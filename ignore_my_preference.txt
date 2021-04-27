@@ -1,0 +1,3 @@
+git update-index --assume-unchanged db/tver.csv
+git update-index --assume-unchanged config/ignore.ini
+git update-index --assume-unchanged config/keyword.ini
