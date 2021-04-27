@@ -1,0 +1,19 @@
+﻿{
+  "manifest_version": 2,
+  "name": "TVer動画URLコピー",
+  "description": "Tverの動画を落とすURLをコピー",
+  "version": "1.2.2",
+  "icons": {
+    "18": "icon.png"
+  },
+  "permissions": [
+    "<all_urls>",
+    "webRequest",
+    "clipboardWrite"
+  ],
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  }
+}
