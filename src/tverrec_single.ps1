@@ -1,120 +1,168 @@
-$CurrentDir = Split-Path $MyInvocation.MyCommand.Path
-Set-Location $CurrentDir
-Write-Output '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
-Write-Output '    GYAO&Tver動画ダウンローダ powershell ver1.0.1 rev.DN'
-Write-Output '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+﻿###################################################################################
+#  tverrec : TVerビデオダウンローダ
+#		個別ダウンロード処理スクリプト
+###################################################################################
+using namespace Microsoft.VisualBasic
+using namespace System.Text.RegularExpressions
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#設定ここから
-
-#ChromeのUserDataフォルダのフルパス
-$usr_dir = "$ENV:UserProfile\OneDrive\TverRecording\ChromeUserData\" 
-
-#保存先のフルパス
-$savepath = 'V:\TVer\'
-
-#ffmpegのフルパス windowsはこのまま(MacやLinuxの人は変える)
-$ffmpeg_path = $CurrentDir + '\lib\ffmpeg.exe'
-
-#Chrome拡張機能のフルパス
-$crx_path = $CurrentDir + '\lib\gyao.crx'
-$ad_killer_path = $CurrentDir + '\lib\TVerEnqueteDisabler.crx' 
-
-#dllのパス
-Add-Type -Path 'lib\WebDriver.dll';
-Add-Type -Path 'lib\WebDriver.Support.dll';
-Add-Type -Path 'lib\Selenium.WebDriverBackedSelenium.dll';
-
-#設定ここまで
+#環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#Set-StrictMode -Off
+Set-StrictMode -Version Latest
+$currentDir = Split-Path $MyInvocation.MyCommand.Path
+Set-Location $currentDir
+$configDir = $(Join-Path $currentDir '..\config')
+$sysFile = $(Join-Path $configDir 'system_setting.ini')
+$iniFile = $(Join-Path $configDir 'user_setting.ini')
+
+#----------------------------------------------------------------------
+#外部設定ファイル読み込み
+Get-Content $sysFile | Where-Object { $_ -notmatch '^\s*$' } | `
+		Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
+		Invoke-Expression
+Get-Content $iniFile | Where-Object { $_ -notmatch '^\s*$' } | `
+		Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
+		Invoke-Expression
+
+#----------------------------------------------------------------------
+#必要モジュールの読み込み
+Add-Type -Path $webDriverPath
+Add-Type -Path $webDriverSupportPath
+Add-Type -Path $seleniumPath
+Add-Type -AssemblyName Microsoft.VisualBasic
+Add-Type -AssemblyName System.Windows.Forms
+
+#----------------------------------------------------------------------
+#開発環境用に設定上書き
+if ($env:Computername -like '*201*') {
+	$chromeUserDataPath = 'R:\TverRecording\ChromeUserData\' 
+	$VerbosePreference = 'Continue'						#詳細メッセージ
+	$DebugPreference = 'Continue'						#デバッグメッセージ
+}
+
+#----------------------------------------------------------------------
+#外部関数ファイルの読み込み
+. '.\common_functions.ps1'
+. '.\tverrec_functions.ps1'
+
+
+#━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#メイン処理
+Write-Host ''
+Write-Host '==================================================================================' -ForegroundColor Cyan
+Write-Host '----------------------------------------------------------------------------------' -ForegroundColor Cyan
+Write-Host '  tverrec : TVerビデオダウンローダ                                                ' -ForegroundColor Cyan
+Write-Host "                      個別一括ダウンロード版 version. $appVersion                     " -ForegroundColor Cyan
+Write-Host '----------------------------------------------------------------------------------' -ForegroundColor Cyan
+Write-Host '==================================================================================' -ForegroundColor Cyan
+Write-Host ''
+
+#----------------------------------------------------------------------
+#動作環境チェック
+. '.\update_chromedriver.ps1'		#chromedriveの最新化チェック
+. '.\update_ffmpeg.ps1'				#ffmpegの最新化チェック
+checkRequiredFile					#設定で指定したファイル・フォルダの存在チェック
+checkGeoIP							#日本のIPアドレスでないと接続不可のためIPアドレスをチェック
 
 #無限ループ
 while ($true) {
-	$title = ''
-	$sub_title = ''
-	$url = Read-Host 'URLを入力してください。' 
-
-	#クリップボードを空にする
-	Set-Clipboard -Value ' '
-	$clip_url = '';
-
-	#Chrome起動
-	$ChromeOptions = New-Object OpenQA.Selenium.Chrome.ChromeOptions
-	$ChromeOptions.AddArguments(@(' --renderer-process-limit=3', ' --media-cache-size=104857600', ' --disable-infobars', " --user-data-dir=$usr_dir"))
-	$ChromeOptions.AddExtensions("$crx_path")
-	$ChromeOptions.AddExtensions("$ad_killer_path")
-	$ChromeOptions.AddUserProfilePreference('credentials_enable_service', $false)
-	$ChromeOptions.AddUserProfilePreference('profile.password_manager_enabled', $false)
-	$driver = New-Object OpenQA.Selenium.Chrome.ChromeDriver($ChromeOptions)
-	#ChromeのWindow最小化
-	#	$driver.manage().Window.Minimize()
-
-	#ChromeにURLを渡す
-	$driver.url = $url
-
-
-	#ループで読み込み完了を待つ
-	for ($i = 0; $i -lt 30; $i++) {
-
-		#再生ボタンをクリック
-		$element = $driver.FindElementByXpath('/html/body')
-		$element.Click()
-		$element.SendKeys($driver.keys.Enter)
-
-		#クリップボード取得
-		$clip_url = Get-Clipboard -Format Text
-
-		#クリップボードにURLがが入ったら抜ける
-		$regex = '([a-zA-Z]{3,})://([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*)*?'		#正規表現URLパターン
-		if ($clip_url -notmatch $regex) {
-		} else {
-			break
-		}
+	#いろいろ初期化
+	$videoID = '' ; $videoPage = '' ; $videoName = '' ; $videoPath = ''
+	$ignore = $false
+	$videoLists = $null ; $newVideo = $null
+	$chromeDriverService = $null ; $chromeOptions = $null ; $chromeDriver = $null
+	while ((Get-Clipboard -Format Text) -ne ' ') {
+		Set-Clipboard -Value ' '
 		Start-Sleep -Milliseconds 300
 	}
 
-	#Chromeからタイトル取得
-	$title = $driver.Title
+	$videoPage = Read-Host 'ビデオURLを入力してください。'
+	if ($videoPage -eq '') { exit }
+	$videoID = $videoPage.Replace('https://tver.jp', '').Replace('http://tver.jp', '').trim()
 
-	#TVer用サブタイトル取得
-	if ($url -match 'tver.jp') {
-		$null = $driver.PageSource -match 'program_subtitle" type="hidden" value="(.+?)"'
-		$sub_title = $Matches[1]
+	#TVerの番組説明の場合はビデオがないのでスキップ
+	if ($videoID -match '/episode/') {
+		Write-Host 'ビデオではなくオンエア情報のようです。スキップします。' -ForegroundColor DarkGray
+		continue								#次のビデオへ
 	}
 
-	#GYAO用サブタイトル取得
-	if ($url -match 'gyao.yahoo.co.jp') {
-		$null = $driver.PageSource -match 'class="video-player-title">(.+?)<'
-		$sub_title = $Matches[1]
+	#すでにダウンロードリストに存在する場合はスキップ
+	$listMatch = Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.videoID -eq $videoID } 
+	if ( $null -ne $listMatch ) {
+		Write-Host '過去に処理したビデオです。スキップします。' -ForegroundColor DarkGray
+		continue								#次のビデオへ
 	}
 
-	#Chrome終了
-	$driver.Close()
-	$driver.Dispose()
-	#	$driver.Quit()
-	Start-Sleep -Milliseconds 1000		#オブジェクト破棄に時間がかかるため待機
+	#Chrome起動と動画情報の整理
+	$chromeDriverService = [OpenQA.Selenium.Chrome.ChromeDriverService]::CreateDefaultService()
+	$chromeDriverService.HideCommandPromptWindow = $true		#chromedriverのWindow非表示(orコンソールに非表示)
+	setChromeAttributes $chromeUserDataPath ([ref]$chromeOptions) $crxPath $adbPath				#Chrome起動パラメータ作成
+	$chromeDriver = New-Object OpenQA.Selenium.Chrome.ChromeDriver($chromeDriverService, $chromeOptions)		#★エラー発生個所
+	$chromeDriver.manage().Window.Minimize()					#ChromeのWindow最小化
+	openVideo ([ref]$chromeDriver) $videoPage					#URLをChromeにわたす
+	$videoURL = playVideo ([ref]$chromeDriver)					#ページ読み込み待ち、再生ボタンクリック、クリップボードにビデオURLを入れる
 
-	#タイトルの不要部分を除去
-	$title = $title -replace ' \| (映画|音楽|アニメ|韓流|バラエティ|スポーツ|見逃し配信) \| 無料動画GYAO\!', ''
-	$title = $title.Replace('｜民放公式テレビポータル「TVer（ティーバー）」 - 無料で動画見放題', '')
-	$title = $title.trim()
-	if ($null -ne $sub_title) { $sub_title = $sub_title.trim() }
+	#ビデオ情報取得
+	$title = getVideoTitle ([ref]$chromeDriver)
+	$subtitle = getVideoSubtitle ([ref]$chromeDriver)
+	$media = getVideoMedia ([ref]$chromeDriver)
+	$broadcastDate = getVideoBroadcastDate ([ref]$chromeDriver)
+	$description = getVideoDescription ([ref]$chromeDriver)
 
-	#ファイル名を設定
-	if ([string]::IsNullOrEmpty($sub_title)) {
-		$filepath = $title + '.mp4'
-	} else {
-		$filepath = $title + ' ' + $sub_title + '.mp4'
+	stopChrome ([ref]$chromeDriver)									#Chrome終了
+	$videoName = setVideoName $title $subtitle $broadcastDate		#保存ファイル名を設定
+	$savePath = $(Join-Path $saveBasePath (removeInvalidFileNameChars $title))
+	$videoPath = $(Join-Path $savePath $videoName)
+
+	#ビデオ情報のコンソール出力
+	writeVideoInfo $videoName $broadcastDate $media $description 
+	writeVideoDebugInfo $videoID $videoPage '' $title $subtitle $videoPath $(getTimeStamp) $videoURL 
+
+	#ダウンロードリストCSV読み込み
+	Write-Debug 'ダウンロード済みリストを読み込みます。'
+	$videoLists = Import-Csv $listFile -Encoding UTF8
+
+	#ダウンロードリストに行追加
+	Write-Verbose 'ダウンロード済みリストに行を追加します。'
+	$newVideo = [pscustomobject]@{ 
+		videoID       = $videoID ;
+		videoPage     = $videoPage ;
+		genre         = '' ;
+		title         = $title ;
+		subtitle      = $subtitle ;
+		media         = $media ;
+		broadcastDate = $broadcastDate ;
+		downloadDate  = $(getTimeStamp)
+		videoName     = $videoName ;
+		videoPath     = $videoPath ;
 	}
 
-	#windowsでファイル名にできない文字列を除去
-	$filepath = $filepath -replace '(\?|\!|>|<|:|\\|/|\|)', ''
-	$filepath = $filepath -replace '(&amp;)', '&'
+	$newList = @()
+	$newList += $videoLists
+	$newList += $newVideo
+	$newList | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
 
-	#ffmpegのコマンド
-	$Argument = ' -n -i "' + $clip_url + '" -vcodec copy -acodec copy "' + $savepath + $filepath + '"'
+	#ダウンロードしないビデオを追加判定
+	if ($ignore -eq $false) {
+		if ([string]::IsNullOrEmpty($videoName)) {
+			Write-Host 'ビデオタイトルを特定できませんでした。スキップします。' -ForegroundColor DarkGray
+			$ignore = $true
+		} 
+	}
 
-	$null = Start-Process -FilePath ($ffmpeg_path) -ArgumentList $Argument -WindowStyle Minimize		# or Hidden
+	#スキップ対象はダウンロードしないで次のビデオへ
+	if ($ignore -eq $true) { continue }								#次のビデオへ
+
+	#保存作ディレクトリがなければ作成
+	if (-Not (Test-Path $savePath -PathType Container)) {
+		$null = New-Item -ItemType directory -Path $savePath
+	}
+	#ffmpeg起動
+	startFfmpeg $videoName $videoPath $videoURL '' $title $subtitle $description $media $videoPage $ffmpegPath
+
+	#ffmpegプロセスの確認と、ffmpegのプロセス数が多い場合の待機
+	getFfmpegProcessList $parallelDownloadNum
 
 
 	Write-Output '終わりました。'
