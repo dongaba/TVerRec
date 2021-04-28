@@ -1,108 +1,83 @@
-■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-tverrec - TVerビデオダウンローダ -
-サポートなしのフリーソフト
-https://github.com/Dicekay/tverrec
-■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+# tverrec - TVerビデオダウンローダ -
+本ツールは、powershellのスクリプトで書かれた動画配信サイトのTver専用の動画ダウンローダです。
+動画を1本ずつ指定してダウンロードするのではなく、動画のジャンルや出演タレントを指定して一括ダウンロードします。
+ループ実行するようになっているので、1回起動すれば新しい番組が配信される都度ダウンロードされるようになります。
+動作に必要なchromedriverやffmpegなどの必要コンポーネントは自動的に最新版がダウンロードされます。
 
-■このソフトの説明
 
-powershellのスクリプトで書かれた動画配信サイトのTver専用の動画ダウンローダです。
-
+## 前提条件
 windows10で動作確認していますが、おそらくWindows7、8でも動作します。
-
-powershellはMacOSX、Linuxにも移植されてるのでもしかしたら動作するかもです。
-
-
-■使い方
-
- 1. src\tverrec_bulk.ps1をテキストエディターで開いてユーザ設定。
-
- 2. PowerShell の実行ポリシーの変更。
-    https://bit.ly/32HAwOKを参照してRemoteSignedに
-
- 3. ffmpeg.exeを別途ダウンロードして、binフォルダの中に配置します。
-
- 4. Windows環境ではstart_tverrec.batで起動。永遠にループして稼働し続けます。
-    もしくはps1にPowerShellを関連付け変更してtverrec_bulk.ps1をクリックで起動。
-
- 5. start_tverrec.batで起動した場合は、stop_tverrec.batで停止できます。
-    関連するダウンロード処理もすべて強制停止されるので注意してください。
-    ダウンロードを止めたくない場合は、tverecのウィンドウを「X」ボタンで閉じてください。
+PowerShellはMacOSX、Linuxにも移植されてるのでメインの機能は動作するかもしれません。
+一部の機能はWindowsを前提に作られているので改変なしでは動作しません。(chromedriverの自動更新機能など)
 
 
-■おすすめの使い方
+## 実行方法
+使い方は非常に簡単です。以下の手順でバッチファイルを実行してください。
+1.  本ツールのzipファイルをダウロードし、任意のディレクトリで解凍してください。
 
- ・ tverrecはクリップボードを使って動作します。
-    tverrec動作中はクリップボードを使えなくなるため、
-    別ユーザを作ってtverrec専用に割り当てるのがおすすめです。
-    
- ・ 別ユーザを作れない場合は、tverrec用のChromeのユーザプロファイルを作成して、
-    tveerec動作中もChromeでのブラウジングをできるようにするのがおすすめです。
+1.  Windows環境では start_tverrec.bat を実行してください。
+1.1.  処理が完了しても10分ごとに永遠にループして稼働し続けます。
+1.1.  もしくは、ps1ファイルをPowerShellにを関連付けして、tverrec_bulk.ps1をクリックで起動。
+1.1.  上記でPowerShellが起動しない場合は、PowerShell の実行ポリシーの変更する必要があるかもしれません。https://bit.ly/32HAwOK を参照してRemoteSignedなどに変更してください。
 
- ・ TVえerのカテゴリ毎のページを指定してstart_tverrec.batで起動すれば、
-    新しい番組が配信されたら自動的にダウンロードされるようになります。
-
- ・ 同様に、フォローしているタレントページを指定してstart_tverrec.batで起動すれば、
-    新しい番組が配信されたら自動的にダウンロードされるようになります。
-
- ・ 同様に、各放送局毎のページを指定してstart_tverrec.batで起動すれば、
-    新しい番組が配信されたら自動的にダウンロードされるようになります。
+1.  start_tverrec.bat で起動した場合は、stop_tverrec.bat で停止できます。
+1.1.  関連するダウンロード処理もすべて強制停止されるので注意してください。
+1.1.  ダウンロードを止めたくない場合は、tverecのウィンドウを「X」ボタンで閉じてください。
 
 
-■注意点
+## 設定内容
+個別の設定はテキストエディタで変更する必要があります。
 
- ・ 解像度の指定はできません。
-    解像度はブラウザで再生するのと同じで回線によって自動で決定します。
+### 動作環境の設定方法
+- config/user_setting.ini をテキストエディターで開いてユーザ設定を行ってください。
 
+### ダウンロード対象のジャンルの設定方法
+- config/keyword.ini をテキストエディターで開いてダウンロード対象のジャンルを設定します。
+    - 不要なジャンルは # でコメントアウトしてください。
+    - ジャンルは網羅しているつもりですが、不足があるかもしれません。
 
-■設定
-
- ・ そのうち説明します
-
-
-
-■アンインストール
-
- ・ レジストリは一切使っていないでの、ゴミ箱に捨てれば良いです。
-
+### ダウンロード対象外の番組の設定方法
+- config/ignore.ini をテキストエディターで開いてダウンロードしたくない番組名を設定します。
+    - ジャンル指定でダウンロードすると不要な番組もまとめてダウンロードされるので、個別にダウンロード対象外に指定できます。
 
 
-----------------------------------------------------------------------
-tverrec - TVer Video Downloader
-  License free software with no support
-  https://github.com/Dicekay/tverrec
-----------------------------------------------------------------------
+## おすすめの使い方
+- tverrecはクリップボードを使って動作します。
+  tverrec動作中はクリップボードを使えなくなるため、別ユーザを作ってtverrec専用に割り当てるのがおすすめです。
 
-- Description of this software
+- 別ユーザを作れない場合は、tverrec用のChromeのユーザプロファイルを作成して、tveerec動作中もChromeでのブラウジングをできるようにするのがおすすめです。
 
- This is a video downloader for Tver, a video distribution site written in powershell script. It has been tested on Windows 10, but it will probably work on Windows 7 and 8 as well. It may work on Windows 7 and 8. powershell has been ported to MacOSX and Linux as well, so it may work.
+- TVerのカテゴリ毎のページを指定して start_tverrec.bat で起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
 
-- How to use
+- 同様に、フォローしているタレントページを指定してstart_tverrec.bat で起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
 
-1. open src\tverrec_bulk.ps1 in a text editor and set user preferences. 2.
-2. change the PowerShell execution policy. Refer to https://bit.ly/32HAwOK.
-3. download ffmpeg.exe separately and place it in the bin folder. 
-4. In Windows environment, start it with start_tverrec.bat. It will loop forever and keep running. Or change the PowerShell association to ps1 and click tverrec_bulk.ps1 to start it. 
-5. If you start it with start_tverrec.bat, you can stop it with stop_tverrec.bat.Note that all related download processes will also be forcibly stopped. If you do not want to stop the download, close the tverec window with the "X" button.
-
-- Recommended usage
-
- tverrec works with the clipboard. When tverrec is running, you cannot use the clipboard. If you can't create a separate user, you can use the clipboard only for tverrec.
- If you can't create a separate user, create a Chrome user profile for tverrec. If you cannot create a separate user, we recommend that you create a Chrome user profile for tverrec so that you can browse in Chrome while tveerec is running.
- If you specify a page for each category of TVEER and start it with start_tverrec.bat. If you specify a page for each category of TVEer and start it with start_tverrec.bat, new programs will be downloaded automatically when they are distributed.
- In the same way, if you start start_tverrec.bat by specifying a talent page you are following, it will automatically download new programs when they are distributed. Similarly, if you specify a talent page you follow and start it with start_tverrec.bat, it will automatically download when a new program is distributed.
- In the same way, if you specify the page for each station and start_tverrec.bat. In the same way, if you specify a page for each station and start it with start_tverrec.bat, it will be downloaded automatically when a new program is distributed.
-
--Cautions
-
- The resolution cannot be specified. The resolution is automatically determined by the line, the same as when playing in a browser.
-
--Settings
-
- will explain it later.
-
--Uninstallation
-
- The registry is not used at all, so you can just throw it in the trash.
+- 同様に、各放送局毎のページを指定してstart_tverrec.batで起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
 
 
+## アンインストール方法
+- レジストリは一切使っていないでの、不要になったらゴミ箱に捨てれば良いです。
+
+
+## 注意事項
+- 解像度の指定はできません。
+    - 解像度はブラウザで再生するのと同じで回線によって自動で決定します。
+
+- 動作中はクリップボードを使用できません。
+    - 本ツールはクリップボードを使って機能間のデータ連携をしています。ツールの動作中にクリップボードを使用すると、ダウンロードに失敗したり動作が重くなることがあります。
+
+- 著作権について
+    - このプログラムの著作権は dongaba が保有しています。
+
+- 事故、故障など
+    - 本ツールを使用して起こった何らかの事故、故障などの責任は負いかねますので、ご使用の際はこのことを承諾したうえでご使用ください。
+
+
+## ライセンス
+- 本ツールはApache License, Version 2.0のライセンス規約(http://www.apache.org/licenses/LICENSE-2.0 )に基づき、複製や再配布、改変が許可されます。
+- 本ツールはApache License, Version 2.0のライセンスで配布されている成果物を含んでいます。
+    - WebDriver.dll version 3.14.0
+    - WebDriver.Support.dll version 3.14.0
+    - Selenium.WebDriverBackedSelenium.dll version 3.14.0
+
+Copyright(c) 2021 dongaba All Rights Reserved.
+This software is released under the Apache License, Version 2.0, see ./LICENSE.
