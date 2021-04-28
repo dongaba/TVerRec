@@ -1,6 +1,7 @@
-﻿#■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+﻿###################################################################################
 #  tverrec : TVerビデオダウンローダ
-#■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+#		一括ダウンロード処理スクリプト
+###################################################################################
 using namespace Microsoft.VisualBasic
 using namespace System.Text.RegularExpressions
 
@@ -50,7 +51,8 @@ if ($env:Computername -like '*201*') {
 Write-Host ''
 Write-Host '==================================================================================' -ForegroundColor Cyan
 Write-Host '----------------------------------------------------------------------------------' -ForegroundColor Cyan
-Write-Host "  tverrec : TVerビデオダウンローダ version. $appVersion                           " -ForegroundColor Cyan
+Write-Host '  tverrec : TVerビデオダウンローダ                                                ' -ForegroundColor Cyan
+Write-Host "                      一括ダウンロード版 version. $appVersion                     " -ForegroundColor Cyan
 Write-Host '----------------------------------------------------------------------------------' -ForegroundColor Cyan
 Write-Host '==================================================================================' -ForegroundColor Cyan
 Write-Host ''
@@ -132,6 +134,7 @@ foreach ($genre in $genres) {
 			Write-Host '過去に処理したビデオです。スキップします。' -ForegroundColor DarkGray
 			continue								#次のビデオへ
 		}
+
 		#Chrome起動と動画情報の整理
 		$chromeDriverService = [OpenQA.Selenium.Chrome.ChromeDriverService]::CreateDefaultService()
 		$chromeDriverService.HideCommandPromptWindow = $true		#chromedriverのWindow非表示(orコンソールに非表示)

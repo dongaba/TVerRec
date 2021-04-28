@@ -1,4 +1,9 @@
-﻿$scriptRoot = if ($PSScriptRoot -eq '') { '.' } else { $PSScriptRoot }
+﻿###################################################################################
+#  tverrec : TVerビデオダウンローダ
+#		Windows用chromedriver最新化処理スクリプト
+###################################################################################
+
+$scriptRoot = if ($PSScriptRoot -eq '') { '.' } else { $PSScriptRoot }
 
 #chromedriver保存先相対Path
 $chromeDriverRelativeDir = '..\lib'

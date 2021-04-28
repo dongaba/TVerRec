@@ -1,4 +1,9 @@
-﻿$scriptRoot = if ($PSScriptRoot -eq '') { '.' } else { $PSScriptRoot }
+﻿###################################################################################
+#  tverrec : TVerビデオダウンローダ
+#		Windows用ffmpeg最新化処理スクリプト
+###################################################################################
+
+$scriptRoot = if ($PSScriptRoot -eq '') { '.' } else { $PSScriptRoot }
 
 #ffmpeg保存先相対Path
 $ffmpegRelativeDir = '..\bin'

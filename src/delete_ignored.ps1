@@ -1,4 +1,9 @@
-﻿using namespace Microsoft.VisualBasic
+﻿###################################################################################
+#  tverrec : TVerビデオダウンローダ
+#		無視対象ビデオ削除処理スクリプト
+###################################################################################
+
+using namespace Microsoft.VisualBasic
 using namespace System.Text.RegularExpressions
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

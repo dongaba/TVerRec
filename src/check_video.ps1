@@ -1,4 +1,9 @@
-﻿using namespace Microsoft.VisualBasic
+﻿###################################################################################
+#  tverrec : TVerビデオダウンローダ
+#		動画チェック処理スクリプト
+###################################################################################
+
+using namespace Microsoft.VisualBasic
 using namespace System.Text.RegularExpressions
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -27,11 +32,38 @@ Add-Type -AssemblyName Microsoft.VisualBasic
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
-
 Get-ChildItem $saveBasePath -Recurse -File -Include *.mp4 |`
 		ForEach-Object { 
-		$ffmpegArgument = ' -v error -i "' + $_ + '" -map 0:1 -f null - >v:\check.log 2>&1'
-		Write-Host "ffmpeg起動コマンド:$ffmpegPath $ffmpegArgument"
-		Start-Process -FilePath ($ffmpegPath) -ArgumentList $ffmpegArgument
+
+		$pinfo = New-Object System.Diagnostics.ProcessStartInfo
+		$pinfo.RedirectStandardOutput = $true
+		$pinfo.RedirectStandardError = $true
+		$pinfo.UseShellExecute = $false
+		#$pinfo.WindowStyle = 'Hidden'
+
+		$pinfo.FileName = $ffmpegPath
+		$pinfo.Arguments = ' -v error -i "' + $_ + '" -f null - '
+		Write-Debug "ffmpeg起動コマンド:$ffmpegPath $ffmpegArgument"
+
+		$p = New-Object System.Diagnostics.Process
+		$p.StartInfo = $pinfo
+		$p.Start() | Out-Null
+		$p.WaitForExit()
+
+		$stdout = $p.StandardOutput.ReadToEnd()
+		$stderr = $p.StandardError.ReadToEnd()
+
+		if ( $stdout -ne '' ) {
+			Write-Host "stdout: $stdout"
+		}
+		if ( $stderr -ne '' ) {
+			Write-Host "stderr: $stderr"
+		}
+		Write-Host 'exit code: ' $p.ExitCode
+
 	}
+
+#$ffmpegArgument = ' -v error -i "' + $_ + '" -f null - >> v:\check.log 2>&1'
+#Write-Debug "ffmpeg起動コマンド:$ffmpegPath $ffmpegArgument"
+#Start-Process -FilePath ($ffmpegPath) -ArgumentList $ffmpegArgument -PassThru -Wait
 

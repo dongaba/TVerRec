@@ -1,4 +1,9 @@
-﻿$scriptRoot = if ($PSScriptRoot -eq '') { '.' } else { $PSScriptRoot }
+﻿###################################################################################
+#  tverrec : TVerビデオダウンローダ
+#		Windows用youtube-dl最新化処理スクリプト
+###################################################################################
+
+$scriptRoot = if ($PSScriptRoot -eq '') { '.' } else { $PSScriptRoot }
 
 #githubの設定
 $repo = 'ytdl-org/youtube-dl'
