@@ -1,7 +1,7 @@
 rem ###################################################################################
-rem #  tverrec : TVerãƒ“ãƒ‡ã‚ªãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ€
+rem #  tverrec : TVerƒrƒfƒIƒ_ƒEƒ“ƒ[ƒ_
 rem #
-rem #		ä¸€æ‹¬ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰å‡¦ç†é–‹å§‹ã‚¹ã‚¯ãƒªãƒ—ãƒˆ
+rem #		ˆêŠ‡ƒ_ƒEƒ“ƒ[ƒhˆ—ŠJnƒXƒNƒŠƒvƒg
 rem #
 rem #	Copyright (c) 2021 dongaba
 rem #
@@ -32,7 +32,7 @@ powershell "Get-WmiObject win32_process -filter processid=$pid | ForEach-Object{
 
 :Loop
 	rem *************************
-	rem ä¸€å®šé–“éš”ã§å®Ÿè¡Œã—ãŸã„å‡¦ç†
+	rem ˆê’èŠÔŠu‚ÅÀs‚µ‚½‚¢ˆ—
 	rem *************************
 
 	title TVer Recorder
