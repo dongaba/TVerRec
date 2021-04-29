@@ -12,12 +12,12 @@ Necessary components such as chromedriver and ffmpeg are automatically downloade
 ## 前提条件 / Requirements
 Google Chromeがインストールされていることが稼働条件です。
 Windows10で動作確認していますが、おそらくWindows7、8でも動作します。
-PowerShellはMacOSX、Linuxにも移植されてるのでメインの機能は動作するかもしれません。
+PowerShellはMacOS、Linuxにも移植されてるのでメインの機能は動作するかもしれません。
 一部の機能はWindowsを前提に作られているので改変なしでは動作しません。(chromedriverの自動更新機能など)
 
 Google Chrome must be installed to run.
 TVerRec has been tested on Windows 10, but it will probably work on Windows 7 and 8 as well.
-PowerShell has been ported to MacOSX and Linux, so the main functions may work on them.
+PowerShell has been ported to MacOS and Linux, so the main functions may work on them.
 Some features are designed only for Windows, so they will not work without modification on other platforms. (e.g. automatic update of chromedriver).
 
 
@@ -25,22 +25,22 @@ Some features are designed only for Windows, so they will not work without modif
 使い方は非常に簡単です。以下の手順でバッチファイルを実行してください。
 1. TVerRecのzipファイルをダウロードし、任意のディレクトリで解凍してください。
 2. 以下を参照して環境設定、ダウンロード設定を行ってください。
-3. Windows環境では start_tverrec.bat を実行してください。
+3. Windows環境では `start_tverrec.bat`を実行してください。
     - 処理が完了しても10分ごとに永遠にループして稼働し続けます。
-    - もしくは、ps1ファイルをPowerShellにを関連付けして、tverrec_bulk.ps1をクリックで起動。
-    - 上記でPowerShellが起動しない場合は、PowerShell の実行ポリシーの変更する必要があるかもしれません。https://bit.ly/32HAwOK を参照してRemoteSignedなどに変更してください。
-4. TVerRecを start_tverrec.bat で起動した場合は、stop_tverrec.bat でTVerRecを停止できます。
+    - もしくは、ps1ファイルをPowerShellにを関連付けして、`tverrec_bulk.ps1`をクリックで起動。
+    - 上記でPowerShellが起動しない場合は、PowerShell の実行ポリシーのRemoteSignedなどに変更する必要があるかもしれません。([参考](https://bit.ly/32HAwOK))
+4. TVerRecを `start_tverrec.bat`で起動した場合は、`stop_tverrec.bat`でTVerRecを停止できます。
     - 関連するダウンロード処理もすべて強制停止されるので注意してください。
     - ダウンロードを止めたくない場合は、tverecのウィンドウを閉じるボタンで閉じてください。
 
 It is very easy to use. Please follow the steps below to run the batch file.
 1. Download the TVerRec zip file and extract it in any directory. 
 2. Please refer to the following section to set up the environment and download settings. 
-3. In Windows environment, you can simply run start_tverrec.bat.
+3. In Windows environment, you can simply run `start_tverrec.bat`.
     - After the download process is completed, TVerRec will continue to run in a loop every 10 minutes forever.
-    - Alternatively, associate the ps1 file with PowerShell and click on tverrec_bulk.ps1 to start.
-    - If the above procedure does not work, you may need to change the execution policy of PowerShell (such as RemoteSigned). 
-4. If you started TVerRec with start_tverrec.bat, you can stop TVerRec with stop_tverrec.bat.
+    - Alternatively, associate the ps1 file with PowerShell and click on `tverrec_bulk.ps1` to start.
+    - If the above procedure does not work, you may need to change the execution policy of PowerShell (such as RemoteSigned). ([Reference](https://bit.ly/3aNCXno))
+4. If you started TVerRec with `start_tverrec.bat`, you can stop TVerRec with `stop_tverrec.bat`.
     - Note that all related child download processes will also be forcibly stopped.
     - If you do not want to stop the download processes, simply close the TVerRec window with the close button.
 
@@ -50,42 +50,82 @@ It is very easy to use. Please follow the steps below to run the batch file.
 Individual settings need to be changed in a text editor.
 
 ### 動作環境の設定方法 / Enviromental settings
-- config/user_setting.ini をテキストエディターで開いてユーザ設定を行ってください。
-- Open config/user_setting.ini with a text editor and configure the user settings as guided.
+- `config/user_setting.ini`をテキストエディターで開いてユーザ設定を行ってください。
+- Open `config/user_setting.ini` with a text editor and configure the user settings as guided.
 ### ダウンロード対象のジャンルの設定方法 / Genres settings for download
-- config/keyword.ini をテキストエディターで開いてダウンロード対象のジャンルを設定します。
-    - 不要なジャンルは # でコメントアウトしてください。
+- `config/keyword.ini`をテキストエディターで開いてダウンロード対象のジャンルを設定します。
+    - 不要なジャンルは `#` でコメントアウトしてください。
     - ジャンルは網羅しているつもりですが、不足があるかもしれません。
-- Open config/keyword.ini with a text editor and set the genre to be downloaded.
-    - Comment out unwanted genres with #.
+- Open `config/keyword.ini` with a text editor and set the genre to be downloaded.
+    - Comment out unwanted genres with `#`.
     - I've tried to cover all genres, but there may be some missing.
 
 ### ダウンロード対象外の番組の設定方法 / Ignore settings for download
-- config/ignore.ini をテキストエディターで開いてダウンロードしたくない番組名を設定します。
+- `config/ignore.ini`をテキストエディターで開いてダウンロードしたくない番組名を設定します。
     - ジャンル指定でダウンロードすると不要な番組もまとめてダウンロードされるので、個別にダウンロード対象外に指定できます。
-- Open config/ignore.ini with a text editor and set the program names you do not want to download.
+- Open `config/ignore.ini` with a text editor and set the program names you do not want to download.
     - When you download videos by genre, some unwanted videos will also be downloaded at once, so you can exclude them individually from downloading.
 
 ## おすすめの使い方 / Recommended usage
 - TVerRecはクリップボードを使って動作します。
   TVerRec動作中はクリップボードを使えなくなるため、別ユーザを作ってTVerRec専用に割り当てるのがおすすめです。
 - 別ユーザを作れない場合は、TVerRec用のChromeのユーザプロファイルを作成して、TVerRec動作中もChromeでのブラウジングをできるようにするのがおすすめです。
-- TVerのカテゴリ毎のページを指定して start_tverrec.bat で起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
-- 同様に、フォローしているタレントページを指定してstart_tverrec.bat で起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
-- 同様に、各放送局毎のページを指定してstart_tverrec.batで起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
+- TVerのカテゴリ毎のページを指定して`start_tverrec.bat`で起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
+- 同様に、フォローしているタレントページを指定して`start_tverrec.bat`で起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
+- 同様に、各放送局毎のページを指定して`start_tverrec.bat`で起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
 
 - TVerRec works by using the clipboard.
   Since the clipboard cannot be used while TVerRec is running, it is recommended to create a separate user and assign it exclusively to TVerRec.
 - If you cannot create a separate user, we recommend that you create a dedicated Chrome user profile for TVerRec so that you can use Chrome while TVerRec is running.
-- If you specify a page for each TVer genre and start it with start_tverrec.bat, it will automatically download new videos when they are available.
-- Similarly, if you specify a talent page you are following and start_tverrec.bat, it will automatically download new videos when they become available.
-- Similarly, if you specify a page for each broadcaster and start_tverrec.bat, new videos will be downloaded automatically when they become available.
+- If you specify a page for each TVer genre and start it with `start_tverrec.bat`, it will automatically download new videos when they are available.
+- Similarly, if you specify a talent page you are following and `start_tverrec.bat`, it will automatically download new videos when they become available.
+- Similarly, if you specify a page for each broadcaster and `start_tverrec.bat`, new videos will be downloaded automatically when they become available.
+
+
+## フォルダ構成 / Folder Structure
+```
+tverrec/
+├─ LICENSE ................................. ライセンス
+├─ README.md ............................... このファイル
+├─ start_tverrec.bat ....................... 一括ダウンロード起動BAT
+├─ stop_tverrec.bat ........................ 一括ダウンロード終了BAT
+├─ bin/ .................................... 実行ファイル格納用フォルダ
+│
+├─ config/ ............................... 設定フォルダ
+│  ├─ ignore.ini ........................... ダウンロード対象外設定ファイル
+│  ├─ keyword.ini .......................... ダウンロード対象ジャンル設定ファイル
+│  ├─ system_setting.ini ................... システム設定ファイル
+│  └─ user_setting.ini ..................... ユーザ設定ファイル
+│
+├─ crx/ .................................. Chrome拡張機能
+│  ├─ tverAdKiller.crx ..................... TVerアンケート回避Chrome拡張
+│  ├─ tverCopy.crx ......................... TVerビデオURL解析Chrome拡張
+│  ├─ tverAdKiller/ ........................ Chrome拡張のソースフォルダ
+│  └─ tverCopy/ ............................ Chrome拡張のソースフォルダ
+│
+├─ db/ ................................... データベース
+│  └─ tver.csv ............................. ダウンロードリスト
+│
+├─ debug/ ................................ デバッグ用
+├─ lib/ .................................. SeleniumのDLL格納フォルダ
+│
+└─ src/ .................................. 各種ソース
+   ├─ check_video.ps1 ...................... ビデオの整合性チェックツール
+   ├─ common_functions.ps1 ................. 共通関数定義
+   ├─ delete_ignored.ps1 ................... ダウンロード対象外ビデオ削除ツール
+   ├─ tverrec_bulk.ps1 ..................... 一括ダウンロードツール本体
+   ├─ tverrec_functions.ps1 ................ TVer用共通関数定義
+   ├─ tverrec_single.ps1 ................... 単体ダウンロードツール
+   ├─ update_chromedriver.ps1 .............. chromedriver自動更新ツール
+   ├─ update_ffmpeg.ps1 .................... ffmpeg自動更新ツール
+   └─ update_youtubedl.ps1 ................. youtube-dl自動更新ツール
+```
 
 ## アンインストール方法 / Uninstallation
 - レジストリは一切使っていないでの、不要になったらゴミ箱に捨てれば良いです。
 - TVerRec doesn't use any registry at all, so if you don't need TVerRec anymore, you can just delete it.
 
-## 注意事項
+## 注意事項 / Notes
 - 解像度の指定はできません。
     - 解像度はブラウザで再生するのと同じで回線によって自動で決定します。
 - 動作中はクリップボードを使用できません。
@@ -104,17 +144,20 @@ Individual settings need to be changed in a text editor.
     - I am not responsible for any accidents or malfunctions that may occur when using TVerRec.
 
 ## ライセンス / License
-- TVerRecはApache License, Version 2.0のライセンス規約(http://www.apache.org/licenses/LICENSE-2.0 )に基づき、複製や再配布、改変が許可されます。
+- TVerRecは[Apache License, Version 2.0のライセンス規約](http://www.apache.org/licenses/LICENSE-2.0)に基づき、複製や再配布、改変が許可されます。
 - TVerRecはApache License, Version 2.0のライセンスで配布されている成果物を含んでいます。
     - WebDriver.dll version 3.14.0
     - WebDriver.Support.dll version 3.14.0
     - Selenium.WebDriverBackedSelenium.dll version 3.14.0
 
-- TVerRec may be copied, redistributed, or modified under the terms of the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0 ).
+- TVerRec may be copied, redistributed, or modified under the terms of the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0 ).
 - TVerRec contains artifacts distributed under the license of the Apache License, Version 2.0.
     - WebDriver.dll version 3.14.0
     - WebDriver.Support.dll version 3.14.0
     - Selenium.WebDriverBackedSelenium.dll version 3.14.0
 
 Copyright(c) 2021 dongaba All Rights Reserved.
+
 This software is released under the Apache License, Version 2.0, see ./LICENSE.
+
+
