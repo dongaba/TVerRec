@@ -49,10 +49,18 @@ $ignoreTitles = (Get-Content $ignoreFile -Encoding UTF8 | `
 	-as [string[]]
 
 #無視リストに入っている番組の場合はスキップフラグを立ててダウンロードリストに書き込み処理へ
+Write-Host '削除対象のビデオフォルダを削除します'
 foreach ($ignoreTitle in $ignoreTitles) {
 	$delPath = Join-Path $saveBasePath $ignoreTitle
 	Write-Host $delPath
 	Remove-Item -Path $delPath -Force -Recurse -ErrorAction SilentlyContinue
 }
 
-
+#空フォルダ と 隠しファイルしか入っていないフォルダを一気に削除
+Write-Host '空フォルダ と 隠しファイルしか入っていないフォルダを削除します'
+$all_subdirs = @(Get-ChildItem -Path $saveBasePath -Recurse | Where-Object { $_.PSIsContainer }) | Sort-Object -Descending { $_.FullName }
+foreach ($subdir in $all_subdirs) {
+	if (@(Get-ChildItem -Path $subdir.FullName -Recurse | Where-Object { ! $_.PSIsContainer }).Count -eq 0) {
+		Remove-Item -Path $subdir.FullName -Recurse -Force
+	}
+}
