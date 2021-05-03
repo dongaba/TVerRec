@@ -193,31 +193,33 @@ foreach ($genre in $genres) {
 			#ダウンロードリストに行追加
 			Write-Verbose 'ダウンロードリストに行を追加します。'
 			$newVideo = [pscustomobject]@{ 
-				videoID       = $videoID ;
-				videoPage     = $videoPage ;
-				genre         = $genre ;
-				title         = $title ;
-				subtitle      = $subtitle ;
-				media         = $media ;
-				broadcastDate = $broadcastDate ;
-				downloadDate  = '-- IGNORED --' ;
-				videoName     = '-- IGNORED --' ;
-				videoPath     = '-- IGNORED --' ;
+				videoID        = $videoID ;
+				videoPage      = $videoPage ;
+				genre          = $genre ;
+				title          = $title ;
+				subtitle       = $subtitle ;
+				media          = $media ;
+				broadcastDate  = $broadcastDate ;
+				downloadDate   = '-- IGNORED --' ;
+				videoName      = '-- IGNORED --' ;
+				videoPath      = '-- IGNORED --' ;
+				videoValidated = '0' ;
 			}
 		} else {
 			#ダウンロードリストに行追加
 			Write-Verbose 'ダウンロード済みリストに行を追加します。'
 			$newVideo = [pscustomobject]@{ 
-				videoID       = $videoID ;
-				videoPage     = $videoPage ;
-				genre         = $genre ;
-				title         = $title ;
-				subtitle      = $subtitle ;
-				media         = $media ;
-				broadcastDate = $broadcastDate ;
-				downloadDate  = $(getTimeStamp)
-				videoName     = $videoName ;
-				videoPath     = $videoPath ;
+				videoID        = $videoID ;
+				videoPage      = $videoPage ;
+				genre          = $genre ;
+				title          = $title ;
+				subtitle       = $subtitle ;
+				media          = $media ;
+				broadcastDate  = $broadcastDate ;
+				downloadDate   = $(getTimeStamp)
+				videoName      = $videoName ;
+				videoPath      = $videoPath ;
+				videoValidated = '0' ;
 			}
 		}
 
