@@ -19,9 +19,6 @@
 #
 ###################################################################################
 
-using namespace Microsoft.VisualBasic
-using namespace System.Text.RegularExpressions
-
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -42,13 +39,8 @@ Get-Content $iniFile | Where-Object { $_ -notmatch '^\s*$' } | `
 		Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
 		Invoke-Expression
 
-#----------------------------------------------------------------------
-#必要モジュールの読み込み
-Add-Type -AssemblyName Microsoft.VisualBasic
-
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
-
 #ダウンロード対象外ビデオ番組リストの読み込み
 $ignoreTitles = (Get-Content $ignoreFile -Encoding UTF8 | `
 			Where-Object { !($_ -match '^\s*$') } | `
