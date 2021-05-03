@@ -1,3 +1,4 @@
+@echo off
 rem ###################################################################################
 rem #  tverrec : TVerビデオダウンローダ
 rem #
@@ -19,7 +20,6 @@ rem #	limitations under the License.
 rem #
 rem ###################################################################################
 
-@echo off
 setlocal enabledelayedexpansion
 cd %~dp0
 
