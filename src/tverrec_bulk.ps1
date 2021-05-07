@@ -51,7 +51,7 @@ Add-Type -AssemblyName System.Windows.Forms
 
 #----------------------------------------------------------------------
 #開発環境用に設定上書き
-if ($env:Computername -like '*201*') {
+if (($env:Computername -like '*201*') -or ($env:Computername -like '*PIG*') ) {
 	$chromeUserDataPath = 'R:\TverRecording\ChromeUserData\' 
 	$VerbosePreference = 'Continue'						#詳細メッセージ
 	$DebugPreference = 'Continue'						#デバッグメッセージ

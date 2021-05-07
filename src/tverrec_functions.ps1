@@ -92,6 +92,9 @@ function getVideoMedia ([ref]$chromeDriver) {
 function getVideoBroadcastDate ([ref]$chromeDriver) {
 	if ( $chromeDriver.value.PageSource -match ' class="tv">(.+?)(　| )(.+?)</span>' ) {
 		$broadcastDate = $Matches[3].Replace('&amp;', '&').Replace('ほか　', '').Replace('分', '').trim()
+		if ($broadcastDate -match '([0-9]+)(月)([0-9]+)(日)(.+?)(放送)') {
+			$broadcastDate = $Matches[1].padleft(2, '0') + $Matches[2] + $Matches[3].padleft(2, '0') + $Matches[4] + $Matches[5] + $Matches[6] 
+		} 
 	} else {
 		$broadcastDate = ''
 	}
