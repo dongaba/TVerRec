@@ -178,11 +178,11 @@ foreach ($genre in $genres) {
 
 		if ([string]::IsNullOrEmpty($videoName)) {
 			Write-Host 'ビデオタイトルを特定できませんでした。スキップします。' -ForegroundColor DarkGray
-			continue								#次のビデオへ
+			continue			#次回再度ダウンロードをトライするためダウンロードリストに追加せずに次のビデオへ
 		}
 		if (Test-Path $videoPath) {
+			$ignore = $true
 			Write-Host 'すでにダウンロード済みのビデオです。スキップします。' -ForegroundColor DarkGray
-			continue								#次のビデオへ
 		} 
 
 		#無視リストに入っている番組の場合はスキップフラグを立ててダウンロードリストに書き込み処理へ
