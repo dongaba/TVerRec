@@ -51,7 +51,7 @@ Add-Type -AssemblyName System.Windows.Forms
 
 #----------------------------------------------------------------------
 #開発環境用に設定上書き
-if (($env:Computername -like '*201*') -or ($env:Computername -like '*PIG*') ) {
+if (($env:Computername -like '*201*') -or ($env:Computername -like '*453*') ) {
 	$chromeUserDataPath = 'R:\TverRecording\ChromeUserData\' 
 	$VerbosePreference = 'Continue'						#詳細メッセージ
 	$DebugPreference = 'Continue'						#デバッグメッセージ
@@ -176,6 +176,15 @@ foreach ($genre in $genres) {
 		writeVideoInfo $videoName $broadcastDate $media $description 
 		writeVideoDebugInfo $videoID $videoPage $genre $title $subtitle $videoPath $(getTimeStamp) $videoURL 
 
+		if ([string]::IsNullOrEmpty($videoName)) {
+			Write-Host 'ビデオタイトルを特定できませんでした。スキップします。' -ForegroundColor DarkGray
+			continue								#次のビデオへ
+		}
+		if (Test-Path $videoPath) {
+			Write-Host 'すでにダウンロード済みのビデオです。スキップします。' -ForegroundColor DarkGray
+			continue								#次のビデオへ
+		} 
+
 		#無視リストに入っている番組の場合はスキップフラグを立ててダウンロードリストに書き込み処理へ
 		foreach ($ignoreTitle in $ignoreTitles) {
 			if ($(conv2Narrow $title) -eq $(conv2Narrow $ignoreTitle)) {
@@ -227,20 +236,6 @@ foreach ($genre in $genres) {
 		$newList += $videoLists
 		$newList += $newVideo
 		$newList | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
-
-		#ダウンロードしないビデオを追加判定
-		if ($ignore -eq $false) {
-			if ([string]::IsNullOrEmpty($videoName)) {
-				Write-Host 'ビデオタイトルを特定できませんでした。スキップします。' -ForegroundColor DarkGray
-				$ignore = $true
-			} elseif (Test-Path $videoPath) {
-				Write-Host 'すでにダウンロード済みのビデオです。スキップします。' -ForegroundColor DarkGray
-				$ignore = $true
-			} 
-		}
-
-		#スキップ対象はダウンロードしないで次のビデオへ
-		if ($ignore -eq $true) { continue }								#次のビデオへ
 
 		#保存作ディレクトリがなければ作成
 		if (-Not (Test-Path $savePath -PathType Container)) {
