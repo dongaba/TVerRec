@@ -224,7 +224,7 @@ function cleanupVideoDB {
 #----------------------------------------------------------------------
 #Chrome起動パラメータ設定
 #----------------------------------------------------------------------
-function setChromeAttributes($chromeUserDataPath, [ref]$chromeOptions, $crxPath, $adbPath) {
+function setChromeAttributes($chromeUserDataPath, [ref]$chromeOptions, $crxPath) {
 
 	$chromeOptions.value = New-Object OpenQA.Selenium.Chrome.ChromeOptions
 
