@@ -228,10 +228,6 @@ function setChromeAttributes($chromeUserDataPath, [ref]$chromeOptions, $crxPath,
 
 	$chromeOptions.value = New-Object OpenQA.Selenium.Chrome.ChromeOptions
 
-	$chromeOptions.value.AddExtensions("$crxPath")									#ビデオURLをクリップボードにコピーする拡張機能
-	$chromeOptions.value.AddExtensions("$adbPath")									#TVerのアンケートページをスキップする拡張機能
-	$chromeOptions.value.AddUserProfilePreference('credentials_enable_service', $false)
-	$chromeOptions.value.AddUserProfilePreference('profile.password_manager_enabled', $false)
 	$chromeOptions.value.AddArgument("--user-data-dir=$chromeUserDataPath")			#ユーザプロファイル指定
 	$chromeOptions.value.AddArgument('--lang=ja-JP')								#日本語(ヘッドレスにすると英語になってしまうらしい)
 	$chromeOptions.value.AddArgument('--window-size=1440,900')						#画面サイズ指定
@@ -239,7 +235,6 @@ function setChromeAttributes($chromeUserDataPath, [ref]$chromeOptions, $crxPath,
 	$chromeOptions.value.AddArgument('--disable-geolocation')						#Geolocation APIを無効
 	$chromeOptions.value.AddArgument('--disable-infobars')							#通知バー無効化
 	$chromeOptions.value.AddArgument('--disable-java')								#Javaを無効
-	$chromeOptions.value.AddArgument('--log-level=2')								#Errorよりレベルの低いログを非表示に
 	#$chromeOptions.value.AddArgument('--headless')									#Chrome をヘッドレスモードで実行する (拡張機能がある場合は使用できない)
 	#$chromeOptions.value.AddArgument('--disable-gpu')								#ヘッドレスの際に暫定的に必要なフラグ
 	#$chromeOptions.value.AddArgument('--remote-debugging-port=9222')				#ヘッドレスの際に。使い方わからないけど。。。
@@ -255,6 +250,9 @@ function setChromeAttributes($chromeUserDataPath, [ref]$chromeOptions, $crxPath,
 	$chromeOptions.value.AddArgument('--disable-hang-monitor')						#「ページ応答無し」のダイアログの表示を抑制
 	$chromeOptions.value.AddArgument('--no-default-browser-check')					#デフォルトブラウザチェックをしない
 	$chromeOptions.value.AddArgument('--enable-easy-off-store-extension-install')	#公式以外からの拡張機能のインストールを有効化
+	$chromeOptions.value.AddExtensions("$crxPath")									#ビデオURLをクリップボードにコピーする拡張機能
+	$chromeOptions.value.AddUserProfilePreference('credentials_enable_service', $false)
+	$chromeOptions.value.AddUserProfilePreference('profile.password_manager_enabled', $false)
 
 }
 
