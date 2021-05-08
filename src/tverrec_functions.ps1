@@ -28,7 +28,6 @@ function checkRequiredFile {
 	if (Test-Path $saveBasePath -PathType Container) {} else { Write-Error 'ビデオ保存先フォルダが存在しません。終了します。' ; exit }
 	if (Test-Path $ffmpegPath -PathType Leaf) {} else { Write-Error 'ffmpeg.exeが存在しません。終了します。' ; exit }
 	if (Test-Path $crxPath -PathType Leaf) {} else { Write-Error 'tver.crxが存在しません。終了します。' ; exit }
-	if (Test-Path $adbPath -PathType Leaf) {} else { Write-Error 'TVerEnqueteDisabler.crxが存在しません。終了します。' Red ; exit }
 	if (Test-Path $webDriverPath -PathType Leaf) {} else { Write-Error 'WebDriver.dllが存在しません。終了します。' ; exit }
 	if (Test-Path $webDriverSupportPath -PathType Leaf) {} else { Write-Error 'WebDriver.Support.dllが存在しません。終了します。' ; exit }
 	if (Test-Path $seleniumPath -PathType Leaf) {} else { Write-Error 'Selenium.WebDriverBackedSelenium.dllが存在しません。終了します。' ; exit }
