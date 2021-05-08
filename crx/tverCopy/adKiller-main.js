@@ -1,3 +1,12 @@
+function usleep(microseconds) {
+	// *     example 1: usleep(2000000); // delays for 2 seconds
+	// *     returns 1: true
+
+	var start = new Date().getTime();
+	while (new Date() < (start + microseconds / 1000)) { }
+	return true;
+}
+
 function checkIframeLoaded() {
 
 	// Get a handle to the iframe element
@@ -67,6 +76,7 @@ window.addEventListener('load', function () {
 		//		checkIframeLoaded();		//でもiframe内のオブジェクトは操作できなかった。ChromeのデバッガのConsoleでは動くので、コードは正しいはず。
 
 		//再読込したらアンケートが消える
+		usleep(10000000);
 		location.reload();
 
 	}

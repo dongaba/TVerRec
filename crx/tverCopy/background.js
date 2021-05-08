@@ -1,3 +1,13 @@
+function usleep(microseconds) {
+    // *     example 1: usleep(2000000); // delays for 2 seconds
+    // *     returns 1: true
+
+    var start = new Date().getTime();
+    while (new Date() < (start + microseconds / 1000)) { }
+    return true;
+}
+
+
 chrome.webRequest.onBeforeRequest.addListener(
     function (details) {
         //  console.log(details);
@@ -37,6 +47,7 @@ function ClipboardSetData(data) {
     text_area.select();
     var result = document.execCommand("copy");
     body.removeChild(text_area);
+    usleep(10000000);
     return result;
 }
 
