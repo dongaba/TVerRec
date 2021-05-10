@@ -16,5 +16,5 @@ debug/*.html
 
 .vscode/launch.json
 .DS_Store
-.lnk
-
+*.lnk
+*.bak
