@@ -2,7 +2,7 @@
 rem ###################################################################################
 rem #  tverrec : TVerビデオダウンローダ
 rem #
-rem #		一括ダウンロード処理開始スクリプト
+rem #		動画チェック処理スクリプト
 rem #
 rem #	Copyright (c) 2021 dongaba
 rem #
@@ -24,19 +24,8 @@ rem ############################################################################
 setlocal enabledelayedexpansion
 cd %~dp0
 
-for /f %%i in ('hostname') do set HostName=%%i
-set PIDFile=%HostName%-pid.txt
-set sleepTime=600
+title TVerRec Video File Checker
+powershell -NoProfile -ExecutionPolicy Unrestricted .\src\check_video.ps1
 
-powershell "Get-WmiObject win32_process -filter processid=$pid | ForEach-Object{$_.parentprocessid;}" > %PIDFile%
 
-:Loop
-
-	title TVerRec Bulk Downloader
-	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\tverrec_bulk.ps1
-
-	timeout /T %sleepTime% /nobreak > nul
-	goto Loop
-
-:End
 
