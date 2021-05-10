@@ -69,7 +69,6 @@ foreach ($videoList in $videoLists.videoPath) {
 		#終了コードが"0"以外は録画リストとファイルを削除
 		Write-Host "stderr: $stderr"
 		Write-Host 'exit code: ' $p.ExitCode
-		Write-Host $pattern
 		try {
 			(Select-String -Pattern $videoPath -Path $listFile -Encoding utf8 -SimpleMatch -NotMatch).Line `
 			| Out-File $listFile -Encoding utf8
