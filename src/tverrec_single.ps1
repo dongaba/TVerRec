@@ -51,8 +51,8 @@ Add-Type -AssemblyName System.Windows.Forms
 
 #----------------------------------------------------------------------
 #開発環境用に設定上書き
-if ($env:Computername -like '*201*') {
-	$chromeUserDataPath = 'R:\TverRecording\ChromeUserData\' 
+if ((Test-Path 'R:\' -PathType Container) ) {
+	$chromeUserDataPath = 'R:\tverrec\ChromeUserData\' 
 	$VerbosePreference = 'Continue'						#詳細メッセージ
 	$DebugPreference = 'Continue'						#デバッグメッセージ
 }
@@ -61,7 +61,6 @@ if ($env:Computername -like '*201*') {
 #外部関数ファイルの読み込み
 . '.\common_functions.ps1'
 . '.\tverrec_functions.ps1'
-
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -113,8 +112,13 @@ while ($true) {
 	#Chrome起動と動画情報の整理
 	$chromeDriverService = [OpenQA.Selenium.Chrome.ChromeDriverService]::CreateDefaultService()
 	$chromeDriverService.HideCommandPromptWindow = $true		#chromedriverのWindow非表示(orコンソールに非表示)
-	setChromeAttributes $chromeUserDataPath ([ref]$chromeOptions) $crxPath $adbPath				#Chrome起動パラメータ作成
-	$chromeDriver = New-Object OpenQA.Selenium.Chrome.ChromeDriver($chromeDriverService, $chromeOptions)		#★エラー発生個所
+		setChromeAttributes $chromeUserDataPath ([ref]$chromeOptions) $crxPath		#Chrome起動パラメータ作成
+		try {
+			$chromeDriver = New-Object OpenQA.Selenium.Chrome.ChromeDriver($chromeDriverService, $chromeOptions)		#★エラー頻発個所
+		} catch {
+			Write-Error 'Chromeの起動に失敗しました。終了します'
+			exit
+		}
 	$chromeDriver.manage().Window.Minimize()					#ChromeのWindow最小化
 	openVideo ([ref]$chromeDriver) $videoPage					#URLをChromeにわたす
 	$videoURL = playVideo ([ref]$chromeDriver)					#ページ読み込み待ち、再生ボタンクリック、クリップボードにビデオURLを入れる
@@ -152,6 +156,7 @@ while ($true) {
 		downloadDate  = $(getTimeStamp)
 		videoName     = $videoName ;
 		videoPath     = $videoPath ;
+		videoValidated = '0' ;
 	}
 
 	$newList = @()
