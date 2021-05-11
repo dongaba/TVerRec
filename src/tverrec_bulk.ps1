@@ -194,18 +194,14 @@ foreach ($genre in $genres) {
 		foreach ($ignoreTitle in $ignoreTitles) {
 			if ($(conv2Narrow $title) -eq $(conv2Narrow $ignoreTitle)) {
 				$ignore = $true
-				Write-Host '無視リストに入っているビデオです。スキップします' -ForegroundColor DarkGray
 				break
 			} 
 		}
 
-		#ダウンロードリストCSV読み込み
-		Write-Debug 'ダウンロード済みリストを読み込みます。'
-		$videoLists = Import-Csv $listFile -Encoding UTF8
-
 		if ($ignore -eq $true) {
 			#ダウンロードリストに行追加
-			Write-Verbose 'ダウンロードリストに行を追加します。'
+			Write-Host '無視リストに入っているビデオです。スキップします' -ForegroundColor DarkGray
+			Write-Verbose 'ダウンロード済みリストに行を追加します。'
 			$newVideo = [pscustomobject]@{ 
 				videoID        = $videoID ;
 				videoPage      = $videoPage ;
@@ -237,20 +233,34 @@ foreach ($genre in $genres) {
 			}
 		}
 
+		#ダウンロードリストCSV読み込み
+		Write-Debug 'ダウンロード済みリストを読み込みます。'
+		$videoLists = Import-Csv $listFile -Encoding UTF8
+
+		#ダウンロードリストCSV書き出し
 		$newList = @()
 		$newList += $videoLists
 		$newList += $newVideo
 		$newList | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
 
-		#保存作ディレクトリがなければ作成
-		if (-Not (Test-Path $savePath -PathType Container)) {
-			$null = New-Item -ItemType directory -Path $savePath
-		}
-		#ffmpeg起動
-		startFfmpeg $videoName $videoPath $videoURL $genre $title $subtitle $description $media $videoPage $ffmpegPath
 
-		#ffmpegプロセスの確認と、ffmpegのプロセス数が多い場合の待機
-		getFfmpegProcessList $parallelDownloadNum
+		#無視リストに入っていなければffmpeg起動
+		if ($true -eq $ignore ) { 
+			continue		#無視リストに入っているビデオは飛ばして次のファイルへ
+		} else {
+
+			#保存作ディレクトリがなければ作成
+			if (-Not (Test-Path $savePath -PathType Container)) {
+				$null = New-Item -ItemType directory -Path $savePath
+			}
+
+			#ffmpeg起動
+			startFfmpeg $videoName $videoPath $videoURL $genre $title $subtitle $description $media $videoPage $ffmpegPath
+
+			#ffmpegプロセスの確認と、ffmpegのプロセス数が多い場合の待機
+			getFfmpegProcessList $parallelDownloadNum
+
+		}
 
 	}
 	#個々のビデオダウンロードここまで

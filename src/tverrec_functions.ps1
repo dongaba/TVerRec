@@ -53,8 +53,9 @@ function saveGenrePage {
 #ビデオタイトル取得
 #----------------------------------------------------------------------
 function getVideoTitle ([ref]$chromeDriver) {
-	if ( $chromeDriver.value.PageSource -match 'id="program_title" type="hidden" value="(.+?)"') {
-		$title = $Matches[1].Replace('&amp;', '&').Replace('｜民放公式テレビポータル「TVer（ティーバー）」 - 無料でビデオ見放題', '').trim()
+	if ( $chromeDriver.value.PageSource -match 'id="program_title" type="hidden" value="(.+?)">') {
+		$title = $Matches[1].Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '')
+		$title = $title.Replace('｜民放公式テレビポータル「TVer（ティーバー）」 - 無料でビデオ見放題', '').trim()
 	} else {
 		$title = ''
 	}
@@ -65,11 +66,12 @@ function getVideoTitle ([ref]$chromeDriver) {
 #ビデオサブタイトル取得
 #----------------------------------------------------------------------
 function getVideoSubtitle ([ref]$chromeDriver) {
-	if ( $chromeDriver.value.PageSource -match 'id="program_subtitle" type="hidden" value="(.+?)"') {
-		$subtitle = $Matches[1].Replace('&amp;', '&').trim()
+	if ( $chromeDriver.value.PageSource -match 'id="program_subtitle" type="hidden" value="(.+?)">') {
+		$subtitle = $Matches[1].Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '').trim()
 	} else {
 		$subtitle = ''
 	}
+	if ($subtitle.length -gt 75) { $subtitle = $subtitle.Substring(0, 75) + '……' }
 	return (conv2Narrow $subtitle)
 }
 
@@ -77,8 +79,8 @@ function getVideoSubtitle ([ref]$chromeDriver) {
 #テレビ局取得
 #----------------------------------------------------------------------
 function getVideoMedia ([ref]$chromeDriver) {
-	if ( $chromeDriver.value.PageSource -match 'id="media" type="hidden" value="(.+?)"') {
-		$media = $Matches[1].Replace('&amp;', '&').trim()
+	if ( $chromeDriver.value.PageSource -match 'id="media" type="hidden" value="(.+?)">') {
+		$media = $Matches[1].Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '').trim()
 	} else {
 		$media = ''
 	}
@@ -90,7 +92,8 @@ function getVideoMedia ([ref]$chromeDriver) {
 #----------------------------------------------------------------------
 function getVideoBroadcastDate ([ref]$chromeDriver) {
 	if ( $chromeDriver.value.PageSource -match ' class="tv">(.+?)(　| )(.+?)</span>' ) {
-		$broadcastDate = $Matches[3].Replace('&amp;', '&').Replace('ほか　', '').Replace('分', '').trim()
+		$broadcastDate = $Matches[3].Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '')
+		$broadcastDate = $broadcastDate.Replace('ほか　', '').Replace('分', '').trim()
 		if ($broadcastDate -match '([0-9]+)(月)([0-9]+)(日)(.+?)(放送)') {
 			$broadcastDate = $Matches[1].padleft(2, '0') + $Matches[2] + $Matches[3].padleft(2, '0') + $Matches[4] + $Matches[5] + $Matches[6] 
 		} 

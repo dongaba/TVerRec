@@ -80,6 +80,13 @@ Write-Host ''
 checkRequiredFile					#設定で指定したファイル・フォルダの存在チェック
 checkGeoIP							#日本のIPアドレスでないと接続不可のためIPアドレスをチェック
 
+#ダウンロード対象外番組リストの読み込み
+$ignoreTitles = (Get-Content $ignoreFile -Encoding UTF8 | `
+			Where-Object { !($_ -match '^\s*$') } | `
+			Where-Object { !($_ -match '^#.*$') } | `
+			Where-Object { !($_ -match '^;.*$') } ) `
+	-as [string[]]
+
 #無限ループ
 while ($true) {
 	#いろいろ初期化
@@ -111,17 +118,17 @@ while ($true) {
 
 	#Chrome起動と動画情報の整理
 	$chromeDriverService = [OpenQA.Selenium.Chrome.ChromeDriverService]::CreateDefaultService()
-	$chromeDriverService.HideCommandPromptWindow = $true		#chromedriverのWindow非表示(orコンソールに非表示)
-		setChromeAttributes $chromeUserDataPath ([ref]$chromeOptions) $crxPath		#Chrome起動パラメータ作成
-		try {
-			$chromeDriver = New-Object OpenQA.Selenium.Chrome.ChromeDriver($chromeDriverService, $chromeOptions)		#★エラー頻発個所
-		} catch {
-			Write-Error 'Chromeの起動に失敗しました。終了します'
-			exit
-		}
-	$chromeDriver.manage().Window.Minimize()					#ChromeのWindow最小化
-	openVideo ([ref]$chromeDriver) $videoPage					#URLをChromeにわたす
-	$videoURL = playVideo ([ref]$chromeDriver)					#ページ読み込み待ち、再生ボタンクリック、クリップボードにビデオURLを入れる
+	$chromeDriverService.HideCommandPromptWindow = $true						#chromedriverのWindow非表示(orコンソールに非表示)
+	setChromeAttributes $chromeUserDataPath ([ref]$chromeOptions) $crxPath		#Chrome起動パラメータ作成
+	try {
+		$chromeDriver = New-Object OpenQA.Selenium.Chrome.ChromeDriver($chromeDriverService, $chromeOptions)		#★エラー頻発個所
+	} catch {
+		Write-Error 'Chromeの起動に失敗しました。終了します'
+		exit
+	}
+	$chromeDriver.manage().Window.Minimize()									#ChromeのWindow最小化
+	openVideo ([ref]$chromeDriver) $videoPage									#URLをChromeにわたす
+	$videoURL = playVideo ([ref]$chromeDriver)									#ページ読み込み待ち、再生ボタンクリック、クリップボードにビデオURLを入れる
 
 	#ビデオ情報取得
 	$title = getVideoTitle ([ref]$chromeDriver)
@@ -137,53 +144,89 @@ while ($true) {
 
 	#ビデオ情報のコンソール出力
 	writeVideoInfo $videoName $broadcastDate $media $description 
-	writeVideoDebugInfo $videoID $videoPage '' $title $subtitle $videoPath $(getTimeStamp) $videoURL 
+	writeVideoDebugInfo $videoID $videoPage '' $title $subtitle $videoPath $(getTimeStamp) $videoURL
+
+	if ([string]::IsNullOrEmpty($videoName)) {
+		Write-Host 'ビデオタイトルを特定できませんでした。スキップします。' -ForegroundColor DarkGray
+		continue			#次回再度ダウンロードをトライするためダウンロードリストに追加せずに次のビデオへ
+	}
+	if (Test-Path $videoPath) {
+		$ignore = $true
+		Write-Host 'すでにダウンロード済みのビデオです。スキップします。' -ForegroundColor DarkGray
+	} 
+
+	#無視リストに入っている番組の場合はスキップフラグを立ててダウンロードリストに書き込み処理へ
+	foreach ($ignoreTitle in $ignoreTitles) {
+		if ($(conv2Narrow $title) -eq $(conv2Narrow $ignoreTitle)) {
+			$ignore = $true
+			break
+		} 
+	}
+
+	if ($ignore -eq $true) {
+		#ダウンロードリストに行追加
+		Write-Host '無視リストに入っているビデオです。スキップします' -ForegroundColor DarkGray
+		Write-Verbose 'ダウンロード済みリストに行を追加します。'
+		$newVideo = [pscustomobject]@{ 
+			videoID        = $videoID ;
+			videoPage      = $videoPage ;
+			genre          = $genre ;
+			title          = $title ;
+			subtitle       = $subtitle ;
+			media          = $media ;
+			broadcastDate  = $broadcastDate ;
+			downloadDate   = '-- IGNORED --' ;
+			videoName      = '-- IGNORED --' ;
+			videoPath      = '-- IGNORED --' ;
+			videoValidated = '0' ;
+		}
+	} else {
+		#ダウンロードリストに行追加
+		Write-Verbose 'ダウンロード済みリストに行を追加します。'
+		$newVideo = [pscustomobject]@{ 
+			videoID        = $videoID ;
+			videoPage      = $videoPage ;
+			genre          = $genre ;
+			title          = $title ;
+			subtitle       = $subtitle ;
+			media          = $media ;
+			broadcastDate  = $broadcastDate ;
+			downloadDate   = $(getTimeStamp)
+			videoName      = $videoName ;
+			videoPath      = $videoPath ;
+			videoValidated = '0' ;
+		}
+	}
 
 	#ダウンロードリストCSV読み込み
 	Write-Debug 'ダウンロード済みリストを読み込みます。'
 	$videoLists = Import-Csv $listFile -Encoding UTF8
 
-	#ダウンロードリストに行追加
-	Write-Verbose 'ダウンロード済みリストに行を追加します。'
-	$newVideo = [pscustomobject]@{ 
-		videoID       = $videoID ;
-		videoPage     = $videoPage ;
-		genre         = '' ;
-		title         = $title ;
-		subtitle      = $subtitle ;
-		media         = $media ;
-		broadcastDate = $broadcastDate ;
-		downloadDate  = $(getTimeStamp)
-		videoName     = $videoName ;
-		videoPath     = $videoPath ;
-		videoValidated = '0' ;
-	}
-
+	#ダウンロードリストCSV書き出し
 	$newList = @()
 	$newList += $videoLists
 	$newList += $newVideo
 	$newList | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
 
-	#ダウンロードしないビデオを追加判定
-	if ($ignore -eq $false) {
-		if ([string]::IsNullOrEmpty($videoName)) {
-			Write-Host 'ビデオタイトルを特定できませんでした。スキップします。' -ForegroundColor DarkGray
-			$ignore = $true
-		} 
+
+	#無視リストに入っていなければffmpeg起動
+	if ($true -eq $ignore ) { 
+		continue		#無視リストに入っているビデオは飛ばして次のファイルへ
+	} else {
+
+		#保存作ディレクトリがなければ作成
+		if (-Not (Test-Path $savePath -PathType Container)) {
+			$null = New-Item -ItemType directory -Path $savePath
+		}
+
+		#ffmpeg起動
+		startFfmpeg $videoName $videoPath $videoURL $genre $title $subtitle $description $media $videoPage $ffmpegPath
+
+		#ffmpegプロセスの確認と、ffmpegのプロセス数が多い場合の待機
+		getFfmpegProcessList $parallelDownloadNum
+
 	}
 
-	#スキップ対象はダウンロードしないで次のビデオへ
-	if ($ignore -eq $true) { continue }								#次のビデオへ
-
-	#保存作ディレクトリがなければ作成
-	if (-Not (Test-Path $savePath -PathType Container)) {
-		$null = New-Item -ItemType directory -Path $savePath
-	}
-	#ffmpeg起動
-	startFfmpeg $videoName $videoPath $videoURL '' $title $subtitle $description $media $videoPage $ffmpegPath
-
-	#ffmpegプロセスの確認と、ffmpegのプロセス数が多い場合の待機
-	getFfmpegProcessList $parallelDownloadNum
 
 
 	Write-Output '終わりました。'
