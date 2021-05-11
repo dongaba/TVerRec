@@ -48,46 +48,51 @@ $videoLists = Import-Csv $listFile -Encoding UTF8 | `
 		Where-Object { $_.videoPath -ne '-- IGNORED --' } | `
 		Select-Object 'videoPath'
 
-foreach ($videoList in $videoLists.videoPath) {
-	$videoPath = $videoList
-	Write-Host $videoPath
+if ($null -eq $videoLists) {
+	Write-Host 'すべてのビデオをチェック済みです'
+} else {
+	Write-Host '以下のビデオをチェックします'
+	Write-Host $videoLists
 
-	#ffmpegで整合性チェック
-	$pinfo = New-Object System.Diagnostics.ProcessStartInfo
-	$pinfo.RedirectStandardError = $true
-	$pinfo.UseShellExecute = $false
-	$pinfo.WindowStyle = 'Hidden'
-	$pinfo.FileName = $ffmpegPath
-	$pinfo.Arguments = ' -v error -i "' + $videoPath + '" -f null - '
-	$p = New-Object System.Diagnostics.Process
-	$p.StartInfo = $pinfo
-	$p.Start() | Out-Null
-	$p.WaitForExit()
-	$stderr = $p.StandardError.ReadToEnd()
+	foreach ($videoList in $videoLists.videoPath) {
+		$videoPath = $videoList
+		Write-Host $videoPath
 
-	if ( $p.ExitCode -ne 0 ) {
-		#終了コードが"0"以外は録画リストとファイルを削除
-		Write-Host "stderr: $stderr"
-		Write-Host 'exit code: ' $p.ExitCode
-		try {
-			(Select-String -Pattern $videoPath -Path $listFile -Encoding utf8 -SimpleMatch -NotMatch).Line `
-			| Out-File $listFile -Encoding utf8
-			Remove-Item $videoPath
-		} catch {
-			Write-Host "ファイル削除できませんでした。: $videoPath"
+		#ffmpegで整合性チェック
+		$pinfo = New-Object System.Diagnostics.ProcessStartInfo
+		$pinfo.RedirectStandardError = $true
+		$pinfo.UseShellExecute = $false
+		$pinfo.WindowStyle = 'Hidden'
+		$pinfo.FileName = $ffmpegPath
+		$pinfo.Arguments = ' -v error -i "' + $videoPath + '" -f null - '
+		$p = New-Object System.Diagnostics.Process
+		$p.StartInfo = $pinfo
+		$p.Start() | Out-Null
+		$p.WaitForExit()
+		$stderr = $p.StandardError.ReadToEnd()
+
+		if ( $p.ExitCode -ne 0 ) {
+			#終了コードが"0"以外は録画リストとファイルを削除
+			Write-Host "stderr: $stderr"
+			Write-Host 'exit code: ' $p.ExitCode
+			try {
+				(Select-String -Pattern $videoPath -Path $listFile -Encoding utf8 -SimpleMatch -NotMatch).Line `
+				| Out-File $listFile -Encoding utf8
+				Remove-Item $videoPath
+			} catch {
+				Write-Host "ファイル削除できませんでした。: $videoPath"
+			}
+		} else {
+			#終了コードが"0"のときは録画リストにチェック済みフラグを立てる
+			try {
+				$newList = (Import-Csv $listFile -Encoding UTF8 )
+				#該当のビデオのチェックステータスを"1"に
+				$($newList | Where-Object { $_.videoPath -eq $videoPath }).videoValidated = '1'
+				$newList | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
+			} catch {
+				Write-Host "録画リストを更新できませんでした。: $videoPath"
+			}
 		}
-	} else {
-		#終了コードが"0"のときは録画リストにチェック済みフラグを立てる
-		try {
-			$newList = (Import-Csv $listFile -Encoding UTF8 )
-			#該当のビデオのチェックステータスを"1"に
-			$($newList | Where-Object { $_.videoPath -eq $videoPath }).videoValidated = '1'
-			$newList | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
-		} catch {
-			Write-Host "録画リストを更新できませんでした。: $videoPath"
-		}
+
 	}
-
 }
-
-

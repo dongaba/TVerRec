@@ -39,4 +39,4 @@ powershell "Get-WmiObject win32_process -filter processid=$pid | ForEach-Object{
 	goto Loop
 
 :End
-
+	pause

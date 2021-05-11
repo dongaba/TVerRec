@@ -27,5 +27,5 @@ cd %~dp0
 title TVerRec Video File Checker
 powershell -NoProfile -ExecutionPolicy Unrestricted .\src\check_video.ps1
 
-
+pause
 
