@@ -108,7 +108,7 @@ function conv2Narrow {
 	Param([string]$Text)		#変換元テキストを引数に指定
 
 	# 正規表現のパターン
-	$regexAlphaNumeric = '[０-９Ａ-Ｚａ-ｚ＃＄％＆－／［］｛｝（ ）＜＞　]+'
+	$regexAlphaNumeric = '[０-９Ａ-Ｚａ-ｚ＃＄％＆－＿／［］｛｝（）＜＞　]+'
 
 	# MatchEvaluatorデリゲート
 	$matchEvaluator = { param([Match]$match) [strings]::StrConv($match, [VbStrConv]::Narrow, 0x0411) }

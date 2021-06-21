@@ -45,6 +45,8 @@ PowerShellはMacOS、Linuxにも移植されてるのでメインの機能は動
 ## フォルダ構成
 ```
 tverrec/
+├─ check_video.bat ......................... ダウンロード済みビデオの整合性チェックBAT
+├─ delete_video.bat ........................ ダウンロード対象外ビデオ削除BAT
 ├─ LICENSE ................................. ライセンス
 ├─ README.md ............................... このファイル
 ├─ start_tverrec.bat ....................... 一括ダウンロード起動BAT
@@ -58,9 +60,7 @@ tverrec/
 │  └─ user_setting.ini ..................... ユーザ設定ファイル
 │
 ├─ crx/ .................................. Chrome拡張機能
-│  ├─ tverAdKiller.crx ..................... TVerアンケート回避Chrome拡張
 │  ├─ tverCopy.crx ......................... TVerビデオURL解析Chrome拡張
-│  ├─ tverAdKiller/ ........................ Chrome拡張のソースフォルダ
 │  └─ tverCopy/ ............................ Chrome拡張のソースフォルダ
 │
 ├─ db/ ................................... データベース
@@ -70,7 +70,7 @@ tverrec/
 ├─ lib/ .................................. SeleniumのDLL格納フォルダ
 │
 └─ src/ .................................. 各種ソース
-   ├─ check_video.ps1 ...................... ビデオの整合性チェックツール
+   ├─ check_video.ps1 ...................... ダウンロード済みビデオの整合性チェックツール
    ├─ common_functions.ps1 ................. 共通関数定義
    ├─ delete_ignored.ps1 ................... ダウンロード対象外ビデオ削除ツール
    ├─ tverrec_bulk.ps1 ..................... 一括ダウンロードツール本体
@@ -154,6 +154,8 @@ Individual settings need to be changed in a text editor.
 ## Folder Structure
 ```
 tverrec/
+├─ check_video.bat ......................... bat file to check video consistensy
+├─ delete_video.bat ........................ bat file to delete ignored videos
 ├─ LICENSE ................................. license
 ├─ README.md ............................... this file
 ├─ start_tverrec.bat ....................... bat file to start bulk download
@@ -167,9 +169,7 @@ tverrec/
 │  └─ user_setting.ini ..................... user settings
 │
 ├─ crx/ .................................. Chrome Extension
-│  ├─ tverAdKiller.crx ..................... TVer questionare disabler
 │  ├─ tverCopy.crx ......................... TVer video analyser
-│  ├─ tverAdKiller/ ........................ forder for source of Chrome extension
 │  └─ tverCopy/ ............................ forder for source of Chrome extension
 │
 ├─ db/ ................................... database

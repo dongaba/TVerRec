@@ -52,11 +52,18 @@ if ($null -eq $videoLists) {
 	Write-Host 'すべてのビデオをチェック済みです'
 } else {
 	Write-Host '以下のビデオをチェックします'
-	Write-Host $videoLists
+    $i=0
+    foreach ($videoList in $videoLists.videoPath) {
+		$videoPath = $videoList
+        $i=$i+1
+		Write-Host "$i 本目: $videoPath"
+    }
 
+    $j=0
 	foreach ($videoList in $videoLists.videoPath) {
 		$videoPath = $videoList
-		Write-Host $videoPath
+$j=$j+1
+		Write-Host "$j/$i 本目をチェック中: $videoPath"
 
 		#ffmpegで整合性チェック
 		$pinfo = New-Object System.Diagnostics.ProcessStartInfo

@@ -200,7 +200,7 @@ foreach ($genre in $genres) {
 
 		if ($ignore -eq $true) {
 			#ダウンロードリストに行追加
-			Write-Host '無視リストに入っているビデオです。スキップします' -ForegroundColor DarkGray
+			Write-Host '無視リストに入っているビデオです。スキップします。' -ForegroundColor DarkGray
 			Write-Verbose 'ダウンロード済みリストに行を追加します。'
 			$newVideo = [pscustomobject]@{ 
 				videoID        = $videoID ;

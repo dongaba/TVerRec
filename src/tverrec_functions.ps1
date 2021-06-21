@@ -59,6 +59,7 @@ function getVideoTitle ([ref]$chromeDriver) {
 	} else {
 		$title = ''
 	}
+	if ($title.length -gt 70) { $title = $title.Substring(0, 70) + '……' }
 	return (conv2Narrow $title)
 }
 
@@ -71,7 +72,7 @@ function getVideoSubtitle ([ref]$chromeDriver) {
 	} else {
 		$subtitle = ''
 	}
-	if ($subtitle.length -gt 75) { $subtitle = $subtitle.Substring(0, 75) + '……' }
+	if ($subtitle.length -gt 70) { $subtitle = $subtitle.Substring(0, 70) + '……' }
 	return (conv2Narrow $subtitle)
 }
 
