@@ -158,8 +158,9 @@ foreach ($genre in $genres) {
 		try {
 			$chromeDriver = New-Object OpenQA.Selenium.Chrome.ChromeDriver($chromeDriverService, $chromeOptions)		#★エラー頻発個所
 		} catch {
-			Write-Error 'Chromeの起動に失敗しました。終了します'
-			exit
+			Write-Error 'Chromeの起動に失敗しました。スキップします。'
+			stopChrome ([ref]$chromeDriver)									#Chrome終了
+			continue								#次のビデオへ
 		}
 		$chromeDriver.manage().Window.Minimize()									#ChromeのWindow最小化
 		openVideo ([ref]$chromeDriver) $videoPage									#URLをChromeにわたす
@@ -194,14 +195,14 @@ foreach ($genre in $genres) {
 		foreach ($ignoreTitle in $ignoreTitles) {
 			if ($(conv2Narrow $title) -eq $(conv2Narrow $ignoreTitle)) {
 				$ignore = $true
+				Write-Host '無視リストに入っているビデオです。スキップします。' -ForegroundColor DarkGray
 				break
 			} 
 		}
 
 		if ($ignore -eq $true) {
 			#ダウンロードリストに行追加
-			Write-Host '無視リストに入っているビデオです。スキップします。' -ForegroundColor DarkGray
-			Write-Verbose 'ダウンロード済みリストに行を追加します。'
+			Write-Verbose 'スキップしたファイルをダウンロードリストに追加します。'
 			$newVideo = [pscustomobject]@{ 
 				videoID        = $videoID ;
 				videoPage      = $videoPage ;
@@ -217,7 +218,7 @@ foreach ($genre in $genres) {
 			}
 		} else {
 			#ダウンロードリストに行追加
-			Write-Verbose 'ダウンロード済みリストに行を追加します。'
+			Write-Verbose 'ダウンロードするファイルをダウンロードリストに追加します。'
 			$newVideo = [pscustomobject]@{ 
 				videoID        = $videoID ;
 				videoPage      = $videoPage ;
@@ -234,7 +235,7 @@ foreach ($genre in $genres) {
 		}
 
 		#ダウンロードリストCSV読み込み
-		Write-Debug 'ダウンロード済みリストを読み込みます。'
+		Write-Debug 'ダウンロードリストを読み込みます。'
 		$videoLists = Import-Csv $listFile -Encoding UTF8
 
 		#ダウンロードリストCSV書き出し
