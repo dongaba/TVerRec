@@ -44,7 +44,6 @@ Get-Content $iniFile | Where-Object { $_ -notmatch '^\s*$' } | `
 #ダウンロード対象外ビデオ番組リストの読み込み
 $ignoreTitles = (Get-Content $ignoreFile -Encoding UTF8 | `
 			Where-Object { !($_ -match '^\s*$') } | `
-			Where-Object { !($_ -match '^#.*$') } | `
 			Where-Object { !($_ -match '^;.*$') } ) `
 	-as [string[]]
 
