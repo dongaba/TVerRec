@@ -67,15 +67,15 @@ function startFfmpeg ($videoName, $videoPath , $videoURL, $genre, $title, $subti
 	$ffmpegArgument = ' -y -i ' + $videoURL `
 		+ ' -vcodec copy -acodec copy' `
 		+ ' -movflags faststart ' `
-		+ ' -metadata genre="' + $genre + '"' `
-		+ ' -metadata title="' + $title + '"' `
-		+ ' -metadata show="' + $title + '"' `
-		+ ' -metadata subtitle="' + $subtitle + '"' `
-		+ ' -metadata description="' + $description + '"' `
-		+ ' -metadata copyright="' + $media + '"' `
-		+ ' -metadata network="' + $media + '"' `
-		+ ' -metadata producer="' + $media + '"' `
-		+ ' -metadata URL="' + $videoPage + '"' `
+		+ ' -metadata genre="' + $genre.Replace('"', '”') + '"' `
+		+ ' -metadata title="' + $title.Replace('"', '”') + '"' `
+		+ ' -metadata show="' + $title.Replace('"', '”') + '"' `
+		+ ' -metadata subtitle="' + $subtitle.Replace('"', '”') + '"' `
+		+ ' -metadata description="' + $description.Replace('"', '”') + '"' `
+		+ ' -metadata copyright="' + $media.Replace('"', '”') + '"' `
+		+ ' -metadata network="' + $media.Replace('"', '”') + '"' `
+		+ ' -metadata producer="' + $media.Replace('"', '”') + '"' `
+		+ ' -metadata URL="' + $videoPage.Replace('"', '”') + '"' `
 		+ ' -metadata year="' + $(Get-Date -UFormat '%Y') + '"' `
 		+ ' -metadata creation_time="' + $(getTimeStamp) + '"'
 	$ffmpegArgument = $ffmpegArgument + ' "' + $videoPath + '"'

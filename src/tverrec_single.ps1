@@ -186,7 +186,7 @@ while ($true) {
 		$newVideo = [pscustomobject]@{ 
 			videoID        = $videoID ;
 			videoPage      = $videoPage ;
-			genre          = $genre ;
+			genre          = '' ;
 			title          = $title ;
 			subtitle       = $subtitle ;
 			media          = $media ;
@@ -220,7 +220,7 @@ while ($true) {
 		}
 
 		#ffmpeg起動
-		startFfmpeg $videoName $videoPath $videoURL $genre $title $subtitle $description $media $videoPage $ffmpegPath
+		startFfmpeg $videoName $videoPath $videoURL '' $title $subtitle $description $media $videoPage $ffmpegPath
 
 		#ffmpegプロセスの確認と、ffmpegのプロセス数が多い場合の待機
 		getFfmpegProcessList $parallelDownloadNum
