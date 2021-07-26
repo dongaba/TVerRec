@@ -49,20 +49,24 @@ $videoLists = Import-Csv $listFile -Encoding UTF8 | `
 		Select-Object 'videoPath'
 
 if ($null -eq $videoLists) {
+	Write-Host '----------------------------------------------------------------------'
 	Write-Host 'すべてのビデオをチェック済みです'
+	Write-Host '----------------------------------------------------------------------'
 } else {
+	Write-Host '----------------------------------------------------------------------'
 	Write-Host '以下のビデオをチェックします'
-    $i=0
-    foreach ($videoList in $videoLists.videoPath) {
-		$videoPath = $videoList
-        $i=$i+1
-		Write-Host "$i 本目: $videoPath"
-    }
-
-    $j=0
+	Write-Host '----------------------------------------------------------------------'
+	$i = 0
 	foreach ($videoList in $videoLists.videoPath) {
 		$videoPath = $videoList
-$j=$j+1
+		$i = $i + 1
+		Write-Host "$i 本目: $videoPath"
+	}
+
+	$j = 0
+	foreach ($videoList in $videoLists.videoPath) {
+		$videoPath = $videoList
+		$j = $j + 1
 		Write-Host "$j/$i 本目をチェック中: $videoPath"
 
 		#ffmpegで整合性チェック
