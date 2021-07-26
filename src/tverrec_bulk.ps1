@@ -109,6 +109,7 @@ foreach ($genre in $genres) {
 	$genrePage = Invoke-WebRequest $genreLink
 	$videoLinks = $genrePage.Links | Where-Object href -Like '*corner*'  | Select-Object href
 	$videoLinks += $genrePage.Links | Where-Object href -Like '*feature*'  | Select-Object href
+	$videoLinks += $genrePage.Links | Where-Object href -Like '*video*'  | Select-Object href
 	$videoLinks += $genrePage.Links | Where-Object href -Like '*lp*'  | Select-Object href
 
 	saveGenrePage						#デバッグ用ジャンルページの保存
