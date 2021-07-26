@@ -56,6 +56,9 @@ function getVideoTitle ([ref]$chromeDriver) {
 	if ( $chromeDriver.value.PageSource -match 'id="program_title" type="hidden" value="(.+?)">') {
 		$title = $Matches[1].Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '')
 		$title = $title.Replace('｜民放公式テレビポータル「TVer（ティーバー）」 - 無料でビデオ見放題', '').trim()
+	} elseif ($chromeDriver.value.PageSource -match '<h2>(.+?)</h2>') {
+		$title = $Matches[1].Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '')
+		$title = $title.Replace('｜民放公式テレビポータル「TVer（ティーバー）」 - 無料でビデオ見放題', '').trim()
 	} else {
 		$title = ''
 	}
@@ -68,6 +71,8 @@ function getVideoTitle ([ref]$chromeDriver) {
 #----------------------------------------------------------------------
 function getVideoSubtitle ([ref]$chromeDriver) {
 	if ( $chromeDriver.value.PageSource -match 'id="program_subtitle" type="hidden" value="(.+?)">') {
+		$subtitle = $Matches[1].Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '').trim()
+	} elseif ( $chromeDriver.value.PageSource -match '<p class="video-subtitle">(.+?)</p>') {
 		$subtitle = $Matches[1].Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '').trim()
 	} else {
 		$subtitle = ''
@@ -108,8 +113,12 @@ function getVideoBroadcastDate ([ref]$chromeDriver) {
 #説明取得
 #----------------------------------------------------------------------
 function getVideoDescription ([ref]$chromeDriver) {
-	$description = $chromeDriver.value.FindElementByClassName('description').Text
-	$description = $description.Replace('&amp;', '&').trim()
+	try {
+		$description = $chromeDriver.value.FindElementByClassName('description').Text
+		$description = $description.Replace('&amp;', '&').trim()
+	} catch {
+		$description = ''
+	}
 	return (conv2Narrow $description)
 }
 
