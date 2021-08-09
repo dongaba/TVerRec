@@ -14,10 +14,6 @@ debug/*.html
 #実行ファイル
 *.exe
 
-#自分だけのカスタマイズ
-move_video.bat
-move_video.ps1
-
 .vscode/launch.json
 .DS_Store
 *.lnk

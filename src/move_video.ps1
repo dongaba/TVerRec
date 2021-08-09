@@ -1,7 +1,7 @@
 ﻿###################################################################################
 #  tverrec : TVerビデオダウンローダ
 #
-#		無視対象ビデオ削除処理スクリプト
+#		動画移動処理スクリプト
 #
 #	Copyright (c) 2021 dongaba
 #
@@ -41,20 +41,31 @@ Get-Content $iniFile | Where-Object { $_ -notmatch '^\s*$' } | `
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
-#ダウンロード対象外ビデオ番組リストの読み込み
-$ignoreTitles = (Get-Content $ignoreFile -Encoding UTF8 | `
-			Where-Object { !($_ -match '^\s*$') } | `
-			Where-Object { !($_ -match '^;.*$') } ) `
-	-as [string[]]
 
-#無視リストに入っている番組の場合はスキップフラグを立ててダウンロードリストに書き込み処理へ
-Write-Host '----------------------------------------------------------------------'
-Write-Host '削除対象のビデオフォルダを削除します'
-Write-Host '----------------------------------------------------------------------'
-foreach ($ignoreTitle in $ignoreTitles) {
-	$delPath = Join-Path $downloadBasePath $ignoreTitle
-	Write-Host $delPath
-	Remove-Item -Path $delPath -Force -Recurse -ErrorAction SilentlyContinue
+#移動先フォルダのサブフォルダの取得
+foreach ($moveToParentName in $moveToParentNameList) {
+	$moveToParentPath = $(Join-Path $saveBasePath $moveToParentName)
+	Write-Host '----------------------------------------------------------------------'
+	Write-Host "$moveToParentPath を処理します"
+	Write-Host '----------------------------------------------------------------------'
+
+	#移動先フォルダを起点として、配下のフォルダを取得
+	$moveToChildPathList = Get-ChildItem $moveToParentPath | Where-Object { $_.PSisContainer }
+
+	foreach ($moveToChildPath in $moveToChildPathList) {
+		$targetFolderName = Split-Path -Leaf $moveToChildPath
+
+		#同名フォルダが存在する場合は配下のファイルを移動
+		$moveFromPath = $(Join-Path $downloadBasePath $targetFolderName)
+		if ( Test-Path $moveFromPath) {
+			$moveFromPath = $moveFromPath + '\*'
+			$moveToPath = $moveToParentPath + '\' + $targetFolderName
+			Write-Host "$moveFromPath を $moveToPath に移動します"
+			Move-Item $moveFromPath -Destination $moveToPath -Force
+		}
+
+	}
+
 }
 
 #空フォルダ と 隠しファイルしか入っていないフォルダを一気に削除
@@ -67,3 +78,4 @@ foreach ($subdir in $all_subdirs) {
 		Remove-Item -Path $subdir.FullName -Recurse -Force
 	}
 }
+

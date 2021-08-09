@@ -45,12 +45,6 @@ PowerShellはMacOS、Linuxにも移植されてるのでメインの機能は動
 ## フォルダ構成
 ```
 tverrec/
-├─ check_video.bat ......................... ダウンロード済みビデオの整合性チェックBAT
-├─ delete_video.bat ........................ ダウンロード対象外ビデオ削除BAT
-├─ LICENSE ................................. ライセンス
-├─ README.md ............................... このファイル
-├─ start_tverrec.bat ....................... 一括ダウンロード起動BAT
-├─ stop_tverrec.bat ........................ 一括ダウンロード終了BAT
 ├─ bin/ .................................... 実行ファイル格納用フォルダ
 │
 ├─ config/ ............................... 設定フォルダ
@@ -67,18 +61,26 @@ tverrec/
 │  └─ tver.csv ............................. ダウンロードリスト
 │
 ├─ debug/ ................................ デバッグ用
+│
 ├─ lib/ .................................. SeleniumのDLL格納フォルダ
 │
-└─ src/ .................................. 各種ソース
-   ├─ check_video.ps1 ...................... ダウンロード済みビデオの整合性チェックツール
-   ├─ common_functions.ps1 ................. 共通関数定義
-   ├─ delete_ignored.ps1 ................... ダウンロード対象外ビデオ削除ツール
-   ├─ tverrec_bulk.ps1 ..................... 一括ダウンロードツール本体
-   ├─ tverrec_functions.ps1 ................ TVer用共通関数定義
-   ├─ tverrec_single.ps1 ................... 単体ダウンロードツール
-   ├─ update_chromedriver.ps1 .............. chromedriver自動更新ツール
-   ├─ update_ffmpeg.ps1 .................... ffmpeg自動更新ツール
-   └─ update_youtubedl.ps1 ................. youtube-dl自動更新ツール
+├─ src/ .................................. 各種ソース
+│  ├─ common_functions.ps1 ................. 共通関数定義
+│  ├─ delete_ignored.ps1 ................... ダウンロード対象外ビデオ削除ツール
+│  ├─ tverrec_bulk.ps1 ..................... 一括ダウンロードツール本体
+│  ├─ tverrec_functions.ps1 ................ TVer用共通関数定義
+│  ├─ tverrec_single.ps1 ................... 単体ダウンロードツール
+│  ├─ update_chromedriver.ps1 .............. chromedriver自動更新ツール
+│  ├─ update_ffmpeg.ps1 .................... ffmpeg自動更新ツール
+│  ├─ update_youtubedl.ps1 ................. youtube-dl自動更新ツール
+│  └─ validate_video.ps1 ................... ダウンロード済みビデオの整合性チェックツール
+│
+├─ delete_video.bat ........................ ダウンロード対象外ビデオ削除BAT
+├─ LICENSE ................................. ライセンス
+├─ README.md ............................... このファイル
+├─ start_tverrec.bat ....................... 一括ダウンロード起動BAT
+├─ stop_tverrec.bat ........................ 一括ダウンロード終了BAT
+└─ validate_video.bat ...................... ダウンロード済みビデオの整合性チェックBAT
 ```
 
 ## アンインストール方法
@@ -154,12 +156,6 @@ Individual settings need to be changed in a text editor.
 ## Folder Structure
 ```
 tverrec/
-├─ check_video.bat ......................... bat file to check video consistensy
-├─ delete_video.bat ........................ bat file to delete ignored videos
-├─ LICENSE ................................. license
-├─ README.md ............................... this file
-├─ start_tverrec.bat ....................... bat file to start bulk download
-├─ stop_tverrec.bat ........................ bat file to stop bulk download
 ├─ bin/ .................................... folder for .exe
 │
 ├─ config/ ............................... configuration folder
@@ -176,18 +172,26 @@ tverrec/
 │  └─ tver.csv ............................. download list
 │
 ├─ debug/ ................................ for debugging
+│
 ├─ lib/ .................................. for Selenium DLL
 │
-└─ src/ .................................. source files
-   ├─ check_video.ps1 ...................... check video consistensy
-   ├─ common_functions.ps1 ................. common functions
-   ├─ delete_ignored.ps1 ................... delete ignored videos
-   ├─ tverrec_bulk.ps1 ..................... bulk downloader
-   ├─ tverrec_functions.ps1 ................ TVer specific functions
-   ├─ tverrec_single.ps1 ................... donwloader for a single video
-   ├─ update_chromedriver.ps1 .............. update chromedriver
-   ├─ update_ffmpeg.ps1 .................... update ffmpeg
-   └─ update_youtubedl.ps1 ................. update youtube-dl
+├─ src/ .................................. source files
+│  ├─ check_video.ps1 ...................... check video consistensy
+│  ├─ common_functions.ps1 ................. common functions
+│  ├─ delete_ignored.ps1 ................... delete ignored videos
+│  ├─ tverrec_bulk.ps1 ..................... bulk downloader
+│  ├─ tverrec_functions.ps1 ................ TVer specific functions
+│  ├─ tverrec_single.ps1 ................... donwloader for a single video
+│  ├─ update_chromedriver.ps1 .............. update chromedriver
+│  ├─ update_ffmpeg.ps1 .................... update ffmpeg
+│  └─ update_youtubedl.ps1 ................. update youtube-dl
+│
+├─ delete_video.bat ........................ bat file to delete ignored videos
+├─ LICENSE ................................. license
+├─ README.md ............................... this file
+├─ start_tverrec.bat ....................... bat file to start bulk download
+├─ stop_tverrec.bat ........................ bat file to stop bulk download
+└─ validate_video.bat ...................... bat file to check video consistensy
 ```
 
 ## Uninstallation

@@ -26,17 +26,57 @@ cd %~dp0
 
 for /f %%i in ('hostname') do set HostName=%%i
 set PIDFile=%HostName%-pid.txt
-set sleepTime=600
+set sleepTime=60
 
 powershell "Get-WmiObject win32_process -filter processid=$pid | ForEach-Object{$_.parentprocessid;}" > %PIDFile%
 
 :Loop
 
-	title TVerRec Bulk Downloader
-	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\tverrec_bulk.ps1
+	goto Downloader
+	echo %sleepTime%秒待機します
+	timeout /T %sleepTime% /nobreak > nul
 
+	goto ProcessChecker
+	goto Validator
+rem	goto Mover
+rem	goto Deleter
+
+	echo %sleepTime%秒待機します
 	timeout /T %sleepTime% /nobreak > nul
 	goto Loop
 
 :End
+	del %PIDFile%
 	pause
+
+
+:Downloader
+	title TVerRec Bulk Downloader
+	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\tverrec_bulk.ps1
+
+
+:ProcessChecker
+rem chromedriverのゾンビが残っていたら終了
+taskkill /F /T /IM chromedriver.exe
+rem ffmpegプロセスチェック
+tasklist | find "ffmpeg.exe" > NUL
+if %ERRORLEVEL% == 0 (
+	echo ダウンロード中です。
+	tasklist /fi "Imagename eq ffmpeg.exe"
+	echo %sleepTime%秒待機します
+	timeout /T %sleepTime% /nobreak > nul
+	goto ProcessChecker
+)
+
+:Validator
+	title TVerRec Video File Validator
+	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\validate_video.ps1
+	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\validate_video.ps1
+
+:Mover
+	title TVerRec Video File Mover
+	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\move_video.ps1
+
+:Deleter
+	title TVerRec Video File Deleter
+	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\delete_ignored.ps1

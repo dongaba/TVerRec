@@ -53,8 +53,8 @@ function getFfmpegProcessList ($parallelDownloadNum) {
 
 	Write-Verbose "現在のダウンロードプロセス一覧  ( $ffmpegCount 個 )"
 
-	while ($ffmpegCount -gt $parallelDownloadNum) {
-		Write-Host "ダウンロードが $parallelDownloadNum 多重を超えたので一時待機します。 ( $(getTimeStamp) )" -ForegroundColor DarkGray
+	while ($ffmpegCount -ge $parallelDownloadNum) {
+		Write-Host "ダウンロードが $parallelDownloadNum 多重に達したので一時待機します。 ( $(getTimeStamp) )" -ForegroundColor DarkGray
 		Start-Sleep -Seconds 60			#1分待機
 		$ffmpegCount = (Get-Process -ErrorAction Ignore -Name ffmpeg).Count
 	}

@@ -2,7 +2,7 @@
 rem ###################################################################################
 rem #  tverrec : TVerビデオダウンローダ
 rem #
-rem #		動画チェック処理スクリプト
+rem #		動画移動処理スクリプト
 rem #
 rem #	Copyright (c) 2021 dongaba
 rem #
@@ -24,8 +24,8 @@ rem ############################################################################
 setlocal enabledelayedexpansion
 cd %~dp0
 
-title TVerRec Video File Checker
-powershell -NoProfile -ExecutionPolicy Unrestricted .\src\check_video.ps1
+title TVerRec Video File Mover
+powershell -NoProfile -ExecutionPolicy Unrestricted .\src\move_video.ps1
 
 pause
 

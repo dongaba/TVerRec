@@ -2,7 +2,7 @@
 rem ###################################################################################
 rem #  tverrec : TVerビデオダウンローダ
 rem #
-rem #		無視対象ビデオ削除処理スクリプトト
+rem #		動画チェック処理スクリプト
 rem #
 rem #	Copyright (c) 2021 dongaba
 rem #
@@ -24,8 +24,8 @@ rem ############################################################################
 setlocal enabledelayedexpansion
 cd %~dp0
 
-title TVerRec Video File Deleter
-powershell -NoProfile -ExecutionPolicy Unrestricted .\src\delete_ignored.ps1
+title TVerRec Video File Checker
+powershell -NoProfile -ExecutionPolicy Unrestricted .\src\validate_video.ps1
 
 pause
 

@@ -25,7 +25,7 @@
 function checkRequiredFile { 
 
 	if (Test-Path $chromeUserDataPath -PathType Container) {} else { Write-Error 'ChromeのUserDataフォルダが存在しません。終了します。' ; exit }
-	if (Test-Path $saveBasePath -PathType Container) {} else { Write-Error 'ビデオ保存先フォルダが存在しません。終了します。' ; exit }
+	if (Test-Path $downloadBasePath -PathType Container) {} else { Write-Error 'ビデオ保存先フォルダが存在しません。終了します。' ; exit }
 	if (Test-Path $ffmpegPath -PathType Leaf) {} else { Write-Error 'ffmpeg.exeが存在しません。終了します。' ; exit }
 	if (Test-Path $crxPath -PathType Leaf) {} else { Write-Error 'tver.crxが存在しません。終了します。' ; exit }
 	if (Test-Path $webDriverPath -PathType Leaf) {} else { Write-Error 'WebDriver.dllが存在しません。終了します。' ; exit }

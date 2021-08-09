@@ -139,7 +139,7 @@ while ($true) {
 
 	stopChrome ([ref]$chromeDriver)									#Chrome終了
 	$videoName = setVideoName $title $subtitle $broadcastDate		#保存ファイル名を設定
-	$savePath = $(Join-Path $saveBasePath (removeInvalidFileNameChars $title))
+	$savePath = $(Join-Path $downloadBasePath (removeInvalidFileNameChars $title))
 	$videoPath = $(Join-Path $savePath $videoName)
 
 	#ビデオ情報のコンソール出力
