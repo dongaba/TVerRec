@@ -297,6 +297,7 @@ function playVideo([ref]$chromeDriver) {
 		$regexURL = '([a-zA-Z]{3,})://([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*)*?'		#正規表現URLパターン
 		if ($videoURL -notmatch $regexURL) {
 		} else {
+			Write-Verbose 'ビデオURLを取得しました。'
 			break		 #ループを抜ける
 		}
 		Start-Sleep -Milliseconds 1000
@@ -315,14 +316,19 @@ function playVideo([ref]$chromeDriver) {
 #----------------------------------------------------------------------
 function stopChrome ([ref]$chromeDriver) {
 
+	Write-Verbose 'Chromeを閉じます。'
 	$chromeDriver.value.Close()
+	Write-Verbose 'Chromeを破棄します。'
 	$chromeDriver.value.Dispose()
+	Write-Verbose 'Chromeを終了します。'
 	$chromeDriver.value.Quit()
+	Write-Verbose 'Chromeを終了しました。'
 }
 #----------------------------------------------------------------------
 #保存ファイル名を設定
 #----------------------------------------------------------------------
 function setVideoName ($title, $subtitle, $broadcastDate) {
+	Write-Verbose 'ビデオファイル名を整形します。'
 	if ($subtitle -eq '') {
 		if ($broadcastDate -eq '') {
 			$videoName = $title + '.mp4'

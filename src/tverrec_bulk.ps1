@@ -243,6 +243,7 @@ foreach ($genre in $genres) {
 		$newList += $videoLists
 		$newList += $newVideo
 		$newList | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
+		Write-Debug 'ダウンロードリストを書き込みました。'
 
 
 		#無視リストに入っていなければffmpeg起動
