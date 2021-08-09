@@ -1,8 +1,8 @@
 @echo off
 rem ###################################################################################
-rem #  tverrec : TVerビデオダウンローダ
+rem #  tverrec : TVer?????????
 rem #
-rem #		無視対象ビデオ削除処理スクリプトト
+rem #		????????????????
 rem #
 rem #	Copyright (c) 2021 dongaba
 rem #
