@@ -109,7 +109,6 @@ foreach ($genre in $genres) {
 	$genrePage = Invoke-WebRequest $genreLink
 	$videoLinks = $genrePage.Links | Where-Object href -Like '*corner*'  | Select-Object href
 	$videoLinks += $genrePage.Links | Where-Object href -Like '*feature*'  | Select-Object href
-	$videoLinks += $genrePage.Links | Where-Object href -Like '*video*'  | Select-Object href
 	$videoLinks += $genrePage.Links | Where-Object href -Like '*lp*'  | Select-Object href
 
 	saveGenrePage						#デバッグ用ジャンルページの保存
@@ -182,14 +181,11 @@ foreach ($genre in $genres) {
 		writeVideoInfo $videoName $broadcastDate $media $description 
 		writeVideoDebugInfo $videoID $videoPage $genre $title $subtitle $videoPath $(getTimeStamp) $videoURL 
 
+		#ビデオタイトルが取得できなかった場合はスキップ次のビデオへ
 		if ([string]::IsNullOrEmpty($videoName)) {
 			Write-Host 'ビデオタイトルを特定できませんでした。スキップします。' -ForegroundColor DarkGray
 			continue			#次回再度ダウンロードをトライするためダウンロードリストに追加せずに次のビデオへ
 		}
-		if (Test-Path $videoPath) {
-			$ignore = $true
-			Write-Host 'すでにダウンロード済みのビデオです。スキップします。' -ForegroundColor DarkGray
-		} 
 
 		#無視リストに入っている番組の場合はスキップフラグを立ててダウンロードリストに書き込み処理へ
 		foreach ($ignoreTitle in $ignoreTitles) {
@@ -200,6 +196,13 @@ foreach ($genre in $genres) {
 			} 
 		}
 
+		#ダウンロード済みの場合はスキップフラグを立ててダウンロードリストに書き込み処理へ
+		if (Test-Path $videoPath) {
+			$ignore = $true
+			Write-Host 'すでにダウンロード済みのビデオです。スキップします。' -ForegroundColor DarkGray
+		} 
+
+		#スキップフラグが立っているかチェック
 		if ($ignore -eq $true) {
 			#ダウンロードリストに行追加
 			Write-Verbose 'スキップしたファイルをダウンロードリストに追加します。'
@@ -211,9 +214,9 @@ foreach ($genre in $genres) {
 				subtitle       = $subtitle ;
 				media          = $media ;
 				broadcastDate  = $broadcastDate ;
-				downloadDate   = '-- IGNORED --' ;
-				videoName      = '-- IGNORED --' ;
-				videoPath      = '-- IGNORED --' ;
+				downloadDate   = '-- SKIPPED --' ;
+				videoName      = '-- SKIPPED --' ;
+				videoPath      = '-- SKIPPED --' ;
 				videoValidated = '0' ;
 			}
 		} else {
