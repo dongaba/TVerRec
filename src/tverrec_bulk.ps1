@@ -134,6 +134,9 @@ foreach ($genre in $genres) {
 		Write-Host "[ $genre - $videoNum / $videoTotal ] をダウンロードします。 ( $(getTimeStamp) )"
 		Write-Host '----------------------------------------------------------------------'
 
+		#ffmpegプロセスの確認と、ffmpegのプロセス数が多い場合の待機
+		getFfmpegProcessList $parallelDownloadNum
+
 		$videoID = $videoLink.href
 		$videoPage = 'https://tver.jp' + $videoID
 
@@ -261,9 +264,6 @@ foreach ($genre in $genres) {
 
 			#ffmpeg起動
 			startFfmpeg $videoName $videoPath $videoURL $genre $title $subtitle $description $media $videoPage $ffmpegPath
-
-			#ffmpegプロセスの確認と、ffmpegのプロセス数が多い場合の待機
-			getFfmpegProcessList $parallelDownloadNum
 
 		}
 

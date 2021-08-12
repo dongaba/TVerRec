@@ -316,12 +316,8 @@ function playVideo([ref]$chromeDriver) {
 #----------------------------------------------------------------------
 function stopChrome ([ref]$chromeDriver) {
 
-	Write-Verbose 'Chromeを閉じます。'
-	$chromeDriver.value.Close()
-	Write-Verbose 'Chromeを破棄します。'
-	$chromeDriver.value.Dispose()
 	Write-Verbose 'Chromeを終了します。'
-	$chromeDriver.value.Quit()
+	$chromeDriver.value.Dispose()
 	Write-Verbose 'Chromeを終了しました。'
 }
 #----------------------------------------------------------------------

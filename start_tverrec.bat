@@ -1,8 +1,8 @@
 @echo off
 rem ###################################################################################
-rem #  tverrec : TVerƒrƒfƒIƒ_ƒEƒ“ƒ[ƒ_
+rem #  tverrec : TVerãƒ“ãƒ‡ã‚ªãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ€
 rem #
-rem #		ˆêŠ‡ƒ_ƒEƒ“ƒ[ƒhˆ—ŠJŽnƒXƒNƒŠƒvƒg
+rem #		ä¸€æ‹¬ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰å‡¦ç†é–‹å§‹ã‚¹ã‚¯ãƒªãƒ—ãƒˆ
 rem #
 rem #	Copyright (c) 2021 dongaba
 rem #
@@ -26,57 +26,42 @@ cd %~dp0
 
 for /f %%i in ('hostname') do set HostName=%%i
 set PIDFile=%HostName%-pid.txt
-set sleepTime=60
+set sleepTime=600
+title TVerRec
 
 powershell "Get-WmiObject win32_process -filter processid=$pid | ForEach-Object{$_.parentprocessid;}" > %PIDFile%
 
 :Loop
 
-	goto Downloader
-	echo %sleepTime%•b‘Ò‹@‚µ‚Ü‚·
+	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\tverrec_bulk.ps1
+	echo %sleepTime%ç§’å¾…æ©Ÿã—ã¾ã™...
 	timeout /T %sleepTime% /nobreak > nul
 
-	goto ProcessChecker
-	goto Validator
-rem	goto Mover
-rem	goto Deleter
+:ProcessChecker
+	rem chromedriverã®ã‚¾ãƒ³ãƒ“ãŒæ®‹ã£ã¦ã„ãŸã‚‰çµ‚äº†
+	taskkill /F /T /IM chromedriver.exe > NUL 2>&1
+	rem ffmpegãƒ—ãƒ­ã‚»ã‚¹ãƒã‚§ãƒƒã‚¯
+	tasklist | find "ffmpeg.exe" > NUL 2>&1
+	if %ERRORLEVEL% == 0 (
+		echo ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰ãŒé€²è¡Œä¸­ã§ã™...
+		tasklist /fi "Imagename eq ffmpeg.exe"
+		echo %sleepTime%ç§’å¾…æ©Ÿã—ã¾ã™...
+		timeout /T %sleepTime% /nobreak > nul
+		goto ProcessChecker
+	)
 
-	echo %sleepTime%•b‘Ò‹@‚µ‚Ü‚·
+	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\validate_video.ps1
+	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\validate_video.ps1
+
+	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\move_video.ps1
+
+	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\delete_ignored.ps1
+
+	echo %sleepTime%ç§’å¾…æ©Ÿã—ã¾ã™...
 	timeout /T %sleepTime% /nobreak > nul
+
 	goto Loop
 
 :End
 	del %PIDFile%
 	pause
-
-
-:Downloader
-	title TVerRec Bulk Downloader
-	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\tverrec_bulk.ps1
-
-
-:ProcessChecker
-rem chromedriver‚Ìƒ]ƒ“ƒr‚ªŽc‚Á‚Ä‚¢‚½‚çI—¹
-taskkill /F /T /IM chromedriver.exe
-rem ffmpegƒvƒƒZƒXƒ`ƒFƒbƒN
-tasklist | find "ffmpeg.exe" > NUL
-if %ERRORLEVEL% == 0 (
-	echo ƒ_ƒEƒ“ƒ[ƒh’†‚Å‚·B
-	tasklist /fi "Imagename eq ffmpeg.exe"
-	echo %sleepTime%•b‘Ò‹@‚µ‚Ü‚·
-	timeout /T %sleepTime% /nobreak > nul
-	goto ProcessChecker
-)
-
-:Validator
-	title TVerRec Video File Validator
-	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\validate_video.ps1
-	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\validate_video.ps1
-
-:Mover
-	title TVerRec Video File Mover
-	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\move_video.ps1
-
-:Deleter
-	title TVerRec Video File Deleter
-	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\delete_ignored.ps1
