@@ -24,8 +24,8 @@
 #----------------------------------------------------------------------
 function checkGeoIP () {
 
-	if ((Invoke-RestMethod -Uri 'http://ipinfo.io').Country -ne 'JP') {
-		Invoke-RestMethod -Uri ('http://ipinfo.io/' + (Invoke-WebRequest -Uri 'http://ifconfig.me/ip').Content)
+	if ((Invoke-RestMethod -Uri 'http://ip-api.com/json/').countryCode -ne 'JP') {
+		Invoke-RestMethod -Uri ('http://ip-api.com/json/' + (Invoke-WebRequest -Uri 'http://ifconfig.me/ip').Content)
 		Write-Host '日本のIPアドレスからしか接続できません。VPN接続してください。' -ForegroundColor Red
 		exit
 	}
@@ -327,13 +327,15 @@ function setVideoName ($title, $subtitle, $broadcastDate) {
 	Write-Verbose 'ビデオファイル名を整形します。'
 	if ($subtitle -eq '') {
 		if ($broadcastDate -eq '') {
-			$videoName = $title + '.mp4'
+			$videoName = $title
 		} else {
-			$videoName = $title + ' ' + $broadcastDate + '.mp4'
+			$videoName = $title + ' ' + $broadcastDate 
 		}
 	} else {
-		$videoName = $title + ' ' + $broadcastDate + ' ' + $subtitle + '.mp4'
+		$videoName = $title + ' ' + $broadcastDate + ' ' + $subtitle
 	}
+	if ($videoName.length -gt 120) { $videoName = $videoName.Substring(0, 120) + '……' }
+	$videoName = $videoName + '.mp4'
 	$videoName = removeInvalidFileNameChars (conv2Narrow $videoName)		#windowsでファイル名にできない文字列を除去
 	return $videoName
 }

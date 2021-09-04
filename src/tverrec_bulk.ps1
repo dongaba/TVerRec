@@ -185,7 +185,7 @@ foreach ($genre in $genres) {
 		writeVideoDebugInfo $videoID $videoPage $genre $title $subtitle $videoPath $(getTimeStamp) $videoURL 
 
 		#ビデオタイトルが取得できなかった場合はスキップ次のビデオへ
-		if ($videoName = '.mp4') {
+		if ($videoName -eq '.mp4') {
 			Write-Host 'ビデオタイトルを特定できませんでした。スキップします。' -ForegroundColor DarkGray
 			continue			#次回再度ダウンロードをトライするためダウンロードリストに追加せずに次のビデオへ
 		}
