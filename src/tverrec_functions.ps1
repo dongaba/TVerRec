@@ -55,10 +55,10 @@ function saveGenrePage {
 function getVideoTitle ([ref]$chromeDriver) {
 	Write-Verbose 'ビデオタイトルを解析中です。'
 	if ( $chromeDriver.value.PageSource -match 'id="program_title" type="hidden" value="(.+?)">') {
-		$title = $Matches[1].Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '')
+		$title = $Matches[1].Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '').Replace('?', '？').Replace('!', '！')
 		$title = $title.Replace('｜民放公式テレビポータル「TVer（ティーバー）」 - 無料でビデオ見放題', '').trim()
 	} elseif ($chromeDriver.value.PageSource -match '<h2>(.+?)</h2>') {
-		$title = $Matches[1].Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '')
+		$title = $Matches[1].Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '').Replace('?', '？').Replace('!', '！')
 		$title = $title.Replace('｜民放公式テレビポータル「TVer（ティーバー）」 - 無料でビデオ見放題', '').trim()
 	} else {
 		$title = ''
@@ -73,9 +73,9 @@ function getVideoTitle ([ref]$chromeDriver) {
 function getVideoSubtitle ([ref]$chromeDriver) {
 	Write-Verbose 'ビデオサブタイトルを解析中です。'
 	if ( $chromeDriver.value.PageSource -match 'id="program_subtitle" type="hidden" value="(.+?)">') {
-		$subtitle = $Matches[1].Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '').trim()
+		$subtitle = $Matches[1].Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '').Replace('?', '？').Replace('!', '！').trim()
 	} elseif ( $chromeDriver.value.PageSource -match '<p class="video-subtitle">(.+?)</p>') {
-		$subtitle = $Matches[1].Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '').trim()
+		$subtitle = $Matches[1].Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '').Replace('?', '？').Replace('!', '！').trim()
 	} else {
 		$subtitle = ''
 	}
