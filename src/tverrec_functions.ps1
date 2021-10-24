@@ -139,8 +139,7 @@ function writeVideoInfo ($videoName, $broadcastDate, $media, $description ) {
 #----------------------------------------------------------------------
 #ビデオ情報デバッグ表示
 #----------------------------------------------------------------------
-function writeVideoDebugInfo ($videoID, $videoPage, $genre, $title, $subtitle, $videoPath, $timeStamp, $videoURL ) {
-	Write-Debug	"ビデオID    :$videoID"
+function writeVideoDebugInfo ($videoPage, $genre, $title, $subtitle, $videoPath, $timeStamp, $videoURL ) {
 	Write-Debug	"ビデオページ:$videoPage"
 	Write-Debug "ジャンル    :$genre"
 	Write-Debug "タイトル    :$title"

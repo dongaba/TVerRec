@@ -93,7 +93,7 @@ while ($true) {
 	$ignore = $false
 	$videoLists = $null ; $newVideo = $null
 	$chromeDriverService = $null ; $chromeOptions = $null ; $chromeDriver = $null
-	while ((Get-Clipboard -Format Text) -ne ' ') {
+	while ((Get-Clipboard -Raw) -ne ' ') {
 		Set-Clipboard -Value ' '
 		Start-Sleep -Milliseconds 300
 	}
@@ -103,16 +103,15 @@ while ($true) {
 
 	$videoPage = Read-Host 'ビデオURLを入力してください。'
 	if ($videoPage -eq '') { exit }
-	$videoID = $videoPage.Replace('https://tver.jp', '').Replace('http://tver.jp', '').trim()
 
 	#TVerの番組説明の場合はビデオがないのでスキップ
-	if ($videoID -match '/episode/') {
+	if ($videoPage -match '/episode/') {
 		Write-Host 'ビデオではなくオンエア情報のようです。スキップします。' -ForegroundColor DarkGray
 		continue								#次のビデオへ
 	}
 
 	#すでにダウンロードリストに存在する場合はスキップ
-	$listMatch = Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.videoID -eq $videoID } 
+		$listMatch = Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.videoPage -eq $videoPage } 
 	if ( $null -ne $listMatch ) {
 		Write-Host '過去に処理したビデオです。スキップします。' -ForegroundColor DarkGray
 		continue								#次のビデオへ
@@ -175,7 +174,6 @@ while ($true) {
 		#ダウンロードリストに行追加
 			Write-Verbose 'スキップしたファイルをダウンロードリストに追加します。'
 		$newVideo = [pscustomobject]@{ 
-			videoID        = $videoID ;
 			videoPage      = $videoPage ;
 			genre          = $genre ;
 			title          = $title ;
@@ -191,7 +189,6 @@ while ($true) {
 		#ダウンロードリストに行追加
 			Write-Verbose 'ダウンロードするファイルをダウンロードリストに追加します。'
 		$newVideo = [pscustomobject]@{ 
-			videoID        = $videoID ;
 			videoPage      = $videoPage ;
 			genre          = '' ;
 			title          = $title ;

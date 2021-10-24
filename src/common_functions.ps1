@@ -293,7 +293,7 @@ function playVideo([ref]$chromeDriver) {
 
 	for ($i = 0; $i -lt 30; $i++) {
 		#クリップボードにURLがが入ったら抜ける
-		$videoURL = Get-Clipboard
+		$videoURL = Get-Clipboard -Raw
 		$regexURL = '([a-zA-Z]{3,})://([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*)*?'		#正規表現URLパターン
 		if ($videoURL -notmatch $regexURL) {
 		} else {
