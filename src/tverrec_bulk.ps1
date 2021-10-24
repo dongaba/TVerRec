@@ -182,7 +182,7 @@ foreach ($genre in $genres) {
 
 		#ビデオ情報のコンソール出力
 		writeVideoInfo $videoName $broadcastDate $media $description 
-		writeVideoDebugInfo $videoPage $genre $title $subtitle $videoPath $(getTimeStamp) $videoURL 
+		writeVideoDebugInfo $videoPage $genre $title $subtitle $videoPath $(getTimeStamp) $videoURL
 
 		#ビデオタイトルが取得できなかった場合はスキップ次のビデオへ
 		if ($videoName -eq '.mp4') {

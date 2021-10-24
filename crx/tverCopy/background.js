@@ -15,8 +15,14 @@ chrome.webRequest.onBeforeRequest.addListener(
 		var re2 = new RegExp("https?://");
 		if (re2.test(url)) {
 			//    console.log(url);
-			var seiki = ".m3u8";
-			var re = new RegExp(seiki, "i");
+			var re = new RegExp(".m4f", "i");
+			if (re.test(url)) {
+
+				ClipboardSetData(url);
+				return;
+			}
+
+			var re = new RegExp(".m3u8", "i");
 			if (re.test(url)) {
 				var xhr = new XMLHttpRequest();
 				xhr.open("GET", url, true);
