@@ -206,22 +206,7 @@ foreach ($genre in $genres) {
 		} 
 
 		#スキップフラグが立っているかチェック
-		if ($ignore -eq $true) {
-			#ダウンロードリストに行追加
-			Write-Verbose 'スキップしたファイルをダウンロードリストに追加します。'
-			$newVideo = [pscustomobject]@{ 
-				videoPage      = $videoPage ;
-				genre          = $genre ;
-				title          = $title ;
-				subtitle       = $subtitle ;
-				media          = $media ;
-				broadcastDate  = $broadcastDate ;
-				downloadDate   = '-- SKIPPED --' ;
-				videoName      = '-- SKIPPED --' ;
-				videoPath      = '-- SKIPPED --' ;
-				videoValidated = '0' ;
-			}
-		} else {
+		if ($ignore -ne $true) {
 			#ダウンロードリストに行追加
 			Write-Verbose 'ダウンロードするファイルをダウンロードリストに追加します。'
 			$newVideo = [pscustomobject]@{ 
@@ -236,22 +221,22 @@ foreach ($genre in $genres) {
 				videoPath      = $videoPath ;
 				videoValidated = '0' ;
 			}
+
+			#ダウンロードリストCSV読み込み
+			Write-Debug 'ダウンロードリストを読み込みます。'
+			$videoLists = Import-Csv $listFile -Encoding UTF8
+
+			#ダウンロードリストCSV書き出し
+			$newList = @()
+			$newList += $videoLists
+			$newList += $newVideo
+			$newList | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
+			Write-Debug 'ダウンロードリストを書き込みました。'
+
 		}
 
-		#ダウンロードリストCSV読み込み
-		Write-Debug 'ダウンロードリストを読み込みます。'
-		$videoLists = Import-Csv $listFile -Encoding UTF8
-
-		#ダウンロードリストCSV書き出し
-		$newList = @()
-		$newList += $videoLists
-		$newList += $newVideo
-		$newList | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
-		Write-Debug 'ダウンロードリストを書き込みました。'
-
-
 		#無視リストに入っていなければffmpeg起動
-		if ($true -eq $ignore ) { 
+		if ($ignore -eq $true ) { 
 			continue		#無視リストに入っているビデオは飛ばして次のファイルへ
 		} else {
 
