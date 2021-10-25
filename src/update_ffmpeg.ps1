@@ -63,7 +63,7 @@ if ($latestVersion -ne $ffmpegCurrentVersion) {
 	$extractedDir = $(Join-Path $scriptRoot $ffmpegRelativeDir)
 	$extractedDir = $extractedDir + '\ffmpeg-*-essentials_build'
 	$extractedFiles = $extractedDir + '\bin\*.exe'
-	Move-Item $extractedFiles $(Join-Path $scriptRoot $ffmpegRelativeDir)
+	Move-Item $extractedFiles $(Join-Path $scriptRoot $ffmpegRelativeDir) -Force
 
 	#ゴミ掃除
 	Remove-Item -Path $extractedDir -Force -Recurse

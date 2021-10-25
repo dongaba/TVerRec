@@ -45,7 +45,6 @@ Get-Content $iniFile | Where-Object { $_ -notmatch '^\s*$' } | `
 #録画リストからビデオチェックが終わっていないものを読み込み
 $videoLists = Import-Csv $listFile -Encoding UTF8 | `
 		Where-Object { $_.videoValidated -ne '1' } | `
-		Where-Object { $_.videoPath -ne '-- SKIPPED --' } | `
 		Select-Object 'videoPath'
 
 if ($null -eq $videoLists) {

@@ -107,9 +107,11 @@ foreach ($genre in $genres) {
 	$genreLink = 'https://tver.jp/' + $genre
 	Write-Host $genreLink
 	$genrePage = Invoke-WebRequest $genreLink
+	$ErrorActionPreference = 'silentlycontinue'
 	$videoLinks = $genrePage.Links | Where-Object href -Like '*corner*'  | Select-Object href
 	$videoLinks += $genrePage.Links | Where-Object href -Like '*feature*'  | Select-Object href
 	$videoLinks += $genrePage.Links | Where-Object href -Like '*lp*'  | Select-Object href
+	$ErrorActionPreference = 'continue'
 
 	saveGenrePage						#デバッグ用ジャンルページの保存
 
@@ -126,7 +128,9 @@ foreach ($genre in $genres) {
 		$videoLists = $null ; $newVideo = $null
 		$chromeDriverService = $null ; $chromeOptions = $null ; $chromeDriver = $null
 		while ((Get-Clipboard -Raw) -ne ' ') {
+			$ErrorActionPreference = 'silentlycontinue'
 			Set-Clipboard -Value ' '
+			$ErrorActionPreference = 'continue'
 			Start-Sleep -Milliseconds 300
 		}
 
