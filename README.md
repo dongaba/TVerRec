@@ -99,9 +99,9 @@ tverrec/
 ## ライセンス
 - TVerRecは[Apache License, Version 2.0のライセンス規約](http://www.apache.org/licenses/LICENSE-2.0)に基づき、複製や再配布、改変が許可されます。
 - TVerRecはApache License, Version 2.0のライセンスで配布されている成果物を含んでいます。
-    - WebDriver.dll version 3.14.0
-    - WebDriver.Support.dll version 3.14.0
-    - Selenium.WebDriverBackedSelenium.dll version 3.14.0
+    - WebDriver.dll version 3.141.0
+    - WebDriver.Support.dll version 3.141.0
+    - Selenium.WebDriverBackedSelenium.dll version 3.141.0
 
 Copyright(c) 2021 dongaba All Rights Reserved.
 
@@ -210,9 +210,9 @@ tverrec/
 ## License
 - TVerRec may be copied, redistributed, or modified under the terms of the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0 ).
 - TVerRec contains artifacts distributed under the license of the Apache License, Version 2.0.
-    - WebDriver.dll version 3.14.0
-    - WebDriver.Support.dll version 3.14.0
-    - Selenium.WebDriverBackedSelenium.dll version 3.14.0
+    - WebDriver.dll version 3.141.0
+    - WebDriver.Support.dll version 3.141.0
+    - Selenium.WebDriverBackedSelenium.dll version 3.141.0
 
 Copyright(c) 2021 dongaba All Rights Reserved.
 
