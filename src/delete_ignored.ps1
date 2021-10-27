@@ -54,7 +54,9 @@ Write-Host '--------------------------------------------------------------------
 foreach ($ignoreTitle in $ignoreTitles) {
 	$delPath = Join-Path $downloadBasePath $ignoreTitle
 	Write-Host $delPath
+	$ErrorActionPreference = 'silentlycontinue'
 	Remove-Item -Path $delPath -Force -Recurse -ErrorAction SilentlyContinue
+	$ErrorActionPreference = 'continue'
 }
 
 #空フォルダ と 隠しファイルしか入っていないフォルダを一気に削除

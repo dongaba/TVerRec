@@ -94,7 +94,9 @@ while ($true) {
 	$videoLists = $null ; $newVideo = $null
 	$chromeDriverService = $null ; $chromeOptions = $null ; $chromeDriver = $null
 	while ((Get-Clipboard -Raw) -ne ' ') {
+		$ErrorActionPreference = 'silentlycontinue'
 		Set-Clipboard -Value ' '
+		$ErrorActionPreference = 'continue'
 		Start-Sleep -Milliseconds 300
 	}
 
@@ -146,7 +148,7 @@ while ($true) {
 
 	#ビデオ情報のコンソール出力
 	writeVideoInfo $videoName $broadcastDate $media $description 
-	writeVideoDebugInfo $videoID $videoPage '' $title $subtitle $videoPath $(getTimeStamp) $videoURL
+	writeVideoDebugInfo $videoPage '' $title $subtitle $videoPath $(getTimeStamp) $videoURL
 
 		#ビデオタイトルが取得できなかった場合はスキップ次のビデオへ
 		if ($videoName -eq '.mp4') {
@@ -170,22 +172,7 @@ while ($true) {
 		} 
 
 		#スキップフラグが立っているかチェック
-	if ($ignore -eq $true) {
-		#ダウンロードリストに行追加
-			Write-Verbose 'スキップしたファイルをダウンロードリストに追加します。'
-		$newVideo = [pscustomobject]@{ 
-			videoPage      = $videoPage ;
-			genre          = $genre ;
-			title          = $title ;
-			subtitle       = $subtitle ;
-			media          = $media ;
-			broadcastDate  = $broadcastDate ;
-				downloadDate   = '-- SKIPPED --' ;
-				videoName      = '-- SKIPPED --' ;
-				videoPath      = '-- SKIPPED --' ;
-			videoValidated = '0' ;
-		}
-	} else {
+	if ($ignore -ne $true) {
 		#ダウンロードリストに行追加
 			Write-Verbose 'ダウンロードするファイルをダウンロードリストに追加します。'
 		$newVideo = [pscustomobject]@{ 
@@ -200,22 +187,22 @@ while ($true) {
 			videoPath      = $videoPath ;
 			videoValidated = '0' ;
 		}
-	}
 
-	#ダウンロードリストCSV読み込み
+		#ダウンロードリストCSV読み込み
 		Write-Debug 'ダウンロードリストを読み込みます。'
-	$videoLists = Import-Csv $listFile -Encoding UTF8
+		$videoLists = Import-Csv $listFile -Encoding UTF8
 
-	#ダウンロードリストCSV書き出し
-	$newList = @()
-	$newList += $videoLists
-	$newList += $newVideo
-	$newList | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
+		#ダウンロードリストCSV書き出し
+		$newList = @()
+		$newList += $videoLists
+		$newList += $newVideo
+		$newList | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
 		Write-Debug 'ダウンロードリストを書き込みました。'
 
+	}
 
 	#無視リストに入っていなければffmpeg起動
-	if ($true -eq $ignore ) { 
+	if ($ignore -eq $true ) { 
 		continue		#無視リストに入っているビデオは飛ばして次のファイルへ
 	} else {
 

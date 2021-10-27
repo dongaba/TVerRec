@@ -317,7 +317,10 @@ function playVideo([ref]$chromeDriver) {
 function stopChrome ([ref]$chromeDriver) {
 
 	Write-Verbose 'Chromeを終了します。'
+	$ErrorActionPreference = 'silentlycontinue'
 	$chromeDriver.value.Dispose()
+	Stop-Process -Name chromedriver
+	$ErrorActionPreference = 'continue'
 	Write-Verbose 'Chromeを終了しました。'
 }
 #----------------------------------------------------------------------
