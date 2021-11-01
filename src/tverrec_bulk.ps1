@@ -226,18 +226,33 @@ foreach ($genre in $genres) {
 				videoValidated = '0' ;
 			}
 
-			#ダウンロードリストCSV読み込み
-			Write-Debug 'ダウンロードリストを読み込みます。'
-			$videoLists = Import-Csv $listFile -Encoding UTF8
-
-			#ダウンロードリストCSV書き出し
-			$newList = @()
-			$newList += $videoLists
-			$newList += $newVideo
-			$newList | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
-			Write-Debug 'ダウンロードリストを書き込みました。'
-
+		} else {
+			#ダウンロードリストに行追加
+			Write-Verbose 'スキップしたファイルをダウンロードリストに追加します。'
+			$newVideo = [pscustomobject]@{ 
+				videoPage      = $videoPage ;
+				genre          = $genre ;
+				title          = $title ;
+				subtitle       = $subtitle ;
+				media          = $media ;
+				broadcastDate  = $broadcastDate ;
+				downloadDate   = '-- SKIPPED --' ;
+				videoName      = '-- SKIPPED --' ;
+				videoPath      = '-- SKIPPED --' ;
+				videoValidated = '0' ;
+			}
 		}
+
+		#ダウンロードリストCSV読み込み
+		Write-Debug 'ダウンロードリストを読み込みます。'
+		$videoLists = Import-Csv $listFile -Encoding UTF8
+
+		#ダウンロードリストCSV書き出し
+		$newList = @()
+		$newList += $videoLists
+		$newList += $newVideo
+		$newList | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
+		Write-Debug 'ダウンロードリストを書き込みました。'
 
 		#無視リストに入っていなければffmpeg起動
 		if ($ignore -eq $true ) { 
