@@ -27,7 +27,7 @@ $chromeDriverDir = $(Join-Path $scriptRoot $chromeDriverRelativeDir)
 $chromeDriverFileLocation = $(Join-Path $chromeDriverDir 'chromedriver.exe')
 
 #Chromeバージョン取得
-$chromeVersion = [System.Diagnostics.FileVersionInfo]::GetVersionInfo('C:\Program Files (x86)\Google\Chrome\Application\chrome.exe').FileVersion
+$chromeVersion = [System.Diagnostics.FileVersionInfo]::GetVersionInfo('C:\Program Files\Google\Chrome\Application\chrome.exe').FileVersion
 $chromeMajorVersion = $chromeVersion.split('.')[0]
 
 #chromedriverのディレクトリがなければ作成
