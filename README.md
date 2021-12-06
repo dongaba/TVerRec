@@ -1,5 +1,5 @@
-# :tv:**TVerRec**:tv: - TVerビデオダウンローダ -
-TVerRecは、powershellのスクリプトで書かれた動画配信サイトのTver専用の動画ダウンローダです。
+# :tv:**TVerRec**:tv: - TVerダウンローダ -
+TVerRecは、powershellのスクリプトで書かれた動画配信サイトのTverのダウンローダです。
 動画を1本ずつ指定してダウンロードするのではなく、動画のジャンルや出演タレントを指定して一括ダウンロードします。
 ループ実行するようになっているので、1回起動すれば新しい番組が配信される都度ダウンロードされるようになります。
 動作に必要なchromedriverやffmpegなどの必要コンポーネントは自動的に最新版がダウンロードされます。
@@ -29,7 +29,7 @@ PowerShellはMacOS、Linuxにも移植されてるのでメインの機能は動
 ### ダウンロード対象のジャンルの設定方法
 - `config/keyword.ini`をテキストエディターで開いてダウンロード対象のジャンルを設定します。
     - 不要なジャンルは `#` でコメントアウトしてください。
-    - ジャンルは網羅しているつもりですが、不足があるかもしれません。
+    - 主なジャンルは網羅しているつもりですが、不足があるかもしれません。
 ### ダウンロード対象外の番組の設定方法
 - `config/ignore.ini`をテキストエディターで開いてダウンロードしたくない番組名を設定します。
     - ジャンル指定でダウンロードすると不要な番組もまとめてダウンロードされるので、個別にダウンロード対象外に指定できます。
@@ -107,9 +107,9 @@ Copyright(c) 2021 dongaba All Rights Reserved.
 
 
 
-# :tv:**TVerRec**:tv: - video downloader for TVer -
-TVerRec is a dedicated video downloader for Tver, a video distribution site in Japan written in powershell script.
-Instead of downloading videos one by one, it downloads them all at once by specifying the genre of the video or the talent who appears in it.
+# :tv:**TVerRec**:tv: - Downloader for TVer -
+TVerRec is a video downloader for TVer written in powershell script.
+Instead of downloading videos one by one, TVerRec downloads them all videos at once by specifying the genre of the video or the talent who appears in it.
 It is designed to run continuously, so if you start it once, it will download every time a new program is delivered.
 Necessary components such as chromedriver and ffmpeg are automatically downloaded to the latest version.
 
