@@ -220,7 +220,7 @@ foreach ($genre in $genres) {
 				subtitle       = $subtitle ;
 				media          = $media ;
 				broadcastDate  = $broadcastDate ;
-				downloadDate   = $(getTimeStamp)
+				downloadDate   = $(getTimeStamp) ;
 				videoName      = $videoName ;
 				videoPath      = $videoPath ;
 				videoValidated = '0' ;
@@ -236,7 +236,7 @@ foreach ($genre in $genres) {
 				subtitle       = $subtitle ;
 				media          = $media ;
 				broadcastDate  = $broadcastDate ;
-				downloadDate   = '-- SKIPPED --' ;
+				downloadDate   = $(getTimeStamp) ;
 				videoName      = '-- SKIPPED --' ;
 				videoPath      = '-- SKIPPED --' ;
 				videoValidated = '0' ;

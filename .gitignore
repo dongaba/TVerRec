@@ -19,3 +19,9 @@ debug/*.html
 *.lnk
 *.bak
 tver - Copy.csv
+config/gyao_keyword.ini
+db/gyao.csv
+src/gyao_bulk.ps1
+src/gyao_single.ps1
+src/gyao_validate_video.ps1
+src/gyaorec_functions.ps1
