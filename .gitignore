@@ -14,6 +14,9 @@ debug/*.html
 #実行ファイル
 *.exe
 
+#動画ファイル
+*.mp4
+
 .vscode/launch.json
 .DS_Store
 *.lnk
