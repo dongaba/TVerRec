@@ -29,7 +29,7 @@ set PIDFile=%HostName%-pid.txt
 set sleepTime=600
 title TVerRec
 
-powershell "Get-WmiObject win32_process -filter processid=$pid | ForEach-Object{$_.parentprocessid;}" > %PIDFile%
+powershell -NoProfile -ExecutionPolicy Unrestricted "Get-WmiObject win32_process -filter processid=$pid | ForEach-Object{$_.parentprocessid;}" > %PIDFile%
 
 :Loop
 

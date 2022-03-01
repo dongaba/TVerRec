@@ -20,19 +20,6 @@
 ###################################################################################
 
 #----------------------------------------------------------------------
-#GEO IPの確認
-#----------------------------------------------------------------------
-function checkGeoIP () {
-
-	if ((Invoke-RestMethod -Uri 'http://ip-api.com/json/').countryCode -ne 'JP') {
-		Invoke-RestMethod -Uri ('http://ip-api.com/json/' + (Invoke-WebRequest -Uri 'http://ifconfig.me/ip').Content)
-		Write-Host '日本のIPアドレスからしか接続できません。VPN接続してください。' -ForegroundColor Red
-		exit
-	}
-
-}
-
-#----------------------------------------------------------------------
 #設定で指定したファイル・フォルダの存在チェック
 #----------------------------------------------------------------------
 function checkRequiredFile { 
@@ -40,10 +27,7 @@ function checkRequiredFile {
 	if (Test-Path $chromeUserDataPath -PathType Container) {} else { Write-Error 'ChromeのUserDataフォルダが存在しません。終了します。' ; exit }
 	if (Test-Path $downloadBasePath -PathType Container) {} else { Write-Error 'ビデオ保存先フォルダが存在しません。終了します。' ; exit }
 	if (Test-Path $ffmpegPath -PathType Leaf) {} else { Write-Error 'ffmpeg.exeが存在しません。終了します。' ; exit }
-	if (Test-Path $crxPath -PathType Leaf) {} else { Write-Error 'tver.crxが存在しません。終了します。' ; exit }
-	if (Test-Path $webDriverPath -PathType Leaf) {} else { Write-Error 'WebDriver.dllが存在しません。終了します。' ; exit }
-	if (Test-Path $webDriverSupportPath -PathType Leaf) {} else { Write-Error 'WebDriver.Support.dllが存在しません。終了します。' ; exit }
-	if (Test-Path $seleniumPath -PathType Leaf) {} else { Write-Error 'Selenium.WebDriverBackedSelenium.dllが存在しません。終了します。' ; exit }
+	if (Test-Path $ytdlpPath -PathType Leaf) {} else { Write-Error 'yt-dlp.exeが存在しません。終了します。' ; exit }
 	if (Test-Path $iniFile -PathType Leaf) {} else { Write-Error 'ユーザ設定ファイルが存在しません。終了します。' ; exit }
 	if (Test-Path $keywordFile -PathType Leaf) {} else { Write-Error 'ダウンロード対象ジャンリリストが存在しません。終了します。' ; exit }
 	if (Test-Path $ignoreFile -PathType Leaf) {} else { Write-Error 'ダウンロード対象外ビデオリストが存在しません。終了します。' ; exit }
@@ -60,46 +44,41 @@ function getTimeStamp {
 }
 
 #----------------------------------------------------------------------
-#ffmpegプロセスの確認と待機
+#yt-dlpプロセスの確認と待機
 #----------------------------------------------------------------------
-function getFfmpegProcessList ($parallelDownloadNum) {
+function getYtdlpProcessList ($parallelDownloadNum) {
 	#ffmpegのプロセスが設定値を超えたら一時待機
 	try {
-		$ffmpegCount = (Get-Process -ErrorAction Ignore -Name ffmpeg).Count
+		$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
 	} catch {
-		$ffmpegCount = 0
+		$ytdlpCount = 0
 	}
 
-	Write-Verbose "現在のダウンロードプロセス一覧  ( $ffmpegCount 個 )"
+	$ytdlpCount = $ytdlpCount / 2
+	Write-Verbose "現在のダウンロードプロセス一覧  ( $ytdlpCount 個 )"
 
-	while ($ffmpegCount -ge $parallelDownloadNum) {
+	while ($ytdlpCount -ge $parallelDownloadNum) {
 		Write-Host "ダウンロードが $parallelDownloadNum 多重に達したので一時待機します。 ( $(getTimeStamp) )" -ForegroundColor DarkGray
 		Start-Sleep -Seconds 60			#1分待機
-		$ffmpegCount = (Get-Process -ErrorAction Ignore -Name ffmpeg).Count
+		$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2
 	}
 }
 
 #----------------------------------------------------------------------
-#ffmpegプロセスの起動
+#yt-dlpプロセスの起動
 #----------------------------------------------------------------------
-function startFfmpeg ($videoName, $videoPath , $videoURL, $genre, $title, $subtitle, $description, $media, $videoPage, $ffmpegPath) {
-	$ffmpegArgument = ' -y -i ' + $videoURL `
-		+ ' -vcodec copy -acodec copy' `
-		+ ' -movflags faststart ' `
-		+ ' -metadata genre="' + $genre.Replace('"', '”') + '"' `
-		+ ' -metadata title="' + $title.Replace('"', '”') + '"' `
-		+ ' -metadata show="' + $title.Replace('"', '”') + '"' `
-		+ ' -metadata subtitle="' + $subtitle.Replace('"', '”') + '"' `
-		+ ' -metadata description="' + $description.Replace('"', '”') + '"' `
-		+ ' -metadata copyright="' + $media.Replace('"', '”') + '"' `
-		+ ' -metadata network="' + $media.Replace('"', '”') + '"' `
-		+ ' -metadata producer="' + $media.Replace('"', '”') + '"' `
-		+ ' -metadata URL="' + $videoPage.Replace('"', '”') + '"' `
-		+ ' -metadata year="' + $(Get-Date -UFormat '%Y') + '"' `
-		+ ' -metadata creation_time="' + $(getTimeStamp) + '"'
-	$ffmpegArgument = $ffmpegArgument + ' "' + $videoPath + '"'
-	Write-Debug "ffmpeg起動コマンド:$ffmpegPath $ffmpegArgument"
-	$null = Start-Process -FilePath ($ffmpegPath) -ArgumentList $ffmpegArgument -PassThru -WindowStyle Hidden		#Minimize or Hidden
+function startYtdlp ($videoPath, $videoPage, $ytdlpPath) {
+	$ytdlpArgument = '-f b ' 
+	$ytdlpArgument += '--downloader aria2c '
+	$ytdlpArgument += '--no-mtime '
+	$ytdlpArgument += '--embed-thumbnail '
+	$ytdlpArgument += '--embed-metadata '
+	$ytdlpArgument += '--embed-subs '
+	$ytdlpArgument += '--no-force-overwrites '
+	$ytdlpArgument += '-o ' + ' "' + $videoPath + '" '
+	$ytdlpArgument += $videoPage 
+	Write-Debug "yt-dlp起動コマンド:$ytdlpPath $ytdlpArgument"
+	$null = Start-Process -FilePath ($ytdlpPath) -ArgumentList $ytdlpArgument -PassThru -WindowStyle Minimize		#Minimize or Hidden
 }
 
 #----------------------------------------------------------------------
@@ -137,211 +116,6 @@ function conv2Narrow {
 	return $result
 }
 
-
-#----------------------------------------------------------------------
-#CSVファイル読み込み
-#	useage : $val = getValue $filePath $keyName
-#----------------------------------------------------------------------
-function getValue($filePath, $keyName) {
-	$hash = @{}
-
-	# ファイルの存在を確認する
-	if ((Test-Path $filePath) -eq $false) {
-		Write-Error('CSV file not found : ' + $filePath)
-		return ''
-	}
-
-	# CSVファイルを読み込んで、ハッシュに変換する
-	Import-Csv $filePath -Encoding UTF8 | ForEach-Object { $hash.Add($_.name, $_) }
-
-	# キーが存在しているか確認する
-	if ($hash.ContainsKey($keyName) -ne $true) {
-		Write-Error('Key not found : ' + $keyName)
-		return ''
-	}
-
-	# value項目を返す
-	return $hash[$keyName].value
-}
-
-#----------------------------------------------------------------------
-#録画リストの情報の追加
-#----------------------------------------------------------------------
-function insertVideoDB {
-
-	#録画リストに行追加
-	Write-Verbose '録画済みリストに行を追加します。'
-	$newVideo = [pscustomobject]@{ 
-		videoID       = $videoID ;
-		videoPage     = $videoPage ;
-		genre         = $genre ;
-		title         = $title ;
-		subtitle      = $subtitle ;
-		media         = $media ;
-		broadcastDate = $broadcastDate ;
-		downloadDate  = $timeStamp
-		videoName     = $videoName ;
-		videoPath     = $videoPath ;
-	}
-	#$newVideo
-	Write-Debug 'リストに以下を追加'
-	$newVideo
-	$newVideo | Format-Table
-
-	Write-Debug 'CSVファイルを上書き出力します'
-	$newList = @()
-	$newList += $videoLists
-	$newList += $newVideo
-	$newList | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
-
-	return $newList
-
-}
-
-#----------------------------------------------------------------------
-#録画リストの情報を検索
-#----------------------------------------------------------------------
-function updatetVideoDB {
-
-	#	#存在しない検索
-	#	$videoLists = Import-Csv $dbPath -Encoding UTF8 | Where-Object { $_.videoID -eq '/feature/f0072557' }
-	#	if ($videoLists -eq $null) { Write-Debug '該当なし' }
-	#
-	#	#存在する検索
-	#	$videoLists = Import-Csv $dbPath -Encoding UTF8 | Where-Object { $_.videoID -eq '/feature/f0072556' }
-	#	if ($videoLists -ne $null) { Write-Debug '外灯あり' }
-	#
-	#	Write-Verbose '録画済みリストの既存レコードを更新します。'
-	#	$videoLists | Export-Csv 'db/tverlist.csv' -NoTypeInformation -Encoding UTF8
-
-}
-
-#----------------------------------------------------------------------
-#録画リストの情報を削除
-#----------------------------------------------------------------------
-function deletetVideoDB {
-
-}
-
-#----------------------------------------------------------------------
-#録画リストの情報を削除
-#----------------------------------------------------------------------
-function cleanupVideoDB {
-
-	#	# CSVファイルからvideoIDとvideoNameの組み合わせでの重複を削除
-	#	Write-Verbose '録画済みリストの重複レコードを削除します。'
-	#	$newVideoLists = $videoLists | Sort-Object -Property videoID,videoName -Unique
-	#	foreach ($newVideoList in $newVideoLists)
-	#	{
-	#		#$videoList.videoID
-	#	}
-	#
-	#	return $videoLists
-
-}
-
-#----------------------------------------------------------------------
-#Chrome起動パラメータ設定
-#----------------------------------------------------------------------
-function setChromeAttributes($chromeUserDataPath, [ref]$chromeOptions, $crxPath) {
-
-	$chromeOptions.value = New-Object OpenQA.Selenium.Chrome.ChromeOptions
-
-	$chromeOptions.value.AddArgument("--user-data-dir=$chromeUserDataPath")			#ユーザプロファイル指定
-	$chromeOptions.value.AddArgument('--lang=ja-JP')								#日本語(ヘッドレスにすると英語になってしまうらしい)
-	$chromeOptions.value.AddArgument('--window-size=1440,900')						#画面サイズ指定
-	$chromeOptions.value.AddArgument('--disable-sync')								#データ同期機能を無効
-	$chromeOptions.value.AddArgument('--disable-geolocation')						#Geolocation APIを無効
-	$chromeOptions.value.AddArgument('--disable-infobars')							#通知バー無効化
-	$chromeOptions.value.AddArgument('--disable-java')								#Javaを無効
-	#$chromeOptions.value.AddArgument('--headless')									#Chrome をヘッドレスモードで実行する (拡張機能がある場合は使用できない)
-	#$chromeOptions.value.AddArgument('--disable-gpu')								#ヘッドレスの際に暫定的に必要なフラグ
-	#$chromeOptions.value.AddArgument('--remote-debugging-port=9222')				#ヘッドレスの際に。使い方わからないけど。。。
-	$chromeOptions.value.AddArgument('--dns-prefetch-disable')						#DNSプリフェッチを無効
-	$chromeOptions.value.AddArgument('--disable-custom-jumplist')					#Windows 7においてカスタムジャンプリストを無効
-	$chromeOptions.value.AddArgument('--disable-desktop-notifications')				#デスクトップ通知を無効
-	$chromeOptions.value.AddArgument('--disable-application-cache')					#HTML5のApplication Cacheを無効
-	$chromeOptions.value.AddArgument('--disable-remote-fonts')						#リモートWebフォントのサポートを無効
-	$chromeOptions.value.AddArgument('--disable-content-prefetch')					#Link prefetchingを無効
-	$chromeOptions.value.AddArgument('--disable-logging')							#ログ出力を無効にする
-	$chromeOptions.value.AddArgument('--disable-metrics')							#
-	$chromeOptions.value.AddArgument('--disable-metrics-reporting')					#
-	$chromeOptions.value.AddArgument('--disable-hang-monitor')						#「ページ応答無し」のダイアログの表示を抑制
-	$chromeOptions.value.AddArgument('--no-default-browser-check')					#デフォルトブラウザチェックをしない
-	$chromeOptions.value.AddArgument('--enable-easy-off-store-extension-install')	#公式以外からの拡張機能のインストールを有効化
-	$chromeOptions.value.AddExtensions("$crxPath")									#ビデオURLをクリップボードにコピーする拡張機能
-	$chromeOptions.value.AddUserProfilePreference('credentials_enable_service', $false)
-	$chromeOptions.value.AddUserProfilePreference('profile.password_manager_enabled', $false)
-
-}
-
-#----------------------------------------------------------------------
-#URLをChromeにわたす
-#----------------------------------------------------------------------
-function openVideo ([ref]$chromeDriver, $videoPage) {
-	for ($i = 0; $i -lt 30; $i++) {
-		try {
-			$chromeDriver.value.url = $videoPage		#ChromeにURLを渡す
-			break
-		} catch {
-			Write-Verbose 'ChromeにURLを渡せませんでした。再試行します。'
-		}
-		Start-Sleep -Milliseconds 1000
-	}
-}
-
-#----------------------------------------------------------------------
-#ページ読み込み待ち、再生ボタンクリック、クリップボードにビデオURLを入れる
-#----------------------------------------------------------------------
-function playVideo([ref]$chromeDriver) {
-	$videoURL = ''
-	#-----------------------------------
-	#ページ読み込み待ちループここから
-	for ($i = 0; $i -lt 30; $i++) {
-		try {
-			$element = $chromeDriver.value.FindElementByXpath('/html/body')
-			break
-		} catch {
-			Write-Verbose '読み込み完了していないため再生ボタン押せませんでした。再試行します。'
-		}
-		Start-Sleep -Milliseconds 1000
-	}
-	$element.Click() # ; $element.SendKeys($chromeDriver.value.keys.Enter)
-
-	Write-Verbose 'ビデオページを読み込みました。ビデオURLを解析中です。'
-
-	for ($i = 0; $i -lt 30; $i++) {
-		#クリップボードにURLがが入ったら抜ける
-		$videoURL = Get-Clipboard -Raw
-		$regexURL = '([a-zA-Z]{3,})://([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*)*?'		#正規表現URLパターン
-		if ($videoURL -notmatch $regexURL) {
-		} else {
-			Write-Verbose 'ビデオURLを取得しました。'
-			break		 #ループを抜ける
-		}
-		Start-Sleep -Milliseconds 1000
-	}
-
-	$chromeDriver.value.PageSource > $(Join-Path $debugDir 'last_video.html')
-
-	return $videoURL
-
-	#ページ読み込み待ちループここまで
-	#-----------------------------------
-}
-
-#----------------------------------------------------------------------
-#Chrome終了
-#----------------------------------------------------------------------
-function stopChrome ([ref]$chromeDriver) {
-
-	Write-Verbose 'Chromeを終了します。'
-	$ErrorActionPreference = 'silentlycontinue'
-	$chromeDriver.value.Dispose()
-	Stop-Process -Name chromedriver
-	$ErrorActionPreference = 'continue'
-	Write-Verbose 'Chromeを終了しました。'
-}
 #----------------------------------------------------------------------
 #保存ファイル名を設定
 #----------------------------------------------------------------------

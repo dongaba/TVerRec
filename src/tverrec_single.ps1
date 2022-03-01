@@ -43,16 +43,12 @@ Get-Content $iniFile | Where-Object { $_ -notmatch '^\s*$' } | `
 
 #----------------------------------------------------------------------
 #必要モジュールの読み込み
-Add-Type -Path $webDriverPath
-Add-Type -Path $webDriverSupportPath
-Add-Type -Path $seleniumPath
 Add-Type -AssemblyName Microsoft.VisualBasic
 Add-Type -AssemblyName System.Windows.Forms
 
 #----------------------------------------------------------------------
 #開発環境用に設定上書き
 if ((Test-Path 'R:\' -PathType Container) ) {
-	$chromeUserDataPath = 'R:\tverrec\ChromeUserData\' 
 	$VerbosePreference = 'Continue'						#詳細メッセージ
 	$DebugPreference = 'Continue'						#デバッグメッセージ
 }
@@ -75,10 +71,10 @@ Write-Host ''
 
 #----------------------------------------------------------------------
 #動作環境チェック
-. '.\update_chromedriver.ps1'		#chromedriveの最新化チェック
 . '.\update_ffmpeg.ps1'				#ffmpegの最新化チェック
+. '.\update_yt-dlp.ps1'				#yt-dlpの最新化チェック
 checkRequiredFile					#設定で指定したファイル・フォルダの存在チェック
-checkGeoIP							#日本のIPアドレスでないと接続不可のためIPアドレスをチェック
+#checkGeoIP							#日本のIPアドレスでないと接続不可のためIPアドレスをチェック
 
 #ダウンロード対象外番組リストの読み込み
 $ignoreTitles = (Get-Content $ignoreFile -Encoding UTF8 | `
@@ -90,21 +86,16 @@ $ignoreTitles = (Get-Content $ignoreFile -Encoding UTF8 | `
 while ($true) {
 	#いろいろ初期化
 	$videoID = '' ; $videoPage = '' ; $videoName = '' ; $videoPath = ''
+	$tverApiBaseURL = '' ; $tverApiTokenLink = '' ; $token = '' ; $teverApiVideoURL = '' ; $videoInfo = ''
 	$ignore = $false
 	$videoLists = $null ; $newVideo = $null
-	$chromeDriverService = $null ; $chromeOptions = $null ; $chromeDriver = $null
-	while ((Get-Clipboard -Raw) -ne ' ') {
-		$ErrorActionPreference = 'silentlycontinue'
-		Set-Clipboard -Value ' '
-		$ErrorActionPreference = 'continue'
-		Start-Sleep -Milliseconds 300
-	}
 
 	#ffmpegプロセスの確認と、ffmpegのプロセス数が多い場合の待機
-	getFfmpegProcessList $parallelDownloadNum
+	getYtdlpProcessList $parallelDownloadNum
 
 	$videoPage = Read-Host 'ビデオURLを入力してください。'
 	if ($videoPage -eq '') { exit }
+	$videoID = $videoPage.Replace('https://tver.jp', '').Replace('http://tver.jp', '').trim()
 
 	#TVerの番組説明の場合はビデオがないのでスキップ
 	if ($videoPage -match '/episode/') {
@@ -113,45 +104,49 @@ while ($true) {
 	}
 
 	#すでにダウンロードリストに存在する場合はスキップ
-		$listMatch = Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.videoPage -eq $videoPage } 
+	$listMatch = Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.videoPage -eq $videoPage } 
 	if ( $null -ne $listMatch ) {
 		Write-Host '過去に処理したビデオです。スキップします。' -ForegroundColor DarkGray
 		continue								#次のビデオへ
 	}
 
-	#Chrome起動と動画情報の整理
-	$chromeDriverService = [OpenQA.Selenium.Chrome.ChromeDriverService]::CreateDefaultService()
-	$chromeDriverService.HideCommandPromptWindow = $true						#chromedriverのWindow非表示(orコンソールに非表示)
-	setChromeAttributes $chromeUserDataPath ([ref]$chromeOptions) $crxPath		#Chrome起動パラメータ作成
-	try {
-		$chromeDriver = New-Object OpenQA.Selenium.Chrome.ChromeDriver($chromeDriverService, $chromeOptions)		#★エラー頻発個所
-	} catch {
-			Write-Error 'Chromeの起動に失敗しました。スキップします。'
-		stopChrome ([ref]$chromeDriver)									#Chrome終了
-		continue								#次のビデオへ	
-	}
-	$chromeDriver.manage().Window.Minimize()									#ChromeのWindow最小化
-	openVideo ([ref]$chromeDriver) $videoPage									#URLをChromeにわたす
-	$videoURL = playVideo ([ref]$chromeDriver)									#ページ読み込み待ち、再生ボタンクリック、クリップボードにビデオURLを入れる
+	#TVerのAPIを叩いてビデオ情報取得
+	$tverApiBaseURL = 'https://api.tver.jp/v4'
+	$tverApiTokenLink = 'https://tver.jp/api/access_token.php'					#APIトークン取得
+	$token = (Invoke-RestMethod -Uri $tverApiTokenLink -Method get).token		#APIトークンセット
+	$teverApiVideoURL = $tverApiBaseURL + $videoID + '?token=' + $token			#APIのURLをセット
+	$videoInfo = (Invoke-RestMethod -Uri $teverApiVideoURL -Method get).main	#API経由でビデオ情報取得
 
-	#ビデオ情報取得
-	$title = getVideoTitle ([ref]$chromeDriver)
-	$subtitle = getVideoSubtitle ([ref]$chromeDriver)
-	$media = getVideoMedia ([ref]$chromeDriver)
-	$broadcastDate = getVideoBroadcastDate ([ref]$chromeDriver)
-	$description = getVideoDescription ([ref]$chromeDriver)
+	#取得したビデオ情報を整形
+	$broadcastDate = $(conv2Narrow ($videoInfo.date).Replace('ほか', '').Replace('放送分', '放送')).trim()
+	if ($broadcastDate -match '([0-9]+)(月)([0-9]+)(日)(.+?)(放送)') {
+		$broadcastYMD = [DateTime]::ParseExact((Get-Date -Format 'yyyy') + $Matches[1].padleft(2, '0') + $Matches[3].padleft(2, '0'), 'yyyyMMdd', $null)
+		if ((Get-Date).AddDays(+1) -lt $broadcastYMD) {
+			$broadcastDate = (Get-Date).AddYears(-1).ToString('yyyy') + '年' + $Matches[1].padleft(2, '0') + $Matches[2] + $Matches[3].padleft(2, '0') + $Matches[4] + $Matches[6] 
+		} else {
+			$broadcastDate = (Get-Date).ToString('yyyy') + '年' + $Matches[1].padleft(2, '0') + $Matches[2] + $Matches[3].padleft(2, '0') + $Matches[4] + $Matches[6] 
+		}
+	} 
+	$title = $(conv2Narrow ($videoInfo.title).Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '').Replace('?', '？').Replace('!', '！')).trim()
+	$subtitle = $(conv2Narrow ($videoInfo.subtitle).Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '').Replace('?', '？').Replace('!', '！')).trim()
+	$media = $(conv2Narrow ($videoInfo.media).Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '')).trim()
+	$description = $(conv2Narrow ($videoInfo.note.text).Replace('&amp;', '&')).trim()
 
-	stopChrome ([ref]$chromeDriver)									#Chrome終了
+	#ビデオファイル情報をセット
 	$videoName = setVideoName $title $subtitle $broadcastDate		#保存ファイル名を設定
 	$savePath = $(Join-Path $downloadBasePath (removeInvalidFileNameChars $title))
 	$videoPath = $(Join-Path $savePath $videoName)
 
 	#ビデオ情報のコンソール出力
 	writeVideoInfo $videoName $broadcastDate $media $description 
-	writeVideoDebugInfo $videoPage '' $title $subtitle $videoPath $(getTimeStamp) $videoURL
+	writeVideoDebugInfo $videoPage '' $title $subtitle $videoPath $(getTimeStamp)
 
-		#ビデオタイトルが取得できなかった場合はスキップ次のビデオへ
-		if ($videoName -eq '.mp4') {
+	#ビデオ情報のコンソール出力
+	writeVideoInfo $videoName $broadcastDate $media $description 
+	writeVideoDebugInfo $videoPage $genre $title $subtitle $videoPath $(getTimeStamp)
+
+	#ビデオタイトルが取得できなかった場合はスキップ次のビデオへ
+	if ($videoName -eq '.mp4') {
 		Write-Host 'ビデオタイトルを特定できませんでした。スキップします。' -ForegroundColor DarkGray
 		continue			#次回再度ダウンロードをトライするためダウンロードリストに追加せずに次のビデオへ
 	}
@@ -160,61 +155,61 @@ while ($true) {
 	foreach ($ignoreTitle in $ignoreTitles) {
 		if ($(conv2Narrow $title) -eq $(conv2Narrow $ignoreTitle)) {
 			$ignore = $true
-				Write-Host '無視リストに入っているビデオです。スキップします。' -ForegroundColor DarkGray
+			Write-Host '無視リストに入っているビデオです。スキップします。' -ForegroundColor DarkGray
 			break
 		} 
 	}
 
-		#ダウンロード済みの場合はスキップフラグを立ててダウンロードリストに書き込み処理へ
-		if (Test-Path $videoPath) {
-			$ignore = $true
-			Write-Host 'すでにダウンロード済みのビデオです。スキップします。' -ForegroundColor DarkGray
-		} 
+	#ダウンロード済みの場合はスキップフラグを立ててダウンロードリストに書き込み処理へ
+	if (Test-Path $videoPath) {
+		$ignore = $true
+		Write-Host 'すでにダウンロード済みのビデオです。スキップします。' -ForegroundColor DarkGray
+	} 
 
-		#スキップフラグが立っているかチェック
+	#スキップフラグが立っているかチェック
 	if ($ignore -ne $true) {
 		#ダウンロードリストに行追加
-			Write-Verbose 'ダウンロードするファイルをダウンロードリストに追加します。'
+		Write-Verbose 'ダウンロードするファイルをダウンロードリストに追加します。'
 		$newVideo = [pscustomobject]@{ 
 			videoPage      = $videoPage ;
-			genre          = '' ;
+			genre          = $genre ;
 			title          = $title ;
 			subtitle       = $subtitle ;
 			media          = $media ;
 			broadcastDate  = $broadcastDate ;
-			downloadDate   = $(getTimeStamp)
+			downloadDate   = $(getTimeStamp) ;
 			videoName      = $videoName ;
 			videoPath      = $videoPath ;
 			videoValidated = '0' ;
 		}
 
-		} else {
-			#ダウンロードリストに行追加
-			Write-Verbose 'スキップしたファイルをダウンロードリストに追加します。'
-			$newVideo = [pscustomobject]@{ 
-				videoPage      = $videoPage ;
-				genre          = $genre ;
-				title          = $title ;
-				subtitle       = $subtitle ;
-				media          = $media ;
-				broadcastDate  = $broadcastDate ;
-				downloadDate   = '-- SKIPPED --' ;
-				videoName      = '-- SKIPPED --' ;
-				videoPath      = '-- SKIPPED --' ;
-				videoValidated = '0' ;
-			}
+	} else {
+		#ダウンロードリストに行追加
+		Write-Verbose 'スキップしたファイルをダウンロードリストに追加します。'
+		$newVideo = [pscustomobject]@{ 
+			videoPage      = $videoPage ;
+			genre          = $genre ;
+			title          = $title ;
+			subtitle       = $subtitle ;
+			media          = $media ;
+			broadcastDate  = $broadcastDate ;
+			downloadDate   = $(getTimeStamp) ;
+			videoName      = '-- SKIPPED --' ;
+			videoPath      = '-- SKIPPED --' ;
+			videoValidated = '0' ;
 		}
+	}
 
-		#ダウンロードリストCSV読み込み
-		Write-Debug 'ダウンロードリストを読み込みます。'
-		$videoLists = Import-Csv $listFile -Encoding UTF8
+	#ダウンロードリストCSV読み込み
+	Write-Debug 'ダウンロードリストを読み込みます。'
+	$videoLists = Import-Csv $listFile -Encoding UTF8
 
-		#ダウンロードリストCSV書き出し
-		$newList = @()
-		$newList += $videoLists
-		$newList += $newVideo
-		$newList | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
-		Write-Debug 'ダウンロードリストを書き込みました。'
+	#ダウンロードリストCSV書き出し
+	$newList = @()
+	$newList += $videoLists
+	$newList += $newVideo
+	$newList | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
+	Write-Debug 'ダウンロードリストを書き込みました。'
 
 	#無視リストに入っていなければffmpeg起動
 	if ($ignore -eq $true ) { 
@@ -226,12 +221,10 @@ while ($true) {
 			$null = New-Item -ItemType directory -Path $savePath
 		}
 
-		#ffmpeg起動
-		startFfmpeg $videoName $videoPath $videoURL '' $title $subtitle $description $media $videoPage $ffmpegPath
+		#yt-dlp起動
+		startYtdlp $videoPath $videoPage $ytdlpPath
 
 	}
-
-
 
 	Write-Output '処理を終了しました。'
 }

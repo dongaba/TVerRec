@@ -58,7 +58,7 @@ foreach ($moveToParentName in $moveToParentNameList) {
 		#同名フォルダが存在する場合は配下のファイルを移動
 		$moveFromPath = $(Join-Path $downloadBasePath $targetFolderName)
 		if ( Test-Path $moveFromPath) {
-			$moveFromPath = $moveFromPath + '\*'
+			$moveFromPath = $moveFromPath + '\*.mp4'
 			$moveToPath = $moveToParentPath + '\' + $targetFolderName
 			Write-Host "$moveFromPath を $moveToPath に移動します"
 			Move-Item $moveFromPath -Destination $moveToPath -Force

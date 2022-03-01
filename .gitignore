@@ -4,6 +4,15 @@ debug/*.html
 #pidファイル
 *pid.txt
 
+#Selenium関連
+lib/Selenium.WebDriverBackedSelenium.dll
+lib/WebDriver.dll
+lib/WebDriver.Support.dll
+lib/chromedriver.exe
+
+#Chrome拡張機能
+crx/*
+
 #Chrome拡張機能証明書
 *.pem
 
@@ -22,9 +31,3 @@ debug/*.html
 *.lnk
 *.bak
 tver - Copy.csv
-config/gyao_keyword.ini
-db/gyao.csv
-src/gyao_bulk.ps1
-src/gyao_single.ps1
-src/gyao_validate_video.ps1
-src/gyaorec_functions.ps1

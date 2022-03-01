@@ -75,7 +75,7 @@ if ($null -eq $videoLists) {
 		$pinfo.UseShellExecute = $false
 		$pinfo.WindowStyle = 'Hidden'
 		$pinfo.FileName = $ffmpegPath
-		$pinfo.Arguments = ' -v error -i "' + $videoPath + '" -f null - '
+		$pinfo.Arguments = ' -i "' + $videoPath + '" -f null - '
 		$p = New-Object System.Diagnostics.Process
 		$p.StartInfo = $pinfo
 		$p.Start() | Out-Null
