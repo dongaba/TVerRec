@@ -69,7 +69,9 @@ function getYtdlpProcessList ($parallelDownloadNum) {
 #----------------------------------------------------------------------
 function startYtdlp ($videoPath, $videoPage, $ytdlpPath) {
 	$ytdlpArgument = '-f b ' 
-	$ytdlpArgument += '--downloader aria2c '
+	$ytdlpArgument += '--abort-on-error '
+	$ytdlpArgument += '--no-part '
+	$ytdlpArgument += '--concurrent-fragments 1 '
 	$ytdlpArgument += '--no-mtime '
 	$ytdlpArgument += '--embed-thumbnail '
 	$ytdlpArgument += '--embed-metadata '

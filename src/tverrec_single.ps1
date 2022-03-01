@@ -141,10 +141,6 @@ while ($true) {
 	writeVideoInfo $videoName $broadcastDate $media $description 
 	writeVideoDebugInfo $videoPage '' $title $subtitle $videoPath $(getTimeStamp)
 
-	#ビデオ情報のコンソール出力
-	writeVideoInfo $videoName $broadcastDate $media $description 
-	writeVideoDebugInfo $videoPage $genre $title $subtitle $videoPath $(getTimeStamp)
-
 	#ビデオタイトルが取得できなかった場合はスキップ次のビデオへ
 	if ($videoName -eq '.mp4') {
 		Write-Host 'ビデオタイトルを特定できませんでした。スキップします。' -ForegroundColor DarkGray
@@ -172,7 +168,7 @@ while ($true) {
 		Write-Verbose 'ダウンロードするファイルをダウンロードリストに追加します。'
 		$newVideo = [pscustomobject]@{ 
 			videoPage      = $videoPage ;
-			genre          = $genre ;
+			genre          = '' ;
 			title          = $title ;
 			subtitle       = $subtitle ;
 			media          = $media ;
@@ -188,7 +184,7 @@ while ($true) {
 		Write-Verbose 'スキップしたファイルをダウンロードリストに追加します。'
 		$newVideo = [pscustomobject]@{ 
 			videoPage      = $videoPage ;
-			genre          = $genre ;
+			genre          = '' ;
 			title          = $title ;
 			subtitle       = $subtitle ;
 			media          = $media ;
