@@ -31,3 +31,5 @@ crx/*
 *.lnk
 *.bak
 tver - Copy.csv
+debug
+debug/*
