@@ -48,10 +48,10 @@ Add-Type -AssemblyName System.Windows.Forms
 
 #----------------------------------------------------------------------
 #開発環境用に設定上書き
-#if ((Test-Path 'R:\' -PathType Container) ) {
-$VerbosePreference = 'Continue'						#詳細メッセージ
-$DebugPreference = 'Continue'						#デバッグメッセージ
-#}
+if ((Test-Path 'R:\' -PathType Container) ) {
+	$VerbosePreference = 'Continue'						#詳細メッセージ
+	$DebugPreference = 'Continue'						#デバッグメッセージ
+}
 
 #----------------------------------------------------------------------
 #外部関数ファイルの読み込み

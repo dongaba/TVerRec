@@ -24,7 +24,6 @@
 #----------------------------------------------------------------------
 function checkRequiredFile { 
 
-	if (Test-Path $chromeUserDataPath -PathType Container) {} else { Write-Error 'ChromeのUserDataフォルダが存在しません。終了します。' ; exit }
 	if (Test-Path $downloadBasePath -PathType Container) {} else { Write-Error 'ビデオ保存先フォルダが存在しません。終了します。' ; exit }
 	if (Test-Path $ffmpegPath -PathType Leaf) {} else { Write-Error 'ffmpeg.exeが存在しません。終了します。' ; exit }
 	if (Test-Path $ytdlpPath -PathType Leaf) {} else { Write-Error 'yt-dlp.exeが存在しません。終了します。' ; exit }
@@ -70,6 +69,7 @@ function getYtdlpProcessList ($parallelDownloadNum) {
 function startYtdlp ($videoPath, $videoPage, $ytdlpPath) {
 	$ytdlpArgument = '-f b ' 
 	$ytdlpArgument += '--abort-on-error '
+	$ytdlpArgument += '--console-title '
 	$ytdlpArgument += '--no-part '
 	$ytdlpArgument += '--concurrent-fragments 1 '
 	$ytdlpArgument += '--no-mtime '
