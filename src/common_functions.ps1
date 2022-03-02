@@ -50,7 +50,7 @@ function getYtdlpProcessList ($parallelDownloadNum) {
 	try {
 		$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
 	} catch {
-		$ytdlpCount = 0
+		$ytdlpCount = 0			#プロセス数が取れなくてもとりあえず先に進む
 	}
 
 	$ytdlpCount = $ytdlpCount / 2

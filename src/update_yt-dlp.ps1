@@ -68,8 +68,3 @@ if ($latestVersion -ne $ytdlpCurrentVersion) {
 	Write-Host 'yt-dlpは最新です。 '
 	Write-Host ''
 }
-
-
-
-
-

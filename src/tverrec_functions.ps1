@@ -50,4 +50,3 @@ function writeVideoDebugInfo ($videoPage, $genre, $title, $subtitle, $videoPath,
 	Write-Debug "ファイル    :$videoPath"
 	Write-Debug "取得日付    :$timeStamp"
 }
-

@@ -20,7 +20,6 @@ rem #	limitations under the License.
 rem #
 rem ###################################################################################
 
-
 setlocal enabledelayedexpansion
 cd %~dp0
 

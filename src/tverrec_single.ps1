@@ -111,11 +111,15 @@ while ($true) {
 	}
 
 	#TVerのAPIを叩いてビデオ情報取得
-	$tverApiBaseURL = 'https://api.tver.jp/v4'
-	$tverApiTokenLink = 'https://tver.jp/api/access_token.php'					#APIトークン取得
-	$token = (Invoke-RestMethod -Uri $tverApiTokenLink -Method get).token		#APIトークンセット
-	$teverApiVideoURL = $tverApiBaseURL + $videoID + '?token=' + $token			#APIのURLをセット
-	$videoInfo = (Invoke-RestMethod -Uri $teverApiVideoURL -Method get).main	#API経由でビデオ情報取得
+	try {
+		$tverApiBaseURL = 'https://api.tver.jp/v4'
+		$tverApiTokenLink = 'https://tver.jp/api/access_token.php'					#APIトークン取得
+		$token = (Invoke-RestMethod -Uri $tverApiTokenLink -Method get).token		#APIトークンセット
+		$teverApiVideoURL = $tverApiBaseURL + $videoID + '?token=' + $token			#APIのURLをセット
+		$videoInfo = (Invoke-RestMethod -Uri $teverApiVideoURL -Method get).main	#API経由でビデオ情報取得
+	} catch {
+		continue										#動画情報が取れなければ以降の処理は行わずに次のビデオへ
+	}
 
 	#取得したビデオ情報を整形
 	$broadcastDate = $(conv2Narrow ($videoInfo.date).Replace('ほか', '').Replace('放送分', '放送')).trim()

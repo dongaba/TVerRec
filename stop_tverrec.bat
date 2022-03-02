@@ -55,4 +55,3 @@ if exist "%PIDFile%" (
 
 :END
 	pause
-

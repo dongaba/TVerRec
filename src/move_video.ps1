@@ -78,4 +78,3 @@ foreach ($subdir in $all_subdirs) {
 		Remove-Item -Path $subdir.FullName -Recurse -Force
 	}
 }
-

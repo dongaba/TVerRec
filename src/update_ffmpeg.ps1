@@ -78,3 +78,4 @@ if ($latestVersion -ne $ffmpegCurrentVersion) {
 	Write-Host 'ffmpegは最新です。 '
 	Write-Host ''
 }
+

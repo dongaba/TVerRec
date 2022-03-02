@@ -20,7 +20,6 @@ rem #	limitations under the License.
 rem #
 rem ###################################################################################
 
-
 setlocal enabledelayedexpansion
 cd %~dp0
 
@@ -28,4 +27,3 @@ title TVerRec Video File Deleter
 powershell -NoProfile -ExecutionPolicy Unrestricted .\src\delete_ignored.ps1
 
 pause
-
