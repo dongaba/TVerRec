@@ -74,9 +74,7 @@ function startYtdlp ($videoPath, $videoPage, $ytdlpPath) {
 	$ytdlpArgument += '--concurrent-fragments 1 '
 	$ytdlpArgument += '--no-mtime '
 	$ytdlpArgument += '--embed-thumbnail '
-	$ytdlpArgument += '--embed-metadata '
 	$ytdlpArgument += '--embed-subs '
-	$ytdlpArgument += '--no-force-overwrites '
 	$ytdlpArgument += '-o ' + ' "' + $videoPath + '" '
 	$ytdlpArgument += $videoPage 
 	Write-Debug "yt-dlp起動コマンド:$ytdlpPath $ytdlpArgument"
@@ -84,9 +82,30 @@ function startYtdlp ($videoPath, $videoPage, $ytdlpPath) {
 }
 
 #----------------------------------------------------------------------
+#ビデオ情報表示
+#----------------------------------------------------------------------
+function writeVideoInfo ($videoName, $broadcastDate, $media, $description ) {
+	Write-Host "ビデオ名    :$videoName"
+	Write-Host "放送日      :$broadcastDate"
+	Write-Host "テレビ局    :$media"
+	Write-Host "ビデオ説明  :$description"
+}
+#----------------------------------------------------------------------
+#ビデオ情報デバッグ表示
+#----------------------------------------------------------------------
+function writeVideoDebugInfo ($videoPage, $genre, $title, $subtitle, $videoPath, $timeStamp ) {
+	Write-Debug	"ビデオページ:$videoPage"
+	Write-Debug "ジャンル    :$genre"
+	Write-Debug "タイトル    :$title"
+	Write-Debug "サブタイトル:$subtitle"
+	Write-Debug "ファイル    :$videoPath"
+	Write-Debug "取得日付    :$timeStamp"
+}
+
+#----------------------------------------------------------------------
 #ファイル名・フォルダ名に禁止文字の削除
 #----------------------------------------------------------------------
-Function removeInvalidFileNameChars {
+function removeInvalidFileNameChars {
 	param(
 		[Parameter(Mandatory = $true,
 			Position = 0,

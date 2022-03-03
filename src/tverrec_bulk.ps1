@@ -56,7 +56,7 @@ if ((Test-Path 'R:\' -PathType Container) ) {
 #----------------------------------------------------------------------
 #外部関数ファイルの読み込み
 . '.\common_functions.ps1'
-. '.\tverrec_functions.ps1'
+. '.\tver_functions.ps1'
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -109,7 +109,7 @@ foreach ($genre in $genres) {
 	$videoLinks += $genrePage.Links | Where-Object href -Like '*lp*'  | Select-Object href
 	$ErrorActionPreference = 'continue'
 
-	saveGenrePage						#デバッグ用ジャンルページの保存
+	#saveGenrePage						#デバッグ用ジャンルページの保存
 
 	#----------------------------------------------------------------------
 	#個々のビデオダウンロードここから
@@ -119,8 +119,10 @@ foreach ($genre in $genres) {
 
 		#いろいろ初期化
 		$videoNum = $videoNum + 1		#ジャンル内のビデオ番号のインクリメント
-		$videoID = '' ; $videoPage = '' ; $videoName = '' ; $videoPath = ''
-		$tverApiBaseURL = '' ; $tverApiTokenLink = '' ; $token = '' ; $teverApiVideoURL = '' ; $videoInfo = ''
+		$videoID = '' ; $videoPage = '' ; $videoName = '' ; $videoPath = '' ;
+		$broadcastDate = '' ; $title = '' ; $subtitle = '' ; $media = '' ; $description = '' ;
+		$videoInfo = $null
+		#		$tverApiBaseURL = '' ; $tverApiTokenLink = '' ; $token = '' ; $teverApiVideoURL = '' ; 
 		$ignore = $false
 		$videoLists = $null ; $newVideo = $null
 
@@ -128,7 +130,7 @@ foreach ($genre in $genres) {
 		Write-Host "[ $genre - $videoNum / $videoTotal ] をダウンロードします。 ( $(getTimeStamp) )"
 		Write-Host '----------------------------------------------------------------------'
 
-		#ffmpegプロセスの確認と、ffmpegのプロセス数が多い場合の待機
+		#yt-dlpプロセスの確認と、yt-dlpのプロセス数が多い場合の待機
 		getYtdlpProcessList $parallelDownloadNum
 
 		$videoID = $videoLink.href
@@ -149,25 +151,13 @@ foreach ($genre in $genres) {
 
 		#TVerのAPIを叩いてビデオ情報取得
 		try {
-			$tverApiBaseURL = 'https://api.tver.jp/v4'
-			$tverApiTokenLink = 'https://tver.jp/api/access_token.php'					#APIトークン取得
-			$token = (Invoke-RestMethod -Uri $tverApiTokenLink -Method get).token		#APIトークンセット
-			$teverApiVideoURL = $tverApiBaseURL + $videoID + '?token=' + $token			#APIのURLをセット
-			$videoInfo = (Invoke-RestMethod -Uri $teverApiVideoURL -Method get).main	#API経由でビデオ情報取得
+			$videoInfo = callTVerAPI ($videoID)
 		} catch {
 			continue										#動画情報が取れなければ以降の処理は行わずに次のビデオへ
 		}
 
 		#取得したビデオ情報を整形
-		$broadcastDate = $(conv2Narrow ($videoInfo.date).Replace('ほか', '').Replace('放送分', '放送')).trim()
-		if ($broadcastDate -match '([0-9]+)(月)([0-9]+)(日)(.+?)(放送)') {
-			$broadcastYMD = [DateTime]::ParseExact((Get-Date -Format 'yyyy') + $Matches[1].padleft(2, '0') + $Matches[3].padleft(2, '0'), 'yyyyMMdd', $null)
-			if ((Get-Date).AddDays(+1) -lt $broadcastYMD) {
-				$broadcastDate = (Get-Date).AddYears(-1).ToString('yyyy') + '年' + $Matches[1].padleft(2, '0') + $Matches[2] + $Matches[3].padleft(2, '0') + $Matches[4] + $Matches[6] 
-			} else {
-				$broadcastDate = (Get-Date).ToString('yyyy') + '年' + $Matches[1].padleft(2, '0') + $Matches[2] + $Matches[3].padleft(2, '0') + $Matches[4] + $Matches[6] 
-			}
-		} 
+		$broadcastDate = getBroadcastDate ($videoInfo)
 		$title = $(conv2Narrow ($videoInfo.title).Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '').Replace('?', '？').Replace('!', '！')).trim()
 		$subtitle = $(conv2Narrow ($videoInfo.subtitle).Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '').Replace('?', '？').Replace('!', '！')).trim()
 		$media = $(conv2Narrow ($videoInfo.media).Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '')).trim()
