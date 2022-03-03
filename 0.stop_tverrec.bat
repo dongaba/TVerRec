@@ -24,7 +24,7 @@ setlocal enabledelayedexpansion
 cd %~dp0
 
 for /f %%i in ('hostname') do set HostName=%%i
-set PIDFile=%HostName%-pid.txt
+set PIDFile=pid-%HostName%.txt
 
 if exist "%PIDFile%" (
 	set /p targetPID=<%PIDFile%

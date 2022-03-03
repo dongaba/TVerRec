@@ -3,6 +3,7 @@ debug/*.html
 
 #pidファイル
 *pid.txt
+pid*.txt
 
 #Selenium関連
 lib/Selenium.WebDriverBackedSelenium.dll
