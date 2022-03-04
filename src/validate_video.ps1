@@ -100,10 +100,10 @@ if ($null -eq $videoLists) {
 		} else {
 			#終了コードが"0"のときは録画リストにチェック済みフラグを立てる
 			try {
-				$newList = (Import-Csv $listFile -Encoding UTF8 )
+				$videoLists = Import-Csv $listFile -Encoding UTF8
 				#該当のビデオのチェックステータスを"1"に
-				$($newList | Where-Object { $_.videoPath -eq $videoPath }).videoValidated = '1'
-				$newList | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
+				$($videoLists | Where-Object { $_.videoPath -eq $videoPath }).videoValidated = '1'
+				$videoLists | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
 			} catch {
 				Write-Host "録画リストを更新できませんでした。: $videoPath"
 			}
