@@ -126,6 +126,9 @@ foreach ($genre in $genres) {
 		$ignore = $false
 		$videoLists = $null ; $newVideo = $null
 
+		#保存先ディレクトリの存在確認
+		if (Test-Path $downloadBasePath -PathType Container) {} else { Write-Error 'ビデオ保存先フォルダが存在しません。終了します。' ; exit }
+
 		Write-Host '----------------------------------------------------------------------'
 		Write-Host "[ $genre - $videoNum / $videoTotal ] をダウンロードします。 ( $(getTimeStamp) )"
 		Write-Host '----------------------------------------------------------------------'
@@ -139,21 +142,29 @@ foreach ($genre in $genres) {
 		#TVerの番組説明の場合はビデオがないのでスキップ
 		if ($videoPage -match '/episode/') {
 			Write-Host 'ビデオではなくオンエア情報のようです。スキップします。' -ForegroundColor DarkGray
-			continue								#次のビデオへ
+			continue			#次のビデオへ
+		}
+
+		#ダウンロードリストの読み込み
+		try {
+			$listMatch = Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.videoPage -eq $videoPage } 
+		} catch {
+			Write-Host 'ダウンロードリストを読み書きできなかったのでスキップしました。'
+			continue			#次回再度トライするためダウンロードリストに追加せずに次のビデオへ
 		}
 
 		#すでにダウンロードリストに存在する場合はスキップ
-		$listMatch = Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.videoPage -eq $videoPage } 
 		if ( $null -ne $listMatch ) {
 			Write-Host '過去に処理したビデオです。スキップします。' -ForegroundColor DarkGray
-			continue								#次のビデオへ
+			continue			#次のビデオへ
 		}
 
 		#TVerのAPIを叩いてビデオ情報取得
 		try {
 			$videoInfo = callTVerAPI ($videoID)
 		} catch {
-			continue										#動画情報が取れなければ以降の処理は行わずに次のビデオへ
+			Write-Host 'TVerから情報を取得できませんでした。スキップします。' -ForegroundColor DarkGray
+			continue			#次回再度トライするためダウンロードリストに追加せずに次のビデオへ
 		}
 
 		#取得したビデオ情報を整形
@@ -178,20 +189,20 @@ foreach ($genre in $genres) {
 			continue			#次回再度ダウンロードをトライするためダウンロードリストに追加せずに次のビデオへ
 		}
 
-		#無視リストに入っている番組の場合はスキップフラグを立ててダウンロードリストに書き込み処理へ
-		foreach ($ignoreTitle in $ignoreTitles) {
-			if ($(conv2Narrow $title) -eq $(conv2Narrow $ignoreTitle)) {
-				$ignore = $true
-				Write-Host '無視リストに入っているビデオです。スキップします。' -ForegroundColor DarkGray
-				break
-			} 
-		}
-
 		#ダウンロード済みの場合はスキップフラグを立ててダウンロードリストに書き込み処理へ
 		if (Test-Path $videoPath) {
 			$ignore = $true
 			Write-Host 'すでにダウンロード済みのビデオです。スキップします。' -ForegroundColor DarkGray
-		} 
+		} else {
+			#無視リストに入っている番組の場合はスキップフラグを立ててダウンロードリストに書き込み処理へ
+			foreach ($ignoreTitle in $ignoreTitles) {
+				if ($(conv2Narrow $title) -eq $(conv2Narrow $ignoreTitle)) {
+					$ignore = $true
+					Write-Host '無視リストに入っているビデオです。スキップします。' -ForegroundColor DarkGray
+					break
+				} 
+			}
+		}
 
 		#スキップフラグが立っているかチェック
 		if ($ignore -ne $true) {
@@ -209,7 +220,6 @@ foreach ($genre in $genres) {
 				videoPath      = $videoPath ;
 				videoValidated = '0' ;
 			}
-
 		} else {
 			#ダウンロードリストに行追加
 			Write-Verbose 'スキップしたファイルをダウンロードリストに追加します。'
@@ -222,21 +232,21 @@ foreach ($genre in $genres) {
 				broadcastDate  = $broadcastDate ;
 				downloadDate   = $(getTimeStamp) ;
 				videoName      = '-- SKIPPED --' ;
-				videoPath      = '-- SKIPPED --' ;
+				videoPath      = $videoPath ;
 				videoValidated = '0' ;
 			}
 		}
 
-		#ダウンロードリストCSV読み込み
-		Write-Debug 'ダウンロードリストを読み込みます。'
-		$videoLists = Import-Csv $listFile -Encoding UTF8
-
-		#ダウンロードリストCSV書き出し
-		$newList = @()
-		$newList += $videoLists
-		$newList += $newVideo
-		$newList | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
-		Write-Debug 'ダウンロードリストを書き込みました。'
+		try {
+			#ダウンロードリストCSV書き出し
+			Write-Debug 'ダウンロードリストを読み込みます。'
+			$videoLists = Import-Csv $listFile -Encoding UTF8
+			$newVideo | Export-Csv $listFile -NoTypeInformation -Encoding UTF8 -Append
+			Write-Debug 'ダウンロードリストを書き込みました。'
+		} catch {
+			Write-Host 'ダウンロードリストを読み書きできなかったのでスキップしました。'
+			continue			#次回再度トライするためダウンロードリストに追加せずに次のビデオへ
+		}
 
 		#無視リストに入っていなければffmpeg起動
 		if ($ignore -eq $true ) { 

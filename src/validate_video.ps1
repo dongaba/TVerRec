@@ -67,6 +67,10 @@ if ($null -eq $videoLists) {
 	foreach ($videoList in $videoLists.videoPath) {
 		$videoPath = $videoList
 		$j = $j + 1
+
+		#保存先ディレクトリの存在確認
+		if (Test-Path $downloadBasePath -PathType Container) {} else { Write-Error 'ビデオ保存先フォルダが存在しません。終了します。' ; exit }
+
 		Write-Host "$j/$i 本目をチェック中: $videoPath"
 
 		#ffmpegで整合性チェック
