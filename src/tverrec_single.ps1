@@ -89,7 +89,7 @@ while ($true) {
 	$broadcastDate = '' ; $title = '' ; $subtitle = '' ; $media = '' ; $description = '' ;
 	$videoInfo = $null
 	$ignore = $false
-	$videoLists = $null ; $newVideo = $null
+	$newVideo = $null
 
 	#yt-dlpプロセスの確認と、yt-dlpのプロセス数が多い場合の待機
 	getYtdlpProcessList $parallelDownloadNum
@@ -198,9 +198,6 @@ while ($true) {
 
 	try {
 		#ダウンロードリストCSV書き出し
-		Write-Debug 'ダウンロードリストを読み込みます。'
-		$videoLists = Import-Csv $listFile -Encoding UTF8
-		$videoLists = Import-Csv $listFile -Encoding UTF8
 		$newVideo | Export-Csv $listFile -NoTypeInformation -Encoding UTF8 -Append
 		Write-Debug 'ダウンロードリストを書き込みました。'
 	} catch {

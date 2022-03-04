@@ -124,7 +124,7 @@ foreach ($genre in $genres) {
 		$videoInfo = $null
 		#		$tverApiBaseURL = '' ; $tverApiTokenLink = '' ; $token = '' ; $teverApiVideoURL = '' ; 
 		$ignore = $false
-		$videoLists = $null ; $newVideo = $null
+		$newVideo = $null
 
 		#保存先ディレクトリの存在確認
 		if (Test-Path $downloadBasePath -PathType Container) {} else { Write-Error 'ビデオ保存先フォルダが存在しません。終了します。' ; exit }
@@ -239,8 +239,6 @@ foreach ($genre in $genres) {
 
 		try {
 			#ダウンロードリストCSV書き出し
-			Write-Debug 'ダウンロードリストを読み込みます。'
-			$videoLists = Import-Csv $listFile -Encoding UTF8
 			$newVideo | Export-Csv $listFile -NoTypeInformation -Encoding UTF8 -Append
 			Write-Debug 'ダウンロードリストを書き込みました。'
 		} catch {
