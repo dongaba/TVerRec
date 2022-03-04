@@ -19,52 +19,63 @@
 #
 ###################################################################################
 
-$scriptRoot = if ($PSScriptRoot -eq '') { '.' } else { $PSScriptRoot }
+#Windowsの判定
+Set-StrictMode -Off
+$isWin = $PSVersionTable.Platform -match '^($|(Microsoft )?Win)'
+Set-StrictMode -Version Latest
 
-#githubの設定
-$repo = 'yt-dlp/yt-dlp'
-$file = 'yt-dlp.exe'
-$releases = "https://api.github.com/repos/$repo/releases"
+if ($isWin) {
 
-#yt-dlp保存先相対Path
-$ytdlpRelativeDir = '..\bin'
-$ytdlpDir = $(Join-Path $scriptRoot $ytdlpRelativeDir)
-$ytdlpFile = $(Join-Path $ytdlpDir 'yt-dlp.exe')
+	$scriptRoot = if ($PSScriptRoot -eq '') { '.' } else { $PSScriptRoot }
 
-#yt-dlpのディレクトリがなければ作成
-if (-Not (Test-Path $ytdlpDir -PathType Container)) {
-	$null = New-Item -ItemType directory -Path $ytdlpDir
-}
+	#githubの設定
+	$repo = 'yt-dlp/yt-dlp'
+	$file = 'yt-dlp.exe'
+	$releases = "https://api.github.com/repos/$repo/releases"
 
-#yt-dlpのバージョン取得
-if (Test-Path $ytdlpFile -PathType Leaf) {
-	# get version of current yt-dlp.exe
-	$ytdlpCurrentVersion = (& $ytdlpFile --version)
+	#yt-dlp保存先相対Path
+	$ytdlpRelativeDir = '..\bin'
+	$ytdlpDir = $(Join-Path $scriptRoot $ytdlpRelativeDir)
+	$ytdlpFile = $(Join-Path $ytdlpDir 'yt-dlp.exe')
+
+	#yt-dlpのディレクトリがなければ作成
+	if (-Not (Test-Path $ytdlpDir -PathType Container)) {
+		$null = New-Item -ItemType directory -Path $ytdlpDir
+	}
+
+	#yt-dlpのバージョン取得
+	if (Test-Path $ytdlpFile -PathType Leaf) {
+		# get version of current yt-dlp.exe
+		$ytdlpCurrentVersion = (& $ytdlpFile --version)
+	} else {
+		# if yt-dlp.exe not found, will download it
+		$ytdlpCurrentVersion = ''
+	}
+
+	#yt-dlpの最新バージョン取得
+	$latestVersion = (Invoke-WebRequest $releases | ConvertFrom-Json)[0].tag_name
+
+	Write-Host 'yt-dlp current:' $ytdlpCurrentVersion
+	Write-Host 'yt-dlp latest:' $latestVersion
+
+	#youtube-dlのダウンロード
+	if ($latestVersion -ne $ytdlpCurrentVersion) {
+		#ダウンロード
+		$tag = (Invoke-WebRequest $releases | ConvertFrom-Json)[0].tag_name
+		$download = "https://github.com/$repo/releases/download/$tag/$file"
+		$ytdlpFileLocation = $(Join-Path $ytdlpDir $file)
+
+		Write-Host "yt-dlpをダウンロードします。 $download"
+		Invoke-WebRequest $download -Out $ytdlpFileLocation
+
+		#バージョンチェック
+		$ytdlpCurrentVersion = (& $ytdlpFile --version)
+		Write-Host "yt-dlpをversion $ytdlpCurrentVersion に更新しました。 "
+	} else {
+		Write-Host 'yt-dlpは最新です。 '
+		Write-Host ''
+	}
+
 } else {
-	# if yt-dlp.exe not found, will download it
-	$ytdlpCurrentVersion = ''
-}
-
-#yt-dlpの最新バージョン取得
-$latestVersion = (Invoke-WebRequest $releases | ConvertFrom-Json)[0].tag_name
-
-Write-Host 'yt-dlp current:' $ytdlpCurrentVersion
-Write-Host 'yt-dlp latest:' $latestVersion
-
-#youtube-dlのダウンロード
-if ($latestVersion -ne $ytdlpCurrentVersion) {
-	#ダウンロード
-	$tag = (Invoke-WebRequest $releases | ConvertFrom-Json)[0].tag_name
-	$download = "https://github.com/$repo/releases/download/$tag/$file"
-	$ytdlpFileLocation = $(Join-Path $ytdlpDir $file)
-
-	Write-Host "yt-dlpをダウンロードします。 $download"
-	Invoke-WebRequest $download -Out $ytdlpFileLocation
-
-	#バージョンチェック
-	$ytdlpCurrentVersion = (& $ytdlpFile --version)
-	Write-Host "yt-dlpをversion $ytdlpCurrentVersion に更新しました。 "
-} else {
-	Write-Host 'yt-dlpは最新です。 '
-	Write-Host ''
+	Write-Host '自動アップデートはWindowsでのみ動作します。 '
 }

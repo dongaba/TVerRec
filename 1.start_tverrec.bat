@@ -37,13 +37,11 @@ powershell -NoProfile -ExecutionPolicy Unrestricted "Get-WmiObject win32_process
 	timeout /T %sleepTime% /nobreak > nul
 
 :ProcessChecker
-	rem chromedriverのゾンビが残っていたら終了
-	taskkill /F /T /IM chromedriver.exe > NUL 2>&1
-	rem ffmpegプロセスチェック
-	tasklist | find "ffmpeg.exe" > NUL 2>&1
+	rem yt-dlpプロセスチェック
+	tasklist | findstr /i "ffmpeg yt-dlp" > NUL 2>&1
 	if %ERRORLEVEL% == 0 (
 		echo ダウンロードが進行中です...
-		tasklist /fi "Imagename eq ffmpeg.exe"
+		tasklist /v /fi "Imagename eq yt-dlp.exe"
 		echo %sleepTime%秒待機します...
 		timeout /T %sleepTime% /nobreak > nul
 		goto ProcessChecker
@@ -52,7 +50,9 @@ powershell -NoProfile -ExecutionPolicy Unrestricted "Get-WmiObject win32_process
 	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\validate_video.ps1
 	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\validate_video.ps1
 
-	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\move_video.ps1
+	if %ERRORLEVEL% == 0 (
+		powershell -NoProfile -ExecutionPolicy Unrestricted .\src\move_video.ps1
+	)
 
 	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\delete_ignored.ps1
 

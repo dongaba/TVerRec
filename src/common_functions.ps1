@@ -23,15 +23,13 @@
 #設定で指定したファイル・フォルダの存在チェック
 #----------------------------------------------------------------------
 function checkRequiredFile { 
-
 	if (Test-Path $downloadBasePath -PathType Container) {} else { Write-Error 'ビデオ保存先フォルダが存在しません。終了します。' ; exit }
-	if (Test-Path $ffmpegPath -PathType Leaf) {} else { Write-Error 'ffmpeg.exeが存在しません。終了します。' ; exit }
-	if (Test-Path $ytdlpPath -PathType Leaf) {} else { Write-Error 'yt-dlp.exeが存在しません。終了します。' ; exit }
+	if (Test-Path $ffmpegPath -PathType Leaf) {} else { Write-Error 'ffmpegが存在しません。終了します。' ; exit }
+	if (Test-Path $ytdlpPath -PathType Leaf) {} else { Write-Error 'yt-dlpが存在しません。終了します。' ; exit }
 	if (Test-Path $iniFile -PathType Leaf) {} else { Write-Error 'ユーザ設定ファイルが存在しません。終了します。' ; exit }
 	if (Test-Path $keywordFile -PathType Leaf) {} else { Write-Error 'ダウンロード対象ジャンリリストが存在しません。終了します。' ; exit }
 	if (Test-Path $ignoreFile -PathType Leaf) {} else { Write-Error 'ダウンロード対象外ビデオリストが存在しません。終了します。' ; exit }
 	if (Test-Path $listFile -PathType Leaf) {} else { Write-Error 'ダウンロードリストが存在しません。終了します。' ; exit }
-
 }
 
 #----------------------------------------------------------------------

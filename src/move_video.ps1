@@ -42,6 +42,10 @@ Get-Content $iniFile | Where-Object { $_ -notmatch '^\s*$' } | `
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
 
+#保存先ディレクトリの存在確認
+if (Test-Path $downloadBasePath -PathType Container) {} else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' ; exit 1 }
+if (Test-Path $saveBasePath -PathType Container) {} else { Write-Error 'ビデオ移動先フォルダにアクセスできません。終了します。' ; exit 1 }
+
 #移動先フォルダのサブフォルダの取得
 foreach ($moveToParentName in $moveToParentNameList) {
 	$moveToParentPath = $(Join-Path $saveBasePath $moveToParentName)

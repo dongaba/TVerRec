@@ -22,8 +22,6 @@
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#Set-StrictMode -Off
-Set-StrictMode -Version Latest
 $currentDir = Split-Path $MyInvocation.MyCommand.Path
 Set-Location $currentDir
 $configDir = $(Join-Path $currentDir '..\config')
@@ -45,7 +43,7 @@ Get-Content $iniFile | Where-Object { $_ -notmatch '^\s*$' } | `
 #録画リストからビデオチェックが終わっていないものを読み込み
 $videoLists = Import-Csv $listFile -Encoding UTF8 | `
 		Where-Object { $_.videoValidated -ne '1' } | `
-		Where-Object { $_.videoPath -ne '-- SKIPPED --' } | `
+		Where-Object { $_.videoPath -ne '-- IGNORED --' } | `
 		Select-Object 'videoPath'
 
 if ($null -eq $videoLists) {
@@ -69,30 +67,32 @@ if ($null -eq $videoLists) {
 		$j = $j + 1
 
 		#保存先ディレクトリの存在確認
-		if (Test-Path $downloadBasePath -PathType Container) {} else { Write-Error 'ビデオ保存先フォルダが存在しません。終了します。' ; exit }
+		if (Test-Path $downloadBasePath -PathType Container) {} else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' ; exit 1 }
 
 		Write-Host "$j/$i 本目をチェック中: $videoPath"
 
 		#ffmpegで整合性チェック
-		$pinfo = New-Object System.Diagnostics.ProcessStartInfo
-		$pinfo.RedirectStandardError = $true
-		$pinfo.UseShellExecute = $false
-		$pinfo.WindowStyle = 'Hidden'
-		$pinfo.FileName = $ffmpegPath
-		$pinfo.Arguments = ' -v error -i "' + $videoPath + '" -f null - '
-		$p = New-Object System.Diagnostics.Process
-		$p.StartInfo = $pinfo
-		$p.Start() | Out-Null
-		$p.WaitForExit()
-		$stderr = $p.StandardError.ReadToEnd()
+		$processInfo = New-Object System.Diagnostics.ProcessStartInfo
+		$processInfo.RedirectStandardError = $true
+		$processInfo.UseShellExecute = $false
+		$processInfo.WindowStyle = 'Hidden'
+		$processInfo.FileName = $ffmpegPath
+		$processInfo.Arguments = ' -v error -i "' + $videoPath + '" -f null - '
+		$process = New-Object System.Diagnostics.Process
+		$process.StartInfo = $processInfo
+		$process.Start() | Out-Null
+		$process.WaitForExit()
+		$stderr = $process.StandardError.ReadToEnd()
 
-		if ( $p.ExitCode -ne 0 ) {
+		if ( $process.ExitCode -ne 0 ) {
 			#終了コードが"0"以外は録画リストとファイルを削除
 			Write-Host "stderr: $stderr"
-			Write-Host 'exit code: ' $p.ExitCode
+			Write-Host 'exit code: ' $process.ExitCode
 			try {
+				#破損している動画ファイルを録画リストから削除
 				(Select-String -Pattern $videoPath -Path $listFile -Encoding utf8 -SimpleMatch -NotMatch).Line `
 				| Out-File $listFile -Encoding utf8
+				#破損している動画ファイルを削除
 				Remove-Item $videoPath
 			} catch {
 				Write-Host "ファイル削除できませんでした。: $videoPath"

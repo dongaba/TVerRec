@@ -24,13 +24,16 @@ using namespace System.Text.RegularExpressions
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#Set-StrictMode -Off
-Set-StrictMode -Version Latest
 $currentDir = Split-Path $MyInvocation.MyCommand.Path
 Set-Location $currentDir
 $configDir = $(Join-Path $currentDir '..\config')
 $sysFile = $(Join-Path $configDir 'system_setting.ini')
 $iniFile = $(Join-Path $configDir 'user_setting.ini')
+
+#Windowsの判定
+Set-StrictMode -Off
+$isWin = $PSVersionTable.Platform -match '^($|(Microsoft )?Win)'
+Set-StrictMode -Version Latest
 
 #----------------------------------------------------------------------
 #外部設定ファイル読み込み
@@ -71,8 +74,10 @@ Write-Host ''
 
 #----------------------------------------------------------------------
 #動作環境チェック
-. '.\update_ffmpeg.ps1'				#ffmpegの最新化チェック
-. '.\update_yt-dlp.ps1'				#yt-dlpの最新化チェック
+if ($isWin) {
+	. '.\update_ffmpeg.ps1'				#ffmpegの最新化チェック
+	. '.\update_yt-dlp.ps1'				#yt-dlpの最新化チェック
+}
 checkRequiredFile					#設定で指定したファイル・フォルダの存在チェック
 #checkGeoIP							#日本のIPアドレスでないと接続不可のためIPアドレスをチェック
 
@@ -123,11 +128,11 @@ foreach ($genre in $genres) {
 		$broadcastDate = '' ; $title = '' ; $subtitle = '' ; $media = '' ; $description = '' ;
 		$videoInfo = $null
 		#		$tverApiBaseURL = '' ; $tverApiTokenLink = '' ; $token = '' ; $teverApiVideoURL = '' ; 
-		$ignore = $false
+		$ignore = $false ; $skip = $false
 		$newVideo = $null
 
 		#保存先ディレクトリの存在確認
-		if (Test-Path $downloadBasePath -PathType Container) {} else { Write-Error 'ビデオ保存先フォルダが存在しません。終了します。' ; exit }
+		if (Test-Path $downloadBasePath -PathType Container) {} else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' ; exit 1 }
 
 		Write-Host '----------------------------------------------------------------------'
 		Write-Host "[ $genre - $videoNum / $videoTotal ] をダウンロードします。 ( $(getTimeStamp) )"
@@ -153,7 +158,7 @@ foreach ($genre in $genres) {
 			continue			#次回再度トライするためダウンロードリストに追加せずに次のビデオへ
 		}
 
-		#すでにダウンロードリストに存在する場合はスキップ
+		#URLがすでにダウンロードリストに存在する場合はスキップ
 		if ( $null -ne $listMatch ) {
 			Write-Host '過去に処理したビデオです。スキップします。' -ForegroundColor DarkGray
 			continue			#次のビデオへ
@@ -189,9 +194,9 @@ foreach ($genre in $genres) {
 			continue			#次回再度ダウンロードをトライするためダウンロードリストに追加せずに次のビデオへ
 		}
 
-		#ダウンロード済みの場合はスキップフラグを立ててダウンロードリストに書き込み処理へ
+		#ファイルが既に存在する場合はスキップフラグを立ててダウンロードリストに書き込み処理へ
 		if (Test-Path $videoPath) {
-			$ignore = $true
+			$skip = $true
 			Write-Host 'すでにダウンロード済みのビデオです。スキップします。' -ForegroundColor DarkGray
 		} else {
 			#無視リストに入っている番組の場合はスキップフラグを立ててダウンロードリストに書き込み処理へ
@@ -218,6 +223,21 @@ foreach ($genre in $genres) {
 				downloadDate   = $(getTimeStamp) ;
 				videoName      = $videoName ;
 				videoPath      = $videoPath ;
+				videoValidated = '0' ;
+			}
+		} elseif ($skip -ne $true) {
+			#ダウンロードリストに行追加
+			Write-Verbose '無視したファイルをダウンロードリストに追加します。'
+			$newVideo = [pscustomobject]@{ 
+				videoPage      = $videoPage ;
+				genre          = $genre ;
+				title          = $title ;
+				subtitle       = $subtitle ;
+				media          = $media ;
+				broadcastDate  = $broadcastDate ;
+				downloadDate   = $(getTimeStamp) ;
+				videoName      = '-- IGNORED --' ;
+				videoPath      = '-- IGNORED --' ;
 				videoValidated = '0' ;
 			}
 		} else {
