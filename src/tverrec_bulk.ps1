@@ -18,7 +18,6 @@
 #	limitations under the License.
 #
 ###################################################################################
-using namespace Microsoft.VisualBasic
 using namespace System.Text.RegularExpressions
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

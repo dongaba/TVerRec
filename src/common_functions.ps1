@@ -163,15 +163,6 @@ function conv2Narrow {
 	}
 	return $text
 
-	#	# 正規表現のパターン
-	#	$regexAlphaNumeric = '[０-９Ａ-Ｚａ-ｚ＃＄％＆－＿／［］｛｝（）＜＞　]+'
-	#
-	#	# MatchEvaluatorデリゲート
-	#	$matchEvaluator = { param([Match]$match) [strings]::StrConv($match, [VbStrConv]::Narrow, 0x0411) }
-	#
-	#	# regexクラスのReplaceメソッドを使用。第2引数にMatchEvaluatorデリゲートを指定
-	#	$result = [regex]::Replace($text, $regexAlphaNumeric, $matchEvaluator)
-	#	return $result
 }
 
 #----------------------------------------------------------------------
