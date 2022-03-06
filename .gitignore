@@ -5,18 +5,6 @@ debug/*.html
 *pid.txt
 pid*.txt
 
-#Selenium関連
-lib/Selenium.WebDriverBackedSelenium.dll
-lib/WebDriver.dll
-lib/WebDriver.Support.dll
-lib/chromedriver.exe
-
-#Chrome拡張機能
-crx/*
-
-#Chrome拡張機能証明書
-*.pem
-
 #アーカイブ
 *.7z
 *.zip

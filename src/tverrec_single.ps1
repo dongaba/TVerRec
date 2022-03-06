@@ -27,8 +27,8 @@ using namespace System.Text.RegularExpressions
 $currentDir = Split-Path $MyInvocation.MyCommand.Path
 Set-Location $currentDir
 $configDir = $(Join-Path $currentDir '..\config')
-$sysFile = $(Join-Path $configDir 'system_setting.ini')
-$iniFile = $(Join-Path $configDir 'user_setting.ini')
+$sysFile = $(Join-Path $configDir 'system_setting.conf')
+$confFile = $(Join-Path $configDir 'user_setting.conf')
 
 #Windowsの判定
 Set-StrictMode -Off
@@ -40,14 +40,13 @@ Set-StrictMode -Version Latest
 Get-Content $sysFile | Where-Object { $_ -notmatch '^\s*$' } | `
 		Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
 		Invoke-Expression
-Get-Content $iniFile | Where-Object { $_ -notmatch '^\s*$' } | `
+Get-Content $confFile | Where-Object { $_ -notmatch '^\s*$' } | `
 		Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
 		Invoke-Expression
 
 #----------------------------------------------------------------------
 #必要モジュールの読み込み
 Add-Type -AssemblyName Microsoft.VisualBasic
-Add-Type -AssemblyName System.Windows.Forms
 
 #----------------------------------------------------------------------
 #開発環境用に設定上書き
@@ -90,11 +89,16 @@ $ignoreTitles = (Get-Content $ignoreFile -Encoding UTF8 | `
 #無限ループ
 while ($true) {
 	#いろいろ初期化
-	$videoID = '' ; $videoPage = '' ; $videoName = '' ; $videoPath = '' ;
+	$videoID = '' ; $videoPage = '' ; $videoName = '' ; $videoPath = '' ; $videoPageLP = '' ;
 	$broadcastDate = '' ; $title = '' ; $subtitle = '' ; $media = '' ; $description = '' ;
 	$videoInfo = $null
 	$ignore = $false ; $skip = $false
 	$newVideo = $null
+
+	#保存先ディレクトリの存在確認
+	if (Test-Path $downloadBasePath -PathType Container) {} else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' ; exit 1 }
+
+	$genre = ''
 
 	#yt-dlpプロセスの確認と、yt-dlpのプロセス数が多い場合の待機
 	getYtdlpProcessList $parallelDownloadNum
@@ -109,15 +113,13 @@ while ($true) {
 		continue			#次のビデオへ
 	}
 
-	#ダウンロードリストの読み込み
+	#URLがすでにダウンロードリストに存在する場合はスキップ
 	try {
 		$listMatch = Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.videoPage -eq $videoPage } 
 	} catch {
 		Write-Host 'ダウンロードリストを読み書きできなかったのでスキップしました。'
 		continue			#次回再度トライするためダウンロードリストに追加せずに次のビデオへ
 	}
-
-	#URLがすでにダウンロードリストに存在する場合はスキップ
 	if ( $null -ne $listMatch ) {
 		Write-Host '過去に処理したビデオです。スキップします。' -ForegroundColor DarkGray
 		continue			#次のビデオへ
@@ -131,12 +133,25 @@ while ($true) {
 		continue			#次回再度トライするためダウンロードリストに追加せずに次のビデオへ
 	}
 
+	#LPがすでにダウンロードリストに存在する場合はスキップ
+	try {
+		$listMatch = Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.videoPageLP -eq $videoPageLP } 
+	} catch {
+		Write-Host 'ダウンロードリストを読み書きできなかったのでスキップしました。'
+		continue			#次回再度トライするためダウンロードリストに追加せずに次のビデオへ
+	}
+	if ( $null -ne $listMatch ) {
+		Write-Host '過去に処理したビデオです。スキップします。' -ForegroundColor DarkGray
+		continue			#次のビデオへ
+	}
+
 	#取得したビデオ情報を整形
 	$broadcastDate = getBroadcastDate ($videoInfo)
 	$title = $(conv2Narrow ($videoInfo.title).Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '').Replace('?', '？').Replace('!', '！')).trim()
 	$subtitle = $(conv2Narrow ($videoInfo.subtitle).Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '').Replace('?', '？').Replace('!', '！')).trim()
 	$media = $(conv2Narrow ($videoInfo.media).Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '')).trim()
 	$description = $(conv2Narrow ($videoInfo.note.text).Replace('&amp;', '&')).trim()
+	$videoPageLP = getVideoPageLP ($videoInfo)
 
 	#ビデオファイル情報をセット
 	$videoName = setVideoName $title $subtitle $broadcastDate		#保存ファイル名を設定
@@ -145,7 +160,7 @@ while ($true) {
 
 	#ビデオ情報のコンソール出力
 	writeVideoInfo $videoName $broadcastDate $media $description 
-	writeVideoDebugInfo $videoPage '' $title $subtitle $videoPath $(getTimeStamp)
+	writeVideoDebugInfo $videoPage $videoPageLP $genre $title $subtitle $videoPath $(getTimeStamp)
 
 	#ビデオタイトルが取得できなかった場合はスキップ次のビデオへ
 	if ($videoName -eq '.mp4') {
@@ -174,6 +189,7 @@ while ($true) {
 		Write-Verbose 'ダウンロードするファイルをダウンロードリストに追加します。'
 		$newVideo = [pscustomobject]@{ 
 			videoPage      = $videoPage ;
+			videoPageLP    = $videoPageLP ;
 			genre          = $genre ;
 			title          = $title ;
 			subtitle       = $subtitle ;
@@ -189,6 +205,7 @@ while ($true) {
 		Write-Verbose '無視したファイルをダウンロードリストに追加します。'
 		$newVideo = [pscustomobject]@{ 
 			videoPage      = $videoPage ;
+			videoPageLP    = $videoPageLP ;
 			genre          = $genre ;
 			title          = $title ;
 			subtitle       = $subtitle ;
@@ -204,6 +221,7 @@ while ($true) {
 		Write-Verbose 'スキップしたファイルをダウンロードリストに追加します。'
 		$newVideo = [pscustomobject]@{ 
 			videoPage      = $videoPage ;
+			videoPageLP    = $videoPageLP ;
 			genre          = $genre ;
 			title          = $title ;
 			subtitle       = $subtitle ;
@@ -225,16 +243,14 @@ while ($true) {
 		continue			#次回再度トライするためダウンロードリストに追加せずに次のビデオへ
 	}
 
-	#無視リストに入っていなければffmpeg起動
-	if ($ignore -eq $true ) { 
-		continue		#無視リストに入っているビデオは飛ばして次のファイルへ
+	#スキップや無視対象でなければyt-dlp起動
+	if (($ignore -eq $true ) -Or ($skip -eq $true)) { 
+		continue			#スキップや無視対象は飛ばして次のファイルへ
 	} else {
-
 		#保存作ディレクトリがなければ作成
 		if (-Not (Test-Path $savePath -PathType Container)) {
 			$null = New-Item -ItemType directory -Path $savePath
 		}
-
 		#yt-dlp起動
 		startYtdlp $videoPath $videoPage $ytdlpPath
 

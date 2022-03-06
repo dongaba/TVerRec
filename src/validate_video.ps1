@@ -25,15 +25,15 @@
 $currentDir = Split-Path $MyInvocation.MyCommand.Path
 Set-Location $currentDir
 $configDir = $(Join-Path $currentDir '..\config')
-$sysFile = $(Join-Path $configDir 'system_setting.ini')
-$iniFile = $(Join-Path $configDir 'user_setting.ini')
+$sysFile = $(Join-Path $configDir 'system_setting.conf')
+$confFile = $(Join-Path $configDir 'user_setting.conf')
 
 #----------------------------------------------------------------------
 #外部設定ファイル読み込み
 Get-Content $sysFile | Where-Object { $_ -notmatch '^\s*$' } | `
 		Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
 		Invoke-Expression
-Get-Content $iniFile | Where-Object { $_ -notmatch '^\s*$' } | `
+Get-Content $confFile | Where-Object { $_ -notmatch '^\s*$' } | `
 		Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
 		Invoke-Expression
 

@@ -23,13 +23,13 @@
 #設定で指定したファイル・フォルダの存在チェック
 #----------------------------------------------------------------------
 function checkRequiredFile { 
-	if (Test-Path $downloadBasePath -PathType Container) {} else { Write-Error 'ビデオ保存先フォルダが存在しません。終了します。' ; exit }
-	if (Test-Path $ffmpegPath -PathType Leaf) {} else { Write-Error 'ffmpegが存在しません。終了します。' ; exit }
-	if (Test-Path $ytdlpPath -PathType Leaf) {} else { Write-Error 'yt-dlpが存在しません。終了します。' ; exit }
-	if (Test-Path $iniFile -PathType Leaf) {} else { Write-Error 'ユーザ設定ファイルが存在しません。終了します。' ; exit }
-	if (Test-Path $keywordFile -PathType Leaf) {} else { Write-Error 'ダウンロード対象ジャンリリストが存在しません。終了します。' ; exit }
-	if (Test-Path $ignoreFile -PathType Leaf) {} else { Write-Error 'ダウンロード対象外ビデオリストが存在しません。終了します。' ; exit }
-	if (Test-Path $listFile -PathType Leaf) {} else { Write-Error 'ダウンロードリストが存在しません。終了します。' ; exit }
+	if (Test-Path $downloadBasePath -PathType Container) {} else { Write-Error 'ビデオ保存先フォルダが存在しません。終了します。' ; exit 1 }
+	if (Test-Path $ffmpegPath -PathType Leaf) {} else { Write-Error 'ffmpegが存在しません。終了します。' ; exit 1 }
+	if (Test-Path $ytdlpPath -PathType Leaf) {} else { Write-Error 'yt-dlpが存在しません。終了します。' ; exit 1 }
+	if (Test-Path $confFile -PathType Leaf) {} else { Write-Error 'ユーザ設定ファイルが存在しません。終了します。' ; exit 1 }
+	if (Test-Path $keywordFile -PathType Leaf) {} else { Write-Error 'ダウンロード対象ジャンルリストが存在しません。終了します。' ; exit 1 }
+	if (Test-Path $ignoreFile -PathType Leaf) {} else { Write-Error 'ダウンロード対象外ビデオリストが存在しません。終了します。' ; exit 1 }
+	if (Test-Path $listFile -PathType Leaf) {} else { Write-Error 'ダウンロードリストが存在しません。終了します。' ; exit 1 }
 }
 
 #----------------------------------------------------------------------
@@ -68,7 +68,6 @@ function startYtdlp ($videoPath, $videoPage, $ytdlpPath) {
 	$ytdlpArgument = '-f b ' 
 	$ytdlpArgument += '--abort-on-error '
 	$ytdlpArgument += '--console-title '
-	$ytdlpArgument += '--no-part '
 	$ytdlpArgument += '--concurrent-fragments 1 '
 	$ytdlpArgument += '--no-mtime '
 	$ytdlpArgument += '--embed-thumbnail '
@@ -76,7 +75,13 @@ function startYtdlp ($videoPath, $videoPage, $ytdlpPath) {
 	$ytdlpArgument += '-o ' + ' "' + $videoPath + '" '
 	$ytdlpArgument += $videoPage 
 	Write-Debug "yt-dlp起動コマンド:$ytdlpPath $ytdlpArgument"
-	$null = Start-Process -FilePath ($ytdlpPath) -ArgumentList $ytdlpArgument -PassThru -WindowStyle Minimize		#Minimize or Hidden
+	if ($isWin) { 
+		$null = Start-Process -FilePath ($ytdlpPath) -ArgumentList $ytdlpArgument -PassThru -WindowStyle $windowStyle
+		#$null = Start-Process -FilePath ($ytdlpPath) -ArgumentList $ytdlpArgument -PassThru -RedirectStandardOutput Out-Null -NoNewWindow
+	} else { 
+		$null = Start-Process -FilePath ($ytdlpPath) -ArgumentList $ytdlpArgument -PassThru -RedirectStandardOutput /dev/null -NoNewWindow
+	}
+
 }
 
 #----------------------------------------------------------------------
@@ -91,8 +96,9 @@ function writeVideoInfo ($videoName, $broadcastDate, $media, $description ) {
 #----------------------------------------------------------------------
 #ビデオ情報デバッグ表示
 #----------------------------------------------------------------------
-function writeVideoDebugInfo ($videoPage, $genre, $title, $subtitle, $videoPath, $timeStamp ) {
+function writeVideoDebugInfo ($videoPage, $videoPageLP, $genre, $title, $subtitle, $videoPath, $timeStamp ) {
 	Write-Debug	"ビデオページ:$videoPage"
+	Write-Debug	"ビデオLP    :$videoPageLP"
 	Write-Debug "ジャンル    :$genre"
 	Write-Debug "タイトル    :$title"
 	Write-Debug "サブタイトル:$subtitle"
@@ -122,17 +128,50 @@ function removeInvalidFileNameChars {
 #----------------------------------------------------------------------
 function conv2Narrow {
 
-	Param([string]$Text)		#変換元テキストを引数に指定
+	Param([string]$text)		#変換元テキストを引数に指定
 
-	# 正規表現のパターン
-	$regexAlphaNumeric = '[０-９Ａ-Ｚａ-ｚ＃＄％＆－＿／［］｛｝（）＜＞　]+'
+	$dakuZenKana = 'ガギグゲゴザジズゼゾダヂヅデドバビブベボ'
+	$dakuHanKana = 'ｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾊﾋﾌﾍﾎ'
+	$hanDakuZenKana = 'パピプペポ'
+	$handakuHanKana = 'ﾊﾋﾌﾍﾎ'
+	$zenKana = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン゛゜ァィゥェォャュョッ'
+	$hanKana = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜｦﾝﾞﾟｧｨｩｪｫｬｭｮｯ'
+	$zenNum = '０１２３４５６７８９'
+	$hanNum = '0123456789'
+	$zenAlpha = 'ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ'
+	$hanAlpha = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+	$zenSimbol = '＠＃＄％＾＆＊－＋＿／［］｛｝（）＜＞　￥”'
+	$hanSimbol = '@#$%^&*-+_/[]{}()<> \"'
 
-	# MatchEvaluatorデリゲート
-	$matchEvaluator = { param([Match]$match) [strings]::StrConv($match, [VbStrConv]::Narrow, 0x0411) }
+	for ($i = 0; $i -lt $dakuZenKana.Length; $i++) {
+		$text = $text.Replace($dakuHanKana[$i] + 'ﾞ', $dakuZenKana[$i])
+	}
+	for ($i = 0; $i -lt $hanDakuZenKana.Length; $i++) {
+		$text = $text.Replace($handakuHanKana[$i] + 'ﾟ', $hanDakuZenKana[$i])
+	}
+	for ($i = 0; $i -lt $zenKana.Length; $i++) {
+		$text = $text.Replace($hanKana[$i], $zenKana[$i])
+	}
+	for ($i = 0; $i -lt $hanNum.Length; $i++) {
+		$text = $text.Replace($zenNum[$i], $hanNum[$i])
+	}
+	for ($i = 0; $i -lt $hanAlpha.Length; $i++) {
+		$text = $text.Replace($zenAlpha[$i], $hanAlpha[$i])
+	}
+	for ($i = 0; $i -lt $hanSimbol.Length; $i++) {
+		$text = $text.Replace($zenSimbol[$i], $hanSimbol[$i])
+	}
+	return $text
 
-	# regexクラスのReplaceメソッドを使用。第2引数にMatchEvaluatorデリゲートを指定
-	$result = [regex]::Replace($Text, $regexAlphaNumeric, $matchEvaluator)
-	return $result
+	#	# 正規表現のパターン
+	#	$regexAlphaNumeric = '[０-９Ａ-Ｚａ-ｚ＃＄％＆－＿／［］｛｝（）＜＞　]+'
+	#
+	#	# MatchEvaluatorデリゲート
+	#	$matchEvaluator = { param([Match]$match) [strings]::StrConv($match, [VbStrConv]::Narrow, 0x0411) }
+	#
+	#	# regexクラスのReplaceメソッドを使用。第2引数にMatchEvaluatorデリゲートを指定
+	#	$result = [regex]::Replace($text, $regexAlphaNumeric, $matchEvaluator)
+	#	return $result
 }
 
 #----------------------------------------------------------------------
@@ -151,6 +190,6 @@ function setVideoName ($title, $subtitle, $broadcastDate) {
 	}
 	if ($videoName.length -gt 120) { $videoName = $videoName.Substring(0, 120) + '……' }
 	$videoName = $videoName + '.mp4'
-	$videoName = removeInvalidFileNameChars (conv2Narrow $videoName)		#windowsでファイル名にできない文字列を除去
+	$videoName = removeInvalidFileNameChars (conv2Narrow $videoName)		#ファイル名にできない文字列を除去
 	return $videoName
 }

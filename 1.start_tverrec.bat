@@ -20,6 +20,9 @@ rem #	limitations under the License.
 rem #
 rem ###################################################################################
 
+rem 文字コードをUTF8に
+chcp 65001
+
 setlocal enabledelayedexpansion
 cd %~dp0
 
@@ -50,9 +53,7 @@ powershell -NoProfile -ExecutionPolicy Unrestricted "Get-WmiObject win32_process
 	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\validate_video.ps1
 	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\validate_video.ps1
 
-	if %ERRORLEVEL% == 0 (
-		powershell -NoProfile -ExecutionPolicy Unrestricted .\src\move_video.ps1
-	)
+	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\move_video.ps1
 
 	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\delete_ignored.ps1
 

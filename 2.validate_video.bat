@@ -20,6 +20,9 @@ rem #	limitations under the License.
 rem #
 rem ###################################################################################
 
+rem 文字コードをUTF8に
+chcp 65001
+
 setlocal enabledelayedexpansion
 cd %~dp0
 
