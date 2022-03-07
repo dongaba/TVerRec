@@ -112,6 +112,7 @@ if ($null -eq $videoLists) {
 	}
 }
 
-# 30日以上前に処理したものはリストから削除
+# 30日以上前に処理したものはリストから削除。ついでに重複削除
 $purgedList = (Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.downloadDate -gt $(Get-Date).AddDays(-30) }) 
+$purgedList = $purgedList | Sort-Object | Get-Unique
 $purgedList | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
