@@ -41,10 +41,10 @@ powershell -NoProfile -ExecutionPolicy Unrestricted "Get-WmiObject win32_process
 
 :ProcessChecker
 	rem yt-dlpプロセスチェック
-	tasklist | findstr /i "ffmpeg yt-dlp" > NUL 2>&1
+	tasklist | findstr /i "ffmpeg yt-dlp" > nul 2>&1
 	if %ERRORLEVEL% == 0 (
 		echo ダウンロードが進行中です...
-		tasklist /v /fi "Imagename eq yt-dlp.exe"
+		tasklist /v | findstr /i "ffmpeg yt-dlp" 
 		echo %sleepTime%秒待機します...
 		timeout /T %sleepTime% /nobreak > nul
 		goto ProcessChecker

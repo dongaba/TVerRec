@@ -235,7 +235,7 @@ while ($true) {
 
 	try {
 		#ダウンロードリストCSV書き出し
-		$newVideo | Export-Csv $listFile -NoTypeInformation -Encoding UTF8 -Append
+		$newVideo | Export-Csv $listFile -NoTypeInformation -Encoding UTF8 -Append -Force
 		Write-Debug 'ダウンロードリストを書き込みました。'
 	} catch {
 		Write-Host 'ダウンロードリストを読み書きできなかったのでスキップしました。'

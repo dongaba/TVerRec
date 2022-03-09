@@ -40,6 +40,20 @@ Get-Content $confFile | Where-Object { $_ -notmatch '^\s*$' } | `
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
 
+#ダウンロードが中断してしまったゴミファイルを削除
+$tempFile = $downloadBasePath + '\*\*.ytdl'
+Remove-Item $tempFile
+$tempFile = $downloadBasePath + '\*\*.jpg'
+Remove-Item $tempFile
+$tempFile = $downloadBasePath + '\*\*.vtt'
+Remove-Item $tempFile
+$tempFile = $downloadBasePath + '\*\*temp.mp4'
+Remove-Item $tempFile
+$tempFile = $downloadBasePath + '\*\*.part'
+Remove-Item $tempFile
+$tempFile = $downloadBasePath + '\*\*mp4.part-Frag*'
+Remove-Item $tempFile
+
 #録画リストからビデオチェックが終わっていないものを読み込み
 $videoLists = Import-Csv $listFile -Encoding UTF8 | `
 		Where-Object { $_.videoValidated -ne '1' } | `
@@ -91,7 +105,7 @@ if ($null -eq $videoLists) {
 			try {
 				#破損している動画ファイルを録画リストから削除
 				(Select-String -Pattern $videoPath -Path $listFile -Encoding utf8 -SimpleMatch -NotMatch).Line `
-				| Out-File $listFile -Encoding utf8
+				| Out-File $listFile -Encoding utf8 -Force
 				#破損している動画ファイルを削除
 				Remove-Item $videoPath
 			} catch {
@@ -103,7 +117,7 @@ if ($null -eq $videoLists) {
 				$videoLists = Import-Csv $listFile -Encoding UTF8
 				#該当のビデオのチェックステータスを"1"に
 				$($videoLists | Where-Object { $_.videoPath -eq $videoPath }).videoValidated = '1'
-				$videoLists | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
+				$videoLists | Export-Csv $listFile -NoTypeInformation -Encoding UTF8 -Force
 			} catch {
 				Write-Host "録画リストを更新できませんでした。: $videoPath"
 			}
@@ -114,5 +128,4 @@ if ($null -eq $videoLists) {
 
 # 30日以上前に処理したものはリストから削除。ついでに重複削除
 $purgedList = (Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.downloadDate -gt $(Get-Date).AddDays(-30) }) 
-$purgedList = $purgedList | Sort-Object | Get-Unique
 $purgedList | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
