@@ -41,6 +41,7 @@ Get-Content $confFile | Where-Object { $_ -notmatch '^\s*$' } | `
 #メイン処理
 
 #ダウンロードが中断してしまったゴミファイルを削除
+Write-Host 'ダウンロードが中断した際にできたゴミファイルを削除します'
 $tempFile = $downloadBasePath + '\*\*.ytdl'
 Remove-Item $tempFile
 $tempFile = $downloadBasePath + '\*\*.jpg'
@@ -53,6 +54,14 @@ $tempFile = $downloadBasePath + '\*\*.part'
 Remove-Item $tempFile
 $tempFile = $downloadBasePath + '\*\*mp4.part-Frag*'
 Remove-Item $tempFile
+Write-Host 'ダウンロードが中断した際にできたゴミファイルを削除しました'
+
+#30日以上前に処理したものはリストから削除
+$purgedList = (Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.downloadDate -gt $(Get-Date).AddDays(-30) }) 
+$purgedList | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
+
+#重複削除。ファイル名で1つしかないもの残し、ダウンロード時間で改めてソート。無視されたファイルがリストから削除されるので注意
+$purgedList | Group-Object -Property 'videoPath' | Where-Object count -EQ 1 | Select-Object -ExpandProperty group | Sort-Object -Property downloadDate | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
 
 #録画リストからビデオチェックが終わっていないものを読み込み
 $videoLists = Import-Csv $listFile -Encoding UTF8 | `
@@ -126,6 +135,4 @@ if ($null -eq $videoLists) {
 	}
 }
 
-# 30日以上前に処理したものはリストから削除。ついでに重複削除
-$purgedList = (Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.downloadDate -gt $(Get-Date).AddDays(-30) }) 
-$purgedList | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
+

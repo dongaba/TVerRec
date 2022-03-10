@@ -181,9 +181,9 @@ foreach ($genre in $genres) {
 
 		#取得したビデオ情報を整形
 		$broadcastDate = getBroadcastDate ($videoInfo)
-		$title = $(conv2Narrow ($videoInfo.title).Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '').Replace('?', '？').Replace('!', '！')).trim()
-		$subtitle = $(conv2Narrow ($videoInfo.subtitle).Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '').Replace('?', '？').Replace('!', '！')).trim()
-		$media = $(conv2Narrow ($videoInfo.media).Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '')).trim()
+		$title = $(conv2Narrow ($videoInfo.title).Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '').Replace(',', '').Replace('?', '？').Replace('!', '！')).trim()
+		$subtitle = $(conv2Narrow ($videoInfo.subtitle).Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '').Replace(',', '').Replace('?', '？').Replace('!', '！')).trim()
+		$media = $(conv2Narrow ($videoInfo.media).Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '').Replace(',', '').Replace('?', '？').Replace('!', '！')).trim()
 		$description = $(conv2Narrow ($videoInfo.note.text).Replace('&amp;', '&')).trim()
 		$videoPageLP = getVideoPageLP ($videoInfo)
 
@@ -225,7 +225,8 @@ foreach ($genre in $genres) {
 				if ($(conv2Narrow $title) -eq $(conv2Narrow $ignoreTitle)) {
 					$ignore = $true
 					Write-Host '無視リストに入っているビデオです。スキップします。' -ForegroundColor DarkGray
-					break
+					#break
+					continue			#リストの重複削除のため、無視したものはリスト出力せずに次のビデオへ行くことに
 				} 
 			}
 		}
