@@ -36,11 +36,10 @@ powershell -NoProfile -ExecutionPolicy Unrestricted "Get-WmiObject win32_process
 :Loop
 
 	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\tverrec_bulk.ps1
-	echo %sleepTime%秒待機します...
-	timeout /T %sleepTime% /nobreak > nul
 
 :ProcessChecker
 	rem yt-dlpプロセスチェック
+	timeout /T 60 /nobreak > nul
 	tasklist | findstr /i "ffmpeg yt-dlp" > nul 2>&1
 	if %ERRORLEVEL% == 0 (
 		echo ダウンロードが進行中です...

@@ -179,14 +179,14 @@ function setVideoName ($title, $subtitle, $broadcastDate) {
 	} else {
 		$videoName = $title + ' ' + $broadcastDate + ' ' + $subtitle
 	}
-
 	$videoName = removeInvalidFileNameChars (conv2Narrow $videoName)		#ファイル名にできない文字列を除去
 
 	#SMBで255バイトまでしかファイル名を持てないらしいので、超えないようにファイル名をトリミング
 	$videoNameTemp = ''
-	$fileNameLimit = 220		#yt-dlpの中間ファイル等を考慮して安全目の上限値
+	$fileNameLimit = $fileNameMax - 25					#yt-dlpの中間ファイル等を考慮して安全目の上限値
 	$videoNameByte = [System.Text.Encoding]::UTF8.GetByteCount($videoName)
 
+	#ファイル名を1文字ずつ増やしていき、上限に達したら残りは「……」とする
 	if ($videoNameByte -gt $fileNameLimit) {
 		for ($i = 1 ; [System.Text.Encoding]::UTF8.GetByteCount($videoNameTemp) -lt $fileNameLimit ; $i++) {
 			$videoNameTemp = $videoName.Substring(0, $i)
@@ -196,13 +196,4 @@ function setVideoName ($title, $subtitle, $broadcastDate) {
 
 	$videoName = $videoName + '.mp4'
 	return $videoName
-}
-
-#----------------------------------------------------------------------
-#文字列をバイト数で切り出す
-#----------------------------------------------------------------------
-function getSubStringBytes([String]$Text, [int]$StartIndex = 0, [int]$Length = 0) {
-	$enc = [System.Text.Encoding]::UTF8
-	$bytes = $enc.GetBytes($Text)
-	return $enc.GetString($bytes, $StartIndex, $Length)
 }

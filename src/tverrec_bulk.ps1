@@ -167,18 +167,6 @@ foreach ($genre in $genres) {
 			continue			#次回再度トライするためリストに追加せずに次のビデオへ
 		}
 
-		#LPがすでにリストに存在する場合はスキップ
-		#		try {
-		#			$listMatch = Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.videoPageLP -eq $videoPageLP } 
-		#		} catch {
-		#			Write-Host 'リストを読み書きできなかったのでスキップしました。'
-		#			continue			#次回再度トライするためリストに追加せずに次のビデオへ
-		#		}
-		#		if ( $null -ne $listMatch ) {
-		#			Write-Host '過去に処理したビデオです。スキップします。' -ForegroundColor DarkGray
-		#			continue			#次のビデオへ
-		#		}
-
 		#取得したビデオ情報を整形
 		$broadcastDate = getBroadcastDate ($videoInfo)
 		$title = $(conv2Narrow ($videoInfo.title).Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '').Replace(',', '').Replace('?', '？').Replace('!', '！')).trim()
