@@ -44,20 +44,27 @@ function getTimeStamp {
 #yt-dlpプロセスの確認と待機
 #----------------------------------------------------------------------
 function getYtdlpProcessList ($parallelDownloadNum) {
-	#ffmpegのプロセスが設定値を超えたら一時待機
+	#yt-dlpのプロセスが設定値を超えたら一時待機
 	try {
-		$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
+		if ($isWin) { 
+			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2 
+		} else {
+			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
+		}
 	} catch {
 		$ytdlpCount = 0			#プロセス数が取れなくてもとりあえず先に進む
 	}
 
-	$ytdlpCount = $ytdlpCount / 2
-	Write-Verbose "現在のダウンロードプロセス一覧  ( $ytdlpCount 個 )"
+	Write-Verbose "現在のダウンロードプロセス一覧 ( $ytdlpCount 個 )"
 
 	while ($ytdlpCount -ge $parallelDownloadNum) {
 		Write-Host "ダウンロードが $parallelDownloadNum 多重に達したので一時待機します。 ( $(getTimeStamp) )" -ForegroundColor DarkGray
 		Start-Sleep -Seconds 60			#1分待機
-		$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2
+		if ($isWin) { 
+			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2 
+		} else {
+			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
+		}
 	}
 }
 

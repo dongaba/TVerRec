@@ -11,11 +11,17 @@ pid*.txt
 
 #実行ファイル
 *.exe
+ffmpeg
+yt-dlp
 
 #動画ファイル
 *.mp4
 *.mp4*
 
+#linux関連開発ファイル
+linux-*
+
+#その他雑多な不要ファイル
 ignore_my_preference.txt
 .vscode/*
 .DS_Store

@@ -28,7 +28,8 @@ cd %~dp0
 
 for /f %%i in ('hostname') do set HostName=%%i
 set PIDFile=pid-%HostName%.txt
-set sleepTime=600
+set retryTime=600
+set sleepTime=3600
 title TVerRec
 
 powershell -NoProfile -ExecutionPolicy Unrestricted "Get-WmiObject win32_process -filter processid=$pid | ForEach-Object{$_.parentprocessid;}" > %PIDFile%
@@ -44,8 +45,8 @@ powershell -NoProfile -ExecutionPolicy Unrestricted "Get-WmiObject win32_process
 	if %ERRORLEVEL% == 0 (
 		echo ダウンロードが進行中です...
 		tasklist /v | findstr /i "ffmpeg yt-dlp" 
-		echo %sleepTime%秒待機します...
-		timeout /T %sleepTime% /nobreak > nul
+		echo %retryTime%秒待機します...
+		timeout /T %retryTime% /nobreak > nul
 		goto ProcessChecker
 	)
 
