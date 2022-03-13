@@ -1,5 +1,5 @@
 ﻿###################################################################################
-#  tverrec : TVerビデオダウンローダ
+#  TVerRec : TVerビデオダウンローダ
 #
 #		個別ダウンロード処理スクリプト
 #
@@ -42,10 +42,6 @@ Get-Content $sysFile | Where-Object { $_ -notmatch '^\s*$' } | `
 Get-Content $confFile | Where-Object { $_ -notmatch '^\s*$' } | `
 		Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
 		Invoke-Expression
-
-#----------------------------------------------------------------------
-#必要モジュールの読み込み
-Add-Type -AssemblyName Microsoft.VisualBasic
 
 #----------------------------------------------------------------------
 #開発環境用に設定上書き
@@ -108,19 +104,19 @@ while ($true) {
 
 	#TVerの番組説明の場合はビデオがないのでスキップ
 	if ($videoPage -match '/episode/') {
-		Write-Host 'ビデオではなくオンエア情報のようです。スキップします。' -ForegroundColor DarkGray
+		Write-Host 'ビデオではなくオンエア情報のようです。スキップします。'
 		continue			#次のビデオへ
 	}
 
-	#URLがすでにダウンロードリストに存在する場合はスキップ
+	#URLがすでにリストに存在する場合はスキップ
 	try {
 		$listMatch = Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.videoPage -eq $videoPage } 
 	} catch {
-		Write-Host 'ダウンロードリストを読み書きできなかったのでスキップしました。'
-		continue			#次回再度トライするためダウンロードリストに追加せずに次のビデオへ
+		Write-Host 'リストを読み書きできなかったのでスキップしました。'
+		continue			#次回再度トライするためリストに追加せずに次のビデオへ
 	}
 	if ( $null -ne $listMatch ) {
-		Write-Host '過去に処理したビデオです。スキップします。' -ForegroundColor DarkGray
+		Write-Host '過去に処理したビデオです。スキップします。'
 		continue			#次のビデオへ
 	}
 
@@ -128,17 +124,17 @@ while ($true) {
 	try {
 		$videoInfo = callTVerAPI ($videoID)
 	} catch {
-		Write-Host 'TVerから情報を取得できませんでした。スキップします。' -ForegroundColor DarkGray
-		continue			#次回再度トライするためダウンロードリストに追加せずに次のビデオへ
+		Write-Host 'TVerから情報を取得できませんでした。スキップします。'
+		continue			#次回再度トライするためリストに追加せずに次のビデオへ
 	}
 
 	#取得したビデオ情報を整形
 	$broadcastDate = getBroadcastDate ($videoInfo)
-	$title = $(conv2Narrow ($videoInfo.title).Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '').Replace(',', '').Replace('?', '？').Replace('!', '！')).trim()
-	$subtitle = $(conv2Narrow ($videoInfo.subtitle).Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '').Replace(',', '').Replace('?', '？').Replace('!', '！')).trim()
-	$media = $(conv2Narrow ($videoInfo.media).Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '').Replace(',', '').Replace('?', '？').Replace('!', '！')).trim()
-	$description = $(conv2Narrow ($videoInfo.note.text).Replace('&amp;', '&')).trim()
-	$videoPageLP = getVideoPageLP ($videoInfo)
+	$title = getVideoTitle ($videoInfo)
+	$subtitle = getVideoSubTitle ($videoInfo)
+	$media = getVideoMedia ($videoInfo)
+	$description = getVideoDescription ($videoInfo)
+	$videoPageLP = getVideoSeries ($videoInfo)
 
 	#ビデオファイル情報をセット
 	$videoName = setVideoName $title $subtitle $broadcastDate		#保存ファイル名を設定
@@ -151,45 +147,43 @@ while ($true) {
 
 	#ビデオタイトルが取得できなかった場合はスキップ次のビデオへ
 	if ($videoName -eq '.mp4') {
-		Write-Host 'ビデオタイトルを特定できませんでした。スキップします。' -ForegroundColor DarkGray
-		continue			#次回再度ダウンロードをトライするためダウンロードリストに追加せずに次のビデオへ
+		Write-Host 'ビデオタイトルを特定できませんでした。スキップします。'
+		continue			#次回再度ダウンロードをトライするためリストに追加せずに次のビデオへ
 	}
 
-	#ファイルが既に存在する場合はスキップフラグを立ててダウンロードリストに書き込み処理へ
+	#ファイルが既に存在する場合はスキップフラグを立ててリストに書き込み処理へ
 	if (Test-Path $videoPath) {
-		$skip = $true
-		Write-Host 'すでにダウンロード済みのビデオです。スキップします。' -ForegroundColor DarkGray
+		#チェック済みか調べた上で、スキップ判断
+		try {
+			$listMatch = Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.videoPath -eq $videoPath } | Where-Object { $_.videoValidated -eq '1' } 
+		} catch {
+			Write-Host 'リストを読み書きできなかったのでスキップしました。'
+			continue			#次回再度トライするためリストに追加せずに次のビデオへ
+		}
+		#結果が0件ということは未検証のファイルがあるということ
+		if ( $null -eq $listMatch ) {
+			Write-Host 'すでにダウンロード済みですが未検証のビデオです。'
+			$skip = $true
+		} else {
+			Write-Host 'すでにダウンロード済み・検証済みのビデオです。スキップします。'
+			continue			#すでに検証済みなのでリストに追加せずに次のビデオへ
+		}
 	} else {
-		#無視リストに入っている番組の場合はスキップフラグを立ててダウンロードリストに書き込み処理へ
+		#無視リストに入っている番組の場合はスキップフラグを立ててリストに書き込み処理へ
 		foreach ($ignoreTitle in $ignoreTitles) {
 			if ($(conv2Narrow $title) -eq $(conv2Narrow $ignoreTitle)) {
 				$ignore = $true
-				Write-Host '無視リストに入っているビデオです。スキップします。' -ForegroundColor DarkGray
-				break
+				Write-Host '無視リストに入っているビデオです。スキップします。'
+				#break
+				continue			#リストの重複削除のため、無視したものはリスト出力せずに次のビデオへ行くことに
 			} 
 		}
 	}
 
 	#スキップフラグが立っているかチェック
-	if ($ignore -ne $true) {
-		#ダウンロードリストに行追加
-		Write-Verbose 'ダウンロードするファイルをダウンロードリストに追加します。'
-		$newVideo = [pscustomobject]@{ 
-			videoPage      = $videoPage ;
-			videoPageLP    = $videoPageLP ;
-			genre          = $genre ;
-			title          = $title ;
-			subtitle       = $subtitle ;
-			media          = $media ;
-			broadcastDate  = $broadcastDate ;
-			downloadDate   = $(getTimeStamp) ;
-			videoName      = $videoName ;
-			videoPath      = $videoPath ;
-			videoValidated = '0' ;
-		}
-	} elseif ($skip -ne $true) {
-		#ダウンロードリストに行追加
-		Write-Verbose '無視したファイルをダウンロードリストに追加します。'
+	if ($ignore -eq $true) {
+		#リストに行追加
+		Write-Host '無視したファイルをリストに追加します。'
 		$newVideo = [pscustomobject]@{ 
 			videoPage      = $videoPage ;
 			videoPageLP    = $videoPageLP ;
@@ -203,9 +197,8 @@ while ($true) {
 			videoPath      = '-- IGNORED --' ;
 			videoValidated = '0' ;
 		}
-	} else {
-		#ダウンロードリストに行追加
-		Write-Verbose 'スキップしたファイルをダウンロードリストに追加します。'
+	} elseif ($skip -eq $true) {
+		Write-Host 'スキップした未検証のファイルをリストに追加します。'
 		$newVideo = [pscustomobject]@{ 
 			videoPage      = $videoPage ;
 			videoPageLP    = $videoPageLP ;
@@ -219,15 +212,31 @@ while ($true) {
 			videoPath      = $videoPath ;
 			videoValidated = '0' ;
 		}
+	} else {
+		#リストに行追加
+		Write-Host 'ダウンロードするファイルをリストに追加します。'
+		$newVideo = [pscustomobject]@{ 
+			videoPage      = $videoPage ;
+			videoPageLP    = $videoPageLP ;
+			genre          = $genre ;
+			title          = $title ;
+			subtitle       = $subtitle ;
+			media          = $media ;
+			broadcastDate  = $broadcastDate ;
+			downloadDate   = $(getTimeStamp) ;
+			videoName      = $videoName ;
+			videoPath      = $videoPath ;
+			videoValidated = '0' ;
+		}
 	}
 
 	try {
-		#ダウンロードリストCSV書き出し
+		#リストCSV書き出し
 		$newVideo | Export-Csv $listFile -NoTypeInformation -Encoding UTF8 -Append -Force
-		Write-Debug 'ダウンロードリストを書き込みました。'
+		Write-Debug 'リストを書き込みました。'
 	} catch {
-		Write-Host 'ダウンロードリストを読み書きできなかったのでスキップしました。'
-		continue			#次回再度トライするためダウンロードリストに追加せずに次のビデオへ
+		Write-Host 'リストを読み書きできなかったのでスキップしました。'
+		continue			#次回再度トライするためリストに追加せずに次のビデオへ
 	}
 
 	#スキップや無視対象でなければyt-dlp起動
@@ -240,6 +249,7 @@ while ($true) {
 		}
 		#yt-dlp起動
 		startYtdlp $videoPath $videoPage $ytdlpPath
+		Start-Sleep -Seconds 10			#10秒待機
 
 	}
 

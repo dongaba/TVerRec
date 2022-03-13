@@ -1,5 +1,5 @@
 ﻿###################################################################################
-#  tverrec : TVerビデオダウンローダ
+#  TVerRec : TVerビデオダウンローダ
 #
 #		共通関数スクリプト
 #
@@ -41,6 +41,85 @@ function getTimeStamp {
 }
 
 #----------------------------------------------------------------------
+#ffmpegのハードウェアデコードオプションの設定
+#----------------------------------------------------------------------
+function getFfmpegDecodeOption {
+	if ($iswin -eq $true) {
+		#Windowsの場合はDirect Xのバージョンを取得
+		$dxdiagFile = $(Join-Path $downloadBasePath 'dxdiag.txt')
+		try {
+			#ffmpegからデコーダー一覧を取得
+			$process = New-Object System.Diagnostics.Process
+			$process.StartInfo.FileName = 'dxdiag.exe'
+			$process.StartInfo.Arguments = "/t $dxdiagFile"
+			$process.StartInfo.UseShellExecute = $False
+			$process.Start() | Out-Null
+			$process.WaitForExit()
+
+			$result = Select-String -Path $dxdiagFile -Pattern 'DDI Version'
+			$ddiVersion = [int]$($result[0].Line.Substring($result[0].Line.Length - 2, 2).trim())
+
+		} catch { $ddiVersion = 0 } finally { $process.Dispose() } 
+
+		try { Remove-Item $dxdiagFile } catch {}
+
+		#DDIのバージョンによりデコードオプションを設定
+		if ($ddiVersion -gt 10 ) {
+			$ffmpegDecodeOption = $ffmpegDecodeD3D11VA		#Direct3D 11 : for Windows
+		} elseif ($ddiVersion -gt 8 ) {
+			$ffmpegDecodeOption = $ffmpegDecodeDXVA2		#Direct3D 9 : for Windows
+		} else {
+			$ffmpegDecodeOption = ''
+		}
+
+	} elseif ($IsLinux -eq $true) {
+		#Linuxの場合はRaspberry Piのデコードオプションを設定
+		$result = Select-String -Path '/proc/cpuinfo' -Pattern 'Raspberry Pi 4'
+		if ($null -ne $result) {
+			$ffmpegDecodeOption = $ffmpegDecodeRpi4			#Raspberry Pi 4
+		} else {
+			$result = Select-String -Path '/proc/cpuinfo' -Pattern 'Raspberry Pi 3'
+			if ($null -ne $result) {
+				$ffmpegDecodeOption = $ffmpegDecodeRpi3			#Raspberry Pi 3
+			} else {
+				$ffmpegDecodeOption = ''
+			}
+		}
+	} else {
+		#WindowsでもLinuxでもない場合
+		$ffmpegDecodeOption = ''
+	}
+
+	#ffmpegのデコードオプションの設定
+	if ($forceSoftwareDecode -eq $true ) {
+		#ソフトウェアデコードを強制する場合
+		$ffmpegDecodeOption = ''
+	} elseif ($ffmpegDecodeOption -eq '') {
+		#ハードウェアデコード方式が決まっていない場合
+		try {
+			#ffmpegからデコーダー一覧を取得
+			$process = New-Object System.Diagnostics.Process
+			$process.StartInfo.FileName = $ffmpegPath
+			$process.StartInfo.Arguments = '-decoders'
+			$process.StartInfo.UseShellExecute = $False
+			$process.StartInfo.RedirectStandardOutput = $True
+			$process.Start() | Out-Null
+			$process.WaitForExit()
+			$stdout = $process.StandardOutput.ReadToEnd()
+
+			#サポートしているデコーダーをチェック
+			if ( $stdout.IndexOf('h264_qsv') -gt 0 ) {
+				$ffmpegDecodeOption = $ffmpegDecodeQSV			#QSV : for Intel CPUs
+			} else {
+				$ffmpegDecodeOption = ''						#使えるハードウェアデコーダが不明
+			}
+		} catch { $ffmpegDecodeOption = '' } finally { $process.Dispose() } 
+	}
+
+	return $ffmpegDecodeOption
+}
+
+#----------------------------------------------------------------------
 #yt-dlpプロセスの確認と待機
 #----------------------------------------------------------------------
 function getYtdlpProcessList ($parallelDownloadNum) {
@@ -58,7 +137,7 @@ function getYtdlpProcessList ($parallelDownloadNum) {
 	Write-Verbose "現在のダウンロードプロセス一覧 ( $ytdlpCount 個 )"
 
 	while ($ytdlpCount -ge $parallelDownloadNum) {
-		Write-Host "ダウンロードが $parallelDownloadNum 多重に達したので一時待機します。 ( $(getTimeStamp) )" -ForegroundColor DarkGray
+		Write-Host "ダウンロードが $parallelDownloadNum 多重に達したので一時待機します。 ( $(getTimeStamp) )"
 		Start-Sleep -Seconds 60			#1分待機
 		if ($isWin) { 
 			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2 
@@ -84,9 +163,8 @@ function startYtdlp ($videoPath, $videoPage, $ytdlpPath) {
 	Write-Debug "yt-dlp起動コマンド:$ytdlpPath $ytdlpArgument"
 	if ($isWin) { 
 		$null = Start-Process -FilePath ($ytdlpPath) -ArgumentList $ytdlpArgument -PassThru -WindowStyle $windowStyle
-		#$null = Start-Process -FilePath ($ytdlpPath) -ArgumentList $ytdlpArgument -PassThru -RedirectStandardOutput Out-Null -NoNewWindow
 	} else { 
-		$null = Start-Process -FilePath ($ytdlpPath) -ArgumentList $ytdlpArgument -PassThru -RedirectStandardOutput /dev/null -NoNewWindow
+		$null = Start-Process -FilePath ($ytdlpPath) -ArgumentList $ytdlpArgument -PassThru -RedirectStandardOutput /dev/null
 	}
 
 }

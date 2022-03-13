@@ -1,6 +1,6 @@
 @echo off
 rem ###################################################################################
-rem #  tverrec : TVerビデオダウンローダ
+rem #  TVerRec : TVerビデオダウンローダ
 rem #
 rem #		無視対象ビデオ削除処理スクリプト
 rem #
@@ -27,6 +27,11 @@ setlocal enabledelayedexpansion
 cd %~dp0
 
 title TVerRec Video File Deleter
-powershell -NoProfile -ExecutionPolicy Unrestricted .\src\delete_ignored.ps1
+
+if exist "C:\Program Files\PowerShell\7\pwsh.exe" (
+	pwsh -NoProfile -ExecutionPolicy Unrestricted .\src\delete_ignored.ps1
+) else (
+	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\delete_ignored.ps1
+)
 
 pause

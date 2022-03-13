@@ -1,6 +1,6 @@
 @echo off
 rem ###################################################################################
-rem #  tverrec : TVerビデオダウンローダ
+rem #  TVerRec : TVerビデオダウンローダ
 rem #
 rem #		一括ダウンロード処理開始スクリプト
 rem #
@@ -26,21 +26,30 @@ chcp 65001
 setlocal enabledelayedexpansion
 cd %~dp0
 
+title TVerRec
+
 for /f %%i in ('hostname') do set HostName=%%i
 set PIDFile=pid-%HostName%.txt
 set retryTime=600
 set sleepTime=3600
-title TVerRec
 
-powershell -NoProfile -ExecutionPolicy Unrestricted "Get-WmiObject win32_process -filter processid=$pid | ForEach-Object{$_.parentprocessid;}" > %PIDFile%
+if exist "C:\Program Files\PowerShell\7\pwsh.exe" (
+	pwsh -NoProfile -ExecutionPolicy Unrestricted "Get-WmiObject win32_process -filter processid=$pid | ForEach-Object{$_.parentprocessid;}" > %PIDFile%
+) else (
+	powershell -NoProfile -ExecutionPolicy Unrestricted "Get-WmiObject win32_process -filter processid=$pid | ForEach-Object{$_.parentprocessid;}" > %PIDFile%
+)
 
 :Loop
 
-	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\tverrec_bulk.ps1
+	if exist "C:\Program Files\PowerShell\7\pwsh.exe" (
+		pwsh -NoProfile -ExecutionPolicy Unrestricted .\src\tverrec_bulk.ps1
+	) else (
+		powershell -NoProfile -ExecutionPolicy Unrestricted .\src\tverrec_bulk.ps1
+	)
 
 :ProcessChecker
 	rem yt-dlpプロセスチェック
-	timeout /T 60 /nobreak > nul
+	timeout /T %retryTime% /nobreak > nul
 	tasklist | findstr /i "ffmpeg yt-dlp" > nul 2>&1
 	if %ERRORLEVEL% == 0 (
 		echo ダウンロードが進行中です...
@@ -50,12 +59,21 @@ powershell -NoProfile -ExecutionPolicy Unrestricted "Get-WmiObject win32_process
 		goto ProcessChecker
 	)
 
-	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\validate_video.ps1
-	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\validate_video.ps1
+	if exist "C:\Program Files\PowerShell\7\pwsh.exe" (
+		pwsh -NoProfile -ExecutionPolicy Unrestricted .\src\validate_video.ps1
+		pwsh -NoProfile -ExecutionPolicy Unrestricted .\src\validate_video.ps1
 
-	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\move_video.ps1
+		pwsh -NoProfile -ExecutionPolicy Unrestricted .\src\move_video.ps1
 
-	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\delete_ignored.ps1
+		pwsh -NoProfile -ExecutionPolicy Unrestricted .\src\delete_ignored.ps1
+	) else (
+		powershell -NoProfile -ExecutionPolicy Unrestricted .\src\validate_video.ps1
+		powershell -NoProfile -ExecutionPolicy Unrestricted .\src\validate_video.ps1
+
+		powershell -NoProfile -ExecutionPolicy Unrestricted .\src\move_video.ps1
+
+		powershell -NoProfile -ExecutionPolicy Unrestricted .\src\delete_ignored.ps1
+	)
 
 	echo %sleepTime%秒待機します...
 	timeout /T %sleepTime% /nobreak > nul

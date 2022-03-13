@@ -1,5 +1,5 @@
 ﻿###################################################################################
-#  tverrec : TVerビデオダウンローダ
+#  TVerRec : TVerビデオダウンローダ
 #
 #		動画チェック処理スクリプト
 #
@@ -18,7 +18,6 @@
 #	limitations under the License.
 #
 ###################################################################################
-
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -39,6 +38,9 @@ Get-Content $confFile | Where-Object { $_ -notmatch '^\s*$' } | `
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
+
+#外部関数ファイルの読み込み
+. '.\common_functions.ps1'
 
 #ダウンロードが中断してしまったゴミファイルを削除
 Write-Host 'ダウンロードが中断した際にできたゴミファイルを削除します'
@@ -61,7 +63,11 @@ $purgedList = (Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.downloadD
 $purgedList | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
 
 #重複削除。ファイル名で1つしかないもの残し、ダウンロード時間で改めてソート。無視されたファイルがリストから削除されるので注意
-$purgedList | Group-Object -Property 'videoPath' | Where-Object count -EQ 1 | Select-Object -ExpandProperty group | Sort-Object -Property downloadDate | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
+$purgedList | Group-Object -Property 'videoPath' | `
+		Where-Object count -EQ 1 | `
+		Select-Object -ExpandProperty group | `
+		Sort-Object -Property downloadDate | `
+		Export-Csv $listFile -NoTypeInformation -Encoding UTF8
 
 #録画リストからビデオチェックが終わっていないものを読み込み
 $videoLists = Import-Csv $listFile -Encoding UTF8 | `
@@ -84,6 +90,9 @@ if ($null -eq $videoLists) {
 		Write-Host "$i 本目: $videoPath"
 	}
 
+	#ffmpegのハードウェアデコードオプションの設定
+	$ffmpegDecodeOption = getFfmpegDecodeOption
+
 	$j = 0
 	foreach ($videoList in $videoLists.videoPath) {
 		$videoPath = $videoList
@@ -94,44 +103,40 @@ if ($null -eq $videoLists) {
 
 		Write-Host "$j/$i 本目をチェック中: $videoPath"
 
-		#ffmpegで整合性チェック
-		$processInfo = New-Object System.Diagnostics.ProcessStartInfo
-		$processInfo.RedirectStandardError = $true
-		$processInfo.UseShellExecute = $false
-		$processInfo.WindowStyle = 'Hidden'
-		$processInfo.FileName = $ffmpegPath
-		$processInfo.Arguments = ' -v error -i "' + $videoPath + '" -f null - '
-		$process = New-Object System.Diagnostics.Process
-		$process.StartInfo = $processInfo
-		$process.Start() | Out-Null
-		$process.WaitForExit()
-		$stderr = $process.StandardError.ReadToEnd()
+		try {
+			#ffmpegで整合性チェック
+			$process = New-Object System.Diagnostics.Process
+			$process.StartInfo.RedirectStandardError = $true
+			$process.StartInfo.UseShellExecute = $false
+			$process.StartInfo.WindowStyle = 'Hidden'
+			$process.StartInfo.FileName = $ffmpegPath
+			$process.StartInfo.Arguments = $ffmpegDecodeOption + ' -v error -i "' + $videoPath + '" -f null - '
+			$process.Start() | Out-Null
+			$process.WaitForExit()
+			$stderr = $process.StandardError.ReadToEnd()
 
-		if ( $process.ExitCode -ne 0 ) {
-			#終了コードが"0"以外は録画リストとファイルを削除
-			Write-Host "stderr: $stderr"
-			Write-Host 'exit code: ' $process.ExitCode
-			try {
-				#破損している動画ファイルを録画リストから削除
-				(Select-String -Pattern $videoPath -Path $listFile -Encoding utf8 -SimpleMatch -NotMatch).Line `
-				| Out-File $listFile -Encoding utf8 -Force
-				#破損している動画ファイルを削除
-				Remove-Item $videoPath
-			} catch {
-				Write-Host "ファイル削除できませんでした。: $videoPath"
+			if ( $process.ExitCode -ne 0 ) {
+				#終了コードが"0"以外は録画リストとファイルを削除
+				Write-Host "stderr: $stderr"
+				Write-Host 'exit code: ' $process.ExitCode
+				try {
+					#破損している動画ファイルを録画リストから削除
+					(Select-String -Pattern $videoPath -Path $listFile -Encoding utf8 -SimpleMatch -NotMatch).Line `
+					| Out-File $listFile -Encoding utf8 -Force
+					#破損している動画ファイルを削除
+					Remove-Item $videoPath
+				} catch { Write-Host "ファイル削除できませんでした。: $videoPath" }
+			} else {
+				#終了コードが"0"のときは録画リストにチェック済みフラグを立てる
+				try {
+					$videoLists = Import-Csv $listFile -Encoding UTF8
+					#該当のビデオのチェックステータスを"1"に
+					$($videoLists | Where-Object { $_.videoPath -eq $videoPath }).videoValidated = '1'
+					$videoLists | Export-Csv $listFile -NoTypeInformation -Encoding UTF8 -Force
+				} catch { Write-Host "録画リストを更新できませんでした。: $videoPath" }
 			}
-		} else {
-			#終了コードが"0"のときは録画リストにチェック済みフラグを立てる
-			try {
-				$videoLists = Import-Csv $listFile -Encoding UTF8
-				#該当のビデオのチェックステータスを"1"に
-				$($videoLists | Where-Object { $_.videoPath -eq $videoPath }).videoValidated = '1'
-				$videoLists | Export-Csv $listFile -NoTypeInformation -Encoding UTF8 -Force
-			} catch {
-				Write-Host "録画リストを更新できませんでした。: $videoPath"
-			}
-		}
 
+		} finally { $process.Dispose() } 
 	}
 }
 
