@@ -18,8 +18,10 @@ yt-dlp
 *.mp4
 *.mp4*
 
-#linux関連開発ファイル
+#環境依存の開発ファイル
 linux-*
+mac-*
+win-*
 
 #その他雑多な不要ファイル
 ignore_my_preference.txt
