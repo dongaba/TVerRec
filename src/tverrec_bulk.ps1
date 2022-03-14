@@ -310,12 +310,16 @@ try {
 }
 
 while ($ytdlpCount -ne 0) {
-	Write-Verbose "現在のダウンロードプロセス一覧 ( $ytdlpCount 個 )"
-	Start-Sleep -Seconds 60			#1分待機
-	if ($isWin) { 
-		$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2 
-	} else {
-		$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
+	try {
+		Write-Verbose "現在のダウンロードプロセス一覧 ( $ytdlpCount 個 )"
+		Start-Sleep -Seconds 60			#1分待機
+		if ($isWin) { 
+			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2 
+		} else {
+			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
+		}
+	} catch {
+		$ytdlpCount = 0
 	}
 }
 

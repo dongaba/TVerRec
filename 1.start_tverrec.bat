@@ -33,11 +33,8 @@ set PIDFile=pid-%HostName%.txt
 set retryTime=600
 set sleepTime=3600
 
-if exist "C:\Program Files\PowerShell\7\pwsh.exe" (
-	pwsh -NoProfile -ExecutionPolicy Unrestricted "Get-WmiObject win32_process -filter processid=$pid | ForEach-Object{$_.parentprocessid;}" > %PIDFile%
-) else (
-	powershell -NoProfile -ExecutionPolicy Unrestricted "Get-WmiObject win32_process -filter processid=$pid | ForEach-Object{$_.parentprocessid;}" > %PIDFile%
-)
+for /f "tokens=2" %%i in ('tasklist /FI "WINDOWTITLE eq TVerRec" /NH') do set myPID=%%i
+echo %myPID% > %PIDFile%
 
 :Loop
 

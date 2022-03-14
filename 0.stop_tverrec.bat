@@ -29,9 +29,8 @@ cd %~dp0
 for /f %%i in ('hostname') do set HostName=%%i
 set PIDFile=pid-%HostName%.txt
 
-if exist "%PIDFile%" (
+if exist %PIDFile% (
 	set /p targetPID=<%PIDFile%
-
 	tasklist /fi "PID eq !targetPID!" | find "cmd.exe" > nul
 	if not ERRORLEVEL 1 (
 		goto RUNNING
