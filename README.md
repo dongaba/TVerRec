@@ -1,4 +1,4 @@
-# :tv:**TVerRec**:tv: - TVer一括ダウンロードツール -
+# :tv:**TVerRec**:tv: - TVer 一括ダウンロード -
 
 TVerRecは、動画配信サイトTVer ( ティーバー <https://tver.jp/> ) の動画を録画保存するためのダウンローダー、ダウンロードツールです。
 動画を1本ずつ指定してダウンロードするのではなく、動画のジャンルや出演タレントを指定して一括ダウンロードします。
@@ -30,7 +30,7 @@ yt-dlpの機能を活用しているため、日本国外からもVPNを使わ�
 4. TVerRecを `windows/start_tverrec.bat`で起動した場合は、`windows/stop_tverrec.bat`でTVerRecを停止できます。
     - 関連するダウンロード処理もすべて強制停止されるので注意してください。
     - ダウンロードを止めたくない場合は、tverecのウィンドウを閉じるボタンで閉じてください。
-5. TVerRecを `windows/start_tverrec.bat`で実行している各ツールを個別に起動するために、`windows/1.download_video.bat`、`windows/2.validate_video.bat`、`windows/3.move_video.bat`、`windows/4.delete_video.bat`を使うこともできます。それぞれ、動画のダウンロドード、ダウンロードした動画の検証、検証した動画の保存先への移動、無視した動画の削除を行います。(`windows/start_tverrec.bat`はこれらを自動的に、且つ無限に実行します)
+5. TVerRecを `windows/start_tverrec.bat`で実行している各ツールを個別に起動するために、`windows/a.download_video.bat`、`windows/b.delete_video.bat`、`windows/c.validate_video.bat`、`windows/d.move_video.bat`を使うこともできます。それぞれ、動画のダウンロドード、無視した動画やダウンロード中断時のゴミファイルの削除、ダウンロードした動画の検証、検証した動画の保存先への移動を行います。(`windows/start_tverrec.bat`はこれらを自動的に、且つ無限に実行します)
 
 個別の設定はテキストエディタで変更する必要があります。
 
@@ -88,18 +88,18 @@ tverrec/
 │  └─ validate_video.ps1 ................... ダウンロード済みビデオの整合性チェックツール
 │
 ├─ unix/ ................................. Linux/Mac用シェルスクリプト
-│  ├─ 1.download_video.sh .................. 一括ダウンロードシェルスクリプト
-│  ├─ 2.delete_video.sh .................... ダウンロード対象外ビデオ・中間ファイル削除シェルスクリプト
-│  ├─ 3.validate_video.sh .................. ダウンロード済みビデオの整合性チェックシェルスクリプト
-│  ├─ 4.move_video.sh ...................... ビデオを保存先に移動するシェルスクリプト(もし必要であれば)
+│  ├─ a.download_video.sh .................. 一括ダウンロードシェルスクリプト
+│  ├─ b.delete_video.sh .................... ダウンロード対象外ビデオ・中間ファイル削除シェルスクリプト
+│  ├─ c.validate_video.sh .................. ダウンロード済みビデオの整合性チェックシェルスクリプト
+│  ├─ d.move_video.sh ...................... ビデオを保存先に移動するシェルスクリプト(もし必要であれば)
 │  ├─ start_tverrec.sh ..................... 無限一括ダウンロード起動シェルスクリプト
 │  └─ stop_tverrec.sh ...................... 無限一括ダウンロード終了シェルスクリプト
 │
 ├─ windows/ .............................. Windows用BATファイル
-│  ├─ 1.download_video.bat ................. 一括ダウンロードBAT
-│  ├─ 2.delete_video.bat ................... ダウンロード対象外ビデオ・中間ファイル削除BAT
-│  ├─ 3.validate_video.bat ................. ダウンロード済みビデオの整合性チェックBAT
-│  ├─ 4.move_video.bat ..................... ビデオを保存先に移動するBAT(もし必要であれば)
+│  ├─ a.download_video.bat ................. 一括ダウンロードBAT
+│  ├─ b.delete_video.bat ................... ダウンロード対象外ビデオ・中間ファイル削除BAT
+│  ├─ c.validate_video.bat ................. ダウンロード済みビデオの整合性チェックBAT
+│  ├─ d.move_video.bat ..................... ビデオを保存先に移動するBAT(もし必要であれば)
 │  ├─ start_tverrec.bat .................... 無限一括ダウンロード起動BAT
 │  └─ stop_tverrec.bat ..................... 無限一括ダウンロード終了BAT
 │

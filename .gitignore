@@ -24,12 +24,13 @@ mac-*
 win-*
 
 #その他雑多な不要ファイル
-ignore_my_preference.txt
+* - コピー.*
+* - Copy.*
 .vscode/*
 .DS_Store
 *.lnk
 *.bak
-tver - Copy.csv
+
 debug
 debug/*
 
@@ -37,4 +38,5 @@ debug/*
 #git update-index --assume-unchanged db/tver.csv
 #git update-index --assume-unchanged config/ignore.conf
 #git update-index --assume-unchanged config/keyword.conf
+
 

@@ -139,10 +139,14 @@ function getYtdlpProcessList ($parallelDownloadNum) {
 	while ($ytdlpCount -ge $parallelDownloadNum) {
 		Write-Host "ダウンロードが $parallelDownloadNum 多重に達したので一時待機します。 ( $(getTimeStamp) )"
 		Start-Sleep -Seconds 60			#1分待機
-		if ($isWin) { 
-			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2 
-		} else {
-			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
+		try {
+			if ($isWin) { 
+				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2 
+			} else {
+				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
+			}
+		} catch {
+			$ytdlpCount = 0			#プロセス数が取れなくてもとりあえず先に進む
 		}
 	}
 }
