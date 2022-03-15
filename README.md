@@ -1,32 +1,36 @@
 # :tv:**TVerRec**:tv: - TVerダウンローダ -
 
-TVerRecは、動画配信サイトTVer ( <https://tver.jp/> ) の動画を保存するためのダウンローダー、ダウンロード支援ツールです。
+TVerRecは、動画配信サイトTVer ( ティーバー <https://tver.jp/> ) の動画を録画保存するためのダウンローダー、ダウンロードツールです。
 動画を1本ずつ指定してダウンロードするのではなく、動画のジャンルや出演タレントを指定して一括ダウンロードします。
 ループ実行するようになっているので、1回起動すれば新しい番組が配信される都度ダウンロードされるようになります。
-動作に必要なyt-dlpやffmpegなどの必要コンポーネントは自動的に最新版がダウンロードされます。
+もちろん動画を1本ずつ指定したダウンロードも可能です。
+また、ダウンロード保存した動画が正常に再生できるかどうかの検証も行い、動画ファイルが壊れている場合には自動的に再ダウンロードします。
+動画の検証時にffmpegを使用しますが、可能な限りハードウェアアクセラレーションを使うので、CPU使用率を抑えることができます。(使用するPCでの性能によっては処理時間が長くなることがあります。その場合はハードウェアアクセラレーションを無効化できます)
+動作に必要なyt-dlpやffmpegなどの必要コンポーネントは自動的に最新版がダウンロードされます。(Windowsのみ)
 
 ## 前提条件
 
 Windows10とWindows11で動作確認していますが、おそらくWindows7、8でも動作します。
-PowerShellはMacOS、Linuxにも移植されてるのでメインの機能は動作するかもしれません。
-一応、PowerShell 7.2をインストールしたRaspberry Pi OSでも動作確認をしています。([参考](https://bit.ly/3IODJzl))
-一部の機能はWindowsを前提に作られているので改変なしでは動作しません。(自動更新機能など)
+PowerShell 5.1とPowershell 7.2の双方で動作します。おそらくそれ以外のVersionでも動作すると思います。
+PowerShellはMacOS、Linuxにも移植されてるので動作するはずです。
+一応、PowerShell 7.2をインストールしたRaspberry Pi OSでも動作確認をしています。([参考](https://docs.microsoft.com/ja-jp/powershell/scripting/install/install-raspbian?view=powershell-7.2))
+MacOSでもPowerShellをインストールすれば動作するはずです。([参考](https://docs.microsoft.com/ja-jp/powershell/scripting/install/installing-powershell-on-macos?view=powershell-7.2))
 yt-dlpの機能を活用しているため、日本国外からもVPNを使わずにダウンロードできます。
 
 ## 実行方法
 
 以下の手順でバッチファイルを実行してください。
 
-1. TVerRecのzipファイルをダウロードし、任意のディレクトリで解凍してください。
+1. TVerRecをダウロードして任意のディレクトリで解凍、または`git clone`してください。
 2. 以下を参照して環境設定、ダウンロード設定を行ってください。
-3. Windows環境では `1.start_tverrec.bat`を実行してください。
+3. Windows環境では `windows/start_tverrec.bat`を実行してください。
     - 処理が完了しても10分ごとに永遠にループして稼働し続けます。
-    - 上記でPowerShellが起動しない場合は、PowerShell の実行ポリシーのRemoteSignedなどに変更する必要があるかもしれません。([参考](https://bit.ly/32HAwOK))
-4. TVerRecを `1.start_tverrec.bat`で起動した場合は、`0.stop_tverrec.bat`でTVerRecを停止できます。
+    - 上記でPowerShellが起動しない場合は、PowerShell の実行ポリシーのRemoteSignedなどに変更する必要があるかもしれません。([参考](https://docs.microsoft.com/ja-jp/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.2))
+    - LinuxやMacOSも基本的に同じ使い方ですが、以下の章を参照してください。
+4. TVerRecを `windows/start_tverrec.bat`で起動した場合は、`windows/stop_tverrec.bat`でTVerRecを停止できます。
     - 関連するダウンロード処理もすべて強制停止されるので注意してください。
     - ダウンロードを止めたくない場合は、tverecのウィンドウを閉じるボタンで閉じてください。
-
-## 設定内容
+5. TVerRecを `windows/start_tverrec.bat`で実行している各ツールを個別に起動するために、`windows/1.download_video.bat`、`windows/2.validate_video.bat`、`windows/3.move_video.bat`、`windows/4.delete_video.bat`を使うこともできます。それぞれ、動画のダウンロドード、ダウンロードした動画の検証、検証した動画の保存先への移動、無視した動画の削除を行います。(`windows/start_tverrec.bat`はこれらを自動的に、且つ無限に実行します)
 
 個別の設定はテキストエディタで変更する必要があります。
 
@@ -42,25 +46,26 @@ yt-dlpの機能を活用しているため、日本国外からもVPNを使わ�
 
 ### ダウンロード対象外の番組の設定方法
 
-- `config/ignore.conf`をテキストエディターで開いてダウンロードしたくない番組名を設定します。
+- `config/ignore.conf`をテキストエディターで開いて、ダウンロードしたくない番組名を設定します。
   - ジャンル指定でダウンロードすると不要な番組もまとめてダウンロードされるので、個別にダウンロード対象外に指定できます。
 
 ## おすすめの使い方
 
-- TVerのカテゴリ毎のページを指定して`1.start_tverrec.bat`で起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
-- 同様に、フォローしているタレントページを指定して`1.start_tverrec.bat`で起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
-- 同様に、各放送局毎のページを指定して`1.start_tverrec.bat`で起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
+- TVerのカテゴリ毎のページを指定して`windows/start_tverrec.bat`で起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
+- 同様に、フォローしているタレントページを指定して`windows/start_tverrec.bat`で起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
+- 同様に、各放送局毎のページを指定して`windows/start_tverrec.bat`で起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
 
-## Linux/Macでの設定方法
+## Linux/Macでの利用方法
 
 - `ffmpeg`と`yt-dlp`を`bin`ディレクトリに配置するか、シンボリックリンクを貼ってください。
-- または、`config/system_setting.conf`に相対パス指定で`ffmpeg`と`yt-dlp`のパスを記述してください。
+  - または、`config/system_setting.conf`に相対パス指定で`ffmpeg`と`yt-dlp`のパスを記述してください。
+- 上記説明の`windows/*.bat`は`unix/*.sh`に読み替えて実行してください。
 
 ## フォルダ構成
 
 ```text
 tverrec/
-├─ bin/ .................................... 実行ファイル格納用フォルダ
+├─ bin/ .................................. 実行ファイル格納用フォルダ
 │
 ├─ config/ ............................... 設定フォルダ
 │  ├─ ignore.conf .......................... ダウンロード対象外設定ファイル
@@ -73,7 +78,7 @@ tverrec/
 │
 ├─ src/ .................................. 各種ソース
 │  ├─ common_functions.ps1 ................. 共通関数定義
-│  ├─ delete_ignored.ps1 ................... ダウンロード対象外ビデオ削除ツール
+│  ├─ delete_trash.ps1 ..................... ダウンロード対象外ビデオ削除ツール
 │  ├─ move_vide.ps1 ........................ ビデオを保存先に移動するツール
 │  ├─ tver_functions.ps1 ................... TVer用共通関数定義
 │  ├─ tverrec_bulk.ps1 ..................... 一括ダウンロードツール本体
@@ -82,13 +87,25 @@ tverrec/
 │  ├─ update_yt-dlp.ps1 .................... yt-dlp自動更新ツール
 │  └─ validate_video.ps1 ................... ダウンロード済みビデオの整合性チェックツール
 │
-├─ 0.stop_tverrec.bat ....................... 一括ダウンロード終了BAT
-├─ 1.start_tverrec.bat ...................... 一括ダウンロード起動BAT
-├─ 2.validate_video.bat ..................... ダウンロード済みビデオの整合性チェックBAT
-├─ 3.move_video.bat ......................... ビデオを保存先に移動するBAT(もし必要であれば)
-├─ 4.delete_video.bat ....................... ダウンロード対象外ビデオ削除BAT
+├─ unix/ ................................. Linux/Mac用シェルスクリプト
+│  ├─ 1.download_video.sh .................. 一括ダウンロードシェルスクリプト
+│  ├─ 2.delete_video.sh .................... ダウンロード対象外ビデオ・中間ファイル削除シェルスクリプト
+│  ├─ 3.validate_video.sh .................. ダウンロード済みビデオの整合性チェックシェルスクリプト
+│  ├─ 4.move_video.sh ...................... ビデオを保存先に移動するシェルスクリプト(もし必要であれば)
+│  ├─ start_tverrec.sh ..................... 無限一括ダウンロード起動シェルスクリプト
+│  └─ stop_tverrec.sh ...................... 無限一括ダウンロード終了シェルスクリプト
+│
+├─ windows/ .............................. Windows用BATファイル
+│  ├─ 1.download_video.bat ................. 一括ダウンロードBAT
+│  ├─ 2.delete_video.bat ................... ダウンロード対象外ビデオ・中間ファイル削除BAT
+│  ├─ 3.validate_video.bat ................. ダウンロード済みビデオの整合性チェックBAT
+│  ├─ 4.move_video.bat ..................... ビデオを保存先に移動するBAT(もし必要であれば)
+│  ├─ start_tverrec.bat .................... 無限一括ダウンロード起動BAT
+│  └─ stop_tverrec.bat ..................... 無限一括ダウンロード終了BAT
+│
 ├─ LICENSE .................................. ライセンス
-└─ README.md ................................ このファイル
+├─ README.md ................................ このファイル
+└─ TODO.md .................................. 今後の改善予定のリスト
 ```
 
 ## アンインストール方法

@@ -2,7 +2,7 @@
 rem ###################################################################################
 rem #  TVerRec : TVerビデオダウンローダ
 rem #
-rem #		動画チェック処理スクリプト
+rem #		動画移動処理スクリプト
 rem #
 rem #	Copyright (c) 2021 dongaba
 rem #
@@ -24,14 +24,15 @@ rem 文字コードをUTF8に
 chcp 65001
 
 setlocal enabledelayedexpansion
-cd %~dp0
+cd /d %~dp0
 
-title TVerRec Video File Checker
+title TVerRec Video File Mover
 
 if exist "C:\Program Files\PowerShell\7\pwsh.exe" (
-	pwsh -NoProfile -ExecutionPolicy Unrestricted .\src\validate_video.ps1
+	pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\move_video.ps1
 ) else (
-	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\validate_video.ps1
+	powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\move_video.ps1
 )
 
 pause
+

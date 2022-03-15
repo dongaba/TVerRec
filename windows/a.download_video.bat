@@ -2,7 +2,7 @@
 rem ###################################################################################
 rem #  TVerRec : TVerビデオダウンローダ
 rem #
-rem #		無視対象ビデオ削除処理スクリプト
+rem #		一括ダウンロードスクリプト
 rem #
 rem #	Copyright (c) 2021 dongaba
 rem #
@@ -24,14 +24,15 @@ rem 文字コードをUTF8に
 chcp 65001
 
 setlocal enabledelayedexpansion
-cd %~dp0
+cd /d %~dp0
 
-title TVerRec Video File Deleter
+title TVerRec Video File Bulk Downloader
 
 if exist "C:\Program Files\PowerShell\7\pwsh.exe" (
-	pwsh -NoProfile -ExecutionPolicy Unrestricted .\src\delete_ignored.ps1
+	pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\tverrec_bulk.ps1
 ) else (
-	powershell -NoProfile -ExecutionPolicy Unrestricted .\src\delete_ignored.ps1
+	powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\tverrec_bulk.ps1
 )
 
 pause
+

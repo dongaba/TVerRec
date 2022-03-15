@@ -2,7 +2,7 @@
 rem ###################################################################################
 rem #  TVerRec : TVerビデオダウンローダ
 rem #
-rem #		一括ダウンロード処理停止スクリプト
+rem #		動画チェック処理スクリプト
 rem #
 rem #	Copyright (c) 2021 dongaba
 rem #
@@ -24,36 +24,15 @@ rem 文字コードをUTF8に
 chcp 65001
 
 setlocal enabledelayedexpansion
-cd %~dp0
+cd /d %~dp0
 
-for /f %%i in ('hostname') do set HostName=%%i
-set PIDFile=pid-%HostName%.txt
+title TVerRec Video File Checker
 
-if exist %PIDFile% (
-	set /p targetPID=<%PIDFile%
-	tasklist /fi "PID eq !targetPID!" | find "cmd.exe" > nul
-	if not ERRORLEVEL 1 (
-		goto RUNNING
-	) else (
-		del %PIDFile%
-		goto NOT_RUNNING
-	)
-
+if exist "C:\Program Files\PowerShell\7\pwsh.exe" (
+	pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\validate_video.ps1
 ) else (
-	goto NOT_RUNNING
-
+	powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\validate_video.ps1
 )
 
-:RUNNING
-	echo kill process: !targetPID!
-	taskkill /F /T /PID !targetPID!
-	del !PIDFile!
-	goto END
+pause
 
-:NOT_RUNNING
-	echo not running
-	del !PIDFile!
-	goto END
-
-:END
-	pause

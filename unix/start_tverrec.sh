@@ -32,7 +32,7 @@ echo $PPID > $PIDFile
 
 while [ true ]
 do
-	pwsh -NoProfile -ExecutionPolicy Unrestricted ./src/tverrec_bulk.ps1
+	pwsh -NoProfile -ExecutionPolicy Unrestricted ../src/tverrec_bulk.ps1
 
 	#yt-dlpプロセスチェック
 	sleep $retryTime
@@ -44,12 +44,14 @@ do
 		sleep $retryTime
 	done
 
+	pwsh -NoProfile -ExecutionPolicy Unrestricted ./src/delete_trash.ps1
+
 	pwsh -NoProfile -ExecutionPolicy Unrestricted ./src/validate_video.ps1
 	pwsh -NoProfile -ExecutionPolicy Unrestricted ./src/validate_video.ps1
 
 	pwsh -NoProfile -ExecutionPolicy Unrestricted ./src/move_video.ps1
 
-	pwsh -NoProfile -ExecutionPolicy Unrestricted ./src/delete_ignored.ps1
+	pwsh -NoProfile -ExecutionPolicy Unrestricted ./src/delete_trash.ps1
 
 	echo "$sleepTime秒待機します..."
 	sleep $sleepTime
