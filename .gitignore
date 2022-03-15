@@ -33,3 +33,8 @@ tver - Copy.csv
 debug
 debug/*
 
+#以下ローカルの変更を潰さないために
+#git update-index --assume-unchanged db/tver.csv
+#git update-index --assume-unchanged config/ignore.conf
+#git update-index --assume-unchanged config/keyword.conf
+
