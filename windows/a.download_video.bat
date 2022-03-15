@@ -31,7 +31,12 @@ title TVerRec Video File Bulk Downloader
 if exist "C:\Program Files\PowerShell\7\pwsh.exe" (
 	pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\tverrec_bulk.ps1
 ) else (
-	powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\tverrec_bulk.ps1
+	powershell -Command "get-content -encoding:utf8 ..\src\common_functions.ps1 | out-file -encoding:utf8 ..\src\common_functions_5.ps1"
+	powershell -Command "get-content -encoding:utf8 ..\src\tver_functions.ps1 | out-file -encoding:utf8 ..\src\tver_functions_5.ps1"
+	powershell -Command "get-content -encoding:utf8 ..\src\update_ffmpeg.ps1 | out-file -encoding:utf8 ..\src\update_ffmpeg_5.ps1"
+	powershell -Command "get-content -encoding:utf8 ..\src\update_yt-dlp.ps1 | out-file -encoding:utf8 ..\src\update_yt-dlp_5.ps1"
+	powershell -Command "get-content -encoding:utf8 ..\src\tverrec_bulk.ps1 | out-file -encoding:utf8 ..\src\tverrec_bulk_5.ps1"
+	powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\tverrec_bulk_5.ps1
 )
 
 pause

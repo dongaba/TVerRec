@@ -11,7 +11,7 @@ TVerRecは、動画配信サイトTVer ( ティーバー <https://tver.jp/> ) �
 ## 前提条件
 
 Windows10とWindows11で動作確認していますが、おそらくWindows7、8でも動作します。
-PowerShell 5.1とPowershell 7.2の双方で動作します。おそらくそれ以外のVersionでも動作すると思います。
+Windows PowerShell 5.1とPowerShell Core 7.2の双方で動作しています。おそらくそれ以外のVersionでも動作すると思います。
 PowerShellはMacOS、Linuxにも移植されてるので動作するはずです。
 一応、PowerShell 7.2をインストールしたRaspberry Pi OSでも動作確認をしています。([参考](https://docs.microsoft.com/ja-jp/powershell/scripting/install/install-raspbian?view=powershell-7.2))
 MacOSでもPowerShellをインストールすれば動作するはずです。([参考](https://docs.microsoft.com/ja-jp/powershell/scripting/install/installing-powershell-on-macos?view=powershell-7.2))
@@ -30,7 +30,7 @@ yt-dlpの機能を活用しているため、日本国外からもVPNを使わ�
 4. TVerRecを `windows/start_tverrec.bat`で起動した場合は、`windows/stop_tverrec.bat`でTVerRecを停止できます。
     - 関連するダウンロード処理もすべて強制停止されるので注意してください。
     - ダウンロードを止めたくない場合は、tverecのウィンドウを閉じるボタンで閉じてください。
-5. TVerRecを `windows/start_tverrec.bat`で実行している各ツールを個別に起動するために、`windows/a.download_video.bat`、`windows/b.delete_video.bat`、`windows/c.validate_video.bat`、`windows/d.move_video.bat`を使うこともできます。それぞれ、動画のダウンロドード、無視した動画やダウンロード中断時のゴミファイルの削除、ダウンロードした動画の検証、検証した動画の保存先への移動を行います。(`windows/start_tverrec.bat`はこれらを自動的に、且つ無限に実行します)
+5. TVerRecを `windows/start_tverrec.bat`で実行している各ツールを個別に起動するために、`windows/a.download_video.bat`、`windows/b.delete_trash.bat`、`windows/c.validate_video.bat`、`windows/d.move_video.bat`を使うこともできます。それぞれ、動画のダウンロドード、無視した動画やダウンロード中断時のゴミファイルの削除、ダウンロードした動画の検証、検証した動画の保存先への移動を行います。(`windows/start_tverrec.bat`はこれらを自動的に、且つ無限に実行します)
 
 個別の設定はテキストエディタで変更する必要があります。
 

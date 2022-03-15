@@ -23,6 +23,9 @@ linux-*
 mac-*
 win-*
 
+#PowerShell 5.1まで用のUTF8-BOM付きファイル
+*_5.ps1
+
 #その他雑多な不要ファイル
 * - コピー.*
 * - Copy.*
@@ -30,6 +33,7 @@ win-*
 .DS_Store
 *.lnk
 *.bak
+memo.txt
 
 debug
 debug/*

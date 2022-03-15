@@ -41,7 +41,12 @@ echo %myPID% > %PIDFile%
 	if exist "C:\Program Files\PowerShell\7\pwsh.exe" (
 		pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\tverrec_bulk.ps1
 	) else (
-		powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\tverrec_bulk.ps1
+		powershell -Command "get-content -encoding:utf8 ..\src\common_functions.ps1 | out-file -encoding:utf8 ..\src\common_functions_5.ps1"
+		powershell -Command "get-content -encoding:utf8 ..\src\tver_functions.ps1 | out-file -encoding:utf8 ..\src\tver_functions_5.ps1"
+		powershell -Command "get-content -encoding:utf8 ..\src\update_ffmpeg.ps1 | out-file -encoding:utf8 ..\src\update_ffmpeg_5.ps1"
+		powershell -Command "get-content -encoding:utf8 ..\src\update_yt-dlp.ps1 | out-file -encoding:utf8 ..\src\update_yt-dlp_5.ps1"
+		powershell -Command "get-content -encoding:utf8 ..\src\tverrec_bulk.ps1 | out-file -encoding:utf8 ..\src\tverrec_bulk_5.ps1"
+		powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\tverrec_bulk_5.ps1
 	)
 
 :ProcessChecker
@@ -65,13 +70,17 @@ echo %myPID% > %PIDFile%
 
 		pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\delete_trash.ps1
 	) else (
-		powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\delete_trash.ps1
+		powershell -Command "get-content -encoding:utf8 ..\src\delete_trash.ps1 | out-file -encoding:utf8 ..\src\delete_trash_5.ps1"
+		powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\delete_trash_5.ps1
 
-		powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\validate_video.ps1
-		powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\validate_video.ps1
+		powershell -Command "get-content -encoding:utf8 ..\src\validate_video.ps1 | out-file -encoding:utf8 ..\src\validate_video_5.ps1"
+		powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\validate_video_5.ps1
+		powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\validate_video_5.ps1
 
-		powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\move_video.ps1
+		powershell -Command "get-content -encoding:utf8 ..\src\move_video.ps1 | out-file -encoding:utf8 ..\src\move_video_5.ps1"
+		powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\move_video_5.ps1
 
+		powershell -Command "get-content -encoding:utf8 ..\src\delete_trash.ps1 | out-file -encoding:utf8 ..\src\delete_trash_5.ps1"
 		powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\delete_trash.ps1
 	)
 

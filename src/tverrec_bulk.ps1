@@ -1,4 +1,4 @@
-﻿###################################################################################
+###################################################################################
 #  TVerRec : TVerビデオダウンローダ
 #
 #		一括ダウンロード処理スクリプト
@@ -54,8 +54,13 @@ try {
 
 	#----------------------------------------------------------------------
 	#外部関数ファイルの読み込み
-	. '.\common_functions.ps1'
-	. '.\tver_functions.ps1'
+	if ($PSVersionTable.PSEdition -eq 'Desktop') {
+		. '.\common_functions_5.ps1'
+		. '.\tver_functions_5.ps1'
+	} else {
+		. '.\common_functions.ps1'
+		. '.\tver_functions.ps1'
+	}
 } catch { Write-Host '設定ファイルの読み込みに失敗しました'; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -71,10 +76,7 @@ Write-Host ''
 
 #----------------------------------------------------------------------
 #動作環境チェック
-if ($isWin) {
-	. '.\update_ffmpeg.ps1'				#ffmpegの最新化チェック
-	. '.\update_yt-dlp.ps1'				#yt-dlpの最新化チェック
-}
+checkLatestTool ($isWin)			#yt-dlpとffmpegの最新化チェック
 checkRequiredFile					#設定で指定したファイル・フォルダの存在チェック
 #checkGeoIP							#日本のIPアドレスでないと接続不可のためIPアドレスをチェック
 
@@ -88,7 +90,7 @@ try {
 
 #ダウンロード対象ジャンルリストの読み込み
 try {
-	$genres = (Get-Content $keywordFile -Encoding UTF8 | `
+	$genreLinks = (Get-Content $keywordFile -Encoding UTF8 | `
 				Where-Object { !($_ -match '^\s*$') } | `
 				Where-Object { !($_ -match '^#.*$') } | `
 				Where-Object { !($_ -match '^;.*$') } ) `
@@ -97,18 +99,18 @@ try {
 
 #----------------------------------------------------------------------
 #個々のジャンルページチェックここから
-foreach ($genre in $genres) {
+foreach ($genreLink in $genreLinks) {
 
 	#ジャンルページチェックタイトルの表示
 	Write-Host ''
 	Write-Host '=================================================================================='
-	Write-Host "【 $genre 】 のダウンロードを開始します。"
+	Write-Host "【 $genreLink 】 のダウンロードを開始します。"
 	Write-Host '=================================================================================='
 
 	#ジャンルページからビデオページのLinkを取得
 	try {
-		$genreLink = 'https://tver.jp/' + $genre
 		Write-Host $genreLink
+		$genre = $genreLink.Replace('https://tver.jp/', '')
 		$genrePage = Invoke-WebRequest $genreLink
 	} catch { Write-Host 'TVerから情報を取得できませんでした。終了します'; exit 1 }
 
@@ -291,7 +293,7 @@ foreach ($genre in $genres) {
 		} else {
 			#保存作ディレクトリがなければ作成
 			if (-Not (Test-Path $savePath -PathType Container)) {
-				$null = New-Item -ItemType directory -Path $savePath
+				try { $null = New-Item -ItemType directory -Path $savePath } catch {}
 			}
 			#yt-dlp起動
 			try { startYtdlp $videoPath $videoPage $ytdlpPath } catch { Write-Host 'yt-dlpの起動に失敗しました' }
@@ -307,31 +309,9 @@ foreach ($genre in $genres) {
 #個々のジャンルページチェックここまで
 #----------------------------------------------------------------------
 
-#yt-dlpのプロセスが設定値を超えたら一時待機
-try {
-	if ($isWin) { 
-		$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2 
-	} else {
-		$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
-	}
-} catch {
-	$ytdlpCount = 0			#プロセス数が取れなくてもとりあえず先に進む
-}
-
-while ($ytdlpCount -ne 0) {
-	try {
-		Write-Verbose "現在のダウンロードプロセス一覧 ( $ytdlpCount 個 )"
-		Start-Sleep -Seconds 60			#1分待機
-		if ($isWin) { 
-			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2 
-		} else {
-			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
-		}
-	} catch {
-		$ytdlpCount = 0
-	}
-}
+#yt-dlpのプロセスが終わるまで待機
+waitTillYtdlpProcessIsZero ($isWin)
 
 Write-Host '----------------------------------------------------------------------------------' -ForegroundColor Cyan
-Write-Host '  処理を終了しました。                                                            ' -ForegroundColor Cyan
+Write-Host '処理を終了しました。                                                            ' -ForegroundColor Cyan
 Write-Host '----------------------------------------------------------------------------------' -ForegroundColor Cyan

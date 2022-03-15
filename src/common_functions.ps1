@@ -1,4 +1,4 @@
-﻿###################################################################################
+###################################################################################
 #  TVerRec : TVerビデオダウンローダ
 #
 #		共通関数スクリプト
@@ -20,6 +20,21 @@
 ###################################################################################
 
 #----------------------------------------------------------------------
+#ツールの最新化確認
+#----------------------------------------------------------------------
+function checkLatestTool ($isWin) {
+	if ($isWin) {
+		if ($PSVersionTable.PSEdition -eq 'Desktop') {
+			. '.\update_ffmpeg_5.ps1'				#ffmpegの最新化チェック
+			. '.\update_yt-dlp_5.ps1'				#yt-dlpの最新化チェック
+		} else {
+			. '.\update_ffmpeg.ps1'				#ffmpegの最新化チェック
+			. '.\update_yt-dlp.ps1'				#yt-dlpの最新化チェック
+		}
+	}
+}
+
+#----------------------------------------------------------------------
 #設定で指定したファイル・フォルダの存在チェック
 #----------------------------------------------------------------------
 function checkRequiredFile { 
@@ -30,6 +45,19 @@ function checkRequiredFile {
 	if (Test-Path $keywordFile -PathType Leaf) {} else { Write-Error 'ダウンロード対象ジャンルリストが存在しません。終了します。' ; exit 1 }
 	if (Test-Path $ignoreFile -PathType Leaf) {} else { Write-Error 'ダウンロード対象外ビデオリストが存在しません。終了します。' ; exit 1 }
 	if (Test-Path $listFile -PathType Leaf) {} else { Write-Error 'ダウンロードリストが存在しません。終了します。' ; exit 1 }
+}
+
+#----------------------------------------------------------------------
+#GEO IPの確認
+#----------------------------------------------------------------------
+function checkGeoIP () {
+	try {
+		if ((Invoke-RestMethod -Uri 'http://ip-api.com/json/').countryCode -ne 'JP') {
+			Invoke-RestMethod -Uri ('http://ip-api.com/json/' + (Invoke-WebRequest -Uri 'http://ifconfig.me/ip').Content)
+			Write-Host '日本のIPアドレスからしか接続できません。VPN接続してください。' -ForegroundColor Red
+			exit
+		}
+	} catch {}
 }
 
 #----------------------------------------------------------------------
@@ -147,6 +175,35 @@ function getYtdlpProcessList ($parallelDownloadNum) {
 			}
 		} catch {
 			$ytdlpCount = 0			#プロセス数が取れなくてもとりあえず先に進む
+		}
+	}
+}
+
+#----------------------------------------------------------------------
+#yt-dlpのプロセスが終わるまで待機
+#----------------------------------------------------------------------
+function waitTillYtdlpProcessIsZero ($isWin) {
+	try {
+		if ($isWin) { 
+			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2 
+		} else {
+			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
+		}
+	} catch {
+		$ytdlpCount = 0			#プロセス数が取れなくてもとりあえず先に進む
+	}
+
+	while ($ytdlpCount -ne 0) {
+		try {
+			Write-Verbose "現在のダウンロードプロセス一覧 ( $ytdlpCount 個 )"
+			Start-Sleep -Seconds 60			#1分待機
+			if ($isWin) { 
+				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2 
+			} else {
+				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
+			}
+		} catch {
+			$ytdlpCount = 0
 		}
 	}
 }
