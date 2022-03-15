@@ -166,7 +166,6 @@ function startYtdlp ($videoPath, $videoPage, $ytdlpPath) {
 	} else { 
 		$null = Start-Process -FilePath ($ytdlpPath) -ArgumentList $ytdlpArgument -PassThru -RedirectStandardOutput /dev/null
 	}
-
 }
 
 #----------------------------------------------------------------------
@@ -225,8 +224,8 @@ function conv2Narrow {
 	$hanNum = '0123456789'
 	$zenAlpha = 'ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ'
 	$hanAlpha = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-	$zenSimbol = '＠＃＄％＾＆＊－＋＿／［］｛｝（）＜＞　￥”'
-	$hanSimbol = '@#$%^&*-+_/[]{}()<> \"'
+	$zenSimbol = '＠＃＄％＾＆＊－＋＿／［］｛｝（）＜＞　￥”；：'
+	$hanSimbol = '@#$%^&*-+_/[]{}()<> \";:'
 
 	for ($i = 0; $i -lt $dakuZenKana.Length; $i++) {
 		$text = $text.Replace($dakuHanKana[$i] + 'ﾞ', $dakuZenKana[$i])

@@ -1,7 +1,7 @@
 ﻿###################################################################################
 #  TVerRec : TVerビデオダウンローダ
 #
-#		動画移動処理スクリプト
+#		無視対象ビデオ削除処理スクリプト
 #
 #	Copyright (c) 2021 dongaba
 #
@@ -43,35 +43,40 @@ try {
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
+#ダウンロード対象外ビデオ番組リストの読み込み
+$ignoreTitles = (Get-Content $ignoreFile -Encoding UTF8 | `
+			Where-Object { !($_ -match '^\s*$') } | `
+			Where-Object { !($_ -match '^;.*$') } ) `
+	-as [string[]]
 
-#保存先ディレクトリの存在確認
-if (Test-Path $downloadBasePath -PathType Container) {} else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' ; exit 1 }
-if (Test-Path $saveBasePath -PathType Container) {} else { Write-Error 'ビデオ移動先フォルダにアクセスできません。終了します。' ; exit 1 }
+#ダウンロードが中断した際にできたゴミファイルは削除
+Write-Host '----------------------------------------------------------------------'
+Write-Host 'ダウンロードが中断した際にできたゴミファイルを削除します'
+Write-Host '----------------------------------------------------------------------'
+#ダウンロードが中断してしまったゴミファイルを削除
+$tempFile = $downloadBasePath + '\*\*.ytdl'
+Remove-Item $tempFile
+$tempFile = $downloadBasePath + '\*\*.jpg'
+Remove-Item $tempFile
+$tempFile = $downloadBasePath + '\*\*.vtt'
+Remove-Item $tempFile
+$tempFile = $downloadBasePath + '\*\*temp.mp4'
+Remove-Item $tempFile
+$tempFile = $downloadBasePath + '\*\*.part'
+Remove-Item $tempFile
+$tempFile = $downloadBasePath + '\*\*mp4.part-Frag*'
+Remove-Item $tempFile
 
-#移動先フォルダのサブフォルダの取得
-foreach ($moveToParentName in $moveToParentNameList) {
-	$moveToParentPath = $(Join-Path $saveBasePath $moveToParentName)
-	Write-Host '----------------------------------------------------------------------'
-	Write-Host "$moveToParentPath を処理します"
-	Write-Host '----------------------------------------------------------------------'
-
-	#移動先フォルダを起点として、配下のフォルダを取得
-	$moveToChildPathList = Get-ChildItem $moveToParentPath | Where-Object { $_.PSisContainer }
-
-	foreach ($moveToChildPath in $moveToChildPathList) {
-		$targetFolderName = Split-Path -Leaf $moveToChildPath
-
-		#同名フォルダが存在する場合は配下のファイルを移動
-		$moveFromPath = $(Join-Path $downloadBasePath $targetFolderName)
-		if ( Test-Path $moveFromPath) {
-			$moveFromPath = $moveFromPath + '\*.mp4'
-			$moveToPath = $moveToParentPath + '\' + $targetFolderName
-			Write-Host "$moveFromPath を $moveToPath に移動します"
-			Move-Item $moveFromPath -Destination $moveToPath -Force
-		}
-
-	}
-
+#無視リストに入っている番組は削除
+Write-Host '----------------------------------------------------------------------'
+Write-Host '削除対象のビデオフォルダを削除します'
+Write-Host '----------------------------------------------------------------------'
+foreach ($ignoreTitle in $ignoreTitles) {
+	$delPath = Join-Path $downloadBasePath $ignoreTitle
+	Write-Host $delPath
+	$ErrorActionPreference = 'silentlycontinue'
+	Remove-Item -Path $delPath -Force -Recurse -ErrorAction SilentlyContinue
+	$ErrorActionPreference = 'continue'
 }
 
 #空フォルダ と 隠しファイルしか入っていないフォルダを一気に削除
@@ -84,3 +89,4 @@ foreach ($subdir in $all_subdirs) {
 		Remove-Item -Path $subdir.FullName -Recurse -Force
 	}
 }
+

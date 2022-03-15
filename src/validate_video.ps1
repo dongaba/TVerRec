@@ -21,59 +21,72 @@
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-$currentDir = Split-Path $MyInvocation.MyCommand.Path
-Set-Location $currentDir
-$configDir = $(Join-Path $currentDir '..\config')
-$sysFile = $(Join-Path $configDir 'system_setting.conf')
-$confFile = $(Join-Path $configDir 'user_setting.conf')
+Set-StrictMode -Version Latest
+try {
+	$currentDir = Split-Path $MyInvocation.MyCommand.Path
+	Set-Location $currentDir
+	$configDir = $(Join-Path $currentDir '..\config')
+	$sysFile = $(Join-Path $configDir 'system_setting.conf')
+	$confFile = $(Join-Path $configDir 'user_setting.conf')
 
-#----------------------------------------------------------------------
-#外部設定ファイル読み込み
-Get-Content $sysFile | Where-Object { $_ -notmatch '^\s*$' } | `
-		Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
-		Invoke-Expression
-Get-Content $confFile | Where-Object { $_ -notmatch '^\s*$' } | `
-		Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
-		Invoke-Expression
+	#----------------------------------------------------------------------
+	#外部設定ファイル読み込み
+	Get-Content $sysFile | Where-Object { $_ -notmatch '^\s*$' } | `
+			Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
+			Invoke-Expression
+	Get-Content $confFile | Where-Object { $_ -notmatch '^\s*$' } | `
+			Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
+			Invoke-Expression
+
+	#外部関数ファイルの読み込み
+	. '.\common_functions.ps1'
+} catch { Write-Host '設定ファイルの読み込みに失敗しました'; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
 
-#外部関数ファイルの読み込み
-. '.\common_functions.ps1'
-
-#ダウンロードが中断してしまったゴミファイルを削除
-Write-Host 'ダウンロードが中断した際にできたゴミファイルを削除します'
-$tempFile = $downloadBasePath + '\*\*.ytdl'
-Remove-Item $tempFile
-$tempFile = $downloadBasePath + '\*\*.jpg'
-Remove-Item $tempFile
-$tempFile = $downloadBasePath + '\*\*.vtt'
-Remove-Item $tempFile
-$tempFile = $downloadBasePath + '\*\*temp.mp4'
-Remove-Item $tempFile
-$tempFile = $downloadBasePath + '\*\*.part'
-Remove-Item $tempFile
-$tempFile = $downloadBasePath + '\*\*mp4.part-Frag*'
-Remove-Item $tempFile
-Write-Host 'ダウンロードが中断した際にできたゴミファイルを削除しました'
+#ffmpegのハードウェアデコードオプションの設定
+Write-Host '----------------------------------------------------------------------'
+Write-Host 'ffmpegのデコードオプションを検出しします'
+Write-Host '  もし動画検証がうまく進まない場合は正しく検出されていない可能性があります'
+Write-Host '  その場合、user_setting.conf で $forceSoftwareDecode = $true と'
+Write-Host '  設定することで解決できる場合があります'
+Write-Host '----------------------------------------------------------------------'
+$ffmpegDecodeOption = getFfmpegDecodeOption
 
 #30日以上前に処理したものはリストから削除
-$purgedList = (Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.downloadDate -gt $(Get-Date).AddDays(-30) }) 
-$purgedList | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
+try {
+	$purgedList = (Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.downloadDate -gt $(Get-Date).AddDays(-30) }) 
+	$purgedList | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
+} catch { Write-Host 'リストのクリーンアップに失敗しました' }
 
-#重複削除。ファイル名で1つしかないもの残し、ダウンロード時間で改めてソート。無視されたファイルがリストから削除されるので注意
-$purgedList | Group-Object -Property 'videoPath' | `
-		Where-Object count -EQ 1 | `
-		Select-Object -ExpandProperty group | `
-		Sort-Object -Property downloadDate | `
-		Export-Csv $listFile -NoTypeInformation -Encoding UTF8
+#無視されたもの
+try {
+	$ignoredList = (Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.videoPath -eq '-- IGNORED --' } ) 
+} catch { Write-Host 'リストの読み込みに失敗しました' }
+
+#無視されなかったものの重複削除。ファイル名で1つしかないもの残す
+try {
+	$processedList = Import-Csv $listFile -Encoding UTF8 | `
+			Group-Object -Property 'videoPath' | `
+			Where-Object count -EQ 1 | `
+			Select-Object -ExpandProperty group
+} catch { Write-Host 'リストの読み込みに失敗しました' }
+
+#無視されたものと無視されなかったものを結合し出力
+$mergedList = $processedList + $ignoredList
+try {
+	$mergedList | Sort-Object -Property downloadDate | `
+			Export-Csv $listFile -NoTypeInformation -Encoding UTF8
+} catch { Write-Host 'リストの更新に失敗しました' }
 
 #録画リストからビデオチェックが終わっていないものを読み込み
-$videoLists = Import-Csv $listFile -Encoding UTF8 | `
-		Where-Object { $_.videoValidated -ne '1' } | `
-		Where-Object { $_.videoPath -ne '-- IGNORED --' } | `
-		Select-Object 'videoPath'
+try {
+	$videoLists = Import-Csv $listFile -Encoding UTF8 | `
+			Where-Object { $_.videoValidated -ne '1' } | `
+			Where-Object { $_.videoPath -ne '-- IGNORED --' } | `
+			Select-Object 'videoPath'
+} catch { Write-Host 'リストの読み込み更新に失敗しました' ; exit 1 }
 
 if ($null -eq $videoLists) {
 	Write-Host '----------------------------------------------------------------------'
@@ -89,9 +102,6 @@ if ($null -eq $videoLists) {
 		$i = $i + 1
 		Write-Host "$i 本目: $videoPath"
 	}
-
-	#ffmpegのハードウェアデコードオプションの設定
-	$ffmpegDecodeOption = getFfmpegDecodeOption
 
 	$j = 0
 	foreach ($videoList in $videoLists.videoPath) {
@@ -125,7 +135,7 @@ if ($null -eq $videoLists) {
 					| Out-File $listFile -Encoding utf8 -Force
 					#破損している動画ファイルを削除
 					Remove-Item $videoPath
-				} catch { Write-Host "ファイル削除できませんでした。: $videoPath" }
+				} catch { Write-Host "ファイル削除できませんでした: $videoPath" }
 			} else {
 				#終了コードが"0"のときは録画リストにチェック済みフラグを立てる
 				try {
@@ -133,10 +143,13 @@ if ($null -eq $videoLists) {
 					#該当のビデオのチェックステータスを"1"に
 					$($videoLists | Where-Object { $_.videoPath -eq $videoPath }).videoValidated = '1'
 					$videoLists | Export-Csv $listFile -NoTypeInformation -Encoding UTF8 -Force
-				} catch { Write-Host "録画リストを更新できませんでした。: $videoPath" }
+				} catch { Write-Host "録画リストを更新できませんでした: $videoPath" }
 			}
-
-		} finally { $process.Dispose() } 
+		} catch {
+			Write-Host 'ffmpegの実行に失敗しました' 
+		} finally {
+			$process.Dispose()
+		} 
 	}
 }
 
