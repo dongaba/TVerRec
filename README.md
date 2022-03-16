@@ -30,13 +30,23 @@ yt-dlpの機能を活用しているため、日本国外からもVPNを使わ�
 4. TVerRecを `windows/start_tverrec.bat`で起動した場合は、`windows/stop_tverrec.bat`でTVerRecを停止できます。
     - 関連するダウンロード処理もすべて強制停止されるので注意してください。
     - ダウンロードを止めたくない場合は、tverecのウィンドウを閉じるボタンで閉じてください。
-5. TVerRecを `windows/start_tverrec.bat`で実行している各ツールを個別に起動するために、`windows/a.download_video.bat`、`windows/b.delete_trash.bat`、`windows/c.validate_video.bat`、`windows/d.move_video.bat`を使うこともできます。それぞれ、動画のダウンロドード、無視した動画やダウンロード中断時のゴミファイルの削除、ダウンロードした動画の検証、検証した動画の保存先への移動を行います。(`windows/start_tverrec.bat`はこれらを自動的に、且つ無限に実行します)
+5. TVerRecを `windows/start_tverrec.bat`で実行している各ツールを個別に起動するために、`windows/a.download_video.bat` / `windows/b.delete_trash.bat` / `windows/c.validate_video.bat` / `windows/d.move_video.bat`を使うこともできます。それぞれ、動画のダウンロドード、無視した動画やダウンロード中断時のゴミファイルの削除、ダウンロードした動画の検証、検証した動画の保存先への移動を行います。(`windows/start_tverrec.bat`はこれらを自動的に、且つ無限に実行します)
 
 個別の設定はテキストエディタで変更する必要があります。
 
 ### 動作環境の設定方法
 
 - `config/user_setting.conf`をテキストエディターで開いてユーザ設定を行ってください。
+  - `$downloadBasePath`には動画をダウンロードするフォルダを設定します
+  - `$saveBasePath`にはダウンロードした動画を移動する先のフォルダを設定します
+  - `$moveToParentNameList`には`$saveBasePath`配下に存在するフォルダをカンマ区切りで設定します
+    - ここで設定したフォルダ配下にあるフォルダと`$downloadBasePath`にあるフォルダが一致する場合、動画ファイルが`$downloadBasePath`から`$saveBasePath`配下の各フォルダ配下に移動されます
+  - `$parallelDownloadNum`は同時に並行で実行するダウンロード数を設定します
+  - `$windowStyle`にはyt-dlpのウィンドウをどのように表示するかを設定します
+    - `Normal` / `Maximized` / `Minimized` / `Hidden` の4つが指定可能です
+  - `$forceSoftwareDecode`に`$true`を設定するとハードウェアアクセラレーションを使わなくなります
+    - 高速なCPUが搭載されている場合はハードウェアアクセラレーションよりもCPUで処理したほうが早い場合があります
+    - ハードウェアアクセラレーション方式の検出がうまくいかない場合(動画の検証が全く進まない場合)にも`$true`に設定してください
 
 ### ダウンロード対象のジャンルの設定方法
 
