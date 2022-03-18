@@ -104,7 +104,9 @@ foreach ($keyword in $keywords) {
 	#----------------------------------------------------------------------
 	#個々のビデオダウンロードここから
 	$videoNum = 0						#ジャンル内の処理中のビデオの番号
-	$videoTotal = $videoLinks.Length	#ジャンル内のトータルビデオ数
+	if ($videoLinks -is [array] ) {
+		$videoTotal = $videoLinks.Length	#ジャンル内のトータルビデオ数
+	} else { $videoTotal = 1 }
 	foreach ($videoID in $videoLinks) {
 
 		#いろいろ初期化
