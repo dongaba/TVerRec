@@ -31,9 +31,9 @@ try {
 		if (!$currentDir) { $currentDir = '.' } 
 	}
 	Set-Location $currentDir
-	$configDir = $(Join-Path $currentDir '..\config')
-	$sysFile = $(Join-Path $configDir 'system_setting.conf')
-	$confFile = $(Join-Path $configDir 'user_setting.conf')
+	$confDir = $(Join-Path $currentDir '..\conf')
+	$sysFile = $(Join-Path $confDir 'system_setting.conf')
+	$confFile = $(Join-Path $confDir 'user_setting.conf')
 
 	#----------------------------------------------------------------------
 	#外部設定ファイル読み込み

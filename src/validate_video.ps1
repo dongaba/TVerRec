@@ -30,9 +30,9 @@ try {
 		if (!$currentDir) { $currentDir = '.' } 
 	}
 	Set-Location $currentDir
-	$configDir = $(Join-Path $currentDir '..\config')
-	$sysFile = $(Join-Path $configDir 'system_setting.conf')
-	$confFile = $(Join-Path $configDir 'user_setting.conf')
+	$confDir = $(Join-Path $currentDir '..\conf')
+	$sysFile = $(Join-Path $confDir 'system_setting.conf')
+	$confFile = $(Join-Path $confDir 'user_setting.conf')
 
 	#----------------------------------------------------------------------
 	#外部設定ファイル読み込み
@@ -56,8 +56,6 @@ try {
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
-
-$ffmpegDecodeOption = getFfmpegDecodeOption		#ffmpegのハードウェアデコードオプションの設定
 purgeDB											#30日以上前に処理したものはリストから削除
 uniqueDB										#リストの重複削除
 
@@ -77,14 +75,31 @@ if ($null -eq $videoLists) {
 	Write-Host '----------------------------------------------------------------------'
 	Write-Host '以下のビデオをチェックします'
 	Write-Host '----------------------------------------------------------------------'
-	$i = 0
+
 	#----------------------------------------------------------------------
+	$i = 0
 	foreach ($videoList in $videoLists.videoPath) {
 		$videoPath = $videoList
 		$i = $i + 1
 		Write-Host "$i 本目: $videoPath"
 	}
 	#----------------------------------------------------------------------
+
+	#ffmpegのデコードオプションの設定
+	if ($forceSoftwareDecode -eq $true ) {
+		#ソフトウェアデコードを強制する場合
+		$decodeOption = ''
+	} else {
+		if ($ffmpegDecodeOption -ne '') {
+			Write-Host '----------------------------------------------------------------------'
+			Write-Host 'ffmpegのデコードオプションが設定されてます'
+			Write-Host 'もし動画検証がうまく進まない場合は、以下のどちらかをお試しください'
+			Write-Host '  ・ user_setting.conf でデコードオプションを変更する'
+			Write-Host '  ・ user_setting.conf で $forceSoftwareDecode = $true と設定する'
+			Write-Host '----------------------------------------------------------------------'
+		}
+		$decodeOption = $ffmpegDecodeOption
+	}
 
 	#----------------------------------------------------------------------
 	$j = 0
@@ -95,7 +110,7 @@ if ($null -eq $videoLists) {
 		if (Test-Path $downloadBasePath -PathType Container) {}
 		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' ; exit 1 }
 		Write-Host "$j/$i 本目をチェック中: $videoPath"
-		checkVideo $ffmpegDecodeOption		#ビデオの整合性チェック
+		checkVideo $decodeOption		#ビデオの整合性チェック
 	}
 	#----------------------------------------------------------------------
 }

@@ -22,15 +22,13 @@
 #----------------------------------------------------------------------
 #ツールの最新化確認
 #----------------------------------------------------------------------
-function checkLatestTool ($isWin) {
-	if ($isWin) {
-		if ($PSVersionTable.PSEdition -eq 'Desktop') {
-			. '.\update_ffmpeg_5.ps1'				#ffmpegの最新化チェック
-			. '.\update_yt-dlp_5.ps1'				#yt-dlpの最新化チェック
-		} else {
-			. '.\update_ffmpeg.ps1'				#ffmpegの最新化チェック
-			. '.\update_yt-dlp.ps1'				#yt-dlpの最新化チェック
-		}
+function checkLatestTool {
+	if ($PSVersionTable.PSEdition -eq 'Desktop') {
+		. '.\update_ffmpeg_5.ps1'				#ffmpegの最新化チェック
+		. '.\update_yt-dlp_5.ps1'				#yt-dlpの最新化チェック
+	} else {
+		. '.\update_ffmpeg.ps1'				#ffmpegの最新化チェック
+		. '.\update_yt-dlp.ps1'				#yt-dlpの最新化チェック
 	}
 }
 
@@ -62,7 +60,7 @@ function checkGeoIP () {
 		if ((Invoke-RestMethod -Uri 'http://ip-api.com/json/').countryCode -ne 'JP') {
 			Invoke-RestMethod -Uri ('http://ip-api.com/json/' + (Invoke-WebRequest -Uri 'http://ifconfig.me/ip').Content)
 			Write-Host '日本のIPアドレスからしか接続できません。VPN接続してください。' -ForegroundColor Red
-			exit
+			exit 1
 		}
 	} catch {}
 }
@@ -73,57 +71,6 @@ function checkGeoIP () {
 function getTimeStamp {
 	$timeStamp = Get-Date -UFormat '%Y-%m-%d %H:%M:%S'
 	return $timeStamp
-}
-
-#----------------------------------------------------------------------
-#ffmpegのハードウェアデコードオプションの設定
-#----------------------------------------------------------------------
-function getFfmpegDecodeOption {
-	Write-Host '----------------------------------------------------------------------'
-	Write-Host 'ffmpegのデコードオプションを検出しします'
-	Write-Host '  もし動画検証がうまく進まない場合は正しく検出されていない可能性があります'
-	Write-Host '  その場合、user_setting.conf で $forceSoftwareDecode = $true と'
-	Write-Host '  設定することで解決できる場合があります'
-	Write-Host '----------------------------------------------------------------------'
-
-	#ffmpegのデコードオプション
-	$ffmpegDecodeQSV = '-hwaccel qsv -c:v h264_qsv'							#QSV : for Intel CPUs
-	#以下はRaspberryPi用だが実用に耐えないのでコメント
-	#$ffmpegDecodeRpi4 = '-c:v h264_v4l2m2m -num_output_buffers 32 -num_capture_buffers 16'	#for Raspberry Pi 4
-	#$ffmpegDecodeRpi3 = '-c:v h264_omx'										#for Raspberry Pi 3
-	#以下は使えるかどうかの判定が難しいのでコメント
-	#$ffmpegDecodeD3D11VA = '-hwaccel d3d11va -hwaccel_output_format d3d11'	#Direct3D 11 : for Windows
-	#$ffmpegDecodeDXVA2 = '-hwaccel dxva2 -hwaccel_output_format dxva2_vld'	#Direct3D 9 : for Windows
-	#以下は検証していないのでコメント
-	#$ffmpegDecodeCUDA = '-hwaccel cuda -hwaccel_output_format cuda'			#CUDA : for NVIDIA Graphic Cards
-
-	$ffmpegDecodeOption = ''
-	
-	#ffmpegのデコードオプションの設定
-	if ($forceSoftwareDecode -eq $true ) {
-		#ソフトウェアデコードを強制する場合
-		$ffmpegDecodeOption = ''
-	} elseif ($ffmpegDecodeOption -eq '') {
-		#ハードウェアデコード方式が決まっていない場合
-		try {
-			#ffmpegからデコーダー一覧を取得
-			$process = New-Object System.Diagnostics.Process
-			$process.StartInfo.FileName = $ffmpegPath
-			$process.StartInfo.Arguments = '-decoders -hide_banner'
-			$process.StartInfo.UseShellExecute = $False
-			$process.StartInfo.RedirectStandardOutput = $True
-			$process.Start() | Out-Null
-			$stdout = $process.StandardOutput.ReadToEnd()
-			$process.WaitForExit()
-
-			#サポートしているデコーダーをチェック
-			if ( $stdout.IndexOf('h264_qsv') -gt 0 ) {
-				$ffmpegDecodeOption = $ffmpegDecodeQSV			#QSV : for Intel CPUs
-			}
-		} catch { $ffmpegDecodeOption = '' } finally { $process.Dispose() } 
-	}
-
-	return $ffmpegDecodeOption
 }
 
 #----------------------------------------------------------------------
@@ -154,7 +101,15 @@ function uniqueDB {
 	} catch { Write-Host 'リストの読み込みに失敗しました' }
 
 	#無視されたものと無視されなかったものを結合し出力
-	$mergedList = $processedList + $ignoredList
+	if ($null -eq $processedList -and $null -eq $ignoredList ) {
+
+	} elseif ($null -ne $processedList -and $null -eq $ignoredList ) {
+		$mergedList = $processedList
+	} elseif ($null -eq $processedList -and $null -ne $ignoredList ) {
+		$mergedList = $ignoredList
+	} else {
+		$mergedList = $processedList + $ignoredList
+	}
 	try {
 		$mergedList | Sort-Object -Property downloadDate | `
 				Export-Csv $listFile -NoTypeInformation -Encoding UTF8
@@ -164,7 +119,7 @@ function uniqueDB {
 #----------------------------------------------------------------------
 #ビデオの整合性チェック
 #----------------------------------------------------------------------
-function checkVideo ($ffmpegDecodeOption) {
+function checkVideo ($decodeOption) {
 	try { 
 		#ffmpegで整合性チェック
 		$process = New-Object System.Diagnostics.Process
@@ -172,7 +127,7 @@ function checkVideo ($ffmpegDecodeOption) {
 		$process.StartInfo.UseShellExecute = $false
 		$process.StartInfo.WindowStyle = 'Hidden'
 		$process.StartInfo.FileName = $ffmpegPath
-		$process.StartInfo.Arguments = $ffmpegDecodeOption + ' -v error -i "' + $videoPath + '" -f null - '
+		$process.StartInfo.Arguments = $decodeOption + ' -v error -i "' + $videoPath + '" -f null - '
 		$process.Start() | Out-Null
 		$stderr = $process.StandardError.ReadToEnd()
 		$process.WaitForExit()
@@ -212,8 +167,12 @@ function getYtdlpProcessList ($parallelDownloadNum) {
 	try {
 		if ($isWin) { 
 			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2 
-		} else {
+		} elseif ($IsLinux) {
 			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
+		} elseif ($IsMac) {
+			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name Python).Count
+		} else {
+			$ytdlpCount = 0
 		}
 	} catch {
 		$ytdlpCount = 0			#プロセス数が取れなくてもとりあえず先に進む
@@ -227,8 +186,12 @@ function getYtdlpProcessList ($parallelDownloadNum) {
 		try {
 			if ($isWin) { 
 				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2 
-			} else {
+			} elseif ($IsLinux) {
 				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
+			} elseif ($IsMac) {
+				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name Python).Count
+			} else {
+				$ytdlpCount = 0
 			}
 		} catch {
 			$ytdlpCount = 0			#プロセス数が取れなくてもとりあえず先に進む
@@ -243,8 +206,12 @@ function waitTillYtdlpProcessIsZero ($isWin) {
 	try {
 		if ($isWin) { 
 			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2 
-		} else {
+		} elseif ($IsLinux) {
 			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
+		} elseif ($IsMac) {
+			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name Python).Count
+		} else {
+			$ytdlpCount = 0
 		}
 	} catch {
 		$ytdlpCount = 0			#プロセス数が取れなくてもとりあえず先に進む
@@ -256,8 +223,12 @@ function waitTillYtdlpProcessIsZero ($isWin) {
 			Start-Sleep -Seconds 60			#1分待機
 			if ($isWin) { 
 				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2 
-			} else {
+			} elseif ($IsLinux) {
 				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
+			} elseif ($IsMac) {
+				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name Python).Count
+			} else {
+				$ytdlpCount = 0
 			}
 		} catch {
 			$ytdlpCount = 0
@@ -269,22 +240,29 @@ function waitTillYtdlpProcessIsZero ($isWin) {
 #yt-dlpプロセスの起動
 #----------------------------------------------------------------------
 function startYtdlp ($videoPath, $videoPage, $ytdlpPath) {
-	#$ffmpegHwAccel = '-hwaccel auto'
-	$ytdlpArgument = '-f b ' 
-	$ytdlpArgument += '--abort-on-error '
-	$ytdlpArgument += '--console-title '
-	$ytdlpArgument += '--concurrent-fragments 1 '
-	$ytdlpArgument += '--no-mtime '
-	$ytdlpArgument += '--embed-thumbnail '
-	$ytdlpArgument += '--embed-subs '
-	#$ytdlpArgument += '--postprocessor-args "' + $ffmpegHwAccel + '"'
-	$ytdlpArgument += '-o ' + ' "' + $videoPath + '" '
-	$ytdlpArgument += $videoPage 
-	Write-Debug "yt-dlp起動コマンド:$ytdlpPath $ytdlpArgument"
-	if ($isWin) { 
-		$null = Start-Process -FilePath ($ytdlpPath) -ArgumentList $ytdlpArgument -PassThru -WindowStyle $windowStyle
-	} else { 
-		$null = Start-Process -FilePath ($ytdlpPath) -ArgumentList $ytdlpArgument -PassThru -RedirectStandardOutput /dev/null
+	$ytdlpArg01 = '-f'
+	$ytdlpArg02 = 'b'
+	$ytdlpArg03 = '--abort-on-error'
+	$ytdlpArg04 = '--console-title'
+	$ytdlpArg05 = '--concurrent-fragments '
+	$ytdlpArg06 = '1'
+	$ytdlpArg07 = '--no-mtime'
+	$ytdlpArg08 = '--embed-thumbnail '
+	$ytdlpArg09 = '--embed-subs '
+	$ytdlpArg10 = '-o'
+	$ytdlpArg11 = '"' + $videoPath + '"' 
+	$ytdlpArg12 = $videoPage
+	Write-Debug "yt-dlp起動コマンド:$ytdlpPath $ytdlpArg01 $ytdlpArg02 $ytdlpArg03 $ytdlpArg04 $ytdlpArg05 $ytdlpArg06 $ytdlpArg07 $ytdlpArg08 $ytdlpArg09 $ytdlpArg10 $ytdlpArg11 $ytdlpArg12"
+	if ($isWin) {
+		$null = Start-Process -FilePath $ytdlpPath `
+			-ArgumentList ($ytdlpArg01, $ytdlpArg02, $ytdlpArg03, $ytdlpArg04, $ytdlpArg05, $ytdlpArg06, $ytdlpArg07, $ytdlpArg08, $ytdlpArg09, $ytdlpArg10, $ytdlpArg11, $ytdlpArg12 ) `
+			-PassThru `
+			-WindowStyle $windowStyle
+	} else {
+		$null = Start-Process -FilePath nohup `
+			-ArgumentList ($ytdlpPath, $ytdlpArg01, $ytdlpArg02, $ytdlpArg03, $ytdlpArg04, $ytdlpArg05, $ytdlpArg06, $ytdlpArg07, $ytdlpArg08, $ytdlpArg09, $ytdlpArg10, $ytdlpArg11, $ytdlpArg12 ) `
+			-PassThru `
+			-RedirectStandardOutput /dev/null
 	}
 }
 

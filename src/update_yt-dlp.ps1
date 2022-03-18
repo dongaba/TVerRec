@@ -39,7 +39,7 @@ $releases = "https://api.github.com/repos/$repo/releases"
 #yt-dlp保存先相対Path
 $ytdlpRelativeDir = '..\bin'
 $ytdlpDir = $(Join-Path $scriptRoot $ytdlpRelativeDir)
-$ytdlpFile = $(Join-Path $ytdlpDir 'yt-dlp.exe')
+if ($isWin) { $ytdlpPath = $(Join-Path $ytdlpDir 'yt-dlp.exe') } else { $ytdlpPath = $(Join-Path $ytdlpDir 'yt-dlp') }
 
 #yt-dlpのディレクトリがなければ作成
 if (-Not (Test-Path $ytdlpDir -PathType Container)) {
@@ -47,9 +47,9 @@ if (-Not (Test-Path $ytdlpDir -PathType Container)) {
 }
 
 #yt-dlpのバージョン取得
-if (Test-Path $ytdlpFile -PathType Leaf) {
+if (Test-Path $ytdlpPath -PathType Leaf) {
 	# get version of current yt-dlp.exe
-	$ytdlpCurrentVersion = (& $ytdlpFile --version)
+	$ytdlpCurrentVersion = (& $ytdlpPath --version)
 } else {
 	# if yt-dlp.exe not found, will download it
 	$ytdlpCurrentVersion = ''

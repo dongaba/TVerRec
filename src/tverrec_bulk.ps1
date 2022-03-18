@@ -32,9 +32,9 @@ try {
 		if (!$currentDir) { $currentDir = '.' } 
 	}
 	Set-Location $currentDir
-	$configDir = $(Join-Path $currentDir '..\config')
-	$sysFile = $(Join-Path $configDir 'system_setting.conf')
-	$confFile = $(Join-Path $configDir 'user_setting.conf')
+	$confDir = $(Join-Path $currentDir '..\conf')
+	$sysFile = $(Join-Path $confDir 'system_setting.conf')
+	$confFile = $(Join-Path $confDir 'user_setting.conf')
 
 	#Windowsの判定
 	Set-StrictMode -Off
@@ -52,10 +52,10 @@ try {
 
 	#----------------------------------------------------------------------
 	#開発環境用に設定上書き
-	if ((Test-Path 'R:\' -PathType Container) ) {
-		$VerbosePreference = 'Continue'						#詳細メッセージ
-		$DebugPreference = 'Continue'						#デバッグメッセージ
-	}
+	#if ((Test-Path 'R:\' -PathType Container) ) {
+	$VerbosePreference = 'Continue'						#詳細メッセージ
+	$DebugPreference = 'Continue'						#デバッグメッセージ
+	#}
 
 	#----------------------------------------------------------------------
 	#外部関数ファイルの読み込み
@@ -81,7 +81,7 @@ Write-Host ''
 
 #----------------------------------------------------------------------
 #動作環境チェック
-checkLatestTool ($isWin)	#yt-dlpとffmpegの最新化チェック
+checkLatestTool						#yt-dlpとffmpegの最新化チェック
 checkRequiredFile					#設定で指定したファイル・フォルダの存在チェック
 #checkGeoIP							#日本のIPアドレスでないと接続不可のためIPアドレスをチェック
 $keywords = loadKeywordList			#ダウンロード対象ジャンルリストの読み込み
