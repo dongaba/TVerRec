@@ -30,13 +30,15 @@ win-*
 * - コピー.*
 * - Copy.*
 .vscode/*
+.vs/*
+TVerRecGUI/*
+debug
+debug/*
+memo.txt
 .DS_Store
 *.lnk
 *.bak
-memo.txt
 
-debug
-debug/*
 
 #以下ローカルの変更を潰さないために
 #git update-index --assume-unchanged db/tver.csv
