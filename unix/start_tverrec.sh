@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 ###################################################################################
 #  TVerRec : TVerビデオダウンローダ
@@ -35,8 +35,7 @@ do
 	pwsh -NoProfile -ExecutionPolicy Unrestricted ../src/tverrec_bulk.ps1
 
 	#yt-dlpプロセスチェック
-	sleep $retryTime
-	while [ `ps -e | grep -E "ffmpeg|yt-dlp" | wc -l` -gt 0 ]
+	while [ `ps -e | grep -E "ffmpeg|yt-dlp" | grep -v grep | wc -l` -gt 0 ]
 	do
 		echo "ダウンロードが進行中です..."
 		ps -e | grep -E "ffmpeg|yt-dlp" 
@@ -44,14 +43,14 @@ do
 		sleep $retryTime
 	done
 
-	pwsh -NoProfile -ExecutionPolicy Unrestricted ./src/delete_trash.ps1
+	pwsh -NoProfile -ExecutionPolicy Unrestricted ../src/delete_trash.ps1
 
-	pwsh -NoProfile -ExecutionPolicy Unrestricted ./src/validate_video.ps1
-	pwsh -NoProfile -ExecutionPolicy Unrestricted ./src/validate_video.ps1
+	pwsh -NoProfile -ExecutionPolicy Unrestricted ../src/validate_video.ps1
+	pwsh -NoProfile -ExecutionPolicy Unrestricted ../src/validate_video.ps1
 
-	pwsh -NoProfile -ExecutionPolicy Unrestricted ./src/move_video.ps1
+	pwsh -NoProfile -ExecutionPolicy Unrestricted ../src/move_video.ps1
 
-	pwsh -NoProfile -ExecutionPolicy Unrestricted ./src/delete_trash.ps1
+	pwsh -NoProfile -ExecutionPolicy Unrestricted ../src/delete_trash.ps1
 
 	echo "$sleepTime秒待機します..."
 	sleep $sleepTime
