@@ -25,7 +25,12 @@ using namespace System.Text.RegularExpressions
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Set-StrictMode -Version Latest
 try {
-	$currentDir = Split-Path $MyInvocation.MyCommand.Path
+	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') { 
+		$currentDir = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition 
+	} else {
+		$currentDir = Split-Path -Parent -Path ([Environment]::GetCommandLineArgs()[0]) 
+		if (!$currentDir) { $currentDir = '.' } 
+	}
 	Set-Location $currentDir
 	$configDir = $(Join-Path $currentDir '..\config')
 	$sysFile = $(Join-Path $configDir 'system_setting.conf')
@@ -76,68 +81,39 @@ Write-Host ''
 
 #----------------------------------------------------------------------
 #動作環境チェック
-checkLatestTool ($isWin)			#yt-dlpとffmpegの最新化チェック
+checkLatestTool ($isWin)	#yt-dlpとffmpegの最新化チェック
 checkRequiredFile					#設定で指定したファイル・フォルダの存在チェック
 #checkGeoIP							#日本のIPアドレスでないと接続不可のためIPアドレスをチェック
-
-#ダウンロード対象外番組リストの読み込み
-try {
-	$ignoreTitles = (Get-Content $ignoreFile -Encoding UTF8 | `
-				Where-Object { !($_ -match '^\s*$') } | `
-				Where-Object { !($_ -match '^;.*$') } ) `
-		-as [string[]]
-} catch { Write-Host 'ダウンロード対象外リストの読み込みに失敗しました'; exit 1 }
-
-#ダウンロード対象ジャンルリストの読み込み
-try {
-	$genreLinks = (Get-Content $keywordFile -Encoding UTF8 | `
-				Where-Object { !($_ -match '^\s*$') } | `
-				Where-Object { !($_ -match '^#.*$') } | `
-				Where-Object { !($_ -match '^;.*$') } ) `
-		-as [string[]]
-} catch { Write-Host 'ダウンロード対象ジャンルリストの読み込みに失敗しました'; exit 1 }
+$keywords = loadKeywordList			#ダウンロード対象ジャンルリストの読み込み
 
 #----------------------------------------------------------------------
 #個々のジャンルページチェックここから
-foreach ($genreLink in $genreLinks) {
+foreach ($keyword in $keywords) {
 
 	#ジャンルページチェックタイトルの表示
 	Write-Host ''
 	Write-Host '=================================================================================='
-	Write-Host "【 $genreLink 】 のダウンロードを開始します。"
+	Write-Host "【 $keyword 】 のダウンロードを開始します。"
 	Write-Host '=================================================================================='
 
-	#ジャンルページからビデオページのLinkを取得
-	try {
-		Write-Host $genreLink
-		$genre = $genreLink.Replace('https://tver.jp/', '')
-		$genrePage = Invoke-WebRequest $genreLink
-	} catch { Write-Host 'TVerから情報を取得できませんでした。終了します'; exit 1 }
+	Write-Host $keyword
+	$genre = $keyword.Replace('https://tver.jp/', '').Replace('http://tver.jp/', '')
 
-	$ErrorActionPreference = 'silentlycontinue'
-	$videoLinks = $genrePage.Links | Where-Object href -Like '*corner*'  | Select-Object href
-	$videoLinks += $genrePage.Links | Where-Object href -Like '*feature*'  | Select-Object href
-	$videoLinks += $genrePage.Links | Where-Object href -Like '*lp*'  | Select-Object href
-	$ErrorActionPreference = 'continue'
-
-	#saveGenrePage						#デバッグ用ジャンルページの保存
+	$videoLinks = getVideoLinks
 
 	#----------------------------------------------------------------------
 	#個々のビデオダウンロードここから
 	$videoNum = 0						#ジャンル内の処理中のビデオの番号
 	$videoTotal = $videoLinks.Length	#ジャンル内のトータルビデオ数
-	foreach ($videoLink in $videoLinks) {
+	foreach ($videoID in $videoLinks) {
 
 		#いろいろ初期化
 		$videoNum = $videoNum + 1		#ジャンル内のビデオ番号のインクリメント
-		$videoID = '' ; $videoPage = '' ; $videoName = '' ; $videoPath = '' ; $videoPageLP = '' ;
-		$broadcastDate = '' ; $title = '' ; $subtitle = '' ; $media = '' ; $description = '' ;
-		$videoInfo = $null
-		$ignore = $false ; $skip = $false
-		$newVideo = $null
+		$videoPage = '' 
 
 		#保存先ディレクトリの存在確認
-		if (Test-Path $downloadBasePath -PathType Container) {} else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します' ; exit 1 }
+		if (Test-Path $downloadBasePath -PathType Container) {} 
+		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します' ; exit 1 }
 
 		Write-Host '----------------------------------------------------------------------'
 		Write-Host "[ $genre - $videoNum / $videoTotal ] をダウンロードします。 ( $(getTimeStamp) )"
@@ -146,172 +122,20 @@ foreach ($genreLink in $genreLinks) {
 		#yt-dlpプロセスの確認と、yt-dlpのプロセス数が多い場合の待機
 		getYtdlpProcessList $parallelDownloadNum
 
-		$videoID = $videoLink.href
 		$videoPage = 'https://tver.jp' + $videoID
 		Write-Host $videoPage
 
-		#TVerの番組説明の場合はビデオがないのでスキップ
-		if ($videoPage -match '/episode/') {
-			Write-Host 'ビデオではなくオンエア情報のようです。スキップします'
-			continue			#次のビデオへ
-		}
-
-		#URLがすでにリストに存在する場合はスキップ
-		try {
-			$listMatch = Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.videoPage -eq $videoPage } 
-		} catch {
-			Write-Host 'リストを読み書きできなかったのでスキップしました'
-			continue			#次回再度トライするためリストに追加せずに次のビデオへ
-		}
-		if ( $null -ne $listMatch ) {
-			Write-Host '過去に処理したビデオです。スキップします'
-			continue			#次のビデオへ
-		}
-
-		#TVerのAPIを叩いてビデオ情報取得
-		try {
-			$videoInfo = callTVerAPI ($videoID)
-		} catch {
-			Write-Host 'TVerから情報を取得できませんでした。スキップします'
-			continue			#次回再度トライするためリストに追加せずに次のビデオへ
-		}
-
-		#取得したビデオ情報を整形
-		$broadcastDate = getBroadcastDate ($videoInfo)
-		$title = getVideoTitle ($videoInfo)
-		$subtitle = getVideoSubTitle ($videoInfo)
-		$media = getVideoMedia ($videoInfo)
-		$description = getVideoDescription ($videoInfo)
-		$videoPageLP = getVideoSeries ($videoInfo)
-
-		#ビデオファイル情報をセット
-		$videoName = setVideoName $title $subtitle $broadcastDate		#保存ファイル名を設定
-		$savePath = $(Join-Path $downloadBasePath (removeInvalidFileNameChars $title))
-		$videoPath = $(Join-Path $savePath $videoName)
-
-		#ビデオ情報のコンソール出力
-		writeVideoInfo $videoName $broadcastDate $media $description 
-		writeVideoDebugInfo $videoPage $videoPageLP $genre $title $subtitle $videoPath $(getTimeStamp)
-
-		#ビデオタイトルが取得できなかった場合はスキップ次のビデオへ
-		if ($videoName -eq '.mp4') {
-			Write-Host 'ビデオタイトルを特定できませんでした。スキップします'
-			continue			#次回再度ダウンロードをトライするためリストに追加せずに次のビデオへ
-		}
-
-		#ファイルが既に存在する場合はスキップフラグを立ててリストに書き込み処理へ
-		if (Test-Path $videoPath) {
-			#チェック済みか調べた上で、スキップ判断
-			try {
-				$listMatch = Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.videoPath -eq $videoPath } | Where-Object { $_.videoValidated -eq '1' } 
-			} catch {
-				Write-Host 'リストを読み書きできませんでした。スキップします'
-				continue			#次回再度トライするためリストに追加せずに次のビデオへ
-			}
-			#結果が0件ということは未検証のファイルがあるということ
-			if ( $null -eq $listMatch ) {
-				Write-Host 'すでにダウンロード済みですが未検証のビデオです。リストに追加します'
-				$skip = $true
-			} else {
-				Write-Host 'すでにダウンロード済み・検証済みのビデオです。スキップします'
-				continue			#すでに検証済みなのでリストに追加せずに次のビデオへ
-			}
-		} else {
-			#無視リストに入っている番組の場合はスキップフラグを立ててリストに書き込み処理へ
-			foreach ($ignoreTitle in $ignoreTitles) {
-				if ($(conv2Narrow $title) -eq $(conv2Narrow $ignoreTitle)) {
-					$ignore = $true
-					Write-Host '無視リストに入っているビデオです。スキップします'
-					#break
-					continue		#リストの重複削除のため、無視したものはリスト出力せずに次のビデオへ行くことに
-				} 
-			}
-		}
-
-		#スキップフラグが立っているかチェック
-		if ($ignore -eq $true) {
-			#リストに行追加
-			Write-Host '無視したファイルをリストに追加します'
-			$newVideo = [pscustomobject]@{ 
-				videoPage      = $videoPage ;
-				videoPageLP    = $videoPageLP ;
-				genre          = $genre ;
-				title          = $title ;
-				subtitle       = $subtitle ;
-				media          = $media ;
-				broadcastDate  = $broadcastDate ;
-				downloadDate   = $(getTimeStamp) ;
-				videoName      = '-- IGNORED --' ;
-				videoPath      = '-- IGNORED --' ;
-				videoValidated = '0' ;
-			}
-		} elseif ($skip -eq $true) {
-			Write-Host 'スキップした未検証のファイルをリストに追加します'
-			$newVideo = [pscustomobject]@{ 
-				videoPage      = $videoPage ;
-				videoPageLP    = $videoPageLP ;
-				genre          = $genre ;
-				title          = $title ;
-				subtitle       = $subtitle ;
-				media          = $media ;
-				broadcastDate  = $broadcastDate ;
-				downloadDate   = $(getTimeStamp) ;
-				videoName      = '-- SKIPPED --' ;
-				videoPath      = $videoPath ;
-				videoValidated = '0' ;
-			}
-		} else {
-			#リストに行追加
-			Write-Host 'ダウンロードするファイルをリストに追加します'
-			$newVideo = [pscustomobject]@{ 
-				videoPage      = $videoPage ;
-				videoPageLP    = $videoPageLP ;
-				genre          = $genre ;
-				title          = $title ;
-				subtitle       = $subtitle ;
-				media          = $media ;
-				broadcastDate  = $broadcastDate ;
-				downloadDate   = $(getTimeStamp) ;
-				videoName      = $videoName ;
-				videoPath      = $videoPath ;
-				videoValidated = '0' ;
-			}
-		}
-
-		try {
-			#リストCSV書き出し
-			$newVideo | Export-Csv $listFile -NoTypeInformation -Encoding UTF8 -Append -Force
-			Write-Debug 'リストを書き込みました'
-		} catch {
-			Write-Host 'リストを更新できませんでした。でスキップします'
-			continue			#次回再度トライするためリストに追加せずに次のビデオへ
-		}
-
-		#スキップや無視対象でなければyt-dlp起動
-		if (($ignore -eq $true ) -Or ($skip -eq $true)) { 
-			continue			#スキップや無視対象は飛ばして次のファイルへ
-		} else {
-			#保存作ディレクトリがなければ作成
-			if (-Not (Test-Path $savePath -PathType Container)) {
-				try { $null = New-Item -ItemType directory -Path $savePath } catch {}
-			}
-			#yt-dlp起動
-			try { startYtdlp $videoPath $videoPage $ytdlpPath } catch { Write-Host 'yt-dlpの起動に失敗しました' }
-
-			Start-Sleep -Seconds 10			#10秒待機
-		}
+		downloadTVerVideo $genre				#TVerビデオダウンロードのメイン処理
 
 	}
-	#個々のビデオダウンロードここまで
 	#----------------------------------------------------------------------
 
 }
-#個々のジャンルページチェックここまで
 #----------------------------------------------------------------------
 
 #yt-dlpのプロセスが終わるまで待機
 waitTillYtdlpProcessIsZero ($isWin)
 
 Write-Host '----------------------------------------------------------------------------------' -ForegroundColor Cyan
-Write-Host '処理を終了しました。                                                            ' -ForegroundColor Cyan
+Write-Host '処理を終了しました。                                                              ' -ForegroundColor Cyan
 Write-Host '----------------------------------------------------------------------------------' -ForegroundColor Cyan

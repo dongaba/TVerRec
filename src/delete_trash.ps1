@@ -24,8 +24,12 @@
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Set-StrictMode -Version Latest
 try {
-	Set-StrictMode -Version Latest
-	$currentDir = Split-Path $MyInvocation.MyCommand.Path
+	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') { 
+		$currentDir = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition 
+	} else {
+		$currentDir = Split-Path -Parent -Path ([Environment]::GetCommandLineArgs()[0]) 
+		if (!$currentDir) { $currentDir = '.' } 
+	}
 	Set-Location $currentDir
 	$configDir = $(Join-Path $currentDir '..\config')
 	$sysFile = $(Join-Path $configDir 'system_setting.conf')
@@ -39,54 +43,20 @@ try {
 	Get-Content $confFile | Where-Object { $_ -notmatch '^\s*$' } | `
 			Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
 			Invoke-Expression
+
+	#----------------------------------------------------------------------
+	#外部関数ファイルの読み込み
+	if ($PSVersionTable.PSEdition -eq 'Desktop') {
+		. '.\common_functions_5.ps1'
+		. '.\tver_functions_5.ps1'
+	} else {
+		. '.\common_functions.ps1'
+		. '.\tver_functions.ps1'
+	}
 } catch { Write-Host '設定ファイルの読み込みに失敗しました'; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
-#ダウンロード対象外ビデオ番組リストの読み込み
-$ignoreTitles = (Get-Content $ignoreFile -Encoding UTF8 | `
-			Where-Object { !($_ -match '^\s*$') } | `
-			Where-Object { !($_ -match '^;.*$') } ) `
-	-as [string[]]
-
-#ダウンロードが中断した際にできたゴミファイルは削除
-Write-Host '----------------------------------------------------------------------'
-Write-Host 'ダウンロードが中断した際にできたゴミファイルを削除します'
-Write-Host '----------------------------------------------------------------------'
-#ダウンロードが中断してしまったゴミファイルを削除
-$tempFile = $downloadBasePath + '\*\*.ytdl'
-Remove-Item $tempFile
-$tempFile = $downloadBasePath + '\*\*.jpg'
-Remove-Item $tempFile
-$tempFile = $downloadBasePath + '\*\*.vtt'
-Remove-Item $tempFile
-$tempFile = $downloadBasePath + '\*\*temp.mp4'
-Remove-Item $tempFile
-$tempFile = $downloadBasePath + '\*\*.part'
-Remove-Item $tempFile
-$tempFile = $downloadBasePath + '\*\*mp4.part-Frag*'
-Remove-Item $tempFile
-
-#無視リストに入っている番組は削除
-Write-Host '----------------------------------------------------------------------'
-Write-Host '削除対象のビデオフォルダを削除します'
-Write-Host '----------------------------------------------------------------------'
-foreach ($ignoreTitle in $ignoreTitles) {
-	$delPath = Join-Path $downloadBasePath $ignoreTitle
-	Write-Host $delPath
-	$ErrorActionPreference = 'silentlycontinue'
-	Remove-Item -Path $delPath -Force -Recurse -ErrorAction SilentlyContinue
-	$ErrorActionPreference = 'continue'
-}
-
-#空フォルダ と 隠しファイルしか入っていないフォルダを一気に削除
-Write-Host '----------------------------------------------------------------------'
-Write-Host '空フォルダ と 隠しファイルしか入っていないフォルダを削除します'
-Write-Host '----------------------------------------------------------------------'
-$all_subdirs = @(Get-ChildItem -Path $downloadBasePath -Recurse | Where-Object { $_.PSIsContainer }) | Sort-Object -Descending { $_.FullName }
-foreach ($subdir in $all_subdirs) {
-	if (@(Get-ChildItem -Path $subdir.FullName -Recurse | Where-Object { ! $_.PSIsContainer }).Count -eq 0) {
-		Remove-Item -Path $subdir.FullName -Recurse -Force
-	}
-}
-
+deleteTrash		#ダウンロードが中断した際にできたゴミファイルは削除
+deleteIgnored	#無視リストに入っている番組は削除
+deleteEmpty		#空フォルダ と 隠しファイルしか入っていないフォルダを一気に削除

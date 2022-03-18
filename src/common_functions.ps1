@@ -38,13 +38,20 @@ function checkLatestTool ($isWin) {
 #設定で指定したファイル・フォルダの存在チェック
 #----------------------------------------------------------------------
 function checkRequiredFile { 
-	if (Test-Path $downloadBasePath -PathType Container) {} else { Write-Error 'ビデオ保存先フォルダが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $ffmpegPath -PathType Leaf) {} else { Write-Error 'ffmpegが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $ytdlpPath -PathType Leaf) {} else { Write-Error 'yt-dlpが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $confFile -PathType Leaf) {} else { Write-Error 'ユーザ設定ファイルが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $keywordFile -PathType Leaf) {} else { Write-Error 'ダウンロード対象ジャンルリストが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $ignoreFile -PathType Leaf) {} else { Write-Error 'ダウンロード対象外ビデオリストが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $listFile -PathType Leaf) {} else { Write-Error 'ダウンロードリストが存在しません。終了します。' ; exit 1 }
+	if (Test-Path $downloadBasePath -PathType Container) {} 
+	else { Write-Error 'ビデオ保存先フォルダが存在しません。終了します。' ; exit 1 }
+	if (Test-Path $ffmpegPath -PathType Leaf) {} 
+	else { Write-Error 'ffmpegが存在しません。終了します。' ; exit 1 }
+	if (Test-Path $ytdlpPath -PathType Leaf) {} 
+	else { Write-Error 'yt-dlpが存在しません。終了します。' ; exit 1 }
+	if (Test-Path $confFile -PathType Leaf) {} 
+	else { Write-Error 'ユーザ設定ファイルが存在しません。終了します。' ; exit 1 }
+	if (Test-Path $keywordFile -PathType Leaf) {} 
+	else { Write-Error 'ダウンロード対象ジャンルリストが存在しません。終了します。' ; exit 1 }
+	if (Test-Path $ignoreFile -PathType Leaf) {} 
+	else { Write-Error 'ダウンロード対象外ビデオリストが存在しません。終了します。' ; exit 1 }
+	if (Test-Path $listFile -PathType Leaf) {} 
+	else { Write-Error 'ダウンロードリストが存在しません。終了します。' ; exit 1 }
 }
 
 #----------------------------------------------------------------------
@@ -72,52 +79,26 @@ function getTimeStamp {
 #ffmpegのハードウェアデコードオプションの設定
 #----------------------------------------------------------------------
 function getFfmpegDecodeOption {
-	if ($iswin -eq $true) {
-		#Windowsの場合はDirect Xのバージョンを取得
-		$dxdiagFile = $(Join-Path $downloadBasePath 'dxdiag.txt')
-		try {
-			#ffmpegからデコーダー一覧を取得
-			$process = New-Object System.Diagnostics.Process
-			$process.StartInfo.FileName = 'dxdiag.exe'
-			$process.StartInfo.Arguments = "/t $dxdiagFile"
-			$process.StartInfo.UseShellExecute = $False
-			$process.Start() | Out-Null
-			$process.WaitForExit()
+	Write-Host '----------------------------------------------------------------------'
+	Write-Host 'ffmpegのデコードオプションを検出しします'
+	Write-Host '  もし動画検証がうまく進まない場合は正しく検出されていない可能性があります'
+	Write-Host '  その場合、user_setting.conf で $forceSoftwareDecode = $true と'
+	Write-Host '  設定することで解決できる場合があります'
+	Write-Host '----------------------------------------------------------------------'
 
-			$result = Select-String -Path $dxdiagFile -Pattern 'DDI Version'
-			$ddiVersion = [int]$($result[0].Line.Substring($result[0].Line.Length - 2, 2).trim())
+	#ffmpegのデコードオプション
+	$ffmpegDecodeQSV = '-hwaccel qsv -c:v h264_qsv'							#QSV : for Intel CPUs
+	#以下はRaspberryPi用だが実用に耐えないのでコメント
+	#$ffmpegDecodeRpi4 = '-c:v h264_v4l2m2m -num_output_buffers 32 -num_capture_buffers 16'	#for Raspberry Pi 4
+	#$ffmpegDecodeRpi3 = '-c:v h264_omx'										#for Raspberry Pi 3
+	#以下は使えるかどうかの判定が難しいのでコメント
+	#$ffmpegDecodeD3D11VA = '-hwaccel d3d11va -hwaccel_output_format d3d11'	#Direct3D 11 : for Windows
+	#$ffmpegDecodeDXVA2 = '-hwaccel dxva2 -hwaccel_output_format dxva2_vld'	#Direct3D 9 : for Windows
+	#以下は検証していないのでコメント
+	#$ffmpegDecodeCUDA = '-hwaccel cuda -hwaccel_output_format cuda'			#CUDA : for NVIDIA Graphic Cards
 
-		} catch { $ddiVersion = 0 } finally { $process.Dispose() } 
-
-		try { Remove-Item $dxdiagFile } catch {}
-
-		#DDIのバージョンによりデコードオプションを設定
-		if ($ddiVersion -gt 10 ) {
-			$ffmpegDecodeOption = $ffmpegDecodeD3D11VA		#Direct3D 11 : for Windows
-		} elseif ($ddiVersion -gt 8 ) {
-			$ffmpegDecodeOption = $ffmpegDecodeDXVA2		#Direct3D 9 : for Windows
-		} else {
-			$ffmpegDecodeOption = ''
-		}
-
-	} elseif ($IsLinux -eq $true) {
-		#Linuxの場合はRaspberry Piのデコードオプションを設定
-		$result = Select-String -Path '/proc/cpuinfo' -Pattern 'Raspberry Pi 4'
-		if ($null -ne $result) {
-			$ffmpegDecodeOption = $ffmpegDecodeRpi4			#Raspberry Pi 4
-		} else {
-			$result = Select-String -Path '/proc/cpuinfo' -Pattern 'Raspberry Pi 3'
-			if ($null -ne $result) {
-				$ffmpegDecodeOption = $ffmpegDecodeRpi3			#Raspberry Pi 3
-			} else {
-				$ffmpegDecodeOption = ''
-			}
-		}
-	} else {
-		#WindowsでもLinuxでもない場合
-		$ffmpegDecodeOption = ''
-	}
-
+	$ffmpegDecodeOption = ''
+	
 	#ffmpegのデコードオプションの設定
 	if ($forceSoftwareDecode -eq $true ) {
 		#ソフトウェアデコードを強制する場合
@@ -128,23 +109,99 @@ function getFfmpegDecodeOption {
 			#ffmpegからデコーダー一覧を取得
 			$process = New-Object System.Diagnostics.Process
 			$process.StartInfo.FileName = $ffmpegPath
-			$process.StartInfo.Arguments = '-decoders'
+			$process.StartInfo.Arguments = '-decoders -hide_banner'
 			$process.StartInfo.UseShellExecute = $False
 			$process.StartInfo.RedirectStandardOutput = $True
 			$process.Start() | Out-Null
-			$process.WaitForExit()
 			$stdout = $process.StandardOutput.ReadToEnd()
+			$process.WaitForExit()
 
 			#サポートしているデコーダーをチェック
 			if ( $stdout.IndexOf('h264_qsv') -gt 0 ) {
 				$ffmpegDecodeOption = $ffmpegDecodeQSV			#QSV : for Intel CPUs
-			} else {
-				$ffmpegDecodeOption = ''						#使えるハードウェアデコーダが不明
 			}
 		} catch { $ffmpegDecodeOption = '' } finally { $process.Dispose() } 
 	}
 
 	return $ffmpegDecodeOption
+}
+
+#----------------------------------------------------------------------
+#30日以上前に処理したものはリストから削除
+#----------------------------------------------------------------------
+function purgeDB {
+	try {
+		$purgedList = (Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.downloadDate -gt $(Get-Date).AddDays(-30) }) 
+		$purgedList | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
+	} catch { Write-Host 'リストのクリーンアップに失敗しました' }
+}
+
+#----------------------------------------------------------------------
+#リストの重複削除
+#----------------------------------------------------------------------
+function uniqueDB {
+	#無視されたもの
+	try {
+		$ignoredList = (Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.videoPath -eq '-- IGNORED --' } ) 
+	} catch { Write-Host 'リストの読み込みに失敗しました' }
+
+	#無視されなかったものの重複削除。ファイル名で1つしかないもの残す
+	try {
+		$processedList = Import-Csv $listFile -Encoding UTF8 | `
+				Group-Object -Property 'videoPath' | `
+				Where-Object count -EQ 1 | `
+				Select-Object -ExpandProperty group
+	} catch { Write-Host 'リストの読み込みに失敗しました' }
+
+	#無視されたものと無視されなかったものを結合し出力
+	$mergedList = $processedList + $ignoredList
+	try {
+		$mergedList | Sort-Object -Property downloadDate | `
+				Export-Csv $listFile -NoTypeInformation -Encoding UTF8
+	} catch { Write-Host 'リストの更新に失敗しました' }
+}
+
+#----------------------------------------------------------------------
+#ビデオの整合性チェック
+#----------------------------------------------------------------------
+function checkVideo ($ffmpegDecodeOption) {
+	try { 
+		#ffmpegで整合性チェック
+		$process = New-Object System.Diagnostics.Process
+		$process.StartInfo.RedirectStandardError = $true
+		$process.StartInfo.UseShellExecute = $false
+		$process.StartInfo.WindowStyle = 'Hidden'
+		$process.StartInfo.FileName = $ffmpegPath
+		$process.StartInfo.Arguments = $ffmpegDecodeOption + ' -v error -i "' + $videoPath + '" -f null - '
+		$process.Start() | Out-Null
+		$stderr = $process.StandardError.ReadToEnd()
+		$process.WaitForExit()
+
+		if ( $process.ExitCode -ne 0 ) {
+			#終了コードが"0"以外は録画リストとファイルを削除
+			Write-Host "stderr: $stderr"
+			Write-Host 'exit code: ' $process.ExitCode
+			try {
+				#破損している動画ファイルを録画リストから削除
+					(Select-String -Pattern $videoPath -Path $listFile -Encoding utf8 -SimpleMatch -NotMatch).Line `
+				| Out-File $listFile -Encoding utf8 -Force
+				#破損している動画ファイルを削除
+				Remove-Item $videoPath
+			} catch { Write-Host "ファイル削除できませんでした: $videoPath" }
+		} else {
+			#終了コードが"0"のときは録画リストにチェック済みフラグを立てる
+			try {
+				$videoLists = Import-Csv $listFile -Encoding UTF8
+				#該当のビデオのチェックステータスを"1"に
+				$($videoLists | Where-Object { $_.videoPath -eq $videoPath }).videoValidated = '1'
+				$videoLists | Export-Csv $listFile -NoTypeInformation -Encoding UTF8 -Force
+			} catch { Write-Host "録画リストを更新できませんでした: $videoPath" }
+		}
+	} catch {
+		Write-Host 'ffmpegの実行に失敗しました' 
+	} finally {
+		$process.Dispose() 
+	} 
 }
 
 #----------------------------------------------------------------------
@@ -212,6 +269,7 @@ function waitTillYtdlpProcessIsZero ($isWin) {
 #yt-dlpプロセスの起動
 #----------------------------------------------------------------------
 function startYtdlp ($videoPath, $videoPage, $ytdlpPath) {
+	#$ffmpegHwAccel = '-hwaccel auto'
 	$ytdlpArgument = '-f b ' 
 	$ytdlpArgument += '--abort-on-error '
 	$ytdlpArgument += '--console-title '
@@ -219,6 +277,7 @@ function startYtdlp ($videoPath, $videoPage, $ytdlpPath) {
 	$ytdlpArgument += '--no-mtime '
 	$ytdlpArgument += '--embed-thumbnail '
 	$ytdlpArgument += '--embed-subs '
+	#$ytdlpArgument += '--postprocessor-args "' + $ffmpegHwAccel + '"'
 	$ytdlpArgument += '-o ' + ' "' + $videoPath + '" '
 	$ytdlpArgument += $videoPage 
 	Write-Debug "yt-dlp起動コマンド:$ytdlpPath $ytdlpArgument"

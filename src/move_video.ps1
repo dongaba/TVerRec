@@ -24,8 +24,12 @@
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Set-StrictMode -Version Latest
 try {
-	Set-StrictMode -Version Latest
-	$currentDir = Split-Path $MyInvocation.MyCommand.Path
+	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') { 
+		$currentDir = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition 
+	} else {
+		$currentDir = Split-Path -Parent -Path ([Environment]::GetCommandLineArgs()[0]) 
+		if (!$currentDir) { $currentDir = '.' } 
+	}
 	Set-Location $currentDir
 	$configDir = $(Join-Path $currentDir '..\config')
 	$sysFile = $(Join-Path $configDir 'system_setting.conf')
@@ -39,17 +43,31 @@ try {
 	Get-Content $confFile | Where-Object { $_ -notmatch '^\s*$' } | `
 			Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
 			Invoke-Expression
+
+	#----------------------------------------------------------------------
+	#外部関数ファイルの読み込み
+	if ($PSVersionTable.PSEdition -eq 'Desktop') {
+		. '.\common_functions_5.ps1'
+		. '.\tver_functions_5.ps1'
+	} else {
+		. '.\common_functions.ps1'
+		. '.\tver_functions.ps1'
+	}
 } catch { Write-Host '設定ファイルの読み込みに失敗しました'; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
 
 #保存先ディレクトリの存在確認
-if (Test-Path $downloadBasePath -PathType Container) {} else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' ; exit 1 }
-if (Test-Path $saveBasePath -PathType Container) {} else { Write-Error 'ビデオ移動先フォルダにアクセスできません。終了します。' ; exit 1 }
+if (Test-Path $downloadBasePath -PathType Container) {}
+else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' ; exit 1 }
+if (Test-Path $saveBasePath -PathType Container) {}
+else { Write-Error 'ビデオ移動先フォルダにアクセスできません。終了します。' ; exit 1 }
 
+#----------------------------------------------------------------------
 #移動先フォルダのサブフォルダの取得
 foreach ($moveToParentName in $moveToParentNameList) {
+
 	$moveToParentPath = $(Join-Path $saveBasePath $moveToParentName)
 	Write-Host '----------------------------------------------------------------------'
 	Write-Host "$moveToParentPath を処理します"
@@ -58,9 +76,9 @@ foreach ($moveToParentName in $moveToParentNameList) {
 	#移動先フォルダを起点として、配下のフォルダを取得
 	$moveToChildPathList = Get-ChildItem $moveToParentPath | Where-Object { $_.PSisContainer }
 
+	#----------------------------------------------------------------------
 	foreach ($moveToChildPath in $moveToChildPathList) {
 		$targetFolderName = Split-Path -Leaf $moveToChildPath
-
 		#同名フォルダが存在する場合は配下のファイルを移動
 		$moveFromPath = $(Join-Path $downloadBasePath $targetFolderName)
 		if ( Test-Path $moveFromPath) {
@@ -69,18 +87,9 @@ foreach ($moveToParentName in $moveToParentNameList) {
 			Write-Host "$moveFromPath を $moveToPath に移動します"
 			Move-Item $moveFromPath -Destination $moveToPath -Force
 		}
-
 	}
-
+	#----------------------------------------------------------------------
 }
+#----------------------------------------------------------------------
 
-#空フォルダ と 隠しファイルしか入っていないフォルダを一気に削除
-Write-Host '----------------------------------------------------------------------'
-Write-Host '空フォルダ と 隠しファイルしか入っていないフォルダを削除します'
-Write-Host '----------------------------------------------------------------------'
-$all_subdirs = @(Get-ChildItem -Path $downloadBasePath -Recurse | Where-Object { $_.PSIsContainer }) | Sort-Object -Descending { $_.FullName }
-foreach ($subdir in $all_subdirs) {
-	if (@(Get-ChildItem -Path $subdir.FullName -Recurse | Where-Object { ! $_.PSIsContainer }).Count -eq 0) {
-		Remove-Item -Path $subdir.FullName -Recurse -Force
-	}
-}
+deleteEmpty		#空フォルダ と 隠しファイルしか入っていないフォルダを一気に削除
