@@ -35,11 +35,11 @@ do
 	pwsh -NoProfile -ExecutionPolicy Unrestricted ../src/tverrec_bulk.ps1
 
 	#yt-dlpプロセスチェック
-	while [ `ps -e | grep -E "ffmpeg|yt-dlp" | grep -v grep | wc -l` -gt 0 ]
+	while [ `ps | grep -E "ffmpeg|yt-dlp" | grep -v grep | wc -l` -gt 0 ]
 	do
 		echo "ダウンロードが進行中です..."
 		ps -e | grep -E "ffmpeg|yt-dlp" 
-		echo "$retryTime秒待機します..."
+		echo $retryTime "秒待機します..."
 		sleep $retryTime
 	done
 
@@ -52,7 +52,7 @@ do
 
 	pwsh -NoProfile -ExecutionPolicy Unrestricted ../src/delete_trash.ps1
 
-	echo "$sleepTime秒待機します..."
+	echo $sleepTime "秒待機します..."
 	sleep $sleepTime
 
 done
