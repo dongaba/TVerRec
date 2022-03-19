@@ -120,26 +120,39 @@ function uniqueDB {
 #ビデオの整合性チェック
 #----------------------------------------------------------------------
 function checkVideo ($decodeOption) {
-	try { 
-		#ffmpegで整合性チェック
-		$process = New-Object System.Diagnostics.Process
-		$process.StartInfo.RedirectStandardError = $true
-		$process.StartInfo.UseShellExecute = $false
-		$process.StartInfo.WindowStyle = 'Hidden'
-		$process.StartInfo.FileName = $ffmpegPath
-		$process.StartInfo.Arguments = $decodeOption + ' -v error -i "' + $videoPath + '" -f null - '
-		$process.Start() | Out-Null
-		$stderr = $process.StandardError.ReadToEnd()
-		$process.WaitForExit()
+	$ffmpegArg01 = $decodeOption
+	$ffmpegArg02 = '-v'
+	$ffmpegArg03 = 'error'
+	$ffmpegArg04 = '-i'
+	$ffmpegArg05 = '"' + $videoPath + '"' 
+	$ffmpegArg06 = '-f'
+	$ffmpegArg07 = 'null'
+	$ffmpegArg08 = '- '
+	Write-Debug "ffmpeg起動コマンド:$ffmpegPath $ffmpegArg01 $ffmpegArg02 $ffmpegArg03 $ffmpegArg04 $ffmpegArg05 $ffmpegArg06 $ffmpegArg07 $ffmpegArg08"
 
-		if ( $process.ExitCode -ne 0 ) {
+	try {
+		if ($isWin) {
+			$proc = Start-Process -FilePath $ffmpegPath `
+				-ArgumentList ($ffmpegArg01, $ffmpegArg02, $ffmpegArg03 , $ffmpegArg04, $ffmpegArg05 , $ffmpegArg06, $ffmpegArg07, $ffmpegArg08) `
+				-WindowStyle $windowStyle `
+				-PassThru `
+				-Wait
+		} else {
+			$proc = Start-Process -FilePath $ffmpegPath `
+				-ArgumentList ($ffmpegArg01, $ffmpegArg02, $ffmpegArg03 , $ffmpegArg04, $ffmpegArg05 , $ffmpegArg06, $ffmpegArg07, $ffmpegArg08) `
+				-PassThru `
+				-Wait
+		}
+		if ($proc.ExitCode -ne 0) {
 			#終了コードが"0"以外は録画リストとファイルを削除
-			Write-Host "stderr: $stderr"
-			Write-Host 'exit code: ' $process.ExitCode
+			Write-Host 'exit code: ' $proc.ExitCode
 			try {
 				#破損している動画ファイルを録画リストから削除
-					(Select-String -Pattern $videoPath -Path $listFile -Encoding utf8 -SimpleMatch -NotMatch).Line `
-				| Out-File $listFile -Encoding utf8 -Force
+					(Select-String -Pattern $videoPath `
+					-Path $listFile `
+					-Encoding utf8 `
+					-SimpleMatch -NotMatch).Line | `
+						Out-File $listFile -Encoding utf8 -Force
 				#破損している動画ファイルを削除
 				Remove-Item $videoPath
 			} catch { Write-Host "ファイル削除できませんでした: $videoPath" }
@@ -152,11 +165,10 @@ function checkVideo ($decodeOption) {
 				$videoLists | Export-Csv $listFile -NoTypeInformation -Encoding UTF8 -Force
 			} catch { Write-Host "録画リストを更新できませんでした: $videoPath" }
 		}
+
 	} catch {
-		Write-Host 'ffmpegの実行に失敗しました' 
-	} finally {
-		$process.Dispose() 
-	} 
+		Write-Host 'ffmpegを起動できませんでした'
+	}
 }
 
 #----------------------------------------------------------------------
@@ -170,7 +182,8 @@ function getYtdlpProcessList ($parallelDownloadNum) {
 		} elseif ($IsLinux) {
 			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
 		} elseif ($IsMac) {
-			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name Python).Count
+			$psCmd = 'ps'
+			$ytdlpCount = ($psCmd | & grep -E 'yt-dlp' | & grep -v grep | & wc -l).trim()
 		} else {
 			$ytdlpCount = 0
 		}
@@ -189,7 +202,8 @@ function getYtdlpProcessList ($parallelDownloadNum) {
 			} elseif ($IsLinux) {
 				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
 			} elseif ($IsMac) {
-				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name Python).Count
+				$psCmd = 'ps'
+				$ytdlpCount = ($psCmd | & grep -E 'yt-dlp' | & grep -v grep | & wc -l).trim()
 			} else {
 				$ytdlpCount = 0
 			}
@@ -209,7 +223,8 @@ function waitTillYtdlpProcessIsZero ($isWin) {
 		} elseif ($IsLinux) {
 			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
 		} elseif ($IsMac) {
-			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name Python).Count
+			$psCmd = 'ps'
+			$ytdlpCount = ($psCmd | & grep -E 'yt-dlp' | & grep -v grep | & wc -l).trim()
 		} else {
 			$ytdlpCount = 0
 		}
@@ -226,7 +241,8 @@ function waitTillYtdlpProcessIsZero ($isWin) {
 			} elseif ($IsLinux) {
 				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
 			} elseif ($IsMac) {
-				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name Python).Count
+				$psCmd = 'ps'
+				$ytdlpCount = ($psCmd | & grep -E 'yt-dlp' | & grep -v grep | & wc -l).trim()
 			} else {
 				$ytdlpCount = 0
 			}
