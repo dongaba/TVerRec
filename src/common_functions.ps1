@@ -181,9 +181,9 @@ function getYtdlpProcessList ($parallelDownloadNum) {
 			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2 
 		} elseif ($IsLinux) {
 			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
-		} elseif ($IsMac) {
+		} elseif ($IsMacOS) {
 			$psCmd = 'ps'
-			$ytdlpCount = ($psCmd | & grep -E 'yt-dlp' | & grep -v grep | & wc -l).trim()
+			$ytdlpCount = (& $psCmd  | & grep yt-dlp | grep -v grep | wc -l).trim()
 		} else {
 			$ytdlpCount = 0
 		}
@@ -200,10 +200,10 @@ function getYtdlpProcessList ($parallelDownloadNum) {
 			if ($isWin) { 
 				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2 
 			} elseif ($IsLinux) {
-				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
-			} elseif ($IsMac) {
+				$ytdlpCount = (& Get-Process -ErrorAction Ignore -Name yt-dlp).Count
+			} elseif ($IsMacOS) {
 				$psCmd = 'ps'
-				$ytdlpCount = ($psCmd | & grep -E 'yt-dlp' | & grep -v grep | & wc -l).trim()
+				$ytdlpCount = (& $psCmd  | & grep yt-dlp | grep -v grep | wc -l).trim()
 			} else {
 				$ytdlpCount = 0
 			}
@@ -222,9 +222,9 @@ function waitTillYtdlpProcessIsZero ($isWin) {
 			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2 
 		} elseif ($IsLinux) {
 			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
-		} elseif ($IsMac) {
+		} elseif ($IsMacOS) {
 			$psCmd = 'ps'
-			$ytdlpCount = ($psCmd | & grep -E 'yt-dlp' | & grep -v grep | & wc -l).trim()
+			$ytdlpCount = (& $psCmd  | & grep yt-dlp | grep -v grep | wc -l).trim()
 		} else {
 			$ytdlpCount = 0
 		}
@@ -240,9 +240,9 @@ function waitTillYtdlpProcessIsZero ($isWin) {
 				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2 
 			} elseif ($IsLinux) {
 				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
-			} elseif ($IsMac) {
+			} elseif ($IsMacOS) {
 				$psCmd = 'ps'
-				$ytdlpCount = ($psCmd | & grep -E 'yt-dlp' | & grep -v grep | & wc -l).trim()
+				$ytdlpCount = (& $psCmd  | & grep yt-dlp | grep -v grep | wc -l).trim()
 			} else {
 				$ytdlpCount = 0
 			}

@@ -81,7 +81,7 @@ Write-Host ''
 
 #----------------------------------------------------------------------
 #動作環境チェック
-checkLatestTool ($isWin)			#yt-dlpとffmpegの最新化チェック
+checkLatestTool						#yt-dlpとffmpegの最新化チェック
 checkRequiredFile					#設定で指定したファイル・フォルダの存在チェック
 #checkGeoIP							#日本のIPアドレスでないと接続不可のためIPアドレスをチェック
 $genre = ''
