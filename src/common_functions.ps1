@@ -193,7 +193,7 @@ function getYtdlpProcessList ($parallelDownloadNum) {
 
 	Write-Verbose "現在のダウンロードプロセス一覧 ( $ytdlpCount 個 )"
 
-	while ($ytdlpCount -ge $parallelDownloadNum) {
+	while ([int]$ytdlpCount -ge [int]$parallelDownloadNum) {
 		Write-Host "ダウンロードが $parallelDownloadNum 多重に達したので一時待機します。 ( $(getTimeStamp) )"
 		Start-Sleep -Seconds 60			#1分待機
 		try {
