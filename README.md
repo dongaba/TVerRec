@@ -15,17 +15,22 @@ TVerRecは、動画配信サイトTVer ( ティーバー <https://tver.jp/> ) �
 4. また、ダウンロード保存した動画が正常に再生できるかどうかの検証も行います。
     - もし動画ファイルが壊れている場合には自動的に再ダウンロードします。
     - 動画の検証時にffmpegを使用しますが、ハードウェアアクセラレーションを使えば、CPU使用率を抑えることができます。(使用するPCでの性能によっては処理時間が長くなることがあります。その場合はハードウェアアクセラレーションを無効化できます)
-5. 動作に必要なyt-dlpやffmpegなどの必要コンポーネントは自動的に最新版がダウンロードされます。(Windowsのみ)
-6. yt-dlpの機能を活用しているため、日本国外からもVPNを使わずに安心して利用することができます。
+5. ダウンロードされたファイルは、最終保存先に自動的に移動可能です。
+    - 例えば毎週同じ番組をダウンロードする場合、最終保存先に番組名のフォルダがあれば自動的に全番組が最終保存先のフォルダに移動されます。
+    - 最終保存先に同名のフォルダがなければ、動画ファイルは保存先フォルダに残り続けます。
+6. 動作に必要なyt-dlpやffmpegなどの必要コンポーネントは自動的に最新版がダウンロードされます。(Windowsのみ)
+7. yt-dlpの機能を活用しているため、日本国外からもVPNを使わずに安心して利用することができます。
 
 ## 前提条件
 
 Windows10とWindows11で動作確認していますが、おそらくWindows7、8でも動作します。
 Windows PowerShell 5.1とPowerShell Core 7.2の双方で動作しています。おそらくそれ以外のVersionでも動作すると思います。
 
-PowerShellはMacOS、Linuxにも移植されてるので動作するはずです。
-一応、PowerShell 7.2をインストールしたRaspberry Pi OSで簡易に動作確認をしています。([参考](https://docs.microsoft.com/ja-jp/powershell/scripting/install/install-raspbian?view=powershell-7.2))
-MacOSでもPowerShellをインストールし簡易に動作確認をしています。([参考](https://docs.microsoft.com/ja-jp/powershell/scripting/install/installing-powershell-on-macos?view=powershell-7.2))
+PowerShellはMacOS、Linuxにも移植されてるので動作します。
+MacOSでもPowerShellをインストールし動作確認をしています。
+([参考](https://docs.microsoft.com/ja-jp/powershell/scripting/install/installing-powershell-on-macos?view=powershell-7.2))
+一応、PowerShell 7.2をインストールしたRaspberry Pi OSで簡易に動作確認をしていますが、性能的にRaspberry Pi 4じゃないと厳しそうです。
+([参考](https://docs.microsoft.com/ja-jp/powershell/scripting/install/install-raspbian?view=powershell-7.2))
 
 ## 実行方法
 
@@ -35,7 +40,8 @@ MacOSでもPowerShellをインストールし簡易に動作確認をしてい�
 2. [環境設定方法](#環境設定方法)、[ダウンロード対象の設定方法](#ダウンロード対象の設定方法)、[ダウンロード対象外の番組の設定方法](#ダウンロード対象外の番組の設定方法)を参照して環境設定、ダウンロード設定を行ってください。
 3. Windows環境では `win/start_tverrec.bat`を実行してください。
     - 処理が完了しても10分ごとに永遠にループして稼働し続けます。
-    - 上記でPowerShellが起動しない場合は、PowerShell の実行ポリシーのRemoteSignedなどに変更する必要があるかもしれません。([参考](https://docs.microsoft.com/ja-jp/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.2))
+    - 上記でPowerShellが起動しない場合は、PowerShell の実行ポリシーのRemoteSignedなどに変更する必要があるかもしれません。
+    ([参考](https://docs.microsoft.com/ja-jp/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.2))
     - LinuxやMacOSも基本的に同じ使い方ですが、以下の章を参照してください。
 4. TVerRecを `win/start_tverrec.bat`で起動した場合は、`win/stop_tverrec.bat`でTVerRecを停止できます。
     - 関連するダウンロード処理もすべて強制停止されるので注意してください。
@@ -47,20 +53,19 @@ MacOSでもPowerShellをインストールし簡易に動作確認をしてい�
 ### 環境設定方法
 
 - `conf/user_setting.conf`をテキストエディターで開いてユーザ設定を行ってください。
-  - `$downloadBasePath`には動画をダウンロードするフォルダを設定します
-  - `$saveBasePath`にはダウンロードした動画を移動する先のフォルダを設定します
-  - `$moveToParentNameList`には`$saveBasePath`配下に存在するフォルダをカンマ区切りで設定します
-    - ここで設定したフォルダ配下にあるフォルダと`$downloadBasePath`にあるフォルダが一致する場合、動画ファイルが`$downloadBasePath`から`$saveBasePath`配下の各フォルダ配下に移動されます
-  - `$parallelDownloadNum`は同時に並行で実行するダウンロード数を設定します
-  - `$windowStyle`にはyt-dlpのウィンドウをどのように表示するかを設定します
-    - `Normal` / `Maximized` / `Minimized` / `Hidden` の4つが指定可能です
-  - `$forceSoftwareDecode`に`$true`を設定するとハードウェアアクセラレーションを使わなくなります
-    - 高速なCPUが搭載されている場合はハードウェアアクセラレーションよりもCPUで処理したほうが早い場合があります
-    - ハードウェアアクセラレーション方式の検出がうまくいかない場合(動画の検証が全く進まない場合)にも`$true`に設定してください
+  - `$downloadBasePath`には動画をダウンロードするフォルダを設定します。
+  - `$saveBasePath`にはダウンロードした動画を移動する先のフォルダを設定します。
+    - ここで設定したフォルダ配下(再帰的にチェックします)にあるフォルダと`$downloadBasePath`にあるフォルダが一致する場合、動画ファイルが`$downloadBasePath`から`$saveBasePath`配下の各フォルダ配下に移動されます。同名のファイルがある場合は上書きされます。
+  - `$parallelDownloadNum`は同時に並行で実行するダウンロード数を設定します。
+  - `$windowStyle`にはyt-dlpのウィンドウをどのように表示するかを設定します。
+    - `Normal` / `Maximized` / `Minimized` / `Hidden` の4つが指定可能です。
+  - `$forceSoftwareDecode`に`$true`を設定するとハードウェアアクセラレーションを使わなくなります。
+    - 高速なCPUが搭載されている場合はハードウェアアクセラレーションよりもCPUで処理したほうが早い場合があります。
+    - ハードウェアアクセラレーション方式の検出がうまくいかない場合(動画の検証が全く進まない場合)にも`$true`に設定してください。
 
 ### ダウンロード対象の設定方法
 
-- `conf/keyword.conf`をテキストエディターで開いてダウンロード対象のタレントの名前や番組名、ジャンル、TV局などを設定します。
+- `conf/keyword.conf`をテキストエディターで開いてダウンロード対象のタレントの名前や番組名、ジャンル、TV局などを設定します
   - 不要なキーワードは `#` でコメントアウトするか削除してください。
   - 主なジャンルは網羅しているつもりですが、不足があるかもしれませんので、必要に応じて適宜自分で補ってください。
 
