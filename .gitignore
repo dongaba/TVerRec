@@ -39,10 +39,9 @@ memo.txt
 *.lnk
 *.bak
 
-
-#以下ローカルの変更を潰さないために
+#ローカルの変更をGitHubにアップしないために
 #git update-index --assume-unchanged db/tver.csv
-#git update-index --assume-unchanged config/ignore.conf
-#git update-index --assume-unchanged config/keyword.conf
+#git update-index --assume-unchanged conf/ignore.conf
+#git update-index --assume-unchanged conf/keyword.conf
 
 
