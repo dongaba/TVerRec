@@ -22,6 +22,7 @@ yt-dlp
 linux-*
 mac-*
 win-*
+conf/dev_setting.conf
 
 #PowerShell 5.1まで用のUTF8-BOM付きファイル
 *_5.ps1
@@ -43,5 +44,5 @@ memo.txt
 #git update-index --assume-unchanged db/tver.csv
 #git update-index --assume-unchanged conf/ignore.conf
 #git update-index --assume-unchanged conf/keyword.conf
-
+#git update-index --assume-unchanged conf/dev_setting.conf
 

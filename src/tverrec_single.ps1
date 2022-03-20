@@ -35,6 +35,7 @@ try {
 	$confDir = $(Join-Path $currentDir '..\conf')
 	$sysFile = $(Join-Path $confDir 'system_setting.conf')
 	$confFile = $(Join-Path $confDir 'user_setting.conf')
+	$devConfFile = $(Join-Path $confDir 'dev_setting.conf')
 
 	#Windowsの判定
 	Set-StrictMode -Off
@@ -52,7 +53,10 @@ try {
 
 	#----------------------------------------------------------------------
 	#開発環境用に設定上書き
-	if ((Test-Path 'R:\' -PathType Container) ) {
+	if (Test-Path $devConfFile) {
+		Get-Content $devConfFile | Where-Object { $_ -notmatch '^\s*$' } | `
+				Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
+				Invoke-Expression
 		$VerbosePreference = 'Continue'						#詳細メッセージ
 		$DebugPreference = 'Continue'						#デバッグメッセージ
 	}

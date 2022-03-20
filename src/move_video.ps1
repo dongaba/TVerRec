@@ -34,6 +34,7 @@ try {
 	$confDir = $(Join-Path $currentDir '..\conf')
 	$sysFile = $(Join-Path $confDir 'system_setting.conf')
 	$confFile = $(Join-Path $confDir 'user_setting.conf')
+	$devConfFile = $(Join-Path $confDir 'dev_setting.conf')
 
 	#----------------------------------------------------------------------
 	#外部設定ファイル読み込み
@@ -52,6 +53,16 @@ try {
 	} else {
 		. '.\common_functions.ps1'
 		. '.\tver_functions.ps1'
+	}
+
+	#----------------------------------------------------------------------
+	#開発環境用に設定上書き
+	if (Test-Path $devConfFile) {
+		Get-Content $devConfFile | Where-Object { $_ -notmatch '^\s*$' } | `
+				Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
+				Invoke-Expression
+		$VerbosePreference = 'Continue'						#詳細メッセージ
+		$DebugPreference = 'Continue'						#デバッグメッセージ
 	}
 } catch { Write-Host '設定ファイルの読み込みに失敗しました'; exit 1 }
 
