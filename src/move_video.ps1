@@ -24,11 +24,11 @@
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Set-StrictMode -Version Latest
 try {
-	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') { 
-		$currentDir = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition 
+	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
+		$currentDir = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
 	} else {
-		$currentDir = Split-Path -Parent -Path ([Environment]::GetCommandLineArgs()[0]) 
-		if (!$currentDir) { $currentDir = '.' } 
+		$currentDir = Split-Path -Parent -Path ([Environment]::GetCommandLineArgs()[0])
+		if (!$currentDir) { $currentDir = '.' }
 	}
 	Set-Location $currentDir
 	$confDir = $(Join-Path $currentDir '..\conf')
@@ -76,14 +76,14 @@ if (Test-Path $saveBasePath -PathType Container) {}
 else { Write-Error 'ビデオ移動先フォルダにアクセスできません。終了します。' ; exit 1 }
 
 #移動先フォルダを起点として、配下のフォルダを取得
-$moveToPathList = Get-ChildItem $saveBasePath -Recurse | Where-Object { $_.PSisContainer } 
+$moveToPathList = Get-ChildItem $saveBasePath -Recurse | Where-Object { $_.PSisContainer }
 
 #----------------------------------------------------------------------
 foreach ($moveToPath in $moveToPathList) {
 	Write-Host '----------------------------------------------------------------------'
 	Write-Host "$moveToPath を処理します"
 	Write-Host '----------------------------------------------------------------------'
-	$targetFolderName = Split-Path -Leaf $moveToPath 
+	$targetFolderName = Split-Path -Leaf $moveToPath
 	#同名フォルダが存在する場合は配下のファイルを移動
 	$moveFromPath = $(Join-Path $downloadBasePath $targetFolderName)
 	if ( Test-Path $moveFromPath) {

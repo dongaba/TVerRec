@@ -25,11 +25,11 @@ using namespace System.Text.RegularExpressions
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Set-StrictMode -Version Latest
 try {
-	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') { 
-		$currentDir = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition 
+	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
+		$currentDir = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
 	} else {
-		$currentDir = Split-Path -Parent -Path ([Environment]::GetCommandLineArgs()[0]) 
-		if (!$currentDir) { $currentDir = '.' } 
+		$currentDir = Split-Path -Parent -Path ([Environment]::GetCommandLineArgs()[0])
+		if (!$currentDir) { $currentDir = '.' }
 	}
 	Set-Location $currentDir
 	$confDir = $(Join-Path $currentDir '..\conf')
@@ -97,7 +97,7 @@ while ($true) {
 	$videoPage = ''
 
 	#保存先ディレクトリの存在確認
-	if (Test-Path $downloadBasePath -PathType Container) {} 
+	if (Test-Path $downloadBasePath -PathType Container) {}
 	else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します' ; exit 1 }
 
 	$videoPage = Read-Host 'ビデオURLを入力してください。'

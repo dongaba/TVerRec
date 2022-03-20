@@ -24,11 +24,11 @@ Set-StrictMode -Off
 $isWin = $PSVersionTable.Platform -match '^($|(Microsoft )?Win)'
 Set-StrictMode -Version Latest
 
-if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') { 
-	$scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition 
-} else { 
-	$scriptRoot = Split-Path -Parent -Path ([Environment]::GetCommandLineArgs()[0]) 
-	if (!$scriptRoot) { $scriptRoot = '.' } 
+if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
+	$scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+} else {
+	$scriptRoot = Split-Path -Parent -Path ([Environment]::GetCommandLineArgs()[0])
+	if (!$scriptRoot) { $scriptRoot = '.' }
 }
 
 #githubの設定
@@ -81,6 +81,6 @@ if ($latestVersion -eq $ytdlpCurrentVersion) {
 			Write-Host "yt-dlpをversion $ytdlpCurrentVersion に更新しました。 "
 		} catch {}
 	}
-} 
+}
 
 

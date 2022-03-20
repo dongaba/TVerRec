@@ -24,11 +24,11 @@ Set-StrictMode -Off
 $isWin = $PSVersionTable.Platform -match '^($|(Microsoft )?Win)'
 Set-StrictMode -Version Latest
 
-if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') { 
-	$scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition 
-} else { 
-	$scriptRoot = Split-Path -Parent -Path ([Environment]::GetCommandLineArgs()[0]) 
-	if (!$scriptRoot) { $scriptRoot = '.' } 
+if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
+	$scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+} else {
+	$scriptRoot = Split-Path -Parent -Path ([Environment]::GetCommandLineArgs()[0])
+	if (!$scriptRoot) { $scriptRoot = '.' }
 }
 
 #ffmpeg保存先相対Path
@@ -64,9 +64,9 @@ if ($latestVersion -eq $ffmpegCurrentVersion) {
 	Write-Host ''
 } else {
 	if ($isWin -eq $false) {
-		Write-Host '自動アップデートはWindowsでのみ動作します。 ' 
+		Write-Host '自動アップデートはWindowsでのみ動作します。 '
 	} else {
-		try { 
+		try {
 			#ダウンロード
 			$ffmpegZipLink = 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip'
 			Write-Host "ffmpegをダウンロードします。 $ffmpegZipLink"

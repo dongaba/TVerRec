@@ -35,20 +35,20 @@ function checkLatestTool {
 #----------------------------------------------------------------------
 #設定で指定したファイル・フォルダの存在チェック
 #----------------------------------------------------------------------
-function checkRequiredFile { 
-	if (Test-Path $downloadBasePath -PathType Container) {} 
+function checkRequiredFile {
+	if (Test-Path $downloadBasePath -PathType Container) {}
 	else { Write-Error 'ビデオ保存先フォルダが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $ffmpegPath -PathType Leaf) {} 
+	if (Test-Path $ffmpegPath -PathType Leaf) {}
 	else { Write-Error 'ffmpegが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $ytdlpPath -PathType Leaf) {} 
+	if (Test-Path $ytdlpPath -PathType Leaf) {}
 	else { Write-Error 'yt-dlpが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $confFile -PathType Leaf) {} 
+	if (Test-Path $confFile -PathType Leaf) {}
 	else { Write-Error 'ユーザ設定ファイルが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $keywordFile -PathType Leaf) {} 
+	if (Test-Path $keywordFile -PathType Leaf) {}
 	else { Write-Error 'ダウンロード対象ジャンルリストが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $ignoreFile -PathType Leaf) {} 
+	if (Test-Path $ignoreFile -PathType Leaf) {}
 	else { Write-Error 'ダウンロード対象外ビデオリストが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $listFile -PathType Leaf) {} 
+	if (Test-Path $listFile -PathType Leaf) {}
 	else { Write-Error 'ダウンロードリストが存在しません。終了します。' ; exit 1 }
 }
 
@@ -78,7 +78,7 @@ function getTimeStamp {
 #----------------------------------------------------------------------
 function purgeDB {
 	try {
-		$purgedList = (Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.downloadDate -gt $(Get-Date).AddDays(-30) }) 
+		$purgedList = (Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.downloadDate -gt $(Get-Date).AddDays(-30) })
 		$purgedList | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
 	} catch { Write-Host 'リストのクリーンアップに失敗しました' }
 }
@@ -89,7 +89,7 @@ function purgeDB {
 function uniqueDB {
 	#無視されたもの
 	try {
-		$ignoredList = (Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.videoPath -eq '-- IGNORED --' } ) 
+		$ignoredList = (Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.videoPath -eq '-- IGNORED --' } )
 	} catch { Write-Host 'リストの読み込みに失敗しました' }
 
 	#無視されなかったものの重複削除。ファイル名で1つしかないもの残す
@@ -124,7 +124,7 @@ function checkVideo ($decodeOption) {
 	$ffmpegArg02 = '-v'
 	$ffmpegArg03 = 'error'
 	$ffmpegArg04 = '-i'
-	$ffmpegArg05 = '"' + $videoPath + '"' 
+	$ffmpegArg05 = '"' + $videoPath + '"'
 	$ffmpegArg06 = '-f'
 	$ffmpegArg07 = 'null'
 	$ffmpegArg08 = '- '
@@ -177,13 +177,13 @@ function checkVideo ($decodeOption) {
 function getYtdlpProcessList ($parallelDownloadNum) {
 	#yt-dlpのプロセスが設定値を超えたら一時待機
 	try {
-		if ($isWin) { 
-			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2 
+		if ($isWin) {
+			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2
 		} elseif ($IsLinux) {
 			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
 		} elseif ($IsMacOS) {
 			$psCmd = 'ps'
-			$ytdlpCount = (& $psCmd  | & grep yt-dlp | grep -v grep | wc -l).trim()
+			$ytdlpCount = (& $psCmd | & grep yt-dlp | grep -v grep | wc -l).trim()
 		} else {
 			$ytdlpCount = 0
 		}
@@ -197,13 +197,13 @@ function getYtdlpProcessList ($parallelDownloadNum) {
 		Write-Host "ダウンロードが $parallelDownloadNum 多重に達したので一時待機します。 ( $(getTimeStamp) )"
 		Start-Sleep -Seconds 60			#1分待機
 		try {
-			if ($isWin) { 
-				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2 
+			if ($isWin) {
+				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2
 			} elseif ($IsLinux) {
 				$ytdlpCount = (& Get-Process -ErrorAction Ignore -Name yt-dlp).Count
 			} elseif ($IsMacOS) {
 				$psCmd = 'ps'
-				$ytdlpCount = (& $psCmd  | & grep yt-dlp | grep -v grep | wc -l).trim()
+				$ytdlpCount = (& $psCmd | & grep yt-dlp | grep -v grep | wc -l).trim()
 			} else {
 				$ytdlpCount = 0
 			}
@@ -218,13 +218,13 @@ function getYtdlpProcessList ($parallelDownloadNum) {
 #----------------------------------------------------------------------
 function waitTillYtdlpProcessIsZero ($isWin) {
 	try {
-		if ($isWin) { 
-			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2 
+		if ($isWin) {
+			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2
 		} elseif ($IsLinux) {
 			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
 		} elseif ($IsMacOS) {
 			$psCmd = 'ps'
-			$ytdlpCount = (& $psCmd  | & grep yt-dlp | grep -v grep | wc -l).trim()
+			$ytdlpCount = (& $psCmd | & grep yt-dlp | grep -v grep | wc -l).trim()
 		} else {
 			$ytdlpCount = 0
 		}
@@ -236,13 +236,13 @@ function waitTillYtdlpProcessIsZero ($isWin) {
 		try {
 			Write-Verbose "現在のダウンロードプロセス一覧 ( $ytdlpCount 個 )"
 			Start-Sleep -Seconds 60			#1分待機
-			if ($isWin) { 
-				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2 
+			if ($isWin) {
+				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2
 			} elseif ($IsLinux) {
 				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
 			} elseif ($IsMacOS) {
 				$psCmd = 'ps'
-				$ytdlpCount = (& $psCmd  | & grep yt-dlp | grep -v grep | wc -l).trim()
+				$ytdlpCount = (& $psCmd | & grep yt-dlp | grep -v grep | wc -l).trim()
 			} else {
 				$ytdlpCount = 0
 			}
@@ -267,7 +267,7 @@ function startYtdlp ($videoPath, $videoPage, $ytdlpPath) {
 	$ytdlpArg09 = '--retries'
 	$ytdlpArg10 = '30'
 	$ytdlpArg11 = '-o'
-	$ytdlpArg12 = '"' + $videoPath + '"' 
+	$ytdlpArg12 = '"' + $videoPath + '"'
 	$ytdlpArg13 = $videoPage
 	Write-Debug "yt-dlp起動コマンド:$ytdlpPath $ytdlpArg01 $ytdlpArg02 $ytdlpArg03 $ytdlpArg04 $ytdlpArg05 $ytdlpArg06 $ytdlpArg07 $ytdlpArg08 $ytdlpArg09 $ytdlpArg10 $ytdlpArg11 $ytdlpArg12 $ytdlpArg13"
 	if ($isWin) {
@@ -373,7 +373,7 @@ function setVideoName ($title, $subtitle, $broadcastDate) {
 		if ($broadcastDate -eq '') {
 			$videoName = $title
 		} else {
-			$videoName = $title + ' ' + $broadcastDate 
+			$videoName = $title + ' ' + $broadcastDate
 		}
 	} else {
 		$videoName = $title + ' ' + $broadcastDate + ' ' + $subtitle

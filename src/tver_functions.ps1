@@ -55,11 +55,11 @@ function getBroadcastDate ($videoInfo ) {
 		$broadcastYMD = [DateTime]::ParseExact((Get-Date -Format 'yyyy') + $Matches[1].padleft(2, '0') + $Matches[3].padleft(2, '0'), 'yyyyMMdd', $null)
 		#実日付の翌日よりも放送日が未来だったら当年ではなく昨年の動画と判断する(年末の番組を年初にダウンロードするケース)
 		if ((Get-Date).AddDays(+1) -lt $broadcastYMD) {
-			$broadcastDate = (Get-Date).AddYears(-1).ToString('yyyy') + '年' + $Matches[1].padleft(2, '0') + $Matches[2] + $Matches[3].padleft(2, '0') + $Matches[4] + $Matches[6] 
+			$broadcastDate = (Get-Date).AddYears(-1).ToString('yyyy') + '年' + $Matches[1].padleft(2, '0') + $Matches[2] + $Matches[3].padleft(2, '0') + $Matches[4] + $Matches[6]
 		} else {
-			$broadcastDate = (Get-Date).ToString('yyyy') + '年' + $Matches[1].padleft(2, '0') + $Matches[2] + $Matches[3].padleft(2, '0') + $Matches[4] + $Matches[6] 
+			$broadcastDate = (Get-Date).ToString('yyyy') + '年' + $Matches[1].padleft(2, '0') + $Matches[2] + $Matches[3].padleft(2, '0') + $Matches[4] + $Matches[6]
 		}
-	} 
+	}
 	return $broadcastDate
 }
 
@@ -146,9 +146,9 @@ function getVideoLinks {
 		try { $genrePage = Invoke-WebRequest $keyword } catch { Write-Host 'TVerから情報を取得できませんでした。スキップします'; continue }
 
 		$ErrorActionPreference = 'silentlycontinue'
-		$videoLinks = ($genrePage.Links | Where-Object href -Like '*corner*'  | Select-Object href).href
-		$videoLinks += ($genrePage.Links | Where-Object href -Like '*feature*'  | Select-Object href).href
-		$videoLinks += ($genrePage.Links | Where-Object href -Like '*lp*'  | Select-Object href).href
+		$videoLinks = ($genrePage.Links | Where-Object href -Like '*corner*' | Select-Object href).href
+		$videoLinks += ($genrePage.Links | Where-Object href -Like '*feature*' | Select-Object href).href
+		$videoLinks += ($genrePage.Links | Where-Object href -Like '*lp*' | Select-Object href).href
 		$ErrorActionPreference = 'continue'
 
 		#saveGenrePage						#デバッグ用ジャンルページの保存
@@ -181,7 +181,7 @@ function downloadTVerVideo ($genre) {
 
 	#URLがすでにリストに存在する場合はスキップ
 	try {
-		$listMatch = Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.videoPage -eq $videoPage } 
+		$listMatch = Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.videoPage -eq $videoPage }
 	} catch {
 		Write-Host 'リストを読み書きできなかったのでスキップしました'
 		continue			#次回再度トライするためリストに追加せずに次のビデオへ
@@ -213,7 +213,7 @@ function downloadTVerVideo ($genre) {
 	$videoPath = $(Join-Path $savePath $videoName)
 
 	#ビデオ情報のコンソール出力
-	writeVideoInfo $videoName $broadcastDate $media $description 
+	writeVideoInfo $videoName $broadcastDate $media $description
 	writeVideoDebugInfo $videoPage $videoPageLP $genre $title $subtitle $videoPath $(getTimeStamp)
 
 	#ビデオタイトルが取得できなかった場合はスキップ次のビデオへ
@@ -226,7 +226,7 @@ function downloadTVerVideo ($genre) {
 	if (Test-Path $videoPath) {
 		#チェック済みか調べた上で、スキップ判断
 		try {
-			$listMatch = Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.videoPath -eq $videoPath } | Where-Object { $_.videoValidated -eq '1' } 
+			$listMatch = Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.videoPath -eq $videoPath } | Where-Object { $_.videoValidated -eq '1' }
 		} catch {
 			Write-Host 'リストを読み書きできませんでした。スキップします'
 			continue			#次回再度トライするためリストに追加せずに次のビデオへ
@@ -247,7 +247,7 @@ function downloadTVerVideo ($genre) {
 				Write-Host '無視リストに入っているビデオです。スキップします'
 				#break
 				continue			#リストの重複削除のため、無視したものはリスト出力せずに次のビデオへ行くことに
-			} 
+			}
 		}
 	}
 
@@ -255,7 +255,7 @@ function downloadTVerVideo ($genre) {
 	if ($ignore -eq $true) {
 		#リストに行追加
 		Write-Host '無視したファイルをリストに追加します'
-		$newVideo = [pscustomobject]@{ 
+		$newVideo = [pscustomobject]@{
 			videoPage      = $videoPage ;
 			videoPageLP    = $videoPageLP ;
 			genre          = $genre ;
@@ -270,7 +270,7 @@ function downloadTVerVideo ($genre) {
 		}
 	} elseif ($skip -eq $true) {
 		Write-Host 'スキップした未検証のファイルをリストに追加します'
-		$newVideo = [pscustomobject]@{ 
+		$newVideo = [pscustomobject]@{
 			videoPage      = $videoPage ;
 			videoPageLP    = $videoPageLP ;
 			genre          = $genre ;
@@ -286,7 +286,7 @@ function downloadTVerVideo ($genre) {
 	} else {
 		#リストに行追加
 		Write-Host 'ダウンロードするファイルをリストに追加します'
-		$newVideo = [pscustomobject]@{ 
+		$newVideo = [pscustomobject]@{
 			videoPage      = $videoPage ;
 			videoPageLP    = $videoPageLP ;
 			genre          = $genre ;
@@ -311,7 +311,7 @@ function downloadTVerVideo ($genre) {
 	}
 
 	#スキップや無視対象でなければyt-dlp起動
-	if (($ignore -eq $true ) -Or ($skip -eq $true)) { 
+	if (($ignore -eq $true ) -Or ($skip -eq $true)) {
 		continue			#スキップや無視対象は飛ばして次のファイルへ
 	} else {
 		#保存作ディレクトリがなければ作成

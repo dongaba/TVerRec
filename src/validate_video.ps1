@@ -23,11 +23,11 @@
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Set-StrictMode -Version Latest
 try {
-	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') { 
-		$currentDir = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition 
+	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
+		$currentDir = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
 	} else {
-		$currentDir = Split-Path -Parent -Path ([Environment]::GetCommandLineArgs()[0]) 
-		if (!$currentDir) { $currentDir = '.' } 
+		$currentDir = Split-Path -Parent -Path ([Environment]::GetCommandLineArgs()[0])
+		if (!$currentDir) { $currentDir = '.' }
 	}
 	Set-Location $currentDir
 	$confDir = $(Join-Path $currentDir '..\conf')
