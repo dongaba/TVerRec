@@ -64,31 +64,22 @@ else { Write-Error 'ビデオ保存先フォルダにアクセスできません
 if (Test-Path $saveBasePath -PathType Container) {}
 else { Write-Error 'ビデオ移動先フォルダにアクセスできません。終了します。' ; exit 1 }
 
+#移動先フォルダを起点として、配下のフォルダを取得
+$moveToPathList = Get-ChildItem $saveBasePath -Recurse | Where-Object { $_.PSisContainer } 
+
 #----------------------------------------------------------------------
-#移動先フォルダのサブフォルダの取得
-foreach ($moveToParentName in $moveToParentNameList) {
-
-	$moveToParentPath = $(Join-Path $saveBasePath $moveToParentName)
+foreach ($moveToPath in $moveToPathList) {
 	Write-Host '----------------------------------------------------------------------'
-	Write-Host "$moveToParentPath を処理します"
+	Write-Host "$moveToPath を処理します"
 	Write-Host '----------------------------------------------------------------------'
-
-	#移動先フォルダを起点として、配下のフォルダを取得
-	$moveToChildPathList = Get-ChildItem $moveToParentPath | Where-Object { $_.PSisContainer }
-
-	#----------------------------------------------------------------------
-	foreach ($moveToChildPath in $moveToChildPathList) {
-		$targetFolderName = Split-Path -Leaf $moveToChildPath
-		#同名フォルダが存在する場合は配下のファイルを移動
-		$moveFromPath = $(Join-Path $downloadBasePath $targetFolderName)
-		if ( Test-Path $moveFromPath) {
-			$moveFromPath = $moveFromPath + '\*.mp4'
-			$moveToPath = $moveToParentPath + '\' + $targetFolderName
-			Write-Host "$moveFromPath を $moveToPath に移動します"
-			Move-Item $moveFromPath -Destination $moveToPath -Force
-		}
+	$targetFolderName = Split-Path -Leaf $moveToPath 
+	#同名フォルダが存在する場合は配下のファイルを移動
+	$moveFromPath = $(Join-Path $downloadBasePath $targetFolderName)
+	if ( Test-Path $moveFromPath) {
+		$moveFromPath = $moveFromPath + '\*.mp4'
+		Write-Host "$moveFromPath を $moveToPath に移動します"
+		Move-Item $moveFromPath -Destination $moveToPath -Force
 	}
-	#----------------------------------------------------------------------
 }
 #----------------------------------------------------------------------
 

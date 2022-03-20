@@ -38,7 +38,7 @@ do
 	while [ `ps | grep -E "ffmpeg|yt-dlp" | grep -v grep | wc -l` -gt 0 ]
 	do
 		echo "ダウンロードが進行中です..."
-		ps -e | grep -E "ffmpeg|yt-dlp" 
+		ps | grep -E "ffmpeg|yt-dlp" 
 		echo $retryTime "秒待機します..."
 		sleep $retryTime
 	done

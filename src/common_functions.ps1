@@ -258,25 +258,26 @@ function waitTillYtdlpProcessIsZero ($isWin) {
 function startYtdlp ($videoPath, $videoPage, $ytdlpPath) {
 	$ytdlpArg01 = '-f'
 	$ytdlpArg02 = 'b'
-	$ytdlpArg03 = '--abort-on-error'
-	$ytdlpArg04 = '--console-title'
-	$ytdlpArg05 = '--concurrent-fragments '
-	$ytdlpArg06 = '1'
-	$ytdlpArg07 = '--no-mtime'
-	$ytdlpArg08 = '--embed-thumbnail '
-	$ytdlpArg09 = '--embed-subs '
-	$ytdlpArg10 = '-o'
-	$ytdlpArg11 = '"' + $videoPath + '"' 
-	$ytdlpArg12 = $videoPage
-	Write-Debug "yt-dlp起動コマンド:$ytdlpPath $ytdlpArg01 $ytdlpArg02 $ytdlpArg03 $ytdlpArg04 $ytdlpArg05 $ytdlpArg06 $ytdlpArg07 $ytdlpArg08 $ytdlpArg09 $ytdlpArg10 $ytdlpArg11 $ytdlpArg12"
+	$ytdlpArg03 = '--console-title'
+	$ytdlpArg04 = '--concurrent-fragments'
+	$ytdlpArg05 = '1'
+	$ytdlpArg06 = '--no-mtime'
+	$ytdlpArg07 = '--embed-thumbnail'
+	$ytdlpArg08 = '--embed-subs'
+	$ytdlpArg09 = '--retries'
+	$ytdlpArg10 = '30'
+	$ytdlpArg11 = '-o'
+	$ytdlpArg12 = '"' + $videoPath + '"' 
+	$ytdlpArg13 = $videoPage
+	Write-Debug "yt-dlp起動コマンド:$ytdlpPath $ytdlpArg01 $ytdlpArg02 $ytdlpArg03 $ytdlpArg04 $ytdlpArg05 $ytdlpArg06 $ytdlpArg07 $ytdlpArg08 $ytdlpArg09 $ytdlpArg10 $ytdlpArg11 $ytdlpArg12 $ytdlpArg13"
 	if ($isWin) {
 		$null = Start-Process -FilePath $ytdlpPath `
-			-ArgumentList ($ytdlpArg01, $ytdlpArg02, $ytdlpArg03, $ytdlpArg04, $ytdlpArg05, $ytdlpArg06, $ytdlpArg07, $ytdlpArg08, $ytdlpArg09, $ytdlpArg10, $ytdlpArg11, $ytdlpArg12 ) `
+			-ArgumentList ($ytdlpArg01, $ytdlpArg02, $ytdlpArg03, $ytdlpArg04, $ytdlpArg05, $ytdlpArg06, $ytdlpArg07, $ytdlpArg08, $ytdlpArg09, $ytdlpArg10, $ytdlpArg11, $ytdlpArg12, $ytdlpArg13 ) `
 			-PassThru `
 			-WindowStyle $windowStyle
 	} else {
 		$null = Start-Process -FilePath nohup `
-			-ArgumentList ($ytdlpPath, $ytdlpArg01, $ytdlpArg02, $ytdlpArg03, $ytdlpArg04, $ytdlpArg05, $ytdlpArg06, $ytdlpArg07, $ytdlpArg08, $ytdlpArg09, $ytdlpArg10, $ytdlpArg11, $ytdlpArg12 ) `
+			-ArgumentList ($ytdlpPath, $ytdlpArg01, $ytdlpArg02, $ytdlpArg03, $ytdlpArg04, $ytdlpArg05, $ytdlpArg06, $ytdlpArg07, $ytdlpArg08, $ytdlpArg09, $ytdlpArg10, $ytdlpArg11, $ytdlpArg12, $ytdlpArg13 ) `
 			-PassThru `
 			-RedirectStandardOutput /dev/null
 	}
