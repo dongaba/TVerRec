@@ -120,61 +120,69 @@ function uniqueDB {
 #ビデオの整合性チェック
 #----------------------------------------------------------------------
 function checkVideo ($decodeOption) {
-	$ffmpegArg01 = $decodeOption
-	$ffmpegArg02 = '-v'
-	$ffmpegArg03 = 'error'
-	$ffmpegArg04 = '-i'
-	$ffmpegArg05 = '"' + $videoPath + '"'
-	$ffmpegArg06 = '-f'
-	$ffmpegArg07 = 'null'
-	$ffmpegArg08 = '- '
-	Write-Debug "ffmpeg起動コマンド:$ffmpegPath $ffmpegArg01 $ffmpegArg02 $ffmpegArg03 $ffmpegArg04 $ffmpegArg05 $ffmpegArg06 $ffmpegArg07 $ffmpegArg08"
+	$errorCount = 0
+	$checkFile = '"' + $videoPath + '"'
+	$ffmpegArgs = "$decodeOption -v error -i $checkFile -f null - "
 
+	Write-Debug "ffmpeg起動コマンド:$ffmpegPath $ffmpegArgs"
 	try {
 		if ($isWin) {
 			$proc = Start-Process -FilePath $ffmpegPath `
-				-ArgumentList ($ffmpegArg01, $ffmpegArg02, $ffmpegArg03 , $ffmpegArg04, $ffmpegArg05 , $ffmpegArg06, $ffmpegArg07, $ffmpegArg08) `
-				-WindowStyle $windowStyle `
+				-ArgumentList ($ffmpegArgs) `
 				-PassThru `
-				-Wait
+				-WindowStyle $windowStyle `
+				-RedirectStandardError $ffpmegErrorLog `
+				-Wait 
 		} else {
 			$proc = Start-Process -FilePath $ffmpegPath `
-				-ArgumentList ($ffmpegArg01, $ffmpegArg02, $ffmpegArg03 , $ffmpegArg04, $ffmpegArg05 , $ffmpegArg06, $ffmpegArg07, $ffmpegArg08) `
+				-ArgumentList ($ffmpegArgs) `
 				-PassThru `
-				-Wait
+				-RedirectStandardOutput /dev/null `
+				-RedirectStandardError $ffpmegErrorLog `
+				-Wait 
 		}
-		if ($proc.ExitCode -ne 0) {
-			#終了コードが"0"以外は録画リストとファイルを削除
-			Write-Host 'exit code: ' $proc.ExitCode
-			try {
-				#破損している動画ファイルを録画リストから削除
-					(Select-String -Pattern $videoPath `
-					-Path $listFile `
-					-Encoding utf8 `
-					-SimpleMatch -NotMatch).Line | `
-						Out-File $listFile -Encoding utf8 -Force
-				#破損している動画ファイルを削除
-				Remove-Item $videoPath
-			} catch { Write-Host "ファイル削除できませんでした: $videoPath" }
-		} else {
-			#終了コードが"0"のときは録画リストにチェック済みフラグを立てる
-			try {
-				$videoLists = Import-Csv $listFile -Encoding UTF8
-				#該当のビデオのチェックステータスを"1"に
-				$($videoLists | Where-Object { $_.videoPath -eq $videoPath }).videoValidated = '1'
-				$videoLists | Export-Csv $listFile -NoTypeInformation -Encoding UTF8 -Force
-			} catch { Write-Host "録画リストを更新できませんでした: $videoPath" }
-		}
-
 	} catch {
 		Write-Host 'ffmpegを起動できませんでした'
 	}
+
+	#ffmpegが正常終了しても、大量エラーが出ることがあるのでエラーをカウント
+	try {
+		if (Test-Path $ffpmegErrorLog) {
+			$errorCount = (Get-Content -Path $ffpmegErrorLog).Length
+		}
+		Remove-Item $ffpmegErrorLog -Force
+	} catch {}
+
+	if ($proc.ExitCode -ne 0 -or $errorCount -gt 30) {
+		#終了コードが"0"以外 または エラーが30行以上 は録画リストとファイルを削除
+		Write-Host 'exit code: ' $proc.ExitCode
+		Write-Host 'error count: ' $errorCount
+		try {
+			#破損している動画ファイルを録画リストから削除
+			(Select-String -Pattern $videoPath `
+				-Path $listFile `
+				-Encoding UTF8 `
+				-SimpleMatch -NotMatch).Line | `
+					Out-File $listFile -Encoding UTF8 -Force
+			#破損している動画ファイルを削除
+			Remove-Item $videoPath
+		} catch { Write-Host "ファイル削除できませんでした: $videoPath" }
+	} else {
+		#終了コードが"0"のときは録画リストにチェック済みフラグを立てる
+		try {
+			$videoLists = Import-Csv $listFile -Encoding UTF8
+			#該当のビデオのチェックステータスを"1"に
+			$($videoLists | Where-Object { $_.videoPath -eq $videoPath }).videoValidated = '1'
+			$videoLists | Export-Csv $listFile -NoTypeInformation -Encoding UTF8 -Force
+		} catch { Write-Host "録画リストを更新できませんでした: $videoPath" }
+	}
+
 }
 
 #----------------------------------------------------------------------
 #yt-dlpプロセスの確認と待機
 #----------------------------------------------------------------------
-function getYtdlpProcessList ($parallelDownloadNum) {
+function getYtdlpProcessList ($parallelDownloadFile) {
 	#yt-dlpのプロセスが設定値を超えたら一時待機
 	try {
 		if ($isWin) {
@@ -193,8 +201,8 @@ function getYtdlpProcessList ($parallelDownloadNum) {
 
 	Write-Verbose "現在のダウンロードプロセス一覧 ( $ytdlpCount 個 )"
 
-	while ([int]$ytdlpCount -ge [int]$parallelDownloadNum) {
-		Write-Host "ダウンロードが $parallelDownloadNum 多重に達したので一時待機します。 ( $(getTimeStamp) )"
+	while ([int]$ytdlpCount -ge [int]$parallelDownloadFile) {
+		Write-Host "ダウンロードが $parallelDownloadFile 多重に達したので一時待機します。 ( $(getTimeStamp) )"
 		Start-Sleep -Seconds 60			#1分待機
 		try {
 			if ($isWin) {
@@ -256,28 +264,35 @@ function waitTillYtdlpProcessIsZero ($isWin) {
 #yt-dlpプロセスの起動
 #----------------------------------------------------------------------
 function startYtdlp ($videoPath, $videoPage, $ytdlpPath) {
-	$ytdlpArg01 = '-f'
-	$ytdlpArg02 = 'b'
-	$ytdlpArg03 = '--console-title'
-	$ytdlpArg04 = '--concurrent-fragments'
-	$ytdlpArg05 = '1'
-	$ytdlpArg06 = '--no-mtime'
-	$ytdlpArg07 = '--embed-thumbnail'
-	$ytdlpArg08 = '--embed-subs'
-	$ytdlpArg09 = '--retries'
-	$ytdlpArg10 = '30'
-	$ytdlpArg11 = '-o'
-	$ytdlpArg12 = '"' + $videoPath + '"'
-	$ytdlpArg13 = $videoPage
-	Write-Debug "yt-dlp起動コマンド:$ytdlpPath $ytdlpArg01 $ytdlpArg02 $ytdlpArg03 $ytdlpArg04 $ytdlpArg05 $ytdlpArg06 $ytdlpArg07 $ytdlpArg08 $ytdlpArg09 $ytdlpArg10 $ytdlpArg11 $ytdlpArg12 $ytdlpArg13"
+	$tmpDir = '"temp:' + $downloadWorkPath + '"'
+	$saveDir = '"home:' + $savePath + '"'
+	$subttlDir = '"subtitle:' + $downloadWorkPath + '"'
+	$thumbDir = '"thumbnail:' + $downloadWorkPath + '"'
+	$chaptDir = '"chapter:' + $downloadWorkPath + '"'
+	$descDir = '"description:' + $downloadWorkPath + '"'
+	$saveFile = '"' + $videoName + '"'
+
+	$ytdlpArgs = '--format mp4 --console-title --no-mtime'
+	$ytdlpArgs += ' --retries 10 --fragment-retries 10'
+	$ytdlpArgs += ' --abort-on-unavailable-fragment'
+	$ytdlpArgs += ' --windows-filenames'
+	$ytdlpArgs += " --concurrent-fragments $parallelDownloadNum"
+	$ytdlpArgs += ' --embed-thumbnail --embed-subs'
+	$ytdlpArgs += ' --embed-metadata --embed-chapters'
+	$ytdlpArgs += " --paths $tmpDir --paths $saveDir"
+	$ytdlpArgs += " --paths $subttlDir --paths $thumbDir"
+	$ytdlpArgs += " --paths $chaptDir --paths $descDir"
+	$ytdlpArgs += " -o $saveFile $videoPage"
+
+	Write-Debug "yt-dlp起動コマンド:$ytdlpPath $ytdlpArgs"
 	if ($isWin) {
 		$null = Start-Process -FilePath $ytdlpPath `
-			-ArgumentList ($ytdlpArg01, $ytdlpArg02, $ytdlpArg03, $ytdlpArg04, $ytdlpArg05, $ytdlpArg06, $ytdlpArg07, $ytdlpArg08, $ytdlpArg09, $ytdlpArg10, $ytdlpArg11, $ytdlpArg12, $ytdlpArg13 ) `
+			-ArgumentList $ytdlpArgs `
 			-PassThru `
 			-WindowStyle $windowStyle
 	} else {
 		$null = Start-Process -FilePath nohup `
-			-ArgumentList ($ytdlpPath, $ytdlpArg01, $ytdlpArg02, $ytdlpArg03, $ytdlpArg04, $ytdlpArg05, $ytdlpArg06, $ytdlpArg07, $ytdlpArg08, $ytdlpArg09, $ytdlpArg10, $ytdlpArg11, $ytdlpArg12, $ytdlpArg13 ) `
+			-ArgumentList ($ytdlpPath, $ytdlpArgs) `
 			-PassThru `
 			-RedirectStandardOutput /dev/null
 	}
@@ -395,4 +410,58 @@ function setVideoName ($title, $subtitle, $broadcastDate) {
 
 	$videoName = $videoName + '.mp4'
 	return $videoName
+}
+
+#----------------------------------------------------------------------
+#ダウンロードが中断した際にできたゴミファイルは削除
+#----------------------------------------------------------------------
+function deleteTrash {
+	Write-Host '----------------------------------------------------------------------'
+	Write-Host 'ダウンロードが中断した際にできたゴミファイルを削除します'
+	Write-Host '----------------------------------------------------------------------'
+	Remove-Item -Path $downloadBasePath -Recurse -Include *.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*
+}
+
+#----------------------------------------------------------------------
+#無視リストに入っている番組は削除
+#----------------------------------------------------------------------
+function deleteIgnored {
+	#ダウンロード対象外ビデオ番組リストの読み込み
+	$ignoreTitles = (Get-Content $ignoreFile -Encoding UTF8 | `
+				Where-Object { !($_ -match '^\s*$') } | `
+				Where-Object { !($_ -match '^;.*$') } ) `
+		-as [string[]]
+
+	Write-Host '----------------------------------------------------------------------'
+	Write-Host '削除対象のビデオフォルダを削除します'
+	Write-Host '----------------------------------------------------------------------'
+	#----------------------------------------------------------------------
+	foreach ($ignoreTitle in $ignoreTitles) {
+		$delPath = Join-Path $downloadBasePath $ignoreTitle
+		Write-Host $delPath
+		$ErrorActionPreference = 'silentlycontinue'
+		Remove-Item -Path $delPath -Force -Recurse -ErrorAction SilentlyContinue
+		$ErrorActionPreference = 'continue'
+	}
+	#----------------------------------------------------------------------
+}
+
+#----------------------------------------------------------------------
+#空フォルダ と 隠しファイルしか入っていないフォルダを一気に削除
+#----------------------------------------------------------------------
+function deleteEmpty {
+	Write-Host '----------------------------------------------------------------------'
+	Write-Host '空フォルダ と 隠しファイルしか入っていないフォルダを削除します'
+	Write-Host '----------------------------------------------------------------------'
+	$allSubDirs = @(Get-ChildItem -Path $downloadBasePath -Recurse | `
+				Where-Object { $_.PSIsContainer }) | `
+				Sort-Object -Descending { $_.FullName }
+	#----------------------------------------------------------------------
+	foreach ($subDir in $allSubDirs) {
+		if (@(Get-ChildItem -Path $subDir.FullName -Recurse | `
+						Where-Object { ! $_.PSIsContainer }).Count -eq 0) {
+			Remove-Item -Path $subDir.FullName -Recurse -Force
+		}
+	}
+	#----------------------------------------------------------------------
 }
