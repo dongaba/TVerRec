@@ -23,35 +23,6 @@ TVerRecは、動画配信サイトTVer ( ティーバー <https://tver.jp/> ) �
 6. 動作に必要なyt-dlpやffmpegなどの必要コンポーネントは**自動的に最新版がダウンロード**されます。(Windowsのみ)
 7. **日本国外からもVPN不要**で利用することができます。
 
-## 前提条件
-
-Windows10とWindows11で動作確認していますが、おそらくWindows7、8でも動作します。
-Windows PowerShell 5.1とPowerShell Core 7.2の双方で動作しています。おそらくそれ以外のVersionでも動作すると思います。
-
-PowerShellはMacOS、Linuxにも移植されてるので動作します。
-MacOSでもPowerShellをインストールし動作確認をしています。
-([参考](https://docs.microsoft.com/ja-jp/powershell/scripting/install/installing-powershell-on-macos?view=powershell-7.2))
-一応、PowerShell 7.2をインストールしたRaspberry Pi OSで簡易に動作確認をしていますが、性能的にRaspberry Pi 4じゃないと厳しそうです。
-([参考](https://docs.microsoft.com/ja-jp/powershell/scripting/install/install-raspbian?view=powershell-7.2))
-
-## 実行方法
-
-以下の手順でバッチファイルを実行してください。
-
-1. `git clone`、またはTVerRecをダウロードして任意のディレクトリで解凍してください。
-2. [環境設定方法](#環境設定方法)、[ダウンロード対象の設定方法](#ダウンロード対象の設定方法)、[ダウンロード対象外の番組の設定方法](#ダウンロード対象外の番組の設定方法)を参照して環境設定、ダウンロード設定を行ってください。
-3. Windows環境では `win/start_tverrec.bat`を実行してください。
-    - 処理が完了しても10分ごとに永遠にループして稼働し続けます。
-    - 上記でPowerShellが起動しない場合は、PowerShell の実行ポリシーのRemoteSignedなどに変更する必要があるかもしれません。
-    ([参考](https://docs.microsoft.com/ja-jp/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.2))
-    - LinuxやMacOSも基本的に同じ使い方ですが、以下の章を参照してください。
-4. TVerRecを `win/start_tverrec.bat`で起動した場合は、`win/stop_tverrec.bat`でTVerRecを停止できます。
-    - 関連するダウンロード処理もすべて強制停止されるので注意してください。
-    - ダウンロードを止めたくない場合は、tverecのウィンドウを閉じるボタンで閉じてください。
-5. TVerRecを `win/start_tverrec.bat`で実行している各ツールを個別に起動するために、`win/a.download_video.bat` / `win/b.delete_trash.bat` / `win/c.validate_video.bat` / `win/d.move_video.bat`を使うこともできます。それぞれ、動画のダウンロドード、無視した動画やダウンロード中断時のゴミファイルの削除、ダウンロードした動画の検証、検証した動画の保存先への移動を行います。(`win/start_tverrec.bat`はこれらを自動的に、且つ無限に実行します)
-
-個別の設定はテキストエディタで変更する必要があります。
-
 ## ダウンロード対象番組の設定方法
 
 - `conf/keyword.conf`をテキストエディターで開いてダウンロード対象のタレントの名前や番組名、ジャンル、TV局などを設定します
@@ -110,6 +81,33 @@ MacOSでもPowerShellをインストールし動作確認をしています。
 - TVerのカテゴリ毎のページを指定して`win/start_tverrec.bat`で起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
 - 同様に、フォローしているタレントや番組名を指定して`win/start_tverrec.bat`で起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
 - 同様に、各放送局毎のページを指定して`win/start_tverrec.bat`で起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
+
+## 前提条件
+
+Windows10とWindows11で動作確認していますが、おそらくWindows7、8でも動作します。
+Windows PowerShell 5.1とPowerShell Core 7.2の双方で動作しています。おそらくそれ以外のVersionでも動作すると思います。
+
+PowerShellはMacOS、Linuxにも移植されてるので動作します。
+MacOSでもPowerShellをインストールし動作確認をしています。
+([参考](https://docs.microsoft.com/ja-jp/powershell/scripting/install/installing-powershell-on-macos?view=powershell-7.2))
+一応、PowerShell 7.2をインストールしたRaspberry Pi OSで簡易に動作確認をしていますが、性能的にRaspberry Pi 4じゃないと厳しそうです。
+([参考](https://docs.microsoft.com/ja-jp/powershell/scripting/install/install-raspbian?view=powershell-7.2))
+
+## 実行方法
+
+以下の手順でバッチファイルを実行してください。
+
+1. `git clone`、またはTVerRecをダウロードして任意のディレクトリで解凍してください。
+2. [環境設定方法](#環境設定方法)、[ダウンロード対象の設定方法](#ダウンロード対象の設定方法)、[ダウンロード対象外の番組の設定方法](#ダウンロード対象外の番組の設定方法)を参照して環境設定、ダウンロード設定を行ってください。
+3. Windows環境では `win/start_tverrec.bat`を実行してください。
+    - 処理が完了しても10分ごとに永遠にループして稼働し続けます。
+    - 上記でPowerShellが起動しない場合は、PowerShell の実行ポリシーのRemoteSignedなどに変更する必要があるかもしれません。
+    ([参考](https://docs.microsoft.com/ja-jp/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.2))
+    - LinuxやMacOSも基本的に同じ使い方ですが、以下の章を参照してください。
+4. TVerRecを `win/start_tverrec.bat`で起動した場合は、`win/stop_tverrec.bat`でTVerRecを停止できます。
+    - 関連するダウンロード処理もすべて強制停止されるので注意してください。
+    - ダウンロードを止めたくない場合は、tverecのウィンドウを閉じるボタンで閉じてください。
+5. TVerRecを `win/start_tverrec.bat`で実行している各ツールを個別に起動するために、`win/a.download_video.bat` / `win/b.delete_trash.bat` / `win/c.validate_video.bat` / `win/d.move_video.bat`を使うこともできます。それぞれ、動画のダウンロドード、無視した動画やダウンロード中断時のゴミファイルの削除、ダウンロードした動画の検証、検証した動画の保存先への移動を行います。(`win/start_tverrec.bat`はこれらを自動的に、且つ無限に実行します)
 
 ## Linux/Macでの利用方法
 
