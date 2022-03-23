@@ -120,7 +120,7 @@ if ($null -eq $videoLists) {
 		#保存先ディレクトリの存在確認
 		if (Test-Path $downloadBasePath -PathType Container) {}
 		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' ; exit 1 }
-		Write-Host "$j/$i 本目をチェック中: $videoPath"
+		Write-Host "$(getTimeStamp) $j/$i 本目をチェック中: $videoPath"
 		checkVideo $decodeOption		#ビデオの整合性チェック
 	}
 	#----------------------------------------------------------------------

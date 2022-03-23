@@ -44,17 +44,20 @@ try {
 
 	#----------------------------------------------------------------------
 	#外部設定ファイル読み込み
-	Get-Content $sysFile | Where-Object { $_ -notmatch '^\s*$' } | `
+	Get-Content $sysFile -Encoding UTF8 | `
+			Where-Object { $_ -notmatch '^\s*$' } | `
 			Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
 			Invoke-Expression
-	Get-Content $confFile | Where-Object { $_ -notmatch '^\s*$' } | `
+	Get-Content $confFile -Encoding UTF8 | `
+			Where-Object { $_ -notmatch '^\s*$' } | `
 			Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
 			Invoke-Expression
 
 	#----------------------------------------------------------------------
 	#開発環境用に設定上書き
 	if (Test-Path $devConfFile) {
-		Get-Content $devConfFile | Where-Object { $_ -notmatch '^\s*$' } | `
+		Get-Content $devConfFile -Encoding UTF8 | `
+				Where-Object { $_ -notmatch '^\s*$' } | `
 				Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
 				Invoke-Expression
 		$VerbosePreference = 'Continue'						#詳細メッセージ
@@ -126,7 +129,7 @@ foreach ($keyword in $keywords) {
 		Write-Host '----------------------------------------------------------------------'
 
 		#yt-dlpプロセスの確認と、yt-dlpのプロセス数が多い場合の待機
-		getYtdlpProcessList $parallelDownloadNum
+		getYtdlpProcessList $parallelDownloadFile
 
 		$videoPage = 'https://tver.jp' + $videoID
 		Write-Host $videoPage

@@ -1,9 +1,12 @@
-#debugフォルダ配下のHTMLファイルは調査用
-debug/*.html
+#一般
+.DS_Store
+.vscode/*
+.vs/*
+*.lnk
 
-#pidファイル
-*pid.txt
-pid*.txt
+#debugフォルダ配下は調査用
+debug
+debug/*
 
 #アーカイブ
 *.7z
@@ -16,28 +19,30 @@ yt-dlp
 
 #動画ファイル
 *.mp4
-*.mp4*
 
-#環境依存の開発ファイル
+#中間ファイル
+ffmpeg_error.log
+*.ytdl
+*.jpg
+*.vtt
+*temp.mp4
+*.part
+*mp4.part-Frag*
+*pid.txt
+pid*.txt
+*_5.ps1
+
+#開発関連ファイル
+TVerRecGUI/*
+memo.txt
+conf/dev_setting.conf
 linux-*
 mac-*
 win-*
-conf/dev_setting.conf
-
-#PowerShell 5.1まで用のUTF8-BOM付きファイル
-*_5.ps1
 
 #その他雑多な不要ファイル
 * - コピー.*
 * - Copy.*
-.vscode/*
-.vs/*
-TVerRecGUI/*
-debug
-debug/*
-memo.txt
-.DS_Store
-*.lnk
 *.bak
 
 #ローカルの変更をGitHubにアップしないために

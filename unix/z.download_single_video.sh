@@ -25,5 +25,5 @@ echo -en "\033];TVerRec Video File Downloader\007"
 
 pwsh -NoProfile -ExecutionPolicy Unrestricted ../src/tverrec_single.ps1
 
-read -t 5 -p 'Press any key ...'
+read -p 'Press any key ...'
 
