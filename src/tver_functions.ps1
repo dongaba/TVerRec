@@ -22,12 +22,12 @@
 #----------------------------------------------------------------------
 #TVerのAPIを叩いてビデオ検索
 #----------------------------------------------------------------------
-function callTVerSearchAPI ($keyword) {
+function getVideoLinkFromFreeKeyword ($keywordName) {
 	$tverApiBaseURL = 'https://api.tver.jp/v4'
-	$tverApiTokenLink = 'https://tver.jp/api/access_token.php'					#APIトークン取得
-	$token = (Invoke-RestMethod -Uri $tverApiTokenLink -Method get).token		#APIトークンセット
-	$teverApiSearchURL = $tverApiBaseURL + '/search?catchup=1&keyword=' + $keyword + '&token=' + $token
-	$searchResult = (Invoke-RestMethod -Uri $teverApiSearchURL -Method get)		#API経由で検索結果取得
+	$tverGetTokenApiURL = 'https://tver.jp/api/access_token.php'					#APIトークン取得
+	$token = (Invoke-RestMethod -Uri $tverGetTokenApiURL -Method get).token		#APIトークンセット
+	$teverSearchApiURL = $tverApiBaseURL + '/search?catchup=1&keyword=' + $keywordName + '&token=' + $token
+	$searchResult = (Invoke-RestMethod -Uri $teverSearchApiURL -Method get)		#API経由で検索結果取得
 	$videoLinks = $searchResult.data.href
 	return $videoLinks
 }
@@ -35,10 +35,10 @@ function callTVerSearchAPI ($keyword) {
 #----------------------------------------------------------------------
 #TVerのAPIを叩いてビデオ情報取得
 #----------------------------------------------------------------------
-function callTVerAPI ($videoID) {
+function getVideoInfoFromVideoID ($videoID) {
 	$tverApiBaseURL = 'https://api.tver.jp/v4'
-	$tverApiTokenLink = 'https://tver.jp/api/access_token.php'					#APIトークン取得
-	$token = (Invoke-RestMethod -Uri $tverApiTokenLink -Method get).token		#APIトークンセット
+	$tverGetTokenApiURL = 'https://tver.jp/api/access_token.php'					#APIトークン取得
+	$token = (Invoke-RestMethod -Uri $tverGetTokenApiURL -Method get).token		#APIトークンセット
 	$teverApiVideoURL = $tverApiBaseURL + $videoID + '?token=' + $token			#APIのURLをセット
 	$videoInfo = (Invoke-RestMethod -Uri $teverApiVideoURL -Method get).main	#API経由でビデオ情報取得
 	return $videoInfo
@@ -47,17 +47,31 @@ function callTVerAPI ($videoID) {
 #----------------------------------------------------------------------
 #取得したビデオ情報を整形
 #----------------------------------------------------------------------
-function getBroadcastDate ($videoInfo ) {
+function getBroadcastDateFromVideoInfo ($videoInfo) {
 	$broadcastYMD = $null
-	$broadcastDate = $(conv2Narrow ($videoInfo.date).Replace('ほか', '').Replace('放送分', '放送')).trim()
+	$broadcastDate = $(getNarrowChars (
+			$videoInfo.date).Replace('ほか', '').Replace('放送分', '放送')
+	).trim()
 	if ($broadcastDate -match '([0-9]+)(月)([0-9]+)(日)(.+?)(放送)') {
 		#当年だと仮定して放送日を抽出
-		$broadcastYMD = [DateTime]::ParseExact((Get-Date -Format 'yyyy') + $Matches[1].padleft(2, '0') + $Matches[3].padleft(2, '0'), 'yyyyMMdd', $null)
+		$broadcastYMD = [DateTime]::ParseExact(
+			(Get-Date -Format 'yyyy') + $Matches[1].padleft(2, '0') + $Matches[3].padleft(2, '0'), 
+			'yyyyMMdd', 
+			$null
+		)
 		#実日付の翌日よりも放送日が未来だったら当年ではなく昨年の動画と判断する(年末の番組を年初にダウンロードするケース)
 		if ((Get-Date).AddDays(+1) -lt $broadcastYMD) {
-			$broadcastDate = (Get-Date).AddYears(-1).ToString('yyyy') + '年' + $Matches[1].padleft(2, '0') + $Matches[2] + $Matches[3].padleft(2, '0') + $Matches[4] + $Matches[6]
+			$broadcastDate = `
+			(Get-Date).AddYears(-1).ToString('yyyy') + '年' `
+				+ $Matches[1].padleft(2, '0') + $Matches[2] `
+				+ $Matches[3].padleft(2, '0') + $Matches[4] `
+				+ $Matches[6]
 		} else {
-			$broadcastDate = (Get-Date).ToString('yyyy') + '年' + $Matches[1].padleft(2, '0') + $Matches[2] + $Matches[3].padleft(2, '0') + $Matches[4] + $Matches[6]
+			$broadcastDate = `
+			(Get-Date).ToString('yyyy') + '年' `
+				+ $Matches[1].padleft(2, '0') + $Matches[2] `
+				+ $Matches[3].padleft(2, '0') + $Matches[4] `
+				+ $Matches[6]
 		}
 	}
 	return $broadcastDate
@@ -66,35 +80,35 @@ function getBroadcastDate ($videoInfo ) {
 #----------------------------------------------------------------------
 #取得したビデオ情報からタイトル情報を取得
 #----------------------------------------------------------------------
-function getVideoTitle ($videoInfo ) {
-	return $(conv2Narrow ($videoInfo.title).Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '').Replace(',', '').Replace('?', '？').Replace('!', '！')).trim()
+function getVideoTitleFromVideoInfo ($videoInfo) {
+	return $(getSpecialCharacterReplaced (getNarrowChars ($videoInfo.title))).trim()
 }
 
 #----------------------------------------------------------------------
 #取得したビデオ情報からサブタイトル情報を取得
 #----------------------------------------------------------------------
-function getVideoSubTitle ($videoInfo ) {
-	return $(conv2Narrow ($videoInfo.subtitle).Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '').Replace(',', '').Replace('?', '？').Replace('!', '！')).trim()
+function getVideoSubTitleFromVideoInfo ($videoInfo) {
+	return $(getSpecialCharacterReplaced (getNarrowChars ($videoInfo.subtitle))).trim()
 }
 
 #----------------------------------------------------------------------
 #取得したビデオ情報から放送局情報を取得
 #----------------------------------------------------------------------
-function getVideoMedia ($videoInfo ) {
-	return $(conv2Narrow ($videoInfo.media).Replace('&amp;', '&').Replace('"', '').Replace('“', '').Replace('”', '').Replace(',', '').Replace('?', '？').Replace('!', '！')).trim()
+function getVideoMediaFromVideoInfo ($videoInfo) {
+	return $(getSpecialCharacterReplaced (getNarrowChars ($videoInfo.media))).trim()
 }
 
 #----------------------------------------------------------------------
 #取得したビデオ情報から番組説明を取得
 #----------------------------------------------------------------------
-function getVideoDescription ($videoInfo ) {
-	return $(conv2Narrow ($videoInfo.note.text).Replace('&amp;', '&')).trim()
+function getVideoDescriptionFromVideoInfo ($videoInfo) {
+	return $(getNarrowChars ($videoInfo.note.text).Replace('&amp;', '&')).trim()
 }
 
 #----------------------------------------------------------------------
 #取得したビデオ情報からLP情報を取得
 #----------------------------------------------------------------------
-function getVideoSeries ($videoInfo ) {
+function getVideoSeriesFromVideoInfo ($videoInfo) {
 	return $videoInfo.lp
 }
 
@@ -102,11 +116,11 @@ function getVideoSeries ($videoInfo ) {
 #デバッグ用ジャンルページの保存
 #----------------------------------------------------------------------
 function saveGenrePage {
-	$genreFile = $($genre + '.html') -replace '(\?|\!|>|<|:|\\|/|\|)', '-'
-	$genreFile = $(Join-Path $debugDir (removeInvalidFileNameChars $genreFile))
+	$keywordFile = $($keywordName + '.html') -replace '(\?|\!|>|<|:|\\|/|\|)', '-'
+	$keywordFile = $(Join-Path $debugRelativeDir (getFileNameWithoutInvalitChars $keywordFile))
 	$webClient = New-Object System.Net.WebClient
 	$webClient.Encoding = [System.Text.Encoding]::UTF8
-	$webClient.DownloadFile($genre, $genreFile)
+	$webClient.DownloadFile($keywordName, $keywordFile)
 }
 
 #----------------------------------------------------------------------
@@ -115,9 +129,9 @@ function saveGenrePage {
 function loadIgnoreList {
 	#ダウンロード対象外番組リストの読み込み
 	try {
-		$ignoreTitles = (Get-Content $ignoreFile -Encoding UTF8 | `
+		$ignoreTitles = (Get-Content $ignoreFileRelativePath -Encoding UTF8 | `
 					Where-Object { !($_ -match '^\s*$') } | `
-					Where-Object { !($_ -match '^;.*$') } ) `
+					Where-Object { !($_ -match '^;.*$') }) `
 			-as [string[]]
 	} catch { Write-Host 'ダウンロード対象外リストの読み込みに失敗しました'; exit 1 }
 	return $ignoreTitles
@@ -128,34 +142,36 @@ function loadIgnoreList {
 #----------------------------------------------------------------------
 function loadKeywordList {
 	try {
-		$keywords = (Get-Content $keywordFile -Encoding UTF8 | `
+		$keywordNames = (Get-Content $keywordFileRelativePath -Encoding UTF8 | `
 					Where-Object { !($_ -match '^\s*$') } | `
 					Where-Object { !($_ -match '^#.*$') } | `
-					Where-Object { !($_ -match '^;.*$') } ) `
+					Where-Object { !($_ -match '^;.*$') }) `
 			-as [string[]]
 	} catch { Write-Host 'ダウンロード対象ジャンルリストの読み込みに失敗しました'; exit 1 }
-	return $keywords
+	return $keywordNames
 }
 
 #----------------------------------------------------------------------
 #キーワードからビデオのリンクへの変換
 #----------------------------------------------------------------------
-function getVideoLinks {
-	if ( $keyword.IndexOf('https://tver.jp/') -eq 0 ) {
+function getVideoLinksFromKeyword ($keywordName) {
+	if ( $keywordName.IndexOf('https://tver.jp/') -eq 0) {
 		#ジャンルページなどURL形式の場合ビデオページのLinkを取得
-		try { $genrePage = Invoke-WebRequest $keyword } catch { Write-Host 'TVerから情報を取得できませんでした。スキップします'; continue }
+		try { $keywordNamePage = Invoke-WebRequest $keywordName } 
+		catch { Write-Host 'TVerから情報を取得できませんでした。スキップします'; continue }
 
 		$ErrorActionPreference = 'silentlycontinue'
-		$videoLinks = ($genrePage.Links | Where-Object href -Like '*corner*' | Select-Object href).href
-		$videoLinks += ($genrePage.Links | Where-Object href -Like '*feature*' | Select-Object href).href
-		$videoLinks += ($genrePage.Links | Where-Object href -Like '*lp*' | Select-Object href).href
+		$videoLinks = ($keywordNamePage.Links | Where-Object href -Like '*corner*' | Select-Object href).href
+		$videoLinks += ($keywordNamePage.Links | Where-Object href -Like '*feature*' | Select-Object href).href
+		$videoLinks += ($keywordNamePage.Links | Where-Object href -Like '*lp*' | Select-Object href).href
 		$ErrorActionPreference = 'continue'
 
 		#saveGenrePage						#デバッグ用ジャンルページの保存
 
 	} else {
 		#タレント名や番組名などURL形式でない場合APIで検索結果からビデオページのLinkを取得
-		try { $videoLinks = callTVerSearchAPI ($keyword) } catch { Write-Host 'TVerから検索結果を取得できませんでした。スキップします'; continue }
+		try { $videoLinks = getVideoLinkFromFreeKeyword ($keywordName) } 
+		catch { Write-Host 'TVerから検索結果を取得できませんでした。スキップします'; continue }
 	}
 	return $videoLinks
 }
@@ -163,58 +179,60 @@ function getVideoLinks {
 #----------------------------------------------------------------------
 #TVerビデオダウンロードのメイン処理
 #----------------------------------------------------------------------
-function downloadTVerVideo ($genre) {
+function downloadTVerVideo ($keywordName) {
 
-	$videoName = '' ; $videoPath = '' ; $videoPageLP = '' ;
-	$broadcastDate = '' ; $title = '' ; $subtitle = '' ; $media = '' ; $description = '' ;
-	$videoInfo = $null
+	$videoName = '' ; $videoFileAbsolutePath = '' ; $videoSeriesPageURL = ''
+	$broadcastDate = '' ; $videoTitleName = '' ; $videoSubtitleName = ''
+	$mediaName = '' ; $descriptionText = ''
+	$videoInfo = $null ; $newVideo = $null
 	$ignore = $false ; $skip = $false
-	$newVideo = $null
+
 
 	$ignoreTitles = loadIgnoreList		#ダウンロード対象外番組リストの読み込み
 	
 	#TVerの番組説明の場合はビデオがないのでスキップ
-	if ($videoPage -match '/episode/') {
+	if ($videoPageURL -match '/episode/') {
 		Write-Host 'ビデオではなくオンエア情報のようです。スキップします'
 		continue			#次のビデオへ
 	}
 
 	#URLがすでにリストに存在する場合はスキップ
 	try {
-		$listMatch = Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.videoPage -eq $videoPage }
+		$listMatch = Import-Csv $listFileRelativePath -Encoding UTF8 | `
+				Where-Object { $_.videoPage -eq $videoPageURL }
 	} catch {
 		Write-Host 'リストを読み書きできなかったのでスキップしました'
 		continue			#次回再度トライするためリストに追加せずに次のビデオへ
 	}
-	if ( $null -ne $listMatch ) {
+	if ( $null -ne $listMatch) {
 		Write-Host '過去に処理したビデオです。スキップします'
 		continue			#次のビデオへ
 	}
 
 	#TVerのAPIを叩いてビデオ情報取得
 	try {
-		$videoInfo = callTVerAPI ($videoID)
+		$videoInfo = getVideoInfoFromVideoID ($videoID)
 	} catch {
 		Write-Host 'TVerから情報を取得できませんでした。スキップします'
 		continue			#次回再度トライするためリストに追加せずに次のビデオへ
 	}
 
 	#取得したビデオ情報を整形
-	$broadcastDate = getBroadcastDate ($videoInfo)
-	$title = getVideoTitle ($videoInfo)
-	$subtitle = getVideoSubTitle ($videoInfo)
-	$media = getVideoMedia ($videoInfo)
-	$description = getVideoDescription ($videoInfo)
-	$videoPageLP = getVideoSeries ($videoInfo)
+	$broadcastDate = getBroadcastDateFromVideoInfo ($videoInfo)
+	$videoTitleName = getVideoTitleFromVideoInfo ($videoInfo)
+	$videoSubtitleName = getVideoSubTitleFromVideoInfo ($videoInfo)
+	$mediaName = getVideoMediaFromVideoInfo ($videoInfo)
+	$descriptionText = getVideoDescriptionFromVideoInfo ($videoInfo)
+	$videoSeriesPageURL = getVideoSeriesFromVideoInfo ($videoInfo)
 
 	#ビデオファイル情報をセット
-	$videoName = setVideoName $title $subtitle $broadcastDate		#保存ファイル名を設定
-	$savePath = $(Join-Path $downloadBasePath (removeInvalidFileNameChars $title))
-	$videoPath = $(Join-Path $savePath $videoName)
+	$videoName = getVideoFileName $videoTitleName $videoSubtitleName $broadcastDate
+	$videoFileAbsoluteDir = $(Join-Path $downloadBaseAbsoluteDir (getFileNameWithoutInvalitChars $videoTitleName))
+	$videoFileAbsolutePath = $(Join-Path $videoFileAbsoluteDir $videoName)
 
 	#ビデオ情報のコンソール出力
-	writeVideoInfo $videoName $broadcastDate $media $description
-	writeVideoDebugInfo $videoPage $videoPageLP $genre $title $subtitle $videoPath $(getTimeStamp)
+	showVideoInfo $videoName $broadcastDate $mediaName $descriptionText
+	showVideoDebugInfo $videoPageURL $videoSeriesPageURL $keywordName $videoTitleName $videoSubtitleName $videoFileAbsolutePath $(getTimeStamp)
 
 	#ビデオタイトルが取得できなかった場合はスキップ次のビデオへ
 	if ($videoName -eq '.mp4') {
@@ -223,16 +241,18 @@ function downloadTVerVideo ($genre) {
 	}
 
 	#ファイルが既に存在する場合はスキップフラグを立ててリストに書き込み処理へ
-	if (Test-Path $videoPath) {
+	if (Test-Path $videoFileAbsolutePath) {
 		#チェック済みか調べた上で、スキップ判断
 		try {
-			$listMatch = Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.videoPath -eq $videoPath } | Where-Object { $_.videoValidated -eq '1' }
+			$listMatch = Import-Csv $listFileRelativePath -Encoding UTF8 | `
+					Where-Object { $_.videoPath -eq $videoFileAbsolutePath } | `
+					Where-Object { $_.videoValidated -eq '1' }
 		} catch {
 			Write-Host 'リストを読み書きできませんでした。スキップします'
 			continue			#次回再度トライするためリストに追加せずに次のビデオへ
 		}
 		#結果が0件ということは未検証のファイルがあるということ
-		if ( $null -eq $listMatch ) {
+		if ( $null -eq $listMatch) {
 			Write-Host 'すでにダウンロード済みですが未検証のビデオです。リストに追加します'
 			$skip = $true
 		} else {
@@ -242,7 +262,7 @@ function downloadTVerVideo ($genre) {
 	} else {
 		#無視リストに入っている番組の場合はスキップフラグを立ててリストに書き込み処理へ
 		foreach ($ignoreTitle in $ignoreTitles) {
-			if ($(conv2Narrow $title) -eq $(conv2Narrow $ignoreTitle)) {
+			if ($(getNarrowChars $videoTitleName) -match $(getNarrowChars $ignoreTitle)) {
 				$ignore = $true
 				Write-Host '無視リストに入っているビデオです。スキップします'
 				#break
@@ -256,12 +276,12 @@ function downloadTVerVideo ($genre) {
 		#リストに行追加
 		Write-Host '無視したファイルをリストに追加します'
 		$newVideo = [pscustomobject]@{
-			videoPage      = $videoPage ;
-			videoPageLP    = $videoPageLP ;
-			genre          = $genre ;
-			title          = $title ;
-			subtitle       = $subtitle ;
-			media          = $media ;
+			videoPage      = $videoPageURL ;
+			videoPageLP    = $videoSeriesPageURL ;
+			genre          = $keywordName ;
+			title          = $videoTitleName ;
+			subtitle       = $videoSubtitleName ;
+			media          = $mediaName ;
 			broadcastDate  = $broadcastDate ;
 			downloadDate   = $(getTimeStamp) ;
 			videoName      = '-- IGNORED --' ;
@@ -271,39 +291,39 @@ function downloadTVerVideo ($genre) {
 	} elseif ($skip -eq $true) {
 		Write-Host 'スキップした未検証のファイルをリストに追加します'
 		$newVideo = [pscustomobject]@{
-			videoPage      = $videoPage ;
-			videoPageLP    = $videoPageLP ;
-			genre          = $genre ;
-			title          = $title ;
-			subtitle       = $subtitle ;
-			media          = $media ;
+			videoPage      = $videoPageURL ;
+			videoPageLP    = $videoSeriesPageURL ;
+			genre          = $keywordName ;
+			title          = $videoTitleName ;
+			subtitle       = $videoSubtitleName ;
+			media          = $mediaName ;
 			broadcastDate  = $broadcastDate ;
 			downloadDate   = $(getTimeStamp) ;
 			videoName      = '-- SKIPPED --' ;
-			videoPath      = $videoPath ;
+			videoPath      = $videoFileAbsolutePath ;
 			videoValidated = '0' ;
 		}
 	} else {
 		#リストに行追加
 		Write-Host 'ダウンロードするファイルをリストに追加します'
 		$newVideo = [pscustomobject]@{
-			videoPage      = $videoPage ;
-			videoPageLP    = $videoPageLP ;
-			genre          = $genre ;
-			title          = $title ;
-			subtitle       = $subtitle ;
-			media          = $media ;
+			videoPage      = $videoPageURL ;
+			videoPageLP    = $videoSeriesPageURL ;
+			genre          = $keywordName ;
+			title          = $videoTitleName ;
+			subtitle       = $videoSubtitleName ;
+			media          = $mediaName ;
 			broadcastDate  = $broadcastDate ;
 			downloadDate   = $(getTimeStamp) ;
 			videoName      = $videoName ;
-			videoPath      = $videoPath ;
+			videoPath      = $videoFileAbsolutePath ;
 			videoValidated = '0' ;
 		}
 	}
 
 	try {
 		#リストCSV書き出し
-		$newVideo | Export-Csv $listFile -NoTypeInformation -Encoding UTF8 -Append -Force
+		$newVideo | Export-Csv $listFileRelativePath -NoTypeInformation -Encoding UTF8 -Append -Force
 		Write-Debug 'リストを書き込みました'
 	} catch {
 		Write-Host 'リストを更新できませんでした。でスキップします'
@@ -311,15 +331,17 @@ function downloadTVerVideo ($genre) {
 	}
 
 	#スキップや無視対象でなければyt-dlp起動
-	if (($ignore -eq $true ) -Or ($skip -eq $true)) {
+	if (($ignore -eq $true) -Or ($skip -eq $true)) {
 		continue			#スキップや無視対象は飛ばして次のファイルへ
 	} else {
 		#保存作ディレクトリがなければ作成
-		if (-Not (Test-Path $savePath -PathType Container)) {
-			try { $null = New-Item -ItemType directory -Path $savePath } catch {}
+		if (-Not (Test-Path $videoFileAbsoluteDir -PathType Container)) {
+			try { $null = New-Item -ItemType directory -Path $videoFileAbsoluteDir } 
+			catch {}
 		}
 		#yt-dlp起動
-		try { startYtdlp $videoPath $videoPage $ytdlpPath } catch { Write-Host 'yt-dlpの起動に失敗しました' }
+		try { executeYtdlp $videoFileAbsolutePath $videoPageURL $ytdlpRelativePath } 
+		catch { Write-Host 'yt-dlpの起動に失敗しました' }
 		Start-Sleep -Seconds 10			#10秒待機
 
 	}

@@ -21,7 +21,7 @@
 
 #Windowsの判定
 Set-StrictMode -Off
-$isWin = $PSVersionTable.Platform -match '^($|(Microsoft )?Win)'
+$isWin = $PSVersionTable.Platform -match '^($|(Microsoft)?Win)'
 Set-StrictMode -Version Latest
 
 if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
@@ -34,7 +34,7 @@ if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
 #ffmpeg保存先相対Path
 $ffmpegRelativeDir = '..\bin'
 $ffmpegDir = $(Join-Path $scriptRoot $ffmpegRelativeDir)
-if ($isWin) { $ffmpegPath = $(Join-Path $ffmpegDir 'ffmpeg.exe') } else { $ffmpegPath = $(Join-Path $ffmpegDir 'ffmpeg') }
+if ($isWin) { $ffmpegRelativePath = $(Join-Path $ffmpegDir 'ffmpeg.exe') } else { $ffmpegRelativePath = $(Join-Path $ffmpegDir 'ffmpeg') }
 
 #ffmpegのディレクトリがなければ作成
 if (-Not (Test-Path $ffmpegDir -PathType Container)) {
@@ -42,9 +42,9 @@ if (-Not (Test-Path $ffmpegDir -PathType Container)) {
 }
 
 #ffmpegのバージョン取得
-if (Test-Path $ffmpegPath -PathType Leaf) {
+if (Test-Path $ffmpegRelativePath -PathType Leaf) {
 	# get version of current ffmpeg.exe
-	$ffmpegFileVersion = (& $ffmpegPath -version)
+	$ffmpegFileVersion = (& $ffmpegRelativePath -version)
 	$null = $ffmpegFileVersion[0] -match 'ffmpeg version (\d+\.\d+(\.\d+)?).*'
 	$ffmpegCurrentVersion = $matches[1]
 } else {
@@ -67,27 +67,50 @@ if ($latestVersion -eq $ffmpegCurrentVersion) {
 		Write-Host '自動アップデートはWindowsでのみ動作します。 '
 	} else {
 		try {
+
 			#ダウンロード
-			$ffmpegZipLink = 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip'
-			Write-Host "ffmpegをダウンロードします。 $ffmpegZipLink"
-			$ffmpegZipFileLocation = $(Join-Path $ffmpegDir 'ffmpeg-release-essentials.zip')
-			Invoke-WebRequest -Uri $ffmpegZipLink -OutFile $ffmpegZipFileLocation
+			try {
+				$ffmpegZipLink = 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip'
+				Write-Host "ffmpegをダウンロードします。 $ffmpegZipLink"
+				$ffmpegZipFileLocation = $(Join-Path $ffmpegDir 'ffmpeg-release-essentials.zip')
+				Invoke-WebRequest -Uri $ffmpegZipLink -OutFile $ffmpegZipFileLocation
+			} catch { Write-Host 'ffmpegのダウンロードに失敗しました' }
+
 			#展開
-			Expand-Archive $ffmpegZipFileLocation -DestinationPath $(Join-Path $scriptRoot $ffmpegRelativeDir) -Force
+			try {
+				Expand-Archive $ffmpegZipFileLocation -DestinationPath $(Join-Path $scriptRoot $ffmpegRelativeDir) -Force
+			} catch { Write-Host 'ffmpegの展開に失敗しました' }
+
 			#配置
-			$extractedDir = $(Join-Path $scriptRoot $ffmpegRelativeDir)
-			$extractedDir = $extractedDir + '\ffmpeg-*-essentials_build'
-			$extractedFiles = $extractedDir + '\bin\*.exe'
-			Move-Item $extractedFiles $(Join-Path $scriptRoot $ffmpegRelativeDir) -Force
+			try {
+				$extractedDir = $(Join-Path $scriptRoot $ffmpegRelativeDir)
+				$extractedDir = $extractedDir + '\ffmpeg-*-essentials_build'
+				$extractedFiles = $extractedDir + '\bin\*.exe'
+				Move-Item $extractedFiles $(Join-Path $scriptRoot $ffmpegRelativeDir) -Force
+			} catch { Write-Host 'ffmpegの配置に失敗しました' }
+
 			#ゴミ掃除
-			Remove-Item -Path $extractedDir -Force -Recurse
-			Remove-Item -Path $ffmpegZipFileLocation -Force
-			#バージョンチェック
-			$ffmpegFileVersion = (& $ffmpegPath -version)
-			$null = $ffmpegFileVersion[0].ToChar -match 'ffmpeg version (\d+\.\d+(\.\d+)?)-.*'
-			$ffmpegCurrentVersion = $matches[1]
-			Write-Host "ffmpegをversion $ffmpegCurrentVersion に更新しました。 "
-		} catch {}
+			try {
+				Remove-Item `
+					-Path $extractedDir `
+					-Force `
+					-Recurse `
+					-ErrorAction SilentlyContinue
+			} catch { Write-Host '中間フォルダの削除に失敗しました' }
+			try {
+				Remove-Item `
+					-Path $ffmpegZipFileLocation `
+					-Force `
+					-ErrorAction SilentlyContinue
+			} catch { Write-Host '中間ファイルの削除に失敗しました' }
+
+		} catch { Write-Host 'ffmpegの更新に失敗しました' }
+
+		#バージョンチェック
+		$ffmpegFileVersion = (& $ffmpegRelativePath -version)
+		$null = $ffmpegFileVersion[0].ToChar -match 'ffmpeg version (\d+\.\d+(\.\d+)?)-.*'
+		$ffmpegCurrentVersion = $matches[1]
+		Write-Host "ffmpegをversion $ffmpegCurrentVersion に更新しました。 "
 	}
 }
 

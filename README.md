@@ -39,21 +39,21 @@ TVerRecは、動画配信サイトTVer ( ティーバー <https://tver.jp/> ) �
 ### ユーザ設定
 
 - ユーザ設定は`conf/user_setting.conf`をテキストエディターで開いて行ってください
-- `$downloadBasePath`には動画をダウンロードするフォルダを設定します。
-- `$downloadWorkPath`には動画をダウンロードするさいにできる中間ファイルを格納するフォルダを設定します。
-- `$saveBasePath`にはダウンロードした動画を移動する先のフォルダを設定します。
-  - ここで設定したフォルダ配下(再帰的にチェックします)にあるフォルダと`$downloadBasePath`にあるフォルダが一致する場合、動画ファイルが`$downloadBasePath`から`$saveBasePath`配下の各フォルダ配下に移動されます。同名のファイルがある場合は上書きされます。
-- `$parallelDownloadFile`は同時に並行でダウンロードする動画の数を設定します。
-- `$parallelDownloadNum`はそれぞれの動画をダウンロードする際の並行ダウンロード数を設定します。
-  - つまり、`$parallelDownloadFile`×`$parallelDownloadNum`が実質的な最大同時ダウンロード数になります。
-- `$windowStyle`にはyt-dlpのウィンドウをどのように表示するかを設定します。
+- `$downloadBaseAbsoluteDir`には動画をダウンロードするフォルダを設定します。
+- `$downloadWorkAbsoluteDir`には動画をダウンロードするさいにできる中間ファイルを格納するフォルダを設定します。
+- `$saveBaseAbsoluteDir`にはダウンロードした動画を移動する先のフォルダを設定します。
+  - ここで設定したフォルダ配下(再帰的にチェックします)にあるフォルダと`$downloadBaseAbsoluteDir`にあるフォルダが一致する場合、動画ファイルが`$downloadBaseAbsoluteDir`から`$saveBaseAbsoluteDir`配下の各フォルダ配下に移動されます。同名のファイルがある場合は上書きされます。
+- `$parallelDownloadFileNum`は同時に並行でダウンロードする動画の数を設定します。
+- `$parallelDownloadNumPerFile`はそれぞれの動画をダウンロードする際の並行ダウンロード数を設定します。
+  - つまり、`$parallelDownloadFileNum`×`$parallelDownloadNumPerFile`が実質的な最大同時ダウンロード数になります。
+- `$windowShowStyle`にはyt-dlpのウィンドウをどのように表示するかを設定します。
   - `Normal` / `Maximized` / `Minimized` / `Hidden` の4つが指定可能です。
   - 初期値は`Hidden`でダウンロードウィンドウは非表示となりますが、`Normal`等に設定することでダウンロードの進捗を確認することができます。
-- `$forceSoftwareDecode`に`$true`を設定するとハードウェアアクセラレーションを使わなくなります。
+- `$forceSoftwareDecodeFlag`に`$true`を設定するとハードウェアアクセラレーションを使わなくなります。
   - 高速なCPUが搭載されている場合はハードウェアアクセラレーションよりもCPUで処理したほうが処理が早い場合があります。
 - `$ffmpegDecodeOption`に直接ffmpegのオプションを記載することでハードウェアアクセラレーションを有効化できます。
   - 例えばIntel CPUを搭載した一般的なPCであれば、`'-hwaccel qsv -c:v h264_qsv'`を設定することで、CPU内蔵のアクセラレータを使ってCPU負荷を下げつつ高速に処理することが可能です。
-  - この設定は`$forceSoftwareDecode`が`$true`に設定されていると無効化されます。
+  - この設定は`$forceSoftwareDecodeFlag`が`$true`に設定されていると無効化されます。
 
 ### システム設定
 
@@ -63,17 +63,17 @@ TVerRecは、動画配信サイトTVer ( ティーバー <https://tver.jp/> ) �
   - 現時点ではバージョン表記をする以外には使われておりません。
 - `$VerbosePreference`や`$DebugPreference`を設定することで、より詳細な情報が画面に出力されます。
   - 設定可能な値はGoogleしてください。PowerShellの設定がそのまま使えます。
-- `$fileNameMax`はOSやファイルシステムが許容するファイル名の最大長をバイト指定で記載します。
+- `$fileNameLengthMax`はOSやファイルシステムが許容するファイル名の最大長をバイト指定で記載します。
   - 一般的なWindows環境では特に変更する必要はありません。
   - ここで指定した長さを超えるファイル名が生成されそうになると、ファイル名が収まるように自動的にファイル名が短縮されます。
   - なので、あまり深い階層を保存先に指定すると頻繁にファイル名が短縮されたり、エラーとなることがあります。
-- `$binDir`、`$dbDir`、`$debugDir`は各種フォルダの設定です。
+- `$binRelativeDir`、`$dbRelativeDir`、`$debugRelativeDir`は各種フォルダの設定です。
   - ソースファイルから見た際の相対パス指定となるようにしてください。
-- `$keywordFile`、`$ignoreFile`はそれぞれダウンロード対象キーワードとダウンロード対象外番組を設定するファイルの名前です。
-- `$listFile`はダウンロードの未済管理をするファイルの名前です。
-- `$ffpmegErrorLog`は動画のチェックをする際にエラーを一時的に出力するファイルのパスです。
-  - 初期値では`$listFile`と同じ場所に出力するようになっています。(が、処理が終われば自動的に削除されます)
-- `$ytdlpPath`と`$ffmpegPath`はそれぞれyt-dlpとffmpegの実行ファイルの配置場所を指定しています。
+- `$keywordFileRelativePath`、`$ignoreFileRelativePath`はそれぞれダウンロード対象キーワードとダウンロード対象外番組を設定するファイルの名前です。
+- `$listFileRelativePath`はダウンロードの未済管理をするファイルの名前です。
+- `$ffpmegErrorLogRelativePath`は動画のチェックをする際にエラーを一時的に出力するファイルのパスです。
+  - 初期値では`$listFileRelativePath`と同じ場所に出力するようになっています。(が、処理が終われば自動的に削除されます)
+- `$ytdlpRelativePath`と`$ffmpegRelativePath`はそれぞれyt-dlpとffmpegの実行ファイルの配置場所を指定しています。
   - ソースファイルから見た際の相対パス指定となるようにしてください。
 
 ## おすすめの使い方

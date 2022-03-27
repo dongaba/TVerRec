@@ -30,7 +30,7 @@ title TVerRec
 
 for /f %%i in ('hostname') do set HostName=%%i
 set PIDFile=pid-%HostName%.txt
-set retryTime=600
+set retryTime=60
 set sleepTime=3600
 
 for /f "tokens=2" %%i in ('tasklist /FI "WINDOWTITLE eq TVerRec" /NH') do set myPID=%%i

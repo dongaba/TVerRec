@@ -36,30 +36,30 @@ function checkLatestTool {
 #設定で指定したファイル・フォルダの存在チェック
 #----------------------------------------------------------------------
 function checkRequiredFile {
-	if (Test-Path $downloadBasePath -PathType Container) {}
+	if (Test-Path $downloadBaseAbsoluteDir -PathType Container) {}
 	else { Write-Error 'ビデオ保存先フォルダが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $ffmpegPath -PathType Leaf) {}
+	if (Test-Path $ffmpegRelativePath -PathType Leaf) {}
 	else { Write-Error 'ffmpegが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $ytdlpPath -PathType Leaf) {}
+	if (Test-Path $ytdlpRelativePath -PathType Leaf) {}
 	else { Write-Error 'yt-dlpが存在しません。終了します。' ; exit 1 }
 	if (Test-Path $confFile -PathType Leaf) {}
 	else { Write-Error 'ユーザ設定ファイルが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $keywordFile -PathType Leaf) {}
+	if (Test-Path $keywordFileRelativePath -PathType Leaf) {}
 	else { Write-Error 'ダウンロード対象ジャンルリストが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $ignoreFile -PathType Leaf) {}
+	if (Test-Path $ignoreFileRelativePath -PathType Leaf) {}
 	else { Write-Error 'ダウンロード対象外ビデオリストが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $listFile -PathType Leaf) {}
+	if (Test-Path $listFileRelativePath -PathType Leaf) {}
 	else { Write-Error 'ダウンロードリストが存在しません。終了します。' ; exit 1 }
 }
 
 #----------------------------------------------------------------------
 #GEO IPの確認
 #----------------------------------------------------------------------
-function checkGeoIP () {
+function checkGeoIP {
 	try {
 		if ((Invoke-RestMethod -Uri 'http://ip-api.com/json/').countryCode -ne 'JP') {
 			Invoke-RestMethod -Uri ('http://ip-api.com/json/' + (Invoke-WebRequest -Uri 'http://ifconfig.me/ip').Content)
-			Write-Host '日本のIPアドレスからしか接続できません。VPN接続してください。' -ForegroundColor Red
+			Write-Host '日本のIPアドレスからしか接続できません。VPN接続してください。' -ForegroundColor Green
 			exit 1
 		}
 	} catch {}
@@ -69,8 +69,8 @@ function checkGeoIP () {
 #タイムスタンプ更新
 #----------------------------------------------------------------------
 function getTimeStamp {
-	$timeStamp = Get-Date -UFormat '%Y-%m-%d %H:%M:%S'
-	return $timeStamp
+	$processedTime = Get-Date -UFormat '%Y-%m-%d %H:%M:%S'
+	return $processedTime
 }
 
 #----------------------------------------------------------------------
@@ -78,8 +78,9 @@ function getTimeStamp {
 #----------------------------------------------------------------------
 function purgeDB {
 	try {
-		$purgedList = (Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.downloadDate -gt $(Get-Date).AddDays(-30) })
-		$purgedList | Export-Csv $listFile -NoTypeInformation -Encoding UTF8
+		$purgedList = (Import-Csv $listFileRelativePath -Encoding UTF8 | `
+					Where-Object { $_.downloadDate -gt $(Get-Date).AddDays(-30) })
+		$purgedList | Export-Csv $listFileRelativePath -NoTypeInformation -Encoding UTF8
 	} catch { Write-Host 'リストのクリーンアップに失敗しました' }
 }
 
@@ -89,30 +90,31 @@ function purgeDB {
 function uniqueDB {
 	#無視されたもの
 	try {
-		$ignoredList = (Import-Csv $listFile -Encoding UTF8 | Where-Object { $_.videoPath -eq '-- IGNORED --' } )
+		$ignoredList = (Import-Csv $listFileRelativePath -Encoding UTF8 | `
+					Where-Object { $_.videoPath -eq '-- IGNORED --' })
 	} catch { Write-Host 'リストの読み込みに失敗しました' }
 
 	#無視されなかったものの重複削除。ファイル名で1つしかないもの残す
 	try {
-		$processedList = Import-Csv $listFile -Encoding UTF8 | `
-				Group-Object -Property 'videoPath' | `
-				Where-Object count -EQ 1 | `
-				Select-Object -ExpandProperty group
+		$processedList = (Import-Csv $listFileRelativePath -Encoding UTF8 | `
+					Group-Object -Property 'videoPath' | `
+					Where-Object count -EQ 1 | `
+					Select-Object -ExpandProperty group)
 	} catch { Write-Host 'リストの読み込みに失敗しました' }
 
 	#無視されたものと無視されなかったものを結合し出力
-	if ($null -eq $processedList -and $null -eq $ignoredList ) {
+	if ($null -eq $processedList -and $null -eq $ignoredList) {
 
-	} elseif ($null -ne $processedList -and $null -eq $ignoredList ) {
+	} elseif ($null -ne $processedList -and $null -eq $ignoredList) {
 		$mergedList = $processedList
-	} elseif ($null -eq $processedList -and $null -ne $ignoredList ) {
+	} elseif ($null -eq $processedList -and $null -ne $ignoredList) {
 		$mergedList = $ignoredList
 	} else {
 		$mergedList = $processedList + $ignoredList
 	}
 	try {
 		$mergedList | Sort-Object -Property downloadDate | `
-				Export-Csv $listFile -NoTypeInformation -Encoding UTF8
+				Export-Csv $listFileRelativePath -NoTypeInformation -Encoding UTF8
 	} catch { Write-Host 'リストの更新に失敗しました' }
 }
 
@@ -121,24 +123,26 @@ function uniqueDB {
 #----------------------------------------------------------------------
 function checkVideo ($decodeOption) {
 	$errorCount = 0
-	$checkFile = '"' + $videoPath + '"'
-	$ffmpegArgs = "$decodeOption -v error -i $checkFile -f null - "
+	$checkFile = '"' + $videoFileAbsolutePath + '"'
+	$ffmpegArgs = "$decodeOption "
+	$ffmpegArgs += ' -hide_banner -v error -xerror'
+	$ffmpegArgs += " -i $checkFile -f null - "
 
-	Write-Debug "ffmpeg起動コマンド:$ffmpegPath $ffmpegArgs"
+	Write-Debug "ffmpeg起動コマンド:$ffmpegRelativePath $ffmpegArgs"
 	try {
 		if ($isWin) {
-			$proc = Start-Process -FilePath $ffmpegPath `
+			$proc = Start-Process -FilePath $ffmpegRelativePath `
 				-ArgumentList ($ffmpegArgs) `
 				-PassThru `
-				-WindowStyle $windowStyle `
-				-RedirectStandardError $ffpmegErrorLog `
+				-WindowStyle $windowShowStyle `
+				-RedirectStandardError $ffpmegErrorLogRelativePath `
 				-Wait 
 		} else {
-			$proc = Start-Process -FilePath $ffmpegPath `
+			$proc = Start-Process -FilePath $ffmpegRelativePath `
 				-ArgumentList ($ffmpegArgs) `
 				-PassThru `
 				-RedirectStandardOutput /dev/null `
-				-RedirectStandardError $ffpmegErrorLog `
+				-RedirectStandardError $ffpmegErrorLogRelativePath `
 				-Wait 
 		}
 	} catch {
@@ -147,34 +151,47 @@ function checkVideo ($decodeOption) {
 
 	#ffmpegが正常終了しても、大量エラーが出ることがあるのでエラーをカウント
 	try {
-		if (Test-Path $ffpmegErrorLog) {
-			$errorCount = (Get-Content -Path $ffpmegErrorLog).Length
+		if (Test-Path $ffpmegErrorLogRelativePath) {
+			$errorCount = (Get-Content -Path $ffpmegErrorLogRelativePath | `
+						Measure-Object -Line).Lines
+			Get-Content -Path $ffpmegErrorLogRelativePath -Encoding UTF8 |`
+					ForEach-Object { Write-Debug "$_" }
 		}
-		Remove-Item $ffpmegErrorLog -Force
-	} catch {}
+	} catch { Write-Host 'ffmpegエラーの数をカウントできませんでした' }
+	try {
+		Remove-Item `
+			-Path $ffpmegErrorLogRelativePath `
+			-Force `
+			-ErrorAction SilentlyContinue
+	} catch { Write-Host 'ffmpegエラーファイルを削除できませんでした' }
 
 	if ($proc.ExitCode -ne 0 -or $errorCount -gt 30) {
 		#終了コードが"0"以外 または エラーが30行以上 は録画リストとファイルを削除
-		Write-Host 'exit code: ' $proc.ExitCode
-		Write-Host 'error count: ' $errorCount
+		Write-Host '  exit code:' $proc.ExitCode
+		Write-Host '  error count:' $errorCount
+		#破損している動画ファイルを録画リストから削除
 		try {
-			#破損している動画ファイルを録画リストから削除
-			(Select-String -Pattern $videoPath `
-				-Path $listFile `
+			(Select-String -Pattern $videoFileAbsolutePath `
+				-Path $listFileRelativePath `
 				-Encoding UTF8 `
 				-SimpleMatch -NotMatch).Line | `
-					Out-File $listFile -Encoding UTF8 -Force
-			#破損している動画ファイルを削除
-			Remove-Item $videoPath
-		} catch { Write-Host "ファイル削除できませんでした: $videoPath" }
+					Out-File $listFileRelativePath -Encoding UTF8 -Force
+		} catch { Write-Host "録画リストの更新に失敗しました: $videoFileAbsolutePath" }
+		#破損している動画ファイルを削除
+		try {
+			Remove-Item `
+				-Path $videoFileAbsolutePath `
+				-Force `
+				-ErrorAction SilentlyContinue
+		} catch { Write-Host "ファイル削除できませんでした: $videoFileAbsolutePath" }
 	} else {
 		#終了コードが"0"のときは録画リストにチェック済みフラグを立てる
 		try {
-			$videoLists = Import-Csv $listFile -Encoding UTF8
+			$videoLists = Import-Csv $listFileRelativePath -Encoding UTF8
 			#該当のビデオのチェックステータスを"1"に
-			$($videoLists | Where-Object { $_.videoPath -eq $videoPath }).videoValidated = '1'
-			$videoLists | Export-Csv $listFile -NoTypeInformation -Encoding UTF8 -Force
-		} catch { Write-Host "録画リストを更新できませんでした: $videoPath" }
+			$($videoLists | Where-Object { $_.videoPath -eq $videoFileAbsolutePath }).videoValidated = '1'
+			$videoLists | Export-Csv $listFileRelativePath -NoTypeInformation -Encoding UTF8 -Force
+		} catch { Write-Host "録画リストを更新できませんでした: $videoFileAbsolutePath" }
 	}
 
 }
@@ -182,7 +199,7 @@ function checkVideo ($decodeOption) {
 #----------------------------------------------------------------------
 #yt-dlpプロセスの確認と待機
 #----------------------------------------------------------------------
-function getYtdlpProcessList ($parallelDownloadFile) {
+function waitTillYtdlpProcessGetFewer ($parallelDownloadFileNum) {
 	#yt-dlpのプロセスが設定値を超えたら一時待機
 	try {
 		if ($isWin) {
@@ -199,10 +216,10 @@ function getYtdlpProcessList ($parallelDownloadFile) {
 		$ytdlpCount = 0			#プロセス数が取れなくてもとりあえず先に進む
 	}
 
-	Write-Verbose "現在のダウンロードプロセス一覧 ( $ytdlpCount 個 )"
+	Write-Verbose "現在のダウンロードプロセス一覧 ($ytdlpCount 個)"
 
-	while ([int]$ytdlpCount -ge [int]$parallelDownloadFile) {
-		Write-Host "ダウンロードが $parallelDownloadFile 多重に達したので一時待機します。 ( $(getTimeStamp) )"
+	while ([int]$ytdlpCount -ge [int]$parallelDownloadFileNum) {
+		Write-Host "ダウンロードが $parallelDownloadFileNum 多重に達したので一時待機します。 ($(getTimeStamp))"
 		Start-Sleep -Seconds 60			#1分待機
 		try {
 			if ($isWin) {
@@ -242,7 +259,7 @@ function waitTillYtdlpProcessIsZero ($isWin) {
 
 	while ($ytdlpCount -ne 0) {
 		try {
-			Write-Verbose "現在のダウンロードプロセス一覧 ( $ytdlpCount 個 )"
+			Write-Verbose "現在のダウンロードプロセス一覧 ($ytdlpCount 個)"
 			Start-Sleep -Seconds 60			#1分待機
 			if ($isWin) {
 				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2
@@ -263,69 +280,77 @@ function waitTillYtdlpProcessIsZero ($isWin) {
 #----------------------------------------------------------------------
 #yt-dlpプロセスの起動
 #----------------------------------------------------------------------
-function startYtdlp ($videoPath, $videoPage, $ytdlpPath) {
-	$tmpDir = '"temp:' + $downloadWorkPath + '"'
-	$saveDir = '"home:' + $savePath + '"'
-	$subttlDir = '"subtitle:' + $downloadWorkPath + '"'
-	$thumbDir = '"thumbnail:' + $downloadWorkPath + '"'
-	$chaptDir = '"chapter:' + $downloadWorkPath + '"'
-	$descDir = '"description:' + $downloadWorkPath + '"'
+function executeYtdlp ($videoFileAbsolutePath, $videoPageURL, $ytdlpRelativePath) {
+	$tmpDir = '"temp:' + $downloadWorkAbsoluteDir + '"'
+	$saveDir = '"home:' + $videoFileAbsoluteDir + '"'
+	$subttlDir = '"subtitle:' + $downloadWorkAbsoluteDir + '"'
+	$thumbDir = '"thumbnail:' + $downloadWorkAbsoluteDir + '"'
+	$chaptDir = '"chapter:' + $downloadWorkAbsoluteDir + '"'
+	$descDir = '"description:' + $downloadWorkAbsoluteDir + '"'
 	$saveFile = '"' + $videoName + '"'
 
 	$ytdlpArgs = '--format mp4 --console-title --no-mtime'
 	$ytdlpArgs += ' --retries 10 --fragment-retries 10'
 	$ytdlpArgs += ' --abort-on-unavailable-fragment'
+	$ytdlpArgs += ' --no-keep-fragments'
 	$ytdlpArgs += ' --windows-filenames'
-	$ytdlpArgs += " --concurrent-fragments $parallelDownloadNum"
+	$ytdlpArgs += ' --xattr-set-filesize'
+	$ytdlpArgs += ' --newline --print-traffic'
+	$ytdlpArgs += " --concurrent-fragments $parallelDownloadNumPerFile"
 	$ytdlpArgs += ' --embed-thumbnail --embed-subs'
 	$ytdlpArgs += ' --embed-metadata --embed-chapters'
-	$ytdlpArgs += " --paths $tmpDir --paths $saveDir"
+	$ytdlpArgs += " --paths $saveDir --paths $tmpDir"
 	$ytdlpArgs += " --paths $subttlDir --paths $thumbDir"
 	$ytdlpArgs += " --paths $chaptDir --paths $descDir"
-	$ytdlpArgs += " -o $saveFile $videoPage"
+	$ytdlpArgs += " -o $saveFile $videoPageURL"
 
-	Write-Debug "yt-dlp起動コマンド:$ytdlpPath $ytdlpArgs"
+	Write-Debug "yt-dlp起動コマンド:$ytdlpRelativePath $ytdlpArgs"
 	if ($isWin) {
-		$null = Start-Process -FilePath $ytdlpPath `
-			-ArgumentList $ytdlpArgs `
-			-PassThru `
-			-WindowStyle $windowStyle
+		try {
+			$null = Start-Process -FilePath $ytdlpRelativePath `
+				-ArgumentList $ytdlpArgs `
+				-PassThru `
+				-WindowStyle $windowShowStyle
+		} catch { Write-Host 'yt-dlpの起動に失敗しました' }
 	} else {
-		$null = Start-Process -FilePath nohup `
-			-ArgumentList ($ytdlpPath, $ytdlpArgs) `
-			-PassThru `
-			-RedirectStandardOutput /dev/null
+		try {
+			$null = Start-Process -FilePath nohup `
+				-ArgumentList ($ytdlpRelativePath, $ytdlpArgs) `
+				-PassThru `
+				-RedirectStandardOutput /dev/null
+		} catch { Write-Host 'yt-dlpの起動に失敗しました' }
 	}
 }
 
 #----------------------------------------------------------------------
 #ビデオ情報表示
 #----------------------------------------------------------------------
-function writeVideoInfo ($videoName, $broadcastDate, $media, $description ) {
+function showVideoInfo ($videoName, $broadcastDate, $mediaName, $descriptionText) {
 	Write-Host "ビデオ名    :$videoName"
 	Write-Host "放送日      :$broadcastDate"
-	Write-Host "テレビ局    :$media"
-	Write-Host "ビデオ説明  :$description"
+	Write-Host "テレビ局    :$mediaName"
+	Write-Host "ビデオ説明  :$descriptionText"
 }
 #----------------------------------------------------------------------
 #ビデオ情報デバッグ表示
 #----------------------------------------------------------------------
-function writeVideoDebugInfo ($videoPage, $videoPageLP, $genre, $title, $subtitle, $videoPath, $timeStamp ) {
-	Write-Debug	"ビデオページ:$videoPage"
-	Write-Debug	"ビデオLP    :$videoPageLP"
-	Write-Debug "ジャンル    :$genre"
-	Write-Debug "タイトル    :$title"
-	Write-Debug "サブタイトル:$subtitle"
-	Write-Debug "ファイル    :$videoPath"
-	Write-Debug "取得日付    :$timeStamp"
+function showVideoDebugInfo ($videoPageURL, $videoSeriesPageURL, $keywordName, $videoTitleName, $videoSubtitleName, $videoFileAbsolutePath, $processedTime) {
+	Write-Debug	"ビデオページ:$videoPageURL"
+	Write-Debug	"ビデオLP    :$videoSeriesPageURL"
+	Write-Debug "キーワード  :$keywordName"
+	Write-Debug "タイトル    :$videoTitleName"
+	Write-Debug "サブタイトル:$videoSubtitleName"
+	Write-Debug "ファイル    :$videoFileAbsolutePath"
+	Write-Debug "取得日付    :$processedTime"
 }
 
 #----------------------------------------------------------------------
 #ファイル名・フォルダ名に禁止文字の削除
 #----------------------------------------------------------------------
-function removeInvalidFileNameChars {
+function getFileNameWithoutInvalitChars {
 	param(
-		[Parameter(Mandatory = $true,
+		[Parameter(
+			Mandatory = $true,
 			Position = 0,
 			ValueFromPipeline = $true,
 			ValueFromPipelineByPropertyName = $true)]
@@ -338,66 +363,83 @@ function removeInvalidFileNameChars {
 }
 
 #----------------------------------------------------------------------
-#全角→半角(英数のみ)
+#全角→半角
 #----------------------------------------------------------------------
-function conv2Narrow {
+function getNarrowChars {
 
 	Param([string]$text)		#変換元テキストを引数に指定
 
-	$dakuZenKana = 'ガギグゲゴザジズゼゾダヂヅデドバビブベボ'
-	$dakuHanKana = 'ｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾊﾋﾌﾍﾎ'
-	$hanDakuZenKana = 'パピプペポ'
-	$handakuHanKana = 'ﾊﾋﾌﾍﾎ'
-	$zenKana = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン゛゜ァィゥェォャュョッ'
-	$hanKana = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜｦﾝﾞﾟｧｨｩｪｫｬｭｮｯ'
-	$zenNum = '０１２３４５６７８９'
-	$hanNum = '0123456789'
-	$zenAlpha = 'ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ'
-	$hanAlpha = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-	$zenSimbol = '＠＃＄％＾＆＊－＋＿／［］｛｝（）＜＞　￥”；：'
-	$hanSimbol = '@#$%^&*-+_/[]{}()<> \";:'
+	$wideKanaDaku = 'ガギグゲゴザジズゼゾダヂヅデドバビブベボ'
+	$narrowKanaDaku = 'ｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾊﾋﾌﾍﾎ'
+	$narrowWideKanaHanDaku = 'パピプペポ'
+	$narrowWideKanaHanDaku = 'ﾊﾋﾌﾍﾎ'
+	$wideKana = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン゛゜ァィゥェォャュョッ'
+	$narrowKana = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜｦﾝﾞﾟｧｨｩｪｫｬｭｮｯ'
+	$wideNum = '０１２３４５６７８９'
+	$narrowNum = '0123456789'
+	$wideAlpha = 'ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ'
+	$narrowAlpha = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+	$wideSimbol = '＠＃＄％＾＆＊－＋＿／［］｛｝（）＜＞　￥＼”；：'
+	$narrowSimbol = '@#$%^&*-+_/[]{}()<> \\";:'
 
-	for ($i = 0; $i -lt $dakuZenKana.Length; $i++) {
-		$text = $text.Replace($dakuHanKana[$i] + 'ﾞ', $dakuZenKana[$i])
+	for ($i = 0; $i -lt $wideKanaDaku.Length; $i++) {
+		$text = $text.Replace($narrowKanaDaku[$i] + 'ﾞ', $wideKanaDaku[$i])
 	}
-	for ($i = 0; $i -lt $hanDakuZenKana.Length; $i++) {
-		$text = $text.Replace($handakuHanKana[$i] + 'ﾟ', $hanDakuZenKana[$i])
+	for ($i = 0; $i -lt $narrowWideKanaHanDaku.Length; $i++) {
+		$text = $text.Replace($narrowWideKanaHanDaku[$i] + 'ﾟ', $narrowWideKanaHanDaku[$i])
 	}
-	for ($i = 0; $i -lt $zenKana.Length; $i++) {
-		$text = $text.Replace($hanKana[$i], $zenKana[$i])
+	for ($i = 0; $i -lt $wideKana.Length; $i++) {
+		$text = $text.Replace($narrowKana[$i], $wideKana[$i])
 	}
-	for ($i = 0; $i -lt $hanNum.Length; $i++) {
-		$text = $text.Replace($zenNum[$i], $hanNum[$i])
+	for ($i = 0; $i -lt $narrowNum.Length; $i++) {
+		$text = $text.Replace($wideNum[$i], $narrowNum[$i])
 	}
-	for ($i = 0; $i -lt $hanAlpha.Length; $i++) {
-		$text = $text.Replace($zenAlpha[$i], $hanAlpha[$i])
+	for ($i = 0; $i -lt $narrowAlpha.Length; $i++) {
+		$text = $text.Replace($wideAlpha[$i], $narrowAlpha[$i])
 	}
-	for ($i = 0; $i -lt $hanSimbol.Length; $i++) {
-		$text = $text.Replace($zenSimbol[$i], $hanSimbol[$i])
+	for ($i = 0; $i -lt $narrowSimbol.Length; $i++) {
+		$text = $text.Replace($wideSimbol[$i], $narrowSimbol[$i])
 	}
 	return $text
 
 }
 
 #----------------------------------------------------------------------
+#いくつかの特殊文字を置換
+#----------------------------------------------------------------------
+function getSpecialCharacterReplaced {
+	Param([string]$text)		#変換元テキストを引数に指定
+	$text = $text.Replace('&amp;', '&')
+	$text = $text.Replace('"', '')
+	$text = $text.Replace('“', '')
+	$text = $text.Replace('”', '')
+	$text = $text.Replace(',', '')
+	$text = $text.Replace('?', '？')
+	$text = $text.Replace('!', '！')
+	$text = $text.Replace('/', '-')
+	$text = $text.Replace('\', '-')
+	return $text
+}
+
+#----------------------------------------------------------------------
 #保存ファイル名を設定
 #----------------------------------------------------------------------
-function setVideoName ($title, $subtitle, $broadcastDate) {
+function getVideoFileName ($videoTitleName, $videoSubtitleName, $broadcastDate) {
 	Write-Verbose 'ビデオファイル名を整形します。'
-	if ($subtitle -eq '') {
+	if ($videoSubtitleName -eq '') {
 		if ($broadcastDate -eq '') {
-			$videoName = $title
+			$videoName = $videoTitleName
 		} else {
-			$videoName = $title + ' ' + $broadcastDate
+			$videoName = $videoTitleName + ' ' + $broadcastDate
 		}
 	} else {
-		$videoName = $title + ' ' + $broadcastDate + ' ' + $subtitle
+		$videoName = $videoTitleName + ' ' + $broadcastDate + ' ' + $videoSubtitleName
 	}
-	$videoName = removeInvalidFileNameChars (conv2Narrow $videoName)		#ファイル名にできない文字列を除去
+	$videoName = getFileNameWithoutInvalitChars (getNarrowChars $videoName)		#ファイル名にできない文字列を除去
 
 	#SMBで255バイトまでしかファイル名を持てないらしいので、超えないようにファイル名をトリミング
 	$videoNameTemp = ''
-	$fileNameLimit = $fileNameMax - 25					#yt-dlpの中間ファイル等を考慮して安全目の上限値
+	$fileNameLimit = $fileNameLengthMax - 25					#yt-dlpの中間ファイル等を考慮して安全目の上限値
 	$videoNameByte = [System.Text.Encoding]::UTF8.GetByteCount($videoName)
 
 	#ファイル名を1文字ずつ増やしていき、上限に達したら残りは「……」とする
@@ -415,53 +457,17 @@ function setVideoName ($title, $subtitle, $broadcastDate) {
 #----------------------------------------------------------------------
 #ダウンロードが中断した際にできたゴミファイルは削除
 #----------------------------------------------------------------------
-function deleteTrash {
-	Write-Host '----------------------------------------------------------------------'
-	Write-Host 'ダウンロードが中断した際にできたゴミファイルを削除します'
-	Write-Host '----------------------------------------------------------------------'
-	Remove-Item -Path $downloadBasePath -Recurse -Include *.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*
+function deleteTrashFiles ($Path, $Conditions) {
+	try {
+		Get-ChildItem `
+			-Path $Path `
+			-Recurse `
+			-Force `
+			-File `
+			-Include $Conditions `
+			-Name | `
+				ForEach-Object { Remove-Item $_.FullName }
+	} catch { Write-Host '削除できないファイルがありました' }
 }
 
-#----------------------------------------------------------------------
-#無視リストに入っている番組は削除
-#----------------------------------------------------------------------
-function deleteIgnored {
-	#ダウンロード対象外ビデオ番組リストの読み込み
-	$ignoreTitles = (Get-Content $ignoreFile -Encoding UTF8 | `
-				Where-Object { !($_ -match '^\s*$') } | `
-				Where-Object { !($_ -match '^;.*$') } ) `
-		-as [string[]]
 
-	Write-Host '----------------------------------------------------------------------'
-	Write-Host '削除対象のビデオフォルダを削除します'
-	Write-Host '----------------------------------------------------------------------'
-	#----------------------------------------------------------------------
-	foreach ($ignoreTitle in $ignoreTitles) {
-		$delPath = Join-Path $downloadBasePath $ignoreTitle
-		Write-Host $delPath
-		$ErrorActionPreference = 'silentlycontinue'
-		Remove-Item -Path $delPath -Force -Recurse -ErrorAction SilentlyContinue
-		$ErrorActionPreference = 'continue'
-	}
-	#----------------------------------------------------------------------
-}
-
-#----------------------------------------------------------------------
-#空フォルダ と 隠しファイルしか入っていないフォルダを一気に削除
-#----------------------------------------------------------------------
-function deleteEmpty {
-	Write-Host '----------------------------------------------------------------------'
-	Write-Host '空フォルダ と 隠しファイルしか入っていないフォルダを削除します'
-	Write-Host '----------------------------------------------------------------------'
-	$allSubDirs = @(Get-ChildItem -Path $downloadBasePath -Recurse | `
-				Where-Object { $_.PSIsContainer }) | `
-				Sort-Object -Descending { $_.FullName }
-	#----------------------------------------------------------------------
-	foreach ($subDir in $allSubDirs) {
-		if (@(Get-ChildItem -Path $subDir.FullName -Recurse | `
-						Where-Object { ! $_.PSIsContainer }).Count -eq 0) {
-			Remove-Item -Path $subDir.FullName -Recurse -Force
-		}
-	}
-	#----------------------------------------------------------------------
-}

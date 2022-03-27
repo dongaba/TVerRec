@@ -33,9 +33,10 @@ pid*.txt
 *_5.ps1
 
 #開発関連ファイル
+dev
+dev/*
 TVerRecGUI/*
 memo.txt
-conf/dev_setting.conf
 linux-*
 mac-*
 win-*

@@ -25,7 +25,7 @@ echo -en "\033];TVerRec\007"
 
 export HostName=`hostname`
 export PIDFile="pid-$HostName.txt"
-export retryTime=600
+export retryTime=60
 export sleepTime=3600
 
 echo $PPID > $PIDFile
