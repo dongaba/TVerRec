@@ -34,42 +34,169 @@ try {
 	$confDir = $(Join-Path $currentDir '..\conf')
 	$sysFile = $(Join-Path $confDir 'system_setting.conf')
 	$confFile = $(Join-Path $confDir 'user_setting.conf')
-	$devConfFile = $(Join-Path $confDir 'dev_setting.conf')
+	$devDir = $(Join-Path $currentDir '..\dev')
+	$devConfFile = $(Join-Path $devDir 'dev_setting.conf')
+	$devFunctionFile = $(Join-Path $devDir 'dev_funcitons.ps1')
 
 	#----------------------------------------------------------------------
 	#外部設定ファイル読み込み
-	Get-Content $sysFile | Where-Object { $_ -notmatch '^\s*$' } | `
+	Get-Content $sysFile -Encoding UTF8 | `
+			Where-Object { $_ -notmatch '^\s*$' } | `
 			Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
 			Invoke-Expression
-	Get-Content $confFile | Where-Object { $_ -notmatch '^\s*$' } | `
+	Get-Content $confFile -Encoding UTF8 | `
+			Where-Object { $_ -notmatch '^\s*$' } | `
 			Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
 			Invoke-Expression
+
+	#----------------------------------------------------------------------
+	#開発環境用に設定上書き
+	if (Test-Path $devConfFile) {
+		Get-Content $devConfFile -Encoding UTF8 | `
+				Where-Object { $_ -notmatch '^\s*$' } | `
+				Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
+				Invoke-Expression
+	}
 
 	#----------------------------------------------------------------------
 	#外部関数ファイルの読み込み
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
 		. '.\common_functions_5.ps1'
 		. '.\tver_functions_5.ps1'
+		if (Test-Path $devFunctionFile) { 
+			Write-Host '========================================================' -ForegroundColor Green
+			Write-Host '  PowerShell Coreではありません                         ' -ForegroundColor Green
+			Write-Host '========================================================' -ForegroundColor Green
+			exit 1
+		}
 	} else {
 		. '.\common_functions.ps1'
 		. '.\tver_functions.ps1'
-	}
-
-	#----------------------------------------------------------------------
-	#開発環境用に設定上書き
-	if (Test-Path $devConfFile) {
-		Get-Content $devConfFile | Where-Object { $_ -notmatch '^\s*$' } | `
-				Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
-				Invoke-Expression
-		$VerbosePreference = 'Continue'						#詳細メッセージ
-		$DebugPreference = 'Continue'						#デバッグメッセージ
+		if (Test-Path $devFunctionFile) { 
+			. $devFunctionFile 
+			Write-Host '========================================================' -ForegroundColor Green
+			Write-Host '  開発ファイルを読み込みました                          ' -ForegroundColor Green
+			Write-Host '========================================================' -ForegroundColor Green
+		}
 	}
 } catch { Write-Host '設定ファイルの読み込みに失敗しました'; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
-deleteTrash		#ダウンロードが中断した際にできたゴミファイルは削除
 
-deleteIgnored	#無視リストに入っている番組は削除
+#======================================================================
+#1/3 ダウンロードが中断した際にできたゴミファイルは削除
+Write-Host '----------------------------------------------------------------------'
+Write-Host 'ダウンロードが中断した際にできたゴミファイルを削除します'
+Write-Host '----------------------------------------------------------------------'
+Write-Progress `
+	-Id 1 `
+	-Activity 'ダウンロード中断時のゴミファイル削除' `
+	-PercentComplete $($( 1 / 3 ) * 100) `
+	-Status '1/3個目'
+Write-Progress `
+	-Id 2 `
+	-ParentId 1 `
+	-Activity "「$($downloadBaseAbsoluteDir)」配下ゴミファイルを削除中" `
+	-PercentComplete $($( 1 / 3 ) * 100) `
+	-Status '1/3個目'
+deleteTrashFiles $downloadBaseAbsoluteDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*'
+Write-Progress `
+	-Id 2 `
+	-ParentId 1 `
+	-Activity "「$($downloadWorkAbsoluteDir)」配下ゴミファイルを削除中" `
+	-PercentComplete $($( 2 / 3 ) * 100) `
+	-Status '2/3個目'
+deleteTrashFiles $downloadWorkAbsoluteDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.mp4'
+Write-Progress `
+	-Id 2 `
+	-ParentId 1 `
+	-Activity "「$($saveBaseAbsoluteDir)」配下ゴミファイルを削除中" `
+	-PercentComplete $($( 3 / 3 ) * 100) `
+	-Status '3/3個目'
+deleteTrashFiles $saveBaseAbsoluteDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*'
 
-deleteEmpty		#空フォルダ と 隠しファイルしか入っていないフォルダを一気に削除
+#======================================================================
+#2/3 無視リストに入っている番組は削除
+Write-Host '----------------------------------------------------------------------'
+Write-Host '削除対象のビデオを削除します'
+Write-Host '----------------------------------------------------------------------'
+Write-Progress `
+	-Id 1 `
+	-Activity '削除対象のビデオを削除' `
+	-PercentComplete $($( 2 / 3 ) * 100) `
+	-Status '2/3個目'
+
+#ダウンロード対象外ビデオ番組リストの読み込み
+$ignoreTitles = (Get-Content $ignoreFileRelativePath -Encoding UTF8 | `
+			Where-Object { !($_ -match '^\s*$') } | `
+			Where-Object { !($_ -match '^;.*$') }) `
+	-as [string[]]
+
+$ignoreNum = 0						#無視リスト内の番号
+if ($ignoreTitles -is [array]) {
+	$ignoreTotal = $ignoreTitles.Length	#無視リスト内のエントリ合計数
+} else { $ignoreTotal = 1 }
+
+foreach ($ignoreTitle in $ignoreTitles) {
+	$ignoreNum = $ignoreNum + 1
+	Write-Progress `
+		-Id 2 `
+		-ParentId 1 `
+		-Activity "「$($ignoreTitle)」を削除中" `
+		-PercentComplete $($( $ignoreNum / $ignoreTotal ) * 100) `
+		-Status "$($ignoreNum)/$($ignoreTotal)個目"
+
+	try {
+		Get-ChildItem `
+			-Path $downloadBaseAbsoluteDir `
+			-Recurse `
+			-Force `
+			-Include "*$ignoreTitle*" `
+			-Name | `
+				ForEach-Object { Remove-Item $_.FullName }
+	} catch { Write-Host '削除できないファイルがありました' }
+}
+
+#======================================================================
+#3/3 空フォルダと隠しファイルしか入っていないフォルダを一気に削除
+Write-Host '----------------------------------------------------------------------'
+Write-Host '空フォルダ と 隠しファイルしか入っていないフォルダを削除します'
+Write-Host '----------------------------------------------------------------------'
+Write-Progress `
+	-Id 1 `
+	-Activity '空フォルダと隠しファイルしか入っていないフォルダを削除' `
+	-PercentComplete $($( 3 / 3 ) * 100) `
+	-Status '3/3個目'
+
+$allSubDirs = @(Get-ChildItem -Path $downloadBaseAbsoluteDir -Recurse | `
+			Where-Object { $_.PSIsContainer }) | `
+			Sort-Object -Descending { $_.FullName }
+
+$subDirNum = 0						#無視リスト内の番号
+if ($ignoreTitles -is [array]) {
+	$subDirTotal = $allSubDirs.Length	#無視リスト内のエントリ合計数
+} else { $subDirTotal = 1 }
+
+foreach ($subDir in $allSubDirs) {
+	$subDirNum = $subDirNum + 1
+	Write-Progress `
+		-Id 2 `
+		-ParentId 1 `
+		-Activity "「$($subDir)」を削除中" `
+		-PercentComplete $($( $subDirNum / $subDirTotal ) * 100) `
+		-Status "$($subDirNum)/$($subDirTotal)個目"
+
+	if (@(Get-ChildItem `
+				-Path $subDir.FullName -Recurse | `
+					Where-Object { ! $_.PSIsContainer }).Count -eq 0) {
+		try {
+			Remove-Item `
+				-Path $subDir.FullName `
+				-Recurse `
+				-Force `
+				-ErrorAction SilentlyContinue
+		} catch { Write-Host "空フォルダの削除に失敗しました: $subDir.FullName" }
+	}
+}
+
