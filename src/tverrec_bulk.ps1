@@ -119,7 +119,7 @@ foreach ($keywordName in $keywordNames) {
 
 	Write-Progress `
 		-Id 1 `
-		-Activity 'キーワードごとの動画の一覧を取得中' `
+		-Activity 'キーワードの動画を取得中' `
 		-PercentComplete $($( $keywordNum / $keywordTotal ) * 100) `
 		-Status "$($keywordNum)/$($keywordTotal)個目"
 
