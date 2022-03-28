@@ -134,6 +134,7 @@ if ($null -eq $videoLists) {
 
 	$completionPercent = 0
 	Write-Progress `
+		-Id 1 `
 		-Activity '動画のチェック中' `
 		-PercentComplete $completionPercent `
 		-Status '残り時間計算中'
@@ -150,7 +151,9 @@ if ($null -eq $videoLists) {
 			$secondsRemaining = ($secondsElapsed.TotalSeconds / $j) * ($i - $j)
 		}
 		$j = $j + 1
+
 		Write-Progress `
+			-Id 1 `
 			-Activity "$($j)/$($i)" `
 			-PercentComplete $completionPercent `
 			-Status "$videoFileAbsolutePath" `
