@@ -147,15 +147,20 @@ foreach ($ignoreTitle in $ignoreTitles) {
 		-PercentComplete $($( $ignoreNum / $ignoreTotal ) * 100) `
 		-Status "$($ignoreTitle)"
 
+	Write-Host "$($ignoreTitle)を処理中"
 	try {
 		$delTargets = Get-ChildItem `
 			-Path $downloadBaseAbsoluteDir `
-			-Recurse `
-			-Force `
-			-Include "*$ignoreTitle*" `
-			-Name
-		foreach ($delTarget in $delTargets) {
-			Remove-Item $delTarget -Force -ErrorAction SilentlyContinue
+			-Directory `
+			-Name `
+			-Include "*$ignoreTitle*"
+		if ($null -ne $delTargets) {
+			Write-Host "$($delTargets)を削除します"
+			foreach ($delTarget in $delTargets) {
+				Remove-Item $delTarget -Force -ErrorAction SilentlyContinue
+			}
+		} else {
+			Write-Host '削除対象はありませんでした'
 		}
 	} catch { Write-Host '削除できないファイルがありました' }
 }
@@ -188,8 +193,10 @@ foreach ($subDir in $allSubDirs) {
 		-PercentComplete $($( $subDirNum / $subDirTotal ) * 100) `
 		-Status "$($subDir)"
 
+	Write-Host "$($subDir.FullName)を処理中"
 	if (@((Get-ChildItem -Path $subDir.FullName -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
 		try {
+			Write-Host "$($subDir.FullName)を削除します"
 			Remove-Item `
 				-Path $subDir.FullName `
 				-Recurse `

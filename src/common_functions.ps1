@@ -458,26 +458,21 @@ function getVideoFileName ($videoTitleName, $videoSubtitleName, $broadcastDate) 
 #----------------------------------------------------------------------
 function deleteTrashFiles ($Path, $Conditions) {
 	try {
-		#		Get-ChildItem `
-		#			-Path $Path `
-		#			-Recurse `
-		#			-Force `
-		#			-File `
-		#			-Include $Conditions `
-		#			-Name | `
-		#				ForEach-Object { Remove-Item $_.FullName }
-
+		Write-Host "$($Path)を処理中"
 		$delTargets = Get-ChildItem `
 			-Path $Path `
 			-Recurse `
-			-Force `
 			-File `
-			-Include $Conditions `
-			-Name
-		foreach ($delTarget in $delTargets) {
-			Remove-Item $delTarget -Force -ErrorAction SilentlyContinue
+			-Name `
+			-Include $Conditions
+		if ($null -ne $delTargets) {
+			Write-Host "$($delTargets)を削除します"
+			foreach ($delTarget in $delTargets) {
+				Remove-Item $delTarget -Force -ErrorAction SilentlyContinue
+			}
+		} else {
+			Write-Host '削除対象はありませんでした'
 		}
-
 	} catch { Write-Host '削除できないファイルがありました' }
 }
 
