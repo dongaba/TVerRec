@@ -91,29 +91,29 @@ Write-Host 'ダウンロードが中断した際にできたゴミファイル�
 Write-Host '----------------------------------------------------------------------'
 Write-Progress `
 	-Id 1 `
-	-Activity 'ゴミファイルを削除' `
+	-Activity '処理 1/3' `
 	-PercentComplete $($( 1 / 3 ) * 100) `
-	-Status '1/3個目'
+	-Status 'ゴミファイルを削除'
 Write-Progress `
 	-Id 2 `
 	-ParentId 1 `
-	-Activity "「$($downloadBaseAbsoluteDir)」配下ゴミファイルを削除中" `
+	-Activity '1/3' `
 	-PercentComplete $($( 1 / 3 ) * 100) `
-	-Status '1/3個目'
+	-Status "$($downloadBaseAbsoluteDir)"
 deleteTrashFiles $downloadBaseAbsoluteDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*'
 Write-Progress `
 	-Id 2 `
 	-ParentId 1 `
-	-Activity "「$($downloadWorkAbsoluteDir)」配下ゴミファイルを削除中" `
+	-Activity '2/3' `
 	-PercentComplete $($( 2 / 3 ) * 100) `
-	-Status '2/3個目'
+	-Status "$($downloadWorkAbsoluteDir)"
 deleteTrashFiles $downloadWorkAbsoluteDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.mp4'
 Write-Progress `
 	-Id 2 `
 	-ParentId 1 `
-	-Activity "「$($saveBaseAbsoluteDir)」配下ゴミファイルを削除中" `
+	-Activity '3/3' `
 	-PercentComplete $($( 3 / 3 ) * 100) `
-	-Status '3/3個目'
+	-Status "$($saveBaseAbsoluteDir)"
 deleteTrashFiles $saveBaseAbsoluteDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*'
 
 #======================================================================
@@ -123,9 +123,9 @@ Write-Host '削除対象のビデオを削除します'
 Write-Host '----------------------------------------------------------------------'
 Write-Progress `
 	-Id 1 `
-	-Activity '削除対象のビデオを削除' `
+	-Activity '処理 2/3' `
 	-PercentComplete $($( 2 / 3 ) * 100) `
-	-Status '2/3個目'
+	-Status '削除対象のビデオを削除'
 
 #ダウンロード対象外ビデオ番組リストの読み込み
 $ignoreTitles = (Get-Content $ignoreFileRelativePath -Encoding UTF8 | `
@@ -143,9 +143,9 @@ foreach ($ignoreTitle in $ignoreTitles) {
 	Write-Progress `
 		-Id 2 `
 		-ParentId 1 `
-		-Activity "「$($ignoreTitle)」を削除中" `
+		-Activity "$($ignoreNum)/$($ignoreTotal)" `
 		-PercentComplete $($( $ignoreNum / $ignoreTotal ) * 100) `
-		-Status "$($ignoreNum)/$($ignoreTotal)個目"
+		-Status "$($ignoreTitle)"
 
 	try {
 		Get-ChildItem `
@@ -165,9 +165,9 @@ Write-Host '空フォルダ と 隠しファイルしか入っていないフォ
 Write-Host '----------------------------------------------------------------------'
 Write-Progress `
 	-Id 1 `
-	-Activity '空フォルダを削除' `
+	-Activity '処理 3/3' `
 	-PercentComplete $($( 3 / 3 ) * 100) `
-	-Status '3/3個目'
+	-Status '空フォルダを削除'
 
 $allSubDirs = @(Get-ChildItem -Path $downloadBaseAbsoluteDir -Recurse | `
 			Where-Object { $_.PSIsContainer }) | `
@@ -183,9 +183,9 @@ foreach ($subDir in $allSubDirs) {
 	Write-Progress `
 		-Id 2 `
 		-ParentId 1 `
-		-Activity "「$($subDir)」を削除中" `
+		-Activity "$($subDirNum)/$($subDirTotal)" `
 		-PercentComplete $($( $subDirNum / $subDirTotal ) * 100) `
-		-Status "$($subDirNum)/$($subDirTotal)個目"
+		-Status "$($subDir)"
 
 	if (@(Get-ChildItem `
 				-Path $subDir.FullName -Recurse | `

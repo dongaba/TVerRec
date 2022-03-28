@@ -119,9 +119,9 @@ foreach ($keywordName in $keywordNames) {
 
 	Write-Progress `
 		-Id 1 `
-		-Activity 'キーワードの動画を取得中' `
+		-Activity "$($keywordNum)/$($keywordTotal)" `
 		-PercentComplete $($( $keywordNum / $keywordTotal ) * 100) `
-		-Status "$($keywordNum)/$($keywordTotal)個目"
+		-Status 'キーワードの動画を取得中'
 
 	$videoLinks = getVideoLinksFromKeyword ($keywordName)
 	$keywordName = $keywordName.Replace('https://tver.jp/', '').Replace('http://tver.jp/', '')
@@ -142,9 +142,9 @@ foreach ($keywordName in $keywordNames) {
 		Write-Progress `
 			-Id 2 `
 			-ParentId 1 `
-			-Activity "「$($keywordName)」の動画ダウンロード中" `
+			-Activity "$($videoNum)/$($videoTotal)" `
 			-PercentComplete $($( $videoNum / $videoTotal ) * 100) `
-			-Status "$($videoNum)/$($videoTotal)本目"
+			-Status "$($keywordName)"
 
 		Write-Host '----------------------------------------------------------------------'
 		Write-Host "[ $keywordName - $videoNum / $videoTotal ] をダウンロードします。 ($(getTimeStamp))"

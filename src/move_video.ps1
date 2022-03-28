@@ -98,9 +98,9 @@ Write-Host 'ビデオファイルを移動しています'
 Write-Host '==========================================================================='
 Write-Progress `
 	-Id 1 `
-	-Activity 'ビデオを移動' `
+	-Activity '処理 1/2' `
 	-PercentComplete $($( 1 / 2 ) * 100) `
-	-Status '1/2個目'
+	-Status 'ビデオを移動'
 
 $moveToPaths = Get-ChildItem $saveBaseAbsoluteDir -Recurse | `
 		Where-Object { $_.PSisContainer } | `
@@ -119,9 +119,9 @@ foreach ($moveToPath in $moveToPaths) {
 	Write-Progress `
 		-Id 2 `
 		-ParentId 1 `
-		-Activity "「$($moveToPath)」を移動中" `
+		-Activity "$($moveToPathNum)/$($moveToPathTotal)" `
 		-PercentComplete $($( $moveToPathNum / $moveToPathTotal ) * 100) `
-		-Status "$($moveToPathNum)/$($moveToPathTotal)個目"
+		-Status "$($moveToPath)"
 
 	$targetFolderName = Split-Path -Leaf $moveToPath
 	#同名フォルダが存在する場合は配下のファイルを移動
@@ -142,9 +142,9 @@ Write-Host '空フォルダ と 隠しファイルしか入っていないフォ
 Write-Host '----------------------------------------------------------------------'
 Write-Progress `
 	-Id 1 `
-	-Activity '空フォルダを削除' `
+	-Activity '処理 2/2' `
 	-PercentComplete $($( 2 / 2 ) * 100) `
-	-Status '2/2個目'
+	-Status '空フォルダを削除'
 
 $allSubDirs = @(Get-ChildItem -Path $downloadBaseAbsoluteDir -Recurse | `
 			Where-Object { $_.PSIsContainer }) | `
@@ -160,9 +160,9 @@ foreach ($subDir in $allSubDirs) {
 	Write-Progress `
 		-Id 2 `
 		-ParentId 1 `
-		-Activity "「$($subDir)」を削除中" `
+		-Activity "$($subDirNum)/$($subDirTotal)" `
 		-PercentComplete $($( $subDirNum / $subDirTotal ) * 100) `
-		-Status "$($subDirNum)/$($subDirTotal)個目"
+		-Status "$($subDir)"
 
 	if (@(Get-ChildItem `
 				-Path $subDir.FullName -Recurse | `

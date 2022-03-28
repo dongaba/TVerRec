@@ -151,9 +151,9 @@ if ($null -eq $videoLists) {
 		}
 		$j = $j + 1
 		Write-Progress `
-			-Activity '動画のチェック中' `
+			-Activity "$($j)/$($i)" `
 			-PercentComplete $completionPercent `
-			-Status "$($j)/$($i)本目 $videoFileAbsolutePath" `
+			-Status "$videoFileAbsolutePath" `
 			-SecondsRemaining $secondsRemaining
 
 		#保存先ディレクトリの存在確認
