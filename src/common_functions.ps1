@@ -78,8 +78,7 @@ function getTimeStamp {
 #----------------------------------------------------------------------
 function purgeDB {
 	try {
-		$purgedList = (Import-Csv $listFileRelativePath -Encoding UTF8 | `
-					Where-Object { $_.downloadDate -gt $(Get-Date).AddDays(-30) })
+		$purgedList = ((Import-Csv $listFileRelativePath -Encoding UTF8).Where({ $_.downloadDate -gt $(Get-Date).AddDays(-30) }))
 		$purgedList | Export-Csv $listFileRelativePath -NoTypeInformation -Encoding UTF8
 	} catch { Write-Host 'リストのクリーンアップに失敗しました' }
 }
@@ -90,8 +89,7 @@ function purgeDB {
 function uniqueDB {
 	#無視されたもの
 	try {
-		$ignoredList = (Import-Csv $listFileRelativePath -Encoding UTF8 | `
-					Where-Object { $_.videoPath -eq '-- IGNORED --' })
+		$ignoredList = ((Import-Csv $listFileRelativePath -Encoding UTF8).Where({ $_.videoPath -eq '-- IGNORED --' }))
 	} catch { Write-Host 'リストの読み込みに失敗しました' }
 
 	#無視されなかったものの重複削除。ファイル名で1つしかないもの残す
@@ -189,7 +187,7 @@ function checkVideo ($decodeOption) {
 		try {
 			$videoLists = Import-Csv $listFileRelativePath -Encoding UTF8
 			#該当のビデオのチェックステータスを"1"に
-			$($videoLists | Where-Object { $_.videoPath -eq $videoFileAbsolutePath }).videoValidated = '1'
+			$(($videoLists).Where({ $_.videoPath -eq $videoFileAbsolutePath })).videoValidated = '1'
 			$videoLists | Export-Csv $listFileRelativePath -NoTypeInformation -Encoding UTF8 -Force
 		} catch { Write-Host "録画リストを更新できませんでした: $videoFileAbsolutePath" }
 	}
@@ -459,14 +457,26 @@ function getVideoFileName ($videoTitleName, $videoSubtitleName, $broadcastDate) 
 #----------------------------------------------------------------------
 function deleteTrashFiles ($Path, $Conditions) {
 	try {
-		Get-ChildItem `
+		#		Get-ChildItem `
+		#			-Path $Path `
+		#			-Recurse `
+		#			-Force `
+		#			-File `
+		#			-Include $Conditions `
+		#			-Name | `
+		#				ForEach-Object { Remove-Item $_.FullName }
+
+		$delTargets = Get-ChildItem `
 			-Path $Path `
 			-Recurse `
 			-Force `
 			-File `
 			-Include $Conditions `
-			-Name | `
-				ForEach-Object { Remove-Item $_.FullName }
+			-Name
+		foreach ($delTarget in $delTargets) {
+			Remove-Item $delTarget -Force -ErrorAction SilentlyContinue
+		}
+
 	} catch { Write-Host '削除できないファイルがありました' }
 }
 

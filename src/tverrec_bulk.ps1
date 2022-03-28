@@ -165,9 +165,6 @@ foreach ($keywordName in $keywordNames) {
 	}
 	#----------------------------------------------------------------------
 
-	Write-Progress -Id 2 -ParentId 1 -Completed
-	Write-Progress -Id 1 -Completed
-
 }
 #======================================================================
 
