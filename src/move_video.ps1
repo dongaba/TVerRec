@@ -100,7 +100,7 @@ Write-Progress `
 	-Id 1 `
 	-Activity '処理 1/2' `
 	-PercentComplete $($( 1 / 2 ) * 100) `
-	-Status 'ビデオを移動'
+	-Status 'フォルダ一覧を作成中'
 
 $moveToPaths = Get-ChildItem $saveBaseAbsoluteDir -Recurse | `
 		Where-Object { $_.PSisContainer } | `
@@ -114,7 +114,6 @@ if ($moveToPaths -is [array]) {
 foreach ($moveToPath in $moveToPaths) {
 	Write-Host '----------------------------------------------------------------------'
 	Write-Host "$moveToPath を処理します"
-	Write-Host '----------------------------------------------------------------------'
 	$moveToPathNum = $moveToPathNum + 1
 	Write-Progress `
 		-Id 2 `
@@ -128,7 +127,7 @@ foreach ($moveToPath in $moveToPaths) {
 	$moveFromPath = $(Join-Path $downloadBaseAbsoluteDir $targetFolderName)
 	if (Test-Path $moveFromPath) {
 		$moveFromPath = $moveFromPath + '\*.mp4'
-		Write-Host "  $moveFromPath を $moveToPath に移動します"
+		Write-Host "  └「$($moveFromPath)」を移動します"
 		try {
 			Move-Item $moveFromPath -Destination $moveToPath -Force
 		} catch {}
