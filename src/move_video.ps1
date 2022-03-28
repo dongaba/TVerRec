@@ -99,7 +99,7 @@ Write-Host '====================================================================
 Write-Progress `
 	-Id 1 `
 	-Activity '処理 1/2' `
-	-PercentComplete $($( 1 / 2 ) * 100) `
+	-PercentComplete $($( 1 / 4 ) * 100) `
 	-Status 'フォルダ一覧を作成中'
 
 $moveToPaths = Get-ChildItem $saveBaseAbsoluteDir -Recurse | `
@@ -110,6 +110,12 @@ $moveToPathNum = 0						#移動先パス番号
 if ($moveToPaths -is [array]) {
 	$moveToPathTotal = $moveToPaths.Length	#移動先パス合計数
 } else { $moveToPathTotal = 1 }
+
+Write-Progress `
+	-Id 1 `
+	-Activity '処理 1/2' `
+	-PercentComplete $($( 1 / 2 ) * 100) `
+	-Status 'ファイルを移動中'
 
 foreach ($moveToPath in $moveToPaths) {
 	Write-Host '----------------------------------------------------------------------'
