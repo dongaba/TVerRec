@@ -119,7 +119,7 @@ Write-Progress `
 
 foreach ($moveToPath in $moveToPaths) {
 	Write-Host '----------------------------------------------------------------------'
-	Write-Host "$moveToPath を処理します"
+	Write-Host "$moveToPath を処理中"
 	$moveToPathNum = $moveToPathNum + 1
 	Write-Progress `
 		-Id 2 `

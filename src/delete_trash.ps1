@@ -147,6 +147,7 @@ foreach ($ignoreTitle in $ignoreTitles) {
 		-PercentComplete $($( $ignoreNum / $ignoreTotal ) * 100) `
 		-Status "$($ignoreTitle)"
 
+	Write-Host '----------------------------------------------------------------------'
 	Write-Host "$($ignoreTitle)を処理中"
 	try {
 		$delTargets = Get-ChildItem `
@@ -155,7 +156,7 @@ foreach ($ignoreTitle in $ignoreTitles) {
 			-Name `
 			-Include "*$ignoreTitle*"
 		if ($null -ne $delTargets) {
-			Write-Host "$($delTargets)を削除します"
+			Write-Host "  └「$($delTargets)」を削除します"
 			foreach ($delTarget in $delTargets) {
 				Remove-Item $delTarget -Force -ErrorAction SilentlyContinue
 			}
@@ -193,10 +194,11 @@ foreach ($subDir in $allSubDirs) {
 		-PercentComplete $($( $subDirNum / $subDirTotal ) * 100) `
 		-Status "$($subDir)"
 
+	Write-Host '----------------------------------------------------------------------'
 	Write-Host "$($subDir.FullName)を処理中"
 	if (@((Get-ChildItem -Path $subDir.FullName -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
 		try {
-			Write-Host "$($subDir.FullName)を削除します"
+			Write-Host "  └「$($subDir.FullName)」を削除します"
 			Remove-Item `
 				-Path $subDir.FullName `
 				-Recurse `
