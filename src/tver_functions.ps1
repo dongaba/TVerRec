@@ -229,6 +229,8 @@ function downloadTVerVideo ($keywordName) {
 	$videoName = getVideoFileName $videoTitleName $videoSubtitleName $broadcastDate
 	$videoFileAbsoluteDir = $(Join-Path $downloadBaseAbsoluteDir (getFileNameWithoutInvalitChars $videoTitleName))
 	$videoFileAbsolutePath = $(Join-Path $videoFileAbsoluteDir $videoName)
+	$videoFileRelativePath = $videoFileAbsolutePath.Replace($downloadBaseAbsoluteDir, '').Replace('\', '/')
+	$videoFileRelativePath = $videoFileRelativePath.Substring(1, $($videoFileRelativePath.Length - 1))
 
 	#ビデオ情報のコンソール出力
 	showVideoInfo $videoName $broadcastDate $mediaName $descriptionText
@@ -300,7 +302,7 @@ function downloadTVerVideo ($keywordName) {
 			broadcastDate  = $broadcastDate ;
 			downloadDate   = $(getTimeStamp) ;
 			videoName      = '-- SKIPPED --' ;
-			videoPath      = $videoFileAbsolutePath ;
+			videoPath      = $videoFileRelativePath ;
 			videoValidated = '0' ;
 		}
 	} else {
@@ -316,7 +318,7 @@ function downloadTVerVideo ($keywordName) {
 			broadcastDate  = $broadcastDate ;
 			downloadDate   = $(getTimeStamp) ;
 			videoName      = $videoName ;
-			videoPath      = $videoFileAbsolutePath ;
+			videoPath      = $videoFileRelativePath ;
 			videoValidated = '0' ;
 		}
 	}

@@ -121,6 +121,7 @@ function uniqueDB {
 #----------------------------------------------------------------------
 function checkVideo ($decodeOption) {
 	$errorCount = 0
+	$videoFileAbsolutePath = Join-Path $downloadBaseAbsoluteDir $videoFileRelativePath
 	$checkFile = '"' + $videoFileAbsolutePath + '"'
 	$ffmpegArgs = "$decodeOption "
 	$ffmpegArgs += ' -hide_banner -v error -xerror'
@@ -165,17 +166,17 @@ function checkVideo ($decodeOption) {
 
 	if ($proc.ExitCode -ne 0 -or $errorCount -gt 30) {
 		#終了コードが"0"以外 または エラーが30行以上 は録画リストとファイルを削除
-		Write-Host "$videoFileAbsolutePath"
+		Write-Host "$videoFileRelativePath"
 		Write-Host "  exit code: $($proc.ExitCode)"
 		Write-Host "  error count: $errorCount"
 		#破損している動画ファイルを録画リストから削除
 		try {
-			(Select-String -Pattern $videoFileAbsolutePath `
+			(Select-String -Pattern $videoFileRelativePath `
 				-Path $listFileRelativePath `
 				-Encoding UTF8 `
 				-SimpleMatch -NotMatch).Line | `
 					Out-File $listFileRelativePath -Encoding UTF8 -Force
-		} catch { Write-Host "録画リストの更新に失敗しました: $videoFileAbsolutePath" }
+		} catch { Write-Host "録画リストの更新に失敗しました: $videoFileRelativePath" }
 		#破損している動画ファイルを削除
 		try {
 			Remove-Item `
@@ -188,9 +189,9 @@ function checkVideo ($decodeOption) {
 		try {
 			$videoLists = Import-Csv $listFileRelativePath -Encoding UTF8
 			#該当のビデオのチェックステータスを"1"に
-			$(($videoLists).Where({ $_.videoPath -eq $videoFileAbsolutePath })).videoValidated = '1'
+			$(($videoLists).Where({ $_.videoPath -eq $videoFileRelativePath })).videoValidated = '1'
 			$videoLists | Export-Csv $listFileRelativePath -NoTypeInformation -Encoding UTF8 -Force
-		} catch { Write-Host "録画リストを更新できませんでした: $videoFileAbsolutePath" }
+		} catch { Write-Host "録画リストを更新できませんでした: $videoFileRelativePath" }
 	}
 
 }

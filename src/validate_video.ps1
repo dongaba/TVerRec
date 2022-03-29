@@ -108,9 +108,9 @@ if ($null -eq $videoLists) {
 	#----------------------------------------------------------------------
 	$i = 0
 	foreach ($videoList in $videoLists.videoPath) {
-		$videoFileAbsolutePath = $videoList
+		$videoFileRelativePath = $videoList
 		$i = $i + 1
-		Write-Host "$i 本目: $videoFileAbsolutePath"
+		Write-Host "$i 本目: $videoFileRelativePath"
 	}
 	#----------------------------------------------------------------------
 
@@ -145,7 +145,7 @@ if ($null -eq $videoLists) {
 		$secondsElapsed = (Get-Date) - $totalStartTime
 		$secondsRemaining = -1
 
-		$videoFileAbsolutePath = $videoList
+		$videoFileRelativePath = $videoList
 		if ($j -ne 0) {
 			$completionPercent = $($( $j / $i ) * 100)
 			$secondsRemaining = ($secondsElapsed.TotalSeconds / $j) * ($i - $j)
@@ -156,7 +156,7 @@ if ($null -eq $videoLists) {
 			-Id 1 `
 			-Activity "$($j)/$($i)" `
 			-PercentComplete $completionPercent `
-			-Status "$videoFileAbsolutePath" `
+			-Status "$videoFileRelativePath" `
 			-SecondsRemaining $secondsRemaining
 
 		#保存先ディレクトリの存在確認
