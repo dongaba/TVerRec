@@ -380,15 +380,16 @@ function executeYtdlp ($videoFilePath, $videoPageURL, $ytdlpPath) {
 	$ytdlpArgs += " --paths $chaptDir --paths $descDir"
 	$ytdlpArgs += " -o $saveFile $videoPageURL"
 
-	Write-Debug "yt-dlp起動コマンド:$ytdlpPath $ytdlpArgs"
 	if ($isWin) {
 		try {
+			Write-Debug "yt-dlp起動コマンド:$ytdlpPath $ytdlpArgs"
 			$null = Start-Process -FilePath $ytdlpPath `
 				-ArgumentList $ytdlpArgs `
 				-PassThru `
 				-WindowStyle $windowShowStyle
 		} catch { Write-Host 'yt-dlpの起動に失敗しました' }
 	} else {
+		Write-Debug "yt-dlp起動コマンド:nohup $ytdlpPath $ytdlpArgs"
 		try {
 			$null = Start-Process -FilePath nohup `
 				-ArgumentList ($ytdlpPath, $ytdlpArgs) `
