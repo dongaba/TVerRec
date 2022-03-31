@@ -79,7 +79,7 @@ try {
 			Write-Host '========================================================' -ForegroundColor Green
 		}
 	}
-} catch { Write-Host '設定ファイルの読み込みに失敗しました'; exit 1 }
+} catch { Write-Host '設定ファイルの読み込みに失敗しました' -ForegroundColor Green ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -114,7 +114,7 @@ Write-Progress `
 	-Activity '3/3' `
 	-PercentComplete $($( 3 / 3 ) * 100) `
 	-Status "$($saveBaseDir)"
-deleteTrashFiles $saveBaseDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*'
+deleteTrashFiles $saveBaseDir '*.ytdl,*.jpg,*.vtt,*.temp.mp4,*.part,*.mp4.part-Frag*'
 
 #======================================================================
 #2/3 無視リストに入っている番組は削除
@@ -151,7 +151,7 @@ foreach ($ignoreTitle in $ignoreTitles) {
 	Write-Host "$($ignoreTitle)を処理中"
 	try {
 		$delTargets = Get-ChildItem `
-			-Path $downloadBaseDir `
+			-LiteralPath $downloadBaseDir `
 			-Directory `
 			-Name `
 			-Include "*$ignoreTitle*"
@@ -159,14 +159,14 @@ foreach ($ignoreTitle in $ignoreTitles) {
 			Write-Host "  └「$($delTargets)」を削除します"
 			foreach ($delTarget in $delTargets) {
 				Remove-Item `
-					-Path $delTarget `
+					-LiteralPath $delTarget `
 					-Force `
 					-ErrorAction SilentlyContinue
 			}
 		} else {
 			Write-Host '  削除対象はありませんでした'
 		}
-	} catch { Write-Host '削除できないファイルがありました' }
+	} catch { Write-Host '削除できないファイルがありました' -ForegroundColor Green }
 }
 
 #======================================================================
@@ -180,7 +180,8 @@ Write-Progress `
 	-PercentComplete $($( 3 / 3 ) * 100) `
 	-Status '空フォルダを削除'
 
-$allSubDirs = @((Get-ChildItem -Path $downloadBaseDir -Recurse).Where({ $_.PSIsContainer })).FullName | `
+$allSubDirs = @((Get-ChildItem -LiteralPath $downloadBaseDir -Recurse).`
+		Where({ $_.PSIsContainer })).FullName | `
 		Sort-Object -Descending
 
 $subDirNum = 0						#サブディレクトリの番号
@@ -199,15 +200,16 @@ foreach ($subDir in $allSubDirs) {
 
 	Write-Host '----------------------------------------------------------------------'
 	Write-Host "$($subDir)を処理中"
-	if (@((Get-ChildItem -Path $subDir -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
+	if (@((Get-ChildItem -LiteralPath $subDir -Recurse).`
+				Where({ ! $_.PSIsContainer })).Count -eq 0) {
 		try {
 			Write-Host "  └「$($subDir)」を削除します"
 			Remove-Item `
-				-Path $subDir `
+				-LiteralPath $subDir `
 				-Recurse `
 				-Force `
 				-ErrorAction SilentlyContinue
-		} catch { Write-Host "空フォルダの削除に失敗しました: $subDir" }
+		} catch { Write-Host "空フォルダの削除に失敗しました: $subDir" -ForegroundColor Green }
 	}
 }
 

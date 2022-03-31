@@ -89,9 +89,10 @@ function purgeDB {
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
-		$purgedList = ((Import-Csv $listFilePath -Encoding UTF8).Where({ $_.downloadDate -gt $(Get-Date).AddDays(-30) }))
+		$purgedList = ((Import-Csv $listFilePath -Encoding UTF8).`
+				Where({ $_.downloadDate -gt $(Get-Date).AddDays(-30) }))
 		$purgedList | Export-Csv $listFilePath -NoTypeInformation -Encoding UTF8
-	} catch { Write-Host 'リストのクリーンアップに失敗しました'
+	} catch { Write-Host 'リストのクリーンアップに失敗しました' -ForegroundColor Green
 	} finally { $null = fileUnlock ($lockFilePath) }
 }
 
@@ -121,17 +122,20 @@ function uniqueDB {
 					Select-Object -ExpandProperty group)
 
 		#無視されたものと無視されなかったものを結合し出力
-		if ($null -eq $processedList -and $null -eq $ignoredList) { return } 
-		elseif ($null -ne $processedList -and $null -eq $ignoredList) { $mergedList = $processedList }
-		elseif ($null -eq $processedList -and $null -ne $ignoredList) { $mergedList = $ignoredList }
-		else { $mergedList = $processedList + $ignoredList }
+		if ($null -eq $processedList -and $null -eq $ignoredList) { 
+			return
+		} elseif ($null -ne $processedList -and $null -eq $ignoredList) { 
+			$mergedList = $processedList
+		} elseif ($null -eq $processedList -and $null -ne $ignoredList) { 
+			$mergedList = $ignoredList 
+		} else { $mergedList = $processedList + $ignoredList }
 		$fileStatus = checkFileStatus $listFilePath
 		Write-Host "Status of $listFilePath is $fileStatus"
 		$mergedList | `
 				Sort-Object -Property downloadDate | `
 				Export-Csv $listFilePath -NoTypeInformation -Encoding UTF8
 
-	} catch { Write-Host 'リストの更新に失敗しました'
+	} catch { Write-Host 'リストの更新に失敗しました' -ForegroundColor Green
 	} finally { $null = fileUnlock ($lockFilePath) }
 }
 
@@ -154,7 +158,9 @@ function checkVideo ($decodeOption) {
 		#ファイル操作
 		$videoLists = Import-Csv $listFilePath -Encoding UTF8
 		$checkStatus = $(($videoLists).Where({ $_.videoPath -eq $videoFileRelativePath })).videoValidated
-	} catch { Write-Host "チェックステータスを取得できませんでした: $videoFileRelativePath"; return 
+	} catch { 
+		Write-Host "チェックステータスを取得できませんでした: $videoFileRelativePath" -ForegroundColor Green
+		return 
 	} finally { $null = fileUnlock ($lockFilePath) }
 
 	#0:未チェック、1:チェック済み、2:チェック中
@@ -164,8 +170,10 @@ function checkVideo ($decodeOption) {
 		#該当のビデオのチェックステータスを"2"にして後続のチェックを実行
 		try {
 			$(($videoLists).Where({ $_.videoPath -eq $videoFileRelativePath })).videoValidated = '2'
-		} catch { Write-Host "該当のレコードが見つかりませんでした: $videoFileRelativePath"; return }
-		try {
+		} catch { 
+			Write-Host "該当のレコードが見つかりませんでした: $videoFileRelativePath" -ForegroundColor Green
+			return 
+		} try {
 			#ロックファイルをロック
 			while ($(fileLock ($lockFilePath)).fileLocked -ne $true) { 
 				Write-Host 'ファイルのロック解除待ち中です'
@@ -173,7 +181,9 @@ function checkVideo ($decodeOption) {
 			}
 			#ファイル操作
 			$videoLists | Export-Csv $listFilePath -NoTypeInformation -Encoding UTF8
-		} catch { Write-Host "録画リストを更新できませんでした: $videoFileRelativePath" ; return 
+		} catch {
+			Write-Host "録画リストを更新できませんでした: $videoFileRelativePath" -ForegroundColor Green
+			return
 		} finally { $null = fileUnlock ($lockFilePath) }
 	}
 
@@ -200,24 +210,24 @@ function checkVideo ($decodeOption) {
 				-Wait 
 		}
 	} catch {
-		Write-Host 'ffmpegを起動できませんでした'
+		Write-Host 'ffmpegを起動できませんでした' -ForegroundColor Green
 	}
 
 	#ffmpegが正常終了しても、大量エラーが出ることがあるのでエラーをカウント
 	try {
 		if (Test-Path $ffpmegErrorLogPath) {
-			$errorCount = (Get-Content -Path $ffpmegErrorLogPath | `
+			$errorCount = (Get-Content -LiteralPath $ffpmegErrorLogPath | `
 						Measure-Object -Line).Lines
-			Get-Content -Path $ffpmegErrorLogPath -Encoding UTF8 |`
+			Get-Content -LiteralPath $ffpmegErrorLogPath -Encoding UTF8 |`
 					ForEach-Object { Write-Debug "$_" }
 		}
-	} catch { Write-Host 'ffmpegエラーの数をカウントできませんでした' }
+	} catch { Write-Host 'ffmpegエラーの数をカウントできませんでした' -ForegroundColor Green }
 
 	#エラーをカウントしたらファイルを削除
 	try {
 		if (Test-Path $ffpmegErrorLogPath) {
 			Remove-Item `
-				-Path $ffpmegErrorLogPath `
+				-LiteralPath $ffpmegErrorLogPath `
 				-Force `
 				-ErrorAction SilentlyContinue
 		}
@@ -238,20 +248,20 @@ function checkVideo ($decodeOption) {
 			#ファイル操作
 			(Select-String `
 				-Pattern $videoFileRelativePath `
-				-Path $listFilePath `
+				-LiteralPath $listFilePath `
 				-Encoding UTF8 `
 				-SimpleMatch -NotMatch).Line | `
 					Out-File $listFilePath -Encoding UTF8
-		} catch { Write-Host "録画リストの更新に失敗しました: $videoFileRelativePath" 
+		} catch { Write-Host "録画リストの更新に失敗しました: $videoFileRelativePath" -ForegroundColor Green
 		} finally { $null = fileUnlock ($lockFilePath) }
 
 		#破損している動画ファイルを削除
 		try {
 			Remove-Item `
-				-Path $videoFilePath `
+				-LiteralPath $videoFilePath `
 				-Force `
 				-ErrorAction SilentlyContinue
-		} catch { Write-Host "ファイル削除できませんでした: $videoFilePath" }
+		} catch { Write-Host "ファイル削除できませんでした: $videoFilePath" -ForegroundColor Green }
 	} else {
 		#終了コードが"0"のときは録画リストにチェック済みフラグを立てる
 		try {
@@ -265,7 +275,7 @@ function checkVideo ($decodeOption) {
 			#該当のビデオのチェックステータスを"1"に
 			$(($videoLists).Where({ $_.videoPath -eq $videoFileRelativePath })).videoValidated = '1'
 			$videoLists | Export-Csv $listFilePath -NoTypeInformation -Encoding UTF8
-		} catch { Write-Host "録画リストを更新できませんでした: $videoFileRelativePath" 
+		} catch { Write-Host "録画リストを更新できませんでした: $videoFileRelativePath" -ForegroundColor Green
 		} finally { $null = fileUnlock ($lockFilePath) }
 	}
 
@@ -386,7 +396,7 @@ function executeYtdlp ($videoFilePath, $videoPageURL, $ytdlpPath) {
 				-ArgumentList $ytdlpArgs `
 				-PassThru `
 				-WindowStyle $windowShowStyle
-		} catch { Write-Host 'yt-dlpの起動に失敗しました' }
+		} catch { Write-Host 'yt-dlpの起動に失敗しました' -ForegroundColor Green }
 	} else {
 		Write-Debug "yt-dlp起動コマンド:nohup $ytdlpPath $ytdlpArgs"
 		try {
@@ -394,7 +404,7 @@ function executeYtdlp ($videoFilePath, $videoPageURL, $ytdlpPath) {
 				-ArgumentList ($ytdlpPath, $ytdlpArgs) `
 				-PassThru `
 				-RedirectStandardOutput /dev/null
-		} catch { Write-Host 'yt-dlpの起動に失敗しました' }
+		} catch { Write-Host 'yt-dlpの起動に失敗しました' -ForegroundColor Green }
 	}
 }
 
@@ -511,11 +521,12 @@ function getVideoFileName ($videoTitle, $videoSubtitle, $broadcastDate) {
 	} else {
 		$videoName = $videoTitle + ' ' + $broadcastDate + ' ' + $videoSubtitle
 	}
-	$videoName = getFileNameWithoutInvalitChars (getNarrowChars $videoName)		#ファイル名にできない文字列を除去
+	#ファイル名にできない文字列を除去
+	$videoName = getFileNameWithoutInvalitChars (getNarrowChars $videoName)
 
 	#SMBで255バイトまでしかファイル名を持てないらしいので、超えないようにファイル名をトリミング
 	$videoNameTemp = ''
-	$fileNameLimit = $fileNameLengthMax - 25					#yt-dlpの中間ファイル等を考慮して安全目の上限値
+	$fileNameLimit = $fileNameLengthMax - 25	#yt-dlpの中間ファイル等を考慮して安全目の上限値
 	$videoNameByte = [System.Text.Encoding]::UTF8.GetByteCount($videoName)
 
 	#ファイル名を1文字ずつ増やしていき、上限に達したら残りは「……」とする
@@ -536,24 +547,26 @@ function getVideoFileName ($videoTitle, $videoSubtitle, $broadcastDate) {
 function deleteTrashFiles ($Path, $Conditions) {
 	try {
 		Write-Host "$($Path)を処理中"
-		$delTargets = Get-ChildItem `
-			-Path $Path `
-			-Recurse `
-			-File `
-			-Name `
-			-Include $Conditions
+		$delTargets = @()
+		foreach ($filter in $Conditions.Split(',').trim()) {
+			$delTargets += Get-ChildItem `
+				-LiteralPath $Path `
+				-Recurse `
+				-File `
+				-Filter $filter
+		}
 		if ($null -ne $delTargets) {
-			Write-Host "$($delTargets)を削除します"
 			foreach ($delTarget in $delTargets) {
+				Write-Host "$($delTarget.FullName)を削除します"
 				Remove-Item `
-					-Path $delTarget `
+					-LiteralPath $delTarget.FullName `
 					-Force `
 					-ErrorAction SilentlyContinue
 			}
 		} else {
 			Write-Host '削除対象はありませんでした'
 		}
-	} catch { Write-Host '削除できないファイルがありました' }
+	} catch { Write-Host '削除できないファイルがありました' -ForegroundColor Green }
 }
 
 #----------------------------------------------------------------------

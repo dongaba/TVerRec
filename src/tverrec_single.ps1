@@ -80,7 +80,7 @@ try {
 			Write-Host '========================================================' -ForegroundColor Green
 		}
 	}
-} catch { Write-Host '設定ファイルの読み込みに失敗しました'; exit 1 }
+} catch { Write-Host '設定ファイルの読み込みに失敗しました' -ForegroundColor Green ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理

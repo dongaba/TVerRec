@@ -79,7 +79,7 @@ try {
 			Write-Host '========================================================' -ForegroundColor Green
 		}
 	}
-} catch { Write-Host '設定ファイルの読み込みに失敗しました'; exit 1 }
+} catch { Write-Host '設定ファイルの読み込みに失敗しました' -ForegroundColor Green ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -87,9 +87,9 @@ try {
 #======================================================================
 #保存先ディレクトリの存在確認
 if (Test-Path $downloadBaseDir -PathType Container) {}
-else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' ; exit 1 }
+else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' -ForegroundColor Green ; exit 1 }
 if (Test-Path $saveBaseDir -PathType Container) {}
-else { Write-Error 'ビデオ移動先フォルダにアクセスできません。終了します。' ; exit 1 }
+else { Write-Error 'ビデオ移動先フォルダにアクセスできません。終了します。' -ForegroundColor Green ; exit 1 }
 
 #======================================================================
 #1/2 移動先フォルダを起点として、配下のフォルダを取得
@@ -170,15 +170,15 @@ foreach ($subDir in $allSubDirs) {
 
 	Write-Host '----------------------------------------------------------------------'
 	Write-Host "$($subDir)を処理中"
-	if (@((Get-ChildItem -Path $subDir -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
+	if (@((Get-ChildItem -LiteralPath $subDir -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
 		try {
 			Write-Host "  └「$($subDir)」を削除します"
 			Remove-Item `
-				-Path $subDir `
+				-LiteralPath $subDir `
 				-Recurse `
 				-Force `
 				-ErrorAction SilentlyContinue
-		} catch { Write-Host "空フォルダの削除に失敗しました: $subDir" }
+		} catch { Write-Host "空フォルダの削除に失敗しました: $subDir" -ForegroundColor Green }
 	}
 }
 

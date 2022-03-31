@@ -64,7 +64,7 @@ if ($latestVersion -eq $ffmpegCurrentVersion) {
 	Write-Host ''
 } else {
 	if ($isWin -eq $false) {
-		Write-Host '自動アップデートはWindowsでのみ動作します。 '
+		Write-Host '自動アップデートはWindowsでのみ動作します。' -ForegroundColor Green
 	} else {
 		try {
 
@@ -74,12 +74,12 @@ if ($latestVersion -eq $ffmpegCurrentVersion) {
 				Write-Host "ffmpegをダウンロードします。 $ffmpegZipLink"
 				$ffmpegZipFileLocation = $(Join-Path $ffmpegDir 'ffmpeg-release-essentials.zip')
 				Invoke-WebRequest -Uri $ffmpegZipLink -OutFile $ffmpegZipFileLocation
-			} catch { Write-Host 'ffmpegのダウンロードに失敗しました' }
+			} catch { Write-Host 'ffmpegのダウンロードに失敗しました' -ForegroundColor Green }
 
 			#展開
 			try {
 				Expand-Archive $ffmpegZipFileLocation -DestinationPath $(Join-Path $scriptRoot $ffmpegRelativeDir) -Force
-			} catch { Write-Host 'ffmpegの展開に失敗しました' }
+			} catch { Write-Host 'ffmpegの展開に失敗しました' -ForegroundColor Green }
 
 			#配置
 			try {
@@ -87,24 +87,24 @@ if ($latestVersion -eq $ffmpegCurrentVersion) {
 				$extractedDir = $extractedDir + '\ffmpeg-*-essentials_build'
 				$extractedFiles = $extractedDir + '\bin\*.exe'
 				Move-Item $extractedFiles $(Join-Path $scriptRoot $ffmpegRelativeDir) -Force
-			} catch { Write-Host 'ffmpegの配置に失敗しました' }
+			} catch { Write-Host 'ffmpegの配置に失敗しました' -ForegroundColor Green }
 
 			#ゴミ掃除
 			try {
 				Remove-Item `
-					-Path $extractedDir `
+					-LiteralPath $extractedDir `
 					-Force `
 					-Recurse `
 					-ErrorAction SilentlyContinue
-			} catch { Write-Host '中間フォルダの削除に失敗しました' }
+			} catch { Write-Host '中間フォルダの削除に失敗しました' -ForegroundColor Green }
 			try {
 				Remove-Item `
-					-Path $ffmpegZipFileLocation `
+					-LiteralPath $ffmpegZipFileLocation `
 					-Force `
 					-ErrorAction SilentlyContinue
-			} catch { Write-Host '中間ファイルの削除に失敗しました' }
+			} catch { Write-Host '中間ファイルの削除に失敗しました' -ForegroundColor Green }
 
-		} catch { Write-Host 'ffmpegの更新に失敗しました' }
+		} catch { Write-Host 'ffmpegの更新に失敗しました' -ForegroundColor Green }
 
 		#バージョンチェック
 		$ffmpegFileVersion = (& $ffmpegPath -version)

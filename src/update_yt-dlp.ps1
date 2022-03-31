@@ -67,7 +67,7 @@ if ($latestVersion -eq $ytdlpCurrentVersion) {
 	Write-Host ''
 } else {
 	if ($isWin -eq $false) {
-		Write-Host '自動アップデートはWindowsでのみ動作します。 '
+		Write-Host '自動アップデートはWindowsでのみ動作します。' -ForegroundColor Green
 	} else {
 		try {
 			#ダウンロード
@@ -79,7 +79,7 @@ if ($latestVersion -eq $ytdlpCurrentVersion) {
 			#バージョンチェック
 			$ytdlpCurrentVersion = (& $ytdlpFile --version)
 			Write-Host "yt-dlpをversion $ytdlpCurrentVersion に更新しました。 "
-		} catch {}
+		} catch { Write-Host 'yt-dlpの更新に失敗しました' -ForegroundColor Green }
 	}
 }
 

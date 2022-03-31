@@ -78,7 +78,7 @@ try {
 			Write-Host '========================================================' -ForegroundColor Green
 		}
 	}
-} catch { Write-Host '設定ファイルの読み込みに失敗しました'; exit 1 }
+} catch { Write-Host '設定ファイルの読み込みに失敗しました' -ForegroundColor Green ; exit 1 }
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
 
@@ -112,7 +112,7 @@ try {
 			Where-Object { $_.videoValidated -eq '0' } | `
 			Where-Object { $_.videoPath -ne '-- IGNORED --' } | `
 			Select-Object 'videoPath'
-} catch { Write-Host 'リストの読み込みに失敗しました'
+} catch { Write-Host 'リストの読み込みに失敗しました' -ForegroundColor Green
 } finally { $null = fileUnlock ($lockFilePath) }
 
 
@@ -174,7 +174,7 @@ if ($null -eq $videoLists) {
 
 		#保存先ディレクトリの存在確認
 		if (Test-Path $downloadBaseDir -PathType Container) {}
-		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' ; exit 1 }
+		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' -ForegroundColor Green ; exit 1 }
 
 		Write-Progress `
 			-Id 1 `
@@ -207,5 +207,5 @@ try {
 		$uncheckedVido.videoValidated = '0'
 	}
 	$videoLists | Export-Csv $listFilePath -NoTypeInformation -Encoding UTF8
-} catch { Write-Host 'リストの更新に失敗しました'
+} catch { Write-Host 'リストの更新に失敗しました' -ForegroundColor Green
 } finally { $null = fileUnlock ($lockFilePath) }

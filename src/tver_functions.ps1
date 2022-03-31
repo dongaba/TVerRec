@@ -133,7 +133,7 @@ function loadIgnoreList {
 					Where-Object { !($_ -match '^\s*$') } | `
 					Where-Object { !($_ -match '^;.*$') }) `
 			-as [string[]]
-	} catch { Write-Host 'ダウンロード対象外リストの読み込みに失敗しました'; exit 1 }
+	} catch { Write-Host 'ダウンロード対象外リストの読み込みに失敗しました' -ForegroundColor Green ; exit 1 }
 	return $ignoreTitles
 }
 
@@ -147,7 +147,7 @@ function loadKeywordList {
 					Where-Object { !($_ -match '^#.*$') } | `
 					Where-Object { !($_ -match '^;.*$') }) `
 			-as [string[]]
-	} catch { Write-Host 'ダウンロード対象ジャンルリストの読み込みに失敗しました'; exit 1 }
+	} catch { Write-Host 'ダウンロード対象ジャンルリストの読み込みに失敗しました' -ForegroundColor Green ; exit 1 }
 	return $keywordNames
 }
 
@@ -206,7 +206,7 @@ function downloadTVerVideo ($keywordName) {
 		#ファイル操作
 		$listMatch = Import-Csv $listFilePath -Encoding UTF8 | `
 				Where-Object { $_.videoPage -eq $videoPageURL }
-	} catch { Write-Host 'リストを読み書きできなかったのでスキップしました'; continue 
+	} catch { Write-Host 'リストを読み書きできなかったのでスキップしました' -ForegroundColor Green ; continue 
 	} finally { $null = fileUnlock ($lockFilePath) }
 
 	if ( $null -ne $listMatch) { Write-Host '過去に処理したビデオです。スキップします'; continue }
@@ -258,7 +258,7 @@ function downloadTVerVideo ($keywordName) {
 			$listMatch = Import-Csv $listFilePath -Encoding UTF8 | `
 					Where-Object { $_.videoPath -eq $videoFilePath } | `
 					Where-Object { $_.videoValidated -eq '1' }
-		} catch { Write-Host 'リストを読み書きできませんでした。スキップします'; continue 
+		} catch { Write-Host 'リストを読み書きできませんでした。スキップします' -ForegroundColor Green ; continue 
 		} finally { $null = fileUnlock ($lockFilePath) }
 
 		#結果が0件ということは未検証のファイルがあるということ
@@ -338,7 +338,7 @@ function downloadTVerVideo ($keywordName) {
 		#ファイル操作
 		$newVideo | Export-Csv $listFilePath -NoTypeInformation -Encoding UTF8 -Append
 		Write-Debug 'リストを書き込みました'
-	} catch { Write-Host 'リストを更新できませんでした。でスキップします'; continue 
+	} catch { Write-Host 'リストを更新できませんでした。でスキップします' -ForegroundColor Green ; continue 
 	} finally { $null = fileUnlock ($lockFilePath) }
 
 	#スキップや無視対象でなければyt-dlp起動
@@ -351,7 +351,7 @@ function downloadTVerVideo ($keywordName) {
 		}
 		#yt-dlp起動
 		try { executeYtdlp $videoFilePath $videoPageURL $ytdlpPath } 
-		catch { Write-Host 'yt-dlpの起動に失敗しました' }
+		catch { Write-Host 'yt-dlpの起動に失敗しました' -ForegroundColor Green }
 		Start-Sleep -Seconds 5			#10秒待機
 
 	}

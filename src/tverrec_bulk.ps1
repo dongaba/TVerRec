@@ -80,7 +80,7 @@ try {
 			Write-Host '========================================================' -ForegroundColor Green
 		}
 	}
-} catch { Write-Host '設定ファイルの読み込みに失敗しました'; exit 1 }
+} catch { Write-Host '設定ファイルの読み込みに失敗しました' -ForegroundColor Green ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -161,7 +161,7 @@ foreach ($keywordName in $keywordNames) {
 
 		#保存先ディレクトリの存在確認
 		if (Test-Path $downloadBaseDir -PathType Container) {}
-		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します' ; exit 1 }
+		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します' -ForegroundColor Green ; exit 1 }
 
 		#yt-dlpプロセスの確認と、yt-dlpのプロセス数が多い場合の待機
 		waitTillYtdlpProcessGetFewer $parallelDownloadFileNum
