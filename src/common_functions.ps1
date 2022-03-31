@@ -68,7 +68,7 @@ function checkGeoIP {
 			Write-Host '日本のIPアドレスからしか接続できません。VPN接続してください。' -ForegroundColor Green
 			exit 1
 		}
-	} catch {}
+	} catch { Write-Host 'Geo IPのチェックに失敗しました' }
 }
 
 #----------------------------------------------------------------------
