@@ -216,10 +216,12 @@ function checkVideo ($decodeOption) {
 
 	#エラーをカウントしたらファイルを削除
 	try {
-		Remove-Item `
-			-Path $ffpmegErrorLogPath `
-			-Force `
-			-ErrorAction SilentlyContinue
+		if (Test-Path $ffpmegErrorLogPath) {
+			Remove-Item `
+				-Path $ffpmegErrorLogPath `
+				-Force `
+				-ErrorAction SilentlyContinue
+		}
 	} catch {}
 
 	if ($proc.ExitCode -ne 0 -or $errorCount -gt 30) {
