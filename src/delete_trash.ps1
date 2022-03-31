@@ -99,22 +99,22 @@ Write-Progress `
 	-ParentId 1 `
 	-Activity '1/3' `
 	-PercentComplete $($( 1 / 3 ) * 100) `
-	-Status "$($downloadBaseAbsoluteDir)"
-deleteTrashFiles $downloadBaseAbsoluteDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*'
+	-Status "$($downloadBaseDir)"
+deleteTrashFiles $downloadBaseDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*'
 Write-Progress `
 	-Id 2 `
 	-ParentId 1 `
 	-Activity '2/3' `
 	-PercentComplete $($( 2 / 3 ) * 100) `
-	-Status "$($downloadWorkAbsoluteDir)"
-deleteTrashFiles $downloadWorkAbsoluteDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.mp4'
+	-Status "$($downloadWorkDir)"
+deleteTrashFiles $downloadWorkDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.mp4'
 Write-Progress `
 	-Id 2 `
 	-ParentId 1 `
 	-Activity '3/3' `
 	-PercentComplete $($( 3 / 3 ) * 100) `
-	-Status "$($saveBaseAbsoluteDir)"
-deleteTrashFiles $saveBaseAbsoluteDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*'
+	-Status "$($saveBaseDir)"
+deleteTrashFiles $saveBaseDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*'
 
 #======================================================================
 #2/3 無視リストに入っている番組は削除
@@ -128,7 +128,7 @@ Write-Progress `
 	-Status '削除対象のビデオを削除'
 
 #ダウンロード対象外ビデオ番組リストの読み込み
-$ignoreTitles = (Get-Content $ignoreFileRelativePath -Encoding UTF8 | `
+$ignoreTitles = (Get-Content $ignoreFilePath -Encoding UTF8 | `
 			Where-Object { !($_ -match '^\s*$') } | `
 			Where-Object { !($_ -match '^;.*$') }) `
 	-as [string[]]
@@ -151,17 +151,20 @@ foreach ($ignoreTitle in $ignoreTitles) {
 	Write-Host "$($ignoreTitle)を処理中"
 	try {
 		$delTargets = Get-ChildItem `
-			-Path $downloadBaseAbsoluteDir `
+			-Path $downloadBaseDir `
 			-Directory `
 			-Name `
 			-Include "*$ignoreTitle*"
 		if ($null -ne $delTargets) {
 			Write-Host "  └「$($delTargets)」を削除します"
 			foreach ($delTarget in $delTargets) {
-				Remove-Item $delTarget -Force -ErrorAction SilentlyContinue
+				Remove-Item `
+					-Path $delTarget `
+					-Force `
+					-ErrorAction SilentlyContinue
 			}
 		} else {
-			Write-Host '削除対象はありませんでした'
+			Write-Host '  削除対象はありませんでした'
 		}
 	} catch { Write-Host '削除できないファイルがありました' }
 }
@@ -177,7 +180,7 @@ Write-Progress `
 	-PercentComplete $($( 3 / 3 ) * 100) `
 	-Status '空フォルダを削除'
 
-$allSubDirs = @((Get-ChildItem -Path $downloadBaseAbsoluteDir -Recurse).Where({ $_.PSIsContainer })) | `
+$allSubDirs = @((Get-ChildItem -Path $downloadBaseDir -Recurse).Where({ $_.PSIsContainer })) | `
 		Sort-Object -Descending { $_.FullName }
 
 $subDirNum = 0						#無視リスト内の番号

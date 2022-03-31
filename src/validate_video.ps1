@@ -79,22 +79,42 @@ try {
 		}
 	}
 } catch { Write-Host '設定ファイルの読み込みに失敗しました'; exit 1 }
-
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
-purgeDB											#30日以上前に処理したものはリストから削除
-uniqueDB										#リストの重複削除
+
+#----------------------------------------------------------------------
+#動作環境チェック
+checkLatestFfmpeg					#ffmpegの最新化チェック
+checkRequiredFile					#設定で指定したファイル・フォルダの存在チェック
+
+Write-Host '==========================================================================='
+Write-Host '30日以上前に処理したものはリストから削除します'
+Write-Host '==========================================================================='
+purgeDB								#30日以上前に処理したものはリストから削除
+
+Write-Host '==========================================================================='
+Write-Host '重複レコードを削除します'
+Write-Host '==========================================================================='
+uniqueDB							#リストの重複削除
 
 #録画リストからビデオチェックが終わっていないものを読み込み
 Write-Host '==========================================================================='
 Write-Host '録画リストからチェックが終わっていないビデオを検索します'
 Write-Host '==========================================================================='
 try {
-	$videoLists = Import-Csv $listFileRelativePath -Encoding UTF8 | `
+	#ロックファイルをロック
+	while ($(fileLock ($lockFilePath)).fileLocked -ne $true) { 
+		Write-Host 'ファイルのロック解除待ち中です'
+		Start-Sleep -Seconds 1
+	}
+	#ファイル操作
+	$videoLists = Import-Csv $listFilePath -Encoding UTF8 | `
 			Where-Object { $_.videoValidated -eq '0' } | `
 			Where-Object { $_.videoPath -ne '-- IGNORED --' } | `
 			Select-Object 'videoPath'
-} catch { Write-Host 'リストの読み込み更新に失敗しました' ; exit 1 }
+} catch { Write-Host 'リストの読み込みに失敗しました'
+} finally { $null = fileUnlock ($lockFilePath) }
+
 
 if ($null -eq $videoLists) {
 	Write-Host '----------------------------------------------------------------------'
@@ -142,15 +162,19 @@ if ($null -eq $videoLists) {
 	#----------------------------------------------------------------------
 	$j = 0
 	foreach ($videoList in $videoLists.videoPath) {
+		$videoFileRelativePath = $videoList
+
 		$secondsElapsed = (Get-Date) - $totalStartTime
 		$secondsRemaining = -1
-
-		$videoFileRelativePath = $videoList
 		if ($j -ne 0) {
 			$completionPercent = $($( $j / $i ) * 100)
 			$secondsRemaining = ($secondsElapsed.TotalSeconds / $j) * ($i - $j)
 		}
 		$j = $j + 1
+
+		#保存先ディレクトリの存在確認
+		if (Test-Path $downloadBaseDir -PathType Container) {}
+		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' ; exit 1 }
 
 		Write-Progress `
 			-Id 1 `
@@ -159,10 +183,7 @@ if ($null -eq $videoLists) {
 			-Status "$videoFileRelativePath" `
 			-SecondsRemaining $secondsRemaining
 
-		#保存先ディレクトリの存在確認
-		if (Test-Path $downloadBaseAbsoluteDir -PathType Container) {}
-		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' ; exit 1 }
-
+		Write-Host "$($videoFileRelativePath)をチェックします"
 		checkVideo $decodeOption		#ビデオの整合性チェック
 
 	}
@@ -170,4 +191,21 @@ if ($null -eq $videoLists) {
 
 }
 
-
+#録画リストからビデオチェックが終わっていないものを読み込み
+Write-Host '==========================================================================='
+Write-Host '録画リストからチェックが終わっていないビデオのステータスを変更します'
+Write-Host '==========================================================================='
+try {
+	#ロックファイルをロック
+	while ($(fileLock ($lockFilePath)).fileLocked -ne $true) { 
+		Write-Host 'ファイルのロック解除待ち中です'
+		Start-Sleep -Seconds 1
+	}
+	#ファイル操作
+	$videoLists = Import-Csv $listFilePath -Encoding UTF8
+	foreach ($uncheckedVido in $(($videoLists).Where({ $_.videoValidated -eq 2 }))) {
+		$uncheckedVido.videoValidated = '0'
+	}
+	$videoLists | Export-Csv $listFilePath -NoTypeInformation -Encoding UTF8
+} catch { Write-Host 'リストの更新に失敗しました'
+} finally { $null = fileUnlock ($lockFilePath) }

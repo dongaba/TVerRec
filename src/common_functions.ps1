@@ -20,35 +20,38 @@
 ###################################################################################
 
 #----------------------------------------------------------------------
-#ツールの最新化確認
+#ytdlpの最新化確認
 #----------------------------------------------------------------------
-function checkLatestTool {
-	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		. '.\update_ffmpeg_5.ps1'				#ffmpegの最新化チェック
-		. '.\update_yt-dlp_5.ps1'				#yt-dlpの最新化チェック
-	} else {
-		. '.\update_ffmpeg.ps1'				#ffmpegの最新化チェック
-		. '.\update_yt-dlp.ps1'				#yt-dlpの最新化チェック
-	}
+function checkLatestYtdlp {
+	if ($PSVersionTable.PSEdition -eq 'Desktop') { . '.\update_yt-dlp_5.ps1' }
+	else { . '.\update_yt-dlp.ps1' }
+}
+
+#----------------------------------------------------------------------
+#ffmpegの最新化確認
+#----------------------------------------------------------------------
+function checkLatestFfmpeg {
+	if ($PSVersionTable.PSEdition -eq 'Desktop') { . '.\update_ffmpeg_5.ps1' }
+	else { . '.\update_ffmpeg.ps1' }
 }
 
 #----------------------------------------------------------------------
 #設定で指定したファイル・フォルダの存在チェック
 #----------------------------------------------------------------------
 function checkRequiredFile {
-	if (Test-Path $downloadBaseAbsoluteDir -PathType Container) {}
+	if (Test-Path $downloadBaseDir -PathType Container) {}
 	else { Write-Error 'ビデオ保存先フォルダが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $ffmpegRelativePath -PathType Leaf) {}
+	if (Test-Path $ffmpegPath -PathType Leaf) {}
 	else { Write-Error 'ffmpegが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $ytdlpRelativePath -PathType Leaf) {}
+	if (Test-Path $ytdlpPath -PathType Leaf) {}
 	else { Write-Error 'yt-dlpが存在しません。終了します。' ; exit 1 }
 	if (Test-Path $confFile -PathType Leaf) {}
 	else { Write-Error 'ユーザ設定ファイルが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $keywordFileRelativePath -PathType Leaf) {}
+	if (Test-Path $keywordFilePath -PathType Leaf) {}
 	else { Write-Error 'ダウンロード対象ジャンルリストが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $ignoreFileRelativePath -PathType Leaf) {}
+	if (Test-Path $ignoreFilePath -PathType Leaf) {}
 	else { Write-Error 'ダウンロード対象外ビデオリストが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $listFileRelativePath -PathType Leaf) {}
+	if (Test-Path $listFilePath -PathType Leaf) {}
 	else { Write-Error 'ダウンロードリストが存在しません。終了します。' ; exit 1 }
 }
 
@@ -58,7 +61,10 @@ function checkRequiredFile {
 function checkGeoIP {
 	try {
 		if ((Invoke-RestMethod -Uri 'http://ip-api.com/json/').countryCode -ne 'JP') {
-			Invoke-RestMethod -Uri ('http://ip-api.com/json/' + (Invoke-WebRequest -Uri 'http://ifconfig.me/ip').Content)
+			Invoke-RestMethod -Uri ( `
+					'http://ip-api.com/json/' `
+					+ (Invoke-WebRequest -Uri 'http://ifconfig.me/ip').Content
+			)
 			Write-Host '日本のIPアドレスからしか接続できません。VPN接続してください。' -ForegroundColor Green
 			exit 1
 		}
@@ -78,42 +84,56 @@ function getTimeStamp {
 #----------------------------------------------------------------------
 function purgeDB {
 	try {
-		$purgedList = ((Import-Csv $listFileRelativePath -Encoding UTF8).Where({ $_.downloadDate -gt $(Get-Date).AddDays(-30) }))
-		$purgedList | Export-Csv $listFileRelativePath -NoTypeInformation -Encoding UTF8
-	} catch { Write-Host 'リストのクリーンアップに失敗しました' }
+		#ロックファイルをロック
+		while ($(fileLock ($lockFilePath)).fileLocked -ne $true) { 
+			Write-Host 'ファイルのロック解除待ち中です'
+			Start-Sleep -Seconds 1
+		}
+		#ファイル操作
+		$purgedList = ((Import-Csv $listFilePath -Encoding UTF8).Where({ $_.downloadDate -gt $(Get-Date).AddDays(-30) }))
+		$purgedList | Export-Csv $listFilePath -NoTypeInformation -Encoding UTF8
+	} catch { Write-Host 'リストのクリーンアップに失敗しました'
+	} finally { $null = fileUnlock ($lockFilePath) }
 }
 
 #----------------------------------------------------------------------
 #リストの重複削除
 #----------------------------------------------------------------------
 function uniqueDB {
+	$processedList = $null
+	$ignoredList = $null
 	#無視されたもの
 	try {
-		$ignoredList = ((Import-Csv $listFileRelativePath -Encoding UTF8).Where({ $_.videoPath -eq '-- IGNORED --' }))
-	} catch { Write-Host 'リストの読み込みに失敗しました' }
+		#ロックファイルをロック
+		while ($(fileLock ($lockFilePath)).fileLocked -ne $true) { 
+			Write-Host 'ファイルのロック解除待ち中です'
+			Start-Sleep -Seconds 1
+		}
 
-	#無視されなかったものの重複削除。ファイル名で1つしかないもの残す
-	try {
-		$processedList = (Import-Csv $listFileRelativePath -Encoding UTF8 | `
+		#ファイル操作
+		#無視されたもの
+		$ignoredList = ((Import-Csv $listFilePath -Encoding UTF8).`
+				Where({ $_.videoPath -eq '-- IGNORED --' }))
+
+		#無視されなかったものの重複削除。ファイル名で1つしかないもの残す
+		$processedList = (Import-Csv $listFilePath -Encoding UTF8 | `
 					Group-Object -Property 'videoPath' | `
 					Where-Object count -EQ 1 | `
 					Select-Object -ExpandProperty group)
-	} catch { Write-Host 'リストの読み込みに失敗しました' }
 
-	#無視されたものと無視されなかったものを結合し出力
-	if ($null -eq $processedList -and $null -eq $ignoredList) {
+		#無視されたものと無視されなかったものを結合し出力
+		if ($null -eq $processedList -and $null -eq $ignoredList) { return } 
+		elseif ($null -ne $processedList -and $null -eq $ignoredList) { $mergedList = $processedList }
+		elseif ($null -eq $processedList -and $null -ne $ignoredList) { $mergedList = $ignoredList }
+		else { $mergedList = $processedList + $ignoredList }
+		$fileStatus = checkFileStatus $listFilePath
+		Write-Host "Status of $listFilePath is $fileStatus"
+		$mergedList | `
+				Sort-Object -Property downloadDate | `
+				Export-Csv $listFilePath -NoTypeInformation -Encoding UTF8
 
-	} elseif ($null -ne $processedList -and $null -eq $ignoredList) {
-		$mergedList = $processedList
-	} elseif ($null -eq $processedList -and $null -ne $ignoredList) {
-		$mergedList = $ignoredList
-	} else {
-		$mergedList = $processedList + $ignoredList
-	}
-	try {
-		$mergedList | Sort-Object -Property downloadDate | `
-				Export-Csv $listFileRelativePath -NoTypeInformation -Encoding UTF8
-	} catch { Write-Host 'リストの更新に失敗しました' }
+	} catch { Write-Host 'リストの更新に失敗しました'
+	} finally { $null = fileUnlock ($lockFilePath) }
 }
 
 #----------------------------------------------------------------------
@@ -121,27 +141,63 @@ function uniqueDB {
 #----------------------------------------------------------------------
 function checkVideo ($decodeOption) {
 	$errorCount = 0
-	$videoFileAbsolutePath = Join-Path $downloadBaseAbsoluteDir $videoFileRelativePath
-	$checkFile = '"' + $videoFileAbsolutePath + '"'
-	$ffmpegArgs = "$decodeOption "
-	$ffmpegArgs += ' -hide_banner -v error -xerror'
-	$ffmpegArgs += " -i $checkFile -f null - "
+	$checkStatus = 0
+	$videoFilePath = Join-Path $downloadBaseDir $videoFileRelativePath
+	try { $null = New-Item $ffpmegErrorLogPath -Type File -Force }catch {}
+	
+	#これからチェックする動画のステータスをチェック
+	try {
+		#ロックファイルをロック
+		while ($(fileLock ($lockFilePath)).fileLocked -ne $true) { 
+			Write-Host 'ファイルのロック解除待ち中です'
+			Start-Sleep -Seconds 1
+		}
+		#ファイル操作
+		$videoLists = Import-Csv $listFilePath -Encoding UTF8
+		$checkStatus = $(($videoLists).Where({ $_.videoPath -eq $videoFileRelativePath })).videoValidated
+	} catch { Write-Host "チェックステータスを取得できませんでした: $videoFileRelativePath"; return 
+	} finally { $null = fileUnlock ($lockFilePath) }
 
-	Write-Debug "ffmpeg起動コマンド:$ffmpegRelativePath $ffmpegArgs"
+	#0:未チェック、1:チェック済み、2:チェック中
+	if ($checkStatus -eq 2 ) { Write-Host '  └他プロセスでチェック中です'; return } 
+	elseif ($checkStatus -eq 1 ) { Write-Host '  └他プロセスでチェック済です'; return } 
+	else {
+		#該当のビデオのチェックステータスを"2"にして後続のチェックを実行
+		try {
+			$(($videoLists).Where({ $_.videoPath -eq $videoFileRelativePath })).videoValidated = '2'
+		} catch { Write-Host "該当のレコードが見つかりませんでした: $videoFileRelativePath"; return }
+		try {
+			#ロックファイルをロック
+			while ($(fileLock ($lockFilePath)).fileLocked -ne $true) { 
+				Write-Host 'ファイルのロック解除待ち中です'
+				Start-Sleep -Seconds 1
+			}
+			#ファイル操作
+			$videoLists | Export-Csv $listFilePath -NoTypeInformation -Encoding UTF8
+		} catch { Write-Host "録画リストを更新できませんでした: $videoFileRelativePath" ; return 
+		} finally { $null = fileUnlock ($lockFilePath) }
+	}
+
+	$checkFile = '"' + $videoFilePath + '"'
+	$ffmpegArgs = "$decodeOption " `
+		+ ' -hide_banner -v error -xerror' `
+		+ " -i $checkFile -f null - "
+
+	Write-Debug "ffmpeg起動コマンド:$ffmpegPath $ffmpegArgs"
 	try {
 		if ($isWin) {
-			$proc = Start-Process -FilePath $ffmpegRelativePath `
+			$proc = Start-Process -FilePath $ffmpegPath `
 				-ArgumentList ($ffmpegArgs) `
 				-PassThru `
 				-WindowStyle $windowShowStyle `
-				-RedirectStandardError $ffpmegErrorLogRelativePath `
+				-RedirectStandardError $ffpmegErrorLogPath `
 				-Wait 
 		} else {
-			$proc = Start-Process -FilePath $ffmpegRelativePath `
+			$proc = Start-Process -FilePath $ffmpegPath `
 				-ArgumentList ($ffmpegArgs) `
 				-PassThru `
 				-RedirectStandardOutput /dev/null `
-				-RedirectStandardError $ffpmegErrorLogRelativePath `
+				-RedirectStandardError $ffpmegErrorLogPath `
 				-Wait 
 		}
 	} catch {
@@ -150,48 +206,66 @@ function checkVideo ($decodeOption) {
 
 	#ffmpegが正常終了しても、大量エラーが出ることがあるのでエラーをカウント
 	try {
-		if (Test-Path $ffpmegErrorLogRelativePath) {
-			$errorCount = (Get-Content -Path $ffpmegErrorLogRelativePath | `
+		if (Test-Path $ffpmegErrorLogPath) {
+			$errorCount = (Get-Content -Path $ffpmegErrorLogPath | `
 						Measure-Object -Line).Lines
-			Get-Content -Path $ffpmegErrorLogRelativePath -Encoding UTF8 |`
+			Get-Content -Path $ffpmegErrorLogPath -Encoding UTF8 |`
 					ForEach-Object { Write-Debug "$_" }
 		}
 	} catch { Write-Host 'ffmpegエラーの数をカウントできませんでした' }
+
+	#エラーをカウントしたらファイルを削除
 	try {
 		Remove-Item `
-			-Path $ffpmegErrorLogRelativePath `
+			-Path $ffpmegErrorLogPath `
 			-Force `
 			-ErrorAction SilentlyContinue
-	} catch { Write-Host 'ffmpegエラーファイルを削除できませんでした' }
+	} catch {}
 
 	if ($proc.ExitCode -ne 0 -or $errorCount -gt 30) {
 		#終了コードが"0"以外 または エラーが30行以上 は録画リストとファイルを削除
 		Write-Host "$videoFileRelativePath"
-		Write-Host "  exit code: $($proc.ExitCode)"
-		Write-Host "  error count: $errorCount"
+		Write-Host "  exit code: $($proc.ExitCode)    error count: $errorCount"
+
 		#破損している動画ファイルを録画リストから削除
 		try {
-			(Select-String -Pattern $videoFileRelativePath `
-				-Path $listFileRelativePath `
+			#ロックファイルをロック
+			while ($(fileLock ($lockFilePath)).fileLocked -ne $true) { 
+				Write-Host 'ファイルのロック解除待ち中です'
+				Start-Sleep -Seconds 1
+			}
+			#ファイル操作
+			(Select-String `
+				-Pattern $videoFileRelativePath `
+				-Path $listFilePath `
 				-Encoding UTF8 `
 				-SimpleMatch -NotMatch).Line | `
-					Out-File $listFileRelativePath -Encoding UTF8 -Force
-		} catch { Write-Host "録画リストの更新に失敗しました: $videoFileRelativePath" }
+					Out-File $listFilePath -Encoding UTF8
+		} catch { Write-Host "録画リストの更新に失敗しました: $videoFileRelativePath" 
+		} finally { $null = fileUnlock ($lockFilePath) }
+
 		#破損している動画ファイルを削除
 		try {
 			Remove-Item `
-				-Path $videoFileAbsolutePath `
+				-Path $videoFilePath `
 				-Force `
 				-ErrorAction SilentlyContinue
-		} catch { Write-Host "ファイル削除できませんでした: $videoFileAbsolutePath" }
+		} catch { Write-Host "ファイル削除できませんでした: $videoFilePath" }
 	} else {
 		#終了コードが"0"のときは録画リストにチェック済みフラグを立てる
 		try {
-			$videoLists = Import-Csv $listFileRelativePath -Encoding UTF8
+			#ロックファイルをロック
+			while ($(fileLock ($lockFilePath)).fileLocked -ne $true) { 
+				Write-Host 'ファイルのロック解除待ち中です'
+				Start-Sleep -Seconds 1
+			}
+			#ファイル操作
+			$videoLists = Import-Csv $listFilePath -Encoding UTF8
 			#該当のビデオのチェックステータスを"1"に
 			$(($videoLists).Where({ $_.videoPath -eq $videoFileRelativePath })).videoValidated = '1'
-			$videoLists | Export-Csv $listFileRelativePath -NoTypeInformation -Encoding UTF8 -Force
-		} catch { Write-Host "録画リストを更新できませんでした: $videoFileRelativePath" }
+			$videoLists | Export-Csv $listFilePath -NoTypeInformation -Encoding UTF8
+		} catch { Write-Host "録画リストを更新できませんでした: $videoFileRelativePath" 
+		} finally { $null = fileUnlock ($lockFilePath) }
 	}
 
 }
@@ -280,13 +354,13 @@ function waitTillYtdlpProcessIsZero ($isWin) {
 #----------------------------------------------------------------------
 #yt-dlpプロセスの起動
 #----------------------------------------------------------------------
-function executeYtdlp ($videoFileAbsolutePath, $videoPageURL, $ytdlpRelativePath) {
-	$tmpDir = '"temp:' + $downloadWorkAbsoluteDir + '"'
-	$saveDir = '"home:' + $videoFileAbsoluteDir + '"'
-	$subttlDir = '"subtitle:' + $downloadWorkAbsoluteDir + '"'
-	$thumbDir = '"thumbnail:' + $downloadWorkAbsoluteDir + '"'
-	$chaptDir = '"chapter:' + $downloadWorkAbsoluteDir + '"'
-	$descDir = '"description:' + $downloadWorkAbsoluteDir + '"'
+function executeYtdlp ($videoFilePath, $videoPageURL, $ytdlpPath) {
+	$tmpDir = '"temp:' + $downloadWorkDir + '"'
+	$saveDir = '"home:' + $videoFileDir + '"'
+	$subttlDir = '"subtitle:' + $downloadWorkDir + '"'
+	$thumbDir = '"thumbnail:' + $downloadWorkDir + '"'
+	$chaptDir = '"chapter:' + $downloadWorkDir + '"'
+	$descDir = '"description:' + $downloadWorkDir + '"'
 	$saveFile = '"' + $videoName + '"'
 
 	$ytdlpArgs = '--format mp4 --console-title --no-mtime'
@@ -304,10 +378,10 @@ function executeYtdlp ($videoFileAbsolutePath, $videoPageURL, $ytdlpRelativePath
 	$ytdlpArgs += " --paths $chaptDir --paths $descDir"
 	$ytdlpArgs += " -o $saveFile $videoPageURL"
 
-	Write-Debug "yt-dlp起動コマンド:$ytdlpRelativePath $ytdlpArgs"
+	Write-Debug "yt-dlp起動コマンド:$ytdlpPath $ytdlpArgs"
 	if ($isWin) {
 		try {
-			$null = Start-Process -FilePath $ytdlpRelativePath `
+			$null = Start-Process -FilePath $ytdlpPath `
 				-ArgumentList $ytdlpArgs `
 				-PassThru `
 				-WindowStyle $windowShowStyle
@@ -315,7 +389,7 @@ function executeYtdlp ($videoFileAbsolutePath, $videoPageURL, $ytdlpRelativePath
 	} else {
 		try {
 			$null = Start-Process -FilePath nohup `
-				-ArgumentList ($ytdlpRelativePath, $ytdlpArgs) `
+				-ArgumentList ($ytdlpPath, $ytdlpArgs) `
 				-PassThru `
 				-RedirectStandardOutput /dev/null
 		} catch { Write-Host 'yt-dlpの起動に失敗しました' }
@@ -334,13 +408,13 @@ function showVideoInfo ($videoName, $broadcastDate, $mediaName, $descriptionText
 #----------------------------------------------------------------------
 #ビデオ情報デバッグ表示
 #----------------------------------------------------------------------
-function showVideoDebugInfo ($videoPageURL, $videoSeriesPageURL, $keywordName, $videoTitleName, $videoSubtitleName, $videoFileAbsolutePath, $processedTime) {
+function showVideoDebugInfo ($videoPageURL, $videoSeriesPageURL, $keywordName, $videoTitle, $videoSubtitle, $videoFilePath, $processedTime) {
 	Write-Debug	"ビデオページ:$videoPageURL"
 	Write-Debug	"ビデオLP    :$videoSeriesPageURL"
 	Write-Debug "キーワード  :$keywordName"
-	Write-Debug "タイトル    :$videoTitleName"
-	Write-Debug "サブタイトル:$videoSubtitleName"
-	Write-Debug "ファイル    :$videoFileAbsolutePath"
+	Write-Debug "タイトル    :$videoTitle"
+	Write-Debug "サブタイトル:$videoSubtitle"
+	Write-Debug "ファイル    :$videoFilePath"
 	Write-Debug "取得日付    :$processedTime"
 }
 
@@ -424,16 +498,16 @@ function getSpecialCharacterReplaced {
 #----------------------------------------------------------------------
 #保存ファイル名を設定
 #----------------------------------------------------------------------
-function getVideoFileName ($videoTitleName, $videoSubtitleName, $broadcastDate) {
+function getVideoFileName ($videoTitle, $videoSubtitle, $broadcastDate) {
 	Write-Verbose 'ビデオファイル名を整形します。'
-	if ($videoSubtitleName -eq '') {
+	if ($videoSubtitle -eq '') {
 		if ($broadcastDate -eq '') {
-			$videoName = $videoTitleName
+			$videoName = $videoTitle
 		} else {
-			$videoName = $videoTitleName + ' ' + $broadcastDate
+			$videoName = $videoTitle + ' ' + $broadcastDate
 		}
 	} else {
-		$videoName = $videoTitleName + ' ' + $broadcastDate + ' ' + $videoSubtitleName
+		$videoName = $videoTitle + ' ' + $broadcastDate + ' ' + $videoSubtitle
 	}
 	$videoName = getFileNameWithoutInvalitChars (getNarrowChars $videoName)		#ファイル名にできない文字列を除去
 
@@ -469,7 +543,10 @@ function deleteTrashFiles ($Path, $Conditions) {
 		if ($null -ne $delTargets) {
 			Write-Host "$($delTargets)を削除します"
 			foreach ($delTarget in $delTargets) {
-				Remove-Item $delTarget -Force -ErrorAction SilentlyContinue
+				Remove-Item `
+					-Path $delTarget `
+					-Force `
+					-ErrorAction SilentlyContinue
 			}
 		} else {
 			Write-Host '削除対象はありませんでした'
@@ -477,4 +554,70 @@ function deleteTrashFiles ($Path, $Conditions) {
 	} catch { Write-Host '削除できないファイルがありました' }
 }
 
+#----------------------------------------------------------------------
+#ファイルのロック
+#----------------------------------------------------------------------
+function fileLock {
+	param (
+		[parameter(position = 0, mandatory)][System.IO.FileInfo]$Path
+	)
+	try {
+		$script:fileLocked = $false						# initialise variables
+		$script:fileInfo = New-Object System.IO.FileInfo $Path		# attempt to open file and detect file lock
+		$script:fileStream = $fileInfo.Open([System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+		$script:fileLocked = $true						# initialise variables
+	} catch {
+		$fileLocked = $false		# catch fileStream had falied
+	} finally {
+		# return result
+		[PSCustomObject]@{
+			path       = $Path
+			fileLocked = $fileLocked
+		}
+	}
+}
 
+#----------------------------------------------------------------------
+#ファイルのアンロック
+#----------------------------------------------------------------------
+function fileUnlock {
+	param (
+		[parameter(position = 0, mandatory)][System.IO.FileInfo]$Path
+	)
+	try {
+		if ($fileStream) { $fileStream.Close() }		# close stream if not lock
+		$script:fileLocked = $false						# initialise variables
+	} catch {
+		$fileLocked = $true		# catch fileStream had falied
+	} finally {
+		# return result
+		[PSCustomObject]@{
+			path       = $Path
+			fileLocked = $fileLocked
+		}
+	}
+}
+
+#----------------------------------------------------------------------
+#ファイルのロック確認
+#----------------------------------------------------------------------
+function isLocked {
+	param (
+		[parameter(position = 0, mandatory)][string]$isLockedPath
+	)
+	try {
+		$script:isFileLocked = $false						# initialise variables
+		$script:isLockedFileInfo = New-Object System.IO.FileInfo $isLockedPath		# attempt to open file and detect file lock
+		$script:isLockedfileStream = $isLockedFileInfo.Open([System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+		if ($isLockedfileStream) { $isLockedfileStream.Close() }		# close stream if not lock
+		$script:isFileLocked = $false						# initialise variables
+	} catch {
+		$isFileLocked = $true		# catch fileStream had falied
+	} finally {
+		# return result
+		[PSCustomObject]@{
+			path       = $isLockedPath
+			fileLocked = $isFileLocked
+		}
+	}
+}

@@ -95,7 +95,8 @@ Write-Host ''
 
 #----------------------------------------------------------------------
 #動作環境チェック
-checkLatestTool						#yt-dlpとffmpegの最新化チェック
+checkLatestYtdlp					#yt-dlpの最新化チェック
+checkLatestFfmpeg					#ffmpegの最新化チェック
 checkRequiredFile					#設定で指定したファイル・フォルダの存在チェック
 #checkGeoIP							#日本のIPアドレスでないと接続不可のためIPアドレスをチェック
 $keywordName = ''
@@ -107,7 +108,7 @@ while ($true) {
 	$videoPageURL = ''
 
 	#保存先ディレクトリの存在確認
-	if (Test-Path $downloadBaseAbsoluteDir -PathType Container) {}
+	if (Test-Path $downloadBaseDir -PathType Container) {}
 	else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します' ; exit 1 }
 
 	$videoPageURL = Read-Host 'ビデオURLを入力してください。'

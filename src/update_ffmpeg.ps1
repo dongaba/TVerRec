@@ -34,7 +34,7 @@ if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
 #ffmpeg保存先相対Path
 $ffmpegRelativeDir = '..\bin'
 $ffmpegDir = $(Join-Path $scriptRoot $ffmpegRelativeDir)
-if ($isWin) { $ffmpegRelativePath = $(Join-Path $ffmpegDir 'ffmpeg.exe') } else { $ffmpegRelativePath = $(Join-Path $ffmpegDir 'ffmpeg') }
+if ($isWin) { $ffmpegPath = $(Join-Path $ffmpegDir 'ffmpeg.exe') } else { $ffmpegPath = $(Join-Path $ffmpegDir 'ffmpeg') }
 
 #ffmpegのディレクトリがなければ作成
 if (-Not (Test-Path $ffmpegDir -PathType Container)) {
@@ -42,9 +42,9 @@ if (-Not (Test-Path $ffmpegDir -PathType Container)) {
 }
 
 #ffmpegのバージョン取得
-if (Test-Path $ffmpegRelativePath -PathType Leaf) {
+if (Test-Path $ffmpegPath -PathType Leaf) {
 	# get version of current ffmpeg.exe
-	$ffmpegFileVersion = (& $ffmpegRelativePath -version)
+	$ffmpegFileVersion = (& $ffmpegPath -version)
 	$null = $ffmpegFileVersion[0] -match 'ffmpeg version (\d+\.\d+(\.\d+)?).*'
 	$ffmpegCurrentVersion = $matches[1]
 } else {
@@ -107,7 +107,7 @@ if ($latestVersion -eq $ffmpegCurrentVersion) {
 		} catch { Write-Host 'ffmpegの更新に失敗しました' }
 
 		#バージョンチェック
-		$ffmpegFileVersion = (& $ffmpegRelativePath -version)
+		$ffmpegFileVersion = (& $ffmpegPath -version)
 		$null = $ffmpegFileVersion[0].ToChar -match 'ffmpeg version (\d+\.\d+(\.\d+)?)-.*'
 		$ffmpegCurrentVersion = $matches[1]
 		Write-Host "ffmpegをversion $ffmpegCurrentVersion に更新しました。 "

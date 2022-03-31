@@ -95,11 +95,14 @@ Write-Host ''
 
 #----------------------------------------------------------------------
 #動作環境チェック
-checkLatestTool						#yt-dlpとffmpegの最新化チェック
+checkLatestYtdlp					#yt-dlpの最新化チェック
+checkLatestFfmpeg					#ffmpegの最新化チェック
 checkRequiredFile					#設定で指定したファイル・フォルダの存在チェック
 #checkGeoIP							#日本のIPアドレスでないと接続不可のためIPアドレスをチェック
+
 $keywordNames = loadKeywordList			#ダウンロード対象ジャンルリストの読み込み
 
+$timer = [System.Diagnostics.Stopwatch]::StartNew()
 $keywordNum = 0						#キーワードの番号
 if ($keywordNames -is [array]) {
 	$keywordTotal = $keywordNames.Length	#トータルキーワード数
@@ -117,11 +120,14 @@ foreach ($keywordName in $keywordNames) {
 
 	$keywordNum = $keywordNum + 1		#キーワード数のインクリメント
 
-	Write-Progress `
-		-Id 1 `
-		-Activity "$($keywordNum)/$($keywordTotal)" `
-		-PercentComplete $($( $keywordNum / $keywordTotal ) * 100) `
-		-Status 'キーワードの動画を取得中'
+	if ($timer.Elapsed.TotalMilliseconds -ge 1000) {
+		Write-Progress `
+			-Id 1 `
+			-Activity "$($keywordNum)/$($keywordTotal)" `
+			-PercentComplete $($( $keywordNum / $keywordTotal ) * 100) `
+			-Status 'キーワードの動画を取得中'
+		$timer.Reset(); $timer.Start()
+	}
 
 	$videoLinks = getVideoLinksFromKeyword ($keywordName)
 	$keywordName = $keywordName.Replace('https://tver.jp/', '').Replace('http://tver.jp/', '')
@@ -139,19 +145,22 @@ foreach ($keywordName in $keywordNames) {
 		$videoNum = $videoNum + 1		#ジャンル内のビデオ番号のインクリメント
 		$videoPageURL = ''
 
-		Write-Progress `
-			-Id 2 `
-			-ParentId 1 `
-			-Activity "$($videoNum)/$($videoTotal)" `
-			-PercentComplete $($( $videoNum / $videoTotal ) * 100) `
-			-Status "$($keywordName)"
+		if ($timer.Elapsed.TotalMilliseconds -ge 1000) {
+			Write-Progress `
+				-Id 2 `
+				-ParentId 1 `
+				-Activity "$($videoNum)/$($videoTotal)" `
+				-PercentComplete $($( $videoNum / $videoTotal ) * 100) `
+				-Status "$($keywordName)"
+			$timer.Reset(); $timer.Start()
+		}
 
 		Write-Host '----------------------------------------------------------------------'
 		Write-Host "[ $keywordName - $videoNum / $videoTotal ] をダウンロードします。 ($(getTimeStamp))"
 		Write-Host '----------------------------------------------------------------------'
 
 		#保存先ディレクトリの存在確認
-		if (Test-Path $downloadBaseAbsoluteDir -PathType Container) {}
+		if (Test-Path $downloadBaseDir -PathType Container) {}
 		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します' ; exit 1 }
 
 		#yt-dlpプロセスの確認と、yt-dlpのプロセス数が多い場合の待機
@@ -162,6 +171,7 @@ foreach ($keywordName in $keywordNames) {
 
 		downloadTVerVideo $keywordName				#TVerビデオダウンロードのメイン処理
 
+		Start-Sleep -Seconds 1
 	}
 	#----------------------------------------------------------------------
 

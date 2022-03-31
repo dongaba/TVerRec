@@ -86,9 +86,9 @@ try {
 
 #======================================================================
 #保存先ディレクトリの存在確認
-if (Test-Path $downloadBaseAbsoluteDir -PathType Container) {}
+if (Test-Path $downloadBaseDir -PathType Container) {}
 else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' ; exit 1 }
-if (Test-Path $saveBaseAbsoluteDir -PathType Container) {}
+if (Test-Path $saveBaseDir -PathType Container) {}
 else { Write-Error 'ビデオ移動先フォルダにアクセスできません。終了します。' ; exit 1 }
 
 #======================================================================
@@ -102,7 +102,7 @@ Write-Progress `
 	-PercentComplete $($( 1 / 4 ) * 100) `
 	-Status 'フォルダ一覧を作成中'
 
-$moveToPaths = Get-ChildItem $saveBaseAbsoluteDir -Recurse | `
+$moveToPaths = Get-ChildItem $saveBaseDir -Recurse | `
 		Where-Object { $_.PSisContainer } | `
 		Sort-Object 
 
@@ -130,7 +130,7 @@ foreach ($moveToPath in $moveToPaths) {
 
 	$targetFolderName = Split-Path -Leaf $moveToPath
 	#同名フォルダが存在する場合は配下のファイルを移動
-	$moveFromPath = $(Join-Path $downloadBaseAbsoluteDir $targetFolderName)
+	$moveFromPath = $(Join-Path $downloadBaseDir $targetFolderName)
 	if (Test-Path $moveFromPath) {
 		$moveFromPath = $moveFromPath + '\*.mp4'
 		Write-Host "  └「$($moveFromPath)」を移動します"
@@ -151,7 +151,7 @@ Write-Progress `
 	-PercentComplete $($( 2 / 2 ) * 100) `
 	-Status '空フォルダを削除'
 
-$allSubDirs = @(Get-ChildItem -Path $downloadBaseAbsoluteDir -Recurse | `
+$allSubDirs = @(Get-ChildItem -Path $downloadBaseDir -Recurse | `
 			Where-Object { $_.PSIsContainer }) | `
 			Sort-Object -Descending { $_.FullName }
 

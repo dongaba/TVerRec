@@ -1,0 +1,2 @@
+Do not delete, this is a file manages the lock between multiple instances.
+このファイルは複数のインスタンス起動時のロックを管理するファイルなので、削除しないでください。
