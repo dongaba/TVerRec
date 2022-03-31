@@ -41,10 +41,10 @@ TVerRecは、動画配信サイトTVer ( ティーバー <https://tver.jp/> ) �
 ### ユーザ設定
 
 - ユーザ設定は`conf/user_setting.conf`をテキストエディターで開いて行ってください
-- `$downloadBaseAbsoluteDir`には動画をダウンロードするフォルダを設定します。
-- `$downloadWorkAbsoluteDir`には動画をダウンロードするさいにできる中間ファイルを格納するフォルダを設定します。
-- `$saveBaseAbsoluteDir`にはダウンロードした動画を移動する先のフォルダを設定します。
-  - ここで設定したフォルダ配下(再帰的にチェックします)にあるフォルダと`$downloadBaseAbsoluteDir`にあるフォルダが一致する場合、動画ファイルが`$downloadBaseAbsoluteDir`から`$saveBaseAbsoluteDir`配下の各フォルダ配下に移動されます。同名のファイルがある場合は上書きされます。
+- `$downloadBaseDir`には動画をダウンロードするフォルダを設定します。
+- `$downloadWorkDir`には動画をダウンロードするさいにできる中間ファイルを格納するフォルダを設定します。
+- `$saveBaseDir`にはダウンロードした動画を移動する先のフォルダを設定します。
+  - ここで設定したフォルダ配下(再帰的にチェックします)にあるフォルダと`$downloadBaseDir`にあるフォルダが一致する場合、動画ファイルが`$downloadBaseDir`から`$saveBaseDir`配下の各フォルダ配下に移動されます。同名のファイルがある場合は上書きされます。
 - `$parallelDownloadFileNum`は同時に並行でダウンロードする動画の数を設定します。
 - `$parallelDownloadNumPerFile`はそれぞれの動画をダウンロードする際の並行ダウンロード数を設定します。
   - つまり、`$parallelDownloadFileNum`×`$parallelDownloadNumPerFile`が実質的な最大同時ダウンロード数になります。
@@ -69,13 +69,13 @@ TVerRecは、動画配信サイトTVer ( ティーバー <https://tver.jp/> ) �
   - 一般的なWindows環境では特に変更する必要はありません。
   - ここで指定した長さを超えるファイル名が生成されそうになると、ファイル名が収まるように自動的にファイル名が短縮されます。
   - なので、あまり深い階層を保存先に指定すると頻繁にファイル名が短縮されたり、エラーとなることがあります。
-- `$binRelativeDir`、`$dbRelativeDir`、`$debugRelativeDir`は各種フォルダの設定です。
+- `$binDir`、`$dbDir`、`$debugDir`は各種フォルダの設定です。
   - ソースファイルから見た際の相対パス指定となるようにしてください。
-- `$keywordFileRelativePath`、`$ignoreFileRelativePath`はそれぞれダウンロード対象キーワードとダウンロード対象外番組を設定するファイルの名前です。
-- `$listFileRelativePath`はダウンロードの未済管理をするファイルの名前です。
-- `$ffpmegErrorLogRelativePath`は動画のチェックをする際にエラーを一時的に出力するファイルのパスです。
-  - 初期値では`$listFileRelativePath`と同じ場所に出力するようになっています。(が、処理が終われば自動的に削除されます)
-- `$ytdlpRelativePath`と`$ffmpegRelativePath`はそれぞれyt-dlpとffmpegの実行ファイルの配置場所を指定しています。
+- `$keywordFilePath`、`$ignoreFilePath`はそれぞれダウンロード対象キーワードとダウンロード対象外番組を設定するファイルの名前です。
+- `$listFilePath`はダウンロードの未済管理をするファイルの名前です。
+- `$ffpmegErrorLogPath`は動画のチェックをする際にエラーを一時的に出力するファイルのパスです。
+  - 初期値では`$listFilePath`と同じ場所に出力するようになっています。(が、処理が終われば自動的に削除されます)
+- `$ytdlpPath`と`$ffmpegPath`はそれぞれyt-dlpとffmpegの実行ファイルの配置場所を指定しています。
   - ソースファイルから見た際の相対パス指定となるようにしてください。
 
 ## おすすめの使い方
