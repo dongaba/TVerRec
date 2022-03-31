@@ -180,12 +180,12 @@ Write-Progress `
 	-PercentComplete $($( 3 / 3 ) * 100) `
 	-Status '空フォルダを削除'
 
-$allSubDirs = @((Get-ChildItem -Path $downloadBaseDir -Recurse).Where({ $_.PSIsContainer })) | `
-		Sort-Object -Descending { $_.FullName }
+$allSubDirs = @((Get-ChildItem -Path $downloadBaseDir -Recurse).Where({ $_.PSIsContainer })).FullName | `
+		Sort-Object -Descending
 
-$subDirNum = 0						#無視リスト内の番号
-if ($ignoreTitles -is [array]) {
-	$subDirTotal = $allSubDirs.Length	#無視リスト内のエントリ合計数
+$subDirNum = 0						#サブディレクトリの番号
+if ($allSubDirs -is [array]) {
+	$subDirTotal = $allSubDirs.Length	#サブディレクトリの合計数
 } else { $subDirTotal = 1 }
 
 foreach ($subDir in $allSubDirs) {
@@ -198,16 +198,16 @@ foreach ($subDir in $allSubDirs) {
 		-Status "$($subDir)"
 
 	Write-Host '----------------------------------------------------------------------'
-	Write-Host "$($subDir.FullName)を処理中"
-	if (@((Get-ChildItem -Path $subDir.FullName -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
+	Write-Host "$($subDir)を処理中"
+	if (@((Get-ChildItem -Path $subDir -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
 		try {
-			Write-Host "  └「$($subDir.FullName)」を削除します"
+			Write-Host "  └「$($subDir)」を削除します"
 			Remove-Item `
-				-Path $subDir.FullName `
+				-Path $subDir `
 				-Recurse `
 				-Force `
 				-ErrorAction SilentlyContinue
-		} catch { Write-Host "空フォルダの削除に失敗しました: $subDir.FullName" }
+		} catch { Write-Host "空フォルダの削除に失敗しました: $subDir" }
 	}
 }
 
