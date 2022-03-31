@@ -187,4 +187,4 @@ tverrec/
 
 - TVerRecは[Apache License, Version 2.0のライセンス規約](http://www.apache.org/licenses/LICENSE-2.0)に基づき、複製や再配布、改変が許可されます。
 
-Copyright(c) 2021 dongaba All Rights Reserved.
+Copyright(c) 2022 dongaba All Rights Reserved.

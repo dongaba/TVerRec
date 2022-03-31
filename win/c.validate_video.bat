@@ -4,7 +4,7 @@ rem #  TVerRec : TVerビデオダウンローダ
 rem #
 rem #		動画チェック処理スクリプト
 rem #
-rem #	Copyright (c) 2021 dongaba
+rem #	Copyright (c) 2022 dongaba
 rem #
 rem #	Licensed under the Apache License, Version 2.0 (the "License");
 rem #	you may not use this file except in compliance with the License.
