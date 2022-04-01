@@ -108,6 +108,9 @@ Write-Progress `
 	-PercentComplete $($( 2 / 3 ) * 100) `
 	-Status "$($downloadWorkDir)"
 deleteTrashFiles $downloadWorkDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.mp4'
+Get-ChildItem -Path $downloadWorkDir -Recurse | `
+		Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-0.5) } | `
+		Remove-Item -Force
 Write-Progress `
 	-Id 2 `
 	-ParentId 1 `
@@ -154,15 +157,17 @@ foreach ($ignoreTitle in $ignoreTitles) {
 			-LiteralPath $downloadBaseDir `
 			-Directory `
 			-Name `
-			-Include "*$ignoreTitle*"
+			-Filter "*$ignoreTitle*"
 		if ($null -ne $delTargets) {
 			foreach ($delTarget in $delTargets) {
-				Write-Host "  └「$($delTarget.FullName)」を削除します"
-				Remove-Item `
-					-LiteralPath $delTarget.FullName `
-					-Recurse `
-					-Force `
-					-ErrorAction SilentlyContinue
+				if (Test-Path $(Join-Path $downloadBaseDir $delTarget) -PathType Container) {
+					Write-Host "  └「$(Join-Path $downloadBaseDir $delTarget)」を削除します"
+					Remove-Item `
+						-LiteralPath $(Join-Path $downloadBaseDir $delTarget) `
+						-Recurse `
+						-Force `
+						-ErrorAction SilentlyContinue
+				}
 			}
 		} else {
 			Write-Host '  削除対象はありませんでした'
