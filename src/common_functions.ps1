@@ -75,7 +75,8 @@ function checkGeoIP {
 #タイムスタンプ更新
 #----------------------------------------------------------------------
 function getTimeStamp {
-	return = Get-Date -UFormat '%Y-%m-%d %H:%M:%S' 
+	$timeStamp = Get-Date -UFormat '%Y-%m-%d %H:%M:%S' 
+	return $timeStamp
 }
 
 #----------------------------------------------------------------------
