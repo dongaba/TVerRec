@@ -23,8 +23,8 @@
 #ytdlpの最新化確認
 #----------------------------------------------------------------------
 function checkLatestYtdlp {
-	if ($PSVersionTable.PSEdition -eq 'Desktop') { . '.\update_yt-dlp_5.ps1' }
-	else { . '.\update_yt-dlp.ps1' }
+	if ($PSVersionTable.PSEdition -eq 'Desktop') { . '.\update_ytdl-patched_5.ps1' }
+	else { . '.\update_ytdl-patched.ps1' }
 }
 
 #----------------------------------------------------------------------
@@ -289,7 +289,7 @@ function waitTillYtdlpProcessGetFewer ($parallelDownloadFileNum) {
 	#yt-dlpのプロセスが設定値を超えたら一時待機
 	try {
 		if ($isWin) {
-			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2
+			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name youtube-dl-red).Count / 2
 		} elseif ($IsLinux) {
 			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
 		} elseif ($IsMacOS) {
@@ -309,7 +309,7 @@ function waitTillYtdlpProcessGetFewer ($parallelDownloadFileNum) {
 		Start-Sleep -Seconds 60			#1分待機
 		try {
 			if ($isWin) {
-				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2
+				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name youtube-dl-red).Count / 2
 			} elseif ($IsLinux) {
 				$ytdlpCount = (& Get-Process -ErrorAction Ignore -Name yt-dlp).Count
 			} elseif ($IsMacOS) {
@@ -330,8 +330,8 @@ function waitTillYtdlpProcessGetFewer ($parallelDownloadFileNum) {
 function waitTillYtdlpProcessIsZero ($isWin) {
 	try {
 		if ($isWin) {
-			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2
-		} elseif ($IsLinux) {
+			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name youtube-dl-red).Count / 2		
+  } elseif ($IsLinux) {
 			$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
 		} elseif ($IsMacOS) {
 			$psCmd = 'ps'
@@ -348,7 +348,7 @@ function waitTillYtdlpProcessIsZero ($isWin) {
 			Write-Verbose "現在のダウンロードプロセス一覧 ($ytdlpCount 個)"
 			Start-Sleep -Seconds 60			#1分待機
 			if ($isWin) {
-				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2
+				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name youtube-dl-red).Count / 2
 			} elseif ($IsLinux) {
 				$ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
 			} elseif ($IsMacOS) {
@@ -399,7 +399,7 @@ function executeYtdlp ($videoFilePath, $videoPageURL, $ytdlpPath) {
 				-WindowStyle $windowShowStyle
 		} catch { Write-Host 'yt-dlpの起動に失敗しました' -ForegroundColor Green }
 	} else {
-		Write-Debug "yt-dlp起動コマンド:nohup $ytdlpPath $ytdlpArgs"
+		Write-Debug "y起動コマンド:nohup $ytdlpPath $ytdlpArgs"
 		try {
 			$null = Start-Process -FilePath nohup `
 				-ArgumentList ($ytdlpPath, $ytdlpArgs) `

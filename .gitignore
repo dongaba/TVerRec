@@ -40,11 +40,13 @@ memo.txt
 linux-*
 mac-*
 win-*
+tver.xlsx
 
 #その他雑多な不要ファイル
 * - コピー.*
 * - Copy.*
 *.bak
+brightcovenew*
 
 #ローカルの変更をGitHubにアップしないために
 #git update-index --assume-unchanged db/tver.csv

@@ -146,6 +146,7 @@ tverrec/
 │  ├─ tverrec_single.ps1 ................... 単体ダウンロードツール
 │  ├─ update_ffmpeg.ps1 .................... ffmpeg自動更新ツール
 │  ├─ update_yt-dlp.ps1 .................... yt-dlp自動更新ツール
+│  ├─ update_ytdl-patched.ps1 .............. ytdl-patched自動更新ツール
 │  └─ validate_video.ps1 ................... ダウンロード済みビデオの整合性チェックツール
 │
 ├─ unix/ ................................. Linux/Mac用シェルスクリプト
