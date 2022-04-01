@@ -156,10 +156,11 @@ foreach ($ignoreTitle in $ignoreTitles) {
 			-Name `
 			-Include "*$ignoreTitle*"
 		if ($null -ne $delTargets) {
-			Write-Host "  └「$($delTargets)」を削除します"
 			foreach ($delTarget in $delTargets) {
+				Write-Host "  └「$($delTarget.FullName)」を削除します"
 				Remove-Item `
-					-LiteralPath $delTarget `
+					-LiteralPath $delTarget.FullName `
+					-Recurse `
 					-Force `
 					-ErrorAction SilentlyContinue
 			}
