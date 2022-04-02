@@ -106,7 +106,9 @@ Write-Progress `
 	-PercentComplete $($( 2 / 3 ) * 100) `
 	-Status "$($downloadWorkDir)"
 deleteTrashFiles $downloadWorkDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.mp4'
-Get-ChildItem -Path $downloadWorkDir -Recurse | `
+Get-ChildItem -Path $downloadWorkDir `
+	-Recurse `
+	-Filter 'ffmpeg_error_*.log' | `
 		Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-0.5) } | `
 		Remove-Item -Force
 Write-Progress `

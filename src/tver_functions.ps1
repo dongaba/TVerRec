@@ -23,32 +23,27 @@
 #TVerのAPIを叩いてビデオ検索
 #----------------------------------------------------------------------
 function getVideoLinkFromFreeKeyword ($keywordName) {
-	#$tverApiBaseURL = 'https://api.tver.jp/v4'
-	#$tverGetTokenApiURL = 'https://tver.jp/api/access_token.php'					#APIトークン取得
-	#$token = (Invoke-RestMethod -Uri $tverGetTokenApiURL -Method get).token		#APIトークンセット
-	#$teverSearchApiURL = $tverApiBaseURL + '/search?catchup=1&keyword=' + $keywordName + '&token=' + $token
-	#$searchResult = (Invoke-RestMethod -Uri $teverSearchApiURL -Method get)		#API経由で検索結果取得
-	#$videoLinks = $searchResult.data.href
+	$tverTokenBaseURL = 'https://platform-api.tver.jp/v2/api/platform_users/browser/create?note=Creating session'
+	$requestHeader = @{
+		'Content-Type' = 'application/x-www-form-urlencoded' ;
+		'origin'       = 'https://tver.jp' ;
+		'referer'      = 'https://tver.jp/' ;
+	}
+	$requestBody = 'device_type=pc'
+	$response = Invoke-RestMethod $tverTokenBaseURL -Method 'POST' -Headers $requestHeader -Body $requestBody
 
-	#$tverGetTokenApiURL = 'https://tver.jp/api/access_token.php'					#APIトークン取得
-	#$token = (Invoke-RestMethod -Uri $tverGetTokenApiURL -Method get).token		#APIトークンセット
-	
-	#暫定対応。取得方法要調査
-	$platform_uid = 'edf0a092d1fb494eac7190b4f099b3473ff5'
-	$platform_token = '21k27cf5ojrhc856eqeyb84f516bibe0fa2x1i88'
 
-	$headerTable = @{
+	$tverSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/'
+	$requestHeader = @{
 		'x-tver-platform-type' = 'web' ;
 		'origin'               = 'https://tver.jp' ;
 		'referer'              = 'https://tver.jp/' ;
 	}
-	$tverApiBaseURL = 'https://platform-api.tver.jp/service/api/v1/'
-	$teverSearchApiURL = $tverApiBaseURL + `
-		'callSearch?platform_uid=' + $platform_uid + `
-		'&platform_token=' + $platform_token + `
+	$tverSearchBaseURL = $tverSearchBaseURL + `
+		'callSearch?platform_uid=' + $response.result.platform_uid + `
+		'&platform_token=' + $response.result.platform_token + `
 		'&keyword=' + $keywordName
-
-	$searchResultsRaw = (Invoke-RestMethod -Headers $headerTable -Uri $teverSearchApiURL -Method GET)
+	$searchResultsRaw = (Invoke-RestMethod -Uri $tverSearchBaseURL -Method 'GET' -Headers $requestHeader)
 	$videoLinks = @()
 	$searchResults = $searchResultsRaw.result.contents
 	$resultCount = $searchResults.length
@@ -63,18 +58,13 @@ function getVideoLinkFromFreeKeyword ($keywordName) {
 #TVerのAPIを叩いてビデオ情報取得
 #----------------------------------------------------------------------
 function getVideoInfoFromVideoID ($videoID) {
-	#$tverApiBaseURL = 'https://api.tver.jp/v4'
-	#$tverGetTokenApiURL = 'https://tver.jp/api/access_token.php'					#APIトークン取得
-	#$token = (Invoke-RestMethod -Uri $tverGetTokenApiURL -Method get).token		#APIトークンセット
-	#$teverApiVideoURL = $tverApiBaseURL + $videoID + '?token=' + $token			#APIのURLをセット
-	#$videoInfo = (Invoke-RestMethod -Uri $teverApiVideoURL -Method get).main	#API経由でビデオ情報取得
 	$headerTable = @{
 		'origin'  = 'https://tver.jp';
 		'referer' = 'https://tver.jp/' 
 	}
 	$tverApiBaseURL = 'https://statics.tver.jp/content'
 	$teverApiVideoURL = $tverApiBaseURL + $videoID.Replace('episodes', 'episode') + '.json?v=5'
-	$videoInfo = (Invoke-RestMethod -Headers $headerTable -Uri $teverApiVideoURL -Method GET)	#API経由でビデオ情報取得
+	$videoInfo = (Invoke-RestMethod -Headers $headerTable -Uri $teverApiVideoURL -Method 'GET')	#API経由でビデオ情報取得
 	return $videoInfo
 }
 
@@ -201,7 +191,11 @@ function getVideoLinksFromKeyword ($keywordName) {
 		catch { Write-Host 'TVerから情報を取得できませんでした。スキップします'; continue }
 
 		try {
-			$videoLinks = ($keywordNamePage.Links | Where-Object href -Like '*episode*' | Select-Object href).href
+			$videoLinks = ($keywordNamePage.Links | Where-Object href -Like '*lp*' | Select-Object href).href
+			$videoLinks += ($keywordNamePage.Links | Where-Object href -Like '*corner*' | Select-Object href).href
+			$videoLinks += ($keywordNamePage.Links | Where-Object href -Like '*series*' | Select-Object href).href
+			$videoLinks += ($keywordNamePage.Links | Where-Object href -Like '*episode*' | Select-Object href).href
+			$videoLinks += ($keywordNamePage.Links | Where-Object href -Like '*feature*' | Select-Object href).href
 		} catch {}
 
 		#saveGenrePage						#デバッグ用ジャンルページの保存
