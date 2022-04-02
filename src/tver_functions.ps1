@@ -33,22 +33,22 @@ function getVideoLinkFromFreeKeyword ($keywordName) {
 	#$tverGetTokenApiURL = 'https://tver.jp/api/access_token.php'					#APIトークン取得
 	#$token = (Invoke-RestMethod -Uri $tverGetTokenApiURL -Method get).token		#APIトークンセット
 	
+	#暫定対応。取得方法要調査
 	$platform_uid = 'edf0a092d1fb494eac7190b4f099b3473ff5'
 	$platform_token = '21k27cf5ojrhc856eqeyb84f516bibe0fa2x1i88'
 
 	$headerTable = @{
-		'x-tver-platform-type' = 'web';
-		'origin'               = 'https://tver.jp';
-		'referer'              = 'https://tver.jp/' 
+		'x-tver-platform-type' = 'web' ;
+		'origin'               = 'https://tver.jp' ;
+		'referer'              = 'https://tver.jp/' ;
 	}
 	$tverApiBaseURL = 'https://platform-api.tver.jp/service/api/v1/'
 	$teverSearchApiURL = $tverApiBaseURL + `
 		'callSearch?platform_uid=' + $platform_uid + `
 		'&platform_token=' + $platform_token + `
-		'&keyword=' + $keywordName + `
-		'&require_data=later'
+		'&keyword=' + $keywordName
 
-	$searchResultsRaw = (Invoke-RestMethod -Headers $headerTable -Uri $teverSearchApiURL -Method GET)		#API経由で検索結果取得
+	$searchResultsRaw = (Invoke-RestMethod -Headers $headerTable -Uri $teverSearchApiURL -Method GET)
 	$videoLinks = @()
 	$searchResults = $searchResultsRaw.result.contents
 	$resultCount = $searchResults.length
@@ -200,11 +200,9 @@ function getVideoLinksFromKeyword ($keywordName) {
 		try { $keywordNamePage = Invoke-WebRequest $keywordName } 
 		catch { Write-Host 'TVerから情報を取得できませんでした。スキップします'; continue }
 
-		$ErrorActionPreference = 'silentlycontinue'
-		$videoLinks = ($keywordNamePage.Links | Where-Object href -Like '*corner*' | Select-Object href).href
-		$videoLinks += ($keywordNamePage.Links | Where-Object href -Like '*feature*' | Select-Object href).href
-		$videoLinks += ($keywordNamePage.Links | Where-Object href -Like '*lp*' | Select-Object href).href
-		$ErrorActionPreference = 'continue'
+		try {
+			$videoLinks = ($keywordNamePage.Links | Where-Object href -Like '*episode*' | Select-Object href).href
+		} catch {}
 
 		#saveGenrePage						#デバッグ用ジャンルページの保存
 
@@ -227,15 +225,8 @@ function downloadTVerVideo ($keywordName) {
 	$videoInfo = $null ; $newVideo = $null
 	$ignore = $false ; $skip = $false
 
-
 	$ignoreTitles = loadIgnoreList		#ダウンロード対象外番組リストの読み込み
 	
-	#	#TVerの番組説明の場合はビデオがないのでスキップ
-	#	if ($videoPageURL -match '/episode/') {
-	#		Write-Host 'ビデオではなくオンエア情報のようです。スキップします'
-	#		continue			#次のビデオへ
-	#	}
-
 	#URLがすでにリストに存在する場合はスキップ
 	try {
 		#ロックファイルをロック
