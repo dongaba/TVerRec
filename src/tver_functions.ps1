@@ -23,12 +23,39 @@
 #TVerのAPIを叩いてビデオ検索
 #----------------------------------------------------------------------
 function getVideoLinkFromFreeKeyword ($keywordName) {
-	$tverApiBaseURL = 'https://api.tver.jp/v4'
-	$tverGetTokenApiURL = 'https://tver.jp/api/access_token.php'					#APIトークン取得
-	$token = (Invoke-RestMethod -Uri $tverGetTokenApiURL -Method get).token		#APIトークンセット
-	$teverSearchApiURL = $tverApiBaseURL + '/search?catchup=1&keyword=' + $keywordName + '&token=' + $token
-	$searchResult = (Invoke-RestMethod -Uri $teverSearchApiURL -Method get)		#API経由で検索結果取得
-	$videoLinks = $searchResult.data.href
+	#$tverApiBaseURL = 'https://api.tver.jp/v4'
+	#$tverGetTokenApiURL = 'https://tver.jp/api/access_token.php'					#APIトークン取得
+	#$token = (Invoke-RestMethod -Uri $tverGetTokenApiURL -Method get).token		#APIトークンセット
+	#$teverSearchApiURL = $tverApiBaseURL + '/search?catchup=1&keyword=' + $keywordName + '&token=' + $token
+	#$searchResult = (Invoke-RestMethod -Uri $teverSearchApiURL -Method get)		#API経由で検索結果取得
+	#$videoLinks = $searchResult.data.href
+
+	#$tverGetTokenApiURL = 'https://tver.jp/api/access_token.php'					#APIトークン取得
+	#$token = (Invoke-RestMethod -Uri $tverGetTokenApiURL -Method get).token		#APIトークンセット
+	
+	$platform_uid = 'edf0a092d1fb494eac7190b4f099b3473ff5'
+	$platform_token = '21k27cf5ojrhc856eqeyb84f516bibe0fa2x1i88'
+
+	$headerTable = @{
+		'x-tver-platform-type' = 'web';
+		'origin'               = 'https://tver.jp';
+		'referer'              = 'https://tver.jp/' 
+	}
+	$tverApiBaseURL = 'https://platform-api.tver.jp/service/api/v1/'
+	$teverSearchApiURL = $tverApiBaseURL + `
+		'callSearch?platform_uid=' + $platform_uid + `
+		'&platform_token=' + $platform_token + `
+		'&keyword=' + $keywordName + `
+		'&require_data=later'
+
+	$searchResultsRaw = (Invoke-RestMethod -Headers $headerTable -Uri $teverSearchApiURL -Method GET)		#API経由で検索結果取得
+	$videoLinks = @()
+	$searchResults = $searchResultsRaw.result.contents
+	$resultCount = $searchResults.length
+	for ($i = 0; $i -lt $resultCount; $i++) {
+		$videoLinks += '/' + $searchResults[$i].type + 's/' + $searchResults[$i].content.id
+	}
+
 	return $videoLinks
 }
 
@@ -36,11 +63,18 @@ function getVideoLinkFromFreeKeyword ($keywordName) {
 #TVerのAPIを叩いてビデオ情報取得
 #----------------------------------------------------------------------
 function getVideoInfoFromVideoID ($videoID) {
-	$tverApiBaseURL = 'https://api.tver.jp/v4'
-	$tverGetTokenApiURL = 'https://tver.jp/api/access_token.php'					#APIトークン取得
-	$token = (Invoke-RestMethod -Uri $tverGetTokenApiURL -Method get).token		#APIトークンセット
-	$teverApiVideoURL = $tverApiBaseURL + $videoID + '?token=' + $token			#APIのURLをセット
-	$videoInfo = (Invoke-RestMethod -Uri $teverApiVideoURL -Method get).main	#API経由でビデオ情報取得
+	#$tverApiBaseURL = 'https://api.tver.jp/v4'
+	#$tverGetTokenApiURL = 'https://tver.jp/api/access_token.php'					#APIトークン取得
+	#$token = (Invoke-RestMethod -Uri $tverGetTokenApiURL -Method get).token		#APIトークンセット
+	#$teverApiVideoURL = $tverApiBaseURL + $videoID + '?token=' + $token			#APIのURLをセット
+	#$videoInfo = (Invoke-RestMethod -Uri $teverApiVideoURL -Method get).main	#API経由でビデオ情報取得
+	$headerTable = @{
+		'origin'  = 'https://tver.jp';
+		'referer' = 'https://tver.jp/' 
+	}
+	$tverApiBaseURL = 'https://statics.tver.jp/content'
+	$teverApiVideoURL = $tverApiBaseURL + $videoID.Replace('episodes', 'episode') + '.json?v=5'
+	$videoInfo = (Invoke-RestMethod -Headers $headerTable -Uri $teverApiVideoURL -Method GET)	#API経由でビデオ情報取得
 	return $videoInfo
 }
 
@@ -50,7 +84,8 @@ function getVideoInfoFromVideoID ($videoID) {
 function getBroadcastDateFromVideoInfo ($videoInfo) {
 	$broadcastYMD = $null
 	$broadcastDate = $(getNarrowChars (
-			$videoInfo.date).Replace('ほか', '').Replace('放送分', '放送')
+			#$videoInfo.date).Replace('ほか', '').Replace('放送分', '放送')
+			$videoInfo.broadcastDateLabel).Replace('ほか', '').Replace('放送分', '放送')
 	).trim()
 	if ($broadcastDate -match '([0-9]+)(月)([0-9]+)(日)(.+?)(放送)') {
 		#当年だと仮定して放送日を抽出
@@ -81,35 +116,40 @@ function getBroadcastDateFromVideoInfo ($videoInfo) {
 #取得したビデオ情報からタイトル情報を取得
 #----------------------------------------------------------------------
 function getVideoTitleFromVideoInfo ($videoInfo) {
-	return $(getSpecialCharacterReplaced (getNarrowChars ($videoInfo.title))).trim()
+	#return $(getSpecialCharacterReplaced (getNarrowChars ($videoInfo.title))).trim()
+	return $(getSpecialCharacterReplaced (getNarrowChars ($videoInfo.share.text).ReplaceLineEndings('').Replace('#TVer', ''))).trim()
 }
 
 #----------------------------------------------------------------------
 #取得したビデオ情報からサブタイトル情報を取得
 #----------------------------------------------------------------------
 function getVideoSubTitleFromVideoInfo ($videoInfo) {
-	return $(getSpecialCharacterReplaced (getNarrowChars ($videoInfo.subtitle))).trim()
+	#return $(getSpecialCharacterReplaced (getNarrowChars ($videoInfo.subtitle))).trim()
+	return $(getSpecialCharacterReplaced (getNarrowChars ($videoInfo.title))).trim()
 }
 
 #----------------------------------------------------------------------
 #取得したビデオ情報から放送局情報を取得
 #----------------------------------------------------------------------
 function getVideoMediaFromVideoInfo ($videoInfo) {
-	return $(getSpecialCharacterReplaced (getNarrowChars ($videoInfo.media))).trim()
+	#return $(getSpecialCharacterReplaced (getNarrowChars ($videoInfo.media))).trim()
+	return $(getSpecialCharacterReplaced (getNarrowChars ($videoInfo.broadcastProviderLabel))).trim()
 }
 
 #----------------------------------------------------------------------
 #取得したビデオ情報から番組説明を取得
 #----------------------------------------------------------------------
 function getVideoDescriptionFromVideoInfo ($videoInfo) {
-	return $(getNarrowChars ($videoInfo.note.text).Replace('&amp;', '&')).trim()
+	#return $(getNarrowChars ($videoInfo.note.text).Replace('&amp;', '&')).trim()
+	return $(getNarrowChars ($videoInfo.description).Replace('&amp;', '&')).trim()
 }
 
 #----------------------------------------------------------------------
 #取得したビデオ情報からLP情報を取得
 #----------------------------------------------------------------------
 function getVideoSeriesFromVideoInfo ($videoInfo) {
-	return $videoInfo.lp
+	#return $videoInfo.lp
+	return $videoInfo.share.url
 }
 
 #----------------------------------------------------------------------
@@ -190,11 +230,11 @@ function downloadTVerVideo ($keywordName) {
 
 	$ignoreTitles = loadIgnoreList		#ダウンロード対象外番組リストの読み込み
 	
-	#TVerの番組説明の場合はビデオがないのでスキップ
-	if ($videoPageURL -match '/episode/') {
-		Write-Host 'ビデオではなくオンエア情報のようです。スキップします'
-		continue			#次のビデオへ
-	}
+	#	#TVerの番組説明の場合はビデオがないのでスキップ
+	#	if ($videoPageURL -match '/episode/') {
+	#		Write-Host 'ビデオではなくオンエア情報のようです。スキップします'
+	#		continue			#次のビデオへ
+	#	}
 
 	#URLがすでにリストに存在する場合はスキップ
 	try {

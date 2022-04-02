@@ -147,7 +147,8 @@ function checkVideo ($decodeOption) {
 	$errorCount = 0
 	$checkStatus = 0
 	$videoFilePath = Join-Path $downloadBaseDir $videoFileRelativePath
-	try { $null = New-Item $ffpmegErrorLogPath -Type File -Force }catch {}
+	try { $null = New-Item $ffpmegErrorLogPath -Type File -Force }
+	catch { return }
 	
 	#これからチェックする動画のステータスをチェック
 	try {
