@@ -18,6 +18,7 @@
 #	limitations under the License.
 #
 ###################################################################################
+
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -26,8 +27,7 @@ try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
 		$currentDir = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
 	} else {
-		$currentDir = Split-Path -Parent -Path ([Environment]::GetCommandLineArgs()[0])
-		if (!$currentDir) { $currentDir = '.' }
+		$currentDir = Convert-Path .
 	}
 	Set-Location $currentDir
 	$confDir = $(Join-Path $currentDir '..\conf')
@@ -66,7 +66,6 @@ try {
 			Write-Host '========================================================' -ForegroundColor Green
 			Write-Host '  PowerShell Coreではありません                         ' -ForegroundColor Green
 			Write-Host '========================================================' -ForegroundColor Green
-			exit 1
 		}
 	} else {
 		. '.\common_functions.ps1'
@@ -79,6 +78,7 @@ try {
 		}
 	}
 } catch { Write-Host '設定ファイルの読み込みに失敗しました' -ForegroundColor Green ; exit 1 }
+
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
 

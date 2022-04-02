@@ -28,8 +28,7 @@ try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
 		$currentDir = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
 	} else {
-		$currentDir = Split-Path -Parent -Path ([Environment]::GetCommandLineArgs()[0])
-		if (!$currentDir) { $currentDir = '.' }
+		$currentDir = Convert-Path .
 	}
 	Set-Location $currentDir
 	$confDir = $(Join-Path $currentDir '..\conf')
@@ -68,7 +67,6 @@ try {
 			Write-Host '========================================================' -ForegroundColor Green
 			Write-Host '  PowerShell Coreではありません                         ' -ForegroundColor Green
 			Write-Host '========================================================' -ForegroundColor Green
-			exit 1
 		}
 	} else {
 		. '.\common_functions.ps1'
