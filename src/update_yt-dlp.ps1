@@ -21,7 +21,7 @@
 
 #Windowsの判定
 Set-StrictMode -Off
-$isWin = $PSVersionTable.Platform -match '^($|(Microsoft)?Win)'
+$global:isWin = $PSVersionTable.Platform -match '^($|(Microsoft)?Win)'
 Set-StrictMode -Version Latest
 
 if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
@@ -39,7 +39,7 @@ $releases = "https://api.github.com/repos/$repo/releases"
 #yt-dlp保存先相対Path
 $ytdlpRelativeDir = '..\bin'
 $ytdlpDir = $(Join-Path $scriptRoot $ytdlpRelativeDir)
-if ($isWin) { $ytdlpPath = $(Join-Path $ytdlpDir 'yt-dlp.exe') } else { $ytdlpPath = $(Join-Path $ytdlpDir 'yt-dlp') }
+if ($global:isWin) { $global:ytdlpPath = $(Join-Path $ytdlpDir 'yt-dlp.exe') } else { $global:ytdlpPath = $(Join-Path $ytdlpDir 'yt-dlp') }
 
 #yt-dlpのディレクトリがなければ作成
 if (-Not (Test-Path $ytdlpDir -PathType Container)) {
@@ -47,9 +47,9 @@ if (-Not (Test-Path $ytdlpDir -PathType Container)) {
 }
 
 #yt-dlpのバージョン取得
-if (Test-Path $ytdlpPath -PathType Leaf) {
+if (Test-Path $global:ytdlpPath -PathType Leaf) {
 	# get version of current yt-dlp.exe
-	$ytdlpCurrentVersion = (& $ytdlpPath --version)
+	$ytdlpCurrentVersion = (& $global:ytdlpPath --version)
 } else {
 	# if yt-dlp.exe not found, will download it
 	$ytdlpCurrentVersion = ''
@@ -66,7 +66,7 @@ if ($latestVersion -eq $ytdlpCurrentVersion) {
 	Write-Host 'yt-dlpは最新です。 '
 	Write-Host ''
 } else {
-	if ($isWin -eq $false) {
+	if ($global:isWin -eq $false) {
 		Write-Host '自動アップデートはWindowsでのみ動作します。' -ForegroundColor Green
 	} else {
 		try {

@@ -26,33 +26,33 @@ using namespace System.Text.RegularExpressions
 Set-StrictMode -Version Latest
 try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$currentDir = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+		$global:currentDir = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
 	} else {
-		$currentDir = Convert-Path .
+		$global:currentDir = Convert-Path .
 	}
-	Set-Location $currentDir
-	$confDir = $(Join-Path $currentDir '..\conf')
-	$sysFile = $(Join-Path $confDir 'system_setting.conf')
-	$confFile = $(Join-Path $confDir 'user_setting.conf')
-	$devDir = $(Join-Path $currentDir '..\dev')
-	$devConfFile = $(Join-Path $devDir 'dev_setting.conf')
-	$devFunctionFile = $(Join-Path $devDir 'dev_funcitons.ps1')
+	Set-Location $global:currentDir
+	$global:confDir = $(Join-Path $global:currentDir '..\conf')
+	$global:sysFile = $(Join-Path $global:confDir 'system_setting.conf')
+	$global:confFile = $(Join-Path $global:confDir 'user_setting.conf')
+	$global:devDir = $(Join-Path $global:currentDir '..\dev')
+	$global:devConfFile = $(Join-Path $global:devDir 'dev_setting.conf')
+	$global:devFunctionFile = $(Join-Path $global:devDir 'dev_funcitons.ps1')
 
 	#----------------------------------------------------------------------
 	#外部設定ファイル読み込み
-	Get-Content $sysFile -Encoding UTF8 | `
+	Get-Content $global:sysFile -Encoding UTF8 | `
 			Where-Object { $_ -notmatch '^\s*$' } | `
 			Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
 			Invoke-Expression
-	Get-Content $confFile -Encoding UTF8 | `
+	Get-Content $global:confFile -Encoding UTF8 | `
 			Where-Object { $_ -notmatch '^\s*$' } | `
 			Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
 			Invoke-Expression
 
 	#----------------------------------------------------------------------
 	#開発環境用に設定上書き
-	if (Test-Path $devConfFile) {
-		Get-Content $devConfFile -Encoding UTF8 | `
+	if (Test-Path $global:devConfFile) {
+		Get-Content $global:devConfFile -Encoding UTF8 | `
 				Where-Object { $_ -notmatch '^\s*$' } | `
 				Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
 				Invoke-Expression
@@ -61,18 +61,18 @@ try {
 	#----------------------------------------------------------------------
 	#外部関数ファイルの読み込み
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		. '.\common_functions_5.ps1'
-		. '.\tver_functions_5.ps1'
-		if (Test-Path $devFunctionFile) { 
+		. $(Convert-Path (Join-Path $currentDir '.\common_functions_5.ps1'))
+		. $(Convert-Path (Join-Path $currentDir '.\tver_functions_5.ps1'))
+		if (Test-Path $global:devFunctionFile) { 
 			Write-Host '========================================================' -ForegroundColor Green
 			Write-Host '  PowerShell Coreではありません                         ' -ForegroundColor Green
 			Write-Host '========================================================' -ForegroundColor Green
 		}
 	} else {
-		. '.\common_functions.ps1'
-		. '.\tver_functions.ps1'
-		if (Test-Path $devFunctionFile) { 
-			. $devFunctionFile 
+		. $(Convert-Path (Join-Path $currentDir '.\common_functions.ps1'))
+		. $(Convert-Path (Join-Path $currentDir '.\tver_functions.ps1'))
+		if (Test-Path $global:devFunctionFile) { 
+			. $global:devFunctionFile 
 			Write-Host '========================================================' -ForegroundColor Green
 			Write-Host '  開発ファイルを読み込みました                          ' -ForegroundColor Green
 			Write-Host '========================================================' -ForegroundColor Green
@@ -85,8 +85,8 @@ try {
 Write-Host ''
 Write-Host '===========================================================================' -ForegroundColor Cyan
 Write-Host '---------------------------------------------------------------------------' -ForegroundColor Cyan
-Write-Host '  tverrec : TVerビデオダウンローダ                                         ' -ForegroundColor Cyan
-Write-Host "                      一括ダウンロード版 version. $appVersion              " -ForegroundColor Cyan
+Write-Host '  TVerRec : TVerビデオダウンローダ                                         ' -ForegroundColor Cyan
+Write-Host "                      一括ダウンロード版 version. $global:appVersion              " -ForegroundColor Cyan
 Write-Host '---------------------------------------------------------------------------' -ForegroundColor Cyan
 Write-Host '===========================================================================' -ForegroundColor Cyan
 Write-Host ''
@@ -98,76 +98,77 @@ checkLatestFfmpeg					#ffmpegの最新化チェック
 checkRequiredFile					#設定で指定したファイル・フォルダの存在チェック
 #checkGeoIP							#日本のIPアドレスでないと接続不可のためIPアドレスをチェック
 
-$keywordNames = loadKeywordList			#ダウンロード対象ジャンルリストの読み込み
+$local:keywordNames = loadKeywordList			#ダウンロード対象ジャンルリストの読み込み
 
-$timer = [System.Diagnostics.Stopwatch]::StartNew()
-$keywordNum = 0						#キーワードの番号
-if ($keywordNames -is [array]) {
-	$keywordTotal = $keywordNames.Length	#トータルキーワード数
-} else { $keywordTotal = 1 }
+$local:timer = [System.Diagnostics.Stopwatch]::StartNew()
+$local:keywordNum = 0						#キーワードの番号
+if ($global:keywordNames -is [array]) {
+	$local:keywordTotal = $global:keywordNames.Length	#トータルキーワード数
+} else { $local:keywordTotal = 1 }
 
 #======================================================================
 #個々のジャンルページチェックここから
-foreach ($keywordName in $keywordNames) {
+foreach ($local:keywordName in $local:keywordNames) {
 
 	#ジャンルページチェックタイトルの表示
 	Write-Host ''
 	Write-Host '==========================================================================='
-	Write-Host "【 $keywordName 】 のダウンロードを開始します。"
+	Write-Host "【 $local:keywordName 】 のダウンロードを開始します。"
 	Write-Host '==========================================================================='
 
-	$keywordNum = $keywordNum + 1		#キーワード数のインクリメント
+	$local:keywordNum = $local:keywordNum + 1		#キーワード数のインクリメント
 
-	if ($timer.Elapsed.TotalMilliseconds -ge 1000) {
+	if ($local:timer.Elapsed.TotalMilliseconds -ge 1000) {
 		Write-Progress `
 			-Id 1 `
-			-Activity "$($keywordNum)/$($keywordTotal)" `
-			-PercentComplete $($( $keywordNum / $keywordTotal ) * 100) `
+			-Activity "$($local:keywordNum)/$($local:keywordTotal)" `
+			-PercentComplete $($( $local:keywordNum / $local:keywordTotal ) * 100) `
 			-Status 'キーワードの動画を取得中'
-		$timer.Reset(); $timer.Start()
+		$local:timer.Reset(); $local:timer.Start()
 	}
 
-	$videoLinks = getVideoLinksFromKeyword ($keywordName)
-	$keywordName = $keywordName.Replace('https://tver.jp/', '').Replace('http://tver.jp/', '')
+	getToken
+	$local:videoLinks = getVideoLinksFromKeyword ($local:keywordName)
+	$local:keywordName = $local:keywordName.Replace('https://tver.jp/', '').Replace('http://tver.jp/', '')
 
-	$videoNum = 0						#ジャンル内の処理中のビデオの番号
-	if ($videoLinks -is [array]) {
-		$videoTotal = $videoLinks.Length	#ジャンル内のトータルビデオ数
-	} else { $videoTotal = 1 }
+	$local:videoNum = 0						#ジャンル内の処理中のビデオの番号
+	if ($local:videoLinks -is [array]) {
+		$local:videoTotal = $local:videoLinks.Length	#ジャンル内のトータルビデオ数
+	} else { $local:videoTotal = 1 }
 
 	#----------------------------------------------------------------------
 	#個々のビデオダウンロードここから
-	foreach ($videoID in $videoLinks) {
+	foreach ($local:videoLink in $local:videoLinks) {
 
 		#いろいろ初期化
-		$videoNum = $videoNum + 1		#ジャンル内のビデオ番号のインクリメント
-		$videoPageURL = ''
+		$local:videoNum = $local:videoNum + 1		#ジャンル内のビデオ番号のインクリメント
+		$local:videoPageURL = ''
 
-		if ($timer.Elapsed.TotalMilliseconds -ge 1000) {
+		if ($local:timer.Elapsed.TotalMilliseconds -ge 1000) {
 			Write-Progress `
 				-Id 2 `
 				-ParentId 1 `
-				-Activity "$($videoNum)/$($videoTotal)" `
-				-PercentComplete $($( $videoNum / $videoTotal ) * 100) `
-				-Status "$($keywordName)"
-			$timer.Reset(); $timer.Start()
+				-Activity "$($local:videoNum)/$($local:videoTotal)" `
+				-PercentComplete $($( $local:videoNum / $local:videoTotal ) * 100) `
+				-Status $local:keywordName
+			$local:timer.Reset(); $local:timer.Start()
 		}
 
 		Write-Host '----------------------------------------------------------------------'
-		Write-Host "[ $keywordName - $videoNum / $videoTotal ] をダウンロードします。 ($(getTimeStamp))"
+		Write-Host "[ $local:keywordName - $local:videoNum / $local:videoTotal ] をダウンロードします。 ($(getTimeStamp))"
 		Write-Host '----------------------------------------------------------------------'
 
 		#保存先ディレクトリの存在確認
-		if (Test-Path $downloadBaseDir -PathType Container) {}
+		if (Test-Path $global:downloadBaseDir -PathType Container) {}
 		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します' -ForegroundColor Green ; exit 1 }
 
 		#yt-dlpプロセスの確認と、yt-dlpのプロセス数が多い場合の待機
-		waitTillYtdlpProcessGetFewer $parallelDownloadFileNum
+		waitTillYtdlpProcessGetFewer $global:parallelDownloadFileNum
 
-		$videoPageURL = 'https://tver.jp' + $videoID
-		Write-Host $videoPageURL
+		$local:videoPageURL = 'https://tver.jp' + $local:videoLink
+		Write-Host $local:videoPageURL
 
-		downloadTVerVideo $keywordName				#TVerビデオダウンロードのメイン処理
+		downloadTVerVideo $local:keywordName $local:videoPageURL $local:videoLink				#TVerビデオダウンロードのメイン処理
 
 		Start-Sleep -Seconds 1
 	}
@@ -177,7 +178,7 @@ foreach ($keywordName in $keywordNames) {
 #======================================================================
 
 #yt-dlpのプロセスが終わるまで待機
-waitTillYtdlpProcessIsZero ($isWin)
+waitTillYtdlpProcessIsZero
 
 Write-Host '---------------------------------------------------------------------------' -ForegroundColor Cyan
 Write-Host '処理を終了しました。                                                       ' -ForegroundColor Cyan

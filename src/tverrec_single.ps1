@@ -33,7 +33,7 @@ try {
 	Set-Location $currentDir
 	$confDir = $(Join-Path $currentDir '..\conf')
 	$sysFile = $(Join-Path $confDir 'system_setting.conf')
-	$confFile = $(Join-Path $confDir 'user_setting.conf')
+	$global:confFile = $(Join-Path $confDir 'user_setting.conf')
 	$devDir = $(Join-Path $currentDir '..\dev')
 	$devConfFile = $(Join-Path $devDir 'dev_setting.conf')
 	$devFunctionFile = $(Join-Path $devDir 'dev_funcitons.ps1')
@@ -44,7 +44,7 @@ try {
 			Where-Object { $_ -notmatch '^\s*$' } | `
 			Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
 			Invoke-Expression
-	Get-Content $confFile -Encoding UTF8 | `
+	Get-Content $global:confFile -Encoding UTF8 | `
 			Where-Object { $_ -notmatch '^\s*$' } | `
 			Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
 			Invoke-Expression
@@ -85,8 +85,8 @@ try {
 Write-Host ''
 Write-Host '===========================================================================' -ForegroundColor Cyan
 Write-Host '---------------------------------------------------------------------------' -ForegroundColor Cyan
-Write-Host '  tverrec : TVerビデオダウンローダ                                         ' -ForegroundColor Cyan
-Write-Host "                      個別ダウンロード版 version. $appVersion              " -ForegroundColor Cyan
+Write-Host '  TVerRec : TVerビデオダウンローダ                                         ' -ForegroundColor Cyan
+Write-Host "                      個別ダウンロード版 version. $global:appVersion              " -ForegroundColor Cyan
 Write-Host '---------------------------------------------------------------------------' -ForegroundColor Cyan
 Write-Host '===========================================================================' -ForegroundColor Cyan
 Write-Host ''
@@ -106,7 +106,7 @@ while ($true) {
 	$videoPageURL = ''
 
 	#保存先ディレクトリの存在確認
-	if (Test-Path $downloadBaseDir -PathType Container) {}
+	if (Test-Path $global:downloadBaseDir -PathType Container) {}
 	else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します' ; exit 1 }
 
 	$videoPageURL = Read-Host 'ビデオURLを入力してください。'

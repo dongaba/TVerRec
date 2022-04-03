@@ -25,33 +25,33 @@
 Set-StrictMode -Version Latest
 try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$currentDir = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+		$global:currentDir = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
 	} else {
-		$currentDir = Convert-Path .
+		$global:currentDir = Convert-Path .
 	}
-	Set-Location $currentDir
-	$confDir = $(Join-Path $currentDir '..\conf')
-	$sysFile = $(Join-Path $confDir 'system_setting.conf')
-	$confFile = $(Join-Path $confDir 'user_setting.conf')
-	$devDir = $(Join-Path $currentDir '..\dev')
-	$devConfFile = $(Join-Path $devDir 'dev_setting.conf')
-	$devFunctionFile = $(Join-Path $devDir 'dev_funcitons.ps1')
+	Set-Location $global:currentDir
+	$global:confDir = $(Join-Path $global:currentDir '..\conf')
+	$global:sysFile = $(Join-Path $global:confDir 'system_setting.conf')
+	$global:confFile = $(Join-Path $global:confDir 'user_setting.conf')
+	$global:devDir = $(Join-Path $global:currentDir '..\dev')
+	$global:devConfFile = $(Join-Path $global:devDir 'dev_setting.conf')
+	$global:devFunctionFile = $(Join-Path $global:devDir 'dev_funcitons.ps1')
 
 	#----------------------------------------------------------------------
 	#外部設定ファイル読み込み
-	Get-Content $sysFile -Encoding UTF8 | `
+	Get-Content $global:sysFile -Encoding UTF8 | `
 			Where-Object { $_ -notmatch '^\s*$' } | `
 			Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
 			Invoke-Expression
-	Get-Content $confFile -Encoding UTF8 | `
+	Get-Content $global:confFile -Encoding UTF8 | `
 			Where-Object { $_ -notmatch '^\s*$' } | `
 			Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
 			Invoke-Expression
 
 	#----------------------------------------------------------------------
 	#開発環境用に設定上書き
-	if (Test-Path $devConfFile) {
-		Get-Content $devConfFile -Encoding UTF8 | `
+	if (Test-Path $global:devConfFile) {
+		Get-Content $global:devConfFile -Encoding UTF8 | `
 				Where-Object { $_ -notmatch '^\s*$' } | `
 				Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
 				Invoke-Expression
@@ -60,18 +60,18 @@ try {
 	#----------------------------------------------------------------------
 	#外部関数ファイルの読み込み
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		. '.\common_functions_5.ps1'
-		. '.\tver_functions_5.ps1'
-		if (Test-Path $devFunctionFile) { 
+		. $(Convert-Path (Join-Path $currentDir '.\common_functions_5.ps1'))
+		. $(Convert-Path (Join-Path $currentDir '.\tver_functions_5.ps1'))
+		if (Test-Path $global:devFunctionFile) { 
 			Write-Host '========================================================' -ForegroundColor Green
 			Write-Host '  PowerShell Coreではありません                         ' -ForegroundColor Green
 			Write-Host '========================================================' -ForegroundColor Green
 		}
 	} else {
-		. '.\common_functions.ps1'
-		. '.\tver_functions.ps1'
-		if (Test-Path $devFunctionFile) { 
-			. $devFunctionFile 
+		. $(Convert-Path (Join-Path $currentDir '.\common_functions.ps1'))
+		. $(Convert-Path (Join-Path $currentDir '.\tver_functions.ps1'))
+		if (Test-Path $global:devFunctionFile) { 
+			. $global:devFunctionFile 
 			Write-Host '========================================================' -ForegroundColor Green
 			Write-Host '  開発ファイルを読み込みました                          ' -ForegroundColor Green
 			Write-Host '========================================================' -ForegroundColor Green
@@ -84,9 +84,9 @@ try {
 
 #======================================================================
 #保存先ディレクトリの存在確認
-if (Test-Path $downloadBaseDir -PathType Container) {}
+if (Test-Path $global:downloadBaseDir -PathType Container) {}
 else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' -ForegroundColor Green ; exit 1 }
-if (Test-Path $saveBaseDir -PathType Container) {}
+if (Test-Path $global:saveBaseDir -PathType Container) {}
 else { Write-Error 'ビデオ移動先フォルダにアクセスできません。終了します。' -ForegroundColor Green ; exit 1 }
 
 #======================================================================
@@ -100,14 +100,14 @@ Write-Progress `
 	-PercentComplete $($( 1 / 4 ) * 100) `
 	-Status 'フォルダ一覧を作成中'
 
-$moveToPaths = Get-ChildItem $saveBaseDir -Recurse | `
+$local:moveToPaths = Get-ChildItem $global:saveBaseDir -Recurse | `
 		Where-Object { $_.PSisContainer } | `
 		Sort-Object 
 
-$moveToPathNum = 0						#移動先パス番号
-if ($moveToPaths -is [array]) {
-	$moveToPathTotal = $moveToPaths.Length	#移動先パス合計数
-} else { $moveToPathTotal = 1 }
+$local:moveToPathNum = 0						#移動先パス番号
+if ($local:moveToPaths -is [array]) {
+	$local:moveToPathTotal = $local:moveToPaths.Length	#移動先パス合計数
+} else { $local:moveToPathTotal = 1 }
 
 Write-Progress `
 	-Id 1 `
@@ -115,25 +115,25 @@ Write-Progress `
 	-PercentComplete $($( 1 / 2 ) * 100) `
 	-Status 'ファイルを移動中'
 
-foreach ($moveToPath in $moveToPaths) {
+foreach ($local:moveToPath in $local:moveToPaths) {
 	Write-Host '----------------------------------------------------------------------'
-	Write-Host "$moveToPath を処理中"
-	$moveToPathNum = $moveToPathNum + 1
+	Write-Host "$local:moveToPath を処理中"
+	$local:moveToPathNum = $local:moveToPathNum + 1
 	Write-Progress `
 		-Id 2 `
 		-ParentId 1 `
-		-Activity "$($moveToPathNum)/$($moveToPathTotal)" `
-		-PercentComplete $($( $moveToPathNum / $moveToPathTotal ) * 100) `
-		-Status "$($moveToPath)"
+		-Activity "$($local:moveToPathNum)/$($local:moveToPathTotal)" `
+		-PercentComplete $($( $local:moveToPathNum / $local:moveToPathTotal ) * 100) `
+		-Status $local:moveToPath
 
-	$targetFolderName = Split-Path -Leaf $moveToPath
+	$local:targetFolderName = Split-Path -Leaf $local:moveToPath
 	#同名フォルダが存在する場合は配下のファイルを移動
-	$moveFromPath = $(Join-Path $downloadBaseDir $targetFolderName)
-	if (Test-Path $moveFromPath) {
-		$moveFromPath = $moveFromPath + '\*.mp4'
-		Write-Host "  └「$($moveFromPath)」を移動します"
+	$local:moveFromPath = $(Join-Path $global:downloadBaseDir $local:targetFolderName)
+	if (Test-Path $local:moveFromPath) {
+		$local:moveFromPath = $local:moveFromPath + '\*.mp4'
+		Write-Host "  └「$($local:moveFromPath)」を移動します"
 		try {
-			Move-Item $moveFromPath -Destination $moveToPath -Force
+			Move-Item $local:moveFromPath -Destination $local:moveToPath -Force
 		} catch {}
 	}
 }
@@ -149,34 +149,34 @@ Write-Progress `
 	-PercentComplete $($( 2 / 2 ) * 100) `
 	-Status '空フォルダを削除'
 
-$allSubDirs = @((Get-ChildItem -Path $downloadBaseDir -Recurse).Where({ $_.PSIsContainer })).FullName | `
+$local:allSubDirs = @((Get-ChildItem -Path $global:downloadBaseDir -Recurse).Where({ $_.PSIsContainer })).FullName | `
 		Sort-Object -Descending
 
-$subDirNum = 0						#サブディレクトリの番号
-if ($allSubDirs -is [array]) {
-	$subDirTotal = $allSubDirs.Length	#サブディレクトリの合計数
-} else { $subDirTotal = 1 }
+$local:subDirNum = 0						#サブディレクトリの番号
+if ($local:allSubDirs -is [array]) {
+	$local:subDirTotal = $local:allSubDirs.Length	#サブディレクトリの合計数
+} else { $local:subDirTotal = 1 }
 
-foreach ($subDir in $allSubDirs) {
-	$subDirNum = $subDirNum + 1
+foreach ($local:subDir in $local:allSubDirs) {
+	$local:subDirNum = $local:subDirNum + 1
 	Write-Progress `
 		-Id 2 `
 		-ParentId 1 `
-		-Activity "$($subDirNum)/$($subDirTotal)" `
-		-PercentComplete $($( $subDirNum / $subDirTotal ) * 100) `
-		-Status "$($subDir)"
+		-Activity "$($local:subDirNum)/$($local:subDirTotal)" `
+		-PercentComplete $($( $local:subDirNum / $local:subDirTotal ) * 100) `
+		-Status $local:subDir
 
 	Write-Host '----------------------------------------------------------------------'
-	Write-Host "$($subDir)を処理中"
-	if (@((Get-ChildItem -LiteralPath $subDir -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
+	Write-Host "$($local:subDir)を処理中"
+	if (@((Get-ChildItem -LiteralPath $local:subDir -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
 		try {
-			Write-Host "  └「$($subDir)」を削除します"
+			Write-Host "  └「$($local:subDir)」を削除します"
 			Remove-Item `
-				-LiteralPath $subDir `
+				-LiteralPath $local:subDir `
 				-Recurse `
 				-Force `
 				-ErrorAction SilentlyContinue
-		} catch { Write-Host "空フォルダの削除に失敗しました: $subDir" -ForegroundColor Green }
+		} catch { Write-Host "空フォルダの削除に失敗しました: $local:subDir" -ForegroundColor Green }
 	}
 }
 

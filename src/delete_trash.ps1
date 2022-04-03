@@ -25,33 +25,33 @@
 Set-StrictMode -Version Latest
 try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$currentDir = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+		$global:currentDir = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
 	} else {
-		$currentDir = Convert-Path .
+		$global:currentDir = Convert-Path .
 	}
-	Set-Location $currentDir
-	$confDir = $(Join-Path $currentDir '..\conf')
-	$sysFile = $(Join-Path $confDir 'system_setting.conf')
-	$confFile = $(Join-Path $confDir 'user_setting.conf')
-	$devDir = $(Join-Path $currentDir '..\dev')
-	$devConfFile = $(Join-Path $devDir 'dev_setting.conf')
-	$devFunctionFile = $(Join-Path $devDir 'dev_funcitons.ps1')
+	Set-Location $global:currentDir
+	$global:confDir = $(Join-Path $global:currentDir '..\conf')
+	$global:sysFile = $(Join-Path $global:confDir 'system_setting.conf')
+	$global:confFile = $(Join-Path $global:confDir 'user_setting.conf')
+	$global:devDir = $(Join-Path $global:currentDir '..\dev')
+	$global:devConfFile = $(Join-Path $global:devDir 'dev_setting.conf')
+	$global:devFunctionFile = $(Join-Path $global:devDir 'dev_funcitons.ps1')
 
 	#----------------------------------------------------------------------
 	#外部設定ファイル読み込み
-	Get-Content $sysFile -Encoding UTF8 | `
+	Get-Content $global:sysFile -Encoding UTF8 | `
 			Where-Object { $_ -notmatch '^\s*$' } | `
 			Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
 			Invoke-Expression
-	Get-Content $confFile -Encoding UTF8 | `
+	Get-Content $global:confFile -Encoding UTF8 | `
 			Where-Object { $_ -notmatch '^\s*$' } | `
 			Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
 			Invoke-Expression
 
 	#----------------------------------------------------------------------
 	#開発環境用に設定上書き
-	if (Test-Path $devConfFile) {
-		Get-Content $devConfFile -Encoding UTF8 | `
+	if (Test-Path $global:devConfFile) {
+		Get-Content $global:devConfFile -Encoding UTF8 | `
 				Where-Object { $_ -notmatch '^\s*$' } | `
 				Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
 				Invoke-Expression
@@ -60,18 +60,18 @@ try {
 	#----------------------------------------------------------------------
 	#外部関数ファイルの読み込み
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		. '.\common_functions_5.ps1'
-		. '.\tver_functions_5.ps1'
-		if (Test-Path $devFunctionFile) { 
+		. $(Convert-Path (Join-Path $currentDir '.\common_functions_5.ps1'))
+		. $(Convert-Path (Join-Path $currentDir '.\tver_functions_5.ps1'))
+		if (Test-Path $global:devFunctionFile) { 
 			Write-Host '========================================================' -ForegroundColor Green
 			Write-Host '  PowerShell Coreではありません                         ' -ForegroundColor Green
 			Write-Host '========================================================' -ForegroundColor Green
 		}
 	} else {
-		. '.\common_functions.ps1'
-		. '.\tver_functions.ps1'
-		if (Test-Path $devFunctionFile) { 
-			. $devFunctionFile 
+		. $(Convert-Path (Join-Path $currentDir '.\common_functions.ps1'))
+		. $(Convert-Path (Join-Path $currentDir '.\tver_functions.ps1'))
+		if (Test-Path $global:devFunctionFile) { 
+			. $global:devFunctionFile 
 			Write-Host '========================================================' -ForegroundColor Green
 			Write-Host '  開発ファイルを読み込みました                          ' -ForegroundColor Green
 			Write-Host '========================================================' -ForegroundColor Green
@@ -97,18 +97,23 @@ Write-Progress `
 	-ParentId 1 `
 	-Activity '1/3' `
 	-PercentComplete $($( 1 / 3 ) * 100) `
-	-Status "$($downloadBaseDir)"
-deleteTrashFiles $downloadBaseDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*'
+	-Status $global:downloadBaseDir
+deleteTrashFiles $global:downloadBaseDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*'
 Write-Progress `
 	-Id 2 `
 	-ParentId 1 `
 	-Activity '2/3' `
 	-PercentComplete $($( 2 / 3 ) * 100) `
-	-Status "$($downloadWorkDir)"
-deleteTrashFiles $downloadWorkDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.mp4'
-Get-ChildItem -Path $downloadWorkDir `
+	-Status $global:downloadWorkDir
+deleteTrashFiles $global:downloadWorkDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.mp4'
+Get-ChildItem -Path $global:downloadWorkDir `
 	-Recurse `
 	-Filter 'ffmpeg_error_*.log' | `
+		Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-0.5) } | `
+		Remove-Item -Force
+Get-ChildItem -Path $currentDir `
+	-Recurse `
+	-Filter 'brightcovenew_ref_*.lock' | `
 		Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-0.5) } | `
 		Remove-Item -Force
 Write-Progress `
@@ -116,8 +121,8 @@ Write-Progress `
 	-ParentId 1 `
 	-Activity '3/3' `
 	-PercentComplete $($( 3 / 3 ) * 100) `
-	-Status "$($saveBaseDir)"
-deleteTrashFiles $saveBaseDir '*.ytdl,*.jpg,*.vtt,*.temp.mp4,*.part,*.mp4.part-Frag*'
+	-Status $global:saveBaseDir
+deleteTrashFiles $global:saveBaseDir '*.ytdl,*.jpg,*.vtt,*.temp.mp4,*.part,*.mp4.part-Frag*'
 
 #======================================================================
 #2/3 無視リストに入っている番組は削除
@@ -131,39 +136,41 @@ Write-Progress `
 	-Status '削除対象のビデオを削除'
 
 #ダウンロード対象外ビデオ番組リストの読み込み
-$ignoreTitles = (Get-Content $ignoreFilePath -Encoding UTF8 | `
+$local:ignoreTitles = (Get-Content $global:ignoreFilePath -Encoding UTF8 | `
 			Where-Object { !($_ -match '^\s*$') } | `
 			Where-Object { !($_ -match '^;.*$') }) `
 	-as [string[]]
 
-$ignoreNum = 0						#無視リスト内の番号
-if ($ignoreTitles -is [array]) {
-	$ignoreTotal = $ignoreTitles.Length	#無視リスト内のエントリ合計数
-} else { $ignoreTotal = 1 }
+$local:ignoreNum = 0						#無視リスト内の番号
+if ($local:ignoreTitles -is [array]) {
+	$local:ignoreTotal = $local:ignoreTitles.Length	#無視リスト内のエントリ合計数
+} else { $local:ignoreTotal = 1 }
 
-foreach ($ignoreTitle in $ignoreTitles) {
-	$ignoreNum = $ignoreNum + 1
+foreach ($local:ignoreTitle in $local:ignoreTitles) {
+	$local:ignoreNum = $local:ignoreNum + 1
 	Write-Progress `
 		-Id 2 `
 		-ParentId 1 `
-		-Activity "$($ignoreNum)/$($ignoreTotal)" `
-		-PercentComplete $($( $ignoreNum / $ignoreTotal ) * 100) `
-		-Status "$($ignoreTitle)"
+		-Activity "$($local:ignoreNum)/$($local:ignoreTotal)" `
+		-PercentComplete $($( $local:ignoreNum / $local:ignoreTotal ) * 100) `
+		-Status $local:ignoreTitle
 
 	Write-Host '----------------------------------------------------------------------'
-	Write-Host "$($ignoreTitle)を処理中"
+	Write-Host "$($local:ignoreTitle)を処理中"
 	try {
-		$delTargets = Get-ChildItem `
-			-LiteralPath $downloadBaseDir `
+		$local:delTargets = Get-ChildItem `
+			-LiteralPath $global:downloadBaseDir `
 			-Directory `
 			-Name `
-			-Filter "*$ignoreTitle*"
-		if ($null -ne $delTargets) {
-			foreach ($delTarget in $delTargets) {
-				if (Test-Path $(Join-Path $downloadBaseDir $delTarget) -PathType Container) {
-					Write-Host "  └「$(Join-Path $downloadBaseDir $delTarget)」を削除します"
+			-Filter '"*' + $local:ignoreTitle + '*"'
+	} catch {}
+	try {
+		if ($null -ne $local:delTargets) {
+			foreach ($local:delTarget in $local:delTargets) {
+				if (Test-Path $(Join-Path $global:downloadBaseDir $local:delTarget) -PathType Container) {
+					Write-Host "  └「$(Join-Path $global:downloadBaseDir $local:delTarget)」を削除します"
 					Remove-Item `
-						-LiteralPath $(Join-Path $downloadBaseDir $delTarget) `
+						-LiteralPath $(Join-Path $global:downloadBaseDir $local:delTarget) `
 						-Recurse `
 						-Force `
 						-ErrorAction SilentlyContinue
@@ -186,36 +193,36 @@ Write-Progress `
 	-PercentComplete $($( 3 / 3 ) * 100) `
 	-Status '空フォルダを削除'
 
-$allSubDirs = @((Get-ChildItem -LiteralPath $downloadBaseDir -Recurse).`
+$local:allSubDirs = @((Get-ChildItem -LiteralPath $global:downloadBaseDir -Recurse).`
 		Where({ $_.PSIsContainer })).FullName | `
 		Sort-Object -Descending
 
-$subDirNum = 0						#サブディレクトリの番号
-if ($allSubDirs -is [array]) {
-	$subDirTotal = $allSubDirs.Length	#サブディレクトリの合計数
-} else { $subDirTotal = 1 }
+$local:subDirNum = 0						#サブディレクトリの番号
+if ($local:allSubDirs -is [array]) {
+	$local:subDirTotal = $local:allSubDirs.Length	#サブディレクトリの合計数
+} else { $local:subDirTotal = 1 }
 
-foreach ($subDir in $allSubDirs) {
-	$subDirNum = $subDirNum + 1
+foreach ($local:subDir in $local:allSubDirs) {
+	$local:subDirNum = $local:subDirNum + 1
 	Write-Progress `
 		-Id 2 `
 		-ParentId 1 `
-		-Activity "$($subDirNum)/$($subDirTotal)" `
-		-PercentComplete $($( $subDirNum / $subDirTotal ) * 100) `
-		-Status "$($subDir)"
+		-Activity "$($local:subDirNum)/$($local:subDirTotal)" `
+		-PercentComplete $($( $local:subDirNum / $local:subDirTotal ) * 100) `
+		-Status $local:subDir
 
 	Write-Host '----------------------------------------------------------------------'
-	Write-Host "$($subDir)を処理中"
-	if (@((Get-ChildItem -LiteralPath $subDir -Recurse).`
+	Write-Host "$($local:subDir)を処理中"
+	if (@((Get-ChildItem -LiteralPath $local:subDir -Recurse).`
 				Where({ ! $_.PSIsContainer })).Count -eq 0) {
 		try {
-			Write-Host "  └「$($subDir)」を削除します"
+			Write-Host "  └「$($local:subDir)」を削除します"
 			Remove-Item `
-				-LiteralPath $subDir `
+				-LiteralPath $local:subDir `
 				-Recurse `
 				-Force `
 				-ErrorAction SilentlyContinue
-		} catch { Write-Host "空フォルダの削除に失敗しました: $subDir" -ForegroundColor Green }
+		} catch { Write-Host "空フォルダの削除に失敗しました: $local:subDir" -ForegroundColor Green }
 	}
 }
 
