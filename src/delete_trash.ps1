@@ -107,7 +107,7 @@ try {
 	| Remove-Item -Force -ErrorAction SilentlyContinue
 } catch {}
 try {
-	Get-ChildItem -Path $currentDir -Recurse -Filter 'brightcovenew_ref_*.lock' `
+	Get-ChildItem -Path $currentDir -Recurse -Filter 'brightcovenew_*.lock' `
 	| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-0.5) } `
 	| Remove-Item -Force -ErrorAction SilentlyContinue
 } catch {}
