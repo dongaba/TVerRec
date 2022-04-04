@@ -67,9 +67,8 @@ function checkRequiredFile {
 function checkGeoIP {
 	try {
 		if ((Invoke-RestMethod -Uri 'http://ip-api.com/json/').countryCode -ne 'JP') {
-			Invoke-RestMethod -Uri ( `
-					'http://ip-api.com/json/' `
-					+ (Invoke-WebRequest -Uri 'http://ifconfig.me/ip').Content
+			Invoke-RestMethod -Uri ( 
+				'http://ip-api.com/json/' + (Invoke-WebRequest -Uri 'http://ifconfig.me/ip').Content
 			)
 			Write-Host '日本のIPアドレスからしか接続できません。VPN接続してください。' -ForegroundColor Green
 			exit 1
@@ -96,9 +95,9 @@ function purgeDB {
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
-		$local:purgedList = ((Import-Csv $global:listFilePath -Encoding UTF8).`
-				Where({ $_.downloadDate -gt $(Get-Date).AddDays(-30) }))
-		$local:purgedList | Export-Csv $global:listFilePath -NoTypeInformation -Encoding UTF8
+		$local:purgedList = ((Import-Csv $global:listFilePath -Encoding UTF8).Where({ $_.downloadDate -gt $(Get-Date).AddDays(-30) }))
+		$local:purgedList `
+		| Export-Csv $global:listFilePath -NoTypeInformation -Encoding UTF8
 	} catch { Write-Host 'リストのクリーンアップに失敗しました' -ForegroundColor Green
 	} finally { $null = fileUnlock ($global:lockFilePath) }
 }
@@ -119,14 +118,13 @@ function uniqueDB {
 
 		#ファイル操作
 		#無視されたもの
-		$local:ignoredList = ((Import-Csv $global:listFilePath -Encoding UTF8).`
-				Where({ $_.videoPath -eq '-- IGNORED --' }))
+		$local:ignoredList = ((Import-Csv $global:listFilePath -Encoding UTF8).Where({ $_.videoPath -eq '-- IGNORED --' }))
 
 		#無視されなかったものの重複削除。ファイル名で1つしかないもの残す
-		$local:processedList = (Import-Csv $global:listFilePath -Encoding UTF8 | `
-					Group-Object -Property 'videoPath' | `
-					Where-Object count -EQ 1 | `
-					Select-Object -ExpandProperty group)
+		$local:processedList = (Import-Csv $global:listFilePath -Encoding UTF8 `
+			| Group-Object -Property 'videoPath' `
+			| Where-Object count -EQ 1 `
+			| Select-Object -ExpandProperty group)
 
 		#無視されたものと無視されなかったものを結合し出力
 		if ($null -eq $local:processedList -and $null -eq $local:ignoredList) { 
@@ -138,9 +136,9 @@ function uniqueDB {
 		} else { $local:mergedList = $local:processedList + $local:ignoredList }
 		$local:fileStatus = checkFileStatus $global:listFilePath
 		Write-Host "Status of $global:listFilePath is $local:fileStatus"
-		$mergedList | `
-				Sort-Object -Property downloadDate | `
-				Export-Csv $global:listFilePath -NoTypeInformation -Encoding UTF8
+		$mergedList `
+		| Sort-Object -Property downloadDate `
+		| Export-Csv $global:listFilePath -NoTypeInformation -Encoding UTF8
 
 	} catch { Write-Host 'リストの更新に失敗しました' -ForegroundColor Green
 	} finally { $null = fileUnlock ($global:lockFilePath) }
@@ -189,7 +187,8 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 				Start-Sleep -Seconds 1
 			}
 			#ファイル操作
-			$local:videoLists | Export-Csv $global:listFilePath -NoTypeInformation -Encoding UTF8
+			$local:videoLists `
+			| Export-Csv $global:listFilePath -NoTypeInformation -Encoding UTF8
 		} catch {
 			Write-Host "録画リストを更新できませんでした: $local:videoFileRelativePath" -ForegroundColor Green
 			return
@@ -225,10 +224,10 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 	#ffmpegが正常終了しても、大量エラーが出ることがあるのでエラーをカウント
 	try {
 		if (Test-Path $global:ffpmegErrorLogPath) {
-			$local:errorCount = (Get-Content -LiteralPath $global:ffpmegErrorLogPath | `
-						Measure-Object -Line).Lines
-			Get-Content -LiteralPath $global:ffpmegErrorLogPath -Encoding UTF8 |`
-					ForEach-Object { Write-Debug "$_" }
+			$local:errorCount = (Get-Content -LiteralPath $global:ffpmegErrorLogPath `
+				| Measure-Object -Line).Lines
+			Get-Content -LiteralPath $global:ffpmegErrorLogPath -Encoding UTF8 `
+			| ForEach-Object { Write-Debug "$_" }
 		}
 	} catch { Write-Host 'ffmpegエラーの数をカウントできませんでした' -ForegroundColor Green }
 
@@ -237,8 +236,7 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 		if (Test-Path $global:ffpmegErrorLogPath) {
 			Remove-Item `
 				-LiteralPath $global:ffpmegErrorLogPath `
-				-Force `
-				-ErrorAction SilentlyContinue
+				-Force -ErrorAction SilentlyContinue
 		}
 	} catch {}
 
@@ -258,9 +256,8 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 			(Select-String `
 				-Pattern $local:videoFileRelativePath `
 				-LiteralPath $global:listFilePath `
-				-Encoding UTF8 `
-				-SimpleMatch -NotMatch).Line | `
-					Out-File $global:listFilePath -Encoding UTF8
+				-Encoding UTF8 -SimpleMatch -NotMatch).Line `
+			| Out-File $global:listFilePath -Encoding UTF8
 		} catch { Write-Host "録画リストの更新に失敗しました: $local:videoFileRelativePath" -ForegroundColor Green
 		} finally { $null = fileUnlock ($global:lockFilePath) }
 
@@ -268,8 +265,7 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 		try {
 			Remove-Item `
 				-LiteralPath $local:videoFilePath `
-				-Force `
-				-ErrorAction SilentlyContinue
+				-Force -ErrorAction SilentlyContinue
 		} catch { Write-Host "ファイル削除できませんでした: $local:videoFilePath" -ForegroundColor Green }
 	} else {
 		#終了コードが"0"のときは録画リストにチェック済みフラグを立てる
@@ -283,7 +279,8 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 			$local:videoLists = Import-Csv $global:listFilePath -Encoding UTF8
 			#該当のビデオのチェックステータスを"1"に
 			$(($local:videoLists).Where({ $_.videoPath -eq $local:videoFileRelativePath })).videoValidated = '1'
-			$local:videoLists | Export-Csv $global:listFilePath -NoTypeInformation -Encoding UTF8
+			$local:videoLists `
+			| Export-Csv $global:listFilePath -NoTypeInformation -Encoding UTF8
 		} catch { Write-Host "録画リストを更新できませんでした: $local:videoFileRelativePath" -ForegroundColor Green
 		} finally { $null = fileUnlock ($global:lockFilePath) }
 	}
@@ -556,19 +553,14 @@ function deleteTrashFiles ($local:Path, $local:Conditions) {
 		Write-Host "$($local:Path)を処理中"
 		$local:delTargets = @()
 		foreach ($local:filter in $local:Conditions.Split(',').trim()) {
-			$local:delTargets += Get-ChildItem `
-				-LiteralPath $local:Path `
-				-Recurse `
-				-File `
-				-Filter $local:filter
+			$local:delTargets += Get-ChildItem -LiteralPath $local:Path `
+				-Recurse -File -Filter $local:filter
 		}
 		if ($null -ne $local:delTargets) {
 			foreach ($local:delTarget in $local:delTargets) {
 				Write-Host "$($local:delTarget.FullName)を削除します"
-				Remove-Item `
-					-LiteralPath $local:delTarget.FullName `
-					-Force `
-					-ErrorAction SilentlyContinue
+				Remove-Item -LiteralPath $local:delTarget.FullName `
+					-Force -ErrorAction SilentlyContinue
 			}
 		} else {
 			Write-Host '削除対象はありませんでした'

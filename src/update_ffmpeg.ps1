@@ -93,15 +93,12 @@ if ($latestVersion -eq $ffmpegCurrentVersion) {
 			try {
 				Remove-Item `
 					-LiteralPath $extractedDir `
-					-Force `
-					-Recurse `
-					-ErrorAction SilentlyContinue
+					-Force -Recurse -ErrorAction SilentlyContinue
 			} catch { Write-Host '中間フォルダの削除に失敗しました' -ForegroundColor Green }
 			try {
 				Remove-Item `
 					-LiteralPath $ffmpegZipFileLocation `
-					-Force `
-					-ErrorAction SilentlyContinue
+					-Force -ErrorAction SilentlyContinue
 			} catch { Write-Host '中間ファイルの削除に失敗しました' -ForegroundColor Green }
 
 		} catch { Write-Host 'ffmpegの更新に失敗しました' -ForegroundColor Green }

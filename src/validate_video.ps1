@@ -39,22 +39,22 @@ try {
 
 	#----------------------------------------------------------------------
 	#外部設定ファイル読み込み
-	Get-Content $global:sysFile -Encoding UTF8 | `
-			Where-Object { $_ -notmatch '^\s*$' } | `
-			Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
-			Invoke-Expression
-	Get-Content $global:confFile -Encoding UTF8 | `
-			Where-Object { $_ -notmatch '^\s*$' } | `
-			Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
-			Invoke-Expression
+	Get-Content $global:sysFile -Encoding UTF8 `
+	| Where-Object { $_ -notmatch '^\s*$' } `
+	| Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } `
+	| Invoke-Expression
+	Get-Content $global:confFile -Encoding UTF8 `
+	| Where-Object { $_ -notmatch '^\s*$' } `
+	| Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } `
+	| Invoke-Expression
 
 	#----------------------------------------------------------------------
 	#開発環境用に設定上書き
 	if (Test-Path $global:devConfFile) {
-		Get-Content $global:devConfFile -Encoding UTF8 | `
-				Where-Object { $_ -notmatch '^\s*$' } | `
-				Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
-				Invoke-Expression
+		Get-Content $global:devConfFile -Encoding UTF8 `
+		| Where-Object { $_ -notmatch '^\s*$' } `
+		| Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } `
+		| Invoke-Expression
 	}
 
 	#----------------------------------------------------------------------
@@ -108,10 +108,10 @@ try {
 		Start-Sleep -Seconds 1
 	}
 	#ファイル操作
-	$local:videoLists = Import-Csv $global:listFilePath -Encoding UTF8 | `
-			Where-Object { $_.videoValidated -eq '0' } | `
-			Where-Object { $_.videoPath -ne '-- IGNORED --' } | `
-			Select-Object 'videoPath'
+	$local:videoLists = Import-Csv $global:listFilePath -Encoding UTF8 `
+	| Where-Object { $_.videoValidated -eq '0' } `
+	| Where-Object { $_.videoPath -ne '-- IGNORED --' } `
+	| Select-Object 'videoPath'
 } catch { Write-Host 'リストの読み込みに失敗しました' -ForegroundColor Green
 } finally { $null = fileUnlock ($global:lockFilePath) }
 
@@ -206,6 +206,7 @@ try {
 	foreach ($local:uncheckedVido in $(($local:videoLists).Where({ $_.videoValidated -eq 2 }))) {
 		$local:uncheckedVido.videoValidated = '0'
 	}
-	$local:videoLists | Export-Csv $global:listFilePath -NoTypeInformation -Encoding UTF8
+	$local:videoLists `
+	| Export-Csv $global:listFilePath -NoTypeInformation -Encoding UTF8
 } catch { Write-Host 'リストの更新に失敗しました' -ForegroundColor Green
 } finally { $null = fileUnlock ($global:lockFilePath) }

@@ -110,8 +110,8 @@ function getVideoInfo ($local:videoLink) {
 	#Series Name
 	#	$response.result.series.content.title
 	#	$response.result.episode.content.seriesTitle
-	$script:videoSeries = $(getSpecialCharacterReplaced ( `
-				getNarrowChars ($local:response.result.series.content.title) `
+	$script:videoSeries = $(getSpecialCharacterReplaced ( 
+			getNarrowChars ($local:response.result.series.content.title) 
 		)).trim()
 	$script:videoSeriesID = $local:response.result.series.content.id
 	$script:videoSeriesPageURL = 'https://tver.jp/series/' + $local:response.result.series.content.id
@@ -120,8 +120,8 @@ function getVideoInfo ($local:videoLink) {
 	#シーズン
 	#Season Name
 	#	$response.result.season.content.title
-	$script:videoSeason = $(getSpecialCharacterReplaced ( `
-				getNarrowChars ($local:response.result.season.content.title) `
+	$script:videoSeason = $(getSpecialCharacterReplaced ( 
+			getNarrowChars ($local:response.result.season.content.title) 
 		)).trim()
 	$script:videoSeasonID = $local:response.result.season.content.id
 
@@ -129,8 +129,8 @@ function getVideoInfo ($local:videoLink) {
 	#エピソード
 	#Episode Name
 	#$response.result.episode.content.title
-	$script:videoTitle = $(getSpecialCharacterReplaced ( `
-				getNarrowChars ($local:response.result.episode.content.title) `
+	$script:videoTitle = $(getSpecialCharacterReplaced ( 
+			getNarrowChars ($local:response.result.episode.content.title) 
 		)).trim()
 	$script:videoEpisodeID = $local:response.result.episode.content.id
 
@@ -138,27 +138,23 @@ function getVideoInfo ($local:videoLink) {
 	#放送局
 	#Media
 	#	$response.result.episode.content.broadcasterName
-	$script:mediaName = $(getSpecialCharacterReplaced ( `
-				getNarrowChars ($local:response.result.episode.content.broadcasterName) `
+	$script:mediaName = $(getSpecialCharacterReplaced ( 
+			getNarrowChars ($local:response.result.episode.content.broadcasterName) 
 		)).trim()
-	$script:providerName = $(getSpecialCharacterReplaced ( `
-				getNarrowChars ($local:response.result.episode.content.productionProviderName) `
+	$script:providerName = $(getSpecialCharacterReplaced ( 
+			getNarrowChars ($local:response.result.episode.content.productionProviderName) 
 		)).trim()
 
 	#----------------------------------------------------------------------
 	#番組説明
-	$script:descriptionText = $(getNarrowChars ($local:videoInfo.description). `
-			Replace('&amp;', '&')).trim()
+	$script:descriptionText = $(getNarrowChars ($local:videoInfo.description).Replace('&amp;', '&')).trim()
 
 	#----------------------------------------------------------------------
 	#放送日
 	#BroadcastDate
 	#	$response.result.episode.content.broadcastDateLabel
 	$local:broadcastYMD = $null
-	$script:broadcastDate = $(getNarrowChars ($local:videoInfo.broadcastDateLabel).`
-			Replace('ほか', '').`
-			Replace('放送分', '放送')).`
-		trim()
+	$script:broadcastDate = $(getNarrowChars ($local:videoInfo.broadcastDateLabel).Replace('ほか', '').Replace('放送分', '放送')).trim()
 	if ($script:broadcastDate -match '([0-9]+)(月)([0-9]+)(日)(.+?)(放送)') {
 		#当年だと仮定して放送日を抽出
 		$local:broadcastYMD = [DateTime]::ParseExact(
@@ -203,9 +199,9 @@ function saveGenrePage {
 function getIgnoreList {
 	#ダウンロード対象外番組リストの読み込み
 	try {
-		$local:ignoreTitles = (Get-Content $global:ignoreFilePath -Encoding UTF8 | `
-					Where-Object { !($_ -match '^\s*$') } | `
-					Where-Object { !($_ -match '^;.*$') }) `
+		$local:ignoreTitles = (Get-Content $global:ignoreFilePath -Encoding UTF8 `
+			| Where-Object { !($_ -match '^\s*$') } `
+			| Where-Object { !($_ -match '^;.*$') }) `
 			-as [string[]]
 	} catch { Write-Host 'ダウンロード対象外リストの読み込みに失敗しました' -ForegroundColor Green ; exit 1 }
 	return $local:ignoreTitles
@@ -216,10 +212,10 @@ function getIgnoreList {
 #----------------------------------------------------------------------
 function loadKeywordList {
 	try {
-		$keywordNames = (Get-Content $global:keywordFilePath -Encoding UTF8 | `
-					Where-Object { !($_ -match '^\s*$') } | `
-					Where-Object { !($_ -match '^#.*$') } | `
-					Where-Object { !($_ -match '^;.*$') }) `
+		$keywordNames = (Get-Content $global:keywordFilePath -Encoding UTF8 `
+			| Where-Object { !($_ -match '^\s*$') } `
+			| Where-Object { !($_ -match '^#.*$') } `
+			| Where-Object { !($_ -match '^;.*$') }) `
 			-as [string[]]
 	} catch { Write-Host 'ダウンロード対象ジャンルリストの読み込みに失敗しました' -ForegroundColor Green ; exit 1 }
 	return $keywordNames
@@ -235,13 +231,15 @@ function getVideoLinksFromKeyword ($keywordName) {
 		catch { Write-Host 'TVerから情報を取得できませんでした。スキップします'; continue }
 
 		try {
-			$videoLinks = ($keywordNamePage.Links | Where-Object { `
+			$videoLinks = ($keywordNamePage.Links `
+				| Where-Object { `
 					(href -Like '*lp*') `
 						-or (href -Like '*corner*') `
 						-or (href -Like '*series*') `
 						-or (href -Like '*episode*') `
 						-or (href -Like '*feature*')`
-				} | Select-Object href).href
+				} `
+				| Select-Object href).href
 		} catch {}
 
 		#saveGenrePage						#デバッグ用ジャンルページの保存
@@ -277,8 +275,8 @@ function downloadTVerVideo ($local:keywordName, $local:videoPageURL, $local:vide
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
-		$local:listMatch = Import-Csv $global:listFilePath -Encoding UTF8 | `
-				Where-Object { $_.videoPage -eq $local:videoPageURL }
+		$local:listMatch = Import-Csv $global:listFilePath -Encoding UTF8 `
+		| Where-Object { $_.videoPage -eq $local:videoPageURL }
 	} catch { Write-Host 'リストを読み書きできなかったのでスキップしました' -ForegroundColor Green ; continue 
 	} finally { $null = fileUnlock ($global:lockFilePath) }
 
@@ -322,9 +320,9 @@ function downloadTVerVideo ($local:keywordName, $local:videoPageURL, $local:vide
 				Start-Sleep -Seconds 1
 			}
 			#ファイル操作
-			$local:listMatch = Import-Csv $global:listFilePath -Encoding UTF8 | `
-					Where-Object { $_.videoPath -eq $script:videoFilePath } | `
-					Where-Object { $_.videoValidated -eq '1' }
+			$local:listMatch = Import-Csv $global:listFilePath -Encoding UTF8 `
+			| Where-Object { $_.videoPath -eq $script:videoFilePath } `
+			| Where-Object { $_.videoValidated -eq '1' }
 		} catch { Write-Host 'リストを読み書きできませんでした。スキップします' -ForegroundColor Green ; continue 
 		} finally { $null = fileUnlock ($global:lockFilePath) }
 

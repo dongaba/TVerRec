@@ -39,22 +39,22 @@ try {
 
 	#----------------------------------------------------------------------
 	#外部設定ファイル読み込み
-	Get-Content $global:sysFile -Encoding UTF8 | `
-			Where-Object { $_ -notmatch '^\s*$' } | `
-			Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
-			Invoke-Expression
-	Get-Content $global:confFile -Encoding UTF8 | `
-			Where-Object { $_ -notmatch '^\s*$' } | `
-			Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
-			Invoke-Expression
+	Get-Content $global:sysFile -Encoding UTF8 `
+	| Where-Object { $_ -notmatch '^\s*$' } `
+	| Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } `
+	| Invoke-Expression
+	Get-Content $global:confFile -Encoding UTF8 `
+	| Where-Object { $_ -notmatch '^\s*$' } `
+	| Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } `
+	| Invoke-Expression
 
 	#----------------------------------------------------------------------
 	#開発環境用に設定上書き
 	if (Test-Path $global:devConfFile) {
-		Get-Content $global:devConfFile -Encoding UTF8 | `
-				Where-Object { $_ -notmatch '^\s*$' } | `
-				Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
-				Invoke-Expression
+		Get-Content $global:devConfFile -Encoding UTF8 `
+		| Where-Object { $_ -notmatch '^\s*$' } `
+		| Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } `
+		| Invoke-Expression
 	}
 
 	#----------------------------------------------------------------------
@@ -100,9 +100,9 @@ Write-Progress `
 	-PercentComplete $($( 1 / 4 ) * 100) `
 	-Status 'フォルダ一覧を作成中'
 
-$local:moveToPaths = Get-ChildItem $global:saveBaseDir -Recurse | `
-		Where-Object { $_.PSisContainer } | `
-		Sort-Object 
+$local:moveToPaths = Get-ChildItem $global:saveBaseDir -Recurse `
+| Where-Object { $_.PSisContainer } `
+| Sort-Object 
 
 $local:moveToPathNum = 0						#移動先パス番号
 if ($local:moveToPaths -is [array]) {
@@ -149,8 +149,8 @@ Write-Progress `
 	-PercentComplete $($( 2 / 2 ) * 100) `
 	-Status '空フォルダを削除'
 
-$local:allSubDirs = @((Get-ChildItem -Path $global:downloadBaseDir -Recurse).Where({ $_.PSIsContainer })).FullName | `
-		Sort-Object -Descending
+$local:allSubDirs = @((Get-ChildItem -Path $global:downloadBaseDir -Recurse).Where({ $_.PSIsContainer })).FullName `
+| Sort-Object -Descending
 
 $local:subDirNum = 0						#サブディレクトリの番号
 if ($local:allSubDirs -is [array]) {
@@ -173,9 +173,7 @@ foreach ($local:subDir in $local:allSubDirs) {
 			Write-Host "  └「$($local:subDir)」を削除します"
 			Remove-Item `
 				-LiteralPath $local:subDir `
-				-Recurse `
-				-Force `
-				-ErrorAction SilentlyContinue
+				-Recurse -Force -ErrorAction SilentlyContinue
 		} catch { Write-Host "空フォルダの削除に失敗しました: $local:subDir" -ForegroundColor Green }
 	}
 }

@@ -40,22 +40,22 @@ try {
 
 	#----------------------------------------------------------------------
 	#外部設定ファイル読み込み
-	Get-Content $global:sysFile -Encoding UTF8 | `
-			Where-Object { $_ -notmatch '^\s*$' } | `
-			Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
-			Invoke-Expression
-	Get-Content $global:confFile -Encoding UTF8 | `
-			Where-Object { $_ -notmatch '^\s*$' } | `
-			Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
-			Invoke-Expression
+	Get-Content $global:sysFile -Encoding UTF8 `
+	| Where-Object { $_ -notmatch '^\s*$' } `
+	| Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } `
+	| Invoke-Expression
+	Get-Content $global:confFile -Encoding UTF8 `
+	| Where-Object { $_ -notmatch '^\s*$' } `
+	| Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } `
+	| Invoke-Expression
 
 	#----------------------------------------------------------------------
 	#開発環境用に設定上書き
 	if (Test-Path $global:devConfFile) {
-		Get-Content $global:devConfFile -Encoding UTF8 | `
-				Where-Object { $_ -notmatch '^\s*$' } | `
-				Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } | `
-				Invoke-Expression
+		Get-Content $global:devConfFile -Encoding UTF8 `
+		| Where-Object { $_ -notmatch '^\s*$' } `
+		| Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } `
+		| Invoke-Expression
 	}
 
 	#----------------------------------------------------------------------
