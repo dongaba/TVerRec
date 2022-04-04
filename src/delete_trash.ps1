@@ -87,20 +87,6 @@ try {
 Write-Host '----------------------------------------------------------------------'
 Write-Host 'ダウンロードが中断した際にできたゴミファイルを削除します'
 Write-Host '----------------------------------------------------------------------'
-Write-Progress -Id 1 `
-	-Activity '処理 1/3' `
-	-PercentComplete $($( 1 / 3 ) * 100) `
-	-Status 'ゴミファイルを削除'
-Write-Progress -Id 2 -ParentId 1 `
-	-Activity '1/3' `
-	-PercentComplete $($( 1 / 3 ) * 100) `
-	-Status $global:downloadBaseDir
-deleteTrashFiles $global:downloadBaseDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*'
-Write-Progress -Id 2 -ParentId 1 `
-	-Activity '2/3' `
-	-PercentComplete $($( 2 / 3 ) * 100) `
-	-Status $global:downloadWorkDir
-deleteTrashFiles $global:downloadWorkDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.mp4'
 try {
 	Get-ChildItem -Path $global:downloadWorkDir -Recurse -Filter 'ffmpeg_error_*.log' `
 	| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-0.5) } `
@@ -111,6 +97,20 @@ try {
 	| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-0.5) } `
 	| Remove-Item -Force -ErrorAction SilentlyContinue
 } catch {}
+Write-Progress -Id 1 `
+	-Activity '処理 1/3' `
+	-PercentComplete $($( 1 / 3 ) * 100) `
+	-Status 'ゴミファイルを削除'
+Write-Progress -Id 2 -ParentId 1 `
+	-Activity '1/3' `
+	-PercentComplete $($( 1 / 3 ) * 100) `
+	-Status $global:downloadBaseDir
+deleteTrashFiles $global:downloadWorkDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.mp4'
+Write-Progress -Id 2 -ParentId 1 `
+	-Activity '2/3' `
+	-PercentComplete $($( 2 / 3 ) * 100) `
+	-Status $global:downloadWorkDir
+deleteTrashFiles $global:downloadBaseDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*'
 Write-Progress -Id 2 -ParentId 1 `
 	-Activity '3/3' `
 	-PercentComplete $($( 3 / 3 ) * 100) `
