@@ -296,7 +296,7 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 function waitTillYtdlpProcessGetFewer ($local:parallelDownloadFileNum) {
 	#yt-dlpのプロセスが設定値を超えたら一時待機
 	try {
-		if ($global:global:isWin) {
+		if ($global:isWin) {
 			$local:ytdlpCount = (Get-Process -ErrorAction Ignore -Name youtube-dl-red).Count / 2
 		} elseif ($IsLinux) {
 			$local:ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count

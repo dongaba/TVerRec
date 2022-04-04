@@ -122,7 +122,7 @@ Write-Progress `
 	-Activity '3/3' `
 	-PercentComplete $($( 3 / 3 ) * 100) `
 	-Status $global:saveBaseDir
-deleteTrashFiles $global:saveBaseDir '*.ytdl,*.jpg,*.vtt,*.temp.mp4,*.part,*.mp4.part-Frag*'
+deleteTrashFiles $global:saveBaseDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*'
 
 #======================================================================
 #2/3 無視リストに入っている番組は削除

@@ -40,7 +40,7 @@ memo.txt
 linux-*
 mac-*
 win-*
-tver.xlsx
+*.xlsx
 
 #その他雑多な不要ファイル
 * - コピー.*
