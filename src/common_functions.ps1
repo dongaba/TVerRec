@@ -458,7 +458,7 @@ function getFileNameWithoutInvalidChars {
 #----------------------------------------------------------------------
 function getNarrowChars {
 
-	Param([string]$local:text)		#変換元テキストを引数に指定
+	Param([String]$local:text)		#変換元テキストを引数に指定
 
 	$local:wideKanaDaku = 'ガギグゲゴザジズゼゾダヂヅデドバビブベボ'
 	$local:narrowKanaDaku = 'ｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾊﾋﾌﾍﾎ'
@@ -499,7 +499,7 @@ function getNarrowChars {
 #いくつかの特殊文字を置換
 #----------------------------------------------------------------------
 function getSpecialCharacterReplaced {
-	Param([string]$local:text)		#変換元テキストを引数に指定
+	Param([String]$local:text)		#変換元テキストを引数に指定
 	$local:text = $local:text.Replace('&amp;', '&')
 	$local:text = $local:text.Replace('"', '')
 	$local:text = $local:text.Replace('“', '')

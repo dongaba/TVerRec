@@ -25,44 +25,44 @@ $global:isWin = $PSVersionTable.Platform -match '^($|(Microsoft)?Win)'
 Set-StrictMode -Version Latest
 
 if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-	$scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+	$local:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
 } else {
-	$scriptRoot = Split-Path -Parent -Path ([Environment]::GetCommandLineArgs()[0])
-	if (!$scriptRoot) { $scriptRoot = '.' }
+	$local:scriptRoot = '.'
 }
 
 #githubの設定
-$repo = 'ytdl-patched/ytdl-patched'
-$file = 'youtube-dl-red.exe'
-$releases = "https://api.github.com/repos/$repo/releases"
+$local:repo = 'ytdl-patched/ytdl-patched'
+$local:file = 'youtube-dl-red.exe'
+$local:releases = "https://api.github.com/repos/$local:repo/releases"
 
 #ytdl-patched保存先相対Path
-$ytdlpRelativeDir = '..\bin'
-$ytdlpDir = $(Join-Path $scriptRoot $ytdlpRelativeDir)
-if ($global:isWin) { $global:ytdlpPath = $(Join-Path $ytdlpDir 'youtube-dl-red.exe') } else { $global:ytdlpPath = $(Join-Path $ytdlpDir 'yt-dlp') }
+$local:ytdlpRelativeDir = '..\bin'
+$local:ytdlpDir = $(Join-Path $local:scriptRoot $local:ytdlpRelativeDir)
+if ($global:isWin) { $global:ytdlpPath = $(Join-Path $local:ytdlpDir 'youtube-dl-red.exe') }
+else { $global:ytdlpPath = $(Join-Path $local:ytdlpDir 'yt-dlp') }
 
 #ytdl-patchedのディレクトリがなければ作成
-if (-Not (Test-Path $ytdlpDir -PathType Container)) {
-	$null = New-Item -ItemType directory -Path $ytdlpDir
+if (-Not (Test-Path $local:ytdlpDir -PathType Container)) {
+	$null = New-Item -ItemType directory -Path $local:ytdlpDir
 }
 
 #ytdl-patchedのバージョン取得
 if (Test-Path $global:ytdlpPath -PathType Leaf) {
 	# get version of current yt-dlp.exe
-	$ytdlpCurrentVersion = (& $global:ytdlpPath --version)
+	$local:ytdlpCurrentVersion = (& $global:ytdlpPath --version)
 } else {
 	# if yt-dlp.exe not found, will download it
-	$ytdlpCurrentVersion = ''
+	$local:ytdlpCurrentVersion = ''
 }
 
 #ytdl-patchedの最新バージョン取得
-try { $latestVersion = (Invoke-WebRequest $releases | ConvertFrom-Json)[0].name } catch {}
+try { $local:latestVersion = (Invoke-WebRequest $local:releases | ConvertFrom-Json)[0].name } catch {}
 
-Write-Host 'youtube-dl-red current:' $ytdlpCurrentVersion
-Write-Host 'youtube-dl-red latest:' $latestVersion
+Write-Host 'youtube-dl-red current:' $local:ytdlpCurrentVersion
+Write-Host 'youtube-dl-red latest:' $local:latestVersion
 
 #ytdl-patchedのダウンロード
-if ($latestVersion -eq $ytdlpCurrentVersion) {
+if ($local:latestVersion -eq $local:ytdlpCurrentVersion) {
 	Write-Host 'youtube-dl-redは最新です。 '
 	Write-Host ''
 } else {
@@ -71,14 +71,14 @@ if ($latestVersion -eq $ytdlpCurrentVersion) {
 	} else {
 		try {
 			#ダウンロード
-			$tag = (Invoke-WebRequest $releases | ConvertFrom-Json)[0].tag_name
-			$download = "https://github.com/$repo/releases/download/$tag/$file"
-			$ytdlpFileLocation = $(Join-Path $ytdlpDir $file)
-			Write-Host "youtube-dl-redをダウンロードします。 $download"
-			Invoke-WebRequest $download -Out $ytdlpFileLocation
+			$local:tag = (Invoke-WebRequest $local:releases | ConvertFrom-Json)[0].tag_name
+			$local:download = "https://github.com/$local:repo/releases/download/$local:tag/$local:file"
+			$local:ytdlpFileLocation = $(Join-Path $local:ytdlpDir $local:file)
+			Write-Host "youtube-dl-redをダウンロードします。 $local:download"
+			Invoke-WebRequest $local:download -Out $local:ytdlpFileLocation
 			#バージョンチェック
-			$ytdlpCurrentVersion = (& $ytdlpFile --version)
-			Write-Host "youtube-dl-redをversion $ytdlpCurrentVersion に更新しました。 "
+			$local:ytdlpCurrentVersion = (& $local:ytdlpFile --version)
+			Write-Host "youtube-dl-redをversion $local:ytdlpCurrentVersion に更新しました。 "
 		} catch { Write-Host 'youtube-dl-redの更新に失敗しました' -ForegroundColor Green }
 	}
 }
