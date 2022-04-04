@@ -26,17 +26,17 @@ using namespace System.Text.RegularExpressions
 Set-StrictMode -Version Latest
 try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$currentDir = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+		$global:currentDir = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
 	} else {
-		$currentDir = Convert-Path .
+		$global:currentDir = Convert-Path .
 	}
-	Set-Location $currentDir
-	$confDir = $(Join-Path $currentDir '..\conf')
-	$sysFile = $(Join-Path $confDir 'system_setting.conf')
-	$global:confFile = $(Join-Path $confDir 'user_setting.conf')
-	$devDir = $(Join-Path $currentDir '..\dev')
-	$devConfFile = $(Join-Path $devDir 'dev_setting.conf')
-	$devFunctionFile = $(Join-Path $devDir 'dev_funcitons.ps1')
+	Set-Location $global:currentDir
+	$global:confDir = $(Join-Path $global:currentDir '..\conf')
+	$global:sysFile = $(Join-Path $global:confDir 'system_setting.conf')
+	$global:confFile = $(Join-Path $global:confDir 'user_setting.conf')
+	$global:devDir = $(Join-Path $global:currentDir '..\dev')
+	$global:devConfFile = $(Join-Path $global:devDir 'dev_setting.conf')
+	$global:devFunctionFile = $(Join-Path $global:devDir 'dev_funcitons.ps1')
 
 	#----------------------------------------------------------------------
 	#外部設定ファイル読み込み
@@ -61,18 +61,18 @@ try {
 	#----------------------------------------------------------------------
 	#外部関数ファイルの読み込み
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		. '.\common_functions_5.ps1'
-		. '.\tver_functions_5.ps1'
-		if (Test-Path $devFunctionFile) { 
+		. $(Convert-Path (Join-Path $global:currentDir '.\common_functions_5.ps1'))
+		. $(Convert-Path (Join-Path $global:currentDir '.\tver_functions_5.ps1'))
+		if (Test-Path $global:devFunctionFile) { 
 			Write-Host '========================================================' -ForegroundColor Green
 			Write-Host '  PowerShell Coreではありません                         ' -ForegroundColor Green
 			Write-Host '========================================================' -ForegroundColor Green
 		}
 	} else {
-		. '.\common_functions.ps1'
-		. '.\tver_functions.ps1'
-		if (Test-Path $devFunctionFile) { 
-			. $devFunctionFile 
+		. $(Convert-Path (Join-Path $global:currentDir '.\common_functions.ps1'))
+		. $(Convert-Path (Join-Path $global:currentDir '.\tver_functions.ps1'))
+		if (Test-Path $global:devFunctionFile) { 
+			. $global:devFunctionFile 
 			Write-Host '========================================================' -ForegroundColor Green
 			Write-Host '  開発ファイルを読み込みました                          ' -ForegroundColor Green
 			Write-Host '========================================================' -ForegroundColor Green
@@ -97,25 +97,25 @@ checkLatestYtdlp					#yt-dlpの最新化チェック
 checkLatestFfmpeg					#ffmpegの最新化チェック
 checkRequiredFile					#設定で指定したファイル・フォルダの存在チェック
 #checkGeoIP							#日本のIPアドレスでないと接続不可のためIPアドレスをチェック
-$keywordName = ''
+$local:keywordNames = ''
 
 #----------------------------------------------------------------------
 #無限ループ
 while ($true) {
 	#いろいろ初期化
-	$videoPageURL = ''
+	$local:videoPageURL = ''
 
 	#保存先ディレクトリの存在確認
 	if (Test-Path $global:downloadBaseDir -PathType Container) {}
 	else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します' ; exit 1 }
 
-	$videoPageURL = Read-Host 'ビデオURLを入力してください。'
+	$local:videoPageURL = Read-Host 'ビデオURLを入力してください。'
 	if ($videoPageURL -eq '') { exit }
-	$videoID = $videoPageURL.Replace('https://tver.jp', '').Replace('http://tver.jp', '').trim()
-	$videoPageURL = 'https://tver.jp' + $videoID
-	Write-Host $videoPageURL
+	$local:videoLink = $local:videoPageURL.Replace('https://tver.jp', '').Replace('http://tver.jp', '').trim()
+	$local:videoPageURL = 'https://tver.jp' + $local:videoLink
+	Write-Host $local:videoPageURL
 
-	downloadTVerVideo $keywordName				#TVerビデオダウンロードのメイン処理
+	downloadTVerVideo $local:keywordName $local:videoPageURL $local:videoLink				#TVerビデオダウンロードのメイン処理
 
 	Write-Host '処理を終了しました。'
 }

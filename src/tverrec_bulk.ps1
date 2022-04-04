@@ -61,16 +61,16 @@ try {
 	#----------------------------------------------------------------------
 	#外部関数ファイルの読み込み
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		. $(Convert-Path (Join-Path $currentDir '.\common_functions_5.ps1'))
-		. $(Convert-Path (Join-Path $currentDir '.\tver_functions_5.ps1'))
+		. $(Convert-Path (Join-Path $global:currentDir '.\common_functions_5.ps1'))
+		. $(Convert-Path (Join-Path $global:currentDir '.\tver_functions_5.ps1'))
 		if (Test-Path $global:devFunctionFile) { 
 			Write-Host '========================================================' -ForegroundColor Green
 			Write-Host '  PowerShell Coreではありません                         ' -ForegroundColor Green
 			Write-Host '========================================================' -ForegroundColor Green
 		}
 	} else {
-		. $(Convert-Path (Join-Path $currentDir '.\common_functions.ps1'))
-		. $(Convert-Path (Join-Path $currentDir '.\tver_functions.ps1'))
+		. $(Convert-Path (Join-Path $global:currentDir '.\common_functions.ps1'))
+		. $(Convert-Path (Join-Path $global:currentDir '.\tver_functions.ps1'))
 		if (Test-Path $global:devFunctionFile) { 
 			. $global:devFunctionFile 
 			Write-Host '========================================================' -ForegroundColor Green
