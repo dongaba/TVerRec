@@ -110,7 +110,7 @@ function getVideoInfo ($local:videoLink) {
 	#Series Name
 	#	$response.result.series.content.title
 	#	$response.result.episode.content.seriesTitle
-	$script:videoTitle = $(getSpecialCharacterReplaced ( `
+	$script:videoSeries = $(getSpecialCharacterReplaced ( `
 				getNarrowChars ($local:response.result.series.content.title) `
 		)).trim()
 	$script:videoSeriesID = $local:response.result.series.content.id
@@ -129,7 +129,7 @@ function getVideoInfo ($local:videoLink) {
 	#エピソード
 	#Episode Name
 	#$response.result.episode.content.title
-	$script:videoSubtitle = $(getSpecialCharacterReplaced ( `
+	$script:videoTitle = $(getSpecialCharacterReplaced ( `
 				getNarrowChars ($local:response.result.episode.content.title) `
 		)).trim()
 	$script:videoEpisodeID = $local:response.result.episode.content.id
@@ -261,7 +261,7 @@ function downloadTVerVideo ($local:keywordName, $local:videoPageURL, $local:vide
 
 	$script:platformUID = '' ; $script:platformToken = ''
 	$script:videoName = '' ; $script:videoFilePath = '' ; $script:videoSeriesPageURL = ''
-	$script:broadcastDate = '' ; $script:videoTitle = '' ; $script:videoSeason = '' ; $script:videoSubtitle = ''
+	$script:broadcastDate = '' ; $script:videoSeries = '' ; $script:videoSeason = '' ; $script:videoTitle = ''
 	$script:mediaName = '' ; $script:descriptionText = ''
 	$script:videoInfo = $null ;
 	$local:newVideo = $null
@@ -294,8 +294,8 @@ function downloadTVerVideo ($local:keywordName, $local:videoPageURL, $local:vide
 	}
 
 	#ビデオファイル情報をセット
-	$script:videoName = getVideoFileName $script:videoTitle $script:videoSeason $script:videoSubtitle $script:broadcastDate
-	$script:videoFileDir = getNarrowChars $($script:videoTitle + ' ' + $script:videoSeason).trim()
+	$script:videoName = getVideoFileName $script:videoSeries $script:videoSeason $script:videoTitle $script:broadcastDate
+	$script:videoFileDir = getNarrowChars $($script:videoSeries + ' ' + $script:videoSeason).trim()
 	$script:videoFileDir = $(Join-Path $global:downloadBaseDir (getFileNameWithoutInvalidChars $script:videoFileDir))
 	$script:videoFilePath = $(Join-Path $script:videoFileDir $script:videoName)
 	$script:videoFileRelativePath = $script:videoFilePath.Replace($global:downloadBaseDir, '').Replace('\', '/')
@@ -303,7 +303,7 @@ function downloadTVerVideo ($local:keywordName, $local:videoPageURL, $local:vide
 
 	#ビデオ情報のコンソール出力
 	showVideoInfo $script:videoName $script:broadcastDate $script:mediaName $descriptionText
-	showVideoDebugInfo $local:videoPageURL $script:videoSeriesPageURL $local:keywordName $script:videoTitle $script:videoSeason $script:videoSubtitle $script:videoFilePath $(getTimeStamp)
+	showVideoDebugInfo $local:videoPageURL $script:videoSeriesPageURL $local:keywordName $script:videoSeries $script:videoSeason $script:videoTitle $script:videoFilePath $(getTimeStamp)
 
 	#ビデオタイトルが取得できなかった場合はスキップ次のビデオへ
 	if ($script:videoName -eq '.mp4') {
@@ -338,7 +338,7 @@ function downloadTVerVideo ($local:keywordName, $local:videoPageURL, $local:vide
 
 		#無視リストに入っている番組の場合はスキップフラグを立ててリスト書き込み処理へ
 		foreach ($local:ignoreTitle in $script:ignoreTitles) {
-			if ($(getNarrowChars $script:videoTitle) -match $(getNarrowChars $local:ignoreTitle)) {
+			if ($(getNarrowChars $script:videoSeries) -match $(getNarrowChars $local:ignoreTitle)) {
 				$script:ignore = $true
 				Write-Host '無視リストに入っているビデオです。スキップします'
 				continue			#リストの重複削除のため、無視したものはリスト出力せずに次のビデオへ行くことに
@@ -354,11 +354,13 @@ function downloadTVerVideo ($local:keywordName, $local:videoPageURL, $local:vide
 			videoPage       = $script:videoPageURL ;
 			videoSeriesPage = $script:videoSeriesPageURL ;
 			genre           = $local:keywordName ;
+			series          = $script:videoSeries ;
+			season          = $script:videoSeason ;
 			title           = $script:videoTitle ;
-			subtitle        = $script:videoSubtitle ;
 			media           = $script:mediaName ;
 			broadcastDate   = $script:broadcastDate ;
 			downloadDate    = $(getTimeStamp) ;
+			videoDir        = $script:videoFileDir ;
 			videoName       = '-- IGNORED --' ;
 			videoPath       = '-- IGNORED --' ;
 			videoValidated  = '0' ;
@@ -369,11 +371,13 @@ function downloadTVerVideo ($local:keywordName, $local:videoPageURL, $local:vide
 			videoPage       = $script:videoPageURL ;
 			videoSeriesPage = $script:videoSeriesPageURL ;
 			genre           = $local:keywordName ;
+			series          = $script:videoSeries ;
+			season          = $script:videoSeason ;
 			title           = $script:videoTitle ;
-			subtitle        = $script:videoSubtitle ;
 			media           = $script:mediaName ;
 			broadcastDate   = $script:broadcastDate ;
 			downloadDate    = $(getTimeStamp) ;
+			videoDir        = $script:videoFileDir ;
 			videoName       = '-- SKIPPED --' ;
 			videoPath       = $videoFileRelativePath ;
 			videoValidated  = '0' ;
@@ -384,11 +388,13 @@ function downloadTVerVideo ($local:keywordName, $local:videoPageURL, $local:vide
 			videoPage       = $script:videoPageURL ;
 			videoSeriesPage = $script:videoSeriesPageURL ;
 			genre           = $local:keywordName ;
+			series          = $script:videoSeries ;
+			season          = $script:videoSeason ;
 			title           = $script:videoTitle ;
-			subtitle        = $script:videoSubtitle ;
 			media           = $script:mediaName ;
 			broadcastDate   = $script:broadcastDate ;
 			downloadDate    = $(getTimeStamp) ;
+			videoDir        = $script:videoFileDir ;
 			videoName       = $script:videoName ;
 			videoPath       = $script:videoFileRelativePath ;
 			videoValidated  = '0' ;

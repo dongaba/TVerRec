@@ -427,13 +427,13 @@ function showVideoInfo ($local:videoName, $local:broadcastDate, $local:mediaName
 #----------------------------------------------------------------------
 #ビデオ情報デバッグ表示
 #----------------------------------------------------------------------
-function showVideoDebugInfo ($local:videoPageURL, $local:videoSeriesPageURL, $local:keywordName, $local:videoTitle, $local:videoSeason, $local:videoSubtitle, $local:videoFilePath, $local:processedTime) {
+function showVideoDebugInfo ($local:videoPageURL, $local:videoSeriesPageURL, $local:keywordName, $local:videoSeries, $local:videoSeason, $local:videoTitle, $local:videoFilePath, $local:processedTime) {
 	Write-Debug	"ビデオエピソードページ:$local:videoPageURL"
 	Write-Debug	"ビデオシリーズページ  :$local:videoSeriesPageURL"
 	Write-Debug "キーワード            :$local:keywordName"
-	Write-Debug "シリーズ              :$local:videoTitle"
+	Write-Debug "シリーズ              :$local:videoSeries"
 	Write-Debug "シーズン              :$local:videoSeason"
-	Write-Debug "サブタイトル          :$local:videoSubtitle"
+	Write-Debug "サブタイトル          :$local:videoTitle"
 	Write-Debug "ファイル              :$local:videoFilePath"
 	Write-Debug "取得日付              :$local:processedTime"
 }
@@ -518,15 +518,15 @@ function getSpecialCharacterReplaced {
 #----------------------------------------------------------------------
 #保存ファイル名を設定
 #----------------------------------------------------------------------
-function getVideoFileName ($local:videoTitle, $local:videoSeason, $local:videoSubtitle, $local:broadcastDate) {
-	if ($local:videoSubtitle -eq '') {
+function getVideoFileName ($local:videoSeries, $local:videoSeason, $local:videoTitle, $local:broadcastDate) {
+	if ($local:videoTitle -eq '') {
 		if ($local:broadcastDate -eq '') {
-			$local:videoName = $local:videoTitle + ' ' + $local:videoSeason 
+			$local:videoName = $local:videoSeries + ' ' + $local:videoSeason 
 		} else {
-			$local:videoName = $local:videoTitle + ' ' + $local:videoSeason + ' ' + $local:broadcastDate
+			$local:videoName = $local:videoSeries + ' ' + $local:videoSeason + ' ' + $local:broadcastDate
 		}
 	} else {
-		$local:videoName = $local:videoTitle + ' ' + $local:videoSeason + ' ' + $local:broadcastDate + ' ' + $local:videoSubtitle
+		$local:videoName = $local:videoSeries + ' ' + $local:videoSeason + ' ' + $local:broadcastDate + ' ' + $local:videoTitle
 	}
 	#ファイル名にできない文字列を除去
 	$local:videoName = $(getFileNameWithoutInvalidChars (getNarrowChars $local:videoName)).Replace('  ', ' ')
