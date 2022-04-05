@@ -294,7 +294,7 @@ function waitTillYtdlpProcessGetFewer ($local:parallelDownloadFileNum) {
 	#yt-dlpのプロセスが設定値を超えたら一時待機
 	try {
 		if ($global:isWin) {
-			$local:ytdlpCount = (Get-Process -ErrorAction Ignore -Name youtube-dl-red).Count / 2
+			$local:ytdlpCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2
 		} elseif ($IsLinux) {
 			$local:ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
 		} elseif ($IsMacOS) {
@@ -314,7 +314,7 @@ function waitTillYtdlpProcessGetFewer ($local:parallelDownloadFileNum) {
 		Start-Sleep -Seconds 60			#1分待機
 		try {
 			if ($global:isWin) {
-				$local:ytdlpCount = (Get-Process -ErrorAction Ignore -Name youtube-dl-red).Count / 2
+				$local:ytdlpCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2
 			} elseif ($IsLinux) {
 				$local:ytdlpCount = (& Get-Process -ErrorAction Ignore -Name yt-dlp).Count
 			} elseif ($IsMacOS) {
@@ -334,7 +334,7 @@ function waitTillYtdlpProcessGetFewer ($local:parallelDownloadFileNum) {
 function waitTillYtdlpProcessIsZero () {
 	try {
 		if ($global:isWin) {
-			$local:ytdlpCount = (Get-Process -ErrorAction Ignore -Name youtube-dl-red).Count / 2		
+			$local:ytdlpCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2		
   } elseif ($IsLinux) {
 			$local:ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
 		} elseif ($IsMacOS) {
@@ -352,7 +352,7 @@ function waitTillYtdlpProcessIsZero () {
 			Write-Verbose "現在のダウンロードプロセス一覧 ($local:ytdlpCount 個)"
 			Start-Sleep -Seconds 60			#1分待機
 			if ($global:isWin) {
-				$local:ytdlpCount = (Get-Process -ErrorAction Ignore -Name youtube-dl-red).Count / 2
+				$local:ytdlpCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2
 			} elseif ($IsLinux) {
 				$local:ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
 			} elseif ($IsMacOS) {

@@ -21,7 +21,7 @@
 
 #Windowsの判定
 Set-StrictMode -Off
-$global:isWin = $PSVersionTable.Platform -match '^($|(Microsoft)?Win)'
+$local:isWin = $PSVersionTable.Platform -match '^($|(Microsoft)?Win)'
 Set-StrictMode -Version Latest
 
 if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
@@ -33,8 +33,8 @@ if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
 #ffmpeg保存先相対Path
 $local:ffmpegRelativeDir = '..\bin'
 $local:ffmpegDir = $(Join-Path $local:scriptRoot $local:ffmpegRelativeDir)
-if ($global:isWin) { $global:ffmpegPath = $(Join-Path $local:ffmpegDir 'ffmpeg.exe') }
-else { $global:ffmpegPath = $(Join-Path $local:ffmpegDir 'ffmpeg') }
+if ($local:isWin) { $local:ffmpegPath = $(Join-Path $local:ffmpegDir 'ffmpeg.exe') }
+else { $local:ffmpegPath = $(Join-Path $local:ffmpegDir 'ffmpeg') }
 
 #ffmpegのディレクトリがなければ作成
 if (-Not (Test-Path $local:ffmpegDir -PathType Container)) {
@@ -42,9 +42,9 @@ if (-Not (Test-Path $local:ffmpegDir -PathType Container)) {
 }
 
 #ffmpegのバージョン取得
-if (Test-Path $global:ffmpegPath -PathType Leaf) {
+if (Test-Path $local:ffmpegPath -PathType Leaf) {
 	# get version of current ffmpeg.exe
-	$local:ffmpegFileVersion = (& $global:ffmpegPath -version)
+	$local:ffmpegFileVersion = (& $local:ffmpegPath -version)
 	$null = $local:ffmpegFileVersion[0] -match 'ffmpeg version (\d+\.\d+(\.\d+)?).*'
 	$local:ffmpegCurrentVersion = $matches[1]
 } else {
@@ -63,7 +63,7 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 	Write-Host 'ffmpegは最新です。 '
 	Write-Host ''
 } else {
-	if ($global:isWin -eq $false) {
+	if ($local:isWin -eq $false) {
 		Write-Host '自動アップデートはWindowsでのみ動作します。' -ForegroundColor Green
 	} else {
 		try {
@@ -78,12 +78,12 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 
 			#展開
 			try {
-				Expand-Archive $local:ffmpegZipFileLocation -DestinationPath $(Join-Path $local:scriptRoot $local:ffmpegRelativeDir) -Force
+				$local:extractedDir = $(Join-Path $local:scriptRoot $local:ffmpegRelativeDir)
+				Expand-Archive $local:ffmpegZipFileLocation -DestinationPath $local:extractedDir
 			} catch { Write-Host 'ffmpegの展開に失敗しました' -ForegroundColor Green }
 
 			#配置
 			try {
-				$local:extractedDir = $(Join-Path $local:scriptRoot $local:ffmpegRelativeDir)
 				$local:extractedDir = $local:extractedDir + '\ffmpeg-*-essentials_build'
 				$local:extractedFiles = $local:extractedDir + '\bin\*.exe'
 				Move-Item $local:extractedFiles $(Join-Path $local:scriptRoot $local:ffmpegRelativeDir) -Force
@@ -92,7 +92,7 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 			#ゴミ掃除
 			try {
 				Remove-Item `
-					-LiteralPath $local:extractedDir `
+					-Path $local:extractedDir `
 					-Force -Recurse -ErrorAction SilentlyContinue
 			} catch { Write-Host '中間フォルダの削除に失敗しました' -ForegroundColor Green }
 			try {
@@ -104,7 +104,7 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 		} catch { Write-Host 'ffmpegの更新に失敗しました' -ForegroundColor Green }
 
 		#バージョンチェック
-		$local:ffmpegFileVersion = (& $global:ffmpegPath -version)
+		$local:ffmpegFileVersion = (& $local:ffmpegPath -version)
 		$null = $local:ffmpegFileVersion[0].ToChar -match 'ffmpeg version (\d+\.\d+(\.\d+)?)-.*'
 		$local:ffmpegCurrentVersion = $local:matches[1]
 		Write-Host "ffmpegをversion $local:ffmpegCurrentVersion に更新しました。 "

@@ -21,7 +21,7 @@
 
 #Windowsの判定
 Set-StrictMode -Off
-$global:isWin = $PSVersionTable.Platform -match '^($|(Microsoft)?Win)'
+$local:isWin = $PSVersionTable.Platform -match '^($|(Microsoft)?Win)'
 Set-StrictMode -Version Latest
 
 if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
@@ -38,8 +38,8 @@ $local:releases = "https://api.github.com/repos/$local:repo/releases"
 #yt-dlp保存先相対Path
 $local:ytdlpRelativeDir = '..\bin'
 $local:ytdlpDir = $(Join-Path $local:scriptRoot $local:ytdlpRelativeDir)
-if ($global:isWin) { $global:ytdlpPath = $(Join-Path $local:ytdlpDir 'yt-dlp.exe') }
-else { $global:ytdlpPath = $(Join-Path $local:ytdlpDir 'yt-dlp') }
+if ($local:isWin) { $local:ytdlpPath = $(Join-Path $local:ytdlpDir 'yt-dlp.exe') }
+else { $local:ytdlpPath = $(Join-Path $local:ytdlpDir 'yt-dlp') }
 
 #yt-dlpのディレクトリがなければ作成
 if (-Not (Test-Path $local:ytdlpDir -PathType Container)) {
@@ -47,9 +47,9 @@ if (-Not (Test-Path $local:ytdlpDir -PathType Container)) {
 }
 
 #yt-dlpのバージョン取得
-if (Test-Path $global:ytdlpPath -PathType Leaf) {
+if (Test-Path $local:ytdlpPath -PathType Leaf) {
 	# get version of current yt-dlp.exe
-	$local:ytdlpCurrentVersion = (& $global:ytdlpPath --version)
+	$local:ytdlpCurrentVersion = (& $local:ytdlpPath --version)
 } else {
 	# if yt-dlp.exe not found, will download it
 	$local:ytdlpCurrentVersion = ''
@@ -66,7 +66,7 @@ if ($local:latestVersion -eq $local:ytdlpCurrentVersion) {
 	Write-Host 'yt-dlpは最新です。 '
 	Write-Host ''
 } else {
-	if ($global:isWin -eq $false) {
+	if ($local:isWin -eq $false) {
 		Write-Host '自動アップデートはWindowsでのみ動作します。' -ForegroundColor Green
 	} else {
 		try {
@@ -77,7 +77,7 @@ if ($local:latestVersion -eq $local:ytdlpCurrentVersion) {
 			Write-Host "yt-dlpをダウンロードします。 $local:download"
 			Invoke-WebRequest $local:download -Out $local:ytdlpFileLocation
 			#バージョンチェック
-			$local:ytdlpCurrentVersion = (& $local:ytdlpFile --version)
+			$local:ytdlpCurrentVersion = (& $local:ytdlpPath --version)
 			Write-Host "yt-dlpをversion $local:ytdlpCurrentVersion に更新しました。 "
 		} catch { Write-Host 'yt-dlpの更新に失敗しました' -ForegroundColor Green }
 	}

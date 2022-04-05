@@ -51,10 +51,10 @@ echo %myPID% > %PIDFile%
 
 :ProcessChecker
 	rem yt-dlpプロセスチェック
-	tasklist | findstr /i "ffmpeg youtube-dl-red" > nul 2>&1
+	tasklist | findstr /i "ffmpeg youtube-dl" > nul 2>&1
 	if %ERRORLEVEL% == 0 (
 		echo ダウンロードが進行中です...
-		tasklist /v | findstr /i "ffmpeg youtube-dl-red" 
+		tasklist /v | findstr /i "ffmpeg youtube-dl" 
 		echo %retryTime%秒待機します...
 		timeout /T %retryTime% /nobreak > nul
 		goto ProcessChecker

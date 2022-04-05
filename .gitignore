@@ -13,9 +13,11 @@ debug/*
 *.zip
 
 #実行ファイル
+bin/*
 *.exe
 ffmpeg
 yt-dlp
+youtube-dl
 
 #動画ファイル
 *.mp4
