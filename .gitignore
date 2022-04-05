@@ -23,7 +23,6 @@ youtube-dl
 *.mp4
 
 #中間ファイル
-ffmpeg_error.log
 *.ytdl
 *.jpg
 *.vtt
@@ -33,6 +32,9 @@ ffmpeg_error.log
 *pid.txt
 pid*.txt
 *_5.ps1
+.smb*
+brightcovenew*
+ffmpeg_error*
 
 #開発関連ファイル
 dev
@@ -48,7 +50,6 @@ win-*
 * - コピー.*
 * - Copy.*
 *.bak
-brightcovenew*
 
 #ローカルの変更をGitHubにアップしないために
 #git update-index --assume-unchanged db/tver.csv
