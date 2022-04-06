@@ -93,10 +93,10 @@ Write-Host ''
 
 #----------------------------------------------------------------------
 #動作環境チェック
-checkLatestYtdlp					#yt-dlpの最新化チェック
-checkLatestFfmpeg					#ffmpegの最新化チェック
-checkRequiredFile					#設定で指定したファイル・フォルダの存在チェック
-#checkGeoIP							#日本のIPアドレスでないと接続不可のためIPアドレスをチェック
+checkLatestYtdl				#yt-dlpの最新化チェック
+checkLatestFfmpeg			#ffmpegの最新化チェック
+checkRequiredFile			#設定で指定したファイル・フォルダの存在チェック
+#checkGeoIP					#日本のIPアドレスでないと接続不可のためIPアドレスをチェック
 
 $local:keywordNames = loadKeywordList			#ダウンロード対象ジャンルリストの読み込み
 
@@ -163,7 +163,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します' -ForegroundColor Green ; exit 1 }
 
 		#yt-dlpプロセスの確認と、yt-dlpのプロセス数が多い場合の待機
-		waitTillYtdlpProcessGetFewer $global:parallelDownloadFileNum
+		waitTillYtdlProcessGetFewer $global:parallelDownloadFileNum
 
 		$local:videoPageURL = 'https://tver.jp' + $local:videoLink
 		Write-Host $local:videoPageURL
@@ -178,7 +178,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 #======================================================================
 
 #yt-dlpのプロセスが終わるまで待機
-waitTillYtdlpProcessIsZero
+waitTillYtdlProcessIsZero
 
 Write-Host '---------------------------------------------------------------------------' -ForegroundColor Cyan
 Write-Host '処理を終了しました。                                                       ' -ForegroundColor Cyan

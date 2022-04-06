@@ -20,9 +20,9 @@
 ###################################################################################
 
 #----------------------------------------------------------------------
-#ytdlpの最新化確認
+#ytdlの最新化確認
 #----------------------------------------------------------------------
-function checkLatestYtdlp {
+function checkLatestYtdl {
 	if ($PSVersionTable.PSEdition -eq 'Desktop') { 
 		. $(Convert-Path (Join-Path $currentDir '.\update_ytdl-patched_5.ps1'))
 	} else { 
@@ -49,7 +49,7 @@ function checkRequiredFile {
 	else { Write-Error 'ビデオ保存先フォルダが存在しません。終了します。' ; exit 1 }
 	if (Test-Path $global:ffmpegPath -PathType Leaf) {}
 	else { Write-Error 'ffmpegが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $global:ytdlpPath -PathType Leaf) {}
+	if (Test-Path $global:ytdlPath -PathType Leaf) {}
 	else { Write-Error 'yt-dlpが存在しません。終了します。' ; exit 1 }
 	if (Test-Path $global:confFile -PathType Leaf) {}
 	else { Write-Error 'ユーザ設定ファイルが存在しません。終了します。' ; exit 1 }
@@ -134,8 +134,6 @@ function uniqueDB {
 		} elseif ($null -eq $processedList -and $null -ne $ignoredList) { 
 			$local:mergedList = $local:ignoredList 
 		} else { $local:mergedList = $local:processedList + $local:ignoredList }
-		$local:fileStatus = checkFileStatus $global:listFilePath
-		Write-Host "Status of $global:listFilePath is $local:fileStatus"
 		$mergedList `
 		| Sort-Object -Property downloadDate `
 		| Export-Csv $global:listFilePath -NoTypeInformation -Encoding UTF8
@@ -243,7 +241,7 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 	if ($local:proc.ExitCode -ne 0 -or $local:errorCount -gt 30) {
 		#終了コードが"0"以外 または エラーが30行以上 は録画リストとファイルを削除
 		Write-Host "$local:videoFileRelativePath"
-		Write-Host "  exit code: $($local:proc.ExitCode)    error count: $local:errorCount"
+		Write-Host "  exit code: $($local:proc.ExitCode)    error count: $local:errorCount" -ForegroundColor Green
 
 		#破損している動画ファイルを録画リストから削除
 		try {
@@ -290,40 +288,40 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 #----------------------------------------------------------------------
 #yt-dlpプロセスの確認と待機
 #----------------------------------------------------------------------
-function waitTillYtdlpProcessGetFewer ($local:parallelDownloadFileNum) {
+function waitTillYtdlProcessGetFewer ($local:parallelDownloadFileNum) {
 	#yt-dlpのプロセスが設定値を超えたら一時待機
 	try {
 		if ($global:isWin) {
-			$local:ytdlpCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2
+			$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2
 		} elseif ($IsLinux) {
-			$local:ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
+			$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
 		} elseif ($IsMacOS) {
 			$local:psCmd = 'ps'
-			$local:ytdlpCount = (& $local:psCmd | & grep yt-dlp | grep -v grep | wc -l).trim()
+			$local:ytdlCount = (& $local:psCmd | & grep yt-dlp | grep -v grep | wc -l).trim()
 		} else {
-			$local:ytdlpCount = 0
+			$local:ytdlCount = 0
 		}
 	} catch {
-		$local:ytdlpCount = 0			#プロセス数が取れなくてもとりあえず先に進む
+		$local:ytdlCount = 0			#プロセス数が取れなくてもとりあえず先に進む
 	}
 
-	Write-Verbose "現在のダウンロードプロセス一覧 ($local:ytdlpCount 個)"
+	Write-Verbose "現在のダウンロードプロセス一覧 ($local:ytdlCount 個)"
 
-	while ([int]$local:ytdlpCount -ge [int]$local:parallelDownloadFileNum) {
+	while ([int]$local:ytdlCount -ge [int]$local:parallelDownloadFileNum) {
 		Write-Host "ダウンロードが $local:parallelDownloadFileNum 多重に達したので一時待機します。 ($(getTimeStamp))"
 		Start-Sleep -Seconds 60			#1分待機
 		try {
 			if ($global:isWin) {
-				$local:ytdlpCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2
+				$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2
 			} elseif ($IsLinux) {
-				$local:ytdlpCount = (& Get-Process -ErrorAction Ignore -Name yt-dlp).Count
+				$local:ytdlCount = (& Get-Process -ErrorAction Ignore -Name yt-dlp).Count
 			} elseif ($IsMacOS) {
-				$local:ytdlpCount = (& $local:psCmd | & grep yt-dlp | grep -v grep | wc -l).trim()
+				$local:ytdlCount = (& $local:psCmd | & grep yt-dlp | grep -v grep | wc -l).trim()
 			} else {
-				$local:ytdlpCount = 0
+				$local:ytdlCount = 0
 			}
 		} catch {
-			$local:ytdlpCount = 0			#プロセス数が取れなくてもとりあえず先に進む
+			$local:ytdlCount = 0			#プロセス数が取れなくてもとりあえず先に進む
 		}
 	}
 }
@@ -331,37 +329,37 @@ function waitTillYtdlpProcessGetFewer ($local:parallelDownloadFileNum) {
 #----------------------------------------------------------------------
 #yt-dlpのプロセスが終わるまで待機
 #----------------------------------------------------------------------
-function waitTillYtdlpProcessIsZero () {
+function waitTillYtdlProcessIsZero () {
 	try {
 		if ($global:isWin) {
-			$local:ytdlpCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2		
+			$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2		
   } elseif ($IsLinux) {
-			$local:ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
+			$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
 		} elseif ($IsMacOS) {
 			$local:psCmd = 'ps'
-			$local:ytdlpCount = (& $local:psCmd | & grep yt-dlp | grep -v grep | wc -l).trim()
+			$local:ytdlCount = (& $local:psCmd | & grep yt-dlp | grep -v grep | wc -l).trim()
 		} else {
-			$local:ytdlpCount = 0
+			$local:ytdlCount = 0
 		}
 	} catch {
-		$local:ytdlpCount = 0			#プロセス数が取れなくてもとりあえず先に進む
+		$local:ytdlCount = 0			#プロセス数が取れなくてもとりあえず先に進む
 	}
 
-	while ($local:ytdlpCount -ne 0) {
+	while ($local:ytdlCount -ne 0) {
 		try {
-			Write-Verbose "現在のダウンロードプロセス一覧 ($local:ytdlpCount 個)"
+			Write-Verbose "現在のダウンロードプロセス一覧 ($local:ytdlCount 個)"
 			Start-Sleep -Seconds 60			#1分待機
 			if ($global:isWin) {
-				$local:ytdlpCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2
+				$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2
 			} elseif ($IsLinux) {
-				$local:ytdlpCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
+				$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
 			} elseif ($IsMacOS) {
-				$local:ytdlpCount = (& $local:psCmd | & grep yt-dlp | grep -v grep | wc -l).trim()
+				$local:ytdlCount = (& $local:psCmd | & grep yt-dlp | grep -v grep | wc -l).trim()
 			} else {
-				$local:ytdlpCount = 0
+				$local:ytdlCount = 0
 			}
 		} catch {
-			$local:ytdlpCount = 0
+			$local:ytdlCount = 0
 		}
 	}
 }
@@ -369,7 +367,7 @@ function waitTillYtdlpProcessIsZero () {
 #----------------------------------------------------------------------
 #yt-dlpプロセスの起動
 #----------------------------------------------------------------------
-function executeYtdlp ($local:videoPageURL) {
+function executeYtdl ($local:videoPageURL) {
 	$local:tmpDir = '"temp:' + $global:downloadWorkDir + '"'
 	$local:saveDir = '"home:' + $global:videoFileDir + '"'
 	$local:subttlDir = '"subtitle:' + $global:downloadWorkDir + '"'
@@ -378,34 +376,46 @@ function executeYtdlp ($local:videoPageURL) {
 	$local:descDir = '"description:' + $global:downloadWorkDir + '"'
 	$local:saveFile = '"' + $videoName + '"'
 
-	$local:ytdlpArgs = '--format mp4 --console-title --no-mtime'
-	$local:ytdlpArgs += ' --retries 10 --fragment-retries 10'
-	$local:ytdlpArgs += ' --abort-on-unavailable-fragment'
-	$local:ytdlpArgs += ' --no-keep-fragments'
-	$local:ytdlpArgs += ' --windows-filenames'
-	$local:ytdlpArgs += ' --xattr-set-filesize'
-	$local:ytdlpArgs += ' --newline --print-traffic'
-	$local:ytdlpArgs += " --concurrent-fragments $global:parallelDownloadNumPerFile"
-	$local:ytdlpArgs += ' --embed-thumbnail --embed-subs'
-	$local:ytdlpArgs += ' --embed-metadata --embed-chapters'
-	$local:ytdlpArgs += " --paths $local:saveDir --paths $local:tmpDir"
-	$local:ytdlpArgs += " --paths $local:subttlDir --paths $local:thumbDir"
-	$local:ytdlpArgs += " --paths $local:chaptDir --paths $local:descDir"
-	$local:ytdlpArgs += " -o $local:saveFile $local:videoPageURL"
+	$local:ytdlArgs = '--format mp4'
+	$local:ytdlArgs += ' --console-title'
+	$local:ytdlArgs += ' --no-mtime'
+	$local:ytdlArgs += ' --retries 10'
+	$local:ytdlArgs += ' --fragment-retries 10'
+	$local:ytdlArgs += ' --abort-on-unavailable-fragment'
+	$local:ytdlArgs += ' --no-keep-fragments'
+	$local:ytdlArgs += ' --abort-on-error'
+	$local:ytdlArgs += ' --no-continue'
+	$local:ytdlArgs += ' --windows-filenames'
+	$local:ytdlArgs += ' --xattr-set-filesize'
+	$local:ytdlArgs += ' --newline'
+	$local:ytdlArgs += ' --print-traffic'
+	$local:ytdlArgs += " --concurrent-fragments $global:parallelDownloadNumPerFile"
+	$local:ytdlArgs += ' --embed-thumbnail'
+	$local:ytdlArgs += ' --embed-subs'
+	$local:ytdlArgs += ' --embed-metadata'
+	$local:ytdlArgs += ' --embed-chapters'
+	$local:ytdlArgs += " --paths $local:saveDir"
+	$local:ytdlArgs += " --paths $local:tmpDir"
+	$local:ytdlArgs += " --paths $local:subttlDir"
+	$local:ytdlArgs += " --paths $local:thumbDir"
+	$local:ytdlArgs += " --paths $local:chaptDir"
+	$local:ytdlArgs += " --paths $local:descDir"
+	$local:ytdlArgs += " -o $local:saveFile"
+	$local:ytdlArgs += " $local:videoPageURL"
 
 	if ($global:isWin) {
 		try {
-			Write-Debug "yt-dlp起動コマンド:$global:ytdlpPath $local:ytdlpArgs"
-			$null = Start-Process -FilePath $global:ytdlpPath `
-				-ArgumentList $local:ytdlpArgs `
+			Write-Debug "yt-dlp起動コマンド:$global:ytdlPath $local:ytdlArgs"
+			$null = Start-Process -FilePath $global:ytdlPath `
+				-ArgumentList $local:ytdlArgs `
 				-PassThru `
 				-WindowStyle $global:windowShowStyle
 		} catch { Write-Host 'yt-dlpの起動に失敗しました' -ForegroundColor Green }
 	} else {
-		Write-Debug "y起動コマンド:nohup $global:ytdlpPath $local:ytdlpArgs"
+		Write-Debug "y起動コマンド:nohup $global:ytdlPath $local:ytdlArgs"
 		try {
 			$null = Start-Process -FilePath nohup `
-				-ArgumentList ($global:ytdlpPath, $local:ytdlpArgs) `
+				-ArgumentList ($global:ytdlPath, $local:ytdlArgs) `
 				-PassThru `
 				-RedirectStandardOutput /dev/null
 		} catch { Write-Host 'yt-dlpの起動に失敗しました' -ForegroundColor Green }

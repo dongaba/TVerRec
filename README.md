@@ -76,13 +76,13 @@ TVerRecは、動画配信サイトTVer ( ティーバー <https://tver.jp/> ) �
   - 一般的なWindows環境では特に変更する必要はありません。
   - ここで指定した長さを超えるファイル名が生成されそうになると、ファイル名が収まるように自動的にファイル名が短縮されます。
   - なので、あまり深い階層を保存先に指定すると頻繁にファイル名が短縮されたり、エラーとなることがあります。
-- `$global:binDir`、`$global:dbDir`、`$global:debugDir`は各種フォルダの設定です。
+- `$global:binDir`、`$global:dbDir`は各種フォルダの設定です。
   - ソースファイルから見た際の相対パス指定となるようにしてください。
 - `$global:keywordFilePath`、`$global:ignoreFilePath`はそれぞれダウンロード対象キーワードとダウンロード対象外番組を設定するファイルの名前です。
 - `$global:listFilePath`はダウンロードの未済管理をするファイルの名前です。
 - `$global:ffpmegErrorLogPath`は動画のチェックをする際にエラーを一時的に出力するファイルのパスです。
   - 初期値では`$global:listFilePath`と同じ場所に出力するようになっています。(が、処理が終われば自動的に削除されます)
-- `$global:ytdlpPath`と`$global:ffmpegPath`はそれぞれyt-dlpとffmpegの実行ファイルの配置場所を指定しています。
+- `$global:ytdlPath`と`$global:ffmpegPath`はそれぞれyt-dlpとffmpegの実行ファイルの配置場所を指定しています。
   - ソースファイルから見た際の相対パス指定となるようにしてください。
 
 ## おすすめの使い方

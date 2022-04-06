@@ -36,33 +36,33 @@ $local:file = 'yt-dlp.exe'
 $local:releases = "https://api.github.com/repos/$local:repo/releases"
 
 #yt-dlp保存先相対Path
-$local:ytdlpRelativeDir = '..\bin'
-$local:ytdlpDir = $(Join-Path $local:scriptRoot $local:ytdlpRelativeDir)
-if ($local:isWin) { $local:ytdlpPath = $(Join-Path $local:ytdlpDir 'yt-dlp.exe') }
-else { $local:ytdlpPath = $(Join-Path $local:ytdlpDir 'yt-dlp') }
+$local:ytdlRelativeDir = '..\bin'
+$local:ytdlDir = $(Join-Path $local:scriptRoot $local:ytdlRelativeDir)
+if ($local:isWin) { $local:ytdlPath = $(Join-Path $local:ytdlDir 'yt-dlp.exe') }
+else { $local:ytdlPath = $(Join-Path $local:ytdlDir 'yt-dlp') }
 
 #yt-dlpのディレクトリがなければ作成
-if (-Not (Test-Path $local:ytdlpDir -PathType Container)) {
-	$null = New-Item -ItemType directory -Path $local:ytdlpDir
+if (-Not (Test-Path $local:ytdlDir -PathType Container)) {
+	$null = New-Item -ItemType directory -Path $local:ytdlDir
 }
 
 #yt-dlpのバージョン取得
-if (Test-Path $local:ytdlpPath -PathType Leaf) {
+if (Test-Path $local:ytdlPath -PathType Leaf) {
 	# get version of current yt-dlp.exe
-	$local:ytdlpCurrentVersion = (& $local:ytdlpPath --version)
+	$local:ytdlCurrentVersion = (& $local:ytdlPath --version)
 } else {
 	# if yt-dlp.exe not found, will download it
-	$local:ytdlpCurrentVersion = ''
+	$local:ytdlCurrentVersion = ''
 }
 
 #yt-dlpの最新バージョン取得
 try { $local:latestVersion = (Invoke-WebRequest $local:releases | ConvertFrom-Json)[0].tag_name } catch {}
 
-Write-Host 'yt-dlp current:' $local:ytdlpCurrentVersion
+Write-Host 'yt-dlp current:' $local:ytdlCurrentVersion
 Write-Host 'yt-dlp latest:' $local:latestVersion
 
 #youtube-dlのダウンロード
-if ($local:latestVersion -eq $local:ytdlpCurrentVersion) {
+if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 	Write-Host 'yt-dlpは最新です。 '
 	Write-Host ''
 } else {
@@ -73,12 +73,12 @@ if ($local:latestVersion -eq $local:ytdlpCurrentVersion) {
 			#ダウンロード
 			$local:tag = (Invoke-WebRequest $local:releases | ConvertFrom-Json)[0].tag_name
 			$local:download = "https://github.com/$local:repo/releases/download/$local:tag/$local:file"
-			$local:ytdlpFileLocation = $(Join-Path $local:ytdlpDir $local:file)
+			$local:ytdlFileLocation = $(Join-Path $local:ytdlDir $local:file)
 			Write-Host "yt-dlpをダウンロードします。 $local:download"
-			Invoke-WebRequest $local:download -Out $local:ytdlpFileLocation
+			Invoke-WebRequest $local:download -Out $local:ytdlFileLocation
 			#バージョンチェック
-			$local:ytdlpCurrentVersion = (& $local:ytdlpPath --version)
-			Write-Host "yt-dlpをversion $local:ytdlpCurrentVersion に更新しました。 "
+			$local:ytdlCurrentVersion = (& $local:ytdlPath --version)
+			Write-Host "yt-dlpをversion $local:ytdlCurrentVersion に更新しました。 "
 		} catch { Write-Host 'yt-dlpの更新に失敗しました' -ForegroundColor Green }
 	}
 }

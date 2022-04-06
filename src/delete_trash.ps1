@@ -149,14 +149,14 @@ foreach ($local:ignoreTitle in $local:ignoreTitles) {
 	Write-Host "$($local:ignoreTitle)を処理中"
 	try {
 		$local:delTargets = Get-ChildItem -LiteralPath $global:downloadBaseDir `
-			-Directory -Name -Filter '"*' + $local:ignoreTitle + '*"'
+			-Directory -Name -Filter "*$($local:ignoreTitle)*"
 	} catch {}
 	try {
 		if ($null -ne $local:delTargets) {
 			foreach ($local:delTarget in $local:delTargets) {
 				if (Test-Path $(Join-Path $global:downloadBaseDir $local:delTarget) -PathType Container) {
 					Write-Host "  └「$(Join-Path $global:downloadBaseDir $local:delTarget)」を削除します"
-					Remove-Item -LiteralPath $(Join-Path $global:downloadBaseDir $local:delTarget) `
+					Remove-Item -Path $(Join-Path $global:downloadBaseDir $local:delTarget) `
 						-Recurse -Force -ErrorAction SilentlyContinue
 				}
 			}
