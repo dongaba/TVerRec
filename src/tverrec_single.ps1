@@ -26,33 +26,33 @@ using namespace System.Text.RegularExpressions
 Set-StrictMode -Version Latest
 try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$global:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+		$script:criptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
 	} else {
-		$global:scriptRoot = Convert-Path .
+		$script:criptRoot = Convert-Path .
 	}
-	Set-Location $global:scriptRoot
-	$global:confDir = $(Join-Path $global:scriptRoot '..\conf')
-	$global:sysFile = $(Join-Path $global:confDir 'system_setting.conf')
-	$global:confFile = $(Join-Path $global:confDir 'user_setting.conf')
-	$global:devDir = $(Join-Path $global:scriptRoot '..\dev')
-	$global:devConfFile = $(Join-Path $global:devDir 'dev_setting.conf')
-	$global:devFunctionFile = $(Join-Path $global:devDir 'dev_funcitons.ps1')
+	Set-Location $script:criptRoot
+	$script:onfDir = $(Join-Path $$script:riptRoot '..\conf')
+	$script:ysFile = $(Join-Path $$script:nfDir 'system_setting.conf')
+	$script:onfFile = $(Join-Path $$script:nfDir 'user_setting.conf')
+	$script:evDir = $(Join-Path $$script:riptRoot '..\dev')
+	$script:evConfFile = $(Join-Path $$script:vDir 'dev_setting.conf')
+	$script:evFunctionFile = $(Join-Path $$script:vDir 'dev_funcitons.ps1')
 
 	#----------------------------------------------------------------------
 	#外部設定ファイル読み込み
-	Get-Content $global:sysFile -Encoding UTF8 `
+	Get-Content $script:ysFile -Encoding UTF8 `
 	| Where-Object { $_ -notmatch '^\s*$' } `
 	| Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } `
 	| Invoke-Expression
-	Get-Content $global:confFile -Encoding UTF8 `
+	Get-Content $script:onfFile -Encoding UTF8 `
 	| Where-Object { $_ -notmatch '^\s*$' } `
 	| Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } `
 	| Invoke-Expression
 
 	#----------------------------------------------------------------------
 	#開発環境用に設定上書き
-	if (Test-Path $global:devConfFile) {
-		Get-Content $global:devConfFile -Encoding UTF8 `
+	if (Test-Path $script:evConfFile) {
+		Get-Content $script:evConfFile -Encoding UTF8 `
 		| Where-Object { $_ -notmatch '^\s*$' } `
 		| Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } `
 		| Invoke-Expression
@@ -61,24 +61,24 @@ try {
 	#----------------------------------------------------------------------
 	#外部関数ファイルの読み込み
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		. $(Convert-Path (Join-Path $global:scriptRoot '.\common_functions_5.ps1'))
-		. $(Convert-Path (Join-Path $global:scriptRoot '.\tver_functions_5.ps1'))
-		if (Test-Path $global:devFunctionFile) {
+		. $(Convert-Path (Join-Path $script:criptRoot '.\common_functions_5.ps1'))
+		. $(Convert-Path (Join-Path $script:criptRoot '.\tver_functions_5.ps1'))
+		if (Test-Path $script:evFunctionFile) {
 			Write-ColorOutput '========================================================' Green
 			Write-ColorOutput '  PowerShell Coreではありません                         ' Green
 			Write-ColorOutput '========================================================' Green
 		}
 	} else {
-		. $(Convert-Path (Join-Path $global:scriptRoot '.\common_functions.ps1'))
-		. $(Convert-Path (Join-Path $global:scriptRoot '.\tver_functions.ps1'))
-		if (Test-Path $global:devFunctionFile) {
-			. $global:devFunctionFile
+		. $(Convert-Path (Join-Path $script:criptRoot '.\common_functions.ps1'))
+		. $(Convert-Path (Join-Path $script:criptRoot '.\tver_functions.ps1'))
+		if (Test-Path $script:evFunctionFile) {
+			. $script:evFunctionFile
 			Write-ColorOutput '========================================================' Green
 			Write-ColorOutput '  開発ファイルを読み込みました                          ' Green
 			Write-ColorOutput '========================================================' Green
 		}
 	}
-} catch { Write-ColorOutput '設定ファイルの読み込みに失敗しました' Green ; exit 1 }
+} catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -86,7 +86,7 @@ Write-ColorOutput ''
 Write-ColorOutput '===========================================================================' Cyan
 Write-ColorOutput '---------------------------------------------------------------------------' Cyan
 Write-ColorOutput '  TVerRec : TVerビデオダウンローダ                                         ' Cyan
-Write-ColorOutput "                      個別ダウンロード版 version. $global:appVersion              " Cyan
+Write-ColorOutput "                      個別ダウンロード版 version. $script:ppVersion              " Cyan
 Write-ColorOutput '---------------------------------------------------------------------------' Cyan
 Write-ColorOutput '===========================================================================' Cyan
 Write-ColorOutput ''
@@ -106,11 +106,11 @@ while ($true) {
 	$local:videoPageURL = ''
 
 	#保存先ディレクトリの存在確認
-	if (Test-Path $global:downloadBaseDir -PathType Container) {}
+	if (Test-Path $script:ownloadBaseDir -PathType Container) {}
 	else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します' ; exit 1 }
 
 	$local:videoPageURL = Read-Host 'ビデオURLを入力してください。'
-	if ($videoPageURL -eq '') { exit }
+	if ($videoPageURL -eq '') { exit 0 }
 	$local:videoLink = $local:videoPageURL.Replace('https://tver.jp', '').Replace('http://tver.jp', '').Trim()
 	$local:videoPageURL = 'https://tver.jp' + $local:videoLink
 	Write-ColorOutput $local:videoPageURL

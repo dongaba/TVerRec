@@ -36,5 +36,3 @@ if [ `ps $targetPID | grep -c bash` -gt 0 ]; then
 else
 	rm -f $PIDFile
 fi
-
-

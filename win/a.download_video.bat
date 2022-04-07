@@ -39,5 +39,4 @@ if exist "C:\Program Files\PowerShell\7\pwsh.exe" (
 	powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\tverrec_bulk_5.ps1
 )
 
-pause
-
+echo 処理が完了しました ...
