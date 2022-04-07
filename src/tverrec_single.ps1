@@ -111,7 +111,7 @@ while ($true) {
 
 	$local:videoPageURL = Read-Host 'ビデオURLを入力してください。'
 	if ($videoPageURL -eq '') { exit }
-	$local:videoLink = $local:videoPageURL.Replace('https://tver.jp', '').Replace('http://tver.jp', '').trim()
+	$local:videoLink = $local:videoPageURL.Replace('https://tver.jp', '').Replace('http://tver.jp', '').Trim()
 	$local:videoPageURL = 'https://tver.jp' + $local:videoLink
 	Write-Host $local:videoPageURL
 

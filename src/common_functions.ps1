@@ -297,7 +297,7 @@ function waitTillYtdlProcessGetFewer ($local:parallelDownloadFileNum) {
 			$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
 		} elseif ($IsMacOS) {
 			$local:psCmd = 'ps'
-			$local:ytdlCount = (& $local:psCmd | & grep yt-dlp | grep -v grep | wc -l).trim()
+			$local:ytdlCount = (& $local:psCmd | & grep yt-dlp | grep -v grep | wc -l).Trim()
 		} else {
 			$local:ytdlCount = 0
 		}
@@ -316,7 +316,7 @@ function waitTillYtdlProcessGetFewer ($local:parallelDownloadFileNum) {
 			} elseif ($IsLinux) {
 				$local:ytdlCount = (& Get-Process -ErrorAction Ignore -Name yt-dlp).Count
 			} elseif ($IsMacOS) {
-				$local:ytdlCount = (& $local:psCmd | & grep yt-dlp | grep -v grep | wc -l).trim()
+				$local:ytdlCount = (& $local:psCmd | & grep yt-dlp | grep -v grep | wc -l).Trim()
 			} else {
 				$local:ytdlCount = 0
 			}
@@ -337,7 +337,7 @@ function waitTillYtdlProcessIsZero () {
 			$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
 		} elseif ($IsMacOS) {
 			$local:psCmd = 'ps'
-			$local:ytdlCount = (& $local:psCmd | & grep yt-dlp | grep -v grep | wc -l).trim()
+			$local:ytdlCount = (& $local:psCmd | & grep yt-dlp | grep -v grep | wc -l).Trim()
 		} else {
 			$local:ytdlCount = 0
 		}
@@ -354,7 +354,7 @@ function waitTillYtdlProcessIsZero () {
 			} elseif ($IsLinux) {
 				$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
 			} elseif ($IsMacOS) {
-				$local:ytdlCount = (& $local:psCmd | & grep yt-dlp | grep -v grep | wc -l).trim()
+				$local:ytdlCount = (& $local:psCmd | & grep yt-dlp | grep -v grep | wc -l).Trim()
 			} else {
 				$local:ytdlCount = 0
 			}
@@ -467,9 +467,7 @@ function getFileNameWithoutInvalidChars {
 #全角→半角
 #----------------------------------------------------------------------
 function getNarrowChars {
-
 	Param([String]$local:text)		#変換元テキストを引数に指定
-
 	$local:wideKanaDaku = 'ガギグゲゴザジズゼゾダヂヅデドバビブベボ'
 	$local:narrowKanaDaku = 'ｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾊﾋﾌﾍﾎ'
 	$local:narrowWideKanaHanDaku = 'パピプペポ'
@@ -482,7 +480,6 @@ function getNarrowChars {
 	$local:narrowAlpha = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 	$local:wideSimbol = '＠＃＄％＾＆＊－＋＿／［］｛｝（）＜＞　￥＼”；：'
 	$local:narrowSimbol = '@#$%^&*-+_/[]{}()<> \\";:'
-
 	for ($i = 0; $i -lt $local:wideKanaDaku.Length; $i++) {
 		$local:text = $local:text.Replace($local:narrowKanaDaku[$i] + 'ﾞ', $local:wideKanaDaku[$i])
 	}
@@ -502,7 +499,6 @@ function getNarrowChars {
 		$local:text = $local:text.Replace($local:wideSimbol[$i], $local:narrowSimbol[$i])
 	}
 	return $local:text
-
 }
 
 #----------------------------------------------------------------------
@@ -520,6 +516,20 @@ function getSpecialCharacterReplaced {
 	$local:text = $local:text.Replace('/', '-')
 	$local:text = $local:text.Replace('\', '-')
 	return $local:text
+}
+
+#----------------------------------------------------------------------
+#タブとスペースを詰めて半角スペース1文字に
+#----------------------------------------------------------------------
+function trimTabSpace ($local:text) {
+	return $local:text.Replace("`t", ' ').Replace('  ', ' ')
+}
+
+#----------------------------------------------------------------------
+#キーワードの後にあるコメントを削除しキーワードのみ抽出
+#----------------------------------------------------------------------
+function removeCommentsFromKeyword ($local:keyword) {
+	return $local:keyword.Split("`t")[0].Split(' ')[0].Split('#')[0]
 }
 
 #----------------------------------------------------------------------
@@ -562,7 +572,7 @@ function deleteTrashFiles ($local:Path, $local:Conditions) {
 	try {
 		Write-Host "$($local:Path)を処理中"
 		$local:delTargets = @()
-		foreach ($local:filter in $local:Conditions.Split(',').trim()) {
+		foreach ($local:filter in $local:Conditions.Split(',').Trim()) {
 			$local:delTargets += Get-ChildItem -LiteralPath $local:Path `
 				-Recurse -File -Filter $local:filter
 		}

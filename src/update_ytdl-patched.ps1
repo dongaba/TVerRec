@@ -55,7 +55,7 @@ if (Test-Path $local:ytdlPath -PathType Leaf) {
 }
 
 #ytdl-patchedの最新バージョン取得
-try { $local:latestVersion = (Invoke-WebRequest $local:releases | ConvertFrom-Json)[0].name } catch {}
+try { $local:latestVersion = (Invoke-WebRequest $local:releases | ConvertFrom-Json)[0].Name } catch {}
 
 Write-Host 'youtube-dl current:' $local:ytdlCurrentVersion
 Write-Host 'youtube-dl latest:' $local:latestVersion
@@ -70,7 +70,7 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 			#githubの設定
 			$local:file = 'youtube-dl'
 			#ダウンロード
-			$local:tag = (Invoke-WebRequest $local:releases | ConvertFrom-Json)[0].tag_name
+			$local:tag = (Invoke-WebRequest $local:releases | ConvertFrom-Json)[0].Tag_name
 			$local:download = "https://github.com/$local:repo/releases/download/$local:tag/$local:file"
 			$local:ytdlFileLocation = $(Join-Path $local:ytdlDir $local:file)
 			Write-Host "youtube-dlをダウンロードします。 $local:download"
@@ -86,7 +86,7 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 			$local:fileAfterRename = 'youtube-dl.exe'
 
 			#ダウンロード
-			$local:tag = (Invoke-WebRequest $local:releases | ConvertFrom-Json)[0].tag_name
+			$local:tag = (Invoke-WebRequest $local:releases | ConvertFrom-Json)[0].Tag_name
 			$local:download = "https://github.com/$local:repo/releases/download/$local:tag/$local:file"
 			$local:ytdlFileLocation = $(Join-Path $local:ytdlDir $local:fileAfterRename)
 			Write-Host "youtube-dlをダウンロードします。 $local:download"

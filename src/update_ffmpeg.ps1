@@ -53,7 +53,11 @@ if (Test-Path $local:ffmpegPath -PathType Leaf) {
 }
 
 #ffmpegの最新バージョン取得
-try { $local:latestVersion = Invoke-RestMethod -Uri https://www.gyan.dev/ffmpeg/builds/release-version }catch {}
+$local:latestVersion = ''
+try { $local:latestRawVersion = Invoke-WebRequest -Uri https://www.gyan.dev/ffmpeg/builds/release-version }catch {}
+foreach ( $local:char in [char[]]$local:latestRawVersion.content ) {
+	$local:latestVersion += $local:char
+}
 
 Write-Host 'ffmpeg current:' $local:ffmpegCurrentVersion
 Write-Host 'ffmpeg latest:' $local:latestVersion

@@ -56,7 +56,7 @@ if (Test-Path $local:ytdlPath -PathType Leaf) {
 }
 
 #yt-dlpの最新バージョン取得
-try { $local:latestVersion = (Invoke-WebRequest $local:releases | ConvertFrom-Json)[0].tag_name } catch {}
+try { $local:latestVersion = (Invoke-WebRequest $local:releases | ConvertFrom-Json)[0].Tag_name } catch {}
 
 Write-Host 'yt-dlp current:' $local:ytdlCurrentVersion
 Write-Host 'yt-dlp latest:' $local:latestVersion
@@ -71,7 +71,7 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 	} else {
 		try {
 			#ダウンロード
-			$local:tag = (Invoke-WebRequest $local:releases | ConvertFrom-Json)[0].tag_name
+			$local:tag = (Invoke-WebRequest $local:releases | ConvertFrom-Json)[0].Tag_name
 			$local:download = "https://github.com/$local:repo/releases/download/$local:tag/$local:file"
 			$local:ytdlFileLocation = $(Join-Path $local:ytdlDir $local:file)
 			Write-Host "yt-dlpをダウンロードします。 $local:download"

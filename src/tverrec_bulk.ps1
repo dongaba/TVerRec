@@ -113,7 +113,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#ジャンルページチェックタイトルの表示
 	Write-Host ''
 	Write-Host '==========================================================================='
-	Write-Host "【 $local:keywordName 】 のダウンロードを開始します。"
+	Write-Host "【 $(trimTabSpace ($local:keywordName)) 】 のダウンロードを開始します。"
 	Write-Host '==========================================================================='
 
 	$local:keywordNum = $local:keywordNum + 1		#キーワード数のインクリメント
