@@ -25,33 +25,33 @@
 Set-StrictMode -Version Latest
 try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$script:criptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+		$script:riptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
 	} else {
-		$script:criptRoot = Convert-Path .
+		$script:riptRoot = Convert-Path .
 	}
-	Set-Location $script:criptRoot
-	$script:onfDir = $(Join-Path $$script:riptRoot '..\conf')
-	$script:ysFile = $(Join-Path $$script:nfDir 'system_setting.conf')
-	$script:onfFile = $(Join-Path $$script:nfDir 'user_setting.conf')
-	$script:evDir = $(Join-Path $$script:riptRoot '..\dev')
-	$script:evConfFile = $(Join-Path $$script:vDir 'dev_setting.conf')
-	$script:evFunctionFile = $(Join-Path $$script:vDir 'dev_funcitons.ps1')
+	Set-Location $script:riptRoot
+	$script:nfDir = $(Join-Path $$$script:ptRoot '..\conf')
+	$script:sFile = $(Join-Path $$$script:Dir 'system_setting.conf')
+	$script:nfFile = $(Join-Path $$$script:Dir 'user_setting.conf')
+	$script:vDir = $(Join-Path $$$script:ptRoot '..\dev')
+	$script:vConfFile = $(Join-Path $$$script:ir 'dev_setting.conf')
+	$script:vFunctionFile = $(Join-Path $$$script:ir 'dev_funcitons.ps1')
 
 	#----------------------------------------------------------------------
 	#外部設定ファイル読み込み
-	Get-Content $script:ysFile -Encoding UTF8 `
+	Get-Content $script:sFile -Encoding UTF8 `
 	| Where-Object { $_ -notmatch '^\s*$' } `
 	| Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } `
 	| Invoke-Expression
-	Get-Content $script:onfFile -Encoding UTF8 `
+	Get-Content $script:nfFile -Encoding UTF8 `
 	| Where-Object { $_ -notmatch '^\s*$' } `
 	| Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } `
 	| Invoke-Expression
 
 	#----------------------------------------------------------------------
 	#開発環境用に設定上書き
-	if (Test-Path $script:evConfFile) {
-		Get-Content $script:evConfFile -Encoding UTF8 `
+	if (Test-Path $script:vConfFile) {
+		Get-Content $script:vConfFile -Encoding UTF8 `
 		| Where-Object { $_ -notmatch '^\s*$' } `
 		| Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } `
 		| Invoke-Expression
@@ -60,18 +60,18 @@ try {
 	#----------------------------------------------------------------------
 	#外部関数ファイルの読み込み
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		. $(Convert-Path (Join-Path $script:criptRoot '.\common_functions_5.ps1'))
-		. $(Convert-Path (Join-Path $script:criptRoot '.\tver_functions_5.ps1'))
-		if (Test-Path $script:evFunctionFile) {
+		. $(Convert-Path (Join-Path $script:riptRoot '.\common_functions_5.ps1'))
+		. $(Convert-Path (Join-Path $script:riptRoot '.\tver_functions_5.ps1'))
+		if (Test-Path $script:vFunctionFile) {
 			Write-ColorOutput '========================================================' Green
 			Write-ColorOutput '  PowerShell Coreではありません                         ' Green
 			Write-ColorOutput '========================================================' Green
 		}
 	} else {
-		. $(Convert-Path (Join-Path $script:criptRoot '.\common_functions.ps1'))
-		. $(Convert-Path (Join-Path $script:criptRoot '.\tver_functions.ps1'))
-		if (Test-Path $script:evFunctionFile) {
-			. $script:evFunctionFile
+		. $(Convert-Path (Join-Path $script:riptRoot '.\common_functions.ps1'))
+		. $(Convert-Path (Join-Path $script:riptRoot '.\tver_functions.ps1'))
+		if (Test-Path $script:vFunctionFile) {
+			. $script:vFunctionFile
 			Write-ColorOutput '========================================================' Green
 			Write-ColorOutput '  開発ファイルを読み込みました                          ' Green
 			Write-ColorOutput '========================================================' Green
@@ -88,15 +88,15 @@ Write-ColorOutput '-------------------------------------------------------------
 Write-ColorOutput 'ダウンロードが中断した際にできたゴミファイルを削除します'
 Write-ColorOutput '----------------------------------------------------------------------'
 try {
-	Get-ChildItem -Path $script:ownloadWorkDir -Recurse -Filter 'ffmpeg_error_*.log' `
+	Get-ChildItem -Path $script:wnloadWorkDir -Recurse -Filter 'ffmpeg_error_*.log' `
 	| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-0.5) } `
 	| Remove-Item -Force -ErrorAction SilentlyContinue
-} catch {}
+} catch { Write-ColorOutput 'ffmpegエラーファイルが削除できませんでした' Green }
 try {
 	Get-ChildItem -Path $scriptRoot -Recurse -Filter 'brightcovenew_*.lock' `
 	| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-0.5) } `
 	| Remove-Item -Force -ErrorAction SilentlyContinue
-} catch {}
+} catch { Write-ColorOutput 'youtube-dlの中間ファイルが削除できませんでした' Green }
 Write-Progress -Id 1 `
 	-Activity '処理 1/3' `
 	-PercentComplete $($( 1 / 3 ) * 100) `
@@ -104,18 +104,18 @@ Write-Progress -Id 1 `
 Write-Progress -Id 2 -ParentId 1 `
 	-Activity '1/3' `
 	-PercentComplete $($( 1 / 3 ) * 100) `
-	-Status $script:ownloadBaseDir
-deleteTrashFiles $script:ownloadWorkDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.mp4'
+	-Status $script:wnloadBaseDir
+deleteTrashFiles $script:wnloadWorkDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.mp4'
 Write-Progress -Id 2 -ParentId 1 `
 	-Activity '2/3' `
 	-PercentComplete $($( 2 / 3 ) * 100) `
-	-Status $script:ownloadWorkDir
-deleteTrashFiles $script:ownloadBaseDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*'
+	-Status $script:wnloadWorkDir
+deleteTrashFiles $script:wnloadBaseDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*'
 Write-Progress -Id 2 -ParentId 1 `
 	-Activity '3/3' `
 	-PercentComplete $($( 3 / 3 ) * 100) `
-	-Status $script:aveBaseDir
-deleteTrashFiles $script:aveBaseDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*'
+	-Status $script:veBaseDir
+deleteTrashFiles $script:veBaseDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*'
 
 #======================================================================
 #2/3 無視リストに入っている番組は削除
@@ -128,7 +128,7 @@ Write-Progress -Id 1 `
 	-Status '削除対象のビデオを削除'
 
 #ダウンロード対象外ビデオ番組リストの読み込み
-$local:ignoreTitles = (Get-Content $script:gnoreFilePath -Encoding UTF8 `
+$local:ignoreTitles = (Get-Content $script:noreFilePath -Encoding UTF8 `
 	| Where-Object { !($_ -match '^\s*$') } `
 	| Where-Object { !($_ -match '^;.*$') }) `
 	-as [string[]]
@@ -148,15 +148,15 @@ foreach ($local:ignoreTitle in $local:ignoreTitles) {
 	Write-ColorOutput '----------------------------------------------------------------------'
 	Write-ColorOutput "$($local:ignoreTitle)を処理中"
 	try {
-		$local:delTargets = Get-ChildItem -LiteralPath $script:ownloadBaseDir `
+		$local:delTargets = Get-ChildItem -LiteralPath $script:wnloadBaseDir `
 			-Directory -Name -Filter "*$($local:ignoreTitle)*"
-	} catch {}
+	} catch { Write-ColorOutput '削除対象の特定ができませんでした' Green }
 	try {
 		if ($null -ne $local:delTargets) {
 			foreach ($local:delTarget in $local:delTargets) {
-				if (Test-Path $(Join-Path $script:ownloadBaseDir $local:delTarget) -PathType Container) {
-					Write-ColorOutput "  └「$(Join-Path $script:ownloadBaseDir $local:delTarget)」を削除します"
-					Remove-Item -Path $(Join-Path $script:ownloadBaseDir $local:delTarget) `
+				if (Test-Path $(Join-Path $script:wnloadBaseDir $local:delTarget) -PathType Container) {
+					Write-ColorOutput "  └「$(Join-Path $script:wnloadBaseDir $local:delTarget)」を削除します"
+					Remove-Item -Path $(Join-Path $script:wnloadBaseDir $local:delTarget) `
 						-Recurse -Force -ErrorAction SilentlyContinue
 				}
 			}
@@ -175,7 +175,7 @@ Write-Progress -Id 1 -Activity '処理 3/3' `
 	-PercentComplete $($( 3 / 3 ) * 100) `
 	-Status '空フォルダを削除'
 
-$local:allSubDirs = @((Get-ChildItem -LiteralPath $script:ownloadBaseDir -Recurse).Where({ $_.PSIsContainer })).FullName `
+$local:allSubDirs = @((Get-ChildItem -LiteralPath $script:wnloadBaseDir -Recurse).Where({ $_.PSIsContainer })).FullName `
 | Sort-Object -Descending
 
 $local:subDirNum = 0						#サブディレクトリの番号
