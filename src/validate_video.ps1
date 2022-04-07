@@ -62,7 +62,7 @@ try {
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
 		. $(Convert-Path (Join-Path $global:currentDir '.\common_functions_5.ps1'))
 		. $(Convert-Path (Join-Path $global:currentDir '.\tver_functions_5.ps1'))
-		if (Test-Path $global:devFunctionFile) { 
+		if (Test-Path $global:devFunctionFile) {
 			Write-Host '========================================================' -ForegroundColor Green
 			Write-Host '  PowerShell Coreではありません                         ' -ForegroundColor Green
 			Write-Host '========================================================' -ForegroundColor Green
@@ -70,8 +70,8 @@ try {
 	} else {
 		. $(Convert-Path (Join-Path $global:currentDir '.\common_functions.ps1'))
 		. $(Convert-Path (Join-Path $global:currentDir '.\tver_functions.ps1'))
-		if (Test-Path $global:devFunctionFile) { 
-			. $global:devFunctionFile 
+		if (Test-Path $global:devFunctionFile) {
+			. $global:devFunctionFile
 			Write-Host '========================================================' -ForegroundColor Green
 			Write-Host '  開発ファイルを読み込みました                          ' -ForegroundColor Green
 			Write-Host '========================================================' -ForegroundColor Green
@@ -103,7 +103,7 @@ Write-Host '録画リストからチェックが終わっていないビデオ�
 Write-Host '==========================================================================='
 try {
 	#ロックファイルをロック
-	while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) { 
+	while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) {
 		Write-Host 'ファイルのロック解除待ち中です'
 		Start-Sleep -Seconds 1
 	}
@@ -150,7 +150,7 @@ if ($null -eq $local:videoLists) {
 		$local:decodeOption = $global:ffmpegDecodeOption
 	}
 
-	$local:totalStartTime = Get-Date 
+	$local:totalStartTime = Get-Date
 
 	$local:completionPercent = 0
 	Write-Progress `
@@ -197,7 +197,7 @@ Write-Host '録画リストからチェックが終わっていないビデオ�
 Write-Host '==========================================================================='
 try {
 	#ロックファイルをロック
-	while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) { 
+	while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) {
 		Write-Host 'ファイルのロック解除待ち中です'
 		Start-Sleep -Seconds 1
 	}

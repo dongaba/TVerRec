@@ -62,7 +62,7 @@ try {
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
 		. $(Convert-Path (Join-Path $global:currentDir '.\common_functions_5.ps1'))
 		. $(Convert-Path (Join-Path $global:currentDir '.\tver_functions_5.ps1'))
-		if (Test-Path $global:devFunctionFile) { 
+		if (Test-Path $global:devFunctionFile) {
 			Write-Host '========================================================' -ForegroundColor Green
 			Write-Host '  PowerShell Coreではありません                         ' -ForegroundColor Green
 			Write-Host '========================================================' -ForegroundColor Green
@@ -70,8 +70,8 @@ try {
 	} else {
 		. $(Convert-Path (Join-Path $global:currentDir '.\common_functions.ps1'))
 		. $(Convert-Path (Join-Path $global:currentDir '.\tver_functions.ps1'))
-		if (Test-Path $global:devFunctionFile) { 
-			. $global:devFunctionFile 
+		if (Test-Path $global:devFunctionFile) {
+			. $global:devFunctionFile
 			Write-Host '========================================================' -ForegroundColor Green
 			Write-Host '  開発ファイルを読み込みました                          ' -ForegroundColor Green
 			Write-Host '========================================================' -ForegroundColor Green

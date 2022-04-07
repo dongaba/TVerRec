@@ -32,7 +32,7 @@ TVerRecは、動画配信サイトTVer ( ティーバー <https://tver.jp/> ) �
 8. ダウンロードされたファイルは、最終保存先に**自動的に整理**可能です。
     - 例えば毎週同じ番組をダウンロードする場合、最終保存先に番組名のフォルダがあれば自動的に全番組が最終保存先のフォルダに移動されます。
     - 最終保存先に同名のフォルダがなければ、動画ファイルは保存先フォルダに残り続けます。
-9. 動作に必要なyt-dlpやffmpegなどの必要コンポーネントは**自動的に最新版がダウンロード**されます。(Windowsのみ)
+9. 動作に必要なyoutube-dlやffmpegなどの必要コンポーネントは**自動的に最新版がダウンロード**されます。(ffmpegの自動ダウンロードはWindowsのみ)
 10. **日本国外からもVPN不要**で利用することができます。
 
 ## ダウンロード対象番組の設定方法
@@ -64,7 +64,7 @@ TVerRecは、動画配信サイトTVer ( ティーバー <https://tver.jp/> ) �
 - `$global:parallelDownloadFileNum`は同時に並行でダウンロードする動画の数を設定します。
 - `$global:parallelDownloadNumPerFile`はそれぞれの動画をダウンロードする際の並行ダウンロード数を設定します。
   - つまり、`$global:parallelDownloadFileNum`×`$global:parallelDownloadNumPerFile`が実質的な最大同時ダウンロード数になります。
-- `$global:windowShowStyle`にはyt-dlpのウィンドウをどのように表示するかを設定します。
+- `$global:windowShowStyle`にはyoutube-dlのウィンドウをどのように表示するかを設定します。
   - `Normal` / `Maximized` / `Minimized` / `Hidden` の4つが指定可能です。
   - 初期値は`Hidden`でダウンロードウィンドウは非表示となりますが、`Normal`等に設定することでダウンロードの進捗を確認することができます。
 - `$global:forceSoftwareDecodeFlag`に`$true`を設定するとハードウェアアクセラレーションを使わなくなります。
@@ -91,7 +91,7 @@ TVerRecは、動画配信サイトTVer ( ティーバー <https://tver.jp/> ) �
 - `$global:listFilePath`はダウンロードの未済管理をするファイルの名前です。
 - `$global:ffpmegErrorLogPath`は動画のチェックをする際にエラーを一時的に出力するファイルのパスです。
   - 初期値では`$global:listFilePath`と同じ場所に出力するようになっています。(が、処理が終われば自動的に削除されます)
-- `$global:ytdlPath`と`$global:ffmpegPath`はそれぞれyt-dlpとffmpegの実行ファイルの配置場所を指定しています。
+- `$global:ytdlPath`と`$global:ffmpegPath`はそれぞれyoutube-dlとffmpegの実行ファイルの配置場所を指定しています。
   - ソースファイルから見た際の相対パス指定となるようにしてください。
 
 ## おすすめの使い方
@@ -132,8 +132,8 @@ MacOSでもPowerShellをインストールし動作確認をしています。
 
 ## Linux/Macでの利用方法
 
-- `ffmpeg`と`yt-dlp`を`bin`ディレクトリに配置するか、シンボリックリンクを貼ってください。
-  - または、`conf/system_setting.conf`に**相対パス指定で**`ffmpeg`と`yt-dlp`のパスを記述してください。
+- `ffmpeg`と`youtube-dl`を`bin`ディレクトリに配置するか、シンボリックリンクを貼ってください。
+  - または、`conf/system_setting.conf`に**相対パス指定で**`ffmpeg`と`youtube-dl`のパスを記述してください。
 - 上記説明の`win/*.bat`は`unix/*.sh`に読み替えて実行してください。
 
 ## フォルダ構成
@@ -161,7 +161,7 @@ TVerRec/
 │  ├─ tverrec_bulk.ps1 ..................... 一括ダウンロードツール本体
 │  ├─ tverrec_single.ps1 ................... 単体ダウンロードツール
 │  ├─ update_ffmpeg.ps1 .................... ffmpeg自動更新ツール
-│  ├─ update_yt-dlp.ps1 .................... yt-dlp自動更新ツール
+│  ├─ update_youtube-dl.ps1 .................... youtube-dl自動更新ツール
 │  ├─ update_ytdl-patched.ps1 .............. ytdl-patched自動更新ツール
 │  └─ validate_video.ps1 ................... ダウンロード済みビデオの整合性チェックツール
 │

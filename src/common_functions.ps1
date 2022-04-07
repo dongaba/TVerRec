@@ -23,9 +23,9 @@
 #ytdlの最新化確認
 #----------------------------------------------------------------------
 function checkLatestYtdl {
-	if ($PSVersionTable.PSEdition -eq 'Desktop') { 
+	if ($PSVersionTable.PSEdition -eq 'Desktop') {
 		. $(Convert-Path (Join-Path $currentDir '.\update_ytdl-patched_5.ps1'))
-	} else { 
+	} else {
 		. $(Convert-Path (Join-Path $currentDir '.\update_ytdl-patched.ps1'))
 	}
 }
@@ -36,7 +36,7 @@ function checkLatestYtdl {
 function checkLatestFfmpeg {
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
 		. $(Convert-Path (Join-Path $currentDir '.\update_ffmpeg_5.ps1'))
-	} else { 
+	} else {
 		. $(Convert-Path (Join-Path $currentDir '.\update_ffmpeg.ps1'))
 	}
 }
@@ -50,7 +50,7 @@ function checkRequiredFile {
 	if (Test-Path $global:ffmpegPath -PathType Leaf) {}
 	else { Write-Error 'ffmpegが存在しません。終了します。' ; exit 1 }
 	if (Test-Path $global:ytdlPath -PathType Leaf) {}
-	else { Write-Error 'yt-dlpが存在しません。終了します。' ; exit 1 }
+	else { Write-Error 'youtube-dlが存在しません。終了します。' ; exit 1 }
 	if (Test-Path $global:confFile -PathType Leaf) {}
 	else { Write-Error 'ユーザ設定ファイルが存在しません。終了します。' ; exit 1 }
 	if (Test-Path $global:keywordFilePath -PathType Leaf) {}
@@ -67,7 +67,7 @@ function checkRequiredFile {
 function checkGeoIP {
 	try {
 		if ((Invoke-RestMethod -Uri 'http://ip-api.com/json/').countryCode -ne 'JP') {
-			Invoke-RestMethod -Uri ( 
+			Invoke-RestMethod -Uri (
 				'http://ip-api.com/json/' + (Invoke-WebRequest -Uri 'http://ifconfig.me/ip').Content
 			)
 			Write-Host '日本のIPアドレスからしか接続できません。VPN接続してください。' -ForegroundColor Green
@@ -80,7 +80,7 @@ function checkGeoIP {
 #タイムスタンプ更新
 #----------------------------------------------------------------------
 function getTimeStamp {
-	$local:timeStamp = Get-Date -UFormat '%Y-%m-%d %H:%M:%S' 
+	$local:timeStamp = Get-Date -UFormat '%Y-%m-%d %H:%M:%S'
 	return $local:timeStamp
 }
 
@@ -90,7 +90,7 @@ function getTimeStamp {
 function purgeDB {
 	try {
 		#ロックファイルをロック
-		while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) { 
+		while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) {
 			Write-Host 'ファイルのロック解除待ち中です'
 			Start-Sleep -Seconds 1
 		}
@@ -111,7 +111,7 @@ function uniqueDB {
 	#無視されたもの
 	try {
 		#ロックファイルをロック
-		while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) { 
+		while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) {
 			Write-Host 'ファイルのロック解除待ち中です'
 			Start-Sleep -Seconds 1
 		}
@@ -127,12 +127,12 @@ function uniqueDB {
 			| Select-Object -ExpandProperty group)
 
 		#無視されたものと無視されなかったものを結合し出力
-		if ($null -eq $local:processedList -and $null -eq $local:ignoredList) { 
+		if ($null -eq $local:processedList -and $null -eq $local:ignoredList) {
 			return
-		} elseif ($null -ne $local:processedList -and $null -eq $local:ignoredList) { 
+		} elseif ($null -ne $local:processedList -and $null -eq $local:ignoredList) {
 			$local:mergedList = $local:processedList
-		} elseif ($null -eq $processedList -and $null -ne $ignoredList) { 
-			$local:mergedList = $local:ignoredList 
+		} elseif ($null -eq $processedList -and $null -ne $ignoredList) {
+			$local:mergedList = $local:ignoredList
 		} else { $local:mergedList = $local:processedList + $local:ignoredList }
 		$mergedList `
 		| Sort-Object -Property downloadDate `
@@ -155,32 +155,32 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 	#これからチェックする動画のステータスをチェック
 	try {
 		#ロックファイルをロック
-		while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) { 
+		while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) {
 			Write-Host 'ファイルのロック解除待ち中です'
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
 		$local:videoLists = Import-Csv $global:listFilePath -Encoding UTF8
 		$local:checkStatus = $(($local:videoLists).Where({ $_.videoPath -eq $local:videoFileRelativePath })).videoValidated
-	} catch { 
+	} catch {
 		Write-Host "チェックステータスを取得できませんでした: $local:videoFileRelativePath" -ForegroundColor Green
-		return 
+		return
 	} finally { $null = fileUnlock ($global:lockFilePath) }
 
 	#0:未チェック、1:チェック済み、2:チェック中
-	if ($local:checkStatus -eq 2 ) { Write-Host '  └他プロセスでチェック中です'; return } 
-	elseif ($local:checkStatus -eq 1 ) { Write-Host '  └他プロセスでチェック済です'; return } 
+	if ($local:checkStatus -eq 2 ) { Write-Host '  └他プロセスでチェック中です'; return }
+	elseif ($local:checkStatus -eq 1 ) { Write-Host '  └他プロセスでチェック済です'; return }
 	else {
 		#該当のビデオのチェックステータスを"2"にして後続のチェックを実行
 		try {
 			$(($local:videoLists).Where({ $_.videoPath -eq $local:videoFileRelativePath })).videoValidated = '2'
-		} catch { 
+		} catch {
 			Write-Host "該当のレコードが見つかりませんでした: $local:videoFileRelativePath" -ForegroundColor Green
-			return 
+			return
 		}
 		try {
 			#ロックファイルをロック
-			while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) { 
+			while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) {
 				Write-Host 'ファイルのロック解除待ち中です'
 				Start-Sleep -Seconds 1
 			}
@@ -206,14 +206,14 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 				-PassThru `
 				-WindowStyle $global:windowShowStyle `
 				-RedirectStandardError $global:ffpmegErrorLogPath `
-				-Wait 
+				-Wait
 		} else {
 			$local:proc = Start-Process -FilePath $global:ffmpegPath `
 				-ArgumentList ($local:ffmpegArgs) `
 				-PassThru `
 				-RedirectStandardOutput /dev/null `
 				-RedirectStandardError $global:ffpmegErrorLogPath `
-				-Wait 
+				-Wait
 		}
 	} catch {
 		Write-Host 'ffmpegを起動できませんでした' -ForegroundColor Green
@@ -246,7 +246,7 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 		#破損している動画ファイルを録画リストから削除
 		try {
 			#ロックファイルをロック
-			while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) { 
+			while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) {
 				Write-Host 'ファイルのロック解除待ち中です'
 				Start-Sleep -Seconds 1
 			}
@@ -269,7 +269,7 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 		#終了コードが"0"のときは録画リストにチェック済みフラグを立てる
 		try {
 			#ロックファイルをロック
-			while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) { 
+			while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) {
 				Write-Host 'ファイルのロック解除待ち中です'
 				Start-Sleep -Seconds 1
 			}
@@ -286,10 +286,10 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 }
 
 #----------------------------------------------------------------------
-#yt-dlpプロセスの確認と待機
+#youtube-dlプロセスの確認と待機
 #----------------------------------------------------------------------
 function waitTillYtdlProcessGetFewer ($local:parallelDownloadFileNum) {
-	#yt-dlpのプロセスが設定値を超えたら一時待機
+	#youtube-dlのプロセスが設定値を超えたら一時待機
 	try {
 		if ($global:isWin) {
 			$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2
@@ -327,7 +327,7 @@ function waitTillYtdlProcessGetFewer ($local:parallelDownloadFileNum) {
 }
 
 #----------------------------------------------------------------------
-#yt-dlpのプロセスが終わるまで待機
+#youtube-dlのプロセスが終わるまで待機
 #----------------------------------------------------------------------
 function waitTillYtdlProcessIsZero () {
 	try {
@@ -365,7 +365,7 @@ function waitTillYtdlProcessIsZero () {
 }
 
 #----------------------------------------------------------------------
-#yt-dlpプロセスの起動
+#youtube-dlプロセスの起動
 #----------------------------------------------------------------------
 function executeYtdl ($local:videoPageURL) {
 	$local:tmpDir = '"temp:' + $global:downloadWorkDir + '"'
@@ -405,12 +405,12 @@ function executeYtdl ($local:videoPageURL) {
 
 	if ($global:isWin) {
 		try {
-			Write-Debug "yt-dlp起動コマンド:$global:ytdlPath $local:ytdlArgs"
+			Write-Debug "youtube-dl起動コマンド:$global:ytdlPath $local:ytdlArgs"
 			$null = Start-Process -FilePath $global:ytdlPath `
 				-ArgumentList $local:ytdlArgs `
 				-PassThru `
 				-WindowStyle $global:windowShowStyle
-		} catch { Write-Host 'yt-dlpの起動に失敗しました' -ForegroundColor Green }
+		} catch { Write-Host 'youtube-dlの起動に失敗しました' -ForegroundColor Green }
 	} else {
 		Write-Debug "y起動コマンド:nohup $global:ytdlPath $local:ytdlArgs"
 		try {
@@ -418,7 +418,7 @@ function executeYtdl ($local:videoPageURL) {
 				-ArgumentList ($global:ytdlPath, $local:ytdlArgs) `
 				-PassThru `
 				-RedirectStandardOutput /dev/null
-		} catch { Write-Host 'yt-dlpの起動に失敗しました' -ForegroundColor Green }
+		} catch { Write-Host 'youtube-dlの起動に失敗しました' -ForegroundColor Green }
 	}
 }
 
@@ -538,7 +538,7 @@ function removeCommentsFromKeyword ($local:keyword) {
 function getVideoFileName ($local:videoSeries, $local:videoSeason, $local:videoTitle, $local:broadcastDate) {
 	if ($local:videoTitle -eq '') {
 		if ($local:broadcastDate -eq '') {
-			$local:videoName = $local:videoSeries + ' ' + $local:videoSeason 
+			$local:videoName = $local:videoSeries + ' ' + $local:videoSeason
 		} else {
 			$local:videoName = $local:videoSeries + ' ' + $local:videoSeason + ' ' + $local:broadcastDate
 		}
@@ -550,7 +550,7 @@ function getVideoFileName ($local:videoSeries, $local:videoSeason, $local:videoT
 
 	#SMBで255バイトまでしかファイル名を持てないらしいので、超えないようにファイル名をトリミング
 	$local:videoNameTemp = ''
-	$local:fileNameLimit = $global:fileNameLengthMax - 25	#yt-dlpの中間ファイル等を考慮して安全目の上限値
+	$local:fileNameLimit = $global:fileNameLengthMax - 25	#youtube-dlの中間ファイル等を考慮して安全目の上限値
 	$local:videoNameByte = [System.Text.Encoding]::UTF8.GetByteCount($local:videoName)
 
 	#ファイル名を1文字ずつ増やしていき、上限に達したら残りは「……」とする

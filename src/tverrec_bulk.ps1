@@ -63,7 +63,7 @@ try {
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
 		. $(Convert-Path (Join-Path $global:currentDir '.\common_functions_5.ps1'))
 		. $(Convert-Path (Join-Path $global:currentDir '.\tver_functions_5.ps1'))
-		if (Test-Path $global:devFunctionFile) { 
+		if (Test-Path $global:devFunctionFile) {
 			Write-Host '========================================================' -ForegroundColor Green
 			Write-Host '  PowerShell Coreではありません                         ' -ForegroundColor Green
 			Write-Host '========================================================' -ForegroundColor Green
@@ -71,8 +71,8 @@ try {
 	} else {
 		. $(Convert-Path (Join-Path $global:currentDir '.\common_functions.ps1'))
 		. $(Convert-Path (Join-Path $global:currentDir '.\tver_functions.ps1'))
-		if (Test-Path $global:devFunctionFile) { 
-			. $global:devFunctionFile 
+		if (Test-Path $global:devFunctionFile) {
+			. $global:devFunctionFile
 			Write-Host '========================================================' -ForegroundColor Green
 			Write-Host '  開発ファイルを読み込みました                          ' -ForegroundColor Green
 			Write-Host '========================================================' -ForegroundColor Green
@@ -93,7 +93,7 @@ Write-Host ''
 
 #----------------------------------------------------------------------
 #動作環境チェック
-checkLatestYtdl				#yt-dlpの最新化チェック
+checkLatestYtdl				#youtube-dlの最新化チェック
 checkLatestFfmpeg			#ffmpegの最新化チェック
 checkRequiredFile			#設定で指定したファイル・フォルダの存在チェック
 #checkGeoIP					#日本のIPアドレスでないと接続不可のためIPアドレスをチェック
@@ -162,7 +162,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 		if (Test-Path $global:downloadBaseDir -PathType Container) {}
 		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します' -ForegroundColor Green ; exit 1 }
 
-		#yt-dlpプロセスの確認と、yt-dlpのプロセス数が多い場合の待機
+		#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 		waitTillYtdlProcessGetFewer $global:parallelDownloadFileNum
 
 		$local:videoPageURL = 'https://tver.jp' + $local:videoLink
@@ -177,7 +177,8 @@ foreach ($local:keywordName in $local:keywordNames) {
 }
 #======================================================================
 
-#yt-dlpのプロセスが終わるまで待機
+#youtube-dlのプロセスが終わるまで待機
+Write-Host 'ダウンロードの終了を待機しています'
 waitTillYtdlProcessIsZero
 
 Write-Host '---------------------------------------------------------------------------' -ForegroundColor Cyan
