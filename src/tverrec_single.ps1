@@ -26,15 +26,15 @@ using namespace System.Text.RegularExpressions
 Set-StrictMode -Version Latest
 try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$global:currentDir = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+		$global:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
 	} else {
-		$global:currentDir = Convert-Path .
+		$global:scriptRoot = Convert-Path .
 	}
-	Set-Location $global:currentDir
-	$global:confDir = $(Join-Path $global:currentDir '..\conf')
+	Set-Location $global:scriptRoot
+	$global:confDir = $(Join-Path $global:scriptRoot '..\conf')
 	$global:sysFile = $(Join-Path $global:confDir 'system_setting.conf')
 	$global:confFile = $(Join-Path $global:confDir 'user_setting.conf')
-	$global:devDir = $(Join-Path $global:currentDir '..\dev')
+	$global:devDir = $(Join-Path $global:scriptRoot '..\dev')
 	$global:devConfFile = $(Join-Path $global:devDir 'dev_setting.conf')
 	$global:devFunctionFile = $(Join-Path $global:devDir 'dev_funcitons.ps1')
 
@@ -61,35 +61,35 @@ try {
 	#----------------------------------------------------------------------
 	#外部関数ファイルの読み込み
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		. $(Convert-Path (Join-Path $global:currentDir '.\common_functions_5.ps1'))
-		. $(Convert-Path (Join-Path $global:currentDir '.\tver_functions_5.ps1'))
+		. $(Convert-Path (Join-Path $global:scriptRoot '.\common_functions_5.ps1'))
+		. $(Convert-Path (Join-Path $global:scriptRoot '.\tver_functions_5.ps1'))
 		if (Test-Path $global:devFunctionFile) {
-			Write-Host '========================================================' -ForegroundColor Green
-			Write-Host '  PowerShell Coreではありません                         ' -ForegroundColor Green
-			Write-Host '========================================================' -ForegroundColor Green
+			Write-ColorOutput '========================================================' Green
+			Write-ColorOutput '  PowerShell Coreではありません                         ' Green
+			Write-ColorOutput '========================================================' Green
 		}
 	} else {
-		. $(Convert-Path (Join-Path $global:currentDir '.\common_functions.ps1'))
-		. $(Convert-Path (Join-Path $global:currentDir '.\tver_functions.ps1'))
+		. $(Convert-Path (Join-Path $global:scriptRoot '.\common_functions.ps1'))
+		. $(Convert-Path (Join-Path $global:scriptRoot '.\tver_functions.ps1'))
 		if (Test-Path $global:devFunctionFile) {
 			. $global:devFunctionFile
-			Write-Host '========================================================' -ForegroundColor Green
-			Write-Host '  開発ファイルを読み込みました                          ' -ForegroundColor Green
-			Write-Host '========================================================' -ForegroundColor Green
+			Write-ColorOutput '========================================================' Green
+			Write-ColorOutput '  開発ファイルを読み込みました                          ' Green
+			Write-ColorOutput '========================================================' Green
 		}
 	}
-} catch { Write-Host '設定ファイルの読み込みに失敗しました' -ForegroundColor Green ; exit 1 }
+} catch { Write-ColorOutput '設定ファイルの読み込みに失敗しました' Green ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
-Write-Host ''
-Write-Host '===========================================================================' -ForegroundColor Cyan
-Write-Host '---------------------------------------------------------------------------' -ForegroundColor Cyan
-Write-Host '  TVerRec : TVerビデオダウンローダ                                         ' -ForegroundColor Cyan
-Write-Host "                      個別ダウンロード版 version. $global:appVersion              " -ForegroundColor Cyan
-Write-Host '---------------------------------------------------------------------------' -ForegroundColor Cyan
-Write-Host '===========================================================================' -ForegroundColor Cyan
-Write-Host ''
+Write-ColorOutput ''
+Write-ColorOutput '===========================================================================' Cyan
+Write-ColorOutput '---------------------------------------------------------------------------' Cyan
+Write-ColorOutput '  TVerRec : TVerビデオダウンローダ                                         ' Cyan
+Write-ColorOutput "                      個別ダウンロード版 version. $global:appVersion              " Cyan
+Write-ColorOutput '---------------------------------------------------------------------------' Cyan
+Write-ColorOutput '===========================================================================' Cyan
+Write-ColorOutput ''
 
 #----------------------------------------------------------------------
 #動作環境チェック
@@ -113,10 +113,10 @@ while ($true) {
 	if ($videoPageURL -eq '') { exit }
 	$local:videoLink = $local:videoPageURL.Replace('https://tver.jp', '').Replace('http://tver.jp', '').Trim()
 	$local:videoPageURL = 'https://tver.jp' + $local:videoLink
-	Write-Host $local:videoPageURL
+	Write-ColorOutput $local:videoPageURL
 
 	downloadTVerVideo $local:keywordName $local:videoPageURL $local:videoLink				#TVerビデオダウンロードのメイン処理
 
-	Write-Host '処理を終了しました。'
+	Write-ColorOutput '処理を終了しました。'
 }
 #----------------------------------------------------------------------

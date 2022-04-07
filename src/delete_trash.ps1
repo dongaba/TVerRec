@@ -25,15 +25,15 @@
 Set-StrictMode -Version Latest
 try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$global:currentDir = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+		$global:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
 	} else {
-		$global:currentDir = Convert-Path .
+		$global:scriptRoot = Convert-Path .
 	}
-	Set-Location $global:currentDir
-	$global:confDir = $(Join-Path $global:currentDir '..\conf')
+	Set-Location $global:scriptRoot
+	$global:confDir = $(Join-Path $global:scriptRoot '..\conf')
 	$global:sysFile = $(Join-Path $global:confDir 'system_setting.conf')
 	$global:confFile = $(Join-Path $global:confDir 'user_setting.conf')
-	$global:devDir = $(Join-Path $global:currentDir '..\dev')
+	$global:devDir = $(Join-Path $global:scriptRoot '..\dev')
 	$global:devConfFile = $(Join-Path $global:devDir 'dev_setting.conf')
 	$global:devFunctionFile = $(Join-Path $global:devDir 'dev_funcitons.ps1')
 
@@ -60,40 +60,40 @@ try {
 	#----------------------------------------------------------------------
 	#外部関数ファイルの読み込み
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		. $(Convert-Path (Join-Path $global:currentDir '.\common_functions_5.ps1'))
-		. $(Convert-Path (Join-Path $global:currentDir '.\tver_functions_5.ps1'))
+		. $(Convert-Path (Join-Path $global:scriptRoot '.\common_functions_5.ps1'))
+		. $(Convert-Path (Join-Path $global:scriptRoot '.\tver_functions_5.ps1'))
 		if (Test-Path $global:devFunctionFile) {
-			Write-Host '========================================================' -ForegroundColor Green
-			Write-Host '  PowerShell Coreではありません                         ' -ForegroundColor Green
-			Write-Host '========================================================' -ForegroundColor Green
+			Write-ColorOutput '========================================================' Green
+			Write-ColorOutput '  PowerShell Coreではありません                         ' Green
+			Write-ColorOutput '========================================================' Green
 		}
 	} else {
-		. $(Convert-Path (Join-Path $global:currentDir '.\common_functions.ps1'))
-		. $(Convert-Path (Join-Path $global:currentDir '.\tver_functions.ps1'))
+		. $(Convert-Path (Join-Path $global:scriptRoot '.\common_functions.ps1'))
+		. $(Convert-Path (Join-Path $global:scriptRoot '.\tver_functions.ps1'))
 		if (Test-Path $global:devFunctionFile) {
 			. $global:devFunctionFile
-			Write-Host '========================================================' -ForegroundColor Green
-			Write-Host '  開発ファイルを読み込みました                          ' -ForegroundColor Green
-			Write-Host '========================================================' -ForegroundColor Green
+			Write-ColorOutput '========================================================' Green
+			Write-ColorOutput '  開発ファイルを読み込みました                          ' Green
+			Write-ColorOutput '========================================================' Green
 		}
 	}
-} catch { Write-Host '設定ファイルの読み込みに失敗しました' -ForegroundColor Green ; exit 1 }
+} catch { Write-ColorOutput '設定ファイルの読み込みに失敗しました' Green ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
 
 #======================================================================
 #1/3 ダウンロードが中断した際にできたゴミファイルは削除
-Write-Host '----------------------------------------------------------------------'
-Write-Host 'ダウンロードが中断した際にできたゴミファイルを削除します'
-Write-Host '----------------------------------------------------------------------'
+Write-ColorOutput '----------------------------------------------------------------------'
+Write-ColorOutput 'ダウンロードが中断した際にできたゴミファイルを削除します'
+Write-ColorOutput '----------------------------------------------------------------------'
 try {
 	Get-ChildItem -Path $global:downloadWorkDir -Recurse -Filter 'ffmpeg_error_*.log' `
 	| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-0.5) } `
 	| Remove-Item -Force -ErrorAction SilentlyContinue
 } catch {}
 try {
-	Get-ChildItem -Path $currentDir -Recurse -Filter 'brightcovenew_*.lock' `
+	Get-ChildItem -Path $scriptRoot -Recurse -Filter 'brightcovenew_*.lock' `
 	| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-0.5) } `
 	| Remove-Item -Force -ErrorAction SilentlyContinue
 } catch {}
@@ -119,9 +119,9 @@ deleteTrashFiles $global:saveBaseDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, 
 
 #======================================================================
 #2/3 無視リストに入っている番組は削除
-Write-Host '----------------------------------------------------------------------'
-Write-Host '削除対象のビデオを削除します'
-Write-Host '----------------------------------------------------------------------'
+Write-ColorOutput '----------------------------------------------------------------------'
+Write-ColorOutput '削除対象のビデオを削除します'
+Write-ColorOutput '----------------------------------------------------------------------'
 Write-Progress -Id 1 `
 	-Activity '処理 2/3' `
 	-PercentComplete $($( 2 / 3 ) * 100) `
@@ -145,8 +145,8 @@ foreach ($local:ignoreTitle in $local:ignoreTitles) {
 		-PercentComplete $($( $local:ignoreNum / $local:ignoreTotal ) * 100) `
 		-Status $local:ignoreTitle
 
-	Write-Host '----------------------------------------------------------------------'
-	Write-Host "$($local:ignoreTitle)を処理中"
+	Write-ColorOutput '----------------------------------------------------------------------'
+	Write-ColorOutput "$($local:ignoreTitle)を処理中"
 	try {
 		$local:delTargets = Get-ChildItem -LiteralPath $global:downloadBaseDir `
 			-Directory -Name -Filter "*$($local:ignoreTitle)*"
@@ -155,22 +155,22 @@ foreach ($local:ignoreTitle in $local:ignoreTitles) {
 		if ($null -ne $local:delTargets) {
 			foreach ($local:delTarget in $local:delTargets) {
 				if (Test-Path $(Join-Path $global:downloadBaseDir $local:delTarget) -PathType Container) {
-					Write-Host "  └「$(Join-Path $global:downloadBaseDir $local:delTarget)」を削除します"
+					Write-ColorOutput "  └「$(Join-Path $global:downloadBaseDir $local:delTarget)」を削除します"
 					Remove-Item -Path $(Join-Path $global:downloadBaseDir $local:delTarget) `
 						-Recurse -Force -ErrorAction SilentlyContinue
 				}
 			}
 		} else {
-			Write-Host '  削除対象はありませんでした'
+			Write-ColorOutput '  削除対象はありませんでした'
 		}
-	} catch { Write-Host '削除できないファイルがありました' -ForegroundColor Green }
+	} catch { Write-ColorOutput '削除できないファイルがありました' Green }
 }
 
 #======================================================================
 #3/3 空フォルダと隠しファイルしか入っていないフォルダを一気に削除
-Write-Host '----------------------------------------------------------------------'
-Write-Host '空フォルダ と 隠しファイルしか入っていないフォルダを削除します'
-Write-Host '----------------------------------------------------------------------'
+Write-ColorOutput '----------------------------------------------------------------------'
+Write-ColorOutput '空フォルダ と 隠しファイルしか入っていないフォルダを削除します'
+Write-ColorOutput '----------------------------------------------------------------------'
 Write-Progress -Id 1 -Activity '処理 3/3' `
 	-PercentComplete $($( 3 / 3 ) * 100) `
 	-Status '空フォルダを削除'
@@ -190,14 +190,14 @@ foreach ($local:subDir in $local:allSubDirs) {
 		-PercentComplete $($( $local:subDirNum / $local:subDirTotal ) * 100) `
 		-Status $local:subDir
 
-	Write-Host '----------------------------------------------------------------------'
-	Write-Host "$($local:subDir)を処理中"
+	Write-ColorOutput '----------------------------------------------------------------------'
+	Write-ColorOutput "$($local:subDir)を処理中"
 	if (@((Get-ChildItem -LiteralPath $local:subDir -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
 		try {
-			Write-Host "  └「$($local:subDir)」を削除します"
+			Write-ColorOutput "  └「$($local:subDir)」を削除します"
 			Remove-Item -LiteralPath $local:subDir `
 				-Recurse -Force -ErrorAction SilentlyContinue
-		} catch { Write-Host "空フォルダの削除に失敗しました: $local:subDir" -ForegroundColor Green }
+		} catch { Write-ColorOutput "空フォルダの削除に失敗しました: $local:subDir" Green }
 	}
 }
 

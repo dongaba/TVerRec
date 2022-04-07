@@ -23,7 +23,7 @@
 
 echo -en "\033];TVerRec\007"
 
-export HostName=`hostname`
+export HostName=$(hostname)
 export PIDFile="pid-$HostName.txt"
 export retryTime=60
 export sleepTime=3600
@@ -35,7 +35,7 @@ do
 	pwsh -NoProfile -ExecutionPolicy Unrestricted ../src/tverrec_bulk.ps1
 
 	#youtube-dlプロセスチェック
-	while [ `ps | grep -E "ffmpeg|yt-dlp" | grep -v grep | wc -l` -gt 0 ]
+	while [ $(ps | grep -E "ffmpeg|yt-dlp" | grep -v grep | wc -l) -gt 0 ]
 	do
 		echo "ダウンロードが進行中です..."
 		ps | grep -E "ffmpeg|yt-dlp" | grep -v grep

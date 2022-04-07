@@ -24,9 +24,9 @@
 #----------------------------------------------------------------------
 function checkLatestYtdl {
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		. $(Convert-Path (Join-Path $currentDir '.\update_ytdl-patched_5.ps1'))
+		. $(Convert-Path (Join-Path $scriptRoot '.\update_ytdl-patched_5.ps1'))
 	} else {
-		. $(Convert-Path (Join-Path $currentDir '.\update_ytdl-patched.ps1'))
+		. $(Convert-Path (Join-Path $scriptRoot '.\update_ytdl-patched.ps1'))
 	}
 }
 
@@ -35,9 +35,9 @@ function checkLatestYtdl {
 #----------------------------------------------------------------------
 function checkLatestFfmpeg {
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		. $(Convert-Path (Join-Path $currentDir '.\update_ffmpeg_5.ps1'))
+		. $(Convert-Path (Join-Path $scriptRoot '.\update_ffmpeg_5.ps1'))
 	} else {
-		. $(Convert-Path (Join-Path $currentDir '.\update_ffmpeg.ps1'))
+		. $(Convert-Path (Join-Path $scriptRoot '.\update_ffmpeg.ps1'))
 	}
 }
 
@@ -70,10 +70,10 @@ function checkGeoIP {
 			Invoke-RestMethod -Uri (
 				'http://ip-api.com/json/' + (Invoke-WebRequest -Uri 'http://ifconfig.me/ip').Content
 			)
-			Write-Host '日本のIPアドレスからしか接続できません。VPN接続してください。' -ForegroundColor Green
+			Write-ColorOutput '日本のIPアドレスからしか接続できません。VPN接続してください。' Green
 			exit 1
 		}
-	} catch { Write-Host 'Geo IPのチェックに失敗しました' }
+	} catch { Write-ColorOutput 'Geo IPのチェックに失敗しました' }
 }
 
 #----------------------------------------------------------------------
@@ -91,14 +91,14 @@ function purgeDB {
 	try {
 		#ロックファイルをロック
 		while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) {
-			Write-Host 'ファイルのロック解除待ち中です'
+			Write-ColorOutput 'ファイルのロック解除待ち中です'
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
 		$local:purgedList = ((Import-Csv $global:listFilePath -Encoding UTF8).Where({ $_.downloadDate -gt $(Get-Date).AddDays(-30) }))
 		$local:purgedList `
 		| Export-Csv $global:listFilePath -NoTypeInformation -Encoding UTF8
-	} catch { Write-Host 'リストのクリーンアップに失敗しました' -ForegroundColor Green
+	} catch { Write-ColorOutput 'リストのクリーンアップに失敗しました' Green
 	} finally { $null = fileUnlock ($global:lockFilePath) }
 }
 
@@ -112,7 +112,7 @@ function uniqueDB {
 	try {
 		#ロックファイルをロック
 		while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) {
-			Write-Host 'ファイルのロック解除待ち中です'
+			Write-ColorOutput 'ファイルのロック解除待ち中です'
 			Start-Sleep -Seconds 1
 		}
 
@@ -138,7 +138,7 @@ function uniqueDB {
 		| Sort-Object -Property downloadDate `
 		| Export-Csv $global:listFilePath -NoTypeInformation -Encoding UTF8
 
-	} catch { Write-Host 'リストの更新に失敗しました' -ForegroundColor Green
+	} catch { Write-ColorOutput 'リストの更新に失敗しました' Green
 	} finally { $null = fileUnlock ($global:lockFilePath) }
 }
 
@@ -156,39 +156,39 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 	try {
 		#ロックファイルをロック
 		while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) {
-			Write-Host 'ファイルのロック解除待ち中です'
+			Write-ColorOutput 'ファイルのロック解除待ち中です'
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
 		$local:videoLists = Import-Csv $global:listFilePath -Encoding UTF8
 		$local:checkStatus = $(($local:videoLists).Where({ $_.videoPath -eq $local:videoFileRelativePath })).videoValidated
 	} catch {
-		Write-Host "チェックステータスを取得できませんでした: $local:videoFileRelativePath" -ForegroundColor Green
+		Write-ColorOutput "チェックステータスを取得できませんでした: $local:videoFileRelativePath" Green
 		return
 	} finally { $null = fileUnlock ($global:lockFilePath) }
 
 	#0:未チェック、1:チェック済み、2:チェック中
-	if ($local:checkStatus -eq 2 ) { Write-Host '  └他プロセスでチェック中です'; return }
-	elseif ($local:checkStatus -eq 1 ) { Write-Host '  └他プロセスでチェック済です'; return }
+	if ($local:checkStatus -eq 2 ) { Write-ColorOutput '  └他プロセスでチェック中です'; return }
+	elseif ($local:checkStatus -eq 1 ) { Write-ColorOutput '  └他プロセスでチェック済です'; return }
 	else {
 		#該当のビデオのチェックステータスを"2"にして後続のチェックを実行
 		try {
 			$(($local:videoLists).Where({ $_.videoPath -eq $local:videoFileRelativePath })).videoValidated = '2'
 		} catch {
-			Write-Host "該当のレコードが見つかりませんでした: $local:videoFileRelativePath" -ForegroundColor Green
+			Write-ColorOutput "該当のレコードが見つかりませんでした: $local:videoFileRelativePath" Green
 			return
 		}
 		try {
 			#ロックファイルをロック
 			while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) {
-				Write-Host 'ファイルのロック解除待ち中です'
+				Write-ColorOutput 'ファイルのロック解除待ち中です'
 				Start-Sleep -Seconds 1
 			}
 			#ファイル操作
 			$local:videoLists `
 			| Export-Csv $global:listFilePath -NoTypeInformation -Encoding UTF8
 		} catch {
-			Write-Host "録画リストを更新できませんでした: $local:videoFileRelativePath" -ForegroundColor Green
+			Write-ColorOutput "録画リストを更新できませんでした: $local:videoFileRelativePath" Green
 			return
 		} finally { $null = fileUnlock ($global:lockFilePath) }
 	}
@@ -216,7 +216,7 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 				-Wait
 		}
 	} catch {
-		Write-Host 'ffmpegを起動できませんでした' -ForegroundColor Green
+		Write-ColorOutput 'ffmpegを起動できませんでした' Green
 	}
 
 	#ffmpegが正常終了しても、大量エラーが出ることがあるのでエラーをカウント
@@ -227,7 +227,7 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 			Get-Content -LiteralPath $global:ffpmegErrorLogPath -Encoding UTF8 `
 			| ForEach-Object { Write-Debug "$_" }
 		}
-	} catch { Write-Host 'ffmpegエラーの数をカウントできませんでした' -ForegroundColor Green }
+	} catch { Write-ColorOutput 'ffmpegエラーの数をカウントできませんでした' Green }
 
 	#エラーをカウントしたらファイルを削除
 	try {
@@ -240,14 +240,14 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 
 	if ($local:proc.ExitCode -ne 0 -or $local:errorCount -gt 30) {
 		#終了コードが"0"以外 または エラーが30行以上 は録画リストとファイルを削除
-		Write-Host "$local:videoFileRelativePath"
-		Write-Host "  exit code: $($local:proc.ExitCode)    error count: $local:errorCount" -ForegroundColor Green
+		Write-ColorOutput "$local:videoFileRelativePath"
+		Write-ColorOutput "  exit code: $($local:proc.ExitCode)    error count: $local:errorCount" Green
 
 		#破損している動画ファイルを録画リストから削除
 		try {
 			#ロックファイルをロック
 			while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) {
-				Write-Host 'ファイルのロック解除待ち中です'
+				Write-ColorOutput 'ファイルのロック解除待ち中です'
 				Start-Sleep -Seconds 1
 			}
 			#ファイル操作
@@ -256,7 +256,7 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 				-LiteralPath $global:listFilePath `
 				-Encoding UTF8 -SimpleMatch -NotMatch).Line `
 			| Out-File $global:listFilePath -Encoding UTF8
-		} catch { Write-Host "録画リストの更新に失敗しました: $local:videoFileRelativePath" -ForegroundColor Green
+		} catch { Write-ColorOutput "録画リストの更新に失敗しました: $local:videoFileRelativePath" Green
 		} finally { $null = fileUnlock ($global:lockFilePath) }
 
 		#破損している動画ファイルを削除
@@ -264,13 +264,13 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 			Remove-Item `
 				-LiteralPath $local:videoFilePath `
 				-Force -ErrorAction SilentlyContinue
-		} catch { Write-Host "ファイル削除できませんでした: $local:videoFilePath" -ForegroundColor Green }
+		} catch { Write-ColorOutput "ファイル削除できませんでした: $local:videoFilePath" Green }
 	} else {
 		#終了コードが"0"のときは録画リストにチェック済みフラグを立てる
 		try {
 			#ロックファイルをロック
 			while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) {
-				Write-Host 'ファイルのロック解除待ち中です'
+				Write-ColorOutput 'ファイルのロック解除待ち中です'
 				Start-Sleep -Seconds 1
 			}
 			#ファイル操作
@@ -279,7 +279,7 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 			$(($local:videoLists).Where({ $_.videoPath -eq $local:videoFileRelativePath })).videoValidated = '1'
 			$local:videoLists `
 			| Export-Csv $global:listFilePath -NoTypeInformation -Encoding UTF8
-		} catch { Write-Host "録画リストを更新できませんでした: $local:videoFileRelativePath" -ForegroundColor Green
+		} catch { Write-ColorOutput "録画リストを更新できませんでした: $local:videoFileRelativePath" Green
 		} finally { $null = fileUnlock ($global:lockFilePath) }
 	}
 
@@ -308,7 +308,7 @@ function waitTillYtdlProcessGetFewer ($local:parallelDownloadFileNum) {
 	Write-Verbose "現在のダウンロードプロセス一覧 ($local:ytdlCount 個)"
 
 	while ([int]$local:ytdlCount -ge [int]$local:parallelDownloadFileNum) {
-		Write-Host "ダウンロードが $local:parallelDownloadFileNum 多重に達したので一時待機します。 ($(getTimeStamp))"
+		Write-ColorOutput "ダウンロードが $local:parallelDownloadFileNum 多重に達したので一時待機します。 ($(getTimeStamp))"
 		Start-Sleep -Seconds 60			#1分待機
 		try {
 			if ($global:isWin) {
@@ -410,7 +410,7 @@ function executeYtdl ($local:videoPageURL) {
 				-ArgumentList $local:ytdlArgs `
 				-PassThru `
 				-WindowStyle $global:windowShowStyle
-		} catch { Write-Host 'youtube-dlの起動に失敗しました' -ForegroundColor Green }
+		} catch { Write-ColorOutput 'youtube-dlの起動に失敗しました' Green }
 	} else {
 		Write-Debug "y起動コマンド:nohup $global:ytdlPath $local:ytdlArgs"
 		try {
@@ -418,7 +418,7 @@ function executeYtdl ($local:videoPageURL) {
 				-ArgumentList ($global:ytdlPath, $local:ytdlArgs) `
 				-PassThru `
 				-RedirectStandardOutput /dev/null
-		} catch { Write-Host 'youtube-dlの起動に失敗しました' -ForegroundColor Green }
+		} catch { Write-ColorOutput 'youtube-dlの起動に失敗しました' Green }
 	}
 }
 
@@ -426,10 +426,10 @@ function executeYtdl ($local:videoPageURL) {
 #ビデオ情報表示
 #----------------------------------------------------------------------
 function showVideoInfo ($local:videoName, $local:broadcastDate, $local:mediaName, $local:descriptionText) {
-	Write-Host "ビデオ名    :$local:videoName"
-	Write-Host "放送日      :$local:broadcastDate"
-	Write-Host "テレビ局    :$local:mediaName"
-	Write-Host "ビデオ説明  :$local:descriptionText"
+	Write-ColorOutput "ビデオ名    :$local:videoName"
+	Write-ColorOutput "放送日      :$local:broadcastDate"
+	Write-ColorOutput "テレビ局    :$local:mediaName"
+	Write-ColorOutput "ビデオ説明  :$local:descriptionText"
 }
 #----------------------------------------------------------------------
 #ビデオ情報デバッグ表示
@@ -570,7 +570,7 @@ function getVideoFileName ($local:videoSeries, $local:videoSeason, $local:videoT
 #----------------------------------------------------------------------
 function deleteTrashFiles ($local:Path, $local:Conditions) {
 	try {
-		Write-Host "$($local:Path)を処理中"
+		Write-ColorOutput "$($local:Path)を処理中"
 		$local:delTargets = @()
 		foreach ($local:filter in $local:Conditions.Split(',').Trim()) {
 			$local:delTargets += Get-ChildItem -LiteralPath $local:Path `
@@ -578,14 +578,14 @@ function deleteTrashFiles ($local:Path, $local:Conditions) {
 		}
 		if ($null -ne $local:delTargets) {
 			foreach ($local:delTarget in $local:delTargets) {
-				Write-Host "$($local:delTarget.FullName)を削除します"
+				Write-ColorOutput "$($local:delTarget.FullName)を削除します"
 				Remove-Item -LiteralPath $local:delTarget.FullName `
 					-Force -ErrorAction SilentlyContinue
 			}
 		} else {
-			Write-Host '削除対象はありませんでした'
+			Write-ColorOutput '削除対象はありませんでした'
 		}
-	} catch { Write-Host '削除できないファイルがありました' -ForegroundColor Green }
+	} catch { Write-ColorOutput '削除できないファイルがありました' Green }
 }
 
 #----------------------------------------------------------------------
@@ -654,4 +654,34 @@ function isLocked {
 			fileLocked = $local:isFileLocked
 		}
 	}
+}
+
+function Write-ColorOutput {
+	[CmdletBinding()]
+	Param(
+		[Parameter(Mandatory = $False, Position = 1, ValueFromPipeline = $True, ValueFromPipelinebyPropertyName = $True)][Object] $Object,
+		[Parameter(Mandatory = $False, Position = 2, ValueFromPipeline = $True, ValueFromPipelinebyPropertyName = $True)][ConsoleColor] $foregroundColor,
+		[Parameter(Mandatory = $False, Position = 3, ValueFromPipeline = $True, ValueFromPipelinebyPropertyName = $True)][ConsoleColor] $backgroundColor,
+		[Switch]$NoNewline
+	)
+
+	# Save previous colors
+	$prevForegroundColor = $host.UI.RawUI.ForegroundColor
+	$prevBackgroundColor = $host.UI.RawUI.BackgroundColor
+
+	# Set BackgroundColor if available
+	if ($BackgroundColor -ne $null) { $host.UI.RawUI.BackgroundColor = $backgroundColor }
+
+	# Set $ForegroundColor if available
+	if ($ForegroundColor -ne $null) { $host.UI.RawUI.ForegroundColor = $foregroundColor }
+
+	# Always write (if we want just a NewLine)
+	if ($null -eq $Object) { $Object = '' }
+
+	if ($NoNewline) { [Console]::Write($Object) } 
+	else { Write-Output $Object }
+
+	# Restore previous colors
+	$host.UI.RawUI.ForegroundColor = $prevForegroundColor
+	$host.UI.RawUI.BackgroundColor = $prevBackgroundColor
 }

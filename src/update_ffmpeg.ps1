@@ -19,17 +19,29 @@
 #
 ###################################################################################
 
+try {
+	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
+		$global:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+	} else {
+		$global:scriptRoot = Convert-Path .
+	}
+	Set-Location $global:scriptRoot
+
+	#----------------------------------------------------------------------
+	#外部関数ファイルの読み込み
+	if ($PSVersionTable.PSEdition -eq 'Desktop') {
+		. $(Convert-Path (Join-Path $global:scriptRoot '.\common_functions_5.ps1'))
+	} else {
+		. $(Convert-Path (Join-Path $global:scriptRoot '.\common_functions.ps1'))
+	}
+} catch { Write-ColorOutput '設定ファイルの読み込みに失敗しました' Green ; exit 1 }
+
 #Windowsの判定
 Set-StrictMode -Off
 $local:isWin = $PSVersionTable.Platform -match '^($|(Microsoft)?Win)'
 Set-StrictMode -Version Latest
 
-if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-	$local:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
-} else {
-	$local:scriptRoot = '.'
-}
-
+$local:releases = 'https://www.gyan.dev/ffmpeg/builds/release-version'
 #ffmpeg保存先相対Path
 $local:ffmpegRelativeDir = '..\bin'
 $local:ffmpegDir = $(Join-Path $local:scriptRoot $local:ffmpegRelativeDir)
@@ -54,64 +66,63 @@ if (Test-Path $local:ffmpegPath -PathType Leaf) {
 
 #ffmpegの最新バージョン取得
 $local:latestVersion = ''
-try { $local:latestRawVersion = Invoke-WebRequest -Uri https://www.gyan.dev/ffmpeg/builds/release-version }catch {}
-foreach ( $local:char in [char[]]$local:latestRawVersion.content ) {
-	$local:latestVersion += $local:char
-}
+try { $local:latestRawVersion = Invoke-WebRequest -Uri $local:releases }
+catch { Write-ColorOutput 'ffmpegの最新バージョンを特定できませんでした' Green ; return }
+$local:latestVersion = $([string]$local:latestRawVersion.rawcontent).remove(0, $([string]$local:latestRawVersion.rawcontent).LastIndexOf("`n") + 1)
 
-Write-Host 'ffmpeg current:' $local:ffmpegCurrentVersion
-Write-Host 'ffmpeg latest:' $local:latestVersion
+Write-ColorOutput "ffmpeg current: $local:ffmpegCurrentVersion"
+Write-ColorOutput "ffmpeg latest: $local:latestVersion"
 
 #ffmpegのダウンロード
 if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
-	Write-Host 'ffmpegは最新です。 '
-	Write-Host ''
+	Write-ColorOutput 'ffmpegは最新です。 '
+	Write-ColorOutput ''
 } else {
 	if ($local:isWin -eq $false) {
-		Write-Host '自動アップデートはWindowsでのみ動作します。' -ForegroundColor Green
+		Write-ColorOutput '自動アップデートはWindowsでのみ動作します。' Green
 	} else {
 		try {
 
 			#ダウンロード
 			try {
 				$local:ffmpegZipLink = 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip'
-				Write-Host "ffmpegをダウンロードします。 $local:ffmpegZipLink"
+				Write-ColorOutput "ffmpegをダウンロードします。 $local:ffmpegZipLink"
 				$local:ffmpegZipFileLocation = $(Join-Path $local:ffmpegDir 'ffmpeg-release-essentials.zip')
 				Invoke-WebRequest -Uri $local:ffmpegZipLink -OutFile $local:ffmpegZipFileLocation
-			} catch { Write-Host 'ffmpegのダウンロードに失敗しました' -ForegroundColor Green }
+			} catch { Write-ColorOutput 'ffmpegのダウンロードに失敗しました' Green }
 
 			#展開
 			try {
 				$local:extractedDir = $(Join-Path $local:scriptRoot $local:ffmpegRelativeDir)
 				Expand-Archive $local:ffmpegZipFileLocation -DestinationPath $local:extractedDir
-			} catch { Write-Host 'ffmpegの展開に失敗しました' -ForegroundColor Green }
+			} catch { Write-ColorOutput 'ffmpegの展開に失敗しました' Green }
 
 			#配置
 			try {
 				$local:extractedDir = $local:extractedDir + '\ffmpeg-*-essentials_build'
 				$local:extractedFiles = $local:extractedDir + '\bin\*.exe'
 				Move-Item $local:extractedFiles $(Join-Path $local:scriptRoot $local:ffmpegRelativeDir) -Force
-			} catch { Write-Host 'ffmpegの配置に失敗しました' -ForegroundColor Green }
+			} catch { Write-ColorOutput 'ffmpegの配置に失敗しました' Green }
 
 			#ゴミ掃除
 			try {
 				Remove-Item `
 					-Path $local:extractedDir `
 					-Force -Recurse -ErrorAction SilentlyContinue
-			} catch { Write-Host '中間フォルダの削除に失敗しました' -ForegroundColor Green }
+			} catch { Write-ColorOutput '中間フォルダの削除に失敗しました' Green }
 			try {
 				Remove-Item `
 					-LiteralPath $local:ffmpegZipFileLocation `
 					-Force -ErrorAction SilentlyContinue
-			} catch { Write-Host '中間ファイルの削除に失敗しました' -ForegroundColor Green }
+			} catch { Write-ColorOutput '中間ファイルの削除に失敗しました' Green }
 
-		} catch { Write-Host 'ffmpegの更新に失敗しました' -ForegroundColor Green }
+		} catch { Write-ColorOutput 'ffmpegの更新に失敗しました' Green }
 
 		#バージョンチェック
 		$local:ffmpegFileVersion = (& $local:ffmpegPath -version)
 		$null = $local:ffmpegFileVersion[0].ToChar -match 'ffmpeg version (\d+\.\d+(\.\d+)?)-.*'
 		$local:ffmpegCurrentVersion = $local:matches[1]
-		Write-Host "ffmpegをversion $local:ffmpegCurrentVersion に更新しました。 "
+		Write-ColorOutput "ffmpegをversion $local:ffmpegCurrentVersion に更新しました。 "
 	}
 }
 

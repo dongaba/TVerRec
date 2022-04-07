@@ -25,15 +25,15 @@
 Set-StrictMode -Version Latest
 try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$global:currentDir = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+		$global:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
 	} else {
-		$global:currentDir = Convert-Path .
+		$global:scriptRoot = Convert-Path .
 	}
-	Set-Location $global:currentDir
-	$global:confDir = $(Join-Path $global:currentDir '..\conf')
+	Set-Location $global:scriptRoot
+	$global:confDir = $(Join-Path $global:scriptRoot '..\conf')
 	$global:sysFile = $(Join-Path $global:confDir 'system_setting.conf')
 	$global:confFile = $(Join-Path $global:confDir 'user_setting.conf')
-	$global:devDir = $(Join-Path $global:currentDir '..\dev')
+	$global:devDir = $(Join-Path $global:scriptRoot '..\dev')
 	$global:devConfFile = $(Join-Path $global:devDir 'dev_setting.conf')
 	$global:devFunctionFile = $(Join-Path $global:devDir 'dev_funcitons.ps1')
 
@@ -60,24 +60,24 @@ try {
 	#----------------------------------------------------------------------
 	#外部関数ファイルの読み込み
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		. $(Convert-Path (Join-Path $global:currentDir '.\common_functions_5.ps1'))
-		. $(Convert-Path (Join-Path $global:currentDir '.\tver_functions_5.ps1'))
+		. $(Convert-Path (Join-Path $global:scriptRoot '.\common_functions_5.ps1'))
+		. $(Convert-Path (Join-Path $global:scriptRoot '.\tver_functions_5.ps1'))
 		if (Test-Path $global:devFunctionFile) {
-			Write-Host '========================================================' -ForegroundColor Green
-			Write-Host '  PowerShell Coreではありません                         ' -ForegroundColor Green
-			Write-Host '========================================================' -ForegroundColor Green
+			Write-ColorOutput '========================================================' Green
+			Write-ColorOutput '  PowerShell Coreではありません                         ' Green
+			Write-ColorOutput '========================================================' Green
 		}
 	} else {
-		. $(Convert-Path (Join-Path $global:currentDir '.\common_functions.ps1'))
-		. $(Convert-Path (Join-Path $global:currentDir '.\tver_functions.ps1'))
+		. $(Convert-Path (Join-Path $global:scriptRoot '.\common_functions.ps1'))
+		. $(Convert-Path (Join-Path $global:scriptRoot '.\tver_functions.ps1'))
 		if (Test-Path $global:devFunctionFile) {
 			. $global:devFunctionFile
-			Write-Host '========================================================' -ForegroundColor Green
-			Write-Host '  開発ファイルを読み込みました                          ' -ForegroundColor Green
-			Write-Host '========================================================' -ForegroundColor Green
+			Write-ColorOutput '========================================================' Green
+			Write-ColorOutput '  開発ファイルを読み込みました                          ' Green
+			Write-ColorOutput '========================================================' Green
 		}
 	}
-} catch { Write-Host '設定ファイルの読み込みに失敗しました' -ForegroundColor Green ; exit 1 }
+} catch { Write-ColorOutput '設定ファイルの読み込みに失敗しました' Green ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -85,15 +85,15 @@ try {
 #======================================================================
 #保存先ディレクトリの存在確認
 if (Test-Path $global:downloadBaseDir -PathType Container) {}
-else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' -ForegroundColor Green ; exit 1 }
+else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' Green ; exit 1 }
 if (Test-Path $global:saveBaseDir -PathType Container) {}
-else { Write-Error 'ビデオ移動先フォルダにアクセスできません。終了します。' -ForegroundColor Green ; exit 1 }
+else { Write-Error 'ビデオ移動先フォルダにアクセスできません。終了します。' Green ; exit 1 }
 
 #======================================================================
 #1/2 移動先フォルダを起点として、配下のフォルダを取得
-Write-Host '==========================================================================='
-Write-Host 'ビデオファイルを移動しています'
-Write-Host '==========================================================================='
+Write-ColorOutput '==========================================================================='
+Write-ColorOutput 'ビデオファイルを移動しています'
+Write-ColorOutput '==========================================================================='
 Write-Progress `
 	-Id 1 `
 	-Activity '処理 1/2' `
@@ -116,8 +116,8 @@ Write-Progress `
 	-Status 'ファイルを移動中'
 
 foreach ($local:moveToPath in $local:moveToPaths) {
-	Write-Host '----------------------------------------------------------------------'
-	Write-Host "$local:moveToPath を処理中"
+	Write-ColorOutput '----------------------------------------------------------------------'
+	Write-ColorOutput "$local:moveToPath を処理中"
 	$local:moveToPathNum = $local:moveToPathNum + 1
 	Write-Progress `
 		-Id 2 `
@@ -131,7 +131,7 @@ foreach ($local:moveToPath in $local:moveToPaths) {
 	$local:moveFromPath = $(Join-Path $global:downloadBaseDir $local:targetFolderName)
 	if (Test-Path $local:moveFromPath) {
 		$local:moveFromPath = $local:moveFromPath + '\*.mp4'
-		Write-Host "  └「$($local:moveFromPath)」を移動します"
+		Write-ColorOutput "  └「$($local:moveFromPath)」を移動します"
 		try {
 			Move-Item $local:moveFromPath -Destination $local:moveToPath -Force
 		} catch {}
@@ -140,9 +140,9 @@ foreach ($local:moveToPath in $local:moveToPaths) {
 
 #======================================================================
 #2/2 空フォルダと隠しファイルしか入っていないフォルダを一気に削除
-Write-Host '----------------------------------------------------------------------'
-Write-Host '空フォルダ と 隠しファイルしか入っていないフォルダを削除します'
-Write-Host '----------------------------------------------------------------------'
+Write-ColorOutput '----------------------------------------------------------------------'
+Write-ColorOutput '空フォルダ と 隠しファイルしか入っていないフォルダを削除します'
+Write-ColorOutput '----------------------------------------------------------------------'
 Write-Progress `
 	-Id 1 `
 	-Activity '処理 2/2' `
@@ -166,15 +166,15 @@ foreach ($local:subDir in $local:allSubDirs) {
 		-PercentComplete $($( $local:subDirNum / $local:subDirTotal ) * 100) `
 		-Status $local:subDir
 
-	Write-Host '----------------------------------------------------------------------'
-	Write-Host "$($local:subDir)を処理中"
+	Write-ColorOutput '----------------------------------------------------------------------'
+	Write-ColorOutput "$($local:subDir)を処理中"
 	if (@((Get-ChildItem -LiteralPath $local:subDir -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
 		try {
-			Write-Host "  └「$($local:subDir)」を削除します"
+			Write-ColorOutput "  └「$($local:subDir)」を削除します"
 			Remove-Item `
 				-LiteralPath $local:subDir `
 				-Recurse -Force -ErrorAction SilentlyContinue
-		} catch { Write-Host "空フォルダの削除に失敗しました: $local:subDir" -ForegroundColor Green }
+		} catch { Write-ColorOutput "空フォルダの削除に失敗しました: $local:subDir" Green }
 	}
 }
 

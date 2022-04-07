@@ -101,7 +101,7 @@ function getVideoLinkFromSeriesID ($local:seriesID) {
 	$local:searchResults = $local:searchResultsRaw.Result.Contents
 	$local:resultCount = $local:searchResults.length
 	for ($i = 0; $i -lt $local:resultCount; $i++) {
-			$local:seasonLinks += $local:searchResults[$i].Content.Id
+		$local:seasonLinks += $local:searchResults[$i].Content.Id
 	}
 	#次にSeason→Episodeに変換
 	foreach ( $local:seasonLink in $local:seasonLinks) {
@@ -341,7 +341,7 @@ function getIgnoreList {
 			| Where-Object { !($_ -match '^\s*$') } `
 			| Where-Object { !($_ -match '^;.*$') }) `
 			-as [string[]]
-	} catch { Write-Host 'ダウンロード対象外リストの読み込みに失敗しました' -ForegroundColor Green ; exit 1 }
+	} catch { Write-ColorOutput 'ダウンロード対象外リストの読み込みに失敗しました' Green ; exit 1 }
 	return $local:ignoreTitles
 }
 
@@ -354,7 +354,7 @@ function loadKeywordList {
 			| Where-Object { !($_ -match '^\s*$') } `
 			| Where-Object { !($_ -match '^#.*$') }) `
 			-as [string[]]
-	} catch { Write-Host 'ダウンロード対象ジャンルリストの読み込みに失敗しました' -ForegroundColor Green ; exit 1 }
+	} catch { Write-ColorOutput 'ダウンロード対象ジャンルリストの読み込みに失敗しました' Green ; exit 1 }
 	return $local:keywordNames
 }
 
@@ -372,7 +372,7 @@ function getVideoLinksFromKeyword ($local:keywordName) {
 	if ( $local:keywordName.IndexOf('https://tver.jp/') -eq 0) {
 		#URL形式の場合ビデオページのLinkを取得
 		try { $local:keywordNamePage = Invoke-WebRequest $local:keywordName }
-		catch { Write-Host 'TVerから情報を取得できませんでした。スキップします'; continue }
+		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします'; continue }
 		try {
 			$script:videoLinks = ($local:keywordNamePage.Links `
 				| Where-Object { `
@@ -383,32 +383,32 @@ function getVideoLinksFromKeyword ($local:keywordName) {
 						-or (href -Like '*feature*')`
 				} `
 				| Select-Object href).href
-		} catch { Write-Host 'TVerから情報を取得できませんでした。スキップします'; continue }
+		} catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします'; continue }
 		#saveGenrePage $script:keywordName						#デバッグ用ジャンルページの保存
 	} elseif ($local:keywordName.IndexOf('talents/') -eq 0) {
 		#タレントIDによるタレント検索からビデオページのLinkを取得
 		$local:talentID = removeCommentsFromKeyword($local:keywordName).Replace('talents/', '').Trim()
 		try { $script:videoLinks = getVideoLinkFromTalentID ($local:talentID) }
-		catch { Write-Host 'TVerから情報を取得できませんでした。スキップします'; continue }
+		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします'; continue }
 	} elseif ($local:keywordName.IndexOf('series/') -eq 0) {
 		#番組IDによる番組検索からビデオページのLinkを取得
 		$local:seriesID = removeCommentsFromKeyword($local:keywordName).Replace('series/', '').Trim()
 		try { $script:videoLinks = getVideoLinkFromSeriesID ($local:seriesID) }
-		catch { Write-Host 'TVerから情報を取得できませんでした。スキップします'; continue }
+		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします'; continue }
 	} elseif ($local:keywordName.IndexOf('id/') -eq 0) {
 		#ジャンルIDなどによる新着検索からビデオページのLinkを取得
 		$local:tagID = removeCommentsFromKeyword($local:keywordName).Replace('id/', '').Trim()
 		try { $script:videoLinks = getVideoLinkFromGenreID ($local:tagID) }
-		catch { Write-Host 'TVerから情報を取得できませんでした。スキップします'; continue }
+		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします'; continue }
 	} elseif ($local:keywordName.IndexOf('title/') -eq 0) {
 		#番組名による新着検索からビデオページのLinkを取得
 		$local:titleName = removeCommentsFromKeyword($local:keywordName).Replace('title/', '').Trim()
 		try { $script:videoLinks = getVideoLinkFromTitle ($local:titleName) }
-		catch { Write-Host 'TVerから情報を取得できませんでした。スキップします'; continue }
+		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします'; continue }
 	} else {
 		#タレント名や番組名などURL形式でない場合APIで検索結果からビデオページのLinkを取得
 		try { $script:videoLinks = getVideoLinkFromFreeKeyword ($local:keywordName) }
-		catch { Write-Host 'TVerから検索結果を取得できませんでした。スキップします'; continue }
+		catch { Write-ColorOutput 'TVerから検索結果を取得できませんでした。スキップします'; continue }
 	}
 	return $script:videoLinks
 }
@@ -432,23 +432,23 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 	try {
 		#ロックファイルをロック
 		while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) {
-			Write-Host 'ファイルのロック解除待ち中です'
+			Write-ColorOutput 'ファイルのロック解除待ち中です'
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
 		$local:listMatch = Import-Csv $global:listFilePath -Encoding UTF8 `
 		| Where-Object { $_.videoPage -eq $script:videoPageURL }
-	} catch { Write-Host 'リストを読み書きできなかったのでスキップしました' -ForegroundColor Green ; continue
+	} catch { Write-ColorOutput 'リストを読み書きできなかったのでスキップしました' Green ; continue
 	} finally { $null = fileUnlock ($global:lockFilePath) }
 
-	if ( $null -ne $local:listMatch) { Write-Host '過去に処理したビデオです。スキップします'; continue }
+	if ( $null -ne $local:listMatch) { Write-ColorOutput '過去に処理したビデオです。スキップします'; continue }
 
 	#TVerのAPIを叩いてビデオ情報取得
 	try {
 		getToken
 		getVideoInfo ($script:videoLink)
 	} catch {
-		Write-Host 'TVerから情報を取得できませんでした。スキップします'
+		Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします'
 		continue			#次回再度トライするためリストに追加せずに次のビデオへ
 	}
 
@@ -466,7 +466,7 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 
 	#ビデオタイトルが取得できなかった場合はスキップ次のビデオへ
 	if ($script:videoName -eq '.mp4') {
-		Write-Host 'ビデオタイトルを特定できませんでした。スキップします'
+		Write-ColorOutput 'ビデオタイトルを特定できませんでした。スキップします'
 		continue			#次回再度ダウンロードをトライするためリストに追加せずに次のビデオへ
 	}
 
@@ -477,21 +477,21 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 		try {
 			#ロックファイルをロック
 			while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) {
-				Write-Host 'ファイルのロック解除待ち中です'
+				Write-ColorOutput 'ファイルのロック解除待ち中です'
 				Start-Sleep -Seconds 1
 			}
 			#ファイル操作
 			$local:listMatch = Import-Csv $global:listFilePath -Encoding UTF8 `
 			| Where-Object { $_.videoPath -eq $script:videoFilePath } `
 			| Where-Object { $_.videoValidated -eq '1' }
-		} catch { Write-Host 'リストを読み書きできませんでした。スキップします' -ForegroundColor Green ; continue
+		} catch { Write-ColorOutput 'リストを読み書きできませんでした。スキップします' Green ; continue
 		} finally { $null = fileUnlock ($global:lockFilePath) }
 
 		#結果が0件ということは未検証のファイルがあるということ
 		if ( $null -eq $local:listMatch) {
-			Write-Host 'すでにダウンロード済みですが未検証のビデオです。リストに追加します'
+			Write-ColorOutput 'すでにダウンロード済みですが未検証のビデオです。リストに追加します'
 			$script:skip = $true
-		} else { Write-Host 'すでにダウンロード済み・検証済みのビデオです。スキップします'; continue }
+		} else { Write-ColorOutput 'すでにダウンロード済み・検証済みのビデオです。スキップします'; continue }
 
 	} else {
 
@@ -499,7 +499,7 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 		foreach ($script:ignoreTitle in $script:ignoreTitles) {
 			if ($(getNarrowChars $script:videoSeries) -match $(getNarrowChars $script:ignoreTitle)) {
 				$script:ignore = $true
-				Write-Host '無視リストに入っているビデオです。スキップします'
+				Write-ColorOutput '無視リストに入っているビデオです。スキップします'
 				continue			#リストの重複削除のため、無視したものはリスト出力せずに次のビデオへ行くことに
 			}
 		}
@@ -508,7 +508,7 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 
 	#スキップフラグが立っているかチェック
 	if ($script:ignore -eq $true) {
-		Write-Host '無視したファイルをリストに追加します'
+		Write-ColorOutput '無視したファイルをリストに追加します'
 		$script:newVideo = [pscustomobject]@{
 			videoPage       = $script:videoPageURL ;
 			videoSeriesPage = $script:videoSeriesPageURL ;
@@ -525,7 +525,7 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 			videoValidated  = '0' ;
 		}
 	} elseif ($script:skip -eq $true) {
-		Write-Host 'スキップした未検証のファイルをリストに追加します'
+		Write-ColorOutput 'スキップした未検証のファイルをリストに追加します'
 		$script:newVideo = [pscustomobject]@{
 			videoPage       = $script:videoPageURL ;
 			videoSeriesPage = $script:videoSeriesPageURL ;
@@ -542,7 +542,7 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 			videoValidated  = '0' ;
 		}
 	} else {
-		Write-Host 'ダウンロードするファイルをリストに追加します'
+		Write-ColorOutput 'ダウンロードするファイルをリストに追加します'
 		$script:newVideo = [pscustomobject]@{
 			videoPage       = $script:videoPageURL ;
 			videoSeriesPage = $script:videoSeriesPageURL ;
@@ -564,13 +564,13 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 	try {
 		#ロックファイルをロック
 		while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) {
-			Write-Host 'ファイルのロック解除待ち中です'
+			Write-ColorOutput 'ファイルのロック解除待ち中です'
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
 		$script:newVideo | Export-Csv $global:listFilePath -NoTypeInformation -Encoding UTF8 -Append
 		Write-Debug 'リストを書き込みました'
-	} catch { Write-Host 'リストを更新できませんでした。でスキップします' -ForegroundColor Green ; continue
+	} catch { Write-ColorOutput 'リストを更新できませんでした。でスキップします' Green ; continue
 	} finally { $null = fileUnlock ($global:lockFilePath) }
 
 	#スキップや無視対象でなければyoutube-dl起動
@@ -583,7 +583,7 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 		}
 		#youtube-dl起動
 		try { executeYtdl $script:videoPageURL }
-		catch { Write-Host 'youtube-dlの起動に失敗しました' -ForegroundColor Green }
+		catch { Write-ColorOutput 'youtube-dlの起動に失敗しました' Green }
 		Start-Sleep -Seconds 5			#5秒待機
 
 	}
