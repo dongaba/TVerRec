@@ -150,7 +150,7 @@ function getVideoLinkFromTitle ($local:titleName) {
 	$local:callSearchURL = $local:callSearchBaseURL + `
 		'?platform_uid=' + $script:platformUID + `
 		'&platform_token=' + $script:platformToken
-		
+
 	$local:searchResultsRaw = (Invoke-RestMethod `
 			-Uri $local:callSearchURL `
 			-Method 'GET' `
@@ -214,7 +214,7 @@ function getVideoLinkFromFreeKeyword ($local:keywordName) {
 function getVideoInfo ($local:videoLink) {
 
 	$local:episodeID = $local:videoLink.Replace('/episodes/', '')
-	
+
 	#----------------------------------------------------------------------
 	#VideoInfo
 	$local:tverVideoInfoBaseURL = 'https://statics.tver.jp/content/episode/'
@@ -427,7 +427,7 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 	$script:ignore = $false ; $script:skip = $false
 
 	$script:ignoreTitles = getIgnoreList		#ダウンロード対象外番組リストの読み込み
-	
+
 	#URLがすでにリストに存在する場合はスキップ
 	try {
 		#ロックファイルをロック
@@ -580,7 +580,7 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 		#保存先ディレクトリがなければ作成
 		if (-Not (Test-Path $script:videoFileDir -PathType Container)) {
 			try { $null = New-Item -ItemType directory -Path $script:videoFileDir }
-			catch { Write-ColorOutput "保存先ディレクトリを作成できませんでした" Green ; continue }
+			catch { Write-ColorOutput '保存先ディレクトリを作成できませんでした' Green ; continue }
 		}
 		#youtube-dl起動
 		try { executeYtdl $script:videoPageURL }
