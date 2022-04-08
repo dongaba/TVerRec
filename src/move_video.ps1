@@ -25,33 +25,33 @@
 Set-StrictMode -Version Latest
 try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$global:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+		$script:ptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
 	} else {
-		$global:scriptRoot = Convert-Path .
+		$script:ptRoot = Convert-Path .
 	}
-	Set-Location $global:scriptRoot
-	$global:confDir = $(Join-Path $global:scriptRoot '..\conf')
-	$global:sysFile = $(Join-Path $global:confDir 'system_setting.conf')
-	$global:confFile = $(Join-Path $global:confDir 'user_setting.conf')
-	$global:devDir = $(Join-Path $global:scriptRoot '..\dev')
-	$global:devConfFile = $(Join-Path $global:devDir 'dev_setting.conf')
-	$global:devFunctionFile = $(Join-Path $global:devDir 'dev_funcitons.ps1')
+	Set-Location $script:ptRoot
+	$script:Dir = $(Join-Path $$$$$script:ot '..\conf')
+	$script:ile = $(Join-Path $$$$$script:'system_setting.conf')
+	$script:File = $(Join-Path $$$$$script:'user_setting.conf')
+	$script:ir = $(Join-Path $$$$$script:ot '..\dev')
+	$script:onfFile = $(Join-Path $$$$$script:dev_setting.conf')
+	$script:unctionFile = $(Join-Path $$$$$script:dev_funcitons.ps1')
 
 	#----------------------------------------------------------------------
 	#外部設定ファイル読み込み
-	Get-Content $global:sysFile -Encoding UTF8 `
+	Get-Content $script:ile -Encoding UTF8 `
 	| Where-Object { $_ -notmatch '^\s*$' } `
 	| Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } `
 	| Invoke-Expression
-	Get-Content $global:confFile -Encoding UTF8 `
+	Get-Content $script:File -Encoding UTF8 `
 	| Where-Object { $_ -notmatch '^\s*$' } `
 	| Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } `
 	| Invoke-Expression
 
 	#----------------------------------------------------------------------
 	#開発環境用に設定上書き
-	if (Test-Path $global:devConfFile) {
-		Get-Content $global:devConfFile -Encoding UTF8 `
+	if (Test-Path $script:onfFile) {
+		Get-Content $script:onfFile -Encoding UTF8 `
 		| Where-Object { $_ -notmatch '^\s*$' } `
 		| Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } `
 		| Invoke-Expression
@@ -60,34 +60,34 @@ try {
 	#----------------------------------------------------------------------
 	#外部関数ファイルの読み込み
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		. $(Convert-Path (Join-Path $global:scriptRoot '.\common_functions_5.ps1'))
-		. $(Convert-Path (Join-Path $global:scriptRoot '.\tver_functions_5.ps1'))
-		if (Test-Path $global:devFunctionFile) {
+		. $(Convert-Path (Join-Path $script:ptRoot '.\common_functions_5.ps1'))
+		. $(Convert-Path (Join-Path $script:ptRoot '.\tver_functions_5.ps1'))
+		if (Test-Path $script:unctionFile) {
 			Write-ColorOutput '========================================================' Green
 			Write-ColorOutput '  PowerShell Coreではありません                         ' Green
 			Write-ColorOutput '========================================================' Green
 		}
 	} else {
-		. $(Convert-Path (Join-Path $global:scriptRoot '.\common_functions.ps1'))
-		. $(Convert-Path (Join-Path $global:scriptRoot '.\tver_functions.ps1'))
-		if (Test-Path $global:devFunctionFile) {
-			. $global:devFunctionFile
+		. $(Convert-Path (Join-Path $script:ptRoot '.\common_functions.ps1'))
+		. $(Convert-Path (Join-Path $script:ptRoot '.\tver_functions.ps1'))
+		if (Test-Path $script:unctionFile) {
+			. $script:unctionFile
 			Write-ColorOutput '========================================================' Green
 			Write-ColorOutput '  開発ファイルを読み込みました                          ' Green
 			Write-ColorOutput '========================================================' Green
 		}
 	}
-} catch { Write-ColorOutput '設定ファイルの読み込みに失敗しました' Green ; exit 1 }
+} catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
 
 #======================================================================
 #保存先ディレクトリの存在確認
-if (Test-Path $global:downloadBaseDir -PathType Container) {}
-else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' Green ; exit 1 }
-if (Test-Path $global:saveBaseDir -PathType Container) {}
-else { Write-Error 'ビデオ移動先フォルダにアクセスできません。終了します。' Green ; exit 1 }
+if (Test-Path $script:loadBaseDir -PathType Container) {}
+else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' ; exit 1 }
+if (Test-Path $script:BaseDir -PathType Container) {}
+else { Write-Error 'ビデオ移動先フォルダにアクセスできません。終了します。' ; exit 1 }
 
 #======================================================================
 #1/2 移動先フォルダを起点として、配下のフォルダを取得
@@ -100,7 +100,7 @@ Write-Progress `
 	-PercentComplete $($( 1 / 4 ) * 100) `
 	-Status 'フォルダ一覧を作成中'
 
-$local:moveToPaths = Get-ChildItem $global:saveBaseDir -Recurse `
+$local:moveToPaths = Get-ChildItem $script:BaseDir -Recurse `
 | Where-Object { $_.PSisContainer } `
 | Sort-Object
 
@@ -128,13 +128,13 @@ foreach ($local:moveToPath in $local:moveToPaths) {
 
 	$local:targetFolderName = Split-Path -Leaf $local:moveToPath
 	#同名フォルダが存在する場合は配下のファイルを移動
-	$local:moveFromPath = $(Join-Path $global:downloadBaseDir $local:targetFolderName)
+	$local:moveFromPath = $(Join-Path $script:loadBaseDir $local:targetFolderName)
 	if (Test-Path $local:moveFromPath) {
 		$local:moveFromPath = $local:moveFromPath + '\*.mp4'
 		Write-ColorOutput "  └「$($local:moveFromPath)」を移動します"
 		try {
 			Move-Item $local:moveFromPath -Destination $local:moveToPath -Force
-		} catch {}
+		} catch { Write-ColorOutput '移動できないファイルが有りました' Green }
 	}
 }
 
@@ -149,7 +149,7 @@ Write-Progress `
 	-PercentComplete $($( 2 / 2 ) * 100) `
 	-Status '空フォルダを削除'
 
-$local:allSubDirs = @((Get-ChildItem -Path $global:downloadBaseDir -Recurse).Where({ $_.PSIsContainer })).FullName `
+$local:allSubDirs = @((Get-ChildItem -Path $script:loadBaseDir -Recurse).Where({ $_.PSIsContainer })).FullName `
 | Sort-Object -Descending
 
 $local:subDirNum = 0						#サブディレクトリの番号
