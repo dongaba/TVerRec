@@ -151,7 +151,7 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 	$local:videoFilePath = Join-Path $script:downloadBaseDir $local:videoFileRelativePath
 	try { $null = New-Item $script:ffpmegErrorLogPath -Type File -Force }
 	catch { Write-ColorOutput 'ffmpegエラーファイルを初期化できませんでした' Green ; return }
-	
+
 	#これからチェックする動画のステータスをチェック
 	try {
 		#ロックファイルをロック
@@ -330,7 +330,7 @@ function waitTillYtdlProcessGetFewer ($local:parallelDownloadFileNum) {
 function waitTillYtdlProcessIsZero () {
 	try {
 		if ($script:isWin) {
-			$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2		
+			$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2
   } elseif ($IsLinux) {
 			$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
 		} elseif ($IsMacOS) {
@@ -451,8 +451,8 @@ function getFileNameWithoutInvalidChars {
 		[Parameter(
 			Mandatory = $true,
 			Position = 0,
-			ValueFromPipeline = $true,
-			ValueFromPipelineByPropertyName = $true)]
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false)]
 		[String]$local:Name
 	)
 
@@ -655,9 +655,9 @@ function isLocked {
 function Write-ColorOutput {
 	[CmdletBinding()]
 	Param(
-		[Parameter(Mandatory = $False, Position = 1, ValueFromPipeline = $True, ValueFromPipelinebyPropertyName = $True)][Object] $Object,
-		[Parameter(Mandatory = $False, Position = 2, ValueFromPipeline = $True, ValueFromPipelinebyPropertyName = $True)][ConsoleColor] $foregroundColor,
-		[Parameter(Mandatory = $False, Position = 3, ValueFromPipeline = $True, ValueFromPipelinebyPropertyName = $True)][ConsoleColor] $backgroundColor
+		[Parameter(Mandatory = $false, Position = 1, ValueFromPipeline = $false, ValueFromPipelinebyPropertyName = $false)][Object] $Object,
+		[Parameter(Mandatory = $false, Position = 2, ValueFromPipeline = $false, ValueFromPipelinebyPropertyName = $false)][ConsoleColor] $foregroundColor,
+		[Parameter(Mandatory = $false, Position = 3, ValueFromPipeline = $false, ValueFromPipelinebyPropertyName = $false)][ConsoleColor] $backgroundColor
 	)
 
 	# Save previous colors
