@@ -123,7 +123,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 	getToken
 	$local:videoLinks = getVideoLinksFromKeyword ($local:keywordName)
-	$local:keywordName = $local:keywordName.Replace('https://tver.jp/', '').Replace('http://tver.jp/', '')
+	$local:keywordName = $local:keywordName.Replace('https://tver.jp/', '')
 
 	$local:videoNum = 0						#ジャンル内の処理中のビデオの番号
 	if ($local:videoLinks -is [array]) {

@@ -66,11 +66,9 @@ function checkRequiredFile {
 #----------------------------------------------------------------------
 function checkGeoIP {
 	try {
-		if ((Invoke-RestMethod -Uri 'http://ip-api.com/json/').countryCode -ne 'JP') {
-			Invoke-RestMethod -Uri (
-				'http://ip-api.com/json/' + (Invoke-WebRequest -Uri 'http://ifconfig.me/ip').Content
-			)
-			Write-ColorOutput '日本のIPアドレスからしか接続できません。VPN接続してください。' Green
+		if ((Invoke-RestMethod -Uri 'https://ipapi.co/json/').country_code -ne 'JP') {
+			Invoke-RestMethod -Uri 'https://ipapi.co/json/'
+			Write-ColorOutput '日本のIPアドレスからしか接続できません。VPN接続を検討してください。' Green
 			exit 1
 		}
 	} catch { Write-ColorOutput 'Geo IPのチェックに失敗しました' Green }
