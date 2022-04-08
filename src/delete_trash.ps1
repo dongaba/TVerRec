@@ -91,12 +91,12 @@ try {
 	Get-ChildItem -Path $global:downloadWorkDir -Recurse -Filter 'ffmpeg_error_*.log' `
 	| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-0.5) } `
 	| Remove-Item -Force -ErrorAction SilentlyContinue
-} catch {}
+} catch { Write-ColorOutput "ffmpegエラーファイルを削除できませんでした" Green }
 try {
 	Get-ChildItem -Path $scriptRoot -Recurse -Filter 'brightcovenew_*.lock' `
 	| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-0.5) } `
 	| Remove-Item -Force -ErrorAction SilentlyContinue
-} catch {}
+} catch { Write-ColorOutput "youtube-dlのロックファイルを削除できませんでした" Green }
 Write-Progress -Id 1 `
 	-Activity '処理 1/3' `
 	-PercentComplete $($( 1 / 3 ) * 100) `
@@ -150,7 +150,7 @@ foreach ($local:ignoreTitle in $local:ignoreTitles) {
 	try {
 		$local:delTargets = Get-ChildItem -LiteralPath $global:downloadBaseDir `
 			-Directory -Name -Filter "*$($local:ignoreTitle)*"
-	} catch {}
+	} catch { Write-ColorOutput '削除対象を特定できませんでした' Green }
 	try {
 		if ($null -ne $local:delTargets) {
 			foreach ($local:delTarget in $local:delTargets) {

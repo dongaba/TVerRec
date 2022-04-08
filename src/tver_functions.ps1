@@ -577,9 +577,10 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 	if (($script:ignore -eq $true) -Or ($script:skip -eq $true)) {
 		continue			#スキップや無視対象は飛ばして次のファイルへ
 	} else {
-		#保存作ディレクトリがなければ作成
+		#保存先ディレクトリがなければ作成
 		if (-Not (Test-Path $script:videoFileDir -PathType Container)) {
-			try { $null = New-Item -ItemType directory -Path $script:videoFileDir } catch {}
+			try { $null = New-Item -ItemType directory -Path $script:videoFileDir }
+			catch { Write-ColorOutput "保存先ディレクトリを作成できませんでした" Green ; continue }
 		}
 		#youtube-dl起動
 		try { executeYtdl $script:videoPageURL }

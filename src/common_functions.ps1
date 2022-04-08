@@ -150,7 +150,7 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 	$local:checkStatus = 0
 	$local:videoFilePath = Join-Path $global:downloadBaseDir $local:videoFileRelativePath
 	try { $null = New-Item $global:ffpmegErrorLogPath -Type File -Force }
-	catch { return }
+	catch { Write-ColorOutput 'ffmpegエラーファイルを初期化できませんでした' Green ; return }
 	
 	#これからチェックする動画のステータスをチェック
 	try {
@@ -236,7 +236,7 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 				-LiteralPath $global:ffpmegErrorLogPath `
 				-Force -ErrorAction SilentlyContinue
 		}
-	} catch {}
+	} catch { Write-ColorOutput "ffmpegエラーファイルを削除できませんでした" Green }
 
 	if ($local:proc.ExitCode -ne 0 -or $local:errorCount -gt 30) {
 		#終了コードが"0"以外 または エラーが30行以上 は録画リストとファイルを削除
@@ -661,25 +661,21 @@ function Write-ColorOutput {
 	Param(
 		[Parameter(Mandatory = $False, Position = 1, ValueFromPipeline = $True, ValueFromPipelinebyPropertyName = $True)][Object] $Object,
 		[Parameter(Mandatory = $False, Position = 2, ValueFromPipeline = $True, ValueFromPipelinebyPropertyName = $True)][ConsoleColor] $foregroundColor,
-		[Parameter(Mandatory = $False, Position = 3, ValueFromPipeline = $True, ValueFromPipelinebyPropertyName = $True)][ConsoleColor] $backgroundColor,
-		[Switch]$NoNewline
+		[Parameter(Mandatory = $False, Position = 3, ValueFromPipeline = $True, ValueFromPipelinebyPropertyName = $True)][ConsoleColor] $backgroundColor
 	)
 
 	# Save previous colors
 	$prevForegroundColor = $host.UI.RawUI.ForegroundColor
 	$prevBackgroundColor = $host.UI.RawUI.BackgroundColor
 
-	# Set BackgroundColor if available
+	# Set colors if available
 	if ($BackgroundColor -ne $null) { $host.UI.RawUI.BackgroundColor = $backgroundColor }
-
-	# Set $ForegroundColor if available
 	if ($ForegroundColor -ne $null) { $host.UI.RawUI.ForegroundColor = $foregroundColor }
 
 	# Always write (if we want just a NewLine)
 	if ($null -eq $Object) { $Object = '' }
 
-	if ($NoNewline) { [Console]::Write($Object) } 
-	else { Write-Output $Object }
+	Write-Output $Object
 
 	# Restore previous colors
 	$host.UI.RawUI.ForegroundColor = $prevForegroundColor

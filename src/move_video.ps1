@@ -134,7 +134,7 @@ foreach ($local:moveToPath in $local:moveToPaths) {
 		Write-ColorOutput "  └「$($local:moveFromPath)」を移動します"
 		try {
 			Move-Item $local:moveFromPath -Destination $local:moveToPath -Force
-		} catch {}
+		} catch { Write-ColorOutput '移動できないファイルがありました' Green }
 	}
 }
 
