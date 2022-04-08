@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![CodeFactor](https://www.codefactor.io/repository/github/dongaba/tverrec/badge)](https://www.codefactor.io/repository/github/dongaba/tverrec)
-![Codacy grade](https://img.shields.io/codacy/grade/1b42499be57b48818db8c3c90d73adb3)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/1b42499be57b48818db8c3c90d73adb3)](https://www.codacy.com/gh/dongaba/TVerRec/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=dongaba/TVerRec&amp;utm_campaign=Badge_Grade)
 ![GitHub top language](https://img.shields.io/github/languages/top/dongaba/TVerRec)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/dongaba/TVerRec)
 ![GitHub repo size](https://img.shields.io/github/repo-size/dongaba/TVerRec)
