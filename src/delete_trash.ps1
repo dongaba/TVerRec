@@ -63,18 +63,18 @@ try {
 		. $(Convert-Path (Join-Path $script:scriptRoot '.\common_functions_5.ps1'))
 		. $(Convert-Path (Join-Path $script:scriptRoot '.\tver_functions_5.ps1'))
 		if (Test-Path $script:devFunctionFile) {
-			Write-ColorOutput '========================================================' Green
-			Write-ColorOutput '  PowerShell Coreではありません                         ' Green
-			Write-ColorOutput '========================================================' Green
+			Write-ColorOutput '========================================================' white DarkGreen
+			Write-ColorOutput '  PowerShell Coreではありません                         ' white DarkGreen
+			Write-ColorOutput '========================================================' white DarkGreen
 		}
 	} else {
 		. $(Convert-Path (Join-Path $script:scriptRoot '.\common_functions.ps1'))
 		. $(Convert-Path (Join-Path $script:scriptRoot '.\tver_functions.ps1'))
 		if (Test-Path $script:devFunctionFile) {
 			. $script:devFunctionFile
-			Write-ColorOutput '========================================================' Green
-			Write-ColorOutput '  開発ファイルを読み込みました                          ' Green
-			Write-ColorOutput '========================================================' Green
+			Write-ColorOutput '========================================================' white DarkGreen
+			Write-ColorOutput '  開発ファイルを読み込みました                          ' white DarkGreen
+			Write-ColorOutput '========================================================' white DarkGreen
 		}
 	}
 } catch { Write-ColorOutput '設定ファイルの読み込みに失敗しました' Green ; exit 1 }
