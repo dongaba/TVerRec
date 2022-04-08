@@ -44,7 +44,7 @@ Set-StrictMode -Version Latest
 $local:releases = 'https://www.gyan.dev/ffmpeg/builds/release-version'
 #ffmpeg保存先相対Path
 $local:ffmpegRelativeDir = '..\bin'
-$local:ffmpegDir = $(Join-Path $local:scriptRoot $local:ffmpegRelativeDir)
+$local:ffmpegDir = $(Join-Path $script:scriptRoot $local:ffmpegRelativeDir)
 if ($local:isWin) { $local:ffmpegPath = $(Join-Path $local:ffmpegDir 'ffmpeg.exe') }
 else { $local:ffmpegPath = $(Join-Path $local:ffmpegDir 'ffmpeg') }
 
@@ -93,7 +93,7 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 
 			#展開
 			try {
-				$local:extractedDir = $(Join-Path $local:scriptRoot $local:ffmpegRelativeDir)
+				$local:extractedDir = $(Join-Path $script:scriptRoot $local:ffmpegRelativeDir)
 				Expand-Archive $local:ffmpegZipFileLocation -DestinationPath $local:extractedDir
 			} catch { Write-ColorOutput 'ffmpegの展開に失敗しました' Green }
 
@@ -101,7 +101,7 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 			try {
 				$local:extractedDir = $local:extractedDir + '\ffmpeg-*-essentials_build'
 				$local:extractedFiles = $local:extractedDir + '\bin\*.exe'
-				Move-Item $local:extractedFiles $(Join-Path $local:scriptRoot $local:ffmpegRelativeDir) -Force
+				Move-Item $local:extractedFiles $(Join-Path $script:scriptRoot $local:ffmpegRelativeDir) -Force
 			} catch { Write-ColorOutput 'ffmpegの配置に失敗しました' Green }
 
 			#ゴミ掃除

@@ -48,7 +48,7 @@ $local:releases = "https://api.github.com/repos/$local:repo/releases"
 
 #ytdl-patched保存先相対Path
 $local:ytdlRelativeDir = '..\bin'
-$local:ytdlDir = $(Join-Path $local:scriptRoot $local:ytdlRelativeDir)
+$local:ytdlDir = $(Join-Path $script:scriptRoot $local:ytdlRelativeDir)
 if ($local:isWin) { $local:ytdlPath = $(Join-Path $local:ytdlDir 'youtube-dl.exe') }
 else { $local:ytdlPath = $(Join-Path $local:ytdlDir 'youtube-dl') }
 
