@@ -57,41 +57,41 @@ TVerRecは、動画配信サイトTVer ( ティーバー <https://tver.jp/> ) �
 ### ユーザ設定
 
 - ユーザ設定は`conf/user_setting.conf`をテキストエディターで開いて行ってください。
-- `$global:downloadBaseDir`には動画をダウンロードするフォルダを設定します。
-- `$global:downloadWorkDir`には動画をダウンロードするさいにできる中間ファイルを格納するフォルダを設定します。
-- `$global:saveBaseDir`にはダウンロードした動画を移動する先のフォルダを設定します。
-  - ここで設定したフォルダ配下(再帰的にチェックします)にあるフォルダと`$global:downloadBaseDir`にあるフォルダが一致する場合、動画ファイルが`$global:downloadBaseDir`から`$global:saveBaseDir`配下の各フォルダ配下に移動されます。同名のファイルがある場合は上書きされます。
-- `$global:parallelDownloadFileNum`は同時に並行でダウンロードする動画の数を設定します。
-- `$global:parallelDownloadNumPerFile`はそれぞれの動画をダウンロードする際の並行ダウンロード数を設定します。
-  - つまり、`$global:parallelDownloadFileNum`×`$global:parallelDownloadNumPerFile`が実質的な最大同時ダウンロード数になります。
-- `$global:windowShowStyle`にはyoutube-dlのウィンドウをどのように表示するかを設定します。
+- `$script:downloadBaseDir`には動画をダウンロードするフォルダを設定します。
+- `$script:downloadWorkDir`には動画をダウンロードするさいにできる中間ファイルを格納するフォルダを設定します。
+- `$script:saveBaseDir`にはダウンロードした動画を移動する先のフォルダを設定します。
+  - ここで設定したフォルダ配下(再帰的にチェックします)にあるフォルダと`$script:downloadBaseDir`にあるフォルダが一致する場合、動画ファイルが`$script:downloadBaseDir`から`$script:saveBaseDir`配下の各フォルダ配下に移動されます。同名のファイルがある場合は上書きされます。
+- `$script:parallelDownloadFileNum`は同時に並行でダウンロードする動画の数を設定します。
+- `$script:parallelDownloadNumPerFile`はそれぞれの動画をダウンロードする際の並行ダウンロード数を設定します。
+  - つまり、`$script:parallelDownloadFileNum`×`$script:parallelDownloadNumPerFile`が実質的な最大同時ダウンロード数になります。
+- `$script:windowShowStyle`にはyoutube-dlのウィンドウをどのように表示するかを設定します。
   - `Normal` / `Maximized` / `Minimized` / `Hidden` の4つが指定可能です。
   - 初期値は`Hidden`でダウンロードウィンドウは非表示となりますが、`Normal`等に設定することでダウンロードの進捗を確認することができます。
-- `$global:forceSoftwareDecodeFlag`に`$true`を設定するとハードウェアアクセラレーションを使わなくなります。
+- `$script:forceSoftwareDecodeFlag`に`$true`を設定するとハードウェアアクセラレーションを使わなくなります。
   - 高速なCPUが搭載されている場合はハードウェアアクセラレーションよりもCPUで処理したほうが処理が早い場合があります。
-- `$global:ffmpegDecodeOption`に直接ffmpegのオプションを記載することでハードウェアアクセラレーションを有効化できます。
+- `$script:ffmpegDecodeOption`に直接ffmpegのオプションを記載することでハードウェアアクセラレーションを有効化できます。
   - 例えばIntel CPUを搭載した一般的なPCであれば、`'-hwaccel qsv -c:v h264_qsv'`を設定することで、CPU内蔵のアクセラレータを使ってCPU負荷を下げつつ高速に処理することが可能です。
-  - この設定は`$global:forceSoftwareDecodeFlag`が`$true`に設定されていると無効化されます。
+  - この設定は`$script:forceSoftwareDecodeFlag`が`$true`に設定されていると無効化されます。
 
 ### システム設定
 
 - より細かく設定を変更したい場合は`conf/system_setting.conf`をテキストエディターで開いてシステム設定を行ってください。(通常は必要ありません)
-- `$global:appVersion`はアプリケーションのバージョンです。
+- `$script:appVersion`はアプリケーションのバージョンです。
   - ここを変えても表示が変わるだけで機能が変わるわけではありません。
   - 現時点ではバージョン表記をする以外には使われておりません。
 - `$VerbosePreference`や`$DebugPreference`を設定することで、より詳細な情報が画面に出力されます。
   - 設定可能な値はGoogleしてください。PowerShellの設定がそのまま使えます。
-- `$global:fileNameLengthMax`はOSやファイルシステムが許容するファイル名の最大長をバイト指定で記載します。
+- `$script:fileNameLengthMax`はOSやファイルシステムが許容するファイル名の最大長をバイト指定で記載します。
   - 一般的なWindows環境では特に変更する必要はありません。
   - ここで指定した長さを超えるファイル名が生成されそうになると、ファイル名が収まるように自動的にファイル名が短縮されます。
   - なので、あまり深い階層を保存先に指定すると頻繁にファイル名が短縮されたり、エラーとなることがあります。
-- `$global:binDir`、`$global:dbDir`は各種フォルダの設定です。
+- `$script:binDir`、`$script:dbDir`は各種フォルダの設定です。
   - ソースファイルから見た際の相対パス指定となるようにしてください。
-- `$global:keywordFilePath`、`$global:ignoreFilePath`はそれぞれダウンロード対象キーワードとダウンロード対象外番組を設定するファイルの名前です。
-- `$global:listFilePath`はダウンロードの未済管理をするファイルの名前です。
-- `$global:ffpmegErrorLogPath`は動画のチェックをする際にエラーを一時的に出力するファイルのパスです。
-  - 初期値では`$global:listFilePath`と同じ場所に出力するようになっています。(が、処理が終われば自動的に削除されます)
-- `$global:ytdlPath`と`$global:ffmpegPath`はそれぞれyoutube-dlとffmpegの実行ファイルの配置場所を指定しています。
+- `$script:keywordFilePath`、`$script:ignoreFilePath`はそれぞれダウンロード対象キーワードとダウンロード対象外番組を設定するファイルの名前です。
+- `$script:listFilePath`はダウンロードの未済管理をするファイルの名前です。
+- `$script:ffpmegErrorLogPath`は動画のチェックをする際にエラーを一時的に出力するファイルのパスです。
+  - 初期値では`$script:listFilePath`と同じ場所に出力するようになっています。(が、処理が終われば自動的に削除されます)
+- `$script:ytdlPath`と`$script:ffmpegPath`はそれぞれyoutube-dlとffmpegの実行ファイルの配置場所を指定しています。
   - ソースファイルから見た際の相対パス指定となるようにしてください。
 
 ## おすすめの使い方

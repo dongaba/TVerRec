@@ -56,5 +56,4 @@ if exist %PIDFile% (
 	goto END
 
 :END
-	pause
-
+	echo 処理が完了しました ...

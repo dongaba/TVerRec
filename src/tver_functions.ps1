@@ -325,7 +325,7 @@ function getVideoInfo ($local:videoLink) {
 #----------------------------------------------------------------------
 function saveGenrePage ($script:KeywordName) {
 	$local:keywordFile = $($script:keywordName + '.html') -replace '(\?|\!|>|<|:|\\|/|\|)', '-'
-	$local:keywordFile = $(Join-Path $global:debugDir (getFileNameWithoutInvalidChars $local:keywordFile))
+	$local:keywordFile = $(Join-Path $script:debugDir (getFileNameWithoutInvalidChars $local:keywordFile))
 	$local:webClient = New-Object System.Net.WebClient
 	$local:webClient.Encoding = [System.Text.Encoding]::UTF8
 	$local:webClient.DownloadFile($script:keywordName, $local:keywordFile)
@@ -337,11 +337,11 @@ function saveGenrePage ($script:KeywordName) {
 function getIgnoreList {
 	#ダウンロード対象外番組リストの読み込み
 	try {
-		$local:ignoreTitles = (Get-Content $global:ignoreFilePath -Encoding UTF8 `
+		$local:ignoreTitles = (Get-Content $script:ignoreFilePath -Encoding UTF8 `
 			| Where-Object { !($_ -match '^\s*$') } `
 			| Where-Object { !($_ -match '^;.*$') }) `
 			-as [string[]]
-	} catch { Write-ColorOutput 'ダウンロード対象外リストの読み込みに失敗しました' Green ; exit 1 }
+	} catch { Write-Error 'ダウンロード対象外リストの読み込みに失敗しました' ; exit 1 }
 	return $local:ignoreTitles
 }
 
@@ -350,11 +350,11 @@ function getIgnoreList {
 #----------------------------------------------------------------------
 function loadKeywordList {
 	try {
-		$local:keywordNames = (Get-Content $global:keywordFilePath -Encoding UTF8 `
+		$local:keywordNames = (Get-Content $script:keywordFilePath -Encoding UTF8 `
 			| Where-Object { !($_ -match '^\s*$') } `
 			| Where-Object { !($_ -match '^#.*$') }) `
 			-as [string[]]
-	} catch { Write-ColorOutput 'ダウンロード対象ジャンルリストの読み込みに失敗しました' Green ; exit 1 }
+	} catch { Write-Error 'ダウンロード対象ジャンルリストの読み込みに失敗しました' ; exit 1 }
 	return $local:keywordNames
 }
 
@@ -431,15 +431,15 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 	#URLがすでにリストに存在する場合はスキップ
 	try {
 		#ロックファイルをロック
-		while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) {
+		while ($(fileLock ($script:lockFilePath)).fileLocked -ne $true) {
 			Write-ColorOutput 'ファイルのロック解除待ち中です'
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
-		$local:listMatch = Import-Csv $global:listFilePath -Encoding UTF8 `
+		$local:listMatch = Import-Csv $script:listFilePath -Encoding UTF8 `
 		| Where-Object { $_.videoPage -eq $script:videoPageURL }
 	} catch { Write-ColorOutput 'リストを読み書きできなかったのでスキップしました' Green ; continue
-	} finally { $null = fileUnlock ($global:lockFilePath) }
+	} finally { $null = fileUnlock ($script:lockFilePath) }
 
 	if ( $null -ne $local:listMatch) { Write-ColorOutput '過去に処理したビデオです。スキップします'; continue }
 
@@ -455,9 +455,9 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 	#ビデオファイル情報をセット
 	$script:videoName = getVideoFileName $script:videoSeries $script:videoSeason $script:videoTitle $script:broadcastDate
 	$script:videoFileDir = getNarrowChars $($script:videoSeries + ' ' + $script:videoSeason).Trim()
-	$script:videoFileDir = $(Join-Path $global:downloadBaseDir (getFileNameWithoutInvalidChars $script:videoFileDir))
+	$script:videoFileDir = $(Join-Path $script:downloadBaseDir (getFileNameWithoutInvalidChars $script:videoFileDir))
 	$script:videoFilePath = $(Join-Path $script:videoFileDir $script:videoName)
-	$script:videoFileRelativePath = $script:videoFilePath.Replace($global:downloadBaseDir, '').Replace('\', '/')
+	$script:videoFileRelativePath = $script:videoFilePath.Replace($script:downloadBaseDir, '').Replace('\', '/')
 	$script:videoFileRelativePath = $script:videoFileRelativePath.Substring(1, $($script:videoFileRelativePath.Length - 1))
 
 	#ビデオ情報のコンソール出力
@@ -476,16 +476,16 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 		#チェック済みか調べた上で、スキップ判断
 		try {
 			#ロックファイルをロック
-			while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) {
+			while ($(fileLock ($script:lockFilePath)).fileLocked -ne $true) {
 				Write-ColorOutput 'ファイルのロック解除待ち中です'
 				Start-Sleep -Seconds 1
 			}
 			#ファイル操作
-			$local:listMatch = Import-Csv $global:listFilePath -Encoding UTF8 `
+			$local:listMatch = Import-Csv $script:listFilePath -Encoding UTF8 `
 			| Where-Object { $_.videoPath -eq $script:videoFilePath } `
 			| Where-Object { $_.videoValidated -eq '1' }
 		} catch { Write-ColorOutput 'リストを読み書きできませんでした。スキップします' Green ; continue
-		} finally { $null = fileUnlock ($global:lockFilePath) }
+		} finally { $null = fileUnlock ($script:lockFilePath) }
 
 		#結果が0件ということは未検証のファイルがあるということ
 		if ( $null -eq $local:listMatch) {
@@ -563,15 +563,15 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 	#リストCSV書き出し
 	try {
 		#ロックファイルをロック
-		while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) {
+		while ($(fileLock ($script:lockFilePath)).fileLocked -ne $true) {
 			Write-ColorOutput 'ファイルのロック解除待ち中です'
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
-		$script:newVideo | Export-Csv $global:listFilePath -NoTypeInformation -Encoding UTF8 -Append
+		$script:newVideo | Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8 -Append
 		Write-Debug 'リストを書き込みました'
 	} catch { Write-ColorOutput 'リストを更新できませんでした。でスキップします' Green ; continue
-	} finally { $null = fileUnlock ($global:lockFilePath) }
+	} finally { $null = fileUnlock ($script:lockFilePath) }
 
 	#スキップや無視対象でなければyoutube-dl起動
 	if (($script:ignore -eq $true) -Or ($script:skip -eq $true)) {
