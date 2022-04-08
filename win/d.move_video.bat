@@ -35,4 +35,5 @@ if exist "C:\Program Files\PowerShell\7\pwsh.exe" (
 	powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\move_video_5.ps1
 )
 
-echo 処理が完了しました ...
+pause
+

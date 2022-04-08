@@ -25,33 +25,33 @@
 Set-StrictMode -Version Latest
 try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$script:criptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+		$global:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
 	} else {
-		$script:criptRoot = Convert-Path .
+		$global:scriptRoot = Convert-Path .
 	}
-	Set-Location $script:criptRoot
-	$script:onfDir = $(Join-Path $$script:riptRoot '..\conf')
-	$script:ysFile = $(Join-Path $$script:nfDir 'system_setting.conf')
-	$script:onfFile = $(Join-Path $$script:nfDir 'user_setting.conf')
-	$script:evDir = $(Join-Path $$script:riptRoot '..\dev')
-	$script:evConfFile = $(Join-Path $$script:vDir 'dev_setting.conf')
-	$script:evFunctionFile = $(Join-Path $$script:vDir 'dev_funcitons.ps1')
+	Set-Location $global:scriptRoot
+	$global:confDir = $(Join-Path $global:scriptRoot '..\conf')
+	$global:sysFile = $(Join-Path $global:confDir 'system_setting.conf')
+	$global:confFile = $(Join-Path $global:confDir 'user_setting.conf')
+	$global:devDir = $(Join-Path $global:scriptRoot '..\dev')
+	$global:devConfFile = $(Join-Path $global:devDir 'dev_setting.conf')
+	$global:devFunctionFile = $(Join-Path $global:devDir 'dev_funcitons.ps1')
 
 	#----------------------------------------------------------------------
 	#外部設定ファイル読み込み
-	Get-Content $script:ysFile -Encoding UTF8 `
+	Get-Content $global:sysFile -Encoding UTF8 `
 	| Where-Object { $_ -notmatch '^\s*$' } `
 	| Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } `
 	| Invoke-Expression
-	Get-Content $script:onfFile -Encoding UTF8 `
+	Get-Content $global:confFile -Encoding UTF8 `
 	| Where-Object { $_ -notmatch '^\s*$' } `
 	| Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } `
 	| Invoke-Expression
 
 	#----------------------------------------------------------------------
 	#開発環境用に設定上書き
-	if (Test-Path $script:evConfFile) {
-		Get-Content $script:evConfFile -Encoding UTF8 `
+	if (Test-Path $global:devConfFile) {
+		Get-Content $global:devConfFile -Encoding UTF8 `
 		| Where-Object { $_ -notmatch '^\s*$' } `
 		| Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } `
 		| Invoke-Expression
@@ -60,24 +60,24 @@ try {
 	#----------------------------------------------------------------------
 	#外部関数ファイルの読み込み
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		. $(Convert-Path (Join-Path $script:criptRoot '.\common_functions_5.ps1'))
-		. $(Convert-Path (Join-Path $script:criptRoot '.\tver_functions_5.ps1'))
-		if (Test-Path $script:evFunctionFile) {
+		. $(Convert-Path (Join-Path $global:scriptRoot '.\common_functions_5.ps1'))
+		. $(Convert-Path (Join-Path $global:scriptRoot '.\tver_functions_5.ps1'))
+		if (Test-Path $global:devFunctionFile) {
 			Write-ColorOutput '========================================================' Green
 			Write-ColorOutput '  PowerShell Coreではありません                         ' Green
 			Write-ColorOutput '========================================================' Green
 		}
 	} else {
-		. $(Convert-Path (Join-Path $script:criptRoot '.\common_functions.ps1'))
-		. $(Convert-Path (Join-Path $script:criptRoot '.\tver_functions.ps1'))
-		if (Test-Path $script:evFunctionFile) {
-			. $script:evFunctionFile
+		. $(Convert-Path (Join-Path $global:scriptRoot '.\common_functions.ps1'))
+		. $(Convert-Path (Join-Path $global:scriptRoot '.\tver_functions.ps1'))
+		if (Test-Path $global:devFunctionFile) {
+			. $global:devFunctionFile
 			Write-ColorOutput '========================================================' Green
 			Write-ColorOutput '  開発ファイルを読み込みました                          ' Green
 			Write-ColorOutput '========================================================' Green
 		}
 	}
-} catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
+} catch { Write-ColorOutput '設定ファイルの読み込みに失敗しました' Green ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -103,17 +103,17 @@ Write-ColorOutput '録画リストからチェックが終わっていないビ�
 Write-ColorOutput '==========================================================================='
 try {
 	#ロックファイルをロック
-	while ($(fileLock ($script:ockFilePath)).fileLocked -ne $true) {
+	while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) {
 		Write-ColorOutput 'ファイルのロック解除待ち中です'
 		Start-Sleep -Seconds 1
 	}
 	#ファイル操作
-	$local:videoLists = Import-Csv $script:istFilePath -Encoding UTF8 `
+	$local:videoLists = Import-Csv $global:listFilePath -Encoding UTF8 `
 	| Where-Object { $_.videoValidated -eq '0' } `
 	| Where-Object { $_.videoPath -ne '-- IGNORED --' } `
 	| Select-Object 'videoPath'
 } catch { Write-ColorOutput 'リストの読み込みに失敗しました' Green
-} finally { $null = fileUnlock ($script:ockFilePath) }
+} finally { $null = fileUnlock ($global:lockFilePath) }
 
 
 if ($null -eq $local:videoLists) {
@@ -135,19 +135,19 @@ if ($null -eq $local:videoLists) {
 	#----------------------------------------------------------------------
 
 	#ffmpegのデコードオプションの設定
-	if ($script:orceSoftwareDecodeFlag -eq $true ) {
+	if ($global:forceSoftwareDecodeFlag -eq $true ) {
 		#ソフトウェアデコードを強制する場合
 		$local:decodeOption = ''
 	} else {
-		if ($script:fmpegDecodeOption -ne '') {
+		if ($global:ffmpegDecodeOption -ne '') {
 			Write-ColorOutput '----------------------------------------------------------------------'
 			Write-ColorOutput 'ffmpegのデコードオプションが設定されてます'
 			Write-ColorOutput 'もし動画検証がうまく進まない場合は、以下のどちらかをお試しください'
 			Write-ColorOutput '  ・ user_setting.conf でデコードオプションを変更する'
-			Write-ColorOutput '  ・ user_setting.conf で $script:orceSoftwareDecodeFlag = $true と設定する'
+			Write-ColorOutput '  ・ user_setting.conf で $global:forceSoftwareDecodeFlag = $true と設定する'
 			Write-ColorOutput '----------------------------------------------------------------------'
 		}
-		$local:decodeOption = $script:fmpegDecodeOption
+		$local:decodeOption = $global:ffmpegDecodeOption
 	}
 
 	$local:totalStartTime = Get-Date
@@ -173,8 +173,8 @@ if ($null -eq $local:videoLists) {
 		$local:j = $local:j + 1
 
 		#保存先ディレクトリの存在確認
-		if (Test-Path $script:ownloadBaseDir -PathType Container) {}
-		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' ; exit 1 }
+		if (Test-Path $global:downloadBaseDir -PathType Container) {}
+		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' Green ; exit 1 }
 
 		Write-Progress `
 			-Id 1 `
@@ -197,16 +197,16 @@ Write-ColorOutput '録画リストからチェックが終わっていないビ�
 Write-ColorOutput '==========================================================================='
 try {
 	#ロックファイルをロック
-	while ($(fileLock ($script:ockFilePath)).fileLocked -ne $true) {
+	while ($(fileLock ($global:lockFilePath)).fileLocked -ne $true) {
 		Write-ColorOutput 'ファイルのロック解除待ち中です'
 		Start-Sleep -Seconds 1
 	}
 	#ファイル操作
-	$local:videoLists = Import-Csv $script:istFilePath -Encoding UTF8
+	$local:videoLists = Import-Csv $global:listFilePath -Encoding UTF8
 	foreach ($local:uncheckedVido in $(($local:videoLists).Where({ $_.videoValidated -eq 2 }))) {
 		$local:uncheckedVido.videoValidated = '0'
 	}
 	$local:videoLists `
-	| Export-Csv $script:istFilePath -NoTypeInformation -Encoding UTF8
+	| Export-Csv $global:listFilePath -NoTypeInformation -Encoding UTF8
 } catch { Write-ColorOutput 'リストの更新に失敗しました' Green
-} finally { $null = fileUnlock ($script:ockFilePath) }
+} finally { $null = fileUnlock ($global:lockFilePath) }

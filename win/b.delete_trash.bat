@@ -36,4 +36,5 @@ if exist "C:\Program Files\PowerShell\7\pwsh.exe" (
 
 )
 
-echo 処理が完了しました ...
+pause
+

@@ -21,20 +21,20 @@
 
 try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$script:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+		$global:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
 	} else {
-		$script:scriptRoot = Convert-Path .
+		$global:scriptRoot = Convert-Path .
 	}
-	Set-Location $local:scriptRoot
+	Set-Location $global:scriptRoot
 
 	#----------------------------------------------------------------------
 	#外部関数ファイルの読み込み
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		. $(Convert-Path (Join-Path $script:scriptRoot '.\common_functions_5.ps1'))
+		. $(Convert-Path (Join-Path $global:scriptRoot '.\common_functions_5.ps1'))
 	} else {
-		. $(Convert-Path (Join-Path $script:scriptRoot '.\common_functions.ps1'))
+		. $(Convert-Path (Join-Path $global:scriptRoot '.\common_functions.ps1'))
 	}
-} catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
+} catch { Write-ColorOutput '設定ファイルの読み込みに失敗しました' Green ; exit 1 }
 
 #Windowsの判定
 Set-StrictMode -Off

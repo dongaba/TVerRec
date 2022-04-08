@@ -25,4 +25,5 @@ echo -en "\033];TVerRec Video File Mover\007"
 
 pwsh -NoProfile -ExecutionPolicy Unrestricted ../src/move_video.ps1
 
-echo "Finished ..."
+read -p 'Press enter key ...'
+

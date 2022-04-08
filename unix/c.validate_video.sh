@@ -25,4 +25,5 @@ echo -en "\033];TVerRec Video File Checker\007"
 
 pwsh -NoProfile -ExecutionPolicy Unrestricted ../src/validate_video.ps1
 
-echo "Finished ..."
+read -p 'Press enter key ...'
+
