@@ -236,7 +236,7 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 				-LiteralPath $script:ffpmegErrorLogPath `
 				-Force -ErrorAction SilentlyContinue
 		}
-	} catch {}
+	} catch { Write-ColorOutput 'ffmpegエラーファイルを削除できませんでした' Green }
 
 	if ($local:proc.ExitCode -ne 0 -or $local:errorCount -gt 30) {
 		#終了コードが"0"以外 または エラーが30行以上 は録画リストとファイルを削除
@@ -671,7 +671,6 @@ function Write-ColorOutput {
 	# Set colors if available
 	if ($BackgroundColor -ne $null) { $host.UI.RawUI.BackgroundColor = $backgroundColor }
 	if ($ForegroundColor -ne $null) { $host.UI.RawUI.ForegroundColor = $foregroundColor }
-
 	# Always write (if we want just a NewLine)
 	if ($null -eq $Object) { $Object = '' }
 

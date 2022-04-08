@@ -23,14 +23,14 @@
 
 echo -en "\033];TVerRec\007"
 
-export HostName=`hostname`
+export HostName=$(hostname)
 export PIDFile="pid-$HostName.txt"
 
 if [ -e $PIDFile ]; then
-	export targetPID=`cat $PIDFile`
+	export targetPID=$(cat $PIDFile)
 fi
 
-if [ `ps $targetPID | grep -c bash` -gt 0 ]; then
+if [ $(ps $targetPID | grep -c bash) -gt 0 ]; then
 	pkill -TERM -P $targetPID
 	rm -f $PIDFile
 else
