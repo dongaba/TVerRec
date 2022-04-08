@@ -661,25 +661,21 @@ function Write-ColorOutput {
 	Param(
 		[Parameter(Mandatory = $False, Position = 1, ValueFromPipeline = $True, ValueFromPipelinebyPropertyName = $True)][Object] $Object,
 		[Parameter(Mandatory = $False, Position = 2, ValueFromPipeline = $True, ValueFromPipelinebyPropertyName = $True)][ConsoleColor] $foregroundColor,
-		[Parameter(Mandatory = $False, Position = 3, ValueFromPipeline = $True, ValueFromPipelinebyPropertyName = $True)][ConsoleColor] $backgroundColor,
-		[Switch]$NoNewline
+		[Parameter(Mandatory = $False, Position = 3, ValueFromPipeline = $True, ValueFromPipelinebyPropertyName = $True)][ConsoleColor] $backgroundColor
 	)
 
 	# Save previous colors
 	$prevForegroundColor = $host.UI.RawUI.ForegroundColor
 	$prevBackgroundColor = $host.UI.RawUI.BackgroundColor
 
-	# Set BackgroundColor if available
+	# Set colors if available
 	if ($BackgroundColor -ne $null) { $host.UI.RawUI.BackgroundColor = $backgroundColor }
-
-	# Set $ForegroundColor if available
 	if ($ForegroundColor -ne $null) { $host.UI.RawUI.ForegroundColor = $foregroundColor }
 
 	# Always write (if we want just a NewLine)
 	if ($null -eq $Object) { $Object = '' }
 
-	if ($NoNewline) { [Console]::Write($Object) } 
-	else { Write-Output $Object }
+	Write-Output $Object
 
 	# Restore previous colors
 	$host.UI.RawUI.ForegroundColor = $prevForegroundColor
