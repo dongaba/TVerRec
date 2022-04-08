@@ -39,21 +39,15 @@ try {
 
 	#----------------------------------------------------------------------
 	#外部設定ファイル読み込み
-	Get-Content $script:sysFile -Encoding UTF8 `
-	| Where-Object { $_ -notmatch '^\s*$' } `
-	| Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } `
+	Get-Content $script:sysFile -Encoding UTF8 -Raw `
 	| Invoke-Expression
-	Get-Content $script:confFile -Encoding UTF8 `
-	| Where-Object { $_ -notmatch '^\s*$' } `
-	| Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } `
+	Get-Content $script:confFile -Encoding UTF8 -Raw `
 	| Invoke-Expression
 
 	#----------------------------------------------------------------------
 	#開発環境用に設定上書き
 	if (Test-Path $script:devConfFile) {
-		Get-Content $script:devConfFile -Encoding UTF8 `
-		| Where-Object { $_ -notmatch '^\s*$' } `
-		| Where-Object { !($_.TrimStart().StartsWith('^\s*;#')) } `
+		Get-Content $script:devConfFile -Encoding UTF8 -Raw `
 		| Invoke-Expression
 	}
 
