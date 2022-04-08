@@ -28,7 +28,7 @@ export PIDFile="pid-$HostName.txt"
 export retryTime=60
 export sleepTime=3600
 
-echo $PPID > $PIDFile
+echo $PPID > "$PIDFile"
 
 while [ true ]
 do
