@@ -21,18 +21,18 @@
 
 try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$global:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+		$script:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
 	} else {
-		$global:scriptRoot = Convert-Path .
+		$script:scriptRoot = Convert-Path .
 	}
-	Set-Location $global:scriptRoot
+	Set-Location $script:scriptRoot
 
 	#----------------------------------------------------------------------
 	#外部関数ファイルの読み込み
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		. $(Convert-Path (Join-Path $global:scriptRoot '.\common_functions_5.ps1'))
+		. $(Convert-Path (Join-Path $script:scriptRoot '.\common_functions_5.ps1'))
 	} else {
-		. $(Convert-Path (Join-Path $global:scriptRoot '.\common_functions.ps1'))
+		. $(Convert-Path (Join-Path $script:scriptRoot '.\common_functions.ps1'))
 	}
 } catch { Write-ColorOutput '設定ファイルの読み込みに失敗しました' Green ; exit 1 }
 
