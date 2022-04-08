@@ -1,5 +1,6 @@
 # :tv:**TVerRec**:tv: - TVer 一括ダウンロード・保存・録画 -
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/7acc6203bfb145b1a764d3394e1961f9)](https://app.codacy.com/gh/dongaba/TVerRec?utm_source=github.com&utm_medium=referral&utm_content=dongaba/TVerRec&utm_campaign=Badge_Grade_Settings)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![CodeFactor](https://www.codefactor.io/repository/github/dongaba/tverrec/badge)](https://www.codefactor.io/repository/github/dongaba/tverrec)
 ![GitHub repo size](https://img.shields.io/github/repo-size/dongaba/TVerRec)
