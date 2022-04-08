@@ -25,5 +25,5 @@ echo -en "\033];TVerRec Video File Deleter\007"
 
 pwsh -NoProfile -ExecutionPolicy Unrestricted ../src/delete_trash.ps1
 
-read -p 'Press enter key ...'
-
+echo "Finished ..."
+read -r

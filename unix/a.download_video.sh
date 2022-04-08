@@ -25,5 +25,5 @@ echo -en "\033];TVerRec Video File Bulk Downloader\007"
 
 pwsh -NoProfile -ExecutionPolicy Unrestricted ../src/tverrec_bulk.ps1
 
-read -p 'Press enter key ...'
-
+echo "Finished ..."
+read -r
