@@ -32,22 +32,20 @@ try {
 	}
 	Set-Location $script:scriptRoot
 	$script:confDir = $(Join-Path $script:scriptRoot '..\conf')
-	$script:sysFile = $(Join-Path $script:confDir 'system_setting.conf')
-	$script:confFile = $(Join-Path $script:confDir 'user_setting.conf')
+	$script:sysFile = $(Join-Path $script:confDir 'system_setting.ps1')
+	$script:confFile = $(Join-Path $script:confDir 'user_setting.ps1')
 	$script:devDir = $(Join-Path $script:scriptRoot '..\dev')
-	$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.conf')
+	$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.ps1')
 	$script:devFunctionFile = $(Join-Path $script:devDir 'dev_funcitons.ps1')
 
 	#----------------------------------------------------------------------
 	#外部設定ファイル読み込み
-	Get-Content $script:sysFile -Encoding UTF8 -Raw | Invoke-Expression
-	Get-Content $script:confFile -Encoding UTF8 -Raw | Invoke-Expression
+	. $script:sysFile
+	. $script:confFile
 
 	#----------------------------------------------------------------------
 	#開発環境用に設定上書き
-	if (Test-Path $script:devConfFile) {
-		Get-Content $script:devConfFile -Encoding UTF8 -Raw | Invoke-Expression
-	}
+	if (Test-Path $script:devConfFile) { . $script:devConfFile }
 
 	#----------------------------------------------------------------------
 	#外部関数ファイルの読み込み
