@@ -1,6 +1,21 @@
 ﻿# CHANGELOG
 
-## [2.3.8](https://github.com/dongaba/TVerRec/releases/tag/v2.3.8) - 2022-04-07
+## [2.3.9](https://github.com/dongaba/TVerRec/releases/tag/v2.3.9)
+
+### Fixes
+
+- Invoke-Expressionの使用を中止
+
+### New Features
+
+- TVerRec自身のバージョンチェック機能を追加
+
+### New Changes
+
+- `src`フォルダ内の構成を変更
+- 設定ファイルの拡張子を変更
+
+## [2.3.8](https://github.com/dongaba/TVerRec/releases/tag/v2.3.8)
 
 ### Fixes
 
