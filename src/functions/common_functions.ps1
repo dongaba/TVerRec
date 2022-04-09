@@ -20,6 +20,25 @@
 ###################################################################################
 
 #----------------------------------------------------------------------
+#TVerRec最新化確認
+#----------------------------------------------------------------------
+function checkLatestTVerRec {
+	#githubの設定
+	$local:repo = 'dongaba/TVerRec'
+	$local:releases = "https://api.github.com/repos/$local:repo/releases"
+
+	#ytdl-patchedの最新バージョン取得
+	try { $local:latestVersion = $((Invoke-WebRequest -Uri $local:releases | ConvertFrom-Json) | Where-Object { $_.prerelease -eq $false } )[0].name }
+	catch { return }
+	$local:latestVersion = $local:latestVersion.Substring(1, $local:latestVersion.Length - 1)
+
+	if ($local:latestVersion -gt $script:appVersion ) {
+		Write-ColorOutput "TVerRecの更新版があるようです。 Version $local:latestVersion" Green
+	}
+
+}
+
+#----------------------------------------------------------------------
 #ytdlの最新化確認
 #----------------------------------------------------------------------
 function checkLatestYtdl {

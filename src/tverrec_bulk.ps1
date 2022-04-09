@@ -84,6 +84,7 @@ Write-ColorOutput ''
 
 #----------------------------------------------------------------------
 #動作環境チェック
+checkLatestTVerRec			#TVerRecの最新化チェック
 checkLatestYtdl				#youtube-dlの最新化チェック
 checkLatestFfmpeg			#ffmpegの最新化チェック
 checkRequiredFile			#設定で指定したファイル・フォルダの存在チェック
