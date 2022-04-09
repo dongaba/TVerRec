@@ -1,11 +1,11 @@
 # :tv:**TVerRec**:tv: - TVer 一括ダウンロード・保存・録画 -
 
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/dongaba/TVerRec)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![CodeFactor](https://www.codefactor.io/repository/github/dongaba/tverrec/badge)](https://www.codefactor.io/repository/github/dongaba/tverrec)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/1b42499be57b48818db8c3c90d73adb3)](https://www.codacy.com/gh/dongaba/TVerRec/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=dongaba/TVerRec&amp;utm_campaign=Badge_Grade)
-![GitHub top language](https://img.shields.io/github/languages/top/dongaba/TVerRec)
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/dongaba/TVerRec)
-![GitHub repo size](https://img.shields.io/github/repo-size/dongaba/TVerRec)
+[![DevSkim](https://github.com/dongaba/TVerRec/actions/workflows/devskim.yml/badge.svg)](https://github.com/dongaba/TVerRec/actions/workflows/devskim.yml)
+[![PSScriptAnalyzer](https://github.com/dongaba/TVerRec/actions/workflows/powershell.yml/badge.svg)](https://github.com/dongaba/TVerRec/actions/workflows/powershell.yml)
 
 TVerRecは、動画配信サイトTVer ( ティーバー <https://tver.jp/> ) の動画を録画保存するためのダウンローダー、ダウンロード支援ツールです。
 
