@@ -19,29 +19,6 @@
 #
 ###################################################################################
 
-try {
-	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$script:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
-	} else {
-		$script:scriptRoot = Convert-Path .
-	}
-	Set-Location $script:scriptRoot
-
-	#----------------------------------------------------------------------
-	#外部関数ファイルの読み込み
-	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		. $(Convert-Path (Join-Path $script:scriptRoot '.\common_functions_5.ps1'))
-	} else {
-		. $(Convert-Path (Join-Path $script:scriptRoot '.\common_functions.ps1'))
-	}
-} catch { Write-ColorOutput '設定ファイルの読み込みに失敗しました' Green ; exit 1 }
-
-#Windowsの判定
-Set-StrictMode -Off
-$local:isWin = $PSVersionTable.Platform -match '^($|(Microsoft)?Win)'
-Set-StrictMode -Version Latest
-
-
 #githubの設定
 $local:repo = 'ytdl-patched/ytdl-patched'
 $local:releases = "https://api.github.com/repos/$local:repo/releases"
@@ -49,7 +26,7 @@ $local:releases = "https://api.github.com/repos/$local:repo/releases"
 #ytdl-patched保存先相対Path
 $local:ytdlRelativeDir = '..\bin'
 $local:ytdlDir = $(Join-Path $script:scriptRoot $local:ytdlRelativeDir)
-if ($local:isWin) { $local:ytdlPath = $(Join-Path $local:ytdlDir 'youtube-dl.exe') }
+if ($script:isWin) { $local:ytdlPath = $(Join-Path $local:ytdlDir 'youtube-dl.exe') }
 else { $local:ytdlPath = $(Join-Path $local:ytdlDir 'youtube-dl') }
 
 #ytdl-patchedのディレクトリがなければ作成
@@ -78,7 +55,7 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 	Write-ColorOutput 'youtube-dlは最新です。 '
 	Write-ColorOutput ''
 } else {
-	if ($local:isWin -eq $false) {
+	if ($script:isWin -eq $false) {
 		try {
 			#githubの設定
 			$local:file = 'youtube-dl'
