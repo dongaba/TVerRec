@@ -31,8 +31,10 @@ title TVerRec Video File Checker
 if exist "C:\Program Files\PowerShell\7\pwsh.exe" (
 	pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\validate_video.ps1
 ) else (
-	powershell -Command "get-content -encoding:utf8 ..\src\common_functions.ps1 | out-file -encoding:utf8 ..\src\common_functions_5.ps1"
-	powershell -Command "get-content -encoding:utf8 ..\src\validate_video.ps1 | out-file -encoding:utf8 ..\src\validate_video_5.ps1"
+	powershell -Command "Get-Content -Encoding:utf8 ..\conf\user_setting.ps1 | Out-File -Encoding:utf8 ..\conf\user_setting_5.ps1 -Force"
+	powershell -Command "Get-Content -Encoding:utf8 ..\conf\system_setting.ps1 | Out-File -Encoding:utf8 ..\conf\system_setting_5.ps1 -Force"
+	powershell -Command "Get-Content -Encoding:utf8 ..\src\common_functions.ps1 | Out-File -Encoding:utf8 ..\src\common_functions_5.ps1 -Force"
+	powershell -Command "Get-Content -Encoding:utf8 ..\src\validate_video.ps1 | Out-File -Encoding:utf8 ..\src\validate_video_5.ps1 -Force"
 	powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\validate_video_5.ps1
 
 )

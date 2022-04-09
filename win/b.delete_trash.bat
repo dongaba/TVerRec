@@ -31,7 +31,9 @@ title TVerRec Video File Deleter
 if exist "C:\Program Files\PowerShell\7\pwsh.exe" (
 	pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\delete_trash.ps1
 ) else (
-	powershell -Command "get-content -encoding:utf8 ..\src\delete_trash.ps1 | out-file -encoding:utf8 ..\src\delete_trash_5.ps1"
+	powershell -Command "Get-Content -Encoding:utf8 ..\conf\user_setting.ps1 | Out-File -Encoding:utf8 ..\conf\user_setting_5.ps1 -Force"
+	powershell -Command "Get-Content -Encoding:utf8 ..\conf\system_setting.ps1 | Out-File -Encoding:utf8 ..\conf\system_setting_5.ps1 -Force"
+	powershell -Command "Get-Content -Encoding:utf8 ..\src\delete_trash.ps1 | Out-File -Encoding:utf8 ..\src\delete_trash_5.ps1 -Force"
 	powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\delete_trash_5.ps1
 
 )
