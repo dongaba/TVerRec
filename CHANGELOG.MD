@@ -1,30 +1,28 @@
-﻿# CHANGELOG
+﻿# Change Log
 
-## [2.3.9](https://github.com/dongaba/TVerRec/releases/tag/v2.3.9)
+## [Unreleased](https://github.com/dongaba/TVerRec)
 
-### Fixes
-
-- Invoke-Expressionの使用を中止
-
-### New Features
+### Added
 
 - TVerRec自身のバージョンチェック機能を追加
 
-### New Changes
+### Changed
 
 - `src`フォルダ内の構成を変更
 - 設定ファイルの拡張子を変更
 
+### Fixed
+
+- Invoke-Expressionの使用を中止
+
 ## [2.3.8](https://github.com/dongaba/TVerRec/releases/tag/v2.3.8)
 
-### Fixes
-
-### New Features
+### Added
 
 - TVerのリニューアルによりフリーワード検索の精度が大幅に下がっていますので、できればタレントID指定、番組ID指定で録画したほうが確実です。
 - 同様にジャンル指定の精度も大幅に下がっているようですのでご注意ください。
 
-### New Changes
+### Changed
 
 - `conf/keyword.conf`をテキストエディターで開いてダウンロード対象のタレントの名前や番組名、ジャンル、TV局などを設定します
   - 不要なキーワードは `#` でコメントアウトするか削除してください。
@@ -35,3 +33,5 @@
     3. **ジャンル指定**(事前に用意されているもののみ)
     4. **番組タイトル**のみを対象としたフリーワード検索
     5. **フリーワード指定**
+
+### Fixed
