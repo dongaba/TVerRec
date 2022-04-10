@@ -15,6 +15,7 @@
 
 - Invoke-Expressionの使用を中止
 - ffmpegErrorLogのゴミが削除されなかった不具合を修正
+- ffmpegのMac/Linux向けダウンロード機能が失敗する不具合を修正
 
 ## [2.3.8](https://github.com/dongaba/TVerRec/releases/tag/v2.3.8)
 
