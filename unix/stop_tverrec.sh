@@ -30,7 +30,7 @@ if [ -e "$PIDFile" ]; then
 	export targetPID=$(cat "$PIDFile")
 fi
 
-if [ "$(pgrep -F "$PIDFile" | grep -c)" -gt 0 ]; then
+if [ "$(pgrep -F "$PIDFile" | wc -l)" -gt 0 ]; then
 	pkill -TERM -P "$targetPID"
 	rm -f "$PIDFile"
 else
