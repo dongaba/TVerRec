@@ -61,7 +61,7 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 			$local:file = 'youtube-dl'
 			#ダウンロード
 			$local:tag = (Invoke-WebRequest $local:releases | ConvertFrom-Json)[0].Tag_name
-			$local:download = "https://github.com/$local:repo/releases/download/$local:tag/$local:file"
+			$local:download = "https://github.com/$local:repo/releases/latest/download/$local:file"
 			$local:ytdlFileLocation = $(Join-Path $local:ytdlDir $local:file)
 			Write-ColorOutput "youtube-dlをダウンロードします。 $local:download"
 			Invoke-WebRequest $local:download -Out $local:ytdlFileLocation
