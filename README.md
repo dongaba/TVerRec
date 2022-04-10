@@ -164,15 +164,15 @@ TVerRec/
 │  └─ ffmpeg_error.log...................... ffmpegのエラーログ(処理中に作成され、自動的に削除されます)
 │
 ├─ src/ .................................. 各種ソース
-│  ├─ common_functions.ps1 ................. 共通関数定義
+│  ├─ functions/ ........................... 各種共通関数
+│  │  ├─ common_functions.ps1 ............. 共通関数定義
+│  │  ├─ tver_functions.ps1 ............... TVer用共通関数定義
+│  │  ├─ update_ffmpeg.ps1 ................ ffmpeg自動更新ツール
+│  │  └─ update_ytdl-patched.ps1 .......... ytdl-patched自動更新ツール
 │  ├─ delete_trash.ps1 ..................... ダウンロード対象外ビデオ削除ツール
 │  ├─ move_vide.ps1 ........................ ビデオを保存先に移動するツール
-│  ├─ tver_functions.ps1 ................... TVer用共通関数定義
 │  ├─ tverrec_bulk.ps1 ..................... 一括ダウンロードツール本体
 │  ├─ tverrec_single.ps1 ................... 単体ダウンロードツール
-│  ├─ update_ffmpeg.ps1 .................... ffmpeg自動更新ツール
-│  ├─ update_youtube-dl.ps1 ................ youtube-dl自動更新ツール
-│  ├─ update_ytdl-patched.ps1 .............. ytdl-patched自動更新ツール
 │  └─ validate_video.ps1 ................... ダウンロード済みビデオの整合性チェックツール
 │
 ├─ unix/ ................................. Linux/Mac用シェルスクリプト
