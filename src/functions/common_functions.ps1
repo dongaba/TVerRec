@@ -309,10 +309,10 @@ function waitTillYtdlProcessGetFewer ($local:parallelDownloadFileNum) {
 		if ($script:isWin) {
 			$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2
 		} elseif ($IsLinux) {
-			$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
+			$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count
 		} elseif ($IsMacOS) {
 			$local:psCmd = 'ps'
-			$local:ytdlCount = (& $local:psCmd | & grep yt-dlp | grep -v grep | wc -l).Trim()
+			$local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | wc -l).Trim()
 		} else {
 			$local:ytdlCount = 0
 		}
@@ -329,9 +329,9 @@ function waitTillYtdlProcessGetFewer ($local:parallelDownloadFileNum) {
 			if ($script:isWin) {
 				$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2
 			} elseif ($IsLinux) {
-				$local:ytdlCount = (& Get-Process -ErrorAction Ignore -Name yt-dlp).Count
+				$local:ytdlCount = (& Get-Process -ErrorAction Ignore -Name youtube-dl).Count
 			} elseif ($IsMacOS) {
-				$local:ytdlCount = (& $local:psCmd | & grep yt-dlp | grep -v grep | wc -l).Trim()
+				$local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | wc -l).Trim()
 			} else {
 				$local:ytdlCount = 0
 			}
@@ -349,10 +349,10 @@ function waitTillYtdlProcessIsZero () {
 		if ($script:isWin) {
 			$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2
   } elseif ($IsLinux) {
-			$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
+			$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count
 		} elseif ($IsMacOS) {
 			$local:psCmd = 'ps'
-			$local:ytdlCount = (& $local:psCmd | & grep yt-dlp | grep -v grep | wc -l).Trim()
+			$local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | wc -l).Trim()
 		} else {
 			$local:ytdlCount = 0
 		}
@@ -367,9 +367,9 @@ function waitTillYtdlProcessIsZero () {
 			if ($script:isWin) {
 				$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2
 			} elseif ($IsLinux) {
-				$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name yt-dlp).Count
+				$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count
 			} elseif ($IsMacOS) {
-				$local:ytdlCount = (& $local:psCmd | & grep yt-dlp | grep -v grep | wc -l).Trim()
+				$local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | wc -l).Trim()
 			} else {
 				$local:ytdlCount = 0
 			}

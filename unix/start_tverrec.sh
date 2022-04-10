@@ -35,10 +35,10 @@ do
 	pwsh -NoProfile -ExecutionPolicy Unrestricted ../src/tverrec_bulk.ps1
 
 	#youtube-dlプロセスチェック
-	while [ "$(ps | grep -E "ffmpeg|yt-dlp" | grep -v grep | grep -c)" -gt 0 ]
+	while [ "$(ps | grep -E "ffmpeg|youtube-dl" | grep -v grep | grep -c)" -gt 0 ]
 	do
 		echo "ダウンロードが進行中です..."
-		ps | grep -E "ffmpeg|yt-dlp" | grep -v grep
+		ps | grep -E "ffmpeg|youtube-dl" | grep -v grep
 		echo $retryTime "秒待機します..."
 		sleep $retryTime
 	done
