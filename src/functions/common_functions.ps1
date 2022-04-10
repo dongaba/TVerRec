@@ -312,7 +312,7 @@ function waitTillYtdlProcessGetFewer ($local:parallelDownloadFileNum) {
 			$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count
 		} elseif ($IsMacOS) {
 			$local:psCmd = 'ps'
-			$local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | wc -l).Trim()
+			$local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim()
 		} else {
 			$local:ytdlCount = 0
 		}
@@ -331,7 +331,7 @@ function waitTillYtdlProcessGetFewer ($local:parallelDownloadFileNum) {
 			} elseif ($IsLinux) {
 				$local:ytdlCount = (& Get-Process -ErrorAction Ignore -Name youtube-dl).Count
 			} elseif ($IsMacOS) {
-				$local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | wc -l).Trim()
+				$local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim()
 			} else {
 				$local:ytdlCount = 0
 			}
@@ -352,7 +352,7 @@ function waitTillYtdlProcessIsZero () {
 			$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count
 		} elseif ($IsMacOS) {
 			$local:psCmd = 'ps'
-			$local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | wc -l).Trim()
+			$local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim()
 		} else {
 			$local:ytdlCount = 0
 		}
@@ -369,7 +369,7 @@ function waitTillYtdlProcessIsZero () {
 			} elseif ($IsLinux) {
 				$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count
 			} elseif ($IsMacOS) {
-				$local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | wc -l).Trim()
+				$local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim()
 			} else {
 				$local:ytdlCount = 0
 			}
