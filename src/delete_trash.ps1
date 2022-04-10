@@ -77,7 +77,8 @@ Write-ColorOutput '-------------------------------------------------------------
 Write-ColorOutput 'ダウンロードが中断した際にできたゴミファイルを削除します'
 Write-ColorOutput '----------------------------------------------------------------------'
 try {
-	Get-ChildItem -Path $script:downloadWorkDir -Recurse -Filter 'ffmpeg_error_*.log' `
+	$script:ffmpegErrorLogDir = Split-Path $script:ffpmegErrorLogPath
+	Get-ChildItem -Path $script:ffmpegErrorLogDir -Recurse -Filter 'ffmpeg_error_*.log' `
 	| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-0.5) } `
 	| Remove-Item -Force -ErrorAction SilentlyContinue
 } catch { Write-ColorOutput 'ffmpegエラーファイルを削除できませんでした' Green }
