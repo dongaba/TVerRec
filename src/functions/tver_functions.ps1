@@ -241,7 +241,8 @@ function getVideoInfo ($local:videoLink) {
 		-Uri $local:tverVideoInfoURL `
 		-Method 'GET' `
 		-Headers $local:requestHeader
-
+	#$response.result.series.content.id + "`t" + $response.result.series.content.title `
+	#	| Out-File $(Join-Path $script:dbDir 'series.txt') -Append -Encoding utf8
 
 	#----------------------------------------------------------------------
 	#シリーズ
