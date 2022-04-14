@@ -35,7 +35,6 @@ function checkLatestTVerRec {
 	if ($local:latestVersion -gt $script:appVersion ) {
 		Write-ColorOutput "TVerRecの更新版があるようです。 Version $local:latestVersion" Green
 	}
-
 }
 
 #----------------------------------------------------------------------
