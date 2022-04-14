@@ -30,43 +30,59 @@ try {
 		$script:scriptRoot = Convert-Path .
 	}
 	Set-Location $script:scriptRoot
-	$script:confDir = $(Join-Path $script:scriptRoot '..\conf')
-	$script:sysFile = $(Join-Path $script:confDir 'system_setting.ps1')
-	$script:confFile = $(Join-Path $script:confDir 'user_setting.ps1')
-	$script:devDir = $(Join-Path $script:scriptRoot '..\dev')
-	$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.ps1')
-	$script:devFunctionFile = $(Join-Path $script:devDir 'dev_funcitons.ps1')
+	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '..\conf'))
+	$script:devDir = $(Convert-Path $(Join-Path $script:scriptRoot '..\dev'))
 
 	#----------------------------------------------------------------------
 	#外部設定ファイル読み込み
-	. $script:sysFile
-	. $script:confFile
-
-	#----------------------------------------------------------------------
-	#開発環境用に設定上書き
-	if (Test-Path $script:devConfFile) { . $script:devConfFile }
+	if ($PSVersionTable.PSEdition -eq 'Desktop') {
+		$script:sysFile = $(Convert-Path $(Join-Path $script:confDir 'system_setting_5.ps1'))
+		$script:confFile = $(Convert-Path $(Join-Path $script:confDir 'user_setting_5.ps1'))
+		. $script:sysFile
+		. $script:confFile
+	} else {
+		$script:sysFile = $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
+		$script:confFile = $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
+		. $script:sysFile
+		. $script:confFile
+	}
 
 	#----------------------------------------------------------------------
 	#外部関数ファイルの読み込み
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
 		. $(Convert-Path (Join-Path $script:scriptRoot '.\functions\common_functions_5.ps1'))
 		. $(Convert-Path (Join-Path $script:scriptRoot '.\functions\tver_functions_5.ps1'))
-		if (Test-Path $script:devFunctionFile) {
-			Write-ColorOutput '========================================================' white DarkGreen
-			Write-ColorOutput '  PowerShell Coreではありません                         ' white DarkGreen
-			Write-ColorOutput '========================================================' white DarkGreen
-		}
 	} else {
 		. $(Convert-Path (Join-Path $script:scriptRoot '.\functions\common_functions.ps1'))
 		. $(Convert-Path (Join-Path $script:scriptRoot '.\functions\tver_functions.ps1'))
+	}
+
+	#----------------------------------------------------------------------
+	#開発環境用に設定上書き
+	if ($PSVersionTable.PSEdition -eq 'Desktop') {
+		$script:devFunctionFile = $(Convert-Path $(Join-Path $script:devDir 'dev_funcitons_5.ps1'))
+		$script:devConfFile = $(Convert-Path $(Join-Path $script:devDir 'dev_setting_5.ps1'))
 		if (Test-Path $script:devFunctionFile) {
 			. $script:devFunctionFile
-			Write-ColorOutput '========================================================' white DarkGreen
-			Write-ColorOutput '  開発ファイルを読み込みました                          ' white DarkGreen
-			Write-ColorOutput '========================================================' white DarkGreen
+			Write-ColorOutput '  開発ファイル用共通関数ファイルを読み込みました' white DarkGreen
+		}
+		if (Test-Path $script:devConfFile) {
+			. $script:devConfFile
+			Write-ColorOutput '  開発ファイル用設定ファイルを読み込みました' white DarkGreen
+		}
+	} else {
+		$script:devFunctionFile = $(Convert-Path $(Join-Path $script:devDir 'dev_funcitons.ps1'))
+		$script:devConfFile = $(Convert-Path $(Join-Path $script:devDir 'dev_setting.ps1'))
+		if (Test-Path $script:devFunctionFile) {
+			. $script:devFunctionFile
+			Write-ColorOutput '  開発ファイル用共通関数ファイルを読み込みました' white DarkGreen
+		}
+		if (Test-Path $script:devConfFile) {
+			. $script:devConfFile
+			Write-ColorOutput '  開発ファイル用設定ファイルを読み込みました' white DarkGreen
 		}
 	}
-} catch { Write-ColorOutput '設定ファイルの読み込みに失敗しました' Green ; exit 1 }
+} catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -90,7 +106,7 @@ Write-Progress `
 	-Status 'フォルダ一覧を作成中'
 
 $local:moveToPaths = Get-ChildItem $script:saveBaseDir -Recurse `
-| Where-Object { $_.PSisContainer } `
+| Where-Object { $_.PSIsContainer } `
 | Sort-Object
 
 $local:moveToPathNum = 0						#移動先パス番号
