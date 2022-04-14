@@ -10,12 +10,14 @@
 
 - `src`フォルダ内の構成を変更
 - 設定ファイルの拡張子を変更
+- Windows PowerShell環境用のソースコードの精製方法を変更
 
 ### Fixed
 
 - Invoke-Expressionの使用を中止
 - ffmpegErrorLogのゴミが削除されなかった不具合を修正
 - ffmpegのMac/Linux向けダウンロード機能が失敗する不具合を修正
+- Windows PowerShell環境での複数のバグを修正
 
 ## [2.3.8](https://github.com/dongaba/TVerRec/releases/tag/v2.3.8)
 
