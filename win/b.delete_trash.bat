@@ -28,15 +28,18 @@ cd /d %~dp0
 
 title TVerRec Video File Deleter
 
-if exist "C:\Program Files\PowerShell\7\pwsh.exe" (
+rem 文字コードをWindows PowerShell用にUTF8-BOMなしファイルを作成する
+powershell -Command "$allPosh5Files = @(Get-ChildItem -Path '../' -Recurse -File -Filter '*_5.ps1' ).FullName ; foreach ($posh5File in $allPosh5Files) { Remove-Item $posh5File -Force }" 2> nul
+powershell -Command "$allPoshFiles = @(Get-ChildItem -Path '../' -Recurse -File -Filter '*.ps1' ).FullName ; foreach ($poshFile in $allPoshFiles) { $posh5File = $poshFile.Replace('.ps1' , '_5.ps1'); Get-Content -Encoding:utf8 $poshFile | Out-File -Encoding:utf8 $posh5File -Force }" 2>&1
+
+where /Q pwsh
+if %ERRORLEVEL% == 0 (
 	pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\delete_trash.ps1
 ) else (
-	powershell -Command "Get-Content -Encoding:utf8 ..\conf\user_setting.ps1 | Out-File -Encoding:utf8 ..\conf\user_setting_5.ps1 -Force"
-	powershell -Command "Get-Content -Encoding:utf8 ..\conf\system_setting.ps1 | Out-File -Encoding:utf8 ..\conf\system_setting_5.ps1 -Force"
-	powershell -Command "Get-Content -Encoding:utf8 ..\src\delete_trash.ps1 | Out-File -Encoding:utf8 ..\src\delete_trash_5.ps1 -Force"
 	powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\delete_trash_5.ps1
-
 )
 
-pause
+rem Windows PowerShell用に作成したUTF8-BOMなしファイルを削除する
+powershell -Command "$allPosh5Files = @(Get-ChildItem -Path '../' -Recurse -File -Filter '*_5.ps1' ).FullName ; foreach ($posh5File in $allPosh5Files) { Remove-Item $posh5File -Force }" 2> nul
 
+pause

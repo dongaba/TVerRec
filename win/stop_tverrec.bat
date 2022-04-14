@@ -31,28 +31,26 @@ set PIDFile=pid-%HostName%.txt
 
 if exist %PIDFile% (
 	set /p targetPID=<%PIDFile%
-	tasklist /fi "PID eq !targetPID!" | find "cmd.exe" > nul
+	tasklist /fi "PID eq !targetPID!" | find "cmd.exe" > nul 2> nul
 	if not ERRORLEVEL 1 (
 		goto RUNNING
 	) else (
 		del %PIDFile%
 		goto NOT_RUNNING
 	)
-
 ) else (
 	goto NOT_RUNNING
-
 )
 
 :RUNNING
 	echo kill process: !targetPID!
-	taskkill /F /T /PID !targetPID!
-	del !PIDFile!
+	taskkill /F /T /PID !targetPID! 2> nul
+	del !PIDFile! 2> nul
 	goto END
 
 :NOT_RUNNING
 	echo not running
-	del !PIDFile!
+	del !PIDFile! 2> nul
 	goto END
 
 :END
