@@ -287,14 +287,23 @@ function getVideoInfo ($local:videoLink) {
 
 	#----------------------------------------------------------------------
 	#番組説明
-	$script:descriptionText = $(getNarrowChars ($local:videoInfo.Description).Replace('&amp;', '&')).Trim()
+	if ($PSVersionTable.PSEdition -eq 'Desktop') {
+		$script:descriptionText = [System.Text.Encoding]::UTF8.GetString( [System.Text.Encoding]::GetEncoding('ISO-8859-1').GetBytes($local:videoInfo.Description) )
+	} else {
+		$script:descriptionText = $(getNarrowChars ($local:videoInfo.Description).Replace('&amp;', '&')).Trim()
+	}
 
 	#----------------------------------------------------------------------
 	#放送日
 	#BroadcastDate
 	#	$response.Result.Episode.Content.BroadcastDateLabel
 	$local:broadcastYMD = $null
-	$script:broadcastDate = $(getNarrowChars ($local:videoInfo.BroadcastDateLabel).Replace('ほか', '').Replace('放送分', '放送')).Trim()
+	if ($PSVersionTable.PSEdition -eq 'Desktop') {
+		$script:broadcastDate = $(getNarrowChars ([System.Text.Encoding]::UTF8.GetString( [System.Text.Encoding]::GetEncoding('ISO-8859-1').GetBytes($local:videoInfo.BroadcastDateLabel) )).Replace('ほか', '').Replace('放送分', '放送')).Trim()
+	} else {
+		$script:broadcastDate = $(getNarrowChars ($local:videoInfo.BroadcastDateLabel).Replace('ほか', '').Replace('放送分', '放送')).Trim()
+	}
+
 	if ($script:broadcastDate -match '([0-9]+)(月)([0-9]+)(日)(.+?)(放送)') {
 		#当年だと仮定して放送日を抽出
 		$local:broadcastYMD = [DateTime]::ParseExact(
