@@ -31,7 +31,7 @@ try {
 	}
 	Set-Location $script:scriptRoot
 	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '..\conf'))
-	$script:devDir = $(Convert-Path $(Join-Path $script:scriptRoot '..\dev'))
+	$script:devDir = $(Join-Path $script:scriptRoot '..\dev')
 
 	#----------------------------------------------------------------------
 	#外部設定ファイル読み込み
