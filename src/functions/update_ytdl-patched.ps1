@@ -72,7 +72,7 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 	} else {
 		try {
 			#githubの設定
-			$local:file = 'youtube-dl-red.exe'
+			$local:file = 'ytdl-patched-red.exe'
 			$local:fileAfterRename = 'youtube-dl.exe'
 			#ダウンロード
 			$local:tag = (Invoke-WebRequest $local:releases | ConvertFrom-Json)[0].Tag_name
