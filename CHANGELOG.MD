@@ -1,5 +1,22 @@
 ﻿# Change Log
 
+## [2.4.0](https://github.com/dongaba/TVerRec/releases/tag/v2.4.0)
+
+### Added
+
+- TVerのトップページに表示される動画をダウンロードするキーワード「toppage」を追加
+
+### Changed
+
+- Invoke-WebRequestのプログレスバーを非表示に変更
+
+
+### Fixed
+
+- youtube-dlがダウンロードされない問題を修正
+- ffmpegがダウンロードされない問題を修正
+- 一部ファイルの読み込みに失敗していた問題を修正
+
 ## [2.3.9](https://github.com/dongaba/TVerRec/releases/tag/v2.3.9)
 
 ### Added
