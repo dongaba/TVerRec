@@ -100,7 +100,7 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 
 		#バージョンチェック
 		$local:ffmpegFileVersion = (& $local:ffmpegPath -version)
-		$null = $local:ffmpegFileVersion[0].ToChar -match 'ffmpeg version (\d+\.\d+(\.\d+)?)-.*'
+		$null = $local:ffmpegFileVersion[0] -match 'ffmpeg version (\d+\.\d+(\.\d+)?)-.*'
 		$local:ffmpegCurrentVersion = $local:matches[1]
 		Write-ColorOutput "ffmpegをversion $local:ffmpegCurrentVersion に更新しました。 "
 	}
