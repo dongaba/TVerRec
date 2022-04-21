@@ -166,9 +166,7 @@ foreach ($local:ignoreTitle in $local:ignoreTitles) {
 						-Recurse -Force -ErrorAction SilentlyContinue
 				}
 			}
-		} else {
-			Write-ColorOutput '  削除対象はありませんでした' DarkGray
-		}
+		} else { Write-ColorOutput '  削除対象はありませんでした' DarkGray }
 	} catch { Write-ColorOutput '削除できないファイルがありました' Green }
 }
 
