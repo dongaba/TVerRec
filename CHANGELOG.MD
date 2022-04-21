@@ -1,5 +1,18 @@
 ﻿# Change Log
 
+## [2.4.1](https://github.com/dongaba/TVerRec/releases/tag/v2.4.1)
+
+### Added
+
+### Changed
+
+- user_setting.ps1にMacやLinux用の指定方法を追加
+
+### Fixed
+
+- Linux/Macでyoutube-dlがダウンロードされない問題を修正
+- Windows Power Shellで不要ファイル削除機能でエラーとなっていた問題を修正
+
 ## [2.4.0](https://github.com/dongaba/TVerRec/releases/tag/v2.4.0)
 
 ### Added
@@ -9,7 +22,6 @@
 ### Changed
 
 - Invoke-WebRequestのプログレスバーを非表示に変更
-
 
 ### Fixed
 
