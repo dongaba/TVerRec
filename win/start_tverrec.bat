@@ -72,7 +72,7 @@ powershell -Command "$allPoshFiles = @(Get-ChildItem -Path '../' -Recurse -File 
 		powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\validate_video_5.ps1
 		powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\validate_video_5.ps1
 		powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\move_video_5.ps1
-		powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\delete_trash.ps1
+		powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\delete_trash_5.ps1
 	)
 
 	echo %sleepTime%秒待機します...
