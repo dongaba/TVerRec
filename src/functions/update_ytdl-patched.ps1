@@ -58,11 +58,12 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 	if ($script:isWin -eq $false) {
 		try {
 			#githubの設定
-			$local:file = 'youtube-dl'
+			$local:file = 'ytdl-patched'
+			$local:fileAfterRename = 'youtube-dl'
 			#ダウンロード
 			$local:tag = (Invoke-WebRequest $local:releases | ConvertFrom-Json)[0].Tag_name
 			$local:download = "https://github.com/$local:repo/releases/latest/download/$local:file"
-			$local:ytdlFileLocation = $(Join-Path $local:ytdlDir $local:file)
+			$local:ytdlFileLocation = $(Join-Path $local:ytdlDir $local:fileAfterRename)
 			Write-ColorOutput "youtube-dlをダウンロードします。 $local:download"
 			Invoke-WebRequest $local:download -Out $local:ytdlFileLocation
 			#バージョンチェック
