@@ -254,7 +254,6 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 
 	if ($local:proc.ExitCode -ne 0 -or $local:errorCount -gt 30) {
 		#終了コードが"0"以外 または エラーが30行以上 は録画リストとファイルを削除
-		Write-ColorOutput "$local:videoFileRelativePath"
 		Write-ColorOutput "  exit code: $($local:proc.ExitCode)    error count: $local:errorCount" Green
 
 		#破損している動画ファイルを録画リストから削除
