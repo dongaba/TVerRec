@@ -24,14 +24,19 @@
 #----------------------------------------------------------------------
 
 #ダウンロード先のフルパス(絶対パス指定)
-$script:downloadBaseDir = 'D:\ダウンロード'
+if ($script:isWin) { $script:downloadBaseDir = 'W:' }
+elseif ($isLinux) { $script:downloadBaseDir = '/mnt/Work' }
+elseif ($isMacOs) { $script:downloadBaseDir = '/Volumes/Work' }
 
 #ダウンロード中の作業ファイル置き場のフルパス(絶対パス指定)
-$script:downloadWorkDir = 'C:\Temp'
-#$script:downloadWorkDir = $env:TMP		#C:\Users\<ユーザ名>\AppData\Local\Temp
+if ($script:isWin) { $script:downloadWorkDir = $env:TMP }	#$env:TMP = C:\Users\<ユーザ名>\AppData\Local\Temp
+elseif ($isLinux) { $script:downloadWorkDir = '/var/tmp' }
+elseif ($isMacOs) { $script:downloadWorkDir = '/Volumes/RamDrive/Temp' }
 
 #保存先のフルパス(絶対パス指定)
-$script:saveBaseDir = 'D:\保管庫'
+if ($script:isWin) { $script:saveBaseDir = 'V:' }
+elseif ($isLinux) { $script:downloadBaseDir = '/mnt/Video' }
+elseif ($isMacOs) { $script:saveBaseDir = '/Volumes/Video' }
 
 #同時ダウンロードファイル数
 $script:parallelDownloadFileNum = 5
