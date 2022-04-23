@@ -23,6 +23,8 @@
 #TVerRec最新化確認
 #----------------------------------------------------------------------
 function checkLatestTVerRec {
+	$progressPreference = 'silentlyContinue'
+
 	#githubの設定
 	$local:repo = 'dongaba/TVerRec'
 	$local:releases = "https://api.github.com/repos/$local:repo/releases"
@@ -35,28 +37,33 @@ function checkLatestTVerRec {
 	if ($local:latestVersion -gt $script:appVersion ) {
 		Write-ColorOutput "TVerRecの更新版があるようです。 Version $local:latestVersion" Green
 	}
+	$progressPreference = 'Continue'
 }
 
 #----------------------------------------------------------------------
 #ytdlの最新化確認
 #----------------------------------------------------------------------
 function checkLatestYtdl {
+	$progressPreference = 'silentlyContinue'
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
 		. $(Convert-Path (Join-Path $scriptRoot '.\functions\update_ytdl-patched_5.ps1'))
 	} else {
 		. $(Convert-Path (Join-Path $scriptRoot '.\functions\update_ytdl-patched.ps1'))
 	}
+	$progressPreference = 'Continue'
 }
 
 #----------------------------------------------------------------------
 #ffmpegの最新化確認
 #----------------------------------------------------------------------
 function checkLatestFfmpeg {
+	$progressPreference = 'silentlyContinue'
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
 		. $(Convert-Path (Join-Path $scriptRoot '.\functions\update_ffmpeg_5.ps1'))
 	} else {
 		. $(Convert-Path (Join-Path $scriptRoot '.\functions\update_ffmpeg.ps1'))
 	}
+	$progressPreference = 'Continue'
 }
 
 #----------------------------------------------------------------------
@@ -387,7 +394,7 @@ function executeYtdl ($local:videoPageURL) {
 	$local:thumbDir = '"thumbnail:' + $script:downloadWorkDir + '"'
 	$local:chaptDir = '"chapter:' + $script:downloadWorkDir + '"'
 	$local:descDir = '"description:' + $script:downloadWorkDir + '"'
-	$local:saveFile = '"' + $videoName + '"'
+	$local:saveFile = '"' + $script:videoName + '"'
 
 	$local:ytdlArgs = '--format mp4'
 	$local:ytdlArgs += ' --console-title'

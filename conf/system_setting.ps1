@@ -71,4 +71,3 @@ if ($PSVersionTable.PSEdition -ne 'Desktop') {
 	$PSStyle.Progress.MaxWidth = 70
 	$PSStyle.Progress.Style = "`e[38;5;123m"
 }
-$progressPreference = 'silentlyContinue'
