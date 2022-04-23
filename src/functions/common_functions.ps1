@@ -341,7 +341,10 @@ function waitTillYtdlProcessGetFewer ($local:parallelDownloadFileNum) {
 	#youtube-dlのプロセスが設定値を超えたら一時待機
 	try {
 		if ($script:isWin) {
-			$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2
+			$local:ytdlCount = [Math]::Round( `
+				(Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, `
+					[MidpointRounding]::AwayFromZero `
+			)
 		} elseif ($IsLinux) {
 			$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count
 		} elseif ($IsMacOS) {
@@ -361,7 +364,10 @@ function waitTillYtdlProcessGetFewer ($local:parallelDownloadFileNum) {
 		Start-Sleep -Seconds 60			#1分待機
 		try {
 			if ($script:isWin) {
-				$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2
+				$local:ytdlCount = [Math]::Round( `
+					(Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, `
+						[MidpointRounding]::AwayFromZero `
+				)
 			} elseif ($IsLinux) {
 				$local:ytdlCount = (& Get-Process -ErrorAction Ignore -Name youtube-dl).Count
 			} elseif ($IsMacOS) {
@@ -381,8 +387,11 @@ function waitTillYtdlProcessGetFewer ($local:parallelDownloadFileNum) {
 function waitTillYtdlProcessIsZero () {
 	try {
 		if ($script:isWin) {
-			$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2
-  } elseif ($IsLinux) {
+			$local:ytdlCount = [Math]::Round( `
+				(Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, `
+					[MidpointRounding]::AwayFromZero `
+			)
+		} elseif ($IsLinux) {
 			$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count
 		} elseif ($IsMacOS) {
 			$local:psCmd = 'ps'
@@ -399,7 +408,10 @@ function waitTillYtdlProcessIsZero () {
 			Write-Verbose "現在のダウンロードプロセス一覧 ($local:ytdlCount 個)" DarkGray
 			Start-Sleep -Seconds 60			#1分待機
 			if ($script:isWin) {
-				$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2
+				$local:ytdlCount = [Math]::Round( `
+					(Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, `
+						[MidpointRounding]::AwayFromZero `
+				)
 			} elseif ($IsLinux) {
 				$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count
 			} elseif ($IsMacOS) {
