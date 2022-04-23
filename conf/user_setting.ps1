@@ -47,6 +47,12 @@ $script:parallelDownloadNumPerFile = 10
 #youtube-dlのウィンドウの表示方法(Windowsのみ) Normal/Maximized/Minimized/Hidden
 $script:windowShowStyle = 'Hidden'
 
+#動画検証の高速化(「$true」で高速化。ただし、検証の精度は落ちる)
+$script:simplifiedValidation = $false
+
+#動画検証の無効化(「$true」で無効化)
+$script:disableValidation = $false
+
 #ffmpegのデコードオプション
 $script:forceSoftwareDecodeFlag = $false						#ソフトウェアデコードを強制する場合は「$false」を「$true」に変える
 $script:ffmpegDecodeOption = ''							#ffmpegのデコードオプションを以下を参考に設定

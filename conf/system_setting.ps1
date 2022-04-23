@@ -39,31 +39,33 @@ $DebugPreference = 'SilentlyContinue'						#デバッグメッセージなし
 $script:fileNameLengthMax = 255
 
 #各種ディレクトリのパス
-$script:binDir = Convert-Path $(Join-Path $scriptRoot '..\bin')
-$script:dbDir = Convert-Path $(Join-Path $scriptRoot '..\db')
+$script:binDir = $(Join-Path $scriptRoot '..\bin')
+$script:dbDir = $(Join-Path $scriptRoot '..\db')
 
 #ダウンロード対象ジャンルリストのパス
-$script:keywordFilePath = Convert-Path $(Join-Path $script:confDir 'keyword.conf')
+$script:keywordFilePath = $(Join-Path $script:confDir 'keyword.conf')
 
 #ダウンロード対象外ビデオリストのパス
-$script:ignoreFilePath = Convert-Path $(Join-Path $script:confDir 'ignore.conf')
+$script:ignoreFilePath = $(Join-Path $script:confDir 'ignore.conf')
 
 #ダウンロードリストのパス
-$script:listFilePath = Convert-Path $(Join-Path $script:dbDir 'tver.csv')
-$script:lockFilePath = Convert-Path $(Join-Path $script:dbDir 'tver.lock')
+$script:listFilePath = $(Join-Path $script:dbDir 'tver.csv')
+$script:lockFilePath = $(Join-Path $script:dbDir 'tver.lock')
 
 #ffpmegで動画検証時のエラーファイルのパス
 $script:ffpmegErrorLogPath = $(Join-Path $script:dbDir "ffmpeg_error_$($PID).log")
 
 #youtube-dlのパス
-if ($script:isWin) { $script:ytdlPath = Convert-Path $(Join-Path $script:binDir 'youtube-dl.exe') }
-else { $script:ytdlPath = Convert-Path $(Join-Path $script:binDir 'youtube-dl') }
-
+if ($script:isWin) { $script:ytdlPath = $(Join-Path $script:binDir 'youtube-dl.exe') }
+else { $script:ytdlPath = $(Join-Path $script:binDir 'youtube-dl') }
 
 #ffmpegのパス
-if ($script:isWin) { $script:ffmpegPath = Convert-Path $(Join-Path $script:binDir 'ffmpeg.exe') }
-else { $script:ffmpegPath = Convert-Path $(Join-Path $script:binDir 'ffmpeg') }
+if ($script:isWin) { $script:ffmpegPath = $(Join-Path $script:binDir 'ffmpeg.exe') }
+else { $script:ffmpegPath = $(Join-Path $script:binDir 'ffmpeg') }
 
+#ffprobeのパス
+if ($script:isWin) { $script:ffprobePath = $(Join-Path $script:binDir 'ffprobe.exe') }
+else { $script:ffprobePath = $(Join-Path $script:binDir 'ffprobe') }
 
 #プログレスバーの表示形式
 #$PSStyle.Progress.View = 'Classic'

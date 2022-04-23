@@ -74,6 +74,8 @@ function checkRequiredFile {
 	else { Write-Error 'ビデオ保存先フォルダが存在しません。終了します。' ; exit 1 }
 	if (Test-Path $script:ffmpegPath -PathType Leaf) {}
 	else { Write-Error 'ffmpegが存在しません。終了します。' ; exit 1 }
+	if (Test-Path $script:ffprobePath -PathType Leaf) {}
+	elseif ($script:simplifiedValidation -eq $true) { Write-Error 'ffprobeが存在しません。終了します。' ; exit 1 }
 	if (Test-Path $script:ytdlPath -PathType Leaf) {}
 	else { Write-Error 'youtube-dlが存在しません。終了します。' ; exit 1 }
 	if (Test-Path $script:confFile -PathType Leaf) {}
@@ -217,28 +219,55 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 	}
 
 	$local:checkFile = '"' + $local:videoFilePath + '"'
-	$local:ffmpegArgs = "$local:decodeOption " `
-		+ ' -hide_banner -v error -xerror' `
-		+ " -i $local:checkFile -f null - "
 
-	Write-Debug "ffmpeg起動コマンド:$script:ffmpegPath $local:ffmpegArgs"
-	try {
-		if ($script:isWin) {
-			$local:proc = Start-Process -FilePath $script:ffmpegPath `
-				-ArgumentList ($local:ffmpegArgs) `
-				-PassThru `
-				-WindowStyle $script:windowShowStyle `
-				-RedirectStandardError $script:ffpmegErrorLogPath `
-				-Wait
-		} else {
-			$local:proc = Start-Process -FilePath $script:ffmpegPath `
-				-ArgumentList ($local:ffmpegArgs) `
-				-PassThru `
-				-RedirectStandardOutput /dev/null `
-				-RedirectStandardError $script:ffpmegErrorLogPath `
-				-Wait
-		}
-	} catch { Write-Error 'ffmpegを起動できませんでした' ; return }
+	if ($script:simplifiedValidation -eq $true) {
+		#ffprobeを使った簡易検査
+		$local:ffprobeArgs = ' -hide_banner -v error -err_detect explode' `
+			+ " -i $local:checkFile "
+
+		Write-Debug "ffprobe起動コマンド:$script:ffprobePath $local:ffprobeArgs"
+		try {
+			if ($script:isWin) {
+				$local:proc = Start-Process -FilePath $script:ffprobePath `
+					-ArgumentList ($local:ffprobeArgs) `
+					-PassThru `
+					-WindowStyle $script:windowShowStyle `
+					-RedirectStandardError $script:ffpmegErrorLogPath `
+					-Wait
+			} else {
+				$local:proc = Start-Process -FilePath $script:ffprobePath `
+					-ArgumentList ($local:ffprobeArgs) `
+					-PassThru `
+					-RedirectStandardOutput /dev/null `
+					-RedirectStandardError $script:ffpmegErrorLogPath `
+					-Wait
+			}
+		} catch { Write-Error 'ffprobeを起動できませんでした' ; return }
+	} else {
+		#ffmpegeを使った完全検査
+		$local:ffmpegArgs = "$local:decodeOption " `
+			+ ' -hide_banner -v error -xerror' `
+			+ " -i $local:checkFile -f null - "
+
+		Write-Debug "ffmpeg起動コマンド:$script:ffmpegPath $local:ffmpegArgs"
+		try {
+			if ($script:isWin) {
+				$local:proc = Start-Process -FilePath $script:ffmpegPath `
+					-ArgumentList ($local:ffmpegArgs) `
+					-PassThru `
+					-WindowStyle $script:windowShowStyle `
+					-RedirectStandardError $script:ffpmegErrorLogPath `
+					-Wait
+			} else {
+				$local:proc = Start-Process -FilePath $script:ffmpegPath `
+					-ArgumentList ($local:ffmpegArgs) `
+					-PassThru `
+					-RedirectStandardOutput /dev/null `
+					-RedirectStandardError $script:ffpmegErrorLogPath `
+					-Wait
+			}
+		} catch { Write-Error 'ffmpegを起動できませんでした' ; return }
+	}
 
 	#ffmpegが正常終了しても、大量エラーが出ることがあるのでエラーをカウント
 	try {
