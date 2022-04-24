@@ -95,20 +95,48 @@ TVerRecは、動画配信サイトTVer ( ティーバー <https://tver.jp/> ) �
 ユーザ設定は`conf/user_setting.ps1`をテキストエディターで開いて行ってください。
 
 - `$script:downloadBaseDir`には動画をダウンロードするフォルダを設定します。
+
 - `$script:downloadWorkDir`には動画をダウンロードするさいにできる中間ファイルを格納するフォルダを設定します。
+
 - `$script:saveBaseDir`にはダウンロードした動画を移動する先のフォルダを設定します。
   - ここで設定したフォルダ配下(再帰的にチェックします)にあるフォルダと`$script:downloadBaseDir`にあるフォルダが一致する場合、動画ファイルが`$script:downloadBaseDir`から`$script:saveBaseDir`配下の各フォルダ配下に移動されます。同名のファイルがある場合は上書きされます。
+
 - `$script:parallelDownloadFileNum`は同時に並行でダウンロードする動画の数を設定します。
+
 - `$script:parallelDownloadNumPerFile`はそれぞれの動画をダウンロードする際の並行ダウンロード数を設定します。
   - つまり、`$script:parallelDownloadFileNum`×`$script:parallelDownloadNumPerFile`が実質的な最大同時ダウンロード数になります。
+
+- `$script:sortVideoByMedia`は放送局(テレビ局)ごとのフォルダを作って動画をダウンロードするかを設定します。
+  - `$script:sortVideoByMedia = $false`の場合の保存先は以下のようになります
+
+        ダウンロード先\
+          └動画シリーズ名 動画シーズン名\
+            └動画シリーズ名 動画シーズン名 放送日 動画タイトル名).mp4
+
+  - `$script:sortVideoByMedia = $true`の際の保存先は以下のようになります
+
+        ダウンロード先\
+          └放送局\
+            └動画シリーズ名 動画シーズン名\
+              └動画シリーズ名 動画シーズン名 放送日 動画タイトル名).mp4
+
 - `$script:windowShowStyle`にはyoutube-dlのウィンドウをどのように表示するかを設定します。
   - `Normal` / `Maximized` / `Minimized` / `Hidden` の4つが指定可能です。
   - 初期値は`Hidden`でダウンロードウィンドウは非表示となりますが、`Normal`等に設定することでダウンロードの進捗を確認することができます。
-- `$script:forceSoftwareDecodeFlag`に`$true`を設定するとハードウェアアクセラレーションを使わなくなります。
+
+- `$script:forceSoftwareDecodeFlag`に`$true`を設定すると、動画検証時にハードウェアアクセラレーションを使わなくなります。
   - 高速なCPUが搭載されている場合はハードウェアアクセラレーションよりもCPUで処理したほうが処理が早い場合があります。
-- `$script:ffmpegDecodeOption`に直接ffmpegのオプションを記載することでハードウェアアクセラレーションを有効化できます。
+
+- `$script:ffmpegDecodeOption`に直接ffmpegのオプションを記載することで動画検証時にハードウェアアクセラレーションを有効化できます。
   - 例えばIntel CPUを搭載した一般的なPCであれば、`'-hwaccel qsv -c:v h264_qsv'`を設定することで、CPU内蔵のアクセラレータを使ってCPU負荷を下げつつ高速に処理することが可能です。
   - この設定は`$script:forceSoftwareDecodeFlag`が`$true`に設定されていると無効化されます。
+
+- 動画検証の高速化オプションとして、他にも以下の2つがあります。
+  - `$script:simplifiedValidation`は検証を簡素化するかどうかを設定します。
+    - `$false`(初期値)を設定すると、ffmpegをつかって動画の検証を行います。PCの性能にもよりますが動画の長さの数分の1から数倍の時間がかかりますが、検証精度は非常に高いです。(全フレームがデコードできるか確認している模様)
+    - `$true`を設定することで、ffmpegによる動画の完全検証ではなく、ffprobeによる簡易検証に切り替えます。動画1本あたり数秒で検証が完了しますが、検証精度は低いです。(おそらくメタデータの検査だけの模様)
+  - `$script:disableValidation`は検証を行わなくするかどうかを設定します。
+    - `$true`を設定することで、動画の検証を完全に止めることができます。
 
 ### システム設定
 

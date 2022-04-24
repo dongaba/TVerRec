@@ -1,5 +1,22 @@
 ﻿# Change Log
 
+## [2.4.2](https://github.com/dongaba/TVerRec/releases/tag/v2.4.2)
+
+### Added
+
+- 動画検証の高速化オプションを2つ追加(「$true」で高速化。いずれも初期値は$false)
+  - ffprobeを使った簡易検証 $script:simplifiedValidation = $true
+  - 動画検証を全く行わない $script:disableValidation = $true
+- 放送局ごとのフォルダを作ってからダウンロードするオプションを追加(「$true」で有効化。初期値は$false)
+
+### Changed
+
+- 動画ファイル検証時の冗長なメッセージを削除
+
+### Fixed
+
+- ステータスバーが表示されない問題を修正
+
 ## [2.4.1](https://github.com/dongaba/TVerRec/releases/tag/v2.4.1)
 
 ### Added
