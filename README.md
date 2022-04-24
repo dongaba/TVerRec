@@ -107,13 +107,13 @@ TVerRecは、動画配信サイトTVer ( ティーバー <https://tver.jp/> ) �
   - つまり、`$script:parallelDownloadFileNum`×`$script:parallelDownloadNumPerFile`が実質的な最大同時ダウンロード数になります。
 
 - `$script:sortVideoByMedia`は放送局(テレビ局)ごとのフォルダを作って動画をダウンロードするかを設定します。
-  - `$script:sortVideoByMedia = $false`の場合の保存先は以下のようになります
+  - `$false`の場合の保存先は以下のようになります
 
         ダウンロード先\
           └動画シリーズ名 動画シーズン名\
             └動画シリーズ名 動画シーズン名 放送日 動画タイトル名).mp4
 
-  - `$script:sortVideoByMedia = $true`の際の保存先は以下のようになります
+  - `$true`の際の保存先は以下のようになります
 
         ダウンロード先\
           └放送局\
