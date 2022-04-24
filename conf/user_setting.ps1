@@ -44,6 +44,18 @@ $script:parallelDownloadFileNum = 5
 #1本のビデオあたりの同時ダウンロード数
 $script:parallelDownloadNumPerFile = 10
 
+#ダウンロード時に放送局毎のフォルダ配下に動画ファイルを保存
+#「$false」の際の保存先は以下
+#  ダウンロード先\
+#    └動画シリーズ名 動画シーズン名\
+#      └動画シリーズ名 動画シーズン名 放送日 動画タイトル名).mp4
+#「$true」の際の保存先は以下
+#  ダウンロード先\
+#    └放送局\
+#      └動画シリーズ名 動画シーズン名\
+#        └動画シリーズ名 動画シーズン名 放送日 動画タイトル名).mp4
+$script:sortVideoByMedia = $false
+
 #youtube-dlのウィンドウの表示方法(Windowsのみ) Normal/Maximized/Minimized/Hidden
 $script:windowShowStyle = 'Hidden'
 

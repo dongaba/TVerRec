@@ -546,7 +546,12 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 	#ビデオファイル情報をセット
 	$script:videoName = getVideoFileName $script:videoSeries $script:videoSeason $script:videoTitle $script:broadcastDate
 	$script:videoFileDir = getNarrowChars $($script:videoSeries + ' ' + $script:videoSeason).Trim()
-	$script:videoFileDir = $(Join-Path $script:downloadBaseDir (getFileNameWithoutInvalidChars $script:videoFileDir))
+	if ($script:sortVideoByMedia -eq $true) {
+		$script:videoFileDir = $(Join-Path $script:downloadBaseDir $( getFileNameWithoutInvalidChars $script:mediaName) `
+			| Join-Path -ChildPath $(getFileNameWithoutInvalidChars $script:videoFileDir))
+	} else {
+		$script:videoFileDir = $(Join-Path $script:downloadBaseDir $(getFileNameWithoutInvalidChars $script:videoFileDir))
+	}
 	$script:videoFilePath = $(Join-Path $script:videoFileDir $script:videoName)
 	$script:videoFileRelativePath = $script:videoFilePath.Replace($script:downloadBaseDir, '').Replace('\', '/')
 	$script:videoFileRelativePath = $script:videoFileRelativePath.Substring(1, $($script:videoFileRelativePath.Length - 1))
