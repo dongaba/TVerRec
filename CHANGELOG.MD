@@ -1,5 +1,17 @@
 ﻿# Change Log
 
+## [2.4.3](https://github.com/dongaba/TVerRec/releases/tag/v2.4.3)
+
+### Added
+
+- ツールの自動アップデートを無効化するオプションを追加(「$true」で無効化。いずれも初期値は$false)
+  - youtube-dlの自動アップデートを無効化 $script:disableUpdateYoutubedl = $true
+  - ffmpegの自動アップデートを無効化$script:disableUpdateFfmpeg = $true
+
+### Changed
+
+### Fixed
+
 ## [2.4.2](https://github.com/dongaba/TVerRec/releases/tag/v2.4.2)
 
 ### Added
