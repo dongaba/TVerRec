@@ -138,6 +138,10 @@ TVerRecは、動画配信サイトTVer ( ティーバー <https://tver.jp/> ) �
   - `$script:disableValidation`は検証を行わなくするかどうかを設定します。
     - `$true`を設定することで、動画の検証を完全に止めることができます。
 
+- TVerRecの特徴の1つでもあるyoutube-dlとffmpegの自動アップデートですが、ツール配布元の不具合等により自動アップデートがうまく動作しない場合には無効化することが可能です。
+  - `$script:disableUpdateYoutubedl`に`$true`を設定するとyoutube-dlの自動アップデートが無効化されます。
+  - `$script:disableUpdateFfmpeg`に`$true`を設定するとffmpegの自動アップデートが無効化されます。
+
 ### システム設定
 
 より細かく設定を変更したい場合は`conf/system_setting.ps1`をテキストエディターで開いてシステム設定を行ってください。(通常は必要ありません)
@@ -196,6 +200,10 @@ MacOSでもPowerShellをインストールし動作確認をしています。
     - ダウンロードを止めたくない場合は、tverecのウィンドウを閉じるボタンで閉じてください。
 5. TVerRecを `win/start_tverrec.bat`で実行している各ツールを個別に起動するために、`win/a.download_video.bat` / `win/b.delete_trash.bat` / `win/c.validate_video.bat` / `win/d.move_video.bat`を使うこともできます。それぞれ、動画のダウンロドード、無視した動画やダウンロード中断時のゴミファイルの削除、ダウンロードした動画の検証、検証した動画の保存先への移動を行います。(`win/start_tverrec.bat`はこれらを自動的に、且つ無限に実行します)
 6. 動画を1本ずつダウンロードしたい場合は`win/z.download_single_video.bat`を実行し、動画のURLを1本ずつ指定してください。
+    - `win/b.validate.bat`を実行するとダウンロードできていないファイルがある場合(正確にはダウンロードしたビデオファイルが破損している場合)に、ダウンロード済みリストからダウンロード履歴を削除するので、再度ダウンロードできるようになります。
+    - `win/b.delete_video.sh`を実行するとダウンロードが中断してしまった際のゴミファイルなどの掃除ができるので、定期的に実行するとディスク容量を節約できます。
+    - `win/d.move_video.sh`を実行すると、動画を最終保存先に移動することも可能です。
+
 
 ## Linux/Macでの利用方法
 
