@@ -83,8 +83,9 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 			Invoke-WebRequest $local:download -Out $local:ytdlFileLocation
 			#バージョンチェック
 			$local:ytdlCurrentVersion = (& $local:ytdlPath --version)
+			if ($? -eq $false) { throw '更新後のバージョン取得に失敗しました' }
 			Write-ColorOutput "youtube-dlをversion $local:ytdlCurrentVersion に更新しました。 "
-		} catch { Write-ColorOutput 'youtube-dlの更新に失敗しました' Green }
+		} catch { exit 1 }
 	}
 }
 

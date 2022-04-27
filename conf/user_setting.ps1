@@ -65,6 +65,12 @@ $script:simplifiedValidation = $false
 #動画検証の無効化(「$true」で無効化)
 $script:disableValidation = $false
 
+#youtube-dlの自動アップデートを無効化
+$script:disableUpdateYoutubedl = $false
+
+#ffmpegの自動アップデートを無効化
+$script:disableUpdateFfmpeg = $false
+
 #ffmpegのデコードオプション
 $script:forceSoftwareDecodeFlag = $false						#ソフトウェアデコードを強制する場合は「$false」を「$true」に変える
 $script:ffmpegDecodeOption = ''							#ffmpegのデコードオプションを以下を参考に設定

@@ -99,10 +99,13 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 		} catch { Write-ColorOutput 'ffmpegの更新に失敗しました' Green }
 
 		#バージョンチェック
-		$local:ffmpegFileVersion = (& $local:ffmpegPath -version)
-		$null = $local:ffmpegFileVersion[0] -match 'ffmpeg version (\d+\.\d+(\.\d+)?)-.*'
-		$local:ffmpegCurrentVersion = $local:matches[1]
-		Write-ColorOutput "ffmpegをversion $local:ffmpegCurrentVersion に更新しました。 "
+		try {
+			$local:ffmpegFileVersion = (& $local:ffmpegPath -version)
+			if ($? -eq $false) { throw '更新後のバージョン取得に失敗しました' }
+			$null = $local:ffmpegFileVersion[0] -match 'ffmpeg version (\d+\.\d+(\.\d+)?)-.*'
+			$local:ffmpegCurrentVersion = $local:matches[1]
+			Write-ColorOutput "ffmpegをversion $local:ffmpegCurrentVersion に更新しました。 "
+		} catch { exit 1 }
 	}
 }
 
