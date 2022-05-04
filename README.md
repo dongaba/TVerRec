@@ -1,7 +1,7 @@
 # :tv:**TVerRec**:tv: - TVer 一括ダウンロード・保存・録画 -
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/dongaba/TVerRec)
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![License](https://img.shields.io/badge/license-MIT-green)](https://opensource.org/licenses/MIT)
 [![CodeFactor](https://www.codefactor.io/repository/github/dongaba/tverrec/badge)](https://www.codefactor.io/repository/github/dongaba/tverrec)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/1b42499be57b48818db8c3c90d73adb3)](https://www.codacy.com/gh/dongaba/TVerRec/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=dongaba/TVerRec&amp;utm_campaign=Badge_Grade)
 [![DevSkim](https://github.com/dongaba/TVerRec/actions/workflows/devskim.yml/badge.svg)](https://github.com/dongaba/TVerRec/actions/workflows/devskim.yml)
@@ -278,6 +278,6 @@ TVerRec/
 
 ## ライセンス
 
-- TVerRecは[Apache License, Version 2.0のライセンス規約](http://www.apache.org/licenses/LICENSE-2.0)に基づき、複製や再配布、改変が許可されます。
+- TVerRecは[The MIT License](https://opensource.org/licenses/MIT)に基づき、複製や再配布、改変が許可されます。
 
-Copyright(c) 2022 dongaba All Rights Reserved.
+Copyright (c) dongaba. All rights reserved.
