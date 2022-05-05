@@ -1,5 +1,15 @@
 ﻿# Change Log
 
+## [Unreleased](https://github.com/dongaba/TVerRec)
+
+### Added
+
+### Changed
+
+- ライセンスをApache 2ライセンスからMITライセンスに変更
+
+### Fixed
+
 ## [2.4.3](https://github.com/dongaba/TVerRec/releases/tag/v2.4.3)
 
 ### Added
