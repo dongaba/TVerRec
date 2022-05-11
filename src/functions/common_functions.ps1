@@ -636,6 +636,9 @@ function getVideoFileName ($local:videoSeries, $local:videoSeason, $local:videoT
 	}
 
 	$local:videoName = $local:videoName + '.mp4'
+	if ($local:videoName.Contains('.mp4') -eq $false) {
+		Write-Error '動画ファイル名の設定がおかしいです'
+	}
 	return $local:videoName
 }
 

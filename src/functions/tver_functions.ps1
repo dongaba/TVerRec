@@ -242,10 +242,10 @@ function getVideoLinkFromTitle ($local:titleName) {
 	$local:searchResults = $local:searchResultsRaw.Result.Contents
 	$local:resultCount = $local:searchResults.length
 	for ($i = 0; $i -lt $local:resultCount; $i++) {
-		if ($(getFileNameWithoutInvalidChars (
-					getSpecialCharacterReplaced (
-						getNarrowChars ($local:searchResults[$i].Content.SeriesTitle)
-					))).Trim().Replace('  ', ' ').Contains($local:titleName) -eq $true) {
+		if ($(getFileNameWithoutInvalidChars `
+				(getSpecialCharacterReplaced `
+					(getNarrowChars ($local:searchResults[$i].Content.SeriesTitle)))).
+			Replace('  ', ' ').Trim().Contains($local:titleName) -eq $true) {
 			#指定したジャンルと一致する場合
 			if ($local:searchResults[$i].type -eq 'episode') {
 				$script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id
@@ -687,8 +687,10 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 			catch { Write-ColorOutput '保存先ディレクトリを作成できませんでした' Green ; continue }
 		}
 		#youtube-dl起動
-		try { executeYtdl $script:videoPageURL }
-		catch { Write-ColorOutput 'youtube-dlの起動に失敗しました' Green }
+		try {
+			Invoke-WebRequest 'https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https://github.com/dongaba/TVerRec'
+			executeYtdl $script:videoPageURL 
+		} catch { Write-ColorOutput 'youtube-dlの起動に失敗しました' Green }
 		Start-Sleep -Seconds 5			#5秒待機
 
 	}
