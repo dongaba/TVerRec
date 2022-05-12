@@ -1,16 +1,24 @@
 # :tv:**TVerRec**:tv: - TVer 一括ダウンロード・保存・録画 -
 
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/dongaba/TVerRec)](https://github.com/dongaba/TVerRec/releases)
-[![License](https://img.shields.io/badge/license-MIT-green)](https://opensource.org/licenses/MIT)
+[![GitHub release](https://img.shields.io/github/v/release/dongaba/TVerRec?color=blue)](https://github.com/dongaba/TVerRec/releases)
+[![License](https://img.shields.io/github/license/dongaba/TVerRec?color=blue)](https://opensource.org/licenses/MIT)
 [![CodeFactor](https://www.codefactor.io/repository/github/dongaba/tverrec/badge)](https://www.codefactor.io/repository/github/dongaba/tverrec)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/1b42499be57b48818db8c3c90d73adb3)](https://www.codacy.com/gh/dongaba/TVerRec/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=dongaba/TVerRec&amp;utm_campaign=Badge_Grade)
 [![DevSkim](https://github.com/dongaba/TVerRec/actions/workflows/devskim.yml/badge.svg)](https://github.com/dongaba/TVerRec/actions/workflows/devskim.yml)
 [![PSScriptAnalyzer](https://github.com/dongaba/TVerRec/actions/workflows/powershell.yml/badge.svg)](https://github.com/dongaba/TVerRec/actions/workflows/powershell.yml)
-![VideoDownload](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fdongaba%2FTVerRec&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=VideoDownload&edge_flat=false)
+
+[![TVerRec Launched](https://hits.sh/github.com/dongaba/TVerRec/launch.svg?view=today-total&color=9f9f9f&label=TVerRec%20Launched)](https://hits.sh/github.com/dongaba/TVerRec/launch)
+[![Video Downloaded](https://hits.sh/github.com/dongaba/TVerRec/download.svg?view=today-total&color=9f9f9f&label=Video%20Downloaded)](https://hits.sh/github.com/dongaba/TVerRec/download)
+[![Video Validated](https://hits.sh/github.com/dongaba/TVerRec/validate.svg?view=today-total&color=9f9f9f&label=Video%20Validated)](https://hits.sh/github.com/dongaba/TVerRec/validate)
+
+[![Windows](https://hits.sh/github.com/dongaba/TVerRec/win.svg?view=today-total&color=9f9f9f&logo=windows&label=Windows)](https://hits.sh/github.com/dongaba/TVerRec/win)
+[![macOS](https://hits.sh/github.com/dongaba/TVerRec/mac.svg?view=today-total&color=9f9f9f&logo=apple&label=macOS)](https://hits.sh/github.com/dongaba/TVerRec/mac)
+[![Linux](https://hits.sh/github.com/dongaba/TVerRec/linux.svg?view=today-total&color=9f9f9f&logo=linux&label=Linux)](https://hits.sh/github.com/dongaba/TVerRec/linux)
+[![Unknown](https://hits.sh/github.com/dongaba/TVerRec/unknown.svg?view=today-total&color=9f9f9f&label=Unknown)](https://hits.sh/github.com/dongaba/TVerRec/unknown)
+[![Windows PowerShell](https://hits.sh/github.com/dongaba/TVerRec/desktop.svg?view=today-total&logo=powershell&color=9f9f9f&label=Windows%20PowerShell)](https://hits.sh/github.com/dongaba/TVerRec/desktop)
+[![PowerShell Core](https://hits.sh/github.com/dongaba/TVerRec/core.svg?view=today-total&color=9f9f9f&logo=dotnet&label=PowerShell%20Core)](https://hits.sh/github.com/dongaba/TVerRec/core)
 
 TVerRecは、動画配信サイトTVer ( ティーバー <https://tver.jp/> ) の動画を録画保存するためのダウンローダー、ダウンロード支援ツールです。
-
-## 2022/4/1のTVerのリニューアルに本格対応しました
 
 - Windows/MacOS/Linuxで動作します。
 - 必要なツールは自動的にダウンロードされますが、うまくいかない場合は以下から取得してください。
