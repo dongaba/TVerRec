@@ -133,7 +133,7 @@ function purgeDB {
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
-		$local:purgedList = ((Import-Csv $script:listFilePath -Encoding UTF8).Where({ $_.downloadDate -gt $(Get-Date).AddDays(-30) }))
+		$local:purgedList = ((Import-Csv $script:listFilePath -Encoding UTF8).Where({ [DateTime]$_.downloadDate -gt $(Get-Date).AddDays(-30) }))
 		$local:purgedList `
 		| Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
 	} catch { Write-ColorOutput 'リストのクリーンアップに失敗しました' Green

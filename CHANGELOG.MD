@@ -4,11 +4,15 @@
 
 ### Added
 
+- ハートビート機能を追加
+
 ### Changed
 
 - ライセンスをApache 2ライセンスからMITライセンスに変更
 
 ### Fixed
+
+- ダウンロード済みリストの引き落としがされない問題を修正
 
 ## [2.4.3](https://github.com/dongaba/TVerRec/releases/tag/v2.4.3)
 
