@@ -1,6 +1,6 @@
 ﻿# Change Log
 
-## [Unreleased](https://github.com/dongaba/TVerRec)
+## [2.4.4](https://github.com/dongaba/TVerRec/releases/tag/v2.4.4)
 
 ### Added
 
