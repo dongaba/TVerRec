@@ -1,12 +1,12 @@
 # :tv:**TVerRec**:tv: - TVer 一括ダウンロード・保存・録画 -
 
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/dongaba/TVerRec)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/dongaba/TVerRec)](https://github.com/dongaba/TVerRec/releases)
 [![License](https://img.shields.io/badge/license-MIT-green)](https://opensource.org/licenses/MIT)
 [![CodeFactor](https://www.codefactor.io/repository/github/dongaba/tverrec/badge)](https://www.codefactor.io/repository/github/dongaba/tverrec)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/1b42499be57b48818db8c3c90d73adb3)](https://www.codacy.com/gh/dongaba/TVerRec/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=dongaba/TVerRec&amp;utm_campaign=Badge_Grade)
 [![DevSkim](https://github.com/dongaba/TVerRec/actions/workflows/devskim.yml/badge.svg)](https://github.com/dongaba/TVerRec/actions/workflows/devskim.yml)
 [![PSScriptAnalyzer](https://github.com/dongaba/TVerRec/actions/workflows/powershell.yml/badge.svg)](https://github.com/dongaba/TVerRec/actions/workflows/powershell.yml)
-[![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fdongaba%2FTVerRec&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=VideoDownload&edge_flat=false)](https://hits.seeyoufarm.com)
+![VideoDownload](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fdongaba%2FTVerRec&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=VideoDownload&edge_flat=false)
 
 TVerRecは、動画配信サイトTVer ( ティーバー <https://tver.jp/> ) の動画を録画保存するためのダウンローダー、ダウンロード支援ツールです。
 
@@ -205,7 +205,6 @@ MacOSでもPowerShellをインストールし動作確認をしています。
     - `win/b.delete_video.sh`を実行するとダウンロードが中断してしまった際のゴミファイルなどの掃除ができるので、定期的に実行するとディスク容量を節約できます。
     - `win/d.move_video.sh`を実行すると、動画を最終保存先に移動することも可能です。
 
-
 ## Linux/Macでの利用方法
 
 - `ffmpeg`と`youtube-dl`を`bin`ディレクトリに配置するか、シンボリックリンクを貼ってください。
@@ -214,57 +213,67 @@ MacOSでもPowerShellをインストールし動作確認をしています。
 
 ## フォルダ構成
 
-```text
-TVerRec/
-├─ bin/ .................................. 実行ファイル格納用フォルダ
-│
-├─ conf/ ................................. 設定フォルダ
-│  ├─ ignore.conf .......................... ダウンロード対象外設定ファイル
-│  ├─ keyword.conf ......................... ダウンロード対象ジャンル設定ファイル
-│  ├─ system_setting.ps1 ................... システム設定ファイル
-│  └─ user_setting.ps1 ..................... ユーザ設定ファイル
-│
-├─ db/ ................................... データベース
-│  ├─ tver.csv ............................. ダウンロードリスト
-│  ├─ tver.lock ............................ 複数インスタンス起動時の排他制御用ファイル
-│  └─ ffmpeg_error.log...................... ffmpegのエラーログ(処理中に作成され、自動的に削除されます)
-│
-├─ src/ .................................. 各種ソース
-│  ├─ functions/ ........................... 各種共通関数
-│  │  ├─ common_functions.ps1 ............. 共通関数定義
-│  │  ├─ tver_functions.ps1 ............... TVer用共通関数定義
-│  │  ├─ update_ffmpeg.ps1 ................ ffmpeg自動更新ツール
-│  │  └─ update_ytdl-patched.ps1 .......... ytdl-patched自動更新ツール
-│  ├─ delete_trash.ps1 ..................... ダウンロード対象外ビデオ削除ツール
-│  ├─ move_vide.ps1 ........................ ビデオを保存先に移動するツール
-│  ├─ tverrec_bulk.ps1 ..................... 一括ダウンロードツール本体
-│  ├─ tverrec_single.ps1 ................... 単体ダウンロードツール
-│  └─ validate_video.ps1 ................... ダウンロード済みビデオの整合性チェックツール
-│
-├─ unix/ ................................. Linux/Mac用シェルスクリプト
-│  ├─ a.download_video.sh .................. 一括ダウンロードするシェルスクリプト
-│  ├─ b.delete_video.sh .................... ダウンロード対象外ビデオ・中間ファイル削除シェルスクリプト
-│  ├─ c.validate_video.sh .................. ダウンロード済みビデオの整合性チェックシェルスクリプト
-│  ├─ d.move_video.sh ...................... ビデオを保存先に移動するシェルスクリプト(もし必要であれば)
-│  ├─ z.download_single_video.sh ........... ビデオを1本ずつダウンロードするシェルスクリプト
-│  ├─ start_tverrec.sh ..................... 無限一括ダウンロード起動シェルスクリプト
-│  └─ stop_tverrec.sh ...................... 無限一括ダウンロード終了シェルスクリプト
-│
-├─ win/ .................................. Windows用BATファイル
-│  ├─ a.download_video.bat ................. 一括ダウンロードするBAT
-│  ├─ b.delete_video.bat ................... ダウンロード対象外ビデオ・中間ファイル削除BAT
-│  ├─ c.validate_video.bat ................. ダウンロード済みビデオの整合性チェックBAT
-│  ├─ d.move_video.bat ..................... ビデオを保存先に移動するBAT(もし必要であれば)
-│  ├─ z.download_single_video.bat .......... ビデオを1本ずつダウンロードするBAT
-│  ├─ start_tverrec.bat .................... 無限一括ダウンロード起動BAT
-│  └─ stop_tverrec.bat ..................... 無限一括ダウンロード終了BAT
-│
-├─ CHANGELOG.md ............................. 変更履歴
-├─ LICENSE .................................. ライセンス
-├─ README.md ................................ このファイル
-├─ TODO.md .................................. 今後の改善予定のリスト
-└─ VERSION .................................. バージョン表記用ファイル
-```
+フォルダ構成は以下のようになっています。
+
+    TVerRec/
+    ├─ bin/ .................................. 実行ファイル格納用フォルダ (初期状態は空)
+    │
+    ├─ conf/ ................................. 設定
+    │  ├─ ignore.conf .......................... ダウンロード対象外設定ファイル
+    │  ├─ keyword.conf ......................... ダウンロード対象ジャンル設定ファイル
+    │  ├─ system_setting.ps1 ................... システム設定ファイル
+    │  └─ user_setting.ps1 ..................... ユーザ設定ファイル
+    │
+    ├─ db/ ................................... データベース
+    │  ├─ tver.csv ............................. ダウンロードリスト
+    │  ├─ tver.lock ............................ 複数インスタンス起動時の排他制御用ファイル
+    │  └─ ffmpeg_error.log...................... ffmpegのエラーログ (処理中に作成され、自動的に削除されます)
+    │
+    ├─ img/ .................................. 画像
+    │  ├─ TVerRec.png .......................... アプリロゴ
+    │  └─ TVerRec-Square.png ................... トースト通知用アプリロゴ
+    │
+    ├─ lib/ .................................. ライブラリ
+    │  └─ win .................................. Windows用ライブラリ
+    │      ├─ common .............................. 共通ライブラリ用
+    │      ├─ core ................................ PowerShell Core用 (配下のファイルは省略)
+    │      └─ desktop ............................. Windows PowerShell用フォルダ (配下のファイルは省略)
+    │
+    ├─ src/ .................................. 各種ソース
+    │  ├─ functions/ ........................... 各種共通関数
+    │  │  ├─ common_functions.ps1 ............. 共通関数定義
+    │  │  ├─ tver_functions.ps1 ............... TVer用共通関数定義
+    │  │  ├─ update_ffmpeg.ps1 ................ ffmpeg自動更新ツール
+    │  │  └─ update_ytdl-patched.ps1 .......... ytdl-patched自動更新ツール
+    │  ├─ delete_trash.ps1 ..................... ダウンロード対象外ビデオ削除ツール
+    │  ├─ move_vide.ps1 ........................ ビデオを保存先に移動するツール
+    │  ├─ tverrec_bulk.ps1 ..................... 一括ダウンロードツール本体
+    │  ├─ tverrec_single.ps1 ................... 単体ダウンロードツール
+    │  └─ validate_video.ps1 ................... ダウンロード済みビデオの整合性チェックツール
+    │
+    ├─ unix/ ................................. Linux/Mac用シェルスクリプト
+    │  ├─ a.download_video.sh .................. 一括ダウンロードするシェルスクリプト
+    │  ├─ b.delete_video.sh .................... ダウンロード対象外ビデオ・中間ファイル削除シェルスクリプト
+    │  ├─ c.validate_video.sh .................. ダウンロード済みビデオの整合性チェックシェルスクリプト
+    │  ├─ d.move_video.sh ...................... ビデオを保存先に移動するシェルスクリプト(もし必要であれば)
+    │  ├─ z.download_single_video.sh ........... ビデオを1本ずつダウンロードするシェルスクリプト
+    │  ├─ start_tverrec.sh ..................... 無限一括ダウンロード起動シェルスクリプト
+    │  └─ stop_tverrec.sh ...................... 無限一括ダウンロード終了シェルスクリプト
+    │
+    ├─ win/ .................................. Windows用BATファイル
+    │  ├─ a.download_video.bat ................. 一括ダウンロードするBAT
+    │  ├─ b.delete_video.bat ................... ダウンロード対象外ビデオ・中間ファイル削除BAT
+    │  ├─ c.validate_video.bat ................. ダウンロード済みビデオの整合性チェックBAT
+    │  ├─ d.move_video.bat ..................... ビデオを保存先に移動するBAT(もし必要であれば)
+    │  ├─ z.download_single_video.bat .......... ビデオを1本ずつダウンロードするBAT
+    │  ├─ start_tverrec.bat .................... 無限一括ダウンロード起動BAT
+    │  └─ stop_tverrec.bat ..................... 無限一括ダウンロード終了BAT
+    │
+    ├─ CHANGELOG.md ............................. 変更履歴
+    ├─ LICENSE .................................. ライセンス
+    ├─ README.md ................................ このファイル
+    ├─ TODO.md .................................. 今後の改善予定のリスト
+    └─ VERSION .................................. バージョン表記用ファイル
 
 ## アンインストール方法
 
