@@ -30,8 +30,8 @@
 #	このファイルに書かれた内容はそのままPowershellスクリプトとして実行。
 #----------------------------------------------------------------------
 
-#アプリケーションバージョン番号
-$script:appName = 'TVerRec'
+#アプリケーション名・バージョン番号
+$script:appName = "$($script:appName)"
 $script:appVersion = Get-Content '..\VERSION'
 
 #Windowsの判定
@@ -51,6 +51,9 @@ $script:binDir = $(Join-Path $scriptRoot '..\bin')
 $script:dbDir = $(Join-Path $scriptRoot '..\db')
 $script:libDir = $(Join-Path $scriptRoot '..\lib')
 $script:imgDir = $(Join-Path $scriptRoot '..\img')
+
+#トースト通知用画像のパス
+$script:toastAppLogo = Convert-Path (Join-Path $script:imgDir 'TVerRec-Toast.png')
 
 #ダウンロード対象ジャンルリストのパス
 $script:keywordFilePath = $(Join-Path $script:confDir 'keyword.conf')

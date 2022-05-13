@@ -97,7 +97,7 @@ try {
 Write-ColorOutput ''
 Write-ColorOutput '===========================================================================' Cyan
 Write-ColorOutput '---------------------------------------------------------------------------' Cyan
-Write-ColorOutput '  TVerRec : TVerビデオダウンローダ                                         ' Cyan
+Write-ColorOutput "  $script:appName : TVerビデオダウンローダ                                 " Cyan
 Write-ColorOutput "                      一括ダウンロード版 version. $script:appVersion       " Cyan
 Write-ColorOutput '---------------------------------------------------------------------------' Cyan
 Write-ColorOutput '===========================================================================' Cyan
@@ -132,8 +132,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 	$local:keywordNum = $local:keywordNum + 1		#キーワード数のインクリメント
 
 	if ($local:timer.Elapsed.TotalMilliseconds -ge 1000) {
-		Write-Progress `
-			-Id 1 `
+		Write-Progress -Id 1 `
 			-Activity "$($local:keywordNum)/$($local:keywordTotal)" `
 			-PercentComplete $($( $local:keywordNum / $local:keywordTotal ) * 100) `
 			-Status 'キーワードの動画を取得中'

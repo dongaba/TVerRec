@@ -29,11 +29,12 @@
 #----------------------------------------------------------------------
 #統計取得
 #----------------------------------------------------------------------
-function collectStatistics ($local:key) {
+function collectStat ($local:key) {
 	$progressPreference = 'silentlyContinue'
-	$local:statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/' 
-	try { Invoke-WebRequest "$($local:statisticsBase)$($local:key).svg" | Out-Null } catch { }
-	$progressPreference = 'Continue'
+	$local:statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
+	try { Invoke-WebRequest "$($local:statisticsBase)$($local:key).svg" | Out-Null }
+	catch { }
+	finally { $progressPreference = 'Continue' }
 }
 
 #----------------------------------------------------------------------
@@ -49,19 +50,13 @@ function checkLatestTVerRec {
 	#TVerRecの最新バージョン取得
 	try {
 		$local:latestVersion = $((Invoke-WebRequest -Uri $local:releases | ConvertFrom-Json) `
-			| Where-Object { $_.prerelease -eq $false } )[0].name 
+			| Where-Object { $_.prerelease -eq $false } )[0].name
 	} catch { return }
 	$local:latestVersion = $local:latestVersion.Substring(1, $local:latestVersion.Length - 1)
 
 	if ($local:latestVersion -gt $script:appVersion ) {
 		Write-ColorOutput "TVerRecの更新版があるようです。 Version $script:appVersion → Version $local:latestVersion" Green
-		if ($script:isWin) {
-			ShowToast `
-				'TVerRecの更新版があるようです' `
-				"Version $script:appVersion → Version $local:latestVersion" `
-				'long' `
-				$false
-		}
+		ShowToast 'TVerRecの更新版があるようです' "Version $script:appVersion → $local:latestVersion" 'long' $false
 	}
 	$progressPreference = 'Continue'
 }
@@ -522,36 +517,36 @@ function getVideoLinksFromKeyword ($local:keywordName) {
 		#saveGenrePage $script:keywordName						#デバッグ用ジャンルページの保存
 	} elseif ($local:keywordName.IndexOf('talents/') -eq 0) {
 		#タレントIDによるタレント検索からビデオページのLinkを取得
-		collectStatistics 'talent'
+		collectStat 'talent'
 		$local:talentID = removeCommentsFromKeyword($local:keywordName).Replace('talents/', '').Trim()
-		try { $script:videoLinks = getVideoLinkFromTalentID ($local:talentID) } 
+		try { $script:videoLinks = getVideoLinkFromTalentID ($local:talentID) }
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} elseif ($local:keywordName.IndexOf('series/') -eq 0) {
 		#番組IDによる番組検索からビデオページのLinkを取得
-		collectStatistics 'series'
+		collectStat 'series'
 		$local:seriesID = removeCommentsFromKeyword($local:keywordName).Replace('series/', '').Trim()
-		try { $script:videoLinks = getVideoLinkFromSeriesID ($local:seriesID) } 
+		try { $script:videoLinks = getVideoLinkFromSeriesID ($local:seriesID) }
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} elseif ($local:keywordName.IndexOf('toppage') -eq 0) {
 		#トップページからビデオページのLinkを取得
-		collectStatistics 'toppage'
-		try { $script:videoLinks = getVideoLinkFromTopPage } 
+		collectStat 'toppage'
+		try { $script:videoLinks = getVideoLinkFromTopPage }
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} elseif ($local:keywordName.IndexOf('id/') -eq 0) {
 		#ジャンルIDなどによる新着検索からビデオページのLinkを取得
-		collectStatistics 'id'
+		collectStat 'id'
 		$local:tagID = removeCommentsFromKeyword($local:keywordName).Replace('id/', '').Trim()
-		try { $script:videoLinks = getVideoLinkFromGenreID ($local:tagID) } 
+		try { $script:videoLinks = getVideoLinkFromGenreID ($local:tagID) }
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} elseif ($local:keywordName.IndexOf('title/') -eq 0) {
 		#番組名による新着検索からビデオページのLinkを取得
-		collectStatistics 'title'
+		collectStat 'title'
 		$local:titleName = removeCommentsFromKeyword($local:keywordName).Replace('title/', '').Trim()
-		try { $script:videoLinks = getVideoLinkFromTitle ($local:titleName) } 
+		try { $script:videoLinks = getVideoLinkFromTitle ($local:titleName) }
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} else {
 		#タレント名や番組名などURL形式でない場合APIで検索結果からビデオページのLinkを取得
-		collectStatistics 'free'
+		collectStat 'free'
 		try { $script:videoLinks = getVideoLinkFromFreeKeyword ($local:keywordName) }
 		catch { Write-ColorOutput 'TVerから検索結果を取得できませんでした。スキップします' Green ; continue }
 	}
@@ -590,7 +585,7 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 
 	#TVerのAPIを叩いてビデオ情報取得
 	try {
-		collectStatistics 'process'
+		collectStat 'process'
 		getToken
 		getVideoInfo ($script:videoLink)
 	} catch {
@@ -735,7 +730,7 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 		}
 
 		#youtube-dl起動
-		try { executeYtdl $script:videoPageURL } 
+		try { executeYtdl $script:videoPageURL }
 		catch { Write-ColorOutput 'youtube-dlの起動に失敗しました' Green }
 		Start-Sleep -Seconds 5			#5秒待機
 
@@ -743,9 +738,12 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 
 }
 
-try { Invoke-WebRequest 'https://github.com/dongaba/TVerRec/blob/master/db/tver.lock' | Out-Null } catch { }
-collectStatistics 'launch'
-if ($script:isWin) { collectStatistics 'win' ; if ($PSEdition -eq 'Core') { collectStatistics 'core' }	else { collectStatistics 'desktop' } }
-elseif ($IsLinux) { collectStatistics 'linux' ; collectStatistics 'core' }
-elseif ($IsMacOS) { collectStatistics 'mac' ; collectStatistics 'core' }
-else { collectStatistics 'unknown' }
+$progressPreference = 'silentlyContinue'
+try { Invoke-WebRequest 'https://github.com/dongaba/TVerRec/blob/master/db/tver.lock' | Out-Null }
+catch { }
+finally { $progressPreference = 'Continue' }
+collectStat 'launch'
+if ($script:isWin) { collectStat 'win' ; if ($PSEdition -eq 'Core') { collectStat 'core' } else { collectStat 'desktop' } }
+elseif ($IsLinux) { collectStat 'linux' ; collectStat 'core' }
+elseif ($IsMacOS) { collectStat 'mac' ; collectStat 'core' }
+else { collectStat 'unknown' }

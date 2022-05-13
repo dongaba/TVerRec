@@ -95,10 +95,7 @@ try {
 #メイン処理
 
 #======================================================================
-#1/3 ダウンロードが中断した際にできたゴミファイルは削除
-Write-ColorOutput '----------------------------------------------------------------------'
-Write-ColorOutput 'ダウンロードが中断した際にできたゴミファイルを削除します'
-Write-ColorOutput '----------------------------------------------------------------------'
+#半日以上前のログファイル・ロックファイルを削除
 try {
 	$script:ffmpegErrorLogDir = Split-Path $script:ffpmegErrorLogPath
 	Get-ChildItem -Path $script:ffmpegErrorLogDir -Recurse -Filter 'ffmpeg_error_*.log' `
@@ -110,38 +107,39 @@ try {
 	| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-0.5) } `
 	| Remove-Item -Force -ErrorAction SilentlyContinue
 } catch { Write-ColorOutput 'youtube-dlのロックファイルを削除できませんでした' Green }
+
+#======================================================================
+#1/3 ダウンロードが中断した際にできたゴミファイルは削除
+Write-ColorOutput '----------------------------------------------------------------------'
+Write-ColorOutput 'ダウンロードが中断した際にできたゴミファイルを削除します'
+Write-ColorOutput '----------------------------------------------------------------------'
 Write-Progress -Id 1 `
 	-Activity '処理 1/3' `
 	-PercentComplete $($( 1 / 3 ) * 100) `
 	-Status 'ゴミファイルを削除'
+ShowProgressToast 'ファイルの掃除中' '  処理1/3 - ダウンロード中断時のゴミファイルを削除' '' "$($script:appName)" 'Delete' 'long' $false
 Write-Progress -Id 2 -ParentId 1 `
 	-Activity '1/3' `
 	-PercentComplete $($( 1 / 3 ) * 100) `
 	-Status $script:downloadBaseDir
-if ($script:isWin) {
-	ShowProgressToast 'ファイルの掃除中' '  1/3 - ダウンロード中断時のゴミファイルを削除' '' 'TVerRec' 'Delete' 'long' $false
-}
-if ($script:isWin) {
-	UpdateProgessToast "$($script:downloadWorkDir)" "$($( 1 / 3 ))" '' '' 'TVerRec' 'Delete'
-}
+UpdateProgessToast "$($script:downloadWorkDir)" "$($( 1 / 3 ))" '' '' "$($script:appName)" 'Delete'
+
 deleteTrashFiles $script:downloadWorkDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.mp4'
 
 Write-Progress -Id 2 -ParentId 1 `
 	-Activity '2/3' `
 	-PercentComplete $($( 2 / 3 ) * 100) `
 	-Status $script:downloadWorkDir
-if ($script:isWin) {
-	UpdateProgessToast "$($script:downloadBaseDir)" "$($( 2 / 3 ))" '' '' 'TVerRec' 'Delete'
-}
+UpdateProgessToast "$($script:downloadBaseDir)" "$($( 2 / 3 ))" '' '' "$($script:appName)" 'Delete'
+
 deleteTrashFiles $script:downloadBaseDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*'
 
 Write-Progress -Id 2 -ParentId 1 `
 	-Activity '3/3' `
 	-PercentComplete $($( 3 / 3 ) * 100) `
 	-Status $script:saveBaseDir
-if ($script:isWin) {
-	UpdateProgessToast "$($script:saveBaseDir)" "$($( 3 / 3 ))" '' '' 'TVerRec' 'Delete'
-}
+UpdateProgessToast "$($script:saveBaseDir)" "$($( 3 / 3 ))" '' '' "$($script:appName)" 'Delete'
+
 deleteTrashFiles $script:saveBaseDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*'
 
 #======================================================================
@@ -153,9 +151,7 @@ Write-Progress -Id 1 `
 	-Activity '処理 2/3' `
 	-PercentComplete $($( 2 / 3 ) * 100) `
 	-Status '削除対象のビデオを削除'
-if ($script:isWin) {
-	ShowProgressToast 'ファイルの掃除中' '  2/3 - 削除対象のビデオを削除' '' 'TVerRec' 'Delete' 'long' $false
-}
+ShowProgressToast 'ファイルの掃除中' '  処理2/3 - 削除対象のビデオを削除' '' "$($script:appName)" 'Delete' 'long' $false
 
 #ダウンロード対象外ビデオ番組リストの読み込み
 $local:ignoreTitles = (Get-Content $script:ignoreFilePath -Encoding UTF8 `
@@ -175,7 +171,7 @@ foreach ($local:ignoreTitle in $local:ignoreTitles) {
 	$local:secondsRemaining = -1
 	if ($local:ignoreNum -ne 0) {
 		$local:secondsRemaining = ($local:secondsElapsed.TotalSeconds / $local:ignoreNum) * ($local:ignoreTotal - $local:ignoreNum)
-		$local:minutesRemaining = "$([String]([math]::Ceiling($local:secondsRemaining / 60)))分" 
+		$local:minutesRemaining = "$([String]([math]::Ceiling($local:secondsRemaining / 60)))分"
 	} else { $local:minutesRemaining = '計算中...' }
 	$local:ignoreNum = $local:ignoreNum + 1
 
@@ -183,10 +179,8 @@ foreach ($local:ignoreTitle in $local:ignoreTitles) {
 		-Activity "$($local:ignoreNum)/$($local:ignoreTotal)" `
 		-PercentComplete $($( $local:ignoreNum / $local:ignoreTotal ) * 100) `
 		-Status $local:ignoreTitle
-	if ($script:isWin) {
-		UpdateProgessToast "$($local:ignoreTitle)" "$( $local:ignoreNum / $local:ignoreTotal )" `
-			"$($local:ignoreNum)/$($local:ignoreTotal)" "残り時間 $local:minutesRemaining" 'TVerRec' 'Delete'
-	}
+	UpdateProgessToast "$($local:ignoreTitle)" "$( $local:ignoreNum / $local:ignoreTotal )" `
+		"$($local:ignoreNum)/$($local:ignoreTotal)" "残り時間 $local:minutesRemaining" "$($script:appName)" 'Delete'
 
 	Write-ColorOutput '----------------------------------------------------------------------'
 	Write-ColorOutput "$($local:ignoreTitle)を処理中"
@@ -208,7 +202,6 @@ foreach ($local:ignoreTitle in $local:ignoreTitles) {
 }
 #----------------------------------------------------------------------
 
-
 #======================================================================
 #3/3 空フォルダと隠しファイルしか入っていないフォルダを一気に削除
 Write-ColorOutput '----------------------------------------------------------------------'
@@ -217,9 +210,8 @@ Write-ColorOutput '-------------------------------------------------------------
 Write-Progress -Id 1 -Activity '処理 3/3' `
 	-PercentComplete $($( 3 / 3 ) * 100) `
 	-Status '空フォルダを削除'
-if ($script:isWin) {
-	ShowProgressToast 'ファイルの掃除中' '  3/3 - 空フォルダを削除' '' 'TVerRec' 'Delete' 'long' $false
-}
+ShowProgressToast 'ファイルの掃除中' '  処理3/3 - 空フォルダを削除' '' "$($script:appName)" 'Delete' 'long' $false
+
 
 $local:allSubDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer })).FullName `
 | Sort-Object -Descending
@@ -236,7 +228,7 @@ foreach ($local:subDir in $local:allSubDirs) {
 	$local:secondsRemaining = -1
 	if ($local:subDirNum -ne 0) {
 		$local:secondsRemaining = ($local:secondsElapsed.TotalSeconds / $local:subDirNum) * ($local:subDirTotal - $local:subDirNum)
-		$local:minutesRemaining = "$([String]([math]::Ceiling($local:secondsRemaining / 60)))分" 
+		$local:minutesRemaining = "$([String]([math]::Ceiling($local:secondsRemaining / 60)))分"
 	} else { $local:minutesRemaining = '計算中...' }
 	$local:subDirNum = $local:subDirNum + 1
 
@@ -244,10 +236,8 @@ foreach ($local:subDir in $local:allSubDirs) {
 		-Activity "$($local:subDirNum)/$($local:subDirTotal)" `
 		-PercentComplete $($( $local:subDirNum / $local:subDirTotal ) * 100) `
 		-Status $local:subDir
-	if ($script:isWin) {
-		UpdateProgessToast "$($local:subDir)" "$( $local:subDirNum / $local:subDirTotal )" `
-			"$($local:subDirNum)/$($local:subDirTotal)" "残り時間 $local:minutesRemaining" 'TVerRec' 'Delete'
-	}
+	UpdateProgessToast "$($local:subDir)" "$( $local:subDirNum / $local:subDirTotal )" `
+		"$($local:subDirNum)/$($local:subDirTotal)" "残り時間 $local:minutesRemaining" "$($script:appName)" 'Delete'
 
 	Write-ColorOutput '----------------------------------------------------------------------'
 	Write-ColorOutput "$($local:subDir)を処理中"
@@ -260,4 +250,6 @@ foreach ($local:subDir in $local:allSubDirs) {
 	}
 }
 #----------------------------------------------------------------------
+
+UpdateProgessToast '' '1' '' '' "$($script:appName)" 'Delete'
 

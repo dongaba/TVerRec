@@ -97,7 +97,7 @@ try {
 Write-ColorOutput ''
 Write-ColorOutput '===========================================================================' Cyan
 Write-ColorOutput '---------------------------------------------------------------------------' Cyan
-Write-ColorOutput '  TVerRec : TVerビデオダウンローダ                                         ' Cyan
+Write-ColorOutput "  $script:appName : TVerビデオダウンローダ                                 " Cyan
 Write-ColorOutput "                      個別ダウンロード版 version. $script:appVersion       " Cyan
 Write-ColorOutput '---------------------------------------------------------------------------' Cyan
 Write-ColorOutput '===========================================================================' Cyan
@@ -112,10 +112,9 @@ checkRequiredFile			#設定で指定したファイル・フォルダの存在�
 #checkGeoIP					#日本のIPアドレスでないと接続不可のためIPアドレスをチェック
 $local:keywordName = 'URL指定'
 
-#----------------------------------------------------------------------
 #無限ループ
 while ($true) {
-	collectStatistics 'single'
+	collectStat 'single'
 	#いろいろ初期化
 	$local:videoPageURL = ''
 
@@ -123,14 +122,21 @@ while ($true) {
 	if (Test-Path $script:downloadBaseDir -PathType Container) { }
 	else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します' ; exit 1 }
 
-	$local:videoPageURL = Read-Host 'ビデオURLを入力してください。'
-	if ($videoPageURL -eq '') { exit }
-	$local:videoLink = $local:videoPageURL.Replace('https://tver.jp', '').Trim()
-	$local:videoPageURL = 'https://tver.jp' + $local:videoLink
-	Write-ColorOutput $local:videoPageURL
+	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
+	waitTillYtdlProcessGetFewer $script:parallelDownloadFileNum
 
-	downloadTVerVideo $local:keywordName $local:videoPageURL $local:videoLink				#TVerビデオダウンロードのメイン処理
+	$local:videoPageURL = Read-Host 'ビデオURLを入力してください。何もにゅうりょくしないで Enter を押すと終了します。'
+	if ($videoPageURL -ne '') {
+		$local:videoLink = $local:videoPageURL.Replace('https://tver.jp', '').Trim()
+		$local:videoPageURL = 'https://tver.jp' + $local:videoLink
+		Write-ColorOutput $local:videoPageURL
 
-	Write-ColorOutput '処理を終了しました。'
+		#TVerビデオダウンロードのメイン処理
+		downloadTVerVideo $local:keywordName $local:videoPageURL $local:videoLink
+	} else { 
+		Write-ColorOutput '---------------------------------------------------------------------------' Cyan
+		Write-ColorOutput '処理を終了しました。                                                       ' Cyan
+		Write-ColorOutput '---------------------------------------------------------------------------' Cyan
+		exit
+	}
 }
-#----------------------------------------------------------------------

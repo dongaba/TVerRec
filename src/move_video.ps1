@@ -102,45 +102,57 @@ if (Test-Path $script:saveBaseDir -PathType Container) { }
 else { Write-Error 'ビデオ移動先フォルダにアクセスできません。終了します。' Green ; exit 1 }
 
 #======================================================================
-#1/2 移動先フォルダを起点として、配下のフォルダを取得
-Write-ColorOutput '==========================================================================='
-Write-ColorOutput 'ビデオファイルを移動しています'
-Write-ColorOutput '==========================================================================='
-Write-Progress `
-	-Id 1 `
-	-Activity '処理 1/2' `
+#1/3 移動先フォルダを起点として、配下のフォルダを取得
+Write-ColorOutput '----------------------------------------------------------------------'
+Write-ColorOutput '移動先フォルダの一覧を作成しています'
+Write-ColorOutput '----------------------------------------------------------------------'
+Write-Progress -Id 1 `
+	-Activity '処理 1/3' `
 	-PercentComplete $($( 1 / 4 ) * 100) `
 	-Status 'フォルダ一覧を作成中'
+ShowProgressToast '動画の移動中' '  処理1/3 - フォルダ一覧を作成' '' "$($script:appName)" 'Move' 'long' $false
 
 $local:moveToPaths = Get-ChildItem $script:saveBaseDir -Recurse `
 | Where-Object { $_.PSIsContainer } `
 | Sort-Object
+
+#======================================================================
+#2/3 移動先フォルダと同名のフォルダ配下の動画を移動
+Write-ColorOutput '----------------------------------------------------------------------'
+Write-ColorOutput 'ビデオファイルを移動しています'
+Write-ColorOutput '----------------------------------------------------------------------'
+Write-Progress -Id 1 `
+	-Activity '処理 2/3' `
+	-PercentComplete $($( 1 / 2 ) * 100) `
+	-Status 'ファイルを移動中'
+ShowProgressToast '動画の移動中' '  処理2/3 - 動画ファイルを移動' '' "$($script:appName)" 'Move' 'long' $false
 
 $local:moveToPathNum = 0						#移動先パス番号
 if ($local:moveToPaths -is [array]) {
 	$local:moveToPathTotal = $local:moveToPaths.Length	#移動先パス合計数
 } else { $local:moveToPathTotal = 1 }
 
-Write-Progress `
-	-Id 1 `
-	-Activity '処理 1/2' `
-	-PercentComplete $($( 1 / 2 ) * 100) `
-	-Status 'ファイルを移動中'
-if ($script:isWin) {
-	ShowProgressToast '動画の移動中' '' '残り時間計算中' 'TVerRec' 'Move' 'long' $false
-}
-
+#----------------------------------------------------------------------
+$local:totalStartTime = Get-Date
 foreach ($local:moveToPath in $local:moveToPaths.FullName) {
-	Write-ColorOutput '----------------------------------------------------------------------'
-	Write-ColorOutput "$local:moveToPath を処理中"
+
+	$local:secondsElapsed = (Get-Date) - $local:totalStartTime
+	$local:secondsRemaining = -1
+	if ($local:moveToPathNum -ne 0) {
+		$local:secondsRemaining = ($local:secondsElapsed.TotalSeconds / $local:moveToPathNum) * ($local:moveToPathTotal - $local:moveToPathNum)
+		$local:minutesRemaining = "$([String]([math]::Ceiling($local:secondsRemaining / 60)))分"
+	} else { $local:minutesRemaining = '計算中...' }
 	$local:moveToPathNum = $local:moveToPathNum + 1
-	Write-Progress `
-		-Id 2 `
-		-ParentId 1 `
+
+	Write-Progress -Id 2 -ParentId 1 `
 		-Activity "$($local:moveToPathNum)/$($local:moveToPathTotal)" `
 		-PercentComplete $($( $local:moveToPathNum / $local:moveToPathTotal ) * 100) `
 		-Status $local:moveToPath
+	UpdateProgessToast "$($local:moveToPath)" "$( $local:moveToPathNum / $local:moveToPathTotal )" `
+		"$($local:moveToPathNum)/$($local:moveToPathTotal)" "残り時間 $local:minutesRemaining" "$($script:appName)" 'Move'
 
+	Write-ColorOutput '----------------------------------------------------------------------'
+	Write-ColorOutput "$($local:moveToPath)を処理中"
 	$local:targetFolderName = Split-Path -Leaf $local:moveToPath
 	#同名フォルダが存在する場合は配下のファイルを移動
 	$local:moveFromPath = $(Join-Path $script:downloadBaseDir $local:targetFolderName)
@@ -152,17 +164,18 @@ foreach ($local:moveToPath in $local:moveToPaths.FullName) {
 		} catch { Write-ColorOutput '移動できないファイルがありました' Green }
 	}
 }
+#----------------------------------------------------------------------
 
 #======================================================================
-#2/2 空フォルダと隠しファイルしか入っていないフォルダを一気に削除
+#3/3 空フォルダと隠しファイルしか入っていないフォルダを一気に削除
 Write-ColorOutput '----------------------------------------------------------------------'
-Write-ColorOutput '空フォルダ と 隠しファイルしか入っていないフォルダを削除します'
+Write-ColorOutput '空フォルダを削除します'
 Write-ColorOutput '----------------------------------------------------------------------'
-Write-Progress `
-	-Id 1 `
-	-Activity '処理 2/2' `
+Write-Progress -Id 1 `
+	-Activity '処理 3/3' `
 	-PercentComplete $($( 2 / 2 ) * 100) `
 	-Status '空フォルダを削除'
+ShowProgressToast '動画の移動中' '  処理3/3 - 空フォルダを削除' '残り時間計算中' "$($script:appName)" 'Move' 'long' $false
 
 $local:allSubDirs = @((Get-ChildItem -Path $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer })).FullName `
 | Sort-Object -Descending
@@ -172,14 +185,23 @@ if ($local:allSubDirs -is [array]) {
 	$local:subDirTotal = $local:allSubDirs.Length	#サブディレクトリの合計数
 } else { $local:subDirTotal = 1 }
 
+#----------------------------------------------------------------------
+$local:totalStartTime = Get-Date
 foreach ($local:subDir in $local:allSubDirs) {
+	$local:secondsElapsed = (Get-Date) - $local:totalStartTime
+	$local:secondsRemaining = -1
+	if ($local:subDirNum -ne 0) {
+		$local:secondsRemaining = ($local:secondsElapsed.TotalSeconds / $local:subDirNum) * ($local:subDirTotal - $local:subDirNum)
+		$local:minutesRemaining = "$([String]([math]::Ceiling($local:secondsRemaining / 60)))分"
+	} else { $local:minutesRemaining = '計算中...' }
 	$local:subDirNum = $local:subDirNum + 1
-	Write-Progress `
-		-Id 2 `
-		-ParentId 1 `
+
+	Write-Progress -Id 2 -ParentId 1 `
 		-Activity "$($local:subDirNum)/$($local:subDirTotal)" `
 		-PercentComplete $($( $local:subDirNum / $local:subDirTotal ) * 100) `
 		-Status $local:subDir
+	UpdateProgessToast "$($local:subDir)" "$( $local:subDirNum / $local:subDirTotal )" `
+		"$($local:subDirNum)/$($local:subDirTotal)" "残り時間 $local:minutesRemaining" "$($script:appName)" 'Delete'
 
 	Write-ColorOutput '----------------------------------------------------------------------'
 	Write-ColorOutput "$($local:subDir)を処理中"
@@ -192,4 +214,6 @@ foreach ($local:subDir in $local:allSubDirs) {
 		} catch { Write-ColorOutput "空フォルダの削除に失敗しました: $local:subDir" Green }
 	}
 }
+#----------------------------------------------------------------------
 
+UpdateProgessToast '' '1' '' '' "$($script:appName)" 'Move'

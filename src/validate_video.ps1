@@ -94,19 +94,25 @@ try {
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
 
-#----------------------------------------------------------------------
+#======================================================================
 #動作環境チェック
 checkLatestFfmpeg					#ffmpegの最新化チェック
 checkRequiredFile					#設定で指定したファイル・フォルダの存在チェック
 
-Write-ColorOutput '==========================================================================='
+#======================================================================
+#リストファイルのクリーンアップ
+Write-ColorOutput '----------------------------------------------------------------------'
 Write-ColorOutput '30日以上前に処理したものはリストから削除します'
-Write-ColorOutput '==========================================================================='
+Write-ColorOutput '----------------------------------------------------------------------'
+ShowProgressToast '動画のチェック中' '  処理1/4 - 30日以上前のリストを削除' '' "$($script:appName)" 'Validate' 'long' $false
+
 purgeDB								#30日以上前に処理したものはリストから削除
 
-Write-ColorOutput '==========================================================================='
+Write-ColorOutput '----------------------------------------------------------------------'
 Write-ColorOutput '重複レコードを削除します'
-Write-ColorOutput '==========================================================================='
+Write-ColorOutput '----------------------------------------------------------------------'
+ShowProgressToast '動画のチェック中' '  処理2/4 - 重複レコードを削除' '' "$($script:appName)" 'Validate' 'long' $false
+
 uniqueDB							#リストの重複削除
 
 if ($script:disableValidation -eq $true) {
@@ -114,10 +120,11 @@ if ($script:disableValidation -eq $true) {
 	exit 0
 }
 
+#======================================================================
 #録画リストからビデオチェックが終わっていないものを読み込み
-Write-ColorOutput '==========================================================================='
+Write-ColorOutput '----------------------------------------------------------------------'
 Write-ColorOutput '録画リストからチェックが終わっていないビデオを検索します'
-Write-ColorOutput '==========================================================================='
+Write-ColorOutput '----------------------------------------------------------------------'
 try {
 	#ロックファイルをロック
 	while ($(fileLock ($script:lockFilePath)).fileLocked -ne $true) {
@@ -134,10 +141,14 @@ try {
 
 
 if ($null -eq $local:videoLists) {
+	#======================================================================
+	#チェックする動画なし
 	Write-ColorOutput '----------------------------------------------------------------------'
 	Write-ColorOutput 'すべてのビデオをチェック済みです'
 	Write-ColorOutput '----------------------------------------------------------------------'
 } else {
+	#======================================================================
+	#動画ファイルをチェック
 	Write-ColorOutput '----------------------------------------------------------------------'
 	Write-ColorOutput '以下のビデオをチェックします'
 	Write-ColorOutput '----------------------------------------------------------------------'
@@ -168,14 +179,11 @@ if ($null -eq $local:videoLists) {
 	}
 
 	$local:completionPercent = 0
-	Write-Progress `
-		-Id 1 `
+	Write-Progress -Id 1 `
 		-Activity '動画のチェック中' `
 		-PercentComplete $local:completionPercent `
 		-Status '残り時間計算中'
-	if ($script:isWin) {
-		ShowProgressToast '動画のチェック中' '' '残り時間計算中' 'TVerRec' 'Validate' 'long' $false
-	}
+	ShowProgressToast '動画のチェック中' '  処理3/4 - 動画を検証' '残り時間計算中' "$($script:appName)" 'Validate' 'long' $false
 
 	#----------------------------------------------------------------------
 	$local:totalStartTime = Get-Date
@@ -188,7 +196,7 @@ if ($null -eq $local:videoLists) {
 		if ($local:validateNum -ne 0) {
 			$local:completionPercent = $($( $local:validateNum / $local:validateTotal ) * 100)
 			$local:secondsRemaining = ($local:secondsElapsed.TotalSeconds / $local:validateNum) * ($local:validateTotal - $local:validateNum)
-			$local:minutesRemaining = "$([String]([math]::Ceiling($local:secondsRemaining / 60)))分" 
+			$local:minutesRemaining = "$([String]([math]::Ceiling($local:secondsRemaining / 60)))分"
 		} else { $local:minutesRemaining = '計算中...' }
 		$local:validateNum = $local:validateNum + 1
 
@@ -196,16 +204,13 @@ if ($null -eq $local:videoLists) {
 		if (Test-Path $script:downloadBaseDir -PathType Container) { }
 		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' Green ; exit 1 }
 
-		Write-Progress `
-			-Id 1 `
+		Write-Progress -Id 1 `
 			-Activity "$($local:validateNum)/$($local:validateTotal)" `
 			-PercentComplete $local:completionPercent `
 			-Status $local:videoFileRelativePath `
 			-SecondsRemaining $local:secondsRemaining
-		if ($script:isWin) {
-			UpdateProgessToast "$($local:videoFileRelativePath)" "$( $local:validateNum / $local:validateTotal )" `
-				"$($local:validateNum)/$($local:validateTotal)本目" "残り時間 $local:minutesRemaining" 'TVerRec' 'Validate'
-		}
+		UpdateProgessToast "$($local:videoFileRelativePath)" "$( $local:validateNum / $local:validateTotal )" `
+			"$($local:validateNum)/$($local:validateTotal)" "残り時間 $local:minutesRemaining" "$($script:appName)" 'Validate'
 
 		Write-ColorOutput "$($local:videoFileRelativePath)をチェックします"
 		checkVideo $local:decodeOption $local:videoFileRelativePath		#ビデオの整合性チェック
@@ -215,10 +220,13 @@ if ($null -eq $local:videoLists) {
 
 }
 
-#録画リストからビデオチェックが終わっていないものを読み込み
-Write-ColorOutput '==========================================================================='
+#======================================================================
+#録画リストからビデオチェックが終わっていないもののステータスを初期化
+Write-ColorOutput '----------------------------------------------------------------------'
 Write-ColorOutput '録画リストからチェックが終わっていないビデオのステータスを変更します'
-Write-ColorOutput '==========================================================================='
+Write-ColorOutput '----------------------------------------------------------------------'
+ShowProgressToast '動画のチェック中' '  処理4/4 - 未検証の動画のステータスを変更' '' "$($script:appName)" 'Validate' 'long' $false
+
 try {
 	#ロックファイルをロック
 	while ($(fileLock ($script:lockFilePath)).fileLocked -ne $true) {
@@ -234,3 +242,5 @@ try {
 	| Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
 } catch { Write-ColorOutput 'リストの更新に失敗しました' Green
 } finally { $null = fileUnlock ($script:lockFilePath) }
+
+UpdateProgessToast '' '1' '' '' "$($script:appName)" 'Validate'
