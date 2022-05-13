@@ -140,7 +140,6 @@ foreach ($local:keywordName in $local:keywordNames) {
 		$local:timer.Reset(); $local:timer.Start()
 	}
 
-	getToken
 	$local:videoLinks = getVideoLinksFromKeyword ($local:keywordName)
 	$local:keywordName = $local:keywordName.Replace('https://tver.jp/', '')
 
@@ -172,7 +171,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 		Write-ColorOutput '----------------------------------------------------------------------'
 
 		#保存先ディレクトリの存在確認
-		if (Test-Path $script:downloadBaseDir -PathType Container) {}
+		if (Test-Path $script:downloadBaseDir -PathType Container) { }
 		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します' Green ; exit 1 }
 
 		#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
@@ -181,7 +180,8 @@ foreach ($local:keywordName in $local:keywordNames) {
 		$local:videoPageURL = 'https://tver.jp' + $local:videoLink
 		Write-ColorOutput $local:videoPageURL
 
-		downloadTVerVideo $local:keywordName $local:videoPageURL $local:videoLink				#TVerビデオダウンロードのメイン処理
+		#TVerビデオダウンロードのメイン処理
+		downloadTVerVideo $local:keywordName $local:videoPageURL $local:videoLink
 
 		Start-Sleep -Seconds 1
 	}
