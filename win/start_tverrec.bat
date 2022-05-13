@@ -44,11 +44,11 @@ rem PIDファイルを作成するする
 for /f "tokens=2" %%i in ('tasklist /FI "WINDOWTITLE eq TVerRec" /NH') do set myPID=%%i
 echo %myPID% > %PIDFile% 2> nul
 
-rem 文字コードをWindows PowerShell用にUTF8-BOMなしファイルを作成する
-powershell -Command "$allPosh5Files = @(Get-ChildItem -Path '../' -Recurse -File -Filter '*_5.ps1' ).FullName ; foreach ($posh5File in $allPosh5Files) { Remove-Item $posh5File -Force }" 2> nul
-powershell -Command "$allPoshFiles = @(Get-ChildItem -Path '../' -Recurse -File -Filter '*.ps1' ).FullName ; foreach ($poshFile in $allPoshFiles) { $posh5File = $poshFile.Replace('.ps1' , '_5.ps1'); Get-Content -Encoding:utf8 $poshFile | Out-File -Encoding:utf8 $posh5File -Force }" 2>&1
+:LOOP
 
-:Loop
+	rem 文字コードをWindows PowerShell用にUTF8-BOMなしファイルを作成する
+	powershell -Command "$allPosh5Files = @(Get-ChildItem -Path '../' -Recurse -File -Filter '*_5.ps1' ).FullName ; foreach ($posh5File in $allPosh5Files) { Remove-Item $posh5File -Force }" 2> nul
+	powershell -Command "$allPoshFiles = @(Get-ChildItem -Path '../' -Recurse -File -Filter '*.ps1' ).FullName ; foreach ($poshFile in $allPoshFiles) { $posh5File = $poshFile.Replace('.ps1' , '_5.ps1'); Get-Content -Encoding:utf8 $poshFile | Out-File -Encoding:utf8 $posh5File -Force }" 2>&1
 
 	if exist "C:\Program Files\PowerShell\7\pwsh.exe" (
 		pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\tverrec_bulk.ps1
@@ -56,7 +56,9 @@ powershell -Command "$allPoshFiles = @(Get-ChildItem -Path '../' -Recurse -File 
 		powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\tverrec_bulk_5.ps1
 	)
 
-:ProcessChecker
+	goto :PROCESSCHECKER
+
+:PROCESSCHECKER
 	rem youtube-dlプロセスチェック
 	tasklist | findstr /i "ffmpeg youtube-dl" > nul 2>&1
 	if %ERRORLEVEL% == 0 (
@@ -64,7 +66,7 @@ powershell -Command "$allPoshFiles = @(Get-ChildItem -Path '../' -Recurse -File 
 		tasklist /v | findstr /i "ffmpeg youtube-dl" 2> nul
 		echo %retryTime%秒待機します...
 		timeout /T %retryTime% /nobreak > nul 2> nul
-		goto ProcessChecker
+		goto :PROCESSCHECKER
 	)
 
 	where /Q pwsh
@@ -82,14 +84,14 @@ powershell -Command "$allPoshFiles = @(Get-ChildItem -Path '../' -Recurse -File 
 		powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\delete_trash_5.ps1
 	)
 
-	echo %sleepTime%秒待機します...
-	timeout /T %sleepTime% /nobreak > nul
-
-	goto Loop
-
-:End
-	rem PIDファイルを削除する
-	del %PIDFile% 2> nul
 	rem Windows PowerShell用に作成したUTF8-BOMなしファイルを削除する
 	powershell -Command "$allPosh5Files = @(Get-ChildItem -Path '../' -Recurse -File -Filter '*_5.ps1' ).FullName ; foreach ($posh5File in $allPosh5Files) { Remove-Item $posh5File -Force }" 2> nul
-	pause
+
+	echo 終了するには Y と入力してください。何も入力しなければ処理を継続します。
+	choice /C YN /T %sleepTime% /D N /M "%sleepTime%秒待機します..."
+	IF ERRORLEVEL 1 goto :END
+	IF ERRORLEVEL 2 goto :LOOP
+
+:END
+	rem PIDファイルを削除する
+	del %PIDFile% 2> nul
