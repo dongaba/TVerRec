@@ -1,6 +1,6 @@
-# :tv:**TVerRec**:tv: - TVer 一括ダウンロード・保存・録画 -
-
 [![Logo](https://raw.githubusercontent.com/dongaba/TVerRec/master/img/TVerRec.png)](#readme)
+
+# :tv:**TVerRec**:tv: - TVer 一括ダウンロード・保存・録画 -
 
 [![GitHub release](https://img.shields.io/github/v/release/dongaba/TVerRec?color=blue)](https://github.com/dongaba/TVerRec/releases)
 [![License](https://img.shields.io/github/license/dongaba/TVerRec?color=blue)](https://opensource.org/licenses/MIT)
