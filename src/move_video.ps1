@@ -96,9 +96,9 @@ try {
 
 #======================================================================
 #保存先ディレクトリの存在確認
-if (Test-Path $script:downloadBaseDir -PathType Container) {}
+if (Test-Path $script:downloadBaseDir -PathType Container) { }
 else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' Green ; exit 1 }
-if (Test-Path $script:saveBaseDir -PathType Container) {}
+if (Test-Path $script:saveBaseDir -PathType Container) { }
 else { Write-Error 'ビデオ移動先フォルダにアクセスできません。終了します。' Green ; exit 1 }
 
 #======================================================================
@@ -126,8 +126,11 @@ Write-Progress `
 	-Activity '処理 1/2' `
 	-PercentComplete $($( 1 / 2 ) * 100) `
 	-Status 'ファイルを移動中'
+if ($script:isWin) {
+	ShowProgressToast '動画の移動中' '' '残り時間計算中' 'TVerRec' 'Move' 'long' $false
+}
 
-foreach ($local:moveToPath in $local:moveToPaths) {
+foreach ($local:moveToPath in $local:moveToPaths.FullName) {
 	Write-ColorOutput '----------------------------------------------------------------------'
 	Write-ColorOutput "$local:moveToPath を処理中"
 	$local:moveToPathNum = $local:moveToPathNum + 1
