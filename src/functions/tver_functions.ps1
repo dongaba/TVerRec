@@ -27,6 +27,46 @@
 ###################################################################################
 
 #----------------------------------------------------------------------
+#統計取得
+#----------------------------------------------------------------------
+function collectStatistics ($local:key) {
+	$progressPreference = 'silentlyContinue'
+	$local:statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/' 
+	try { Invoke-WebRequest "$($local:statisticsBase)$($local:key).svg" | Out-Null } catch { }
+	$progressPreference = 'Continue'
+}
+
+#----------------------------------------------------------------------
+#TVerRec最新化確認
+#----------------------------------------------------------------------
+function checkLatestTVerRec {
+	$progressPreference = 'silentlyContinue'
+
+	#githubの設定
+	$local:repo = 'dongaba/TVerRec'
+	$local:releases = "https://api.github.com/repos/$local:repo/releases"
+
+	#TVerRecの最新バージョン取得
+	try {
+		$local:latestVersion = $((Invoke-WebRequest -Uri $local:releases | ConvertFrom-Json) `
+			| Where-Object { $_.prerelease -eq $false } )[0].name 
+	} catch { return }
+	$local:latestVersion = $local:latestVersion.Substring(1, $local:latestVersion.Length - 1)
+
+	if ($local:latestVersion -gt $script:appVersion ) {
+		Write-ColorOutput "TVerRecの更新版があるようです。 Version $script:appVersion → Version $local:latestVersion" Green
+		if ($script:isWin) {
+			ShowToast `
+				'TVerRecの更新版があるようです' `
+				"Version $script:appVersion → Version $local:latestVersion" `
+				'long' `
+				$false
+		}
+	}
+	$progressPreference = 'Continue'
+}
+
+#----------------------------------------------------------------------
 #TVerのAPI Tokenを取得
 #----------------------------------------------------------------------
 function getToken () {
@@ -62,7 +102,7 @@ function getVideoLinkFromTalentID ($local:talentID) {
 	for ($i = 0; $i -lt $local:resultCount; $i++) {
 		if ($local:searchResults[$i].type -eq 'episode') {
 			$script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id
-		} else {}		#通常はepisode以外返ってこないはずなので無視
+		} else { }		#通常はepisode以外返ってこないはずなので無視
 	}
 	[System.GC]::Collect()
 	return $script:videoLinks | Sort-Object | Get-Unique
@@ -86,7 +126,7 @@ function getVideoLinkFromSeasonID ($local:SeasonID) {
 	for ($i = 0; $i -lt $local:resultCount; $i++) {
 		if ($local:searchResults[$i].type -eq 'episode') {
 			$script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id
-		} else {}		#通常はepisode以外返ってこないはずなので無視
+		} else { }		#通常はepisode以外返ってこないはずなので無視
 	}
 	[System.GC]::Collect()
 	return $script:videoLinks | Sort-Object | Get-Unique
@@ -482,30 +522,36 @@ function getVideoLinksFromKeyword ($local:keywordName) {
 		#saveGenrePage $script:keywordName						#デバッグ用ジャンルページの保存
 	} elseif ($local:keywordName.IndexOf('talents/') -eq 0) {
 		#タレントIDによるタレント検索からビデオページのLinkを取得
+		collectStatistics 'talent'
 		$local:talentID = removeCommentsFromKeyword($local:keywordName).Replace('talents/', '').Trim()
-		try { $script:videoLinks = getVideoLinkFromTalentID ($local:talentID) }
+		try { $script:videoLinks = getVideoLinkFromTalentID ($local:talentID) } 
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} elseif ($local:keywordName.IndexOf('series/') -eq 0) {
 		#番組IDによる番組検索からビデオページのLinkを取得
+		collectStatistics 'series'
 		$local:seriesID = removeCommentsFromKeyword($local:keywordName).Replace('series/', '').Trim()
-		try { $script:videoLinks = getVideoLinkFromSeriesID ($local:seriesID) }
+		try { $script:videoLinks = getVideoLinkFromSeriesID ($local:seriesID) } 
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} elseif ($local:keywordName.IndexOf('toppage') -eq 0) {
 		#トップページからビデオページのLinkを取得
-		try { $script:videoLinks = getVideoLinkFromTopPage }
+		collectStatistics 'toppage'
+		try { $script:videoLinks = getVideoLinkFromTopPage } 
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} elseif ($local:keywordName.IndexOf('id/') -eq 0) {
 		#ジャンルIDなどによる新着検索からビデオページのLinkを取得
+		collectStatistics 'id'
 		$local:tagID = removeCommentsFromKeyword($local:keywordName).Replace('id/', '').Trim()
-		try { $script:videoLinks = getVideoLinkFromGenreID ($local:tagID) }
+		try { $script:videoLinks = getVideoLinkFromGenreID ($local:tagID) } 
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} elseif ($local:keywordName.IndexOf('title/') -eq 0) {
 		#番組名による新着検索からビデオページのLinkを取得
+		collectStatistics 'title'
 		$local:titleName = removeCommentsFromKeyword($local:keywordName).Replace('title/', '').Trim()
-		try { $script:videoLinks = getVideoLinkFromTitle ($local:titleName) }
+		try { $script:videoLinks = getVideoLinkFromTitle ($local:titleName) } 
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} else {
 		#タレント名や番組名などURL形式でない場合APIで検索結果からビデオページのLinkを取得
+		collectStatistics 'free'
 		try { $script:videoLinks = getVideoLinkFromFreeKeyword ($local:keywordName) }
 		catch { Write-ColorOutput 'TVerから検索結果を取得できませんでした。スキップします' Green ; continue }
 	}
@@ -544,6 +590,7 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 
 	#TVerのAPIを叩いてビデオ情報取得
 	try {
+		collectStatistics 'process'
 		getToken
 		getVideoInfo ($script:videoLink)
 	} catch {
@@ -686,14 +733,19 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 			try { $null = New-Item -ItemType directory -Path $script:videoFileDir }
 			catch { Write-ColorOutput '保存先ディレクトリを作成できませんでした' Green ; continue }
 		}
+
 		#youtube-dl起動
-		try {
-			Invoke-WebRequest 'https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https://github.com/dongaba/TVerRec'
-			executeYtdl $script:videoPageURL 
-		} catch { Write-ColorOutput 'youtube-dlの起動に失敗しました' Green }
+		try { executeYtdl $script:videoPageURL } 
+		catch { Write-ColorOutput 'youtube-dlの起動に失敗しました' Green }
 		Start-Sleep -Seconds 5			#5秒待機
 
 	}
 
 }
 
+try { Invoke-WebRequest 'https://github.com/dongaba/TVerRec/blob/master/db/tver.lock' | Out-Null } catch { }
+collectStatistics 'launch'
+if ($script:isWin) { collectStatistics 'win' ; if ($PSEdition -eq 'Core') { collectStatistics 'core' }	else { collectStatistics 'desktop' } }
+elseif ($IsLinux) { collectStatistics 'linux' ; collectStatistics 'core' }
+elseif ($IsMacOS) { collectStatistics 'mac' ; collectStatistics 'core' }
+else { collectStatistics 'unknown' }
