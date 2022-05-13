@@ -115,11 +115,12 @@ $local:keywordName = 'URL指定'
 #----------------------------------------------------------------------
 #無限ループ
 while ($true) {
+	collectStatistics 'single'
 	#いろいろ初期化
 	$local:videoPageURL = ''
 
 	#保存先ディレクトリの存在確認
-	if (Test-Path $script:downloadBaseDir -PathType Container) {}
+	if (Test-Path $script:downloadBaseDir -PathType Container) { }
 	else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します' ; exit 1 }
 
 	$local:videoPageURL = Read-Host 'ビデオURLを入力してください。'
