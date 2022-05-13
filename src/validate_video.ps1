@@ -143,11 +143,11 @@ if ($null -eq $local:videoLists) {
 	Write-ColorOutput '----------------------------------------------------------------------'
 
 	#----------------------------------------------------------------------
-	$local:i = 0
+	$local:validateTotal = 0
 	foreach ($local:videoList in $local:videoLists.videoPath) {
 		$local:videoFileRelativePath = $local:videoList
-		$local:i = $local:i + 1
-		Write-ColorOutput "$local:i 本目: $local:videoFileRelativePath"
+		$local:validateTotal = $local:validateTotal + 1
+		Write-ColorOutput "$local:validateTotal 本目: $local:videoFileRelativePath"
 	}
 	#----------------------------------------------------------------------
 
@@ -167,38 +167,45 @@ if ($null -eq $local:videoLists) {
 		$local:decodeOption = $script:ffmpegDecodeOption
 	}
 
-	$local:totalStartTime = Get-Date
-
 	$local:completionPercent = 0
 	Write-Progress `
 		-Id 1 `
 		-Activity '動画のチェック中' `
 		-PercentComplete $local:completionPercent `
 		-Status '残り時間計算中'
+	if ($script:isWin) {
+		ShowProgressToast '動画のチェック中' '' '残り時間計算中' 'TVerRec' 'Validate' 'long' $false
+	}
 
 	#----------------------------------------------------------------------
-	$local:j = 0
+	$local:totalStartTime = Get-Date
+	$local:validateNum = 0
 	foreach ($local:videoList in $local:videoLists.videoPath) {
 		$local:videoFileRelativePath = $local:videoList
 
 		$local:secondsElapsed = (Get-Date) - $local:totalStartTime
 		$local:secondsRemaining = -1
-		if ($j -ne 0) {
-			$local:completionPercent = $($( $j / $i ) * 100)
-			$local:secondsRemaining = ($local:secondsElapsed.TotalSeconds / $local:j) * ($local:i - $local:j)
-		}
-		$local:j = $local:j + 1
+		if ($local:validateNum -ne 0) {
+			$local:completionPercent = $($( $local:validateNum / $local:validateTotal ) * 100)
+			$local:secondsRemaining = ($local:secondsElapsed.TotalSeconds / $local:validateNum) * ($local:validateTotal - $local:validateNum)
+			$local:minutesRemaining = "$([String]([math]::Ceiling($local:secondsRemaining / 60)))分" 
+		} else { $local:minutesRemaining = '計算中...' }
+		$local:validateNum = $local:validateNum + 1
 
 		#保存先ディレクトリの存在確認
-		if (Test-Path $script:downloadBaseDir -PathType Container) {}
+		if (Test-Path $script:downloadBaseDir -PathType Container) { }
 		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' Green ; exit 1 }
 
 		Write-Progress `
 			-Id 1 `
-			-Activity "$($local:j)/$($local:i)" `
+			-Activity "$($local:validateNum)/$($local:validateTotal)" `
 			-PercentComplete $local:completionPercent `
 			-Status $local:videoFileRelativePath `
 			-SecondsRemaining $local:secondsRemaining
+		if ($script:isWin) {
+			UpdateProgessToast "$($local:videoFileRelativePath)" "$( $local:validateNum / $local:validateTotal )" `
+				"$($local:validateNum)/$($local:validateTotal)本目" "残り時間 $local:minutesRemaining" 'TVerRec' 'Validate'
+		}
 
 		Write-ColorOutput "$($local:videoFileRelativePath)をチェックします"
 		checkVideo $local:decodeOption $local:videoFileRelativePath		#ビデオの整合性チェック

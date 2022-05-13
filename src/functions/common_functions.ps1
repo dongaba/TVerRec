@@ -27,27 +27,6 @@
 ###################################################################################
 
 #----------------------------------------------------------------------
-#TVerRec最新化確認
-#----------------------------------------------------------------------
-function checkLatestTVerRec {
-	$progressPreference = 'silentlyContinue'
-
-	#githubの設定
-	$local:repo = 'dongaba/TVerRec'
-	$local:releases = "https://api.github.com/repos/$local:repo/releases"
-
-	#ytdl-patchedの最新バージョン取得
-	try { $local:latestVersion = $((Invoke-WebRequest -Uri $local:releases | ConvertFrom-Json) | Where-Object { $_.prerelease -eq $false } )[0].name }
-	catch { return }
-	$local:latestVersion = $local:latestVersion.Substring(1, $local:latestVersion.Length - 1)
-
-	if ($local:latestVersion -gt $script:appVersion ) {
-		Write-ColorOutput "TVerRecの更新版があるようです。 Version $local:latestVersion" Green
-	}
-	$progressPreference = 'Continue'
-}
-
-#----------------------------------------------------------------------
 #ytdlの最新化確認
 #----------------------------------------------------------------------
 function checkLatestYtdl {
@@ -59,7 +38,7 @@ function checkLatestYtdl {
 			. $(Convert-Path (Join-Path $scriptRoot '.\functions\update_ytdl-patched.ps1'))
 		}
 		if ($? -eq $false) { Write-Error 'youtube-dlの更新に失敗しました' ; exit 1 }
-	} else {}
+	} else { }
 	$progressPreference = 'Continue'
 }
 
@@ -75,7 +54,7 @@ function checkLatestFfmpeg {
 			. $(Convert-Path (Join-Path $scriptRoot '.\functions\update_ffmpeg.ps1'))
 		}
 		if ($? -eq $false) { Write-Error 'ffmpegの更新に失敗しました' ; exit 1 }
-	} else {}
+	} else { }
 	$progressPreference = 'Continue'
 }
 
@@ -83,21 +62,23 @@ function checkLatestFfmpeg {
 #設定で指定したファイル・フォルダの存在チェック
 #----------------------------------------------------------------------
 function checkRequiredFile {
-	if (Test-Path $script:downloadBaseDir -PathType Container) {}
+	if (Test-Path $script:downloadBaseDir -PathType Container) { }
 	else { Write-Error 'ビデオ保存先フォルダが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $script:ffmpegPath -PathType Leaf) {}
+	if (Test-Path $script:ffmpegPath -PathType Leaf) { }
 	else { Write-Error 'ffmpegが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $script:ffprobePath -PathType Leaf) {}
+	if (Test-Path $script:ffprobePath -PathType Leaf) { }
 	elseif ($script:simplifiedValidation -eq $true) { Write-Error 'ffprobeが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $script:ytdlPath -PathType Leaf) {}
+	if (Test-Path $script:ytdlPath -PathType Leaf) { }
 	else { Write-Error 'youtube-dlが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $script:confFile -PathType Leaf) {}
+	if (Test-Path $script:confFile -PathType Leaf) { }
 	else { Write-Error 'ユーザ設定ファイルが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $script:keywordFilePath -PathType Leaf) {}
+	if (Test-Path $script:keywordFilePath -PathType Leaf) { }
 	else { Write-Error 'ダウンロード対象ジャンルリストが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $script:ignoreFilePath -PathType Leaf) {}
+	if (Test-Path $script:ignoreFilePath -PathType Leaf) { }
 	else { Write-Error 'ダウンロード対象外ビデオリストが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $script:listFilePath -PathType Leaf) {}
+	if (Test-Path $script:listFilePath -PathType Leaf) { }
+	else { Copy-Item -Path $script:listFileBlankPath -Destination $script:listFilePath -Force }
+	if (Test-Path $script:listFilePath -PathType Leaf) { }
 	else { Write-Error 'ダウンロードリストが存在しません。終了します。' ; exit 1 }
 }
 
@@ -210,6 +191,7 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 	elseif ($local:checkStatus -eq 1 ) { Write-ColorOutput '  └他プロセスでチェック済です' DarkGray ; return }
 	else {
 		#該当のビデオのチェックステータスを"2"にして後続のチェックを実行
+		collectStatistics 'validate'
 		try {
 			$(($local:videoLists).Where({ $_.videoPath -eq $local:videoFileRelativePath })).videoValidated = '2'
 		} catch {
@@ -442,6 +424,8 @@ function waitTillYtdlProcessIsZero () {
 #youtube-dlプロセスの起動
 #----------------------------------------------------------------------
 function executeYtdl ($local:videoPageURL) {
+	collectStatistics 'download'
+
 	$local:tmpDir = '"temp:' + $script:downloadWorkDir + '"'
 	$local:saveDir = '"home:' + $script:videoFileDir + '"'
 	$local:subttlDir = '"subtitle:' + $script:downloadWorkDir + '"'
@@ -758,4 +742,166 @@ function Write-ColorOutput {
 	# Restore previous colors
 	$host.UI.RawUI.ForegroundColor = $prevForegroundColor
 	$host.UI.RawUI.BackgroundColor = $prevBackgroundColor
+}
+
+#----------------------------------------------------------------------
+#Windows Application ID取得
+#----------------------------------------------------------------------
+function Get-WindowsAppId {
+	if ($PSEdition -eq 'Desktop') {
+		(Get-StartApps -Name 'PowerShell').where({ $_.Name -eq 'Windows PowerShell' }).AppId
+	} elseif ($PSVersionTable.PSVersion -ge [Version]'6.0') {
+		Import-Module StartLayout -SkipEditionCheck
+		(Get-StartApps -Name 'PowerShell').where({ $_.Name -like 'PowerShell*' })[0].AppId
+	} else { '{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe' }
+}
+
+#----------------------------------------------------------------------
+#トースト表示
+#----------------------------------------------------------------------
+function ShowToast {
+	[CmdletBinding()]
+	PARAM (
+		[Parameter(Mandatory = $true)][String] $local:toastText1,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:toastText2,
+		[Parameter(Mandatory = $false)][ValidateSet('Short', 'Long')][String] $local:toastDuration,
+		[Parameter(Mandatory = $false)][Boolean] $local:toastSilent
+	)
+
+	if ($local:toastSilent) { $local:toastSoundElement = '<audio silent="true" />' }
+	else { $local:toastSoundElement = '<audio src="ms-winsoundevent:Notification.Default" loop="false"/>' }
+	if (!($local:toastDuration)) { $local:toastDuration = 'short' }
+	$local:toastTitle = $script:appName
+	$local:toastAttribution = ''
+	$local:toastAppLogo = Convert-Path (Join-Path $script:imgDir 'TVerRec-Square.png')
+
+	if (-not ('Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder' -as [Type])) {
+		if ($PSEdition -eq 'Core') {
+			#For PowerShell Core v6.x & PowerShell v7+
+			Add-Type -Path (Join-Path $script:libDir 'win\core\Microsoft.Windows.SDK.NET.dll')
+			Add-Type -Path (Join-Path $script:libDir 'win\core\WinRT.Runtime.dll')
+			Add-Type -Path (Join-Path $script:libDir 'win\core\Microsoft.Toolkit.Uwp.Notifications.dll')
+		} else {
+			#For Windows PowerShell and Windows PowerShell_ISE
+			Add-Type -Path (Join-Path $script:libDir 'win\desktop\Microsoft.Toolkit.Uwp.Notifications.dll')
+		}
+	}
+
+	$local:toastContent = @"
+<?xml version="1.0" encoding="utf-8"?>
+<toast duration="$($local:toastDuration)">
+	<visual>
+		<binding template="ToastGeneric">
+			<text>$($local:toastTitle)</text>
+			<text>$($local:toastText1)</text>
+			<text>$($local:toastText2)</text>
+			<image placement="appLogoOverride" hint-crop="circle" src="$($local:toastAppLogo)"/>
+			<text placement="attribution">$($local:toastAttribution)</text>
+		</binding>
+	</visual>
+	$local:toastSoundElement
+</toast>
+"@
+
+	$local:appID = Get-WindowsAppId
+	$local:toastXML = New-Object Windows.Data.Xml.Dom.XmlDocument
+	$local:toastXML.LoadXml($local:toastContent)
+	$local:toastBody = New-Object Windows.UI.Notifications.ToastNotification $local:toastXML
+
+	$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Show($local:toastBody)
+}
+
+
+#----------------------------------------------------------------------
+#進捗バー付きトースト表示
+#----------------------------------------------------------------------
+function ShowProgressToast {
+	[CmdletBinding()]
+	PARAM (
+		[Parameter(Mandatory = $true)][String] $local:toastText1,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:toastText2,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:toastWorkDetail,
+		[Parameter(Mandatory = $true)][String] $local:toastTag,
+		[Parameter(Mandatory = $true)][String] $local:toastGroup,
+		[Parameter(Mandatory = $false)][ValidateSet('Short', 'Long')][String] $local:toastDuration,
+		[Parameter(Mandatory = $false)][Boolean] $local:toastSilent
+	)
+
+	if ($local:toastSilent) { $local:toastSoundElement = '<audio silent="true" />' }
+	else { $local:toastSoundElement = '<audio src="ms-winsoundevent:Notification.Default" loop="false"/>' }
+	if (!($local:toastDuration)) { $local:toastDuration = 'short' }
+	$local:toastTitle = $script:appName
+	$local:toastAttribution = ''
+	$local:toastAppLogo = Convert-Path (Join-Path $script:imgDir 'TVerRec-Square.png')
+
+	if (-not ('Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder' -as [Type])) {
+		if ($PSEdition -eq 'Core') {
+			#For PowerShell Core v6.x & PowerShell v7+
+			Add-Type -Path (Join-Path $script:libDir 'win\core\Microsoft.Windows.SDK.NET.dll')
+			Add-Type -Path (Join-Path $script:libDir 'win\core\WinRT.Runtime.dll')
+			Add-Type -Path (Join-Path $script:libDir 'win\core\Microsoft.Toolkit.Uwp.Notifications.dll')
+		} else {
+			#For Windows PowerShell and Windows PowerShell_ISE
+			Add-Type -Path (Join-Path $script:libDir 'win\desktop\Microsoft.Toolkit.Uwp.Notifications.dll')
+		}
+	}
+
+	$local:toastContent = @"
+<?xml version="1.0" encoding="utf-8"?>
+<toast duration="$($local:toastDuration)">
+	<visual>
+		<binding template="ToastGeneric">
+			<text>$($local:toastTitle)</text>
+			<text>$($local:toastText1)</text>
+			<text>$($local:toastText2)</text>
+			<image placement="appLogoOverride" hint-crop="circle" src="$($local:toastAppLogo)"/>
+			<progress value="{progressValue}" title="{progressTitle}" valueStringOverride="{progressValueString}" status="{progressStatus}" />
+			<text placement="attribution">$($local:toastAttribution)</text>
+		</binding>
+	</visual>
+	$local:toastSoundElement
+</toast>
+"@
+
+	$local:appID = Get-WindowsAppId
+	$local:toastXML = New-Object Windows.Data.Xml.Dom.XmlDocument
+	$local:toastXML.LoadXml($local:toastContent)
+	$local:toast = New-Object Windows.UI.Notifications.ToastNotification $local:toastXML
+	$local:toast.Tag = $local:toastTag
+	$local:toast.Group = $local:toastGroup
+	$local:toastData = New-Object 'system.collections.generic.dictionary[string,string]'
+	$local:toastData.add('progressTitle', $local:toastWorkDetail)
+	$local:toastData.add('progressValue', '')
+	$local:toastData.add('progressValueString', '')
+	$local:toastData.add('progressStatus', '')
+	$local:toast.Data = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
+	$local:toast.Data.SequenceNumber = 1
+
+	$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Show($local:toast)
+}
+
+#----------------------------------------------------------------------
+#進捗バー付きトースト更新
+#----------------------------------------------------------------------
+function UpdateProgessToast {
+	[CmdletBinding()]
+	PARAM (
+		[Parameter(Mandatory = $true)][String] $local:toastProgressTitle,
+		[Parameter(Mandatory = $true)][String] $local:toastProgressRatio,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:toastLeftText,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:toastRrightText,
+		[Parameter(Mandatory = $true)][String] $local:toastTag,
+		[Parameter(Mandatory = $true)][String] $local:toastGroup
+	)
+
+	$local:appID = Get-WindowsAppId
+	$local:toastData = New-Object 'system.collections.generic.dictionary[string,string]'
+	$local:toastData.add('progressTitle', $local:toastProgressTitle)
+	$local:toastData.add('progressValue', $local:toastProgressRatio)
+	$local:toastData.add('progressValueString', $local:toastRrightText)
+	$local:toastData.add('progressStatus', $local:toastLeftText)
+	$local:toastProgressData = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
+	$local:toastProgressData.SequenceNumber = 3
+
+	[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Update($local:toastProgressData, $local:toastTag , $local:toastGroup)
 }

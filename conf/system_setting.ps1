@@ -31,6 +31,7 @@
 #----------------------------------------------------------------------
 
 #アプリケーションバージョン番号
+$script:appName = 'TVerRec'
 $script:appVersion = Get-Content '..\VERSION'
 
 #Windowsの判定
@@ -48,6 +49,8 @@ $script:fileNameLengthMax = 255
 #各種ディレクトリのパス
 $script:binDir = $(Join-Path $scriptRoot '..\bin')
 $script:dbDir = $(Join-Path $scriptRoot '..\db')
+$script:libDir = $(Join-Path $scriptRoot '..\lib')
+$script:imgDir = $(Join-Path $scriptRoot '..\img')
 
 #ダウンロード対象ジャンルリストのパス
 $script:keywordFilePath = $(Join-Path $script:confDir 'keyword.conf')
@@ -56,6 +59,7 @@ $script:keywordFilePath = $(Join-Path $script:confDir 'keyword.conf')
 $script:ignoreFilePath = $(Join-Path $script:confDir 'ignore.conf')
 
 #ダウンロードリストのパス
+$script:listFileBlankPath = $(Join-Path $script:dbDir 'tver-blank.csv')
 $script:listFilePath = $(Join-Path $script:dbDir 'tver.csv')
 $script:lockFilePath = $(Join-Path $script:dbDir 'tver.lock')
 
