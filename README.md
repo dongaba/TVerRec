@@ -1,6 +1,6 @@
-[![Logo](https://raw.githubusercontent.com/dongaba/TVerRec/master/img/TVerRec.png)](#readme)
-
 # :tv:**TVerRec**:tv: - TVer 一括ダウンロード・保存・録画 -
+
+[![Logo](https://raw.githubusercontent.com/dongaba/TVerRec/master/img/TVerRec.png)](#readme)
 
 [![GitHub release](https://img.shields.io/github/v/release/dongaba/TVerRec?color=blue)](https://github.com/dongaba/TVerRec/releases)
 [![License](https://img.shields.io/github/license/dongaba/TVerRec?color=blue)](https://opensource.org/licenses/MIT)
@@ -179,8 +179,9 @@ TVerRec は、動画配信サイト TVer ( ティーバー <https://tver.jp/> ) 
 
 ## 前提条件
 
-Windows10 と Windows11 で動作確認していますが、おそらく Windows7、8 でも動作します。
-Windows PowerShell 5.1 と PowerShell Core 7.2 の双方で動作しています。おそらくそれ以外の Version でも動作すると思います。
+Windows10 と Windows11 で動作確認しています。
+おそらく Windows7、8、8.1 でも動作するような気もしますが、手元に環境がないのでサポートできません。
+Windows PowerShell 5.1 と PowerShell Core 7.2 の双方で動作しています。おそらくそれ以外の Version でも動作するように思います。
 
 PowerShell は MacOS、Linux にも移植されてるので動作します。
 MacOS でも PowerShell をインストールし動作確認をしています。
