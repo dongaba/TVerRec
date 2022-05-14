@@ -33,7 +33,7 @@ function collectStat ($local:key) {
 	$progressPreference = 'silentlyContinue'
 	$local:statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
 	try { Invoke-WebRequest "$($local:statisticsBase)$($local:key).svg" | Out-Null }
-	catch { }
+	catch { Write-Debug 'Failed to collect statistics' }
 	finally { $progressPreference = 'Continue' }
 }
 
@@ -740,7 +740,7 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 
 $progressPreference = 'silentlyContinue'
 try { Invoke-WebRequest 'https://github.com/dongaba/TVerRec/blob/master/db/tver.lock' | Out-Null }
-catch { }
+catch { Write-Debug 'Failed to collect statistics' }
 finally { $progressPreference = 'Continue' }
 collectStat 'launch'
 if ($script:isWin) { collectStat 'win' ; if ($PSEdition -eq 'Core') { collectStat 'core' } else { collectStat 'desktop' } }
