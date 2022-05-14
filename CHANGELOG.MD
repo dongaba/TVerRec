@@ -4,7 +4,7 @@
 
 ### Added
 
-- Windows 向けトースト通知機能
+- Windows 向けトースト通知機能を追加
 
 ### Changed
 
