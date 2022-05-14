@@ -10,6 +10,16 @@
 
 ### Fixed
 
+## [2.4.6](https://github.com/dongaba/TVerRec/releases/tag/v2.4.6)
+
+### Added
+
+### Changed
+
+### Fixed
+
+- Windows 用の起動 BAT が LOOP に失敗する不具合を修正
+
 ## [2.4.5](https://github.com/dongaba/TVerRec/releases/tag/v2.4.5)
 
 ### Added
