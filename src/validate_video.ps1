@@ -259,4 +259,4 @@ try {
 } finally { $null = fileUnlock ($script:lockFilePath) }
 
 #進捗表示
-UpdateProgessToast '' '1' '' '完了' "$($script:appName)" 'Validate'
+UpdateProgessToast '動画のチェック' '1' '' '完了' "$($script:appName)" 'Validate'

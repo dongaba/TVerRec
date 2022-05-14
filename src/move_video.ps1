@@ -244,4 +244,4 @@ foreach ($local:subDir in $local:allSubDirs) {
 #----------------------------------------------------------------------
 
 #進捗表示
-UpdateProgessToast '' '1' '' '完了' "$($script:appName)" 'Move'
+UpdateProgessToast '動画の移動' '1' '' '完了' "$($script:appName)" 'Move'

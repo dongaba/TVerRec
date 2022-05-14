@@ -281,5 +281,5 @@ foreach ($local:subDir in $local:allSubDirs) {
 #----------------------------------------------------------------------
 
 #進捗表示
-UpdateProgessToast '' '1' '' '完了' "$($script:appName)" 'Delete'
+UpdateProgessToast 'ファイルの掃除' '1' '' '完了' "$($script:appName)" 'Delete'
 

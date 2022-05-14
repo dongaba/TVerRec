@@ -227,9 +227,9 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 #進捗表示
 UpdateProgessToast2 `
-	'' '1' `
+	'キーワードから動画の抽出' '1' `
 	'' '完了' `
-	'' '1' `
+	'動画のダウンロード' '1' `
 	'' '完了' `
 	"$($script:appName)" 'Bulk'
 
