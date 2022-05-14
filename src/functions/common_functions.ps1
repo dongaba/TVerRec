@@ -808,7 +808,7 @@ function ShowToast {
 		$local:toastXML = New-Object Windows.Data.Xml.Dom.XmlDocument
 		$local:toastXML.LoadXml($script:toastProgressContent)
 		$local:toastBody = New-Object Windows.UI.Notifications.ToastNotification $local:toastXML
-		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Show($local:toastBody)
+		[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Show($local:toastBody) | Out-Null
 	}
 }
 
@@ -878,7 +878,7 @@ function ShowProgressToast {
 		$local:toastData.add('progressStatus', '')
 		$local:toast.Data = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
 		$local:toast.Data.SequenceNumber = 1
-		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Show($local:toast)
+		[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Show($local:toast) | Out-Null
 	}
 }
 
@@ -905,7 +905,7 @@ function UpdateProgessToast {
 		$local:toastData.add('progressStatus', $local:toastLeftText)
 		$local:toastProgressData = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
 		$local:toastProgressData.SequenceNumber = 2
-		[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Update($local:toastProgressData, $local:toastTag , $local:toastGroup)
+		[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Update($local:toastProgressData, $local:toastTag , $local:toastGroup) | Out-Null
 	}
 }
 
@@ -980,7 +980,7 @@ function ShowProgressToast2 {
 		$local:toastData.add('progressStatus2', '')
 		$local:toast.Data = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
 		$local:toast.Data.SequenceNumber = 1
-		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Show($local:toast)
+		[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Show($local:toast) | Out-Null
 	}
 }
 
@@ -1015,7 +1015,7 @@ function UpdateProgessToast2 {
 		$local:toastData.add('progressStatus2', $local:toastLeftText2)
 		$local:toastProgressData = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
 		$local:toastProgressData.SequenceNumber = 2
-		[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Update($local:toastProgressData, $local:toastTag , $local:toastGroup)
+		[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Update($local:toastProgressData, $local:toastTag , $local:toastGroup) | Out-Null
 	}
 }
 

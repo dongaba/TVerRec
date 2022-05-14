@@ -6,6 +6,8 @@
 
 ### Changed
 
+- トースト表示時の不要なメッセージを削減
+
 ### Fixed
 
 ## [2.4.5](https://github.com/dongaba/TVerRec/releases/tag/v2.4.5)
