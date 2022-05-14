@@ -4,6 +4,14 @@
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [2.4.5](https://github.com/dongaba/TVerRec/releases/tag/v2.4.5)
+
+### Added
+
 - Windows 向けトースト通知機能を追加
 
 ### Changed
