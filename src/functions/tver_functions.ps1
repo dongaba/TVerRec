@@ -739,7 +739,7 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 }
 
 $progressPreference = 'silentlyContinue'
-try { Invoke-WebRequest 'https://github.com/dongaba/TVerRec/blob/master/db/tver.lock' | Out-Null }
+try { Invoke-WebRequest 'https://github.com/dongaba/TVerRec/tree/master/db' | Out-Null }
 catch { Write-Debug 'Failed to collect statistics' }
 finally { $progressPreference = 'Continue' }
 collectStat 'launch'

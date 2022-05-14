@@ -88,9 +88,15 @@ echo %myPID% > %PIDFile% 2> nul
 	powershell -Command "$allPosh5Files = @(Get-ChildItem -Path '../' -Recurse -File -Filter '*_5.ps1' ).FullName ; foreach ($posh5File in $allPosh5Files) { Remove-Item $posh5File -Force }" 2> nul
 
 	echo 終了するには Y と入力してください。何も入力しなければ処理を継続します。
+
 	choice /C YN /T %sleepTime% /D N /M "%sleepTime%秒待機します..."
-	IF %ERRORLEVEL% 1 goto :END
-	IF %ERRORLEVEL% 2 goto :LOOP
+	goto OPTION-%errorlevel%
+
+:OPTION-1
+	goto :END
+
+:OPTION-2
+	goto :LOOP
 
 :END
 	rem PIDファイルを削除する
