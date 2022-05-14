@@ -89,8 +89,8 @@ echo %myPID% > %PIDFile% 2> nul
 
 	echo 終了するには Y と入力してください。何も入力しなければ処理を継続します。
 	choice /C YN /T %sleepTime% /D N /M "%sleepTime%秒待機します..."
-	IF ERRORLEVEL 1 goto :END
-	IF ERRORLEVEL 2 goto :LOOP
+	IF %ERRORLEVEL% 1 goto :END
+	IF %ERRORLEVEL% 2 goto :LOOP
 
 :END
 	rem PIDファイルを削除する
