@@ -72,22 +72,22 @@ try {
 		$script:devConfFile = $(Join-Path $script:devDir 'dev_setting_5.ps1')
 		if (Test-Path $script:devFunctionFile) {
 			. $script:devFunctionFile
-			Write-ColorOutput '  開発ファイル用共通関数ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' white DarkGreen
 		}
 		if (Test-Path $script:devConfFile) {
 			. $script:devConfFile
-			Write-ColorOutput '  開発ファイル用設定ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' white DarkGreen
 		}
 	} else {
 		$script:devFunctionFile = $(Join-Path $script:devDir 'dev_funcitons.ps1')
 		$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.ps1')
 		if (Test-Path $script:devFunctionFile) {
 			. $script:devFunctionFile
-			Write-ColorOutput '  開発ファイル用共通関数ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' white DarkGreen
 		}
 		if (Test-Path $script:devConfFile) {
 			. $script:devConfFile
-			Write-ColorOutput '  開発ファイル用設定ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' white DarkGreen
 		}
 	}
 } catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
@@ -118,7 +118,7 @@ while ($true) {
 	#いろいろ初期化
 	$local:videoPageURL = ''
 
-	#保存先ディレクトリの存在確認
+	#保存先ディレクトリの存在確認(稼働中に共有フォルダが切断された場合に対応)
 	if (Test-Path $script:downloadBaseDir -PathType Container) { }
 	else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します' ; exit 1 }
 

@@ -72,22 +72,22 @@ try {
 		$script:devConfFile = $(Join-Path $script:devDir 'dev_setting_5.ps1')
 		if (Test-Path $script:devFunctionFile) {
 			. $script:devFunctionFile
-			Write-ColorOutput '  開発ファイル用共通関数ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' white DarkGreen
 		}
 		if (Test-Path $script:devConfFile) {
 			. $script:devConfFile
-			Write-ColorOutput '  開発ファイル用設定ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' white DarkGreen
 		}
 	} else {
 		$script:devFunctionFile = $(Join-Path $script:devDir 'dev_funcitons.ps1')
 		$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.ps1')
 		if (Test-Path $script:devFunctionFile) {
 			. $script:devFunctionFile
-			Write-ColorOutput '  開発ファイル用共通関数ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' white DarkGreen
 		}
 		if (Test-Path $script:devConfFile) {
 			. $script:devConfFile
-			Write-ColorOutput '  開発ファイル用設定ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' white DarkGreen
 		}
 	}
 } catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
@@ -111,17 +111,26 @@ checkLatestFfmpeg			#ffmpegの最新化チェック
 checkRequiredFile			#設定で指定したファイル・フォルダの存在チェック
 #checkGeoIP					#日本のIPアドレスでないと接続不可のためIPアドレスをチェック
 
+#処理
 $local:keywordNames = loadKeywordList			#ダウンロード対象ジャンルリストの読み込み
 
-$local:timer = [System.Diagnostics.Stopwatch]::StartNew()
 $local:keywordNum = 0						#キーワードの番号
 if ($script:keywordNames -is [array]) {
 	$local:keywordTotal = $script:keywordNames.Length	#トータルキーワード数
 } else { $local:keywordTotal = 1 }
 
+#進捗表示
+ShowProgressToast2 '一括ダウンロード中' `
+	'キーワードから動画を抽出しダウンロード' '読み込み中...' '読み込み中...' `
+	"$($script:appName)" 'Bulk' 'long' $false
+
+
 #======================================================================
 #個々のジャンルページチェックここから
+$local:totalStartTime = Get-Date
 foreach ($local:keywordName in $local:keywordNames) {
+	#いろいろ初期化
+	$local:videoLink = '　'
 
 	#ジャンルページチェックタイトルの表示
 	Write-ColorOutput ''
@@ -129,16 +138,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 	Write-ColorOutput "【 $(trimTabSpace ($local:keywordName)) 】 のダウンロードを開始します。"
 	Write-ColorOutput '==========================================================================='
 
-	$local:keywordNum = $local:keywordNum + 1		#キーワード数のインクリメント
-
-	if ($local:timer.Elapsed.TotalMilliseconds -ge 1000) {
-		Write-Progress -Id 1 `
-			-Activity "$($local:keywordNum)/$($local:keywordTotal)" `
-			-PercentComplete $($( $local:keywordNum / $local:keywordTotal ) * 100) `
-			-Status 'キーワードの動画を取得中'
-		$local:timer.Reset(); $local:timer.Start()
-	}
-
+	#処理
 	$local:videoLinks = getVideoLinksFromKeyword ($local:keywordName)
 	$local:keywordName = $local:keywordName.Replace('https://tver.jp/', '')
 
@@ -147,29 +147,65 @@ foreach ($local:keywordName in $local:keywordNames) {
 		$local:videoTotal = $local:videoLinks.Length	#ジャンル内のトータルビデオ数
 	} else { $local:videoTotal = 1 }
 
+	#処理時間の推計
+	$local:secElapsed = (Get-Date) - $local:totalStartTime
+	$local:secRemaining = -1
+	if ($local:keywordNum -ne 0) {
+		$local:secRemaining = ($local:secElapsed.TotalSeconds / $local:keywordNum) * ($local:keywordTotal - $local:keywordNum)
+		$local:minRemaining = "$([String]([math]::Ceiling($local:secRemaining / 60)))分"
+		$local:progressRatio1 = $($local:keywordNum / $local:keywordTotal)
+	} else {
+		$local:minRemaining = '計算中...'
+		$local:progressRatio1 = 0
+	}
+	$local:progressRatio2 = 0
+
+	$local:keywordNum = $local:keywordNum + 1		#キーワード数のインクリメント
+
+	#進捗表示
+	Write-Progress -Id 1 `
+		-Activity "$($local:keywordNum)/$($local:keywordTotal)" `
+		-PercentComplete $($( $local:keywordNum / $local:keywordTotal ) * 100) `
+		-Status 'キーワードの動画を取得中'
+	UpdateProgessToast2 `
+		"$($local:keywordName)" "$($local:progressRatio1)" `
+		"$($local:keywordNum)/$($local:keywordTotal)" "残り時間 $local:minRemaining" `
+		"$($local:videoLink)" "$($local:progressRatio2)" `
+		"$($local:videoNum)/$($local:videoTotal)" '' `
+		"$($script:appName)" 'Bulk'
+
 	#----------------------------------------------------------------------
 	#個々のビデオダウンロードここから
 	foreach ($local:videoLink in $local:videoLinks) {
-
 		#いろいろ初期化
-		$local:videoNum = $local:videoNum + 1		#ジャンル内のビデオ番号のインクリメント
 		$local:videoPageURL = ''
+		$local:videoNum = $local:videoNum + 1		#ジャンル内のビデオ番号のインクリメント
 
-		if ($local:timer.Elapsed.TotalMilliseconds -ge 1000) {
-			Write-Progress `
-				-Id 2 `
-				-ParentId 1 `
-				-Activity "$($local:videoNum)/$($local:videoTotal)" `
-				-PercentComplete $($( $local:videoNum / $local:videoTotal ) * 100) `
-				-Status $local:keywordName
-			$local:timer.Reset(); $local:timer.Start()
+		#進捗率の計算
+		if ($local:keywordNum -ne 0) {
+			$local:progressRatio2 = $($local:videoNum / $local:videoTotal)
+		} else {
+			$local:progressRatio2 = 0
 		}
 
+		#進捗表示
+		Write-Progress -Id 2 -ParentId 1 `
+			-Activity "$($local:videoNum)/$($local:videoTotal)" `
+			-PercentComplete $($( $local:videoNum / $local:videoTotal ) * 100) `
+			-Status $local:keywordName
+		UpdateProgessToast2 `
+			"$($local:keywordName)" "$($local:progressRatio1)" `
+			"$($local:keywordNum)/$($local:keywordTotal)" "残り時間 $local:minRemaining" `
+			"$($local:videoLink)" "$($local:progressRatio2)" `
+			"$($local:videoNum)/$($local:videoTotal)" '' `
+			"$($script:appName)" 'Bulk'
+
+		#処理
 		Write-ColorOutput '----------------------------------------------------------------------'
 		Write-ColorOutput "[ $local:keywordName - $local:videoNum / $local:videoTotal ] をダウンロードします。 ($(getTimeStamp))"
 		Write-ColorOutput '----------------------------------------------------------------------'
 
-		#保存先ディレクトリの存在確認
+		#保存先ディレクトリの存在確認(稼働中に共有フォルダが切断された場合に対応)
 		if (Test-Path $script:downloadBaseDir -PathType Container) { }
 		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します' Green ; exit 1 }
 
@@ -188,6 +224,14 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 }
 #======================================================================
+
+#進捗表示
+UpdateProgessToast2 `
+	'' '1' `
+	'' '完了' `
+	'' '1' `
+	'' '完了' `
+	"$($script:appName)" 'Bulk'
 
 #youtube-dlのプロセスが終わるまで待機
 Write-ColorOutput 'ダウンロードの終了を待機しています'

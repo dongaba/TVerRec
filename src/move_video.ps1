@@ -71,22 +71,22 @@ try {
 		$script:devConfFile = $(Join-Path $script:devDir 'dev_setting_5.ps1')
 		if (Test-Path $script:devFunctionFile) {
 			. $script:devFunctionFile
-			Write-ColorOutput '  開発ファイル用共通関数ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' white DarkGreen
 		}
 		if (Test-Path $script:devConfFile) {
 			. $script:devConfFile
-			Write-ColorOutput '  開発ファイル用設定ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' white DarkGreen
 		}
 	} else {
 		$script:devFunctionFile = $(Join-Path $script:devDir 'dev_funcitons.ps1')
 		$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.ps1')
 		if (Test-Path $script:devFunctionFile) {
 			. $script:devFunctionFile
-			Write-ColorOutput '  開発ファイル用共通関数ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' white DarkGreen
 		}
 		if (Test-Path $script:devConfFile) {
 			. $script:devConfFile
-			Write-ColorOutput '  開発ファイル用設定ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' white DarkGreen
 		}
 	}
 } catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
@@ -106,12 +106,16 @@ else { Write-Error 'ビデオ移動先フォルダにアクセスできません
 Write-ColorOutput '----------------------------------------------------------------------'
 Write-ColorOutput '移動先フォルダの一覧を作成しています'
 Write-ColorOutput '----------------------------------------------------------------------'
+
+#進捗表示
 Write-Progress -Id 1 `
 	-Activity '処理 1/3' `
 	-PercentComplete $($( 1 / 4 ) * 100) `
 	-Status 'フォルダ一覧を作成中'
-ShowProgressToast '動画の移動中' '  処理1/3 - フォルダ一覧を作成' '' "$($script:appName)" 'Move' 'long' $false
+ShowProgressToast '動画の移動中' '　処理1/3 - フォルダ一覧を作成' '' `
+	"$($script:appName)" 'Move' 'long' $false
 
+#処理
 $local:moveToPaths = Get-ChildItem $script:saveBaseDir -Recurse `
 | Where-Object { $_.PSIsContainer } `
 | Sort-Object
@@ -121,12 +125,16 @@ $local:moveToPaths = Get-ChildItem $script:saveBaseDir -Recurse `
 Write-ColorOutput '----------------------------------------------------------------------'
 Write-ColorOutput 'ビデオファイルを移動しています'
 Write-ColorOutput '----------------------------------------------------------------------'
+
+#進捗表示
 Write-Progress -Id 1 `
 	-Activity '処理 2/3' `
 	-PercentComplete $($( 1 / 2 ) * 100) `
 	-Status 'ファイルを移動中'
-ShowProgressToast '動画の移動中' '  処理2/3 - 動画ファイルを移動' '' "$($script:appName)" 'Move' 'long' $false
+ShowProgressToast '動画の移動中' '　処理2/3 - 動画ファイルを移動' '' `
+	"$($script:appName)" 'Move' 'long' $false
 
+#処理
 $local:moveToPathNum = 0						#移動先パス番号
 if ($local:moveToPaths -is [array]) {
 	$local:moveToPathTotal = $local:moveToPaths.Length	#移動先パス合計数
@@ -136,21 +144,29 @@ if ($local:moveToPaths -is [array]) {
 $local:totalStartTime = Get-Date
 foreach ($local:moveToPath in $local:moveToPaths.FullName) {
 
-	$local:secondsElapsed = (Get-Date) - $local:totalStartTime
-	$local:secondsRemaining = -1
+	#処理時間の推計
+	$local:secElapsed = (Get-Date) - $local:totalStartTime
+	$local:secRemaining = -1
 	if ($local:moveToPathNum -ne 0) {
-		$local:secondsRemaining = ($local:secondsElapsed.TotalSeconds / $local:moveToPathNum) * ($local:moveToPathTotal - $local:moveToPathNum)
-		$local:minutesRemaining = "$([String]([math]::Ceiling($local:secondsRemaining / 60)))分"
-	} else { $local:minutesRemaining = '計算中...' }
+		$local:secRemaining = ($local:secElapsed.TotalSeconds / $local:moveToPathNum) * ($local:moveToPathTotal - $local:moveToPathNum)
+		$local:minRemaining = "$([String]([math]::Ceiling($local:secRemaining / 60)))分"
+		$local:progressRatio = $($local:moveToPathNum / $local:moveToPathTotal)
+	} else {
+		$local:minRemaining = '計算中...'
+		$local:progressRatio = 0
+	}
 	$local:moveToPathNum = $local:moveToPathNum + 1
 
+	#進捗表示
 	Write-Progress -Id 2 -ParentId 1 `
 		-Activity "$($local:moveToPathNum)/$($local:moveToPathTotal)" `
-		-PercentComplete $($( $local:moveToPathNum / $local:moveToPathTotal ) * 100) `
+		-PercentComplete $($local:progressRatio * 100) `
 		-Status $local:moveToPath
-	UpdateProgessToast "$($local:moveToPath)" "$( $local:moveToPathNum / $local:moveToPathTotal )" `
-		"$($local:moveToPathNum)/$($local:moveToPathTotal)" "残り時間 $local:minutesRemaining" "$($script:appName)" 'Move'
+	UpdateProgessToast "$($local:moveToPath)" "$($local:progressRatio)" `
+		"$($local:moveToPathNum)/$($local:moveToPathTotal)" "残り時間 $local:minRemaining" `
+		"$($script:appName)" 'Move'
 
+	#処理
 	Write-ColorOutput '----------------------------------------------------------------------'
 	Write-ColorOutput "$($local:moveToPath)を処理中"
 	$local:targetFolderName = Split-Path -Leaf $local:moveToPath
@@ -171,12 +187,15 @@ foreach ($local:moveToPath in $local:moveToPaths.FullName) {
 Write-ColorOutput '----------------------------------------------------------------------'
 Write-ColorOutput '空フォルダを削除します'
 Write-ColorOutput '----------------------------------------------------------------------'
+#進捗表示
 Write-Progress -Id 1 `
 	-Activity '処理 3/3' `
 	-PercentComplete $($( 2 / 2 ) * 100) `
 	-Status '空フォルダを削除'
-ShowProgressToast '動画の移動中' '  処理3/3 - 空フォルダを削除' '残り時間計算中' "$($script:appName)" 'Move' 'long' $false
+ShowProgressToast '動画の移動中' '　処理3/3 - 空フォルダを削除' '残り時間計算中' `
+	"$($script:appName)" 'Move' 'long' $false
 
+#処理
 $local:allSubDirs = @((Get-ChildItem -Path $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer })).FullName `
 | Sort-Object -Descending
 
@@ -188,21 +207,29 @@ if ($local:allSubDirs -is [array]) {
 #----------------------------------------------------------------------
 $local:totalStartTime = Get-Date
 foreach ($local:subDir in $local:allSubDirs) {
-	$local:secondsElapsed = (Get-Date) - $local:totalStartTime
-	$local:secondsRemaining = -1
+	#処理時間の推計
+	$local:secElapsed = (Get-Date) - $local:totalStartTime
+	$local:secRemaining = -1
 	if ($local:subDirNum -ne 0) {
-		$local:secondsRemaining = ($local:secondsElapsed.TotalSeconds / $local:subDirNum) * ($local:subDirTotal - $local:subDirNum)
-		$local:minutesRemaining = "$([String]([math]::Ceiling($local:secondsRemaining / 60)))分"
-	} else { $local:minutesRemaining = '計算中...' }
+		$local:secRemaining = ($local:secElapsed.TotalSeconds / $local:subDirNum) * ($local:subDirTotal - $local:subDirNum)
+		$local:minRemaining = "$([String]([math]::Ceiling($local:secRemaining / 60)))分"
+		$local:progressRatio = $($local:moveToPathNum / $local:moveToPathTotal)
+	} else {
+		$local:minRemaining = '計算中...'
+		$local:progressRatio = 0
+	}
 	$local:subDirNum = $local:subDirNum + 1
 
+	#進捗表示
 	Write-Progress -Id 2 -ParentId 1 `
 		-Activity "$($local:subDirNum)/$($local:subDirTotal)" `
-		-PercentComplete $($( $local:subDirNum / $local:subDirTotal ) * 100) `
+		-PercentComplete $($local:progressRatio * 100) `
 		-Status $local:subDir
-	UpdateProgessToast "$($local:subDir)" "$( $local:subDirNum / $local:subDirTotal )" `
-		"$($local:subDirNum)/$($local:subDirTotal)" "残り時間 $local:minutesRemaining" "$($script:appName)" 'Delete'
+	UpdateProgessToast "$($local:subDir)" "$($local:progressRatio)" `
+		"$($local:subDirNum)/$($local:subDirTotal)" "残り時間 $local:minRemaining" `
+		"$($script:appName)" 'Delete'
 
+	#処理
 	Write-ColorOutput '----------------------------------------------------------------------'
 	Write-ColorOutput "$($local:subDir)を処理中"
 	if (@((Get-ChildItem -LiteralPath $local:subDir -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
@@ -216,4 +243,5 @@ foreach ($local:subDir in $local:allSubDirs) {
 }
 #----------------------------------------------------------------------
 
-UpdateProgessToast '' '1' '' '' "$($script:appName)" 'Move'
+#進捗表示
+UpdateProgessToast '' '1' '' '完了' "$($script:appName)" 'Move'

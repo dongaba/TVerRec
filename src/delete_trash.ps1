@@ -71,22 +71,22 @@ try {
 		$script:devConfFile = $(Join-Path $script:devDir 'dev_setting_5.ps1')
 		if (Test-Path $script:devFunctionFile) {
 			. $script:devFunctionFile
-			Write-ColorOutput '  開発ファイル用共通関数ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' white DarkGreen
 		}
 		if (Test-Path $script:devConfFile) {
 			. $script:devConfFile
-			Write-ColorOutput '  開発ファイル用設定ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' white DarkGreen
 		}
 	} else {
 		$script:devFunctionFile = $(Join-Path $script:devDir 'dev_funcitons.ps1')
 		$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.ps1')
 		if (Test-Path $script:devFunctionFile) {
 			. $script:devFunctionFile
-			Write-ColorOutput '  開発ファイル用共通関数ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' white DarkGreen
 		}
 		if (Test-Path $script:devConfFile) {
 			. $script:devConfFile
-			Write-ColorOutput '  開発ファイル用設定ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' white DarkGreen
 		}
 	}
 } catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
@@ -113,33 +113,42 @@ try {
 Write-ColorOutput '----------------------------------------------------------------------'
 Write-ColorOutput 'ダウンロードが中断した際にできたゴミファイルを削除します'
 Write-ColorOutput '----------------------------------------------------------------------'
+#進捗表示
 Write-Progress -Id 1 `
 	-Activity '処理 1/3' `
 	-PercentComplete $($( 1 / 3 ) * 100) `
 	-Status 'ゴミファイルを削除'
-ShowProgressToast 'ファイルの掃除中' '  処理1/3 - ダウンロード中断時のゴミファイルを削除' '' "$($script:appName)" 'Delete' 'long' $false
+ShowProgressToast 'ファイルの掃除中' '　処理1/3 - ダウンロード中断時のゴミファイルを削除' '' "$($script:appName)" 'Delete' 'long' $false
 Write-Progress -Id 2 -ParentId 1 `
 	-Activity '1/3' `
 	-PercentComplete $($( 1 / 3 ) * 100) `
 	-Status $script:downloadBaseDir
-UpdateProgessToast "$($script:downloadWorkDir)" "$($( 1 / 3 ))" '' '' "$($script:appName)" 'Delete'
+UpdateProgessToast "$($script:downloadWorkDir)" "$($( 1 / 3 ))" '' '' `
+	"$($script:appName)" 'Delete'
 
+#処理
 deleteTrashFiles $script:downloadWorkDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.mp4'
 
+#進捗表示
 Write-Progress -Id 2 -ParentId 1 `
 	-Activity '2/3' `
 	-PercentComplete $($( 2 / 3 ) * 100) `
 	-Status $script:downloadWorkDir
-UpdateProgessToast "$($script:downloadBaseDir)" "$($( 2 / 3 ))" '' '' "$($script:appName)" 'Delete'
+UpdateProgessToast "$($script:downloadBaseDir)" "$($( 2 / 3 ))" '' '' `
+	"$($script:appName)" 'Delete'
 
+#処理
 deleteTrashFiles $script:downloadBaseDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*'
 
+#進捗表示
 Write-Progress -Id 2 -ParentId 1 `
 	-Activity '3/3' `
 	-PercentComplete $($( 3 / 3 ) * 100) `
 	-Status $script:saveBaseDir
-UpdateProgessToast "$($script:saveBaseDir)" "$($( 3 / 3 ))" '' '' "$($script:appName)" 'Delete'
+UpdateProgessToast "$($script:saveBaseDir)" "$($( 3 / 3 ))" '' '' `
+	"$($script:appName)" 'Delete'
 
+#処理
 deleteTrashFiles $script:saveBaseDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*'
 
 #======================================================================
@@ -147,11 +156,13 @@ deleteTrashFiles $script:saveBaseDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, 
 Write-ColorOutput '----------------------------------------------------------------------'
 Write-ColorOutput '削除対象のビデオを削除します'
 Write-ColorOutput '----------------------------------------------------------------------'
+#進捗表示
 Write-Progress -Id 1 `
 	-Activity '処理 2/3' `
 	-PercentComplete $($( 2 / 3 ) * 100) `
 	-Status '削除対象のビデオを削除'
-ShowProgressToast 'ファイルの掃除中' '  処理2/3 - 削除対象のビデオを削除' '' "$($script:appName)" 'Delete' 'long' $false
+ShowProgressToast 'ファイルの掃除中' '　処理2/3 - 削除対象のビデオを削除' '' `
+	"$($script:appName)" 'Delete' 'long' $false
 
 #ダウンロード対象外ビデオ番組リストの読み込み
 $local:ignoreTitles = (Get-Content $script:ignoreFilePath -Encoding UTF8 `
@@ -159,6 +170,7 @@ $local:ignoreTitles = (Get-Content $script:ignoreFilePath -Encoding UTF8 `
 	| Where-Object { !($_ -match '^;.*$') }) `
 	-as [string[]]
 
+#処理
 $local:ignoreNum = 0						#無視リスト内の番号
 if ($local:ignoreTitles -is [array]) {
 	$local:ignoreTotal = $local:ignoreTitles.Length	#無視リスト内のエントリ合計数
@@ -167,21 +179,29 @@ if ($local:ignoreTitles -is [array]) {
 #----------------------------------------------------------------------
 $local:totalStartTime = Get-Date
 foreach ($local:ignoreTitle in $local:ignoreTitles) {
-	$local:secondsElapsed = (Get-Date) - $local:totalStartTime
-	$local:secondsRemaining = -1
+	#処理時間の推計
+	$local:secElapsed = (Get-Date) - $local:totalStartTime
+	$local:secRemaining = -1
 	if ($local:ignoreNum -ne 0) {
-		$local:secondsRemaining = ($local:secondsElapsed.TotalSeconds / $local:ignoreNum) * ($local:ignoreTotal - $local:ignoreNum)
-		$local:minutesRemaining = "$([String]([math]::Ceiling($local:secondsRemaining / 60)))分"
-	} else { $local:minutesRemaining = '計算中...' }
+		$local:secRemaining = ($local:secElapsed.TotalSeconds / $local:ignoreNum) * ($local:ignoreTotal - $local:ignoreNum)
+		$local:minRemaining = "$([String]([math]::Ceiling($local:secRemaining / 60)))分"
+		$local:progressRatio = $($local:ignoreNum / $local:ignoreTotal)
+	} else {
+		$local:minRemaining = '計算中...'
+		$local:progressRatio = 0
+	}
 	$local:ignoreNum = $local:ignoreNum + 1
 
+	#進捗表示
 	Write-Progress -Id 2 -ParentId 1 `
 		-Activity "$($local:ignoreNum)/$($local:ignoreTotal)" `
-		-PercentComplete $($( $local:ignoreNum / $local:ignoreTotal ) * 100) `
+		-PercentComplete $($local:progressRatio * 100) `
 		-Status $local:ignoreTitle
-	UpdateProgessToast "$($local:ignoreTitle)" "$( $local:ignoreNum / $local:ignoreTotal )" `
-		"$($local:ignoreNum)/$($local:ignoreTotal)" "残り時間 $local:minutesRemaining" "$($script:appName)" 'Delete'
+	UpdateProgessToast "$($local:ignoreTitle)" "$($local:progressRatio)" `
+		"$($local:ignoreNum)/$($local:ignoreTotal)" "残り時間 $local:minRemaining" `
+		"$($script:appName)" 'Delete'
 
+	#処理
 	Write-ColorOutput '----------------------------------------------------------------------'
 	Write-ColorOutput "$($local:ignoreTitle)を処理中"
 	try {
@@ -197,7 +217,7 @@ foreach ($local:ignoreTitle in $local:ignoreTitles) {
 						-Recurse -Force -ErrorAction SilentlyContinue
 				}
 			}
-		} else { Write-ColorOutput '  削除対象はありませんでした' DarkGray }
+		} else { Write-ColorOutput '　削除対象はありませんでした' DarkGray }
 	} catch { Write-ColorOutput '削除できないファイルがありました' Green }
 }
 #----------------------------------------------------------------------
@@ -207,12 +227,13 @@ foreach ($local:ignoreTitle in $local:ignoreTitles) {
 Write-ColorOutput '----------------------------------------------------------------------'
 Write-ColorOutput '空フォルダを削除します'
 Write-ColorOutput '----------------------------------------------------------------------'
+#進捗表示
 Write-Progress -Id 1 -Activity '処理 3/3' `
 	-PercentComplete $($( 3 / 3 ) * 100) `
 	-Status '空フォルダを削除'
-ShowProgressToast 'ファイルの掃除中' '  処理3/3 - 空フォルダを削除' '' "$($script:appName)" 'Delete' 'long' $false
+ShowProgressToast 'ファイルの掃除中' '　処理3/3 - 空フォルダを削除' '' "$($script:appName)" 'Delete' 'long' $false
 
-
+#処理
 $local:allSubDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer })).FullName `
 | Sort-Object -Descending
 
@@ -224,21 +245,29 @@ if ($local:allSubDirs -is [array]) {
 #----------------------------------------------------------------------
 $local:totalStartTime = Get-Date
 foreach ($local:subDir in $local:allSubDirs) {
-	$local:secondsElapsed = (Get-Date) - $local:totalStartTime
-	$local:secondsRemaining = -1
+	#処理時間の推計
+	$local:secElapsed = (Get-Date) - $local:totalStartTime
+	$local:secRemaining = -1
 	if ($local:subDirNum -ne 0) {
-		$local:secondsRemaining = ($local:secondsElapsed.TotalSeconds / $local:subDirNum) * ($local:subDirTotal - $local:subDirNum)
-		$local:minutesRemaining = "$([String]([math]::Ceiling($local:secondsRemaining / 60)))分"
-	} else { $local:minutesRemaining = '計算中...' }
+		$local:secRemaining = ($local:secElapsed.TotalSeconds / $local:subDirNum) * ($local:subDirTotal - $local:subDirNum)
+		$local:minRemaining = "$([String]([math]::Ceiling($local:secRemaining / 60)))分"
+		$local:progressRatio = $($local:subDirNum / $local:subDirTotal)
+	} else {
+		$local:minRemaining = '計算中...'
+		$local:progressRatio = 0
+	}
 	$local:subDirNum = $local:subDirNum + 1
 
+	#進捗表示
 	Write-Progress -Id 2 -ParentId 1 `
 		-Activity "$($local:subDirNum)/$($local:subDirTotal)" `
-		-PercentComplete $($( $local:subDirNum / $local:subDirTotal ) * 100) `
+		-PercentComplete $($local:progressRatio * 100) `
 		-Status $local:subDir
-	UpdateProgessToast "$($local:subDir)" "$( $local:subDirNum / $local:subDirTotal )" `
-		"$($local:subDirNum)/$($local:subDirTotal)" "残り時間 $local:minutesRemaining" "$($script:appName)" 'Delete'
+	UpdateProgessToast "$($local:subDir)" "$($local:progressRatio)" `
+		"$($local:subDirNum)/$($local:subDirTotal)" "残り時間 $local:minRemaining" `
+		"$($script:appName)" 'Delete'
 
+	#処理
 	Write-ColorOutput '----------------------------------------------------------------------'
 	Write-ColorOutput "$($local:subDir)を処理中"
 	if (@((Get-ChildItem -LiteralPath $local:subDir -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
@@ -251,5 +280,6 @@ foreach ($local:subDir in $local:allSubDirs) {
 }
 #----------------------------------------------------------------------
 
-UpdateProgessToast '' '1' '' '' "$($script:appName)" 'Delete'
+#進捗表示
+UpdateProgessToast '' '1' '' '完了' "$($script:appName)" 'Delete'
 

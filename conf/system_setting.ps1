@@ -31,7 +31,7 @@
 #----------------------------------------------------------------------
 
 #アプリケーション名・バージョン番号
-$script:appName = "$($script:appName)"
+$script:appName = 'TVerRec'
 $script:appVersion = Get-Content '..\VERSION'
 
 #Windowsの判定
