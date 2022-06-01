@@ -26,15 +26,69 @@
 #
 ###################################################################################
 
+
 #----------------------------------------------------------------------
 #統計取得
 #----------------------------------------------------------------------
-function collectStat ($local:key) {
+function ga {
+	[CmdletBinding()]
+	PARAM (
+		[Parameter(Mandatory = $true)][String] $local:event,
+		[Parameter(Mandatory = $false)][String] $local:type,
+		[Parameter(Mandatory = $false)][String] $local:id
+	)
+
+	if (!($local:type)) { $local:type = '' }
+	if (!($local:id)) { $local:id = '' }
+	if ($script:isWin) { $local:os = [string][System.Environment]::OSVersion }
+	elseif ($IsLinux) { $local:os = "Linux $([string][System.Environment]::OSVersion.Version)" } 
+	elseif ($IsMacOS) { $local:os = "macOS $([string][System.Environment]::OSVersion.Version)" }
+	else { $local:os = [string][System.Environment]::OSVersion }
+	$local:tz = [string][TimeZoneInfo]::Local.BaseUtcOffset
+
 	$progressPreference = 'silentlyContinue'
 	$local:statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
-	try { Invoke-WebRequest "$($local:statisticsBase)$($local:key).svg" | Out-Null }
+	try { Invoke-WebRequest "$($local:statisticsBase)$($local:event).svg" | Out-Null }
 	catch { Write-Debug 'Failed to collect statistics' }
 	finally { $progressPreference = 'Continue' }
+
+	$local:gaBaseURL1 = 'https://www.google-analytics.com'
+	$local:gaBaseURL2 = '/mp/collect'
+	$local:gaID = 'measurement_id=G-NMSF9L531G'
+	$local:gaKey = 'api_secret=UZ3InfgkTgGiR4FU-in9sw'
+	$local:epochTime = [decimal]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() * 1000)
+	$local:gaURL = $($local:gaBaseURL1) + $($local:gaBaseURL2)
+	$local:gaHeaders = New-Object 'System.Collections.Generic.Dictionary[[String],[String]]'
+	$local:gaHeaders.Add('Content-Type', 'application/json')
+	$local:gaBody = '{'
+	$local:gaBody += "`"client_id`":`"$($script:guid)`","
+	$local:gaBody += "`"timestamp_micros`":`"$($local:epochTime)`","
+	$local:gaBody += "`"non_personalized_ads`":false,"
+	$local:gaBody += "`"user_properties`":{"
+	$local:gaBody += "	`"AppName`":{`"value`":`"$script:appName`"},"
+	$local:gaBody += "	`"AppVersion`":{`"value`":`"$script:appVersion`"},"
+	$local:gaBody += "	`"PSEdition`":{`"value`":`"$($PSVersionTable.PSEdition)`"},"
+	$local:gaBody += "	`"PSVersion`":{`"value`":`"$($PSVersionTable.PSVersion)`"},"
+	$local:gaBody += "	`"OS`":{`"value`":`"$($local:os)`"},"
+	$local:gaBody += "	`"TZ`":{`"value`":`"$($local:tz)`"}"
+	$local:gaBody += '},'
+	$local:gaBody += "`"events`":[{"
+	$local:gaBody += "	`"name`":`"$local:event`","
+	$local:gaBody += "	`"params`":{"
+	$local:gaBody += "		`"Type`":`"$($local:type)`","
+	$local:gaBody += "		`"ID`":`"($local:id)`","
+	$local:gaBody += "		`"Target`":`"$($local:type)/$($local:id)`""
+	$local:gaBody += '	}'
+	$local:gaBody += '}]'
+	$local:gaBody += '}'
+
+	Invoke-RestMethod `
+		-Uri "$($local:gaURL)?$($local:gaID)&$($local:gaKey)" `
+		-Method 'POST' `
+		-Headers $local:gaHeaders `
+		-Body $local:gaBody `
+	| Out-Null 
+
 }
 
 #----------------------------------------------------------------------
@@ -517,36 +571,36 @@ function getVideoLinksFromKeyword ($local:keywordName) {
 		#saveGenrePage $script:keywordName						#デバッグ用ジャンルページの保存
 	} elseif ($local:keywordName.IndexOf('talents/') -eq 0) {
 		#タレントIDによるタレント検索からビデオページのLinkを取得
-		collectStat 'talent'
+		ga 'search' 'talent' $local:keywordName
 		$local:talentID = removeCommentsFromKeyword($local:keywordName).Replace('talents/', '').Trim()
 		try { $script:videoLinks = getVideoLinkFromTalentID ($local:talentID) }
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} elseif ($local:keywordName.IndexOf('series/') -eq 0) {
 		#番組IDによる番組検索からビデオページのLinkを取得
-		collectStat 'series'
+		ga 'search' 'series' $local:keywordName
 		$local:seriesID = removeCommentsFromKeyword($local:keywordName).Replace('series/', '').Trim()
 		try { $script:videoLinks = getVideoLinkFromSeriesID ($local:seriesID) }
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} elseif ($local:keywordName.IndexOf('toppage') -eq 0) {
 		#トップページからビデオページのLinkを取得
-		collectStat 'toppage'
+		ga 'search' 'toppage'
 		try { $script:videoLinks = getVideoLinkFromTopPage }
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} elseif ($local:keywordName.IndexOf('id/') -eq 0) {
 		#ジャンルIDなどによる新着検索からビデオページのLinkを取得
-		collectStat 'id'
+		ga 'search' 'id' $local:keywordName
 		$local:tagID = removeCommentsFromKeyword($local:keywordName).Replace('id/', '').Trim()
 		try { $script:videoLinks = getVideoLinkFromGenreID ($local:tagID) }
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} elseif ($local:keywordName.IndexOf('title/') -eq 0) {
 		#番組名による新着検索からビデオページのLinkを取得
-		collectStat 'title'
+		ga 'search' 'title' $local:keywordName
 		$local:titleName = removeCommentsFromKeyword($local:keywordName).Replace('title/', '').Trim()
 		try { $script:videoLinks = getVideoLinkFromTitle ($local:titleName) }
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} else {
 		#タレント名や番組名などURL形式でない場合APIで検索結果からビデオページのLinkを取得
-		collectStat 'free'
+		ga 'search' 'free' $local:keywordName
 		try { $script:videoLinks = getVideoLinkFromFreeKeyword ($local:keywordName) }
 		catch { Write-ColorOutput 'TVerから検索結果を取得できませんでした。スキップします' Green ; continue }
 	}
@@ -585,7 +639,7 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 
 	#TVerのAPIを叩いてビデオ情報取得
 	try {
-		collectStat 'process'
+		ga 'getinfo' 'link' $script:videoLink
 		getToken
 		getVideoInfo ($script:videoLink)
 	} catch {
@@ -738,12 +792,5 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 
 }
 
-$progressPreference = 'silentlyContinue'
-try { Invoke-WebRequest 'https://github.com/dongaba/TVerRec/tree/master/db' | Out-Null }
-catch { Write-Debug 'Failed to collect statistics' }
-finally { $progressPreference = 'Continue' }
-collectStat 'launch'
-if ($script:isWin) { collectStat 'win' ; if ($PSEdition -eq 'Core') { collectStat 'core' } else { collectStat 'desktop' } }
-elseif ($IsLinux) { collectStat 'linux' ; collectStat 'core' }
-elseif ($IsMacOS) { collectStat 'mac' ; collectStat 'core' }
-else { collectStat 'unknown' }
+$script:guid = [guid]::NewGuid()
+ga 'launch' $script:scriptRoot $script:scriptName

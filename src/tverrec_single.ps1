@@ -34,6 +34,7 @@ Set-StrictMode -Version Latest
 try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
 		$script:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+		$script:scriptName = Split-Path -Leaf -Path $MyInvocation.MyCommand.Definition
 	} else {
 		$script:scriptRoot = Convert-Path .
 	}
@@ -114,7 +115,6 @@ $local:keywordName = 'URL指定'
 
 #無限ループ
 while ($true) {
-	collectStat 'single'
 	#いろいろ初期化
 	$local:videoPageURL = ''
 

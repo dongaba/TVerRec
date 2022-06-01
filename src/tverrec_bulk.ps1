@@ -34,6 +34,7 @@ Set-StrictMode -Version Latest
 try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
 		$script:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+		$script:scriptName = Split-Path -Leaf -Path $MyInvocation.MyCommand.Definition
 	} else {
 		$script:scriptRoot = Convert-Path .
 	}
@@ -120,9 +121,14 @@ if ($script:keywordNames -is [array]) {
 } else { $local:keywordTotal = 1 }
 
 #進捗表示
-ShowProgressToast2 '一括ダウンロード中' `
-	'キーワードから動画を抽出しダウンロード' '読み込み中...' '読み込み中...' `
-	"$($script:appName)" 'Bulk' 'long' $false
+ShowProgess2Row `
+	'一括ダウンロード中' `
+	'キーワードから動画を抽出しダウンロード' `
+	'読み込み中...' `
+	'読み込み中...' `
+	'long' `
+	$false `
+	'Bulk'
 
 
 #======================================================================
@@ -149,30 +155,29 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 	#処理時間の推計
 	$local:secElapsed = (Get-Date) - $local:totalStartTime
-	$local:secRemaining = -1
+	$local:secRemaining1 = -1
 	if ($local:keywordNum -ne 0) {
-		$local:secRemaining = ($local:secElapsed.TotalSeconds / $local:keywordNum) * ($local:keywordTotal - $local:keywordNum)
-		$local:minRemaining = "$([String]([math]::Ceiling($local:secRemaining / 60)))分"
+		$local:secRemaining1 = ($local:secElapsed.TotalSeconds / $local:keywordNum) * ($local:keywordTotal - $local:keywordNum)
 		$local:progressRatio1 = $($local:keywordNum / $local:keywordTotal)
 	} else {
-		$local:minRemaining = '計算中...'
 		$local:progressRatio1 = 0
 	}
 	$local:progressRatio2 = 0
 
 	$local:keywordNum = $local:keywordNum + 1		#キーワード数のインクリメント
 
-	#進捗表示
-	Write-Progress -Id 1 `
-		-Activity "$($local:keywordNum)/$($local:keywordTotal)" `
-		-PercentComplete $($( $local:keywordNum / $local:keywordTotal ) * 100) `
-		-Status 'キーワードの動画を取得中'
-	UpdateProgessToast2 `
-		"$($local:keywordName)" "$($local:progressRatio1)" `
-		"$($local:keywordNum)/$($local:keywordTotal)" "残り時間 $local:minRemaining" `
-		"$($local:videoLink)" "$($local:progressRatio2)" `
-		"$($local:videoNum)/$($local:videoTotal)" '' `
-		"$($script:appName)" 'Bulk'
+	#進捗更新
+	UpdateProgess2Row `
+		"$($local:keywordNum)/$($local:keywordTotal)" `
+		"$($local:keywordName)" `
+		"$($local:progressRatio1)" `
+		$local:secRemaining1 `
+		'' `
+		"$($local:videoLink)" `
+		"$($local:progressRatio2)" `
+		'' `
+		'Bulk'
+
 
 	#----------------------------------------------------------------------
 	#個々のビデオダウンロードここから
@@ -188,17 +193,18 @@ foreach ($local:keywordName in $local:keywordNames) {
 			$local:progressRatio2 = 0
 		}
 
-		#進捗表示
-		Write-Progress -Id 2 -ParentId 1 `
-			-Activity "$($local:videoNum)/$($local:videoTotal)" `
-			-PercentComplete $($( $local:videoNum / $local:videoTotal ) * 100) `
-			-Status $local:keywordName
-		UpdateProgessToast2 `
-			"$($local:keywordName)" "$($local:progressRatio1)" `
-			"$($local:keywordNum)/$($local:keywordTotal)" "残り時間 $local:minRemaining" `
-			"$($local:videoLink)" "$($local:progressRatio2)" `
-			"$($local:videoNum)/$($local:videoTotal)" '' `
-			"$($script:appName)" 'Bulk'
+		#進捗更新
+		UpdateProgess2Row `
+			"$($local:keywordNum)/$($local:keywordTotal)" `
+			"$($local:keywordName)" `
+			"$($local:progressRatio1)" `
+			$local:secRemaining1 `
+			"$($local:videoNum)/$($local:videoTotal)" `
+			"$($local:videoLink)" `
+			"$($local:progressRatio2)" `
+			'' `
+			'Bulk'
+
 
 		#処理
 		Write-ColorOutput '----------------------------------------------------------------------'

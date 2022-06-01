@@ -191,7 +191,6 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 	elseif ($local:checkStatus -eq 1 ) { Write-ColorOutput '  └他プロセスでチェック済です' DarkGray ; return }
 	else {
 		#該当のビデオのチェックステータスを"2"にして後続のチェックを実行
-		collectStat 'validate'
 		try {
 			$(($local:videoLists).Where({ $_.videoPath -eq $local:videoFileRelativePath })).videoValidated = '2'
 		} catch {
@@ -214,6 +213,7 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 	}
 
 	$local:checkFile = '"' + $local:videoFilePath + '"'
+	ga 'validate'
 
 	if ($script:simplifiedValidation -eq $true) {
 		#ffprobeを使った簡易検査
@@ -424,7 +424,7 @@ function waitTillYtdlProcessIsZero () {
 #youtube-dlプロセスの起動
 #----------------------------------------------------------------------
 function executeYtdl ($local:videoPageURL) {
-	collectStat 'download'
+	ga 'download'
 
 	$local:tmpDir = '"temp:' + $script:downloadWorkDir + '"'
 	$local:saveDir = '"home:' + $script:videoFileDir + '"'
@@ -1017,5 +1017,68 @@ function UpdateProgessToast2 {
 		$local:toastProgressData.SequenceNumber = 2
 		[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Update($local:toastProgressData, $local:toastTag , $local:toastGroup) | Out-Null
 	}
+}
+
+#----------------------------------------------------------------------
+#進捗表示
+#----------------------------------------------------------------------
+function ShowProgess2Row {
+	[CmdletBinding()]
+	PARAM (
+		[Parameter(Mandatory = $true)][String] $local:progressText1,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:progressText2,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:toastWorkDetail1,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:toastWorkDetail2,
+		[Parameter(Mandatory = $false)][ValidateSet('Short', 'Long')][String] $local:toastDuration,
+		[Parameter(Mandatory = $false)][Boolean] $local:toastSilent,
+		[Parameter(Mandatory = $true)][String] $local:toastGroup
+	)
+
+	if (!($local:progressText2)) { $local:progressText2 = '' }
+	if (!($local:toastWorkDetail1)) { $local:toastWorkDetail1 = '' }
+	if (!($local:toastWorkDetail2)) { $local:toastWorkDetail2 = '' }
+
+	ShowProgressToast2 `
+		$local:progressText1 `
+		$local:progressText2 `
+		$local:toastWorkDetail1 `
+		$local:toastWorkDetail2 `
+		"$($script:appName)" `
+		$local:toastGroup `
+		$local:toastDuration `
+		$local:toastSilent
+}
+
+#----------------------------------------------------------------------
+#進捗更新
+#----------------------------------------------------------------------
+function UpdateProgess2Row {
+	[CmdletBinding()]
+	PARAM (
+		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:progressActivity1,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:currentProcessing1,
+		[Parameter(Mandatory = $true)][String] $local:progressRatio1,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:secRemaining1,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:progressActivity2,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:currentProcessing2,
+		[Parameter(Mandatory = $true)][String] $local:progressRatio2,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:secRemaining2,
+		[Parameter(Mandatory = $true)][String] $local:toastGroup
+	)
+
+	if ($local:secRemaining1 -eq -1 -or $local:secRemaining1 -eq '' ) { $local:minRemaining1 = '計算中...' }
+	else { $local:minRemaining1 = "$([String]([math]::Ceiling($local:secRemaining1 / 60)))分" }
+	if ($local:secRemaining2 -eq -1 -or $local:secRemaining2 -eq '' ) { $local:minRemaining2 = '計算中...' }
+	else { $local:minRemaining2 = "$([String]([math]::Ceiling($local:secRemaining2 / 60)))分" }
+	if ($local:secRemaining1 -ne '') { $local:secRemaining1 = "残り時間 $local:minRemaining1" }
+	if ($local:secRemaining2 -ne '') { $local:secRemaining2 = "残り時間 $local:minRemaining2" }
+	if ($local:progressActivity2 -eq '') { $local:progressActivity2 = '　' }
+
+	UpdateProgessToast2 `
+		"$($local:currentProcessing1)" "$($local:progressRatio1)" `
+		"$local:progressActivity1" "$local:minRemaining1" `
+		"$($local:currentProcessing2)" "$($local:progressRatio2)" `
+		"$local:progressActivity2" "$local:secRemaining2" `
+		"$($script:appName)" "$local:toastGroup"
 }
 
