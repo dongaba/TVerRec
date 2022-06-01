@@ -1,12 +1,13 @@
 ﻿# Change Log
 
-## [Unreleased](https://github.com/dongaba/TVerRec)
+## [2.4.8](https://github.com/dongaba/TVerRec/releases/tag/v2.4.8)
 
 ### Added
 
 ### Changed
 
 - トースト表示時の不要なメッセージを削減
+- youtube-dl を別バージョンに差し替え
 
 ### Fixed
 
