@@ -17,7 +17,7 @@ TVerRec は、動画配信サイト TVer ( ティーバー <https://tver.jp/> ) 
 
 - Windows/MacOS/Linux で動作します。
 - 必要なツールは自動的にダウンロードされますが、うまくいかない場合は以下から取得してください。
-  - youtube-dl-pathed [https://github.com/ytdl-patched/ytdl-patched/releases]
+  - yt-dlp [https://github.com/yt-dlp/yt-dlp/releases]
   - ffmpeg [https://www.ffmpeg.org/download.html]
 - TVer のリニューアルによりフリーワード検索の精度が大幅に下がっていますので、できればタレント ID 指定、番組 ID 指定で録画したほうが確実です。
 - 同様にジャンル指定の精度も大幅に下がっているようですのでご注意ください。
