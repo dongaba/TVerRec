@@ -27,7 +27,7 @@
 ###################################################################################
 
 #githubの設定
-$local:repo = 'ytdl-patched/ytdl-patched'
+$local:repo = 'yt-dlp/yt-dlp'
 $local:releases = "https://api.github.com/repos/$local:repo/releases"
 
 #ytdl-patched保存先相対Path
@@ -54,6 +54,7 @@ if (Test-Path $local:ytdlPath -PathType Leaf) {
 try { $local:latestVersion = (Invoke-WebRequest -Uri $local:releases | ConvertFrom-Json)[0].Name }
 catch { Write-ColorOutput 'youtube-dlの最新バージョンを特定できませんでした' Green ; return }
 
+$local:latestVersion = $local:latestVersion.replace('yt-dlp ', '')
 Write-ColorOutput "youtube-dl current: $local:ytdlCurrentVersion"
 Write-ColorOutput "youtube-dl latest: $local:latestVersion"
 
@@ -65,7 +66,7 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 	if ($script:isWin -eq $false) {
 		try {
 			#githubの設定
-			$local:file = 'ytdl-patched'
+			$local:file = 'yt-dlp'
 			$local:fileAfterRename = 'youtube-dl'
 			#ダウンロード
 			$local:tag = (Invoke-WebRequest $local:releases | ConvertFrom-Json)[0].Tag_name
@@ -80,7 +81,7 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 	} else {
 		try {
 			#githubの設定
-			$local:file = 'ytdl-patched-red.exe'
+			$local:file = 'yt-dlp.exe'
 			$local:fileAfterRename = 'youtube-dl.exe'
 			#ダウンロード
 			$local:tag = (Invoke-WebRequest $local:releases | ConvertFrom-Json)[0].Tag_name

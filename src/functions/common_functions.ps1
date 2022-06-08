@@ -32,10 +32,20 @@
 function checkLatestYtdl {
 	$progressPreference = 'silentlyContinue'
 	if ($script:disableUpdateYoutubedl -eq $false) {
-		if ($PSVersionTable.PSEdition -eq 'Desktop') {
-			. $(Convert-Path (Join-Path $scriptRoot '.\functions\update_ytdl-patched_5.ps1'))
+		if ($script:preferredYoutubedl -eq 'yt-dlp') {
+			if ($PSVersionTable.PSEdition -eq 'Desktop') {
+				. $(Convert-Path (Join-Path $scriptRoot '.\functions\update_yt-dlp_5.ps1'))
+			} else {
+				. $(Convert-Path (Join-Path $scriptRoot '.\functions\update_yt-dlp.ps1'))
+			}
+		} elseif ($script:preferredYoutubedl = 'ytdl-patched') {
+			if ($PSVersionTable.PSEdition -eq 'Desktop') {
+				. $(Convert-Path (Join-Path $scriptRoot '.\functions\update_ytdl-patched_5.ps1'))
+			} else {
+				. $(Convert-Path (Join-Path $scriptRoot '.\functions\update_ytdl-patched.ps1'))
+			}
 		} else {
-			. $(Convert-Path (Join-Path $scriptRoot '.\functions\update_ytdl-patched.ps1'))
+			Write-Error 'youtube-dlの取得元の指定が無効です' ; exit 1
 		}
 		if ($? -eq $false) { Write-Error 'youtube-dlの更新に失敗しました' ; exit 1 }
 	} else { }

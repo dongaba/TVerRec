@@ -143,8 +143,13 @@ TVerRec は、動画配信サイト TVer ( ティーバー <https://tver.jp/> ) 
     - `$true`を設定することで、動画の検証を完全に止めることができます。
 
 - TVerRec の特徴の 1 つでもある youtube-dl と ffmpeg の自動アップデートですが、ツール配布元の不具合等により自動アップデートがうまく動作しない場合には無効化することが可能です。
+
   - `$script:disableUpdateYoutubedl`に`$true`を設定すると youtube-dl の自動アップデートが無効化されます。
   - `$script:disableUpdateFfmpeg`に`$true`を設定すると ffmpeg の自動アップデートが無効化されます。
+
+- youtube-dl に起因する問題が起きた際には以下の 2 種類の youtube-dl を使い分けることが可能です。
+  - `$script:preferredYoutubedl`に`yt-dlp`(初期値)を設定すると [yt-dlp](https://github.com/yt-dlp/yt-dlp) から取得します。こちらの方が安定していますが、不具合発生時のバグ修正には時間がかかる傾向があります。
+  - `$script:preferredYoutubedl`に`ytdl-patched`を設定すると [ytdl-patched](https://github.com/ytdl-patched/ytdl-patched) から取得します。こちらの方が頻繁に更新されており、不具合発生時にもすぐバグ修正される傾向があります。
 
 ### システム設定
 
@@ -251,6 +256,7 @@ MacOS でも PowerShell をインストールし動作確認をしています�
     │  │  ├─ common_functions.ps1 ............. 共通関数定義
     │  │  ├─ tver_functions.ps1 ............... TVer用共通関数定義
     │  │  ├─ update_ffmpeg.ps1 ................ ffmpeg自動更新ツール
+    │  │  ├─ update_yt-dlp.ps1 ................ yt-dlp自動更新ツール
     │  │  └─ update_ytdl-patched.ps1 .......... ytdl-patched自動更新ツール
     │  ├─ delete_trash.ps1 ..................... ダウンロード対象外ビデオ削除ツール
     │  ├─ move_vide.ps1 ........................ ビデオを保存先に移動するツール
