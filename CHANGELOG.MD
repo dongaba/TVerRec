@@ -1,5 +1,17 @@
 ﻿# Change Log
 
+## [2.4.9](https://github.com/dongaba/TVerRec/releases/tag/v2.4.9)
+
+### Added
+
+### Changed
+
+- youtube-dl の取得元を 2 箇所から選択できるように変更
+
+### Fixed
+
+- 毎回 yt-dlp がダウンロードされる問題を修正
+
 ## [2.4.8](https://github.com/dongaba/TVerRec/releases/tag/v2.4.8)
 
 ### Added
