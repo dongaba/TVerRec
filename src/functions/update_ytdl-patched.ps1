@@ -43,7 +43,7 @@ if (-Not (Test-Path $local:ytdlDir -PathType Container)) {
 
 #ytdl-patchedのバージョン取得
 if (Test-Path $local:ytdlPath -PathType Leaf) {
-	# get version of current yt-dlp.exe
+	# get version of current ytdl-patched.exe
 	$local:ytdlCurrentVersion = (& $local:ytdlPath --version)
 } else {
 	# if yt-dlp.exe not found, will download it

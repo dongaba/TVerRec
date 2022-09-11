@@ -30,18 +30,18 @@
 $local:repo = 'yt-dlp/yt-dlp'
 $local:releases = "https://api.github.com/repos/$local:repo/releases"
 
-#ytdl-patched保存先相対Path
+#yt-dlp保存先相対Path
 $local:ytdlRelativeDir = '..\bin'
 $local:ytdlDir = $(Join-Path $script:scriptRoot $local:ytdlRelativeDir)
 if ($script:isWin) { $local:ytdlPath = $(Join-Path $local:ytdlDir 'youtube-dl.exe') }
 else { $local:ytdlPath = $(Join-Path $local:ytdlDir 'youtube-dl') }
 
-#ytdl-patchedのディレクトリがなければ作成
+#yt-dlpのディレクトリがなければ作成
 if (-Not (Test-Path $local:ytdlDir -PathType Container)) {
 	$null = New-Item -ItemType directory -Path $local:ytdlDir
 }
 
-#ytdl-patchedのバージョン取得
+#yt-dlpのバージョン取得
 if (Test-Path $local:ytdlPath -PathType Leaf) {
 	# get version of current yt-dlp.exe
 	$local:ytdlCurrentVersion = (& $local:ytdlPath --version)
@@ -50,15 +50,14 @@ if (Test-Path $local:ytdlPath -PathType Leaf) {
 	$local:ytdlCurrentVersion = ''
 }
 
-#ytdl-patchedの最新バージョン取得
-try { $local:latestVersion = (Invoke-WebRequest -Uri $local:releases | ConvertFrom-Json)[0].Name }
+#yt-dlpの最新バージョン取得
+try { $local:latestVersion = (Invoke-WebRequest -Uri $local:releases | ConvertFrom-Json)[0].Tag_Name }
 catch { Write-ColorOutput 'youtube-dlの最新バージョンを特定できませんでした' Green ; return }
 
-$local:latestVersion = $local:latestVersion.replace('yt-dlp ', '')
 Write-ColorOutput "youtube-dl current: $local:ytdlCurrentVersion"
 Write-ColorOutput "youtube-dl latest: $local:latestVersion"
 
-#ytdl-patchedのダウンロード
+#yt-dlpのダウンロード
 if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 	Write-ColorOutput 'youtube-dlは最新です。 '
 	Write-ColorOutput ''
