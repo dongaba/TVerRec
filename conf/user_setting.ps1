@@ -76,7 +76,7 @@ $script:disableValidation = $false
 $script:disableUpdateYoutubedl = $false
 
 #youtube-dlの取得元
-$script:preferredYoutubedl = 'yt-dlp'	#'yt-dlp' or 'ytdl-patched'
+$script:preferredYoutubedl = 'ytdl-patched'	#'yt-dlp' or 'ytdl-patched'
 
 #ffmpegの自動アップデートを無効化
 $script:disableUpdateFfmpeg = $false
