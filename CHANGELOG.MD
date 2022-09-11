@@ -1,5 +1,23 @@
 ﻿# Change Log
 
+## [2.5.0](https://github.com/dongaba/TVerRec/releases/tag/v2.5.0)
+
+### Added
+
+- 新着ビデオリストからのダウンロード機能を追加
+- ランキングからのダウンロード機能を追加
+
+### Changed
+
+- トップページの解析を最新のトップページレイアウトに合わせて改良
+- ジャンル ID などの指定による検索を変更し、タグ検索として新着番組以外からも対象を検索するように改良
+- 指定可能な タグ検索 (旧 ID 検索) に使用する Tag の最新化(Keyword.conf を更新しています)
+- 指定可能な TV 局の最新化(Keyword.conf を更新しています)
+- 標準の youtoube-dl を ytdl-patched に変更
+- 無視リストの判定を番組シリーズ名だけでなく番組名でも判定するように変更
+
+### Fixed
+
 ## [2.4.9](https://github.com/dongaba/TVerRec/releases/tag/v2.4.9)
 
 ### Added
