@@ -207,12 +207,12 @@ foreach ($local:ignoreTitle in $local:ignoreTitles) {
 	Write-ColorOutput "$($local:ignoreTitle)を処理中"
 	try {
 		$local:delTargets = Get-ChildItem -LiteralPath $script:downloadBaseDir `
-			-Directory -Name -Filter "*$($local:ignoreTitle)*"
+			-Name -Filter "*$($local:ignoreTitle)*"
 	} catch { Write-ColorOutput '削除対象を特定できませんでした' Green }
 	try {
 		if ($null -ne $local:delTargets) {
 			foreach ($local:delTarget in $local:delTargets) {
-				if (Test-Path $(Join-Path $script:downloadBaseDir $local:delTarget) -PathType Container) {
+				if (Test-Path $(Join-Path $script:downloadBaseDir $local:delTarget)) {
 					Write-ColorOutput "  └「$(Join-Path $script:downloadBaseDir $local:delTarget)」を削除します"
 					Remove-Item -Path $(Join-Path $script:downloadBaseDir $local:delTarget) `
 						-Recurse -Force -ErrorAction SilentlyContinue
