@@ -236,7 +236,6 @@ function getVideoLinkFromTopPage {
 			#横スクロール型 or 総合ランキング or 注目タレント or 特集
 			$local:searchSectionResultCount = $local:searchResults[$i].Contents.length
 			for ($j = 0; $j -lt $local:searchSectionResultCount; $j++) {
-				#指定したジャンルと一致する場合
 				if ($local:searchResults[$i].contents[$j].type -eq 'episode') {
 					$script:videoLinks += '/episodes/' + $local:searchResults[$i].contents[$j].Content.Id
 				} elseif ($local:searchResults[$i].contents[$j].type -eq 'season') {
@@ -263,7 +262,6 @@ function getVideoLinkFromTopPage {
 			for ($j = 0; $j -lt $local:searchSectionResultCount; $j++) {
 				$local:searchSectionResultCount = $local:searchResults[$i].Contents.length
 				for ($j = 0; $j -lt $local:searchSectionResultCount; $j++) {
-					#指定したジャンルと一致する場合
 					if ($local:searchResults[$i].contents[$j].Content.Content.type -eq 'episode' ) {
 						$script:videoLinks += '/episodes/' + $local:searchResults[$i].contents[$j].Content.Content.Content.Id
 					} elseif ($local:searchResults[$i].contents[$j].Content.Content.type -eq 'season') {
@@ -307,7 +305,36 @@ function getVideoLinkFromTag ($local:tagID) {
 	$local:searchResults = $local:searchResultsRaw.Result.Contents
 	$local:resultCount = $local:searchResults.length
 	for ($i = 0; $i -lt $local:resultCount; $i++) {
-		#指定したジャンルと一致する場合
+		if ($local:searchResults[$i].type -eq 'episode') {
+			$script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id
+		} elseif ($local:searchResults[$i].type -eq 'season') {
+			$script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id)
+		} elseif ($local:searchResults[$i].type -eq 'series') {
+			$script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id)
+		} else {
+			#他にはないと思われるが念のため
+			$script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id
+		}
+	}
+	return $script:videoLinks | Sort-Object | Get-Unique
+}
+
+#----------------------------------------------------------------------
+#新着からビデオページのLinkを取得
+#----------------------------------------------------------------------
+function getVideoLinkFromNew ($local:tagID) {
+	$local:callSearchBaseURL = 'https://service-api.tver.jp/api/v1/callNewerDetail'
+	$local:callSearchURL = $local:callSearchBaseURL + `
+		'/' + $local:tagID + `
+		'?platform_uid=' + $script:platformUID + `
+		'&platform_token=' + $script:platformToken
+	$local:searchResultsRaw = (Invoke-RestMethod `
+			-Uri $local:callSearchURL `
+			-Method 'GET' `
+			-Headers $script:requestHeader)
+	$local:searchResults = $local:searchResultsRaw.Result.Contents.Contents
+	$local:resultCount = $local:searchResults.length
+	for ($i = 0; $i -lt $local:resultCount; $i++) {
 		if ($local:searchResults[$i].type -eq 'episode') {
 			$script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id
 		} elseif ($local:searchResults[$i].type -eq 'season') {
@@ -344,7 +371,6 @@ function getVideoLinkFromRanking ($local:tagID) {
 	$local:searchResults = $local:searchResultsRaw.Result.Contents.Contents
 	$local:resultCount = $local:searchResults.length
 	for ($i = 0; $i -lt $local:resultCount; $i++) {
-		#指定したジャンルと一致する場合
 		if ($local:searchResults[$i].type -eq 'episode') {
 			$script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id
 		} elseif ($local:searchResults[$i].type -eq 'season') {
@@ -379,7 +405,6 @@ function getVideoLinkFromTitle ($local:titleName) {
 				(getSpecialCharacterReplaced `
 					(getNarrowChars ($local:searchResults[$i].Content.SeriesTitle)))).
 			Replace('  ', ' ').Trim().Contains($local:titleName) -eq $true) {
-			#指定したジャンルと一致する場合
 			if ($local:searchResults[$i].type -eq 'episode') {
 				$script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id
 			} elseif ($local:searchResults[$i].type -eq 'season') {
@@ -631,16 +656,22 @@ function getVideoLinksFromKeyword ($local:keywordName) {
 		$local:tagID = removeCommentsFromKeyword($local:keywordName).Replace('tag/', '').Trim()
 		try { $script:videoLinks = getVideoLinkFromTag ($local:tagID) }
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
-	} elseif ($local:keywordName.IndexOf('toppage') -eq 0) {
-		#トップページからビデオページのLinkを取得
-		ga 'search' 'toppage'
-		try { $script:videoLinks = getVideoLinkFromTopPage }
+	} elseif ($local:keywordName.IndexOf('new/') -eq 0) {
+		#新着ビデオからビデオページのLinkを取得
+		ga 'search' 'new' $local:keywordName
+		$local:titleName = removeCommentsFromKeyword($local:keywordName).Replace('new/', '').Trim()
+		try { $script:videoLinks = getVideoLinkFromNew ($local:titleName) }
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} elseif ($local:keywordName.IndexOf('ranking/') -eq 0) {
 		#ランキングによるビデオページのLinkを取得
 		ga 'search' 'ranking' $local:keywordName
 		$local:titleName = removeCommentsFromKeyword($local:keywordName).Replace('ranking/', '').Trim()
 		try { $script:videoLinks = getVideoLinkFromRanking ($local:titleName) }
+		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
+	} elseif ($local:keywordName.IndexOf('toppage') -eq 0) {
+		#トップページからビデオページのLinkを取得
+		ga 'search' 'toppage'
+		try { $script:videoLinks = getVideoLinkFromTopPage }
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} elseif ($local:keywordName.IndexOf('title/') -eq 0) {
 		#番組名による新着検索からビデオページのLinkを取得
