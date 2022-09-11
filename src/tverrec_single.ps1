@@ -133,7 +133,7 @@ while ($true) {
 
 		#TVerビデオダウンロードのメイン処理
 		downloadTVerVideo $local:keywordName $local:videoPageURL $local:videoLink
-	} else { 
+	} else {
 		Write-ColorOutput '---------------------------------------------------------------------------' Cyan
 		Write-ColorOutput '処理を終了しました。                                                       ' Cyan
 		Write-ColorOutput '---------------------------------------------------------------------------' Cyan

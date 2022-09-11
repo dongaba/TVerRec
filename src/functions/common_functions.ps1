@@ -38,7 +38,7 @@ function checkLatestYtdl {
 			} else {
 				. $(Convert-Path (Join-Path $scriptRoot '.\functions\update_yt-dlp.ps1'))
 			}
-		} elseif ($script:preferredYoutubedl = 'ytdl-patched') {
+		} elseif ($script:preferredYoutubedl -eq 'ytdl-patched') {
 			if ($PSVersionTable.PSEdition -eq 'Desktop') {
 				. $(Convert-Path (Join-Path $scriptRoot '.\functions\update_ytdl-patched_5.ps1'))
 			} else {

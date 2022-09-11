@@ -41,7 +41,7 @@ function ga {
 	if (!($local:type)) { $local:type = '' }
 	if (!($local:id)) { $local:id = '' }
 	if ($script:isWin) { $local:os = [string][System.Environment]::OSVersion }
-	elseif ($IsLinux) { $local:os = "Linux $([string][System.Environment]::OSVersion.Version)" } 
+	elseif ($IsLinux) { $local:os = "Linux $([string][System.Environment]::OSVersion.Version)" }
 	elseif ($IsMacOS) { $local:os = "macOS $([string][System.Environment]::OSVersion.Version)" }
 	else { $local:os = [string][System.Environment]::OSVersion }
 	$local:tz = [string][TimeZoneInfo]::Local.BaseUtcOffset
@@ -87,7 +87,7 @@ function ga {
 		-Method 'POST' `
 		-Headers $local:gaHeaders `
 		-Body $local:gaBody `
-	| Out-Null 
+	| Out-Null
 
 }
 
