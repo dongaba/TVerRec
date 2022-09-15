@@ -101,18 +101,6 @@ function checkRequiredFile {
 }
 
 #----------------------------------------------------------------------
-#GEO IPの確認
-#----------------------------------------------------------------------
-function checkGeoIP {
-	try {
-		$local:ipapi = (Invoke-RestMethod -Uri 'https://ipapi.co/jsonp/').replace('callback(', '').replace(');', '')
-		$local:ipapi = $local:ipapi.replace('{', "{`n").replace('}', "`n}").replace(', ', ",`n")
-		$script:clientEnv = @{}
-		$(ConvertFrom-Json $local:ipapi).psobject.properties | ForEach-Object { $script:clientEnv[$_.Name] = $_.Value }
-	} catch { Write-ColorOutput 'Geo IPのチェックに失敗しました' Green }
-}
-
-#----------------------------------------------------------------------
 #統計取得
 #----------------------------------------------------------------------
 function ga {
