@@ -110,7 +110,8 @@ checkLatestTVerRec			#TVerRecの最新化チェック
 checkLatestYtdl				#youtube-dlの最新化チェック
 checkLatestFfmpeg			#ffmpegの最新化チェック
 checkRequiredFile			#設定で指定したファイル・フォルダの存在チェック
-#checkGeoIP					#日本のIPアドレスでないと接続不可のためIPアドレスをチェック
+#checkGeoIP					#GEO IPのチェック
+
 $local:keywordName = 'URL指定'
 
 #無限ループ

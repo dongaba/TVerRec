@@ -110,7 +110,7 @@ checkLatestTVerRec			#TVerRecの最新化チェック
 checkLatestYtdl				#youtube-dlの最新化チェック
 checkLatestFfmpeg			#ffmpegの最新化チェック
 checkRequiredFile			#設定で指定したファイル・フォルダの存在チェック
-#checkGeoIP					#日本のIPアドレスでないと接続不可のためIPアドレスをチェック
+#checkGeoIP					#GEO IPのチェック
 
 #処理
 $local:keywordNames = loadKeywordList			#ダウンロード対象ジャンルリストの読み込み
@@ -224,7 +224,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 		#TVerビデオダウンロードのメイン処理
 		downloadTVerVideo $local:keywordName $local:videoPageURL $local:videoLink
 
-		Start-Sleep -Seconds 1
+		Start-Sleep -Seconds 0.5
 	}
 	#----------------------------------------------------------------------
 
