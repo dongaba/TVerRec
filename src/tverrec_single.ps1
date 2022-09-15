@@ -125,7 +125,7 @@ while ($true) {
 	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 	waitTillYtdlProcessGetFewer $script:parallelDownloadFileNum
 
-	$local:videoPageURL = Read-Host 'ビデオURLを入力してください。何もにゅうりょくしないで Enter を押すと終了します。'
+	$local:videoPageURL = Read-Host 'ビデオURLを入力してください。何も入力しないで Enter を押すと終了します。'
 	if ($videoPageURL -ne '') {
 		$local:videoLink = $local:videoPageURL.Replace('https://tver.jp', '').Trim()
 		$local:videoPageURL = 'https://tver.jp' + $local:videoLink
