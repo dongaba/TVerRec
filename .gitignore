@@ -52,6 +52,8 @@ win-*
 *.bak
 
 #ローカルの変更をGitHubにアップしないために
-#git update-index --assume-unchanged db/tver.csv
+tver.csv
+ignore.conf
+keyword.conf
 #git update-index --assume-unchanged conf/dev_setting.ps1
 
