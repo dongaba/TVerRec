@@ -26,71 +26,6 @@
 #
 ###################################################################################
 
-
-#----------------------------------------------------------------------
-#統計取得
-#----------------------------------------------------------------------
-function ga {
-	[CmdletBinding()]
-	PARAM (
-		[Parameter(Mandatory = $true)][String] $local:event,
-		[Parameter(Mandatory = $false)][String] $local:type,
-		[Parameter(Mandatory = $false)][String] $local:id
-	)
-
-	if (!($local:type)) { $local:type = '' }
-	if (!($local:id)) { $local:id = '' }
-	if ($script:isWin) { $local:os = [string][System.Environment]::OSVersion }
-	elseif ($IsLinux) { $local:os = "Linux $([string][System.Environment]::OSVersion.Version)" }
-	elseif ($IsMacOS) { $local:os = "macOS $([string][System.Environment]::OSVersion.Version)" }
-	else { $local:os = [string][System.Environment]::OSVersion }
-	$local:tz = [string][TimeZoneInfo]::Local.BaseUtcOffset
-
-	$progressPreference = 'silentlyContinue'
-	$local:statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
-	try { Invoke-WebRequest "$($local:statisticsBase)$($local:event).svg" | Out-Null }
-	catch { Write-Debug 'Failed to collect statistics' }
-	finally { $progressPreference = 'Continue' }
-
-	$local:gaBaseURL1 = 'https://www.google-analytics.com'
-	$local:gaBaseURL2 = '/mp/collect'
-	$local:gaID = 'measurement_id=G-NMSF9L531G'
-	$local:gaKey = 'api_secret=UZ3InfgkTgGiR4FU-in9sw'
-	$local:epochTime = [decimal]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() * 1000)
-	$local:gaURL = $($local:gaBaseURL1) + $($local:gaBaseURL2)
-	$local:gaHeaders = New-Object 'System.Collections.Generic.Dictionary[[String],[String]]'
-	$local:gaHeaders.Add('Content-Type', 'application/json')
-	$local:gaBody = '{'
-	$local:gaBody += "`"client_id`":`"$($script:guid)`","
-	$local:gaBody += "`"timestamp_micros`":`"$($local:epochTime)`","
-	$local:gaBody += "`"non_personalized_ads`":false,"
-	$local:gaBody += "`"user_properties`":{"
-	$local:gaBody += "	`"AppName`":{`"value`":`"$script:appName`"},"
-	$local:gaBody += "	`"AppVersion`":{`"value`":`"$script:appVersion`"},"
-	$local:gaBody += "	`"PSEdition`":{`"value`":`"$($PSVersionTable.PSEdition)`"},"
-	$local:gaBody += "	`"PSVersion`":{`"value`":`"$($PSVersionTable.PSVersion)`"},"
-	$local:gaBody += "	`"OS`":{`"value`":`"$($local:os)`"},"
-	$local:gaBody += "	`"TZ`":{`"value`":`"$($local:tz)`"}"
-	$local:gaBody += '},'
-	$local:gaBody += "`"events`":[{"
-	$local:gaBody += "	`"name`":`"$local:event`","
-	$local:gaBody += "	`"params`":{"
-	$local:gaBody += "		`"Type`":`"$($local:type)`","
-	$local:gaBody += "		`"ID`":`"($local:id)`","
-	$local:gaBody += "		`"Target`":`"$($local:type)/$($local:id)`""
-	$local:gaBody += '	}'
-	$local:gaBody += '}]'
-	$local:gaBody += '}'
-
-	Invoke-RestMethod `
-		-Uri "$($local:gaURL)?$($local:gaID)&$($local:gaKey)" `
-		-Method 'POST' `
-		-Headers $local:gaHeaders `
-		-Body $local:gaBody `
-	| Out-Null
-
-}
-
 #----------------------------------------------------------------------
 #TVerRec最新化確認
 #----------------------------------------------------------------------
@@ -878,5 +813,4 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 
 }
 
-$script:guid = [guid]::NewGuid()
 ga 'launch' $script:scriptRoot $script:scriptName

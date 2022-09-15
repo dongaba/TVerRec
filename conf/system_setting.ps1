@@ -56,13 +56,15 @@ $script:imgDir = $(Join-Path $scriptRoot '..\img')
 $script:toastAppLogo = Convert-Path (Join-Path $script:imgDir 'TVerRec-Toast.png')
 
 #ダウンロード対象ジャンルリストのパス
+$script:keywordFileSamplePath = $(Join-Path $script:confDir 'keyword.sampleconf')
 $script:keywordFilePath = $(Join-Path $script:confDir 'keyword.conf')
 
 #ダウンロード対象外ビデオリストのパス
+$script:ignoreFileSamplePath = $(Join-Path $script:confDir 'ignore.sample.conf')
 $script:ignoreFilePath = $(Join-Path $script:confDir 'ignore.conf')
 
 #ダウンロードリストのパス
-$script:listFileBlankPath = $(Join-Path $script:dbDir 'tver-blank.csv')
+$script:listFileSamplePath = $(Join-Path $script:dbDir 'tver.sample.csv')
 $script:listFilePath = $(Join-Path $script:dbDir 'tver.csv')
 $script:lockFilePath = $(Join-Path $script:dbDir 'tver.lock')
 

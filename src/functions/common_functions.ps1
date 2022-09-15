@@ -82,12 +82,20 @@ function checkRequiredFile {
 	else { Write-Error 'youtube-dlが存在しません。終了します。' ; exit 1 }
 	if (Test-Path $script:confFile -PathType Leaf) { }
 	else { Write-Error 'ユーザ設定ファイルが存在しません。終了します。' ; exit 1 }
+
+	#ファイルが存在しない場合はサンプルファイルをコピー
+	if (Test-Path $script:keywordFilePath -PathType Leaf) { }
+	else { Copy-Item -Path $script:keywordFileSamplePath -Destination $script:keywordFilePath -Force }
+	if (Test-Path $script:ignoreFilePath -PathType Leaf) { }
+	else { Copy-Item -Path $script:ignoreFileSamplePath -Destination $script:ignoreFilePath -Force }
+	if (Test-Path $script:listFilePath -PathType Leaf) { }
+	else { Copy-Item -Path $script:listFileSamplePath -Destination $script:listFilePath -Force }
+
+	#念のためチェック
 	if (Test-Path $script:keywordFilePath -PathType Leaf) { }
 	else { Write-Error 'ダウンロード対象ジャンルリストが存在しません。終了します。' ; exit 1 }
 	if (Test-Path $script:ignoreFilePath -PathType Leaf) { }
 	else { Write-Error 'ダウンロード対象外ビデオリストが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $script:listFilePath -PathType Leaf) { }
-	else { Copy-Item -Path $script:listFileBlankPath -Destination $script:listFilePath -Force }
 	if (Test-Path $script:listFilePath -PathType Leaf) { }
 	else { Write-Error 'ダウンロードリストが存在しません。終了します。' ; exit 1 }
 }
@@ -97,12 +105,92 @@ function checkRequiredFile {
 #----------------------------------------------------------------------
 function checkGeoIP {
 	try {
-		if ((Invoke-RestMethod -Uri 'https://ipapi.co/json/').country_code -ne 'JP') {
-			Invoke-RestMethod -Uri 'https://ipapi.co/json/'
-			Write-ColorOutput '日本のIPアドレスからしか接続できません。VPN接続を検討してください。' Green
-			exit 1
-		}
+		$local:ipapi = (Invoke-RestMethod -Uri 'https://ipapi.co/jsonp/').replace('callback(', '').replace(');', '')
+		$local:ipapi = $local:ipapi.replace('{', "{`n").replace('}', "`n}").replace(', ', ",`n")
+		$script:clientEnv = @{}
+		$(ConvertFrom-Json $local:ipapi).psobject.properties | ForEach-Object { $script:clientEnv[$_.Name] = $_.Value }
 	} catch { Write-ColorOutput 'Geo IPのチェックに失敗しました' Green }
+}
+
+#----------------------------------------------------------------------
+#統計取得
+#----------------------------------------------------------------------
+function ga {
+	[CmdletBinding()]
+	PARAM (
+		[Parameter(Mandatory = $true)][String] $local:event,
+		[Parameter(Mandatory = $false)][String] $local:type,
+		[Parameter(Mandatory = $false)][String] $local:id
+	)
+
+	if (!($local:type)) { $local:type = '' }
+	if (!($local:id)) { $local:id = '' }
+	if ($script:isWin) { $local:os = [string][System.Environment]::OSVersion }
+	elseif ($IsLinux) { $local:os = "Linux $([string][System.Environment]::OSVersion.Version)" }
+	elseif ($IsMacOS) { $local:os = "macOS $([string][System.Environment]::OSVersion.Version)" }
+	else { $local:os = [string][System.Environment]::OSVersion }
+	$local:tz = [string][TimeZoneInfo]::Local.BaseUtcOffset
+	$local:guid = [guid]::NewGuid()
+	$local:epochTime = [decimal]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() * 1000)
+
+	$progressPreference = 'silentlyContinue'
+	$local:statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
+	try { Invoke-WebRequest "$($local:statisticsBase)$($local:event).svg" | Out-Null }
+	catch { Write-Debug 'Failed to collect statistics' }
+	finally { $progressPreference = 'Continue' }
+	try { $local:ipapi = (Invoke-RestMethod -Uri 'https://ipapi.co/jsonp/') }
+	catch { Write-Debug 'Geo IPのチェックに失敗しました' }
+	finally { $progressPreference = 'Continue' }
+
+	$script:clientEnv = @{}
+	$local:ipapi = $local:ipapi.replace('callback(', '').replace(');', '')
+	$local:ipapi = $local:ipapi.replace('{', "{`n").replace('}', "`n}").replace(', ', ",`n")
+	$(ConvertFrom-Json $local:ipapi).psobject.properties | ForEach-Object { $script:clientEnv[$_.Name] = $_.Value }
+	$script:clientEnv.Add('Appname', "$script:appName")
+	$script:clientEnv.Add('AppVersion', "$script:appVersion")
+	$script:clientEnv.Add('PSEdition', "$($PSVersionTable.PSEdition)")
+	$script:clientEnv.Add('PSVersion', "$($PSVersionTable.PSVersion)")
+	$script:clientEnv.Add('OS', "$($local:os)")
+	$script:clientEnv.Add('TZ', "$($local:tz)")
+	$script:clientEnv = $script:clientEnv.GetEnumerator() | Sort-Object -Property key
+
+	$local:gaBaseURL1 = 'https://www.google-analytics.com'
+	$local:gaBaseURL2 = '/mp/collect'
+	$local:gaID = 'measurement_id=G-NMSF9L531G'
+	$local:gaKey = 'api_secret=UZ3InfgkTgGiR4FU-in9sw'
+	$local:gaURL = $($local:gaBaseURL1) + $($local:gaBaseURL2)
+
+	$local:gaHeaders = New-Object 'System.Collections.Generic.Dictionary[[String],[String]]'
+	$local:gaHeaders.Add('Content-Type', 'application/json')
+	$local:gaBody = '{'
+	$local:gaBody += "`"client_id`" : `"$($local:guid)`","
+	$local:gaBody += "`"timestamp_micros`" : `"$($local:epochTime)`","
+	$local:gaBody += "`"non_personalized_ads`" : false,"
+	$local:gaBody += "`"user_properties`":{"
+	foreach ($item in $script:clientEnv) {
+		$local:gaBody += "	`"$($item.Key)`":{`"value`":`"$($item.Value)`"}"
+	}
+	$local:gaBody += '},'
+	$local:gaBody += "`"events`" : [ {"
+	$local:gaBody += "	`"name`" : `"$local:event`","
+	$local:gaBody += "	`"params`" : {"
+	$local:gaBody += "		`"Type`" : `"$($local:type)`","
+	$local:gaBody += "		`"ID`" : `"($local:id)`","
+	$local:gaBody += "		`"Target`" : `"$($local:type)/$($local:id)`","
+	foreach ($local:env in $script:clientEnv) {
+		$local:gaBody += "		`"$($local:env.Key)`" : `"$($local:env.Value)`""
+	}
+	$local:gaBody += '	}'
+	$local:gaBody += '} ]'
+	$local:gaBody += '}'
+
+	Invoke-RestMethod `
+		-Uri "$($local:gaURL)?$($local:gaID)&$($local:gaKey)" `
+		-Method 'POST' `
+		-Headers $local:gaHeaders `
+		-Body $local:gaBody `
+	| Out-Null
+
 }
 
 #----------------------------------------------------------------------
