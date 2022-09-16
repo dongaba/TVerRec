@@ -142,35 +142,33 @@ function ga {
 	$script:clientEnv.Add('TZ', "$($local:tz)")
 	$script:clientEnv = $script:clientEnv.GetEnumerator() | Sort-Object -Property key
 
-	$local:gaBaseURL1 = 'https://www.google-analytics.com'
-	$local:gaBaseURL2 = '/mp/collect'
+	$local:gaURL = 'https://www.google-analytics.com/mp/collect'
 	$local:gaID = 'measurement_id=G-NMSF9L531G'
 	$local:gaKey = 'api_secret=UZ3InfgkTgGiR4FU-in9sw'
-	$local:gaURL = $($local:gaBaseURL1) + $($local:gaBaseURL2)
 
 	$local:gaHeaders = New-Object 'System.Collections.Generic.Dictionary[[String],[String]]'
 	$local:gaHeaders.Add('Content-Type', 'application/json')
-	$local:gaBody = '{'
-	$local:gaBody += "`"client_id`" : `"$($local:guid)`","
-	$local:gaBody += "`"timestamp_micros`" : `"$($local:epochTime)`","
-	$local:gaBody += "`"non_personalized_ads`" : false,"
-	$local:gaBody += "`"user_properties`":{"
+	$local:gaBody = "{ `"client_id`" : `"$($local:guid)`", "
+	$local:gaBody += "`"timestamp_micros`" : `"$($local:epochTime)`", "
+	$local:gaBody += "`"non_personalized_ads`" : false, "
+	$local:gaBody += "`"user_properties`":{ "
 	foreach ($item in $script:clientEnv) {
-		$local:gaBody += "	`"$($item.Key)`":{`"value`":`"$($item.Value)`"}"
+		$local:gaBody += "	`"$($item.Key)`" : {`"value`":`"$($item.Value)`"}, "
 	}
-	$local:gaBody += '},'
-	$local:gaBody += "`"events`" : [ {"
-	$local:gaBody += "	`"name`" : `"$local:event`","
-	$local:gaBody += "	`"params`" : {"
-	$local:gaBody += "		`"Type`" : `"$($local:type)`","
-	$local:gaBody += "		`"ID`" : `"($local:id)`","
-	$local:gaBody += "		`"Target`" : `"$($local:type)/$($local:id)`","
+	$local:gaBody += "	`"dummy`" : {`"value`":`"dummy`"} "
+	#$local:gaBody.subString(0, $local:gaBody.length - 2)	#drop last 1 chars
+	$local:gaBody += "}, `"events`" : [ { "
+	$local:gaBody += "`"name`" : `"$local:event`", "
+	$local:gaBody += "`"params`" : {"
+	$local:gaBody += "`"Type`" : `"$($local:type)`", "
+	$local:gaBody += "`"ID`" : `"($local:id)`", "
+	$local:gaBody += "`"Target`" : `"$($local:type)/$($local:id)`", "
 	foreach ($local:env in $script:clientEnv) {
-		$local:gaBody += "		`"$($local:env.Key)`" : `"$($local:env.Value)`""
+		$local:gaBody += "`"$($local:env.Key)`" : `"$($local:env.Value)`", "
 	}
-	$local:gaBody += '	}'
-	$local:gaBody += '} ]'
-	$local:gaBody += '}'
+	$local:gaBody += "`"dummy`" : `"dummy`" "
+	#$local:gaBody.subString(0, $local:gaBody.length - 2)	#drop last 1 chars
+	$local:gaBody += '} } ] }'
 
 	Invoke-RestMethod `
 		-Uri "$($local:gaURL)?$($local:gaID)&$($local:gaKey)" `
@@ -199,7 +197,7 @@ function purgeDB {
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
-		$local:purgedList = ((Import-Csv $script:listFilePath -Encoding UTF8).Where({ [DateTime]$_.downloadDate -gt $(Get-Date).AddDays(-30) }))
+		$local:purgedList = ((Import-Csv $script:listFilePath -Encoding UTF8).Where({ [DateTime]::ParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null) -gt $(Get-Date).AddDays(-30) }))
 		$local:purgedList `
 		| Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
 	} catch { Write-ColorOutput 'リストのクリーンアップに失敗しました' Green

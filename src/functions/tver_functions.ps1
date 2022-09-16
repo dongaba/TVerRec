@@ -813,4 +813,4 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 
 }
 
-ga 'launch' $script:scriptRoot $script:scriptName
+ga 'launch' $script:scriptName
