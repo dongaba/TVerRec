@@ -178,7 +178,6 @@ function ga {
 		-Headers $local:gaHeaders `
 		-Body $local:gaBody `
 	| Out-Null
-
 }
 
 #----------------------------------------------------------------------

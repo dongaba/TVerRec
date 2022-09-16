@@ -575,33 +575,33 @@ function getVideoLinksFromKeyword ($local:keywordName) {
 		#saveGenrePage $script:keywordName						#デバッグ用ジャンルページの保存
 	} elseif ($local:keywordName.IndexOf('series/') -eq 0) {
 		#番組IDによる番組検索からビデオページのLinkを取得
-		ga 'search' 'series' $local:keywordName
 		$local:seriesID = removeCommentsFromKeyword($local:keywordName).Replace('series/', '').Trim()
+		ga 'search' 'series' $local:seriesID
 		try { $script:videoLinks = getVideoLinkFromSeriesID ($local:seriesID) }
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} elseif ($local:keywordName.IndexOf('talents/') -eq 0) {
 		#タレントIDによるタレント検索からビデオページのLinkを取得
-		ga 'search' 'talent' $local:keywordName
 		$local:talentID = removeCommentsFromKeyword($local:keywordName).Replace('talents/', '').Trim()
+		ga 'search' 'talent' $local:talentID
 		try { $script:videoLinks = getVideoLinkFromTalentID ($local:talentID) }
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} elseif ($local:keywordName.IndexOf('tag/') -eq 0) {
 		#ジャンルなどのTag情報からビデオページのLinkを取得
-		ga 'search' 'tag' $local:keywordName
 		$local:tagID = removeCommentsFromKeyword($local:keywordName).Replace('tag/', '').Trim()
+		ga 'search' 'tag' $local:tagID
 		try { $script:videoLinks = getVideoLinkFromTag ($local:tagID) }
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} elseif ($local:keywordName.IndexOf('new/') -eq 0) {
 		#新着ビデオからビデオページのLinkを取得
-		ga 'search' 'new' $local:keywordName
-		$local:titleName = removeCommentsFromKeyword($local:keywordName).Replace('new/', '').Trim()
-		try { $script:videoLinks = getVideoLinkFromNew ($local:titleName) }
+		$local:genre = removeCommentsFromKeyword($local:keywordName).Replace('new/', '').Trim()
+		ga 'search' 'new' $local:genre
+		try { $script:videoLinks = getVideoLinkFromNew ($local:genre) }
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} elseif ($local:keywordName.IndexOf('ranking/') -eq 0) {
 		#ランキングによるビデオページのLinkを取得
-		ga 'search' 'ranking' $local:keywordName
-		$local:titleName = removeCommentsFromKeyword($local:keywordName).Replace('ranking/', '').Trim()
-		try { $script:videoLinks = getVideoLinkFromRanking ($local:titleName) }
+		$local:genre = removeCommentsFromKeyword($local:keywordName).Replace('ranking/', '').Trim()
+		ga 'search' 'ranking' $local:genre
+		try { $script:videoLinks = getVideoLinkFromRanking ($local:genre) }
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} elseif ($local:keywordName.IndexOf('toppage') -eq 0) {
 		#トップページからビデオページのLinkを取得
@@ -610,8 +610,8 @@ function getVideoLinksFromKeyword ($local:keywordName) {
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} elseif ($local:keywordName.IndexOf('title/') -eq 0) {
 		#番組名による新着検索からビデオページのLinkを取得
-		ga 'search' 'title' $local:keywordName
 		$local:titleName = removeCommentsFromKeyword($local:keywordName).Replace('title/', '').Trim()
+		ga 'search' 'title' $local:titleName
 		try { $script:videoLinks = getVideoLinkFromTitle ($local:titleName) }
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} else {
