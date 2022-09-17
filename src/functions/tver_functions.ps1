@@ -576,47 +576,47 @@ function getVideoLinksFromKeyword ($local:keywordName) {
 	} elseif ($local:keywordName.IndexOf('series/') -eq 0) {
 		#番組IDによる番組検索からビデオページのLinkを取得
 		$local:seriesID = removeCommentsFromKeyword($local:keywordName).Replace('series/', '').Trim()
-		ga 'search' 'series' $local:seriesID
+		goAnal 'search' 'series' $local:seriesID
 		try { $script:videoLinks = getVideoLinkFromSeriesID ($local:seriesID) }
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} elseif ($local:keywordName.IndexOf('talents/') -eq 0) {
 		#タレントIDによるタレント検索からビデオページのLinkを取得
 		$local:talentID = removeCommentsFromKeyword($local:keywordName).Replace('talents/', '').Trim()
-		ga 'search' 'talent' $local:talentID
+		goAnal 'search' 'talent' $local:talentID
 		try { $script:videoLinks = getVideoLinkFromTalentID ($local:talentID) }
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} elseif ($local:keywordName.IndexOf('tag/') -eq 0) {
 		#ジャンルなどのTag情報からビデオページのLinkを取得
 		$local:tagID = removeCommentsFromKeyword($local:keywordName).Replace('tag/', '').Trim()
-		ga 'search' 'tag' $local:tagID
+		goAnal 'search' 'tag' $local:tagID
 		try { $script:videoLinks = getVideoLinkFromTag ($local:tagID) }
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} elseif ($local:keywordName.IndexOf('new/') -eq 0) {
 		#新着ビデオからビデオページのLinkを取得
 		$local:genre = removeCommentsFromKeyword($local:keywordName).Replace('new/', '').Trim()
-		ga 'search' 'new' $local:genre
+		goAnal 'search' 'new' $local:genre
 		try { $script:videoLinks = getVideoLinkFromNew ($local:genre) }
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} elseif ($local:keywordName.IndexOf('ranking/') -eq 0) {
 		#ランキングによるビデオページのLinkを取得
 		$local:genre = removeCommentsFromKeyword($local:keywordName).Replace('ranking/', '').Trim()
-		ga 'search' 'ranking' $local:genre
+		goAnal 'search' 'ranking' $local:genre
 		try { $script:videoLinks = getVideoLinkFromRanking ($local:genre) }
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} elseif ($local:keywordName.IndexOf('toppage') -eq 0) {
 		#トップページからビデオページのLinkを取得
-		ga 'search' 'toppage'
+		goAnal 'search' 'toppage'
 		try { $script:videoLinks = getVideoLinkFromTopPage }
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} elseif ($local:keywordName.IndexOf('title/') -eq 0) {
 		#番組名による新着検索からビデオページのLinkを取得
 		$local:titleName = removeCommentsFromKeyword($local:keywordName).Replace('title/', '').Trim()
-		ga 'search' 'title' $local:titleName
+		goAnal 'search' 'title' $local:titleName
 		try { $script:videoLinks = getVideoLinkFromTitle ($local:titleName) }
 		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
 	} else {
 		#タレント名や番組名などURL形式でない場合APIで検索結果からビデオページのLinkを取得
-		ga 'search' 'free' $local:keywordName
+		goAnal 'search' 'free' $local:keywordName
 		try { $script:videoLinks = getVideoLinkFromFreeKeyword ($local:keywordName) }
 		catch { Write-ColorOutput 'TVerから検索結果を取得できませんでした。スキップします' Green ; continue }
 	}
@@ -655,7 +655,7 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 
 	#TVerのAPIを叩いてビデオ情報取得
 	try {
-		ga 'getinfo' 'link' $script:videoLink
+		goAnal 'getinfo' 'link' $script:videoLink
 		getToken
 		getVideoInfo ($script:videoLink)
 	} catch {
@@ -813,4 +813,4 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 
 }
 
-ga 'launch' $script:scriptName
+goAnal 'launch'

@@ -27,6 +27,30 @@
 ###################################################################################
 
 #----------------------------------------------------------------------
+#GUID取得
+#----------------------------------------------------------------------
+if ($script:isWin) { $script:os = [string][System.Environment]::OSVersion }
+elseif ($IsLinux) { $script:os = "Linux $([string][System.Environment]::OSVersion.Version)" }
+elseif ($IsMacOS) { $script:os = "macOS $([string][System.Environment]::OSVersion.Version)" }
+else { $script:os = [string][System.Environment]::OSVersion }
+$script:tz = [string][TimeZoneInfo]::Local.BaseUtcOffset
+$script:guid = [guid]::NewGuid()
+$script:ipapi = ''
+try { $script:ipapi = (Invoke-RestMethod -Uri 'https://ipapi.co/jsonp/') }
+catch { Write-Debug 'Geo IPのチェックに失敗しました' }
+$script:clientEnv = @{}
+$script:ipapi = $script:ipapi.replace('callback(', '').replace(');', '')
+$script:ipapi = $script:ipapi.replace('{', "{`n").replace('}', "`n}").replace(', ', ",`n")
+$(ConvertFrom-Json $script:ipapi).psobject.properties | ForEach-Object { $script:clientEnv[$_.Name] = $_.Value }
+$script:clientEnv.Add('Appname', "$script:appName")
+$script:clientEnv.Add('AppVersion', "$script:appVersion")
+$script:clientEnv.Add('PSEdition', "$($PSVersionTable.PSEdition)")
+$script:clientEnv.Add('PSVersion', "$($PSVersionTable.PSVersion)")
+$script:clientEnv.Add('OS', "$($script:os)")
+$script:clientEnv.Add('TZ', "$($script:tz)")
+$script:clientEnv = $script:clientEnv.GetEnumerator() | Sort-Object -Property key
+
+#----------------------------------------------------------------------
 #ytdlの最新化確認
 #----------------------------------------------------------------------
 function checkLatestYtdl {
@@ -103,7 +127,7 @@ function checkRequiredFile {
 #----------------------------------------------------------------------
 #統計取得
 #----------------------------------------------------------------------
-function ga {
+function goAnal {
 	[CmdletBinding()]
 	PARAM (
 		[Parameter(Mandatory = $true)][String] $local:event,
@@ -113,12 +137,6 @@ function ga {
 
 	if (!($local:type)) { $local:type = '' }
 	if (!($local:id)) { $local:id = '' }
-	if ($script:isWin) { $local:os = [string][System.Environment]::OSVersion }
-	elseif ($IsLinux) { $local:os = "Linux $([string][System.Environment]::OSVersion.Version)" }
-	elseif ($IsMacOS) { $local:os = "macOS $([string][System.Environment]::OSVersion.Version)" }
-	else { $local:os = [string][System.Environment]::OSVersion }
-	$local:tz = [string][TimeZoneInfo]::Local.BaseUtcOffset
-	$local:guid = [guid]::NewGuid()
 	$local:epochTime = [decimal]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() * 1000)
 
 	$progressPreference = 'silentlyContinue'
@@ -126,21 +144,6 @@ function ga {
 	try { Invoke-WebRequest "$($local:statisticsBase)$($local:event).svg" | Out-Null }
 	catch { Write-Debug 'Failed to collect statistics' }
 	finally { $progressPreference = 'Continue' }
-	try { $local:ipapi = (Invoke-RestMethod -Uri 'https://ipapi.co/jsonp/') }
-	catch { Write-Debug 'Geo IPのチェックに失敗しました' }
-	finally { $progressPreference = 'Continue' }
-
-	$script:clientEnv = @{}
-	$local:ipapi = $local:ipapi.replace('callback(', '').replace(');', '')
-	$local:ipapi = $local:ipapi.replace('{', "{`n").replace('}', "`n}").replace(', ', ",`n")
-	$(ConvertFrom-Json $local:ipapi).psobject.properties | ForEach-Object { $script:clientEnv[$_.Name] = $_.Value }
-	$script:clientEnv.Add('Appname', "$script:appName")
-	$script:clientEnv.Add('AppVersion', "$script:appVersion")
-	$script:clientEnv.Add('PSEdition', "$($PSVersionTable.PSEdition)")
-	$script:clientEnv.Add('PSVersion', "$($PSVersionTable.PSVersion)")
-	$script:clientEnv.Add('OS', "$($local:os)")
-	$script:clientEnv.Add('TZ', "$($local:tz)")
-	$script:clientEnv = $script:clientEnv.GetEnumerator() | Sort-Object -Property key
 
 	$local:gaURL = 'https://www.google-analytics.com/mp/collect'
 	$local:gaID = 'measurement_id=G-NMSF9L531G'
@@ -148,7 +151,7 @@ function ga {
 
 	$local:gaHeaders = New-Object 'System.Collections.Generic.Dictionary[[String],[String]]'
 	$local:gaHeaders.Add('Content-Type', 'application/json')
-	$local:gaBody = "{ `"client_id`" : `"$($local:guid)`", "
+	$local:gaBody = "{ `"client_id`" : `"$($script:guid)`", "
 	$local:gaBody += "`"timestamp_micros`" : `"$($local:epochTime)`", "
 	$local:gaBody += "`"non_personalized_ads`" : false, "
 	$local:gaBody += "`"user_properties`":{ "
@@ -296,7 +299,7 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 	}
 
 	$local:checkFile = '"' + $local:videoFilePath + '"'
-	ga 'validate'
+	goAnal 'validate'
 
 	if ($script:simplifiedValidation -eq $true) {
 		#ffprobeを使った簡易検査
@@ -507,7 +510,7 @@ function waitTillYtdlProcessIsZero () {
 #youtube-dlプロセスの起動
 #----------------------------------------------------------------------
 function executeYtdl ($local:videoPageURL) {
-	ga 'download'
+	goAnal 'download'
 
 	$local:tmpDir = '"temp:' + $script:downloadWorkDir + '"'
 	$local:saveDir = '"home:' + $script:videoFileDir + '"'
