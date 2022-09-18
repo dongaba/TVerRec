@@ -181,7 +181,7 @@ function goAnal {
 			-Body $local:gaBody `
 		| Out-Null
 	} catch { Write-Debug 'Failed to collect statistics' } 
-	finally { progressPreference = 'Continue' }
+	finally { $progressPreference = 'Continue' }
 
 }
 
