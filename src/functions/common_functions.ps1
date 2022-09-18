@@ -173,12 +173,16 @@ function goAnal {
 	#$local:gaBody.subString(0, $local:gaBody.length - 2)	#drop last 1 chars
 	$local:gaBody += '} } ] }'
 
-	Invoke-RestMethod `
-		-Uri "$($local:gaURL)?$($local:gaID)&$($local:gaKey)" `
-		-Method 'POST' `
-		-Headers $local:gaHeaders `
-		-Body $local:gaBody `
-	| Out-Null
+	$progressPreference = 'silentlyContinue'
+	try { Invoke-RestMethod `
+			-Uri "$($local:gaURL)?$($local:gaID)&$($local:gaKey)" `
+			-Method 'POST' `
+			-Headers $local:gaHeaders `
+			-Body $local:gaBody `
+		| Out-Null
+	} catch { Write-Debug 'Failed to collect statistics' } 
+	finally { progressPreference = 'Continue' }
+
 }
 
 #----------------------------------------------------------------------
