@@ -98,6 +98,8 @@ function checkLatestFfmpeg {
 function checkRequiredFile {
 	if (Test-Path $script:downloadBaseDir -PathType Container) { }
 	else { Write-Error 'ビデオ保存先フォルダが存在しません。終了します。' ; exit 1 }
+	if (Test-Path $script:downloadWorkDir -PathType Container) { }
+	else { Write-Error 'ダウンロード作業フォルダが存在しません。終了します。' ; exit 1 }
 	if (Test-Path $script:ffmpegPath -PathType Leaf) { }
 	else { Write-Error 'ffmpegが存在しません。終了します。' ; exit 1 }
 	if (Test-Path $script:ffprobePath -PathType Leaf) { }
