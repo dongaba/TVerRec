@@ -656,7 +656,6 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 	#TVerのAPIを叩いてビデオ情報取得
 	try {
 		goAnal 'getinfo' 'link' $script:videoLink
-		getToken
 		getVideoInfo ($script:videoLink)
 	} catch {
 		Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green
@@ -713,6 +712,11 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 
 		#無視リストに入っている番組の場合はスキップフラグを立ててリスト書き込み処理へ
 		foreach ($script:ignoreTitle in $script:ignoreTitles) {
+			if ($(getNarrowChars $script:videoName) -match $(getNarrowChars $script:ignoreTitle)) {
+				$script:ignore = $true
+				Write-ColorOutput '無視リストに入っているビデオです。スキップします' DarkGray
+				continue			#リストの重複削除のため、無視したものはリスト出力せずに次のビデオへ行くことに
+			}
 			if ($(getNarrowChars $script:videoSeries) -match $(getNarrowChars $script:ignoreTitle)) {
 				$script:ignore = $true
 				Write-ColorOutput '無視リストに入っているビデオです。スキップします' DarkGray
