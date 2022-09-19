@@ -399,7 +399,7 @@ function getVideoInfo ($local:videoLink) {
 		'origin'  = 'https://tver.jp';
 		'referer' = 'https://tver.jp/'
 	}
-	$local:tverVideoInfoURL = $local:tverVideoInfoBaseURL + $local:episodeID + '.json?v=5'
+	$local:tverVideoInfoURL = $local:tverVideoInfoBaseURL + $local:episodeID + '.json'
 	$local:videoInfo = (Invoke-RestMethod `
 			-Uri $local:tverVideoInfoURL `
 			-Method 'GET' `
@@ -418,7 +418,6 @@ function getVideoInfo ($local:videoLink) {
 		-Uri $local:tverVideoInfoURL `
 		-Method 'GET' `
 		-Headers $local:requestHeader
-
 	#$response.result.series.content.id + "`t" + $response.result.series.content.title `
 	#	| Out-File $(Join-Path $script:devDir 'series.txt') -Append -Encoding utf8
 
@@ -550,7 +549,6 @@ function loadKeywordList {
 #キーワードからビデオのリンクへの変換
 #----------------------------------------------------------------------
 function getVideoLinksFromKeyword ($local:keywordName) {
-	getToken
 	$script:requestHeader = @{
 		'x-tver-platform-type' = 'web' ;
 		'Origin'               = 'https://tver.jp' ;
@@ -628,15 +626,12 @@ function getVideoLinksFromKeyword ($local:keywordName) {
 #----------------------------------------------------------------------
 function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:videoLink) {
 
-	$script:platformUID = '' ; $script:platformToken = ''
 	$script:videoName = '' ; $script:videoFilePath = '' ; $script:videoSeriesPageURL = ''
 	$script:broadcastDate = '' ; $script:videoSeries = '' ; $script:videoSeason = '' ; $script:videoTitle = ''
 	$script:mediaName = '' ; $script:descriptionText = ''
 	$script:videoInfo = $null ;
 	$script:newVideo = $null
 	$script:ignore = $false ; $script:skip = $false
-
-	$script:ignoreTitles = getIgnoreList		#ダウンロード対象外番組リストの読み込み
 
 	#URLがすでにリストに存在する場合はスキップ
 	try {

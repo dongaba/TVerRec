@@ -113,6 +113,8 @@ checkRequiredFile			#設定で指定したファイル・フォルダの存在�
 
 #処理
 $local:keywordNames = loadKeywordList			#ダウンロード対象ジャンルリストの読み込み
+$script:ignoreTitles = getIgnoreList		#ダウンロード対象外番組リストの読み込み
+getToken
 
 $local:keywordNum = 0						#キーワードの番号
 if ($script:keywordNames -is [array]) {
@@ -223,7 +225,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 		#TVerビデオダウンロードのメイン処理
 		downloadTVerVideo $local:keywordName $local:videoPageURL $local:videoLink
 
-		Start-Sleep -Seconds 0.5
+		Start-Sleep -Seconds 1
 	}
 	#----------------------------------------------------------------------
 
