@@ -170,12 +170,12 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#進捗更新
 	UpdateProgess2Row `
 		"$($local:keywordNum)/$($local:keywordTotal)" `
-		"$($local:keywordName)" `
-		"$($local:progressRatio1)" `
-		$local:secRemaining1 `
+		"$local:keywordName" `
+		"$local:progressRatio1" `
+		"$local:secRemaining1" `
 		'' `
-		"$($local:videoLink)" `
-		"$($local:progressRatio2)" `
+		"$local:videoLink" `
+		"$local:progressRatio2" `
 		'' `
 		'Bulk'
 
@@ -197,12 +197,12 @@ foreach ($local:keywordName in $local:keywordNames) {
 		#進捗更新
 		UpdateProgess2Row `
 			"$($local:keywordNum)/$($local:keywordTotal)" `
-			"$($local:keywordName)" `
-			"$($local:progressRatio1)" `
-			$local:secRemaining1 `
+			"$local:keywordName" `
+			"$local:progressRatio1" `
+			"$local:secRemaining1" `
 			"$($local:videoNum)/$($local:videoTotal)" `
-			"$($local:videoLink)" `
-			"$($local:progressRatio2)" `
+			"$local:videoLink" `
+			"$local:progressRatio2" `
 			'' `
 			'Bulk'
 
@@ -225,7 +225,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 		#TVerビデオダウンロードのメイン処理
 		downloadTVerVideo $local:keywordName $local:videoPageURL $local:videoLink
 
-		Start-Sleep -Seconds 1
+		#		Start-Sleep -Seconds 1
 	}
 	#----------------------------------------------------------------------
 
@@ -238,7 +238,7 @@ UpdateProgessToast2 `
 	'' '完了' `
 	'動画のダウンロード' '1' `
 	'' '完了' `
-	"$($script:appName)" 'Bulk'
+	$script:appName 'Bulk'
 
 #youtube-dlのプロセスが終わるまで待機
 Write-ColorOutput 'ダウンロードの終了を待機しています'

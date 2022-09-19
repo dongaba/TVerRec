@@ -42,12 +42,12 @@ $script:clientEnv = @{}
 $script:ipapi = $script:ipapi.replace('callback(', '').replace(');', '')
 $script:ipapi = $script:ipapi.replace('{', "{`n").replace('}', "`n}").replace(', ', ",`n")
 $(ConvertFrom-Json $script:ipapi).psobject.properties | ForEach-Object { $script:clientEnv[$_.Name] = $_.Value }
-$script:clientEnv.Add('Appname', "$script:appName")
-$script:clientEnv.Add('AppVersion', "$script:appVersion")
-$script:clientEnv.Add('PSEdition', "$($PSVersionTable.PSEdition)")
-$script:clientEnv.Add('PSVersion', "$($PSVersionTable.PSVersion)")
-$script:clientEnv.Add('OS', "$($script:os)")
-$script:clientEnv.Add('TZ', "$($script:tz)")
+$script:clientEnv.Add('Appname', $script:appName)
+$script:clientEnv.Add('AppVersion', $script:appVersion)
+$script:clientEnv.Add('PSEdition', $PSVersionTable.PSEdition)
+$script:clientEnv.Add('PSVersion', $PSVersionTable.PSVersion)
+$script:clientEnv.Add('OS', $script:os)
+$script:clientEnv.Add('TZ', $script:tz)
 $script:clientEnv = $script:clientEnv.GetEnumerator() | Sort-Object -Property key
 
 #----------------------------------------------------------------------
@@ -153,23 +153,23 @@ function goAnal {
 
 	$local:gaHeaders = New-Object 'System.Collections.Generic.Dictionary[[String],[String]]'
 	$local:gaHeaders.Add('Content-Type', 'application/json')
-	$local:gaBody = "{ `"client_id`" : `"$($script:guid)`", "
-	$local:gaBody += "`"timestamp_micros`" : `"$($local:epochTime)`", "
+	$local:gaBody = "{ `"client_id`" : `"$script:guid`", "
+	$local:gaBody += "`"timestamp_micros`" : `"$local:epochTime`", "
 	$local:gaBody += "`"non_personalized_ads`" : false, "
 	$local:gaBody += "`"user_properties`":{ "
 	foreach ($item in $script:clientEnv) {
-		$local:gaBody += "	`"$($item.Key)`" : {`"value`":`"$($item.Value)`"}, "
+		$local:gaBody += "	`"$($item.Key)`" : {`"value`":`"$item.Value`"}, "
 	}
 	$local:gaBody += "	`"dummy`" : {`"value`":`"dummy`"} "
 	#$local:gaBody.subString(0, $local:gaBody.length - 2)	#drop last 1 chars
 	$local:gaBody += "}, `"events`" : [ { "
 	$local:gaBody += "`"name`" : `"$local:event`", "
 	$local:gaBody += "`"params`" : {"
-	$local:gaBody += "`"Type`" : `"$($local:type)`", "
-	$local:gaBody += "`"ID`" : `"($local:id)`", "
+	$local:gaBody += "`"Type`" : `"$local:type`", "
+	$local:gaBody += "`"ID`" : `"$local:id`", "
 	$local:gaBody += "`"Target`" : `"$($local:type)/$($local:id)`", "
 	foreach ($local:env in $script:clientEnv) {
-		$local:gaBody += "`"$($local:env.Key)`" : `"$($local:env.Value)`", "
+		$local:gaBody += "`"$local:env.Key`" : `"$local:env.Value`", "
 	}
 	$local:gaBody += "`"dummy`" : `"dummy`" "
 	#$local:gaBody.subString(0, $local:gaBody.length - 2)	#drop last 1 chars
@@ -1135,7 +1135,7 @@ function ShowProgess2Row {
 		$local:progressText2 `
 		$local:toastWorkDetail1 `
 		$local:toastWorkDetail2 `
-		"$($script:appName)" `
+		$script:appName `
 		$local:toastGroup `
 		$local:toastDuration `
 		$local:toastSilent
@@ -1167,10 +1167,15 @@ function UpdateProgess2Row {
 	if ($local:progressActivity2 -eq '') { $local:progressActivity2 = '　' }
 
 	UpdateProgessToast2 `
-		"$($local:currentProcessing1)" "$($local:progressRatio1)" `
-		"$local:progressActivity1" "$local:minRemaining1" `
-		"$($local:currentProcessing2)" "$($local:progressRatio2)" `
-		"$local:progressActivity2" "$local:secRemaining2" `
-		"$($script:appName)" "$local:toastGroup"
+		$local:currentProcessing1 `
+		$local:progressRatio1 `
+		$local:progressActivity1 `
+		$local:minRemaining1 `
+		$local:currentProcessing2 `
+		$local:progressRatio2 `
+		$local:progressActivity2 `
+		$local:secRemaining2 `
+		$script:appName `
+		$local:toastGroup
 }
 

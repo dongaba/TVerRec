@@ -34,7 +34,7 @@ function checkLatestTVerRec {
 
 	#githubの設定
 	$local:repo = 'dongaba/TVerRec'
-	$local:releases = "https://api.github.com/repos/$local:repo/releases"
+	$local:releases = "https://api.github.com/repos/$($local:repo)/releases"
 
 	#TVerRecの最新バージョン取得
 	try {

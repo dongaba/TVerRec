@@ -216,9 +216,9 @@ if ($null -eq $local:videoLists) {
 			-PercentComplete $($local:progressRatio * 100) `
 			-Status $local:videoFileRelativePath `
 			-SecondsRemaining $local:secRemaining
-		UpdateProgessToast "$($local:videoFileRelativePath)" "$($local:progressRatio)" `
+		UpdateProgessToast "$local:videoFileRelativePath" "$local:progressRatio" `
 			"$($local:validateNum)/$($local:validateTotal)" "残り時間 $local:minRemaining" `
-			"$($script:appName)" 'Validate'
+			$script:appName 'Validate'
 
 		#処理
 		$local:videoFileRelativePath = $local:videoList
@@ -260,4 +260,4 @@ try {
 } finally { $null = fileUnlock ($script:lockFilePath) }
 
 #進捗表示
-UpdateProgessToast '動画のチェック' '1' '' '完了' "$($script:appName)" 'Validate'
+UpdateProgessToast '動画のチェック' '1' '' '完了' $script:appName 'Validate'

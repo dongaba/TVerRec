@@ -163,9 +163,9 @@ foreach ($local:moveToPath in $local:moveToPaths.FullName) {
 		-Activity "$($local:moveToPathNum)/$($local:moveToPathTotal)" `
 		-PercentComplete $($local:progressRatio * 100) `
 		-Status $local:moveToPath
-	UpdateProgessToast "$($local:moveToPath)" "$($local:progressRatio)" `
+	UpdateProgessToast "$local:moveToPath" "$local:progressRatio" `
 		"$($local:moveToPathNum)/$($local:moveToPathTotal)" "残り時間 $local:minRemaining" `
-		"$($script:appName)" 'Move'
+		$script:appName 'Move'
 
 	#処理
 	Write-ColorOutput '----------------------------------------------------------------------'
@@ -226,9 +226,9 @@ foreach ($local:subDir in $local:allSubDirs) {
 		-Activity "$($local:subDirNum)/$($local:subDirTotal)" `
 		-PercentComplete $($local:progressRatio * 100) `
 		-Status $local:subDir
-	UpdateProgessToast "$($local:subDir)" "$($local:progressRatio)" `
+	UpdateProgessToast "$local:subDir" "$local:progressRatio" `
 		"$($local:subDirNum)/$($local:subDirTotal)" "残り時間 $local:minRemaining" `
-		"$($script:appName)" 'Delete'
+		$script:appName 'Delete'
 
 	#処理
 	Write-ColorOutput '----------------------------------------------------------------------'
@@ -245,4 +245,4 @@ foreach ($local:subDir in $local:allSubDirs) {
 #----------------------------------------------------------------------
 
 #進捗表示
-UpdateProgessToast '動画の移動' '1' '' '完了' "$($script:appName)" 'Move'
+UpdateProgessToast '動画の移動' '1' '' '完了' $script:appName 'Move'

@@ -28,7 +28,7 @@
 
 #githubの設定
 $local:repo = 'yt-dlp/yt-dlp'
-$local:releases = "https://api.github.com/repos/$local:repo/releases"
+$local:releases = "https://api.github.com/repos/$($local:repo)/releases"
 
 #yt-dlp保存先相対Path
 $local:ytdlRelativeDir = '..\bin'
@@ -69,7 +69,7 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 			$local:fileAfterRename = 'youtube-dl'
 			#ダウンロード
 			$local:tag = (Invoke-WebRequest $local:releases | ConvertFrom-Json)[0].Tag_name
-			$local:download = "https://github.com/$local:repo/releases/latest/download/$local:file"
+			$local:download = "https://github.com/$($local:repo)/releases/latest/download/$($local:file)"
 			$local:ytdlFileLocation = $(Join-Path $local:ytdlDir $local:fileAfterRename)
 			Write-ColorOutput "youtube-dlをダウンロードします。 $local:download"
 			Invoke-WebRequest $local:download -Out $local:ytdlFileLocation
@@ -84,7 +84,7 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 			$local:fileAfterRename = 'youtube-dl.exe'
 			#ダウンロード
 			$local:tag = (Invoke-WebRequest $local:releases | ConvertFrom-Json)[0].Tag_name
-			$local:download = "https://github.com/$local:repo/releases/download/$local:tag/$local:file"
+			$local:download = "https://github.com/$($local:repo)/releases/download/$($local:tag)/$($local:file)"
 			$local:ytdlFileLocation = $(Join-Path $local:ytdlDir $local:fileAfterRename)
 			Write-ColorOutput "youtube-dlをダウンロードします。 $local:download"
 			Invoke-WebRequest $local:download -Out $local:ytdlFileLocation
