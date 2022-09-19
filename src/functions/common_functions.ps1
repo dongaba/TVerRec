@@ -182,7 +182,7 @@ function goAnal {
 			-Headers $local:gaHeaders `
 			-Body $local:gaBody `
 		| Out-Null
-	} catch { Write-Debug 'Failed to collect statistics' } 
+	} catch { Write-Debug 'Failed to collect statistics' }
 	finally { $progressPreference = 'Continue' }
 
 }
