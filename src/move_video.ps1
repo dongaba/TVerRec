@@ -160,7 +160,7 @@ foreach ($local:moveToPath in $local:moveToPaths.FullName) {
 
 	#進捗表示
 	Write-Progress -Id 2 -ParentId 1 `
-		-Activity $($local:moveToPathNum)/$($local:moveToPathTotal) `
+		-Activity $local:moveToPathNum/$local:moveToPathTotal `
 		-PercentComplete $($local:progressRatio * 100) `
 		-Status $local:moveToPath
 	UpdateProgessToast $local:moveToPath $local:progressRatio `

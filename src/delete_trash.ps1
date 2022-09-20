@@ -263,7 +263,7 @@ foreach ($local:subDir in $local:allSubDirs) {
 
 	#進捗表示
 	Write-Progress -Id 2 -ParentId 1 `
-		-Activity $($local:subDirNum)/$($local:subDirTotal) `
+		-Activity $local:subDirNum/$local:subDirTotal `
 		-PercentComplete $($local:progressRatio * 100) `
 		-Status $local:subDir
 	UpdateProgessToast $local:subDir $local:progressRatio `
