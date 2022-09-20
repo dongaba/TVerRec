@@ -158,7 +158,7 @@ function goAnal {
 	$local:gaBody += "`"non_personalized_ads`" : false, "
 	$local:gaBody += "`"user_properties`":{ "
 	foreach ($item in $script:clientEnv) {
-		$local:gaBody += "	`"$($item.Key)`" : {`"value`":`"$item.Value`"}, "
+		$local:gaBody += "	`"$item.Key`" : {`"value`":`"$item.Value`"}, "
 	}
 	$local:gaBody += "	`"dummy`" : {`"value`":`"dummy`"} "
 	#$local:gaBody.subString(0, $local:gaBody.length - 2)	#drop last 1 chars
@@ -167,7 +167,7 @@ function goAnal {
 	$local:gaBody += "`"params`" : {"
 	$local:gaBody += "`"Type`" : `"$local:type`", "
 	$local:gaBody += "`"ID`" : `"$local:id`", "
-	$local:gaBody += "`"Target`" : `"$($local:type)/$($local:id)`", "
+	$local:gaBody += "`"Target`" : `"$local:type/$local:id`", "
 	foreach ($local:env in $script:clientEnv) {
 		$local:gaBody += "`"$local:env.Key`" : `"$local:env.Value`", "
 	}
@@ -362,7 +362,7 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 			$local:errorCount = (Get-Content -LiteralPath $script:ffpmegErrorLogPath `
 				| Measure-Object -Line).Lines
 			Get-Content -LiteralPath $script:ffpmegErrorLogPath -Encoding UTF8 `
-			| ForEach-Object { Write-Debug "$_" }
+			| ForEach-Object { Write-Debug $_ }
 		}
 	} catch { Write-ColorOutput 'ffmpegエラーの数をカウントできませんでした' Green ; $local:errorCount = 9999999 }
 
@@ -882,14 +882,14 @@ function ShowToast {
 
 		$local:toastProgressContent = @"
 <?xml version="1.0" encoding="utf-8"?>
-<toast duration="$($local:toastDuration)">
+<toast duration="$local:toastDuration">
 	<visual>
 		<binding template="ToastGeneric">
-			<text>$($local:toastTitle)</text>
-			<text>$($local:toastText1)</text>
-			<text>$($local:toastText2)</text>
-			<image placement="appLogoOverride" hint-crop="circle" src="$($local:toastAppLogo)"/>
-			<text placement="attribution">$($local:toastAttribution)</text>
+			<text>$local:toastTitle</text>
+			<text>$local:toastText1</text>
+			<text>$local:toastText2</text>
+			<image placement="appLogoOverride" hint-crop="circle" src="$local:toastAppLogo"/>
+			<text placement="attribution">$local:toastAttribution</text>
 		</binding>
 	</visual>
 	$local:toastSoundElement
@@ -942,13 +942,13 @@ function ShowProgressToast {
 
 		$local:toastContent = @"
 <?xml version="1.0" encoding="utf-8"?>
-<toast duration="$($local:toastDuration)">
+<toast duration="$local:toastDuration">
 	<visual>
 		<binding template="ToastGeneric">
-			<text>$($local:toastTitle)</text>
-			<text>$($local:toastText1)</text>
-			<text>$($local:toastText2)</text>
-			<image placement="appLogoOverride" hint-crop="circle" src="$($local:toastAppLogo)"/>
+			<text>$local:toastTitle</text>
+			<text>$local:toastText1</text>
+			<text>$local:toastText2</text>
+			<image placement="appLogoOverride" hint-crop="circle" src="$local:toastAppLogo"/>
 			<progress value="{progressValue}" title="{progressTitle}" valueStringOverride="{progressValueString}" status="{progressStatus}" />
 			<text placement="attribution">$($local:toastAttribution)</text>
 		</binding>
@@ -1039,13 +1039,13 @@ function ShowProgressToast2 {
 
 		$local:toastContent = @"
 <?xml version="1.0" encoding="utf-8"?>
-<toast duration="$($local:toastDuration)">
+<toast duration="$local:toastDuration">
 	<visual>
 		<binding template="ToastGeneric">
-			<text>$($local:toastTitle)</text>
-			<text>$($local:toastText1)</text>
-			<text>$($local:toastText2)</text>
-			<image placement="appLogoOverride" hint-crop="circle" src="$($local:toastAppLogo)"/>
+			<text>$local:toastTitle</text>
+			<text>$local:toastText1</text>
+			<text>$local:toastText2</text>
+			<image placement="appLogoOverride" hint-crop="circle" src="$local:toastAppLogo"/>
 			<progress value="{progressValue1}" title="{progressTitle1}" valueStringOverride="{progressValueString1}" status="{progressStatus1}" />
 			<progress value="{progressValue2}" title="{progressTitle2}" valueStringOverride="{progressValueString2}" status="{progressStatus2}" />
 			<text placement="attribution">$($local:toastAttribution)</text>

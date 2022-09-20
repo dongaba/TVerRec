@@ -114,7 +114,7 @@ Write-Progress -Id 1 `
 	-PercentComplete $($( 1 / 4 ) * 100) `
 	-Status 'フォルダ一覧を作成中'
 ShowProgressToast '動画の移動中' '　処理1/3 - フォルダ一覧を作成' '' `
-	"$($script:appName)" 'Move' 'long' $false
+	$script:appName 'Move' 'long' $false
 
 #処理
 $local:moveToPaths = Get-ChildItem $script:saveBaseDir -Recurse `
@@ -133,7 +133,7 @@ Write-Progress -Id 1 `
 	-PercentComplete $($( 1 / 2 ) * 100) `
 	-Status 'ファイルを移動中'
 ShowProgressToast '動画の移動中' '　処理2/3 - 動画ファイルを移動' '' `
-	"$($script:appName)" 'Move' 'long' $false
+	$script:appName 'Move' 'long' $false
 
 #処理
 $local:moveToPathNum = 0						#移動先パス番号
@@ -160,11 +160,11 @@ foreach ($local:moveToPath in $local:moveToPaths.FullName) {
 
 	#進捗表示
 	Write-Progress -Id 2 -ParentId 1 `
-		-Activity "$($local:moveToPathNum)/$($local:moveToPathTotal)" `
+		-Activity $($local:moveToPathNum)/$($local:moveToPathTotal) `
 		-PercentComplete $($local:progressRatio * 100) `
 		-Status $local:moveToPath
-	UpdateProgessToast "$local:moveToPath" "$local:progressRatio" `
-		"$($local:moveToPathNum)/$($local:moveToPathTotal)" "残り時間 $local:minRemaining" `
+	UpdateProgessToast $local:moveToPath $local:progressRatio `
+		$local:moveToPathNum/$local:moveToPathTotal "残り時間 $local:minRemaining" `
 		$script:appName 'Move'
 
 	#処理
@@ -194,7 +194,7 @@ Write-Progress -Id 1 `
 	-PercentComplete $($( 2 / 2 ) * 100) `
 	-Status '空フォルダを削除'
 ShowProgressToast '動画の移動中' '　処理3/3 - 空フォルダを削除' '残り時間計算中' `
-	"$($script:appName)" 'Move' 'long' $false
+	$script:appName 'Move' 'long' $false
 
 #処理
 $local:allSubDirs = @((Get-ChildItem -Path $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer })).FullName `
@@ -223,11 +223,11 @@ foreach ($local:subDir in $local:allSubDirs) {
 
 	#進捗表示
 	Write-Progress -Id 2 -ParentId 1 `
-		-Activity "$($local:subDirNum)/$($local:subDirTotal)" `
+		-Activity $local:subDirNum/$local:subDirTotal `
 		-PercentComplete $($local:progressRatio * 100) `
 		-Status $local:subDir
-	UpdateProgessToast "$local:subDir" "$local:progressRatio" `
-		"$($local:subDirNum)/$($local:subDirTotal)" "残り時間 $local:minRemaining" `
+	UpdateProgessToast $local:subDir $local:progressRatio `
+		$local:subDirNum/$local:subDirTotal "残り時間 $local:minRemaining" `
 		$script:appName 'Delete'
 
 	#処理

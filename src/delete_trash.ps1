@@ -119,12 +119,13 @@ Write-Progress -Id 1 `
 	-Activity '処理 1/3' `
 	-PercentComplete $($( 1 / 3 ) * 100) `
 	-Status 'ゴミファイルを削除'
-ShowProgressToast 'ファイルの掃除中' '　処理1/3 - ダウンロード中断時のゴミファイルを削除' '' $script:appName 'Delete' 'long' $false
+ShowProgressToast 'ファイルの掃除中' '　処理1/3 - ダウンロード中断時のゴミファイルを削除' '' `
+	$script:appName 'Delete' 'long' $false
 Write-Progress -Id 2 -ParentId 1 `
 	-Activity '1/3' `
 	-PercentComplete $($( 1 / 3 ) * 100) `
 	-Status $script:downloadBaseDir
-UpdateProgessToast "$script:downloadWorkDir" "$( 1 / 3 )" '' '' `
+UpdateProgessToast $script:downloadWorkDir $( 1 / 3 ) '' '' `
 	$script:appName 'Delete'
 
 #処理
@@ -133,9 +134,9 @@ deleteTrashFiles $script:downloadWorkDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.pa
 #進捗表示
 Write-Progress -Id 2 -ParentId 1 `
 	-Activity '2/3' `
-	-PercentComplete $($( 2 / 3 ) * 100) `
+	-PercentComplete $($(2 / 3) * 100) `
 	-Status $script:downloadWorkDir
-UpdateProgessToast "$script:downloadBaseDir" "$( 2 / 3 )" '' '' `
+UpdateProgessToast $script:downloadBaseDir $(2 / 3) '' '' `
 	$script:appName 'Delete'
 
 #処理
@@ -144,9 +145,9 @@ deleteTrashFiles $script:downloadBaseDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.pa
 #進捗表示
 Write-Progress -Id 2 -ParentId 1 `
 	-Activity '3/3' `
-	-PercentComplete $($( 3 / 3 ) * 100) `
+	-PercentComplete $($(3 / 3) * 100) `
 	-Status $script:saveBaseDir
-UpdateProgessToast "$script:saveBaseDir" "$( 3 / 3 )" '' '' `
+UpdateProgessToast $script:saveBaseDir $(3 / 3) '' '' `
 	$script:appName 'Delete'
 
 #処理
@@ -195,11 +196,11 @@ foreach ($local:ignoreTitle in $local:ignoreTitles) {
 
 	#進捗表示
 	Write-Progress -Id 2 -ParentId 1 `
-		-Activity "$($local:ignoreNum)/$($local:ignoreTotal)" `
+		-Activity $local:ignoreNum/$local:ignoreTotal `
 		-PercentComplete $($local:progressRatio * 100) `
 		-Status $local:ignoreTitle
-	UpdateProgessToast "$local:ignoreTitle" "$local:progressRatio" `
-		"$($local:ignoreNum)/$($local:ignoreTotal)" "残り時間 $local:minRemaining" `
+	UpdateProgessToast $local:ignoreTitle $local:progressRatio `
+		$local:ignoreNum/$local:ignoreTotal "残り時間 $local:minRemaining" `
 		$script:appName 'Delete'
 
 	#処理
@@ -232,7 +233,8 @@ Write-ColorOutput '-------------------------------------------------------------
 Write-Progress -Id 1 -Activity '処理 3/3' `
 	-PercentComplete $($( 3 / 3 ) * 100) `
 	-Status '空フォルダを削除'
-ShowProgressToast 'ファイルの掃除中' '　処理3/3 - 空フォルダを削除' '' "$($script:appName)" 'Delete' 'long' $false
+ShowProgressToast 'ファイルの掃除中' '　処理3/3 - 空フォルダを削除' '' `
+	$script:appName 'Delete' 'long' $false
 
 #処理
 $local:allSubDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer })).FullName `
@@ -261,11 +263,11 @@ foreach ($local:subDir in $local:allSubDirs) {
 
 	#進捗表示
 	Write-Progress -Id 2 -ParentId 1 `
-		-Activity "$($local:subDirNum)/$($local:subDirTotal)" `
+		-Activity $($local:subDirNum)/$($local:subDirTotal) `
 		-PercentComplete $($local:progressRatio * 100) `
 		-Status $local:subDir
-	UpdateProgessToast "$local:subDir" "$local:progressRatio" `
-		"$($local:subDirNum)/$($local:subDirTotal)" "残り時間 $local:minRemaining" `
+	UpdateProgessToast $local:subDir $local:progressRatio `
+		$local:subDirNum/$local:subDirTotal "残り時間 $local:minRemaining" `
 		$script:appName 'Delete'
 
 	#処理

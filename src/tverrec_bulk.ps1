@@ -169,13 +169,13 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 	#進捗更新
 	UpdateProgess2Row `
-		"$($local:keywordNum)/$($local:keywordTotal)" `
-		"$local:keywordName" `
-		"$local:progressRatio1" `
-		"$local:secRemaining1" `
+		$local:keywordNum/$local:keywordTotal `
+		$local:keywordName `
+		$local:progressRatio1 `
+		$local:secRemaining1 `
 		'' `
-		"$local:videoLink" `
-		"$local:progressRatio2" `
+		$local:videoLink `
+		$local:progressRatio2 `
 		'' `
 		'Bulk'
 
@@ -196,13 +196,13 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 		#進捗更新
 		UpdateProgess2Row `
-			"$($local:keywordNum)/$($local:keywordTotal)" `
-			"$local:keywordName" `
-			"$local:progressRatio1" `
-			"$local:secRemaining1" `
-			"$($local:videoNum)/$($local:videoTotal)" `
-			"$local:videoLink" `
-			"$local:progressRatio2" `
+			$local:keywordNum/$local:keywordTotal `
+			$local:keywordName `
+			$local:progressRatio1 `
+			$local:secRemaining1 `
+			$local:videoNum/$local:videoTotal `
+			$local:videoLink `
+			$local:progressRatio2 `
 			'' `
 			'Bulk'
 

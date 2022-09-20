@@ -107,7 +107,7 @@ Write-ColorOutput '30日以上前に処理したものはリストから削除�
 Write-ColorOutput '----------------------------------------------------------------------'
 #進捗表示
 ShowProgressToast '動画のチェック中' '　処理1/4 - 30日以上前のリストを削除' '' `
-	"$($script:appName)" 'Validate' 'long' $false
+	$script:appName 'Validate' 'long' $false
 
 #処理
 purgeDB								#30日以上前に処理したものはリストから削除
@@ -117,7 +117,7 @@ Write-ColorOutput '重複レコードを削除します'
 Write-ColorOutput '----------------------------------------------------------------------'
 #進捗表示
 ShowProgressToast '動画のチェック中' '　処理2/4 - 重複レコードを削除' '' `
-	"$($script:appName)" 'Validate' 'long' $false
+	$script:appName 'Validate' 'long' $false
 
 #処理
 uniqueDB							#リストの重複削除
@@ -191,7 +191,7 @@ if ($null -eq $local:videoLists) {
 		-PercentComplete 0 `
 		-Status '残り時間計算中'
 	ShowProgressToast '動画のチェック中' '　処理3/4 - 動画を検証' '残り時間計算中' `
-		"$($script:appName)" 'Validate' 'long' $false
+		"$script:appName" 'Validate' 'long' $false
 
 	#----------------------------------------------------------------------
 	$local:totalStartTime = Get-Date
@@ -212,12 +212,12 @@ if ($null -eq $local:videoLists) {
 
 		#進捗表示
 		Write-Progress -Id 1 `
-			-Activity "$($local:validateNum)/$($local:validateTotal)" `
+			-Activity $local:validateNum/$local:validateTotal `
 			-PercentComplete $($local:progressRatio * 100) `
 			-Status $local:videoFileRelativePath `
 			-SecondsRemaining $local:secRemaining
-		UpdateProgessToast "$local:videoFileRelativePath" "$local:progressRatio" `
-			"$($local:validateNum)/$($local:validateTotal)" "残り時間 $local:minRemaining" `
+		UpdateProgessToast $local:videoFileRelativePath $local:progressRatio `
+			$local:validateNum/$local:validateTotal "残り時間 $local:minRemaining" `
 			$script:appName 'Validate'
 
 		#処理
@@ -240,7 +240,7 @@ Write-ColorOutput '録画リストからチェックが終わっていないビ�
 Write-ColorOutput '----------------------------------------------------------------------'
 #進捗表示
 ShowProgressToast '動画のチェック中' '　処理4/4 - 未検証の動画のステータスを変更' '' `
-	"$($script:appName)" 'Validate' 'long' $false
+	$script:appName 'Validate' 'long' $false
 
 #処理
 try {
