@@ -636,7 +636,7 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 	#URLがすでにリストに存在する場合はスキップ
 	try {
 		#ロックファイルをロック
-		while ($(fileLock ($script:lockFilePath)).fileLocked -ne $true) {
+		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
 			Write-ColorOutput 'ファイルのロック解除待ち中です' DarkGray
 			Start-Sleep -Seconds 1
 		}
@@ -644,7 +644,7 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 		$local:listMatch = Import-Csv $script:listFilePath -Encoding UTF8 `
 		| Where-Object { $_.videoPage -eq $script:videoPageURL }
 	} catch { Write-ColorOutput 'リストを読み書きできなかったのでスキップしました' Green ; continue
-	} finally { $null = fileUnlock ($script:lockFilePath) }
+	} finally { $null = fileUnlock $script:lockFilePath }
 
 	if ( $null -ne $local:listMatch) { Write-ColorOutput '過去に処理したビデオです。スキップします' DarkGray ; continue }
 
@@ -686,7 +686,7 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 		#チェック済みか調べた上で、スキップ判断
 		try {
 			#ロックファイルをロック
-			while ($(fileLock ($script:lockFilePath)).fileLocked -ne $true) {
+			while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
 				Write-ColorOutput 'ファイルのロック解除待ち中です' DarkGray
 				Start-Sleep -Seconds 1
 			}
@@ -695,7 +695,7 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 			| Where-Object { $_.videoPath -eq $script:videoFilePath } `
 			| Where-Object { $_.videoValidated -eq '1' }
 		} catch { Write-ColorOutput 'リストを読み書きできませんでした。スキップします' Green ; continue
-		} finally { $null = fileUnlock ($script:lockFilePath) }
+		} finally { $null = fileUnlock $script:lockFilePath }
 
 		#結果が0件ということは未検証のファイルがあるということ
 		if ( $null -eq $local:listMatch) {
@@ -783,7 +783,7 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 	#リストCSV書き出し
 	try {
 		#ロックファイルをロック
-		while ($(fileLock ($script:lockFilePath)).fileLocked -ne $true) {
+		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
 			Write-ColorOutput 'ファイルのロック解除待ち中です' DarkGray
 			Start-Sleep -Seconds 1
 		}
@@ -791,7 +791,7 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 		$script:newVideo | Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8 -Append
 		Write-Debug 'リストを書き込みました'
 	} catch { Write-ColorOutput 'リストを更新できませんでした。でスキップします' Green ; continue
-	} finally { $null = fileUnlock ($script:lockFilePath) }
+	} finally { $null = fileUnlock $script:lockFilePath }
 
 	#スキップや無視対象でなければyoutube-dl起動
 	if (($script:ignore -eq $true) -Or ($script:skip -eq $true)) {

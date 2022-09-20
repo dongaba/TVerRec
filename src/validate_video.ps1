@@ -146,7 +146,7 @@ Write-ColorOutput '録画リストからチェックが終わっていないビ�
 Write-ColorOutput '----------------------------------------------------------------------'
 try {
 	#ロックファイルをロック
-	while ($(fileLock ($script:lockFilePath)).fileLocked -ne $true) {
+	while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
 		Write-ColorOutput 'ファイルのロック解除待ち中です' DarkGray
 		Start-Sleep -Seconds 1
 	}
@@ -156,7 +156,7 @@ try {
 	| Where-Object { $_.videoPath -ne '-- IGNORED --' } `
 	| Select-Object 'videoPath'
 } catch { Write-ColorOutput 'リストの読み込みに失敗しました' Green
-} finally { $null = fileUnlock ($script:lockFilePath) }
+} finally { $null = fileUnlock $script:lockFilePath }
 
 
 if ($null -eq $local:videoLists) {
@@ -274,7 +274,7 @@ ShowProgressToast `
 #処理
 try {
 	#ロックファイルをロック
-	while ($(fileLock ($script:lockFilePath)).fileLocked -ne $true) {
+	while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
 		Write-ColorOutput 'ファイルのロック解除待ち中です' DarkGray
 		Start-Sleep -Seconds 1
 	}
@@ -286,7 +286,7 @@ try {
 	$local:videoLists `
 	| Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
 } catch { Write-ColorOutput 'リストの更新に失敗しました' Green
-} finally { $null = fileUnlock ($script:lockFilePath) }
+} finally { $null = fileUnlock $script:lockFilePath }
 
 #進捗表示
 UpdateProgessToast `

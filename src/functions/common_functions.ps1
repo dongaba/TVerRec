@@ -131,7 +131,7 @@ function checkRequiredFile {
 #----------------------------------------------------------------------
 function goAnal {
 	[CmdletBinding()]
-	PARAM (
+	Param (
 		[Parameter(Mandatory = $true)][String] $local:event,
 		[Parameter(Mandatory = $false)][String] $local:type,
 		[Parameter(Mandatory = $false)][String] $local:id
@@ -201,7 +201,7 @@ function getTimeStamp {
 function purgeDB {
 	try {
 		#ロックファイルをロック
-		while ($(fileLock ($script:lockFilePath)).fileLocked -ne $true) {
+		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
 			Write-ColorOutput 'ファイルのロック解除待ち中です' DarkGray
 			Start-Sleep -Seconds 1
 		}
@@ -210,7 +210,7 @@ function purgeDB {
 		$local:purgedList `
 		| Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
 	} catch { Write-ColorOutput 'リストのクリーンアップに失敗しました' Green
-	} finally { $null = fileUnlock ($script:lockFilePath) }
+	} finally { $null = fileUnlock $script:lockFilePath }
 }
 
 #----------------------------------------------------------------------
@@ -222,7 +222,7 @@ function uniqueDB {
 	#無視されたもの
 	try {
 		#ロックファイルをロック
-		while ($(fileLock ($script:lockFilePath)).fileLocked -ne $true) {
+		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
 			Write-ColorOutput 'ファイルのロック解除待ち中です' DarkGray
 			Start-Sleep -Seconds 1
 		}
@@ -250,7 +250,7 @@ function uniqueDB {
 		| Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
 
 	} catch { Write-ColorOutput 'リストの更新に失敗しました' Green
-	} finally { $null = fileUnlock ($script:lockFilePath) }
+	} finally { $null = fileUnlock $script:lockFilePath }
 }
 
 #----------------------------------------------------------------------
@@ -266,7 +266,7 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 	#これからチェックする動画のステータスをチェック
 	try {
 		#ロックファイルをロック
-		while ($(fileLock ($script:lockFilePath)).fileLocked -ne $true) {
+		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
 			Write-ColorOutput 'ファイルのロック解除待ち中です' DarkGray
 			Start-Sleep -Seconds 1
 		}
@@ -276,7 +276,7 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 	} catch {
 		Write-ColorOutput "チェックステータスを取得できませんでした: $local:videoFileRelativePath" Green
 		return
-	} finally { $null = fileUnlock ($script:lockFilePath) }
+	} finally { $null = fileUnlock $script:lockFilePath }
 
 	#0:未チェック、1:チェック済み、2:チェック中
 	if ($local:checkStatus -eq 2 ) { Write-ColorOutput '  └他プロセスでチェック中です' DarkGray ; return }
@@ -291,7 +291,7 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 		}
 		try {
 			#ロックファイルをロック
-			while ($(fileLock ($script:lockFilePath)).fileLocked -ne $true) {
+			while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
 				Write-ColorOutput 'ファイルのロック解除待ち中です' DarkGray
 				Start-Sleep -Seconds 1
 			}
@@ -301,7 +301,7 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 		} catch {
 			Write-ColorOutput "録画リストを更新できませんでした: $local:videoFileRelativePath" Green
 			return
-		} finally { $null = fileUnlock ($script:lockFilePath) }
+		} finally { $null = fileUnlock $script:lockFilePath }
 	}
 
 	$local:checkFile = '"' + $local:videoFilePath + '"'
@@ -382,7 +382,7 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 		#破損している動画ファイルを録画リストから削除
 		try {
 			#ロックファイルをロック
-			while ($(fileLock ($script:lockFilePath)).fileLocked -ne $true) {
+			while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
 				Write-ColorOutput 'ファイルのロック解除待ち中です' DarkGray
 				Start-Sleep -Seconds 1
 			}
@@ -393,7 +393,7 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 				-Encoding UTF8 -SimpleMatch -NotMatch).Line `
 			| Out-File $script:listFilePath -Encoding UTF8
 		} catch { Write-ColorOutput "録画リストの更新に失敗しました: $local:videoFileRelativePath" Green
-		} finally { $null = fileUnlock ($script:lockFilePath) }
+		} finally { $null = fileUnlock $script:lockFilePath }
 
 		#破損している動画ファイルを削除
 		try {
@@ -405,7 +405,7 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 		#終了コードが"0"のときは録画リストにチェック済みフラグを立てる
 		try {
 			#ロックファイルをロック
-			while ($(fileLock ($script:lockFilePath)).fileLocked -ne $true) {
+			while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
 				Write-ColorOutput 'ファイルのロック解除待ち中です' DarkGray
 				Start-Sleep -Seconds 1
 			}
@@ -416,7 +416,7 @@ function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
 			$local:videoLists `
 			| Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
 		} catch { Write-ColorOutput "録画リストを更新できませんでした: $local:videoFileRelativePath" Green
-		} finally { $null = fileUnlock ($script:lockFilePath) }
+		} finally { $null = fileUnlock $script:lockFilePath }
 	}
 
 }
@@ -599,7 +599,7 @@ function showVideoDebugInfo ($local:videoPageURL, $local:videoSeriesPageURL, $lo
 #ファイル名・フォルダ名に禁止文字の削除
 #----------------------------------------------------------------------
 function getFileNameWithoutInvalidChars {
-	param(
+	Param (
 		[Parameter(
 			Mandatory = $true,
 			Position = 0,
@@ -617,7 +617,7 @@ function getFileNameWithoutInvalidChars {
 #全角→半角
 #----------------------------------------------------------------------
 function getNarrowChars {
-	Param([String]$local:text)		#変換元テキストを引数に指定
+	Param ([String]$local:text)		#変換元テキストを引数に指定
 	$local:wideKanaDaku = 'ガギグゲゴザジズゼゾダヂヅデドバビブベボ'
 	$local:narrowKanaDaku = 'ｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾊﾋﾌﾍﾎ'
 	$local:narrowWideKanaHanDaku = 'パピプペポ'
@@ -655,7 +655,8 @@ function getNarrowChars {
 #いくつかの特殊文字を置換
 #----------------------------------------------------------------------
 function getSpecialCharacterReplaced {
-	Param([String]$local:text)		#変換元テキストを引数に指定
+	[CmdletBinding()]
+	Param ([String]$local:text)		#変換元テキストを引数に指定
 	$local:text = $local:text.Replace('&amp;', '&')
 	$local:text = $local:text.Replace('"', '')
 	$local:text = $local:text.Replace('“', '')
@@ -743,8 +744,9 @@ function deleteTrashFiles ($local:Path, $local:Conditions) {
 #ファイルのロック
 #----------------------------------------------------------------------
 function fileLock {
-	param (
-		[parameter(position = 0, mandatory)][System.IO.FileInfo]$local:Path
+	[CmdletBinding()]
+	Param (
+		[parameter(Mandatory = $true, Position = 0)][System.IO.FileInfo]$local:Path
 	)
 	try {
 		$local:fileLocked = $false						# initialise variables
@@ -766,8 +768,9 @@ function fileLock {
 #ファイルのアンロック
 #----------------------------------------------------------------------
 function fileUnlock {
-	param (
-		[parameter(position = 0, mandatory)][System.IO.FileInfo]$local:Path
+	[CmdletBinding()]
+	Param (
+		[parameter(Mandatory = $true, Position = 0)][System.IO.FileInfo]$local:Path
 	)
 	try {
 		if ($script:fileStream) { $script:fileStream.Close() }		# close stream if not lock
@@ -787,8 +790,9 @@ function fileUnlock {
 #ファイルのロック確認
 #----------------------------------------------------------------------
 function isLocked {
-	param (
-		[parameter(position = 0, mandatory)][string]$local:isLockedPath
+	[CmdletBinding()]
+	Param (
+		[parameter(Mandatory = $true, Position = 0)][string]$local:isLockedPath
 	)
 	try {
 		$local:isFileLocked = $false						# initialise variables
@@ -812,10 +816,10 @@ function isLocked {
 #----------------------------------------------------------------------
 function Write-ColorOutput {
 	[CmdletBinding()]
-	Param(
-		[Parameter(Mandatory = $false, Position = 1, ValueFromPipeline = $false, ValueFromPipelinebyPropertyName = $false)][Object] $Object,
-		[Parameter(Mandatory = $false, Position = 2, ValueFromPipeline = $false, ValueFromPipelinebyPropertyName = $false)][ConsoleColor] $foregroundColor,
-		[Parameter(Mandatory = $false, Position = 3, ValueFromPipeline = $false, ValueFromPipelinebyPropertyName = $false)][ConsoleColor] $backgroundColor
+	Param (
+		[Parameter(Mandatory = $false, Position = 0)][Object] $Text,
+		[Parameter(Mandatory = $false, Position = 1)][ConsoleColor] $foregroundColor,
+		[Parameter(Mandatory = $false, Position = 2)][ConsoleColor] $backgroundColor
 	)
 
 	# Save previous colors
@@ -827,9 +831,9 @@ function Write-ColorOutput {
 	if ($ForegroundColor -ne $null) { $host.UI.RawUI.ForegroundColor = $foregroundColor }
 
 	# Always write (if we want just a NewLine)
-	if ($null -eq $Object) { $Object = '' }
+	if ($null -eq $Text) { $Text = '' }
 
-	Write-Output $Object
+	Write-Output $Text
 
 	# Restore previous colors
 	$host.UI.RawUI.ForegroundColor = $prevForegroundColor
@@ -853,7 +857,7 @@ function Get-WindowsAppId {
 #----------------------------------------------------------------------
 function ShowToast {
 	[CmdletBinding()]
-	PARAM (
+	Param (
 		[Parameter(Mandatory = $true)][String] $local:toastText1,
 		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:toastText2,
 		[Parameter(Mandatory = $false)][ValidateSet('Short', 'Long')][String] $local:toastDuration,
@@ -910,7 +914,7 @@ function ShowToast {
 #----------------------------------------------------------------------
 function ShowProgressToast {
 	[CmdletBinding()]
-	PARAM (
+	Param (
 		[Parameter(Mandatory = $true)][Alias('toastText1')][String] $local:toastText1,
 		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastText2')][String] $local:toastText2,
 		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastWorkDetail')][String] $local:toastWorkDetail,
@@ -979,7 +983,7 @@ function ShowProgressToast {
 #----------------------------------------------------------------------
 function UpdateProgessToast {
 	[CmdletBinding()]
-	PARAM (
+	Param (
 		[Parameter(Mandatory = $true)][Alias('toastProgressTitle')][String] $local:toastProgressTitle,
 		[Parameter(Mandatory = $true)][Alias('toastProgressRatio')][String] $local:toastProgressRatio,
 		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastLeftText')][String] $local:toastLeftText,
@@ -1006,7 +1010,7 @@ function UpdateProgessToast {
 #----------------------------------------------------------------------
 function ShowProgressToast2 {
 	[CmdletBinding()]
-	PARAM (
+	Param (
 		[Parameter(Mandatory = $true)][Alias('toastText1')][String] $local:toastText1,
 		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastText2')][String] $local:toastText2,
 		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastWorkDetail1')][String] $local:toastWorkDetail1,
@@ -1081,7 +1085,7 @@ function ShowProgressToast2 {
 #----------------------------------------------------------------------
 function UpdateProgessToast2 {
 	[CmdletBinding()]
-	PARAM (
+	Param (
 		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastProgressTitle1')][String] $local:toastProgressTitle1,
 		[Parameter(Mandatory = $true)][Alias('toastProgressRatio1')][String] $local:toastProgressRatio1,
 		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastLeftText1')][String] $local:toastLeftText1,
@@ -1116,7 +1120,7 @@ function UpdateProgessToast2 {
 #----------------------------------------------------------------------
 function ShowProgess2Row {
 	[CmdletBinding()]
-	PARAM (
+	Param (
 		[Parameter(Mandatory = $true)][Alias('progressText1')][String] $local:progressText1,
 		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('progressText2')][String] $local:progressText2,
 		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastWorkDetail1')][String] $local:toastWorkDetail1,
@@ -1146,7 +1150,7 @@ function ShowProgess2Row {
 #----------------------------------------------------------------------
 function UpdateProgess2Row {
 	[CmdletBinding()]
-	PARAM (
+	Param (
 		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('progressActivity1')][String] $local:progressActivity1,
 		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('currentProcessing1')][String] $local:currentProcessing1,
 		[Parameter(Mandatory = $true)][Alias('progressRatio1')][String] $local:progressRatio1,

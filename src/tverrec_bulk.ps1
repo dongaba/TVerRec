@@ -169,7 +169,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#進捗更新
 	UpdateProgess2Row `
 		-progressActivity1 $local:keywordNum/$local:keywordTotal `
-		-currentProcessing1 $local:keywordName `
+		-currentProcessing1 $(trimTabSpace ($local:keywordName)) `
 		-progressRatio1 $local:progressRatio1 `
 		-secRemaining1 $local:secRemaining1 `
 		-progressActivity2 '' `
@@ -196,7 +196,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 		#進捗更新
 		UpdateProgess2Row `
 			-progressActivity1 $local:keywordNum/$local:keywordTotal `
-			-currentProcessing1 $local:keywordName `
+			-currentProcessing1 $(trimTabSpace ($local:keywordName)) `
 			-progressRatio1 $local:progressRatio1 `
 			-secRemaining1 $local:secRemaining1 `
 			-progressActivity2 $local:videoNum/$local:videoTotal `
@@ -208,7 +208,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 		#処理
 		Write-ColorOutput '----------------------------------------------------------------------'
-		Write-ColorOutput "[ $local:keywordName - $local:videoNum / $local:videoTotal ] をダウンロードします。 ($(getTimeStamp))"
+		Write-ColorOutput "[ $(trimTabSpace ($local:keywordName)) - $local:videoNum / $local:videoTotal ] をダウンロードします。 ($(getTimeStamp))"
 		Write-ColorOutput '----------------------------------------------------------------------'
 
 		#保存先ディレクトリの存在確認(稼働中に共有フォルダが切断された場合に対応)

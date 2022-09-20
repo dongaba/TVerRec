@@ -1,5 +1,24 @@
 ﻿# Change Log
 
+## [2.5.1](https://github.com/dongaba/TVerRec/releases/tag/v2.5.1)
+
+### Added
+
+- バージョンアップ時にリストファイル(Keywordファイル、Ignoreファイル)がクリアされないようにする
+
+### Changed
+
+- TVerへのAPIコール数を削減し高速化
+- ファイルアクセスを削減し高速化
+- ソースコードのリファクタリングを実施
+- GEO IPのチェックの完全廃止
+
+### Fixed
+
+- トーストメッセージの誤植を修正
+- エラーメッセージの誤植を修正
+
+
 ## [2.5.0](https://github.com/dongaba/TVerRec/releases/tag/v2.5.0)
 
 ### Added
