@@ -119,14 +119,25 @@ Write-Progress -Id 1 `
 	-Activity '処理 1/3' `
 	-PercentComplete $($( 1 / 3 ) * 100) `
 	-Status 'ゴミファイルを削除'
-ShowProgressToast 'ファイルの掃除中' '　処理1/3 - ダウンロード中断時のゴミファイルを削除' '' `
-	$script:appName 'Delete' 'long' $false
+ShowProgressToast `
+	-toastText1 'ファイルの掃除中' `
+	-toastText2 '　処理1/3 - ダウンロード中断時のゴミファイルを削除' `
+	-toastWorkDetail '' `
+	-toastTag $script:appName `
+	-toastGroup 'Delete' `
+	-toastDuration 'long' `
+	-toastSilent $false
 Write-Progress -Id 2 -ParentId 1 `
 	-Activity '1/3' `
 	-PercentComplete $($( 1 / 3 ) * 100) `
 	-Status $script:downloadBaseDir
-UpdateProgessToast $script:downloadWorkDir $( 1 / 3 ) '' '' `
-	$script:appName 'Delete'
+UpdateProgessToast `
+	-toastProgressTitle $script:downloadWorkDir `
+	-toastProgressRatio $( 1 / 3 ) `
+	-toastLeftText '' `
+	-toastRrightText '' `
+	-toastTag $script:appName `
+	-toastGroup 'Delete'
 
 #処理
 deleteTrashFiles $script:downloadWorkDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.mp4'
@@ -136,8 +147,13 @@ Write-Progress -Id 2 -ParentId 1 `
 	-Activity '2/3' `
 	-PercentComplete $($(2 / 3) * 100) `
 	-Status $script:downloadWorkDir
-UpdateProgessToast $script:downloadBaseDir $(2 / 3) '' '' `
-	$script:appName 'Delete'
+UpdateProgessToast `
+	-toastProgressTitle $script:downloadBaseDir `
+	-toastProgressRatio $( 2 / 3 ) `
+	-toastLeftText '' `
+	-toastRrightText '' `
+	-toastTag $script:appName `
+	-toastGroup 'Delete'
 
 #処理
 deleteTrashFiles $script:downloadBaseDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*'
@@ -147,8 +163,13 @@ Write-Progress -Id 2 -ParentId 1 `
 	-Activity '3/3' `
 	-PercentComplete $($(3 / 3) * 100) `
 	-Status $script:saveBaseDir
-UpdateProgessToast $script:saveBaseDir $(3 / 3) '' '' `
-	$script:appName 'Delete'
+UpdateProgessToast `
+	-toastProgressTitle $script:saveBaseDir `
+	-toastProgressRatio $( 3 / 3 ) `
+	-toastLeftText '' `
+	-toastRrightText '' `
+	-toastTag $script:appName `
+	-toastGroup 'Delete'
 
 #処理
 deleteTrashFiles $script:saveBaseDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*'
@@ -163,8 +184,14 @@ Write-Progress -Id 1 `
 	-Activity '処理 2/3' `
 	-PercentComplete $($( 2 / 3 ) * 100) `
 	-Status '削除対象のビデオを削除'
-ShowProgressToast 'ファイルの掃除中' '　処理2/3 - 削除対象のビデオを削除' '' `
-	$script:appName 'Delete' 'long' $false
+ShowProgressToast `
+	-toastText1 'ファイルの掃除中' `
+	-toastText2 '　処理2/3 - 削除対象のビデオを削除' `
+	-toastWorkDetail '' `
+	-toastTag $script:appName `
+	-toastGroup 'Delete' `
+	-toastDuration 'long' `
+	-toastSilent $false
 
 #ダウンロード対象外ビデオ番組リストの読み込み
 $local:ignoreTitles = (Get-Content $script:ignoreFilePath -Encoding UTF8 `
@@ -199,9 +226,13 @@ foreach ($local:ignoreTitle in $local:ignoreTitles) {
 		-Activity $local:ignoreNum/$local:ignoreTotal `
 		-PercentComplete $($local:progressRatio * 100) `
 		-Status $local:ignoreTitle
-	UpdateProgessToast $local:ignoreTitle $local:progressRatio `
-		$local:ignoreNum/$local:ignoreTotal "残り時間 $local:minRemaining" `
-		$script:appName 'Delete'
+	UpdateProgessToast `
+		-toastProgressTitle $local:ignoreTitle `
+		-toastProgressRatio $local:progressRatio `
+		-toastLeftText $local:ignoreNum/$local:ignoreTotal `
+		-toastRrightText "残り時間 $local:minRemaining" `
+		-toastTag $script:appName `
+		-toastGroup 'Delete'
 
 	#処理
 	Write-ColorOutput '----------------------------------------------------------------------'
@@ -233,8 +264,14 @@ Write-ColorOutput '-------------------------------------------------------------
 Write-Progress -Id 1 -Activity '処理 3/3' `
 	-PercentComplete $($( 3 / 3 ) * 100) `
 	-Status '空フォルダを削除'
-ShowProgressToast 'ファイルの掃除中' '　処理3/3 - 空フォルダを削除' '' `
-	$script:appName 'Delete' 'long' $false
+ShowProgressToast `
+	-toastText1 'ファイルの掃除中' `
+	-toastText2 '　処理3/3 - 空フォルダを削除' `
+	-toastWorkDetail '' `
+	-toastTag $script:appName `
+	-toastGroup 'Delete' `
+	-toastDuration 'long' `
+	-toastSilent $false
 
 #処理
 $local:allSubDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer })).FullName `
@@ -266,9 +303,13 @@ foreach ($local:subDir in $local:allSubDirs) {
 		-Activity $local:subDirNum/$local:subDirTotal `
 		-PercentComplete $($local:progressRatio * 100) `
 		-Status $local:subDir
-	UpdateProgessToast $local:subDir $local:progressRatio `
-		$local:subDirNum/$local:subDirTotal "残り時間 $local:minRemaining" `
-		$script:appName 'Delete'
+	UpdateProgessToast `
+		-toastProgressTitle $local:subDir `
+		-toastProgressRatio $local:progressRatio `
+		-toastLeftText $local:subDirNum/$local:subDirTotal `
+		-toastRrightText "残り時間 $local:minRemaining" `
+		-toastTag $script:appName `
+		-toastGroup 'Delete'
 
 	#処理
 	Write-ColorOutput '----------------------------------------------------------------------'
@@ -284,5 +325,11 @@ foreach ($local:subDir in $local:allSubDirs) {
 #----------------------------------------------------------------------
 
 #進捗表示
-UpdateProgessToast 'ファイルの掃除' '1' '' '完了' $script:appName 'Delete'
+UpdateProgessToast `
+	-toastProgressTitle 'ファイルの掃除' `
+	-toastProgressRatio '1' `
+	-toastLeftText '' `
+	-toastRrightText '完了' `
+	-toastTag $script:appName `
+	-toastGroup 'Delete'
 

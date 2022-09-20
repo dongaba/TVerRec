@@ -106,8 +106,14 @@ Write-ColorOutput '-------------------------------------------------------------
 Write-ColorOutput '30日以上前に処理したものはリストから削除します'
 Write-ColorOutput '----------------------------------------------------------------------'
 #進捗表示
-ShowProgressToast '動画のチェック中' '　処理1/4 - 30日以上前のリストを削除' '' `
-	$script:appName 'Validate' 'long' $false
+ShowProgressToast `
+	-toastText1 '動画のチェック中' `
+	-toastText2 '　処理1/4 - 30日以上前のリストを削除' `
+	-toastWorkDetail '' `
+	-toastTag $script:appName `
+	-toastGroup 'Validate' `
+	-toastDuration 'long' `
+	-toastSilent $false
 
 #処理
 purgeDB								#30日以上前に処理したものはリストから削除
@@ -116,8 +122,14 @@ Write-ColorOutput '-------------------------------------------------------------
 Write-ColorOutput '重複レコードを削除します'
 Write-ColorOutput '----------------------------------------------------------------------'
 #進捗表示
-ShowProgressToast '動画のチェック中' '　処理2/4 - 重複レコードを削除' '' `
-	$script:appName 'Validate' 'long' $false
+ShowProgressToast `
+	-toastText1 '動画のチェック中' `
+	-toastText2 '　処理2/4 - 重複レコードを削除' `
+	-toastWorkDetail '' `
+	-toastTag $script:appName `
+	-toastGroup 'Validate' `
+	-toastDuration 'long' `
+	-toastSilent $false
 
 #処理
 uniqueDB							#リストの重複削除
@@ -190,8 +202,15 @@ if ($null -eq $local:videoLists) {
 		-Activity '動画のチェック中' `
 		-PercentComplete 0 `
 		-Status '残り時間計算中'
-	ShowProgressToast '動画のチェック中' '　処理3/4 - 動画を検証' '残り時間計算中' `
-		"$script:appName" 'Validate' 'long' $false
+	ShowProgressToast `
+		-toastText1 '動画のチェック中' `
+		-toastText2 '　処理3/4 - 動画を検証' `
+		-toastWorkDetail '残り時間計算中' `
+		-toastTag $script:appName `
+		-toastGroup 'Validate' `
+		-toastDuration 'long' `
+		-toastSilent $false
+
 
 	#----------------------------------------------------------------------
 	$local:totalStartTime = Get-Date
@@ -216,9 +235,13 @@ if ($null -eq $local:videoLists) {
 			-PercentComplete $($local:progressRatio * 100) `
 			-Status $local:videoFileRelativePath `
 			-SecondsRemaining $local:secRemaining
-		UpdateProgessToast $local:videoFileRelativePath $local:progressRatio `
-			$local:validateNum/$local:validateTotal "残り時間 $local:minRemaining" `
-			$script:appName 'Validate'
+		UpdateProgessToast `
+			-toastProgressTitle $local:videoFileRelativePath `
+			-toastProgressRatio $local:progressRatio `
+			-toastLeftText $local:validateNum/$local:validateTotal `
+			-toastRrightText "残り時間 $local:minRemaining" `
+			-toastTag $script:appName `
+			-toastGroup 'Validate'
 
 		#処理
 		$local:videoFileRelativePath = $local:videoList
@@ -239,8 +262,14 @@ Write-ColorOutput '-------------------------------------------------------------
 Write-ColorOutput '録画リストからチェックが終わっていないビデオのステータスを変更します'
 Write-ColorOutput '----------------------------------------------------------------------'
 #進捗表示
-ShowProgressToast '動画のチェック中' '　処理4/4 - 未検証の動画のステータスを変更' '' `
-	$script:appName 'Validate' 'long' $false
+ShowProgressToast `
+	-toastText1 '動画のチェック中' `
+	-toastText2 '　処理4/4 - 未検証の動画のステータスを変更' `
+	-toastWorkDetail '' `
+	-toastTag $script:appName `
+	-toastGroup 'Validate' `
+	-toastDuration 'long' `
+	-toastSilent $false
 
 #処理
 try {
@@ -260,4 +289,10 @@ try {
 } finally { $null = fileUnlock ($script:lockFilePath) }
 
 #進捗表示
-UpdateProgessToast '動画のチェック' '1' '' '完了' $script:appName 'Validate'
+UpdateProgessToast `
+	-toastProgressTitle '動画のチェック' `
+	-toastProgressRatio '1' `
+	-toastLeftText '' `
+	-toastRrightText '完了' `
+	-toastTag $script:appName `
+	-toastGroup 'Validate'

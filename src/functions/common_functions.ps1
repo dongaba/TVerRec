@@ -911,13 +911,13 @@ function ShowToast {
 function ShowProgressToast {
 	[CmdletBinding()]
 	PARAM (
-		[Parameter(Mandatory = $true)][String] $local:toastText1,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:toastText2,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:toastWorkDetail,
-		[Parameter(Mandatory = $true)][String] $local:toastTag,
-		[Parameter(Mandatory = $true)][String] $local:toastGroup,
-		[Parameter(Mandatory = $false)][ValidateSet('Short', 'Long')][String] $local:toastDuration,
-		[Parameter(Mandatory = $false)][Boolean] $local:toastSilent
+		[Parameter(Mandatory = $true)][Alias('toastText1')][String] $local:toastText1,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastText2')][String] $local:toastText2,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastWorkDetail')][String] $local:toastWorkDetail,
+		[Parameter(Mandatory = $true)][Alias('toastTag')][String] $local:toastTag,
+		[Parameter(Mandatory = $true)][Alias('toastGroup')][String] $local:toastGroup,
+		[Parameter(Mandatory = $false)][ValidateSet('Short', 'Long')][Alias('toastDuration')][String] $local:toastDuration,
+		[Parameter(Mandatory = $false)][Alias('toastSilent')][Boolean] $local:toastSilent
 	)
 
 	if ($script:isWin) {
@@ -980,12 +980,12 @@ function ShowProgressToast {
 function UpdateProgessToast {
 	[CmdletBinding()]
 	PARAM (
-		[Parameter(Mandatory = $true)][String] $local:toastProgressTitle,
-		[Parameter(Mandatory = $true)][String] $local:toastProgressRatio,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:toastLeftText,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:toastRrightText,
-		[Parameter(Mandatory = $true)][String] $local:toastTag,
-		[Parameter(Mandatory = $true)][String] $local:toastGroup
+		[Parameter(Mandatory = $true)][Alias('toastProgressTitle')][String] $local:toastProgressTitle,
+		[Parameter(Mandatory = $true)][Alias('toastProgressRatio')][String] $local:toastProgressRatio,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastLeftText')][String] $local:toastLeftText,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastRrightText')][String] $local:toastRrightText,
+		[Parameter(Mandatory = $true)][Alias('toastTag')][String] $local:toastTag,
+		[Parameter(Mandatory = $true)][Alias('toastGroup')][String] $local:toastGroup
 	)
 
 	if ($script:isWin) {
@@ -1007,14 +1007,14 @@ function UpdateProgessToast {
 function ShowProgressToast2 {
 	[CmdletBinding()]
 	PARAM (
-		[Parameter(Mandatory = $true)][String] $local:toastText1,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:toastText2,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:toastWorkDetail1,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:toastWorkDetail2,
-		[Parameter(Mandatory = $true)][String] $local:toastTag,
-		[Parameter(Mandatory = $true)][String] $local:toastGroup,
-		[Parameter(Mandatory = $false)][ValidateSet('Short', 'Long')][String] $local:toastDuration,
-		[Parameter(Mandatory = $false)][Boolean] $local:toastSilent
+		[Parameter(Mandatory = $true)][Alias('toastText1')][String] $local:toastText1,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastText2')][String] $local:toastText2,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastWorkDetail1')][String] $local:toastWorkDetail1,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastWorkDetail2')][String] $local:toastWorkDetail2,
+		[Parameter(Mandatory = $true)][Alias('toastTag')][String] $local:toastTag,
+		[Parameter(Mandatory = $true)][Alias('toastGroup')][String] $local:toastGroup,
+		[Parameter(Mandatory = $false)][ValidateSet('Short', 'Long')][Alias('toastDuration')][String] $local:toastDuration,
+		[Parameter(Mandatory = $false)][Alias('toastSilent')][Boolean] $local:toastSilent
 	)
 
 	if ($script:isWin) {
@@ -1082,16 +1082,16 @@ function ShowProgressToast2 {
 function UpdateProgessToast2 {
 	[CmdletBinding()]
 	PARAM (
-		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:toastProgressTitle1,
-		[Parameter(Mandatory = $true)][String] $local:toastProgressRatio1,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:toastLeftText1,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:toastRrightText1,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:toastProgressTitle2,
-		[Parameter(Mandatory = $true)][String] $local:toastProgressRatio2,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:toastLeftText2,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:toastRrightText2,
-		[Parameter(Mandatory = $true)][String] $local:toastTag,
-		[Parameter(Mandatory = $true)][String] $local:toastGroup
+		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastProgressTitle1')][String] $local:toastProgressTitle1,
+		[Parameter(Mandatory = $true)][Alias('toastProgressRatio1')][String] $local:toastProgressRatio1,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastLeftText1')][String] $local:toastLeftText1,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastRrightText1')][String] $local:toastRrightText1,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastProgressTitle2')][String] $local:toastProgressTitle2,
+		[Parameter(Mandatory = $true)][Alias('toastProgressRatio2')][String] $local:toastProgressRatio2,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastLeftText2')][String] $local:toastLeftText2,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastRrightText2')][String] $local:toastRrightText2,
+		[Parameter(Mandatory = $true)][Alias('toastTag')][String] $local:toastTag,
+		[Parameter(Mandatory = $true)][Alias('toastGroup')][String] $local:toastGroup
 	)
 
 	if ($script:isWin) {
@@ -1117,13 +1117,13 @@ function UpdateProgessToast2 {
 function ShowProgess2Row {
 	[CmdletBinding()]
 	PARAM (
-		[Parameter(Mandatory = $true)][String] $local:progressText1,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:progressText2,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:toastWorkDetail1,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:toastWorkDetail2,
-		[Parameter(Mandatory = $false)][ValidateSet('Short', 'Long')][String] $local:toastDuration,
-		[Parameter(Mandatory = $false)][Boolean] $local:toastSilent,
-		[Parameter(Mandatory = $true)][String] $local:toastGroup
+		[Parameter(Mandatory = $true)][Alias('progressText1')][String] $local:progressText1,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('progressText2')][String] $local:progressText2,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastWorkDetail1')][String] $local:toastWorkDetail1,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastWorkDetail2')][String] $local:toastWorkDetail2,
+		[Parameter(Mandatory = $false)][ValidateSet('Short', 'Long')][Alias('toastDuration')][String] $local:toastDuration,
+		[Parameter(Mandatory = $false)][Alias('toastSilent')][Boolean] $local:toastSilent,
+		[Parameter(Mandatory = $true)][Alias('toastGroup')][String] $local:toastGroup
 	)
 
 	if (!($local:progressText2)) { $local:progressText2 = '' }
@@ -1131,14 +1131,14 @@ function ShowProgess2Row {
 	if (!($local:toastWorkDetail2)) { $local:toastWorkDetail2 = '' }
 
 	ShowProgressToast2 `
-		$local:progressText1 `
-		$local:progressText2 `
-		$local:toastWorkDetail1 `
-		$local:toastWorkDetail2 `
-		$script:appName `
-		$local:toastGroup `
-		$local:toastDuration `
-		$local:toastSilent
+		-toastText1 $local:progressText1 `
+		-toastText2 $local:progressText2 `
+		-toastWorkDetail1 $local:toastWorkDetail1 `
+		-toastWorkDetail2 $local:toastWorkDetail2 `
+		-toastTag $script:appName `
+		-toastGroup $local:toastGroup `
+		-toastDuration $local:toastDuration `
+		-toastSilent $local:toastSilent
 }
 
 #----------------------------------------------------------------------
@@ -1147,15 +1147,15 @@ function ShowProgess2Row {
 function UpdateProgess2Row {
 	[CmdletBinding()]
 	PARAM (
-		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:progressActivity1,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:currentProcessing1,
-		[Parameter(Mandatory = $true)][String] $local:progressRatio1,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:secRemaining1,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:progressActivity2,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:currentProcessing2,
-		[Parameter(Mandatory = $true)][String] $local:progressRatio2,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:secRemaining2,
-		[Parameter(Mandatory = $true)][String] $local:toastGroup
+		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('progressActivity1')][String] $local:progressActivity1,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('currentProcessing1')][String] $local:currentProcessing1,
+		[Parameter(Mandatory = $true)][Alias('progressRatio1')][String] $local:progressRatio1,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('secRemaining1')][String] $local:secRemaining1,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('progressActivity2')][String] $local:progressActivity2,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('currentProcessing2')][String] $local:currentProcessing2,
+		[Parameter(Mandatory = $true)][Alias('progressRatio2')][String] $local:progressRatio2,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('secRemaining2')][String] $local:secRemaining2,
+		[Parameter(Mandatory = $true)][Alias('toastGroup')][String] $local:toastGroup
 	)
 
 	if ($local:secRemaining1 -eq -1 -or $local:secRemaining1 -eq '' ) { $local:minRemaining1 = '計算中...' }
@@ -1167,15 +1167,15 @@ function UpdateProgess2Row {
 	if ($local:progressActivity2 -eq '') { $local:progressActivity2 = '　' }
 
 	UpdateProgessToast2 `
-		$local:currentProcessing1 `
-		$local:progressRatio1 `
-		$local:progressActivity1 `
-		$local:minRemaining1 `
-		$local:currentProcessing2 `
-		$local:progressRatio2 `
-		$local:progressActivity2 `
-		$local:secRemaining2 `
-		$script:appName `
-		$local:toastGroup
+		-toastProgressTitle1 $local:currentProcessing1 `
+		-toastProgressRatio1 $local:progressRatio1 `
+		-toastLeftText1 $local:progressActivity1 `
+		-toastRrightText1 $local:minRemaining1 `
+		-toastProgressTitle2 $local:currentProcessing2 `
+		-toastProgressRatio2 $local:progressRatio2 `
+		-toastLeftText2 $local:progressActivity2 `
+		-toastRrightText2 $local:secRemaining2 `
+		-toastTag $script:appName `
+		-toastGroup $local:toastGroup
 }
 

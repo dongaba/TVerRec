@@ -123,14 +123,13 @@ if ($script:keywordNames -is [array]) {
 
 #進捗表示
 ShowProgess2Row `
-	'一括ダウンロード中' `
-	'キーワードから動画を抽出しダウンロード' `
-	'読み込み中...' `
-	'読み込み中...' `
-	'long' `
-	$false `
-	'Bulk'
-
+	-progressText1 '一括ダウンロード中' `
+	-progressText2 'キーワードから動画を抽出しダウンロード' `
+	-toastWorkDetail1 '読み込み中...' `
+	-toastWorkDetail2 '読み込み中...' `
+	-toastDuration 'long' `
+	-toastSilent $false `
+	-toastGroup 'Bulk'
 
 #======================================================================
 #個々のジャンルページチェックここから
@@ -169,15 +168,15 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 	#進捗更新
 	UpdateProgess2Row `
-		$local:keywordNum/$local:keywordTotal `
-		$local:keywordName `
-		$local:progressRatio1 `
-		$local:secRemaining1 `
-		'' `
-		$local:videoLink `
-		$local:progressRatio2 `
-		'' `
-		'Bulk'
+		-progressActivity1 $local:keywordNum/$local:keywordTotal `
+		-currentProcessing1 $local:keywordName `
+		-progressRatio1 $local:progressRatio1 `
+		-secRemaining1 $local:secRemaining1 `
+		-progressActivity2 '' `
+		-currentProcessing2 $local:videoLink `
+		-progressRatio2 $local:progressRatio2 `
+		-secRemaining2 '' `
+		-toastGroup 'Bulk'
 
 
 	#----------------------------------------------------------------------
@@ -196,15 +195,15 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 		#進捗更新
 		UpdateProgess2Row `
-			$local:keywordNum/$local:keywordTotal `
-			$local:keywordName `
-			$local:progressRatio1 `
-			$local:secRemaining1 `
-			$local:videoNum/$local:videoTotal `
-			$local:videoLink `
-			$local:progressRatio2 `
-			'' `
-			'Bulk'
+			-progressActivity1 $local:keywordNum/$local:keywordTotal `
+			-currentProcessing1 $local:keywordName `
+			-progressRatio1 $local:progressRatio1 `
+			-secRemaining1 $local:secRemaining1 `
+			-progressActivity2 $local:videoNum/$local:videoTotal `
+			-currentProcessing2 $local:videoLink `
+			-progressRatio2 $local:progressRatio2 `
+			-secRemaining2 '' `
+			-toastGroup 'Bulk'
 
 
 		#処理
@@ -234,11 +233,16 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 #進捗表示
 UpdateProgessToast2 `
-	'キーワードから動画の抽出' '1' `
-	'' '完了' `
-	'動画のダウンロード' '1' `
-	'' '完了' `
-	$script:appName 'Bulk'
+	-toastProgressTitle1 'キーワードから動画の抽出' `
+	-toastProgressRatio1 '1' `
+	-toastLeftText1 '' `
+	-toastRrightText1 '完了' `
+	-toastProgressTitle2 '動画のダウンロード' `
+	-toastProgressRatio2 '1' `
+	-toastLeftText2 '' `
+	-toastRrightText2 '完了' `
+	-toastTag $script:appName `
+	-toastGroup 'Bulk'
 
 #youtube-dlのプロセスが終わるまで待機
 Write-ColorOutput 'ダウンロードの終了を待機しています'

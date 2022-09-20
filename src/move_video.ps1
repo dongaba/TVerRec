@@ -113,8 +113,14 @@ Write-Progress -Id 1 `
 	-Activity '処理 1/3' `
 	-PercentComplete $($( 1 / 4 ) * 100) `
 	-Status 'フォルダ一覧を作成中'
-ShowProgressToast '動画の移動中' '　処理1/3 - フォルダ一覧を作成' '' `
-	$script:appName 'Move' 'long' $false
+ShowProgressToast `
+	-toastText1 '動画の移動中' `
+	-toastText2 '　処理1/3 - フォルダ一覧を作成' `
+	-toastWorkDetail '' `
+	-toastTag $script:appName `
+	-toastGroup 'Move' `
+	-toastDuration 'long' `
+	-toastSilent $false
 
 #処理
 $local:moveToPaths = Get-ChildItem $script:saveBaseDir -Recurse `
@@ -132,8 +138,14 @@ Write-Progress -Id 1 `
 	-Activity '処理 2/3' `
 	-PercentComplete $($( 1 / 2 ) * 100) `
 	-Status 'ファイルを移動中'
-ShowProgressToast '動画の移動中' '　処理2/3 - 動画ファイルを移動' '' `
-	$script:appName 'Move' 'long' $false
+ShowProgressToast `
+	-toastText1 '動画の移動中' `
+	-toastText2 '　処理2/3 - 動画ファイルを移動' `
+	-toastWorkDetail '' `
+	-toastTag $script:appName `
+	-toastGroup 'Move' `
+	-toastDuration 'long' `
+	-toastSilent $false
 
 #処理
 $local:moveToPathNum = 0						#移動先パス番号
@@ -163,9 +175,13 @@ foreach ($local:moveToPath in $local:moveToPaths.FullName) {
 		-Activity $local:moveToPathNum/$local:moveToPathTotal `
 		-PercentComplete $($local:progressRatio * 100) `
 		-Status $local:moveToPath
-	UpdateProgessToast $local:moveToPath $local:progressRatio `
-		$local:moveToPathNum/$local:moveToPathTotal "残り時間 $local:minRemaining" `
-		$script:appName 'Move'
+	UpdateProgessToast `
+		-toastProgressTitle $local:moveToPath `
+		-toastProgressRatio $local:progressRatio `
+		-toastLeftText $local:moveToPathNum/$local:moveToPathTotal `
+		-toastRrightText "残り時間 $local:minRemaining" `
+		-toastTag $script:appName `
+		-toastGroup 'Move'
 
 	#処理
 	Write-ColorOutput '----------------------------------------------------------------------'
@@ -193,10 +209,16 @@ Write-Progress -Id 1 `
 	-Activity '処理 3/3' `
 	-PercentComplete $($( 2 / 2 ) * 100) `
 	-Status '空フォルダを削除'
-ShowProgressToast '動画の移動中' '　処理3/3 - 空フォルダを削除' '残り時間計算中' `
-	$script:appName 'Move' 'long' $false
+ShowProgressToast `
+	-toastText1 '動画の移動中' `
+	-toastText2 '　処理3/3 - 空フォルダを削除' `
+	-toastWorkDetail '残り時間計算中' `
+	-toastTag $script:appName `
+	-toastGroup 'Move' `
+	-toastDuration 'long' `
+	-toastSilent $false
 
-#処理
+	#処理
 $local:allSubDirs = @((Get-ChildItem -Path $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer })).FullName `
 | Sort-Object -Descending
 
@@ -226,9 +248,13 @@ foreach ($local:subDir in $local:allSubDirs) {
 		-Activity $local:subDirNum/$local:subDirTotal `
 		-PercentComplete $($local:progressRatio * 100) `
 		-Status $local:subDir
-	UpdateProgessToast $local:subDir $local:progressRatio `
-		$local:subDirNum/$local:subDirTotal "残り時間 $local:minRemaining" `
-		$script:appName 'Delete'
+	UpdateProgessToast `
+		-toastProgressTitle $local:subDir `
+		-toastProgressRatio $local:progressRatio `
+		-toastLeftText $local:subDirNum/$local:subDirTotal `
+		-toastRrightText "残り時間 $local:minRemaining" `
+		-toastTag $script:appName `
+		-toastGroup 'Move'
 
 	#処理
 	Write-ColorOutput '----------------------------------------------------------------------'
@@ -245,4 +271,10 @@ foreach ($local:subDir in $local:allSubDirs) {
 #----------------------------------------------------------------------
 
 #進捗表示
-UpdateProgessToast '動画の移動' '1' '' '完了' $script:appName 'Move'
+UpdateProgessToast `
+	-toastProgressTitle '動画の移動' `
+	-toastProgressRatio '1' `
+	-toastLeftText '' `
+	-toastRrightText '完了' `
+	-toastTag $script:appName `
+	-toastGroup 'Move'
