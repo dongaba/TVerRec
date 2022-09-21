@@ -9,7 +9,7 @@
 [![DevSkim](https://github.com/dongaba/TVerRec/actions/workflows/devskim.yml/badge.svg)](https://github.com/dongaba/TVerRec/actions/workflows/devskim.yml)
 [![PSScriptAnalyzer](https://github.com/dongaba/TVerRec/actions/workflows/powershell.yml/badge.svg)](https://github.com/dongaba/TVerRec/actions/workflows/powershell.yml)  
 [![TVerRec Launched](https://hits.sh/github.com/dongaba/TVerRec/launch.svg?view=today-total&color=9f9f9f&label=TVerRec%20Launched)](https://hits.sh/github.com/dongaba/TVerRec/launch)
-[![Video Processed](https://hits.sh/github.com/dongaba/TVerRec/process.svg?view=today-total&color=9f9f9f&label=Video%20Processed)](https://hits.sh/github.com/dongaba/TVerRec/process)
+[![Video Searched](https://hits.sh/github.com/dongaba/TVerRec/search.svg?view=today-total&color=9f9f9f&label=Video%20Searched)](https://hits.sh/github.com/dongaba/TVerRec/search)
 [![Video Downloaded](https://hits.sh/github.com/dongaba/TVerRec/download.svg?view=today-total&color=9f9f9f&label=Video%20Downloaded)](https://hits.sh/github.com/dongaba/TVerRec/download)
 [![Video Validated](https://hits.sh/github.com/dongaba/TVerRec/validate.svg?view=today-total&color=9f9f9f&label=Video%20Validated)](https://hits.sh/github.com/dongaba/TVerRec/validate)
 
