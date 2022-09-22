@@ -1,6 +1,16 @@
 ﻿# Change Log
 
-## [2.5.1](https://github.com/dongaba/TVerRec/releases/tag/v2.5.1)
+## [2.5.2](https://github.com/dongaba/TVerRec/releases/tag/v2.5.2)
+
+### Added
+
+### Changed
+
+### Fixed
+
+- 一部変数の展開に失敗していたのを修正
+- 
+- ## [2.5.1](https://github.com/dongaba/TVerRec/releases/tag/v2.5.1)
 
 ### Added
 
@@ -17,7 +27,6 @@
 
 - トーストメッセージの誤植を修正
 - エラーメッセージの誤植を修正
-
 
 ## [2.5.0](https://github.com/dongaba/TVerRec/releases/tag/v2.5.0)
 

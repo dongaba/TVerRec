@@ -158,7 +158,7 @@ function goAnal {
 	$local:gaBody += "`"non_personalized_ads`" : false, "
 	$local:gaBody += "`"user_properties`":{ "
 	foreach ($item in $script:clientEnv) {
-		$local:gaBody += "	`"$item.Key`" : {`"value`":`"$item.Value`"}, "
+		$local:gaBody += "	`"$($item.Key)`" : {`"value`":`"$($item.Value)`"}, "
 	}
 	$local:gaBody += "	`"dummy`" : {`"value`":`"dummy`"} "
 	#$local:gaBody.subString(0, $local:gaBody.length - 2)	#drop last 1 chars
@@ -168,8 +168,8 @@ function goAnal {
 	$local:gaBody += "`"Type`" : `"$local:type`", "
 	$local:gaBody += "`"ID`" : `"$local:id`", "
 	$local:gaBody += "`"Target`" : `"$local:type/$local:id`", "
-	foreach ($local:env in $script:clientEnv) {
-		$local:gaBody += "`"$local:env.Key`" : `"$local:env.Value`", "
+	foreach ($item in $script:clientEnv) {
+		$local:gaBody += "`"$($item.Key)`" : `"$($item.Value)`", "
 	}
 	$local:gaBody += "`"dummy`" : `"dummy`" "
 	#$local:gaBody.subString(0, $local:gaBody.length - 2)	#drop last 1 chars
