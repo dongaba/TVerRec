@@ -148,19 +148,20 @@ function goAnal {
 	finally { $progressPreference = 'Continue' }
 
 	$local:gaURL = 'https://www.google-analytics.com/mp/collect'
-	$local:gaID = 'measurement_id=G-NMSF9L531G'
 	$local:gaKey = 'api_secret=UZ3InfgkTgGiR4FU-in9sw'
+	$local:gaID = 'measurement_id=G-NMSF9L531G'
 
 	$local:gaHeaders = New-Object 'System.Collections.Generic.Dictionary[[String],[String]]'
+	$local:gaHeaders.Add('HOST', 'www.google-analytics.com')
 	$local:gaHeaders.Add('Content-Type', 'application/json')
 	$local:gaBody = "{ `"client_id`" : `"$script:guid`", "
 	$local:gaBody += "`"timestamp_micros`" : `"$local:epochTime`", "
 	$local:gaBody += "`"non_personalized_ads`" : false, "
 	$local:gaBody += "`"user_properties`":{ "
 	foreach ($item in $script:clientEnv) {
-		$local:gaBody += "	`"$($item.Key)`" : {`"value`":`"$($item.Value)`"}, "
+		$local:gaBody += "`"$($item.Key)`" : {`"value`" : `"$($item.Value)`"}, "
 	}
-	$local:gaBody += "	`"dummy`" : {`"value`":`"dummy`"} "
+	$local:gaBody += "`"dummy`" : {`"value`":`"dummy`"} "
 	#$local:gaBody.subString(0, $local:gaBody.length - 2)	#drop last 1 chars
 	$local:gaBody += "}, `"events`" : [ { "
 	$local:gaBody += "`"name`" : `"$local:event`", "
@@ -177,7 +178,7 @@ function goAnal {
 
 	$progressPreference = 'silentlyContinue'
 	try { Invoke-RestMethod `
-			-Uri "$($local:gaURL)?$($local:gaID)&$($local:gaKey)" `
+			-Uri "$($local:gaURL)?$($local:gaKey)&$($local:gaID)" `
 			-Method 'POST' `
 			-Headers $local:gaHeaders `
 			-Body $local:gaBody `
