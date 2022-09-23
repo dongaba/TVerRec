@@ -37,12 +37,12 @@ title TVerRec Video File Mover
 
 rem 文字コードをWindows PowerShell用にUTF8-BOMなしファイルを作成する
 powershell -Command "$allPosh5Files = @(Get-ChildItem -Path '../' -Recurse -File -Filter '*_5.ps1' ).FullName ; foreach ($posh5File in $allPosh5Files) { Remove-Item $posh5File -Force }" 2> nul
-powershell -Command "$allPoshFiles = @(Get-ChildItem -Path '../' -Recurse -File -Filter '*.ps1' ).FullName ; foreach ($poshFile in $allPoshFiles) { $posh5File = $poshFile.Replace('.ps1' , '_5.ps1'); Get-Content -Encoding:utf8 $poshFile | Out-File -Encoding:utf8 $posh5File -Force }" 2>&1
 
 where /Q pwsh
 if %ERRORLEVEL% == 0 (
 	pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\move_video.ps1
 ) else (
+	powershell -Command "$allPoshFiles = @(Get-ChildItem -Path '../' -Recurse -File -Filter '*.ps1' ).FullName ; foreach ($poshFile in $allPoshFiles) { $posh5File = $poshFile.Replace('.ps1' , '_5.ps1'); Get-Content -Encoding:utf8 $poshFile | Out-File -Encoding:utf8 $posh5File -Force }" 2>&1
 	powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\move_video_5.ps1
 )
 
