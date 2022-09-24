@@ -72,22 +72,22 @@ try {
 		$script:devConfFile = $(Join-Path $script:devDir 'dev_setting_5.ps1')
 		if (Test-Path $script:devFunctionFile) {
 			. $script:devFunctionFile
-			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
 		}
 		if (Test-Path $script:devConfFile) {
 			. $script:devConfFile
-			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
 		}
 	} else {
 		$script:devFunctionFile = $(Join-Path $script:devDir 'dev_funcitons.ps1')
 		$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.ps1')
 		if (Test-Path $script:devFunctionFile) {
 			. $script:devFunctionFile
-			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
 		}
 		if (Test-Path $script:devConfFile) {
 			. $script:devConfFile
-			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
 		}
 	}
 } catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
@@ -107,13 +107,13 @@ Write-ColorOutput '30日以上前に処理したものはリストから削除�
 Write-ColorOutput '----------------------------------------------------------------------'
 #進捗表示
 ShowProgressToast `
-	-toastText1 '動画のチェック中' `
-	-toastText2 '　処理1/4 - 30日以上前のリストを削除' `
-	-toastWorkDetail '' `
-	-toastTag $script:appName `
-	-toastGroup 'Validate' `
-	-toastDuration 'long' `
-	-toastSilent $false
+	-Text1 '動画のチェック中' `
+	-Text2 '　処理1/4 - 30日以上前のリストを削除' `
+	-WorkDetail '' `
+	-Tag $script:appName `
+	-Group 'Validate' `
+	-Duration 'long' `
+	-Silent $false
 
 #処理
 purgeDB								#30日以上前に処理したものはリストから削除
@@ -123,13 +123,13 @@ Write-ColorOutput '重複レコードを削除します'
 Write-ColorOutput '----------------------------------------------------------------------'
 #進捗表示
 ShowProgressToast `
-	-toastText1 '動画のチェック中' `
-	-toastText2 '　処理2/4 - 重複レコードを削除' `
-	-toastWorkDetail '' `
-	-toastTag $script:appName `
-	-toastGroup 'Validate' `
-	-toastDuration 'long' `
-	-toastSilent $false
+	-Text1 '動画のチェック中' `
+	-Text2 '　処理2/4 - 重複レコードを削除' `
+	-WorkDetail '' `
+	-Tag $script:appName `
+	-Group 'Validate' `
+	-Duration 'long' `
+	-Silent $false
 
 #処理
 uniqueDB							#リストの重複削除
@@ -147,7 +147,7 @@ Write-ColorOutput '-------------------------------------------------------------
 try {
 	#ロックファイルをロック
 	while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
-		Write-ColorOutput 'ファイルのロック解除待ち中です' DarkGray
+		Write-ColorOutput 'ファイルのロック解除待ち中です' -FgColor 'DarkGray'
 		Start-Sleep -Seconds 1
 	}
 	#ファイル操作
@@ -155,7 +155,7 @@ try {
 	| Where-Object { $_.videoValidated -eq '0' } `
 	| Where-Object { $_.videoPath -ne '-- IGNORED --' } `
 	| Select-Object 'videoPath'
-} catch { Write-ColorOutput 'リストの読み込みに失敗しました' Green
+} catch { Write-ColorOutput 'リストの読み込みに失敗しました' -FgColor 'Green'
 } finally { $null = fileUnlock $script:lockFilePath }
 
 
@@ -203,13 +203,13 @@ if ($null -eq $local:videoLists) {
 		-PercentComplete 0 `
 		-Status '残り時間計算中'
 	ShowProgressToast `
-		-toastText1 '動画のチェック中' `
-		-toastText2 '　処理3/4 - 動画を検証' `
-		-toastWorkDetail '残り時間計算中' `
-		-toastTag $script:appName `
-		-toastGroup 'Validate' `
-		-toastDuration 'long' `
-		-toastSilent $false
+		-Text1 '動画のチェック中' `
+		-Text2 '　処理3/4 - 動画を検証' `
+		-WorkDetail '残り時間計算中' `
+		-Tag $script:appName `
+		-Group 'Validate' `
+		-Duration 'long' `
+		-Silent $false
 
 
 	#----------------------------------------------------------------------
@@ -236,18 +236,18 @@ if ($null -eq $local:videoLists) {
 			-Status $local:videoFileRelativePath `
 			-SecondsRemaining $local:secRemaining
 		UpdateProgessToast `
-			-toastProgressTitle $local:videoFileRelativePath `
-			-toastProgressRatio $local:progressRatio `
-			-toastLeftText $local:validateNum/$local:validateTotal `
-			-toastRrightText "残り時間 $local:minRemaining" `
-			-toastTag $script:appName `
-			-toastGroup 'Validate'
+			-Title $local:videoFileRelativePath `
+			-Rate $local:progressRatio `
+			-LeftText $local:validateNum/$local:validateTotal `
+			-RrightText "残り時間 $local:minRemaining" `
+			-Tag $script:appName `
+			-Group 'Validate'
 
 		#処理
 		$local:videoFileRelativePath = $local:videoList
 
 		if (Test-Path $script:downloadBaseDir -PathType Container) { }
-		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' Green ; exit 1 }
+		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' -FgColor 'Green' ; exit 1 }
 
 		Write-ColorOutput "$($local:videoFileRelativePath)をチェックします"
 		checkVideo $local:decodeOption $local:videoFileRelativePath		#ビデオの整合性チェック
@@ -263,19 +263,19 @@ Write-ColorOutput '録画リストからチェックが終わっていないビ�
 Write-ColorOutput '----------------------------------------------------------------------'
 #進捗表示
 ShowProgressToast `
-	-toastText1 '動画のチェック中' `
-	-toastText2 '　処理4/4 - 未検証の動画のステータスを変更' `
-	-toastWorkDetail '' `
-	-toastTag $script:appName `
-	-toastGroup 'Validate' `
-	-toastDuration 'long' `
-	-toastSilent $false
+	-Text1 '動画のチェック中' `
+	-Text2 '　処理4/4 - 未検証の動画のステータスを変更' `
+	-WorkDetail '' `
+	-Tag $script:appName `
+	-Group 'Validate' `
+	-Duration 'long' `
+	-Silent $false
 
 #処理
 try {
 	#ロックファイルをロック
 	while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
-		Write-ColorOutput 'ファイルのロック解除待ち中です' DarkGray
+		Write-ColorOutput 'ファイルのロック解除待ち中です' -FgColor 'DarkGray'
 		Start-Sleep -Seconds 1
 	}
 	#ファイル操作
@@ -285,14 +285,14 @@ try {
 	}
 	$local:videoLists `
 	| Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
-} catch { Write-ColorOutput 'リストの更新に失敗しました' Green
+} catch { Write-ColorOutput 'リストの更新に失敗しました' -FgColor 'Green'
 } finally { $null = fileUnlock $script:lockFilePath }
 
 #進捗表示
 UpdateProgessToast `
-	-toastProgressTitle '動画のチェック' `
-	-toastProgressRatio '1' `
-	-toastLeftText '' `
-	-toastRrightText '完了' `
-	-toastTag $script:appName `
-	-toastGroup 'Validate'
+	-Title '動画のチェック' `
+	-Rate '1' `
+	-LeftText '' `
+	-RrightText '完了' `
+	-Tag $script:appName `
+	-Group 'Validate'

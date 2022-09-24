@@ -52,7 +52,7 @@ if (Test-Path $local:ytdlPath -PathType Leaf) {
 
 #yt-dlpの最新バージョン取得
 try { $local:latestVersion = (Invoke-WebRequest -Uri $local:releases | ConvertFrom-Json)[0].Tag_Name }
-catch { Write-ColorOutput 'youtube-dlの最新バージョンを特定できませんでした' Green ; return }
+catch { Write-ColorOutput 'youtube-dlの最新バージョンを特定できませんでした' -FgColor 'Green' ; return }
 
 Write-ColorOutput "youtube-dl current: $local:ytdlCurrentVersion"
 Write-ColorOutput "youtube-dl latest: $local:latestVersion"
@@ -76,7 +76,7 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 			#バージョンチェック
 			$local:ytdlCurrentVersion = (& $local:ytdlPath --version)
 			Write-ColorOutput "youtube-dlをversion $local:ytdlCurrentVersion に更新しました。 "
-		} catch { Write-ColorOutput 'youtube-dlの更新に失敗しました' Green }
+		} catch { Write-ColorOutput 'youtube-dlの更新に失敗しました' -FgColor 'Green' }
 	} else {
 		try {
 			#githubの設定

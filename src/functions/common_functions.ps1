@@ -51,555 +51,22 @@ $script:clientEnv.Add('TZ', $script:tz)
 $script:clientEnv = $script:clientEnv.GetEnumerator() | Sort-Object -Property key
 
 #----------------------------------------------------------------------
-#ytdlの最新化確認
-#----------------------------------------------------------------------
-function checkLatestYtdl {
-	$progressPreference = 'silentlyContinue'
-	if ($script:disableUpdateYoutubedl -eq $false) {
-		if ($script:preferredYoutubedl -eq 'yt-dlp') {
-			if ($PSVersionTable.PSEdition -eq 'Desktop') {
-				. $(Convert-Path (Join-Path $scriptRoot '.\functions\update_yt-dlp_5.ps1'))
-			} else {
-				. $(Convert-Path (Join-Path $scriptRoot '.\functions\update_yt-dlp.ps1'))
-			}
-		} elseif ($script:preferredYoutubedl -eq 'ytdl-patched') {
-			if ($PSVersionTable.PSEdition -eq 'Desktop') {
-				. $(Convert-Path (Join-Path $scriptRoot '.\functions\update_ytdl-patched_5.ps1'))
-			} else {
-				. $(Convert-Path (Join-Path $scriptRoot '.\functions\update_ytdl-patched.ps1'))
-			}
-		} else {
-			Write-Error 'youtube-dlの取得元の指定が無効です' ; exit 1
-		}
-		if ($? -eq $false) { Write-Error 'youtube-dlの更新に失敗しました' ; exit 1 }
-	} else { }
-	$progressPreference = 'Continue'
-}
-
-#----------------------------------------------------------------------
-#ffmpegの最新化確認
-#----------------------------------------------------------------------
-function checkLatestFfmpeg {
-	$progressPreference = 'silentlyContinue'
-	if ($script:disableUpdateFfmpeg -eq $false) {
-		if ($PSVersionTable.PSEdition -eq 'Desktop') {
-			. $(Convert-Path (Join-Path $scriptRoot '.\functions\update_ffmpeg_5.ps1'))
-		} else {
-			. $(Convert-Path (Join-Path $scriptRoot '.\functions\update_ffmpeg.ps1'))
-		}
-		if ($? -eq $false) { Write-Error 'ffmpegの更新に失敗しました' ; exit 1 }
-	} else { }
-	$progressPreference = 'Continue'
-}
-
-#----------------------------------------------------------------------
-#設定で指定したファイル・フォルダの存在チェック
-#----------------------------------------------------------------------
-function checkRequiredFile {
-	if (Test-Path $script:downloadBaseDir -PathType Container) { }
-	else { Write-Error 'ビデオ保存先フォルダが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $script:downloadWorkDir -PathType Container) { }
-	else { Write-Error 'ダウンロード作業フォルダが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $script:ffmpegPath -PathType Leaf) { }
-	else { Write-Error 'ffmpegが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $script:ffprobePath -PathType Leaf) { }
-	elseif ($script:simplifiedValidation -eq $true) { Write-Error 'ffprobeが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $script:ytdlPath -PathType Leaf) { }
-	else { Write-Error 'youtube-dlが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $script:confFile -PathType Leaf) { }
-	else { Write-Error 'ユーザ設定ファイルが存在しません。終了します。' ; exit 1 }
-
-	#ファイルが存在しない場合はサンプルファイルをコピー
-	if (Test-Path $script:keywordFilePath -PathType Leaf) { }
-	else { Copy-Item -Path $script:keywordFileSamplePath -Destination $script:keywordFilePath -Force }
-	if (Test-Path $script:ignoreFilePath -PathType Leaf) { }
-	else { Copy-Item -Path $script:ignoreFileSamplePath -Destination $script:ignoreFilePath -Force }
-	if (Test-Path $script:listFilePath -PathType Leaf) { }
-	else { Copy-Item -Path $script:listFileSamplePath -Destination $script:listFilePath -Force }
-
-	#念のためチェック
-	if (Test-Path $script:keywordFilePath -PathType Leaf) { }
-	else { Write-Error 'ダウンロード対象ジャンルリストが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $script:ignoreFilePath -PathType Leaf) { }
-	else { Write-Error 'ダウンロード対象外ビデオリストが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $script:listFilePath -PathType Leaf) { }
-	else { Write-Error 'ダウンロードリストが存在しません。終了します。' ; exit 1 }
-}
-
-#----------------------------------------------------------------------
-#統計取得
-#----------------------------------------------------------------------
-function goAnal {
-	[CmdletBinding()]
-	Param (
-		[Parameter(Mandatory = $true)][String] $local:event,
-		[Parameter(Mandatory = $false)][String] $local:type,
-		[Parameter(Mandatory = $false)][String] $local:id
-	)
-
-	if (!($local:type)) { $local:type = '' }
-	if (!($local:id)) { $local:id = '' }
-	$local:epochTime = [decimal]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() * 1000)
-
-	$progressPreference = 'silentlyContinue'
-	$local:statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
-	try { Invoke-WebRequest "$($local:statisticsBase)$($local:event).svg" | Out-Null }
-	catch { Write-Debug 'Failed to collect statistics' }
-	finally { $progressPreference = 'Continue' }
-
-	$local:gaURL = 'https://www.google-analytics.com/mp/collect'
-	$local:gaKey = 'api_secret=UZ3InfgkTgGiR4FU-in9sw'
-	$local:gaID = 'measurement_id=G-NMSF9L531G'
-
-	$local:gaHeaders = New-Object 'System.Collections.Generic.Dictionary[[String],[String]]'
-	$local:gaHeaders.Add('HOST', 'www.google-analytics.com')
-	$local:gaHeaders.Add('Content-Type', 'application/json')
-	$local:gaBody = "{ `"client_id`" : `"$script:guid`", "
-	$local:gaBody += "`"timestamp_micros`" : `"$local:epochTime`", "
-	$local:gaBody += "`"non_personalized_ads`" : false, "
-	$local:gaBody += "`"user_properties`":{ "
-	foreach ($item in $script:clientEnv) {
-		$local:gaBody += "`"$($item.Key)`" : {`"value`" : `"$($item.Value)`"}, "
-	}
-	$local:gaBody += "`"dummy`" : {`"value`":`"dummy`"} "
-	#$local:gaBody.subString(0, $local:gaBody.length - 2)	#drop last 1 chars
-	$local:gaBody += "}, `"events`" : [ { "
-	$local:gaBody += "`"name`" : `"$local:event`", "
-	$local:gaBody += "`"params`" : {"
-	$local:gaBody += "`"Type`" : `"$local:type`", "
-	$local:gaBody += "`"ID`" : `"$local:id`", "
-	$local:gaBody += "`"Target`" : `"$local:type/$local:id`", "
-	foreach ($item in $script:clientEnv) {
-		$local:gaBody += "`"$($item.Key)`" : `"$($item.Value)`", "
-	}
-	$local:gaBody += "`"dummy`" : `"dummy`" "
-	#$local:gaBody.subString(0, $local:gaBody.length - 2)	#drop last 1 chars
-	$local:gaBody += '} } ] }'
-
-	$progressPreference = 'silentlyContinue'
-	try { Invoke-RestMethod `
-			-Uri "$($local:gaURL)?$($local:gaKey)&$($local:gaID)" `
-			-Method 'POST' `
-			-Headers $local:gaHeaders `
-			-Body $local:gaBody `
-		| Out-Null
-	} catch { Write-Debug 'Failed to collect statistics' }
-	finally { $progressPreference = 'Continue' }
-
-}
-
-#----------------------------------------------------------------------
 #タイムスタンプ更新
 #----------------------------------------------------------------------
 function getTimeStamp {
+	[OutputType([System.Void])]
+	Param ()
+
 	$local:timeStamp = Get-Date -UFormat '%Y-%m-%d %H:%M:%S'
 	return $local:timeStamp
-}
-
-#----------------------------------------------------------------------
-#30日以上前に処理したものはリストから削除
-#----------------------------------------------------------------------
-function purgeDB {
-	try {
-		#ロックファイルをロック
-		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
-			Write-ColorOutput 'ファイルのロック解除待ち中です' DarkGray
-			Start-Sleep -Seconds 1
-		}
-		#ファイル操作
-		$local:purgedList = ((Import-Csv $script:listFilePath -Encoding UTF8).Where({ [DateTime]::ParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null) -gt $(Get-Date).AddDays(-30) }))
-		$local:purgedList `
-		| Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
-	} catch { Write-ColorOutput 'リストのクリーンアップに失敗しました' Green
-	} finally { $null = fileUnlock $script:lockFilePath }
-}
-
-#----------------------------------------------------------------------
-#リストの重複削除
-#----------------------------------------------------------------------
-function uniqueDB {
-	$local:processedList = $null
-	$local:ignoredList = $null
-	#無視されたもの
-	try {
-		#ロックファイルをロック
-		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
-			Write-ColorOutput 'ファイルのロック解除待ち中です' DarkGray
-			Start-Sleep -Seconds 1
-		}
-
-		#ファイル操作
-		#無視されたもの
-		$local:ignoredList = ((Import-Csv $script:listFilePath -Encoding UTF8).Where({ $_.videoPath -eq '-- IGNORED --' }))
-
-		#無視されなかったものの重複削除。ファイル名で1つしかないもの残す
-		$local:processedList = (Import-Csv $script:listFilePath -Encoding UTF8 `
-			| Group-Object -Property 'videoPath' `
-			| Where-Object count -EQ 1 `
-			| Select-Object -ExpandProperty group)
-
-		#無視されたものと無視されなかったものを結合し出力
-		if ($null -eq $local:processedList -and $null -eq $local:ignoredList) {
-			return
-		} elseif ($null -ne $local:processedList -and $null -eq $local:ignoredList) {
-			$local:mergedList = $local:processedList
-		} elseif ($null -eq $processedList -and $null -ne $ignoredList) {
-			$local:mergedList = $local:ignoredList
-		} else { $local:mergedList = $local:processedList + $local:ignoredList }
-		$mergedList `
-		| Sort-Object -Property downloadDate `
-		| Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
-
-	} catch { Write-ColorOutput 'リストの更新に失敗しました' Green
-	} finally { $null = fileUnlock $script:lockFilePath }
-}
-
-#----------------------------------------------------------------------
-#ビデオの整合性チェック
-#----------------------------------------------------------------------
-function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
-	$local:errorCount = 0
-	$local:checkStatus = 0
-	$local:videoFilePath = Join-Path $script:downloadBaseDir $local:videoFileRelativePath
-	try { $null = New-Item $script:ffpmegErrorLogPath -Type File -Force }
-	catch { Write-ColorOutput 'ffmpegエラーファイルを初期化できませんでした' Green ; return }
-
-	#これからチェックする動画のステータスをチェック
-	try {
-		#ロックファイルをロック
-		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
-			Write-ColorOutput 'ファイルのロック解除待ち中です' DarkGray
-			Start-Sleep -Seconds 1
-		}
-		#ファイル操作
-		$local:videoLists = Import-Csv $script:listFilePath -Encoding UTF8
-		$local:checkStatus = $(($local:videoLists).Where({ $_.videoPath -eq $local:videoFileRelativePath })).videoValidated
-	} catch {
-		Write-ColorOutput "チェックステータスを取得できませんでした: $local:videoFileRelativePath" Green
-		return
-	} finally { $null = fileUnlock $script:lockFilePath }
-
-	#0:未チェック、1:チェック済み、2:チェック中
-	if ($local:checkStatus -eq 2 ) { Write-ColorOutput '  └他プロセスでチェック中です' DarkGray ; return }
-	elseif ($local:checkStatus -eq 1 ) { Write-ColorOutput '  └他プロセスでチェック済です' DarkGray ; return }
-	else {
-		#該当のビデオのチェックステータスを"2"にして後続のチェックを実行
-		try {
-			$(($local:videoLists).Where({ $_.videoPath -eq $local:videoFileRelativePath })).videoValidated = '2'
-		} catch {
-			Write-ColorOutput "該当のレコードが見つかりませんでした: $local:videoFileRelativePath" Green
-			return
-		}
-		try {
-			#ロックファイルをロック
-			while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
-				Write-ColorOutput 'ファイルのロック解除待ち中です' DarkGray
-				Start-Sleep -Seconds 1
-			}
-			#ファイル操作
-			$local:videoLists `
-			| Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
-		} catch {
-			Write-ColorOutput "録画リストを更新できませんでした: $local:videoFileRelativePath" Green
-			return
-		} finally { $null = fileUnlock $script:lockFilePath }
-	}
-
-	$local:checkFile = '"' + $local:videoFilePath + '"'
-	goAnal 'validate'
-
-	if ($script:simplifiedValidation -eq $true) {
-		#ffprobeを使った簡易検査
-		$local:ffprobeArgs = ' -hide_banner -v error -err_detect explode' `
-			+ " -i $local:checkFile "
-
-		Write-Debug "ffprobe起動コマンド:$script:ffprobePath $local:ffprobeArgs"
-		try {
-			if ($script:isWin) {
-				$local:proc = Start-Process -FilePath $script:ffprobePath `
-					-ArgumentList ($local:ffprobeArgs) `
-					-PassThru `
-					-WindowStyle $script:windowShowStyle `
-					-RedirectStandardError $script:ffpmegErrorLogPath `
-					-Wait
-			} else {
-				$local:proc = Start-Process -FilePath $script:ffprobePath `
-					-ArgumentList ($local:ffprobeArgs) `
-					-PassThru `
-					-RedirectStandardOutput /dev/null `
-					-RedirectStandardError $script:ffpmegErrorLogPath `
-					-Wait
-			}
-		} catch { Write-Error 'ffprobeを起動できませんでした' ; return }
-	} else {
-		#ffmpegeを使った完全検査
-		$local:ffmpegArgs = "$local:decodeOption " `
-			+ ' -hide_banner -v error -xerror' `
-			+ " -i $local:checkFile -f null - "
-
-		Write-Debug "ffmpeg起動コマンド:$script:ffmpegPath $local:ffmpegArgs"
-		try {
-			if ($script:isWin) {
-				$local:proc = Start-Process -FilePath $script:ffmpegPath `
-					-ArgumentList ($local:ffmpegArgs) `
-					-PassThru `
-					-WindowStyle $script:windowShowStyle `
-					-RedirectStandardError $script:ffpmegErrorLogPath `
-					-Wait
-			} else {
-				$local:proc = Start-Process -FilePath $script:ffmpegPath `
-					-ArgumentList ($local:ffmpegArgs) `
-					-PassThru `
-					-RedirectStandardOutput /dev/null `
-					-RedirectStandardError $script:ffpmegErrorLogPath `
-					-Wait
-			}
-		} catch { Write-Error 'ffmpegを起動できませんでした' ; return }
-	}
-
-	#ffmpegが正常終了しても、大量エラーが出ることがあるのでエラーをカウント
-	try {
-		if (Test-Path $script:ffpmegErrorLogPath) {
-			$local:errorCount = (Get-Content -LiteralPath $script:ffpmegErrorLogPath `
-				| Measure-Object -Line).Lines
-			Get-Content -LiteralPath $script:ffpmegErrorLogPath -Encoding UTF8 `
-			| ForEach-Object { Write-Debug $_ }
-		}
-	} catch { Write-ColorOutput 'ffmpegエラーの数をカウントできませんでした' Green ; $local:errorCount = 9999999 }
-
-	#エラーをカウントしたらファイルを削除
-	try {
-		if (Test-Path $script:ffpmegErrorLogPath) {
-			Remove-Item `
-				-LiteralPath $script:ffpmegErrorLogPath `
-				-Force -ErrorAction SilentlyContinue
-		}
-	} catch { Write-ColorOutput 'ffmpegエラーファイルを削除できませんでした' Green }
-
-	if ($local:proc.ExitCode -ne 0 -or $local:errorCount -gt 30) {
-		#終了コードが"0"以外 または エラーが30行以上 は録画リストとファイルを削除
-		Write-ColorOutput "  exit code: $($local:proc.ExitCode)    error count: $local:errorCount" Green
-
-		#破損している動画ファイルを録画リストから削除
-		try {
-			#ロックファイルをロック
-			while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
-				Write-ColorOutput 'ファイルのロック解除待ち中です' DarkGray
-				Start-Sleep -Seconds 1
-			}
-			#ファイル操作
-			(Select-String `
-				-Pattern $local:videoFileRelativePath `
-				-LiteralPath $script:listFilePath `
-				-Encoding UTF8 -SimpleMatch -NotMatch).Line `
-			| Out-File $script:listFilePath -Encoding UTF8
-		} catch { Write-ColorOutput "録画リストの更新に失敗しました: $local:videoFileRelativePath" Green
-		} finally { $null = fileUnlock $script:lockFilePath }
-
-		#破損している動画ファイルを削除
-		try {
-			Remove-Item `
-				-LiteralPath $local:videoFilePath `
-				-Force -ErrorAction SilentlyContinue
-		} catch { Write-ColorOutput "ファイル削除できませんでした: $local:videoFilePath" Green }
-	} else {
-		#終了コードが"0"のときは録画リストにチェック済みフラグを立てる
-		try {
-			#ロックファイルをロック
-			while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
-				Write-ColorOutput 'ファイルのロック解除待ち中です' DarkGray
-				Start-Sleep -Seconds 1
-			}
-			#ファイル操作
-			$local:videoLists = Import-Csv $script:listFilePath -Encoding UTF8
-			#該当のビデオのチェックステータスを"1"に
-			$(($local:videoLists).Where({ $_.videoPath -eq $local:videoFileRelativePath })).videoValidated = '1'
-			$local:videoLists `
-			| Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
-		} catch { Write-ColorOutput "録画リストを更新できませんでした: $local:videoFileRelativePath" Green
-		} finally { $null = fileUnlock $script:lockFilePath }
-	}
-
-}
-
-#----------------------------------------------------------------------
-#youtube-dlプロセスの確認と待機
-#----------------------------------------------------------------------
-function waitTillYtdlProcessGetFewer ($local:parallelDownloadFileNum) {
-	#youtube-dlのプロセスが設定値を超えたら一時待機
-	try {
-		if ($script:isWin) {
-			$local:ytdlCount = [Math]::Round( `
-				(Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, `
-					[MidpointRounding]::AwayFromZero `
-			)
-		} elseif ($IsLinux) {
-			$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count
-		} elseif ($IsMacOS) {
-			$local:psCmd = 'ps'
-			$local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim()
-		} else {
-			$local:ytdlCount = 0
-		}
-	} catch {
-		$local:ytdlCount = 0			#プロセス数が取れなくてもとりあえず先に進む
-	}
-
-	Write-Verbose "現在のダウンロードプロセス一覧 ($local:ytdlCount 個)"
-
-	while ([int]$local:ytdlCount -ge [int]$local:parallelDownloadFileNum) {
-		Write-ColorOutput "ダウンロードが $local:parallelDownloadFileNum 多重に達したので一時待機します。 ($(getTimeStamp))" DarkGray
-		Start-Sleep -Seconds 60			#1分待機
-		try {
-			if ($script:isWin) {
-				$local:ytdlCount = [Math]::Round( `
-					(Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, `
-						[MidpointRounding]::AwayFromZero `
-				)
-			} elseif ($IsLinux) {
-				$local:ytdlCount = (& Get-Process -ErrorAction Ignore -Name youtube-dl).Count
-			} elseif ($IsMacOS) {
-				$local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim()
-			} else {
-				$local:ytdlCount = 0
-			}
-		} catch {
-			$local:ytdlCount = 0			#プロセス数が取れなくてもとりあえず先に進む
-		}
-	}
-}
-
-#----------------------------------------------------------------------
-#youtube-dlのプロセスが終わるまで待機
-#----------------------------------------------------------------------
-function waitTillYtdlProcessIsZero () {
-	try {
-		if ($script:isWin) {
-			$local:ytdlCount = [Math]::Round( `
-				(Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, `
-					[MidpointRounding]::AwayFromZero `
-			)
-		} elseif ($IsLinux) {
-			$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count
-		} elseif ($IsMacOS) {
-			$local:psCmd = 'ps'
-			$local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim()
-		} else {
-			$local:ytdlCount = 0
-		}
-	} catch {
-		$local:ytdlCount = 0			#プロセス数が取れなくてもとりあえず先に進む
-	}
-
-	while ($local:ytdlCount -ne 0) {
-		try {
-			Write-Verbose "現在のダウンロードプロセス一覧 ($local:ytdlCount 個)" DarkGray
-			Start-Sleep -Seconds 60			#1分待機
-			if ($script:isWin) {
-				$local:ytdlCount = [Math]::Round( `
-					(Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, `
-						[MidpointRounding]::AwayFromZero `
-				)
-			} elseif ($IsLinux) {
-				$local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count
-			} elseif ($IsMacOS) {
-				$local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim()
-			} else {
-				$local:ytdlCount = 0
-			}
-		} catch {
-			$local:ytdlCount = 0
-		}
-	}
-}
-
-#----------------------------------------------------------------------
-#youtube-dlプロセスの起動
-#----------------------------------------------------------------------
-function executeYtdl ($local:videoPageURL) {
-	goAnal 'download'
-
-	$local:tmpDir = '"temp:' + $script:downloadWorkDir + '"'
-	$local:saveDir = '"home:' + $script:videoFileDir + '"'
-	$local:subttlDir = '"subtitle:' + $script:downloadWorkDir + '"'
-	$local:thumbDir = '"thumbnail:' + $script:downloadWorkDir + '"'
-	$local:chaptDir = '"chapter:' + $script:downloadWorkDir + '"'
-	$local:descDir = '"description:' + $script:downloadWorkDir + '"'
-	$local:saveFile = '"' + $script:videoName + '"'
-
-	$local:ytdlArgs = '--format mp4'
-	$local:ytdlArgs += ' --console-title'
-	$local:ytdlArgs += ' --no-mtime'
-	$local:ytdlArgs += ' --retries 10'
-	$local:ytdlArgs += ' --fragment-retries 10'
-	$local:ytdlArgs += ' --abort-on-unavailable-fragment'
-	$local:ytdlArgs += ' --no-keep-fragments'
-	$local:ytdlArgs += ' --abort-on-error'
-	$local:ytdlArgs += ' --no-continue'
-	$local:ytdlArgs += ' --windows-filenames'
-	$local:ytdlArgs += ' --xattr-set-filesize'
-	$local:ytdlArgs += ' --newline'
-	$local:ytdlArgs += ' --print-traffic'
-	$local:ytdlArgs += " --concurrent-fragments $script:parallelDownloadNumPerFile"
-	$local:ytdlArgs += ' --embed-thumbnail'
-	$local:ytdlArgs += ' --embed-subs'
-	$local:ytdlArgs += ' --embed-metadata'
-	$local:ytdlArgs += ' --embed-chapters'
-	$local:ytdlArgs += " --paths $local:saveDir"
-	$local:ytdlArgs += " --paths $local:tmpDir"
-	$local:ytdlArgs += " --paths $local:subttlDir"
-	$local:ytdlArgs += " --paths $local:thumbDir"
-	$local:ytdlArgs += " --paths $local:chaptDir"
-	$local:ytdlArgs += " --paths $local:descDir"
-	$local:ytdlArgs += " -o $local:saveFile"
-	$local:ytdlArgs += " $local:videoPageURL"
-
-	if ($script:isWin) {
-		try {
-			Write-Debug "youtube-dl起動コマンド:$script:ytdlPath $local:ytdlArgs"
-			$null = Start-Process -FilePath $script:ytdlPath `
-				-ArgumentList $local:ytdlArgs `
-				-PassThru `
-				-WindowStyle $script:windowShowStyle
-		} catch { Write-Error 'youtube-dlの起動に失敗しました' ; return }
-	} else {
-		Write-Debug "y起動コマンド:nohup $script:ytdlPath $local:ytdlArgs"
-		try {
-			$null = Start-Process -FilePath nohup `
-				-ArgumentList ($script:ytdlPath, $local:ytdlArgs) `
-				-PassThru `
-				-RedirectStandardOutput /dev/null
-		} catch { Write-Error 'youtube-dlの起動に失敗しました' ; return }
-	}
-}
-
-#----------------------------------------------------------------------
-#ビデオ情報表示
-#----------------------------------------------------------------------
-function showVideoInfo ($local:videoName, $local:broadcastDate, $local:mediaName, $local:descriptionText) {
-	Write-ColorOutput "ビデオ名    :$local:videoName" DarkGray
-	Write-ColorOutput "放送日      :$local:broadcastDate" DarkGray
-	Write-ColorOutput "テレビ局    :$local:mediaName" DarkGray
-	Write-ColorOutput "ビデオ説明  :$local:descriptionText" DarkGray
-}
-#----------------------------------------------------------------------
-#ビデオ情報デバッグ表示
-#----------------------------------------------------------------------
-function showVideoDebugInfo ($local:videoPageURL, $local:videoSeriesPageURL, $local:keywordName, $local:videoSeries, $local:videoSeason, $local:videoTitle, $local:videoFilePath, $local:processedTime) {
-	Write-Debug	"ビデオエピソードページ:$local:videoPageURL"
-	Write-Debug	"ビデオシリーズページ  :$local:videoSeriesPageURL"
-	Write-Debug "キーワード            :$local:keywordName"
-	Write-Debug "シリーズ              :$local:videoSeries"
-	Write-Debug "シーズン              :$local:videoSeason"
-	Write-Debug "サブタイトル          :$local:videoTitle"
-	Write-Debug "ファイル              :$local:videoFilePath"
-	Write-Debug "取得日付              :$local:processedTime"
 }
 
 #----------------------------------------------------------------------
 #ファイル名・フォルダ名に禁止文字の削除
 #----------------------------------------------------------------------
 function getFileNameWithoutInvalidChars {
+	[CmdletBinding()]
+	[OutputType([String])]
 	Param (
 		[Parameter(
 			Mandatory = $true,
@@ -618,6 +85,8 @@ function getFileNameWithoutInvalidChars {
 #全角→半角
 #----------------------------------------------------------------------
 function getNarrowChars {
+	[CmdletBinding()]
+	[OutputType([String])]
 	Param ([String]$local:text)		#変換元テキストを引数に指定
 	$local:wideKanaDaku = 'ガギグゲゴザジズゼゾダヂヅデドバビブベボ'
 	$local:narrowKanaDaku = 'ｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾊﾋﾌﾍﾎ'
@@ -657,6 +126,7 @@ function getNarrowChars {
 #----------------------------------------------------------------------
 function getSpecialCharacterReplaced {
 	[CmdletBinding()]
+	[OutputType([String])]
 	Param ([String]$local:text)		#変換元テキストを引数に指定
 	$local:text = $local:text.Replace('&amp;', '&')
 	$local:text = $local:text.Replace('"', '')
@@ -673,72 +143,63 @@ function getSpecialCharacterReplaced {
 #----------------------------------------------------------------------
 #タブとスペースを詰めて半角スペース1文字に
 #----------------------------------------------------------------------
-function trimTabSpace ($local:text) {
+function trimTabSpace {
+	[CmdletBinding()]
+	[OutputType([String])]
+	Param ([String]$local:text)		#変換元テキストを引数に指定
 	return $local:text.Replace("`t", ' ').Replace('  ', ' ')
 }
 
 #----------------------------------------------------------------------
-#キーワードの後にあるコメントを削除しキーワードのみ抽出
+#設定ファイルの行末コメントを削除
 #----------------------------------------------------------------------
-function removeCommentsFromKeyword ($local:keyword) {
-	return $local:keyword.Split("`t")[0].Split(' ')[0].Split('#')[0]
+function removeTrailingCommentsFromConfigFile {
+	[OutputType([String])]
+	Param ([String]$local:text)		#変換元テキストを引数に指定
+	return $local:text.Split("`t")[0].Split(' ')[0].Split('#')[0]
 }
 
 #----------------------------------------------------------------------
-#保存ファイル名を設定
+#指定したPath配下の指定した条件でファイルを削除
 #----------------------------------------------------------------------
-function getVideoFileName ($local:videoSeries, $local:videoSeason, $local:videoTitle, $local:broadcastDate) {
-	if ($local:videoTitle -eq '') {
-		if ($local:broadcastDate -eq '') {
-			$local:videoName = $local:videoSeries + ' ' + $local:videoSeason
-		} else {
-			$local:videoName = $local:videoSeries + ' ' + $local:videoSeason + ' ' + $local:broadcastDate
-		}
-	} else {
-		$local:videoName = $local:videoSeries + ' ' + $local:videoSeason + ' ' + $local:broadcastDate + ' ' + $local:videoTitle
-	}
-	#ファイル名にできない文字列を除去
-	$local:videoName = $(getFileNameWithoutInvalidChars (getNarrowChars $local:videoName)).Replace('  ', ' ')
+function deleteFiles {
+	Param (
+		[parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $true,
+			ValueFromPipelineByPropertyName = $false,
+			Position = 0
+		)]
+		[Alias('Path')]
+		[System.IO.FileInfo] $local:Path,
 
-	#SMBで255バイトまでしかファイル名を持てないらしいので、超えないようにファイル名をトリミング
-	$local:videoNameTemp = ''
-	$local:fileNameLimit = $script:fileNameLengthMax - 25	#youtube-dlの中間ファイル等を考慮して安全目の上限値
-	$local:videoNameByte = [System.Text.Encoding]::UTF8.GetByteCount($local:videoName)
+		[Parameter(
+			Mandatory = $false,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false,
+			Position = 0
+		)]
+		[Alias('Conditions')]
+		[Object] $local:Conditions
+	)
 
-	#ファイル名を1文字ずつ増やしていき、上限に達したら残りは「……」とする
-	if ($local:videoNameByte -gt $local:fileNameLimit) {
-		for ($i = 1 ; [System.Text.Encoding]::UTF8.GetByteCount($local:videoNameTemp) -lt $local:fileNameLimit ; $i++) {
-			$local:videoNameTemp = $local:videoName.Substring(0, $i)
-		}
-		$local:videoName = $local:videoNameTemp + '……'			#ファイル名省略の印
-	}
-
-	$local:videoName = $local:videoName + '.mp4'
-	if ($local:videoName.Contains('.mp4') -eq $false) {
-		Write-Error '動画ファイル名の設定がおかしいです'
-	}
-	return $local:videoName
-}
-
-#----------------------------------------------------------------------
-#ダウンロードが中断した際にできたゴミファイルは削除
-#----------------------------------------------------------------------
-function deleteTrashFiles ($local:Path, $local:Conditions) {
 	try {
 		Write-ColorOutput "$($local:Path)を処理中"
 		$local:delTargets = @()
 		foreach ($local:filter in $local:Conditions.Split(',').Trim()) {
-			$local:delTargets += Get-ChildItem -LiteralPath $local:Path `
+			$local:delTargets += Get-ChildItem `
+				-LiteralPath $local:Path `
 				-Recurse -File -Filter $local:filter
 		}
 		if ($null -ne $local:delTargets) {
 			foreach ($local:delTarget in $local:delTargets) {
 				Write-ColorOutput "$($local:delTarget.FullName)を削除します"
-				Remove-Item -LiteralPath $local:delTarget.FullName `
+				Remove-Item `
+					-LiteralPath $local:delTarget.FullName `
 					-Force -ErrorAction SilentlyContinue
 			}
-		} else { Write-ColorOutput '削除対象はありませんでした' DarkGray }
-	} catch { Write-ColorOutput '削除できないファイルがありました' Green }
+		} else { Write-ColorOutput '削除対象はありませんでした' -FgColor 'DarkGray' }
+	} catch { Write-ColorOutput '削除できないファイルがありました' -FgColor 'Green' }
 }
 
 #----------------------------------------------------------------------
@@ -746,16 +207,25 @@ function deleteTrashFiles ($local:Path, $local:Conditions) {
 #----------------------------------------------------------------------
 function fileLock {
 	[CmdletBinding()]
+	[OutputType([PSCustomObject])]
 	Param (
-		[parameter(Mandatory = $true, Position = 0)][System.IO.FileInfo]$local:Path
+		[parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $true,
+			ValueFromPipelineByPropertyName = $false,
+			Position = 0
+		)]
+		[Alias('Path')]
+		[System.IO.FileInfo] $local:Path
 	)
+
 	try {
-		$local:fileLocked = $false						# initialise variables
+		$local:fileLocked = $false		# initialise variables
 		$script:fileInfo = New-Object System.IO.FileInfo $local:Path		# attempt to open file and detect file lock
 		$script:fileStream = $script:fileInfo.Open([System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
-		$local:fileLocked = $true						# initialise variables
+		$local:fileLocked = $true		# initialise variables
 	} catch {
-		$fileLocked = $false		# catch fileStream had falied
+		$fileLocked = $false			# catch fileStream had falied
 	} finally {
 		# return result
 		[PSCustomObject]@{
@@ -770,12 +240,21 @@ function fileLock {
 #----------------------------------------------------------------------
 function fileUnlock {
 	[CmdletBinding()]
+	[OutputType([PSCustomObject])]
 	Param (
-		[parameter(Mandatory = $true, Position = 0)][System.IO.FileInfo]$local:Path
+		[parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $true,
+			ValueFromPipelineByPropertyName = $false,
+			Position = 0
+		)]
+		[Alias('Path')]
+		[System.IO.FileInfo] $local:Path
 	)
+
 	try {
 		if ($script:fileStream) { $script:fileStream.Close() }		# close stream if not lock
-		$local:fileLocked = $false						# initialise variables
+		$local:fileLocked = $false		# initialise variables
 	} catch {
 		$local:fileLocked = $true		# catch fileStream had falied
 	} finally {
@@ -792,17 +271,26 @@ function fileUnlock {
 #----------------------------------------------------------------------
 function isLocked {
 	[CmdletBinding()]
+	[OutputType([PSCustomObject])]
 	Param (
-		[parameter(Mandatory = $true, Position = 0)][string]$local:isLockedPath
+		[parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $true,
+			ValueFromPipelineByPropertyName = $false,
+			Position = 0
+		)]
+		[Alias('Path')]
+		[string]$local:isLockedPath
 	)
+
 	try {
-		$local:isFileLocked = $false						# initialise variables
+		$local:isFileLocked = $false		# initialise variables
 		$local:isLockedFileInfo = New-Object System.IO.FileInfo $local:isLockedPath		# attempt to open file and detect file lock
 		$local:isLockedfileStream = $local:isLockedFileInfo.Open([System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
 		if ($local:isLockedfileStream) { $local:isLockedfileStream.Close() }		# close stream if not lock
-		$local:isFileLocked = $false						# initialise variables
+		$local:isFileLocked = $false		# initialise variables
 	} catch {
-		$local:isFileLocked = $true		# catch fileStream had falied
+		$local:isFileLocked = $true			# catch fileStream had falied
 	} finally {
 		# return result
 		[PSCustomObject]@{
@@ -817,40 +305,71 @@ function isLocked {
 #----------------------------------------------------------------------
 function Write-ColorOutput {
 	[CmdletBinding()]
+	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $false, Position = 0)][Object] $Text,
-		[Parameter(Mandatory = $false, Position = 1)][ConsoleColor] $foregroundColor,
-		[Parameter(Mandatory = $false, Position = 2)][ConsoleColor] $backgroundColor
+		[Parameter(
+			Mandatory = $false,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false,
+			Position = 0
+		)]
+		[Alias('Text')]
+		[Object] $local:text,
+
+		[Parameter(
+			Mandatory = $false,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false,
+			Position = 1
+		)]
+		[Alias('FgColor')]
+		[ConsoleColor] $local:foregroundColor,
+
+		[Parameter(
+			Mandatory = $false,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false,
+			Position = 2
+		)]
+		[Alias('BgColor')]
+		[ConsoleColor] $local:backgroundColor
 	)
 
 	# Save previous colors
-	$prevForegroundColor = $host.UI.RawUI.ForegroundColor
-	$prevBackgroundColor = $host.UI.RawUI.BackgroundColor
+	$local:prevForegroundColor = $host.UI.RawUI.ForegroundColor
+	$local:prevBackgroundColor = $host.UI.RawUI.BackgroundColor
 
 	# Set colors if available
-	if ($BackgroundColor -ne $null) { $host.UI.RawUI.BackgroundColor = $backgroundColor }
-	if ($ForegroundColor -ne $null) { $host.UI.RawUI.ForegroundColor = $foregroundColor }
+	if ($local:backgroundColor -ne $null) { $host.UI.RawUI.BackgroundColor = $local:backgroundColor }
+	if ($local:foregroundColor -ne $null) { $host.UI.RawUI.ForegroundColor = $local:foregroundColor }
 
 	# Always write (if we want just a NewLine)
-	if ($null -eq $Text) { $Text = '' }
+	if ($null -eq $local:text) { $local:text = '' }
 
-	Write-Output $Text
+	Write-Output $local:text
 
 	# Restore previous colors
-	$host.UI.RawUI.ForegroundColor = $prevForegroundColor
-	$host.UI.RawUI.BackgroundColor = $prevBackgroundColor
+	$host.UI.RawUI.ForegroundColor = $local:prevForegroundColor
+	$host.UI.RawUI.BackgroundColor = $local:prevBackgroundColor
 }
 
 #----------------------------------------------------------------------
 #Windows Application ID取得
 #----------------------------------------------------------------------
 function Get-WindowsAppId {
+	[OutputType([String])]
+	Param ()
+
 	if ($PSEdition -eq 'Desktop') {
-		(Get-StartApps -Name 'PowerShell').where({ $_.Name -eq 'Windows PowerShell' }).AppId
+		$local:appID = (Get-StartApps -Name 'PowerShell').where({ $_.Name -eq 'Windows PowerShell' }).AppId
 	} elseif ($PSVersionTable.PSVersion -ge [Version]'6.0') {
 		Import-Module StartLayout -SkipEditionCheck
-		(Get-StartApps -Name 'PowerShell').where({ $_.Name -like 'PowerShell*' })[0].AppId
-	} else { '{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe' }
+		$local:appID = (Get-StartApps -Name 'PowerShell').where({ $_.Name -like 'PowerShell*' })[0].AppId
+	} else {
+		$local:appID = '{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe'
+	}
+
+	return $local:appID
 }
 
 #----------------------------------------------------------------------
@@ -858,16 +377,47 @@ function Get-WindowsAppId {
 #----------------------------------------------------------------------
 function ShowToast {
 	[CmdletBinding()]
+	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true)][String] $local:toastText1,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][String] $local:toastText2,
-		[Parameter(Mandatory = $false)][ValidateSet('Short', 'Long')][String] $local:toastDuration,
-		[Parameter(Mandatory = $false)][Boolean] $local:toastSilent
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[Alias('Text1')]
+		[string] $local:toastText1,
+
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[Alias('Text2')]
+		[AllowEmptyString()]
+		[string] $local:toastText2,
+
+		[Parameter(
+			Mandatory = $false,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[Alias('Duration')]
+		[ValidateSet('Short', 'Long')]
+		[string] $local:toastDuration,
+
+		[Parameter(
+			Mandatory = $false,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[Alias('Silent')]
+		[Boolean] $local:toastSilent
 	)
 
 	if ($script:isWin) {
 		if ($local:toastSilent) { $local:toastSoundElement = '<audio silent="true" />' }
 		else { $local:toastSoundElement = '<audio src="ms-winsoundevent:Notification.Default" loop="false"/>' }
+
 		if (!($local:toastDuration)) { $local:toastDuration = 'short' }
 		$local:toastTitle = $script:appName
 		$local:toastAttribution = ''
@@ -903,7 +453,7 @@ function ShowToast {
 
 		$local:appID = Get-WindowsAppId
 		$local:toastXML = New-Object Windows.Data.Xml.Dom.XmlDocument
-		$local:toastXML.LoadXml($script:toastProgressContent)
+		$local:toastXML.LoadXml($local:toastProgressContent)
 		$local:toastBody = New-Object Windows.UI.Notifications.ToastNotification $local:toastXML
 		[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Show($local:toastBody) | Out-Null
 	}
@@ -915,19 +465,72 @@ function ShowToast {
 #----------------------------------------------------------------------
 function ShowProgressToast {
 	[CmdletBinding()]
+	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true)][Alias('toastText1')][String] $local:toastText1,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastText2')][String] $local:toastText2,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastWorkDetail')][String] $local:toastWorkDetail,
-		[Parameter(Mandatory = $true)][Alias('toastTag')][String] $local:toastTag,
-		[Parameter(Mandatory = $true)][Alias('toastGroup')][String] $local:toastGroup,
-		[Parameter(Mandatory = $false)][ValidateSet('Short', 'Long')][Alias('toastDuration')][String] $local:toastDuration,
-		[Parameter(Mandatory = $false)][Alias('toastSilent')][Boolean] $local:toastSilent
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[Alias('Text1')]
+		[string] $local:toastText1,
+
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[AllowEmptyString()]
+		[Alias('Text2')]
+		[string] $local:toastText2,
+
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[AllowEmptyString()]
+		[Alias('WorkDetail')]
+		[string] $local:toastWorkDetail,
+
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[Alias('Tag')]
+		[string] $local:toastTag,
+
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[Alias('Group')]
+		[string] $local:toastGroup,
+
+		[Parameter(
+			Mandatory = $false,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[ValidateSet('Short', 'Long')]
+		[Alias('Duration')]
+		[string] $local:toastDuration,
+
+		[Parameter(
+			Mandatory = $false,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[Alias('Silent')]
+		[Boolean] $local:toastSilent
 	)
 
 	if ($script:isWin) {
 		if ($local:toastSilent) { $local:toastSoundElement = '<audio silent="true" />' }
 		else { $local:toastSoundElement = '<audio src="ms-winsoundevent:Notification.Default" loop="false"/>' }
+
 		if (!($local:toastDuration)) { $local:toastDuration = 'short' }
 		$local:toastTitle = $script:appName
 		$local:toastAttribution = ''
@@ -984,20 +587,64 @@ function ShowProgressToast {
 #----------------------------------------------------------------------
 function UpdateProgessToast {
 	[CmdletBinding()]
+	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true)][Alias('toastProgressTitle')][String] $local:toastProgressTitle,
-		[Parameter(Mandatory = $true)][Alias('toastProgressRatio')][String] $local:toastProgressRatio,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastLeftText')][String] $local:toastLeftText,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastRrightText')][String] $local:toastRrightText,
-		[Parameter(Mandatory = $true)][Alias('toastTag')][String] $local:toastTag,
-		[Parameter(Mandatory = $true)][Alias('toastGroup')][String] $local:toastGroup
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[Alias('Title')]
+		[string] $local:toastTitle,
+
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[Alias('Rate')]
+		[string] $local:toastRate,
+
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[AllowEmptyString()]
+		[Alias('LeftText')]
+		[string] $local:toastLeftText,
+
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[AllowEmptyString()]
+		[Alias('RrightText')]
+		[string] $local:toastRrightText,
+
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[Alias('Tag')]
+		[string] $local:toastTag,
+
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[Alias('Group')]
+		[string] $local:toastGroup
 	)
 
 	if ($script:isWin) {
 		$local:appID = Get-WindowsAppId
 		$local:toastData = New-Object 'system.collections.generic.dictionary[string,string]'
-		$local:toastData.add('progressTitle', $local:toastProgressTitle)
-		$local:toastData.add('progressValue', $local:toastProgressRatio)
+		$local:toastData.add('progressTitle', $local:toastTitle)
+		$local:toastData.add('progressValue', $local:toastRate)
 		$local:toastData.add('progressValueString', $local:toastRrightText)
 		$local:toastData.add('progressStatus', $local:toastLeftText)
 		$local:toastProgressData = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
@@ -1011,20 +658,81 @@ function UpdateProgessToast {
 #----------------------------------------------------------------------
 function ShowProgressToast2 {
 	[CmdletBinding()]
+	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true)][Alias('toastText1')][String] $local:toastText1,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastText2')][String] $local:toastText2,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastWorkDetail1')][String] $local:toastWorkDetail1,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastWorkDetail2')][String] $local:toastWorkDetail2,
-		[Parameter(Mandatory = $true)][Alias('toastTag')][String] $local:toastTag,
-		[Parameter(Mandatory = $true)][Alias('toastGroup')][String] $local:toastGroup,
-		[Parameter(Mandatory = $false)][ValidateSet('Short', 'Long')][Alias('toastDuration')][String] $local:toastDuration,
-		[Parameter(Mandatory = $false)][Alias('toastSilent')][Boolean] $local:toastSilent
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[Alias('Text1')]
+		[string] $local:toastText1,
+
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[AllowEmptyString()]
+		[Alias('Text2')]
+		[string] $local:toastText2,
+
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[AllowEmptyString()]
+		[Alias('WorkDetail1')]
+		[string] $local:toastWorkDetail1,
+
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[AllowEmptyString()]
+		[Alias('WorkDetail2')]
+		[string] $local:toastWorkDetail2,
+
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[Alias('Tag')]
+		[string] $local:toastTag,
+
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[Alias('Group')]
+		[string] $local:toastGroup,
+
+		[Parameter(
+			Mandatory = $false,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[ValidateSet('Short', 'Long')]
+		[Alias('Duration')]
+		[string] $local:toastDuration,
+
+		[Parameter(
+			Mandatory = $false,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[Alias('Silent')]
+		[Boolean] $local:toastSilent
 	)
 
 	if ($script:isWin) {
 		if ($local:toastSilent) { $local:toastSoundElement = '<audio silent="true" />' }
 		else { $local:toastSoundElement = '<audio src="ms-winsoundevent:Notification.Default" loop="false"/>' }
+
 		if (!($local:toastDuration)) { $local:toastDuration = 'short' }
 		$local:toastTitle = $script:appName
 		$local:toastAttribution = ''
@@ -1086,28 +794,104 @@ function ShowProgressToast2 {
 #----------------------------------------------------------------------
 function UpdateProgessToast2 {
 	[CmdletBinding()]
+	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastProgressTitle1')][String] $local:toastProgressTitle1,
-		[Parameter(Mandatory = $true)][Alias('toastProgressRatio1')][String] $local:toastProgressRatio1,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastLeftText1')][String] $local:toastLeftText1,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastRrightText1')][String] $local:toastRrightText1,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastProgressTitle2')][String] $local:toastProgressTitle2,
-		[Parameter(Mandatory = $true)][Alias('toastProgressRatio2')][String] $local:toastProgressRatio2,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastLeftText2')][String] $local:toastLeftText2,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastRrightText2')][String] $local:toastRrightText2,
-		[Parameter(Mandatory = $true)][Alias('toastTag')][String] $local:toastTag,
-		[Parameter(Mandatory = $true)][Alias('toastGroup')][String] $local:toastGroup
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[AllowEmptyString()]
+		[Alias('Title1')]
+		[string] $local:toastTitle1,
+
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[Alias('Rate1')]
+		[string] $local:toastRate1,
+
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[AllowEmptyString()]
+		[Alias('LeftText1')
+		][string] $local:toastLeftText1,
+
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[AllowEmptyString()]
+		[Alias('RrightText1')]
+		[string] $local:toastRrightText1,
+
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[AllowEmptyString()]
+		[Alias('Title2')]
+		[string] $local:toastTitle2,
+
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[Alias('Rate2')]
+		[string] $local:toastRate2,
+
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[AllowEmptyString()]
+		[Alias('LeftText2')]
+		[string] $local:toastLeftText2,
+
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[AllowEmptyString()]
+		[Alias('RrightText2')]
+		[string] $local:toastRrightText2,
+
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[Alias('Tag')]
+		[string] $local:toastTag,
+
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[Alias('Group')]
+		[string] $local:toastGroup
 	)
 
 	if ($script:isWin) {
 		$local:appID = Get-WindowsAppId
 		$local:toastData = New-Object 'system.collections.generic.dictionary[string,string]'
-		$local:toastData.add('progressTitle1', $local:toastProgressTitle1)
-		$local:toastData.add('progressValue1', $local:toastProgressRatio1)
+		$local:toastData.add('progressTitle1', $local:toastTitle1)
+		$local:toastData.add('progressValue1', $local:toastRate1)
 		$local:toastData.add('progressValueString1', $local:toastRrightText1)
 		$local:toastData.add('progressStatus1', $local:toastLeftText1)
-		$local:toastData.add('progressTitle2', $local:toastProgressTitle2)
-		$local:toastData.add('progressValue2', $local:toastProgressRatio2)
+		$local:toastData.add('progressTitle2', $local:toastTitle2)
+		$local:toastData.add('progressValue2', $local:toastRate2)
 		$local:toastData.add('progressValueString2', $local:toastRrightText2)
 		$local:toastData.add('progressStatus2', $local:toastLeftText2)
 		$local:toastProgressData = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
@@ -1121,14 +905,67 @@ function UpdateProgessToast2 {
 #----------------------------------------------------------------------
 function ShowProgess2Row {
 	[CmdletBinding()]
+	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true)][Alias('progressText1')][String] $local:progressText1,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('progressText2')][String] $local:progressText2,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastWorkDetail1')][String] $local:toastWorkDetail1,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('toastWorkDetail2')][String] $local:toastWorkDetail2,
-		[Parameter(Mandatory = $false)][ValidateSet('Short', 'Long')][Alias('toastDuration')][String] $local:toastDuration,
-		[Parameter(Mandatory = $false)][Alias('toastSilent')][Boolean] $local:toastSilent,
-		[Parameter(Mandatory = $true)][Alias('toastGroup')][String] $local:toastGroup
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[Alias('ProgressText1')]
+		[string] $local:progressText1,
+
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[AllowEmptyString()]
+		[Alias('ProgressText2')]
+		[string] $local:progressText2,
+		
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[AllowEmptyString()]
+		[Alias('WorkDetail1')]
+		[string] $local:toastWorkDetail1,
+		
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[AllowEmptyString()]
+		[Alias('WorkDetail2')]
+		[string] $local:toastWorkDetail2,
+		
+		[Parameter(
+			Mandatory = $false,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[ValidateSet('Short', 'Long')]
+		[Alias('Duration')]
+		[string] $local:toastDuration,
+		
+		[Parameter(
+			Mandatory = $false,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[Alias('Silent')]
+		[Boolean] $local:toastSilent,
+		
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[Alias('Group')]
+		[string] $local:toastGroup
 	)
 
 	if (!($local:progressText2)) { $local:progressText2 = '' }
@@ -1136,14 +973,14 @@ function ShowProgess2Row {
 	if (!($local:toastWorkDetail2)) { $local:toastWorkDetail2 = '' }
 
 	ShowProgressToast2 `
-		-toastText1 $local:progressText1 `
-		-toastText2 $local:progressText2 `
-		-toastWorkDetail1 $local:toastWorkDetail1 `
-		-toastWorkDetail2 $local:toastWorkDetail2 `
-		-toastTag $script:appName `
-		-toastGroup $local:toastGroup `
-		-toastDuration $local:toastDuration `
-		-toastSilent $local:toastSilent
+		-Text1 $local:progressText1 `
+		-Text2 $local:progressText2 `
+		-WorkDetail1 $local:toastWorkDetail1 `
+		-WorkDetail2 $local:toastWorkDetail2 `
+		-Tag $script:appName `
+		-Group $local:toastGroup `
+		-Duration $local:toastDuration `
+		-Silent $local:toastSilent
 }
 
 #----------------------------------------------------------------------
@@ -1151,36 +988,162 @@ function ShowProgess2Row {
 #----------------------------------------------------------------------
 function UpdateProgess2Row {
 	[CmdletBinding()]
+	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('progressActivity1')][String] $local:progressActivity1,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('currentProcessing1')][String] $local:currentProcessing1,
-		[Parameter(Mandatory = $true)][Alias('progressRatio1')][String] $local:progressRatio1,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('secRemaining1')][String] $local:secRemaining1,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('progressActivity2')][String] $local:progressActivity2,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('currentProcessing2')][String] $local:currentProcessing2,
-		[Parameter(Mandatory = $true)][Alias('progressRatio2')][String] $local:progressRatio2,
-		[Parameter(Mandatory = $true)][AllowEmptyString()][Alias('secRemaining2')][String] $local:secRemaining2,
-		[Parameter(Mandatory = $true)][Alias('toastGroup')][String] $local:toastGroup
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[AllowEmptyString()]
+		[Alias('ProgressActivity1')]
+		[string] $local:progressActivity1,
+		
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[AllowEmptyString()]
+		[Alias('CurrentProcessing1')]
+		[string] $local:currentProcessing1,
+		
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[Alias('Rate1')]
+		[string] $local:progressRatio1,
+		
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[AllowEmptyString()]
+		[Alias('SecRemaining1')]
+		[string] $local:secRemaining1,
+		
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[AllowEmptyString()]
+		[Alias('ProgressActivity2')]
+		[string] $local:progressActivity2,
+		
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[AllowEmptyString()]
+		[Alias('CurrentProcessing2')]
+		[string] $local:currentProcessing2,
+		
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[Alias('Rate2')]
+		[string] $local:progressRatio2,
+		
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[AllowEmptyString()]
+		[Alias('SecRemaining2')]
+		[string] $local:secRemaining2,
+		
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false
+		)]
+		[Alias('Group')]
+		[string] $local:toastGroup
 	)
 
 	if ($local:secRemaining1 -eq -1 -or $local:secRemaining1 -eq '' ) { $local:minRemaining1 = '計算中...' }
 	else { $local:minRemaining1 = "$([String]([math]::Ceiling($local:secRemaining1 / 60)))分" }
+
 	if ($local:secRemaining2 -eq -1 -or $local:secRemaining2 -eq '' ) { $local:minRemaining2 = '計算中...' }
 	else { $local:minRemaining2 = "$([String]([math]::Ceiling($local:secRemaining2 / 60)))分" }
+
 	if ($local:secRemaining1 -ne '') { $local:secRemaining1 = "残り時間 $local:minRemaining1" }
 	if ($local:secRemaining2 -ne '') { $local:secRemaining2 = "残り時間 $local:minRemaining2" }
 	if ($local:progressActivity2 -eq '') { $local:progressActivity2 = '　' }
 
 	UpdateProgessToast2 `
-		-toastProgressTitle1 $local:currentProcessing1 `
-		-toastProgressRatio1 $local:progressRatio1 `
-		-toastLeftText1 $local:progressActivity1 `
-		-toastRrightText1 $local:minRemaining1 `
-		-toastProgressTitle2 $local:currentProcessing2 `
-		-toastProgressRatio2 $local:progressRatio2 `
-		-toastLeftText2 $local:progressActivity2 `
-		-toastRrightText2 $local:secRemaining2 `
-		-toastTag $script:appName `
-		-toastGroup $local:toastGroup
+		-Title1 $local:currentProcessing1 `
+		-Rate1 $local:progressRatio1 `
+		-LeftText1 $local:progressActivity1 `
+		-RrightText1 $local:minRemaining1 `
+		-Title2 $local:currentProcessing2 `
+		-Rate2 $local:progressRatio2 `
+		-LeftText2 $local:progressActivity2 `
+		-RrightText2 $local:secRemaining2 `
+		-Tag $script:appName `
+		-Group $local:toastGroup
 }
 
+#----------------------------------------------------------------------
+#統計取得
+#----------------------------------------------------------------------
+function goAnal {
+	[CmdletBinding()]
+	[OutputType([System.Void])]
+	Param (
+		[Parameter(Mandatory = $true)][string] $local:event,
+		[Parameter(Mandatory = $false)][string] $local:type,
+		[Parameter(Mandatory = $false)][string] $local:id
+	)
+
+	if (!($local:type)) { $local:type = '' }
+	if (!($local:id)) { $local:id = '' }
+	$local:epochTime = [decimal]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() * 1000)
+
+	$progressPreference = 'silentlyContinue'
+	$local:statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
+	try { Invoke-WebRequest "$($local:statisticsBase)$($local:event).svg" | Out-Null }
+	catch { Write-Debug 'Failed to collect statistics' }
+	finally { $progressPreference = 'Continue' }
+
+	$local:gaURL = 'https://www.google-analytics.com/mp/collect'
+	$local:gaKey = 'api_secret=UZ3InfgkTgGiR4FU-in9sw'
+	$local:gaID = 'measurement_id=G-NMSF9L531G'
+	$local:gaHeaders = New-Object 'System.Collections.Generic.Dictionary[[String],[String]]'
+	$local:gaHeaders.Add('HOST', 'www.google-analytics.com')
+	$local:gaHeaders.Add('Content-Type', 'application/json')
+	$local:gaBody = "{ `"client_id`" : `"$script:guid`", "
+	$local:gaBody += "`"timestamp_micros`" : `"$local:epochTime`", "
+	$local:gaBody += "`"non_personalized_ads`" : false, "
+	$local:gaBody += "`"user_properties`":{ "
+	foreach ($item in $script:clientEnv) { $local:gaBody += "`"$($item.Key)`" : {`"value`" : `"$($item.Value)`"}, " }
+	$local:gaBody = $local:gaBody.Trim().Trim(',', ' ')		#delete last comma
+	$local:gaBody += "}, `"events`" : [ { "
+	$local:gaBody += "`"name`" : `"$local:event`", "
+	$local:gaBody += "`"params`" : {"
+	$local:gaBody += "`"Type`" : `"$local:type`", "
+	$local:gaBody += "`"ID`" : `"$local:id`", "
+	$local:gaBody += "`"Target`" : `"$local:type/$local:id`", "
+	foreach ($item in $script:clientEnv) { $local:gaBody += "`"$($item.Key)`" : `"$($item.Value)`", " }
+	$local:gaBody = $local:gaBody.Trim().Trim(',', ' ')		#delete last comma
+	$local:gaBody += '} } ] }'
+
+	$progressPreference = 'silentlyContinue'
+	try { Invoke-RestMethod `
+			-Uri "$($local:gaURL)?$($local:gaKey)&$($local:gaID)" `
+			-Method 'POST' `
+			-Headers $local:gaHeaders `
+			-Body $local:gaBody `
+		| Out-Null
+	} catch { Write-Debug 'Failed to collect statistics' }
+	finally { $progressPreference = 'Continue' }
+
+}

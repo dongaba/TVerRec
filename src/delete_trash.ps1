@@ -72,22 +72,22 @@ try {
 		$script:devConfFile = $(Join-Path $script:devDir 'dev_setting_5.ps1')
 		if (Test-Path $script:devFunctionFile) {
 			. $script:devFunctionFile
-			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
 		}
 		if (Test-Path $script:devConfFile) {
 			. $script:devConfFile
-			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
 		}
 	} else {
 		$script:devFunctionFile = $(Join-Path $script:devDir 'dev_funcitons.ps1')
 		$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.ps1')
 		if (Test-Path $script:devFunctionFile) {
 			. $script:devFunctionFile
-			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
 		}
 		if (Test-Path $script:devConfFile) {
 			. $script:devConfFile
-			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
 		}
 	}
 } catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
@@ -102,12 +102,12 @@ try {
 	Get-ChildItem -Path $script:ffmpegErrorLogDir -Recurse -Filter 'ffmpeg_error_*.log' `
 	| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-0.5) } `
 	| Remove-Item -Force -ErrorAction SilentlyContinue
-} catch { Write-ColorOutput 'ffmpegエラーファイルを削除できませんでした' Green }
+} catch { Write-ColorOutput 'ffmpegエラーファイルを削除できませんでした' -FgColor 'Green' }
 try {
 	Get-ChildItem -Path $scriptRoot -Recurse -Filter 'brightcovenew_*.lock' `
 	| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-0.5) } `
 	| Remove-Item -Force -ErrorAction SilentlyContinue
-} catch { Write-ColorOutput 'youtube-dlのロックファイルを削除できませんでした' Green }
+} catch { Write-ColorOutput 'youtube-dlのロックファイルを削除できませんでした' -FgColor 'Green' }
 
 #======================================================================
 #1/3 ダウンロードが中断した際にできたゴミファイルは削除
@@ -120,27 +120,29 @@ Write-Progress -Id 1 `
 	-PercentComplete $($( 1 / 3 ) * 100) `
 	-Status 'ゴミファイルを削除'
 ShowProgressToast `
-	-toastText1 'ファイルの掃除中' `
-	-toastText2 '　処理1/3 - ダウンロード中断時のゴミファイルを削除' `
-	-toastWorkDetail '' `
-	-toastTag $script:appName `
-	-toastGroup 'Delete' `
-	-toastDuration 'long' `
-	-toastSilent $false
+	-Text1 'ファイルの掃除中' `
+	-Text2 '　処理1/3 - ダウンロード中断時のゴミファイルを削除' `
+	-WorkDetail '' `
+	-Tag $script:appName `
+	-Group 'Delete' `
+	-Duration 'long' `
+	-Silent $false
 Write-Progress -Id 2 -ParentId 1 `
 	-Activity '1/3' `
 	-PercentComplete $($( 1 / 3 ) * 100) `
 	-Status $script:downloadBaseDir
 UpdateProgessToast `
-	-toastProgressTitle $script:downloadWorkDir `
-	-toastProgressRatio $( 1 / 3 ) `
-	-toastLeftText '' `
-	-toastRrightText '' `
-	-toastTag $script:appName `
-	-toastGroup 'Delete'
+	-Title $script:downloadWorkDir `
+	-Rate $( 1 / 3 ) `
+	-LeftText '' `
+	-RrightText '' `
+	-Tag $script:appName `
+	-Group 'Delete'
 
 #処理
-deleteTrashFiles $script:downloadWorkDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.mp4'
+deleteFiles `
+	-Path $script:downloadWorkDir `
+	-Conditions '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.mp4'
 
 #進捗表示
 Write-Progress -Id 2 -ParentId 1 `
@@ -148,15 +150,17 @@ Write-Progress -Id 2 -ParentId 1 `
 	-PercentComplete $($(2 / 3) * 100) `
 	-Status $script:downloadWorkDir
 UpdateProgessToast `
-	-toastProgressTitle $script:downloadBaseDir `
-	-toastProgressRatio $( 2 / 3 ) `
-	-toastLeftText '' `
-	-toastRrightText '' `
-	-toastTag $script:appName `
-	-toastGroup 'Delete'
+	-Title $script:downloadBaseDir `
+	-Rate $( 2 / 3 ) `
+	-LeftText '' `
+	-RrightText '' `
+	-Tag $script:appName `
+	-Group 'Delete'
 
 #処理
-deleteTrashFiles $script:downloadBaseDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*'
+deleteFiles `
+	-Path $script:downloadBaseDir `
+	-Conditions '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*'
 
 #進捗表示
 Write-Progress -Id 2 -ParentId 1 `
@@ -164,15 +168,17 @@ Write-Progress -Id 2 -ParentId 1 `
 	-PercentComplete $($(3 / 3) * 100) `
 	-Status $script:saveBaseDir
 UpdateProgessToast `
-	-toastProgressTitle $script:saveBaseDir `
-	-toastProgressRatio $( 3 / 3 ) `
-	-toastLeftText '' `
-	-toastRrightText '' `
-	-toastTag $script:appName `
-	-toastGroup 'Delete'
+	-Title $script:saveBaseDir `
+	-Rate $( 3 / 3 ) `
+	-LeftText '' `
+	-RrightText '' `
+	-Tag $script:appName `
+	-Group 'Delete'
 
 #処理
-deleteTrashFiles $script:saveBaseDir '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*'
+deleteFiles `
+	-Path $script:saveBaseDir `
+	-Conditions '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*'
 
 #======================================================================
 #2/3 無視リストに入っている番組は削除
@@ -185,13 +191,13 @@ Write-Progress -Id 1 `
 	-PercentComplete $($( 2 / 3 ) * 100) `
 	-Status '削除対象のビデオを削除'
 ShowProgressToast `
-	-toastText1 'ファイルの掃除中' `
-	-toastText2 '　処理2/3 - 削除対象のビデオを削除' `
-	-toastWorkDetail '' `
-	-toastTag $script:appName `
-	-toastGroup 'Delete' `
-	-toastDuration 'long' `
-	-toastSilent $false
+	-Text1 'ファイルの掃除中' `
+	-Text2 '　処理2/3 - 削除対象のビデオを削除' `
+	-WorkDetail '' `
+	-Tag $script:appName `
+	-Group 'Delete' `
+	-Duration 'long' `
+	-Silent $false
 
 #ダウンロード対象外ビデオ番組リストの読み込み
 $local:ignoreTitles = (Get-Content $script:ignoreFilePath -Encoding UTF8 `
@@ -227,12 +233,12 @@ foreach ($local:ignoreTitle in $local:ignoreTitles) {
 		-PercentComplete $($local:progressRatio * 100) `
 		-Status $local:ignoreTitle
 	UpdateProgessToast `
-		-toastProgressTitle $local:ignoreTitle `
-		-toastProgressRatio $local:progressRatio `
-		-toastLeftText $local:ignoreNum/$local:ignoreTotal `
-		-toastRrightText "残り時間 $local:minRemaining" `
-		-toastTag $script:appName `
-		-toastGroup 'Delete'
+		-Title $local:ignoreTitle `
+		-Rate $local:progressRatio `
+		-LeftText $local:ignoreNum/$local:ignoreTotal `
+		-RrightText "残り時間 $local:minRemaining" `
+		-Tag $script:appName `
+		-Group 'Delete'
 
 	#処理
 	Write-ColorOutput '----------------------------------------------------------------------'
@@ -240,7 +246,7 @@ foreach ($local:ignoreTitle in $local:ignoreTitles) {
 	try {
 		$local:delTargets = Get-ChildItem -LiteralPath $script:downloadBaseDir `
 			-Name -Filter "*$($local:ignoreTitle)*"
-	} catch { Write-ColorOutput '削除対象を特定できませんでした' Green }
+	} catch { Write-ColorOutput '削除対象を特定できませんでした' -FgColor 'Green' }
 	try {
 		if ($null -ne $local:delTargets) {
 			foreach ($local:delTarget in $local:delTargets) {
@@ -250,8 +256,8 @@ foreach ($local:ignoreTitle in $local:ignoreTitles) {
 						-Recurse -Force -ErrorAction SilentlyContinue
 				}
 			}
-		} else { Write-ColorOutput '　削除対象はありませんでした' DarkGray }
-	} catch { Write-ColorOutput '削除できないファイルがありました' Green }
+		} else { Write-ColorOutput '　削除対象はありませんでした' -FgColor 'DarkGray' }
+	} catch { Write-ColorOutput '削除できないファイルがありました' -FgColor 'Green' }
 }
 #----------------------------------------------------------------------
 
@@ -265,13 +271,13 @@ Write-Progress -Id 1 -Activity '処理 3/3' `
 	-PercentComplete $($( 3 / 3 ) * 100) `
 	-Status '空フォルダを削除'
 ShowProgressToast `
-	-toastText1 'ファイルの掃除中' `
-	-toastText2 '　処理3/3 - 空フォルダを削除' `
-	-toastWorkDetail '' `
-	-toastTag $script:appName `
-	-toastGroup 'Delete' `
-	-toastDuration 'long' `
-	-toastSilent $false
+	-Text1 'ファイルの掃除中' `
+	-Text2 '　処理3/3 - 空フォルダを削除' `
+	-WorkDetail '' `
+	-Tag $script:appName `
+	-Group 'Delete' `
+	-Duration 'long' `
+	-Silent $false
 
 #処理
 $local:allSubDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer })).FullName `
@@ -304,12 +310,12 @@ foreach ($local:subDir in $local:allSubDirs) {
 		-PercentComplete $($local:progressRatio * 100) `
 		-Status $local:subDir
 	UpdateProgessToast `
-		-toastProgressTitle $local:subDir `
-		-toastProgressRatio $local:progressRatio `
-		-toastLeftText $local:subDirNum/$local:subDirTotal `
-		-toastRrightText "残り時間 $local:minRemaining" `
-		-toastTag $script:appName `
-		-toastGroup 'Delete'
+		-Title $local:subDir `
+		-Rate $local:progressRatio `
+		-LeftText $local:subDirNum/$local:subDirTotal `
+		-RrightText "残り時間 $local:minRemaining" `
+		-Tag $script:appName `
+		-Group 'Delete'
 
 	#処理
 	Write-ColorOutput '----------------------------------------------------------------------'
@@ -319,17 +325,17 @@ foreach ($local:subDir in $local:allSubDirs) {
 			Write-ColorOutput "  └「$($local:subDir)」を削除します"
 			Remove-Item -LiteralPath $local:subDir `
 				-Recurse -Force -ErrorAction SilentlyContinue
-		} catch { Write-ColorOutput "空フォルダの削除に失敗しました: $local:subDir" Green }
+		} catch { Write-ColorOutput "空フォルダの削除に失敗しました: $local:subDir" -FgColor 'Green' }
 	}
 }
 #----------------------------------------------------------------------
 
 #進捗表示
 UpdateProgessToast `
-	-toastProgressTitle 'ファイルの掃除' `
-	-toastProgressRatio '1' `
-	-toastLeftText '' `
-	-toastRrightText '完了' `
-	-toastTag $script:appName `
-	-toastGroup 'Delete'
+	-Title 'ファイルの掃除' `
+	-Rate '1' `
+	-LeftText '' `
+	-RrightText '完了' `
+	-Tag $script:appName `
+	-Group 'Delete'
 

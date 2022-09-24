@@ -30,30 +30,158 @@
 #TVerRec最新化確認
 #----------------------------------------------------------------------
 function checkLatestTVerRec {
+	[OutputType([System.Void])]
+	Param ()
+
 	$progressPreference = 'silentlyContinue'
 
-	#githubの設定
+	goAnal 'launch'
+	#TVerRecの最新バージョン取得
 	$local:repo = 'dongaba/TVerRec'
 	$local:releases = "https://api.github.com/repos/$($local:repo)/releases"
+	try { $local:latestVersion = $((Invoke-WebRequest -Uri $local:releases).content | ConvertFrom-Json)[0].tag_name } 
+	catch { return }
+	$local:latestVersion = $local:latestVersion.Trim('v', ' ')
 
-	#TVerRecの最新バージョン取得
-	try {
-		$local:latestVersion = $((Invoke-WebRequest -Uri $local:releases | ConvertFrom-Json) `
-			| Where-Object { $_.prerelease -eq $false } )[0].name
-	} catch { return }
-	$local:latestVersion = $local:latestVersion.Substring(1, $local:latestVersion.Length - 1)
-
+	#バージョン判定
 	if ($local:latestVersion -gt $script:appVersion ) {
-		Write-ColorOutput "TVerRecの更新版があるようです。 Version $script:appVersion → Version $local:latestVersion" Green
-		ShowToast 'TVerRecの更新版があるようです' "Version $script:appVersion → $local:latestVersion" 'long' $false
+		Write-ColorOutput 'TVerRecの更新版があるようです。' -FgColor 'Green'
+		Write-ColorOutput ''
+		Write-ColorOutput "  Current Version $script:appVersion " -FgColor 'Green'
+		Write-ColorOutput "  Latest Version  $local:latestVersion" -FgColor 'Green'
+		Write-ColorOutput ''
+		Write-ColorOutput "$(((Invoke-WebRequest -Uri $local:releases).content | ConvertFrom-Json)[0].body)" -FgColor 'Green'
+		ShowToast `
+			-Text1 'TVerRecの更新版があるようです' `
+			-Text2 "  Version $script:appVersion → $local:latestVersion" `
+			-Duration 'long' `
+			-Silent $false
 	}
+
 	$progressPreference = 'Continue'
+}
+
+#----------------------------------------------------------------------
+#ytdlの最新化確認
+#----------------------------------------------------------------------
+function checkLatestYtdl {
+	[OutputType([System.Void])]
+	Param ()
+
+	$progressPreference = 'silentlyContinue'
+
+	if ($script:disableUpdateYoutubedl -eq $false) {
+		if ($script:preferredYoutubedl -eq 'yt-dlp') {
+			if ($PSVersionTable.PSEdition -eq 'Desktop') { . $(Convert-Path (Join-Path $scriptRoot '.\functions\update_yt-dlp_5.ps1')) } 
+			else { . $(Convert-Path (Join-Path $scriptRoot '.\functions\update_yt-dlp.ps1')) }
+		} elseif ($script:preferredYoutubedl -eq 'ytdl-patched') {
+			if ($PSVersionTable.PSEdition -eq 'Desktop') { . $(Convert-Path (Join-Path $scriptRoot '.\functions\update_ytdl-patched_5.ps1')) } 
+			else { . $(Convert-Path (Join-Path $scriptRoot '.\functions\update_ytdl-patched.ps1')) }
+		} else {
+			Write-Error 'youtube-dlの取得元の指定が無効です' ; exit 1
+		}
+		if ($? -eq $false) { Write-Error 'youtube-dlの更新に失敗しました' ; exit 1 }
+	} else { }
+
+	$progressPreference = 'Continue'
+}
+
+#----------------------------------------------------------------------
+#ffmpegの最新化確認
+#----------------------------------------------------------------------
+function checkLatestFfmpeg {
+	[OutputType([System.Void])]
+	Param ()
+
+	$progressPreference = 'silentlyContinue'
+
+	if ($script:disableUpdateFfmpeg -eq $false) {
+		if ($PSVersionTable.PSEdition -eq 'Desktop') { . $(Convert-Path (Join-Path $scriptRoot '.\functions\update_ffmpeg_5.ps1')) } 
+		else { . $(Convert-Path (Join-Path $scriptRoot '.\functions\update_ffmpeg.ps1')) }
+		if ($? -eq $false) { Write-Error 'ffmpegの更新に失敗しました' ; exit 1 }
+	} else { }
+
+	$progressPreference = 'Continue'
+}
+
+#----------------------------------------------------------------------
+#設定で指定したファイル・フォルダの存在チェック
+#----------------------------------------------------------------------
+function checkRequiredFile {
+	[OutputType([System.Void])]
+	Param ()
+
+	if (Test-Path $script:downloadBaseDir -PathType Container) { }
+	else { Write-Error 'ビデオ保存先フォルダが存在しません。終了します。' ; exit 1 }
+	if (Test-Path $script:downloadWorkDir -PathType Container) { }
+	else { Write-Error 'ダウンロード作業フォルダが存在しません。終了します。' ; exit 1 }
+	if (Test-Path $script:ffmpegPath -PathType Leaf) { }
+	else { Write-Error 'ffmpegが存在しません。終了します。' ; exit 1 }
+	if (Test-Path $script:ffprobePath -PathType Leaf) { }
+	elseif ($script:simplifiedValidation -eq $true) { Write-Error 'ffprobeが存在しません。終了します。' ; exit 1 }
+	if (Test-Path $script:ytdlPath -PathType Leaf) { }
+	else { Write-Error 'youtube-dlが存在しません。終了します。' ; exit 1 }
+	if (Test-Path $script:confFile -PathType Leaf) { }
+	else { Write-Error 'ユーザ設定ファイルが存在しません。終了します。' ; exit 1 }
+
+	#ファイルが存在しない場合はサンプルファイルをコピー
+	if (Test-Path $script:keywordFilePath -PathType Leaf) { }
+	else { Copy-Item -Path $script:keywordFileSamplePath -Destination $script:keywordFilePath -Force }
+	if (Test-Path $script:ignoreFilePath -PathType Leaf) { }
+	else { Copy-Item -Path $script:ignoreFileSamplePath -Destination $script:ignoreFilePath -Force }
+	if (Test-Path $script:listFilePath -PathType Leaf) { }
+	else { Copy-Item -Path $script:listFileSamplePath -Destination $script:listFilePath -Force }
+
+	#念のためチェック
+	if (Test-Path $script:keywordFilePath -PathType Leaf) { }
+	else { Write-Error 'ダウンロード対象ジャンルリストが存在しません。終了します。' ; exit 1 }
+	if (Test-Path $script:ignoreFilePath -PathType Leaf) { }
+	else { Write-Error 'ダウンロード対象外ビデオリストが存在しません。終了します。' ; exit 1 }
+	if (Test-Path $script:listFilePath -PathType Leaf) { }
+	else { Write-Error 'ダウンロードリストが存在しません。終了します。' ; exit 1 }
+}
+
+#----------------------------------------------------------------------
+#ダウンロード対象ジャンルリストの読み込み
+#----------------------------------------------------------------------
+function loadKeywordList {
+	[OutputType([String[]])]
+	Param ()
+
+	try {
+		$local:keywordNames = (Get-Content $script:keywordFilePath -Encoding UTF8 `
+			| Where-Object { !($_ -match '^\s*$') } `
+			| Where-Object { !($_ -match '^#.*$') }) `
+			-as [string[]]
+	} catch { Write-ColorOutput 'ダウンロード対象ジャンルリストの読み込みに失敗しました' -FgColor 'Green' ; exit 1 }
+
+	return $local:keywordNames
+}
+
+#----------------------------------------------------------------------
+#ダウンロード対象外番組リストの読み込み
+#----------------------------------------------------------------------
+function getIgnoreList {
+	[OutputType([String[]])]
+	Param ()
+
+	try {
+		$local:ignoreTitles = (Get-Content $script:ignoreFilePath -Encoding UTF8 `
+			| Where-Object { !($_ -match '^\s*$') } `
+			| Where-Object { !($_ -match '^;.*$') }) `
+			-as [string[]]
+	} catch { Write-ColorOutput 'ダウンロード対象外リストの読み込みに失敗しました' -FgColor 'Green' ; exit 1 }
+
+	return $local:ignoreTitles
 }
 
 #----------------------------------------------------------------------
 #TVerのAPI Tokenを取得
 #----------------------------------------------------------------------
 function getToken () {
+	[OutputType([System.Void])]
+	Param ()
+
 	$local:tverTokenURL = 'https://platform-api.tver.jp/v2/api/platform_users/browser/create'
 	$local:requestHeader = @{
 		'Content-Type' = 'application/x-www-form-urlencoded' ;
@@ -69,66 +197,115 @@ function getToken () {
 }
 
 #----------------------------------------------------------------------
-#TalentIDによるタレント検索からビデオページのLinkを取得
+#キーワードからビデオのリンクへの変換
 #----------------------------------------------------------------------
-function getVideoLinkFromTalentID ($local:talentID) {
-	$local:callTalentEpisodeBaseURL = 'https://platform-api.tver.jp/service/api/v1/callTalentEpisode/'
-	$local:callTalentEpisodeURL = $local:callTalentEpisodeBaseURL + `
-		$local:talentID + `
-		'?platform_uid=' + $script:platformUID + `
-		'&platform_token=' + $script:platformToken
-	$local:searchResultsRaw = (Invoke-RestMethod `
-			-Uri $local:callTalentEpisodeURL `
-			-Method 'GET' `
-			-Headers $script:requestHeader)
-	$local:searchResults = $local:searchResultsRaw.Result.Contents
-	$local:resultCount = $local:searchResults.length
-	for ($i = 0; $i -lt $local:resultCount; $i++) {
-		if ($local:searchResults[$i].type -eq 'episode') {
-			$script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id
-		} else { }		#通常はepisode以外返ってこないはずなので無視
+function getVideoLinksFromKeyword {
+	[OutputType([System.Object[]])]
+	Param ([String]$local:keywordName)
+
+	$script:requestHeader = @{
+		'x-tver-platform-type' = 'web' ;
+		'Origin'               = 'https://tver.jp' ;
+		'Referer'              = 'https://tver.jp/' ;
 	}
-	[System.GC]::Collect()
+	$script:videoLinks = @()
+	if ( $local:keywordName.IndexOf('https://tver.jp/') -eq 0) {
+		#URL形式の場合ビデオページのLinkを取得
+		try { $local:keywordNamePage = Invoke-WebRequest $local:keywordName }
+		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' -FgColor 'Green' ; continue }
+		try {
+			$script:videoLinks = ($local:keywordNamePage.Links `
+				| Where-Object { `
+					(href -Like '*lp*') `
+						-or (href -Like '*corner*') `
+						-or (href -Like '*series*') `
+						-or (href -Like '*episode*') `
+						-or (href -Like '*feature*')`
+				} `
+				| Select-Object href).href
+		} catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' -FgColor 'Green' ; continue }
+		#saveGenrePage $script:keywordName						#デバッグ用ジャンルページの保存
+	} elseif ($local:keywordName.IndexOf('series/') -eq 0) {
+		#番組IDによる番組検索からビデオページのLinkを取得
+		$local:seriesID = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('series/', '').Trim()
+		goAnal 'search' 'series' $local:seriesID
+		try { $script:videoLinks = getVideoLinkFromSeriesID ($local:seriesID) }
+		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' -FgColor 'Green' ; continue }
+	} elseif ($local:keywordName.IndexOf('talents/') -eq 0) {
+		#タレントIDによるタレント検索からビデオページのLinkを取得
+		$local:talentID = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('talents/', '').Trim()
+		goAnal 'search' 'talent' $local:talentID
+		try { $script:videoLinks = getVideoLinkFromTalentID ($local:talentID) }
+		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' -FgColor 'Green' ; continue }
+	} elseif ($local:keywordName.IndexOf('tag/') -eq 0) {
+		#ジャンルなどのTag情報からビデオページのLinkを取得
+		$local:tagID = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('tag/', '').Trim()
+		goAnal 'search' 'tag' $local:tagID
+		try { $script:videoLinks = getVideoLinkFromTag ($local:tagID) }
+		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' -FgColor 'Green' ; continue }
+	} elseif ($local:keywordName.IndexOf('new/') -eq 0) {
+		#新着ビデオからビデオページのLinkを取得
+		$local:genre = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('new/', '').Trim()
+		goAnal 'search' 'new' $local:genre
+		try { $script:videoLinks = getVideoLinkFromNew ($local:genre) }
+		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' -FgColor 'Green' ; continue }
+	} elseif ($local:keywordName.IndexOf('ranking/') -eq 0) {
+		#ランキングによるビデオページのLinkを取得
+		$local:genre = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('ranking/', '').Trim()
+		goAnal 'search' 'ranking' $local:genre
+		try { $script:videoLinks = getVideoLinkFromRanking ($local:genre) }
+		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' -FgColor 'Green' ; continue }
+	} elseif ($local:keywordName.IndexOf('toppage') -eq 0) {
+		#トップページからビデオページのLinkを取得
+		goAnal 'search' 'toppage'
+		try { $script:videoLinks = getVideoLinkFromTopPage }
+		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' -FgColor 'Green' ; continue }
+	} elseif ($local:keywordName.IndexOf('title/') -eq 0) {
+		#番組名による新着検索からビデオページのLinkを取得
+		$local:titleName = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('title/', '').Trim()
+		goAnal 'search' 'title' $local:titleName
+		try { $script:videoLinks = getVideoLinkFromTitle ($local:titleName) }
+		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' -FgColor 'Green' ; continue }
+	} else {
+		#タレント名や番組名などURL形式でない場合APIで検索結果からビデオページのLinkを取得
+		goAnal 'search' 'free' $local:keywordName
+		try { $script:videoLinks = getVideoLinkFromFreeKeyword ($local:keywordName) }
+		catch { Write-ColorOutput 'TVerから検索結果を取得できませんでした。スキップします' -FgColor 'Green' ; continue }
+	}
+
 	return $script:videoLinks | Sort-Object | Get-Unique
 }
 
 #----------------------------------------------------------------------
-#SeasonIDによる番組検索からビデオページのLinkを取得
+#デバッグ用ジャンルページの保存
 #----------------------------------------------------------------------
-function getVideoLinkFromSeasonID ($local:SeasonID) {
-	$local:callSeasonEpisodeBaseURL = 'https://platform-api.tver.jp/service/api/v1/callSeasonEpisodes/'
-	$local:callSeasonEpisodeURL = $local:callSeasonEpisodeBaseURL + `
-		$local:SeasonID + `
-		'?platform_uid=' + $script:platformUID + `
-		'&platform_token=' + $script:platformToken
-	$local:searchResultsRaw = (Invoke-RestMethod `
-			-Uri $local:callSeasonEpisodeURL `
-			-Method 'GET' `
-			-Headers $script:requestHeader)
-	$local:searchResults = $local:searchResultsRaw.Result.Contents
-	$local:resultCount = $local:searchResults.length
-	for ($i = 0; $i -lt $local:resultCount; $i++) {
-		if ($local:searchResults[$i].type -eq 'episode') {
-			$script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id
-		} else { }		#通常はepisode以外返ってこないはずなので無視
-	}
-	[System.GC]::Collect()
-	return $script:videoLinks | Sort-Object | Get-Unique
+function saveGenrePage {
+	[OutputType([System.Void])]
+	Param ([String]$local:keywordName)
+
+	$local:keywordFile = $($script:keywordName + '.html') -replace '(\?|\!|>|<|:|\\|/|\|)', '-'
+	$local:keywordFile = $(Join-Path $script:debugDir (getFileNameWithoutInvalidChars $local:keywordFile))
+	$local:webClient = New-Object System.Net.WebClient
+	$local:webClient.Encoding = [System.Text.Encoding]::UTF8
+	$local:webClient.DownloadFile($script:keywordName, $local:keywordFile)
 }
 
 #----------------------------------------------------------------------
 #SeriesIDによる番組検索からビデオページのLinkを取得
 #----------------------------------------------------------------------
-function getVideoLinkFromSeriesID ($local:seriesID) {
+function getVideoLinkFromSeriesID {
+	[OutputType([System.Object[]])]
+	Param ([String]$local:seriesID)
+
 	$local:seasonLinks = @()
-	$local:callSeriesSeasonBaseURL = 'https://platform-api.tver.jp/service/api/v1/callSeriesSeasons/'
+	$local:callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callSeriesSeasons/'
 	#まずはSeries→Seasonに変換
-	$local:callSeriesSeasonURL = $local:callSeriesSeasonBaseURL + `
+	$local:callSearchURL = $local:callSearchBaseURL + `
 		$local:seriesID + `
 		'?platform_uid=' + $script:platformUID + `
 		'&platform_token=' + $script:platformToken
 	$local:searchResultsRaw = (Invoke-RestMethod `
-			-Uri $local:callSeriesSeasonURL `
+			-Uri $local:callSearchURL `
 			-Method 'GET' `
 			-Headers $script:requestHeader)
 	$local:searchResults = $local:searchResultsRaw.Result.Contents
@@ -141,6 +318,129 @@ function getVideoLinkFromSeriesID ($local:seriesID) {
 		$script:videoLinks += getVideoLinkFromSeasonID ($local:seasonLink)
 	}
 	[System.GC]::Collect()
+
+	return $script:videoLinks | Sort-Object | Get-Unique
+}
+
+#----------------------------------------------------------------------
+#TalentIDによるタレント検索からビデオページのLinkを取得
+#----------------------------------------------------------------------
+function getVideoLinkFromTalentID {
+	[OutputType([System.Object[]])]
+	Param ([String]$local:talentID)
+
+	$local:callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callTalentEpisode/'
+	$local:callSearchURL = $local:callSearchBaseURL + `
+		$local:talentID + `
+		'?platform_uid=' + $script:platformUID + `
+		'&platform_token=' + $script:platformToken
+	$local:searchResultsRaw = (Invoke-RestMethod `
+			-Uri $local:callSearchURL `
+			-Method 'GET' `
+			-Headers $script:requestHeader)
+	$local:searchResults = $local:searchResultsRaw.Result.Contents
+	$local:resultCount = $local:searchResults.length
+	for ($i = 0; $i -lt $local:resultCount; $i++) {
+		if ($local:searchResults[$i].type -eq 'episode') { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id } 
+		elseif ($local:searchResults[$i].type -eq 'season') { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) } 
+		elseif ($local:searchResults[$i].type -eq 'series') { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) } 
+		else { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id }	#他にはないと思われるが念のため
+	}
+	[System.GC]::Collect()
+
+	return $script:videoLinks | Sort-Object | Get-Unique
+}
+
+#----------------------------------------------------------------------
+#タグからビデオページのLinkを取得
+#----------------------------------------------------------------------
+function getVideoLinkFromTag {
+	[OutputType([System.Object[]])]
+	Param ([String]$local:tagID)
+
+	$local:callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callTagSearch'
+	$local:callSearchURL = $local:callSearchBaseURL + `
+		'/' + $local:tagID + `
+		'?platform_uid=' + $script:platformUID + `
+		'&platform_token=' + $script:platformToken
+	$local:searchResultsRaw = (Invoke-RestMethod `
+			-Uri $local:callSearchURL `
+			-Method 'GET' `
+			-Headers $script:requestHeader)
+	$local:searchResults = $local:searchResultsRaw.Result.Contents
+	$local:resultCount = $local:searchResults.length
+	for ($i = 0; $i -lt $local:resultCount; $i++) {
+		if ($local:searchResults[$i].type -eq 'episode') { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id } 
+		elseif ($local:searchResults[$i].type -eq 'season') { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) } 
+		elseif ($local:searchResults[$i].type -eq 'series') { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) } 
+		else { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id }	#他にはないと思われるが念のため
+	}
+	[System.GC]::Collect()
+
+	return $script:videoLinks | Sort-Object | Get-Unique
+}
+
+#----------------------------------------------------------------------
+#新着からビデオページのLinkを取得
+#----------------------------------------------------------------------
+function getVideoLinkFromNew {
+	[OutputType([System.Object[]])]
+	Param ([String]$local:genre)
+
+	$local:callSearchBaseURL = 'https://service-api.tver.jp/api/v1/callNewerDetail'
+	$local:callSearchURL = $local:callSearchBaseURL + `
+		'/' + $local:genre + `
+		'?platform_uid=' + $script:platformUID + `
+		'&platform_token=' + $script:platformToken
+	$local:searchResultsRaw = (Invoke-RestMethod `
+			-Uri $local:callSearchURL `
+			-Method 'GET' `
+			-Headers $script:requestHeader)
+	$local:searchResults = $local:searchResultsRaw.Result.Contents.Contents
+	$local:resultCount = $local:searchResults.length
+	for ($i = 0; $i -lt $local:resultCount; $i++) {
+		if ($local:searchResults[$i].type -eq 'episode') { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id } 
+		elseif ($local:searchResults[$i].type -eq 'season') { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) } 
+		elseif ($local:searchResults[$i].type -eq 'series') { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) } 
+		else { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id }	#他にはないと思われるが念のため
+	}
+	[System.GC]::Collect()
+
+	return $script:videoLinks | Sort-Object | Get-Unique
+}
+
+#----------------------------------------------------------------------
+#ランキングからビデオページのLinkを取得
+#----------------------------------------------------------------------
+function getVideoLinkFromRanking {
+	[OutputType([System.Object[]])]
+	Param ([String]$local:genre)
+
+	$local:callSearchBaseURL = 'https://service-api.tver.jp/api/v1/callEpisodeRanking'
+	if ($local:genre -eq 'all') {
+		$local:callSearchURL = $local:callSearchBaseURL + `
+			'?platform_uid=' + $script:platformUID + `
+			'&platform_token=' + $script:platformToken
+	} else {
+		$local:callSearchURL = $local:callSearchBaseURL + `
+			'Detail/' + $local:genre + `
+			'?platform_uid=' + $script:platformUID + `
+			'&platform_token=' + $script:platformToken
+	}
+	$local:searchResultsRaw = (Invoke-RestMethod `
+			-Uri $local:callSearchURL `
+			-Method 'GET' `
+			-Headers $script:requestHeader)
+	$local:searchResults = $local:searchResultsRaw.Result.Contents.Contents
+	$local:resultCount = $local:searchResults.length
+	for ($i = 0; $i -lt $local:resultCount; $i++) {
+		if ($local:searchResults[$i].type -eq 'episode') { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id } 
+		elseif ($local:searchResults[$i].type -eq 'season') { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) }
+		elseif ($local:searchResults[$i].type -eq 'series') { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) } 
+		else { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id }	#他にはないと思われるが念のため
+	}
+	[System.GC]::Collect()
+
 	return $script:videoLinks | Sort-Object | Get-Unique
 }
 
@@ -148,12 +448,15 @@ function getVideoLinkFromSeriesID ($local:seriesID) {
 #トップページからビデオページのLinkを取得
 #----------------------------------------------------------------------
 function getVideoLinkFromTopPage {
-	$local:callHomeBaseURL = 'https://platform-api.tver.jp/service/api/v1/callHome'
-	$local:callHomeURL = $local:callHomeBaseURL + `
+	[OutputType([System.Object[]])]
+	Param ()
+
+	$local:callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callHome'
+	$local:callSearchURL = $local:callSearchBaseURL + `
 		'?platform_uid=' + $script:platformUID + `
 		'&platform_token=' + $script:platformToken
 	$local:searchResultsRaw = (Invoke-RestMethod `
-			-Uri $local:callHomeURL `
+			-Uri $local:callSearchURL `
 			-Method 'GET' `
 			-Headers $script:requestHeader)
 	$local:searchResults = $local:searchResultsRaw.Result.Components
@@ -171,44 +474,30 @@ function getVideoLinkFromTopPage {
 			#横スクロール型 or 総合ランキング or 注目タレント or 特集
 			$local:searchSectionResultCount = $local:searchResults[$i].Contents.length
 			for ($j = 0; $j -lt $local:searchSectionResultCount; $j++) {
-				if ($local:searchResults[$i].contents[$j].type -eq 'episode') {
-					$script:videoLinks += '/episodes/' + $local:searchResults[$i].contents[$j].Content.Id
-				} elseif ($local:searchResults[$i].contents[$j].type -eq 'season') {
-					$script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].contents[$j].Content.Id)
-				} elseif ($local:searchResults[$i].contents[$j].type -eq 'series') {
-					$script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].contents[$j].Content.Id)
-				} elseif ($local:searchResults[$i].contents[$j].type -eq 'talent') {
-					$script:videoLinks += getVideoLinkFromTalentID ($local:searchResults[$i].contents[$j].Content.Id)
-				} elseif ($local:searchResults[$i].contents[$j].type -eq 'specialMain') {
-					#特集ページ。パース方法不明
-					#https://tver.jp/specials/$($local:searchResults[4].contents.content.id)
-					#$local:searchResults[4].contents.content.id
-					#callSpecialContentsDetailを再帰的に呼び出す必要がありそう
-					#https://platform-api.tver.jp/service/api/v1/callSpecialContents/drama-digest?require_data=mylist[special][drama-digest]
-					#を呼んで得られたspecialContents>[TypeがSpecialのもの]>contents.content.idを使って、再度以下のように呼び出し。(以下の例ではsum22-latterhal)
-					#https://platform-api.tver.jp/service/api/v1/callSpecialContentsDetail/sum22-latterhalf?sort_key=newer&require_data=mylist, later
-				} else {
-					#他にはないと思われるが念のため
-					$script:videoLinks += '/' + $local:searchResults[$i].contents[$j].type + '/' + $local:searchResults[$i].contents[$j].Content.Id
-				}
+				if ($local:searchResults[$i].contents[$j].type -eq 'episode') { $script:videoLinks += '/episodes/' + $local:searchResults[$i].contents[$j].Content.Id } 
+				elseif ($local:searchResults[$i].contents[$j].type -eq 'season') { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].contents[$j].Content.Id) }
+				elseif ($local:searchResults[$i].contents[$j].type -eq 'series') { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].contents[$j].Content.Id) } 
+				elseif ($local:searchResults[$i].contents[$j].type -eq 'talent') { $script:videoLinks += getVideoLinkFromTalentID ($local:searchResults[$i].contents[$j].Content.Id) }
+				elseif ($local:searchResults[$i].contents[$j].type -eq 'specialMain') {}
+				#特集ページ。パース方法不明
+				#https://tver.jp/specials/$($local:searchResults[4].contents.content.id)
+				#$local:searchResults[4].contents.content.id
+				#callSpecialContentsDetailを再帰的に呼び出す必要がありそう
+				#https://platform-api.tver.jp/service/api/v1/callSpecialContents/drama-digest?require_data=mylist[special][drama-digest]
+				#を呼んで得られたspecialContents>[TypeがSpecialのもの]>contents.content.idを使って、再度以下のように呼び出し。(以下の例ではsum22-latterhal)
+				#https://platform-api.tver.jp/service/api/v1/callSpecialContentsDetail/sum22-latterhalf?sort_key=newer&require_data=mylist, later
+				else { $script:videoLinks += '/' + $local:searchResults[$i].contents[$j].type + '/' + $local:searchResults[$i].contents[$j].Content.Id }	#他にはないと思われるが念のため
 			}
 		} elseif ($local:searchResults[$i].type -eq 'topics') {
 			$local:searchSectionResultCount = $local:searchResults.Contents.length
 			for ($j = 0; $j -lt $local:searchSectionResultCount; $j++) {
 				$local:searchSectionResultCount = $local:searchResults[$i].Contents.length
 				for ($j = 0; $j -lt $local:searchSectionResultCount; $j++) {
-					if ($local:searchResults[$i].contents[$j].Content.Content.type -eq 'episode' ) {
-						$script:videoLinks += '/episodes/' + $local:searchResults[$i].contents[$j].Content.Content.Content.Id
-					} elseif ($local:searchResults[$i].contents[$j].Content.Content.type -eq 'season') {
-						$script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].contents[$j].Content.Content.Content.Id)
-					} elseif ($local:searchResults[$i].contents[$j].Content.Content.type -eq 'series') {
-						$script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].contents[$j].Content.Content.Content.Id)
-					} elseif ($local:searchResults[$i].contents[$j].Content.Content.type -eq 'talent') {
-						$script:videoLinks += getVideoLinkFromTalentID ($local:searchResults[$i].contents[$j].Content.Content.Content.Id)
-					} else {
-						#他にはないと思われるが念のため
-						$script:videoLinks += '/' + $local:searchResults[$i].contents[$j].type + '/' + $local:searchResults[$i].contents[$j].Content.Content.Content.Id
-					}
+					if ($local:searchResults[$i].contents[$j].Content.Content.type -eq 'episode' ) { $script:videoLinks += '/episodes/' + $local:searchResults[$i].contents[$j].Content.Content.Content.Id } 
+					elseif ($local:searchResults[$i].contents[$j].Content.Content.type -eq 'season') { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].contents[$j].Content.Content.Content.Id) } 
+					elseif ($local:searchResults[$i].contents[$j].Content.Content.type -eq 'series') { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].contents[$j].Content.Content.Content.Id) } 
+					elseif ($local:searchResults[$i].contents[$j].Content.Content.type -eq 'talent') { $script:videoLinks += getVideoLinkFromTalentID ($local:searchResults[$i].contents[$j].Content.Content.Content.Id) } 
+					else { $script:videoLinks += '/' + $local:searchResults[$i].contents[$j].type + '/' + $local:searchResults[$i].contents[$j].Content.Content.Content.Id }	#他にはないと思われるが念のため
 				}
 			}
 		} elseif ($local:searchResults[$i].type -eq 'banner') {
@@ -221,109 +510,18 @@ function getVideoLinkFromTopPage {
 
 		}
 	}
-	return $script:videoLinks | Sort-Object | Get-Unique
-}
+	[System.GC]::Collect()
 
-#----------------------------------------------------------------------
-#タグからビデオページのLinkを取得
-#----------------------------------------------------------------------
-function getVideoLinkFromTag ($local:tagID) {
-	$local:callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callTagSearch'
-	$local:callSearchURL = $local:callSearchBaseURL + `
-		'/' + $local:tagID + `
-		'?platform_uid=' + $script:platformUID + `
-		'&platform_token=' + $script:platformToken
-	$local:searchResultsRaw = (Invoke-RestMethod `
-			-Uri $local:callSearchURL `
-			-Method 'GET' `
-			-Headers $script:requestHeader)
-	$local:searchResults = $local:searchResultsRaw.Result.Contents
-	$local:resultCount = $local:searchResults.length
-	for ($i = 0; $i -lt $local:resultCount; $i++) {
-		if ($local:searchResults[$i].type -eq 'episode') {
-			$script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id
-		} elseif ($local:searchResults[$i].type -eq 'season') {
-			$script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id)
-		} elseif ($local:searchResults[$i].type -eq 'series') {
-			$script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id)
-		} else {
-			#他にはないと思われるが念のため
-			$script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id
-		}
-	}
-	return $script:videoLinks | Sort-Object | Get-Unique
-}
-
-#----------------------------------------------------------------------
-#新着からビデオページのLinkを取得
-#----------------------------------------------------------------------
-function getVideoLinkFromNew ($local:tagID) {
-	$local:callSearchBaseURL = 'https://service-api.tver.jp/api/v1/callNewerDetail'
-	$local:callSearchURL = $local:callSearchBaseURL + `
-		'/' + $local:tagID + `
-		'?platform_uid=' + $script:platformUID + `
-		'&platform_token=' + $script:platformToken
-	$local:searchResultsRaw = (Invoke-RestMethod `
-			-Uri $local:callSearchURL `
-			-Method 'GET' `
-			-Headers $script:requestHeader)
-	$local:searchResults = $local:searchResultsRaw.Result.Contents.Contents
-	$local:resultCount = $local:searchResults.length
-	for ($i = 0; $i -lt $local:resultCount; $i++) {
-		if ($local:searchResults[$i].type -eq 'episode') {
-			$script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id
-		} elseif ($local:searchResults[$i].type -eq 'season') {
-			$script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id)
-		} elseif ($local:searchResults[$i].type -eq 'series') {
-			$script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id)
-		} else {
-			#他にはないと思われるが念のため
-			$script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id
-		}
-	}
-	return $script:videoLinks | Sort-Object | Get-Unique
-}
-
-#----------------------------------------------------------------------
-#ランキングからビデオページのLinkを取得
-#----------------------------------------------------------------------
-function getVideoLinkFromRanking ($local:tagID) {
-	$local:callSearchBaseURL = 'https://service-api.tver.jp/api/v1/callEpisodeRanking'
-	if ($local:tagID -eq 'all') {
-		$local:callSearchURL = $local:callSearchBaseURL + `
-			'?platform_uid=' + $script:platformUID + `
-			'&platform_token=' + $script:platformToken
-	} else {
-		$local:callSearchURL = $local:callSearchBaseURL + `
-			'Detail/' + $local:tagID + `
-			'?platform_uid=' + $script:platformUID + `
-			'&platform_token=' + $script:platformToken
-	}
-	$local:searchResultsRaw = (Invoke-RestMethod `
-			-Uri $local:callSearchURL `
-			-Method 'GET' `
-			-Headers $script:requestHeader)
-	$local:searchResults = $local:searchResultsRaw.Result.Contents.Contents
-	$local:resultCount = $local:searchResults.length
-	for ($i = 0; $i -lt $local:resultCount; $i++) {
-		if ($local:searchResults[$i].type -eq 'episode') {
-			$script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id
-		} elseif ($local:searchResults[$i].type -eq 'season') {
-			$script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id)
-		} elseif ($local:searchResults[$i].type -eq 'series') {
-			$script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id)
-		} else {
-			#他にはないと思われるが念のため
-			$script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id
-		}
-	}
 	return $script:videoLinks | Sort-Object | Get-Unique
 }
 
 #----------------------------------------------------------------------
 #番組名による新着検索からビデオページのLinkを取得
 #----------------------------------------------------------------------
-function getVideoLinkFromTitle ($local:titleName) {
+function getVideoLinkFromTitle {
+	[OutputType([System.Object[]])]
+	Param ([String]$local:titleName)
+
 	$local:callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callSearch'
 	$local:callSearchURL = $local:callSearchBaseURL + `
 		'?platform_uid=' + $script:platformUID + `
@@ -336,29 +534,26 @@ function getVideoLinkFromTitle ($local:titleName) {
 	$local:searchResults = $local:searchResultsRaw.Result.Contents
 	$local:resultCount = $local:searchResults.length
 	for ($i = 0; $i -lt $local:resultCount; $i++) {
-		if ($(getFileNameWithoutInvalidChars `
-				(getSpecialCharacterReplaced `
-					(getNarrowChars ($local:searchResults[$i].Content.SeriesTitle)))).
-			Replace('  ', ' ').Trim().Contains($local:titleName) -eq $true) {
-			if ($local:searchResults[$i].type -eq 'episode') {
-				$script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id
-			} elseif ($local:searchResults[$i].type -eq 'season') {
-				$script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id)
-			} elseif ($local:searchResults[$i].type -eq 'series') {
-				$script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id)
-			} else {
-				#他にはないと思われるが念のため
-				$script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id
-			}
+		if ($(getFileNameWithoutInvalidChars (getSpecialCharacterReplaced (getNarrowChars (`
+								$local:searchResults[$i].Content.SeriesTitle)))).Replace('  ', ' ').Trim().Contains($local:titleName) -eq $true) {
+			if ($local:searchResults[$i].type -eq 'episode') { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id } 
+			elseif ($local:searchResults[$i].type -eq 'season') { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) } 
+			elseif ($local:searchResults[$i].type -eq 'series') { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) } 
+			else { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id }	#他にはないと思われるが念のため
 		}
 	}
+	[System.GC]::Collect()
+
 	return $script:videoLinks | Sort-Object | Get-Unique
 }
 
 #----------------------------------------------------------------------
 #TVerのAPIを叩いてフリーワード検索
 #----------------------------------------------------------------------
-function getVideoLinkFromFreeKeyword ($local:keywordName) {
+function getVideoLinkFromFreeKeyword {
+	[OutputType([System.Object[]])]
+	Param ([String]$local:keywordName)
+
 	$local:tverSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callSearch'
 	$local:tverSearchURL = $local:tverSearchBaseURL + `
 		'?platform_uid=' + $script:platformUID + `
@@ -371,254 +566,77 @@ function getVideoLinkFromFreeKeyword ($local:keywordName) {
 	$local:searchResults = $local:searchResultsRaw.Result.Contents
 	$local:resultCount = $local:searchResults.length
 	for ($i = 0; $i -lt $local:resultCount; $i++) {
-		if ($local:searchResults[$i].type -eq 'episode') {
-			$script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id
-		} elseif ($local:searchResults[$i].type -eq 'season') {
-			$script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id)
-		} elseif ($local:searchResults[$i].type -eq 'series') {
-			$script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id)
-		} else {
-			#他にはないと思われるが念のため
-			$script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id
-		}
+		if ($local:searchResults[$i].type -eq 'episode') { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id } 
+		elseif ($local:searchResults[$i].type -eq 'season') { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) } 
+		elseif ($local:searchResults[$i].type -eq 'series') { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) } 
+		else { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id }	#他にはないと思われるが念のため
 	}
+	[System.GC]::Collect()
+
 	return $script:videoLinks | Sort-Object | Get-Unique
 }
 
 #----------------------------------------------------------------------
-#TVerのAPIを叩いてビデオ情報取得
+#SeasonIDによる番組検索からビデオページのLinkを取得
 #----------------------------------------------------------------------
-function getVideoInfo ($local:videoLink) {
+function getVideoLinkFromSeasonID {
+	[OutputType([System.Object[]])]
+	Param ([String]$local:SeasonID)
 
-	$local:episodeID = $local:videoLink.Replace('/episodes/', '')
-
-	#----------------------------------------------------------------------
-	#VideoInfo
-	$local:tverVideoInfoBaseURL = 'https://statics.tver.jp/content/episode/'
-	$local:requestHeader = @{
-		'origin'  = 'https://tver.jp';
-		'referer' = 'https://tver.jp/'
-	}
-	$local:tverVideoInfoURL = $local:tverVideoInfoBaseURL + $local:episodeID + '.json'
-	$local:videoInfo = (Invoke-RestMethod `
-			-Uri $local:tverVideoInfoURL `
-			-Method 'GET' `
-			-Headers $local:requestHeader)
-
-	#----------------------------------------------------------------------
-	#Token & UID
-	$local:tverVideoInfoBaseURL = 'https://platform-api.tver.jp/service/api/v1/callEpisode/'
-	$local:requestHeader = @{
-		'x-tver-platform-type' = 'web' ;
-	}
-	$local:tverVideoInfoURL = $local:tverVideoInfoBaseURL + $local:episodeID + `
+	$local:tverSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callSeasonEpisodes/'
+	$local:callSearchURL = $local:tverSearchBaseURL + `
+		$local:SeasonID + `
 		'?platform_uid=' + $script:platformUID + `
 		'&platform_token=' + $script:platformToken
-	$local:response = Invoke-RestMethod `
-		-Uri $local:tverVideoInfoURL `
-		-Method 'GET' `
-		-Headers $local:requestHeader
-	#$response.result.series.content.id + "`t" + $response.result.series.content.title `
-	#	| Out-File $(Join-Path $script:devDir 'series.txt') -Append -Encoding utf8
+	$local:searchResultsRaw = (Invoke-RestMethod `
+			-Uri $local:callSearchURL `
+			-Method 'GET' `
+			-Headers $script:requestHeader)
+	$local:searchResults = $local:searchResultsRaw.Result.Contents
+	$local:resultCount = $local:searchResults.length
+	for ($i = 0; $i -lt $local:resultCount; $i++) {
+		if ($local:searchResults[$i].type -eq 'episode') { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id } 
+		elseif ($local:searchResults[$i].type -eq 'season') { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) } 
+		elseif ($local:searchResults[$i].type -eq 'series') { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) } 
+		else { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id }	#他にはないと思われるが念のため
+	}
+	[System.GC]::Collect()
 
-	#----------------------------------------------------------------------
-	#シリーズ
-	#Series Name
-	#	$response.Result.Series.Content.Title
-	#	$response.Result.Episode.Content.SeriesTitle
-	$script:videoSeries = $(getSpecialCharacterReplaced (
-			getNarrowChars ($local:response.Result.Series.Content.Title)
-		)).Trim()
-	$script:videoSeriesID = $local:response.Result.Series.Content.Id
-	$script:videoSeriesPageURL = 'https://tver.jp/series/' + `
-		$local:response.Result.Series.Content.Id
+	return $script:videoLinks | Sort-Object | Get-Unique
+}
 
-	#----------------------------------------------------------------------
-	#シーズン
-	#Season Name
-	#	$response.Result.Season.Content.Title
-	$script:videoSeason = $(getSpecialCharacterReplaced (
-			getNarrowChars ($local:response.Result.Season.Content.Title)
-		)).Trim()
-	$script:videoSeasonID = $local:response.Result.Season.Content.Id
+#----------------------------------------------------------------------
+#youtube-dlプロセスの確認と待機
+#----------------------------------------------------------------------
+function waitTillYtdlProcessGetFewer {
+	[OutputType([System.Void])]
+	Param ([Int32]$local:parallelDownloadFileNum)
 
-	#----------------------------------------------------------------------
-	#エピソード
-	#Episode Name
-	#$response.Result.Episode.Content.Title
-	$script:videoTitle = $(getSpecialCharacterReplaced (
-			getNarrowChars ($local:response.Result.Episode.Content.Title)
-		)).Trim()
-	$script:videoEpisodeID = $local:response.Result.Episode.Content.Id
-
-	#----------------------------------------------------------------------
-	#放送局
-	#Media
-	#	$response.Result.Episode.Content.BroadcasterName
-	$script:mediaName = $(getSpecialCharacterReplaced (
-			getNarrowChars ($local:response.Result.Episode.Content.BroadcasterName)
-		)).Trim()
-	$script:providerName = $(getSpecialCharacterReplaced (
-			getNarrowChars ($local:response.Result.Episode.Content.ProductionProviderName)
-		)).Trim()
-
-	#----------------------------------------------------------------------
-	#番組説明
-	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		$script:descriptionText = [System.Text.Encoding]::UTF8.GetString( [System.Text.Encoding]::GetEncoding('ISO-8859-1').GetBytes($local:videoInfo.Description) )
-	} else {
-		$script:descriptionText = $(getNarrowChars ($local:videoInfo.Description).Replace('&amp;', '&')).Trim()
+	$local:psCmd = 'ps'
+	#youtube-dlのプロセスが設定値を超えたら一時待機
+	try {
+		if ($script:isWin) { $local:ytdlCount = [Math]::Round( (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) } 
+		elseif ($IsLinux) { $local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count } 
+		elseif ($IsMacOS) { $local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim() } 
+		else { $local:ytdlCount = 0 }
+	} catch {
+		$local:ytdlCount = 0			#プロセス数が取れなくてもとりあえず先に進む
 	}
 
-	#----------------------------------------------------------------------
-	#放送日
-	#BroadcastDate
-	#	$response.Result.Episode.Content.BroadcastDateLabel
-	$local:broadcastYMD = $null
-	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		$script:broadcastDate = $(getNarrowChars ([System.Text.Encoding]::UTF8.GetString( [System.Text.Encoding]::GetEncoding('ISO-8859-1').GetBytes($local:videoInfo.BroadcastDateLabel) )).Replace('ほか', '').Replace('放送分', '放送')).Trim()
-	} else {
-		$script:broadcastDate = $(getNarrowChars ($local:videoInfo.BroadcastDateLabel).Replace('ほか', '').Replace('放送分', '放送')).Trim()
-	}
+	Write-Verbose "現在のダウンロードプロセス一覧 ($local:ytdlCount 個)"
 
-	if ($script:broadcastDate -match '([0-9]+)(月)([0-9]+)(日)(.+?)(放送)') {
-		#当年だと仮定して放送日を抽出
-		$local:broadcastYMD = [DateTime]::ParseExact(
-			(Get-Date -Format 'yyyy') + $Matches[1].padleft(2, '0') + $Matches[3].padleft(2, '0'),
-			'yyyyMMdd',
-			$null
-		)
-		#実日付の翌日よりも放送日が未来だったら当年ではなく昨年の動画と判断する
-		#(年末の番組を年初にダウンロードするケース)
-		if ((Get-Date).AddDays(+1) -lt $local:broadcastYMD) {
-			$script:broadcastDate = `
-			(Get-Date).AddYears(-1).ToString('yyyy') + '年' `
-				+ $Matches[1].padleft(2, '0') + $Matches[2] `
-				+ $Matches[3].padleft(2, '0') + $Matches[4] `
-				+ $Matches[6]
-		} else {
-			$script:broadcastDate = `
-			(Get-Date).ToString('yyyy') + '年' `
-				+ $Matches[1].padleft(2, '0') + $Matches[2] `
-				+ $Matches[3].padleft(2, '0') + $Matches[4] `
-				+ $Matches[6]
+	while ([int]$local:ytdlCount -ge [int]$local:parallelDownloadFileNum) {
+		Write-ColorOutput "ダウンロードが $local:parallelDownloadFileNum 多重に達したので一時待機します。 ($(getTimeStamp))" -FgColor 'DarkGray'
+		Start-Sleep -Seconds 60			#1分待機
+		try {
+			if ($script:isWin) { $local:ytdlCount = [Math]::Round( (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) } 
+			elseif ($IsLinux) { $local:ytdlCount = (& Get-Process -ErrorAction Ignore -Name youtube-dl).Count } 
+			elseif ($IsMacOS) { $local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim() } 
+			else { $local:ytdlCount = 0 }
+		} catch {
+			$local:ytdlCount = 0			#プロセス数が取れなくてもとりあえず先に進む
 		}
 	}
-
-}
-
-#----------------------------------------------------------------------
-#デバッグ用ジャンルページの保存
-#----------------------------------------------------------------------
-function saveGenrePage ($script:KeywordName) {
-	$local:keywordFile = $($script:keywordName + '.html') -replace '(\?|\!|>|<|:|\\|/|\|)', '-'
-	$local:keywordFile = $(Join-Path $script:debugDir (getFileNameWithoutInvalidChars $local:keywordFile))
-	$local:webClient = New-Object System.Net.WebClient
-	$local:webClient.Encoding = [System.Text.Encoding]::UTF8
-	$local:webClient.DownloadFile($script:keywordName, $local:keywordFile)
-}
-
-#----------------------------------------------------------------------
-#ダウンロード対象外番組リストの読み込み
-#----------------------------------------------------------------------
-function getIgnoreList {
-	#ダウンロード対象外番組リストの読み込み
-	try {
-		$local:ignoreTitles = (Get-Content $script:ignoreFilePath -Encoding UTF8 `
-			| Where-Object { !($_ -match '^\s*$') } `
-			| Where-Object { !($_ -match '^;.*$') }) `
-			-as [string[]]
-	} catch { Write-ColorOutput 'ダウンロード対象外リストの読み込みに失敗しました' Green ; exit 1 }
-	return $local:ignoreTitles
-}
-
-#----------------------------------------------------------------------
-#ダウンロード対象ジャンルリストの読み込み
-#----------------------------------------------------------------------
-function loadKeywordList {
-	try {
-		$local:keywordNames = (Get-Content $script:keywordFilePath -Encoding UTF8 `
-			| Where-Object { !($_ -match '^\s*$') } `
-			| Where-Object { !($_ -match '^#.*$') }) `
-			-as [string[]]
-	} catch { Write-ColorOutput 'ダウンロード対象ジャンルリストの読み込みに失敗しました' Green ; exit 1 }
-	return $local:keywordNames
-}
-
-#----------------------------------------------------------------------
-#キーワードからビデオのリンクへの変換
-#----------------------------------------------------------------------
-function getVideoLinksFromKeyword ($local:keywordName) {
-	$script:requestHeader = @{
-		'x-tver-platform-type' = 'web' ;
-		'Origin'               = 'https://tver.jp' ;
-		'Referer'              = 'https://tver.jp/' ;
-	}
-	$script:videoLinks = @()
-	if ( $local:keywordName.IndexOf('https://tver.jp/') -eq 0) {
-		#URL形式の場合ビデオページのLinkを取得
-		try { $local:keywordNamePage = Invoke-WebRequest $local:keywordName }
-		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
-		try {
-			$script:videoLinks = ($local:keywordNamePage.Links `
-				| Where-Object { `
-					(href -Like '*lp*') `
-						-or (href -Like '*corner*') `
-						-or (href -Like '*series*') `
-						-or (href -Like '*episode*') `
-						-or (href -Like '*feature*')`
-				} `
-				| Select-Object href).href
-		} catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
-		#saveGenrePage $script:keywordName						#デバッグ用ジャンルページの保存
-	} elseif ($local:keywordName.IndexOf('series/') -eq 0) {
-		#番組IDによる番組検索からビデオページのLinkを取得
-		$local:seriesID = removeCommentsFromKeyword($local:keywordName).Replace('series/', '').Trim()
-		goAnal 'search' 'series' $local:seriesID
-		try { $script:videoLinks = getVideoLinkFromSeriesID ($local:seriesID) }
-		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
-	} elseif ($local:keywordName.IndexOf('talents/') -eq 0) {
-		#タレントIDによるタレント検索からビデオページのLinkを取得
-		$local:talentID = removeCommentsFromKeyword($local:keywordName).Replace('talents/', '').Trim()
-		goAnal 'search' 'talent' $local:talentID
-		try { $script:videoLinks = getVideoLinkFromTalentID ($local:talentID) }
-		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
-	} elseif ($local:keywordName.IndexOf('tag/') -eq 0) {
-		#ジャンルなどのTag情報からビデオページのLinkを取得
-		$local:tagID = removeCommentsFromKeyword($local:keywordName).Replace('tag/', '').Trim()
-		goAnal 'search' 'tag' $local:tagID
-		try { $script:videoLinks = getVideoLinkFromTag ($local:tagID) }
-		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
-	} elseif ($local:keywordName.IndexOf('new/') -eq 0) {
-		#新着ビデオからビデオページのLinkを取得
-		$local:genre = removeCommentsFromKeyword($local:keywordName).Replace('new/', '').Trim()
-		goAnal 'search' 'new' $local:genre
-		try { $script:videoLinks = getVideoLinkFromNew ($local:genre) }
-		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
-	} elseif ($local:keywordName.IndexOf('ranking/') -eq 0) {
-		#ランキングによるビデオページのLinkを取得
-		$local:genre = removeCommentsFromKeyword($local:keywordName).Replace('ranking/', '').Trim()
-		goAnal 'search' 'ranking' $local:genre
-		try { $script:videoLinks = getVideoLinkFromRanking ($local:genre) }
-		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
-	} elseif ($local:keywordName.IndexOf('toppage') -eq 0) {
-		#トップページからビデオページのLinkを取得
-		goAnal 'search' 'toppage'
-		try { $script:videoLinks = getVideoLinkFromTopPage }
-		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
-	} elseif ($local:keywordName.IndexOf('title/') -eq 0) {
-		#番組名による新着検索からビデオページのLinkを取得
-		$local:titleName = removeCommentsFromKeyword($local:keywordName).Replace('title/', '').Trim()
-		goAnal 'search' 'title' $local:titleName
-		try { $script:videoLinks = getVideoLinkFromTitle ($local:titleName) }
-		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green ; continue }
-	} else {
-		#タレント名や番組名などURL形式でない場合APIで検索結果からビデオページのLinkを取得
-		goAnal 'search' 'free' $local:keywordName
-		try { $script:videoLinks = getVideoLinkFromFreeKeyword ($local:keywordName) }
-		catch { Write-ColorOutput 'TVerから検索結果を取得できませんでした。スキップします' Green ; continue }
-	}
-	return $script:videoLinks | Sort-Object | Get-Unique
 }
 
 #----------------------------------------------------------------------
@@ -629,7 +647,7 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 	$script:videoName = '' ; $script:videoFilePath = '' ; $script:videoSeriesPageURL = ''
 	$script:broadcastDate = '' ; $script:videoSeries = '' ; $script:videoSeason = '' ; $script:videoTitle = ''
 	$script:mediaName = '' ; $script:descriptionText = ''
-	$script:videoInfo = $null ;
+	#$script:videoInfo = $null ;
 	$script:newVideo = $null
 	$script:ignore = $false ; $script:skip = $false
 
@@ -637,23 +655,23 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 	try {
 		#ロックファイルをロック
 		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
-			Write-ColorOutput 'ファイルのロック解除待ち中です' DarkGray
+			Write-ColorOutput 'ファイルのロック解除待ち中です' -FgColor 'DarkGray'
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
 		$local:listMatch = Import-Csv $script:listFilePath -Encoding UTF8 `
 		| Where-Object { $_.videoPage -eq $script:videoPageURL }
-	} catch { Write-ColorOutput 'リストを読み書きできなかったのでスキップしました' Green ; continue
+	} catch { Write-ColorOutput 'リストを読み書きできなかったのでスキップしました' -FgColor 'Green' ; continue
 	} finally { $null = fileUnlock $script:lockFilePath }
 
-	if ( $null -ne $local:listMatch) { Write-ColorOutput '過去に処理したビデオです。スキップします' DarkGray ; continue }
+	if ( $null -ne $local:listMatch) { Write-ColorOutput '過去に処理したビデオです。スキップします' -FgColor 'DarkGray' ; continue }
 
 	#TVerのAPIを叩いてビデオ情報取得
 	try {
 		goAnal 'getinfo' 'link' $script:videoLink
 		getVideoInfo ($script:videoLink)
 	} catch {
-		Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' Green
+		Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' -FgColor 'Green'
 		continue			#次回再度トライするためリストに追加せずに次のビデオへ
 	}
 
@@ -676,7 +694,7 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 
 	#ビデオタイトルが取得できなかった場合はスキップ次のビデオへ
 	if ($script:videoName -eq '.mp4') {
-		Write-ColorOutput 'ビデオタイトルを特定できませんでした。スキップします' Green
+		Write-ColorOutput 'ビデオタイトルを特定できませんでした。スキップします' -FgColor 'Green'
 		continue			#次回再度ダウンロードをトライするためリストに追加せずに次のビデオへ
 	}
 
@@ -687,21 +705,21 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 		try {
 			#ロックファイルをロック
 			while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
-				Write-ColorOutput 'ファイルのロック解除待ち中です' DarkGray
+				Write-ColorOutput 'ファイルのロック解除待ち中です' -FgColor 'DarkGray'
 				Start-Sleep -Seconds 1
 			}
 			#ファイル操作
 			$local:listMatch = Import-Csv $script:listFilePath -Encoding UTF8 `
 			| Where-Object { $_.videoPath -eq $script:videoFilePath } `
 			| Where-Object { $_.videoValidated -eq '1' }
-		} catch { Write-ColorOutput 'リストを読み書きできませんでした。スキップします' Green ; continue
+		} catch { Write-ColorOutput 'リストを読み書きできませんでした。スキップします' -FgColor 'Green' ; continue
 		} finally { $null = fileUnlock $script:lockFilePath }
 
 		#結果が0件ということは未検証のファイルがあるということ
 		if ( $null -eq $local:listMatch) {
-			Write-ColorOutput 'すでにダウンロード済みですが未検証のビデオです。リストに追加します' DarkGray
+			Write-ColorOutput 'すでにダウンロード済みですが未検証のビデオです。リストに追加します' -FgColor 'DarkGray'
 			$script:skip = $true
-		} else { Write-ColorOutput 'すでにダウンロード済み・検証済みのビデオです。スキップします' DarkGray ; continue }
+		} else { Write-ColorOutput 'すでにダウンロード済み・検証済みのビデオです。スキップします' -FgColor 'DarkGray' ; continue }
 
 	} else {
 
@@ -709,17 +727,17 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 		foreach ($script:ignoreTitle in $script:ignoreTitles) {
 			if ($(getNarrowChars $script:videoName) -match $(getNarrowChars $script:ignoreTitle)) {
 				$script:ignore = $true
-				Write-ColorOutput '無視リストに入っているビデオです。スキップします' DarkGray
+				Write-ColorOutput '無視リストに入っているビデオです。スキップします' -FgColor 'DarkGray'
 				continue			#リストの重複削除のため、無視したものはリスト出力せずに次のビデオへ行くことに
 			}
 			if ($(getNarrowChars $script:videoSeries) -match $(getNarrowChars $script:ignoreTitle)) {
 				$script:ignore = $true
-				Write-ColorOutput '無視リストに入っているビデオです。スキップします' DarkGray
+				Write-ColorOutput '無視リストに入っているビデオです。スキップします' -FgColor 'DarkGray'
 				continue			#リストの重複削除のため、無視したものはリスト出力せずに次のビデオへ行くことに
 			}
 			if ($(getNarrowChars $script:videoTitle) -match $(getNarrowChars $script:ignoreTitle)) {
 				$script:ignore = $true
-				Write-ColorOutput '無視リストに入っているビデオです。スキップします' DarkGray
+				Write-ColorOutput '無視リストに入っているビデオです。スキップします' -FgColor 'DarkGray'
 				continue			#リストの重複削除のため、無視したものはリスト出力せずに次のビデオへ行くことに
 			}
 		}
@@ -784,13 +802,13 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 	try {
 		#ロックファイルをロック
 		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
-			Write-ColorOutput 'ファイルのロック解除待ち中です' DarkGray
+			Write-ColorOutput 'ファイルのロック解除待ち中です' -FgColor 'DarkGray'
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
 		$script:newVideo | Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8 -Append
 		Write-Debug 'リストを書き込みました'
-	} catch { Write-ColorOutput 'リストを更新できませんでした。でスキップします' Green ; continue
+	} catch { Write-ColorOutput 'リストを更新できませんでした。でスキップします' -FgColor 'Green' ; continue
 	} finally { $null = fileUnlock $script:lockFilePath }
 
 	#スキップや無視対象でなければyoutube-dl起動
@@ -800,16 +818,501 @@ function downloadTVerVideo ($script:keywordName, $script:videoPageURL, $script:v
 		#保存先ディレクトリがなければ作成
 		if (-Not (Test-Path $script:videoFileDir -PathType Container)) {
 			try { $null = New-Item -ItemType directory -Path $script:videoFileDir }
-			catch { Write-ColorOutput '保存先ディレクトリを作成できませんでした' Green ; continue }
+			catch { Write-ColorOutput '保存先ディレクトリを作成できませんでした' -FgColor 'Green' ; continue }
 		}
 
 		#youtube-dl起動
 		try { executeYtdl $script:videoPageURL }
-		catch { Write-ColorOutput 'youtube-dlの起動に失敗しました' Green }
+		catch { Write-ColorOutput 'youtube-dlの起動に失敗しました' -FgColor 'Green' }
 		Start-Sleep -Seconds 5			#5秒待機
 
 	}
 
 }
 
-goAnal 'launch'
+#----------------------------------------------------------------------
+#TVerのAPIを叩いてビデオ情報取得
+#----------------------------------------------------------------------
+function getVideoInfo ($local:videoLink) {
+
+	$local:episodeID = $local:videoLink.Replace('/episodes/', '')
+
+	#----------------------------------------------------------------------
+	#VideoInfo
+	$local:tverVideoInfoBaseURL = 'https://statics.tver.jp/content/episode/'
+	$local:requestHeader = @{
+		'origin'  = 'https://tver.jp';
+		'referer' = 'https://tver.jp/'
+	}
+	$local:tverVideoInfoURL = $local:tverVideoInfoBaseURL + $local:episodeID + '.json'
+	$local:videoInfo = (Invoke-RestMethod `
+			-Uri $local:tverVideoInfoURL `
+			-Method 'GET' `
+			-Headers $local:requestHeader)
+
+	#----------------------------------------------------------------------
+	#Token & UID
+	$local:tverVideoInfoBaseURL = 'https://platform-api.tver.jp/service/api/v1/callEpisode/'
+	$local:requestHeader = @{
+		'x-tver-platform-type' = 'web' ;
+	}
+	$local:tverVideoInfoURL = $local:tverVideoInfoBaseURL + $local:episodeID + `
+		'?platform_uid=' + $script:platformUID + `
+		'&platform_token=' + $script:platformToken
+	$local:response = Invoke-RestMethod `
+		-Uri $local:tverVideoInfoURL `
+		-Method 'GET' `
+		-Headers $local:requestHeader
+	#$response.result.series.content.id + "`t" + $response.result.series.content.title `
+	#	| Out-File $(Join-Path $script:devDir 'series.txt') -Append -Encoding utf8
+
+	#----------------------------------------------------------------------
+	#シリーズ
+	#Series Name
+	#	$response.Result.Series.Content.Title
+	#	$response.Result.Episode.Content.SeriesTitle
+	$script:videoSeries = $(getSpecialCharacterReplaced (
+			getNarrowChars ($local:response.Result.Series.Content.Title))).Trim()
+	$script:videoSeriesID = $local:response.Result.Series.Content.Id
+	$script:videoSeriesPageURL = 'https://tver.jp/series/' + $local:response.Result.Series.Content.Id
+
+	#----------------------------------------------------------------------
+	#シーズン
+	#Season Name
+	#	$response.Result.Season.Content.Title
+	$script:videoSeason = $(getSpecialCharacterReplaced (
+			getNarrowChars ($local:response.Result.Season.Content.Title))).Trim()
+	$script:videoSeasonID = $local:response.Result.Season.Content.Id
+
+	#----------------------------------------------------------------------
+	#エピソード
+	#Episode Name
+	#$response.Result.Episode.Content.Title
+	$script:videoTitle = $(getSpecialCharacterReplaced (
+			getNarrowChars ($local:response.Result.Episode.Content.Title))).Trim()
+	$script:videoEpisodeID = $local:response.Result.Episode.Content.Id
+
+	#----------------------------------------------------------------------
+	#放送局
+	#Media
+	#	$response.Result.Episode.Content.BroadcasterName
+	$script:mediaName = $(getSpecialCharacterReplaced (
+			getNarrowChars ($local:response.Result.Episode.Content.BroadcasterName))).Trim()
+	$script:providerName = $(getSpecialCharacterReplaced (
+			getNarrowChars ($local:response.Result.Episode.Content.ProductionProviderName))).Trim()
+
+	#----------------------------------------------------------------------
+	#番組説明
+	if ($PSVersionTable.PSEdition -eq 'Desktop') {
+		$script:descriptionText = [System.Text.Encoding]::UTF8.GetString([System.Text.Encoding]::GetEncoding('ISO-8859-1').GetBytes($local:videoInfo.Description))
+	} else {
+		$script:descriptionText = $(getNarrowChars ($local:videoInfo.Description).Replace('&amp;', '&')).Trim()
+	}
+
+	#----------------------------------------------------------------------
+	#放送日
+	#BroadcastDate
+	#	$response.Result.Episode.Content.BroadcastDateLabel
+	$local:broadcastYMD = $null
+	if ($PSVersionTable.PSEdition -eq 'Desktop') {
+		$script:broadcastDate = $(getNarrowChars ([System.Text.Encoding]::UTF8.GetString([System.Text.Encoding]::GetEncoding('ISO-8859-1').GetBytes($local:videoInfo.BroadcastDateLabel))).Replace('ほか', '').Replace('放送分', '放送')).Trim()
+	} else {
+		$script:broadcastDate = $(getNarrowChars ($local:videoInfo.BroadcastDateLabel).Replace('ほか', '').Replace('放送分', '放送')).Trim()
+	}
+
+	if ($script:broadcastDate -match '([0-9]+)(月)([0-9]+)(日)(.+?)(放送)') {
+		#当年だと仮定して放送日を抽出
+		$local:broadcastYMD = [DateTime]::ParseExact(
+			(Get-Date -Format 'yyyy') + $Matches[1].padleft(2, '0') + $Matches[3].padleft(2, '0'),
+			'yyyyMMdd',
+			$null
+		)
+		#実日付の翌日よりも放送日が未来だったら当年ではなく昨年の動画と判断する
+		#(年末の番組を年初にダウンロードするケース)
+		if ((Get-Date).AddDays(+1) -lt $local:broadcastYMD) {
+			$script:broadcastDate = `
+			(Get-Date).AddYears(-1).ToString('yyyy') + '年' `
+				+ $Matches[1].padleft(2, '0') + $Matches[2] `
+				+ $Matches[3].padleft(2, '0') + $Matches[4] + $Matches[6]
+		} else {
+			$script:broadcastDate = `
+			(Get-Date).ToString('yyyy') + '年' `
+				+ $Matches[1].padleft(2, '0') + $Matches[2] `
+				+ $Matches[3].padleft(2, '0') + $Matches[4] + $Matches[6]
+		}
+	}
+
+}
+
+#----------------------------------------------------------------------
+#保存ファイル名を設定
+#----------------------------------------------------------------------
+function getVideoFileName ($local:videoSeries, $local:videoSeason, $local:videoTitle, $local:broadcastDate) {
+
+	$local:videoName = $local:videoSeries + ' ' + $local:videoSeason + ' ' + $local:broadcastDate + ' ' + $local:videoTitle
+
+	#ファイル名にできない文字列を除去
+	$local:videoName = $(getFileNameWithoutInvalidChars (getNarrowChars $local:videoName)).Replace('  ', ' ').Trim()
+
+	#SMBで255バイトまでしかファイル名を持てないらしいので、超えないようにファイル名をトリミング
+	$local:videoNameTemp = ''
+	$local:fileNameLimit = $script:fileNameLengthMax - 25	#youtube-dlの中間ファイル等を考慮して安全目の上限値
+	$local:videoNameByte = [System.Text.Encoding]::UTF8.GetByteCount($local:videoName)
+
+	#ファイル名を1文字ずつ増やしていき、上限に達したら残りは「……」とする
+	if ($local:videoNameByte -gt $local:fileNameLimit) {
+		for ($i = 1 ; [System.Text.Encoding]::UTF8.GetByteCount($local:videoNameTemp) -lt $local:fileNameLimit ; $i++) {
+			$local:videoNameTemp = $local:videoName.Substring(0, $i)
+		}
+		$local:videoName = $local:videoNameTemp + '……'			#ファイル名省略の印
+	}
+
+	$local:videoName = $local:videoName + '.mp4'
+	if ($local:videoName.Contains('.mp4') -eq $false) {
+		Write-Error '動画ファイル名の設定がおかしいです'
+	}
+
+	return $local:videoName
+}
+
+#----------------------------------------------------------------------
+#ビデオ情報表示
+#----------------------------------------------------------------------
+function showVideoInfo ($local:videoName, $local:broadcastDate, $local:mediaName, $local:descriptionText) {
+	Write-ColorOutput "ビデオ名    :$local:videoName" -FgColor 'DarkGray'
+	Write-ColorOutput "放送日      :$local:broadcastDate" -FgColor 'DarkGray'
+	Write-ColorOutput "テレビ局    :$local:mediaName" -FgColor 'DarkGray'
+	Write-ColorOutput "ビデオ説明  :$local:descriptionText" -FgColor 'DarkGray'
+}
+#----------------------------------------------------------------------
+#ビデオ情報デバッグ表示
+#----------------------------------------------------------------------
+function showVideoDebugInfo ($local:videoPageURL, $local:videoSeriesPageURL, $local:keywordName, $local:videoSeries, $local:videoSeason, $local:videoTitle, $local:videoFilePath, $local:processedTime) {
+	Write-Debug	"ビデオエピソードページ:$local:videoPageURL"
+	Write-Debug	"ビデオシリーズページ  :$local:videoSeriesPageURL"
+	Write-Debug "キーワード            :$local:keywordName"
+	Write-Debug "シリーズ              :$local:videoSeries"
+	Write-Debug "シーズン              :$local:videoSeason"
+	Write-Debug "サブタイトル          :$local:videoTitle"
+	Write-Debug "ファイル              :$local:videoFilePath"
+	Write-Debug "取得日付              :$local:processedTime"
+}
+
+#----------------------------------------------------------------------
+#youtube-dlプロセスの起動
+#----------------------------------------------------------------------
+function executeYtdl ($local:videoPageURL) {
+	goAnal 'download'
+
+	$local:tmpDir = '"temp:' + $script:downloadWorkDir + '"'
+	$local:saveDir = '"home:' + $script:videoFileDir + '"'
+	$local:subttlDir = '"subtitle:' + $script:downloadWorkDir + '"'
+	$local:thumbDir = '"thumbnail:' + $script:downloadWorkDir + '"'
+	$local:chaptDir = '"chapter:' + $script:downloadWorkDir + '"'
+	$local:descDir = '"description:' + $script:downloadWorkDir + '"'
+	$local:saveFile = '"' + $script:videoName + '"'
+
+	$local:ytdlArgs = '--format mp4'
+	$local:ytdlArgs += ' --console-title'
+	$local:ytdlArgs += ' --no-mtime'
+	$local:ytdlArgs += ' --retries 10'
+	$local:ytdlArgs += ' --fragment-retries 10'
+	$local:ytdlArgs += ' --abort-on-unavailable-fragment'
+	$local:ytdlArgs += ' --no-keep-fragments'
+	$local:ytdlArgs += ' --abort-on-error'
+	$local:ytdlArgs += ' --no-continue'
+	$local:ytdlArgs += ' --windows-filenames'
+	$local:ytdlArgs += ' --xattr-set-filesize'
+	$local:ytdlArgs += ' --newline'
+	$local:ytdlArgs += ' --print-traffic'
+	$local:ytdlArgs += " --concurrent-fragments $script:parallelDownloadNumPerFile"
+	$local:ytdlArgs += ' --embed-thumbnail'
+	$local:ytdlArgs += ' --embed-subs'
+	$local:ytdlArgs += ' --embed-metadata'
+	$local:ytdlArgs += ' --embed-chapters'
+	$local:ytdlArgs += " --paths $local:saveDir"
+	$local:ytdlArgs += " --paths $local:tmpDir"
+	$local:ytdlArgs += " --paths $local:subttlDir"
+	$local:ytdlArgs += " --paths $local:thumbDir"
+	$local:ytdlArgs += " --paths $local:chaptDir"
+	$local:ytdlArgs += " --paths $local:descDir"
+	$local:ytdlArgs += " -o $local:saveFile"
+	$local:ytdlArgs += " $local:videoPageURL"
+
+	if ($script:isWin) {
+		try {
+			Write-Debug "youtube-dl起動コマンド:$script:ytdlPath $local:ytdlArgs"
+			$null = Start-Process -FilePath $script:ytdlPath `
+				-ArgumentList $local:ytdlArgs `
+				-PassThru `
+				-WindowStyle $script:windowShowStyle
+		} catch { Write-Error 'youtube-dlの起動に失敗しました' ; return }
+	} else {
+		Write-Debug "y起動コマンド:nohup $script:ytdlPath $local:ytdlArgs"
+		try {
+			$null = Start-Process -FilePath nohup `
+				-ArgumentList ($script:ytdlPath, $local:ytdlArgs) `
+				-PassThru `
+				-RedirectStandardOutput /dev/null
+		} catch { Write-Error 'youtube-dlの起動に失敗しました' ; return }
+	}
+}
+
+#----------------------------------------------------------------------
+#youtube-dlのプロセスが終わるまで待機
+#----------------------------------------------------------------------
+function waitTillYtdlProcessIsZero () {
+	[OutputType([System.Void])]
+	Param ()
+
+
+	$local:psCmd = 'ps'
+	try {
+		if ($script:isWin) { $local:ytdlCount = [Math]::Round( (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) } 
+		elseif ($IsLinux) { $local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count } 
+		elseif ($IsMacOS) { $local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim() } 
+		else { $local:ytdlCount = 0 }
+	} catch {
+		$local:ytdlCount = 0			#プロセス数が取れなくてもとりあえず先に進む
+	}
+
+	while ($local:ytdlCount -ne 0) {
+		try {
+			Write-Verbose "現在のダウンロードプロセス一覧 ($local:ytdlCount 個)" -FgColor 'DarkGray'
+			Start-Sleep -Seconds 60			#1分待機
+			if ($script:isWin) { $local:ytdlCount = [Math]::Round( (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) } 
+			elseif ($IsLinux) { $local:ytdlCount = (Get-Process -ErrorAction Ignore -Name youtube-dl).Count } 
+			elseif ($IsMacOS) { $local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim() } 
+			else { $local:ytdlCount = 0 }
+		} catch {
+			$local:ytdlCount = 0
+		}
+	}
+}
+
+#----------------------------------------------------------------------
+#30日以上前に処理したものはリストから削除
+#----------------------------------------------------------------------
+function purgeDB {
+	[OutputType([System.Void])]
+	Param ()
+
+	try {
+		#ロックファイルをロック
+		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
+			Write-ColorOutput 'ファイルのロック解除待ち中です' -FgColor 'DarkGray'
+			Start-Sleep -Seconds 1
+		}
+		#ファイル操作
+		$local:purgedList = ((Import-Csv $script:listFilePath -Encoding UTF8).Where({ [DateTime]::ParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null) -gt $(Get-Date).AddDays(-30) }))
+		$local:purgedList `
+		| Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
+	} catch { Write-ColorOutput 'リストのクリーンアップに失敗しました' -FgColor 'Green'
+	} finally { $null = fileUnlock $script:lockFilePath }
+}
+
+#----------------------------------------------------------------------
+#リストの重複削除
+#----------------------------------------------------------------------
+function uniqueDB {
+	[OutputType([System.Void])]
+	Param ()
+
+	$local:processedList = $null
+	$local:ignoredList = $null
+	#無視されたもの
+	try {
+		#ロックファイルをロック
+		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
+			Write-ColorOutput 'ファイルのロック解除待ち中です' -FgColor 'DarkGray'
+			Start-Sleep -Seconds 1
+		}
+
+		#ファイル操作
+		#無視されたもの
+		$local:ignoredList = ((Import-Csv $script:listFilePath -Encoding UTF8).Where({ $_.videoPath -eq '-- IGNORED --' }))
+
+		#無視されなかったものの重複削除。ファイル名で1つしかないもの残す
+		$local:processedList = (Import-Csv $script:listFilePath -Encoding UTF8 `
+			| Group-Object -Property 'videoPath' `
+			| Where-Object count -EQ 1 `
+			| Select-Object -ExpandProperty group)
+
+		#無視されたものと無視されなかったものを結合し出力
+		if ($null -eq $local:processedList -and $null -eq $local:ignoredList) { return }
+		elseif ($null -ne $local:processedList -and $null -eq $local:ignoredList) { $local:mergedList = $local:processedList }
+		elseif ($null -eq $processedList -and $null -ne $ignoredList) { $local:mergedList = $local:ignoredList }
+		else { $local:mergedList = $local:processedList + $local:ignoredList }
+		$mergedList `
+		| Sort-Object -Property downloadDate `
+		| Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
+
+	} catch { Write-ColorOutput 'リストの更新に失敗しました' -FgColor 'Green'
+	} finally { $null = fileUnlock $script:lockFilePath }
+}
+
+#----------------------------------------------------------------------
+#ビデオの整合性チェック
+#----------------------------------------------------------------------
+function checkVideo ($local:decodeOption, $local:videoFileRelativePath) {
+	$local:errorCount = 0
+	$local:checkStatus = 0
+	$local:videoFilePath = Join-Path $script:downloadBaseDir $local:videoFileRelativePath
+	try { $null = New-Item $script:ffpmegErrorLogPath -Type File -Force }
+	catch { Write-ColorOutput 'ffmpegエラーファイルを初期化できませんでした' -FgColor 'Green' ; return }
+
+	#これからチェックする動画のステータスをチェック
+	try {
+		#ロックファイルをロック
+		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
+			Write-ColorOutput 'ファイルのロック解除待ち中です' -FgColor 'DarkGray'
+			Start-Sleep -Seconds 1
+		}
+		#ファイル操作
+		$local:videoLists = Import-Csv $script:listFilePath -Encoding UTF8
+		$local:checkStatus = $(($local:videoLists).Where({ $_.videoPath -eq $local:videoFileRelativePath })).videoValidated
+	} catch {
+		Write-ColorOutput "チェックステータスを取得できませんでした: $local:videoFileRelativePath" Green
+		return
+	} finally { $null = fileUnlock $script:lockFilePath }
+
+	#0:未チェック、1:チェック済み、2:チェック中
+	if ($local:checkStatus -eq 2 ) { Write-ColorOutput '  └他プロセスでチェック中です' -FgColor 'DarkGray' ; return }
+	elseif ($local:checkStatus -eq 1 ) { Write-ColorOutput '  └他プロセスでチェック済です' -FgColor 'DarkGray' ; return }
+	else {
+		#該当のビデオのチェックステータスを"2"にして後続のチェックを実行
+		try { $(($local:videoLists).Where({ $_.videoPath -eq $local:videoFileRelativePath })).videoValidated = '2' }
+		catch { Write-ColorOutput "該当のレコードが見つかりませんでした: $local:videoFileRelativePath" Green ; return }
+		try {
+			#ロックファイルをロック
+			while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
+				Write-ColorOutput 'ファイルのロック解除待ち中です' -FgColor 'DarkGray'
+				Start-Sleep -Seconds 1
+			}
+			#ファイル操作
+			$local:videoLists `
+			| Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
+		} catch { Write-ColorOutput "録画リストを更新できませんでした: $local:videoFileRelativePath" Green ; return }
+		finally { $null = fileUnlock $script:lockFilePath }
+	}
+
+	$local:checkFile = '"' + $local:videoFilePath + '"'
+	goAnal 'validate'
+
+	if ($script:simplifiedValidation -eq $true) {
+		#ffprobeを使った簡易検査
+		$local:ffprobeArgs = ' -hide_banner -v error -err_detect explode' `
+			+ " -i $local:checkFile "
+
+		Write-Debug "ffprobe起動コマンド:$script:ffprobePath $local:ffprobeArgs"
+		try {
+			if ($script:isWin) {
+				$local:proc = Start-Process -FilePath $script:ffprobePath `
+					-ArgumentList ($local:ffprobeArgs) `
+					-PassThru `
+					-WindowStyle $script:windowShowStyle `
+					-RedirectStandardError $script:ffpmegErrorLogPath `
+					-Wait
+			} else {
+				$local:proc = Start-Process -FilePath $script:ffprobePath `
+					-ArgumentList ($local:ffprobeArgs) `
+					-PassThru `
+					-RedirectStandardOutput /dev/null `
+					-RedirectStandardError $script:ffpmegErrorLogPath `
+					-Wait
+			}
+		} catch { Write-Error 'ffprobeを起動できませんでした' ; return }
+	} else {
+		#ffmpegeを使った完全検査
+		$local:ffmpegArgs = "$local:decodeOption " `
+			+ ' -hide_banner -v error -xerror' `
+			+ " -i $local:checkFile -f null - "
+
+		Write-Debug "ffmpeg起動コマンド:$script:ffmpegPath $local:ffmpegArgs"
+		try {
+			if ($script:isWin) {
+				$local:proc = Start-Process -FilePath $script:ffmpegPath `
+					-ArgumentList ($local:ffmpegArgs) `
+					-PassThru `
+					-WindowStyle $script:windowShowStyle `
+					-RedirectStandardError $script:ffpmegErrorLogPath `
+					-Wait
+			} else {
+				$local:proc = Start-Process -FilePath $script:ffmpegPath `
+					-ArgumentList ($local:ffmpegArgs) `
+					-PassThru `
+					-RedirectStandardOutput /dev/null `
+					-RedirectStandardError $script:ffpmegErrorLogPath `
+					-Wait
+			}
+		} catch { Write-Error 'ffmpegを起動できませんでした' ; return }
+	}
+
+	#ffmpegが正常終了しても、大量エラーが出ることがあるのでエラーをカウント
+	try {
+		if (Test-Path $script:ffpmegErrorLogPath) {
+			$local:errorCount = (`
+					Get-Content `
+					-LiteralPath $script:ffpmegErrorLogPath `
+				| Measure-Object -Line).Lines
+			Get-Content `
+				-LiteralPath $script:ffpmegErrorLogPath `
+				-Encoding UTF8 `
+			| ForEach-Object { Write-Debug $_ }
+		}
+	} catch { Write-ColorOutput 'ffmpegエラーの数をカウントできませんでした' -FgColor 'Green' ; $local:errorCount = 9999999 }
+
+	#エラーをカウントしたらファイルを削除
+	try {
+		if (Test-Path $script:ffpmegErrorLogPath) {
+			Remove-Item `
+				-LiteralPath $script:ffpmegErrorLogPath `
+				-Force -ErrorAction SilentlyContinue
+		}
+	} catch { Write-ColorOutput 'ffmpegエラーファイルを削除できませんでした' -FgColor 'Green' }
+
+	if ($local:proc.ExitCode -ne 0 -or $local:errorCount -gt 30) {
+		#終了コードが"0"以外 または エラーが30行以上 は録画リストとファイルを削除
+		Write-ColorOutput "  exit code: $($local:proc.ExitCode)    error count: $local:errorCount" Green
+
+		#破損している動画ファイルを録画リストから削除
+		try {
+			#ロックファイルをロック
+			while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
+				Write-ColorOutput 'ファイルのロック解除待ち中です' -FgColor 'DarkGray'
+				Start-Sleep -Seconds 1
+			}
+			#ファイル操作
+			(Select-String `
+				-Pattern $local:videoFileRelativePath `
+				-LiteralPath $script:listFilePath `
+				-Encoding UTF8 -SimpleMatch -NotMatch).Line `
+			| Out-File $script:listFilePath -Encoding UTF8
+		} catch { Write-ColorOutput "録画リストの更新に失敗しました: $local:videoFileRelativePath" Green
+		} finally { $null = fileUnlock $script:lockFilePath }
+
+		#破損している動画ファイルを削除
+		try {
+			Remove-Item `
+				-LiteralPath $local:videoFilePath `
+				-Force -ErrorAction SilentlyContinue
+		} catch { Write-ColorOutput "ファイル削除できませんでした: $local:videoFilePath" Green }
+	} else {
+		#終了コードが"0"のときは録画リストにチェック済みフラグを立てる
+		try {
+			#ロックファイルをロック
+			while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
+				Write-ColorOutput 'ファイルのロック解除待ち中です' -FgColor 'DarkGray'
+				Start-Sleep -Seconds 1
+			}
+			#ファイル操作
+			$local:videoLists = Import-Csv $script:listFilePath -Encoding UTF8
+			#該当のビデオのチェックステータスを"1"に
+			$(($local:videoLists).Where({ $_.videoPath -eq $local:videoFileRelativePath })).videoValidated = '1'
+			$local:videoLists `
+			| Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
+		} catch { Write-ColorOutput "録画リストを更新できませんでした: $local:videoFileRelativePath" Green }
+		finally { $null = fileUnlock $script:lockFilePath }
+	}
+
+}

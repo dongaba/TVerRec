@@ -73,22 +73,22 @@ try {
 		$script:devConfFile = $(Join-Path $script:devDir 'dev_setting_5.ps1')
 		if (Test-Path $script:devFunctionFile) {
 			. $script:devFunctionFile
-			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
 		}
 		if (Test-Path $script:devConfFile) {
 			. $script:devConfFile
-			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
 		}
 	} else {
 		$script:devFunctionFile = $(Join-Path $script:devDir 'dev_funcitons.ps1')
 		$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.ps1')
 		if (Test-Path $script:devFunctionFile) {
 			. $script:devFunctionFile
-			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
 		}
 		if (Test-Path $script:devConfFile) {
 			. $script:devConfFile
-			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
 		}
 	}
 } catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
@@ -96,12 +96,12 @@ try {
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
 Write-ColorOutput ''
-Write-ColorOutput '===========================================================================' Cyan
-Write-ColorOutput '---------------------------------------------------------------------------' Cyan
-Write-ColorOutput "  $script:appName : TVerビデオダウンローダ                                 " Cyan
-Write-ColorOutput "                      一括ダウンロード版 version. $script:appVersion       " Cyan
-Write-ColorOutput '---------------------------------------------------------------------------' Cyan
-Write-ColorOutput '===========================================================================' Cyan
+Write-ColorOutput '===========================================================================' -FgColor 'Cyan'
+Write-ColorOutput '---------------------------------------------------------------------------' -FgColor 'Cyan'
+Write-ColorOutput "  $script:appName : TVerビデオダウンローダ                                 " -FgColor 'Cyan'
+Write-ColorOutput "                      一括ダウンロード版 version. $script:appVersion       " -FgColor 'Cyan'
+Write-ColorOutput '---------------------------------------------------------------------------' -FgColor 'Cyan'
+Write-ColorOutput '===========================================================================' -FgColor 'Cyan'
 Write-ColorOutput ''
 
 #----------------------------------------------------------------------
@@ -123,13 +123,13 @@ if ($script:keywordNames -is [array]) {
 
 #進捗表示
 ShowProgess2Row `
-	-progressText1 '一括ダウンロード中' `
-	-progressText2 'キーワードから動画を抽出しダウンロード' `
-	-toastWorkDetail1 '読み込み中...' `
-	-toastWorkDetail2 '読み込み中...' `
-	-toastDuration 'long' `
-	-toastSilent $false `
-	-toastGroup 'Bulk'
+	-ProgressText1 '一括ダウンロード中' `
+	-ProgressText2 'キーワードから動画を抽出しダウンロード' `
+	-WorkDetail1 '読み込み中...' `
+	-WorkDetail2 '読み込み中...' `
+	-Duration 'long' `
+	-Silent $false `
+	-Group 'Bulk'
 
 #======================================================================
 #個々のジャンルページチェックここから
@@ -168,15 +168,15 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 	#進捗更新
 	UpdateProgess2Row `
-		-progressActivity1 $local:keywordNum/$local:keywordTotal `
-		-currentProcessing1 $(trimTabSpace ($local:keywordName)) `
-		-progressRatio1 $local:progressRatio1 `
-		-secRemaining1 $local:secRemaining1 `
-		-progressActivity2 '' `
-		-currentProcessing2 $local:videoLink `
-		-progressRatio2 $local:progressRatio2 `
-		-secRemaining2 '' `
-		-toastGroup 'Bulk'
+		-ProgressActivity1 $local:keywordNum/$local:keywordTotal `
+		-CurrentProcessing1 $(trimTabSpace ($local:keywordName)) `
+		-Rate1 $local:progressRatio1 `
+		-SecRemaining1 $local:secRemaining1 `
+		-ProgressActivity2 '' `
+		-CurrentProcessing2 $local:videoLink `
+		-Rate2 $local:progressRatio2 `
+		-SecRemaining2 '' `
+		-Group 'Bulk'
 
 
 	#----------------------------------------------------------------------
@@ -195,15 +195,15 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 		#進捗更新
 		UpdateProgess2Row `
-			-progressActivity1 $local:keywordNum/$local:keywordTotal `
-			-currentProcessing1 $(trimTabSpace ($local:keywordName)) `
-			-progressRatio1 $local:progressRatio1 `
-			-secRemaining1 $local:secRemaining1 `
-			-progressActivity2 $local:videoNum/$local:videoTotal `
-			-currentProcessing2 $local:videoLink `
-			-progressRatio2 $local:progressRatio2 `
-			-secRemaining2 '' `
-			-toastGroup 'Bulk'
+			-ProgressActivity1 $local:keywordNum/$local:keywordTotal `
+			-CurrentProcessing1 $(trimTabSpace ($local:keywordName)) `
+			-Rate1 $local:progressRatio1 `
+			-SecRemaining1 $local:secRemaining1 `
+			-ProgressActivity2 $local:videoNum/$local:videoTotal `
+			-CurrentProcessing2 $local:videoLink `
+			-Rate2 $local:progressRatio2 `
+			-SecRemaining2 '' `
+			-Group 'Bulk'
 
 
 		#処理
@@ -213,7 +213,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 		#保存先ディレクトリの存在確認(稼働中に共有フォルダが切断された場合に対応)
 		if (Test-Path $script:downloadBaseDir -PathType Container) { }
-		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します' Green ; exit 1 }
+		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します' -FgColor 'Green' ; exit 1 }
 
 		#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 		waitTillYtdlProcessGetFewer $script:parallelDownloadFileNum
@@ -233,21 +233,21 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 #進捗表示
 UpdateProgessToast2 `
-	-toastProgressTitle1 'キーワードから動画の抽出' `
-	-toastProgressRatio1 '1' `
-	-toastLeftText1 '' `
-	-toastRrightText1 '完了' `
-	-toastProgressTitle2 '動画のダウンロード' `
-	-toastProgressRatio2 '1' `
-	-toastLeftText2 '' `
-	-toastRrightText2 '完了' `
-	-toastTag $script:appName `
-	-toastGroup 'Bulk'
+	-Title1 'キーワードから動画の抽出' `
+	-Rate1 '1' `
+	-LeftText1 '' `
+	-RrightText1 '完了' `
+	-Title2 '動画のダウンロード' `
+	-Rate2 '1' `
+	-LeftText2 '' `
+	-RrightText2 '完了' `
+	-Tag $script:appName `
+	-Group 'Bulk'
 
 #youtube-dlのプロセスが終わるまで待機
 Write-ColorOutput 'ダウンロードの終了を待機しています'
 waitTillYtdlProcessIsZero
 
-Write-ColorOutput '---------------------------------------------------------------------------' Cyan
-Write-ColorOutput '処理を終了しました。                                                       ' Cyan
-Write-ColorOutput '---------------------------------------------------------------------------' Cyan
+Write-ColorOutput '---------------------------------------------------------------------------' -FgColor 'Cyan'
+Write-ColorOutput '処理を終了しました。                                                       ' -FgColor 'Cyan'
+Write-ColorOutput '---------------------------------------------------------------------------' -FgColor 'Cyan'

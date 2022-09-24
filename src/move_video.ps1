@@ -72,22 +72,22 @@ try {
 		$script:devConfFile = $(Join-Path $script:devDir 'dev_setting_5.ps1')
 		if (Test-Path $script:devFunctionFile) {
 			. $script:devFunctionFile
-			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
 		}
 		if (Test-Path $script:devConfFile) {
 			. $script:devConfFile
-			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
 		}
 	} else {
 		$script:devFunctionFile = $(Join-Path $script:devDir 'dev_funcitons.ps1')
 		$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.ps1')
 		if (Test-Path $script:devFunctionFile) {
 			. $script:devFunctionFile
-			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
 		}
 		if (Test-Path $script:devConfFile) {
 			. $script:devConfFile
-			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' white DarkGreen
+			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
 		}
 	}
 } catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
@@ -98,9 +98,9 @@ try {
 #======================================================================
 #保存先ディレクトリの存在確認
 if (Test-Path $script:downloadBaseDir -PathType Container) { }
-else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' Green ; exit 1 }
+else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' -FgColor 'Green' ; exit 1 }
 if (Test-Path $script:saveBaseDir -PathType Container) { }
-else { Write-Error 'ビデオ移動先フォルダにアクセスできません。終了します。' Green ; exit 1 }
+else { Write-Error 'ビデオ移動先フォルダにアクセスできません。終了します。' -FgColor 'Green' ; exit 1 }
 
 #======================================================================
 #1/3 移動先フォルダを起点として、配下のフォルダを取得
@@ -114,13 +114,13 @@ Write-Progress -Id 1 `
 	-PercentComplete $($( 1 / 4 ) * 100) `
 	-Status 'フォルダ一覧を作成中'
 ShowProgressToast `
-	-toastText1 '動画の移動中' `
-	-toastText2 '　処理1/3 - フォルダ一覧を作成' `
-	-toastWorkDetail '' `
-	-toastTag $script:appName `
-	-toastGroup 'Move' `
-	-toastDuration 'long' `
-	-toastSilent $false
+	-Text1 '動画の移動中' `
+	-Text2 '　処理1/3 - フォルダ一覧を作成' `
+	-WorkDetail '' `
+	-Tag $script:appName `
+	-Group 'Move' `
+	-Duration 'long' `
+	-Silent $false
 
 #処理
 $local:moveToPaths = Get-ChildItem $script:saveBaseDir -Recurse `
@@ -139,13 +139,13 @@ Write-Progress -Id 1 `
 	-PercentComplete $($( 1 / 2 ) * 100) `
 	-Status 'ファイルを移動中'
 ShowProgressToast `
-	-toastText1 '動画の移動中' `
-	-toastText2 '　処理2/3 - 動画ファイルを移動' `
-	-toastWorkDetail '' `
-	-toastTag $script:appName `
-	-toastGroup 'Move' `
-	-toastDuration 'long' `
-	-toastSilent $false
+	-Text1 '動画の移動中' `
+	-Text2 '　処理2/3 - 動画ファイルを移動' `
+	-WorkDetail '' `
+	-Tag $script:appName `
+	-Group 'Move' `
+	-Duration 'long' `
+	-Silent $false
 
 #処理
 $local:moveToPathNum = 0						#移動先パス番号
@@ -176,12 +176,12 @@ foreach ($local:moveToPath in $local:moveToPaths.FullName) {
 		-PercentComplete $($local:progressRatio * 100) `
 		-Status $local:moveToPath
 	UpdateProgessToast `
-		-toastProgressTitle $local:moveToPath `
-		-toastProgressRatio $local:progressRatio `
-		-toastLeftText $local:moveToPathNum/$local:moveToPathTotal `
-		-toastRrightText "残り時間 $local:minRemaining" `
-		-toastTag $script:appName `
-		-toastGroup 'Move'
+		-Title $local:moveToPath `
+		-Rate $local:progressRatio `
+		-LeftText $local:moveToPathNum/$local:moveToPathTotal `
+		-RrightText "残り時間 $local:minRemaining" `
+		-Tag $script:appName `
+		-Group 'Move'
 
 	#処理
 	Write-ColorOutput '----------------------------------------------------------------------'
@@ -194,7 +194,7 @@ foreach ($local:moveToPath in $local:moveToPaths.FullName) {
 		Write-ColorOutput "  └「$($local:moveFromPath)」を移動します"
 		try {
 			Move-Item $local:moveFromPath -Destination $local:moveToPath -Force
-		} catch { Write-ColorOutput '移動できないファイルがありました' Green }
+		} catch { Write-ColorOutput '移動できないファイルがありました' -FgColor 'Green' }
 	}
 }
 #----------------------------------------------------------------------
@@ -210,15 +210,15 @@ Write-Progress -Id 1 `
 	-PercentComplete $($( 2 / 2 ) * 100) `
 	-Status '空フォルダを削除'
 ShowProgressToast `
-	-toastText1 '動画の移動中' `
-	-toastText2 '　処理3/3 - 空フォルダを削除' `
-	-toastWorkDetail '残り時間計算中' `
-	-toastTag $script:appName `
-	-toastGroup 'Move' `
-	-toastDuration 'long' `
-	-toastSilent $false
+	-Text1 '動画の移動中' `
+	-Text2 '　処理3/3 - 空フォルダを削除' `
+	-WorkDetail '残り時間計算中' `
+	-Tag $script:appName `
+	-Group 'Move' `
+	-Duration 'long' `
+	-Silent $false
 
-	#処理
+#処理
 $local:allSubDirs = @((Get-ChildItem -Path $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer })).FullName `
 | Sort-Object -Descending
 
@@ -249,12 +249,12 @@ foreach ($local:subDir in $local:allSubDirs) {
 		-PercentComplete $($local:progressRatio * 100) `
 		-Status $local:subDir
 	UpdateProgessToast `
-		-toastProgressTitle $local:subDir `
-		-toastProgressRatio $local:progressRatio `
-		-toastLeftText $local:subDirNum/$local:subDirTotal `
-		-toastRrightText "残り時間 $local:minRemaining" `
-		-toastTag $script:appName `
-		-toastGroup 'Move'
+		-Title $local:subDir `
+		-Rate $local:progressRatio `
+		-LeftText $local:subDirNum/$local:subDirTotal `
+		-RrightText "残り時間 $local:minRemaining" `
+		-Tag $script:appName `
+		-Group 'Move'
 
 	#処理
 	Write-ColorOutput '----------------------------------------------------------------------'
@@ -265,16 +265,16 @@ foreach ($local:subDir in $local:allSubDirs) {
 			Remove-Item `
 				-LiteralPath $local:subDir `
 				-Recurse -Force -ErrorAction SilentlyContinue
-		} catch { Write-ColorOutput "空フォルダの削除に失敗しました: $local:subDir" Green }
+		} catch { Write-ColorOutput "空フォルダの削除に失敗しました: $local:subDir" -FgColor 'Green' }
 	}
 }
 #----------------------------------------------------------------------
 
 #進捗表示
 UpdateProgessToast `
-	-toastProgressTitle '動画の移動' `
-	-toastProgressRatio '1' `
-	-toastLeftText '' `
-	-toastRrightText '完了' `
-	-toastTag $script:appName `
-	-toastGroup 'Move'
+	-Title '動画の移動' `
+	-Rate '1' `
+	-LeftText '' `
+	-RrightText '完了' `
+	-Tag $script:appName `
+	-Group 'Move'
