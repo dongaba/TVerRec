@@ -30,6 +30,11 @@
 #	このファイルに書かれた内容はそのままPowershellスクリプトとして実行。
 #----------------------------------------------------------------------
 
+#Windowsの判定
+Set-StrictMode -Off
+$script:isWin = $PSVersionTable.Platform -match '^($|(Microsoft)?Win)'
+Set-StrictMode -Version Latest
+
 #ダウンロード先のフルパス(絶対パス指定)
 if ($script:isWin) { $script:downloadBaseDir = 'W:' }
 elseif ($isLinux) { $script:downloadBaseDir = '/mnt/Work' }
@@ -96,11 +101,6 @@ $script:ffmpegDecodeOption = ''							#ffmpegのデコードオプションを�
 #アプリケーション名・バージョン番号
 $script:appName = 'TVerRec'
 $script:appVersion = Get-Content '..\VERSION'
-
-#Windowsの判定
-Set-StrictMode -Off
-$script:isWin = $PSVersionTable.Platform -match '^($|(Microsoft)?Win)'
-Set-StrictMode -Version Latest
 
 #デバッグレベル
 $VerbosePreference = 'SilentlyContinue'						#詳細メッセージなし
