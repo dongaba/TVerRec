@@ -43,17 +43,21 @@ try {
 	$script:devDir = $(Join-Path $script:scriptRoot '..\dev')
 
 	#----------------------------------------------------------------------
-	#外部設定ファイル読み込み
+	#設定ファイル読み込み
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
 		$script:sysFile = $(Convert-Path $(Join-Path $script:confDir 'system_setting_5.ps1'))
-		$script:confFile = $(Convert-Path $(Join-Path $script:confDir 'user_setting_5.ps1'))
 		. $script:sysFile
-		. $script:confFile
+		if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
+			$script:confFile = $(Convert-Path $(Join-Path $script:confDir 'user_setting_5.ps1'))
+			. $script:confFile
+		}
 	} else {
 		$script:sysFile = $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
-		$script:confFile = $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
 		. $script:sysFile
-		. $script:confFile
+		if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
+			$script:confFile = $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
+			. $script:confFile
+		}
 	}
 
 	#----------------------------------------------------------------------
@@ -222,7 +226,10 @@ foreach ($local:keywordName in $local:keywordNames) {
 		Write-ColorOutput $local:videoPageURL
 
 		#TVerビデオダウンロードのメイン処理
-		downloadTVerVideo $local:keywordName $local:videoPageURL $local:videoLink
+		downloadTVerVideo `
+			-Keyword $local:keywordName `
+			-URL $local:videoPageURL `
+			-Link $local:videoLink
 
 		#		Start-Sleep -Seconds 1
 	}

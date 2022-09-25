@@ -42,17 +42,21 @@ try {
 	$script:devDir = $(Join-Path $script:scriptRoot '..\dev')
 
 	#----------------------------------------------------------------------
-	#外部設定ファイル読み込み
+	#設定ファイル読み込み
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
 		$script:sysFile = $(Convert-Path $(Join-Path $script:confDir 'system_setting_5.ps1'))
-		$script:confFile = $(Convert-Path $(Join-Path $script:confDir 'user_setting_5.ps1'))
 		. $script:sysFile
-		. $script:confFile
+		if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
+			$script:confFile = $(Convert-Path $(Join-Path $script:confDir 'user_setting_5.ps1'))
+			. $script:confFile
+		}
 	} else {
 		$script:sysFile = $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
-		$script:confFile = $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
 		. $script:sysFile
-		. $script:confFile
+		if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
+			$script:confFile = $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
+			. $script:confFile
+		}
 	}
 
 	#----------------------------------------------------------------------
@@ -116,7 +120,7 @@ ShowProgressToast `
 	-Silent $false
 
 #処理
-purgeDB								#30日以上前に処理したものはリストから削除
+purgeDB -RetentionPeriod 30				#30日以上前に処理したものはリストから削除
 
 Write-ColorOutput '----------------------------------------------------------------------'
 Write-ColorOutput '重複レコードを削除します'
@@ -250,7 +254,9 @@ if ($null -eq $local:videoLists) {
 		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' -FgColor 'Green' ; exit 1 }
 
 		Write-ColorOutput "$($local:videoFileRelativePath)をチェックします"
-		checkVideo $local:decodeOption $local:videoFileRelativePath		#ビデオの整合性チェック
+		checkVideo `
+			-DecodeOption $local:decodeOption `
+			-Path $local:videoFileRelativePath		#ビデオの整合性チェック
 	}
 	#----------------------------------------------------------------------
 

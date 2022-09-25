@@ -29,11 +29,11 @@
 #----------------------------------------------------------------------
 #GUID取得
 #----------------------------------------------------------------------
-if ($script:isWin) { $script:os = [string][System.Environment]::OSVersion }
-elseif ($IsLinux) { $script:os = "Linux $([string][System.Environment]::OSVersion.Version)" }
-elseif ($IsMacOS) { $script:os = "macOS $([string][System.Environment]::OSVersion.Version)" }
-else { $script:os = [string][System.Environment]::OSVersion }
-$script:tz = [string][TimeZoneInfo]::Local.BaseUtcOffset
+if ($script:isWin) { $script:os = [String][System.Environment]::OSVersion }
+elseif ($IsLinux) { $script:os = "Linux $([String][System.Environment]::OSVersion.Version)" }
+elseif ($IsMacOS) { $script:os = "macOS $([String][System.Environment]::OSVersion.Version)" }
+else { $script:os = [String][System.Environment]::OSVersion }
+$script:tz = [String][TimeZoneInfo]::Local.BaseUtcOffset
 $script:guid = [guid]::NewGuid()
 $script:ipapi = ''
 try { $script:ipapi = (Invoke-RestMethod -Uri 'https://ipapi.co/jsonp/') }
@@ -163,6 +163,8 @@ function removeTrailingCommentsFromConfigFile {
 #指定したPath配下の指定した条件でファイルを削除
 #----------------------------------------------------------------------
 function deleteFiles {
+	[CmdletBinding()]
+	[OutputType([System.Void])]
 	Param (
 		[parameter(
 			Mandatory = $true,
@@ -280,7 +282,7 @@ function isLocked {
 			Position = 0
 		)]
 		[Alias('Path')]
-		[string]$local:isLockedPath
+		[String]$local:isLockedPath
 	)
 
 	try {
@@ -385,16 +387,15 @@ function ShowToast {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Text1')]
-		[string] $local:toastText1,
+		[String] $local:toastText1,
 
 		[Parameter(
-			Mandatory = $true,
+			Mandatory = $false,
 			ValueFromPipeline = $false,
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Text2')]
-		[AllowEmptyString()]
-		[string] $local:toastText2,
+		[String] $local:toastText2,
 
 		[Parameter(
 			Mandatory = $false,
@@ -403,7 +404,7 @@ function ShowToast {
 		)]
 		[Alias('Duration')]
 		[ValidateSet('Short', 'Long')]
-		[string] $local:toastDuration,
+		[String] $local:toastDuration,
 
 		[Parameter(
 			Mandatory = $false,
@@ -473,25 +474,23 @@ function ShowProgressToast {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Text1')]
-		[string] $local:toastText1,
+		[String] $local:toastText1,
 
 		[Parameter(
-			Mandatory = $true,
+			Mandatory = $false,
 			ValueFromPipeline = $false,
 			ValueFromPipelineByPropertyName = $false
 		)]
-		[AllowEmptyString()]
 		[Alias('Text2')]
-		[string] $local:toastText2,
+		[String] $local:toastText2,
 
 		[Parameter(
-			Mandatory = $true,
+			Mandatory = $false,
 			ValueFromPipeline = $false,
 			ValueFromPipelineByPropertyName = $false
 		)]
-		[AllowEmptyString()]
 		[Alias('WorkDetail')]
-		[string] $local:toastWorkDetail,
+		[String] $local:toastWorkDetail,
 
 		[Parameter(
 			Mandatory = $true,
@@ -499,7 +498,7 @@ function ShowProgressToast {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Tag')]
-		[string] $local:toastTag,
+		[String] $local:toastTag,
 
 		[Parameter(
 			Mandatory = $true,
@@ -507,7 +506,7 @@ function ShowProgressToast {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Group')]
-		[string] $local:toastGroup,
+		[String] $local:toastGroup,
 
 		[Parameter(
 			Mandatory = $false,
@@ -516,7 +515,7 @@ function ShowProgressToast {
 		)]
 		[ValidateSet('Short', 'Long')]
 		[Alias('Duration')]
-		[string] $local:toastDuration,
+		[String] $local:toastDuration,
 
 		[Parameter(
 			Mandatory = $false,
@@ -595,7 +594,7 @@ function UpdateProgessToast {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Title')]
-		[string] $local:toastTitle,
+		[String] $local:toastTitle,
 
 		[Parameter(
 			Mandatory = $true,
@@ -603,25 +602,23 @@ function UpdateProgessToast {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Rate')]
-		[string] $local:toastRate,
+		[String] $local:toastRate,
 
 		[Parameter(
-			Mandatory = $true,
+			Mandatory = $false,
 			ValueFromPipeline = $false,
 			ValueFromPipelineByPropertyName = $false
 		)]
-		[AllowEmptyString()]
 		[Alias('LeftText')]
-		[string] $local:toastLeftText,
+		[String] $local:toastLeftText,
 
 		[Parameter(
-			Mandatory = $true,
+			Mandatory = $false,
 			ValueFromPipeline = $false,
 			ValueFromPipelineByPropertyName = $false
 		)]
-		[AllowEmptyString()]
 		[Alias('RrightText')]
-		[string] $local:toastRrightText,
+		[String] $local:toastRrightText,
 
 		[Parameter(
 			Mandatory = $true,
@@ -629,7 +626,7 @@ function UpdateProgessToast {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Tag')]
-		[string] $local:toastTag,
+		[String] $local:toastTag,
 
 		[Parameter(
 			Mandatory = $true,
@@ -637,7 +634,7 @@ function UpdateProgessToast {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Group')]
-		[string] $local:toastGroup
+		[String] $local:toastGroup
 	)
 
 	if ($script:isWin) {
@@ -666,34 +663,31 @@ function ShowProgressToast2 {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Text1')]
-		[string] $local:toastText1,
+		[String] $local:toastText1,
 
 		[Parameter(
-			Mandatory = $true,
+			Mandatory = $false,
 			ValueFromPipeline = $false,
 			ValueFromPipelineByPropertyName = $false
 		)]
-		[AllowEmptyString()]
 		[Alias('Text2')]
-		[string] $local:toastText2,
+		[String] $local:toastText2,
 
 		[Parameter(
-			Mandatory = $true,
+			Mandatory = $false,
 			ValueFromPipeline = $false,
 			ValueFromPipelineByPropertyName = $false
 		)]
-		[AllowEmptyString()]
 		[Alias('WorkDetail1')]
-		[string] $local:toastWorkDetail1,
+		[String] $local:toastWorkDetail1,
 
 		[Parameter(
-			Mandatory = $true,
+			Mandatory = $false,
 			ValueFromPipeline = $false,
 			ValueFromPipelineByPropertyName = $false
 		)]
-		[AllowEmptyString()]
 		[Alias('WorkDetail2')]
-		[string] $local:toastWorkDetail2,
+		[String] $local:toastWorkDetail2,
 
 		[Parameter(
 			Mandatory = $true,
@@ -701,7 +695,7 @@ function ShowProgressToast2 {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Tag')]
-		[string] $local:toastTag,
+		[String] $local:toastTag,
 
 		[Parameter(
 			Mandatory = $true,
@@ -709,7 +703,7 @@ function ShowProgressToast2 {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Group')]
-		[string] $local:toastGroup,
+		[String] $local:toastGroup,
 
 		[Parameter(
 			Mandatory = $false,
@@ -718,7 +712,7 @@ function ShowProgressToast2 {
 		)]
 		[ValidateSet('Short', 'Long')]
 		[Alias('Duration')]
-		[string] $local:toastDuration,
+		[String] $local:toastDuration,
 
 		[Parameter(
 			Mandatory = $false,
@@ -797,13 +791,12 @@ function UpdateProgessToast2 {
 	[OutputType([System.Void])]
 	Param (
 		[Parameter(
-			Mandatory = $true,
+			Mandatory = $false,
 			ValueFromPipeline = $false,
 			ValueFromPipelineByPropertyName = $false
 		)]
-		[AllowEmptyString()]
 		[Alias('Title1')]
-		[string] $local:toastTitle1,
+		[String] $local:toastTitle1,
 
 		[Parameter(
 			Mandatory = $true,
@@ -811,34 +804,31 @@ function UpdateProgessToast2 {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Rate1')]
-		[string] $local:toastRate1,
+		[String] $local:toastRate1,
 
 		[Parameter(
-			Mandatory = $true,
+			Mandatory = $false,
 			ValueFromPipeline = $false,
 			ValueFromPipelineByPropertyName = $false
 		)]
-		[AllowEmptyString()]
 		[Alias('LeftText1')
-		][string] $local:toastLeftText1,
+		][String] $local:toastLeftText1,
 
 		[Parameter(
-			Mandatory = $true,
+			Mandatory = $false,
 			ValueFromPipeline = $false,
 			ValueFromPipelineByPropertyName = $false
 		)]
-		[AllowEmptyString()]
 		[Alias('RrightText1')]
-		[string] $local:toastRrightText1,
+		[String] $local:toastRrightText1,
 
 		[Parameter(
-			Mandatory = $true,
+			Mandatory = $false,
 			ValueFromPipeline = $false,
 			ValueFromPipelineByPropertyName = $false
 		)]
-		[AllowEmptyString()]
 		[Alias('Title2')]
-		[string] $local:toastTitle2,
+		[String] $local:toastTitle2,
 
 		[Parameter(
 			Mandatory = $true,
@@ -846,25 +836,23 @@ function UpdateProgessToast2 {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Rate2')]
-		[string] $local:toastRate2,
+		[String] $local:toastRate2,
 
 		[Parameter(
-			Mandatory = $true,
+			Mandatory = $false,
 			ValueFromPipeline = $false,
 			ValueFromPipelineByPropertyName = $false
 		)]
-		[AllowEmptyString()]
 		[Alias('LeftText2')]
-		[string] $local:toastLeftText2,
+		[String] $local:toastLeftText2,
 
 		[Parameter(
-			Mandatory = $true,
+			Mandatory = $false,
 			ValueFromPipeline = $false,
 			ValueFromPipelineByPropertyName = $false
 		)]
-		[AllowEmptyString()]
 		[Alias('RrightText2')]
-		[string] $local:toastRrightText2,
+		[String] $local:toastRrightText2,
 
 		[Parameter(
 			Mandatory = $true,
@@ -872,7 +860,7 @@ function UpdateProgessToast2 {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Tag')]
-		[string] $local:toastTag,
+		[String] $local:toastTag,
 
 		[Parameter(
 			Mandatory = $true,
@@ -880,7 +868,7 @@ function UpdateProgessToast2 {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Group')]
-		[string] $local:toastGroup
+		[String] $local:toastGroup
 	)
 
 	if ($script:isWin) {
@@ -913,34 +901,31 @@ function ShowProgess2Row {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('ProgressText1')]
-		[string] $local:progressText1,
+		[String] $local:progressText1,
 
 		[Parameter(
-			Mandatory = $true,
+			Mandatory = $false,
 			ValueFromPipeline = $false,
 			ValueFromPipelineByPropertyName = $false
 		)]
-		[AllowEmptyString()]
 		[Alias('ProgressText2')]
-		[string] $local:progressText2,
+		[String] $local:progressText2,
 		
 		[Parameter(
-			Mandatory = $true,
+			Mandatory = $false,
 			ValueFromPipeline = $false,
 			ValueFromPipelineByPropertyName = $false
 		)]
-		[AllowEmptyString()]
 		[Alias('WorkDetail1')]
-		[string] $local:toastWorkDetail1,
+		[String] $local:toastWorkDetail1,
 		
 		[Parameter(
-			Mandatory = $true,
+			Mandatory = $false,
 			ValueFromPipeline = $false,
 			ValueFromPipelineByPropertyName = $false
 		)]
-		[AllowEmptyString()]
 		[Alias('WorkDetail2')]
-		[string] $local:toastWorkDetail2,
+		[String] $local:toastWorkDetail2,
 		
 		[Parameter(
 			Mandatory = $false,
@@ -949,7 +934,7 @@ function ShowProgess2Row {
 		)]
 		[ValidateSet('Short', 'Long')]
 		[Alias('Duration')]
-		[string] $local:toastDuration,
+		[String] $local:toastDuration,
 		
 		[Parameter(
 			Mandatory = $false,
@@ -965,7 +950,7 @@ function ShowProgess2Row {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Group')]
-		[string] $local:toastGroup
+		[String] $local:toastGroup
 	)
 
 	if (!($local:progressText2)) { $local:progressText2 = '' }
@@ -991,22 +976,20 @@ function UpdateProgess2Row {
 	[OutputType([System.Void])]
 	Param (
 		[Parameter(
-			Mandatory = $true,
+			Mandatory = $false,
 			ValueFromPipeline = $false,
 			ValueFromPipelineByPropertyName = $false
 		)]
-		[AllowEmptyString()]
 		[Alias('ProgressActivity1')]
-		[string] $local:progressActivity1,
+		[String] $local:progressActivity1,
 		
 		[Parameter(
-			Mandatory = $true,
+			Mandatory = $false,
 			ValueFromPipeline = $false,
 			ValueFromPipelineByPropertyName = $false
 		)]
-		[AllowEmptyString()]
 		[Alias('CurrentProcessing1')]
-		[string] $local:currentProcessing1,
+		[String] $local:currentProcessing1,
 		
 		[Parameter(
 			Mandatory = $true,
@@ -1014,34 +997,31 @@ function UpdateProgess2Row {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Rate1')]
-		[string] $local:progressRatio1,
+		[String] $local:progressRatio1,
 		
 		[Parameter(
-			Mandatory = $true,
+			Mandatory = $false,
 			ValueFromPipeline = $false,
 			ValueFromPipelineByPropertyName = $false
 		)]
-		[AllowEmptyString()]
 		[Alias('SecRemaining1')]
-		[string] $local:secRemaining1,
+		[String] $local:secRemaining1,
 		
 		[Parameter(
-			Mandatory = $true,
+			Mandatory = $false,
 			ValueFromPipeline = $false,
 			ValueFromPipelineByPropertyName = $false
 		)]
-		[AllowEmptyString()]
 		[Alias('ProgressActivity2')]
-		[string] $local:progressActivity2,
+		[String] $local:progressActivity2,
 		
 		[Parameter(
-			Mandatory = $true,
+			Mandatory = $false,
 			ValueFromPipeline = $false,
 			ValueFromPipelineByPropertyName = $false
 		)]
-		[AllowEmptyString()]
 		[Alias('CurrentProcessing2')]
-		[string] $local:currentProcessing2,
+		[String] $local:currentProcessing2,
 		
 		[Parameter(
 			Mandatory = $true,
@@ -1049,16 +1029,15 @@ function UpdateProgess2Row {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Rate2')]
-		[string] $local:progressRatio2,
+		[String] $local:progressRatio2,
 		
 		[Parameter(
-			Mandatory = $true,
+			Mandatory = $false,
 			ValueFromPipeline = $false,
 			ValueFromPipelineByPropertyName = $false
 		)]
-		[AllowEmptyString()]
 		[Alias('SecRemaining2')]
-		[string] $local:secRemaining2,
+		[String] $local:secRemaining2,
 		
 		[Parameter(
 			Mandatory = $true,
@@ -1066,7 +1045,7 @@ function UpdateProgess2Row {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Group')]
-		[string] $local:toastGroup
+		[String] $local:toastGroup
 	)
 
 	if ($local:secRemaining1 -eq -1 -or $local:secRemaining1 -eq '' ) { $local:minRemaining1 = '計算中...' }
@@ -1096,12 +1075,19 @@ function UpdateProgess2Row {
 #統計取得
 #----------------------------------------------------------------------
 function goAnal {
-	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true)][string] $local:event,
-		[Parameter(Mandatory = $false)][string] $local:type,
-		[Parameter(Mandatory = $false)][string] $local:id
+		[Parameter(Mandatory = $true)]
+		[Alias('Event')]
+		[String] $local:event,
+
+		[Parameter(Mandatory = $false)]
+		[Alias('Type')]
+		[String] $local:type,
+
+		[Parameter(Mandatory = $false)]
+		[Alias('ID')]
+		[String] $local:id
 	)
 
 	if (!($local:type)) { $local:type = '' }
@@ -1125,6 +1111,9 @@ function goAnal {
 	$local:gaBody += "`"non_personalized_ads`" : false, "
 	$local:gaBody += "`"user_properties`":{ "
 	foreach ($item in $script:clientEnv) { $local:gaBody += "`"$($item.Key)`" : {`"value`" : `"$($item.Value)`"}, " }
+	$local:gaBody += "`"DisableValidation`" : {`"value`" : `"$($script:disableValidation)`"}, "
+	$local:gaBody += "`"SortwareDecode`" : {`"value`" : `"$($script:forceSoftwareDecodeFlag)`"}, "
+	$local:gaBody += "`"DecodeOption`" : {`"value`" : `"$($script:ffmpegDecodeOption)`"}, "
 	$local:gaBody = $local:gaBody.Trim().Trim(',', ' ')		#delete last comma
 	$local:gaBody += "}, `"events`" : [ { "
 	$local:gaBody += "`"name`" : `"$local:event`", "
@@ -1133,6 +1122,9 @@ function goAnal {
 	$local:gaBody += "`"ID`" : `"$local:id`", "
 	$local:gaBody += "`"Target`" : `"$local:type/$local:id`", "
 	foreach ($item in $script:clientEnv) { $local:gaBody += "`"$($item.Key)`" : `"$($item.Value)`", " }
+	$local:gaBody += "`"DisableValidation`" : `"$($script:disableValidation)`", "
+	$local:gaBody += "`"SortwareDecode`" : `"$($script:forceSoftwareDecodeFlag)`", "
+	$local:gaBody += "`"DecodeOption`" : `"$($script:ffmpegDecodeOption)`", "
 	$local:gaBody = $local:gaBody.Trim().Trim(',', ' ')		#delete last comma
 	$local:gaBody += '} } ] }'
 

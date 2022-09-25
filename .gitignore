@@ -55,5 +55,6 @@ win-*
 tver.csv
 ignore.conf
 keyword.conf
+user_setting.ps1
 #git update-index --assume-unchanged conf/dev_setting.ps1
 

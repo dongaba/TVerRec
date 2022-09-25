@@ -55,7 +55,7 @@ if (Test-Path $local:ffmpegPath -PathType Leaf) {
 $local:latestVersion = ''
 try { $local:latestRawVersion = Invoke-WebRequest -Uri $local:releases }
 catch { Write-ColorOutput 'ffmpegの最新バージョンを特定できませんでした' -FgColor 'Green' ; return }
-$local:latestVersion = $([string]$local:latestRawVersion.rawcontent).remove(0, $([string]$local:latestRawVersion.rawcontent).LastIndexOf("`n") + 1)
+$local:latestVersion = $([String]$local:latestRawVersion.rawcontent).remove(0, $([String]$local:latestRawVersion.rawcontent).LastIndexOf("`n") + 1)
 
 Write-ColorOutput "ffmpeg current: $local:ffmpegCurrentVersion"
 Write-ColorOutput "ffmpeg latest: $local:latestVersion"
