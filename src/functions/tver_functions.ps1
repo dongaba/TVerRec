@@ -342,7 +342,7 @@ function getVideoLinkFromTalentID {
 		if ($local:searchResults[$i].type -eq 'episode') { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id }
 		elseif ($local:searchResults[$i].type -eq 'season') { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) }
 		elseif ($local:searchResults[$i].type -eq 'series') { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) }
-		elseif ($local:searchResults[$i].type -eq 'live') { Write-ColorOutput 'リアルタイム配信には対応していないためスキップします' -FgColor 'DarkGray' }
+		elseif ($local:searchResults[$i].type -eq 'live') { }
 		else { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id }	#他にはないと思われるが念のため
 	}
 	[System.GC]::Collect()
@@ -372,7 +372,7 @@ function getVideoLinkFromTag {
 		if ($local:searchResults[$i].type -eq 'episode') { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id }
 		elseif ($local:searchResults[$i].type -eq 'season') { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) }
 		elseif ($local:searchResults[$i].type -eq 'series') { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) }
-		elseif ($local:searchResults[$i].type -eq 'live') { Write-ColorOutput 'リアルタイム配信には対応していないためスキップします' -FgColor 'DarkGray' }
+		elseif ($local:searchResults[$i].type -eq 'live') { }
 		else { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id }	#他にはないと思われるが念のため
 	}
 	[System.GC]::Collect()
@@ -402,7 +402,7 @@ function getVideoLinkFromNew {
 		if ($local:searchResults[$i].type -eq 'episode') { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id }
 		elseif ($local:searchResults[$i].type -eq 'season') { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) }
 		elseif ($local:searchResults[$i].type -eq 'series') { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) }
-		elseif ($local:searchResults[$i].type -eq 'live') { Write-ColorOutput 'リアルタイム配信には対応していないためスキップします' -FgColor 'DarkGray' }
+		elseif ($local:searchResults[$i].type -eq 'live') { }
 		else { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id }	#他にはないと思われるが念のため
 	}
 	[System.GC]::Collect()
@@ -438,7 +438,7 @@ function getVideoLinkFromRanking {
 		if ($local:searchResults[$i].type -eq 'episode') { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id }
 		elseif ($local:searchResults[$i].type -eq 'season') { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) }
 		elseif ($local:searchResults[$i].type -eq 'series') { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) }
-		elseif ($local:searchResults[$i].type -eq 'live') { Write-ColorOutput 'リアルタイム配信には対応していないためスキップします' -FgColor 'DarkGray' }
+		elseif ($local:searchResults[$i].type -eq 'live') { }
 		else { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id }	#他にはないと思われるが念のため
 	}
 	[System.GC]::Collect()
@@ -480,7 +480,7 @@ function getVideoLinkFromTopPage {
 				elseif ($local:searchResults[$i].contents[$j].type -eq 'season') { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].contents[$j].Content.Id) }
 				elseif ($local:searchResults[$i].contents[$j].type -eq 'series') { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].contents[$j].Content.Id) }
 				elseif ($local:searchResults[$i].contents[$j].type -eq 'talent') { $script:videoLinks += getVideoLinkFromTalentID ($local:searchResults[$i].contents[$j].Content.Id) }
-				elseif ($local:searchResults[$i].contents[$j].type -eq 'live') { Write-ColorOutput 'リアルタイム配信には対応していないためスキップします' -FgColor 'DarkGray' }
+				elseif ($local:searchResults[$i].contents[$j].type -eq 'live') { }
 				elseif ($local:searchResults[$i].contents[$j].type -eq 'specialMain') {}
 				#特集ページ。パース方法不明
 				#https://tver.jp/specials/$($local:searchResults[4].contents.content.id)
@@ -500,7 +500,7 @@ function getVideoLinkFromTopPage {
 					elseif ($local:searchResults[$i].contents[$j].Content.Content.type -eq 'season') { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].contents[$j].Content.Content.Content.Id) }
 					elseif ($local:searchResults[$i].contents[$j].Content.Content.type -eq 'series') { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].contents[$j].Content.Content.Content.Id) }
 					elseif ($local:searchResults[$i].contents[$j].Content.Content.type -eq 'talent') { $script:videoLinks += getVideoLinkFromTalentID ($local:searchResults[$i].contents[$j].Content.Content.Content.Id) }
-					elseif ($local:searchResults[$i].contents[$j].Content.Content.type -eq 'live') { Write-ColorOutput 'リアルタイム配信には対応していないためスキップします' -FgColor 'DarkGray' }
+					elseif ($local:searchResults[$i].contents[$j].Content.Content.type -eq 'live') { }
 					else { $script:videoLinks += '/' + $local:searchResults[$i].contents[$j].type + '/' + $local:searchResults[$i].contents[$j].Content.Content.Content.Id }	#他にはないと思われるが念のため
 				}
 			}
@@ -543,7 +543,7 @@ function getVideoLinkFromTitle {
 			if ($local:searchResults[$i].type -eq 'episode') { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id }
 			elseif ($local:searchResults[$i].type -eq 'season') { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) }
 			elseif ($local:searchResults[$i].type -eq 'series') { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) }
-			elseif ($local:searchResults[$i].type -eq 'live') { Write-ColorOutput 'リアルタイム配信には対応していないためスキップします' -FgColor 'DarkGray' }
+			elseif ($local:searchResults[$i].type -eq 'live') { }
 			else { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id }	#他にはないと思われるが念のため
 		}
 	}
@@ -574,7 +574,7 @@ function getVideoLinkFromFreeKeyword {
 		if ($local:searchResults[$i].type -eq 'episode') { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id }
 		elseif ($local:searchResults[$i].type -eq 'season') { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) }
 		elseif ($local:searchResults[$i].type -eq 'series') { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) }
-		elseif ($local:searchResults[$i].type -eq 'live') { Write-ColorOutput 'リアルタイム配信には対応していないためスキップします' -FgColor 'DarkGray' }
+		elseif ($local:searchResults[$i].type -eq 'live') { }
 		else { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id }	#他にはないと思われるが念のため
 	}
 	[System.GC]::Collect()
@@ -604,7 +604,7 @@ function getVideoLinkFromSeasonID {
 		if ($local:searchResults[$i].type -eq 'episode') { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id }
 		elseif ($local:searchResults[$i].type -eq 'season') { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) }
 		elseif ($local:searchResults[$i].type -eq 'series') { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) }
-		elseif ($local:searchResults[$i].type -eq 'live') { Write-ColorOutput 'リアルタイム配信には対応していないためスキップします' -FgColor 'DarkGray' }
+		elseif ($local:searchResults[$i].type -eq 'live') { }
 		else { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id }	#他にはないと思われるが念のため
 	}
 	[System.GC]::Collect()
