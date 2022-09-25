@@ -210,7 +210,7 @@ function getVideoLinksFromKeyword {
 	if ( $local:keywordName.IndexOf('https://tver.jp/') -eq 0) {
 		#URL形式の場合ビデオページのLinkを取得
 		try { $local:keywordNamePage = Invoke-WebRequest $local:keywordName }
-		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' -FgColor 'Green' ; continue }
+		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします Err:00' -FgColor 'Green' ; continue }
 		try {
 			$script:videoLinks = ($local:keywordNamePage.Links `
 				| Where-Object { `
@@ -221,54 +221,54 @@ function getVideoLinksFromKeyword {
 						-or (href -Like '*feature*')`
 				} `
 				| Select-Object href).href
-		} catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' -FgColor 'Green' ; continue }
+		} catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします Err:01' -FgColor 'Green' ; continue }
 		#saveGenrePage $script:keywordName						#デバッグ用ジャンルページの保存
 	} elseif ($local:keywordName.IndexOf('series/') -eq 0) {
 		#番組IDによる番組検索からビデオページのLinkを取得
 		$local:seriesID = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('series/', '').Trim()
 		goAnal -Event 'search' -Type 'series' -ID $local:seriesID
 		try { $script:videoLinks = getVideoLinkFromSeriesID ($local:seriesID) }
-		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' -FgColor 'Green' ; continue }
+		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします Err:02' -FgColor 'Green' ; continue }
 	} elseif ($local:keywordName.IndexOf('talents/') -eq 0) {
 		#タレントIDによるタレント検索からビデオページのLinkを取得
 		$local:talentID = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('talents/', '').Trim()
 		goAnal -Event 'search' -Type 'talent' -ID $local:talentID
 		try { $script:videoLinks = getVideoLinkFromTalentID ($local:talentID) }
-		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' -FgColor 'Green' ; continue }
+		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします Err:03' -FgColor 'Green' ; continue }
 	} elseif ($local:keywordName.IndexOf('tag/') -eq 0) {
 		#ジャンルなどのTag情報からビデオページのLinkを取得
 		$local:tagID = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('tag/', '').Trim()
 		goAnal -Event 'search' -Type 'tag' -ID $local:tagID
 		try { $script:videoLinks = getVideoLinkFromTag ($local:tagID) }
-		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' -FgColor 'Green' ; continue }
+		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします Err:04' -FgColor 'Green' ; continue }
 	} elseif ($local:keywordName.IndexOf('new/') -eq 0) {
 		#新着ビデオからビデオページのLinkを取得
 		$local:genre = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('new/', '').Trim()
 		goAnal -Event 'search' -Type 'new' -ID $local:genre
 		try { $script:videoLinks = getVideoLinkFromNew ($local:genre) }
-		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' -FgColor 'Green' ; continue }
+		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします Err:05' -FgColor 'Green' ; continue }
 	} elseif ($local:keywordName.IndexOf('ranking/') -eq 0) {
 		#ランキングによるビデオページのLinkを取得
 		$local:genre = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('ranking/', '').Trim()
 		goAnal -Event 'search' -Type 'ranking' -ID $local:genre
 		try { $script:videoLinks = getVideoLinkFromRanking ($local:genre) }
-		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' -FgColor 'Green' ; continue }
+		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします Err:06' -FgColor 'Green' ; continue }
 	} elseif ($local:keywordName.IndexOf('toppage') -eq 0) {
 		#トップページからビデオページのLinkを取得
 		goAnal -Event 'search' -Type 'toppage'
 		try { $script:videoLinks = getVideoLinkFromTopPage }
-		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' -FgColor 'Green' ; continue }
+		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします Err:07' -FgColor 'Green' ; continue }
 	} elseif ($local:keywordName.IndexOf('title/') -eq 0) {
 		#番組名による新着検索からビデオページのLinkを取得
 		$local:titleName = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('title/', '').Trim()
 		goAnal -Event 'search' -Type 'title' -ID $local:titleName
 		try { $script:videoLinks = getVideoLinkFromTitle ($local:titleName) }
-		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' -FgColor 'Green' ; continue }
+		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします Err:08' -FgColor 'Green' ; continue }
 	} else {
 		#タレント名や番組名などURL形式でない場合APIで検索結果からビデオページのLinkを取得
 		goAnal -Event 'search' -Type 'free' -ID $local:keywordName
 		try { $script:videoLinks = getVideoLinkFromFreeKeyword ($local:keywordName) }
-		catch { Write-ColorOutput 'TVerから検索結果を取得できませんでした。スキップします' -FgColor 'Green' ; continue }
+		catch { Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします Err:09' -FgColor 'Green' ; continue }
 	}
 
 	return $script:videoLinks | Sort-Object | Get-Unique
@@ -342,6 +342,7 @@ function getVideoLinkFromTalentID {
 		if ($local:searchResults[$i].type -eq 'episode') { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id }
 		elseif ($local:searchResults[$i].type -eq 'season') { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) }
 		elseif ($local:searchResults[$i].type -eq 'series') { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) }
+		elseif ($local:searchResults[$i].type -eq 'live') { Write-Color 'リアルタイム配信には対応していないためスキップします' -FgColor 'DarkGray' }
 		else { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id }	#他にはないと思われるが念のため
 	}
 	[System.GC]::Collect()
@@ -371,6 +372,7 @@ function getVideoLinkFromTag {
 		if ($local:searchResults[$i].type -eq 'episode') { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id }
 		elseif ($local:searchResults[$i].type -eq 'season') { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) }
 		elseif ($local:searchResults[$i].type -eq 'series') { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) }
+		elseif ($local:searchResults[$i].type -eq 'live') { Write-Color 'リアルタイム配信には対応していないためスキップします' -FgColor 'DarkGray' }
 		else { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id }	#他にはないと思われるが念のため
 	}
 	[System.GC]::Collect()
@@ -400,6 +402,7 @@ function getVideoLinkFromNew {
 		if ($local:searchResults[$i].type -eq 'episode') { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id }
 		elseif ($local:searchResults[$i].type -eq 'season') { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) }
 		elseif ($local:searchResults[$i].type -eq 'series') { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) }
+		elseif ($local:searchResults[$i].type -eq 'live') { Write-Color 'リアルタイム配信には対応していないためスキップします' -FgColor 'DarkGray' }
 		else { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id }	#他にはないと思われるが念のため
 	}
 	[System.GC]::Collect()
@@ -435,6 +438,7 @@ function getVideoLinkFromRanking {
 		if ($local:searchResults[$i].type -eq 'episode') { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id }
 		elseif ($local:searchResults[$i].type -eq 'season') { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) }
 		elseif ($local:searchResults[$i].type -eq 'series') { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) }
+		elseif ($local:searchResults[$i].type -eq 'live') { Write-Color 'リアルタイム配信には対応していないためスキップします' -FgColor 'DarkGray' }
 		else { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id }	#他にはないと思われるが念のため
 	}
 	[System.GC]::Collect()
@@ -476,6 +480,7 @@ function getVideoLinkFromTopPage {
 				elseif ($local:searchResults[$i].contents[$j].type -eq 'season') { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].contents[$j].Content.Id) }
 				elseif ($local:searchResults[$i].contents[$j].type -eq 'series') { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].contents[$j].Content.Id) }
 				elseif ($local:searchResults[$i].contents[$j].type -eq 'talent') { $script:videoLinks += getVideoLinkFromTalentID ($local:searchResults[$i].contents[$j].Content.Id) }
+				elseif ($local:searchResults[$i].contents[$j].type -eq 'live') { Write-Color 'リアルタイム配信には対応していないためスキップします' -FgColor 'DarkGray' }
 				elseif ($local:searchResults[$i].contents[$j].type -eq 'specialMain') {}
 				#特集ページ。パース方法不明
 				#https://tver.jp/specials/$($local:searchResults[4].contents.content.id)
@@ -495,6 +500,7 @@ function getVideoLinkFromTopPage {
 					elseif ($local:searchResults[$i].contents[$j].Content.Content.type -eq 'season') { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].contents[$j].Content.Content.Content.Id) }
 					elseif ($local:searchResults[$i].contents[$j].Content.Content.type -eq 'series') { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].contents[$j].Content.Content.Content.Id) }
 					elseif ($local:searchResults[$i].contents[$j].Content.Content.type -eq 'talent') { $script:videoLinks += getVideoLinkFromTalentID ($local:searchResults[$i].contents[$j].Content.Content.Content.Id) }
+					elseif ($local:searchResults[$i].contents[$j].Content.Content.type -eq 'live') { Write-Color 'リアルタイム配信には対応していないためスキップします' -FgColor 'DarkGray' }
 					else { $script:videoLinks += '/' + $local:searchResults[$i].contents[$j].type + '/' + $local:searchResults[$i].contents[$j].Content.Content.Content.Id }	#他にはないと思われるが念のため
 				}
 			}
@@ -537,6 +543,7 @@ function getVideoLinkFromTitle {
 			if ($local:searchResults[$i].type -eq 'episode') { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id }
 			elseif ($local:searchResults[$i].type -eq 'season') { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) }
 			elseif ($local:searchResults[$i].type -eq 'series') { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) }
+			elseif ($local:searchResults[$i].type -eq 'live') { Write-Color 'リアルタイム配信には対応していないためスキップします' -FgColor 'DarkGray' }
 			else { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id }	#他にはないと思われるが念のため
 		}
 	}
@@ -567,6 +574,7 @@ function getVideoLinkFromFreeKeyword {
 		if ($local:searchResults[$i].type -eq 'episode') { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id }
 		elseif ($local:searchResults[$i].type -eq 'season') { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) }
 		elseif ($local:searchResults[$i].type -eq 'series') { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) }
+		elseif ($local:searchResults[$i].type -eq 'live') { Write-Color 'リアルタイム配信には対応していないためスキップします' -FgColor 'DarkGray' }
 		else { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id }	#他にはないと思われるが念のため
 	}
 	[System.GC]::Collect()
@@ -596,6 +604,7 @@ function getVideoLinkFromSeasonID {
 		if ($local:searchResults[$i].type -eq 'episode') { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id }
 		elseif ($local:searchResults[$i].type -eq 'season') { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) }
 		elseif ($local:searchResults[$i].type -eq 'series') { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) }
+		elseif ($local:searchResults[$i].type -eq 'live') { Write-Color 'リアルタイム配信には対応していないためスキップします' -FgColor 'DarkGray' }
 		else { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id }	#他にはないと思われるが念のため
 	}
 	[System.GC]::Collect()
@@ -692,7 +701,7 @@ function downloadTVerVideo {
 		goAnal -Event 'getinfo' -Type 'link' -ID $script:videoLink
 		getVideoInfo -Link $script:videoLink
 	} catch {
-		Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします' -FgColor 'Green'
+		Write-ColorOutput 'TVerから情報を取得できませんでした。スキップします Err:10' -FgColor 'Green'
 		continue			#次回再度トライするためリストに追加せずに次のビデオへ
 	}
 
@@ -890,7 +899,7 @@ function getVideoInfo {
 		'origin'  = 'https://tver.jp';
 		'referer' = 'https://tver.jp/'
 	}
-	$local:tverVideoInfoURL = $local:tverVideoInfoBaseURL + $local:episodeID + '.json'
+	$local:tverVideoInfoURL = $local:tverVideoInfoBaseURL + $local:episodeID + '.json?v=7'
 	$local:videoInfo = (Invoke-RestMethod `
 			-Uri $local:tverVideoInfoURL `
 			-Method 'GET' `

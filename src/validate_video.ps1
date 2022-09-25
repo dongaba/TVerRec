@@ -44,7 +44,7 @@ try {
 	#----------------------------------------------------------------------
 	#設定ファイル読み込み
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		$script:sysFile = $(Convert-Path $(Join-Path $script:confDir 'system_setting_5.ps1'))
+		$script:sysFile = $(Join-Path $script:confDir 'system_setting_5.ps1')
 		. $script:sysFile
 		if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
 			$script:confFile = $(Convert-Path $(Join-Path $script:confDir 'user_setting_5.ps1'))
@@ -62,11 +62,11 @@ try {
 	#----------------------------------------------------------------------
 	#外部関数ファイルの読み込み
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		. $(Convert-Path (Join-Path $script:scriptRoot '.\functions\common_functions_5.ps1'))
-		. $(Convert-Path (Join-Path $script:scriptRoot '.\functions\tver_functions_5.ps1'))
+		. $(Convert-Path (Join-Path $script:scriptRoot '..\src\functions\common_functions_5.ps1'))
+		. $(Convert-Path (Join-Path $script:scriptRoot '..\src\functions\tver_functions_5.ps1'))
 	} else {
-		. $(Convert-Path (Join-Path $script:scriptRoot '.\functions\common_functions.ps1'))
-		. $(Convert-Path (Join-Path $script:scriptRoot '.\functions\tver_functions.ps1'))
+		. $(Convert-Path (Join-Path $script:scriptRoot '..\src\functions\common_functions.ps1'))
+		. $(Convert-Path (Join-Path $script:scriptRoot '..\src\functions\tver_functions.ps1'))
 	}
 
 	#----------------------------------------------------------------------
