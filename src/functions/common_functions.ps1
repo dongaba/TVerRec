@@ -910,7 +910,7 @@ function ShowProgess2Row {
 		)]
 		[Alias('ProgressText2')]
 		[String] $local:progressText2,
-		
+
 		[Parameter(
 			Mandatory = $false,
 			ValueFromPipeline = $false,
@@ -918,7 +918,7 @@ function ShowProgess2Row {
 		)]
 		[Alias('WorkDetail1')]
 		[String] $local:toastWorkDetail1,
-		
+
 		[Parameter(
 			Mandatory = $false,
 			ValueFromPipeline = $false,
@@ -926,7 +926,7 @@ function ShowProgess2Row {
 		)]
 		[Alias('WorkDetail2')]
 		[String] $local:toastWorkDetail2,
-		
+
 		[Parameter(
 			Mandatory = $false,
 			ValueFromPipeline = $false,
@@ -935,7 +935,7 @@ function ShowProgess2Row {
 		[ValidateSet('Short', 'Long')]
 		[Alias('Duration')]
 		[String] $local:toastDuration,
-		
+
 		[Parameter(
 			Mandatory = $false,
 			ValueFromPipeline = $false,
@@ -943,7 +943,7 @@ function ShowProgess2Row {
 		)]
 		[Alias('Silent')]
 		[Boolean] $local:toastSilent,
-		
+
 		[Parameter(
 			Mandatory = $true,
 			ValueFromPipeline = $false,
@@ -982,7 +982,7 @@ function UpdateProgess2Row {
 		)]
 		[Alias('ProgressActivity1')]
 		[String] $local:progressActivity1,
-		
+
 		[Parameter(
 			Mandatory = $false,
 			ValueFromPipeline = $false,
@@ -990,7 +990,7 @@ function UpdateProgess2Row {
 		)]
 		[Alias('CurrentProcessing1')]
 		[String] $local:currentProcessing1,
-		
+
 		[Parameter(
 			Mandatory = $true,
 			ValueFromPipeline = $false,
@@ -998,7 +998,7 @@ function UpdateProgess2Row {
 		)]
 		[Alias('Rate1')]
 		[String] $local:progressRatio1,
-		
+
 		[Parameter(
 			Mandatory = $false,
 			ValueFromPipeline = $false,
@@ -1006,7 +1006,7 @@ function UpdateProgess2Row {
 		)]
 		[Alias('SecRemaining1')]
 		[String] $local:secRemaining1,
-		
+
 		[Parameter(
 			Mandatory = $false,
 			ValueFromPipeline = $false,
@@ -1014,7 +1014,7 @@ function UpdateProgess2Row {
 		)]
 		[Alias('ProgressActivity2')]
 		[String] $local:progressActivity2,
-		
+
 		[Parameter(
 			Mandatory = $false,
 			ValueFromPipeline = $false,
@@ -1022,7 +1022,7 @@ function UpdateProgess2Row {
 		)]
 		[Alias('CurrentProcessing2')]
 		[String] $local:currentProcessing2,
-		
+
 		[Parameter(
 			Mandatory = $true,
 			ValueFromPipeline = $false,
@@ -1030,7 +1030,7 @@ function UpdateProgess2Row {
 		)]
 		[Alias('Rate2')]
 		[String] $local:progressRatio2,
-		
+
 		[Parameter(
 			Mandatory = $false,
 			ValueFromPipeline = $false,
@@ -1038,7 +1038,7 @@ function UpdateProgess2Row {
 		)]
 		[Alias('SecRemaining2')]
 		[String] $local:secRemaining2,
-		
+
 		[Parameter(
 			Mandatory = $true,
 			ValueFromPipeline = $false,

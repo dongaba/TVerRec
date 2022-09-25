@@ -1103,21 +1103,21 @@ function showVideoDebugInfo {
 		)]
 		[Alias('Season')]
 		[String] $local:videoSeason,
-		
+
 		[Parameter(
 			Mandatory = $false,
 			Position = 5
 		)]
 		[Alias('Title')]
 		[String] $local:videoTitle,
-		
+
 		[Parameter(
 			Mandatory = $false,
 			Position = 6
 		)]
 		[Alias('Path')]
 		[String] $local:videoFilePath,
-		
+
 		[Parameter(
 			Mandatory = $false,
 			Position = 7
