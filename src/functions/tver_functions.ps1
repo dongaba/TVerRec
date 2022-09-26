@@ -981,28 +981,28 @@ function getVideoFileName {
 	[OutputType([String])]
 	Param (
 		[Parameter(
-			Mandatory = $true,
+			Mandatory = $false,
 			Position = 0
 		)]
 		[Alias('Series')]
 		[String] $local:videoSeries,
 
 		[Parameter(
-			Mandatory = $true,
+			Mandatory = $false,
 			Position = 1
 		)]
 		[Alias('Season')]
 		[String] $local:videoSeason,
 
 		[Parameter(
-			Mandatory = $true,
+			Mandatory = $false,
 			Position = 2
 		)]
 		[Alias('Title')]
 		[String] $local:videoTitle,
 
 		[Parameter(
-			Mandatory = $true,
+			Mandatory = $false,
 			Position = 3
 		)]
 		[Alias('Date')]
