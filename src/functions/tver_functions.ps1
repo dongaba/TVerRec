@@ -893,25 +893,6 @@ function getVideoInfo {
 	$local:episodeID = $local:videoLink.Replace('/episodes/', '')
 
 	#----------------------------------------------------------------------
-	#番組説明
-	$local:tverVideoInfoBaseURL = 'https://statics.tver.jp/content/episode/'
-	$local:requestHeader = @{
-		'origin'  = 'https://tver.jp';
-		'referer' = 'https://tver.jp/'
-	}
-	$local:tverVideoInfoURL = $local:tverVideoInfoBaseURL + $local:episodeID + '.json?v=7'
-	$local:videoInfo = (Invoke-RestMethod `
-			-Uri $local:tverVideoInfoURL `
-			-Method 'GET' `
-			-Headers $local:requestHeader)
-
-	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		$script:descriptionText = [System.Text.Encoding]::UTF8.GetString([System.Text.Encoding]::GetEncoding('ISO-8859-1').GetBytes($local:videoInfo.Description))
-	} else {
-		$script:descriptionText = $(getNarrowChars ($local:videoInfo.Description).Replace('&amp;', '&')).Trim()
-	}
-
-	#----------------------------------------------------------------------
 	#番組説明以外
 	$local:tverVideoInfoBaseURL = 'https://platform-api.tver.jp/service/api/v1/callEpisode/'
 	$local:requestHeader = @{
@@ -954,9 +935,9 @@ function getVideoInfo {
 	#	$response.Result.Episode.Content.BroadcastDateLabel
 	$local:broadcastYMD = $null
 	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		$script:broadcastDate = $(getNarrowChars ([System.Text.Encoding]::UTF8.GetString([System.Text.Encoding]::GetEncoding('ISO-8859-1').GetBytes($local:videoInfo.BroadcastDateLabel))).Replace('ほか', '').Replace('放送分', '放送')).Trim()
+		$script:broadcastDate = $(getNarrowChars ([System.Text.Encoding]::UTF8.GetString([System.Text.Encoding]::GetEncoding('ISO-8859-1').GetBytes($local:response.Result.Episode.Content.BroadcastDateLabel))).Replace('ほか', '').Replace('放送分', '放送')).Trim()
 	} else {
-		$script:broadcastDate = $(getNarrowChars ($local:videoInfo.BroadcastDateLabel).Replace('ほか', '').Replace('放送分', '放送')).Trim()
+		$script:broadcastDate = $(getNarrowChars ($local:response.Result.Episode.Content.BroadcastDateLabel).Replace('ほか', '').Replace('放送分', '放送')).Trim()
 	}
 
 	if ($script:broadcastDate -match '([0-9]+)(月)([0-9]+)(日)(.+?)(放送)') {
@@ -967,6 +948,28 @@ function getVideoInfo {
 		if ((Get-Date).AddDays(+1) -lt $local:broadcastYMD) { $script:broadcastDate = (Get-Date).AddYears(-1).ToString('yyyy') + '年' }
 		else { $script:broadcastDate = (Get-Date).ToString('yyyy') + '年' }
 		$script:broadcastDate += $Matches[1].padleft(2, '0') + $Matches[2] + $Matches[3].padleft(2, '0') + $Matches[4] + $Matches[6]
+	}
+
+	#Version
+	$local:versionNum = $local:response.result.episode.content.version
+
+	#----------------------------------------------------------------------
+	#番組説明
+	$local:tverVideoInfoBaseURL = 'https://statics.tver.jp/content/episode/'
+	$local:requestHeader = @{
+		'origin'  = 'https://tver.jp';
+		'referer' = 'https://tver.jp/'
+	}
+	$local:tverVideoInfoURL = $local:tverVideoInfoBaseURL + $local:episodeID + '.json?v=' + $local:versionNum
+	$local:videoInfo = (Invoke-RestMethod `
+			-Uri $local:tverVideoInfoURL `
+			-Method 'GET' `
+			-Headers $local:requestHeader)
+
+	if ($PSVersionTable.PSEdition -eq 'Desktop') {
+		$script:descriptionText = [System.Text.Encoding]::UTF8.GetString([System.Text.Encoding]::GetEncoding('ISO-8859-1').GetBytes($local:videoInfo.Description))
+	} else {
+		$script:descriptionText = $(getNarrowChars ($local:videoInfo.Description).Replace('&amp;', '&')).Trim()
 	}
 
 }

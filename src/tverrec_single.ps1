@@ -115,6 +115,9 @@ checkLatestYtdl				#youtube-dlの最新化チェック
 checkLatestFfmpeg			#ffmpegの最新化チェック
 checkRequiredFile			#設定で指定したファイル・フォルダの存在チェック
 
+#処理
+$script:ignoreTitles = getIgnoreList		#ダウンロード対象外番組リストの読み込み
+getToken
 $local:keywordName = 'URL指定'
 
 #無限ループ
