@@ -182,7 +182,6 @@ foreach ($local:keywordName in $local:keywordNames) {
 		-SecRemaining2 '' `
 		-Group 'Bulk'
 
-
 	#----------------------------------------------------------------------
 	#個々のビデオダウンロードここから
 	foreach ($local:videoLink in $local:videoLinks) {
@@ -209,7 +208,6 @@ foreach ($local:keywordName in $local:keywordNames) {
 			-SecRemaining2 '' `
 			-Group 'Bulk'
 
-
 		#処理
 		Write-ColorOutput '----------------------------------------------------------------------'
 		Write-ColorOutput "[ $(trimTabSpace ($local:keywordName)) - $local:videoNum / $local:videoTotal ] をダウンロードします。 ($(getTimeStamp))"
@@ -217,7 +215,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 		#保存先ディレクトリの存在確認(稼働中に共有フォルダが切断された場合に対応)
 		if (Test-Path $script:downloadBaseDir -PathType Container) { }
-		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します' -FgColor 'Green' ; exit 1 }
+		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します' ; exit 1 }
 
 		#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 		waitTillYtdlProcessGetFewer $script:parallelDownloadFileNum
@@ -231,7 +229,6 @@ foreach ($local:keywordName in $local:keywordNames) {
 			-URL $local:videoPageURL `
 			-Link $local:videoLink
 
-		#		Start-Sleep -Seconds 1
 	}
 	#----------------------------------------------------------------------
 
