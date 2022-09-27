@@ -1,5 +1,15 @@
 ﻿# Change Log
 
+## [2.5.4](https://github.com/dongaba/TVerRec/releases/tag/v2.5.4)
+
+### 2.5.4 Added
+
+### 2.5.4 Changed
+
+- Powershell Desktopで放送日のパースに失敗する問題を修正
+
+### 2.5.4 Fixed
+
 ## [2.5.3](https://github.com/dongaba/TVerRec/releases/tag/v2.5.3)
 
 ### 2.5.3 Added

@@ -934,11 +934,7 @@ function getVideoInfo {
 	#放送日
 	#	$response.Result.Episode.Content.BroadcastDateLabel
 	$local:broadcastYMD = $null
-	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		$script:broadcastDate = $(getNarrowChars ([System.Text.Encoding]::UTF8.GetString([System.Text.Encoding]::GetEncoding('ISO-8859-1').GetBytes($local:response.Result.Episode.Content.BroadcastDateLabel))).Replace('ほか', '').Replace('放送分', '放送')).Trim()
-	} else {
-		$script:broadcastDate = $(getNarrowChars ($local:response.Result.Episode.Content.BroadcastDateLabel).Replace('ほか', '').Replace('放送分', '放送')).Trim()
-	}
+	$script:broadcastDate = $(getNarrowChars ($response.Result.Episode.Content.BroadcastDateLabel).Replace('ほか', '').Replace('放送分', '放送')).Trim()
 
 	if ($script:broadcastDate -match '([0-9]+)(月)([0-9]+)(日)(.+?)(放送)') {
 		#当年だと仮定して放送日を抽出
@@ -950,11 +946,10 @@ function getVideoInfo {
 		$script:broadcastDate += $Matches[1].padleft(2, '0') + $Matches[2] + $Matches[3].padleft(2, '0') + $Matches[4] + $Matches[6]
 	}
 
-	#Version
-	$local:versionNum = $local:response.result.episode.content.version
 
 	#----------------------------------------------------------------------
 	#番組説明
+	$local:versionNum = $local:response.result.episode.content.version
 	$local:tverVideoInfoBaseURL = 'https://statics.tver.jp/content/episode/'
 	$local:requestHeader = @{
 		'origin'  = 'https://tver.jp';
