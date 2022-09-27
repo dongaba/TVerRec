@@ -28,7 +28,7 @@
 
 - 一部変数の展開に失敗していたのを修正
 
-- ## [2.5.1](https://github.com/dongaba/TVerRec/releases/tag/v2.5.1)
+## [2.5.1](https://github.com/dongaba/TVerRec/releases/tag/v2.5.1)
 
 ### 2.5.1 Added
 
