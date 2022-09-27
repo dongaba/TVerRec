@@ -1189,6 +1189,7 @@ function executeYtdl {
 	$local:ytdlArgs += ' --embed-thumbnail'
 	$local:ytdlArgs += ' --embed-subs'
 	$local:ytdlArgs += ' --embed-metadata'
+	$local:ytdlArgs += ' --xattrs'
 	$local:ytdlArgs += ' --embed-chapters'
 	$local:ytdlArgs += " --paths $local:saveDir"
 	$local:ytdlArgs += " --paths $local:tmpDir"

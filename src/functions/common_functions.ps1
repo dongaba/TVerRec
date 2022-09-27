@@ -88,6 +88,7 @@ function getNarrowChars {
 	[CmdletBinding()]
 	[OutputType([String])]
 	Param ([String]$local:text)		#変換元テキストを引数に指定
+
 	$local:wideKanaDaku = 'ガギグゲゴザジズゼゾダヂヅデドバビブベボ'
 	$local:narrowKanaDaku = 'ｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾊﾋﾌﾍﾎ'
 	$local:narrowWideKanaHanDaku = 'パピプペポ'
@@ -98,8 +99,8 @@ function getNarrowChars {
 	$local:narrowNum = '0123456789'
 	$local:wideAlpha = 'ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ'
 	$local:narrowAlpha = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-	$local:wideSimbol = '＠＃＄％＾＆＊－＋＿／［］｛｝（）＜＞　￥＼”；：'
-	$local:narrowSimbol = '@#$%^&*-+_/[]{}()<> \\";:'
+	$local:wideSimbol = '＠＃＄％＾＆＊－＋＿／［］｛｝（）＜＞　￥＼”；：．，'
+	$local:narrowSimbol = '@#$%^&*-+_/[]{}()<> \\";:.,'
 	for ($i = 0; $i -lt $local:wideKanaDaku.Length; $i++) {
 		$local:text = $local:text.Replace($local:narrowKanaDaku[$i] + 'ﾞ', $local:wideKanaDaku[$i])
 	}
@@ -128,6 +129,7 @@ function getSpecialCharacterReplaced {
 	[CmdletBinding()]
 	[OutputType([String])]
 	Param ([String]$local:text)		#変換元テキストを引数に指定
+
 	$local:text = $local:text.Replace('&amp;', '&')
 	$local:text = $local:text.Replace('"', '')
 	$local:text = $local:text.Replace('“', '')
@@ -147,6 +149,7 @@ function trimTabSpace {
 	[CmdletBinding()]
 	[OutputType([String])]
 	Param ([String]$local:text)		#変換元テキストを引数に指定
+
 	return $local:text.Replace("`t", ' ').Replace('  ', ' ')
 }
 
@@ -156,6 +159,7 @@ function trimTabSpace {
 function removeTrailingCommentsFromConfigFile {
 	[OutputType([String])]
 	Param ([String]$local:text)		#変換元テキストを引数に指定
+
 	return $local:text.Split("`t")[0].Split(' ')[0].Split('#')[0]
 }
 
