@@ -1,12 +1,30 @@
 ﻿# Change Log
 
+## [2.5.5 beta]
+
+### 2.5.5 Added
+
+### 2.5.5 Changed
+
+- TVerRec のバージョンアップチェック機能を改良
+- コンソールウィンドウ内のプログレスバーを廃止
+- コンソール表示を簡素化
+- PowerShell Core の存在チェックを改良(Microsoft Store 版も判定可能に)
+- ソースコードのリファクタリング
+- ビデオ移動時に空フォルダを削除しない仕様に変更
+
+### 2.5.5 Fixed
+
+- ゴミファイルの削除が不完全な場合がある問題を修正
+- 無視リストに入っている動画がダウンロードされることがある問題を修正
+
 ## [2.5.4](https://github.com/dongaba/TVerRec/releases/tag/v2.5.4)
 
 ### 2.5.4 Added
 
 ### 2.5.4 Changed
 
-- Powershell Desktopで放送日のパースに失敗する問題を修正
+- Powershell Desktop で放送日のパースに失敗する問題を修正
 
 ### 2.5.4 Fixed
 

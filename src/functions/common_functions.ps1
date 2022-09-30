@@ -177,35 +177,35 @@ function deleteFiles {
 			Position = 0
 		)]
 		[Alias('Path')]
-		[System.IO.FileInfo] $local:Path,
+		[System.IO.FileInfo] $local:path,
 
 		[Parameter(
-			Mandatory = $false,
+			Mandatory = $true,
 			ValueFromPipeline = $false,
 			ValueFromPipelineByPropertyName = $false,
 			Position = 0
 		)]
 		[Alias('Conditions')]
-		[Object] $local:Conditions
+		[Object] $local:conditions,
+
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false,
+			Position = 0
+		)]
+		[Alias('DatePast')]
+		[int32] $local:datePast
 	)
 
 	try {
-		Write-ColorOutput "$($local:Path)を処理中"
-		$local:delTargets = @()
-		foreach ($local:filter in $local:Conditions.Split(',').Trim()) {
-			$local:delTargets += Get-ChildItem `
-				-LiteralPath $local:Path `
-				-Recurse -File -Filter $local:filter
+		foreach ($local:condition in $local:conditions.Split(',').Trim()) {
+			Write-ColorOutput "$($local:path) - $($local:condition)"
+			Get-ChildItem -LiteralPath $local:path -Recurse -File -Filter $local:condition `
+			| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays($local:datePast) } `
+			| Remove-Item -Force -ErrorAction SilentlyContinue
 		}
-		if ($null -ne $local:delTargets) {
-			foreach ($local:delTarget in $local:delTargets) {
-				Write-ColorOutput "$($local:delTarget.FullName)を削除します"
-				Remove-Item `
-					-LiteralPath $local:delTarget.FullName `
-					-Force -ErrorAction SilentlyContinue
-			}
-		} else { Write-ColorOutput '削除対象はありませんでした' -FgColor 'DarkGray' }
-	} catch { Write-ColorOutput '削除できないファイルがありました' -FgColor 'Green' }
+	} catch { Write-ColorOutput '　削除できないファイルがありました' -FgColor 'Green' }
 }
 
 #----------------------------------------------------------------------
@@ -338,7 +338,16 @@ function Write-ColorOutput {
 			Position = 2
 		)]
 		[Alias('BgColor')]
-		[ConsoleColor] $local:backgroundColor
+		[ConsoleColor] $local:backgroundColor,
+
+		[Parameter(
+			Mandatory = $false,
+			ValueFromPipeline = $false,
+			ValueFromPipelineByPropertyName = $false,
+			Position = 4
+		)]
+		[Alias('NoNewLine')]
+		[Boolean] $local:noLF
 	)
 
 	# Save previous colors
@@ -352,7 +361,8 @@ function Write-ColorOutput {
 	# Always write (if we want just a NewLine)
 	if ($null -eq $local:text) { $local:text = '' }
 
-	Write-Output $local:text
+	if ($local:noLF -eq $true) { Write-Host -NoNewline $local:text }
+	else { Write-Host $local:text }
 
 	# Restore previous colors
 	$host.UI.RawUI.ForegroundColor = $local:prevForegroundColor
@@ -1133,13 +1143,8 @@ function goAnal {
 	$local:gaBody += '} } ] }'
 
 	$progressPreference = 'silentlyContinue'
-	try { Invoke-RestMethod `
-			-Uri "$($local:gaURL)?$($local:gaKey)&$($local:gaID)" `
-			-Method 'POST' `
-			-Headers $local:gaHeaders `
-			-Body $local:gaBody `
-		| Out-Null
-	} catch { Write-Debug 'Failed to collect statistics' }
+	try { Invoke-RestMethod -Uri "$($local:gaURL)?$($local:gaKey)&$($local:gaID)" -Method 'POST' -Headers $local:gaHeaders -Body $local:gaBody | Out-Null }
+	catch { Write-Debug 'Failed to collect statistics' }
 	finally { $progressPreference = 'Continue' }
 
 }

@@ -77,22 +77,22 @@ try {
 		$script:devConfFile = $(Join-Path $script:devDir 'dev_setting_5.ps1')
 		if (Test-Path $script:devFunctionFile) {
 			. $script:devFunctionFile
-			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
+			Write-ColorOutput '開発ファイル用共通関数ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
 		}
 		if (Test-Path $script:devConfFile) {
 			. $script:devConfFile
-			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
+			Write-ColorOutput '開発ファイル用設定ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
 		}
 	} else {
 		$script:devFunctionFile = $(Join-Path $script:devDir 'dev_funcitons.ps1')
 		$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.ps1')
 		if (Test-Path $script:devFunctionFile) {
 			. $script:devFunctionFile
-			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
+			Write-ColorOutput '開発ファイル用共通関数ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
 		}
 		if (Test-Path $script:devConfFile) {
 			. $script:devConfFile
-			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
+			Write-ColorOutput '開発ファイル用設定ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
 		}
 	}
 } catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
@@ -101,10 +101,16 @@ try {
 #メイン処理
 Write-ColorOutput ''
 Write-ColorOutput '===========================================================================' -FgColor 'Cyan'
-Write-ColorOutput '---------------------------------------------------------------------------' -FgColor 'Cyan'
-Write-ColorOutput "  $script:appName : TVerビデオダウンローダ                                 " -FgColor 'Cyan'
-Write-ColorOutput "                      個別ダウンロード版 version. $script:appVersion       " -FgColor 'Cyan'
-Write-ColorOutput '---------------------------------------------------------------------------' -FgColor 'Cyan'
+Write-ColorOutput '                                                                           ' -FgColor 'Cyan'
+Write-ColorOutput '        ████████ ██    ██ ███████ ██████  ██████  ███████  ██████          ' -FgColor 'Cyan'
+Write-ColorOutput '           ██    ██    ██ ██      ██   ██ ██   ██ ██      ██               ' -FgColor 'Cyan'
+Write-ColorOutput '           ██    ██    ██ █████   ██████  ██████  █████   ██               ' -FgColor 'Cyan'
+Write-ColorOutput '           ██     ██  ██  ██      ██   ██ ██   ██ ██      ██               ' -FgColor 'Cyan'
+Write-ColorOutput '           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          ' -FgColor 'Cyan'
+Write-ColorOutput '                                                                           ' -FgColor 'Cyan'
+Write-ColorOutput "        $script:appName : TVerビデオダウンローダ                           " -FgColor 'Cyan'
+Write-ColorOutput "                             個別ダウンロード版 version. $script:appVersion" -FgColor 'Cyan'
+Write-ColorOutput '                                                                           ' -FgColor 'Cyan'
 Write-ColorOutput '===========================================================================' -FgColor 'Cyan'
 Write-ColorOutput ''
 
@@ -116,9 +122,9 @@ checkLatestFfmpeg			#ffmpegの最新化チェック
 checkRequiredFile			#設定で指定したファイル・フォルダの存在チェック
 
 #処理
+$local:keywordName = 'URL指定'
 $script:ignoreTitles = getIgnoreList		#ダウンロード対象外番組リストの読み込み
 getToken
-$local:keywordName = 'URL指定'
 
 #無限ループ
 while ($true) {

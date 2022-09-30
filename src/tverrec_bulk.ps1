@@ -77,22 +77,22 @@ try {
 		$script:devConfFile = $(Join-Path $script:devDir 'dev_setting_5.ps1')
 		if (Test-Path $script:devFunctionFile) {
 			. $script:devFunctionFile
-			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
+			Write-ColorOutput '開発ファイル用共通関数ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
 		}
 		if (Test-Path $script:devConfFile) {
 			. $script:devConfFile
-			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
+			Write-ColorOutput '開発ファイル用設定ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
 		}
 	} else {
 		$script:devFunctionFile = $(Join-Path $script:devDir 'dev_funcitons.ps1')
 		$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.ps1')
 		if (Test-Path $script:devFunctionFile) {
 			. $script:devFunctionFile
-			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
+			Write-ColorOutput '開発ファイル用共通関数ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
 		}
 		if (Test-Path $script:devConfFile) {
 			. $script:devConfFile
-			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
+			Write-ColorOutput '開発ファイル用設定ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
 		}
 	}
 } catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
@@ -101,10 +101,16 @@ try {
 #メイン処理
 Write-ColorOutput ''
 Write-ColorOutput '===========================================================================' -FgColor 'Cyan'
-Write-ColorOutput '---------------------------------------------------------------------------' -FgColor 'Cyan'
-Write-ColorOutput "  $script:appName : TVerビデオダウンローダ                                 " -FgColor 'Cyan'
-Write-ColorOutput "                      一括ダウンロード版 version. $script:appVersion       " -FgColor 'Cyan'
-Write-ColorOutput '---------------------------------------------------------------------------' -FgColor 'Cyan'
+Write-ColorOutput '                                                                           ' -FgColor 'Cyan'
+Write-ColorOutput '        ████████ ██    ██ ███████ ██████  ██████  ███████  ██████          ' -FgColor 'Cyan'
+Write-ColorOutput '           ██    ██    ██ ██      ██   ██ ██   ██ ██      ██               ' -FgColor 'Cyan'
+Write-ColorOutput '           ██    ██    ██ █████   ██████  ██████  █████   ██               ' -FgColor 'Cyan'
+Write-ColorOutput '           ██     ██  ██  ██      ██   ██ ██   ██ ██      ██               ' -FgColor 'Cyan'
+Write-ColorOutput '           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          ' -FgColor 'Cyan'
+Write-ColorOutput '                                                                           ' -FgColor 'Cyan'
+Write-ColorOutput "        $script:appName : TVerビデオダウンローダ                           " -FgColor 'Cyan'
+Write-ColorOutput "                             一括ダウンロード版 version. $script:appVersion" -FgColor 'Cyan'
+Write-ColorOutput '                                                                           ' -FgColor 'Cyan'
 Write-ColorOutput '===========================================================================' -FgColor 'Cyan'
 Write-ColorOutput ''
 
@@ -116,14 +122,13 @@ checkLatestFfmpeg			#ffmpegの最新化チェック
 checkRequiredFile			#設定で指定したファイル・フォルダの存在チェック
 
 #処理
-$local:keywordNames = loadKeywordList			#ダウンロード対象ジャンルリストの読み込み
+$local:keywordNames = loadKeywordList		#ダウンロード対象ジャンルリストの読み込み
 $script:ignoreTitles = getIgnoreList		#ダウンロード対象外番組リストの読み込み
 getToken
 
 $local:keywordNum = 0						#キーワードの番号
-if ($script:keywordNames -is [array]) {
-	$local:keywordTotal = $script:keywordNames.Length	#トータルキーワード数
-} else { $local:keywordTotal = 1 }
+if ($script:keywordNames -is [array]) { $local:keywordTotal = $script:keywordNames.Length }		#トータルキーワード数
+else { $local:keywordTotal = 1 }
 
 #進捗表示
 ShowProgess2Row `
@@ -144,9 +149,9 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 	#ジャンルページチェックタイトルの表示
 	Write-ColorOutput ''
-	Write-ColorOutput '==========================================================================='
-	Write-ColorOutput "【 $(trimTabSpace ($local:keywordName)) 】 のダウンロードを開始します。"
-	Write-ColorOutput '==========================================================================='
+	Write-ColorOutput '----------------------------------------------------------------------'
+	Write-ColorOutput "$(trimTabSpace ($local:keywordName))"
+	Write-ColorOutput '----------------------------------------------------------------------'
 
 	#処理
 	$local:videoLinks = getVideoLinksFromKeyword ($local:keywordName)
@@ -160,12 +165,8 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#処理時間の推計
 	$local:secElapsed = (Get-Date) - $local:totalStartTime
 	$local:secRemaining1 = -1
-	if ($local:keywordNum -ne 0) {
-		$local:secRemaining1 = ($local:secElapsed.TotalSeconds / $local:keywordNum) * ($local:keywordTotal - $local:keywordNum)
-		$local:progressRatio1 = $($local:keywordNum / $local:keywordTotal)
-	} else {
-		$local:progressRatio1 = 0
-	}
+	if ($local:keywordNum -ne 0) { $local:secRemaining1 = ($local:secElapsed.TotalSeconds / $local:keywordNum) * ($local:keywordTotal - $local:keywordNum) }
+	$local:progressRatio1 = $($local:keywordNum / $local:keywordTotal)
 	$local:progressRatio2 = 0
 
 	$local:keywordNum = $local:keywordNum + 1		#キーワード数のインクリメント
@@ -184,17 +185,18 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 	#----------------------------------------------------------------------
 	#個々のビデオダウンロードここから
+	if ($null -eq $local:videoLinks ) { Write-ColorOutput '　対象ビデオがありませんでした。' -FgColor 'DarkGray' }
 	foreach ($local:videoLink in $local:videoLinks) {
 		#いろいろ初期化
 		$local:videoPageURL = ''
 		$local:videoNum = $local:videoNum + 1		#ジャンル内のビデオ番号のインクリメント
 
+		#保存先ディレクトリの存在確認(稼働中に共有フォルダが切断された場合に対応)
+		if (Test-Path $script:downloadBaseDir -PathType Container) { }
+		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します' ; exit 1 }
+
 		#進捗率の計算
-		if ($local:keywordNum -ne 0) {
-			$local:progressRatio2 = $($local:videoNum / $local:videoTotal)
-		} else {
-			$local:progressRatio2 = 0
-		}
+		$local:progressRatio2 = $($local:videoNum / $local:videoTotal)
 
 		#進捗更新
 		UpdateProgess2Row `
@@ -209,19 +211,11 @@ foreach ($local:keywordName in $local:keywordNames) {
 			-Group 'Bulk'
 
 		#処理
-		Write-ColorOutput '----------------------------------------------------------------------'
-		Write-ColorOutput "[ $(trimTabSpace ($local:keywordName)) - $local:videoNum / $local:videoTotal ] をダウンロードします。 ($(getTimeStamp))"
-		Write-ColorOutput '----------------------------------------------------------------------'
-
-		#保存先ディレクトリの存在確認(稼働中に共有フォルダが切断された場合に対応)
-		if (Test-Path $script:downloadBaseDir -PathType Container) { }
-		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します' ; exit 1 }
+		$local:videoPageURL = 'https://tver.jp' + $local:videoLink
+		Write-ColorOutput "$($local:videoNum)/$($local:videoTotal) - $local:videoPageURL" -NoNewline $true
 
 		#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 		waitTillYtdlProcessGetFewer $script:parallelDownloadFileNum
-
-		$local:videoPageURL = 'https://tver.jp' + $local:videoLink
-		Write-ColorOutput $local:videoPageURL
 
 		#TVerビデオダウンロードのメイン処理
 		downloadTVerVideo `

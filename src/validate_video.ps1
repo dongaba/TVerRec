@@ -76,22 +76,22 @@ try {
 		$script:devConfFile = $(Join-Path $script:devDir 'dev_setting_5.ps1')
 		if (Test-Path $script:devFunctionFile) {
 			. $script:devFunctionFile
-			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
+			Write-ColorOutput '開発ファイル用共通関数ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
 		}
 		if (Test-Path $script:devConfFile) {
 			. $script:devConfFile
-			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
+			Write-ColorOutput '開発ファイル用設定ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
 		}
 	} else {
 		$script:devFunctionFile = $(Join-Path $script:devDir 'dev_funcitons.ps1')
 		$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.ps1')
 		if (Test-Path $script:devFunctionFile) {
 			. $script:devFunctionFile
-			Write-ColorOutput '　開発ファイル用共通関数ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
+			Write-ColorOutput '開発ファイル用共通関数ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
 		}
 		if (Test-Path $script:devConfFile) {
 			. $script:devConfFile
-			Write-ColorOutput '　開発ファイル用設定ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
+			Write-ColorOutput '開発ファイル用設定ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
 		}
 	}
 } catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
@@ -109,6 +109,7 @@ checkRequiredFile					#設定で指定したファイル・フォルダの存在
 Write-ColorOutput '----------------------------------------------------------------------'
 Write-ColorOutput '30日以上前に処理したものはリストから削除します'
 Write-ColorOutput '----------------------------------------------------------------------'
+Write-ColorOutput ''
 #進捗表示
 ShowProgressToast `
 	-Text1 '動画のチェック中' `
@@ -125,6 +126,7 @@ purgeDB -RetentionPeriod 30				#30日以上前に処理したものはリスト�
 Write-ColorOutput '----------------------------------------------------------------------'
 Write-ColorOutput '重複レコードを削除します'
 Write-ColorOutput '----------------------------------------------------------------------'
+Write-ColorOutput ''
 #進捗表示
 ShowProgressToast `
 	-Text1 '動画のチェック中' `
@@ -146,7 +148,7 @@ if ($script:disableValidation -eq $true) {
 #======================================================================
 #録画リストからビデオチェックが終わっていないものを読み込み
 Write-ColorOutput '----------------------------------------------------------------------'
-Write-ColorOutput '録画リストからチェックが終わっていないビデオを検索します'
+Write-ColorOutput 'チェックが終わっていないビデオをチェックします'
 Write-ColorOutput '----------------------------------------------------------------------'
 try {
 	#ロックファイルをロック
@@ -155,39 +157,28 @@ try {
 		Start-Sleep -Seconds 1
 	}
 	#ファイル操作
-	$local:videoLists = Import-Csv $script:listFilePath -Encoding UTF8 `
-	| Where-Object { $_.videoValidated -eq '0' } `
-	| Where-Object { $_.videoPath -ne '-- IGNORED --' } `
-	| Select-Object 'videoPath'
+	$local:videoLists = (
+		Import-Csv $script:listFilePath -Encoding UTF8 `
+		| Where-Object { $_.videoValidated -eq '0' } `
+		| Where-Object { $_.videoPath -ne '-- IGNORED --' } `
+		| Select-Object 'videoPath'
+	)
 } catch { Write-ColorOutput 'リストの読み込みに失敗しました' -FgColor 'Green'
 } finally { $null = fileUnlock $script:lockFilePath }
 
 
 if ($null -eq $local:videoLists) {
-	#======================================================================
 	#チェックする動画なし
 	Write-ColorOutput '----------------------------------------------------------------------'
 	Write-ColorOutput 'すべてのビデオをチェック済みです'
 	Write-ColorOutput '----------------------------------------------------------------------'
 } else {
-	#======================================================================
 	#動画ファイルをチェック
-	Write-ColorOutput '----------------------------------------------------------------------'
-	Write-ColorOutput '以下のビデオをチェックします'
-	Write-ColorOutput '----------------------------------------------------------------------'
-
-	#----------------------------------------------------------------------
 	$local:validateTotal = 0
-	foreach ($local:videoList in $local:videoLists.videoPath) {
-		$local:videoFileRelativePath = $local:videoList
-		$local:validateTotal = $local:validateTotal + 1
-		Write-ColorOutput "$local:validateTotal 本目: $local:videoFileRelativePath"
-	}
-	#----------------------------------------------------------------------
+	$local:validateTotal = $local:videoLists.Length
 
 	#ffmpegのデコードオプションの設定
 	if ($script:forceSoftwareDecodeFlag -eq $true ) {
-		#ソフトウェアデコードを強制する場合
 		$local:decodeOption = ''
 	} else {
 		if ($script:ffmpegDecodeOption -ne '') {
@@ -202,10 +193,6 @@ if ($null -eq $local:videoLists) {
 	}
 
 	#進捗表示
-	Write-Progress -Id 1 `
-		-Activity '動画のチェック中' `
-		-PercentComplete 0 `
-		-Status '残り時間計算中'
 	ShowProgressToast `
 		-Text1 '動画のチェック中' `
 		-Text2 '　処理3/4 - 動画を検証' `
@@ -220,6 +207,8 @@ if ($null -eq $local:videoLists) {
 	$local:totalStartTime = Get-Date
 	$local:validateNum = 0
 	foreach ($local:videoList in $local:videoLists.videoPath) {
+		$local:videoFileRelativePath = $local:videoList
+
 		#処理時間の推計
 		$local:secElapsed = (Get-Date) - $local:totalStartTime
 		$local:secRemaining = -1
@@ -234,11 +223,6 @@ if ($null -eq $local:videoLists) {
 		$local:validateNum = $local:validateNum + 1
 
 		#進捗表示
-		Write-Progress -Id 1 `
-			-Activity $local:validateNum/$local:validateTotal `
-			-PercentComplete $($local:progressRatio * 100) `
-			-Status $local:videoFileRelativePath `
-			-SecondsRemaining $local:secRemaining
 		UpdateProgessToast `
 			-Title $local:videoFileRelativePath `
 			-Rate $local:progressRatio `
@@ -248,12 +232,10 @@ if ($null -eq $local:videoLists) {
 			-Group 'Validate'
 
 		#処理
-		$local:videoFileRelativePath = $local:videoList
-
 		if (Test-Path $script:downloadBaseDir -PathType Container) { }
 		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' -FgColor 'Green' ; exit 1 }
 
-		Write-ColorOutput "$($local:videoFileRelativePath)をチェックします"
+		Write-ColorOutput "$($local:validateNum)/$($local:validateTotal) - $($local:videoFileRelativePath)"
 		checkVideo `
 			-DecodeOption $local:decodeOption `
 			-Path $local:videoFileRelativePath		#ビデオの整合性チェック
@@ -267,6 +249,7 @@ if ($null -eq $local:videoLists) {
 Write-ColorOutput '----------------------------------------------------------------------'
 Write-ColorOutput '録画リストからチェックが終わっていないビデオのステータスを変更します'
 Write-ColorOutput '----------------------------------------------------------------------'
+Write-ColorOutput ''
 #進捗表示
 ShowProgressToast `
 	-Text1 '動画のチェック中' `
@@ -289,8 +272,7 @@ try {
 	foreach ($local:uncheckedVido in $(($local:videoLists).Where({ $_.videoValidated -eq 2 }))) {
 		$local:uncheckedVido.videoValidated = '0'
 	}
-	$local:videoLists `
-	| Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
+	$local:videoLists | Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
 } catch { Write-ColorOutput 'リストの更新に失敗しました' -FgColor 'Green'
 } finally { $null = fileUnlock $script:lockFilePath }
 

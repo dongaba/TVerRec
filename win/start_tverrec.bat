@@ -49,7 +49,9 @@ echo %myPID% > %PIDFile% 2> nul
 	rem 文字コードをWindows PowerShell用にUTF8-BOMなしファイルを作成する
 	powershell -Command "$allPosh5Files = @(Get-ChildItem -Path '../' -Recurse -File -Filter '*_5.ps1' ).FullName ; foreach ($posh5File in $allPosh5Files) { Remove-Item $posh5File -Force }" 2> nul
 
-	if exist "C:\Program Files\PowerShell\7\pwsh.exe" (
+	title TVerRec - Downloading
+	where /Q pwsh
+	if %ERRORLEVEL% == 0 (
 		pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\tverrec_bulk.ps1
 	) else (
 		powershell -Command "$allPoshFiles = @(Get-ChildItem -Path '../' -Recurse -File -Filter '*.ps1' ).FullName ; foreach ($poshFile in $allPoshFiles) { $posh5File = $poshFile.Replace('.ps1' , '_5.ps1'); Get-Content -Encoding:utf8 $poshFile | Out-File -Encoding:utf8 $posh5File -Force }" 2>&1
@@ -71,22 +73,31 @@ echo %myPID% > %PIDFile% 2> nul
 
 	where /Q pwsh
 	if %ERRORLEVEL% == 0 (
+		title TVerRec - Deleting
 		pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\delete_trash.ps1
+		title TVerRec - Validating
 		pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\validate_video.ps1
 		pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\validate_video.ps1
+		title TVerRec - Moving
 		pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\move_video.ps1
+		title TVerRec - Deleting
 		pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\delete_trash.ps1
 	) else (
+		title TVerRec - Deleting
 		powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\delete_trash_5.ps1
+		title TVerRec - Validating
 		powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\validate_video_5.ps1
 		powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\validate_video_5.ps1
+		title TVerRec - Moving
 		powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\move_video_5.ps1
+		title TVerRec - Deleting
 		powershell -NoProfile -ExecutionPolicy Unrestricted ..\src\delete_trash_5.ps1
 	)
 
 	rem Windows PowerShell用に作成したUTF8-BOMなしファイルを削除する
 	powershell -Command "$allPosh5Files = @(Get-ChildItem -Path '../' -Recurse -File -Filter '*_5.ps1' ).FullName ; foreach ($posh5File in $allPosh5Files) { Remove-Item $posh5File -Force }" 2> nul
 
+	title TVerRec
 	echo 終了するには Y と入力してください。何も入力しなければ処理を継続します。
 
 	choice /C YN /T %sleepTime% /D N /M "%sleepTime%秒待機します..."

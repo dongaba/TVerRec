@@ -146,9 +146,3 @@ else { $script:ffmpegPath = $(Join-Path $script:binDir 'ffmpeg') }
 if ($script:isWin) { $script:ffprobePath = $(Join-Path $script:binDir 'ffprobe.exe') }
 else { $script:ffprobePath = $(Join-Path $script:binDir 'ffprobe') }
 
-#プログレスバーの表示形式
-#$PSStyle.Progress.View = 'Classic'
-if ($PSVersionTable.PSEdition -ne 'Desktop') {
-	$PSStyle.Progress.MaxWidth = 70
-	$PSStyle.Progress.Style = "`e[38;5;123m"
-}

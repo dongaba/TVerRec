@@ -57,53 +57,42 @@ try { $local:latestRawVersion = Invoke-WebRequest -Uri $local:releases }
 catch { Write-ColorOutput 'ffmpegの最新バージョンを特定できませんでした' -FgColor 'Green' ; return }
 $local:latestVersion = $([String]$local:latestRawVersion.rawcontent).remove(0, $([String]$local:latestRawVersion.rawcontent).LastIndexOf("`n") + 1)
 
-Write-ColorOutput "ffmpeg current: $local:ffmpegCurrentVersion"
-Write-ColorOutput "ffmpeg latest: $local:latestVersion"
-
 #ffmpegのダウンロード
 if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 	Write-ColorOutput 'ffmpegは最新です。 '
+	Write-ColorOutput "　ffmpeg current: $local:ffmpegCurrentVersion"
+	Write-ColorOutput "　ffmpeg latest: $local:latestVersion"
 	Write-ColorOutput ''
 } else {
 	if ($script:isWin -eq $false) {
 		Write-ColorOutput '自動アップデートはWindowsでのみ動作します。' -FgColor 'Green'
 	} else {
+		#ダウンロード
 		try {
+			$local:ffmpegZipLink = 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip'
+			Write-ColorOutput "ffmpegをダウンロードします。 $local:ffmpegZipLink"
+			$local:ffmpegZipFileLocation = $(Join-Path $local:ffmpegDir 'ffmpeg-release-essentials.zip')
+			Invoke-WebRequest -Uri $local:ffmpegZipLink -OutFile $local:ffmpegZipFileLocation
+		} catch { Write-ColorOutput 'ffmpegのダウンロードに失敗しました' -FgColor 'Green' }
 
-			#ダウンロード
-			try {
-				$local:ffmpegZipLink = 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip'
-				Write-ColorOutput "ffmpegをダウンロードします。 $local:ffmpegZipLink"
-				$local:ffmpegZipFileLocation = $(Join-Path $local:ffmpegDir 'ffmpeg-release-essentials.zip')
-				Invoke-WebRequest -Uri $local:ffmpegZipLink -OutFile $local:ffmpegZipFileLocation
-			} catch { Write-ColorOutput 'ffmpegのダウンロードに失敗しました' -FgColor 'Green' }
+		#展開
+		try {
+			$local:extractedDir = $(Join-Path $script:scriptRoot $local:ffmpegRelativeDir)
+			Expand-Archive $local:ffmpegZipFileLocation -DestinationPath $local:extractedDir
+		} catch { Write-ColorOutput 'ffmpegの展開に失敗しました' -FgColor 'Green' }
 
-			#展開
-			try {
-				$local:extractedDir = $(Join-Path $script:scriptRoot $local:ffmpegRelativeDir)
-				Expand-Archive $local:ffmpegZipFileLocation -DestinationPath $local:extractedDir
-			} catch { Write-ColorOutput 'ffmpegの展開に失敗しました' -FgColor 'Green' }
+		#配置
+		try {
+			$local:extractedDir = $local:extractedDir + '\ffmpeg-*-essentials_build'
+			$local:extractedFiles = $local:extractedDir + '\bin\*.exe'
+			Move-Item $local:extractedFiles $(Join-Path $script:scriptRoot $local:ffmpegRelativeDir) -Force
+		} catch { Write-ColorOutput 'ffmpegの配置に失敗しました' -FgColor 'Green' }
 
-			#配置
-			try {
-				$local:extractedDir = $local:extractedDir + '\ffmpeg-*-essentials_build'
-				$local:extractedFiles = $local:extractedDir + '\bin\*.exe'
-				Move-Item $local:extractedFiles $(Join-Path $script:scriptRoot $local:ffmpegRelativeDir) -Force
-			} catch { Write-ColorOutput 'ffmpegの配置に失敗しました' -FgColor 'Green' }
-
-			#ゴミ掃除
-			try {
-				Remove-Item `
-					-Path $local:extractedDir `
-					-Force -Recurse -ErrorAction SilentlyContinue
-			} catch { Write-ColorOutput '中間フォルダの削除に失敗しました' -FgColor 'Green' }
-			try {
-				Remove-Item `
-					-LiteralPath $local:ffmpegZipFileLocation `
-					-Force -ErrorAction SilentlyContinue
-			} catch { Write-ColorOutput '中間ファイルの削除に失敗しました' -FgColor 'Green' }
-
-		} catch { Write-ColorOutput 'ffmpegの更新に失敗しました' -FgColor 'Green' }
+		#ゴミ掃除
+		try { Remove-Item -Path $local:extractedDir -Force -Recurse -ErrorAction SilentlyContinue }
+		catch { Write-ColorOutput '中間フォルダの削除に失敗しました' -FgColor 'Green' }
+		try { Remove-Item -LiteralPath $local:ffmpegZipFileLocation -Force -ErrorAction SilentlyContinue }
+		catch { Write-ColorOutput '中間ファイルの削除に失敗しました' -FgColor 'Green' }
 
 		#バージョンチェック
 		try {
