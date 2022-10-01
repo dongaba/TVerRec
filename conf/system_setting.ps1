@@ -119,7 +119,7 @@ $script:imgDir = $(Join-Path $scriptRoot '..\img')
 $script:toastAppLogo = Convert-Path (Join-Path $script:imgDir 'TVerRec-Toast.png')
 
 #ダウンロード対象ジャンルリストのパス
-$script:keywordFileSamplePath = $(Join-Path $script:confDir 'keyword.sampleconf')
+$script:keywordFileSamplePath = $(Join-Path $script:confDir 'keyword.sample.conf')
 $script:keywordFilePath = $(Join-Path $script:confDir 'keyword.conf')
 
 #ダウンロード対象外ビデオリストのパス
