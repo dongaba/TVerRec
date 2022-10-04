@@ -233,7 +233,7 @@ if ($null -eq $local:videoLists) {
 		if (Test-Path $script:downloadBaseDir -PathType Container) { }
 		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' -FgColor 'Green' ; exit 1 }
 
-		Write-ColorOutput "$($local:validateNum)/$($local:validateTotal) - $($local:videoFileRelativePath)"
+		Write-ColorOutput "$($local:validateNum)/$($local:validateTotal) - $($local:videoFileRelativePath)" -NoNewLine $true
 		checkVideo `
 			-DecodeOption $local:decodeOption `
 			-Path $local:videoFileRelativePath		#ビデオの整合性チェック

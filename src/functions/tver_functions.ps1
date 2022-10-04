@@ -1363,7 +1363,7 @@ function checkVideo {
 		$local:videoLists = Import-Csv $script:listFilePath -Encoding UTF8
 		$local:checkStatus = $(($local:videoLists).Where({ $_.videoPath -eq $local:videoFileRelativePath })).videoValidated
 	} catch {
-		Write-ColorOutput "　チェックステータスを取得できませんでした: $local:videoFileRelativePath" Green
+		Write-ColorOutput "　チェックステータスを取得できませんでした: $local:videoFileRelativePath" 'Green'
 		return
 	} finally { $null = fileUnlock $script:lockFilePath }
 
@@ -1373,7 +1373,7 @@ function checkVideo {
 	else {
 		#該当のビデオのチェックステータスを"2"にして後続のチェックを実行
 		try { $(($local:videoLists).Where({ $_.videoPath -eq $local:videoFileRelativePath })).videoValidated = '2' }
-		catch { Write-ColorOutput "　該当のレコードが見つかりませんでした: $local:videoFileRelativePath" Green ; return }
+		catch { Write-ColorOutput "　該当のレコードが見つかりませんでした: $local:videoFileRelativePath" 'Green' ; return }
 		try {
 			#ロックファイルをロック
 			while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
@@ -1382,7 +1382,7 @@ function checkVideo {
 			}
 			#ファイル操作
 			$local:videoLists | Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
-		} catch { Write-ColorOutput "　録画リストを更新できませんでした: $local:videoFileRelativePath" Green ; return }
+		} catch { Write-ColorOutput "　録画リストを更新できませんでした: $local:videoFileRelativePath" 'Green' ; return }
 		finally { $null = fileUnlock $script:lockFilePath }
 	}
 
@@ -1462,8 +1462,10 @@ function checkVideo {
 	} catch { Write-ColorOutput '　ffmpegエラーファイルを削除できませんでした' -FgColor 'Green' }
 
 	if ($local:proc.ExitCode -ne 0 -or $local:errorCount -gt 30) {
+		Write-ColorOutput '　チェックNGでした' -FgColor 'Green'
+
 		#終了コードが"0"以外 または エラーが30行以上 は録画リストとファイルを削除
-		Write-ColorOutput "　exit code: $($local:proc.ExitCode)    error count: $local:errorCount" Green
+		Write-ColorOutput "　exit code: $($local:proc.ExitCode)    error count: $local:errorCount" 'Green'
 
 		#破損している動画ファイルを録画リストから削除
 		try {
@@ -1474,14 +1476,15 @@ function checkVideo {
 			}
 			#ファイル操作
 			(Select-String -Pattern $local:videoFileRelativePath -LiteralPath $script:listFilePath -Encoding UTF8 -SimpleMatch -NotMatch).Line | Out-File $script:listFilePath -Encoding UTF8
-		} catch { Write-ColorOutput "　録画リストの更新に失敗しました: $local:videoFileRelativePath" Green
+		} catch { Write-ColorOutput "　録画リストの更新に失敗しました: $local:videoFileRelativePath" 'Green'
 		} finally { $null = fileUnlock $script:lockFilePath }
 
 		#破損している動画ファイルを削除
 		try { Remove-Item -LiteralPath $local:videoFilePath -Force -ErrorAction SilentlyContinue }
-		catch { Write-ColorOutput "　ファイル削除できませんでした: $local:videoFilePath" Green }
+		catch { Write-ColorOutput "　ファイル削除できませんでした: $local:videoFilePath" 'Green' }
 	} else {
 		#終了コードが"0"のときは録画リストにチェック済みフラグを立てる
+		Write-ColorOutput '　チェックOKでした' -FgColor 'DarkGray'
 		try {
 			#ロックファイルをロック
 			while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
@@ -1493,7 +1496,7 @@ function checkVideo {
 			#該当のビデオのチェックステータスを"1"に
 			$(($local:videoLists).Where({ $_.videoPath -eq $local:videoFileRelativePath })).videoValidated = '1'
 			$local:videoLists | Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
-		} catch { Write-ColorOutput "　録画リストを更新できませんでした: $local:videoFileRelativePath" Green }
+		} catch { Write-ColorOutput "　録画リストを更新できませんでした: $local:videoFileRelativePath" 'Green' }
 		finally { $null = fileUnlock $script:lockFilePath }
 	}
 

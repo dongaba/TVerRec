@@ -9,10 +9,11 @@
 - 標準の youtoube-dl を yt-dlp に変更
 - ビデオ検証時のデコードオプションが設定されている際のメッセージの色を変更
 - ソースコードの可読性を向上
+- ビデオ検証時に検証結果を OK/NG で表示するように変更
 
 ### 2.5.6 Fixed
 
-- Linuxで youtoube-dl の指定を yt-dlp にした際に、同時多重ダウンロードの上限が効いていなかった問題を修正
+- Linux で youtoube-dl の指定を yt-dlp にした際に、同時多重ダウンロードの上限が効いていなかった問題を修正
 - サンプルファイルの名称設定ミスを修正
 
 ## [2.5.5](https://github.com/dongaba/TVerRec/releases/tag/v2.5.5)
