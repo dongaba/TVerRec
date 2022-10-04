@@ -169,9 +169,7 @@ try {
 
 if ($null -eq $local:videoLists) {
 	#チェックする動画なし
-	Write-ColorOutput '----------------------------------------------------------------------'
-	Write-ColorOutput 'すべてのビデオをチェック済みです'
-	Write-ColorOutput '----------------------------------------------------------------------'
+	Write-ColorOutput '　すべてのビデオをチェック済みです' -FgColor 'DarkGray'
 } else {
 	#動画ファイルをチェック
 	$local:validateTotal = 0
@@ -182,12 +180,12 @@ if ($null -eq $local:videoLists) {
 		$local:decodeOption = ''
 	} else {
 		if ($script:ffmpegDecodeOption -ne '') {
-			Write-ColorOutput '----------------------------------------------------------------------'
-			Write-ColorOutput 'ffmpegのデコードオプションが設定されてます'
-			Write-ColorOutput 'もし動画検証がうまく進まない場合は、以下のどちらかをお試しください'
-			Write-ColorOutput '　・ user_setting.ps1 でデコードオプションを変更する'
-			Write-ColorOutput '　・ user_setting.ps1 で $script:forceSoftwareDecodeFlag = $true と設定する'
-			Write-ColorOutput '----------------------------------------------------------------------'
+			Write-ColorOutput '----------------------------------------------------------------------' -FgColor 'Green'
+			Write-ColorOutput 'ffmpegのデコードオプションが設定されてます                            ' -FgColor 'Green'
+			Write-ColorOutput 'もし動画検証がうまく進まない場合は、以下のどちらかをお試しください    ' -FgColor 'Green'
+			Write-ColorOutput '　・ user_setting.ps1 でデコードオプションを変更する                  ' -FgColor 'Green'
+			Write-ColorOutput '　・ user_setting.ps1 で $script:forceSoftwareDecodeFlag = $true と設定する' -FgColor 'Green'
+			Write-ColorOutput '----------------------------------------------------------------------' -FgColor 'Green'
 		}
 		$local:decodeOption = $script:ffmpegDecodeOption
 	}
@@ -239,6 +237,8 @@ if ($null -eq $local:videoLists) {
 		checkVideo `
 			-DecodeOption $local:decodeOption `
 			-Path $local:videoFileRelativePath		#ビデオの整合性チェック
+		
+		Start-Sleep -Seconds 1
 	}
 	#----------------------------------------------------------------------
 
