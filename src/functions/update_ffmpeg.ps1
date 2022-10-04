@@ -65,7 +65,7 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 	Write-ColorOutput ''
 } else {
 	if ($script:isWin -eq $false) {
-		Write-ColorOutput '自動アップデートはWindowsでのみ動作します。' -FgColor 'Green'
+		Write-ColorOutput 'ffmpegの自動アップデートはWindowsでのみ動作します。' -FgColor 'Green'
 	} else {
 		#ダウンロード
 		try {
