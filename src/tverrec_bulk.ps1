@@ -185,7 +185,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 	#----------------------------------------------------------------------
 	#個々のビデオダウンロードここから
-	if ($null -eq $local:videoLinks ) { Write-ColorOutput '　対象ビデオがありませんでした。' -FgColor 'DarkGray' }
+	if ($null -eq $local:videoLinks ) { Write-ColorOutput '　対象ビデオがありませんでした。' -FgColor 'Gray' }
 	foreach ($local:videoLink in $local:videoLinks) {
 		#いろいろ初期化
 		$local:videoPageURL = ''

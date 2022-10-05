@@ -621,7 +621,7 @@ function waitTillYtdlProcessGetFewer {
 	Write-Verbose "現在のダウンロードプロセス一覧 ($local:ytdlCount 個)"
 
 	while ([int]$local:ytdlCount -ge [int]$local:parallelDownloadFileNum) {
-		Write-ColorOutput "ダウンロードが $local:parallelDownloadFileNum 多重に達したので一時待機します。 ($(getTimeStamp))" -FgColor 'DarkGray'
+		Write-ColorOutput "ダウンロードが $local:parallelDownloadFileNum 多重に達したので一時待機します。 ($(getTimeStamp))" -FgColor 'Gray'
 		Start-Sleep -Seconds 60			#1分待機
 		try {
 			if ($script:isWin) { $local:ytdlCount = [Math]::Round( (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) }
@@ -673,7 +673,7 @@ function downloadTVerVideo {
 	try {
 		#ロックファイルをロック
 		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
-			Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'DarkGray'
+			Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
@@ -681,7 +681,7 @@ function downloadTVerVideo {
 	} catch { Write-ColorOutput '　リストを読み書きできなかったのでスキップしました' -FgColor 'Green' ; continue
 	} finally { $null = fileUnlock $script:lockFilePath }
 
-	if ( $null -ne $local:listMatch) { Write-ColorOutput '　過去に処理したビデオです。スキップします' -FgColor 'DarkGray' ; continue }
+	if ( $null -ne $local:listMatch) { Write-ColorOutput '　過去に処理したビデオです。スキップします' -FgColor 'Gray' ; continue }
 
 	#TVerのAPIを叩いてビデオ情報取得
 	goAnal -Event 'getinfo' -Type 'link' -ID $script:videoLink
@@ -737,7 +737,7 @@ function downloadTVerVideo {
 		try {
 			#ロックファイルをロック
 			while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
-				Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'DarkGray'
+				Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
 				Start-Sleep -Seconds 1
 			}
 			#ファイル操作
@@ -747,9 +747,9 @@ function downloadTVerVideo {
 
 		#結果が0件ということは未検証のファイルがあるということ
 		if ( $null -eq $local:listMatch) {
-			Write-ColorOutput '　すでにダウンロード済みですが未検証のビデオです。リストに追加します' -FgColor 'DarkGray'
+			Write-ColorOutput '　すでにダウンロード済みですが未検証のビデオです。リストに追加します' -FgColor 'Gray'
 			$script:skip = $true
-		} else { Write-ColorOutput '　すでにダウンロード済み・検証済みのビデオです。スキップします' -FgColor 'DarkGray' ; continue }
+		} else { Write-ColorOutput '　すでにダウンロード済み・検証済みのビデオです。スキップします' -FgColor 'Gray' ; continue }
 
 	} else {
 
@@ -776,17 +776,17 @@ function downloadTVerVideo {
 
 			if ($(getNarrowChars $script:videoName) -match $(getNarrowChars $local:ignoreTitle)) {
 				$script:ignore = $true
-				Write-ColorOutput '　無視リストに入っているビデオです。スキップします' -FgColor 'DarkGray'
+				Write-ColorOutput '　無視リストに入っているビデオです。スキップします' -FgColor 'Gray'
 				continue			#リストの重複削除のため、無視したものはリスト出力せずに次のビデオへ行くことに
 			}
 			if ($(getNarrowChars $script:videoSeries) -match $(getNarrowChars $local:ignoreTitle)) {
 				$script:ignore = $true
-				Write-ColorOutput '　無視リストに入っているビデオです。スキップします' -FgColor 'DarkGray'
+				Write-ColorOutput '　無視リストに入っているビデオです。スキップします' -FgColor 'Gray'
 				continue			#リストの重複削除のため、無視したものはリスト出力せずに次のビデオへ行くことに
 			}
 			if ($(getNarrowChars $script:videoTitle) -match $(getNarrowChars $local:ignoreTitle)) {
 				$script:ignore = $true
-				Write-ColorOutput '　無視リストに入っているビデオです。スキップします' -FgColor 'DarkGray'
+				Write-ColorOutput '　無視リストに入っているビデオです。スキップします' -FgColor 'Gray'
 				continue			#リストの重複削除のため、無視したものはリスト出力せずに次のビデオへ行くことに
 			}
 		}
@@ -851,7 +851,7 @@ function downloadTVerVideo {
 	try {
 		#ロックファイルをロック
 		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
-			Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'DarkGray'
+			Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
@@ -1062,10 +1062,10 @@ function showVideoInfo {
 	)
 
 	Write-ColorOutput ' '
-	Write-ColorOutput "ビデオ名    :$local:videoName" -FgColor 'DarkGray'
-	Write-ColorOutput "放送日      :$local:broadcastDate" -FgColor 'DarkGray'
-	Write-ColorOutput "テレビ局    :$local:mediaName" -FgColor 'DarkGray'
-	Write-ColorOutput "ビデオ説明  :$local:descriptionText" -FgColor 'DarkGray'
+	Write-ColorOutput "ビデオ名    :$local:videoName" -FgColor 'Gray'
+	Write-ColorOutput "放送日      :$local:broadcastDate" -FgColor 'Gray'
+	Write-ColorOutput "テレビ局    :$local:mediaName" -FgColor 'Gray'
+	Write-ColorOutput "ビデオ説明  :$local:descriptionText" -FgColor 'Gray'
 }
 #----------------------------------------------------------------------
 #ビデオ情報デバッグ表示
@@ -1238,7 +1238,7 @@ function waitTillYtdlProcessIsZero () {
 
 	while ($local:ytdlCount -ne 0) {
 		try {
-			Write-Verbose "現在のダウンロードプロセス一覧 ($local:ytdlCount 個)" -FgColor 'DarkGray'
+			Write-Verbose "現在のダウンロードプロセス一覧 ($local:ytdlCount 個)" -FgColor 'Gray'
 			Start-Sleep -Seconds 60			#1分待機
 			if ($script:isWin) { $local:ytdlCount = [Math]::Round( (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) }
 			elseif ($IsLinux) { $local:ytdlCount = (Get-Process -ErrorAction Ignore -Name $local:processName).Count }
@@ -1267,7 +1267,7 @@ function purgeDB {
 	try {
 		#ロックファイルをロック
 		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
-			Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'DarkGray'
+			Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
@@ -1290,7 +1290,7 @@ function uniqueDB {
 	try {
 		#ロックファイルをロック
 		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
-			Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'DarkGray'
+			Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
 			Start-Sleep -Seconds 1
 		}
 
@@ -1354,7 +1354,7 @@ function checkVideo {
 	try {
 		#ロックファイルをロック
 		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
-			Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'DarkGray'
+			Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
@@ -1366,8 +1366,8 @@ function checkVideo {
 	} finally { $null = fileUnlock $script:lockFilePath }
 
 	#0:未チェック、1:チェック済み、2:チェック中
-	if ($local:checkStatus -eq 2 ) { Write-ColorOutput '　他プロセスでチェック中です' -FgColor 'DarkGray' ; return }
-	elseif ($local:checkStatus -eq 1 ) { Write-ColorOutput '　他プロセスでチェック済です' -FgColor 'DarkGray' ; return }
+	if ($local:checkStatus -eq 2 ) { Write-ColorOutput '　他プロセスでチェック中です' -FgColor 'Gray' ; return }
+	elseif ($local:checkStatus -eq 1 ) { Write-ColorOutput '　他プロセスでチェック済です' -FgColor 'Gray' ; return }
 	else {
 		#該当のビデオのチェックステータスを"2"にして後続のチェックを実行
 		try { $(($local:videoLists).Where({ $_.videoPath -eq $local:videoFileRelativePath })).videoValidated = '2' }
@@ -1375,7 +1375,7 @@ function checkVideo {
 		try {
 			#ロックファイルをロック
 			while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
-				Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'DarkGray'
+				Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
 				Start-Sleep -Seconds 1
 			}
 			#ファイル操作
@@ -1469,7 +1469,7 @@ function checkVideo {
 		try {
 			#ロックファイルをロック
 			while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
-				Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'DarkGray'
+				Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
 				Start-Sleep -Seconds 1
 			}
 			#ファイル操作
@@ -1482,11 +1482,11 @@ function checkVideo {
 		catch { Write-ColorOutput "　ファイル削除できませんでした: $local:videoFilePath" 'Green' }
 	} else {
 		#終了コードが"0"のときは録画リストにチェック済みフラグを立てる
-		Write-ColorOutput '　チェックOKでした' -FgColor 'DarkGray'
+		Write-ColorOutput '　チェックOKでした' -FgColor 'Gray'
 		try {
 			#ロックファイルをロック
 			while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
-				Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'DarkGray'
+				Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
 				Start-Sleep -Seconds 1
 			}
 			#ファイル操作

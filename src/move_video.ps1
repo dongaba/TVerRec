@@ -179,7 +179,7 @@ foreach ($local:moveToPath in $local:moveToPaths.FullName) {
 	$local:moveFromPath = $(Join-Path $script:downloadBaseDir $local:targetFolderName)
 	if (Test-Path $local:moveFromPath) {
 		$local:moveFromPath = $local:moveFromPath + '\*.mp4'
-		Write-ColorOutput "　「$($local:moveFromPath)」を移動します" -FgColor 'DarkGray'
+		Write-ColorOutput "　「$($local:moveFromPath)」を移動します" -FgColor 'Gray'
 		try { Move-Item $local:moveFromPath -Destination $local:moveToPath -Force }
 		catch { Write-ColorOutput '　移動できないファイルがありました' -FgColor 'Green' }
 	} else { Write-ColorOutput '' }

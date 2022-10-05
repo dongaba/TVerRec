@@ -153,7 +153,7 @@ Write-ColorOutput '-------------------------------------------------------------
 try {
 	#ロックファイルをロック
 	while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
-		Write-ColorOutput 'ファイルのロック解除待ち中です' -FgColor 'DarkGray'
+		Write-ColorOutput 'ファイルのロック解除待ち中です' -FgColor 'Gray'
 		Start-Sleep -Seconds 1
 	}
 	#ファイル操作
@@ -169,7 +169,7 @@ try {
 
 if ($null -eq $local:videoLists) {
 	#チェックする動画なし
-	Write-ColorOutput '　すべてのビデオをチェック済みです' -FgColor 'DarkGray'
+	Write-ColorOutput '　すべてのビデオをチェック済みです' -FgColor 'Gray'
 } else {
 	#動画ファイルをチェック
 	$local:validateTotal = 0
@@ -264,7 +264,7 @@ ShowProgressToast `
 try {
 	#ロックファイルをロック
 	while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
-		Write-ColorOutput 'ファイルのロック解除待ち中です' -FgColor 'DarkGray'
+		Write-ColorOutput 'ファイルのロック解除待ち中です' -FgColor 'Gray'
 		Start-Sleep -Seconds 1
 	}
 	#ファイル操作
