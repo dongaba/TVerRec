@@ -1174,14 +1174,12 @@ function executeYtdl {
 	$local:ytdlArgs += ' --abort-on-error'
 	$local:ytdlArgs += ' --no-continue'
 	$local:ytdlArgs += ' --windows-filenames'
-	$local:ytdlArgs += ' --xattr-set-filesize'
 	$local:ytdlArgs += ' --newline'
 	$local:ytdlArgs += ' --print-traffic'
 	$local:ytdlArgs += " --concurrent-fragments $script:parallelDownloadNumPerFile"
 	$local:ytdlArgs += ' --embed-thumbnail'
 	$local:ytdlArgs += ' --embed-subs'
 	$local:ytdlArgs += ' --embed-metadata'
-	$local:ytdlArgs += ' --xattrs'
 	$local:ytdlArgs += ' --embed-chapters'
 	$local:ytdlArgs += " --paths $local:saveDir"
 	$local:ytdlArgs += " --paths $local:tmpDir"

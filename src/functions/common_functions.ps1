@@ -198,14 +198,15 @@ function deleteFiles {
 		[int32] $local:datePast
 	)
 
-	try {
-		foreach ($local:condition in $local:conditions.Split(',').Trim()) {
-			Write-ColorOutput "$($local:path) - $($local:condition)"
-			Get-ChildItem -LiteralPath $local:path -Recurse -File -Filter $local:condition `
-			| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays($local:datePast) } `
-			| Remove-Item -Force -ErrorAction SilentlyContinue
-		}
-	} catch { Write-ColorOutput '　削除できないファイルがありました' -FgColor 'Green' }
+	#	try {
+	foreach ($local:condition in $local:conditions.Split(',').Trim()) {
+		Write-ColorOutput "$($local:path) - $($local:condition)"
+		Get-ChildItem -LiteralPath $local:path -Recurse -File -Filter $local:condition `
+		| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays($local:datePast) } `
+		| Remove-Item -Force -ErrorAction SilentlyContinue
+		| Out-Null
+	}
+	#	} catch { Write-ColorOutput '　削除できないファイルがありました' -FgColor 'Green' }
 }
 
 #----------------------------------------------------------------------
@@ -1114,6 +1115,7 @@ function goAnal {
 	catch { Write-Debug 'Failed to collect statistics' }
 	finally { $progressPreference = 'Continue' }
 
+	if ($local:event -eq 'search') { return }
 	$local:gaURL = 'https://www.google-analytics.com/mp/collect'
 	$local:gaKey = 'api_secret=UZ3InfgkTgGiR4FU-in9sw'
 	$local:gaID = 'measurement_id=G-NMSF9L531G'

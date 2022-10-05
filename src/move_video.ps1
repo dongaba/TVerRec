@@ -173,16 +173,16 @@ foreach ($local:moveToPath in $local:moveToPaths.FullName) {
 		-Group 'Move'
 
 	#処理
-	Write-ColorOutput "$($local:moveToPathNum)/$($local:moveToPathTotal) - $($local:moveToPath)"
+	Write-ColorOutput "$($local:moveToPathNum)/$($local:moveToPathTotal) - $($local:moveToPath)" -NoNewline $true
 	$local:targetFolderName = Split-Path -Leaf $local:moveToPath
 	#同名フォルダが存在する場合は配下のファイルを移動
 	$local:moveFromPath = $(Join-Path $script:downloadBaseDir $local:targetFolderName)
 	if (Test-Path $local:moveFromPath) {
 		$local:moveFromPath = $local:moveFromPath + '\*.mp4'
-		Write-ColorOutput "　「$($local:moveFromPath)」を移動します"
+		Write-ColorOutput "　「$($local:moveFromPath)」を移動します" -FgColor 'DarkGray'
 		try { Move-Item $local:moveFromPath -Destination $local:moveToPath -Force }
 		catch { Write-ColorOutput '　移動できないファイルがありました' -FgColor 'Green' }
-	}
+	} else { Write-ColorOutput '' }
 }
 #----------------------------------------------------------------------
 
