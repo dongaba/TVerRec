@@ -14,6 +14,7 @@
 ### 2.5.6 Fixed
 
 - Linux で youtoube-dl の指定を yt-dlp にした際に、同時多重ダウンロードの上限が効いていなかった問題を修正
+- 一部 Linux 環境で youtuve-dl の実行に失敗する問題の修正
 - サンプルファイルの名称設定ミスを修正
 
 ## [2.5.5](https://github.com/dongaba/TVerRec/releases/tag/v2.5.5)
