@@ -1,6 +1,6 @@
 ﻿# Change Log
 
-## [2.5.6 beta]()
+## [2.5.6](https://github.com/dongaba/TVerRec/releases/tag/v2.5.6)
 
 ### 2.5.6 Added
 
