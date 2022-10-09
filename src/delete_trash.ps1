@@ -76,22 +76,22 @@ try {
 		$script:devConfFile = $(Join-Path $script:devDir 'dev_setting_5.ps1')
 		if (Test-Path $script:devFunctionFile) {
 			. $script:devFunctionFile
-			Write-ColorOutput '開発ファイル用共通関数ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
+			Write-ColorOutput '開発ファイル用共通関数ファイルを読み込みました' -FgColor 'Yellow'
 		}
 		if (Test-Path $script:devConfFile) {
 			. $script:devConfFile
-			Write-ColorOutput '開発ファイル用設定ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
+			Write-ColorOutput '開発ファイル用設定ファイルを読み込みました' -FgColor 'Yellow'
 		}
 	} else {
 		$script:devFunctionFile = $(Join-Path $script:devDir 'dev_funcitons.ps1')
 		$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.ps1')
 		if (Test-Path $script:devFunctionFile) {
 			. $script:devFunctionFile
-			Write-ColorOutput '開発ファイル用共通関数ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
+			Write-ColorOutput '開発ファイル用共通関数ファイルを読み込みました' -FgColor 'Yellow'
 		}
 		if (Test-Path $script:devConfFile) {
 			. $script:devConfFile
-			Write-ColorOutput '開発ファイル用設定ファイルを読み込みました' -FgColor 'White' -BgColor 'DarkGreen'
+			Write-ColorOutput '開発ファイル用設定ファイルを読み込みました' -FgColor 'Yellow'
 		}
 	}
 } catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
@@ -230,18 +230,18 @@ foreach ($local:ignoreTitle in $local:ignoreTitles) {
 		-Group 'Delete'
 
 	#処理
-	Write-ColorOutput "$($local:ignoreNum)/$($local:ignoreTotal) - $($local:ignoreTitle)"
+	Write-ColorOutput "$($local:ignoreNum)/$($local:ignoreTotal) - $($local:ignoreTitle)" -NoNewline $true
 	try { $local:delTargets = Get-ChildItem -LiteralPath $script:downloadBaseDir -Name -Filter "*$($local:ignoreTitle)*" }
 	catch { Write-ColorOutput '　削除対象を特定できませんでした' -FgColor 'Green' }
 	try {
 		if ($null -ne $local:delTargets) {
 			foreach ($local:delTarget in $local:delTargets) {
 				if (Test-Path $(Join-Path $script:downloadBaseDir $local:delTarget)) {
-					Write-ColorOutput "　「$(Join-Path $script:downloadBaseDir $local:delTarget)」を削除します"
+					Write-ColorOutput "　「$(Join-Path $script:downloadBaseDir $local:delTarget)」を削除します" -FgColor 'Gray'
 					Remove-Item -Path $(Join-Path $script:downloadBaseDir $local:delTarget) -Recurse -Force -ErrorAction SilentlyContinue
-				}
+				} else { Write-ColorOutput '' }
 			}
-		}
+		} else { Write-ColorOutput '' }
 	} catch { Write-ColorOutput '　削除できないファイルがありました' -FgColor 'Green' }
 }
 #----------------------------------------------------------------------
@@ -294,12 +294,12 @@ foreach ($local:subDir in $local:allSubDirs) {
 		-Group 'Delete'
 
 	#処理
-	Write-ColorOutput "$($local:subDirNum)/$($local:subDirTotal) - $($local:subDir)"
+	Write-ColorOutput "$($local:subDirNum)/$($local:subDirTotal) - $($local:subDir)" -NoNewline $true
 	if (@((Get-ChildItem -LiteralPath $local:subDir -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
-		Write-ColorOutput "　「$($local:subDir)」を削除します"
+		Write-ColorOutput "　「$($local:subDir)」を削除します" -FgColor 'Gray'
 		try { Remove-Item -LiteralPath $local:subDir -Recurse -Force -ErrorAction SilentlyContinue }
 		catch { Write-ColorOutput "　空フォルダの削除に失敗しました: $local:subDir" -FgColor 'Green' }
-	}
+	} else { Write-ColorOutput '' }
 }
 #----------------------------------------------------------------------
 

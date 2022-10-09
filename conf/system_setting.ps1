@@ -36,19 +36,25 @@ $script:isWin = $PSVersionTable.Platform -match '^($|(Microsoft)?Win)'
 Set-StrictMode -Version Latest
 
 #ダウンロード先のフルパス(絶対パス指定)
-if ($script:isWin) { $script:downloadBaseDir = 'W:' }
-elseif ($isLinux) { $script:downloadBaseDir = '/mnt/Work' }
-elseif ($isMacOs) { $script:downloadBaseDir = '/Volumes/Work' }
+switch ($true) {
+	$script:isWin { $script:downloadBaseDir = 'W:' }
+	$isLinux { $script:downloadBaseDir = '/mnt/Work' }
+	$isMacOs { $script:downloadBaseDir = '/Volumes/Work' }
+}
 
 #ダウンロード中の作業ファイル置き場のフルパス(絶対パス指定)
-if ($script:isWin) { $script:downloadWorkDir = $env:TMP }	#$env:TMP = C:\Users\<ユーザ名>\AppData\Local\Temp
-elseif ($isLinux) { $script:downloadWorkDir = '/var/tmp' }
-elseif ($isMacOs) { $script:downloadWorkDir = '/Volumes/RamDrive/Temp' }
+switch ($true) {
+	$script:isWin { $script:downloadWorkDir = $env:TMP }	#$env:TMP = C:\Users\<ユーザ名>\AppData\Local\Temp
+	$isLinux { $script:downloadWorkDir = '/var/tmp' }
+	$isMacOs { $script:downloadWorkDir = '/Volumes/RamDrive/Temp' }
+}
 
 #保存先のフルパス(絶対パス指定)
-if ($script:isWin) { $script:saveBaseDir = 'V:' }
-elseif ($isLinux) { $script:downloadBaseDir = '/mnt/Video' }
-elseif ($isMacOs) { $script:saveBaseDir = '/Volumes/Video' }
+switch ($true) {
+	$script:isWin { $script:saveBaseDir = 'V:' }
+	$isLinux { $script:downloadBaseDir = '/mnt/Video' }
+	$isMacOs { $script:saveBaseDir = '/Volumes/Video' }
+}
 
 #同時ダウンロードファイル数
 $script:parallelDownloadFileNum = 5

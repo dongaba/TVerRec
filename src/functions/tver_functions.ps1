@@ -52,11 +52,8 @@ function checkLatestTVerRec {
 	if ($local:latestMajorVersion -gt $local:appMajorVersion ) {
 		$local:versionUp = $true			#最新バージョンのメジャーバージョンが大きい場合
 	} elseif ($local:latestMajorVersion -eq $local:appMajorVersion ) {
-		if ( $local:appMajorVersion -ne $script:appVersion) {
-			$local:versionUp = $true		#マイナーバージョンが設定されている場合
-		} else {
-			$local:versionUp = $false		#バージョンが完全に一致する場合
-		}
+		if ( $local:appMajorVersion -ne $script:appVersion) { $local:versionUp = $true }	#マイナーバージョンが設定されている場合
+		else { $local:versionUp = $false }	#バージョンが完全に一致する場合
 	} else {
 		$local:versionUp = $false			#ローカルバージョンの方が新しい場合
 	}
@@ -486,7 +483,7 @@ function getVideoLinkFromTopPage {
 				}
 			}
 		} elseif ($local:searchResults[$i].type -eq 'topics') {
-			$local:searchSectionResultCount = $local:searchResults.Contents.Length
+			$local:searchSectionResultCount = $local:searchResults[$i].Contents.Length
 			for ($j = 0; $j -lt $local:searchSectionResultCount; $j++) {
 				$local:searchSectionResultCount = $local:searchResults[$i].Contents.Length
 				for ($j = 0; $j -lt $local:searchSectionResultCount; $j++) {
@@ -506,7 +503,8 @@ function getVideoLinkFromTopPage {
 			#URLは $($local:searchResults[$i].contents.content.targetURL)
 			#$local:searchResults[$i].contents.content.targetURL
 		} elseif ($local:searchResults[$i].type -eq 'resume') {
-			#特集
+			#続きを見る
+			#ブラウザのCookieを処理しないといけないと思われるため対応予定なし
 		} else {}
 	}
 	[System.GC]::Collect()
@@ -610,10 +608,12 @@ function waitTillYtdlProcessGetFewer {
 
 	#youtube-dlのプロセスが設定値を超えたら一時待機
 	try {
-		if ($script:isWin) { $local:ytdlCount = [Math]::Round( (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) }
-		elseif ($IsLinux) { $local:ytdlCount = (Get-Process -ErrorAction Ignore -Name $local:processName).Count }
-		elseif ($IsMacOS) { $local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim() }
-		else { $local:ytdlCount = 0 }
+		switch ($true) {
+			$script:isWin { $local:ytdlCount = [Math]::Round( (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) }
+			$IsLinux { $local:ytdlCount = (Get-Process -ErrorAction Ignore -Name $local:processName).Count }
+			$IsMacOS { $local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim() }
+			default { $local:ytdlCount = 0 }
+		}
 	} catch {
 		$local:ytdlCount = 0			#プロセス数が取れなくてもとりあえず先に進む
 	}
@@ -624,10 +624,12 @@ function waitTillYtdlProcessGetFewer {
 		Write-ColorOutput "ダウンロードが $local:parallelDownloadFileNum 多重に達したので一時待機します。 ($(getTimeStamp))" -FgColor 'Gray'
 		Start-Sleep -Seconds 60			#1分待機
 		try {
-			if ($script:isWin) { $local:ytdlCount = [Math]::Round( (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) }
-			elseif ($IsLinux) { $local:ytdlCount = (& Get-Process -ErrorAction Ignore -Name $local:processName).Count }
-			elseif ($IsMacOS) { $local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim() }
-			else { $local:ytdlCount = 0 }
+			switch ($ture) {
+				$script:isWin { $local:ytdlCount = [Math]::Round( (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) }
+				$IsLinux { $local:ytdlCount = (& Get-Process -ErrorAction Ignore -Name $local:processName).Count }
+				$IsMacOS { $local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim() }
+				default { $local:ytdlCount = 0 }
+			}
 		} catch {
 			$local:ytdlCount = 0			#プロセス数が取れなくてもとりあえず先に進む
 		}
@@ -1175,7 +1177,6 @@ function executeYtdl {
 	$local:ytdlArgs += ' --no-continue'
 	$local:ytdlArgs += ' --windows-filenames'
 	$local:ytdlArgs += ' --newline'
-	$local:ytdlArgs += ' --print-traffic'
 	$local:ytdlArgs += " --concurrent-fragments $script:parallelDownloadNumPerFile"
 	$local:ytdlArgs += ' --embed-thumbnail'
 	$local:ytdlArgs += ' --embed-subs'
@@ -1187,7 +1188,7 @@ function executeYtdl {
 	$local:ytdlArgs += " --paths $local:thumbDir"
 	$local:ytdlArgs += " --paths $local:chaptDir"
 	$local:ytdlArgs += " --paths $local:descDir"
-	$local:ytdlArgs += " -o $local:saveFile"
+	$local:ytdlArgs += " --output $local:saveFile"
 	$local:ytdlArgs += " $local:videoPageURL"
 
 	if ($script:isWin) {
@@ -1228,10 +1229,12 @@ function waitTillYtdlProcessIsZero () {
 	} 
 
 	try {
-		if ($script:isWin) { $local:ytdlCount = [Math]::Round( (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) }
-		elseif ($IsLinux) { $local:ytdlCount = (Get-Process -ErrorAction Ignore -Name $local:processName).Count }
-		elseif ($IsMacOS) { $local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim() }
-		else { $local:ytdlCount = 0 }
+		switch ($true) {
+			$script:isWin { $local:ytdlCount = [Math]::Round( (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) }
+			$IsLinux { $local:ytdlCount = (Get-Process -ErrorAction Ignore -Name $local:processName).Count }
+			$IsMacOS { $local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim() }
+			default { $local:ytdlCount = 0 }
+		}
 	} catch {
 		$local:ytdlCount = 0			#プロセス数が取れなくてもとりあえず先に進む
 	}
@@ -1240,10 +1243,12 @@ function waitTillYtdlProcessIsZero () {
 		try {
 			Write-Verbose "現在のダウンロードプロセス一覧 ($local:ytdlCount 個)" -FgColor 'Gray'
 			Start-Sleep -Seconds 60			#1分待機
-			if ($script:isWin) { $local:ytdlCount = [Math]::Round( (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) }
-			elseif ($IsLinux) { $local:ytdlCount = (Get-Process -ErrorAction Ignore -Name $local:processName).Count }
-			elseif ($IsMacOS) { $local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim() }
-			else { $local:ytdlCount = 0 }
+			switch ($true) {
+				$script:isWin { $local:ytdlCount = [Math]::Round( (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) }
+				$IsLinux { $local:ytdlCount = (Get-Process -ErrorAction Ignore -Name $local:processName).Count }
+				$IsMacOS { $local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim() }
+				default { $local:ytdlCount = 0 }
+			}
 		} catch {
 			$local:ytdlCount = 0
 		}

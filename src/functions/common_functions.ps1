@@ -29,10 +29,12 @@
 #----------------------------------------------------------------------
 #GUID取得
 #----------------------------------------------------------------------
-if ($script:isWin) { $script:os = [String][System.Environment]::OSVersion }
-elseif ($IsLinux) { $script:os = "Linux $([String][System.Environment]::OSVersion.Version)" }
-elseif ($IsMacOS) { $script:os = "macOS $([String][System.Environment]::OSVersion.Version)" }
-else { $script:os = [String][System.Environment]::OSVersion }
+switch ($true) {
+	$script:isWin { $script:os = [String][System.Environment]::OSVersion }
+	$IsLinux { $script:os = "Linux $([String][System.Environment]::OSVersion.Version)" }
+	$IsMacOS { $script:os = "macOS $([String][System.Environment]::OSVersion.Version)" }
+	default { $script:os = [String][System.Environment]::OSVersion }
+}
 $script:tz = [String][TimeZoneInfo]::Local.BaseUtcOffset
 $script:guid = [guid]::NewGuid()
 $script:ipapi = ''
