@@ -35,6 +35,7 @@ pid*.txt
 .smb*
 brightcovenew*
 ffmpeg_error*
+tver.lock
 
 #開発関連ファイル
 dev*
