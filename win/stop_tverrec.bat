@@ -62,4 +62,4 @@ if exist %PIDFile% (
 
 :END
 	pause
-
+	exit

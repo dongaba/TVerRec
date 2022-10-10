@@ -1,5 +1,17 @@
 ﻿# Change Log
 
+## [2.5.7](https://github.com/dongaba/TVerRec/releases/tag/v2.5.7)
+
+### 2.5.7 Added
+
+- PowerSehll Core がインストールされていない Windows で実行した場合に、PowerShell を自動でインストールするか確認する機能を追加
+
+### 2.5.7 Changed
+
+- Windows PowerShell のサポートを終了(Windows PowerShell に起因する不具合が多いため。ご理解ください)
+
+### 2.5.7 Fixed
+
 ## [2.5.6](https://github.com/dongaba/TVerRec/releases/tag/v2.5.6)
 
 ### 2.5.6 Added
@@ -10,7 +22,7 @@
 - ビデオ検証時のデコードオプションが設定されている際のメッセージの色を変更
 - ソースコードの可読性を向上
 - ビデオ検証時に検証結果を OK/NG で表示するように変更
-- Linuxで一括ダウンロードを即時再実行できるように変更
+- Linux で一括ダウンロードを即時再実行できるように変更
 
 ### 2.5.6 Fixed
 

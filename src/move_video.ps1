@@ -43,56 +43,29 @@ try {
 
 	#----------------------------------------------------------------------
 	#設定ファイル読み込み
-	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		$script:sysFile = $(Join-Path $script:confDir 'system_setting_5.ps1')
-		. $script:sysFile
-		if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
-			$script:confFile = $(Convert-Path $(Join-Path $script:confDir 'user_setting_5.ps1'))
-			. $script:confFile
-		}
-	} else {
-		$script:sysFile = $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
-		. $script:sysFile
-		if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
-			$script:confFile = $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
-			. $script:confFile
-		}
+	$script:sysFile = $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
+	. $script:sysFile
+	if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
+		$script:confFile = $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
+		. $script:confFile
 	}
 
 	#----------------------------------------------------------------------
 	#外部関数ファイルの読み込み
-	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		. $(Convert-Path (Join-Path $script:scriptRoot '..\src\functions\common_functions_5.ps1'))
-		. $(Convert-Path (Join-Path $script:scriptRoot '..\src\functions\tver_functions_5.ps1'))
-	} else {
-		. $(Convert-Path (Join-Path $script:scriptRoot '..\src\functions\common_functions.ps1'))
-		. $(Convert-Path (Join-Path $script:scriptRoot '..\src\functions\tver_functions.ps1'))
-	}
+	. $(Convert-Path (Join-Path $script:scriptRoot '..\src\functions\common_functions.ps1'))
+	. $(Convert-Path (Join-Path $script:scriptRoot '..\src\functions\tver_functions.ps1'))
 
 	#----------------------------------------------------------------------
 	#開発環境用に設定上書き
-	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		$script:devFunctionFile = $(Join-Path $script:devDir 'dev_funcitons_5.ps1')
-		$script:devConfFile = $(Join-Path $script:devDir 'dev_setting_5.ps1')
-		if (Test-Path $script:devFunctionFile) {
-			. $script:devFunctionFile
-			Write-ColorOutput '開発ファイル用共通関数ファイルを読み込みました' -FgColor 'Yellow'
-		}
-		if (Test-Path $script:devConfFile) {
-			. $script:devConfFile
-			Write-ColorOutput '開発ファイル用設定ファイルを読み込みました' -FgColor 'Yellow'
-		}
-	} else {
-		$script:devFunctionFile = $(Join-Path $script:devDir 'dev_funcitons.ps1')
-		$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.ps1')
-		if (Test-Path $script:devFunctionFile) {
-			. $script:devFunctionFile
-			Write-ColorOutput '開発ファイル用共通関数ファイルを読み込みました' -FgColor 'Yellow'
-		}
-		if (Test-Path $script:devConfFile) {
-			. $script:devConfFile
-			Write-ColorOutput '開発ファイル用設定ファイルを読み込みました' -FgColor 'Yellow'
-		}
+	$script:devFunctionFile = $(Join-Path $script:devDir 'dev_funcitons.ps1')
+	$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.ps1')
+	if (Test-Path $script:devFunctionFile) {
+		. $script:devFunctionFile
+		Write-ColorOutput '開発ファイル用共通関数ファイルを読み込みました' -FgColor 'Yellow'
+	}
+	if (Test-Path $script:devConfFile) {
+		. $script:devConfFile
+		Write-ColorOutput '開発ファイル用設定ファイルを読み込みました' -FgColor 'Yellow'
 	}
 } catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
 

@@ -1,6 +1,6 @@
 # :tv:**TVerRec**:tv: - TVer 一括ダウンロード・保存・録画 -
 
-[![Logo](https://raw.githubusercontent.com/dongaba/TVerRec/master/img/TVerRec.png)](#readme)
+![Logo](https://raw.githubusercontent.com/dongaba/TVerRec/master/img/TVerRec.png)
 
 [![GitHub release](https://img.shields.io/github/v/release/dongaba/TVerRec?color=blue)](https://github.com/dongaba/TVerRec/releases)
 [![License](https://img.shields.io/github/license/dongaba/TVerRec?color=blue)](https://opensource.org/licenses/MIT)
@@ -16,9 +16,14 @@
 TVerRec は、動画配信サイト TVer ( ティーバー <https://tver.jp/> ) の動画を録画保存するためのダウンローダー、ダウンロード支援ツールです。
 
 - Windows/MacOS/Linux で動作します。
+- **Windows PowerShell では動作しません。PowerShell Core をインストールしてください。**
+  - Windows 環境で PowerShell Core がインストールされていない場合は、自動的に PowerShell Core をインストールします。
+  - 手動で PowerShell Core を[インストールする方法](https://learn.microsoft.com/ja-jp/powershell/scripting/install/installing-powershell-on-windows)もあります。
+- Linux での PoweShell Core のインストールは[こちらを参照](https://learn.microsoft.com/ja-jp/powershell/scripting/install/installing-powershell-on-linux)ください。
+- MacOS での PoweShell Core のインストールは[こちらを参照](https://learn.microsoft.com/ja-jp/powershell/scripting/install/installing-powershell-on-macos)ください。
 - 必要なツールは自動的にダウンロードされますが、うまくいかない場合は以下から取得してください。
-  - yt-dlp [https://github.com/yt-dlp/yt-dlp/releases]
-  - ffmpeg [https://www.ffmpeg.org/download.html]
+  - [yt-dlp](https://github.com/yt-dlp/yt-dlp/releases)
+  - [ffmpeg](https://www.ffmpeg.org/download.html)
 - 検索機能を改良したので、タグ検索機能を使うことでほぼ確実に録画可能となりました。
 - 番組名検索・フリーワード検索の精度は依然としてそれほど高くないのでご注意ください。
 
@@ -85,7 +90,7 @@ TVerRec は、動画配信サイト TVer ( ティーバー <https://tver.jp/> ) 
 7. 番組名を指定
    - 番組名のみにヒットするフリーワード検索です
    - 「title/ちびまる子ちゃん」のように指定します
-   - 珠にしか放送されない番組でSeries IDがわからない場合や、番組名のキーワード検索に便利です
+   - 珠にしか放送されない番組で Series ID がわからない場合や、番組名のキーワード検索に便利です
 8. フリーワード検索
    - 上記のいずれにも該当しない番組をフリーワードで指定できますが、検索結果の精度は TVer のみぞ知るところです
    - 番組名だけでなくタレント名なども検索の対象になるようですが、詳細な検索対象は不明です
@@ -188,14 +193,14 @@ TVerRec は、動画配信サイト TVer ( ティーバー <https://tver.jp/> ) 
 
 ## 前提条件
 
-Windows10 と Windows11 で動作確認しています。
-おそらく Windows7、8、8.1 でも動作するような気もしますが、手元に環境がないのでサポートできません。
-Windows PowerShell 5.1 と PowerShell Core 7.2 の双方で動作しています。おそらくそれ以外の Version でも動作するように思います。
+Windows11 で動作確認しています。
+おそらく Windows7、8、8.1、10 でも動作するような気もしますが、手元に環境がないのでサポートできません。
+PowerShell Core 7.2 で動作します。おそらくそれ以外のバージョンの PowerShell Core でも動作するように思いますが、Windows PowerShell では動作しません。
 
 PowerShell は MacOS、Linux にも移植されてるので動作します。
 MacOS でも PowerShell をインストールし動作確認をしています。
 ([参考](https://docs.microsoft.com/ja-jp/powershell/scripting/install/installing-powershell-on-macos?view=powershell-7.2))
-一応、PowerShell 7.2 をインストールした Raspberry Pi OS で簡易に動作確認をしていますが、性能的に Raspberry Pi 4 じゃないと厳しそうです。
+Ubuntu 20.04, 22.04 で動作確認しています。一応、PowerShell 7.2 をインストールした Raspberry Pi OS でも簡易に動作確認をしていますが、動画検証を行う場合は性能的に Raspberry Pi 4 じゃないと厳しそうです。ダウンロードだけであれば余裕です。
 ([参考](https://docs.microsoft.com/ja-jp/powershell/scripting/install/install-raspbian?view=powershell-7.2))
 
 ## 実行方法
@@ -255,8 +260,7 @@ MacOS でも PowerShell をインストールし動作確認をしています�
     ├─ lib/ .............................. ライブラリ
     │  └─ win .............................. Windows用ライブラリ
     │      ├─ common ......................... 共通ライブラリ用
-    │      ├─ core ........................... PowerShell Core用フォルダ (配下のファイルは省略)
-    │      └─ desktop ........................ Windows PowerShell用フォルダ (配下のファイルは省略)
+    │      └─ core ........................... PowerShell Core用フォルダ (配下のファイルは省略)
     │
     ├─ src/ .............................. 各種ソース
     │  ├─ functions/ ....................... 各種共通関数

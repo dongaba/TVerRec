@@ -32,28 +32,27 @@
 
 #Windowsの判定
 Set-StrictMode -Off
-$script:isWin = $PSVersionTable.Platform -match '^($|(Microsoft)?Win)'
 Set-StrictMode -Version Latest
 
 #ダウンロード先のフルパス(絶対パス指定)
 switch ($true) {
-	$script:isWin { $script:downloadBaseDir = 'W:' }
-	$isLinux { $script:downloadBaseDir = '/mnt/Work' }
-	$isMacOs { $script:downloadBaseDir = '/Volumes/Work' }
+	$IsWindows { $script:downloadBaseDir = 'W:' ; break }
+	$isLinux { $script:downloadBaseDir = '/mnt/Work' ; break}
+	$isMacOs { $script:downloadBaseDir = '/Volumes/Work' ; break}
 }
 
 #ダウンロード中の作業ファイル置き場のフルパス(絶対パス指定)
 switch ($true) {
-	$script:isWin { $script:downloadWorkDir = $env:TMP }	#$env:TMP = C:\Users\<ユーザ名>\AppData\Local\Temp
-	$isLinux { $script:downloadWorkDir = '/var/tmp' }
-	$isMacOs { $script:downloadWorkDir = '/Volumes/RamDrive/Temp' }
+	$IsWindows { $script:downloadWorkDir = $env:TMP ; break}	#$env:TMP = C:\Users\<ユーザ名>\AppData\Local\Temp
+	$isLinux { $script:downloadWorkDir = '/var/tmp' ; break}
+	$isMacOs { $script:downloadWorkDir = '/Volumes/RamDrive/Temp' ; break}
 }
 
 #保存先のフルパス(絶対パス指定)
 switch ($true) {
-	$script:isWin { $script:saveBaseDir = 'V:' }
-	$isLinux { $script:downloadBaseDir = '/mnt/Video' }
-	$isMacOs { $script:saveBaseDir = '/Volumes/Video' }
+	$IsWindows { $script:saveBaseDir = 'V:' ; break}
+	$isLinux { $script:downloadBaseDir = '/mnt/Video' ; break}
+	$isMacOs { $script:saveBaseDir = '/Volumes/Video' ; break }
 }
 
 #同時ダウンロードファイル数
@@ -141,14 +140,20 @@ $script:lockFilePath = $(Join-Path $script:dbDir 'tver.lock')
 $script:ffpmegErrorLogPath = $(Join-Path $script:dbDir "ffmpeg_error_$($PID).log")
 
 #youtube-dlのパス
-if ($script:isWin) { $script:ytdlPath = $(Join-Path $script:binDir 'youtube-dl.exe') }
+if ($IsWindows) { $script:ytdlPath = $(Join-Path $script:binDir 'youtube-dl.exe') }
 else { $script:ytdlPath = $(Join-Path $script:binDir 'youtube-dl') }
 
 #ffmpegのパス
-if ($script:isWin) { $script:ffmpegPath = $(Join-Path $script:binDir 'ffmpeg.exe') }
-else { $script:ffmpegPath = $(Join-Path $script:binDir 'ffmpeg') }
+if ($IsWindows) { $script:ffmpegPath = $(Join-Path $script:binDir 'ffmpeg.exe') }
+else {
+	$script:ffmpegPath = $(Join-Path $script:binDir 'ffmpeg')
+	if (!(Test-Path $script:ffmpegPath)) { $script:ffmpegPath = (& which ffmpeg) }
+}
 
 #ffprobeのパス
-if ($script:isWin) { $script:ffprobePath = $(Join-Path $script:binDir 'ffprobe.exe') }
-else { $script:ffprobePath = $(Join-Path $script:binDir 'ffprobe') }
+if ($IsWindows) { $script:ffprobePath = $(Join-Path $script:binDir 'ffprobe.exe') }
+else {
+	$script:ffprobePath = $(Join-Path $script:binDir 'ffprobe')
+	if (!(Test-Path $script:ffprobePath)) { $script:ffprobePath = (& which ffprobe) }
+}
 

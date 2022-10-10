@@ -30,10 +30,10 @@
 #GUID取得
 #----------------------------------------------------------------------
 switch ($true) {
-	$script:isWin { $script:os = [String][System.Environment]::OSVersion }
-	$IsLinux { $script:os = "Linux $([String][System.Environment]::OSVersion.Version)" }
-	$IsMacOS { $script:os = "macOS $([String][System.Environment]::OSVersion.Version)" }
-	default { $script:os = [String][System.Environment]::OSVersion }
+	$IsWindows { $script:os = [String][System.Environment]::OSVersion ; break }
+	$IsLinux { $script:os = "Linux $([String][System.Environment]::OSVersion.Version)" ; break }
+	$IsMacOS { $script:os = "macOS $([String][System.Environment]::OSVersion.Version)" ; break }
+	default { $script:os = [String][System.Environment]::OSVersion ; break }
 }
 $script:tz = [String][TimeZoneInfo]::Local.BaseUtcOffset
 $script:guid = [guid]::NewGuid()
@@ -205,7 +205,7 @@ function deleteFiles {
 		Write-ColorOutput "$($local:path) - $($local:condition)"
 		Get-ChildItem -LiteralPath $local:path -Recurse -File -Filter $local:condition `
 		| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays($local:datePast) } `
-		| Remove-Item -Force -ErrorAction SilentlyContinue
+		| Remove-Item -Force -ErrorAction SilentlyContinue `
 		| Out-Null
 	}
 	#	} catch { Write-ColorOutput '　削除できないファイルがありました' -FgColor 'Green' }
@@ -379,14 +379,8 @@ function Get-WindowsAppId {
 	[OutputType([String])]
 	Param ()
 
-	if ($PSEdition -eq 'Desktop') {
-		$local:appID = (Get-StartApps -Name 'PowerShell').where({ $_.Name -eq 'Windows PowerShell' }).AppId
-	} elseif ($PSVersionTable.PSVersion -ge [Version]'6.0') {
-		Import-Module StartLayout -SkipEditionCheck
-		$local:appID = (Get-StartApps -Name 'PowerShell').where({ $_.Name -like 'PowerShell*' })[0].AppId
-	} else {
-		$local:appID = '{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe'
-	}
+	Import-Module StartLayout -SkipEditionCheck
+	$local:appID = (Get-StartApps -Name 'PowerShell').where({ $_.Name -like 'PowerShell*' })[0].AppId
 
 	return $local:appID
 }
@@ -432,7 +426,7 @@ function ShowToast {
 		[Boolean] $local:toastSilent
 	)
 
-	if ($script:isWin) {
+	if ($IsWindows) {
 		if ($local:toastSilent) { $local:toastSoundElement = '<audio silent="true" />' }
 		else { $local:toastSoundElement = '<audio src="ms-winsoundevent:Notification.Default" loop="false"/>' }
 
@@ -442,15 +436,10 @@ function ShowToast {
 		$local:toastAppLogo = $script:toastAppLogo
 
 		if (-not ('Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder' -as [Type])) {
-			if ($PSEdition -eq 'Core') {
-				#For PowerShell Core v6.x & PowerShell v7+
-				Add-Type -Path (Join-Path $script:libDir 'win\core\Microsoft.Windows.SDK.NET.dll')
-				Add-Type -Path (Join-Path $script:libDir 'win\core\WinRT.Runtime.dll')
-				Add-Type -Path (Join-Path $script:libDir 'win\core\Microsoft.Toolkit.Uwp.Notifications.dll')
-			} else {
-				#For Windows PowerShell and Windows PowerShell_ISE
-				Add-Type -Path (Join-Path $script:libDir 'win\desktop\Microsoft.Toolkit.Uwp.Notifications.dll')
-			}
+			#For PowerShell Core v6.x & PowerShell v7+
+			Add-Type -Path (Join-Path $script:libDir 'win\core\Microsoft.Windows.SDK.NET.dll')
+			Add-Type -Path (Join-Path $script:libDir 'win\core\WinRT.Runtime.dll')
+			Add-Type -Path (Join-Path $script:libDir 'win\core\Microsoft.Toolkit.Uwp.Notifications.dll')
 		}
 
 		$local:toastProgressContent = @"
@@ -543,7 +532,7 @@ function ShowProgressToast {
 		[Boolean] $local:toastSilent
 	)
 
-	if ($script:isWin) {
+	if ($IsWindows) {
 		if ($local:toastSilent) { $local:toastSoundElement = '<audio silent="true" />' }
 		else { $local:toastSoundElement = '<audio src="ms-winsoundevent:Notification.Default" loop="false"/>' }
 
@@ -553,15 +542,10 @@ function ShowProgressToast {
 		$local:toastAppLogo = $script:toastAppLogo
 
 		if (-not ('Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder' -as [Type])) {
-			if ($PSEdition -eq 'Core') {
-				#For PowerShell Core v6.x & PowerShell v7+
-				Add-Type -Path (Join-Path $script:libDir 'win\core\Microsoft.Windows.SDK.NET.dll')
-				Add-Type -Path (Join-Path $script:libDir 'win\core\WinRT.Runtime.dll')
-				Add-Type -Path (Join-Path $script:libDir 'win\core\Microsoft.Toolkit.Uwp.Notifications.dll')
-			} else {
-				#For Windows PowerShell and Windows PowerShell_ISE
-				Add-Type -Path (Join-Path $script:libDir 'win\desktop\Microsoft.Toolkit.Uwp.Notifications.dll')
-			}
+			#For PowerShell Core v6.x & PowerShell v7+
+			Add-Type -Path (Join-Path $script:libDir 'win\core\Microsoft.Windows.SDK.NET.dll')
+			Add-Type -Path (Join-Path $script:libDir 'win\core\WinRT.Runtime.dll')
+			Add-Type -Path (Join-Path $script:libDir 'win\core\Microsoft.Toolkit.Uwp.Notifications.dll')
 		}
 
 		$local:toastContent = @"
@@ -654,7 +638,7 @@ function UpdateProgessToast {
 		[String] $local:toastGroup
 	)
 
-	if ($script:isWin) {
+	if ($IsWindows) {
 		$local:appID = Get-WindowsAppId
 		$local:toastData = New-Object 'system.collections.generic.dictionary[string,string]'
 		$local:toastData.add('progressTitle', $local:toastTitle)
@@ -740,7 +724,7 @@ function ShowProgressToast2 {
 		[Boolean] $local:toastSilent
 	)
 
-	if ($script:isWin) {
+	if ($IsWindows) {
 		if ($local:toastSilent) { $local:toastSoundElement = '<audio silent="true" />' }
 		else { $local:toastSoundElement = '<audio src="ms-winsoundevent:Notification.Default" loop="false"/>' }
 
@@ -750,15 +734,10 @@ function ShowProgressToast2 {
 		$local:toastAppLogo = $script:toastAppLogo
 
 		if (-not ('Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder' -as [Type])) {
-			if ($PSEdition -eq 'Core') {
-				#For PowerShell Core v6.x & PowerShell v7+
-				Add-Type -Path (Join-Path $script:libDir 'win\core\Microsoft.Windows.SDK.NET.dll')
-				Add-Type -Path (Join-Path $script:libDir 'win\core\WinRT.Runtime.dll')
-				Add-Type -Path (Join-Path $script:libDir 'win\core\Microsoft.Toolkit.Uwp.Notifications.dll')
-			} else {
-				#For Windows PowerShell and Windows PowerShell_ISE
-				Add-Type -Path (Join-Path $script:libDir 'win\desktop\Microsoft.Toolkit.Uwp.Notifications.dll')
-			}
+			#For PowerShell Core v6.x & PowerShell v7+
+			Add-Type -Path (Join-Path $script:libDir 'win\core\Microsoft.Windows.SDK.NET.dll')
+			Add-Type -Path (Join-Path $script:libDir 'win\core\WinRT.Runtime.dll')
+			Add-Type -Path (Join-Path $script:libDir 'win\core\Microsoft.Toolkit.Uwp.Notifications.dll')
 		}
 
 		$local:toastContent = @"
@@ -888,7 +867,7 @@ function UpdateProgessToast2 {
 		[String] $local:toastGroup
 	)
 
-	if ($script:isWin) {
+	if ($IsWindows) {
 		$local:appID = Get-WindowsAppId
 		$local:toastData = New-Object 'system.collections.generic.dictionary[string,string]'
 		$local:toastData.add('progressTitle1', $local:toastTitle1)

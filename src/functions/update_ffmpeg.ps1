@@ -32,7 +32,7 @@ $local:releases = 'https://www.gyan.dev/ffmpeg/builds/release-version'
 #ffmpeg保存先相対Path
 $local:ffmpegRelativeDir = '..\bin'
 $local:ffmpegDir = $(Join-Path $script:scriptRoot $local:ffmpegRelativeDir)
-if ($script:isWin) { $local:ffmpegPath = $(Join-Path $local:ffmpegDir 'ffmpeg.exe') }
+if ($IsWindows) { $local:ffmpegPath = $(Join-Path $local:ffmpegDir 'ffmpeg.exe') }
 else { $local:ffmpegPath = $(Join-Path $local:ffmpegDir 'ffmpeg') }
 
 #ffmpegのディレクトリがなければ作成
@@ -64,7 +64,7 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 	Write-ColorOutput "　ffmpeg latest: $local:latestVersion"
 	Write-ColorOutput ''
 } else {
-	if ($script:isWin -eq $false) {
+	if ($IsWindows -eq $false) {
 		Write-ColorOutput 'ffmpegの自動アップデートはWindowsでのみ動作します。' -FgColor 'Green'
 	} else {
 		#ダウンロード

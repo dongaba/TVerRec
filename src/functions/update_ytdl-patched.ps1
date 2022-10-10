@@ -33,7 +33,7 @@ $local:releases = "https://api.github.com/repos/$($local:repo)/releases"
 #ytdl-patched保存先相対Path
 $local:ytdlRelativeDir = '..\bin'
 $local:ytdlDir = $(Join-Path $script:scriptRoot $local:ytdlRelativeDir)
-if ($script:isWin) { $local:ytdlPath = $(Join-Path $local:ytdlDir 'youtube-dl.exe') }
+if ($IsWindows) { $local:ytdlPath = $(Join-Path $local:ytdlDir 'youtube-dl.exe') }
 else { $local:ytdlPath = $(Join-Path $local:ytdlDir 'youtube-dl') }
 
 #ytdl-patchedのディレクトリがなければ作成
@@ -61,7 +61,7 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 	Write-ColorOutput "　youtube-dl latest: $local:latestVersion"
 	Write-ColorOutput ''
 } else {
-	if ($script:isWin -eq $false) {
+	if ($IsWindows -eq $false) {
 		try {
 			#githubの設定
 			$local:file = 'ytdl-patched'

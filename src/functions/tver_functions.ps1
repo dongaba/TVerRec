@@ -97,15 +97,9 @@ function checkLatestYtdl {
 	$progressPreference = 'silentlyContinue'
 
 	if ($script:disableUpdateYoutubedl -eq $false) {
-		if ($script:preferredYoutubedl -eq 'yt-dlp') {
-			if ($PSVersionTable.PSEdition -eq 'Desktop') { . $(Convert-Path (Join-Path $scriptRoot '.\functions\update_yt-dlp_5.ps1')) }
-			else { . $(Convert-Path (Join-Path $scriptRoot '.\functions\update_yt-dlp.ps1')) }
-		} elseif ($script:preferredYoutubedl -eq 'ytdl-patched') {
-			if ($PSVersionTable.PSEdition -eq 'Desktop') { . $(Convert-Path (Join-Path $scriptRoot '.\functions\update_ytdl-patched_5.ps1')) }
-			else { . $(Convert-Path (Join-Path $scriptRoot '.\functions\update_ytdl-patched.ps1')) }
-		} else {
-			Write-Error 'youtube-dlの取得元の指定が無効です' ; exit 1
-		}
+		if ($script:preferredYoutubedl -eq 'yt-dlp') { . $(Convert-Path (Join-Path $scriptRoot '.\functions\update_yt-dlp.ps1')) }
+		elseif ($script:preferredYoutubedl -eq 'ytdl-patched') { . $(Convert-Path (Join-Path $scriptRoot '.\functions\update_ytdl-patched.ps1')) }
+		else { Write-Error 'youtube-dlの取得元の指定が無効です' ; exit 1 }
 		if ($? -eq $false) { Write-Error 'youtube-dlの更新に失敗しました' ; exit 1 }
 	} else { }
 
@@ -122,8 +116,7 @@ function checkLatestFfmpeg {
 	$progressPreference = 'silentlyContinue'
 
 	if ($script:disableUpdateFfmpeg -eq $false) {
-		if ($PSVersionTable.PSEdition -eq 'Desktop') { . $(Convert-Path (Join-Path $scriptRoot '.\functions\update_ffmpeg_5.ps1')) }
-		else { . $(Convert-Path (Join-Path $scriptRoot '.\functions\update_ffmpeg.ps1')) }
+		. $(Convert-Path (Join-Path $scriptRoot '.\functions\update_ffmpeg.ps1'))
 		if ($? -eq $false) { Write-Error 'ffmpegの更新に失敗しました' ; exit 1 }
 	} else { }
 
@@ -342,12 +335,12 @@ function getVideoLinkFromTalentID {
 	$local:searchResults = $local:searchResultsRaw.Result.Contents
 	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
 		switch ($local:searchResults[$i].type) {
-			'episode' { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id }
-			'season' { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) }
-			'series' { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) }
-			'live' { }
+			'episode' { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id ; break }
+			'season' { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) ; break }
+			'series' { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) ; break }
+			'live' { break }
 			#他にはないと思われるが念のため
-			default { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id }
+			default { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id ; break }
 		}
 	}
 	[System.GC]::Collect()
@@ -368,12 +361,12 @@ function getVideoLinkFromTag {
 	$local:searchResults = $local:searchResultsRaw.Result.Contents
 	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
 		switch ($local:searchResults[$i].type) {
-			'episode' { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id }
-			'season' { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) }
-			'series' { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) }
-			'live' { }
+			'episode' { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id ; break }
+			'season' { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) ; break }
+			'series' { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) ; break }
+			'live' { break }
 			#他にはないと思われるが念のため
-			default { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id }
+			default { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id ; break }
 		}
 	}
 	[System.GC]::Collect()
@@ -394,12 +387,12 @@ function getVideoLinkFromNew {
 	$local:searchResults = $local:searchResultsRaw.Result.Contents.Contents
 	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
 		switch ($local:searchResults[$i].type) {
-			'episode' { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id }
-			'season' { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) }
-			'series' { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) }
-			'live' { }
+			'episode' { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id ; break }
+			'season' { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) ; break }
+			'series' { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) ; break }
+			'live' { break }
 			#他にはないと思われるが念のため
-			default { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id }
+			default { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id ; break }
 		}
 	}
 	[System.GC]::Collect()
@@ -424,12 +417,12 @@ function getVideoLinkFromRanking {
 	$local:searchResults = $local:searchResultsRaw.Result.Contents.Contents
 	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
 		switch ($local:searchResults[$i].type) {
-			'episode' { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id }
-			'season' { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) }
-			'series' { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) }
-			'live' { }
+			'episode' { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id ; break }
+			'season' { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) ; break }
+			'series' { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) ; break }
+			'live' { break }
 			#他にはないと思われるが念のため
-			default { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id }
+			default { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id ; break }
 		}
 	}
 	[System.GC]::Collect()
@@ -465,12 +458,12 @@ function getVideoLinkFromTopPage {
 			$local:searchSectionResultCount = $local:searchResults[$i].Contents.Length
 			for ($j = 0; $j -lt $local:searchSectionResultCount; $j++) {
 				switch ($local:searchResults[$i].contents[$j].type) {
-					'episode' { $script:videoLinks += '/episodes/' + $local:searchResults[$i].contents[$j].Content.Id }
-					'season' { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].contents[$j].Content.Id) }
-					'series' { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].contents[$j].Content.Id) }
-					'talent' { $script:videoLinks += getVideoLinkFromTalentID ($local:searchResults[$i].contents[$j].Content.Id) }
-					'live' { }
-					'specialMain' {}
+					'episode' { $script:videoLinks += '/episodes/' + $local:searchResults[$i].contents[$j].Content.Id ; break }
+					'season' { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].contents[$j].Content.Id) ; break }
+					'series' { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].contents[$j].Content.Id) ; break }
+					'talent' { $script:videoLinks += getVideoLinkFromTalentID ($local:searchResults[$i].contents[$j].Content.Id) ; break }
+					'live' { break }
+					'specialMain' { break }
 					#特集ページ。パース方法不明
 					#https://tver.jp/specials/$($local:searchResults[4].contents.content.id)
 					#$local:searchResults[4].contents.content.id
@@ -479,7 +472,7 @@ function getVideoLinkFromTopPage {
 					#を呼んで得られたspecialContents>[TypeがSpecialのもの]>contents.content.idを使って、再度以下のように呼び出し。(以下の例ではsum22-latterhal)
 					#https://platform-api.tver.jp/service/api/v1/callSpecialContentsDetail/sum22-latterhalf?sort_key=newer&require_data=mylist, later
 					#他にはないと思われるが念のため
-					default { $script:videoLinks += '/' + $local:searchResults[$i].contents[$j].type + '/' + $local:searchResults[$i].contents[$j].Content.Id }
+					default { $script:videoLinks += '/' + $local:searchResults[$i].contents[$j].type + '/' + $local:searchResults[$i].contents[$j].Content.Id ; break }
 				}
 			}
 		} elseif ($local:searchResults[$i].type -eq 'topics') {
@@ -488,13 +481,13 @@ function getVideoLinkFromTopPage {
 				$local:searchSectionResultCount = $local:searchResults[$i].Contents.Length
 				for ($j = 0; $j -lt $local:searchSectionResultCount; $j++) {
 					switch ($local:searchResults[$i].contents[$j].Content.Content.type) {
-						'episode' { $script:videoLinks += '/episodes/' + $local:searchResults[$i].contents[$j].Content.Content.Content.Id }
-						'season' { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].contents[$j].Content.Content.Content.Id) }
-						'series' { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].contents[$j].Content.Content.Content.Id) }
-						'talent' { $script:videoLinks += getVideoLinkFromTalentID ($local:searchResults[$i].contents[$j].Content.Content.Content.Id) }
-						'live' { }
+						'episode' { $script:videoLinks += '/episodes/' + $local:searchResults[$i].contents[$j].Content.Content.Content.Id ; break }
+						'season' { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].contents[$j].Content.Content.Content.Id) ; break }
+						'series' { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].contents[$j].Content.Content.Content.Id) ; break }
+						'talent' { $script:videoLinks += getVideoLinkFromTalentID ($local:searchResults[$i].contents[$j].Content.Content.Content.Id) ; break }
+						'live' { break }
 						#他にはないと思われるが念のため
-						default { $script:videoLinks += '/' + $local:searchResults[$i].contents[$j].type + '/' + $local:searchResults[$i].contents[$j].Content.Content.Content.Id }
+						default { $script:videoLinks += '/' + $local:searchResults[$i].contents[$j].type + '/' + $local:searchResults[$i].contents[$j].Content.Content.Content.Id ; break }
 					}
 				}
 			}
@@ -526,12 +519,12 @@ function getVideoLinkFromTitle {
 	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
 		if ($(getFileNameWithoutInvalidChars (getSpecialCharacterReplaced (getNarrowChars ($local:searchResults[$i].Content.SeriesTitle)))).Replace('  ', ' ').Trim().Contains($local:titleName) -eq $true) {
 			switch ($local:searchResults[$i].type) {
-				'episode' { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id }
-				'season' { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) }
-				'series' { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) }
-				'live' { }
+				'episode' { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id ; break }
+				'season' { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) ; break }
+				'series' { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) ; break }
+				'live' { break }
 				#他にはないと思われるが念のため
-				default { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id }
+				default { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id ; break }
 			}
 		}
 	}
@@ -553,12 +546,12 @@ function getVideoLinkFromFreeKeyword {
 	$local:searchResults = $local:searchResultsRaw.Result.Contents
 	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
 		switch ($local:searchResults[$i].type) {
-			'episode' { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id }
-			'season' { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) }
-			'series' { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) }
-			'live' { }
+			'episode' { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id ; break }
+			'season' { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) ; break }
+			'series' { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) ; break }
+			'live' { break }
 			#他にはないと思われるが念のため
-			default { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id }
+			default { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id ; break }
 		}
 	}
 	[System.GC]::Collect()
@@ -579,12 +572,12 @@ function getVideoLinkFromSeasonID {
 	$local:searchResults = $local:searchResultsRaw.Result.Contents
 	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
 		switch ($local:searchResults[$i].type) {
-			'episode' { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id }
-			'season' { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) }
-			'series' { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) }
-			'live' { }
+			'episode' { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id ; break }
+			'season' { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) ; break }
+			'series' { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) ; break }
+			'live' { break }
 			#他にはないと思われるが念のため
-			default { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id }
+			default { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id ; break }
 		}
 	}
 	[System.GC]::Collect()
@@ -602,17 +595,17 @@ function waitTillYtdlProcessGetFewer {
 	$local:psCmd = 'ps'
 
 	switch ($script:preferredYoutubedl) {
-		'yt-dlp' { $local:processName = 'yt-dlp' }
-		'ytdl-patched' { $local:processName = 'youtube-dl' }
+		'yt-dlp' { $local:processName = 'yt-dlp' ; break }
+		'ytdl-patched' { $local:processName = 'youtube-dl' ; break }
 	} 
 
 	#youtube-dlのプロセスが設定値を超えたら一時待機
 	try {
 		switch ($true) {
-			$script:isWin { $local:ytdlCount = [Math]::Round( (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) }
-			$IsLinux { $local:ytdlCount = (Get-Process -ErrorAction Ignore -Name $local:processName).Count }
-			$IsMacOS { $local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim() }
-			default { $local:ytdlCount = 0 }
+			$IsWindows { $local:ytdlCount = [Math]::Round( (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) ; break }
+			$IsLinux { $local:ytdlCount = (Get-Process -ErrorAction Ignore -Name $local:processName).Count ; break }
+			$IsMacOS { $local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim() ; break }
+			default { $local:ytdlCount = 0 ; break }
 		}
 	} catch {
 		$local:ytdlCount = 0			#プロセス数が取れなくてもとりあえず先に進む
@@ -625,10 +618,10 @@ function waitTillYtdlProcessGetFewer {
 		Start-Sleep -Seconds 60			#1分待機
 		try {
 			switch ($ture) {
-				$script:isWin { $local:ytdlCount = [Math]::Round( (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) }
-				$IsLinux { $local:ytdlCount = (& Get-Process -ErrorAction Ignore -Name $local:processName).Count }
-				$IsMacOS { $local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim() }
-				default { $local:ytdlCount = 0 }
+				$IsWindows { $local:ytdlCount = [Math]::Round( (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) ; break }
+				$IsLinux { $local:ytdlCount = (& Get-Process -ErrorAction Ignore -Name $local:processName).Count ; break }
+				$IsMacOS { $local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim() ; break }
+				default { $local:ytdlCount = 0 ; break }
 			}
 		} catch {
 			$local:ytdlCount = 0			#プロセス数が取れなくてもとりあえず先に進む
@@ -671,7 +664,6 @@ function downloadTVerVideo {
 	$script:newVideo = $null
 	$script:ignore = $false ; $script:skip = $false
 
-	#URLがすでにリストに存在する場合はスキップ
 	try {
 		#ロックファイルをロック
 		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
@@ -683,6 +675,7 @@ function downloadTVerVideo {
 	} catch { Write-ColorOutput '　リストを読み書きできなかったのでスキップしました' -FgColor 'Green' ; continue
 	} finally { $null = fileUnlock $script:lockFilePath }
 
+	#URLがすでにリストに存在する場合はスキップ
 	if ( $null -ne $local:listMatch) { Write-ColorOutput '　過去に処理したビデオです。スキップします' -FgColor 'Gray' ; continue }
 
 	#TVerのAPIを叩いてビデオ情報取得
@@ -959,11 +952,7 @@ function getVideoInfo {
 	}
 	$local:tverVideoInfoURL = $local:tverVideoInfoBaseURL + $local:episodeID + '.json?v=' + $local:versionNum
 	$local:videoInfo = Invoke-RestMethod -Uri $local:tverVideoInfoURL -Method 'GET' -Headers $local:requestHeader
-	if ($PSVersionTable.PSEdition -eq 'Desktop') {
-		$script:descriptionText = [System.Text.Encoding]::UTF8.GetString([System.Text.Encoding]::GetEncoding('ISO-8859-1').GetBytes($local:videoInfo.Description))
-	} else {
-		$script:descriptionText = $(getNarrowChars ($local:videoInfo.Description).Replace('&amp;', '&')).Trim()
-	}
+	$script:descriptionText = $(getNarrowChars ($local:videoInfo.Description).Replace('&amp;', '&')).Trim()
 
 }
 
@@ -1191,7 +1180,7 @@ function executeYtdl {
 	$local:ytdlArgs += " --output $local:saveFile"
 	$local:ytdlArgs += " $local:videoPageURL"
 
-	if ($script:isWin) {
+	if ($IsWindows) {
 		try {
 			Write-Debug "youtube-dl起動コマンド:$script:ytdlPath $local:ytdlArgs"
 			$null = (
@@ -1224,16 +1213,16 @@ function waitTillYtdlProcessIsZero () {
 	$local:psCmd = 'ps'
 
 	switch ($script:preferredYoutubedl) {
-		'yt-dlp' { $local:processName = 'yt-dlp' }
-		'ytdl-patched' { $local:processName = 'youtube-dl' }
+		'yt-dlp' { $local:processName = 'yt-dlp' ; break }
+		'ytdl-patched' { $local:processName = 'youtube-dl' ; break }
 	} 
 
 	try {
 		switch ($true) {
-			$script:isWin { $local:ytdlCount = [Math]::Round( (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) }
-			$IsLinux { $local:ytdlCount = (Get-Process -ErrorAction Ignore -Name $local:processName).Count }
-			$IsMacOS { $local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim() }
-			default { $local:ytdlCount = 0 }
+			$IsWindows { $local:ytdlCount = [Math]::Round( (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) ; break }
+			$IsLinux { $local:ytdlCount = (Get-Process -ErrorAction Ignore -Name $local:processName).Count ; break }
+			$IsMacOS { $local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim() ; break }
+			default { $local:ytdlCount = 0 ; break }
 		}
 	} catch {
 		$local:ytdlCount = 0			#プロセス数が取れなくてもとりあえず先に進む
@@ -1244,10 +1233,10 @@ function waitTillYtdlProcessIsZero () {
 			Write-Verbose "現在のダウンロードプロセス一覧 ($local:ytdlCount 個)" -FgColor 'Gray'
 			Start-Sleep -Seconds 60			#1分待機
 			switch ($true) {
-				$script:isWin { $local:ytdlCount = [Math]::Round( (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) }
-				$IsLinux { $local:ytdlCount = (Get-Process -ErrorAction Ignore -Name $local:processName).Count }
-				$IsMacOS { $local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim() }
-				default { $local:ytdlCount = 0 }
+				$IsWindows { $local:ytdlCount = [Math]::Round( (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) ; break }
+				$IsLinux { $local:ytdlCount = (Get-Process -ErrorAction Ignore -Name $local:processName).Count ; break }
+				$IsMacOS { $local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim() ; break }
+				default { $local:ytdlCount = 0 ; break }
 			}
 		} catch {
 			$local:ytdlCount = 0
@@ -1399,7 +1388,7 @@ function checkVideo {
 
 		Write-Debug "ffprobe起動コマンド:$script:ffprobePath $local:ffprobeArgs"
 		try {
-			if ($script:isWin) {
+			if ($IsWindows) {
 				$local:proc = (
 					Start-Process -FilePath $script:ffprobePath `
 						-ArgumentList ($local:ffprobeArgs) `
@@ -1427,7 +1416,7 @@ function checkVideo {
 
 		Write-Debug "ffmpeg起動コマンド:$script:ffmpegPath $local:ffmpegArgs"
 		try {
-			if ($script:isWin) {
+			if ($IsWindows) {
 				$local:proc = (
 					Start-Process -FilePath $script:ffmpegPath `
 						-ArgumentList ($local:ffmpegArgs) `
