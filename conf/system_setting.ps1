@@ -51,7 +51,7 @@ switch ($true) {
 #保存先のフルパス(絶対パス指定)
 switch ($true) {
 	$IsWindows { $script:saveBaseDir = 'V:' ; break}
-	$isLinux { $script:downloadBaseDir = '/mnt/Video' ; break}
+	$isLinux { $script:saveBaseDir = '/mnt/Video' ; break }
 	$isMacOs { $script:saveBaseDir = '/Volumes/Video' ; break }
 }
 
@@ -141,7 +141,10 @@ $script:ffpmegErrorLogPath = $(Join-Path $script:dbDir "ffmpeg_error_$($PID).log
 
 #youtube-dlのパス
 if ($IsWindows) { $script:ytdlPath = $(Join-Path $script:binDir 'youtube-dl.exe') }
-else { $script:ytdlPath = $(Join-Path $script:binDir 'youtube-dl') }
+else {
+	$script:ytdlPath = $(Join-Path $script:binDir 'youtube-dl')
+	if (!(Test-Path $script:ytdlPath)) { $script:ytdlPath = (& which youtube-dl) }
+}
 
 #ffmpegのパス
 if ($IsWindows) { $script:ffmpegPath = $(Join-Path $script:binDir 'ffmpeg.exe') }

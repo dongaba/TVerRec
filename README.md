@@ -27,6 +27,18 @@ TVerRec は、動画配信サイト TVer ( ティーバー <https://tver.jp/> ) 
 - 検索機能を改良したので、タグ検索機能を使うことでほぼ確実に録画可能となりました。
 - 番組名検索・フリーワード検索の精度は依然としてそれほど高くないのでご注意ください。
 
+## 前提条件
+
+Windows11 で動作確認しています。
+おそらく Windows7、8、8.1、10 でも動作するような気もしますが、手元に環境がないのでサポートできません。
+PowerShell Core 7.2 で動作します。おそらくそれ以外のバージョンの PowerShell Core でも動作するように思いますが、Windows PowerShell では動作しません。
+
+PowerShell は MacOS、Linux にも移植されてるので動作します。
+MacOS でも PowerShell をインストールし動作確認をしています。
+([参考](https://docs.microsoft.com/ja-jp/powershell/scripting/install/installing-powershell-on-macos?view=powershell-7.2))
+Ubuntu 20.04, 22.04 で動作確認しています。一応、PowerShell 7.2 をインストールした Raspberry Pi OS でも簡易に動作確認をしていますが、動画検証を行う場合は性能的に Raspberry Pi 4 じゃないと厳しそうです。ダウンロードだけであれば余裕です。
+([参考](https://docs.microsoft.com/ja-jp/powershell/scripting/install/install-raspbian?view=powershell-7.2))
+
 ## ざっくり以下のようなことができます
 
 1. 動画の**ジャンル**や**出演タレント**、**番組名**などの**キーワード指定**して**一括ダウンロード**します。
@@ -48,6 +60,14 @@ TVerRec は、動画配信サイト TVer ( ティーバー <https://tver.jp/> ) 
    - 最終保存先に同名のフォルダがなければ、動画ファイルは保存先フォルダに残り続けます。
 9. 動作に必要な youtube-dl や ffmpeg などの必要コンポーネントは**自動的に最新版がダウンロード**されます。(ffmpeg の自動ダウンロードは Windows のみ)
 10. **日本国外からも VPN 不要**で利用することができます。
+
+## おすすめの使い方
+
+- TVer のカテゴリ毎のページを指定して`win/start_tverrec.bat`で起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
+- 同様に、フォローしているタレントや番組名を指定して`win/start_tverrec.bat`で起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
+- 同様に、各放送局毎のページを指定して`win/start_tverrec.bat`で起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
+- 動画ファイルの検証に時間がかかる場合、複数の PC で同時に検証を行うことで複数の動画を並行して検証できるため、検証時間を短縮できます。
+  そのためには、ダウンロード先などの各フォルダを共有フォルダにして同時に複数の PC からアクセスできるようにする必要があります。
 
 ## ダウンロード対象番組の設定方法
 
@@ -104,21 +124,58 @@ TVerRec は、動画配信サイト TVer ( ティーバー <https://tver.jp/> ) 
 
 - ダウンロード条件にマッチする動画は全てダウンロードされるので、場合によってはダウンロードしたくない番組もまとめてダウンロードされます。そのような時には個別にダウンロード対象外に指定できます。
 
+## Windowsでの実行方法
+
+以下の手順でバッチファイルを実行してください。
+
+1. TVerRec をダウロードして任意のディレクトリで解凍してください。
+   - または、`git clone`してください。ただし、リリース版ではないため不具合が含まれている可能性があります。
+2. [環境設定方法](#環境設定方法)、[ダウンロード対象番組の設定方法](#ダウンロード対象番組の設定方法)、[ダウンロード対象外の番組の設定方法](#ダウンロード対象外の番組の設定方法)を参照して環境設定、ダウンロード設定を行ってください。
+3. Windows 環境では `win/start_tverrec.bat`を実行してください。
+   - 処理が完了しても 60 分ごとに永遠にループして稼働し続けます。
+   - 上記で PowerShell が起動しない場合は、PowerShell の実行ポリシーの RemoteSigned などに変更する必要があるかもしれません。
+     ([参考](https://docs.microsoft.com/ja-jp/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.2))
+   - Linux や MacOS も基本的に同じ使い方ですが、以下の章を参照してください。
+4. TVerRec を `win/start_tverrec.bat`で起動した場合は、`win/stop_tverrec.bat`で TVerRec を停止できます。
+   - 関連するダウンロード処理もすべて強制停止されるので注意してください。
+   - ダウンロードを止めたくない場合は、tverec のウィンドウを閉じるボタンで閉じてください。
+5. TVerRec を `win/start_tverrec.bat`で実行している各ツールを個別に起動するために、`win/a.download_video.bat` / `win/b.delete_trash.bat` / `win/c.validate_video.bat` / `win/d.move_video.bat`を使うこともできます。それぞれ、動画のダウンロドード、無視した動画やダウンロード中断時のゴミファイルの削除、ダウンロードした動画の検証、検証した動画の保存先への移動を行います。(`win/start_tverrec.bat`はこれらを自動的に、且つ無限に実行します)
+6. 動画を 1 本ずつダウンロードしたい場合は`win/z.download_single_video.bat`を実行し、動画の URL を 1 本ずつ指定してください。
+   - `win/b.validate.bat`を実行するとダウンロードできていないファイルがある場合(正確にはダウンロードしたビデオファイルが破損している場合)に、ダウンロード済みリストからダウンロード履歴を削除するので、再度ダウンロードできるようになります。
+   - `win/b.delete_video.sh`を実行するとダウンロードが中断してしまった際のゴミファイルなどの掃除ができるので、定期的に実行するとディスク容量を節約できます。
+   - `win/d.move_video.sh`を実行すると、動画を最終保存先に移動することも可能です。
+
+## Linux/Mac での実行方法
+
+- `ffmpeg`と`youtube-dl`を`bin`ディレクトリに配置するか、パスが通っている状態にしてください。
+  - Pathが通っている状態になっていれば`conf/system_setting.ps1`にパスを記載する必要はありません。
+  - `conf/system_setting.ps1`にパスを記載する際は、**相対パス指定で**`ffmpeg`と`youtube-dl`のパスを記述してください。
+- 上記のWindows用の説明の`win/*.bat`は`unix/*.sh`に読み替えて実行してください。
+
 ## 環境設定方法
 
-### アプリの設定
+### 基本的な設定
 
 アプリの設定は`conf/user_setting.ps1`をテキストエディターで開いて行ってください。(存在しない場合は`conf/system_setting.ps1`をコピーして作成してください)
 
 - `$script:downloadBaseDir`には動画をダウンロードするフォルダを設定します。
+
 - `$script:downloadWorkDir`には動画をダウンロードするさいにできる中間ファイルを格納するフォルダを設定します。
+
 - `$script:saveBaseDir`にはダウンロードした動画を移動する先のフォルダを設定します。
   - ここで設定したフォルダ配下(再帰的にチェックします)にあるフォルダと`$script:downloadBaseDir`にあるフォルダが一致する場合、動画ファイルが`$script:downloadBaseDir`から`$script:saveBaseDir`配下の各フォルダ配下に移動されます。同名のファイルがある場合は上書きされます。
+
 - `$script:parallelDownloadFileNum`は同時に並行でダウンロードする動画の数を設定します。
+
 - `$script:parallelDownloadNumPerFile`はそれぞれの動画をダウンロードする際の並行ダウンロード数を設定します。
   - つまり、`$script:parallelDownloadFileNum`×`$script:parallelDownloadNumPerFile`が実質的な最大同時ダウンロード数になります。
-- `$script:sortVideoByMedia`は放送局(テレビ局)ごとのフォルダを作って動画をダウンロードするかを設定します。
 
+
+### 高度な設定
+
+より細かく設定を変更したい場合は以下のような項目も設定変更が可能です。
+
+- `$script:sortVideoByMedia`は放送局(テレビ局)ごとのフォルダを作って動画をダウンロードするかを設定します。
   - `$false`の場合の保存先は以下のようになります
 
         ダウンロード先\
@@ -132,17 +189,10 @@ TVerRec は、動画配信サイト TVer ( ティーバー <https://tver.jp/> ) 
             └動画シリーズ名 動画シーズン名\
               └動画シリーズ名 動画シーズン名 放送日 動画タイトル名.mp4
 
-- `$script:windowShowStyle`には youtube-dl のウィンドウをどのように表示するかを設定します。
-
-  - `Normal` / `Maximized` / `Minimized` / `Hidden` の 4 つが指定可能です。
-  - 初期値は`Hidden`でダウンロードウィンドウは非表示となりますが、`Normal`等に設定することでダウンロードの進捗を確認することができます。
-
 - `$script:forceSoftwareDecodeFlag`に`$true`を設定すると、動画検証時にハードウェアアクセラレーションを使わなくなります。
-
   - 高速な CPU が搭載されている場合はハードウェアアクセラレーションよりも CPU で処理したほうが処理が早い場合があります。
 
 - `$script:ffmpegDecodeOption`に直接 ffmpeg のオプションを記載することで動画検証時にハードウェアアクセラレーションを有効化できます。
-
   - 例えば Intel CPU を搭載した一般的な PC であれば、`'-hwaccel qsv -c:v h264_qsv'`を設定することで、CPU 内蔵のアクセラレータを使って CPU 負荷を下げつつ高速に処理することが可能です。
   - この設定は`$script:forceSoftwareDecodeFlag`が`$true`に設定されていると無効化されます。
 
@@ -163,72 +213,40 @@ TVerRec は、動画配信サイト TVer ( ティーバー <https://tver.jp/> ) 
   - `$script:preferredYoutubedl`に`ytdl-patched`(初期値)を設定すると [ytdl-patched](https://github.com/ytdl-patched/ytdl-patched) から取得します。こちらの方が頻繁に更新されており、不具合発生時にもすぐバグ修正される傾向があります。
   - `$script:preferredYoutubedl`に`yt-dlp`を設定すると [yt-dlp](https://github.com/yt-dlp/yt-dlp) から取得します。こちらの方が安定していますが、不具合発生時のバグ修正には時間がかかる傾向があります。
 
-より細かく設定を変更したい場合は以下のような項目も設定変更が可能です。(通常は必要ありません)
+- `$script:windowShowStyle`には youtube-dl のウィンドウをどのように表示するかを設定します。
+
+  - `Normal` / `Maximized` / `Minimized` / `Hidden` の 4 つが指定可能です。
+  - 初期値は`Hidden`でダウンロードウィンドウは非表示となりますが、`Normal`等に設定することでダウンロードの進捗を確認することができます。
+
+### 変更が推奨されない設定
+
+以下の項目は変更を推奨していません。変更される際は自己責任でお願いします。
 
 - `$script:appVersion`はアプリケーションのバージョンです。
   - ここを変えても表示が変わるだけで機能が変わるわけではありません。
   - 現時点ではバージョン表記をする以外には使われておりません。
+
 - `$VerbosePreference`や`$DebugPreference`を設定することで、より詳細な情報が画面に出力されます。
   - 設定可能な値は Google してください。PowerShell の設定がそのまま使えます。
+
 - `$script:fileNameLengthMax`は OS やファイルシステムが許容するファイル名の最大長をバイト指定で記載します。
+
 - 一般的な Windows 環境では特に変更する必要はありません。
   - ここで指定した長さを超えるファイル名が生成されそうになると、ファイル名が収まるように自動的にファイル名が短縮されます。
   - なので、あまり深い階層を保存先に指定すると頻繁にファイル名が短縮されたり、エラーとなることがあります。
+
 - `$script:binDir`、`$script:dbDir`は各種フォルダの設定です。
   - ソースファイルから見た際の相対パス指定となるようにしてください。
+
 - `$script:keywordFilePath`、`$script:ignoreFilePath`はそれぞれダウンロード対象キーワードとダウンロード対象外番組を設定するファイルの名前です。
+
 - `$script:listFilePath`はダウンロードの未済管理をするファイルの名前です。
+
 - `$script:ffpmegErrorLogPath`は動画のチェックをする際にエラーを一時的に出力するファイルのパスです。
   - 初期値では`$script:listFilePath`と同じ場所に出力するようになっています。(が、処理が終われば自動的に削除されます)
+
 - `$script:ytdlPath`と`$script:ffmpegPath`はそれぞれ youtube-dl と ffmpeg の実行ファイルの配置場所を指定しています。
   - ソースファイルから見た際の相対パス指定となるようにしてください。
-
-## おすすめの使い方
-
-- TVer のカテゴリ毎のページを指定して`win/start_tverrec.bat`で起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
-- 同様に、フォローしているタレントや番組名を指定して`win/start_tverrec.bat`で起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
-- 同様に、各放送局毎のページを指定して`win/start_tverrec.bat`で起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
-- 動画ファイルの検証に時間がかかる場合、複数の PC で同時に検証を行うことで複数の動画を並行して検証できるため、検証時間を短縮できます。
-  そのためには、ダウンロード先などの各フォルダを共有フォルダにして同時に複数の PC からアクセスできるようにする必要があります。
-
-## 前提条件
-
-Windows11 で動作確認しています。
-おそらく Windows7、8、8.1、10 でも動作するような気もしますが、手元に環境がないのでサポートできません。
-PowerShell Core 7.2 で動作します。おそらくそれ以外のバージョンの PowerShell Core でも動作するように思いますが、Windows PowerShell では動作しません。
-
-PowerShell は MacOS、Linux にも移植されてるので動作します。
-MacOS でも PowerShell をインストールし動作確認をしています。
-([参考](https://docs.microsoft.com/ja-jp/powershell/scripting/install/installing-powershell-on-macos?view=powershell-7.2))
-Ubuntu 20.04, 22.04 で動作確認しています。一応、PowerShell 7.2 をインストールした Raspberry Pi OS でも簡易に動作確認をしていますが、動画検証を行う場合は性能的に Raspberry Pi 4 じゃないと厳しそうです。ダウンロードだけであれば余裕です。
-([参考](https://docs.microsoft.com/ja-jp/powershell/scripting/install/install-raspbian?view=powershell-7.2))
-
-## 実行方法
-
-以下の手順でバッチファイルを実行してください。
-
-1. TVerRec をダウロードして任意のディレクトリで解凍してください。
-   - または、`git clone`してください。ただし、リリース版ではないため不具合が含まれている可能性があります。
-2. [環境設定方法](#環境設定方法)、[ダウンロード対象番組の設定方法](#ダウンロード対象番組の設定方法)、[ダウンロード対象外の番組の設定方法](#ダウンロード対象外の番組の設定方法)を参照して環境設定、ダウンロード設定を行ってください。
-3. Windows 環境では `win/start_tverrec.bat`を実行してください。
-   - 処理が完了しても 10 分ごとに永遠にループして稼働し続けます。
-   - 上記で PowerShell が起動しない場合は、PowerShell の実行ポリシーの RemoteSigned などに変更する必要があるかもしれません。
-     ([参考](https://docs.microsoft.com/ja-jp/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.2))
-   - Linux や MacOS も基本的に同じ使い方ですが、以下の章を参照してください。
-4. TVerRec を `win/start_tverrec.bat`で起動した場合は、`win/stop_tverrec.bat`で TVerRec を停止できます。
-   - 関連するダウンロード処理もすべて強制停止されるので注意してください。
-   - ダウンロードを止めたくない場合は、tverec のウィンドウを閉じるボタンで閉じてください。
-5. TVerRec を `win/start_tverrec.bat`で実行している各ツールを個別に起動するために、`win/a.download_video.bat` / `win/b.delete_trash.bat` / `win/c.validate_video.bat` / `win/d.move_video.bat`を使うこともできます。それぞれ、動画のダウンロドード、無視した動画やダウンロード中断時のゴミファイルの削除、ダウンロードした動画の検証、検証した動画の保存先への移動を行います。(`win/start_tverrec.bat`はこれらを自動的に、且つ無限に実行します)
-6. 動画を 1 本ずつダウンロードしたい場合は`win/z.download_single_video.bat`を実行し、動画の URL を 1 本ずつ指定してください。
-   - `win/b.validate.bat`を実行するとダウンロードできていないファイルがある場合(正確にはダウンロードしたビデオファイルが破損している場合)に、ダウンロード済みリストからダウンロード履歴を削除するので、再度ダウンロードできるようになります。
-   - `win/b.delete_video.sh`を実行するとダウンロードが中断してしまった際のゴミファイルなどの掃除ができるので、定期的に実行するとディスク容量を節約できます。
-   - `win/d.move_video.sh`を実行すると、動画を最終保存先に移動することも可能です。
-
-## Linux/Mac での利用方法
-
-- `ffmpeg`と`youtube-dl`を`bin`ディレクトリに配置するか、シンボリックリンクを貼ってください。
-  - または、`conf/system_setting.ps1`に**相対パス指定で**`ffmpeg`と`youtube-dl`のパスを記述してください。
-- 上記説明の`win/*.bat`は`unix/*.sh`に読み替えて実行してください。
 
 ## フォルダ構成
 

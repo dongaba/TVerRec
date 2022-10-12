@@ -60,6 +60,6 @@ do
 	pwsh -NoProfile -ExecutionPolicy Unrestricted ../src/delete_trash.ps1
 
 	echo $sleepTime "秒待機します。すぐに処理を再開するにはEnterを押してください。"
-	read -t $sleepTime
+	read -r -t $sleepTime
 
 done

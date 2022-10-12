@@ -1,5 +1,15 @@
 ﻿# Change Log
 
+## [2.5.8](https://github.com/dongaba/TVerRec/releases/tag/v2.5.8)
+
+### 2.5.8 Added
+
+### 2.5.8 Changed
+
+### 2.5.8 Fixed
+
+- Linux用の動画保存先先フォルダの指定が間違っている[問題](https://github.com/dongaba/TVerRec/issues/18)を修正
+
 ## [2.5.7](https://github.com/dongaba/TVerRec/releases/tag/v2.5.7)
 
 ### 2.5.7 Added

@@ -31,11 +31,10 @@ youtube-dl
 *mp4.part-Frag*
 *pid.txt
 pid*.txt
-*_5.ps1
 .smb*
 brightcovenew*
 ffmpeg_error*
-tver.lock
+
 
 #開発関連ファイル
 dev*
@@ -57,5 +56,7 @@ tver.csv
 ignore.conf
 keyword.conf
 user_setting.ps1
+tver.lock
+db/tver.lock
 #git update-index --assume-unchanged conf/dev_setting.ps1
 
