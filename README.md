@@ -9,7 +9,7 @@
 [![DevSkim](https://github.com/dongaba/TVerRec/actions/workflows/devskim.yml/badge.svg)](https://github.com/dongaba/TVerRec/actions/workflows/devskim.yml)
 [![PSScriptAnalyzer](https://github.com/dongaba/TVerRec/actions/workflows/powershell.yml/badge.svg)](https://github.com/dongaba/TVerRec/actions/workflows/powershell.yml)
 [![TVerRec Launch](https://hits.sh/github.com/dongaba/TVerRec/launch.svg?view=today-total&color=9f9f9f&label=TVerRec%20Launch)](https://hits.sh/github.com/dongaba/TVerRec/launch)
-[![Video Searche(https://hits.sh/github.com/dongaba/TVerRec/search.svg?view=today-total&color=9f9f9f&label=Video%20Search)](https://hits.sh/github.com/dongaba/TVerRec/search)
+[![Video Searche](https://hits.sh/github.com/dongaba/TVerRec/search.svg?view=today-total&color=9f9f9f&label=Video%20Search)](https://hits.sh/github.com/dongaba/TVerRec/search)
 [![Video Download](https://hits.sh/github.com/dongaba/TVerRec/download.svg?view=today-total&color=9f9f9f&label=Video%20Download)](https://hits.sh/github.com/dongaba/TVerRec/download)
 [![Video Validate](https://hits.sh/github.com/dongaba/TVerRec/validate.svg?view=today-total&color=9f9f9f&label=Video%20Validate)](https://hits.sh/github.com/dongaba/TVerRec/validate)
 
@@ -124,7 +124,7 @@ Ubuntu 20.04, 22.04 で動作確認しています。一応、PowerShell 7.2 を
 
 - ダウンロード条件にマッチする動画は全てダウンロードされるので、場合によってはダウンロードしたくない番組もまとめてダウンロードされます。そのような時には個別にダウンロード対象外に指定できます。
 
-## Windowsでの実行方法
+## Windows での実行方法
 
 以下の手順でバッチファイルを実行してください。
 
@@ -148,9 +148,9 @@ Ubuntu 20.04, 22.04 で動作確認しています。一応、PowerShell 7.2 を
 ## Linux/Mac での実行方法
 
 - `ffmpeg`と`youtube-dl`を`bin`ディレクトリに配置するか、パスが通っている状態にしてください。
-  - Pathが通っている状態になっていれば`conf/system_setting.ps1`にパスを記載する必要はありません。
+  - Path が通っている状態になっていれば`conf/system_setting.ps1`にパスを記載する必要はありません。
   - `conf/system_setting.ps1`にパスを記載する際は、**相対パス指定で**`ffmpeg`と`youtube-dl`のパスを記述してください。
-- 上記のWindows用の説明の`win/*.bat`は`unix/*.sh`に読み替えて実行してください。
+- 上記の Windows 用の説明の`win/*.bat`は`unix/*.sh`に読み替えて実行してください。
 
 ## 環境設定方法
 
@@ -163,6 +163,7 @@ Ubuntu 20.04, 22.04 で動作確認しています。一応、PowerShell 7.2 を
 - `$script:downloadWorkDir`には動画をダウンロードするさいにできる中間ファイルを格納するフォルダを設定します。
 
 - `$script:saveBaseDir`にはダウンロードした動画を移動する先のフォルダを設定します。
+
   - ここで設定したフォルダ配下(再帰的にチェックします)にあるフォルダと`$script:downloadBaseDir`にあるフォルダが一致する場合、動画ファイルが`$script:downloadBaseDir`から`$script:saveBaseDir`配下の各フォルダ配下に移動されます。同名のファイルがある場合は上書きされます。
 
 - `$script:parallelDownloadFileNum`は同時に並行でダウンロードする動画の数を設定します。
@@ -175,6 +176,7 @@ Ubuntu 20.04, 22.04 で動作確認しています。一応、PowerShell 7.2 を
 より細かく設定を変更したい場合は以下のような項目も設定変更が可能です。
 
 - `$script:sortVideoByMedia`は放送局(テレビ局)ごとのフォルダを作って動画をダウンロードするかを設定します。
+
   - `$false`の場合の保存先は以下のようになります
 
         ダウンロード先\
@@ -189,9 +191,11 @@ Ubuntu 20.04, 22.04 で動作確認しています。一応、PowerShell 7.2 を
               └動画シリーズ名 動画シーズン名 放送日 動画タイトル名.mp4
 
 - `$script:forceSoftwareDecodeFlag`に`$true`を設定すると、動画検証時にハードウェアアクセラレーションを使わなくなります。
+
   - 高速な CPU が搭載されている場合はハードウェアアクセラレーションよりも CPU で処理したほうが処理が早い場合があります。
 
 - `$script:ffmpegDecodeOption`に直接 ffmpeg のオプションを記載することで動画検証時にハードウェアアクセラレーションを有効化できます。
+
   - 例えば Intel CPU を搭載した一般的な PC であれば、`'-hwaccel qsv -c:v h264_qsv'`を設定することで、CPU 内蔵のアクセラレータを使って CPU 負荷を下げつつ高速に処理することが可能です。
   - この設定は`$script:forceSoftwareDecodeFlag`が`$true`に設定されていると無効化されます。
 
@@ -209,6 +213,7 @@ Ubuntu 20.04, 22.04 で動作確認しています。一応、PowerShell 7.2 を
   - `$script:disableUpdateFfmpeg`に`$true`を設定すると ffmpeg の自動アップデートが無効化されます。
 
 - youtube-dl に起因する問題が起きた際には以下の 2 種類の youtube-dl を使い分けることが可能です。
+
   - `$script:preferredYoutubedl`に`ytdl-patched`(初期値)を設定すると [ytdl-patched](https://github.com/ytdl-patched/ytdl-patched) から取得します。こちらの方が頻繁に更新されており、不具合発生時にもすぐバグ修正される傾向があります。
   - `$script:preferredYoutubedl`に`yt-dlp`を設定すると [yt-dlp](https://github.com/yt-dlp/yt-dlp) から取得します。こちらの方が安定していますが、不具合発生時のバグ修正には時間がかかる傾向があります。
 
@@ -222,19 +227,23 @@ Ubuntu 20.04, 22.04 で動作確認しています。一応、PowerShell 7.2 を
 以下の項目は変更を推奨していません。変更される際は自己責任でお願いします。
 
 - `$script:appVersion`はアプリケーションのバージョンです。
+
   - ここを変えても表示が変わるだけで機能が変わるわけではありません。
   - 現時点ではバージョン表記をする以外には使われておりません。
 
 - `$VerbosePreference`や`$DebugPreference`を設定することで、より詳細な情報が画面に出力されます。
+
   - 設定可能な値は Google してください。PowerShell の設定がそのまま使えます。
 
 - `$script:fileNameLengthMax`は OS やファイルシステムが許容するファイル名の最大長をバイト指定で記載します。
 
 - 一般的な Windows 環境では特に変更する必要はありません。
+
   - ここで指定した長さを超えるファイル名が生成されそうになると、ファイル名が収まるように自動的にファイル名が短縮されます。
   - なので、あまり深い階層を保存先に指定すると頻繁にファイル名が短縮されたり、エラーとなることがあります。
 
 - `$script:binDir`、`$script:dbDir`は各種フォルダの設定です。
+
   - ソースファイルから見た際の相対パス指定となるようにしてください。
 
 - `$script:keywordFilePath`、`$script:ignoreFilePath`はそれぞれダウンロード対象キーワードとダウンロード対象外番組を設定するファイルの名前です。
@@ -242,6 +251,7 @@ Ubuntu 20.04, 22.04 で動作確認しています。一応、PowerShell 7.2 を
 - `$script:listFilePath`はダウンロードの未済管理をするファイルの名前です。
 
 - `$script:ffpmegErrorLogPath`は動画のチェックをする際にエラーを一時的に出力するファイルのパスです。
+
   - 初期値では`$script:listFilePath`と同じ場所に出力するようになっています。(が、処理が終われば自動的に削除されます)
 
 - `$script:ytdlPath`と`$script:ffmpegPath`はそれぞれ youtube-dl と ffmpeg の実行ファイルの配置場所を指定しています。
