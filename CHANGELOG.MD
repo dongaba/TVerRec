@@ -8,7 +8,7 @@
 
 ### 2.5.9 Fixed
 
-- `$script:saveBaseDir`で指定されるディレクトリがからの際にエラーとなる[問題](https://github.com/dongaba/TVerRec/issues/19)を修正
+- `$script:saveBaseDir`で指定されるディレクトリが空の際にエラーとなる[問題](https://github.com/dongaba/TVerRec/issues/19)を修正
 
 ## [2.5.8](https://github.com/dongaba/TVerRec/releases/tag/v2.5.8)
 
