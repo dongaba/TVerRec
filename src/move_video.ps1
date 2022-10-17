@@ -117,45 +117,49 @@ ShowProgressToast `
 #処理
 $local:moveToPathNum = 0						#移動先パス番号
 if ($local:moveToPaths -is [array]) { $local:moveToPathTotal = $local:moveToPaths.Length }		#移動先パス合計数
-else { $local:moveToPathTotal = 1 }
+elseif ($null -ne $local:moveToPaths ) { $local:moveToPathTotal = 1 }
+else { $local:moveToPathTotal = 0 }
 
 #----------------------------------------------------------------------
 $local:totalStartTime = Get-Date
-foreach ($local:moveToPath in $local:moveToPaths.FullName) {
 
-	#処理時間の推計
-	$local:secElapsed = (Get-Date) - $local:totalStartTime
-	$local:secRemaining = -1
-	if ($local:moveToPathNum -ne 0) {
-		$local:secRemaining = ($local:secElapsed.TotalSeconds / $local:moveToPathNum) * ($local:moveToPathTotal - $local:moveToPathNum)
-		$local:minRemaining = "$([String]([math]::Ceiling($local:secRemaining / 60)))分"
-		$local:progressRatio = $($local:moveToPathNum / $local:moveToPathTotal)
-	} else {
-		$local:minRemaining = '計算中...'
-		$local:progressRatio = 0
+if ($local:moveToPathTotal -ne 0) {
+	foreach ($local:moveToPath in $local:moveToPaths.FullName) {
+
+		#処理時間の推計
+		$local:secElapsed = (Get-Date) - $local:totalStartTime
+		$local:secRemaining = -1
+		if ($local:moveToPathNum -ne 0) {
+			$local:secRemaining = ($local:secElapsed.TotalSeconds / $local:moveToPathNum) * ($local:moveToPathTotal - $local:moveToPathNum)
+			$local:minRemaining = "$([String]([math]::Ceiling($local:secRemaining / 60)))分"
+			$local:progressRatio = $($local:moveToPathNum / $local:moveToPathTotal)
+		} else {
+			$local:minRemaining = '計算中...'
+			$local:progressRatio = 0
+		}
+		$local:moveToPathNum = $local:moveToPathNum + 1
+
+		#進捗表示
+		UpdateProgessToast `
+			-Title $local:moveToPath `
+			-Rate $local:progressRatio `
+			-LeftText $local:moveToPathNum/$local:moveToPathTotal `
+			-RrightText "残り時間 $local:minRemaining" `
+			-Tag $script:appName `
+			-Group 'Move'
+
+		#処理
+		Write-ColorOutput "$($local:moveToPathNum)/$($local:moveToPathTotal) - $($local:moveToPath)" -NoNewline $true
+		$local:targetFolderName = Split-Path -Leaf $local:moveToPath
+		#同名フォルダが存在する場合は配下のファイルを移動
+		$local:moveFromPath = $(Join-Path $script:downloadBaseDir $local:targetFolderName)
+		if (Test-Path $local:moveFromPath) {
+			$local:moveFromPath = $local:moveFromPath + '\*.mp4'
+			Write-ColorOutput "　「$($local:moveFromPath)」を移動します" -FgColor 'Gray'
+			try { Move-Item $local:moveFromPath -Destination $local:moveToPath -Force }
+			catch { Write-ColorOutput '　移動できないファイルがありました' -FgColor 'Green' }
+		} else { Write-ColorOutput '' }
 	}
-	$local:moveToPathNum = $local:moveToPathNum + 1
-
-	#進捗表示
-	UpdateProgessToast `
-		-Title $local:moveToPath `
-		-Rate $local:progressRatio `
-		-LeftText $local:moveToPathNum/$local:moveToPathTotal `
-		-RrightText "残り時間 $local:minRemaining" `
-		-Tag $script:appName `
-		-Group 'Move'
-
-	#処理
-	Write-ColorOutput "$($local:moveToPathNum)/$($local:moveToPathTotal) - $($local:moveToPath)" -NoNewline $true
-	$local:targetFolderName = Split-Path -Leaf $local:moveToPath
-	#同名フォルダが存在する場合は配下のファイルを移動
-	$local:moveFromPath = $(Join-Path $script:downloadBaseDir $local:targetFolderName)
-	if (Test-Path $local:moveFromPath) {
-		$local:moveFromPath = $local:moveFromPath + '\*.mp4'
-		Write-ColorOutput "　「$($local:moveFromPath)」を移動します" -FgColor 'Gray'
-		try { Move-Item $local:moveFromPath -Destination $local:moveToPath -Force }
-		catch { Write-ColorOutput '　移動できないファイルがありました' -FgColor 'Green' }
-	} else { Write-ColorOutput '' }
 }
 #----------------------------------------------------------------------
 

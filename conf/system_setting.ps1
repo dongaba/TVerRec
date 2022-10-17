@@ -50,7 +50,7 @@ switch ($true) {
 
 #保存先のフルパス(絶対パス指定)
 switch ($true) {
-	$IsWindows { $script:saveBaseDir = 'V:' ; break}
+	$IsWindows { a = 'V:' ; break}
 	$isLinux { $script:saveBaseDir = '/mnt/Video' ; break }
 	$isMacOs { $script:saveBaseDir = '/Volumes/Video' ; break }
 }

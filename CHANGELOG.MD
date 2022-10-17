@@ -1,5 +1,15 @@
 ﻿# Change Log
 
+## [2.5.9](https://github.com/dongaba/TVerRec/releases/tag/v2.5.9)
+
+### 2.5.9 Added
+
+### 2.5.9 Changed
+
+### 2.5.9 Fixed
+
+- `$script:saveBaseDir`で指定されるディレクトリがからの際にエラーとなる[問題](https://github.com/dongaba/TVerRec/issues/19)を修正
+
 ## [2.5.8](https://github.com/dongaba/TVerRec/releases/tag/v2.5.8)
 
 ### 2.5.8 Added
