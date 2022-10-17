@@ -37,20 +37,20 @@ Set-StrictMode -Version Latest
 #ダウンロード先のフルパス(絶対パス指定)
 switch ($true) {
 	$IsWindows { $script:downloadBaseDir = 'W:' ; break }
-	$isLinux { $script:downloadBaseDir = '/mnt/Work' ; break}
-	$isMacOs { $script:downloadBaseDir = '/Volumes/Work' ; break}
+	$isLinux { $script:downloadBaseDir = '/mnt/Work' ; break }
+	$isMacOs { $script:downloadBaseDir = '/Volumes/Work' ; break }
 }
 
 #ダウンロード中の作業ファイル置き場のフルパス(絶対パス指定)
 switch ($true) {
-	$IsWindows { $script:downloadWorkDir = $env:TMP ; break}	#$env:TMP = C:\Users\<ユーザ名>\AppData\Local\Temp
-	$isLinux { $script:downloadWorkDir = '/var/tmp' ; break}
-	$isMacOs { $script:downloadWorkDir = '/Volumes/RamDrive/Temp' ; break}
+	$IsWindows { $script:downloadWorkDir = $env:TMP ; break }	#$env:TMP = C:\Users\<ユーザ名>\AppData\Local\Temp
+	$isLinux { $script:downloadWorkDir = '/var/tmp' ; break }
+	$isMacOs { $script:downloadWorkDir = '/Volumes/RamDrive/Temp' ; break }
 }
 
 #保存先のフルパス(絶対パス指定)
 switch ($true) {
-	$IsWindows { a = 'V:' ; break}
+	$IsWindows { $script:saveBaseDir = 'V:' ; break }
 	$isLinux { $script:saveBaseDir = '/mnt/Video' ; break }
 	$isMacOs { $script:saveBaseDir = '/Volumes/Video' ; break }
 }

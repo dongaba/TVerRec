@@ -1,5 +1,15 @@
 ﻿# Change Log
 
+## [2.6.0](https://github.com/dongaba/TVerRec/releases/tag/v2.6.0)
+
+### 2.6.0 Added
+
+### 2.6.0 Changed
+
+### 2.6.0 Fixed
+
+- `system_setting.ps1`に Typo があったのを修正
+
 ## [2.5.9](https://github.com/dongaba/TVerRec/releases/tag/v2.5.9)
 
 ### 2.5.9 Added
@@ -18,7 +28,7 @@
 
 ### 2.5.8 Fixed
 
-- Linux用の動画保存先先フォルダの指定が間違っている[問題](https://github.com/dongaba/TVerRec/issues/18)を修正
+- Linux 用の動画保存先先フォルダの指定が間違っている[問題](https://github.com/dongaba/TVerRec/issues/18)を修正
 
 ## [2.5.7](https://github.com/dongaba/TVerRec/releases/tag/v2.5.7)
 
