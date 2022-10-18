@@ -617,7 +617,7 @@ function waitTillYtdlProcessGetFewer {
 		Write-ColorOutput "ダウンロードが $local:parallelDownloadFileNum 多重に達したので一時待機します。 ($(getTimeStamp))" -FgColor 'Gray'
 		Start-Sleep -Seconds 60			#1分待機
 		try {
-			switch ($ture) {
+			switch ($true) {
 				$IsWindows { $local:ytdlCount = [Math]::Round( (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) ; break }
 				$IsLinux { $local:ytdlCount = (& Get-Process -ErrorAction Ignore -Name $local:processName).Count ; break }
 				$IsMacOS { $local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim() ; break }

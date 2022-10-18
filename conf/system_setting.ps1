@@ -29,8 +29,6 @@
 #	「#」or「;」でコメントアウト
 #	このファイルに書かれた内容はそのままPowershellスクリプトとして実行。
 #----------------------------------------------------------------------
-
-#Windowsの判定
 Set-StrictMode -Off
 Set-StrictMode -Version Latest
 

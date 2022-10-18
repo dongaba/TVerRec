@@ -1,5 +1,15 @@
 ﻿# Change Log
 
+## [2.6.1](https://github.com/dongaba/TVerRec/releases/tag/v2.6.1)
+
+### 2.6.1 Added
+
+### 2.6.1 Changed
+
+### 2.6.1 Fixed
+
+- youtube-dl の多重度チェックが正しく機能せず youtube-dl を無限に起動していた問題修正
+
 ## [2.6.0](https://github.com/dongaba/TVerRec/releases/tag/v2.6.0)
 
 ### 2.6.0 Added
