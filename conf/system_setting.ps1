@@ -101,6 +101,9 @@ $script:ffmpegDecodeOption = ''							#ffmpegのデコードオプションを�
 #$script:ffmpegDecodeOption = '-hwaccel cuda -hwaccel_output_format cuda'							#CUDA : for NVIDIA Graphic Cards
 #$script:ffmpegDecodeOption = '-hwaccel videotoolbox'												#VideoToolBox : for Macs
 
+#----------------------------------------------------------------------
+#	以下は変更を推奨しない設定。変更の際は自己責任で。
+#----------------------------------------------------------------------
 #アプリケーション名・バージョン番号
 $script:appName = 'TVerRec'
 $script:appVersion = Get-Content '..\VERSION'
