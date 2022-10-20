@@ -1,5 +1,15 @@
 ﻿# Change Log
 
+## [2.6.2](https://github.com/dongaba/TVerRec/releases/tag/v2.6.2)
+
+### 2.6.2 Added
+
+### 2.6.2 Changed
+
+### 2.6.2 Fixed
+
+- ダウンロード先フォルダが空の際にエラーとなる問題を修正
+
 ## [2.6.1](https://github.com/dongaba/TVerRec/releases/tag/v2.6.1)
 
 ### 2.6.1 Added

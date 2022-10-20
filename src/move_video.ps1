@@ -113,6 +113,7 @@ ShowProgressToast `
 	-Silent $false
 
 #処理
+$local:moveToPaths = $null
 $local:moveToPaths = Get-ChildItem $script:saveBaseDir -Recurse | Where-Object { $_.PSIsContainer } | Sort-Object
 
 $local:moveToPathNum = 0						#移動先パス番号
