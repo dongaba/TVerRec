@@ -43,7 +43,7 @@ PowerShell は MacOS、Linux にも移植されてるので動作します。
 MacOS でも PowerShell をインストールし動作確認をしています。
 ([参考](https://docs.microsoft.com/ja-jp/powershell/scripting/install/installing-powershell-on-macos?view=powershell-7.2))
 Ubuntu 22.04 で動作確認しています。
-Android タブレットに導入した Termux 上の Ubuntu や UserLAnd 上の Debian でも動作します。
+Android タブレットに導入した Termux 上の Ubuntu や UserLand 上の Debian でも動作します。
 一応、Raspberry Pi OS でも簡易に動作確認をしていますが、動画検証を行う場合は性能的に Raspberry Pi 4 じゃないと厳しそうです。
 ダウンロードだけであれば余裕です。
 ([参考](https://docs.microsoft.com/ja-jp/powershell/scripting/install/install-raspbian?view=powershell-7.2))
