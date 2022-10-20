@@ -52,7 +52,7 @@ if (Test-Path $local:ytdlPath -PathType Leaf) {
 
 #ytdl-patchedの最新バージョン取得
 try { $local:latestVersion = (Invoke-WebRequest -Uri $local:releases | ConvertFrom-Json)[0].Name }
-catch { Write-ColorOutput 'youtube-dlの最新バージョンを特定できませんでした' -FgColor 'Green' ; return }
+catch { Write-ColorOutput 'youtube-dl(ytdl-patched)の最新バージョンを特定できませんでした' -FgColor 'Green' ; return }
 
 #ytdl-patchedのダウンロード
 if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
