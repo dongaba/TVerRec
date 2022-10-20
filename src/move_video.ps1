@@ -95,8 +95,6 @@ ShowProgressToast `
 	-Duration 'long' `
 	-Silent $false
 
-#処理
-$local:moveToPaths = Get-ChildItem $script:saveBaseDir -Recurse | Where-Object { $_.PSIsContainer } | Sort-Object
 
 #======================================================================
 #2/2 移動先フォルダと同名のフォルダ配下の動画を移動
@@ -115,9 +113,11 @@ ShowProgressToast `
 	-Silent $false
 
 #処理
+$local:moveToPaths = Get-ChildItem $script:saveBaseDir -Recurse | Where-Object { $_.PSIsContainer } | Sort-Object
+
 $local:moveToPathNum = 0						#移動先パス番号
 if ($local:moveToPaths -is [array]) { $local:moveToPathTotal = $local:moveToPaths.Length }		#移動先パス合計数
-elseif ($null -ne $local:moveToPaths ) { $local:moveToPathTotal = 1 }
+elseif ($null -ne $local:moveToPaths) { $local:moveToPathTotal = 1 }
 else { $local:moveToPathTotal = 0 }
 
 #----------------------------------------------------------------------

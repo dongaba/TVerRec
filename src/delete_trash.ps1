@@ -235,44 +235,49 @@ ShowProgressToast `
 	-Silent $false
 
 #処理
-$local:allSubDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer })).FullName | Sort-Object -Descending
+try {
+	$local:allSubDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer })).FullName | Sort-Object -Descending
+} catch { }		#配下にディレクトリがない場合のエラー対策
 
 $local:subDirNum = 0						#サブディレクトリの番号
-if ($local:allSubDirs -is [array]) {
-	$local:subDirTotal = $local:allSubDirs.Length	#サブディレクトリの合計数
-} else { $local:subDirTotal = 1 }
+if ($local:allSubDirs -is [array]) { $local:subDirTotal = $local:allSubDirs.Length }		#サブディレクトリの合計数
+elseif ($null -ne $local:allSubDirs) { $local:subDirTotal = 1 }
+else { $local:subDirTotal = 0 }
 
 #----------------------------------------------------------------------
 $local:totalStartTime = Get-Date
-foreach ($local:subDir in $local:allSubDirs) {
-	#処理時間の推計
-	$local:secElapsed = (Get-Date) - $local:totalStartTime
-	$local:secRemaining = -1
-	if ($local:subDirNum -ne 0) {
-		$local:secRemaining = ($local:secElapsed.TotalSeconds / $local:subDirNum) * ($local:subDirTotal - $local:subDirNum)
-		$local:minRemaining = "$([String]([math]::Ceiling($local:secRemaining / 60)))分"
-		$local:progressRatio = $($local:subDirNum / $local:subDirTotal)
-	} else {
-		$local:minRemaining = '計算中...'
-		$local:progressRatio = 0
+
+if ($local:subDirTotal -ne 0) {
+	foreach ($local:subDir in $local:allSubDirs) {
+		#処理時間の推計
+		$local:secElapsed = (Get-Date) - $local:totalStartTime
+		$local:secRemaining = -1
+		if ($local:subDirNum -ne 0) {
+			$local:secRemaining = ($local:secElapsed.TotalSeconds / $local:subDirNum) * ($local:subDirTotal - $local:subDirNum)
+			$local:minRemaining = "$([String]([math]::Ceiling($local:secRemaining / 60)))分"
+			$local:progressRatio = $($local:subDirNum / $local:subDirTotal)
+		} else {
+			$local:minRemaining = '計算中...'
+			$local:progressRatio = 0
+		}
+		$local:subDirNum = $local:subDirNum + 1
+
+		UpdateProgessToast `
+			-Title $local:subDir `
+			-Rate $local:progressRatio `
+			-LeftText $local:subDirNum/$local:subDirTotal `
+			-RrightText "残り時間 $local:minRemaining" `
+			-Tag $script:appName `
+			-Group 'Delete'
+
+		#処理
+		Write-ColorOutput "$($local:subDirNum)/$($local:subDirTotal) - $($local:subDir)" -NoNewline $true
+		if (@((Get-ChildItem -LiteralPath $local:subDir -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
+			Write-ColorOutput "　「$($local:subDir)」を削除します" -FgColor 'Gray'
+			try { Remove-Item -LiteralPath $local:subDir -Recurse -Force -ErrorAction SilentlyContinue }
+			catch { Write-ColorOutput "　空フォルダの削除に失敗しました: $local:subDir" -FgColor 'Green' }
+		} else { Write-ColorOutput '' }
 	}
-	$local:subDirNum = $local:subDirNum + 1
-
-	UpdateProgessToast `
-		-Title $local:subDir `
-		-Rate $local:progressRatio `
-		-LeftText $local:subDirNum/$local:subDirTotal `
-		-RrightText "残り時間 $local:minRemaining" `
-		-Tag $script:appName `
-		-Group 'Delete'
-
-	#処理
-	Write-ColorOutput "$($local:subDirNum)/$($local:subDirTotal) - $($local:subDir)" -NoNewline $true
-	if (@((Get-ChildItem -LiteralPath $local:subDir -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
-		Write-ColorOutput "　「$($local:subDir)」を削除します" -FgColor 'Gray'
-		try { Remove-Item -LiteralPath $local:subDir -Recurse -Force -ErrorAction SilentlyContinue }
-		catch { Write-ColorOutput "　空フォルダの削除に失敗しました: $local:subDir" -FgColor 'Green' }
-	} else { Write-ColorOutput '' }
 }
 #----------------------------------------------------------------------
 
