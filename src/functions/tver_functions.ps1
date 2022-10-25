@@ -603,7 +603,7 @@ function waitTillYtdlProcessGetFewer {
 	try {
 		switch ($true) {
 			$IsWindows { $local:ytdlCount = [Math]::Round( (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) ; break }
-			$IsLinux { $local:ytdlCount = (Get-Process -ErrorAction Ignore -Name $local:processName).Count ; break }
+			$IsLinux { $local:ytdlCount = @(Get-Process -ErrorAction Ignore -Name $local:processName).Count ; break }
 			$IsMacOS { $local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim() ; break }
 			default { $local:ytdlCount = 0 ; break }
 		}
@@ -613,19 +613,17 @@ function waitTillYtdlProcessGetFewer {
 
 	Write-Verbose "現在のダウンロードプロセス一覧 ($local:ytdlCount 個)"
 
-	while ([int]$local:ytdlCount -ge [int]$local:parallelDownloadFileNum) {
+	while ([int]$local:ytdlCount -ge [int]$local:parallelDownloadFileNum ) {
 		Write-ColorOutput "ダウンロードが $local:parallelDownloadFileNum 多重に達したので一時待機します。 ($(getTimeStamp))" -FgColor 'Gray'
+		Write-Verbose "現在のダウンロードプロセス一覧 ($local:ytdlCount 個)"
 		Start-Sleep -Seconds 60			#1分待機
 		try {
 			switch ($true) {
 				$IsWindows { $local:ytdlCount = [Math]::Round( (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) ; break }
-				$IsLinux { $local:ytdlCount = (& Get-Process -ErrorAction Ignore -Name $local:processName).Count ; break }
+				$IsLinux { $local:ytdlCount = @(Get-Process -ErrorAction Ignore -Name $local:processName).Count ; break }
 				$IsMacOS { $local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim() ; break }
-				default { $local:ytdlCount = 0 ; break }
 			}
-		} catch {
-			$local:ytdlCount = 0			#プロセス数が取れなくてもとりあえず先に進む
-		}
+		} catch {}
 	}
 }
 
@@ -1053,10 +1051,10 @@ function showVideoInfo {
 	)
 
 	Write-ColorOutput ' '
-	Write-ColorOutput "ビデオ名    :$local:videoName" -FgColor 'Gray'
-	Write-ColorOutput "放送日      :$local:broadcastDate" -FgColor 'Gray'
-	Write-ColorOutput "テレビ局    :$local:mediaName" -FgColor 'Gray'
-	Write-ColorOutput "ビデオ説明  :$local:descriptionText" -FgColor 'Gray'
+	Write-ColorOutput "　ビデオ名    :$local:videoName" -FgColor 'Gray'
+	Write-ColorOutput "　放送日      :$local:broadcastDate" -FgColor 'Gray'
+	Write-ColorOutput "　テレビ局    :$local:mediaName" -FgColor 'Gray'
+	Write-ColorOutput "　ビデオ説明  :$local:descriptionText" -FgColor 'Gray'
 }
 #----------------------------------------------------------------------
 #ビデオ情報デバッグ表示
@@ -1121,14 +1119,14 @@ function showVideoDebugInfo {
 		[String] $local:processedTime
 	)
 
-	Write-Debug	"ビデオエピソードページ:$local:videoPageURL"
-	Write-Debug	"ビデオシリーズページ  :$local:videoSeriesPageURL"
-	Write-Debug "キーワード            :$local:keywordName"
-	Write-Debug "シリーズ              :$local:videoSeries"
-	Write-Debug "シーズン              :$local:videoSeason"
-	Write-Debug "サブタイトル          :$local:videoTitle"
-	Write-Debug "ファイル              :$local:videoFilePath"
-	Write-Debug "取得日付              :$local:processedTime"
+	Write-Debug	"　ビデオエピソードページ:$local:videoPageURL"
+	Write-Debug	"　ビデオシリーズページ  :$local:videoSeriesPageURL"
+	Write-Debug "　キーワード            :$local:keywordName"
+	Write-Debug "　シリーズ              :$local:videoSeries"
+	Write-Debug "　シーズン              :$local:videoSeason"
+	Write-Debug "　サブタイトル          :$local:videoTitle"
+	Write-Debug "　ファイル              :$local:videoFilePath"
+	Write-Debug "　取得日付              :$local:processedTime"
 }
 
 #----------------------------------------------------------------------
@@ -1220,7 +1218,7 @@ function waitTillYtdlProcessIsZero () {
 	try {
 		switch ($true) {
 			$IsWindows { $local:ytdlCount = [Math]::Round( (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) ; break }
-			$IsLinux { $local:ytdlCount = (Get-Process -ErrorAction Ignore -Name $local:processName).Count ; break }
+			$IsLinux { $local:ytdlCount = @(Get-Process -ErrorAction Ignore -Name $local:processName).Count ; break }
 			$IsMacOS { $local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim() ; break }
 			default { $local:ytdlCount = 0 ; break }
 		}
@@ -1234,7 +1232,7 @@ function waitTillYtdlProcessIsZero () {
 			Start-Sleep -Seconds 60			#1分待機
 			switch ($true) {
 				$IsWindows { $local:ytdlCount = [Math]::Round( (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) ; break }
-				$IsLinux { $local:ytdlCount = (Get-Process -ErrorAction Ignore -Name $local:processName).Count ; break }
+				$IsLinux { $local:ytdlCount = @(Get-Process -ErrorAction Ignore -Name $local:processName).Count ; break }
 				$IsMacOS { $local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim() ; break }
 				default { $local:ytdlCount = 0 ; break }
 			}
