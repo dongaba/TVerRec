@@ -210,7 +210,7 @@ if ($null -eq $local:videoLists) {
 		checkVideo `
 			-DecodeOption $local:decodeOption `
 			-Path $local:videoFileRelativePath		#ビデオの整合性チェック
-		
+
 		Start-Sleep -Seconds 1
 	}
 	#----------------------------------------------------------------------

@@ -238,7 +238,7 @@ ShowProgressToast `
 $local:allSubDirs = $null
 try {
 	$local:allSubDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer })).FullName | Sort-Object -Descending
-} catch { }		#配下にディレクトリがない場合のエラー対策
+} catch { Write-ColorOutput '　フォルダを見つけられませんでした' -FgColor 'Green' }		#配下にディレクトリがない場合のエラー対策
 
 $local:subDirNum = 0						#サブディレクトリの番号
 if ($local:allSubDirs -is [array]) { $local:subDirTotal = $local:allSubDirs.Length }		#サブディレクトリの合計数
