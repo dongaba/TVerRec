@@ -54,7 +54,7 @@ $script:clientEnv.Add('PSVersion', $PSVersionTable.PSVersion)
 $script:clientEnv.Add('OS', $script:os)
 $script:clientEnv.Add('TZ', $script:tz)
 $script:clientEnv = $script:clientEnv.GetEnumerator() | Sort-Object -Property key
-$progressPreference = 'Continue' 
+$progressPreference = 'Continue'
 
 #----------------------------------------------------------------------
 #タイムスタンプ更新
