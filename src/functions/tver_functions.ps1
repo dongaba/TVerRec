@@ -597,7 +597,7 @@ function waitTillYtdlProcessGetFewer {
 	switch ($script:preferredYoutubedl) {
 		'yt-dlp' { $local:processName = 'yt-dlp' ; break }
 		'ytdl-patched' { $local:processName = 'youtube-dl' ; break }
-	} 
+	}
 
 	#youtube-dlのプロセスが設定値を超えたら一時待機
 	try {
