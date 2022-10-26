@@ -272,7 +272,7 @@ function getVideoLinksFromKeyword {
 		$local:titleName = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('title/', '').Trim()
 		goAnal -Event 'search' -Type 'title' -ID $local:titleName
 		try { $script:videoLinks = getVideoLinkFromTitle ($local:titleName) }
-		catch { Write-ColorOutput '　番組名検索はTVer側で廃止されました。フリーワード検索で大応してください。スキップします Err:08' -FgColor 'Green' ; continue }
+		catch { Write-ColorOutput '　番組名検索はTVer側で廃止されました。フリーワード検索で対応してください。スキップします Err:08' -FgColor 'Green' ; continue }
 	} else {
 		#タレント名や番組名などURL形式でない場合APIで検索結果からビデオページのLinkを取得
 		goAnal -Event 'search' -Type 'free' -ID $local:keywordName
