@@ -272,7 +272,7 @@ function getVideoLinksFromKeyword {
 		$local:titleName = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('title/', '').Trim()
 		goAnal -Event 'search' -Type 'title' -ID $local:titleName
 		try { $script:videoLinks = getVideoLinkFromTitle ($local:titleName) }
-		catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:08' -FgColor 'Green' ; continue }
+		catch { Write-ColorOutput '　番組名検索はTVer側で廃止されました。フリーワード検索で大応してください。スキップします Err:08' -FgColor 'Green' ; continue }
 	} else {
 		#タレント名や番組名などURL形式でない場合APIで検索結果からビデオページのLinkを取得
 		goAnal -Event 'search' -Type 'free' -ID $local:keywordName
@@ -540,7 +540,7 @@ function getVideoLinkFromFreeKeyword {
 	[OutputType([System.Object[]])]
 	Param ([String]$local:keywordName)
 
-	$local:tverSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callSearch'
+	$local:tverSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callKeywordSearch'
 	$local:tverSearchURL = $local:tverSearchBaseURL + '?platform_uid=' + $script:platformUID + '&platform_token=' + $script:platformToken + '&keyword=' + $local:keywordName
 	$local:searchResultsRaw = Invoke-RestMethod -Uri $local:tverSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec 10
 	$local:searchResults = $local:searchResultsRaw.Result.Contents
