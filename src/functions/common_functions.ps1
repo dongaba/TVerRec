@@ -29,6 +29,7 @@
 #----------------------------------------------------------------------
 #GUID取得
 #----------------------------------------------------------------------
+$progressPreference = 'silentlyContinue'
 switch ($true) {
 	$IsWindows { $script:os = [String][System.Environment]::OSVersion ; break }
 	$IsLinux { $script:os = "Linux $([String][System.Environment]::OSVersion.Version)" ; break }
@@ -38,12 +39,13 @@ switch ($true) {
 $script:tz = [String][TimeZoneInfo]::Local.BaseUtcOffset
 $script:guid = [guid]::NewGuid()
 $script:ipapi = ''
-try { $script:ipapi = (Invoke-RestMethod -Uri 'https://ipapi.co/jsonp/') }
-catch { Write-Debug 'Geo IPのチェックに失敗しました' }
 $script:clientEnv = @{}
-$script:ipapi = $script:ipapi.replace('callback(', '').replace(');', '')
-$script:ipapi = $script:ipapi.replace('{', "{`n").replace('}', "`n}").replace(', ', ",`n")
-$(ConvertFrom-Json $script:ipapi).psobject.properties | ForEach-Object { $script:clientEnv[$_.Name] = $_.Value }
+try {
+	$script:ipapi = (Invoke-RestMethod -Uri 'https://ipapi.co/jsonp/ ' -TimeoutSec 10)
+	$script:ipapi = $script:ipapi.replace('callback(', '').replace(');', '')
+	$script:ipapi = $script:ipapi.replace('{', "{`n").replace('}', "`n}").replace(', ', ",`n")
+	$(ConvertFrom-Json $script:ipapi).psobject.properties | ForEach-Object { $script:clientEnv[$_.Name] = $_.Value }
+} catch { Write-Debug 'Geo IPのチェックに失敗しました' }
 $script:clientEnv.Add('Appname', $script:appName)
 $script:clientEnv.Add('AppVersion', $script:appVersion)
 $script:clientEnv.Add('PSEdition', $PSVersionTable.PSEdition)
@@ -51,6 +53,7 @@ $script:clientEnv.Add('PSVersion', $PSVersionTable.PSVersion)
 $script:clientEnv.Add('OS', $script:os)
 $script:clientEnv.Add('TZ', $script:tz)
 $script:clientEnv = $script:clientEnv.GetEnumerator() | Sort-Object -Property key
+$progressPreference = 'Continue' 
 
 #----------------------------------------------------------------------
 #タイムスタンプ更新
@@ -1092,7 +1095,7 @@ function goAnal {
 
 	$progressPreference = 'silentlyContinue'
 	$local:statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
-	try { Invoke-WebRequest "$($local:statisticsBase)$($local:event).svg" | Out-Null }
+	try { Invoke-WebRequest "$($local:statisticsBase)$($local:event).svg" -TimeoutSec 10 | Out-Null }
 	catch { Write-Debug 'Failed to collect statistics' }
 	finally { $progressPreference = 'Continue' }
 
@@ -1126,7 +1129,7 @@ function goAnal {
 	$local:gaBody += '} } ] }'
 
 	$progressPreference = 'silentlyContinue'
-	try { Invoke-RestMethod -Uri "$($local:gaURL)?$($local:gaKey)&$($local:gaID)" -Method 'POST' -Headers $local:gaHeaders -Body $local:gaBody | Out-Null }
+	try { Invoke-RestMethod -Uri "$($local:gaURL)?$($local:gaKey)&$($local:gaID)" -Method 'POST' -Headers $local:gaHeaders -Body $local:gaBody -TimeoutSec 10 | Out-Null }
 	catch { Write-Debug 'Failed to collect statistics' }
 	finally { $progressPreference = 'Continue' }
 

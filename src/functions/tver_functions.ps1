@@ -41,7 +41,7 @@ function checkLatestTVerRec {
 	#TVerRecの最新バージョン取得
 	$local:repo = 'dongaba/TVerRec'
 	$local:releases = "https://api.github.com/repos/$($local:repo)/releases"
-	try { $local:appReleases = $((Invoke-WebRequest -Uri $local:releases).content | ConvertFrom-Json) }
+	try { $local:appReleases = $((Invoke-WebRequest -Uri $local:releases -TimeoutSec 10).content | ConvertFrom-Json) }
 	catch { return }
 
 	$local:latestVersion = $($local:appReleases)[0].tag_name.Trim('v', ' ')		# v1.2.3 → 1.2.3
@@ -196,7 +196,7 @@ function getToken () {
 		'Content-Type' = 'application/x-www-form-urlencoded' ;
 	}
 	$local:requestBody = 'device_type=pc'
-	$local:tokenResponse = Invoke-RestMethod -Uri $local:tverTokenURL -Method 'POST' -Headers $local:requestHeader -Body $local:requestBody
+	$local:tokenResponse = Invoke-RestMethod -Uri $local:tverTokenURL -Method 'POST' -Headers $local:requestHeader -Body $local:requestBody -TimeoutSec 10
 	$script:platformUID = $local:tokenResponse.Result.platform_uid
 	$script:platformToken = $local:tokenResponse.Result.platform_token
 }
@@ -216,7 +216,7 @@ function getVideoLinksFromKeyword {
 	$script:videoLinks = @()
 	if ( $local:keywordName.IndexOf('https://tver.jp/') -eq 0) {
 		#URL形式の場合ビデオページのLinkを取得
-		try { $local:keywordNamePage = Invoke-WebRequest $local:keywordName }
+		try { $local:keywordNamePage = Invoke-WebRequest $local:keywordName -TimeoutSec 10 }
 		catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:00' -FgColor 'Green' ; continue }
 		try {
 			$script:videoLinks = (
@@ -308,7 +308,7 @@ function getVideoLinkFromSeriesID {
 	$local:callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callSeriesSeasons/'
 	#まずはSeries→Seasonに変換
 	$local:callSearchURL = $local:callSearchBaseURL + $local:seriesID + '?platform_uid=' + $script:platformUID + '&platform_token=' + $script:platformToken
-	$local:searchResultsRaw = Invoke-RestMethod -Uri $local:callSearchURL -Method 'GET' -Headers $script:requestHeader
+	$local:searchResultsRaw = Invoke-RestMethod -Uri $local:callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec 10
 	$local:searchResults = $local:searchResultsRaw.Result.Contents
 	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
 		$local:seasonLinks += $local:searchResults[$i].Content.Id
@@ -331,7 +331,7 @@ function getVideoLinkFromTalentID {
 
 	$local:callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callTalentEpisode/'
 	$local:callSearchURL = $local:callSearchBaseURL + $local:talentID + '?platform_uid=' + $script:platformUID + '&platform_token=' + $script:platformToken
-	$local:searchResultsRaw = Invoke-RestMethod -Uri $local:callSearchURL -Method 'GET' -Headers $script:requestHeader
+	$local:searchResultsRaw = Invoke-RestMethod -Uri $local:callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec 10
 	$local:searchResults = $local:searchResultsRaw.Result.Contents
 	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
 		switch ($local:searchResults[$i].type) {
@@ -357,7 +357,7 @@ function getVideoLinkFromTag {
 
 	$local:callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callTagSearch'
 	$local:callSearchURL = $local:callSearchBaseURL + '/' + $local:tagID + '?platform_uid=' + $script:platformUID + '&platform_token=' + $script:platformToken
-	$local:searchResultsRaw = Invoke-RestMethod -Uri $local:callSearchURL -Method 'GET' -Headers $script:requestHeader
+	$local:searchResultsRaw = Invoke-RestMethod -Uri $local:callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec 10
 	$local:searchResults = $local:searchResultsRaw.Result.Contents
 	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
 		switch ($local:searchResults[$i].type) {
@@ -383,7 +383,7 @@ function getVideoLinkFromNew {
 
 	$local:callSearchBaseURL = 'https://service-api.tver.jp/api/v1/callNewerDetail'
 	$local:callSearchURL = $local:callSearchBaseURL + '/' + $local:genre + '?platform_uid=' + $script:platformUID + '&platform_token=' + $script:platformToken
-	$local:searchResultsRaw = Invoke-RestMethod -Uri $local:callSearchURL -Method 'GET' -Headers $script:requestHeader
+	$local:searchResultsRaw = Invoke-RestMethod -Uri $local:callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec 10
 	$local:searchResults = $local:searchResultsRaw.Result.Contents.Contents
 	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
 		switch ($local:searchResults[$i].type) {
@@ -413,7 +413,7 @@ function getVideoLinkFromRanking {
 	} else {
 		$local:callSearchURL = $local:callSearchBaseURL + 'Detail/' + $local:genre + '?platform_uid=' + $script:platformUID + '&platform_token=' + $script:platformToken
 	}
-	$local:searchResultsRaw = Invoke-RestMethod -Uri $local:callSearchURL -Method 'GET' -Headers $script:requestHeader
+	$local:searchResultsRaw = Invoke-RestMethod -Uri $local:callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec 10
 	$local:searchResults = $local:searchResultsRaw.Result.Contents.Contents
 	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
 		switch ($local:searchResults[$i].type) {
@@ -441,7 +441,7 @@ function getVideoLinkFromTopPage {
 	$local:callSearchURL = $local:callSearchBaseURL + `
 		'?platform_uid=' + $script:platformUID + `
 		'&platform_token=' + $script:platformToken
-	$local:searchResultsRaw = Invoke-RestMethod -Uri $local:callSearchURL -Method 'GET' -Headers $script:requestHeader
+	$local:searchResultsRaw = Invoke-RestMethod -Uri $local:callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec 10
 	$local:searchResults = $local:searchResultsRaw.Result.Components
 	$local:searchResultCount = $local:searchResults.Length
 	for ($i = 0; $i -lt $local:searchResultCount; $i++) {
@@ -514,7 +514,7 @@ function getVideoLinkFromTitle {
 
 	$local:callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callSearch'
 	$local:callSearchURL = $local:callSearchBaseURL + '?platform_uid=' + $script:platformUID + '&platform_token=' + $script:platformToken
-	$local:searchResultsRaw = Invoke-RestMethod -Uri $local:callSearchURL -Method 'GET' -Headers $script:requestHeader
+	$local:searchResultsRaw = Invoke-RestMethod -Uri $local:callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec 10
 	$local:searchResults = $local:searchResultsRaw.Result.Contents
 	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
 		if ($(getFileNameWithoutInvalidChars (getSpecialCharacterReplaced (getNarrowChars ($local:searchResults[$i].Content.SeriesTitle)))).Replace('  ', ' ').Trim().Contains($local:titleName) -eq $true) {
@@ -542,7 +542,7 @@ function getVideoLinkFromFreeKeyword {
 
 	$local:tverSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callSearch'
 	$local:tverSearchURL = $local:tverSearchBaseURL + '?platform_uid=' + $script:platformUID + '&platform_token=' + $script:platformToken + '&keyword=' + $local:keywordName
-	$local:searchResultsRaw = Invoke-RestMethod -Uri $local:tverSearchURL -Method 'GET' -Headers $script:requestHeader
+	$local:searchResultsRaw = Invoke-RestMethod -Uri $local:tverSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec 10
 	$local:searchResults = $local:searchResultsRaw.Result.Contents
 	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
 		switch ($local:searchResults[$i].type) {
@@ -568,7 +568,7 @@ function getVideoLinkFromSeasonID {
 
 	$local:tverSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callSeasonEpisodes/'
 	$local:callSearchURL = $local:tverSearchBaseURL + $local:SeasonID + '?platform_uid=' + $script:platformUID + '&platform_token=' + $script:platformToken
-	$local:searchResultsRaw = Invoke-RestMethod -Uri $local:callSearchURL -Method 'GET' -Headers $script:requestHeader
+	$local:searchResultsRaw = Invoke-RestMethod -Uri $local:callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec 10
 	$local:searchResults = $local:searchResultsRaw.Result.Contents
 	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
 		switch ($local:searchResults[$i].type) {
@@ -607,9 +607,7 @@ function waitTillYtdlProcessGetFewer {
 			$IsMacOS { $local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim() ; break }
 			default { $local:ytdlCount = 0 ; break }
 		}
-	} catch {
-		$local:ytdlCount = 0			#プロセス数が取れなくてもとりあえず先に進む
-	}
+	} catch { $local:ytdlCount = 0 }			#プロセス数が取れなくてもとりあえず先に進む
 
 	Write-Verbose "現在のダウンロードプロセス一覧 ($local:ytdlCount 個)"
 
@@ -623,7 +621,7 @@ function waitTillYtdlProcessGetFewer {
 				$IsLinux { $local:ytdlCount = @(Get-Process -ErrorAction Ignore -Name $local:processName).Count ; break }
 				$IsMacOS { $local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim() ; break }
 			}
-		} catch {}
+		} catch { Write-Debug 'youtube-dlのプロセス数の取得に失敗しました' }
 	}
 }
 
@@ -897,7 +895,7 @@ function getVideoInfo {
 	$local:tverVideoInfoURL = $local:tverVideoInfoBaseURL + $local:episodeID + `
 		'?platform_uid=' + $script:platformUID + `
 		'&platform_token=' + $script:platformToken
-	$local:response = Invoke-RestMethod -Uri $local:tverVideoInfoURL -Method 'GET' -Headers $local:requestHeader
+	$local:response = Invoke-RestMethod -Uri $local:tverVideoInfoURL -Method 'GET' -Headers $local:requestHeader -TimeoutSec 10
 	#$response.result.series.content.id + "`t" + $response.result.series.content.title `
 	#	| Out-File $(Join-Path $script:devDir 'series.txt') -Append -Encoding utf8
 
@@ -949,7 +947,7 @@ function getVideoInfo {
 		'referer' = 'https://tver.jp/'
 	}
 	$local:tverVideoInfoURL = $local:tverVideoInfoBaseURL + $local:episodeID + '.json?v=' + $local:versionNum
-	$local:videoInfo = Invoke-RestMethod -Uri $local:tverVideoInfoURL -Method 'GET' -Headers $local:requestHeader
+	$local:videoInfo = Invoke-RestMethod -Uri $local:tverVideoInfoURL -Method 'GET' -Headers $local:requestHeader -TimeoutSec 10
 	$script:descriptionText = $(getNarrowChars ($local:videoInfo.Description).Replace('&amp;', '&')).Trim()
 
 }
