@@ -1211,7 +1211,7 @@ function waitTillYtdlProcessIsZero () {
 	switch ($script:preferredYoutubedl) {
 		'yt-dlp' { $local:processName = 'yt-dlp' ; break }
 		'ytdl-patched' { $local:processName = 'youtube-dl' ; break }
-	} 
+	}
 
 	try {
 		switch ($true) {

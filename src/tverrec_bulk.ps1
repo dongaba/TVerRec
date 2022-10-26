@@ -143,7 +143,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#処理時間の推計
 	$local:secElapsed = (Get-Date) - $local:totalStartTime
 	$local:secRemaining1 = -1
-	if ($local:keywordNum -ne 0) { 
+	if ($local:keywordNum -ne 0) {
 		$local:secRemaining1 = ($local:secElapsed.TotalSeconds / $local:keywordNum) * ($local:keywordTotal - $local:keywordNum)
 	}
 	$local:progressRatio1 = $($local:keywordNum / $local:keywordTotal)
