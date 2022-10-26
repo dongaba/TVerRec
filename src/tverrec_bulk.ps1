@@ -25,7 +25,6 @@
 #	THE SOFTWARE.
 #
 ###################################################################################
-using namespace System.Text.RegularExpressions
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定
@@ -41,23 +40,29 @@ try {
 	Set-Location $script:scriptRoot
 	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '..\conf'))
 	$script:devDir = $(Join-Path $script:scriptRoot '..\dev')
+} catch { Write-Error 'ディレクトリ設定に失敗しました' ; exit 1 }
 
-	#----------------------------------------------------------------------
-	#設定ファイル読み込み
+#----------------------------------------------------------------------
+#設定ファイル読み込み
+try {
 	$script:sysFile = $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
 	. $script:sysFile
 	if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
 		$script:confFile = $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
 		. $script:confFile
 	}
+} catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
 
-	#----------------------------------------------------------------------
-	#外部関数ファイルの読み込み
+#----------------------------------------------------------------------
+#外部関数ファイルの読み込み
+try {
 	. $(Convert-Path (Join-Path $script:scriptRoot '..\src\functions\common_functions.ps1'))
 	. $(Convert-Path (Join-Path $script:scriptRoot '..\src\functions\tver_functions.ps1'))
+} catch { Write-Error '外部関数ファイルの読み込みに失敗しました' ; exit 1 }
 
-	#----------------------------------------------------------------------
-	#開発環境用に設定上書き
+#----------------------------------------------------------------------
+#開発環境用に設定上書き
+try {
 	$script:devFunctionFile = $(Join-Path $script:devDir 'dev_funcitons.ps1')
 	$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.ps1')
 	if (Test-Path $script:devFunctionFile) {
@@ -68,7 +73,7 @@ try {
 		. $script:devConfFile
 		Write-ColorOutput '開発ファイル用設定ファイルを読み込みました' -FgColor 'Yellow'
 	}
-} catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error '開発用設定ファイルの読み込みに失敗しました' ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -138,7 +143,9 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#処理時間の推計
 	$local:secElapsed = (Get-Date) - $local:totalStartTime
 	$local:secRemaining1 = -1
-	if ($local:keywordNum -ne 0) { $local:secRemaining1 = ($local:secElapsed.TotalSeconds / $local:keywordNum) * ($local:keywordTotal - $local:keywordNum) }
+	if ($local:keywordNum -ne 0) { 
+		$local:secRemaining1 = ($local:secElapsed.TotalSeconds / $local:keywordNum) * ($local:keywordTotal - $local:keywordNum)
+	}
 	$local:progressRatio1 = $($local:keywordNum / $local:keywordTotal)
 	$local:progressRatio2 = 0
 
