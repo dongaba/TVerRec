@@ -84,7 +84,45 @@ function getFileNameWithoutInvalidChars {
 
 	$local:invalidChars = [IO.Path]::GetInvalidFileNameChars() -join ''
 	$local:result = '[{0}]' -f [RegEx]::Escape($local:invalidChars)
-	return ($local:Name -replace $local:result)
+	$local:Name = $local:Name -replace $local:result , ''
+
+	#Linux/MacではGetInvalidFileNameChars()が不完全なため、ダメ押しで置換
+	$local:Name = $local:Name.Replace('*', '-')
+	$local:Name = $local:Name.Replace('?', '-')
+	$local:Name = $local:Name.Replace('\', '-')
+	$local:Name = $local:Name.Replace('/', '-')
+	$local:Name = $local:Name.Replace('"', '-')
+	$local:Name = $local:Name.Replace(':', '-')
+	$local:Name = $local:Name.Replace('<', '-')
+	$local:Name = $local:Name.Replace('>', '-')
+	$local:Name = $local:Name.Replace('|', '-')
+	$local:Name = $local:Name.Replace('', '')
+	$local:Name = $local:Name.Replace('', '')
+	$local:Name = $local:Name.Replace('', '')
+	$local:Name = $local:Name.Replace('', '')
+	$local:Name = $local:Name.Replace('', '')
+	$local:Name = $local:Name.Replace('', '')
+	$local:Name = $local:Name.Replace('', '')
+	$local:Name = $local:Name.Replace('', '')
+	$local:Name = $local:Name.Replace('', '')
+	$local:Name = $local:Name.Replace('', '')
+	$local:Name = $local:Name.Replace('', '')
+	$local:Name = $local:Name.Replace('', '')
+	$local:Name = $local:Name.Replace('', '')
+	$local:Name = $local:Name.Replace('', '')
+	$local:Name = $local:Name.Replace('', '')
+	$local:Name = $local:Name.Replace('', '')
+	$local:Name = $local:Name.Replace('', '')
+	$local:Name = $local:Name.Replace('', '')
+	$local:Name = $local:Name.Replace('', '')
+	$local:Name = $local:Name.Replace('', '')
+	$local:Name = $local:Name.Replace('', '')
+	$local:Name = $local:Name.Replace('', '')
+	$local:Name = $local:Name.Replace('', '')
+	$local:Name = $local:Name.Replace('', '')
+	$local:Name = $local:Name.Replace('', '')
+
+	return $local:Name
 }
 
 #----------------------------------------------------------------------
@@ -137,6 +175,10 @@ function getSpecialCharacterReplaced {
 	Param ([String]$local:text)		#変換元テキストを引数に指定
 
 	$local:text = $local:text.Replace('&amp;', '&')
+	$local:text = $local:text.Replace('*', '＊')
+	$local:text = $local:text.Replace('|', '｜')
+	$local:text = $local:text.Replace(':', '：')
+	$local:text = $local:text.Replace(';', '；')
 	$local:text = $local:text.Replace('"', '')
 	$local:text = $local:text.Replace('“', '')
 	$local:text = $local:text.Replace('”', '')
@@ -145,6 +187,8 @@ function getSpecialCharacterReplaced {
 	$local:text = $local:text.Replace('!', '！')
 	$local:text = $local:text.Replace('/', '-')
 	$local:text = $local:text.Replace('\', '-')
+	$local:text = $local:text.Replace('<', '＜')
+	$local:text = $local:text.Replace('>', '＞')
 	return $local:text
 }
 
