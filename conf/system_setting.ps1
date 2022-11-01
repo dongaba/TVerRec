@@ -115,6 +115,9 @@ $DebugPreference = 'SilentlyContinue'						#デバッグメッセージなし
 #ファイルシステムが許容するファイル名の最大長(byte)
 $script:fileNameLengthMax = 255
 
+#Httpアクセスのタイムアウト(sec)
+$script:timeoutSec = 60
+
 #各種ディレクトリのパス
 $script:binDir = $(Join-Path $scriptRoot '..\bin')
 $script:dbDir = $(Join-Path $scriptRoot '..\db')
@@ -160,6 +163,3 @@ else {
 	$script:ffprobePath = $(Join-Path $script:binDir 'ffprobe')
 	if (!(Test-Path $script:ffprobePath)) { $script:ffprobePath = (& which ffprobe) }
 }
-
-#Toast用AppID取得に必要
-if ($IsWindows) { Import-Module StartLayout -SkipEditionCheck }

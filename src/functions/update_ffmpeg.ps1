@@ -53,7 +53,7 @@ if (Test-Path $local:ffmpegPath -PathType Leaf) {
 
 #ffmpegの最新バージョン取得
 $local:latestVersion = ''
-try { $local:latestRawVersion = Invoke-WebRequest -Uri $local:releases -TimeoutSec 10 }
+try { $local:latestRawVersion = Invoke-WebRequest -Uri $local:releases -TimeOutSec $script:timeoutSec }
 catch { Write-ColorOutput 'ffmpegの最新バージョンを特定できませんでした' -FgColor 'Green' ; return }
 $local:latestVersion = $([String]$local:latestRawVersion.rawcontent).remove(0, $([String]$local:latestRawVersion.rawcontent).LastIndexOf("`n") + 1)
 
@@ -72,7 +72,7 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 			$local:ffmpegZipLink = 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip'
 			Write-ColorOutput "ffmpegをダウンロードします。 $local:ffmpegZipLink"
 			$local:ffmpegZipFileLocation = $(Join-Path $local:ffmpegDir 'ffmpeg-release-essentials.zip')
-			Invoke-WebRequest -Uri $local:ffmpegZipLink -OutFile $local:ffmpegZipFileLocation -TimeoutSec 10
+			Invoke-WebRequest -Uri $local:ffmpegZipLink -OutFile $local:ffmpegZipFileLocation -TimeOutSec $script:timeoutSec
 		} catch { Write-ColorOutput 'ffmpegのダウンロードに失敗しました' -FgColor 'Green' }
 
 		#展開
