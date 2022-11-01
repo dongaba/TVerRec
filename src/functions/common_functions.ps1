@@ -427,7 +427,6 @@ function Get-WindowsAppId {
 	[OutputType([String])]
 	Param ()
 
-	Import-Module StartLayout -SkipEditionCheck
 	$local:appID = (Get-StartApps -Name 'PowerShell').where({ $_.Name -like 'PowerShell*' })[0].AppId
 
 	return $local:appID

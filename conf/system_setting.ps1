@@ -161,3 +161,5 @@ else {
 	if (!(Test-Path $script:ffprobePath)) { $script:ffprobePath = (& which ffprobe) }
 }
 
+#Toast用AppID取得に必要
+if ($IsWindows) { Import-Module StartLayout -SkipEditionCheck }
