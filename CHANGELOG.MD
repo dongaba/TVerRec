@@ -1,5 +1,15 @@
 ﻿# Change Log
 
+## [2.6.3](https://github.com/dongaba/TVerRec/releases/tag/v2.6.3)
+
+### 2.6.3 Added
+
+### 2.6.3 Changed
+
+### 2.6.3 Fixed
+
+- youtube-dl のプロセス数取得の[不具合](https://github.com/dongaba/TVerRec/issues/21)を修正
+
 ## [2.6.2](https://github.com/dongaba/TVerRec/releases/tag/v2.6.2)
 
 ### 2.6.2 Added

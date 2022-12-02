@@ -621,7 +621,10 @@ function waitTillYtdlProcessGetFewer {
 				$IsLinux { $local:ytdlCount = @(Get-Process -ErrorAction Ignore -Name $local:processName).Count ; break }
 				$IsMacOS { $local:ytdlCount = (& $local:psCmd | & grep youtube-dl | grep -v grep | grep -c ^).Trim() ; break }
 			}
-		} catch { Write-Debug 'youtube-dlのプロセス数の取得に失敗しました' }
+		} catch {
+			$local:ytdlCount = 0
+			Write-Debug 'youtube-dlのプロセス数の取得に失敗しました'
+		}
 	}
 }
 
