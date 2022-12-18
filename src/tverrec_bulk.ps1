@@ -124,6 +124,8 @@ $local:totalStartTime = Get-Date
 foreach ($local:keywordName in $local:keywordNames) {
 	#いろいろ初期化
 	$local:videoLink = '　'
+	$local:videoLinks = @()
+	$local:searchResultCount = 0
 
 	#ジャンルページチェックタイトルの表示
 	Write-ColorOutput ''
@@ -132,13 +134,31 @@ foreach ($local:keywordName in $local:keywordNames) {
 	Write-ColorOutput '----------------------------------------------------------------------'
 
 	#処理
-	$local:videoLinks = getVideoLinksFromKeyword ($local:keywordName)
+	$local:resultLinks = getVideoLinksFromKeyword ($local:keywordName)
 	$local:keywordName = $local:keywordName.Replace('https://tver.jp/', '')
 
+	#リストファイルのデータを読み込み
+	try {
+		#ロックファイルをロック
+		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
+			Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
+			Start-Sleep -Seconds 1
+		}
+		#ファイル操作
+		$script:listFileData = Import-Csv $script:listFilePath -Encoding UTF8
+	} catch { Write-ColorOutput '　リストを読み込めなかったのでスキップしました' -FgColor 'Green' ; continue
+	} finally { $null = fileUnlock $script:lockFilePath }
+
+	#URLがすでにリストに存在する場合は検索結果から除外
+	foreach ($local:resultLink in $local:resultLinks) {
+		$local:listMatch = $script:listFileData | Where-Object { $_.videoPage -eq $local:resultLink }
+		if ($null -eq $local:listMatch) { $local:videoLinks += $local:resultLink }
+		else { $local:searchResultCount = $local:searchResultCount + 1 ; continue }
+	}
+
 	$local:videoNum = 0						#ジャンル内の処理中のビデオの番号
-	if ($local:videoLinks -is [array]) {
-		$local:videoTotal = $local:videoLinks.Length	#ジャンル内のトータルビデオ数
-	} else { $local:videoTotal = 1 }
+	$local:videoTotal = $local:videoLinks.Length	#ジャンル内のトータルビデオ数
+	if ($local:videoTotal -eq 0) { Write-ColorOutput "　未処理の対象ビデオがありませんでした。(処理済 $($local:searchResultCount)本)" -FgColor 'Gray' }
 
 	#処理時間の推計
 	$local:secElapsed = (Get-Date) - $local:totalStartTime
@@ -165,10 +185,8 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 	#----------------------------------------------------------------------
 	#個々のビデオダウンロードここから
-	if ($null -eq $local:videoLinks ) { Write-ColorOutput '　対象ビデオがありませんでした。' -FgColor 'Gray' }
 	foreach ($local:videoLink in $local:videoLinks) {
 		#いろいろ初期化
-		$local:videoPageURL = ''
 		$local:videoNum = $local:videoNum + 1		#ジャンル内のビデオ番号のインクリメント
 
 		#保存先ディレクトリの存在確認(稼働中に共有フォルダが切断された場合に対応)
@@ -191,8 +209,8 @@ foreach ($local:keywordName in $local:keywordNames) {
 			-Group 'Bulk'
 
 		#処理
-		$local:videoPageURL = 'https://tver.jp' + $local:videoLink
-		Write-ColorOutput "$($local:videoNum)/$($local:videoTotal) - $local:videoPageURL" -NoNewline $true
+		Write-ColorOutput '--------------------------------------------------'
+		Write-ColorOutput "$($local:videoNum)/$($local:videoTotal) - $local:videoLink" -NoNewline $true
 
 		#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 		waitTillYtdlProcessGetFewer $script:parallelDownloadFileNum
@@ -200,8 +218,8 @@ foreach ($local:keywordName in $local:keywordNames) {
 		#TVerビデオダウンロードのメイン処理
 		downloadTVerVideo `
 			-Keyword $local:keywordName `
-			-URL $local:videoPageURL `
-			-Link $local:videoLink
+			-URL $local:videoLink `
+			-Link $local:videoLink.Replace('https://tver.jp', '')
 
 	}
 	#----------------------------------------------------------------------

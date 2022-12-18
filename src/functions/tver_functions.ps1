@@ -213,13 +213,13 @@ function getVideoLinksFromKeyword {
 		'Origin'               = 'https://tver.jp' ;
 		'Referer'              = 'https://tver.jp/' ;
 	}
-	$script:videoLinks = @()
+	$script:tverLinks = @()
 	if ( $local:keywordName.IndexOf('https://tver.jp/') -eq 0) {
 		#URL形式の場合ビデオページのLinkを取得
 		try { $local:keywordNamePage = Invoke-WebRequest $local:keywordName -TimeoutSec $script:timeoutSec }
 		catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:00' -FgColor 'Green' ; continue }
 		try {
-			$script:videoLinks = (
+			$script:tverLinks = (
 				$local:keywordNamePage.Links `
 				| Where-Object { `
 					(href -Like '*lp*') `
@@ -236,51 +236,61 @@ function getVideoLinksFromKeyword {
 		#番組IDによる番組検索からビデオページのLinkを取得
 		$local:seriesID = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('series/', '').Trim()
 		goAnal -Event 'search' -Type 'series' -ID $local:seriesID
-		try { $script:videoLinks = getVideoLinkFromSeriesID ($local:seriesID) }
+		try { $script:tverLinks = getVideoLinkFromSeriesID ($local:seriesID) }
 		catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:02' -FgColor 'Green' ; continue }
 	} elseif ($local:keywordName.IndexOf('talents/') -eq 0) {
 		#タレントIDによるタレント検索からビデオページのLinkを取得
 		$local:talentID = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('talents/', '').Trim()
 		goAnal -Event 'search' -Type 'talent' -ID $local:talentID
-		try { $script:videoLinks = getVideoLinkFromTalentID ($local:talentID) }
+		try { $script:tverLinks = getVideoLinkFromTalentID ($local:talentID) }
 		catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:03' -FgColor 'Green' ; continue }
 	} elseif ($local:keywordName.IndexOf('tag/') -eq 0) {
 		#ジャンルなどのTag情報からビデオページのLinkを取得
 		$local:tagID = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('tag/', '').Trim()
 		goAnal -Event 'search' -Type 'tag' -ID $local:tagID
-		try { $script:videoLinks = getVideoLinkFromTag ($local:tagID) }
+		try { $script:tverLinks = getVideoLinkFromTag ($local:tagID) }
 		catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:04' -FgColor 'Green' ; continue }
 	} elseif ($local:keywordName.IndexOf('new/') -eq 0) {
 		#新着ビデオからビデオページのLinkを取得
 		$local:genre = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('new/', '').Trim()
 		goAnal -Event 'search' -Type 'new' -ID $local:genre
-		try { $script:videoLinks = getVideoLinkFromNew ($local:genre) }
+		try { $script:tverLinks = getVideoLinkFromNew ($local:genre) }
 		catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:05' -FgColor 'Green' ; continue }
 	} elseif ($local:keywordName.IndexOf('ranking/') -eq 0) {
 		#ランキングによるビデオページのLinkを取得
 		$local:genre = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('ranking/', '').Trim()
 		goAnal -Event 'search' -Type 'ranking' -ID $local:genre
-		try { $script:videoLinks = getVideoLinkFromRanking ($local:genre) }
+		try { $script:tverLinks = getVideoLinkFromRanking ($local:genre) }
 		catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:06' -FgColor 'Green' ; continue }
 	} elseif ($local:keywordName.IndexOf('toppage') -eq 0) {
 		#トップページからビデオページのLinkを取得
 		goAnal -Event 'search' -Type 'toppage'
-		try { $script:videoLinks = getVideoLinkFromTopPage }
+		try { $script:tverLinks = getVideoLinkFromTopPage }
 		catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:07' -FgColor 'Green' ; continue }
 	} elseif ($local:keywordName.IndexOf('title/') -eq 0) {
 		#番組名による新着検索からビデオページのLinkを取得
 		$local:titleName = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('title/', '').Trim()
 		goAnal -Event 'search' -Type 'title' -ID $local:titleName
-		try { $script:videoLinks = getVideoLinkFromTitle ($local:titleName) }
+		try { $script:tverLinks = getVideoLinkFromTitle ($local:titleName) }
 		catch { Write-ColorOutput '　番組名検索はTVer側で廃止されました。フリーワード検索で対応してください。スキップします Err:08' -FgColor 'Green' ; continue }
 	} else {
 		#タレント名や番組名などURL形式でない場合APIで検索結果からビデオページのLinkを取得
 		goAnal -Event 'search' -Type 'free' -ID $local:keywordName
-		try { $script:videoLinks = getVideoLinkFromFreeKeyword ($local:keywordName) }
+		try { $script:tverLinks = getVideoLinkFromFreeKeyword ($local:keywordName) }
 		catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:09' -FgColor 'Green' ; continue }
 	}
 
-	return $script:videoLinks | Sort-Object | Get-Unique
+	$script:tverLinks = $script:tverLinks | Sort-Object | Get-Unique
+
+	if ($script:tverLinks -is [array]) {
+		for ( $i = 0; $i -lt $script:tverLinks.Count; $i++) {
+			$script:tverLinks[$i] = 'https://tver.jp' + $script:tverLinks[$i]
+		}
+	} elseif ($null -ne $script:tverLinks) {
+		$script:tverLinks = 'https://tver.jp' + $script:tverLinks
+	}
+
+	return $script:tverLinks
 }
 
 #----------------------------------------------------------------------
@@ -315,11 +325,11 @@ function getVideoLinkFromSeriesID {
 	}
 	#次にSeason→Episodeに変換
 	foreach ( $local:seasonLink in $local:seasonLinks) {
-		$script:videoLinks += getVideoLinkFromSeasonID ($local:seasonLink)
+		$script:tverLinks += getVideoLinkFromSeasonID ($local:seasonLink)
 	}
 	[System.GC]::Collect()
 
-	return $script:videoLinks | Sort-Object | Get-Unique
+	return $script:tverLinks | Sort-Object | Get-Unique
 }
 
 #----------------------------------------------------------------------
@@ -335,17 +345,17 @@ function getVideoLinkFromTalentID {
 	$local:searchResults = $local:searchResultsRaw.Result.Contents
 	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
 		switch ($local:searchResults[$i].type) {
-			'episode' { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id ; break }
-			'season' { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) ; break }
-			'series' { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) ; break }
+			'episode' { $script:tverLinks += '/episodes/' + $local:searchResults[$i].Content.Id ; break }
+			'season' { $script:tverLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) ; break }
+			'series' { $script:tverLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) ; break }
 			'live' { break }
 			#他にはないと思われるが念のため
-			default { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id ; break }
+			default { $script:tverLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id ; break }
 		}
 	}
 	[System.GC]::Collect()
 
-	return $script:videoLinks | Sort-Object | Get-Unique
+	return $script:tverLinks | Sort-Object | Get-Unique
 }
 
 #----------------------------------------------------------------------
@@ -361,17 +371,17 @@ function getVideoLinkFromTag {
 	$local:searchResults = $local:searchResultsRaw.Result.Contents
 	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
 		switch ($local:searchResults[$i].type) {
-			'episode' { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id ; break }
-			'season' { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) ; break }
-			'series' { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) ; break }
+			'episode' { $script:tverLinks += '/episodes/' + $local:searchResults[$i].Content.Id ; break }
+			'season' { $script:tverLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) ; break }
+			'series' { $script:tverLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) ; break }
 			'live' { break }
 			#他にはないと思われるが念のため
-			default { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id ; break }
+			default { $script:tverLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id ; break }
 		}
 	}
 	[System.GC]::Collect()
 
-	return $script:videoLinks | Sort-Object | Get-Unique
+	return $script:tverLinks | Sort-Object | Get-Unique
 }
 
 #----------------------------------------------------------------------
@@ -387,17 +397,17 @@ function getVideoLinkFromNew {
 	$local:searchResults = $local:searchResultsRaw.Result.Contents.Contents
 	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
 		switch ($local:searchResults[$i].type) {
-			'episode' { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id ; break }
-			'season' { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) ; break }
-			'series' { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) ; break }
+			'episode' { $script:tverLinks += '/episodes/' + $local:searchResults[$i].Content.Id ; break }
+			'season' { $script:tverLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) ; break }
+			'series' { $script:tverLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) ; break }
 			'live' { break }
 			#他にはないと思われるが念のため
-			default { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id ; break }
+			default { $script:tverLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id ; break }
 		}
 	}
 	[System.GC]::Collect()
 
-	return $script:videoLinks | Sort-Object | Get-Unique
+	return $script:tverLinks | Sort-Object | Get-Unique
 }
 
 #----------------------------------------------------------------------
@@ -417,17 +427,17 @@ function getVideoLinkFromRanking {
 	$local:searchResults = $local:searchResultsRaw.Result.Contents.Contents
 	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
 		switch ($local:searchResults[$i].type) {
-			'episode' { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id ; break }
-			'season' { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) ; break }
-			'series' { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) ; break }
+			'episode' { $script:tverLinks += '/episodes/' + $local:searchResults[$i].Content.Id ; break }
+			'season' { $script:tverLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) ; break }
+			'series' { $script:tverLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) ; break }
 			'live' { break }
 			#他にはないと思われるが念のため
-			default { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id ; break }
+			default { $script:tverLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id ; break }
 		}
 	}
 	[System.GC]::Collect()
 
-	return $script:videoLinks | Sort-Object | Get-Unique
+	return $script:tverLinks | Sort-Object | Get-Unique
 }
 
 #----------------------------------------------------------------------
@@ -458,10 +468,10 @@ function getVideoLinkFromTopPage {
 			$local:searchSectionResultCount = $local:searchResults[$i].Contents.Length
 			for ($j = 0; $j -lt $local:searchSectionResultCount; $j++) {
 				switch ($local:searchResults[$i].contents[$j].type) {
-					'episode' { $script:videoLinks += '/episodes/' + $local:searchResults[$i].contents[$j].Content.Id ; break }
-					'season' { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].contents[$j].Content.Id) ; break }
-					'series' { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].contents[$j].Content.Id) ; break }
-					'talent' { $script:videoLinks += getVideoLinkFromTalentID ($local:searchResults[$i].contents[$j].Content.Id) ; break }
+					'episode' { $script:tverLinks += '/episodes/' + $local:searchResults[$i].contents[$j].Content.Id ; break }
+					'season' { $script:tverLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].contents[$j].Content.Id) ; break }
+					'series' { $script:tverLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].contents[$j].Content.Id) ; break }
+					'talent' { $script:tverLinks += getVideoLinkFromTalentID ($local:searchResults[$i].contents[$j].Content.Id) ; break }
 					'live' { break }
 					'specialMain' { break }
 					#特集ページ。パース方法不明
@@ -472,7 +482,7 @@ function getVideoLinkFromTopPage {
 					#を呼んで得られたspecialContents>[TypeがSpecialのもの]>contents.content.idを使って、再度以下のように呼び出し。(以下の例ではsum22-latterhal)
 					#https://platform-api.tver.jp/service/api/v1/callSpecialContentsDetail/sum22-latterhalf?sort_key=newer&require_data=mylist, later
 					#他にはないと思われるが念のため
-					default { $script:videoLinks += '/' + $local:searchResults[$i].contents[$j].type + '/' + $local:searchResults[$i].contents[$j].Content.Id ; break }
+					default { $script:tverLinks += '/' + $local:searchResults[$i].contents[$j].type + '/' + $local:searchResults[$i].contents[$j].Content.Id ; break }
 				}
 			}
 		} elseif ($local:searchResults[$i].type -eq 'topics') {
@@ -481,13 +491,13 @@ function getVideoLinkFromTopPage {
 				$local:searchSectionResultCount = $local:searchResults[$i].Contents.Length
 				for ($j = 0; $j -lt $local:searchSectionResultCount; $j++) {
 					switch ($local:searchResults[$i].contents[$j].Content.Content.type) {
-						'episode' { $script:videoLinks += '/episodes/' + $local:searchResults[$i].contents[$j].Content.Content.Content.Id ; break }
-						'season' { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].contents[$j].Content.Content.Content.Id) ; break }
-						'series' { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].contents[$j].Content.Content.Content.Id) ; break }
-						'talent' { $script:videoLinks += getVideoLinkFromTalentID ($local:searchResults[$i].contents[$j].Content.Content.Content.Id) ; break }
+						'episode' { $script:tverLinks += '/episodes/' + $local:searchResults[$i].contents[$j].Content.Content.Content.Id ; break }
+						'season' { $script:tverLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].contents[$j].Content.Content.Content.Id) ; break }
+						'series' { $script:tverLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].contents[$j].Content.Content.Content.Id) ; break }
+						'talent' { $script:tverLinks += getVideoLinkFromTalentID ($local:searchResults[$i].contents[$j].Content.Content.Content.Id) ; break }
 						'live' { break }
 						#他にはないと思われるが念のため
-						default { $script:videoLinks += '/' + $local:searchResults[$i].contents[$j].type + '/' + $local:searchResults[$i].contents[$j].Content.Content.Content.Id ; break }
+						default { $script:tverLinks += '/' + $local:searchResults[$i].contents[$j].type + '/' + $local:searchResults[$i].contents[$j].Content.Content.Content.Id ; break }
 					}
 				}
 			}
@@ -502,7 +512,7 @@ function getVideoLinkFromTopPage {
 	}
 	[System.GC]::Collect()
 
-	return $script:videoLinks | Sort-Object | Get-Unique
+	return $script:tverLinks | Sort-Object | Get-Unique
 }
 
 #----------------------------------------------------------------------
@@ -519,18 +529,18 @@ function getVideoLinkFromTitle {
 	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
 		if ($(getFileNameWithoutInvalidChars (getSpecialCharacterReplaced (getNarrowChars ($local:searchResults[$i].Content.SeriesTitle)))).Replace('  ', ' ').Trim().Contains($local:titleName) -eq $true) {
 			switch ($local:searchResults[$i].type) {
-				'episode' { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id ; break }
-				'season' { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) ; break }
-				'series' { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) ; break }
+				'episode' { $script:tverLinks += '/episodes/' + $local:searchResults[$i].Content.Id ; break }
+				'season' { $script:tverLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) ; break }
+				'series' { $script:tverLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) ; break }
 				'live' { break }
 				#他にはないと思われるが念のため
-				default { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id ; break }
+				default { $script:tverLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id ; break }
 			}
 		}
 	}
 	[System.GC]::Collect()
 
-	return $script:videoLinks | Sort-Object | Get-Unique
+	return $script:tverLinks | Sort-Object | Get-Unique
 }
 
 #----------------------------------------------------------------------
@@ -546,17 +556,17 @@ function getVideoLinkFromFreeKeyword {
 	$local:searchResults = $local:searchResultsRaw.Result.Contents
 	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
 		switch ($local:searchResults[$i].type) {
-			'episode' { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id ; break }
-			'season' { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) ; break }
-			'series' { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) ; break }
+			'episode' { $script:tverLinks += '/episodes/' + $local:searchResults[$i].Content.Id ; break }
+			'season' { $script:tverLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) ; break }
+			'series' { $script:tverLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) ; break }
 			'live' { break }
 			#他にはないと思われるが念のため
-			default { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id ; break }
+			default { $script:tverLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id ; break }
 		}
 	}
 	[System.GC]::Collect()
 
-	return $script:videoLinks | Sort-Object | Get-Unique
+	return $script:tverLinks | Sort-Object | Get-Unique
 }
 
 #----------------------------------------------------------------------
@@ -572,17 +582,17 @@ function getVideoLinkFromSeasonID {
 	$local:searchResults = $local:searchResultsRaw.Result.Contents
 	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
 		switch ($local:searchResults[$i].type) {
-			'episode' { $script:videoLinks += '/episodes/' + $local:searchResults[$i].Content.Id ; break }
-			'season' { $script:videoLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) ; break }
-			'series' { $script:videoLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) ; break }
+			'episode' { $script:tverLinks += '/episodes/' + $local:searchResults[$i].Content.Id ; break }
+			'season' { $script:tverLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) ; break }
+			'series' { $script:tverLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) ; break }
 			'live' { break }
 			#他にはないと思われるが念のため
-			default { $script:videoLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id ; break }
+			default { $script:tverLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id ; break }
 		}
 	}
 	[System.GC]::Collect()
 
-	return $script:videoLinks | Sort-Object | Get-Unique
+	return $script:tverLinks | Sort-Object | Get-Unique
 }
 
 #----------------------------------------------------------------------
@@ -663,20 +673,6 @@ function downloadTVerVideo {
 	$script:newVideo = $null
 	$script:ignore = $false ; $script:skip = $false
 
-	try {
-		#ロックファイルをロック
-		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
-			Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
-			Start-Sleep -Seconds 1
-		}
-		#ファイル操作
-		$local:listMatch = Import-Csv $script:listFilePath -Encoding UTF8 | Where-Object { $_.videoPage -eq $script:videoPageURL }
-	} catch { Write-ColorOutput '　リストを読み書きできなかったのでスキップしました' -FgColor 'Green' ; continue
-	} finally { $null = fileUnlock $script:lockFilePath }
-
-	#URLがすでにリストに存在する場合はスキップ
-	if ( $null -ne $local:listMatch) { Write-ColorOutput '　過去に処理したビデオです。スキップします' -FgColor 'Gray' ; continue }
-
 	#TVerのAPIを叩いてビデオ情報取得
 	goAnal -Event 'getinfo' -Type 'link' -ID $script:videoLink
 	try {
@@ -727,17 +723,8 @@ function downloadTVerVideo {
 	#ファイルが既に存在する場合はスキップフラグを立ててリストに書き込み処理へ
 	if (Test-Path $script:videoFilePath) {
 
-		#チェック済みか調べた上で、スキップ判断
-		try {
-			#ロックファイルをロック
-			while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
-				Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
-				Start-Sleep -Seconds 1
-			}
-			#ファイル操作
-			$local:listMatch = Import-Csv $script:listFilePath -Encoding UTF8 | Where-Object { $_.videoPath -eq $script:videoFilePath } | Where-Object { $_.videoValidated -eq '1' }
-		} catch { Write-ColorOutput '　リストを読み書きできませんでした。スキップします' -FgColor 'Green' ; continue
-		} finally { $null = fileUnlock $script:lockFilePath }
+		#リストファイルにチェック済みの状態で存在するかチェック
+		$local:listMatch = $script:listFileData | Where-Object { $_.videoPath -eq $script:videoFilePath } | Where-Object { $_.videoValidated -eq '1' }
 
 		#結果が0件ということは未検証のファイルがあるということ
 		if ( $null -eq $local:listMatch) {
@@ -768,20 +755,12 @@ function downloadTVerVideo {
 			$local:ignoreTitle = $local:ignoreTitle.replace('|', '\|')
 			$local:ignoreTitle = $local:ignoreTitle.replace('/', '\/')
 
-			if ($(getNarrowChars $script:videoName) -match $(getNarrowChars $local:ignoreTitle)) {
+			if (($(getNarrowChars $script:videoName) -match $(getNarrowChars $local:ignoreTitle)) `
+					-Or ($(getNarrowChars $script:videoSeries) -match $(getNarrowChars $local:ignoreTitle)) `
+					-Or ($(getNarrowChars $script:videoTitle) -match $(getNarrowChars $local:ignoreTitle))) {
 				$script:ignore = $true
 				Write-ColorOutput '　無視リストに入っているビデオです。スキップします' -FgColor 'Gray'
-				continue			#リストの重複削除のため、無視したものはリスト出力せずに次のビデオへ行くことに
-			}
-			if ($(getNarrowChars $script:videoSeries) -match $(getNarrowChars $local:ignoreTitle)) {
-				$script:ignore = $true
-				Write-ColorOutput '　無視リストに入っているビデオです。スキップします' -FgColor 'Gray'
-				continue			#リストの重複削除のため、無視したものはリスト出力せずに次のビデオへ行くことに
-			}
-			if ($(getNarrowChars $script:videoTitle) -match $(getNarrowChars $local:ignoreTitle)) {
-				$script:ignore = $true
-				Write-ColorOutput '　無視リストに入っているビデオです。スキップします' -FgColor 'Gray'
-				continue			#リストの重複削除のため、無視したものはリスト出力せずに次のビデオへ行くことに
+				break		#無視リストと合致したものはそれ以上無視するかのチェック不要
 			}
 		}
 
@@ -850,6 +829,7 @@ function downloadTVerVideo {
 		}
 		#ファイル操作
 		$script:newVideo | Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8 -Append
+		$script:listFileData += $script:newVideo
 		Write-Debug 'リストを書き込みました'
 	} catch { Write-ColorOutput '　リストを更新できませんでした。でスキップします' -FgColor 'Green' ; continue
 	} finally { $null = fileUnlock $script:lockFilePath }
@@ -1354,7 +1334,7 @@ function checkVideo {
 		$local:videoLists = Import-Csv $script:listFilePath -Encoding UTF8
 		$local:checkStatus = $(($local:videoLists).Where({ $_.videoPath -eq $local:videoFileRelativePath })).videoValidated
 	} catch {
-		Write-ColorOutput "　チェックステータスを取得できませんでした: $local:videoFileRelativePath" 'Green'
+		Write-ColorOutput "　既にリストから削除されたようです: $local:videoFileRelativePath" 'Gray'
 		return
 	} finally { $null = fileUnlock $script:lockFilePath }
 

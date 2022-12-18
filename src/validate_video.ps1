@@ -88,7 +88,7 @@ checkRequiredFile					#設定で指定したファイル・フォルダの存在
 Write-ColorOutput '----------------------------------------------------------------------'
 Write-ColorOutput '30日以上前に処理したものはリストから削除します'
 Write-ColorOutput '----------------------------------------------------------------------'
-Write-ColorOutput ''
+
 #進捗表示
 ShowProgressToast `
 	-Text1 '動画のチェック中' `
@@ -101,11 +101,12 @@ ShowProgressToast `
 
 #処理
 purgeDB -RetentionPeriod 30				#30日以上前に処理したものはリストから削除
+Write-ColorOutput ''
 
 Write-ColorOutput '----------------------------------------------------------------------'
 Write-ColorOutput '重複レコードを削除します'
 Write-ColorOutput '----------------------------------------------------------------------'
-Write-ColorOutput ''
+
 #進捗表示
 ShowProgressToast `
 	-Text1 '動画のチェック中' `
@@ -118,6 +119,7 @@ ShowProgressToast `
 
 #処理
 uniqueDB							#リストの重複削除
+Write-ColorOutput ''
 
 if ($script:disableValidation -eq $true) {
 	Write-ColorOutput '動画ファイルのチェックが無効化されているので、検証せずに終了します'
@@ -149,6 +151,7 @@ try {
 if ($null -eq $local:videoLists) {
 	#チェックする動画なし
 	Write-ColorOutput '　すべてのビデオをチェック済みです' -FgColor 'Gray'
+	Write-ColorOutput ''
 } else {
 	#動画ファイルをチェック
 	$local:validateTotal = 0
@@ -161,9 +164,10 @@ if ($null -eq $local:videoLists) {
 		if ($script:ffmpegDecodeOption -ne '') {
 			Write-ColorOutput '----------------------------------------------------------------------' -FgColor 'Green'
 			Write-ColorOutput 'ffmpegのデコードオプションが設定されてます                            ' -FgColor 'Green'
+			Write-ColorOutput "　・$($script:ffmpegDecodeOption)                                     " -FgColor 'Green'
 			Write-ColorOutput 'もし動画検証がうまく進まない場合は、以下のどちらかをお試しください    ' -FgColor 'Green'
-			Write-ColorOutput '　・ user_setting.ps1 でデコードオプションを変更する                  ' -FgColor 'Green'
-			Write-ColorOutput '　・ user_setting.ps1 で $script:forceSoftwareDecodeFlag = $true と設定する' -FgColor 'Green'
+			Write-ColorOutput '　・user_setting.ps1 でデコードオプションを変更する                   ' -FgColor 'Green'
+			Write-ColorOutput '　・user_setting.ps1 で $script:forceSoftwareDecodeFlag = $true と設定する' -FgColor 'Green'
 			Write-ColorOutput '----------------------------------------------------------------------' -FgColor 'Green'
 		}
 		$local:decodeOption = $script:ffmpegDecodeOption

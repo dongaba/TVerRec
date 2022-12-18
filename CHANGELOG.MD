@@ -1,5 +1,16 @@
 ﻿# Change Log
 
+## [2.6.4](https://github.com/dongaba/TVerRec/releases/tag/v2.6.4)
+
+### 2.6.4 Added
+
+### 2.6.4 Changed
+
+- ファイル I/O の削減による大幅高速化(条件により最大で数十～数百倍)
+- 無視リストとの照合を高速化
+
+### 2.6.4 Fixed
+
 ## [2.6.3](https://github.com/dongaba/TVerRec/releases/tag/v2.6.3)
 
 ### 2.6.3 Added
