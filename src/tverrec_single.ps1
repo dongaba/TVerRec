@@ -116,6 +116,18 @@ while ($true) {
 	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 	waitTillYtdlProcessGetFewer $script:parallelDownloadFileNum
 
+	#リストファイルのデータを読み込み
+	try {
+		#ロックファイルをロック
+		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
+			Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
+			Start-Sleep -Seconds 1
+		}
+		#ファイル操作
+		$script:listFileData = Import-Csv $script:listFilePath -Encoding UTF8
+	} catch { Write-ColorOutput '　リストを読み込めなかったのでスキップしました' -FgColor 'Green' ; continue
+	} finally { $null = fileUnlock $script:lockFilePath }
+
 	$local:videoPageURL = Read-Host 'ビデオURLを入力してください。何も入力しないで Enter を押すと終了します。'
 	if ($videoPageURL -ne '') {
 		$local:videoLink = $local:videoPageURL.Replace('https://tver.jp', '').Trim()

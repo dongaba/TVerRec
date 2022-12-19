@@ -724,7 +724,7 @@ function downloadTVerVideo {
 	if (Test-Path $script:videoFilePath) {
 
 		#リストファイルにチェック済みの状態で存在するかチェック
-		$local:listMatch = $script:listFileData | Where-Object { $_.videoPath -eq $script:videoFilePath } | Where-Object { $_.videoValidated -eq '1' }
+		$local:listMatch = $script:listFileData | Where-Object { $_.videoPath -eq $script:videoFileRelativePath } | Where-Object { $_.videoValidated -eq '1' }
 
 		#結果が0件ということは未検証のファイルがあるということ
 		if ( $null -eq $local:listMatch) {
@@ -831,7 +831,7 @@ function downloadTVerVideo {
 		$script:newVideo | Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8 -Append
 		$script:listFileData += $script:newVideo
 		Write-Debug 'リストを書き込みました'
-	} catch { Write-ColorOutput '　リストを更新できませんでした。でスキップします' -FgColor 'Green' ; continue
+	} catch { Write-ColorOutput '　リストを更新できませんでした。スキップします' -FgColor 'Green' ; continue
 	} finally { $null = fileUnlock $script:lockFilePath }
 
 	#スキップや無視対象でなければyoutube-dl起動

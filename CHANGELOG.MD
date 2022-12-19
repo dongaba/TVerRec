@@ -1,5 +1,17 @@
 ﻿# Change Log
 
+## [2.6.5](https://github.com/dongaba/TVerRec/releases/tag/v2.6.5)
+
+### 2.6.5 Added
+
+### 2.6.5 Changed
+
+- Readme を少し修正
+
+### 2.6.5 Fixed
+
+- v2.6.4 で個別ダウンロードの修正を漏らしていた[不具合](https://github.com/dongaba/TVerRec/issues/22)を修正
+
 ## [2.6.4](https://github.com/dongaba/TVerRec/releases/tag/v2.6.4)
 
 ### 2.6.4 Added
