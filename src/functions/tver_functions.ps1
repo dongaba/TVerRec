@@ -667,7 +667,7 @@ function downloadTVerVideo {
 	)
 
 	$script:videoName = '' ; $script:videoFilePath = '' ; $script:videoSeriesPageURL = ''
-	$script:broadcastDate = '' ; $script:videoSeries = '' ; $script:videoSeason = '' ; $script:videoTitle = ''
+	$script:broadcastDate = '' ; $script:videoSeries = '' ; $script:videoSeason = '' ; $script:videoEpisode = '' ; $script:videoTitle = ''
 	$script:mediaName = '' ; $script:descriptionText = ''
 	#$script:videoInfo = $null ;
 	$script:newVideo = $null
@@ -683,7 +683,12 @@ function downloadTVerVideo {
 	}
 
 	#ダウンロードファイル情報をセット
-	$script:videoName = getVideoFileName -Series $script:videoSeries -Season $script:videoSeason -Title $script:videoTitle -Date $script:broadcastDate
+	$script:videoName = getVideoFileName `
+		-Series $script:videoSeries `
+		-Season $script:videoSeason `
+		-Episode $script:videoEpisode `
+		-Title $script:videoTitle `
+		-Date $script:broadcastDate
 
 	$script:videoFileDir = getNarrowChars $($script:videoSeries + ' ' + $script:videoSeason).Trim()
 	if ($script:sortVideoByMedia -eq $true) {
@@ -710,6 +715,7 @@ function downloadTVerVideo {
 		-Keyword $script:keywordName `
 		-Series $script:videoSeries `
 		-Season $script:videoSeason `
+		-Episode $script:videoEpisode `
 		-Title $script:videoTitle `
 		-Path $script:videoFilePath `
 		-Time $(getTimeStamp)
@@ -930,6 +936,7 @@ function getVideoInfo {
 	$local:tverVideoInfoURL = $local:tverVideoInfoBaseURL + $local:episodeID + '.json?v=' + $local:versionNum
 	$local:videoInfo = Invoke-RestMethod -Uri $local:tverVideoInfoURL -Method 'GET' -Headers $local:requestHeader -TimeoutSec $script:timeoutSec
 	$script:descriptionText = $(getNarrowChars ($local:videoInfo.Description).Replace('&amp;', '&')).Trim()
+	$script:videoEpisode = getNarrowChars ($local:videoInfo.No)
 
 }
 
@@ -957,18 +964,29 @@ function getVideoFileName {
 			Mandatory = $false,
 			Position = 2
 		)]
-		[Alias('Title')]
-		[String] $local:videoTitle,
+		[Alias('Episode')]
+		[String] $local:videoEpisode,
 
 		[Parameter(
 			Mandatory = $false,
 			Position = 3
 		)]
+		[Alias('Title')]
+		[String] $local:videoTitle,
+
+		[Parameter(
+			Mandatory = $false,
+			Position = 4
+		)]
 		[Alias('Date')]
 		[String] $local:broadcastDate
 	)
 
-	$local:videoName = $local:videoSeries + ' ' + $local:videoSeason + ' ' + $local:broadcastDate + ' ' + $local:videoTitle
+	if ($script:addEpisodeNumber -eq $true) {
+		$local:videoName = $local:videoSeries + ' ' + $local:videoSeason + ' ' + $local:broadcastDate + ' Ep' + $local:videoEpisode + ' ' + $local:videoTitle
+	} else {
+		$local:videoName = $local:videoSeries + ' ' + $local:videoSeason + ' ' + $local:broadcastDate + ' ' + $local:videoTitle
+	}
 
 	#ファイル名にできない文字列を除去
 	$local:videoName = $(getFileNameWithoutInvalidChars (getNarrowChars $local:videoName)).Replace('  ', ' ').Trim()
@@ -1080,19 +1098,26 @@ function showVideoDebugInfo {
 			Mandatory = $false,
 			Position = 5
 		)]
+		[Alias('Episode')]
+		[String] $local:videoEpisode,
+
+		[Parameter(
+			Mandatory = $false,
+			Position = 6
+		)]
 		[Alias('Title')]
 		[String] $local:videoTitle,
 
 		[Parameter(
 			Mandatory = $false,
-			Position = 6
+			Position = 7
 		)]
 		[Alias('Path')]
 		[String] $local:videoFilePath,
 
 		[Parameter(
 			Mandatory = $false,
-			Position = 7
+			Position = 8
 		)]
 		[Alias('Time')]
 		[String] $local:processedTime
@@ -1103,6 +1128,7 @@ function showVideoDebugInfo {
 	Write-Debug "　キーワード          :$local:keywordName"
 	Write-Debug "　シリーズ            :$local:videoSeries"
 	Write-Debug "　シーズン            :$local:videoSeason"
+	Write-Debug "　エピソード          :$local:videoEpisode"
 	Write-Debug "　サブタイトル        :$local:videoTitle"
 	Write-Debug "　ファイル            :$local:videoFilePath"
 	Write-Debug "　取得日付            :$local:processedTime"

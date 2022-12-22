@@ -71,6 +71,13 @@ $script:parallelDownloadNumPerFile = 10
 #        └番組シリーズ名 番組シーズン名 放送日 番組タイトル名).mp4
 $script:sortVideoByMedia = $false
 
+#ダウンロードファイル名にエピソード番号を付加
+#「$false」の場合のファイル名は以下
+#  番組シリーズ名 番組シーズン名 放送日 番組タイトル名.mp4
+#「$true」の際のファイル名は以下
+#  番組シリーズ名 番組シーズン名 放送日 Epエピソード番号 番組タイトル名.mp4
+$script:addEpisodeNumber = $false
+
 #youtube-dlのウィンドウの表示方法(Windowsのみ) Normal/Maximized/Minimized/Hidden
 $script:windowShowStyle = 'Hidden'
 
