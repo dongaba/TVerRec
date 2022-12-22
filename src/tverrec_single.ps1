@@ -1,5 +1,5 @@
 ###################################################################################
-#  TVerRec : TVerビデオダウンローダ
+#  TVerRec : TVerダウンローダ
 #
 #		個別ダウンロード処理スクリプト
 #
@@ -86,7 +86,7 @@ Write-ColorOutput '           ██    ██    ██ █████   █�
 Write-ColorOutput '           ██     ██  ██  ██      ██   ██ ██   ██ ██      ██               ' -FgColor 'Cyan'
 Write-ColorOutput '           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          ' -FgColor 'Cyan'
 Write-ColorOutput '                                                                           ' -FgColor 'Cyan'
-Write-ColorOutput "        $script:appName : TVerビデオダウンローダ                           " -FgColor 'Cyan'
+Write-ColorOutput "        $script:appName : TVerダウンローダ                                 " -FgColor 'Cyan'
 Write-ColorOutput "                             個別ダウンロード版 version. $script:appVersion" -FgColor 'Cyan'
 Write-ColorOutput '                                                                           ' -FgColor 'Cyan'
 Write-ColorOutput '===========================================================================' -FgColor 'Cyan'
@@ -111,7 +111,7 @@ while ($true) {
 
 	#保存先ディレクトリの存在確認(稼働中に共有フォルダが切断された場合に対応)
 	if (Test-Path $script:downloadBaseDir -PathType Container) { }
-	else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します' ; exit 1 }
+	else { Write-Error '番組ダウンロード先フォルダにアクセスできません。終了します' ; exit 1 }
 
 	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 	waitTillYtdlProcessGetFewer $script:parallelDownloadFileNum
@@ -128,13 +128,13 @@ while ($true) {
 	} catch { Write-ColorOutput '　リストを読み込めなかったのでスキップしました' -FgColor 'Green' ; continue
 	} finally { $null = fileUnlock $script:lockFilePath }
 
-	$local:videoPageURL = Read-Host 'ビデオURLを入力してください。何も入力しないで Enter を押すと終了します。'
+	$local:videoPageURL = Read-Host '番組URLを入力してください。何も入力しないで Enter を押すと終了します。'
 	if ($videoPageURL -ne '') {
 		$local:videoLink = $local:videoPageURL.Replace('https://tver.jp', '').Trim()
 		$local:videoPageURL = 'https://tver.jp' + $local:videoLink
 		Write-ColorOutput $local:videoPageURL
 
-		#TVerビデオダウンロードのメイン処理
+		#TVer番組ダウンロードのメイン処理
 		downloadTVerVideo `
 			-Keyword $local:keywordName `
 			-URL $local:videoPageURL `

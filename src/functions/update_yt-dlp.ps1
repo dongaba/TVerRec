@@ -1,5 +1,5 @@
 ###################################################################################
-#  TVerRec : TVerビデオダウンローダ
+#  TVerRec : TVerダウンローダ
 #
 #		Windows用ytdl-patched最新化処理スクリプト
 #
@@ -51,7 +51,7 @@ if (Test-Path $local:ytdlPath -PathType Leaf) {
 }
 
 #yt-dlpの最新バージョン取得
-try { $local:latestVersion = (Invoke-WebRequest -Uri $local:releases -TimeOutSec $script:timeoutSec | ConvertFrom-Json)[0].Tag_Name }
+try { $local:latestVersion = (Invoke-WebRequest -Uri $local:releases -TimeoutSec $script:timeoutSec | ConvertFrom-Json)[0].Tag_Name }
 catch { Write-ColorOutput 'youtube-dl(yt-dlp)の最新バージョンを特定できませんでした' -FgColor 'Green' ; return }
 
 #yt-dlpのダウンロード
@@ -67,11 +67,11 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 			$local:file = 'yt-dlp'
 			$local:fileAfterRename = 'youtube-dl'
 			#ダウンロード
-			$local:tag = (Invoke-WebRequest $local:releases -TimeOutSec $script:timeoutSec | ConvertFrom-Json)[0].Tag_name
+			$local:tag = (Invoke-WebRequest $local:releases -TimeoutSec $script:timeoutSec | ConvertFrom-Json)[0].Tag_name
 			$local:download = "https://github.com/$($local:repo)/releases/latest/download/$($local:file)"
 			$local:ytdlFileLocation = $(Join-Path $local:ytdlDir $local:fileAfterRename)
 			Write-ColorOutput "youtube-dlをダウンロードします。 $local:download"
-			Invoke-WebRequest $local:download -Out $local:ytdlFileLocation -TimeOutSec $script:timeoutSec
+			Invoke-WebRequest $local:download -Out $local:ytdlFileLocation -TimeoutSec $script:timeoutSec
 			#バージョンチェック
 			$local:ytdlCurrentVersion = (& $local:ytdlPath --version)
 			Write-ColorOutput "youtube-dlをversion $local:ytdlCurrentVersion に更新しました。 "
@@ -82,11 +82,11 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 			$local:file = 'yt-dlp.exe'
 			$local:fileAfterRename = 'youtube-dl.exe'
 			#ダウンロード
-			$local:tag = (Invoke-WebRequest $local:releases -TimeOutSec $script:timeoutSec | ConvertFrom-Json)[0].Tag_name
+			$local:tag = (Invoke-WebRequest $local:releases -TimeoutSec $script:timeoutSec | ConvertFrom-Json)[0].Tag_name
 			$local:download = "https://github.com/$($local:repo)/releases/download/$($local:tag)/$($local:file)"
 			$local:ytdlFileLocation = $(Join-Path $local:ytdlDir $local:fileAfterRename)
 			Write-ColorOutput "youtube-dlをダウンロードします。 $local:download"
-			Invoke-WebRequest $local:download -Out $local:ytdlFileLocation -TimeOutSec $script:timeoutSec
+			Invoke-WebRequest $local:download -Out $local:ytdlFileLocation -TimeoutSec $script:timeoutSec
 			#バージョンチェック
 			$local:ytdlCurrentVersion = (& $local:ytdlPath --version)
 			if ($? -eq $false) { throw '更新後のバージョン取得に失敗しました' }

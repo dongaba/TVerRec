@@ -19,7 +19,7 @@ ffmpeg
 yt-dlp
 youtube-dl
 
-#動画ファイル
+#ダウンロードファイル
 *.mp4
 
 #中間ファイル

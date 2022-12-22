@@ -1,7 +1,7 @@
 ###################################################################################
-#  TVerRec : TVerビデオダウンローダ
+#  TVerRec : TVerダウンローダ
 #
-#		動画移動処理スクリプト
+#		番組移動処理スクリプト
 #
 #	Copyright (c) 2022 dongaba
 #
@@ -81,9 +81,9 @@ try {
 #======================================================================
 #保存先ディレクトリの存在確認
 if (Test-Path $script:downloadBaseDir -PathType Container) { }
-else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' -FgColor 'Green' ; exit 1 }
+else { Write-Error '番組ダウンロード先フォルダにアクセスできません。終了します。' -FgColor 'Green' ; exit 1 }
 if (Test-Path $script:saveBaseDir -PathType Container) { }
-else { Write-Error 'ビデオ移動先フォルダにアクセスできません。終了します。' -FgColor 'Green' ; exit 1 }
+else { Write-Error '番組移動先フォルダにアクセスできません。終了します。' -FgColor 'Green' ; exit 1 }
 
 #======================================================================
 #1/2 移動先フォルダを起点として、配下のフォルダを取得
@@ -93,7 +93,7 @@ Write-ColorOutput '-------------------------------------------------------------
 
 #進捗表示
 ShowProgressToast `
-	-Text1 '動画の移動中' `
+	-Text1 '番組の移動中' `
 	-Text2 '　処理1/2 - フォルダ一覧を作成' `
 	-WorkDetail '' `
 	-Tag $script:appName `
@@ -103,15 +103,15 @@ ShowProgressToast `
 
 
 #======================================================================
-#2/2 移動先フォルダと同名のフォルダ配下の動画を移動
+#2/2 移動先フォルダと同名のフォルダ配下の番組を移動
 Write-ColorOutput '----------------------------------------------------------------------'
-Write-ColorOutput 'ビデオファイルを移動しています'
+Write-ColorOutput 'ダウンロードファイルを移動しています'
 Write-ColorOutput '----------------------------------------------------------------------'
 
 #進捗表示
 ShowProgressToast `
-	-Text1 '動画の移動中' `
-	-Text2 '　処理2/2 - 動画ファイルを移動' `
+	-Text1 '番組の移動中' `
+	-Text2 '　処理2/2 - ダウンロードファイルを移動' `
 	-WorkDetail '' `
 	-Tag $script:appName `
 	-Group 'Move' `
@@ -172,7 +172,7 @@ if ($local:moveToPathTotal -ne 0) {
 
 #進捗表示
 UpdateProgessToast `
-	-Title '動画の移動' `
+	-Title '番組の移動' `
 	-Rate '1' `
 	-LeftText '' `
 	-RrightText '完了' `

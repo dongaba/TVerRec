@@ -1,7 +1,7 @@
 ###################################################################################
-#  TVerRec : TVerビデオダウンローダ
+#  TVerRec : TVerダウンローダ
 #
-#		動画チェック処理スクリプト
+#		番組チェック処理スクリプト
 #
 #	Copyright (c) 2022 dongaba
 #
@@ -91,7 +91,7 @@ Write-ColorOutput '-------------------------------------------------------------
 
 #進捗表示
 ShowProgressToast `
-	-Text1 '動画のチェック中' `
+	-Text1 'ダウンロードファイルの整合性検証中' `
 	-Text2 '　処理1/4 - 30日以上前のリストを削除' `
 	-WorkDetail '' `
 	-Tag $script:appName `
@@ -109,7 +109,7 @@ Write-ColorOutput '-------------------------------------------------------------
 
 #進捗表示
 ShowProgressToast `
-	-Text1 '動画のチェック中' `
+	-Text1 'ダウンロードファイルの整合性検証中' `
 	-Text2 '　処理2/4 - 重複レコードを削除' `
 	-WorkDetail '' `
 	-Tag $script:appName `
@@ -122,14 +122,14 @@ uniqueDB							#リストの重複削除
 Write-ColorOutput ''
 
 if ($script:disableValidation -eq $true) {
-	Write-ColorOutput '動画ファイルのチェックが無効化されているので、検証せずに終了します'
+	Write-ColorOutput 'ダウンロードファイルの整合性検証が無効化されているので、検証せずに終了します'
 	exit 0
 }
 
 #======================================================================
-#録画リストからビデオチェックが終わっていないものを読み込み
+#ダウンロードリストから番組チェックが終わっていないものを読み込み
 Write-ColorOutput '----------------------------------------------------------------------'
-Write-ColorOutput 'チェックが終わっていないビデオをチェックします'
+Write-ColorOutput '整合性検証が終わっていない番組を検証します'
 Write-ColorOutput '----------------------------------------------------------------------'
 try {
 	#ロックファイルをロック
@@ -149,11 +149,11 @@ try {
 
 
 if ($null -eq $local:videoLists) {
-	#チェックする動画なし
-	Write-ColorOutput '　すべてのビデオをチェック済みです' -FgColor 'Gray'
+	#チェックする番組なし
+	Write-ColorOutput '　すべての番組を検証済みです' -FgColor 'Gray'
 	Write-ColorOutput ''
 } else {
-	#動画ファイルをチェック
+	#ダウンロードファイルをチェック
 	$local:validateTotal = 0
 	$local:validateTotal = $local:videoLists.Length
 
@@ -165,7 +165,7 @@ if ($null -eq $local:videoLists) {
 			Write-ColorOutput '----------------------------------------------------------------------' -FgColor 'Green'
 			Write-ColorOutput 'ffmpegのデコードオプションが設定されてます                            ' -FgColor 'Green'
 			Write-ColorOutput "　・$($script:ffmpegDecodeOption)                                     " -FgColor 'Green'
-			Write-ColorOutput 'もし動画検証がうまく進まない場合は、以下のどちらかをお試しください    ' -FgColor 'Green'
+			Write-ColorOutput 'もし整合性検証がうまく進まない場合は、以下のどちらかをお試しください  ' -FgColor 'Green'
 			Write-ColorOutput '　・user_setting.ps1 でデコードオプションを変更する                   ' -FgColor 'Green'
 			Write-ColorOutput '　・user_setting.ps1 で $script:forceSoftwareDecodeFlag = $true と設定する' -FgColor 'Green'
 			Write-ColorOutput '----------------------------------------------------------------------' -FgColor 'Green'
@@ -175,8 +175,8 @@ if ($null -eq $local:videoLists) {
 
 	#進捗表示
 	ShowProgressToast `
-		-Text1 '動画のチェック中' `
-		-Text2 '　処理3/4 - 動画を検証' `
+		-Text1 'ダウンロードファイルの整合性検証中' `
+		-Text2 '　処理3/4 - ファイルを検証' `
 		-WorkDetail '残り時間計算中' `
 		-Tag $script:appName `
 		-Group 'Validate' `
@@ -214,12 +214,12 @@ if ($null -eq $local:videoLists) {
 
 		#処理
 		if (Test-Path $script:downloadBaseDir -PathType Container) { }
-		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します。' -FgColor 'Green' ; exit 1 }
+		else { Write-Error '番組ダウンロード先フォルダにアクセスできません。終了します。' -FgColor 'Green' ; exit 1 }
 
 		Write-ColorOutput "$($local:validateNum)/$($local:validateTotal) - $($local:videoFileRelativePath)" -NoNewLine $true
 		checkVideo `
 			-DecodeOption $local:decodeOption `
-			-Path $local:videoFileRelativePath		#ビデオの整合性チェック
+			-Path $local:videoFileRelativePath		#番組の整合性チェック
 
 		Start-Sleep -Seconds 1
 	}
@@ -228,15 +228,15 @@ if ($null -eq $local:videoLists) {
 }
 
 #======================================================================
-#録画リストからビデオチェックが終わっていないもののステータスを初期化
+#ダウンロードリストから整合性検証が終わっていないもののステータスを初期化
 Write-ColorOutput '----------------------------------------------------------------------'
-Write-ColorOutput '録画リストからチェックが終わっていないビデオのステータスを変更します'
+Write-ColorOutput 'ダウンロードリストから検証が終わっていない番組のステータスを変更します'
 Write-ColorOutput '----------------------------------------------------------------------'
 Write-ColorOutput ''
 #進捗表示
 ShowProgressToast `
-	-Text1 '動画のチェック中' `
-	-Text2 '　処理4/4 - 未検証の動画のステータスを変更' `
+	-Text1 'ダウンロードファイルの整合性検証中' `
+	-Text2 '　処理4/4 - 未検証のファイルのステータスを変更' `
 	-WorkDetail '' `
 	-Tag $script:appName `
 	-Group 'Validate' `
@@ -261,7 +261,7 @@ try {
 
 #進捗表示
 UpdateProgessToast `
-	-Title '動画のチェック' `
+	-Title 'ダウンロードファイルの整合性検証' `
 	-Rate '1' `
 	-LeftText '' `
 	-RrightText '完了' `

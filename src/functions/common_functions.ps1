@@ -1,5 +1,5 @@
 ###################################################################################
-#  TVerRec : TVerビデオダウンローダ
+#  TVerRec : TVerダウンローダ
 #
 #		共通関数スクリプト
 #
@@ -45,7 +45,7 @@ $script:guid = [guid]::NewGuid()
 $script:ipapi = ''
 $script:clientEnv = @{}
 try {
-	$script:ipapi = (Invoke-RestMethod -Uri 'https://ipapi.co/jsonp/ ' -TimeOutSec $script:timeoutSec)
+	$script:ipapi = (Invoke-RestMethod -Uri 'https://ipapi.co/jsonp/ ' -TimeoutSec $script:timeoutSec)
 	$script:ipapi = $script:ipapi.replace('callback(', '').replace(');', '')
 	$script:ipapi = $script:ipapi.replace('{', "{`n").replace('}', "`n}").replace(', ', ",`n")
 	$(ConvertFrom-Json $script:ipapi).psobject.properties | ForEach-Object { $script:clientEnv[$_.Name] = $_.Value }
@@ -1142,7 +1142,7 @@ function goAnal {
 
 	$progressPreference = 'silentlyContinue'
 	$local:statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
-	try { Invoke-WebRequest "$($local:statisticsBase)$($local:event).svg" -TimeOutSec $script:timeoutSec | Out-Null }
+	try { Invoke-WebRequest "$($local:statisticsBase)$($local:event).svg" -TimeoutSec $script:timeoutSec | Out-Null }
 	catch { Write-Debug 'Failed to collect statistics' }
 	finally { $progressPreference = 'Continue' }
 
@@ -1176,7 +1176,7 @@ function goAnal {
 	$local:gaBody += '} } ] }'
 
 	$progressPreference = 'silentlyContinue'
-	try { Invoke-RestMethod -Uri "$($local:gaURL)?$($local:gaKey)&$($local:gaID)" -Method 'POST' -Headers $local:gaHeaders -Body $local:gaBody -TimeOutSec $script:timeoutSec | Out-Null }
+	try { Invoke-RestMethod -Uri "$($local:gaURL)?$($local:gaKey)&$($local:gaID)" -Method 'POST' -Headers $local:gaHeaders -Body $local:gaBody -TimeoutSec $script:timeoutSec | Out-Null }
 	catch { Write-Debug 'Failed to collect statistics' }
 	finally { $progressPreference = 'Continue' }
 

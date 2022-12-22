@@ -1,5 +1,5 @@
 ###################################################################################
-#  TVerRec : TVerビデオダウンローダ
+#  TVerRec : TVerダウンローダ
 #
 #		一括ダウンロード処理スクリプト
 #
@@ -86,7 +86,7 @@ Write-ColorOutput '           ██    ██    ██ █████   █�
 Write-ColorOutput '           ██     ██  ██  ██      ██   ██ ██   ██ ██      ██               ' -FgColor 'Cyan'
 Write-ColorOutput '           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          ' -FgColor 'Cyan'
 Write-ColorOutput '                                                                           ' -FgColor 'Cyan'
-Write-ColorOutput "        $script:appName : TVerビデオダウンローダ                           " -FgColor 'Cyan'
+Write-ColorOutput "        $script:appName : TVerダウンローダ                                 " -FgColor 'Cyan'
 Write-ColorOutput "                             一括ダウンロード版 version. $script:appVersion" -FgColor 'Cyan'
 Write-ColorOutput '                                                                           ' -FgColor 'Cyan'
 Write-ColorOutput '===========================================================================' -FgColor 'Cyan'
@@ -111,7 +111,7 @@ else { $local:keywordTotal = 1 }
 #進捗表示
 ShowProgess2Row `
 	-ProgressText1 '一括ダウンロード中' `
-	-ProgressText2 'キーワードから動画を抽出しダウンロード' `
+	-ProgressText2 'キーワードから番組を抽出しダウンロード' `
 	-WorkDetail1 '読み込み中...' `
 	-WorkDetail2 '読み込み中...' `
 	-Duration 'long' `
@@ -156,9 +156,9 @@ foreach ($local:keywordName in $local:keywordNames) {
 		else { $local:searchResultCount = $local:searchResultCount + 1 ; continue }
 	}
 
-	$local:videoNum = 0						#ジャンル内の処理中のビデオの番号
-	$local:videoTotal = $local:videoLinks.Length	#ジャンル内のトータルビデオ数
-	if ($local:videoTotal -eq 0) { Write-ColorOutput "　未処理の対象ビデオがありませんでした。(処理済 $($local:searchResultCount)本)" -FgColor 'Gray' }
+	$local:videoNum = 0								#ジャンル内の処理中の番組の番号
+	$local:videoTotal = $local:videoLinks.Length	#ダウンロード対象のトータル番組数
+	Write-ColorOutput "　ダウンロード対象$($local:videoTotal)本 処理済み$($local:searchResultCount - $local:videoTotal)本" -FgColor 'Gray'
 
 	#処理時間の推計
 	$local:secElapsed = (Get-Date) - $local:totalStartTime
@@ -184,14 +184,14 @@ foreach ($local:keywordName in $local:keywordNames) {
 		-Group 'Bulk'
 
 	#----------------------------------------------------------------------
-	#個々のビデオダウンロードここから
+	#個々の番組ダウンロードここから
 	foreach ($local:videoLink in $local:videoLinks) {
 		#いろいろ初期化
-		$local:videoNum = $local:videoNum + 1		#ジャンル内のビデオ番号のインクリメント
+		$local:videoNum = $local:videoNum + 1		#ジャンル内の番組番号のインクリメント
 
 		#保存先ディレクトリの存在確認(稼働中に共有フォルダが切断された場合に対応)
 		if (Test-Path $script:downloadBaseDir -PathType Container) { }
-		else { Write-Error 'ビデオ保存先フォルダにアクセスできません。終了します' ; exit 1 }
+		else { Write-Error '番組ダウンロード先フォルダにアクセスできません。終了します' ; exit 1 }
 
 		#進捗率の計算
 		$local:progressRatio2 = $($local:videoNum / $local:videoTotal)
@@ -215,7 +215,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 		#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 		waitTillYtdlProcessGetFewer $script:parallelDownloadFileNum
 
-		#TVerビデオダウンロードのメイン処理
+		#TVer番組ダウンロードのメイン処理
 		downloadTVerVideo `
 			-Keyword $local:keywordName `
 			-URL $local:videoLink `
@@ -229,11 +229,11 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 #進捗表示
 UpdateProgessToast2 `
-	-Title1 'キーワードから動画の抽出' `
+	-Title1 'キーワードから番組の抽出' `
 	-Rate1 '1' `
 	-LeftText1 '' `
 	-RrightText1 '完了' `
-	-Title2 '動画のダウンロード' `
+	-Title2 '番組のダウンロード' `
 	-Rate2 '1' `
 	-LeftText2 '' `
 	-RrightText2 '完了' `

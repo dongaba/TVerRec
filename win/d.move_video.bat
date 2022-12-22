@@ -1,8 +1,8 @@
 @echo off
 rem ###################################################################################
-rem #  TVerRec : TVerビデオダウンローダ
+rem #  TVerRec : TVerダウンローダ
 rem #
-rem #		動画移動処理スクリプト
+rem #		番組移動処理スクリプト
 rem #
 rem #	Copyright (c) 2022 dongaba
 rem #

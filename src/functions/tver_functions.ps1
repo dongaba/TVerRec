@@ -1,5 +1,5 @@
 ###################################################################################
-#  TVerRec : TVerビデオダウンローダ
+#  TVerRec : TVerダウンローダ
 #
 #		TVer固有関数スクリプト
 #
@@ -131,7 +131,7 @@ function checkRequiredFile {
 	Param ()
 
 	if (Test-Path $script:downloadBaseDir -PathType Container) { }
-	else { Write-Error 'ビデオ保存先フォルダが存在しません。終了します。' ; exit 1 }
+	else { Write-Error '番組ダウンロード先フォルダが存在しません。終了します。' ; exit 1 }
 	if (Test-Path $script:downloadWorkDir -PathType Container) { }
 	else { Write-Error 'ダウンロード作業フォルダが存在しません。終了します。' ; exit 1 }
 	if (Test-Path $script:ffmpegPath -PathType Leaf) { }
@@ -153,7 +153,7 @@ function checkRequiredFile {
 	if (Test-Path $script:keywordFilePath -PathType Leaf) { }
 	else { Write-Error 'ダウンロード対象ジャンルリストが存在しません。終了します。' ; exit 1 }
 	if (Test-Path $script:ignoreFilePath -PathType Leaf) { }
-	else { Write-Error 'ダウンロード対象外ビデオリストが存在しません。終了します。' ; exit 1 }
+	else { Write-Error 'ダウンロード対象外番組リストが存在しません。終了します。' ; exit 1 }
 	if (Test-Path $script:listFilePath -PathType Leaf) { }
 	else { Write-Error 'ダウンロードリストが存在しません。終了します。' ; exit 1 }
 }
@@ -202,7 +202,7 @@ function getToken () {
 }
 
 #----------------------------------------------------------------------
-#キーワードからビデオのリンクへの変換
+#キーワードから番組のリンクへの変換
 #----------------------------------------------------------------------
 function getVideoLinksFromKeyword {
 	[OutputType([System.Object[]])]
@@ -215,7 +215,7 @@ function getVideoLinksFromKeyword {
 	}
 	$script:tverLinks = @()
 	if ( $local:keywordName.IndexOf('https://tver.jp/') -eq 0) {
-		#URL形式の場合ビデオページのLinkを取得
+		#URL形式の場合番組ページのLinkを取得
 		try { $local:keywordNamePage = Invoke-WebRequest $local:keywordName -TimeoutSec $script:timeoutSec }
 		catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:00' -FgColor 'Green' ; continue }
 		try {
@@ -233,48 +233,48 @@ function getVideoLinksFromKeyword {
 		} catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:01' -FgColor 'Green' ; continue }
 		#saveGenrePage $script:keywordName						#デバッグ用ジャンルページの保存
 	} elseif ($local:keywordName.IndexOf('series/') -eq 0) {
-		#番組IDによる番組検索からビデオページのLinkを取得
+		#番組IDによる番組検索から番組ページのLinkを取得
 		$local:seriesID = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('series/', '').Trim()
 		goAnal -Event 'search' -Type 'series' -ID $local:seriesID
 		try { $script:tverLinks = getVideoLinkFromSeriesID ($local:seriesID) }
 		catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:02' -FgColor 'Green' ; continue }
 	} elseif ($local:keywordName.IndexOf('talents/') -eq 0) {
-		#タレントIDによるタレント検索からビデオページのLinkを取得
+		#タレントIDによるタレント検索から番組ページのLinkを取得
 		$local:talentID = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('talents/', '').Trim()
 		goAnal -Event 'search' -Type 'talent' -ID $local:talentID
 		try { $script:tverLinks = getVideoLinkFromTalentID ($local:talentID) }
 		catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:03' -FgColor 'Green' ; continue }
 	} elseif ($local:keywordName.IndexOf('tag/') -eq 0) {
-		#ジャンルなどのTag情報からビデオページのLinkを取得
+		#ジャンルなどのTag情報から番組ページのLinkを取得
 		$local:tagID = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('tag/', '').Trim()
 		goAnal -Event 'search' -Type 'tag' -ID $local:tagID
 		try { $script:tverLinks = getVideoLinkFromTag ($local:tagID) }
 		catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:04' -FgColor 'Green' ; continue }
 	} elseif ($local:keywordName.IndexOf('new/') -eq 0) {
-		#新着ビデオからビデオページのLinkを取得
+		#新着番組から番組ページのLinkを取得
 		$local:genre = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('new/', '').Trim()
 		goAnal -Event 'search' -Type 'new' -ID $local:genre
 		try { $script:tverLinks = getVideoLinkFromNew ($local:genre) }
 		catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:05' -FgColor 'Green' ; continue }
 	} elseif ($local:keywordName.IndexOf('ranking/') -eq 0) {
-		#ランキングによるビデオページのLinkを取得
+		#ランキングによる番組ページのLinkを取得
 		$local:genre = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('ranking/', '').Trim()
 		goAnal -Event 'search' -Type 'ranking' -ID $local:genre
 		try { $script:tverLinks = getVideoLinkFromRanking ($local:genre) }
 		catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:06' -FgColor 'Green' ; continue }
 	} elseif ($local:keywordName.IndexOf('toppage') -eq 0) {
-		#トップページからビデオページのLinkを取得
+		#トップページから番組ページのLinkを取得
 		goAnal -Event 'search' -Type 'toppage'
 		try { $script:tverLinks = getVideoLinkFromTopPage }
 		catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:07' -FgColor 'Green' ; continue }
 	} elseif ($local:keywordName.IndexOf('title/') -eq 0) {
-		#番組名による新着検索からビデオページのLinkを取得
+		#番組名による新着検索から番組ページのLinkを取得
 		$local:titleName = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('title/', '').Trim()
 		goAnal -Event 'search' -Type 'title' -ID $local:titleName
 		try { $script:tverLinks = getVideoLinkFromTitle ($local:titleName) }
 		catch { Write-ColorOutput '　番組名検索はTVer側で廃止されました。フリーワード検索で対応してください。スキップします Err:08' -FgColor 'Green' ; continue }
 	} else {
-		#タレント名や番組名などURL形式でない場合APIで検索結果からビデオページのLinkを取得
+		#タレント名や番組名などURL形式でない場合APIで検索結果から番組ページのLinkを取得
 		goAnal -Event 'search' -Type 'free' -ID $local:keywordName
 		try { $script:tverLinks = getVideoLinkFromFreeKeyword ($local:keywordName) }
 		catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:09' -FgColor 'Green' ; continue }
@@ -283,7 +283,7 @@ function getVideoLinksFromKeyword {
 	$script:tverLinks = $script:tverLinks | Sort-Object | Get-Unique
 
 	if ($script:tverLinks -is [array]) {
-		for ( $i = 0; $i -lt $script:tverLinks.Count; $i++) {
+		for ( $i = 0; $i -lt $script:tverLinks.Length; $i++) {
 			$script:tverLinks[$i] = 'https://tver.jp' + $script:tverLinks[$i]
 		}
 	} elseif ($null -ne $script:tverLinks) {
@@ -308,7 +308,7 @@ function saveGenrePage {
 }
 
 #----------------------------------------------------------------------
-#SeriesIDによる番組検索からビデオページのLinkを取得
+#SeriesIDによる番組検索から番組ページのLinkを取得
 #----------------------------------------------------------------------
 function getVideoLinkFromSeriesID {
 	[OutputType([System.Object[]])]
@@ -333,7 +333,7 @@ function getVideoLinkFromSeriesID {
 }
 
 #----------------------------------------------------------------------
-#TalentIDによるタレント検索からビデオページのLinkを取得
+#TalentIDによるタレント検索から番組ページのLinkを取得
 #----------------------------------------------------------------------
 function getVideoLinkFromTalentID {
 	[OutputType([System.Object[]])]
@@ -359,7 +359,7 @@ function getVideoLinkFromTalentID {
 }
 
 #----------------------------------------------------------------------
-#タグからビデオページのLinkを取得
+#タグから番組ページのLinkを取得
 #----------------------------------------------------------------------
 function getVideoLinkFromTag {
 	[OutputType([System.Object[]])]
@@ -385,7 +385,7 @@ function getVideoLinkFromTag {
 }
 
 #----------------------------------------------------------------------
-#新着からビデオページのLinkを取得
+#新着から番組ページのLinkを取得
 #----------------------------------------------------------------------
 function getVideoLinkFromNew {
 	[OutputType([System.Object[]])]
@@ -411,7 +411,7 @@ function getVideoLinkFromNew {
 }
 
 #----------------------------------------------------------------------
-#ランキングからビデオページのLinkを取得
+#ランキングから番組ページのLinkを取得
 #----------------------------------------------------------------------
 function getVideoLinkFromRanking {
 	[OutputType([System.Object[]])]
@@ -441,7 +441,7 @@ function getVideoLinkFromRanking {
 }
 
 #----------------------------------------------------------------------
-#トップページからビデオページのLinkを取得
+#トップページから番組ページのLinkを取得
 #----------------------------------------------------------------------
 function getVideoLinkFromTopPage {
 	[OutputType([System.Object[]])]
@@ -516,7 +516,7 @@ function getVideoLinkFromTopPage {
 }
 
 #----------------------------------------------------------------------
-#番組名による新着検索からビデオページのLinkを取得
+#番組名による新着検索から番組ページのLinkを取得
 #----------------------------------------------------------------------
 function getVideoLinkFromTitle {
 	[OutputType([System.Object[]])]
@@ -570,7 +570,7 @@ function getVideoLinkFromFreeKeyword {
 }
 
 #----------------------------------------------------------------------
-#SeasonIDによる番組検索からビデオページのLinkを取得
+#SeasonIDによる番組検索から番組ページのLinkを取得
 #----------------------------------------------------------------------
 function getVideoLinkFromSeasonID {
 	[OutputType([System.Object[]])]
@@ -639,7 +639,7 @@ function waitTillYtdlProcessGetFewer {
 }
 
 #----------------------------------------------------------------------
-#TVerビデオダウンロードのメイン処理
+#TVer番組ダウンロードのメイン処理
 #----------------------------------------------------------------------
 function downloadTVerVideo {
 	[OutputType([System.Void])]
@@ -673,16 +673,16 @@ function downloadTVerVideo {
 	$script:newVideo = $null
 	$script:ignore = $false ; $script:skip = $false
 
-	#TVerのAPIを叩いてビデオ情報取得
+	#TVerのAPIを叩いて番組情報取得
 	goAnal -Event 'getinfo' -Type 'link' -ID $script:videoLink
 	try {
 		getVideoInfo -Link $script:videoLink
 	} catch {
 		Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:10' -FgColor 'Green'
-		continue			#次回再度トライするためリストに追加せずに次のビデオへ
+		continue			#次回再度トライするためリストに追加せずに次の番組へ
 	}
 
-	#ビデオファイル情報をセット
+	#ダウンロードファイル情報をセット
 	$script:videoName = getVideoFileName -Series $script:videoSeries -Season $script:videoSeason -Title $script:videoTitle -Date $script:broadcastDate
 
 	$script:videoFileDir = getNarrowChars $($script:videoSeries + ' ' + $script:videoSeason).Trim()
@@ -698,7 +698,7 @@ function downloadTVerVideo {
 	$script:videoFileRelativePath = $script:videoFilePath.Replace($script:downloadBaseDir, '').Replace('\', '/')
 	$script:videoFileRelativePath = $script:videoFileRelativePath.Substring(1, $($script:videoFileRelativePath.Length - 1))
 
-	#ビデオ情報のコンソール出力
+	#番組情報のコンソール出力
 	showVideoInfo `
 		-Name $script:videoName `
 		-Date $script:broadcastDate `
@@ -714,10 +714,10 @@ function downloadTVerVideo {
 		-Path $script:videoFilePath `
 		-Time $(getTimeStamp)
 
-	#ビデオタイトルが取得できなかった場合はスキップ次のビデオへ
+	#番組タイトルが取得できなかった場合はスキップ次の番組へ
 	if ($script:videoName -eq '.mp4') {
-		Write-ColorOutput '　ビデオタイトルを特定できませんでした。スキップします' -FgColor 'Green'
-		continue			#次回再度ダウンロードをトライするためリストに追加せずに次のビデオへ
+		Write-ColorOutput '　番組タイトルを特定できませんでした。スキップします' -FgColor 'Green'
+		continue			#次回再度ダウンロードをトライするためリストに追加せずに次の番組へ
 	}
 
 	#ファイルが既に存在する場合はスキップフラグを立ててリストに書き込み処理へ
@@ -728,9 +728,9 @@ function downloadTVerVideo {
 
 		#結果が0件ということは未検証のファイルがあるということ
 		if ( $null -eq $local:listMatch) {
-			Write-ColorOutput '　すでにダウンロード済みですが未検証のビデオです。リストに追加します' -FgColor 'Gray'
+			Write-ColorOutput '　すでにダウンロード済みですが未検証の番組です。リストに追加します' -FgColor 'Gray'
 			$script:skip = $true
-		} else { Write-ColorOutput '　すでにダウンロード済み・検証済みのビデオです。スキップします' -FgColor 'Gray' ; continue }
+		} else { Write-ColorOutput '　すでにダウンロード済み・検証済みの番組です。スキップします' -FgColor 'Gray' ; continue }
 
 	} else {
 
@@ -759,7 +759,7 @@ function downloadTVerVideo {
 					-Or ($(getNarrowChars $script:videoSeries) -match $(getNarrowChars $local:ignoreTitle)) `
 					-Or ($(getNarrowChars $script:videoTitle) -match $(getNarrowChars $local:ignoreTitle))) {
 				$script:ignore = $true
-				Write-ColorOutput '　無視リストに入っているビデオです。スキップします' -FgColor 'Gray'
+				Write-ColorOutput '　無視リストに入っている番組です。スキップします' -FgColor 'Gray'
 				break		#無視リストと合致したものはそれ以上無視するかのチェック不要
 			}
 		}
@@ -829,8 +829,8 @@ function downloadTVerVideo {
 		}
 		#ファイル操作
 		$script:newVideo | Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8 -Append
-		$script:listFileData += $script:newVideo
 		Write-Debug 'リストを書き込みました'
+		$script:listFileData = Import-Csv $script:listFilePath -Encoding UTF8
 	} catch { Write-ColorOutput '　リストを更新できませんでした。スキップします' -FgColor 'Green' ; continue
 	} finally { $null = fileUnlock $script:lockFilePath }
 
@@ -854,7 +854,7 @@ function downloadTVerVideo {
 }
 
 #----------------------------------------------------------------------
-#TVerのAPIを叩いてビデオ情報取得
+#TVerのAPIを叩いて番組情報取得
 #----------------------------------------------------------------------
 function getVideoInfo {
 	[OutputType([System.Void])]
@@ -879,8 +879,6 @@ function getVideoInfo {
 		'?platform_uid=' + $script:platformUID + `
 		'&platform_token=' + $script:platformToken
 	$local:response = Invoke-RestMethod -Uri $local:tverVideoInfoURL -Method 'GET' -Headers $local:requestHeader -TimeoutSec $script:timeoutSec
-	#$response.result.series.content.id + "`t" + $response.result.series.content.title `
-	#	| Out-File $(Join-Path $script:devDir 'series.txt') -Append -Encoding utf8
 
 	#シリーズ
 	#	$response.Result.Series.Content.Title
@@ -913,7 +911,7 @@ function getVideoInfo {
 	if ($script:broadcastDate -match '([0-9]+)(月)([0-9]+)(日)(.+?)(放送)') {
 		#当年だと仮定して放送日を抽出
 		$local:broadcastYMD = [DateTime]::ParseExact( (Get-Date -Format 'yyyy') + $Matches[1].padleft(2, '0') + $Matches[3].padleft(2, '0'), 'yyyyMMdd', $null)
-		#実日付の翌日よりも放送日が未来だったら当年ではなく昨年の動画と判断する
+		#実日付の翌日よりも放送日が未来だったら当年ではなく昨年の番組と判断する
 		#(年末の番組を年初にダウンロードするケース)
 		if ((Get-Date).AddDays(+1) -lt $local:broadcastYMD) { $script:broadcastDate = (Get-Date).AddYears(-1).ToString('yyyy') + '年' }
 		else { $script:broadcastDate = (Get-Date).ToString('yyyy') + '年' }
@@ -990,14 +988,14 @@ function getVideoFileName {
 
 	$local:videoName = $local:videoName + '.mp4'
 	if ($local:videoName.Contains('.mp4') -eq $false) {
-		Write-Error '　動画ファイル名の設定がおかしいです'
+		Write-Error '　ダウンロードファイル名の設定がおかしいです'
 	}
 
 	return $local:videoName
 }
 
 #----------------------------------------------------------------------
-#ビデオ情報表示
+#番組情報表示
 #----------------------------------------------------------------------
 function showVideoInfo {
 	[OutputType([System.Void])]
@@ -1032,13 +1030,13 @@ function showVideoInfo {
 	)
 
 	Write-ColorOutput ' '
-	Write-ColorOutput "　ビデオ名    :$local:videoName" -FgColor 'Gray'
-	Write-ColorOutput "　放送日      :$local:broadcastDate" -FgColor 'Gray'
-	Write-ColorOutput "　テレビ局    :$local:mediaName" -FgColor 'Gray'
-	Write-ColorOutput "　ビデオ説明  :$local:descriptionText" -FgColor 'Gray'
+	Write-ColorOutput "　番組名  :$local:videoName" -FgColor 'Gray'
+	Write-ColorOutput "　放送日  :$local:broadcastDate" -FgColor 'Gray'
+	Write-ColorOutput "　テレビ局:$local:mediaName" -FgColor 'Gray'
+	Write-ColorOutput "　番組説明:$local:descriptionText" -FgColor 'Gray'
 }
 #----------------------------------------------------------------------
-#ビデオ情報デバッグ表示
+#番組情報デバッグ表示
 #----------------------------------------------------------------------
 function showVideoDebugInfo {
 	[OutputType([System.Void])]
@@ -1100,14 +1098,14 @@ function showVideoDebugInfo {
 		[String] $local:processedTime
 	)
 
-	Write-Debug	"　ビデオエピソードページ:$local:videoPageURL"
-	Write-Debug	"　ビデオシリーズページ  :$local:videoSeriesPageURL"
-	Write-Debug "　キーワード            :$local:keywordName"
-	Write-Debug "　シリーズ              :$local:videoSeries"
-	Write-Debug "　シーズン              :$local:videoSeason"
-	Write-Debug "　サブタイトル          :$local:videoTitle"
-	Write-Debug "　ファイル              :$local:videoFilePath"
-	Write-Debug "　取得日付              :$local:processedTime"
+	Write-Debug	"　番組エピソードページ:$local:videoPageURL"
+	Write-Debug	"　番組シリーズページ  :$local:videoSeriesPageURL"
+	Write-Debug "　キーワード          :$local:keywordName"
+	Write-Debug "　シリーズ            :$local:videoSeries"
+	Write-Debug "　シーズン            :$local:videoSeason"
+	Write-Debug "　サブタイトル        :$local:videoTitle"
+	Write-Debug "　ファイル            :$local:videoFilePath"
+	Write-Debug "　取得日付            :$local:processedTime"
 }
 
 #----------------------------------------------------------------------
@@ -1297,7 +1295,7 @@ function uniqueDB {
 }
 
 #----------------------------------------------------------------------
-#ビデオの整合性チェック
+#番組の整合性チェック
 #----------------------------------------------------------------------
 function checkVideo {
 	[OutputType([System.Void])]
@@ -1323,7 +1321,7 @@ function checkVideo {
 	try { $null = New-Item $script:ffpmegErrorLogPath -Type File -Force }
 	catch { Write-ColorOutput '　ffmpegエラーファイルを初期化できませんでした' -FgColor 'Green' ; return }
 
-	#これからチェックする動画のステータスをチェック
+	#これからチェックする番組のステータスをチェック
 	try {
 		#ロックファイルをロック
 		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
@@ -1342,7 +1340,7 @@ function checkVideo {
 	if ($local:checkStatus -eq 2 ) { Write-ColorOutput '　他プロセスでチェック中です' -FgColor 'Gray' ; return }
 	elseif ($local:checkStatus -eq 1 ) { Write-ColorOutput '　他プロセスでチェック済です' -FgColor 'Gray' ; return }
 	else {
-		#該当のビデオのチェックステータスを"2"にして後続のチェックを実行
+		#該当の番組のチェックステータスを"2"にして後続のチェックを実行
 		try { $(($local:videoLists).Where({ $_.videoPath -eq $local:videoFileRelativePath })).videoValidated = '2' }
 		catch { Write-ColorOutput "　該当のレコードが見つかりませんでした: $local:videoFileRelativePath" 'Green' ; return }
 		try {
@@ -1353,7 +1351,7 @@ function checkVideo {
 			}
 			#ファイル操作
 			$local:videoLists | Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
-		} catch { Write-ColorOutput "　録画リストを更新できませんでした: $local:videoFileRelativePath" 'Green' ; return }
+		} catch { Write-ColorOutput "　ダウンロードリストを更新できませんでした: $local:videoFileRelativePath" 'Green' ; return }
 		finally { $null = fileUnlock $script:lockFilePath }
 	}
 
@@ -1435,10 +1433,10 @@ function checkVideo {
 	if ($local:proc.ExitCode -ne 0 -or $local:errorCount -gt 30) {
 		Write-ColorOutput '　チェックNGでした' -FgColor 'Green'
 
-		#終了コードが"0"以外 または エラーが30行以上 は録画リストとファイルを削除
+		#終了コードが"0"以外 または エラーが30行以上 はダウンロードリストとファイルを削除
 		Write-ColorOutput "　exit code: $($local:proc.ExitCode)    error count: $local:errorCount" 'Green'
 
-		#破損している動画ファイルを録画リストから削除
+		#破損しているダウンロードファイルをダウンロードリストから削除
 		try {
 			#ロックファイルをロック
 			while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
@@ -1447,14 +1445,14 @@ function checkVideo {
 			}
 			#ファイル操作
 			(Select-String -Pattern $local:videoFileRelativePath -LiteralPath $script:listFilePath -Encoding UTF8 -SimpleMatch -NotMatch).Line | Out-File $script:listFilePath -Encoding UTF8
-		} catch { Write-ColorOutput "　録画リストの更新に失敗しました: $local:videoFileRelativePath" 'Green'
+		} catch { Write-ColorOutput "　ダウンロードリストの更新に失敗しました: $local:videoFileRelativePath" 'Green'
 		} finally { $null = fileUnlock $script:lockFilePath }
 
-		#破損している動画ファイルを削除
+		#破損しているダウンロードファイルを削除
 		try { Remove-Item -LiteralPath $local:videoFilePath -Force -ErrorAction SilentlyContinue }
 		catch { Write-ColorOutput "　ファイル削除できませんでした: $local:videoFilePath" 'Green' }
 	} else {
-		#終了コードが"0"のときは録画リストにチェック済みフラグを立てる
+		#終了コードが"0"のときはダウンロードリストにチェック済みフラグを立てる
 		Write-ColorOutput '　チェックOKでした' -FgColor 'Gray'
 		try {
 			#ロックファイルをロック
@@ -1464,10 +1462,10 @@ function checkVideo {
 			}
 			#ファイル操作
 			$local:videoLists = Import-Csv $script:listFilePath -Encoding UTF8
-			#該当のビデオのチェックステータスを"1"に
+			#該当の番組のチェックステータスを"1"に
 			$(($local:videoLists).Where({ $_.videoPath -eq $local:videoFileRelativePath })).videoValidated = '1'
 			$local:videoLists | Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
-		} catch { Write-ColorOutput "　録画リストを更新できませんでした: $local:videoFileRelativePath" 'Green' }
+		} catch { Write-ColorOutput "　ダウンロードリストを更新できませんでした: $local:videoFileRelativePath" 'Green' }
 		finally { $null = fileUnlock $script:lockFilePath }
 	}
 
