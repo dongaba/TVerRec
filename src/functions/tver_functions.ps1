@@ -897,6 +897,7 @@ function getVideoInfo {
 	#Season Name
 	#	$response.Result.Season.Content.Title
 	$script:videoSeason = $(getSpecialCharacterReplaced (getNarrowChars ($local:response.Result.Season.Content.Title))).Trim()
+	if ($script:videoSeason -eq '本編') { $script:videoSeason = '' }	#シーズン名が本編の場合はシーズン名をクリア
 	$script:videoSeasonID = $local:response.Result.Season.Content.Id
 
 	#エピソード
