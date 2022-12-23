@@ -86,13 +86,31 @@ checkRequiredFile					#設定で指定したファイル・フォルダの存在
 #======================================================================
 #リストファイルのクリーンアップ
 Write-ColorOutput '----------------------------------------------------------------------'
+Write-ColorOutput 'リストの不整合レコードを削除します'
+Write-ColorOutput '----------------------------------------------------------------------'
+
+#進捗表示
+ShowProgressToast `
+	-Text1 'ダウンロードファイルの整合性検証中' `
+	-Text2 '　処理1/5 - 不整合レコードを削除' `
+	-WorkDetail '' `
+	-Tag $script:appName `
+	-Group 'Validate' `
+	-Duration 'long' `
+	-Silent $false
+
+#処理
+cleanDB							#リストの重複削除
+Write-ColorOutput ''
+
+Write-ColorOutput '----------------------------------------------------------------------'
 Write-ColorOutput '30日以上前に処理したものはリストから削除します'
 Write-ColorOutput '----------------------------------------------------------------------'
 
 #進捗表示
 ShowProgressToast `
 	-Text1 'ダウンロードファイルの整合性検証中' `
-	-Text2 '　処理1/4 - 30日以上前のリストを削除' `
+	-Text2 '　処理2/5 - 30日以上前のリストを削除' `
 	-WorkDetail '' `
 	-Tag $script:appName `
 	-Group 'Validate' `
@@ -110,7 +128,7 @@ Write-ColorOutput '-------------------------------------------------------------
 #進捗表示
 ShowProgressToast `
 	-Text1 'ダウンロードファイルの整合性検証中' `
-	-Text2 '　処理2/4 - 重複レコードを削除' `
+	-Text2 '　処理3/5 - 重複レコードを削除' `
 	-WorkDetail '' `
 	-Tag $script:appName `
 	-Group 'Validate' `
@@ -176,7 +194,7 @@ if ($null -eq $local:videoLists) {
 	#進捗表示
 	ShowProgressToast `
 		-Text1 'ダウンロードファイルの整合性検証中' `
-		-Text2 '　処理3/4 - ファイルを検証' `
+		-Text2 '　処理4/5 - ファイルを検証' `
 		-WorkDetail '残り時間計算中' `
 		-Tag $script:appName `
 		-Group 'Validate' `
@@ -236,7 +254,7 @@ Write-ColorOutput ''
 #進捗表示
 ShowProgressToast `
 	-Text1 'ダウンロードファイルの整合性検証中' `
-	-Text2 '　処理4/4 - 未検証のファイルのステータスを変更' `
+	-Text2 '　処理5/5 - 未検証のファイルのステータスを変更' `
 	-WorkDetail '' `
 	-Tag $script:appName `
 	-Group 'Validate' `

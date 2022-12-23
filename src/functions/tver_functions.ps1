@@ -836,9 +836,9 @@ function downloadTVerVideo {
 		#ファイル操作
 		$script:newVideo | Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8 -Append
 		Write-Debug 'リストを書き込みました'
-		$script:listFileData = Import-Csv $script:listFilePath -Encoding UTF8
 	} catch { Write-ColorOutput '　リストを更新できませんでした。スキップします' -FgColor 'Green' ; continue
 	} finally { $null = fileUnlock $script:lockFilePath }
+	$script:listFileData = Import-Csv $script:listFilePath -Encoding UTF8
 
 	#スキップや無視対象でなければyoutube-dl起動
 	if (($script:ignore -eq $true) -Or ($script:skip -eq $true)) {
@@ -1249,6 +1249,41 @@ function waitTillYtdlProcessIsZero () {
 }
 
 #----------------------------------------------------------------------
+#リストの不整合を解消
+#----------------------------------------------------------------------
+function cleanDB {
+	[OutputType([System.Void])]
+	Param ()
+
+	$local:listData0 = $null
+	$local:listData1 = $null
+	$local:listData2 = $null
+	$local:mergedList = @()
+	#無視されたもの
+	try {
+		#ロックファイルをロック
+		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
+			Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
+			Start-Sleep -Seconds 1
+		}
+
+		#ファイル操作
+		#videoValidatedが空白でないもの
+		$local:listData = ((Import-Csv $script:listFilePath -Encoding UTF8).Where({ $null -ne $_.videoValidated }))
+		$local:listData0 = (($local:listData).Where({ $_.videoValidated -eq '0' }))
+		$local:listData1 = (($local:listData).Where({ $_.videoValidated -eq '1' }))
+		$local:listData2 = (($local:listData).Where({ $_.videoValidated -eq '2' }))
+
+		if ($null -ne $local:listData0) { $local:mergedList += $local:listData0 }
+		if ($null -ne $local:listData1) { $local:mergedList += $local:listData1 }
+		if ($null -ne $local:listData2) { $local:mergedList += $local:listData2 }
+		$local:mergedList | Sort-Object -Property downloadDate | Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
+
+	} catch { Write-ColorOutput '　リストの更新に失敗しました' -FgColor 'Green'
+	} finally { $null = fileUnlock $script:lockFilePath }
+}
+
+#----------------------------------------------------------------------
 #30日以上前に処理したものはリストから削除
 #----------------------------------------------------------------------
 function purgeDB {
@@ -1315,7 +1350,7 @@ function uniqueDB {
 			}
 		}
 
-		$mergedList | Sort-Object -Property downloadDate | Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
+		$local:mergedList | Sort-Object -Property downloadDate | Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
 
 	} catch { Write-ColorOutput '　リストの更新に失敗しました' -FgColor 'Green'
 	} finally { $null = fileUnlock $script:lockFilePath }
