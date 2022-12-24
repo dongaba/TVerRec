@@ -271,8 +271,9 @@ function getVideoLinksFromKeyword {
 		#番組名による新着検索から番組ページのLinkを取得
 		$local:titleName = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('title/', '').Trim()
 		goAnal -Event 'search' -Type 'title' -ID $local:titleName
-		try { $script:tverLinks = getVideoLinkFromTitle ($local:titleName) }
-		catch { Write-ColorOutput '　番組名検索はTVer側で廃止されました。フリーワード検索で対応してください。スキップします Err:08' -FgColor 'Green' ; continue }
+		Write-ColorOutput '　番組名検索はTVer側で廃止されました。フリーワード検索で対応してください。スキップします Err:08' -FgColor 'Green' ; continue
+		# try { $script:tverLinks = getVideoLinkFromTitle ($local:titleName) }
+		# catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:08' -FgColor 'Green' ; continue }
 	} else {
 		#タレント名や番組名などURL形式でない場合APIで検索結果から番組ページのLinkを取得
 		goAnal -Event 'search' -Type 'free' -ID $local:keywordName
@@ -518,30 +519,30 @@ function getVideoLinkFromTopPage {
 #----------------------------------------------------------------------
 #番組名による新着検索から番組ページのLinkを取得
 #----------------------------------------------------------------------
-function getVideoLinkFromTitle {
-	[OutputType([System.Object[]])]
-	Param ([String]$local:titleName)
+# function getVideoLinkFromTitle {
+# 	[OutputType([System.Object[]])]
+# 	Param ([String]$local:titleName)
 
-	$local:callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callSearch'
-	$local:callSearchURL = $local:callSearchBaseURL + '?platform_uid=' + $script:platformUID + '&platform_token=' + $script:platformToken
-	$local:searchResultsRaw = Invoke-RestMethod -Uri $local:callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
-	$local:searchResults = $local:searchResultsRaw.Result.Contents
-	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
-		if ($(getFileNameWithoutInvalidChars (getSpecialCharacterReplaced (getNarrowChars ($local:searchResults[$i].Content.SeriesTitle)))).Replace('  ', ' ').Trim().Contains($local:titleName) -eq $true) {
-			switch ($local:searchResults[$i].type) {
-				'episode' { $script:tverLinks += '/episodes/' + $local:searchResults[$i].Content.Id ; break }
-				'season' { $script:tverLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) ; break }
-				'series' { $script:tverLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) ; break }
-				'live' { break }
-				#他にはないと思われるが念のため
-				default { $script:tverLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id ; break }
-			}
-		}
-	}
-	[System.GC]::Collect()
+# 	$local:callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callSearch'
+# 	$local:callSearchURL = $local:callSearchBaseURL + '?platform_uid=' + $script:platformUID + '&platform_token=' + $script:platformToken
+# 	$local:searchResultsRaw = Invoke-RestMethod -Uri $local:callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
+# 	$local:searchResults = $local:searchResultsRaw.Result.Contents
+# 	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
+# 		if ($(getFileNameWithoutInvalidChars (getSpecialCharacterReplaced (getNarrowChars ($local:searchResults[$i].Content.SeriesTitle)))).Replace('  ', ' ').Trim().Contains($local:titleName) -eq $true) {
+# 			switch ($local:searchResults[$i].type) {
+# 				'episode' { $script:tverLinks += '/episodes/' + $local:searchResults[$i].Content.Id ; break }
+# 				'season' { $script:tverLinks += getVideoLinkFromSeasonID ($local:searchResults[$i].Content.Id) ; break }
+# 				'series' { $script:tverLinks += getVideoLinkFromSeriesID ($local:searchResults[$i].Content.Id) ; break }
+# 				'live' { break }
+# 				#他にはないと思われるが念のため
+# 				default { $script:tverLinks += '/' + $local:searchResults[$i].type + '/' + $local:searchResults[$i].Content.Id ; break }
+# 			}
+# 		}
+# 	}
+# 	[System.GC]::Collect()
 
-	return $script:tverLinks | Sort-Object | Get-Unique
-}
+# 	return $script:tverLinks | Sort-Object | Get-Unique
+# }
 
 #----------------------------------------------------------------------
 #TVerのAPIを叩いてフリーワード検索
@@ -690,7 +691,7 @@ function downloadTVerVideo {
 		-Title $script:videoTitle `
 		-Date $script:broadcastDate
 
-	$script:videoFileDir = getNarrowChars $($script:videoSeries + ' ' + $script:videoSeason).Trim()
+	$script:videoFileDir = getSpecialCharacterReplaced (getNarrowChars $($script:videoSeries + ' ' + $script:videoSeason)).Trim()
 	if ($script:sortVideoByMedia -eq $true) {
 		$script:videoFileDir = (
 			$(Join-Path $script:downloadBaseDir $( getFileNameWithoutInvalidChars $script:mediaName) `
@@ -990,7 +991,7 @@ function getVideoFileName {
 	}
 
 	#ファイル名にできない文字列を除去
-	$local:videoName = $(getFileNameWithoutInvalidChars (getNarrowChars $local:videoName)).Replace('  ', ' ').Trim()
+	$local:videoName = $(getFileNameWithoutInvalidChars (getSpecialCharacterReplaced (getNarrowChars $local:videoName))).Replace('  ', ' ').Trim()
 
 	#SMBで255バイトまでしかファイル名を持てないらしいので、超えないようにファイル名をトリミング
 	$local:videoNameTemp = ''
