@@ -92,7 +92,7 @@ Write-ColorOutput '-------------------------------------------------------------
 #進捗表示
 ShowProgressToast `
 	-Text1 'ダウンロードファイルの整合性検証中' `
-	-Text2 '　処理1/5 - 不整合レコードを削除' `
+	-Text2 '　処理1/5 - 破損レコードを削除' `
 	-WorkDetail '' `
 	-Tag $script:appName `
 	-Group 'Validate' `
@@ -100,7 +100,7 @@ ShowProgressToast `
 	-Silent $false
 
 #処理
-cleanDB							#リストの重複削除
+cleanDB							#リストの破損レコード削除
 Write-ColorOutput ''
 
 Write-ColorOutput '----------------------------------------------------------------------'

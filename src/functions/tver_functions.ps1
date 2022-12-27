@@ -898,7 +898,6 @@ function getVideoInfo {
 	#Season Name
 	#	$response.Result.Season.Content.Title
 	$script:videoSeason = $(getSpecialCharacterReplaced (getNarrowChars ($local:response.Result.Season.Content.Title))).Trim()
-	if ($script:videoSeason -eq '本編') { $script:videoSeason = '' }	#シーズン名が本編の場合はシーズン名をクリア
 	$script:videoSeasonID = $local:response.Result.Season.Content.Id
 
 	#エピソード
@@ -913,19 +912,7 @@ function getVideoInfo {
 
 	#放送日
 	#	$response.Result.Episode.Content.BroadcastDateLabel
-	$local:broadcastYMD = $null
 	$script:broadcastDate = $(getNarrowChars ($response.Result.Episode.Content.BroadcastDateLabel).Replace('ほか', '').Replace('放送分', '放送')).Trim()
-
-	if ($script:broadcastDate -match '([0-9]+)(月)([0-9]+)(日)(.+?)(放送)') {
-		#当年だと仮定して放送日を抽出
-		$local:broadcastYMD = [DateTime]::ParseExact( (Get-Date -Format 'yyyy') + $Matches[1].padleft(2, '0') + $Matches[3].padleft(2, '0'), 'yyyyMMdd', $null)
-		#実日付の翌日よりも放送日が未来だったら当年ではなく昨年の番組と判断する
-		#(年末の番組を年初にダウンロードするケース)
-		if ((Get-Date).AddDays(+1) -lt $local:broadcastYMD) { $script:broadcastDate = (Get-Date).AddYears(-1).ToString('yyyy') + '年' }
-		else { $script:broadcastDate = (Get-Date).ToString('yyyy') + '年' }
-		$script:broadcastDate += $Matches[1].padleft(2, '0') + $Matches[2] + $Matches[3].padleft(2, '0') + $Matches[4] + $Matches[6]
-	}
-
 
 	#----------------------------------------------------------------------
 	#番組説明
@@ -984,6 +971,29 @@ function getVideoFileName {
 		[String] $local:broadcastDate
 	)
 
+	#「《」と「》」で挟まれた文字を除去
+	if ($script:removeSpecialNote -eq $true) {
+		if ($local:videoSeries -match '(.*)(《.*》)(.*)') { $local:videoSeries = $($Matches[1] + $Matches[3]).Replace('  ', ' ').Trim() }
+		if ($local:videoSeason -match '(.*)(《.*》)(.*)') { $local:videoSeason = $($Matches[1] + $Matches[3]).Replace('  ', ' ').Trim() }
+		if ($local:videoTitle -match '(.*)(《.*》)(.*)') { $local:videoTitle = $($Matches[1] + $Matches[3]).Replace('  ', ' ').Trim() }
+	}
+
+	#シーズン名が本編の場合はシーズン名をクリア
+	if ($script:videoSeason -eq '本編') { $local:videoSeason = '' }
+
+	#放送日を整形
+	$local:broadcastYMD = $null
+	if ($local:broadcastDate -match '([0-9]+)(月)([0-9]+)(日)(.+?)(放送)') {
+		#当年だと仮定して放送日を抽出
+		$local:broadcastYMD = [DateTime]::ParseExact( (Get-Date -Format 'yyyy') + $Matches[1].padleft(2, '0') + $Matches[3].padleft(2, '0'), 'yyyyMMdd', $null)
+		#実日付の翌日よりも放送日が未来だったら当年ではなく昨年の番組と判断する
+		#(年末の番組を年初にダウンロードするケース)
+		if ((Get-Date).AddDays(+1) -lt $local:broadcastYMD) { $local:broadcastDate = (Get-Date).AddYears(-1).ToString('yyyy') + '年' }
+		else { $local:broadcastDate = (Get-Date).ToString('yyyy') + '年' }
+		$local:broadcastDate += $Matches[1].padleft(2, '0') + $Matches[2] + $Matches[3].padleft(2, '0') + $Matches[4] + $Matches[6]
+	}
+
+	#ファイル名を生成
 	if ($script:addEpisodeNumber -eq $true) {
 		$local:videoName = $local:videoSeries + ' ' + $local:videoSeason + ' ' + $local:broadcastDate + ' Ep' + $local:videoEpisode + ' ' + $local:videoTitle
 	} else {
