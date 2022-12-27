@@ -942,14 +942,14 @@ function getVideoInfo {
 
 	#放送日を整形
 	$local:broadcastYMD = $null
-	if ($local:broadcastDate -match '([0-9]+)(月)([0-9]+)(日)(.+?)(放送)') {
+	if ($script:broadcastDate -match '([0-9]+)(月)([0-9]+)(日)(.+?)(放送)') {
 		#当年だと仮定して放送日を抽出
 		$local:broadcastYMD = [DateTime]::ParseExact( (Get-Date -Format 'yyyy') + $Matches[1].padleft(2, '0') + $Matches[3].padleft(2, '0'), 'yyyyMMdd', $null)
 		#実日付の翌日よりも放送日が未来だったら当年ではなく昨年の番組と判断する
 		#(年末の番組を年初にダウンロードするケース)
-		if ((Get-Date).AddDays(+1) -lt $local:broadcastYMD) { $local:broadcastDate = (Get-Date).AddYears(-1).ToString('yyyy') + '年' }
-		else { $local:broadcastDate = (Get-Date).ToString('yyyy') + '年' }
-		$local:broadcastDate += $Matches[1].padleft(2, '0') + $Matches[2] + $Matches[3].padleft(2, '0') + $Matches[4] + $Matches[6]
+		if ((Get-Date).AddDays(+1) -lt $local:broadcastYMD) { $script:broadcastDate = (Get-Date).AddYears(-1).ToString('yyyy') + '年' }
+		else { $script:broadcastDate = (Get-Date).ToString('yyyy') + '年' }
+		$script:broadcastDate += $Matches[1].padleft(2, '0') + $Matches[2] + $Matches[3].padleft(2, '0') + $Matches[4] + $Matches[6]
 	}
 
 }
