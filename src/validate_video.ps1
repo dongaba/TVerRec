@@ -84,9 +84,9 @@ checkLatestFfmpeg					#ffmpegの最新化チェック
 checkRequiredFile					#設定で指定したファイル・フォルダの存在チェック
 
 #======================================================================
-#リストファイルのクリーンアップ
+#ダウンロード履歴ファイルのクリーンアップ
 Write-ColorOutput '----------------------------------------------------------------------'
-Write-ColorOutput 'リストの不整合レコードを削除します'
+Write-ColorOutput 'ダウンロード履歴の不整合レコードを削除します'
 Write-ColorOutput '----------------------------------------------------------------------'
 
 #進捗表示
@@ -100,17 +100,17 @@ ShowProgressToast `
 	-Silent $false
 
 #処理
-cleanDB							#リストの破損レコード削除
+cleanDB							#ダウンロード履歴の破損レコード削除
 Write-ColorOutput ''
 
 Write-ColorOutput '----------------------------------------------------------------------'
-Write-ColorOutput '30日以上前に処理したものはリストから削除します'
+Write-ColorOutput '30日以上前に処理したものはダウンロード履歴から削除します'
 Write-ColorOutput '----------------------------------------------------------------------'
 
 #進捗表示
 ShowProgressToast `
 	-Text1 'ダウンロードファイルの整合性検証中' `
-	-Text2 '　処理2/5 - 30日以上前のリストを削除' `
+	-Text2 '　処理2/5 - 30日以上前のダウンロード履歴を削除' `
 	-WorkDetail '' `
 	-Tag $script:appName `
 	-Group 'Validate' `
@@ -118,17 +118,17 @@ ShowProgressToast `
 	-Silent $false
 
 #処理
-purgeDB -RetentionPeriod 30				#30日以上前に処理したものはリストから削除
+purgeDB -RetentionPeriod 30				#30日以上前に処理したものはダウンロード履歴から削除
 Write-ColorOutput ''
 
 Write-ColorOutput '----------------------------------------------------------------------'
-Write-ColorOutput '重複レコードを削除します'
+Write-ColorOutput 'ダウンロード履歴の重複レコードを削除します'
 Write-ColorOutput '----------------------------------------------------------------------'
 
 #進捗表示
 ShowProgressToast `
 	-Text1 'ダウンロードファイルの整合性検証中' `
-	-Text2 '　処理3/5 - 重複レコードを削除' `
+	-Text2 '　処理3/5 - ダウンロード履歴の重複レコードを削除' `
 	-WorkDetail '' `
 	-Tag $script:appName `
 	-Group 'Validate' `
@@ -136,7 +136,7 @@ ShowProgressToast `
 	-Silent $false
 
 #処理
-uniqueDB							#リストの重複削除
+uniqueDB							#ダウンロード履歴の重複削除
 Write-ColorOutput ''
 
 if ($script:disableValidation -eq $true) {
@@ -145,7 +145,7 @@ if ($script:disableValidation -eq $true) {
 }
 
 #======================================================================
-#ダウンロードリストから番組チェックが終わっていないものを読み込み
+#ダウンロード履歴から番組チェックが終わっていないものを読み込み
 Write-ColorOutput '----------------------------------------------------------------------'
 Write-ColorOutput '整合性検証が終わっていない番組を検証します'
 Write-ColorOutput '----------------------------------------------------------------------'
@@ -162,13 +162,13 @@ try {
 		| Where-Object { $_.videoPath -ne '-- IGNORED --' } `
 		| Select-Object 'videoPath'
 	)
-} catch { Write-ColorOutput 'リストの読み込みに失敗しました' -FgColor 'Green'
+} catch { Write-ColorOutput 'ダウンロード履歴の読み込みに失敗しました' -FgColor 'Green'
 } finally { $null = fileUnlock $script:lockFilePath }
 
 
 if ($null -eq $local:videoLists) {
 	#チェックする番組なし
-	Write-ColorOutput '　すべての番組を検証済みです' -FgColor 'Gray'
+	Write-ColorOutput '　すべての番組を検証済です' -FgColor 'Gray'
 	Write-ColorOutput ''
 } else {
 	#ダウンロードファイルをチェック
@@ -246,9 +246,9 @@ if ($null -eq $local:videoLists) {
 }
 
 #======================================================================
-#ダウンロードリストから整合性検証が終わっていないもののステータスを初期化
+#ダウンロード履歴から整合性検証が終わっていないもののステータスを初期化
 Write-ColorOutput '----------------------------------------------------------------------'
-Write-ColorOutput 'ダウンロードリストから検証が終わっていない番組のステータスを変更します'
+Write-ColorOutput 'ダウンロード履歴から検証が終わっていない番組のステータスを変更します'
 Write-ColorOutput '----------------------------------------------------------------------'
 Write-ColorOutput ''
 #進捗表示
@@ -274,7 +274,7 @@ try {
 		$local:uncheckedVido.videoValidated = '0'
 	}
 	$local:videoLists | Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
-} catch { Write-ColorOutput 'リストの更新に失敗しました' -FgColor 'Green'
+} catch { Write-ColorOutput 'ダウンロード履歴の更新に失敗しました' -FgColor 'Green'
 } finally { $null = fileUnlock $script:lockFilePath }
 
 #進捗表示

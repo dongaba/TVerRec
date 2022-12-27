@@ -101,7 +101,7 @@ checkRequiredFile			#設定で指定したファイル・フォルダの存在�
 
 #処理
 $local:keywordName = 'URL指定'
-$script:ignoreTitles = getIgnoreList		#ダウンロード対象外番組リストの読み込み
+$script:ignoreTitles = getIgnoreList		#ダウンロード対象外番組の読み込み
 getToken
 
 #無限ループ
@@ -116,7 +116,7 @@ while ($true) {
 	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 	waitTillYtdlProcessGetFewer $script:parallelDownloadFileNum
 
-	#リストファイルのデータを読み込み
+	#ダウンロード履歴ファイルのデータを読み込み
 	try {
 		#ロックファイルをロック
 		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
@@ -125,7 +125,7 @@ while ($true) {
 		}
 		#ファイル操作
 		$script:listFileData = Import-Csv $script:listFilePath -Encoding UTF8
-	} catch { Write-ColorOutput '　リストを読み込めなかったのでスキップしました' -FgColor 'Green' ; continue
+	} catch { Write-ColorOutput '　ダウンロード履歴を読み込めなかったのでスキップしました' -FgColor 'Green' ; continue
 	} finally { $null = fileUnlock $script:lockFilePath }
 
 	$local:videoPageURL = Read-Host '番組URLを入力してください。何も入力しないで Enter を押すと終了します。'

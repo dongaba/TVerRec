@@ -100,8 +100,8 @@ checkLatestFfmpeg			#ffmpegの最新化チェック
 checkRequiredFile			#設定で指定したファイル・フォルダの存在チェック
 
 #処理
-$local:keywordNames = loadKeywordList		#ダウンロード対象ジャンルリストの読み込み
-$script:ignoreTitles = getIgnoreList		#ダウンロード対象外番組リストの読み込み
+$local:keywordNames = loadKeywordList		#ダウンロード対象キーワードの読み込み
+$script:ignoreTitles = getIgnoreList		#ダウンロード対象外番組の読み込み
 getToken
 
 $local:keywordNum = 0						#キーワードの番号
@@ -137,7 +137,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 	$local:resultLinks = getVideoLinksFromKeyword ($local:keywordName)
 	$local:keywordName = $local:keywordName.Replace('https://tver.jp/', '')
 
-	#リストファイルのデータを読み込み
+	#ダウンロード履歴ファイルのデータを読み込み
 	try {
 		#ロックファイルをロック
 		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
@@ -146,10 +146,10 @@ foreach ($local:keywordName in $local:keywordNames) {
 		}
 		#ファイル操作
 		$script:listFileData = Import-Csv $script:listFilePath -Encoding UTF8
-	} catch { Write-ColorOutput '　リストを読み込めなかったのでスキップしました' -FgColor 'Green' ; continue
+	} catch { Write-ColorOutput '　ダウンロード履歴を読み込めなかったのでスキップしました' -FgColor 'Green' ; continue
 	} finally { $null = fileUnlock $script:lockFilePath }
 
-	#URLがすでにリストに存在する場合は検索結果から除外
+	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 	foreach ($local:resultLink in $local:resultLinks) {
 		$local:listMatch = $script:listFileData | Where-Object { $_.videoPage -eq $local:resultLink }
 		if ($null -eq $local:listMatch) { $local:videoLinks += $local:resultLink }
@@ -158,7 +158,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 	$local:videoNum = 0								#ジャンル内の処理中の番組の番号
 	$local:videoTotal = $local:videoLinks.Length	#ダウンロード対象のトータル番組数
-	Write-ColorOutput "　ダウンロード対象$($local:videoTotal)本 処理済み$($local:searchResultCount - $local:videoTotal)本" -FgColor 'Gray'
+	Write-ColorOutput "　ダウンロード対象$($local:videoTotal)本 処理済$($local:searchResultCount - $local:videoTotal)本" -FgColor 'Gray'
 
 	#処理時間の推計
 	$local:secElapsed = (Get-Date) - $local:totalStartTime

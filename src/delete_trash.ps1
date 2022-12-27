@@ -1,7 +1,7 @@
 ###################################################################################
 #  TVerRec : TVerダウンローダ
 #
-#		無視対象番組削除処理スクリプト
+#		ダウンロード対象外番組削除処理スクリプト
 #
 #	Copyright (c) 2022 dongaba
 #
@@ -161,26 +161,26 @@ deleteFiles `
 	-DatePast 0
 
 #======================================================================
-#2/3 無視リストに入っている番組は削除
+#2/3 ダウンロード対象外に入っている番組は削除
 Write-ColorOutput '----------------------------------------------------------------------'
-Write-ColorOutput '削除対象の番組を削除します'
+Write-ColorOutput 'ダウンロード対象外の番組を削除します'
 Write-ColorOutput '----------------------------------------------------------------------'
 #進捗表示
 ShowProgressToast `
 	-Text1 'ファイルの掃除中' `
-	-Text2 '　処理2/3 - 削除対象の番組を削除' `
+	-Text2 '　処理2/3 - ダウンロード対象外の番組を削除' `
 	-WorkDetail '' `
 	-Tag $script:appName `
 	-Group 'Delete' `
 	-Duration 'long' `
 	-Silent $false
 
-#ダウンロード対象外番組リストの読み込み
+#ダウンロード対象外番組の読み込み
 $local:ignoreTitles = [string[]](Get-Content $script:ignoreFilePath -Encoding UTF8 | Where-Object { !($_ -match '^\s*$') } | Where-Object { !($_ -match '^;.*$') })
 #処理
-$local:ignoreNum = 0						#無視リスト内の番号
+$local:ignoreNum = 0						#ダウンロード対象外内の番号
 if ($local:ignoreTitles -is [array]) {
-	$local:ignoreTotal = $local:ignoreTitles.Length	#無視リスト内のエントリ合計数
+	$local:ignoreTotal = $local:ignoreTitles.Length	#ダウンロード対象外内のエントリ合計数
 } else { $local:ignoreTotal = 1 }
 
 #----------------------------------------------------------------------
