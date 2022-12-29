@@ -13,76 +13,43 @@
 [![Video Download](https://hits.sh/github.com/dongaba/TVerRec/download.svg?view=today-total&color=9f9f9f&label=Video%20Download)](https://hits.sh/github.com/dongaba/TVerRec/download)
 [![Video Validate](https://hits.sh/github.com/dongaba/TVerRec/validate.svg?view=today-total&color=9f9f9f&label=Video%20Validate)](https://hits.sh/github.com/dongaba/TVerRec/validate)
 
+## TVerRec とは
+
 TVerRec は、テレビ番組配信サイト TVer ( ティーバー <https://tver.jp/> ) の番組をダウンロード保存するためのダウンローダー、ダウンロード支援ツールです。
 
-- **TVerRec は Windows PowerShell をサポートしなくなりました。PowerShell Core でご利用ください。**
-- Windows/MacOS/Linux で動作します。
+- TVerRec は PowerShell Core をインストールした Windows/MacOS/Linux で動作します。
+
+  - **TVerRec は Windows PowerShell をサポートしなくなりました。PowerShell Core でご利用ください。**
   - Windows 環境で PowerShell Core がインストールされていない場合は、TVerRec が自動的に PowerShell Core をインストールします。
-  - 手動で PowerShell Core を[インストールする方法](https://learn.microsoft.com/ja-jp/powershell/scripting/install/installing-powershell-on-windows)もあります。
-  - Linux での PoweShell Core のインストールは[こちらを参照](https://learn.microsoft.com/ja-jp/powershell/scripting/install/installing-powershell-on-linux)ください。
-  - MacOS での PoweShell Core のインストールは[こちらを参照](https://learn.microsoft.com/ja-jp/powershell/scripting/install/installing-powershell-on-macos)ください。
-- 必要なツールは自動的にダウンロードされますが、うまくいかない場合は以下から取得してください。
-  - [yt-dlp](https://github.com/yt-dlp/yt-dlp/releases)
-  - [ffmpeg](https://www.ffmpeg.org/download.html) (Windows のみ自動ダウンロードに対応)
-- 検索機能を改良したので、タグ検索機能を使うことでほぼ確実にダウンロード可能となりました。
-- 番組名検索・フリーワード検索の精度は依然としてそれほど高くないのでご注意ください。
+  - Windows 環境に手動で PowerShell Core をインストールする方法や MacOS、Linux 環境への PowerShell のインストールについては[Wiki のこちらのページ](https://github.com/dongaba/TVerRec/wiki/PowerShell%E3%81%AE%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB)を参照してください。
 
 ## 動作の前提条件
 
-Windows11 で動作確認しています。
-おそらく Windows7、8、8.1、10 でも動作すると思いますが、手元に環境がないのでサポートできません。
-PowerShell Core 7.3 で動作します。おそらくそれ以外のバージョンの PowerShell Core でも動作するように思いますが、Windows PowerShell では動作しません。
-
-PowerShell は MacOS、Linux にも移植されてるので動作します。
-MacOS でも PowerShell をインストールし動作確認をしています。
-([参考](https://docs.microsoft.com/ja-jp/powershell/scripting/install/installing-powershell-on-macos?view=powershell-7.2))
-Ubuntu 22.04 で動作確認しています。
-Android タブレットに導入した Termux 上の Ubuntu や UserLAnd 上の Debian でも動作します。
-一応、Raspberry Pi OS でも簡易に動作確認をしていますが、整合性検証を行う場合は性能的に Raspberry Pi 4 じゃないと厳しそうです。
-ダウンロードだけであれば余裕です。
-([参考](https://docs.microsoft.com/ja-jp/powershell/scripting/install/install-raspbian?view=powershell-7.2))
+- OS
+  - Windows
+  - MacOS
+  - Linux
+- 必要なソフトウェア
+  - PowerShell Core (Windows 環境では自動インストール)
+  - youtube-dl (自動ダウンロード)
+  - ffmpeg (Windows 環境では自動ダウンロード)
 
 ## 主な機能
 
+各機能の詳細は[Wiki のこちらのページ](https://github.com/dongaba/TVerRec/wiki/)を参照してください。
+
 1. 番組の**ジャンル**や**出演タレント**、**番組名**などの**キーワード指定**して**一括ダウンロード**します。
-
-   - **CM は入っていない**ため気に入った番組を配信終了を気にすることなくいつまでも保存しておくことができます。
-   - TVerRec はループ実行するようになっているので、**1 回起動すれば新しい番組が配信される都度自動でダウンロード、保存**されるようになります。
-
 2. TVer の**全録**が可能です。(厳密には録画ではなくダウンロード)
-
-   - ちまちま URL をコピペしたり画面録画する必要はなく、起動して放置するだけの全自動ダウンロードです。控えめに言って最高です。
-
 3. TVer の**番組サムネイルをダウンロードファイルに埋め込み**ます。
-
 4. 字幕データが TVer にある場合は、**字幕情報もダウンロードファイルに埋め込み**ます。
-
 5. 並列ダウンロードによる**高速ダウンロード**が可能です。
-   (デフォルト設定で 5 ファイル同時ダウンロード、1 ファイルあたり 10 並列ダウンロード、合計最大 50 並列ダウンロード)
-
 6. もちろん**番組を 1 本ずつ指定したダウンロード**も可能です。
-
-   - なかには全録するほどのディスク容量がないよ、という方もいらっしゃることでしょう。安心してください。
-   - 番組の URL を指定することでダウンロードしたい番組を 1 本ずつ指定することも可能です。
-
 7. また、ダウンロードした**番組が破損していないかの検証**も行います。
-
-   - もしダウンロードファイルが破損している場合には次回実行時に自動的に再ダウンロードします。
-   - ダウンロードファイルの整合性検証時に ffmpeg を使用しますが、ハードウェアアクセラレーションを使えば、CPU 使用率を抑えることができます。(使用する PC での性能によっては処理時間が長くなることがあります。ハードウェアアクセラレーションを無効にすることもできます。)
-
 8. ダウンロードされたファイルは、最終保存先に**自動的に整理**可能です。
-
-   - 例えば毎週同じ番組をダウンロードする場合、最終保存先に番組名のフォルダがあれば自動的に全番組が最終保存先のフォルダに移動されます。
-   - 最終保存先に同名のフォルダがなければ、ダウンロードファイルはダウンロード先フォルダに残り続けます。
-
 9. 動作に必要な youtube-dl や ffmpeg などの必要コンポーネントは**自動的に最新版がダウンロード**されます。(ffmpeg の自動ダウンロードは Windows のみ)
-
 10. Windows 環境ではトースト通知によりダウンロードの進捗状況などを通知します。
-
-    - 処理完了までの時間を表示しますが、あくまでも参考情報と思ってください。(ダウンロード条件の数をベースに算出しているため、ダウンロード対象本数によって大きく時間がずれることがあります)
-    - トースト通知の詳細は[こちら](https://learn.microsoft.com/ja-jp/windows/apps/design/shell/tiles-and-notifications/toast-notifications-overview)
-
-11. **日本国外からも VPN 不要**で利用することができます。
+11. 動作に必要なツールは自動インストール・ダウンロード
+12. **日本国外からも VPN 不要**で利用することができます。
 
 ## おすすめの使い方
 
@@ -94,235 +61,15 @@ Android タブレットに導入した Termux 上の Ubuntu や UserLAnd 上の 
 
 ## ダウンロード対象の設定
 
-### ダウンロード対象番組の設定方法
-
-`conf/keyword.conf`をテキストエディターで開いてダウンロード対象のタレントや番組、ジャンル、TV 局などを設定します。
-`conf/keyword.conf`が存在しない場合は`conf/keyword.sample.conf`をコピーして`conf/keyword.conf`を作成することができます。
-(手作業でコピーしなくても初回起動時に自動的にサンプルファイルをコピーして作成されますが、そのままだと TVer の全番組がダウンロードされてしまうのでご注意ください。)
-
-- 不要なキーワードは `#` でコメントアウトするか削除してください。
-- 主なジャンルは網羅しているつもりですが、不足があるかもしれませんので、必要に応じて適宜自分で補ってください。
-- ダウンロード対象番組の指定の方法はいくつかあります。
-
-1. 番組 ID を指定
-
-   - 番組 ID を指定します
-   - 番組 ID は、TVer で番組ページを検索した際の URL に含まれる「series/srxxxxxxxx」です
-   - 毎週チェックしている番組がある際に便利ですね
-
-2. タレント ID を指定
-
-   - タレント ID を指定します
-   - タレント ID は、TVer でタレントページを検索した際の URL に含まれる「talents/txxxxxx」です
-   - 推しの出演番組を漏らさずダウンロードしちゃいましょう
-
-3. タグを指定
-
-   - タグは、`conf/keyword.sample.conf`に記載されている「tag/txxxxxx」です
-   - 指定可能なタグは`conf/keyword.sample.conf`に記載されています(バージョンアップとともに変化する可能性があります)
-   - 以下のような指定が可能です。
-     1. ジャンルを指定: ジャンルを指定します
-     2. 地域限定番組を指定: 地域を指定します
-     3. テレビ局を指定: テレビ局を指定します
-     4. 放送曜日を指定: 放送曜日を指定します
-   - ジャンル指定以外はあんまり使い道ないかもしれないですね
-
-4. 新着を指定
-
-   - 新着番組の種類を指定します
-   - 指定可能な種類は`conf/keyword.sample.conf`に記載されています(バージョンアップとともに変化する可能性があります)
-
-5. ランキングを指定
-
-   - ランキングの種類を指定します
-   - 指定可能な種類は`conf/keyword.sample.conf`に記載されています(バージョンアップとともに変化する可能性があります)
-   - 話題になっている番組をチェックしたい場合にどうぞ
-
-6. トップページを指定
-
-   - TVer のトップページに表示される番組を可能な限りダウンロードします
-   - TVer のトップページに表示されている番組がシリーズ物の場合、シリーズの番組すべてをダウンロードしようとします
-   - ニーズがあるかわかりませんが一応作っておきました
-
-7. フリーワード検索
-   - 上記のいずれにも該当しない番組をフリーワードで指定できますが、検索結果の精度は TVer のみぞ知るところです
-   - 番組名だけでなくタレント名なども検索の対象になるようですが、詳細な検索対象は不明です
-   - あまり精度良くないですが、とりあえず多めにダウンロードしておきたい方はどうぞ
-
-### ダウンロード対象外の番組の設定方法
-
-ジャンル指定などで番組をダウンロードする場合、ダウンロード条件にマッチする番組は全てダウンロードされるので、場合によってはダウンロードしたくない番組もまとめてダウンロードされます。
-そのような時には`conf/ignore.conf`をテキストエディターで開いて、ダウンロードしたくない番組名を設定することで、個別にダウンロードを抑止することができます。
-`conf/ignore.conf`が存在しない場合は`conf/ignore.sample.conf`をコピーして`conf/ignore.conf`を作成してください。(手作業でコピーしなくても初回起動時に自動的にサンプルファイルをコピーして作成されます。)
-
-## 実行方法
-
-### Windows での実行方法
-
-以下の手順でバッチファイルを実行してください。
-
-1. TVerRec をダウロードして任意のディレクトリで解凍してください。
-
-   - または、`git clone`してください。ただし、リリース版ではないため不具合が含まれている可能性があります。
-
-2. [環境設定方法](#環境設定方法)、[ダウンロード対象番組の設定方法](#ダウンロード対象番組の設定方法)、[ダウンロード対象外の番組の設定方法](#ダウンロード対象外の番組の設定方法)を参照して環境設定、ダウンロード設定を行ってください。
-
-3. Windows 環境では `win/start_tverrec.bat`を実行してください。
-
-   - 処理が完了しても 60 分ごとに永遠にループして稼働し続けます。
-   - 上記で PowerShell が起動しない場合は、PowerShell の実行ポリシーの RemoteSigned などに変更する必要があるかもしれません。
-     ([参考](https://docs.microsoft.com/ja-jp/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.2))
-   - Linux や MacOS も基本的に同じ使い方ですが、以下の章を参照してください。
-
-4. TVerRec を `win/start_tverrec.bat`で起動した場合は、`win/stop_tverrec.bat`で TVerRec を停止できます。
-
-   - 関連するダウンロード処理もすべて強制停止されるので注意してください。
-   - ダウンロードを止めたくない場合は、tverec のウィンドウを閉じるボタンで閉じてください。(Linux や MacOS では、Ctrl + C でプロセスを止めてください)
-
-- TVerRec を `win/start_tverrec.bat`で実行している各ツールを個別に起動するために、`win/a.download_video.bat` / `win/b.delete_trash.bat` / `win/c.validate_video.bat` / `win/d.move_video.bat`を使うこともできます。
-  それぞれ、番組のダウンロード、ダウンロード対象外番組やダウンロード中断時のゴミファイルの削除、ダウンロードした番組の検証、検証した番組の保存先への移動を行います。
-  (`win/start_tverrec.bat`はこれらを自動的に、且つ無限に実行します)
-
-- 番組を 1 本ずつダウンロードしたい場合は`win/z.download_single_video.bat`を実行し、番組の URL を 1 本ずつ指定してください。
-  - `win/b.validate.bat`を実行するとダウンロードできていないファイルがある場合(正確にはダウンロードしたファイルが破損している場合)に、ダウンロード履歴を削除するので、再度ダウンロードできるようになります。
-  - `win/b.delete_video.sh`を実行するとダウンロードが中断してしまった際のゴミファイルなどの掃除ができるので、定期的に実行するとディスク容量を節約できます。
-  - `win/d.move_video.sh`を実行すると、番組を最終保存先に移動することも可能です。
-
-### Linux/Mac での実行方法
-
-`ffmpeg`と`youtube-dl`を`bin`ディレクトリに配置するか、パスが通っている状態にしてください。
-実行権限の付与を忘れずに行いましょう。
-
-- Path が通っている状態になっていれば`conf/system_setting.ps1`にパスを記載する必要はありません。
-- `conf/system_setting.ps1`にパスを記載する際は、**相対パス指定で**`ffmpeg`と`youtube-dl`のパスを記述してください。
-- 上記の Windows 用の説明の`win/*.bat`は`unix/*.sh`に読み替えて実行してください。
+ダウンロード対象番組の設定方法については[Wiki のこちらのページ](https://github.com/dongaba/TVerRec/wiki/%E3%83%80%E3%82%A6%E3%83%B3%E3%83%AD%E3%83%BC%E3%83%89%E5%AF%BE%E8%B1%A1%E7%95%AA%E7%B5%84%E3%81%AE%E8%A8%AD%E5%AE%9A)を参照してください。
 
 ## 環境設定方法
 
-### 基本的な設定
+初期設定や環境設定の方法については[Wiki のこちらのページ](https://github.com/dongaba/TVerRec/wiki/%E5%88%9D%E6%9C%9F%E8%A8%AD%E5%AE%9A%E3%83%BB%E7%92%B0%E5%A2%83%E8%A8%AD%E5%AE%9A%E3%81%AE%E6%96%B9%E6%B3%95)を参照してください。
 
-アプリの設定は`conf/user_setting.ps1`をテキストエディターで開いて行ってください。
-(存在しない場合は`conf/system_setting.ps1`をコピーして作成してください)
+## 実行方法
 
-- `$script:downloadBaseDir`には番組をダウンロードするフォルダを設定します。
-- `$script:downloadWorkDir`には番組をダウンロードするさいにできる中間ファイルを格納するフォルダを設定します。
-- `$script:saveBaseDir`にはダウンロードした番組を移動する先のフォルダを設定します。
-  - ここで設定したフォルダ配下(再帰的にチェックします)にあるフォルダと`$script:downloadBaseDir`にあるフォルダが一致する場合、ダウンロードファイルが`$script:downloadBaseDir`から`$script:saveBaseDir`配下の各フォルダ配下に移動されます。
-    同名のファイルがある場合は上書きされます。
-- `$script:parallelDownloadFileNum`は同時に並行でダウンロードする番組の数を設定します。
-- `$script:parallelDownloadNumPerFile`はそれぞれの番組をダウンロードする際の並行ダウンロード数を設定します。
-- つまり、`$script:parallelDownloadFileNum`×`$script:parallelDownloadNumPerFile`が実質的な最大同時ダウンロード数になります。
-
-### 高度な設定
-
-より細かく設定を変更したい場合は以下のような項目も設定変更が可能です。
-
-- `$script:sortVideoByMedia`は放送局(テレビ局)ごとのフォルダを作って番組をダウンロードするかを設定します。
-
-  - `$false`の場合の保存先は以下のようになります(初期値)
-
-        ダウンロード先\
-          └番組シリーズ名 番組シーズン名\
-            └番組シリーズ名 番組シーズン名 放送日 番組タイトル名.mp4
-
-  - `$true`の際の保存先は以下のようになります
-
-        ダウンロード先\
-          └放送局\
-            └番組シリーズ名 番組シーズン名\
-              └番組シリーズ名 番組シーズン名 放送日 番組タイトル名.mp4
-
-- `$script:addEpisodeNumber`はダウンロードファイル名にエピソード番号を付加するかを設定します。
-
-  - 最近バラエティーバングを未中心に同一放送日の番組を分割配信することが増えてきていますが、そのような場合でも再生順序を明確にすることができます。
-  - また、話数を漢数字で配信するドラマでもエピソード番号によるソートが可能になります。
-  - ただし、番組によってはエピソード番号が固定になっている番組やエピソード番号が取得できない番組もありますのでご注意ください。
-
-  - `$false`の場合のファイル名は以下のようになります(初期値)
-
-        番組シリーズ名 番組シーズン名 放送日 番組タイトル名.mp4
-
-  - `$true`の際のファイル名は以下のようになります
-
-        番組シリーズ名 番組シーズン名 放送日 Epエピソード番号 番組タイトル名.mp4
-
-- `$script:removeSpecialNote`は番組名に付く《ドラマ特区》、《新シリーズ放送記念》、《ドラマ Paravi》、《〇〇出演 「〇〇」スタート記念》などの不要なコメント(補足情報?)を削除するかを設定します。
-
-  - `$false`の場合は TVer で配信されているとおりに番組名を設定(初期値)
-  - `$true`の場合は「《」と「》」で挟まれた部分を削除
-
-- `$script:forceSoftwareDecodeFlag`に`$true`を設定すると、ダウンロードファイルの整合性検証時にハードウェアアクセラレーションを使わなくなります。
-
-  - 高速な CPU が搭載されている場合はハードウェアアクセラレーションよりも CPU で処理したほうが処理が早いことがあります。
-
-- `$script:ffmpegDecodeOption`に直接 ffmpeg のオプションを記載することでダウンロードファイルの整合性検証時にハードウェアアクセラレーションを有効化できます。
-
-  - 例えば Intel CPU を搭載した一般的な PC であれば、`'-hwaccel qsv -c:v h264_qsv'`を設定することで、CPU 内蔵のアクセラレータを使って CPU 負荷を下げつつ高速に処理することが可能です。
-  - この設定は`$script:forceSoftwareDecodeFlag`が`$true`に設定されていると無効化されます。
-
-- ダウンロードファイルの整合性検証の高速化オプションとして、他にも以下の 2 つがあります。
-
-  - `$script:simplifiedValidation`は検証を簡素化するかどうかを設定します。
-    - `$false`(初期値)を設定すると、ffmpeg を使ってダウンロードファイルの整合性検証を行います。
-      PC の性能にもよりますが番組の長さの数分の 1 から数倍の時間がかかりますが、検証精度は非常に高いです。
-      (全フレームがデコードできるか確認している模様)
-    - `$true`を設定することで、ffmpeg による番組の完全検証ではなく、ffprobe による簡易検証に切り替えます。
-      番組 1 本あたり数秒で検証が完了しますが、検証精度は低いです。(おそらくメタデータの検査だけの模様)
-  - `$script:disableValidation`は検証を行わなくするかどうかを設定します。
-    - `$true`を設定することで、ダウンロードファイルの整合性検証を完全に止めることができます。
-
-- TVerRec の特徴の 1 つでもある youtube-dl と ffmpeg の自動アップデートですが、ツール配布元の不具合等により自動アップデートがうまく動作しない場合には無効化することが可能です。
-
-  - `$script:disableUpdateYoutubedl`に`$true`を設定すると youtube-dl の自動アップデートが無効化されます。
-  - `$script:disableUpdateFfmpeg`に`$true`を設定すると ffmpeg の自動アップデートが無効化されます。
-
-- youtube-dl に起因する問題が起きた際には以下の 2 種類の youtube-dl を使い分けることが可能です。
-
-  - `$script:preferredYoutubedl`に`yt-dlp`(初期値)を設定すると [yt-dlp](https://github.com/yt-dlp/yt-dlp) から取得します。
-    こちらの方が安定していますが、不具合発生時のバグ修正には時間がかかる傾向があります。
-  - `$script:preferredYoutubedl`に`ytdl-patched`を設定すると [ytdl-patched](https://github.com/ytdl-patched/ytdl-patched) から取得します。
-    こちらの方が頻繁に更新されており、不具合発生時にもすぐバグ修正される傾向があります。
-    `yt-dlp`でダウンロードできない場合には`ytdl-patched`を試す価値があります。
-
-- `$script:windowShowStyle`には youtube-dl のウィンドウをどのように表示するかを設定します。
-
-  - `Normal` / `Maximized` / `Minimized` / `Hidden` の 4 つが指定可能です。
-  - 初期値は`Hidden`でダウンロードウィンドウは非表示となりますが、`Normal`等に設定することでダウンロードの進捗を確認することができます。
-
-### 変更が推奨されない設定
-
-以下の項目は変更を推奨していません。変更される際は自己責任でお願いします。
-
-- `$script:appVersion`はアプリケーションのバージョンです。
-
-  - ここを変えても表示が変わるだけで機能が変わるわけではありません。
-  - 現時点ではバージョン表記をする以外には使われておりません。
-
-- `$VerbosePreference`や`$DebugPreference`を設定することで、より詳細な情報が画面に出力されます。
-
-  - 設定可能な値は Google してください。PowerShell の設定がそのまま使えます。
-
-- `$script:fileNameLengthMax`は OS やファイルシステムが許容するファイル名の最大長をバイト指定で記載します。
-
-- 一般的な Windows 環境では特に変更する必要はありません。
-
-  - ここで指定した長さを超えるファイル名が生成されそうになると、ファイル名が収まるように自動的にファイル名が短縮されます。
-  - なので、あまり深い階層を保存先に指定すると頻繁にファイル名が短縮されたり、エラーとなることがあります。
-
-- `$script:binDir`、`$script:dbDir`は各種フォルダの設定です。
-
-  - ソースファイルから見た際の相対パス指定となるようにしてください。
-
-- `$script:keywordFilePath`、`$script:ignoreFilePath`はそれぞれダウンロード対象キーワードとダウンロード対象外番組を設定するファイルの名前です。
-- `$script:listFilePath`はダウンロードの未済管理をするファイルの名前です。
-
-- `$script:ffpmegErrorLogPath`はダウンロードファイルの整合性検証をする際にエラーを一時的に出力するファイルのパスです。
-
-  - 初期値では`$script:listFilePath`と同じ場所に出力するようになっています。(が、処理が終われば自動的に削除されます)
-
-- `$script:ytdlPath`と`$script:ffmpegPath`はそれぞれ youtube-dl と ffmpeg の実行ファイルの配置場所を指定しています。
-
-  - ソースファイルから見た際の相対パス指定となるようにしてください。
+TVerRec の使い方・実行方法については[Wiki のこちらのページ](https://github.com/dongaba/TVerRec/wiki/TVerRec%E3%81%AE%E4%BD%BF%E3%81%84%E6%96%B9)を参照してください。
 
 ## フォルダ構成
 
