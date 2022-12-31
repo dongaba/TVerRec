@@ -96,11 +96,11 @@ ShowProgressToast `
 	-Duration 'long' `
 	-Silent $false
 
-UpdateProgessToast `
+UpdateProgressToast `
 	-Title $script:downloadWorkDir `
 	-Rate $( 1 / 4 ) `
 	-LeftText '' `
-	-RrightText '' `
+	-RightText '' `
 	-Tag $script:appName `
 	-Group 'Delete'
 
@@ -116,11 +116,11 @@ deleteFiles `
 	-DatePast -0.5
 
 #進捗表示
-UpdateProgessToast `
+UpdateProgressToast `
 	-Title $script:downloadWorkDir `
 	-Rate $( 2 / 4 ) `
 	-LeftText '' `
-	-RrightText '' `
+	-RightText '' `
 	-Tag $script:appName `
 	-Group 'Delete'
 
@@ -131,11 +131,11 @@ deleteFiles `
 	-DatePast 0
 
 #進捗表示
-UpdateProgessToast `
+UpdateProgressToast `
 	-Title $script:downloadBaseDir `
 	-Rate $( 3 / 4 ) `
 	-LeftText '' `
-	-RrightText '' `
+	-RightText '' `
 	-Tag $script:appName `
 	-Group 'Delete'
 
@@ -146,11 +146,11 @@ deleteFiles `
 	-DatePast 0
 
 #進捗表示
-UpdateProgessToast `
+UpdateProgressToast `
 	-Title $script:saveBaseDir `
 	-Rate $( 4 / 4 ) `
 	-LeftText '' `
-	-RrightText '' `
+	-RightText '' `
 	-Tag $script:appName `
 	-Group 'Delete'
 
@@ -200,11 +200,11 @@ foreach ($local:ignoreTitle in $local:ignoreTitles) {
 	$local:ignoreNum = $local:ignoreNum + 1
 
 	#進捗表示
-	UpdateProgessToast `
+	UpdateProgressToast `
 		-Title $local:ignoreTitle `
 		-Rate $local:progressRatio `
 		-LeftText $local:ignoreNum/$local:ignoreTotal `
-		-RrightText "残り時間 $local:minRemaining" `
+		-RightText "残り時間 $local:minRemaining" `
 		-Tag $script:appName `
 		-Group 'Delete'
 
@@ -269,11 +269,11 @@ if ($local:subDirTotal -ne 0) {
 		}
 		$local:subDirNum = $local:subDirNum + 1
 
-		UpdateProgessToast `
+		UpdateProgressToast `
 			-Title $local:subDir `
 			-Rate $local:progressRatio `
 			-LeftText $local:subDirNum/$local:subDirTotal `
-			-RrightText "残り時間 $local:minRemaining" `
+			-RightText "残り時間 $local:minRemaining" `
 			-Tag $script:appName `
 			-Group 'Delete'
 
@@ -289,11 +289,11 @@ if ($local:subDirTotal -ne 0) {
 #----------------------------------------------------------------------
 
 #進捗表示
-UpdateProgessToast `
+UpdateProgressToast `
 	-Title 'ファイルの掃除' `
 	-Rate '1' `
 	-LeftText '' `
-	-RrightText '完了' `
+	-RightText '完了' `
 	-Tag $script:appName `
 	-Group 'Delete'
 

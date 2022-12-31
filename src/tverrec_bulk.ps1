@@ -109,7 +109,7 @@ if ($script:keywordNames -is [array]) { $local:keywordTotal = $script:keywordNam
 else { $local:keywordTotal = 1 }
 
 #進捗表示
-ShowProgess2Row `
+ShowProgress2Row `
 	-ProgressText1 '一括ダウンロード中' `
 	-ProgressText2 'キーワードから番組を抽出しダウンロード' `
 	-WorkDetail1 '読み込み中...' `
@@ -172,7 +172,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 	$local:keywordNum = $local:keywordNum + 1		#キーワード数のインクリメント
 
 	#進捗更新
-	UpdateProgess2Row `
+	UpdateProgress2Row `
 		-ProgressActivity1 $local:keywordNum/$local:keywordTotal `
 		-CurrentProcessing1 $(trimTabSpace ($local:keywordName)) `
 		-Rate1 $local:progressRatio1 `
@@ -197,7 +197,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 		$local:progressRatio2 = $($local:videoNum / $local:videoTotal)
 
 		#進捗更新
-		UpdateProgess2Row `
+		UpdateProgress2Row `
 			-ProgressActivity1 $local:keywordNum/$local:keywordTotal `
 			-CurrentProcessing1 $(trimTabSpace ($local:keywordName)) `
 			-Rate1 $local:progressRatio1 `
@@ -228,15 +228,15 @@ foreach ($local:keywordName in $local:keywordNames) {
 #======================================================================
 
 #進捗表示
-UpdateProgessToast2 `
+UpdateProgressToast2 `
 	-Title1 'キーワードから番組の抽出' `
 	-Rate1 '1' `
 	-LeftText1 '' `
-	-RrightText1 '完了' `
+	-RightText1 '完了' `
 	-Title2 '番組のダウンロード' `
 	-Rate2 '1' `
 	-LeftText2 '' `
-	-RrightText2 '完了' `
+	-RightText2 '完了' `
 	-Tag $script:appName `
 	-Group 'Bulk'
 

@@ -184,10 +184,36 @@ function loadKeywordList {
 	[OutputType([String[]])]
 	Param ()
 
-	try { $local:keywordNames = [string[]](Get-Content $script:keywordFilePath -Encoding UTF8 | Where-Object { !($_ -match '^\s*$') } | Where-Object { !($_ -match '^#.*$') }) }
-	catch { Write-ColorOutput 'ダウンロード対象キーワードの読み込みに失敗しました' -FgColor 'Green' ; exit 1 }
+	try { $local:keywordNames = [string[]](Get-Content $script:keywordFilePath -Encoding UTF8 `
+			| Where-Object { !($_ -match '^\s*$') } `		#空行を除く
+			| Where-Object { !($_ -match '^#.*$') })		#コメント行を除く
+	} catch { Write-ColorOutput 'ダウンロード対象キーワードの読み込みに失敗しました' -FgColor 'Green' ; exit 1 }
 
 	return $local:keywordNames
+}
+
+#----------------------------------------------------------------------
+#ダウンロードリストの読み込み
+#----------------------------------------------------------------------
+function loadDownloadList {
+	[OutputType([String[]])]
+	Param ()
+
+	try {
+		#ロックファイルをロック
+		while ($(fileLock $script:listLockFilePath).fileLocked -ne $true) {
+			Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
+			Start-Sleep -Seconds 1
+		}
+		#ファイル操作
+		$local:videoLinks = (Import-Csv $script:listFilePath -Encoding UTF8 `
+			| Select-Object episodeID `					#EpisodeIDのみ抽出
+			| Where-Object { !($_ -match '^\s*$') } `	#空行を除く
+			| Where-Object { !($_.episodeID -match '^#') })		#ダウンロード対象外を除く
+	} catch { Write-ColorOutput 'ダウンロードリストの読み込みに失敗しました' -FgColor 'Green' ; exit 1 }
+	finally { $null = fileUnlock $script:listLockFilePath }
+
+	return $local:videoLinks
 }
 
 #----------------------------------------------------------------------
@@ -197,8 +223,10 @@ function getIgnoreList {
 	[OutputType([String[]])]
 	Param ()
 
-	try { $local:ignoreTitles = [string[]](Get-Content $script:ignoreFilePath -Encoding UTF8 | Where-Object { !($_ -match '^\s*$') } | Where-Object { !($_ -match '^;.*$') }) }
-	catch { Write-ColorOutput 'ダウンロード対象外の読み込みに失敗しました' -FgColor 'Green' ; exit 1 }
+	try { $local:ignoreTitles = [string[]](Get-Content $script:ignoreFilePath -Encoding UTF8 `
+			| Where-Object { !($_ -match '^\s*$') } `		#空行を除く
+			| Where-Object { !($_ -match '^;.*$') })		#コメント行を除く
+	} catch { Write-ColorOutput 'ダウンロード対象外の読み込みに失敗しました' -FgColor 'Green' ; exit 1 }
 
 	return $local:ignoreTitles
 }
@@ -921,20 +949,6 @@ function generateTVerVideoList {
 		Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:10' -FgColor 'Green'
 		continue			#次回再度トライするため以降の処理をせずに次の番組へ
 	}
-
-	# #番組情報のコンソール出力
-	# Write-ColorOutput "Series:$($script:videoSeries)" -FgColor 'Blue'
-	# Write-ColorOutput "SeriesID:$($script:videoSeriesID)" -FgColor 'Blue'
-	# Write-ColorOutput "Season:$($script:videoSeason)" -FgColor 'Blue'
-	# Write-ColorOutput "SeasonID:$($script:videoSeasonID)" -FgColor 'Blue'
-	# Write-ColorOutput "Epsode#:$($script:videoEpisode)" -FgColor 'Blue'
-	# Write-ColorOutput "Title:$($script:videoTitle)" -FgColor 'Blue'
-	# Write-ColorOutput "EpisodeID:$($script:videoLink.Replace('/episodes/', ''))" -FgColor 'Blue'
-	# Write-ColorOutput "Media:$($script:mediaName)" -FgColor 'Blue'
-	# Write-ColorOutput "Provider:$($script:providerName)" -FgColor 'Blue'
-	# Write-ColorOutput "BroadcastDate:$($script:broadcastDate)" -FgColor 'Blue'
-	# Write-ColorOutput "EndTime:$($script:endTime)" -FgColor 'Blue'
-	# Write-ColorOutput "Keyword:$($script:keywordName)" -FgColor 'Blue'
 
 	#ダウンロード対象外に入っている番組の場合はリスト出力しない
 	foreach ($local:ignoreTitle in $script:ignoreTitles) {

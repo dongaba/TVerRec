@@ -222,11 +222,11 @@ if ($null -eq $local:videoHists) {
 		$local:validateNum = $local:validateNum + 1
 
 		#進捗表示
-		UpdateProgessToast `
+		UpdateProgressToast `
 			-Title $local:videoFileRelativePath `
 			-Rate $local:progressRatio `
 			-LeftText $local:validateNum/$local:validateTotal `
-			-RrightText "残り時間 $local:minRemaining" `
+			-RightText "残り時間 $local:minRemaining" `
 			-Tag $script:appName `
 			-Group 'Validate'
 
@@ -278,10 +278,10 @@ try {
 } finally { $null = fileUnlock $script:historyLockFilePath }
 
 #進捗表示
-UpdateProgessToast `
+UpdateProgressToast `
 	-Title 'ダウンロードファイルの整合性検証' `
 	-Rate '1' `
 	-LeftText '' `
-	-RrightText '完了' `
+	-RightText '完了' `
 	-Tag $script:appName `
 	-Group 'Validate'

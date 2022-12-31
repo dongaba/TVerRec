@@ -147,11 +147,11 @@ if ($local:moveToPathTotal -ne 0) {
 		$local:moveToPathNum = $local:moveToPathNum + 1
 
 		#進捗表示
-		UpdateProgessToast `
+		UpdateProgressToast `
 			-Title $local:moveToPath `
 			-Rate $local:progressRatio `
 			-LeftText $local:moveToPathNum/$local:moveToPathTotal `
-			-RrightText "残り時間 $local:minRemaining" `
+			-RightText "残り時間 $local:minRemaining" `
 			-Tag $script:appName `
 			-Group 'Move'
 
@@ -171,10 +171,10 @@ if ($local:moveToPathTotal -ne 0) {
 #----------------------------------------------------------------------
 
 #進捗表示
-UpdateProgessToast `
+UpdateProgressToast `
 	-Title '番組の移動' `
 	-Rate '1' `
 	-LeftText '' `
-	-RrightText '完了' `
+	-RightText '完了' `
 	-Tag $script:appName `
 	-Group 'Move'

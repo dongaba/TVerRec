@@ -100,7 +100,7 @@ checkLatestFfmpeg			#ffmpegの最新化チェック
 checkRequiredFile			#設定で指定したファイル・フォルダの存在チェック
 
 #処理
-$local:keywordName = 'URL指定'
+$local:keywordName = '個別指定'
 $script:ignoreTitles = getIgnoreList		#ダウンロード対象外番組の読み込み
 getToken
 

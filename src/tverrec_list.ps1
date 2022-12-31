@@ -1,7 +1,7 @@
 ###################################################################################
 #  TVerRec : TVerダウンローダ
 #
-#		番組リストファイル出力処理スクリプト
+#		リストダウンロード処理スクリプト
 #
 #	Copyright (c) 2022 dongaba
 #
@@ -87,7 +87,7 @@ Write-ColorOutput '           ██     ██  ██  ██      ██   �
 Write-ColorOutput '           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          ' -FgColor 'Cyan'
 Write-ColorOutput '                                                                           ' -FgColor 'Cyan'
 Write-ColorOutput "        $script:appName : TVerダウンローダ                                 " -FgColor 'Cyan'
-Write-ColorOutput "                             番組リスト生成 version. $script:appVersion    " -FgColor 'Cyan'
+Write-ColorOutput "                             リストダウンロード version. $script:appVersion  " -FgColor 'Cyan'
 Write-ColorOutput '                                                                           ' -FgColor 'Cyan'
 Write-ColorOutput '===========================================================================' -FgColor 'Cyan'
 Write-ColorOutput ''
@@ -95,141 +95,117 @@ Write-ColorOutput ''
 #----------------------------------------------------------------------
 #動作環境チェック
 checkLatestTVerRec			#TVerRecの最新化チェック
+checkLatestYtdl				#youtube-dlの最新化チェック
+checkLatestFfmpeg			#ffmpegの最新化チェック
 checkRequiredFile			#設定で指定したファイル・フォルダの存在チェック
 
+#いろいろ初期化
+$local:videoLink = '　'
+$local:videoLinks = @()
+$local:videoNum = 0								#リスト内の処理中の番組の番号
+
 #処理
-$local:keywordNames = loadKeywordList		#ダウンロード対象キーワードの読み込み
+$local:keywordName = 'リスト指定'
 $script:ignoreTitles = getIgnoreList		#ダウンロード対象外番組の読み込み
 getToken
 
-$local:keywordNum = 0						#キーワードの番号
-if ($script:keywordNames -is [array]) { $local:keywordTotal = $script:keywordNames.Length }		#トータルキーワード数
-else { $local:keywordTotal = 1 }
+Write-ColorOutput ''
+Write-ColorOutput '----------------------------------------------------------------------'
+Write-ColorOutput 'ダウンロードリストを読み込みます'
+$local:listLinks = loadDownloadList		#ダウンロードリストの読み込み
+Write-ColorOutput "　リスト件数$($local:listLinks.Length)件"
+
+Write-ColorOutput ''
+Write-ColorOutput '----------------------------------------------------------------------'
+Write-ColorOutput 'ダウンロード履歴を読み込みます'
+#ダウンロード履歴ファイルのデータを読み込み
+try {
+	#ロックファイルをロック
+	while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true) {
+		Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
+		Start-Sleep -Seconds 1
+	}
+	#ファイル操作
+	$script:historyFileData = Import-Csv $script:historyFilePath -Encoding UTF8
+} catch { Write-ColorOutput '　ダウンロード履歴を読み込めなかったのでスキップしました' -FgColor 'Green' ; continue
+} finally { $null = fileUnlock $script:historyLockFilePath }
+
+Write-ColorOutput ''
+Write-ColorOutput '----------------------------------------------------------------------'
+Write-ColorOutput 'ダウンロード履歴に含まれる番組を除外します'
+#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
+foreach ($local:listLink in $local:listLinks.episodeID) {
+	$local:historyMatch = $script:historyFileData | Where-Object { $_.videoPage -eq $('https://tver.jp/episodes/' + $local:listLink) }
+	if ($null -eq $local:historyMatch) { $local:videoLinks += $local:listLink }
+	else { $local:searchResultCount = $local:searchResultCount + 1 ; continue }
+}
+$local:videoTotal = $local:videoLinks.Length	#ダウンロード対象のトータル番組数
+Write-ColorOutput "　ダウンロード対象$($local:videoTotal)件"
+
+
+#処理時間の推計
+$local:totalStartTime = Get-Date
+$local:secRemaining = -1
 
 #進捗表示
-ShowProgress2Row `
-	-ProgressText1 'キーワードから番組リスト作成中' `
-	-ProgressText2 'キーワードから番組を抽出しダウンロード' `
-	-WorkDetail1 '読み込み中...' `
-	-WorkDetail2 '読み込み中...' `
+ShowProgressToast `
+	-Text1 'リストからの番組のダウンロード' `
+	-Text2 'リストファイルから番組をダウンロード' `
+	-WorkDetail '読み込み中...' `
 	-Duration 'long' `
 	-Silent $false `
-	-Group 'ListGen'
+	-Tag $script:appName `
+	-Group 'List'
 
-#======================================================================
-#個々のジャンルページチェックここから
-$local:totalStartTime = Get-Date
-foreach ($local:keywordName in $local:keywordNames) {
+#----------------------------------------------------------------------
+#個々の番組ダウンロードここから
+foreach ($local:videoLink in $local:videoLinks) {
 	#いろいろ初期化
-	$local:videoLink = '　'
-	$local:videoLinks = @()
-	$local:searchResultCount = 0
+	$local:videoNum = $local:videoNum + 1		#ジャンル内の番組番号のインクリメント
 
-	#ジャンルページチェックタイトルの表示
-	Write-ColorOutput ''
-	Write-ColorOutput '----------------------------------------------------------------------'
-	Write-ColorOutput "$(trimTabSpace ($local:keywordName))"
-	Write-ColorOutput '----------------------------------------------------------------------'
+	#保存先ディレクトリの存在確認(稼働中に共有フォルダが切断された場合に対応)
+	if (Test-Path $script:downloadBaseDir -PathType Container) { }
+	else { Write-Error '番組ダウンロード先フォルダにアクセスできません。終了します' ; exit 1 }
 
-	#処理
-	$local:resultLinks = getVideoLinksFromKeyword ($local:keywordName)
-	$local:keywordName = $local:keywordName.Replace('https://tver.jp/', '')
-
-	#ダウンロード履歴ファイルのデータを読み込み
-	try {
-		#ロックファイルをロック
-		while ($(fileLock $script:listLockFilePath).fileLocked -ne $true) {
-			Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
-			Start-Sleep -Seconds 1
-		}
-		#ファイル操作
-		$script:listFileData = Import-Csv $script:listFilePath -Encoding UTF8
-	} catch { Write-ColorOutput '　ダウンロードリストを読み込めなかったのでスキップしました' -FgColor 'Green' ; continue
-	} finally { $null = fileUnlock $script:listLockFilePath }
-
-	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
-	foreach ($local:resultLink in $local:resultLinks) {
-		$local:listMatch = $script:listFileData | Where-Object { $_.episodeID -like "*$($local:resultLink.replace('https://tver.jp/episodes/', ''))" }
-		if ($null -eq $local:listMatch) { $local:videoLinks += $local:resultLink }
-		else { $local:searchResultCount = $local:searchResultCount + 1 ; continue }
-	}
-
-	$local:videoNum = 0								#ジャンル内の処理中の番組の番号
-	if ($null -eq $local:videoLinks) { $local:videoTotal = 0 }
-	else { $local:videoTotal = $local:videoLinks.Length }	#ダウンロード対象のトータル番組数
-	Write-ColorOutput "　ダウンロード対象$($local:videoTotal)本 処理済$($local:searchResultCount)本" -FgColor 'Gray'
-
-	#処理時間の推計
+	#進捗率の計算
+	$local:progressRatio = $($local:videoNum / $local:videoTotal)
 	$local:secElapsed = (Get-Date) - $local:totalStartTime
-	$local:secRemaining1 = -1
-	if ($local:keywordNum -ne 0) {
-		$local:secRemaining1 = ($local:secElapsed.TotalSeconds / $local:keywordNum) * ($local:keywordTotal - $local:keywordNum)
-	}
-	$local:progressRatio1 = $($local:keywordNum / $local:keywordTotal)
-	$local:progressRatio2 = 0
-
-	$local:keywordNum = $local:keywordNum + 1		#キーワード数のインクリメント
+	$local:secRemaining = ($local:secElapsed.TotalSeconds / $local:videoNum) * ($local:videoTotal - $local:videoNum)
+	$local:minRemaining = "$([String]([math]::Ceiling($local:secRemaining / 60)))分"
 
 	#進捗更新
-	UpdateProgress2Row `
-		-ProgressActivity1 $local:keywordNum/$local:keywordTotal `
-		-CurrentProcessing1 $(trimTabSpace ($local:keywordName)) `
-		-Rate1 $local:progressRatio1 `
-		-SecRemaining1 $local:secRemaining1 `
-		-ProgressActivity2 '' `
-		-CurrentProcessing2 $local:videoLink `
-		-Rate2 $local:progressRatio2 `
-		-SecRemaining2 '' `
-		-Group 'ListGen'
+	UpdateProgressToast `
+		-Title 'リストからの番組のダウンロード' `
+		-Rate $local:progressRatio `
+		-LeftText $local:videoNum/$local:videoTotal `
+		-RightText $local:minRemaining `
+		-Tag $script:appName `
+		-Group 'List'
 
-	#----------------------------------------------------------------------
-	#個々の番組の情報の取得ここから
-	foreach ($local:videoLink in $local:videoLinks) {
-		#いろいろ初期化
-		$local:videoNum = $local:videoNum + 1		#ジャンル内の番組番号のインクリメント
+	#処理
+	Write-ColorOutput '--------------------------------------------------'
+	Write-ColorOutput "$($local:videoNum)/$($local:videoTotal) - $($local:videoLink)" -NoNewline $true
 
-		#進捗率の計算
-		$local:progressRatio2 = $($local:videoNum / $local:videoTotal)
+	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
+	waitTillYtdlProcessGetFewer $script:parallelDownloadFileNum
 
-		#進捗更新
-		UpdateProgress2Row `
-			-ProgressActivity1 $local:keywordNum/$local:keywordTotal `
-			-CurrentProcessing1 $(trimTabSpace ($local:keywordName)) `
-			-Rate1 $local:progressRatio1 `
-			-SecRemaining1 $local:secRemaining1 `
-			-ProgressActivity2 $local:videoNum/$local:videoTotal `
-			-CurrentProcessing2 $local:videoLink `
-			-Rate2 $local:progressRatio2 `
-			-SecRemaining2 '' `
-			-Group 'ListGen'
-
-		#処理
-		Write-ColorOutput "$($local:videoNum)/$($local:videoTotal) - $local:videoLink" -NoNewLine $true
-
-		#TVer番組ダウンロードのメイン処理
-		generateTVerVideoList `
-			-Keyword $local:keywordName `
-			-URL $local:videoLink `
-			-Link $local:videoLink.Replace('https://tver.jp', '')
-
-	}
-	#----------------------------------------------------------------------
+	#TVer番組ダウンロードのメイン処理
+	downloadTVerVideo `
+		-Keyword $local:keywordName `
+		-URL $('https://tver.jp/episodes/' + $local:videoLink) `
+		-Link $('/episodes/' + $local:videoLink)
 
 }
-#======================================================================
+#----------------------------------------------------------------------
 
 #進捗表示
-UpdateProgressToast2 `
-	-Title1 'キーワードから番組リストの作成' `
-	-Rate1 '1' `
-	-LeftText1 '' `
-	-RightText1 '完了' `
-	-Title2 '番組のダウンロード' `
-	-Rate2 '1' `
-	-LeftText2 '' `
-	-RightText2 '完了' `
+UpdateProgressToast `
+	-Title 'リストからの番組のダウンロード' `
+	-Rate '1' `
+	-LeftText '' `
+	-RightText '完了' `
 	-Tag $script:appName `
-	-Group 'ListGen'
+	-Group 'List'
 
 #youtube-dlのプロセスが終わるまで待機
 Write-ColorOutput 'ダウンロードの終了を待機しています'

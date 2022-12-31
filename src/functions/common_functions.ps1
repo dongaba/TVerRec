@@ -635,7 +635,7 @@ function ShowProgressToast {
 #----------------------------------------------------------------------
 #進捗バー付きトースト更新
 #----------------------------------------------------------------------
-function UpdateProgessToast {
+function UpdateProgressToast {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
@@ -668,8 +668,8 @@ function UpdateProgessToast {
 			ValueFromPipeline = $false,
 			ValueFromPipelineByPropertyName = $false
 		)]
-		[Alias('RrightText')]
-		[String] $local:toastRrightText,
+		[Alias('RightText')]
+		[String] $local:toastRightText,
 
 		[Parameter(
 			Mandatory = $true,
@@ -693,7 +693,7 @@ function UpdateProgessToast {
 		$local:toastData = New-Object 'system.collections.generic.dictionary[string,string]'
 		$local:toastData.add('progressTitle', $local:toastTitle)
 		$local:toastData.add('progressValue', $local:toastRate)
-		$local:toastData.add('progressValueString', $local:toastRrightText)
+		$local:toastData.add('progressValueString', $local:toastRightText)
 		$local:toastData.add('progressStatus', $local:toastLeftText)
 		$local:toastProgressData = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
 		$local:toastProgressData.SequenceNumber = 2
@@ -832,7 +832,7 @@ function ShowProgressToast2 {
 #----------------------------------------------------------------------
 #進捗バー付きトースト更新
 #----------------------------------------------------------------------
-function UpdateProgessToast2 {
+function UpdateProgressToast2 {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
@@ -865,8 +865,8 @@ function UpdateProgessToast2 {
 			ValueFromPipeline = $false,
 			ValueFromPipelineByPropertyName = $false
 		)]
-		[Alias('RrightText1')]
-		[String] $local:toastRrightText1,
+		[Alias('RightText1')]
+		[String] $local:toastRightText1,
 
 		[Parameter(
 			Mandatory = $false,
@@ -897,8 +897,8 @@ function UpdateProgessToast2 {
 			ValueFromPipeline = $false,
 			ValueFromPipelineByPropertyName = $false
 		)]
-		[Alias('RrightText2')]
-		[String] $local:toastRrightText2,
+		[Alias('RightText2')]
+		[String] $local:toastRightText2,
 
 		[Parameter(
 			Mandatory = $true,
@@ -922,11 +922,11 @@ function UpdateProgessToast2 {
 		$local:toastData = New-Object 'system.collections.generic.dictionary[string,string]'
 		$local:toastData.add('progressTitle1', $local:toastTitle1)
 		$local:toastData.add('progressValue1', $local:toastRate1)
-		$local:toastData.add('progressValueString1', $local:toastRrightText1)
+		$local:toastData.add('progressValueString1', $local:toastRightText1)
 		$local:toastData.add('progressStatus1', $local:toastLeftText1)
 		$local:toastData.add('progressTitle2', $local:toastTitle2)
 		$local:toastData.add('progressValue2', $local:toastRate2)
-		$local:toastData.add('progressValueString2', $local:toastRrightText2)
+		$local:toastData.add('progressValueString2', $local:toastRightText2)
 		$local:toastData.add('progressStatus2', $local:toastLeftText2)
 		$local:toastProgressData = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
 		$local:toastProgressData.SequenceNumber = 2
@@ -937,7 +937,7 @@ function UpdateProgessToast2 {
 #----------------------------------------------------------------------
 #進捗表示
 #----------------------------------------------------------------------
-function ShowProgess2Row {
+function ShowProgress2Row {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
@@ -1017,7 +1017,7 @@ function ShowProgess2Row {
 #----------------------------------------------------------------------
 #進捗更新
 #----------------------------------------------------------------------
-function UpdateProgess2Row {
+function UpdateProgress2Row {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
@@ -1104,15 +1104,15 @@ function UpdateProgess2Row {
 	if ($local:secRemaining2 -ne '') { $local:secRemaining2 = "残り時間 $local:minRemaining2" }
 	if ($local:progressActivity2 -eq '') { $local:progressActivity2 = '　' }
 
-	UpdateProgessToast2 `
+	UpdateProgressToast2 `
 		-Title1 $local:currentProcessing1 `
 		-Rate1 $local:progressRatio1 `
 		-LeftText1 $local:progressActivity1 `
-		-RrightText1 $local:minRemaining1 `
+		-RightText1 $local:minRemaining1 `
 		-Title2 $local:currentProcessing2 `
 		-Rate2 $local:progressRatio2 `
 		-LeftText2 $local:progressActivity2 `
-		-RrightText2 $local:secRemaining2 `
+		-RightText2 $local:secRemaining2 `
 		-Tag $script:appName `
 		-Group $local:toastGroup
 }
