@@ -109,13 +109,12 @@ $local:keywordName = 'リスト指定'
 $script:ignoreTitles = getIgnoreList		#ダウンロード対象外番組の読み込み
 getToken
 
-Write-ColorOutput ''
 Write-ColorOutput '----------------------------------------------------------------------'
 Write-ColorOutput 'ダウンロードリストを読み込みます'
 $local:listLinks = loadDownloadList		#ダウンロードリストの読み込み
 Write-ColorOutput "　リスト件数$($local:listLinks.Length)件"
-
 Write-ColorOutput ''
+
 Write-ColorOutput '----------------------------------------------------------------------'
 Write-ColorOutput 'ダウンロード履歴を読み込みます'
 #ダウンロード履歴ファイルのデータを読み込み
@@ -129,18 +128,18 @@ try {
 	$script:historyFileData = Import-Csv $script:historyFilePath -Encoding UTF8
 } catch { Write-ColorOutput '　ダウンロード履歴を読み込めなかったのでスキップしました' -FgColor 'Green' ; continue
 } finally { $null = fileUnlock $script:historyLockFilePath }
-
 Write-ColorOutput ''
+
 Write-ColorOutput '----------------------------------------------------------------------'
 Write-ColorOutput 'ダウンロード履歴に含まれる番組を除外します'
 #URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 foreach ($local:listLink in $local:listLinks.episodeID) {
 	$local:historyMatch = $script:historyFileData | Where-Object { $_.videoPage -eq $('https://tver.jp/episodes/' + $local:listLink) }
 	if ($null -eq $local:historyMatch) { $local:videoLinks += $local:listLink }
-	else { $local:searchResultCount = $local:searchResultCount + 1 ; continue }
 }
 $local:videoTotal = $local:videoLinks.Length	#ダウンロード対象のトータル番組数
 Write-ColorOutput "　ダウンロード対象$($local:videoTotal)件"
+Write-ColorOutput ''
 
 
 #処理時間の推計
