@@ -208,8 +208,11 @@ UpdateProgressToast `
 
 #youtube-dlのプロセスが終わるまで待機
 Write-ColorOutput 'ダウンロードの終了を待機しています'
+Write-ColorOutput ''
 waitTillYtdlProcessIsZero
 
 Write-ColorOutput '---------------------------------------------------------------------------' -FgColor 'Cyan'
 Write-ColorOutput '処理を終了しました。                                                       ' -FgColor 'Cyan'
 Write-ColorOutput '---------------------------------------------------------------------------' -FgColor 'Cyan'
+Write-ColorOutput '必要に応じてリストファイルを編集してダウンロード不要な番組を削除してください'
+Write-ColorOutput "　リストファイルパス: $($script:listFilePath)"
