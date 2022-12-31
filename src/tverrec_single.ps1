@@ -87,7 +87,7 @@ Write-ColorOutput '           ██     ██  ██  ██      ██   �
 Write-ColorOutput '           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          ' -FgColor 'Cyan'
 Write-ColorOutput '                                                                           ' -FgColor 'Cyan'
 Write-ColorOutput "        $script:appName : TVerダウンローダ                                 " -FgColor 'Cyan'
-Write-ColorOutput "                             個別ダウンロード版 version. $script:appVersion" -FgColor 'Cyan'
+Write-ColorOutput "                             個別ダウンロード version. $script:appVersion  " -FgColor 'Cyan'
 Write-ColorOutput '                                                                           ' -FgColor 'Cyan'
 Write-ColorOutput '===========================================================================' -FgColor 'Cyan'
 Write-ColorOutput ''
@@ -119,14 +119,14 @@ while ($true) {
 	#ダウンロード履歴ファイルのデータを読み込み
 	try {
 		#ロックファイルをロック
-		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
+		while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true) {
 			Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
-		$script:listFileData = Import-Csv $script:listFilePath -Encoding UTF8
+		$script:historyFileData = Import-Csv $script:historyFilePath -Encoding UTF8
 	} catch { Write-ColorOutput '　ダウンロード履歴を読み込めなかったのでスキップしました' -FgColor 'Green' ; continue
-	} finally { $null = fileUnlock $script:lockFilePath }
+	} finally { $null = fileUnlock $script:historyLockFilePath }
 
 	$local:videoPageURL = Read-Host '番組URLを入力してください。何も入力しないで Enter を押すと終了します。'
 	if ($videoPageURL -ne '') {

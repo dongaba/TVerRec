@@ -53,10 +53,10 @@ win-*
 
 #ローカルの変更をGitHubにアップしないために
 tver.csv
+history.csv
+list.csv
 ignore.conf
 keyword.conf
 user_setting.ps1
-tver.lock
-db/tver.lock
 #git update-index --assume-unchanged conf/dev_setting.ps1
 

@@ -136,6 +136,7 @@ $script:binDir = $(Join-Path $scriptRoot '..\bin')
 $script:dbDir = $(Join-Path $scriptRoot '..\db')
 $script:libDir = $(Join-Path $scriptRoot '..\lib')
 $script:imgDir = $(Join-Path $scriptRoot '..\img')
+$script:listDir = $(Join-Path $scriptRoot '..\list')
 
 #トースト通知用画像のパス
 $script:toastAppLogo = Convert-Path (Join-Path $script:imgDir 'TVerRec-Toast.png')
@@ -149,9 +150,12 @@ $script:ignoreFileSamplePath = $(Join-Path $script:confDir 'ignore.sample.conf')
 $script:ignoreFilePath = $(Join-Path $script:confDir 'ignore.conf')
 
 #ダウンロード履歴のパス
-$script:listFileSamplePath = $(Join-Path $script:dbDir 'tver.sample.csv')
-$script:listFilePath = $(Join-Path $script:dbDir 'tver.csv')
-$script:lockFilePath = $(Join-Path $script:dbDir 'tver.lock')
+$script:historyFilePath = $(Join-Path $script:dbDir 'history.csv')
+$script:historyFileSamplePath = $(Join-Path $script:dbDir 'history.sample.csv')
+$script:historyLockFilePath = $(Join-Path $script:dbDir 'history.lock')
+$script:listFilePath = $(Join-Path $script:listDir 'list.csv')
+$script:listFileSamplePath = $(Join-Path $script:listDir 'list.sample.csv')
+$script:listLockFilePath = $(Join-Path $script:dbDir 'list.lock')
 
 #ffpmegで番組検証時のエラーファイルのパス
 $script:ffpmegErrorLogPath = $(Join-Path $script:dbDir "ffmpeg_error_$($PID).log")

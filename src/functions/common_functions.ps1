@@ -1181,3 +1181,19 @@ function goAnal {
 	finally { $progressPreference = 'Continue' }
 
 }
+
+#----------------------------------------------------------------------
+#UNIX時間をDateTime型に変換
+#----------------------------------------------------------------------
+function unixTimeToDateTime($unixTime) {
+	$origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
+	$origin.AddSeconds($unixTime)
+}
+
+#----------------------------------------------------------------------
+#DateTime型をUNIX時間に変換
+#----------------------------------------------------------------------
+function dateTimeToUnixTime($dateTime) {
+	$origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
+	[Int]($dateTime - $origin).TotalSeconds
+}

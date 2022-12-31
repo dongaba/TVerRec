@@ -141,11 +141,28 @@ function checkRequiredFile {
 	if (Test-Path $script:ytdlPath -PathType Leaf) { }
 	else { Write-Error 'youtube-dlが存在しません。終了します。' ; exit 1 }
 
+	#過去のバージョンで使用していたファイルを削除、または移行
+	#tver.lockをhistory.lockに移行(v2.6.5→v2.6.6)
+	if (Test-Path $(Join-Path $script:dbDir 'tver.lock') -PathType Leaf) {
+		Move-Item -Path $(Join-Path $script:dbDir 'tver.lock') -Destination $script:historyLockFilePath -Force
+	}
+	#tver.sample.csvをhistory.sample.csvに移行(v2.6.5→v2.6.6)
+	if (Test-Path $(Join-Path $script:dbDir 'tver.sample.csv') -PathType Leaf) {
+		Move-Item -Path $(Join-Path $script:dbDir 'tver.sample.csv') -Destination $script:historyFilePath -Force
+	}
+	#tver.csvをhistory.csvに移行(v2.6.5→v2.6.6)
+	if (Test-Path $(Join-Path $script:dbDir 'tver.csv') -PathType Leaf) {
+		Rename-Item -Path $(Join-Path $script:dbDir 'tver.csv') -NewName history.csv -Force
+	}
+
+
 	#ファイルが存在しない場合はサンプルファイルをコピー
 	if (Test-Path $script:keywordFilePath -PathType Leaf) { }
 	else { Copy-Item -Path $script:keywordFileSamplePath -Destination $script:keywordFilePath -Force }
 	if (Test-Path $script:ignoreFilePath -PathType Leaf) { }
 	else { Copy-Item -Path $script:ignoreFileSamplePath -Destination $script:ignoreFilePath -Force }
+	if (Test-Path $script:historyFilePath -PathType Leaf) { }
+	else { Copy-Item -Path $script:historyFileSamplePath -Destination $script:historyFilePath -Force }
 	if (Test-Path $script:listFilePath -PathType Leaf) { }
 	else { Copy-Item -Path $script:listFileSamplePath -Destination $script:listFilePath -Force }
 
@@ -154,8 +171,10 @@ function checkRequiredFile {
 	else { Write-Error 'ダウンロード対象キーワードファイルが存在しません。終了します。' ; exit 1 }
 	if (Test-Path $script:ignoreFilePath -PathType Leaf) { }
 	else { Write-Error 'ダウンロード対象外番組ファイルが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $script:listFilePath -PathType Leaf) { }
+	if (Test-Path $script:historyFilePath -PathType Leaf) { }
 	else { Write-Error 'ダウンロード履歴ファイルが存在しません。終了します。' ; exit 1 }
+	if (Test-Path $script:listFilePath -PathType Leaf) { }
+	else { Write-Error 'ダウンロードリストファイルが存在しません。終了します。' ; exit 1 }
 }
 
 #----------------------------------------------------------------------
@@ -670,7 +689,6 @@ function downloadTVerVideo {
 	$script:videoName = '' ; $script:videoFilePath = '' ; $script:videoSeriesPageURL = ''
 	$script:broadcastDate = '' ; $script:videoSeries = '' ; $script:videoSeason = '' ; $script:videoEpisode = '' ; $script:videoTitle = ''
 	$script:mediaName = '' ; $script:descriptionText = ''
-	#$script:videoInfo = $null ;
 	$script:newVideo = $null
 	$script:ignore = $false ; $script:skip = $false
 
@@ -719,7 +737,8 @@ function downloadTVerVideo {
 		-Episode $script:videoEpisode `
 		-Title $script:videoTitle `
 		-Path $script:videoFilePath `
-		-Time $(getTimeStamp)
+		-Time $(getTimeStamp) `
+		-EndTime $script:endTime
 
 	#番組タイトルが取得できなかった場合はスキップ次の番組へ
 	if ($script:videoName -eq '.mp4') {
@@ -731,10 +750,10 @@ function downloadTVerVideo {
 	if (Test-Path $script:videoFilePath) {
 
 		#リストファイルにチェック済の状態で存在するかチェック
-		$local:listMatch = $script:listFileData | Where-Object { $_.videoPath -eq $script:videoFileRelativePath } | Where-Object { $_.videoValidated -eq '1' }
+		$local:historyMatch = $script:historyFileData | Where-Object { $_.videoPath -eq $script:videoFileRelativePath } | Where-Object { $_.videoValidated -eq '1' }
 
 		#結果が0件ということは未検証のファイルがあるということ
-		if ( $null -eq $local:listMatch) {
+		if ( $null -eq $local:historyMatch) {
 			Write-ColorOutput '　すでにダウンロード済ですが未検証の番組です。ダウンロード履歴に追加します' -FgColor 'Gray'
 			$script:skip = $true
 		} else { Write-ColorOutput '　すでにダウンロード済・検証済の番組です。スキップします' -FgColor 'Gray' ; continue }
@@ -766,7 +785,6 @@ function downloadTVerVideo {
 					-Or ($(getNarrowChars $script:videoSeries) -match $(getNarrowChars $local:ignoreTitle)) `
 					-Or ($(getNarrowChars $script:videoTitle) -match $(getNarrowChars $local:ignoreTitle))) {
 				$script:ignore = $true
-				Write-ColorOutput '　ダウンロード対象外に入っている番組です。スキップします' -FgColor 'Gray'
 				break		#ダウンロード対象外と合致したものはそれ以上のチェック不要
 			}
 		}
@@ -830,16 +848,16 @@ function downloadTVerVideo {
 	#ダウンロード履歴CSV書き出し
 	try {
 		#ロックファイルをロック
-		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
+		while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true) {
 			Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
-		$script:newVideo | Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8 -Append
+		$script:newVideo | Export-Csv $script:historyFilePath -NoTypeInformation -Encoding UTF8 -Append
 		Write-Debug 'ダウンロード履歴を書き込みました'
 	} catch { Write-ColorOutput '　ダウンロード履歴を更新できませんでした。スキップします' -FgColor 'Green' ; continue
-	} finally { $null = fileUnlock $script:lockFilePath }
-	$script:listFileData = Import-Csv $script:listFilePath -Encoding UTF8
+	} finally { $null = fileUnlock $script:historyLockFilePath }
+	$script:historyFileData = Import-Csv $script:historyFilePath -Encoding UTF8
 
 	#スキップやダウンロード対象外でなければyoutube-dl起動
 	if (($script:ignore -eq $true) -Or ($script:skip -eq $true)) {
@@ -857,6 +875,147 @@ function downloadTVerVideo {
 		Start-Sleep -Seconds 5			#5秒待機
 
 	}
+
+}
+
+#----------------------------------------------------------------------
+#TVer番組ダウンロードのメイン処理
+#----------------------------------------------------------------------
+function generateTVerVideoList {
+	[OutputType([System.Void])]
+	Param (
+		[Parameter(
+			Mandatory = $true,
+			Position = 0
+		)]
+		[Alias('Keyword')]
+		[String] $script:keywordName,
+
+		[Parameter(
+			Mandatory = $true,
+			Position = 1
+		)]
+		[Alias('URL')]
+		[String] $script:videoPageURL,
+
+		[Parameter(
+			Mandatory = $true,
+			Position = 2
+		)]
+		[Alias('Link')]
+		[String] $script:videoLink
+	)
+
+	$script:videoName = '' ; $script:videoFilePath = '' ; $script:videoSeriesPageURL = ''
+	$script:broadcastDate = '' ; $script:videoSeries = '' ; $script:videoSeason = '' ; $script:videoEpisode = '' ; $script:videoTitle = ''
+	$script:mediaName = '' ; $script:descriptionText = ''
+	$local:ignoreWord = ''
+	$script:newVideo = $null
+	$script:ignore = $false ; $script:skip = $false
+
+	#TVerのAPIを叩いて番組情報取得
+	goAnal -Event 'getinfo' -Type 'link' -ID $script:videoLink
+	try {
+		getVideoInfo -Link $script:videoLink
+	} catch {
+		Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:10' -FgColor 'Green'
+		continue			#次回再度トライするため以降の処理をせずに次の番組へ
+	}
+
+	# #番組情報のコンソール出力
+	# Write-ColorOutput "Series:$($script:videoSeries)" -FgColor 'Blue'
+	# Write-ColorOutput "SeriesID:$($script:videoSeriesID)" -FgColor 'Blue'
+	# Write-ColorOutput "Season:$($script:videoSeason)" -FgColor 'Blue'
+	# Write-ColorOutput "SeasonID:$($script:videoSeasonID)" -FgColor 'Blue'
+	# Write-ColorOutput "Epsode#:$($script:videoEpisode)" -FgColor 'Blue'
+	# Write-ColorOutput "Title:$($script:videoTitle)" -FgColor 'Blue'
+	# Write-ColorOutput "EpisodeID:$($script:videoLink.Replace('/episodes/', ''))" -FgColor 'Blue'
+	# Write-ColorOutput "Media:$($script:mediaName)" -FgColor 'Blue'
+	# Write-ColorOutput "Provider:$($script:providerName)" -FgColor 'Blue'
+	# Write-ColorOutput "BroadcastDate:$($script:broadcastDate)" -FgColor 'Blue'
+	# Write-ColorOutput "EndTime:$($script:endTime)" -FgColor 'Blue'
+	# Write-ColorOutput "Keyword:$($script:keywordName)" -FgColor 'Blue'
+
+	#ダウンロード対象外に入っている番組の場合はリスト出力しない
+	foreach ($local:ignoreTitle in $script:ignoreTitles) {
+
+		#正規表現用のエスケープ
+		$local:ignoreTitle = $local:ignoreTitle.replace('\', '\\')
+		$local:ignoreTitle = $local:ignoreTitle.replace('*', '\*')
+		$local:ignoreTitle = $local:ignoreTitle.replace('+', '\+')
+		$local:ignoreTitle = $local:ignoreTitle.replace('.', '\.')
+		$local:ignoreTitle = $local:ignoreTitle.replace('?', '\?')
+		$local:ignoreTitle = $local:ignoreTitle.replace('{', '\{')
+		$local:ignoreTitle = $local:ignoreTitle.replace('}', '\}')
+		$local:ignoreTitle = $local:ignoreTitle.replace('(', '\(')
+		$local:ignoreTitle = $local:ignoreTitle.replace(')', '\)')
+		$local:ignoreTitle = $local:ignoreTitle.replace('[', '\[')
+		$local:ignoreTitle = $local:ignoreTitle.replace(']', '\]')
+		$local:ignoreTitle = $local:ignoreTitle.replace('^', '\^')
+		$local:ignoreTitle = $local:ignoreTitle.replace('$', '\$')
+		$local:ignoreTitle = $local:ignoreTitle.replace('-', '\-')
+		$local:ignoreTitle = $local:ignoreTitle.replace('|', '\|')
+		$local:ignoreTitle = $local:ignoreTitle.replace('/', '\/')
+
+		if (($(getNarrowChars $script:videoSeries) -match $(getNarrowChars $local:ignoreTitle)) `
+				-Or ($(getNarrowChars $script:videoTitle) -match $(getNarrowChars $local:ignoreTitle))) {
+			$local:ignoreWord = $local:ignoreTitle
+			$script:ignore = $true
+			break		#ダウンロード対象外と合致したものはそれ以上のチェック不要
+		}
+	}
+
+	#スキップフラグが立っているかチェック
+	if ($script:ignore -eq $true) {
+		Write-ColorOutput '　番組をコメントアウトした状態でリストファイルに追加します'
+		$script:newVideo = [pscustomobject]@{
+			seriesName    = $script:videoSeries ;
+			seriesID      = $script:videoSeriesID ;
+			seasonName    = $script:videoSeason ;
+			seasonID      = $script:videoSeasonID ;
+			episodeNo     = $script:videoEpisode ;
+			episodeName   = $script:videoTitle ;
+			episodeID     = '#' + $($script:videoLink.Replace('/episodes/', '')) ;
+			media         = $script:mediaName ;
+			provider      = $script:providerName ;
+			broadcastDate = $script:broadcastDate ;
+			endTime       = $script:endTime ;
+			keyword       = $script:keywordName ;
+			ignoreWord    = $local:ignoreWord ;
+		}
+	} else {
+		Write-ColorOutput '　番組をリストファイルに追加します'
+		$script:newVideo = [pscustomobject]@{
+			seriesName    = $script:videoSeries ;
+			seriesID      = $script:videoSeriesID ;
+			seasonName    = $script:videoSeason ;
+			seasonID      = $script:videoSeasonID ;
+			episodeNo     = $script:videoEpisode ;
+			episodeName   = $script:videoTitle ;
+			episodeID     = $($script:videoLink.Replace('/episodes/', '')) ;
+			media         = $script:mediaName ;
+			provider      = $script:providerName ;
+			broadcastDate = $script:broadcastDate ;
+			endTime       = $script:endTime ;
+			keyword       = $script:keywordName ;
+			ignoreWord    = '' ;
+		}
+	}
+
+	#ダウンロードリストCSV書き出し
+	try {
+		#ロックファイルをロック
+		while ($(fileLock $script:listLockFilePath).fileLocked -ne $true) {
+			Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
+			Start-Sleep -Seconds 1
+		}
+		#ファイル操作
+		$script:newVideo | Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8 -Append
+		Write-Debug 'ダウンロードリストを書き込みました'
+	} catch { Write-ColorOutput '　ダウンロードリストを更新できませんでした。スキップします' -FgColor 'Green' ; continue
+	} finally { $null = fileUnlock $script:listLockFilePath }
+	$script:listFileData = Import-Csv $script:listFilePath -Encoding UTF8
+
 
 }
 
@@ -913,6 +1072,11 @@ function getVideoInfo {
 	#放送日
 	#	$response.Result.Episode.Content.BroadcastDateLabel
 	$script:broadcastDate = $(getNarrowChars ($response.Result.Episode.Content.BroadcastDateLabel).Replace('ほか', '').Replace('放送分', '放送')).Trim()
+
+	#配信終了日時
+	#	$response.Result.Episode.Content.endAt
+	$script:endTime = $(getNarrowChars ($response.Result.Episode.Content.endAt)).Trim()
+	$script:endTime = $(unixTimeToDateTime ($script:endTime)).AddHours(9)
 
 	#----------------------------------------------------------------------
 	#番組説明
@@ -1135,7 +1299,14 @@ function showVideoDebugInfo {
 			Position = 8
 		)]
 		[Alias('Time')]
-		[String] $local:processedTime
+		[String] $local:processedTime,
+
+		[Parameter(
+			Mandatory = $false,
+			Position = 9
+		)]
+		[Alias('EndTime')]
+		[String] $local:endTime
 	)
 
 	Write-Debug	"　番組エピソードページ:$local:videoPageURL"
@@ -1147,6 +1318,7 @@ function showVideoDebugInfo {
 	Write-Debug "　サブタイトル        :$local:videoTitle"
 	Write-Debug "　ファイル            :$local:videoFilePath"
 	Write-Debug "　取得日付            :$local:processedTime"
+	Write-Debug "　配信終了            :$local:endTime"
 }
 
 #----------------------------------------------------------------------
@@ -1269,32 +1441,32 @@ function cleanDB {
 	[OutputType([System.Void])]
 	Param ()
 
-	$local:listData0 = $null
-	$local:listData1 = $null
-	$local:listData2 = $null
-	$local:mergedList = @()
+	$local:historyData0 = $null
+	$local:historyData1 = $null
+	$local:historyData2 = $null
+	$local:mergedHist = @()
 	#ダウンロード対象外とされたもの
 	try {
 		#ロックファイルをロック
-		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
+		while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true) {
 			Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
 			Start-Sleep -Seconds 1
 		}
 
 		#ファイル操作
 		#videoValidatedが空白でないもの
-		$local:listData = ((Import-Csv $script:listFilePath -Encoding UTF8).Where({ $null -ne $_.videoValidated }))
-		$local:listData0 = (($local:listData).Where({ $_.videoValidated -eq '0' }))
-		$local:listData1 = (($local:listData).Where({ $_.videoValidated -eq '1' }))
-		$local:listData2 = (($local:listData).Where({ $_.videoValidated -eq '2' }))
+		$local:historyData = ((Import-Csv $script:historyFilePath -Encoding UTF8).Where({ $null -ne $_.videoValidated }))
+		$local:historyData0 = (($local:historyData).Where({ $_.videoValidated -eq '0' }))
+		$local:historyData1 = (($local:historyData).Where({ $_.videoValidated -eq '1' }))
+		$local:historyData2 = (($local:historyData).Where({ $_.videoValidated -eq '2' }))
 
-		if ($null -ne $local:listData0) { $local:mergedList += $local:listData0 }
-		if ($null -ne $local:listData1) { $local:mergedList += $local:listData1 }
-		if ($null -ne $local:listData2) { $local:mergedList += $local:listData2 }
-		$local:mergedList | Sort-Object -Property downloadDate | Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
+		if ($null -ne $local:historyData0) { $local:mergedHist += $local:historyData0 }
+		if ($null -ne $local:historyData1) { $local:mergedHist += $local:historyData1 }
+		if ($null -ne $local:historyData2) { $local:mergedHist += $local:historyData2 }
+		$local:mergedHist | Sort-Object -Property downloadDate | Export-Csv $script:historyFilePath -NoTypeInformation -Encoding UTF8
 
 	} catch { Write-ColorOutput '　ダウンロード履歴の更新に失敗しました' -FgColor 'Green'
-	} finally { $null = fileUnlock $script:lockFilePath }
+	} finally { $null = fileUnlock $script:historyLockFilePath }
 }
 
 #----------------------------------------------------------------------
@@ -1313,15 +1485,15 @@ function purgeDB {
 
 	try {
 		#ロックファイルをロック
-		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
+		while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true) {
 			Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
-		$local:purgedList = ((Import-Csv $script:listFilePath -Encoding UTF8).Where({ [DateTime]::ParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null) -gt $(Get-Date).AddDays(-1 * $local:retentionPeriod) }))
-		$local:purgedList | Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
+		$local:purgedHist = ((Import-Csv $script:historyFilePath -Encoding UTF8).Where({ [DateTime]::ParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null) -gt $(Get-Date).AddDays(-1 * $local:retentionPeriod) }))
+		$local:purgedHist | Export-Csv $script:historyFilePath -NoTypeInformation -Encoding UTF8
 	} catch { Write-ColorOutput '　ダウンロード履歴のクリーンアップに失敗しました' -FgColor 'Green'
-	} finally { $null = fileUnlock $script:lockFilePath }
+	} finally { $null = fileUnlock $script:historyLockFilePath }
 }
 
 #----------------------------------------------------------------------
@@ -1331,43 +1503,43 @@ function uniqueDB {
 	[OutputType([System.Void])]
 	Param ()
 
-	$local:processedList = $null
-	$local:ignoredList = $null
+	$local:processedHist = $null
+	$local:ignoredHist = $null
 	#ダウンロード対象外とされたもの
 	try {
 		#ロックファイルをロック
-		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
+		while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true) {
 			Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
 			Start-Sleep -Seconds 1
 		}
 
 		#ファイル操作
 		#ダウンロード対象外とされたもの
-		$local:ignoredList = ((Import-Csv $script:listFilePath -Encoding UTF8).Where({ $_.videoPath -eq '-- IGNORED --' }))
+		$local:ignoredHist = ((Import-Csv $script:historyFilePath -Encoding UTF8).Where({ $_.videoPath -eq '-- IGNORED --' }))
 
 		#ダウンロード対象外とされなかったものの重複削除。ファイル名で1つしかないもの残す
-		$local:processedList = Import-Csv $script:listFilePath -Encoding UTF8 | Group-Object -Property 'videoPath' | Where-Object count -EQ 1 | Select-Object -ExpandProperty group
+		$local:processedHist = Import-Csv $script:historyFilePath -Encoding UTF8 | Group-Object -Property 'videoPath' | Where-Object count -EQ 1 | Select-Object -ExpandProperty group
 
 		#ダウンロード対象外とされたものとダウンロード対象外とされなかったものを結合し出力
-		switch ($local:processedList) {
+		switch ($local:processedHist) {
 			$null {
-				switch ($local:ignoredList) {
+				switch ($local:ignoredHist) {
 					$null { retrun }
-					default { $local:mergedList = $local:ignoredList; break }
+					default { $local:mergedHist = $local:ignoredHist; break }
 				}; break		#breakがないと無限ループ
 			}
 			default {
-				switch ($local:ignoredList) {
-					$null { $local:mergedList = $local:processedList; break }
-					default { $local:mergedList = $local:processedList + $local:ignoredList; break }
+				switch ($local:ignoredHist) {
+					$null { $local:mergedHist = $local:processedHist; break }
+					default { $local:mergedHist = $local:processedHist + $local:ignoredHist; break }
 				}; break		#breakがないと無限ループ
 			}
 		}
 
-		$local:mergedList | Sort-Object -Property downloadDate | Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
+		$local:mergedHist | Sort-Object -Property downloadDate | Export-Csv $script:historyFilePath -NoTypeInformation -Encoding UTF8
 
 	} catch { Write-ColorOutput '　ダウンロード履歴の更新に失敗しました' -FgColor 'Green'
-	} finally { $null = fileUnlock $script:lockFilePath }
+	} finally { $null = fileUnlock $script:historyLockFilePath }
 }
 
 #----------------------------------------------------------------------
@@ -1400,35 +1572,35 @@ function checkVideo {
 	#これからチェックする番組のステータスをチェック
 	try {
 		#ロックファイルをロック
-		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
+		while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true) {
 			Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
-		$local:videoLists = Import-Csv $script:listFilePath -Encoding UTF8
-		$local:checkStatus = $(($local:videoLists).Where({ $_.videoPath -eq $local:videoFileRelativePath })).videoValidated
+		$local:videoHists = Import-Csv $script:historyFilePath -Encoding UTF8
+		$local:checkStatus = $(($local:videoHists).Where({ $_.videoPath -eq $local:videoFileRelativePath })).videoValidated
 	} catch {
 		Write-ColorOutput "　既にダウンロード履歴から削除されたようです: $local:videoFileRelativePath" 'Gray'
 		return
-	} finally { $null = fileUnlock $script:lockFilePath }
+	} finally { $null = fileUnlock $script:historyLockFilePath }
 
 	#0:未チェック、1:チェック済、2:チェック中
 	if ($local:checkStatus -eq 2 ) { Write-ColorOutput '　他プロセスでチェック中です' -FgColor 'Gray' ; return }
 	elseif ($local:checkStatus -eq 1 ) { Write-ColorOutput '　他プロセスでチェック済です' -FgColor 'Gray' ; return }
 	else {
 		#該当の番組のチェックステータスを"2"にして後続のチェックを実行
-		try { $(($local:videoLists).Where({ $_.videoPath -eq $local:videoFileRelativePath })).videoValidated = '2' }
+		try { $(($local:videoHists).Where({ $_.videoPath -eq $local:videoFileRelativePath })).videoValidated = '2' }
 		catch { Write-ColorOutput "　該当のレコードが見つかりませんでした: $local:videoFileRelativePath" 'Green' ; return }
 		try {
 			#ロックファイルをロック
-			while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
+			while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true) {
 				Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
 				Start-Sleep -Seconds 1
 			}
 			#ファイル操作
-			$local:videoLists | Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
+			$local:videoHists | Export-Csv $script:historyFilePath -NoTypeInformation -Encoding UTF8
 		} catch { Write-ColorOutput "　ダウンロード履歴を更新できませんでした: $local:videoFileRelativePath" 'Green' ; return }
-		finally { $null = fileUnlock $script:lockFilePath }
+		finally { $null = fileUnlock $script:historyLockFilePath }
 	}
 
 	$local:checkFile = '"' + $local:videoFilePath + '"'
@@ -1515,14 +1687,14 @@ function checkVideo {
 		#破損しているダウンロードファイルをダウンロード履歴から削除
 		try {
 			#ロックファイルをロック
-			while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
+			while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true) {
 				Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
 				Start-Sleep -Seconds 1
 			}
 			#ファイル操作
-			(Select-String -Pattern $local:videoFileRelativePath -LiteralPath $script:listFilePath -Encoding UTF8 -SimpleMatch -NotMatch).Line | Out-File $script:listFilePath -Encoding UTF8
+			(Select-String -Pattern $local:videoFileRelativePath -LiteralPath $script:historyFilePath -Encoding UTF8 -SimpleMatch -NotMatch).Line | Out-File $script:historyFilePath -Encoding UTF8
 		} catch { Write-ColorOutput "　ダウンロード履歴の更新に失敗しました: $local:videoFileRelativePath" 'Green'
-		} finally { $null = fileUnlock $script:lockFilePath }
+		} finally { $null = fileUnlock $script:historyLockFilePath }
 
 		#破損しているダウンロードファイルを削除
 		try { Remove-Item -LiteralPath $local:videoFilePath -Force -ErrorAction SilentlyContinue }
@@ -1532,17 +1704,17 @@ function checkVideo {
 		Write-ColorOutput '　チェックOKでした' -FgColor 'Gray'
 		try {
 			#ロックファイルをロック
-			while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
+			while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true) {
 				Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
 				Start-Sleep -Seconds 1
 			}
 			#ファイル操作
-			$local:videoLists = Import-Csv $script:listFilePath -Encoding UTF8
+			$local:videoHists = Import-Csv $script:historyFilePath -Encoding UTF8
 			#該当の番組のチェックステータスを"1"に
-			$(($local:videoLists).Where({ $_.videoPath -eq $local:videoFileRelativePath })).videoValidated = '1'
-			$local:videoLists | Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
+			$(($local:videoHists).Where({ $_.videoPath -eq $local:videoFileRelativePath })).videoValidated = '1'
+			$local:videoHists | Export-Csv $script:historyFilePath -NoTypeInformation -Encoding UTF8
 		} catch { Write-ColorOutput "　ダウンロード履歴を更新できませんでした: $local:videoFileRelativePath" 'Green' }
-		finally { $null = fileUnlock $script:lockFilePath }
+		finally { $null = fileUnlock $script:historyLockFilePath }
 	}
 
 }

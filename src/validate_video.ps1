@@ -151,42 +151,42 @@ Write-ColorOutput '整合性検証が終わっていない番組を検証しま�
 Write-ColorOutput '----------------------------------------------------------------------'
 try {
 	#ロックファイルをロック
-	while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
+	while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true) {
 		Write-ColorOutput 'ファイルのロック解除待ち中です' -FgColor 'Gray'
 		Start-Sleep -Seconds 1
 	}
 	#ファイル操作
-	$local:videoLists = (
-		Import-Csv $script:listFilePath -Encoding UTF8 `
+	$local:videoHists = (
+		Import-Csv $script:historyFilePath -Encoding UTF8 `
 		| Where-Object { $_.videoValidated -eq '0' } `
 		| Where-Object { $_.videoPath -ne '-- IGNORED --' } `
 		| Select-Object 'videoPath'
 	)
 } catch { Write-ColorOutput 'ダウンロード履歴の読み込みに失敗しました' -FgColor 'Green'
-} finally { $null = fileUnlock $script:lockFilePath }
+} finally { $null = fileUnlock $script:historyLockFilePath }
 
 
-if ($null -eq $local:videoLists) {
+if ($null -eq $local:videoHists) {
 	#チェックする番組なし
 	Write-ColorOutput '　すべての番組を検証済です' -FgColor 'Gray'
 	Write-ColorOutput ''
 } else {
 	#ダウンロードファイルをチェック
 	$local:validateTotal = 0
-	$local:validateTotal = $local:videoLists.Length
+	$local:validateTotal = $local:videoHists.Length
 
 	#ffmpegのデコードオプションの設定
 	if ($script:forceSoftwareDecodeFlag -eq $true ) {
 		$local:decodeOption = ''
 	} else {
 		if ($script:ffmpegDecodeOption -ne '') {
-			Write-ColorOutput '----------------------------------------------------------------------' -FgColor 'Green'
-			Write-ColorOutput 'ffmpegのデコードオプションが設定されてます                            ' -FgColor 'Green'
-			Write-ColorOutput "　・$($script:ffmpegDecodeOption)                                     " -FgColor 'Green'
-			Write-ColorOutput 'もし整合性検証がうまく進まない場合は、以下のどちらかをお試しください  ' -FgColor 'Green'
-			Write-ColorOutput '　・user_setting.ps1 でデコードオプションを変更する                   ' -FgColor 'Green'
-			Write-ColorOutput '　・user_setting.ps1 で $script:forceSoftwareDecodeFlag = $true と設定する' -FgColor 'Green'
-			Write-ColorOutput '----------------------------------------------------------------------' -FgColor 'Green'
+			Write-ColorOutput '---------------------------------------------------------------------------' -FgColor 'Green'
+			Write-ColorOutput 'ffmpegのデコードオプションが設定されてます                                 ' -FgColor 'Green'
+			Write-ColorOutput "　・$($script:ffmpegDecodeOption)                                          " -FgColor 'Green'
+			Write-ColorOutput 'もし整合性検証がうまく進まない場合は、以下のどちらかをお試しください       ' -FgColor 'Green'
+			Write-ColorOutput '　・user_setting.ps1 でデコードオプションを変更する                        ' -FgColor 'Green'
+			Write-ColorOutput '　・user_setting.ps1 で $script:forceSoftwareDecodeFlag = $true と設定する ' -FgColor 'Green'
+			Write-ColorOutput '---------------------------------------------------------------------------' -FgColor 'Green'
 		}
 		$local:decodeOption = $script:ffmpegDecodeOption
 	}
@@ -205,8 +205,8 @@ if ($null -eq $local:videoLists) {
 	#----------------------------------------------------------------------
 	$local:totalStartTime = Get-Date
 	$local:validateNum = 0
-	foreach ($local:videoList in $local:videoLists.videoPath) {
-		$local:videoFileRelativePath = $local:videoList
+	foreach ($local:videoHist in $local:videoHists.videoPath) {
+		$local:videoFileRelativePath = $local:videoHist
 
 		#処理時間の推計
 		$local:secElapsed = (Get-Date) - $local:totalStartTime
@@ -264,18 +264,18 @@ ShowProgressToast `
 #処理
 try {
 	#ロックファイルをロック
-	while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
+	while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true) {
 		Write-ColorOutput 'ファイルのロック解除待ち中です' -FgColor 'Gray'
 		Start-Sleep -Seconds 1
 	}
 	#ファイル操作
-	$local:videoLists = Import-Csv $script:listFilePath -Encoding UTF8
-	foreach ($local:uncheckedVido in $(($local:videoLists).Where({ $_.videoValidated -eq 2 }))) {
+	$local:videoHists = Import-Csv $script:historyFilePath -Encoding UTF8
+	foreach ($local:uncheckedVido in $(($local:videoHists).Where({ $_.videoValidated -eq 2 }))) {
 		$local:uncheckedVido.videoValidated = '0'
 	}
-	$local:videoLists | Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8
+	$local:videoHists | Export-Csv $script:historyFilePath -NoTypeInformation -Encoding UTF8
 } catch { Write-ColorOutput 'ダウンロード履歴の更新に失敗しました' -FgColor 'Green'
-} finally { $null = fileUnlock $script:lockFilePath }
+} finally { $null = fileUnlock $script:historyLockFilePath }
 
 #進捗表示
 UpdateProgessToast `

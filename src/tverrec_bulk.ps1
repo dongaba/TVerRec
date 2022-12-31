@@ -87,7 +87,7 @@ Write-ColorOutput '           ██     ██  ██  ██      ██   �
 Write-ColorOutput '           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          ' -FgColor 'Cyan'
 Write-ColorOutput '                                                                           ' -FgColor 'Cyan'
 Write-ColorOutput "        $script:appName : TVerダウンローダ                                 " -FgColor 'Cyan'
-Write-ColorOutput "                             一括ダウンロード版 version. $script:appVersion" -FgColor 'Cyan'
+Write-ColorOutput "                             一括ダウンロード version. $script:appVersion  " -FgColor 'Cyan'
 Write-ColorOutput '                                                                           ' -FgColor 'Cyan'
 Write-ColorOutput '===========================================================================' -FgColor 'Cyan'
 Write-ColorOutput ''
@@ -140,25 +140,25 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#ダウンロード履歴ファイルのデータを読み込み
 	try {
 		#ロックファイルをロック
-		while ($(fileLock $script:lockFilePath).fileLocked -ne $true) {
+		while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true) {
 			Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
-		$script:listFileData = Import-Csv $script:listFilePath -Encoding UTF8
+		$script:historyFileData = Import-Csv $script:historyFilePath -Encoding UTF8
 	} catch { Write-ColorOutput '　ダウンロード履歴を読み込めなかったのでスキップしました' -FgColor 'Green' ; continue
-	} finally { $null = fileUnlock $script:lockFilePath }
+	} finally { $null = fileUnlock $script:historyLockFilePath }
 
 	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 	foreach ($local:resultLink in $local:resultLinks) {
-		$local:listMatch = $script:listFileData | Where-Object { $_.videoPage -eq $local:resultLink }
-		if ($null -eq $local:listMatch) { $local:videoLinks += $local:resultLink }
+		$local:historyMatch = $script:historyFileData | Where-Object { $_.videoPage -eq $local:resultLink }
+		if ($null -eq $local:historyMatch) { $local:videoLinks += $local:resultLink }
 		else { $local:searchResultCount = $local:searchResultCount + 1 ; continue }
 	}
 
 	$local:videoNum = 0								#ジャンル内の処理中の番組の番号
 	$local:videoTotal = $local:videoLinks.Length	#ダウンロード対象のトータル番組数
-	Write-ColorOutput "　ダウンロード対象$($local:videoTotal)本 処理済$($local:searchResultCount - $local:videoTotal)本" -FgColor 'Gray'
+	Write-ColorOutput "　ダウンロード対象$($local:videoTotal)本 処理済$($local:searchResultCount)本" -FgColor 'Gray'
 
 	#処理時間の推計
 	$local:secElapsed = (Get-Date) - $local:totalStartTime
