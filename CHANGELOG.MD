@@ -1,5 +1,17 @@
 ﻿# Change Log
 
+## [2.6.7](https://github.com/dongaba/TVerRec/releases/tag/v2.6.7)
+
+### 2.6.7 Added
+
+### 2.6.7 Changed
+
+- シーズン名の取得方法を変更(複数シーズンがある際に現在メインで配信中のシリーズ名が返ってくることがあるため)
+
+### 2.6.7 Fixed
+
+- ReadmeのWikiへのリンク切れを修正
+
 ## [2.6.6](https://github.com/dongaba/TVerRec/releases/tag/v2.6.6)
 
 ### 2.6.6 Added
