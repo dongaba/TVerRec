@@ -1071,7 +1071,7 @@ function getVideoInfo {
 	#シーズン
 	#Season Name
 	#	$response.Result.Season.Content.Title
-	$script:videoSeason = $(getSpecialCharacterReplaced (getNarrowChars ($local:response.response.Result.Season.Content.Title))).Trim()
+	$script:videoSeason = $(getSpecialCharacterReplaced (getNarrowChars ($local:response.Result.Season.Content.Title))).Trim()
 	$script:videoSeasonID = $local:response.Result.Season.Content.Id
 
 	#エピソード
