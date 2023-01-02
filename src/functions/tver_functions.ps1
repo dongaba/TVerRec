@@ -1062,9 +1062,15 @@ function getVideoInfo {
 
 	#シリーズ
 	#	$response.Result.Series.Content.Title
-	#	複数シーズンがある際に現在メインで配信中のシリーズ名が返ってくることがあるのでこちらに変更
 	#	$response.Result.Episode.Content.SeriesTitle
-	$script:videoSeries = $(getSpecialCharacterReplaced (getNarrowChars ($local:response.Result.Episode.Content.SeriesTitle))).Trim()
+	#		Series.Content.Titleだと複数シーズンがある際に現在メインで配信中のシリーズ名が返ってくることがある
+	#		Episode.Content.SeriesTitleだとSeries名+Season名が設定される番組もある
+	#	なのでSeries.Content.TitleとEpisode.Content.SeriesTitleの短い方を採用する
+	if ($local:response.Result.Episode.Content.SeriesTitle.Length -le $local:response.Result.Series.Content.Title.Length ) {
+		$script:videoSeries = $(getSpecialCharacterReplaced (getNarrowChars ($local:response.Result.Episode.Content.SeriesTitle))).Trim()
+	} else {
+		$script:videoSeries = $(getSpecialCharacterReplaced (getNarrowChars ($local:response.Result.Series.Content.Title))).Trim()
+	}
 	$script:videoSeriesID = $local:response.Result.Series.Content.Id
 	$script:videoSeriesPageURL = 'https://tver.jp/series/' + $local:response.Result.Series.Content.Id
 
@@ -1118,6 +1124,9 @@ function getVideoInfo {
 
 	#シーズン名が本編の場合はシーズン名をクリア
 	if ($script:videoSeason -eq '本編') { $script:videoSeason = '' }
+
+	#シリーズ名がシーズン名で終わる場合はシーズン名をクリア
+	if ($script:videoSeries -like $('*' + $script:videoSeason)) { $script:videoSeason = '' }
 
 	#放送日を整形
 	$local:broadcastYMD = $null

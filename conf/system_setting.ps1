@@ -32,26 +32,36 @@
 Set-StrictMode -Off
 Set-StrictMode -Version Latest
 
-#ダウンロード先のフルパス(絶対パス指定)
-switch ($true) {
-	$IsWindows { $script:downloadBaseDir = 'W:' ; break }
-	$isLinux { $script:downloadBaseDir = '/mnt/Work' ; break }
-	$isMacOs { $script:downloadBaseDir = '/Volumes/Work' ; break }
-}
+#----------------------------------------------------------------------
+# 基本的な設定
+#----------------------------------------------------------------------
 
-#ダウンロード中の作業ファイル置き場のフルパス(絶対パス指定)
-switch ($true) {
-	$IsWindows { $script:downloadWorkDir = $env:TMP ; break }	#$env:TMP = C:\Users\<ユーザ名>\AppData\Local\Temp
-	$isLinux { $script:downloadWorkDir = '/var/tmp' ; break }
-	$isMacOs { $script:downloadWorkDir = '/Volumes/RamDrive/Temp' ; break }
-}
+#ダウンロード先のフルパス(絶対パス指定)
+#　ダウンロード先とは、検証が終わった動画ファイルが配置される場所です。
+#　規定の設定ではWドライブが設定されています。(通常のPCではWドライブはありませんので変更が必要です)
+#　例えば C:\Users\yamada-taro\Video にダウンロードするのであれば $script:downloadBaseDir = 'C:\Users\yamada-taro\Video' と設定します。
+#　MacOSやLinuxでは $script:downloadBaseDir = '/mnt/Work' や $script:downloadBaseDir = '/Volumes/Work' などのように設定します。
+$script:downloadBaseDir = 'W:'
+
+#ダウンロード中の作業フォルダのフルパス(絶対パス指定)
+#　作業フォルダは、動画のダウンロード中に処理途中のファイルが配置される場所です。
+#　多数のファイルが作成され読み書きが多発するので、SSDやRamDriveなどの高速なディスクを指定すると動作速度が向上します。
+#　規定の設定では各ユーザのTempフォルダ配下が設定されており、Windows環境であれば変更しなくても動作します。
+#　例えば C:\Temp にダウンロードするのであれば $script:downloadWorkDir = 'C:\Temp' と設定します。
+#　MacOSやLinuxでは $script:downloadWorkDir = '/var/tmp' や $script:downloadWorkDir = '/Volumes/RamDrive/Temp' などのように設定します。
+$script:downloadWorkDir = $env:TMP	#$env:TMP = C:\Users\<ユーザ名>\AppData\Local\Temp
 
 #保存先のフルパス(絶対パス指定)
-switch ($true) {
-	$IsWindows { $script:saveBaseDir = 'V:' ; break }
-	$isLinux { $script:saveBaseDir = '/mnt/Video' ; break }
-	$isMacOs { $script:saveBaseDir = '/Volumes/Video' ; break }
-}
+#　保存先とは、動画ファイルを最終的に整理するためのライブラリ等が配置されている場所です。
+#　規定の設定ではVドライブが設定されています。(通常のPCではVドライブはありませんので変更が必要です)
+#　ダウンロード先のフォルダで動画を再生するのであれば、適当な空フォルダを指定しておいてもOKです。
+#　例えば C:\TverLibrary を保存先にするのであれば $script:saveBaseDir = 'C:\TverLibrary' と設定します。
+#　MacOSやLinuxでは $script:saveBaseDir = '/var/Video' や $script:saveBaseDir = '/Volumes/RamDrive/Video' などのように設定します。
+$script:saveBaseDir = 'V:'
+
+#----------------------------------------------------------------------
+# 高度な設定
+#----------------------------------------------------------------------
 
 #同時ダウンロードファイル数
 $script:parallelDownloadFileNum = 5
@@ -84,26 +94,32 @@ $script:addEpisodeNumber = $false
 #  《ドラマ特区》、《新シリーズ放送記念》、《ドラマParavi》、《〇〇出演 「〇〇」スタート記念》などを除去する目的
 $script:removeSpecialNote = $false
 
-#youtube-dlのウィンドウの表示方法(Windowsのみ) Normal/Maximized/Minimized/Hidden
-$script:windowShowStyle = 'Hidden'
+#youtube-dlの取得元
+$script:preferredYoutubedl = 'yt-dlp'	#'yt-dlp' or 'ytdl-patched'
 
-#番組の整合性検証の高速化(「$true」で高速化。ただし、検証の精度は落ちる)
+#youtube-dlの自動アップデートを無効化
+$script:disableUpdateYoutubedl = $false
+
+#ffmpegの自動アップデートを無効化
+$script:disableUpdateFfmpeg = $false
+
+#ソフトウェアデコードの強制(「$true」でソフトウェアデコードの強制。ただしCPU使用率が上がる)
+$script:forceSoftwareDecodeFlag = $false
+
+#番組の整合性検証の高速化(「$true」で高速化。ただし検証の精度は落ちる)
 $script:simplifiedValidation = $false
 
 #番組の整合性検証の無効化(「$true」で無効化)
 $script:disableValidation = $false
 
-#youtube-dlの自動アップデートを無効化
-$script:disableUpdateYoutubedl = $false
+#youtube-dlとffmpegのウィンドウの表示方法(Windowsのみ) Normal/Maximized/Minimized/Hidden
+$script:windowShowStyle = 'Hidden'
 
-#youtube-dlの取得元
-$script:preferredYoutubedl = 'yt-dlp'	#'yt-dlp' or 'ytdl-patched'
 
-#ffmpegの自動アップデートを無効化
-$script:disableUpdateFfmpeg = $false
-
+#----------------------------------------------------------------------
+#	以下は変更を推奨しない設定。変更の際は自己責任で。
+#----------------------------------------------------------------------
 #ffmpegのデコードオプション
-$script:forceSoftwareDecodeFlag = $false				#ソフトウェアデコードを強制する場合は「$false」を「$true」に変える
 $script:ffmpegDecodeOption = ''							#ffmpegのデコードオプションを以下を参考に設定
 #以下は$script:ffmpegDecodeOptionの設定例
 #$script:ffmpegDecodeOption = '-hwaccel qsv -c:v h264_qsv'											#QSV : for Intel CPUs (Intel内蔵グラフィックを使用)
@@ -114,9 +130,6 @@ $script:ffmpegDecodeOption = ''							#ffmpegのデコードオプションを�
 #$script:ffmpegDecodeOption = '-c:v h264_v4l2m2m -num_output_buffers 32 -num_capture_buffers 32'	#for Raspberry Pi 4 64bit
 #$script:ffmpegDecodeOption = '-c:v h264_omx'														#for Raspberry Pi 3/4 32bit
 
-#----------------------------------------------------------------------
-#	以下は変更を推奨しない設定。変更の際は自己責任で。
-#----------------------------------------------------------------------
 #アプリケーション名・バージョン番号
 $script:appName = 'TVerRec'
 $script:appVersion = Get-Content '..\VERSION'
