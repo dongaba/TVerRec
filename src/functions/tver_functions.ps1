@@ -1064,7 +1064,7 @@ function getVideoInfo {
 	#	$response.Result.Series.Content.Title
 	#	複数シーズンがある際に現在メインで配信中のシリーズ名が返ってくることがあるのでこちらに変更
 	#	$response.Result.Episode.Content.SeriesTitle
-	$script:videoSeason = $(getSpecialCharacterReplaced (getNarrowChars ($local:response.Result.Episode.Content.SeriesTitle))).Trim()
+	$script:videoSeries = $(getSpecialCharacterReplaced (getNarrowChars ($local:response.Result.Episode.Content.SeriesTitle))).Trim()
 	$script:videoSeriesID = $local:response.Result.Series.Content.Id
 	$script:videoSeriesPageURL = 'https://tver.jp/series/' + $local:response.Result.Series.Content.Id
 
