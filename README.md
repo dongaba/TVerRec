@@ -13,7 +13,7 @@
 [![Video Download](https://hits.sh/github.com/dongaba/TVerRec/download.svg?view=today-total&color=9f9f9f&label=Video%20Download)](https://hits.sh/github.com/dongaba/TVerRec/download)
 [![Video Validate](https://hits.sh/github.com/dongaba/TVerRec/validate.svg?view=today-total&color=9f9f9f&label=Video%20Validate)](https://hits.sh/github.com/dongaba/TVerRec/validate)
 
-TVerRecは、テレビ番組配信サイトTVer(ティーバー<https://tver.jp/>)の番組をダウンロード保存するためのダウンローダー、ダウンロード支援ツールです。
+TVerRecは、テレビ番組配信サイトTVer(ティーバー<https://tver.jp>)の番組をダウンロード保存するためのダウンローダー、ダウンロード支援ツールです。
 
 - TVerRecはPowerShell CoreをインストールしたWindows/MacOS/Linuxで動作します。
 - **TVerRecはWindows PowerShellをサポートしなくなりました。PowerShell Coreでご利用ください。**
@@ -52,9 +52,9 @@ TVerRecは、テレビ番組配信サイトTVer(ティーバー<https://tver.jp/
 
 - 一括ダウンロード
 
-  - TVerのカテゴリ毎のページを指定して`win/start_tverrec.bat`で起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
-  - 同様に、推しのタレントや番組を指定して`win/start_tverrec.bat`で起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
-  - 同様に、各放送局毎のページを指定して`win/start_tverrec.bat`で起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
+  - TVerのカテゴリ毎のページを指定して起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
+  - 同様に、推しのタレントや番組を指定して起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
+  - 同様に、各放送局毎のページを指定して起動すれば、新しい番組が配信されたら自動的にダウンロードされるようになります。
 
 - リストダウンロード
 

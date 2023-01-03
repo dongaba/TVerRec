@@ -258,10 +258,10 @@ function getVideoLinksFromKeyword {
 	$script:requestHeader = @{
 		'x-tver-platform-type' = 'web' ;
 		'Origin'               = 'https://tver.jp' ;
-		'Referer'              = 'https://tver.jp/' ;
+		'Referer'              = 'https://tver.jp' ;
 	}
 	$script:tverLinks = @()
-	if ( $local:keywordName.IndexOf('https://tver.jp/') -eq 0) {
+	if ( $local:keywordName.IndexOf('https://tver.jp') -eq 0) {
 		#URL形式の場合番組ページのLinkを取得
 		try { $local:keywordNamePage = Invoke-WebRequest $local:keywordName -TimeoutSec $script:timeoutSec }
 		catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:00' -FgColor 'Green' ; continue }
@@ -907,7 +907,7 @@ function downloadTVerVideo {
 }
 
 #----------------------------------------------------------------------
-#TVer番組ダウンロードのメイン処理
+#TVer番組ダウンロードリスト作成のメイン処理
 #----------------------------------------------------------------------
 function generateTVerVideoList {
 	[OutputType([System.Void])]
@@ -1087,6 +1087,7 @@ function getVideoInfo {
 
 	#放送局
 	#	$response.Result.Episode.Content.BroadcasterName
+	#	$response.Result.Episode.Content.ProductionProviderName
 	$script:mediaName = $(getSpecialCharacterReplaced (getNarrowChars ($local:response.Result.Episode.Content.BroadcasterName))).Trim()
 	$script:providerName = $(getSpecialCharacterReplaced (getNarrowChars ($local:response.Result.Episode.Content.ProductionProviderName))).Trim()
 
@@ -1104,8 +1105,8 @@ function getVideoInfo {
 	$local:versionNum = $local:response.result.episode.content.version
 	$local:tverVideoInfoBaseURL = 'https://statics.tver.jp/content/episode/'
 	$local:requestHeader = @{
-		'origin'  = 'https://tver.jp';
-		'referer' = 'https://tver.jp/'
+		'origin'  = 'https://tver.jp' ;
+		'referer' = 'https://tver.jp' ;
 	}
 	$local:tverVideoInfoURL = $local:tverVideoInfoBaseURL + $local:episodeID + '.json?v=' + $local:versionNum
 	$local:videoInfo = Invoke-RestMethod -Uri $local:tverVideoInfoURL -Method 'GET' -Headers $local:requestHeader -TimeoutSec $script:timeoutSec
@@ -1125,8 +1126,8 @@ function getVideoInfo {
 	#シーズン名が本編の場合はシーズン名をクリア
 	if ($script:videoSeason -eq '本編') { $script:videoSeason = '' }
 
-	#シリーズ名がシーズン名で終わる場合はシーズン名をクリア
-	if ($script:videoSeries -like $('*' + $script:videoSeason)) { $script:videoSeason = '' }
+	#シリーズ名がシーズン名を含む場合はシーズン名をクリア
+	if ($script:videoSeries -like $('*' + $script:videoSeason + '*' )) { $script:videoSeason = '' }
 
 	#放送日を整形
 	$local:broadcastYMD = $null
