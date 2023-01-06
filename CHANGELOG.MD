@@ -1,5 +1,15 @@
 ﻿# Change Log
 
+## [2.6.8](https://github.com/dongaba/TVerRec/releases/tag/v2.6.8)
+
+### 2.6.8 Added
+
+### 2.6.8 Changed
+
+### 2.6.8 Fixed
+
+- v2.6.7で追加した2つのBATファイルの改行コードが不正だった問題を修正
+
 ## [2.6.7](https://github.com/dongaba/TVerRec/releases/tag/v2.6.7)
 
 ### 2.6.7 Added
