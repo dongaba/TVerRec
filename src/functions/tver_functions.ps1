@@ -1369,6 +1369,7 @@ function executeYtdl {
 	$local:chaptDir = '"chapter:' + $script:downloadWorkDir + '"'
 	$local:descDir = '"description:' + $script:downloadWorkDir + '"'
 	$local:saveFile = '"' + $script:videoName + '"'
+	$local:ffmpegPath = '"' + $script:ffmpegPath + '"'
 
 	$local:ytdlArgs = '--format mp4'
 	$local:ytdlArgs += ' --console-title'
@@ -1394,7 +1395,7 @@ function executeYtdl {
 	$local:ytdlArgs += " --paths $local:descDir"
 	$local:ytdlArgs += " --output $local:saveFile"
 	$local:ytdlArgs += " $local:videoPageURL"
-	$local:ytdlArgs += " --ffmpeg-location $script:ffmpegPath"
+	$local:ytdlArgs += " --ffmpeg-location $local:ffmpegPath"
 
 	if ($IsWindows) {
 		try {
