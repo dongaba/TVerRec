@@ -1394,6 +1394,7 @@ function executeYtdl {
 	$local:ytdlArgs += " --paths $local:descDir"
 	$local:ytdlArgs += " --output $local:saveFile"
 	$local:ytdlArgs += " $local:videoPageURL"
+	$local:ytdlArgs += " --ffmpeg-location $script:ffmpegPath"
 
 	if ($IsWindows) {
 		try {
