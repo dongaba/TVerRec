@@ -1445,7 +1445,7 @@ function waitTillYtdlProcessIsZero () {
 
 	while ($local:ytdlCount -ne 0) {
 		try {
-			Write-Verbose "現在のダウンロードプロセス一覧 ($local:ytdlCount 個)" -FgColor 'Gray'
+			Write-Verbose "現在のダウンロードプロセス一覧 ($local:ytdlCount 個)"
 			Start-Sleep -Seconds 60			#1分待機
 			switch ($true) {
 				$IsWindows { $local:ytdlCount = [Math]::Round( (Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) ; break }
