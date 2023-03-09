@@ -158,6 +158,10 @@ if ($local:moveToPathTotal -ne 0) {
 		#処理
 		Write-ColorOutput "$($local:moveToPathNum)/$($local:moveToPathTotal) - $($local:moveToPath)" -NoNewline $true
 		$local:targetFolderName = Split-Path -Leaf $local:moveToPath
+		if ($script:sortVideoByMedia) {
+			$local:mediaName = Split-Path -Leaf $(Split-Path -Parent $local:moveToPath)
+			$local:targetFolderName = $(Join-Path $local:mediaName $local:targetFolderName)
+		}
 		#同名フォルダが存在する場合は配下のファイルを移動
 		$local:moveFromPath = $(Join-Path $script:downloadBaseDir $local:targetFolderName)
 		if (Test-Path $local:moveFromPath) {
