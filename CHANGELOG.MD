@@ -1,5 +1,20 @@
 ﻿# Change Log
 
+## [2.6.9](https://github.com/dongaba/TVerRec/releases/tag/v2.6.9)
+
+3件のプルリクを取り込み
+
+### 2.6.9 Added
+
+### 2.6.9 Changed
+
+- youtube-dlにffmpegのPathを渡すように変更
+
+### 2.6.9 Fixed
+
+- TV局毎のディレクトリに保存している際に、番組を最終保存先に正しく移動できるように修正
+- youtube-dlの実行監視の不具合を修正
+
 ## [2.6.8](https://github.com/dongaba/TVerRec/releases/tag/v2.6.8)
 
 ### 2.6.8 Added
