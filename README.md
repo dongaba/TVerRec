@@ -8,10 +8,10 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/1b42499be57b48818db8c3c90d73adb3)](https://app.codacy.com/gh/dongaba/TVerRec/dashboard)
 [![DevSkim](https://github.com/dongaba/TVerRec/actions/workflows/devskim.yml/badge.svg)](https://github.com/dongaba/TVerRec/actions/workflows/devskim.yml)
 [![PSScriptAnalyzer](https://github.com/dongaba/TVerRec/actions/workflows/powershell.yml/badge.svg)](https://github.com/dongaba/TVerRec/actions/workflows/powershell.yml)
-[![TVerRec Launch](https://hits.sh/github.com/dongaba/TVerRec/launch.svg?view=total&color=9f9f9f&label=TVerRec%20Launch)](https://hits.sh/github.com/dongaba/TVerRec/launch)
-[![Video Searche](https://hits.sh/github.com/dongaba/TVerRec/search.svg?view=total&color=9f9f9f&label=Video%20Search)](https://hits.sh/github.com/dongaba/TVerRec/search)
-[![Video Download](https://hits.sh/github.com/dongaba/TVerRec/download.svg?view=total&color=9f9f9f&label=Video%20Download)](https://hits.sh/github.com/dongaba/TVerRec/download)
-[![Video Validate](https://hits.sh/github.com/dongaba/TVerRec/validate.svg?view=total&color=9f9f9f&label=Video%20Validate)](https://hits.sh/github.com/dongaba/TVerRec/validate)
+[![TVerRec Launched](https://hits.sh/github.com/dongaba/TVerRec/launch.svg?view=total&color=9f9f9f&label=TVerRec%20Launch)](https://hits.sh/github.com/dongaba/TVerRec/launch)
+[![Video Searched](https://hits.sh/github.com/dongaba/TVerRec/search.svg?view=total&color=9f9f9f&label=Video%20Search)](https://hits.sh/github.com/dongaba/TVerRec/search)
+[![Video Downloaded](https://hits.sh/github.com/dongaba/TVerRec/download.svg?view=total&color=9f9f9f&label=Video%20Download)](https://hits.sh/github.com/dongaba/TVerRec/download)
+[![Video Validated](https://hits.sh/github.com/dongaba/TVerRec/validate.svg?view=total&color=9f9f9f&label=Video%20Validate)](https://hits.sh/github.com/dongaba/TVerRec/validate)
 
 TVerRec は、テレビ番組配信サイト TVer(ティーバー<https://tver.jp>)の番組をダウンロード保存するためのダウンローダー、ダウンロード支援ツールです。
 
