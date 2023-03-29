@@ -35,7 +35,6 @@ pid*.txt
 brightcovenew*
 ffmpeg_error*
 
-
 #開発関連ファイル
 dev*
 dev*/*
