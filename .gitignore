@@ -8,19 +8,6 @@
 debug
 debug/*
 
-#dockerフォルダ配下のフォルダは不要
-docker/bin
-docker/conf
-docker/db
-docker/img
-docker/lib
-docker/list
-docker/src
-docker/unix
-docker/win
-docker/VERSION
-docker/push.sh
-
 #アーカイブ
 *.7z
 *.zip
