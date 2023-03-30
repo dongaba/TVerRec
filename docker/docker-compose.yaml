@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+
+  tverrec:
+    container_name: tverrec
+    image: tverrec
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    tmpfs:
+      - /mnt/Temp
+    volumes:
+      - type: bind
+        source: /mnt/c/Work
+        target: /mnt/Work
+      - type: bind
+        source: /mnt/c/Video
+        target: /mnt/Video
+      - type: bind
+        source: ./conf
+        target: /app/TVerRec/conf
+      - type: bind
+        source: ./db
+        target: /app/TVerRec/db
+      - type: bind
+        source: ./list
+        target: /app/TVerRec/list
+    network_mode: host
+    restart: always
+    command: start_tverrec.sh
+
