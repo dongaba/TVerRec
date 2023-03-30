@@ -19,6 +19,7 @@ docker/src
 docker/unix
 docker/win
 docker/VERSION
+docker/push.sh
 
 #アーカイブ
 *.7z

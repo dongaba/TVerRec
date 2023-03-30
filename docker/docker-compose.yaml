@@ -1,13 +1,30 @@
-version: '3'
+version: '3.8'
 
 services:
-
   tverrec:
-    container_name: tverrec
-    image: tverrec
+    container_name: bulkdownload
+    image: dongaba/tverrec
+    hostname: 'tverrec'
+    restart: always
+    tty: true
+
+    #network_mode: "host"
+    #pid: "host"
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    ports:
+      - "20022:20022"
     build:
       context: .
       dockerfile: ./Dockerfile
+
+    environment:
+      POWERSHELL_TELEMETRY_OPTOUT: 1
+      COMPOSE_PROJECT_NAME: tverrec
+
+    user: tverrec
+
     tmpfs:
       - /mnt/Temp
     volumes:
@@ -26,7 +43,9 @@ services:
       - type: bind
         source: ./list
         target: /app/TVerRec/list
-    network_mode: host
-    restart: always
-    command: start_tverrec.sh
+
+    cap_add:
+      - NET_ADMIN
+    cap_drop:
+      - SYS_ADMIN
 

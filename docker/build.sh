@@ -43,12 +43,12 @@ sed -i -e "s#'W:'#'/mnt/Work'#g" ./conf/system_setting.ps1
 sed -i -e "s#=\ \$env:TMP#=\ '/mnt/Temp'#g" ./conf/system_setting.ps1
 sed -i -e "s#'V:'#'/mnt/Video'#g" ./conf/system_setting.ps1
 
-#コンテナイメージの作成
-#docker image build --no-cache -t tverrec .
+#コンテナイメージ作成
+#docker build --no-cache -t dongaba/tverrec .
 docker-compose build --no-cache
 
 #コンテナ起動
-#docker container run -it tverrec
+#docker run --rm -it dongaba/tverrec
 docker-compose up -d
 
 #掃除

@@ -7,7 +7,6 @@ LABEL org.opencontainers.image.title="TVerRec" \
 	org.opencontainers.image.authors="dongaba" \
 	org.opencontainers.image.licenses=MIT
 
-#テレメトリ送信からのオプトアウト
 ENV POWERSHELL_TELEMETRY_OPTOUT=1
 
 #必要ソフトのインストール
@@ -17,31 +16,43 @@ RUN --mount=type=cache,target=/var/lib/apt \
 	&& apt-get install --no-install-recommends -y \
 	procps \
 	yt-dlp \
-	curl \
 	wget \
 	xz-utils \
+	openssh-server \
+	vim-tiny \
+	net-tools \
+	sudo \
 	&& apt-get autoremove -y \
 	&& apt-get clean -y
+
+#User追加
+ARG USERNAME=tverrec \
+	GROUPNAME=tverrec \
+	PASSWORD=tverrec \
+	UID=1000 \
+	GID=1000
+RUN groupadd -g $GID $GROUPNAME \
+	&& useradd -m -s /bin/bash -u $UID -g $GID -G sudo $USERNAME \
+	&& echo "$USERNAME:$PASSWORD" | chpasswd \
+	#&& echo 'Defaults visiblepw' | sudo tee -a /etc/sudoers \
+	&& echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" | sudo tee -a /etc/sudoers
+
+#ssh
+ENV NOTVISIBLE "in users profile"
+RUN sed -ri 's/^#Port 22/Port 20022/' /etc/ssh/sshd_config \
+	&& sed -ri 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' /etc/pam.d/sshd \
+	&& echo 'export VISIBLE=now' | sudo tee -a /etc/profile \
+	&& ssh-keygen -A
+EXPOSE 20022
 
 #ディレクトリの作成
 RUN mkdir -p -m 777 /app/TVerRec \
 	/mnt/Temp \
 	/mnt/Work \
-	/mnt/Video 
-
+	/mnt/Video
 
 #TVerRecのCOPY
 COPY . /app/TVerRec/
-
-#User追加
-ARG USERNAME=tverrec \
-	GROUPNAME=tverrec \
-	UID=1000 \
-	GID=1000
-RUN groupadd -g $GID $GROUPNAME && \
-	useradd -m -s /bin/bash -u $UID -g $GID $USERNAME \
-	&& chown -R 1000:1000 /app/TVerRec
-USER $USERNAME
 
 #ffmpeg
 RUN cd /tmp \
@@ -55,6 +66,9 @@ RUN cd /tmp \
 #youtube-dl
 RUN cp -f /usr/bin/yt-dlp /app/TVerRec/bin/youtube-dl
 
+#権限変更
+RUN chown -R $UID:$GID /app/TVerRec
+USER $USERNAME
+
 WORKDIR /app/TVerRec/unix
-ENTRYPOINT ["bash"]
-CMD ["start_tverrec.sh"]
+ENTRYPOINT ["bash", "-c","sudo service ssh start && ./start_tverrec.sh"]
