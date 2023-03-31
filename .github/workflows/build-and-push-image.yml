@@ -25,10 +25,12 @@ jobs:
           flavor: latest=true
           tags: |
             type=schedule
+            type=ref,event=branch
             type=ref,event=pr
             type=semver,pattern={{raw}}
             type=semver,pattern={{version}}
-
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
