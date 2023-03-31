@@ -30,8 +30,7 @@
 
 echo -en "\033];TVerRec\007"
 
-export HostName="$(hostname)"
-export PIDFile="pid-$HostName.txt"
+export PIDFile="pid-$(hostname).txt"
 
 if [ -e "$PIDFile" ]; then
 	export targetPID=$(cat "$PIDFile")

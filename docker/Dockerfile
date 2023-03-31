@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/powershell:latest
+FROM mcr.microsoft.com/powershell:lts-ubuntu-20.04
 
 LABEL org.opencontainers.image.title="TVerRec" \
 	org.opencontainers.image.description="TVerRec is a download tool to download and save TVer programs. You can download TVer programs by specifying the name of genre, talent, program and more." \
@@ -29,7 +29,7 @@ RUN --mount=type=cache,target=/var/lib/apt \
 ARG UID=1000 \
 	GID=1000
 RUN groupadd -g $GID tverrec \
-	&& useradd -m -s /bin/bash -u $UID -g $GID tverrec \
+	&& useradd -l -m -s /bin/bash -u $UID -g $GID tverrec \
 	&& echo "tverrec:tverrec" | chpasswd 
 
 #ssh
@@ -51,7 +51,7 @@ RUN chmod a+x /app/TVerRec/entrypoint.sh \
 
 #youtube-dl & ffmpeg
 RUN cp -f /usr/bin/yt-dlp /app/TVerRec/bin/youtube-dl \
-	&&wget -O /tmp/ffmpeg-release-amd64-static.tar.xz https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz \
+	&&wget --progress -O /tmp/ffmpeg-release-amd64-static.tar.xz https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz \
 	&& tar -Jxvf /tmp/ffmpeg-release-amd64-static.tar.xz -C /tmp \
 	&& cp -f /tmp/ffmpeg*amd64-static/ff* /app/TVerRec/bin/. \
 	&& chmod a+x /app/TVerRec/bin/ff* \

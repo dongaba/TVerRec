@@ -30,8 +30,7 @@
 
 echo -en "\033];TVerRec\007"
 
-export HostName="$(hostname)"
-export PIDFile="pid-$HostName.txt"
+export PIDFile="pid-$(hostname).txt"
 export retryTime=60
 export sleepTime=3600
 

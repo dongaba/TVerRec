@@ -34,7 +34,7 @@ jobs:
 
       - name: Available platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
-        
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v2
         with:
