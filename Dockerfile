@@ -7,8 +7,6 @@ LABEL org.opencontainers.image.title="TVerRec" \
 	org.opencontainers.image.authors="dongaba" \
 	org.opencontainers.image.licenses=MIT
 
-ENV POWERSHELL_TELEMETRY_OPTOUT=1
-
 #必要ソフトのインストール
 RUN --mount=type=cache,target=/var/lib/apt \
 	--mount=type=cache,target=/var/cache/apt \
@@ -33,7 +31,7 @@ RUN groupadd -g "$GID" tverrec \
 	&& useradd -l -m -s /bin/bash -u "$UID" -g "$GID" tverrec \
 	&& echo "tverrec:tverrec" | chpasswd 
 
-#ssh
+#ssh設定
 ENV NOTVISIBLE "in users profile"
 RUN sed -ri 's/^#Port 22/Port 20022/' /etc/ssh/sshd_config \
 	&& sed -ri 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' /etc/pam.d/sshd \
@@ -55,8 +53,7 @@ RUN mkdir -p -m 777 \
 	/mnt/Work \
 	/mnt/Video
 
-#TVerRecのCOPY
-#COPY ./TVerRec /app/TVerRec/
+#TVerRecのインストール
 COPY bin /app/TVerRec/bin
 COPY conf /app/TVerRec/conf
 COPY db /app/TVerRec/db
@@ -68,7 +65,7 @@ COPY win /app/TVerRec/win
 COPY VERSION /app/TVerRec
 COPY docker/entrypoint.sh /app/TVerRec/
 
-#youtube-dl & ffmpeg
+#youtube-dl & ffmpegインストール
 RUN cp -f /usr/bin/yt-dlp /app/TVerRec/bin/youtube-dl \
 	&& wget -q --show-progress -O /tmp/ffmpeg-release-amd64-static.tar.xz https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz \
 	&& tar -Jxf /tmp/ffmpeg-release-amd64-static.tar.xz -C /tmp \
@@ -76,6 +73,7 @@ RUN cp -f /usr/bin/yt-dlp /app/TVerRec/bin/youtube-dl \
 	&& chmod a+x /app/TVerRec/bin/ff* \
 	&& rm -rf /tmp/ffmpeg*
 
+#コンテナ用修正
 RUN rm -rf /app/TVerRec/*/.gitkeep \
 	&& sed -i -e 's#\.\./src#/app/TVerRec/src#g' /app/TVerRec/unix/*.sh \
 	&& sed -i -e "s#'TVerRec'#'TVerRecContainer'#g" /app/TVerRec/conf/system_setting.ps1 \
@@ -86,6 +84,7 @@ RUN rm -rf /app/TVerRec/*/.gitkeep \
 #権限変更
 RUN chown -R tverrec:tverrec /app/TVerRec \
 	&& chmod a+x /app/TVerRec/entrypoint.sh
+ENV POWERSHELL_TELEMETRY_OPTOUT=1
 
 WORKDIR /app/TVerRec/unix
 ENTRYPOINT ["/app/TVerRec/entrypoint.sh"]
