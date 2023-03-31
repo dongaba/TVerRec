@@ -50,7 +50,8 @@ RUN chmod a+x /app/TVerRec/entrypoint.sh \
 	/mnt/Video
 
 #youtube-dl
-RUN cp -f /usr/bin/yt-dlp /app/TVerRec/bin/youtube-dl
+RUN mkdir -p /app/TVerRec/bin \
+	&& cp -f /usr/bin/yt-dlp /app/TVerRec/bin/youtube-dl
 
 #ffmpeg
 RUN wget -O /tmp/ffmpeg-release-amd64-static.tar.xz https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz \
