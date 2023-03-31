@@ -41,25 +41,51 @@ RUN sed -ri 's/^#Port 22/Port 20022/' /etc/ssh/sshd_config \
 	&& ssh-keygen -A
 EXPOSE 20022
 
-#TVerRecのCOPY
-COPY ./TVerRec /app/TVerRec/
-COPY entrypoint.sh /app/TVerRec/
-RUN chmod a+x /app/TVerRec/entrypoint.sh \
-	&& mkdir -p -m 777 /app/TVerRec/bin \
+#ディレクトリ準備
+RUN mkdir -p -m 777 \ 
+	/app/TVerRec/bin \
+	/app/TVerRec/conf \
+	/app/TVerRec/db \
+	/app/TVerRec/img \
+	/app/TVerRec/list \
+	/app/TVerRec/src \
+	/app/TVerRec/unix \
+	/app/TVerRec/win \
 	/mnt/Temp \
 	/mnt/Work \
 	/mnt/Video
 
+#TVerRecのCOPY
+#COPY ./TVerRec /app/TVerRec/
+COPY bin /app/TVerRec/bin
+COPY conf /app/TVerRec/conf
+COPY db /app/TVerRec/db
+COPY img /app/TVerRec/img
+COPY list /app/TVerRec/list
+COPY src /app/TVerRec/src
+COPY unix /app/TVerRec/unix
+COPY win /app/TVerRec/win
+COPY VERSION /app/TVerRec
+COPY docker/entrypoint.sh /app/TVerRec/
+
 #youtube-dl & ffmpeg
 RUN cp -f /usr/bin/yt-dlp /app/TVerRec/bin/youtube-dl \
-	&&wget -q --show-progress -O /tmp/ffmpeg-release-amd64-static.tar.xz https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz \
-	&& tar -Jxvf /tmp/ffmpeg-release-amd64-static.tar.xz -C /tmp \
+	&& wget -q --show-progress -O /tmp/ffmpeg-release-amd64-static.tar.xz https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz \
+	&& tar -Jxf /tmp/ffmpeg-release-amd64-static.tar.xz -C /tmp \
 	&& cp -f /tmp/ffmpeg*amd64-static/ff* /app/TVerRec/bin/. \
 	&& chmod a+x /app/TVerRec/bin/ff* \
 	&& rm -rf /tmp/ffmpeg*
 
+RUN rm -rf /app/TVerRec/*/.gitkeep \
+	&& sed -i -e 's#\.\./src#/app/TVerRec/src#g' /app/TVerRec/unix/*.sh \
+	&& sed -i -e "s#'TVerRec'#'TVerRecContainer'#g" /app/TVerRec/conf/system_setting.ps1 \
+	&& sed -i -e "s#'W:'#'/mnt/Work'#g" /app/TVerRec/conf/system_setting.ps1 \
+	&& sed -i -e "s#=\ \$env:TMP#=\ '/mnt/Temp'#g" /app/TVerRec/conf/system_setting.ps1 \
+	&& sed -i -e "s#'V:'#'/mnt/Video'#g" /app/TVerRec/conf/system_setting.ps1
+
 #権限変更
-RUN chown -R tverrec:tverrec /app/TVerRec
+RUN chown -R tverrec:tverrec /app/TVerRec \
+	&& chmod a+x /app/TVerRec/entrypoint.sh
 
 WORKDIR /app/TVerRec/unix
 ENTRYPOINT ["/app/TVerRec/entrypoint.sh"]
