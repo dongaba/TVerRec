@@ -41,7 +41,7 @@ jobs:
           context: ./docker
           push: true
           platforms: linux/amd64
-          tags: ${{ steps.meta.outputs.version }}
+          tags: type=semver,pattern={{version}}
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Docker Hub Description
