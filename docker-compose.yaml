@@ -5,15 +5,11 @@ services:
     container_name: bulkdownload
     image: dongaba/tverrec:latest
     hostname: 'tverrec'
-    restart: always
+    restart: unless-stopped
     tty: true
     user: tverrec
 
     #network_mode: "host"
-    #pid: "host"
-    dns:
-      - 1.1.1.1
-      - 8.8.8.8
     build:
       context: .
       dockerfile: ./Dockerfile
@@ -47,9 +43,3 @@ services:
     cap_drop:
       - NET_ADMIN
       - SYS_ADMIN
-
-    #cap_add:
-    #  - NET_ADMIN
-    #cap_drop:
-    #  - SYS_ADMIN
-

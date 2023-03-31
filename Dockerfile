@@ -1,11 +1,9 @@
-FROM mcr.microsoft.com/powershell:lts-ubuntu-20.04
+FROM mcr.microsoft.com/powershell:7.3-ubuntu-22.04
 
 ENV POWERSHELL_TELEMETRY_OPTOUT=1
 SHELL ["/bin/bash", "-c"]
 
 LABEL org.opencontainers.image.title="TVerRec" \
-	org.opencontainers.image.description="TVerRec is a download tool to download and save TVer programs. You can download TVer programs by specifying the name of genre, talent, program and more." \
-	org.opencontainers.image.version=2.6.9 \
 	org.opencontainers.image.source=https://github.com/dongaba/TVerRec \
 	org.opencontainers.image.authors="dongaba" \
 	org.opencontainers.image.licenses=MIT
