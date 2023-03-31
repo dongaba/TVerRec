@@ -52,7 +52,7 @@ jobs:
       - name: Docker Hub Description
         uses: peter-evans/dockerhub-description@v2
         with:
-          #username: ${{ secrets.DOCKERHUB_USERNAME }}
-          #password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
           repository: dongaba/tverrec
           readme-filepath: ./README.md
