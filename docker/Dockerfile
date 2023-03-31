@@ -44,17 +44,14 @@ EXPOSE 20022
 COPY ./TVerRec /app/TVerRec/
 COPY entrypoint.sh /app/TVerRec/
 RUN chmod a+x /app/TVerRec/entrypoint.sh \
-	&& mkdir -p -m 777 /app/TVerRec \
+	&& mkdir -p -m 777 /app/TVerRec/bin \
 	/mnt/Temp \
 	/mnt/Work \
 	/mnt/Video
 
-#youtube-dl
-RUN mkdir -p /app/TVerRec/bin \
-	&& cp -f /usr/bin/yt-dlp /app/TVerRec/bin/youtube-dl
-
-#ffmpeg
-RUN wget -O /tmp/ffmpeg-release-amd64-static.tar.xz https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz \
+#youtube-dl & ffmpeg
+RUN cp -f /usr/bin/yt-dlp /app/TVerRec/bin/youtube-dl \
+	&&wget -O /tmp/ffmpeg-release-amd64-static.tar.xz https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz \
 	&& tar -Jxvf /tmp/ffmpeg-release-amd64-static.tar.xz -C /tmp \
 	&& cp -f /tmp/ffmpeg*amd64-static/ff* /app/TVerRec/bin/. \
 	&& chmod a+x /app/TVerRec/bin/ff* \
