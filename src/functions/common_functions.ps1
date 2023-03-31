@@ -50,7 +50,7 @@ try {
 	$script:ipapi = $script:ipapi.replace('{', "{`n").replace('}', "`n}").replace(', ', ",`n")
 	$(ConvertFrom-Json $script:ipapi).psobject.properties | ForEach-Object { $script:clientEnv[$_.Name] = $_.Value }
 } catch { Write-Debug 'Geo IPのチェックに失敗しました' }
-$script:clientEnv.Add('Appname', $script:appName)
+$script:clientEnv.Add('AppName', $script:appName)
 $script:clientEnv.Add('AppVersion', $script:appVersion)
 $script:clientEnv.Add('PSEdition', $PSVersionTable.PSEdition)
 $script:clientEnv.Add('PSVersion', $PSVersionTable.PSVersion)
