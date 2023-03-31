@@ -23,7 +23,8 @@ RUN --mount=type=cache,target=/var/lib/apt \
 	net-tools \
 	gosu \
 	&& apt-get autoremove -y \
-	&& apt-get clean -y
+	&& apt-get clean -y \
+	&& rm -rf /var/lib/apt/lists/*
 
 #User追加
 ARG UID=1000 \
