@@ -33,13 +33,13 @@ services:
         source: /mnt/c/Video
         target: /mnt/Video
       - type: bind
-        source: ./TVerRec/conf
+        source: /TVerRec/conf
         target: /app/TVerRec/conf
       - type: bind
-        source: ./TVerRec/db
+        source: /TVerRec/db
         target: /app/TVerRec/db
       - type: bind
-        source: ./TVerRec/list
+        source: /TVerRec/list
         target: /app/TVerRec/list
 
     cap_add:
