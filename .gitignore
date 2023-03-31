@@ -9,7 +9,7 @@ debug
 debug/*
 
 #dockerフォルダ配下
-docker/push.sh
+docker/test.sh
 
 #アーカイブ
 *.7z
