@@ -51,4 +51,3 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
           repository: dongaba/tverrec
           readme-filepath: ./README.md
-          short-description: ${{ github.event.repository.description }}
