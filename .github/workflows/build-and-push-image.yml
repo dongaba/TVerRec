@@ -24,7 +24,7 @@ jobs:
         with:
           images: dongaba/tverrec
           flavor: latest=true
-          tags: type=semver,pattern={{version}}
+          tags: type=schedule,pattern={{date 'YYYYMMDD-hhmmss' tz='Asia/Tokyo'}}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
