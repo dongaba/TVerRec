@@ -1414,7 +1414,8 @@ function executeYtdl {
 				Start-Process -FilePath nohup `
 					-ArgumentList ($script:ytdlPath, $local:ytdlArgs) `
 					-PassThru `
-					-RedirectStandardOutput /dev/null
+					-RedirectStandardOutput /dev/null `
+					-RedirectStandardError /dev/zero
 			)
 		} catch { Write-Error '　youtube-dlの起動に失敗しました' ; return }
 	}

@@ -7,14 +7,13 @@ services:
     hostname: 'tverrec'
     restart: always
     tty: true
+    user: tverrec
 
     #network_mode: "host"
     #pid: "host"
     dns:
       - 1.1.1.1
       - 8.8.8.8
-    ports:
-      - "20022:20022"
     build:
       context: .
       dockerfile: ./Dockerfile
@@ -43,7 +42,14 @@ services:
         target: /app/TVerRec/list
 
     cap_add:
-      - NET_ADMIN
+      - ALL
+
     cap_drop:
+      - NET_ADMIN
       - SYS_ADMIN
+
+    #cap_add:
+    #  - NET_ADMIN
+    #cap_drop:
+    #  - SYS_ADMIN
 

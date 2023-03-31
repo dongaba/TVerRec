@@ -8,9 +8,6 @@
 debug
 debug/*
 
-#dockerフォルダ配下
-docker/test.sh
-
 #アーカイブ
 *.7z
 *.zip
@@ -39,6 +36,7 @@ brightcovenew*
 ffmpeg_error*
 
 #開発関連ファイル
+test.sh
 dev*
 dev*/*
 memo.txt
