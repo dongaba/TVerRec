@@ -16,7 +16,8 @@
 TVerRec は、テレビ番組配信サイト TVer(ティーバー<https://tver.jp>)の番組をダウンロード保存するためのダウンローダー、ダウンロード支援ツールです。
 
 - TVerRec は PowerShell Core をインストールした Windows/MacOS/Linux で動作します。
-- **TVerRec は Windows PowerShell をサポートしなくなりました。PowerShell Core でご利用ください。**
+- TVerRec Dockerイメージも[配布中](https://hub.docker.com/r/dongaba/tverrec)です。
+- **TVerRec は Windows PowerShell をサポートません。PowerShell Core でご利用ください。**
 - Windows 環境で PowerShell Core がインストールされていない場合は、TVerRec が自動的に PowerShell Core をインストールします。
 - Windows 環境に手動で PowerShell Core をインストールする方法や MacOS、Linux 環境への PowerShell のインストールについては[Wiki のこちらのページ](https://github.com/dongaba/TVerRec/wiki/PowerShell%E3%81%AE%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB)を参照してください。
 
@@ -98,7 +99,8 @@ TVerRec の使い方・実行方法については[Wiki こちらのページ](h
     │  └─ list.lock ........................ 複数インスタンス起動時のダウンロードリストファイルの排他制御用ファイル
     │
     ├─ docker/ ........................... Docker用
-    │  └─ entrypoint.sh..................... Dockerコンテナのエンドポイント
+    │  ├─ Dockerfile.alpine ................ Alpine LinuxをベースにしたDockerイメージ用Dockerfile
+    │  └─ Dockerfile.ubuntu ................ Ubuntu LinuxをベースにしたDockerイメージ用Dockerfile
     │
     ├─ img/ .............................. 画像
     │  ├─ TVerRec-Logo.png ................. アプリロゴ
@@ -134,7 +136,7 @@ TVerRec の使い方・実行方法については[Wiki こちらのページ](h
     │  ├─ a.download_video.sh .............. キーワードを元一括ダウンロードするシェルスクリプト
     │  ├─ b.delete_video.sh ................ ダウンロード対象外番組・中間ファイル削除シェルスクリプト
     │  ├─ c.validate_video.sh .............. ダウンロード済番組の整合性チェックシェルスクリプト
-    │  ├─ d.move_video.sh .................. 番組を保存先に移動するシェルスクリプト(もし必要であれば)
+    │  ├─ d.move_video.sh .................. 番組を保存先に移動するシェルスクリプト
     │  ├─ start_tverrec.sh ................. キーワードを元に無限一括ダウンロード起動シェルスクリプト
     │  ├─ stop_tverrec.sh .................. 無限一括ダウンロード終了シェルスクリプト
     │  ├─ x.generate_list.sh ............... ダウンロードリストを生成するシェルスクリプト
