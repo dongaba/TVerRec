@@ -38,7 +38,7 @@ set PIDFile=pid-%HostName%.txt
 
 if exist %PIDFile% (
 	set /p targetPID=<%PIDFile%
-	tasklist /fi "PID eq !targetPID!" | find "cmd.exe" > nul 2> nul
+	tasklist /fi "PID eq !targetPID!" > nul 2> nul
 	if not ERRORLEVEL 1 (
 		goto :RUNNING
 	) else (
