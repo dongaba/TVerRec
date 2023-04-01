@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/powershell:alpine-3.14
+FROM mcr.microsoft.com/powershell:ubuntu-22.04
 
 ENV POWERSHELL_TELEMETRY_OPTOUT=1
 
@@ -8,18 +8,20 @@ LABEL org.opencontainers.image.title="TVerRec" \
 	org.opencontainers.image.licenses=MIT
 
 #必要ソフトのインストール
-RUN apk --update --no-cache add \
+RUN	apt-get update \
+	&& apt-get install --no-install-recommends -y \
 	curl \
 	git \
 	python3 \
-	ffmpeg \
-	&& rm -rf /var/cache/apk/*
+	&& apt-get autoremove -y \
+	&& apt-get clean -y \
+	&& rm -rf /var/lib/apt/lists/*
 
 #User追加
 ARG UID=1000 \
 	GID=1000
-RUN addgroup -g "$GID" tverrec \
-	&& adduser -D -u "$UID" tverrec -G tverrec \
+RUN groupadd -g "$GID" tverrec \
+	&& useradd -l -m -s /bin/bash -u "$UID" -g "$GID" tverrec \
 	&& echo "tverrec:tverrec" | chpasswd 
 
 #ディレクトリ準備
@@ -51,5 +53,6 @@ RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o 
 	&& chmod a+x ./bin/youtube-dl
 
 WORKDIR /app/TVerRec/unix
-ENTRYPOINT ["/bin/sh"]
+ENTRYPOINT ["/bin/bash"]
 CMD ["start_tverrec.sh"]
+
