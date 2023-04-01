@@ -30,8 +30,8 @@
 
 echo -en "\033];TVerRec\007"
 
-for /f %%i in ('hostname') do set HostName=%%i
-set PIDFile=pid-%HostName%.txt
+export HostName="$(hostname)"
+export PIDFile="pid-$HostName.txt"
 export retryTime=60
 export sleepTime=3600
 
