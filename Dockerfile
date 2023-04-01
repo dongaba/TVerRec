@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/powershell:7.3-ubuntu-22.04
+FROM mcr.microsoft.com/powershell:ubuntu-22.04
 
 ENV POWERSHELL_TELEMETRY_OPTOUT=1
 SHELL ["/bin/bash", "-c"]
@@ -9,16 +9,11 @@ LABEL org.opencontainers.image.title="TVerRec" \
 	org.opencontainers.image.licenses=MIT
 
 #必要ソフトのインストール
-RUN --mount=type=cache,target=/var/lib/apt \
-	--mount=type=cache,target=/var/cache/apt \
-	apt-get update \
+RUN	apt-get update \
 	&& apt-get install --no-install-recommends -y \
 	procps \
 	yt-dlp \
-	wget \
-	xz-utils \
-	#vim-tiny \
-	#net-tools \
+	ffmpeg \
 	&& apt-get autoremove -y \
 	&& apt-get clean -y \
 	&& rm -rf /var/lib/apt/lists/*
@@ -37,19 +32,16 @@ RUN mkdir -p -m 777 \
 	/mnt/Work \
 	/mnt/Video
 
-USER tverrec
-
 #TVerRecのインストール
 COPY --chown=tverrec:tverrec . /app/TVerRec
 
 #youtube-dl & ffmpegインストール
-RUN cp -f /usr/bin/yt-dlp /app/TVerRec/bin/youtube-dl \
-	&& wget -q -O /tmp/ffmpeg-release-amd64-static.tar.xz https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz \
-	&& tar -Jxf /tmp/ffmpeg-release-amd64-static.tar.xz -C /tmp \
-	&& cp -f /tmp/ffmpeg*amd64-static/ff* /app/TVerRec/bin/. \
-	&& chmod a+x /app/TVerRec/bin/ff* \
-	&& chown tverrec:tverrec /app/TVerRec/bin/* \
-	&& rm -rf /tmp/ffmpeg*
+RUN cp -f `which yt-dlp` /app/TVerRec/bin/youtube-dl \
+	&& cp -f `which ffmpeg` /app/TVerRec/bin/ffmpeg \
+	&& cp -f `which ffprobe` /app/TVerRec/bin/ffprobe \
+	&& chown tverrec:tverrec /app/TVerRec/bin/*
+
+USER tverrec
 
 #コンテナ用修正
 RUN chmod a+x /app/TVerRec/docker/entrypoint.sh \

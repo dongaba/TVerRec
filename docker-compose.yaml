@@ -8,8 +8,8 @@ services:
     restart: unless-stopped
     tty: true
     user: tverrec
+    network_mode: "host"
 
-    #network_mode: "host"
     build:
       context: .
       dockerfile: ./Dockerfile

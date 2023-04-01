@@ -6,8 +6,8 @@
 .gitignore
 .gitkeep
 .dockerignore
-Dockerfile
-docker-compose.yaml
+*Dockerfile*
+*docker-compose.yaml*
 LICENSE
 *.md
 *.MD
@@ -18,3 +18,4 @@ dev/*
 keyword.conf
 history.csv
 list.csv
+
