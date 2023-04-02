@@ -6,7 +6,6 @@ services:
     image: dongaba/tverrec:latest
     hostname: 'tverrec'
     restart: unless-stopped
-    tty: true
     user: tverrec
     network_mode: "host"
 
