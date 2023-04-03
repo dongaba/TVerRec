@@ -1,4 +1,4 @@
-name: Build and Push image to Docker Hub
+name: Build and Push image to GitHub Conainer Registry
 
 on:
   push:
@@ -20,7 +20,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: dongaba/tverrec
+          images: ghcr.io/dongaba/tverrec
           flavor: latest=true
           tags: |
             type=ref,event=branch
