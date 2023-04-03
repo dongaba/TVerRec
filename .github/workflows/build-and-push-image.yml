@@ -12,8 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 #Check out
-      - uses: actions/checkout@v3
       - name: Check out the repo
+        uses: actions/checkout@v3
 
 #Collect metadata
       - name: Extract metadata for Docker
