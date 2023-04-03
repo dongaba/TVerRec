@@ -5,7 +5,8 @@ ENV POWERSHELL_TELEMETRY_OPTOUT=1
 LABEL org.opencontainers.image.title="TVerRec" \
 	org.opencontainers.image.source=https://github.com/dongaba/TVerRec \
 	org.opencontainers.image.authors="dongaba" \
-	org.opencontainers.image.licenses=MIT
+	org.opencontainers.image.licenses=MIT \
+	org.opencontainers.image.description="TVerRecは、TVerの番組をダウンロード保存するためのダウンロードツールです。番組のジャンルや出演タレント、番組名などを指定して一括ダウンロードします。CMは入っていないため気に入った番組を配信終了後も残しておくことができます。1回起動すれば新しい番組が配信される度にダウンロードされます。"
 
 #必要ソフトのインストール
 RUN apk --update --no-cache add \

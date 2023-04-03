@@ -18,6 +18,16 @@ jobs:
     name: Push Docker image to GitHub Container Repository
     runs-on: ubuntu-latest
     steps:
+      #Set Tag Name
+      - name: Set Tag Name as Preparation
+        id: prep
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            TAG=${GITHUB_REF#refs/tags/}
+          else
+            TAG="latest"
+          fi
+          echo "::set-output name=tag::${IMAGE_NAME}:${TAG}"
 
       #Check out
       - name: Check out the repo
@@ -61,7 +71,7 @@ jobs:
           context: .
           platforms: linux/amd64,linux/386,linux/arm64,linux/arm/v7
           push: true
-          tags: ghcr.io/${{ steps.meta.outputs.tags }}
+          tags: ${{ steps.prep.outputs.tag }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
