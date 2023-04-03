@@ -48,8 +48,8 @@ RUN sed -i -e 's|\.\./src|/app/TVerRec/src|g' ./unix/*.sh \
 #youtube-dlインストール
 RUN curl -L "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" -o ./bin/youtube-dl \
 	&& chmod a+x ./bin/youtube-dl \
-	&& cp `which ffmpeg` ./bin/. \
-	&& cp `which ffprobe` ./bin/.
+	&& cp $(which ffmpeg) ./bin/. \
+	&& cp $(which ffprobe) ./bin/.
 
 WORKDIR /app/TVerRec/unix
 ENTRYPOINT ["/bin/sh"]
