@@ -27,7 +27,7 @@ jobs:
           else
             TAG="latest"
           fi
-          echo "::set-output name=tag::${IMAGE_NAME}:${TAG}"
+          echo "tag=${REGISTRY}/${IMAGE_NAME}:${TAG}" >> $GITHUB_OUTPUT
 
       #Check out
       - name: Check out the repo
