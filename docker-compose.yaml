@@ -21,19 +21,19 @@ services:
       - /mnt/Temp
     volumes:
       - type: bind
-        source: /mnt/c/Work
+        source: ~/ContainerData/Work
         target: /mnt/Work
       - type: bind
-        source: /mnt/c/Video
+        source: ~/ContainerData/Video
         target: /mnt/Video
       - type: bind
-        source: /TVerRec/conf
+        source: ~/ContainerData/conf
         target: /app/TVerRec/conf
       - type: bind
-        source: /TVerRec/db
+        source: ~/ContainerData/db
         target: /app/TVerRec/db
       - type: bind
-        source: /TVerRec/list
+        source: ~/ContainerData/list
         target: /app/TVerRec/list
 
     cap_add:
