@@ -130,16 +130,21 @@ function checkRequiredFile {
 	[OutputType([System.Void])]
 	Param ()
 
-	if (Test-Path $script:downloadBaseDir -PathType Container) { }
-	else { Write-Error '番組ダウンロード先フォルダが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $script:downloadWorkDir -PathType Container) { }
-	else { Write-Error 'ダウンロード作業フォルダが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $script:ffmpegPath -PathType Leaf) { }
-	else { Write-Error 'ffmpegが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $script:ffprobePath -PathType Leaf) { }
-	elseif ($script:simplifiedValidation -eq $true) { Write-Error 'ffprobeが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $script:ytdlPath -PathType Leaf) { }
-	else { Write-Error 'youtube-dlが存在しません。終了します。' ; exit 1 }
+	if (!(Test-Path $script:downloadBaseDir -PathType Container)) { 
+		Write-Error '番組ダウンロード先フォルダが存在しません。終了します。' ; exit 1
+	}
+	if (!(Test-Path $script:downloadWorkDir -PathType Container)) {
+		Write-Error 'ダウンロード作業フォルダが存在しません。終了します。' ; exit 1
+	}
+	if (!(Test-Path $script:ytdlPath -PathType Leaf)) {
+		Write-Error 'youtube-dlが存在しません。終了します。' ; exit 1
+	}
+	if (!(Test-Path $script:ffmpegPath -PathType Leaf)) {
+		Write-Error 'ffmpegが存在しません。終了します。' ; exit 1
+	}
+	if ((!(Test-Path $script:ffprobePath -PathType Leaf)) -And ($script:simplifiedValidation -eq $true)) {
+		Write-Error 'ffprobeが存在しません。終了します。' ; exit 1
+	}
 
 	#過去のバージョンで使用していたファイルを削除、または移行
 	#tver.lockをhistory.lockに移行(v2.6.5→v2.6.6)
@@ -157,24 +162,44 @@ function checkRequiredFile {
 
 
 	#ファイルが存在しない場合はサンプルファイルをコピー
-	if (Test-Path $script:keywordFilePath -PathType Leaf) { }
-	else { Copy-Item -Path $script:keywordFileSamplePath -Destination $script:keywordFilePath -Force }
-	if (Test-Path $script:ignoreFilePath -PathType Leaf) { }
-	else { Copy-Item -Path $script:ignoreFileSamplePath -Destination $script:ignoreFilePath -Force }
-	if (Test-Path $script:historyFilePath -PathType Leaf) { }
-	else { Copy-Item -Path $script:historyFileSamplePath -Destination $script:historyFilePath -Force }
-	if (Test-Path $script:listFilePath -PathType Leaf) { }
-	else { Copy-Item -Path $script:listFileSamplePath -Destination $script:listFilePath -Force }
+	if (!(Test-Path $script:keywordFilePath -PathType Leaf)) {
+		if (!(Test-Path $script:keywordFileSamplePath -PathType Leaf)) {
+			Write-Error 'ダウンロード対象キーワードファイル(サンプル)が存在しません。終了します。' ; exit 1
+		}
+		Copy-Item -Path $script:keywordFileSamplePath -Destination $script:keywordFilePath -Force 
+	}
+	if (!(Test-Path $script:ignoreFilePath -PathType Leaf)) {
+		if (!(Test-Path $script:ignoreFileSamplePath -PathType Leaf)) {
+			Write-Error 'ダウンロード対象外番組ファイル(サンプル)が存在しません。終了します。' ; exit 1
+		}
+		Copy-Item -Path $script:ignoreFileSamplePath -Destination $script:ignoreFilePath -Force
+	}
+	if (!(Test-Path $script:historyFilePath -PathType Leaf)) {
+		if (!(Test-Path $script:historyFileSamplePath -PathType Leaf)) {
+			Write-Error 'ダウンロード履歴ファイル(サンプル)が存在しません。終了します。' ; exit 1
+		}
+		Copy-Item -Path $script:historyFileSamplePath -Destination $script:historyFilePath -Force
+	}
+	if (!(Test-Path $script:listFilePath -PathType Leaf)) {
+		if (!(Test-Path $script:listFileSamplePath -PathType Leaf)) {
+			Write-Error 'ダウンロードリストファイル(サンプル)が存在しません。終了します。' ; exit 1
+		}
+		Copy-Item -Path $script:listFileSamplePath -Destination $script:listFilePath -Force
+	}
 
 	#念のためチェック
-	if (Test-Path $script:keywordFilePath -PathType Leaf) { }
-	else { Write-Error 'ダウンロード対象キーワードファイルが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $script:ignoreFilePath -PathType Leaf) { }
-	else { Write-Error 'ダウンロード対象外番組ファイルが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $script:historyFilePath -PathType Leaf) { }
-	else { Write-Error 'ダウンロード履歴ファイルが存在しません。終了します。' ; exit 1 }
-	if (Test-Path $script:listFilePath -PathType Leaf) { }
-	else { Write-Error 'ダウンロードリストファイルが存在しません。終了します。' ; exit 1 }
+	if (!(Test-Path $script:keywordFilePath -PathType Leaf)) {
+		Write-Error 'ダウンロード対象キーワードファイルが存在しません。終了します。' ; exit 1
+	}
+	if (!(Test-Path $script:ignoreFilePath -PathType Leaf)) {
+		Write-Error 'ダウンロード対象外番組ファイルが存在しません。終了します。' ; exit 1
+	}
+	if (!(Test-Path $script:historyFilePath -PathType Leaf)) {
+		Write-Error 'ダウンロード履歴ファイルが存在しません。終了します。' ; exit 1
+	}
+	if (!(Test-Path $script:listFilePath -PathType Leaf)) {
+		Write-Error 'ダウンロードリストファイルが存在しません。終了します。' ; exit 1
+	}
 }
 
 #----------------------------------------------------------------------

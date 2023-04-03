@@ -1,0 +1,5 @@
+{
+	"powershell.scriptAnalysis.settingsPath": ".vscode\\analyzersettings.psd1",
+	"powershell.scriptAnalysis.enable": true,
+	"powershell.codeFormatting.addWhitespaceAroundPipe": true
+}

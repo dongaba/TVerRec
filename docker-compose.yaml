@@ -27,8 +27,8 @@ services:
         source: ~/ContainerData/Video
         target: /mnt/Video
       - type: bind
-        source: ~/ContainerData/conf
-        target: /app/TVerRec/conf
+        source: ~/ContainerData/conf/user_setting.ps1
+        target: /app/TVerRec/conf/user_setting.ps1
       - type: bind
         source: ~/ContainerData/db
         target: /app/TVerRec/db
