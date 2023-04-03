@@ -11,9 +11,11 @@ jobs:
   build_and_push:
     runs-on: ubuntu-latest
     steps:
+#Check out
       - name: Check out the repo
         uses: actions/checkout@v3
 
+#Collect metadata
       - name: Extract metadata for Docker
         id: meta
         uses: docker/metadata-action@v4
@@ -24,6 +26,7 @@ jobs:
             type=ref,event=branch
             type=semver,pattern={{version}}
 
+#Build Preperation
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
 
@@ -31,16 +34,12 @@ jobs:
         id: buildx
         uses: docker/setup-buildx-action@v1
 
+#Debug info to confirm available platforms
       - name: Available platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-
-      - name: Build and push Docker image
+#Build
+      - name: Build Docker image
         uses: docker/build-push-action@v2
         with:
           context: .
@@ -49,6 +48,13 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+#Push to Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
       - name: Docker Hub Description
         uses: peter-evans/dockerhub-description@v2
         with:
@@ -56,3 +62,25 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
           repository: dongaba/tverrec
           readme-filepath: ./README.md
+
+#Push to GitHub Container Registry
+     - name: Log in to the Container registry
+       uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+       with:
+         registry: ghcr.io
+         username: ${{ github.actor }}
+         password: ${{ secrets.GITHUB_TOKEN }}
+
+     - name: Extract metadata (tags, labels) for Docker
+       id: meta
+       uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+       with:
+         images: ghcr.io/dongaba/tverrec
+
+     - name: Build and push Docker image
+       uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+       with:
+         context: .
+         push: true
+         tags: ${{ steps.meta.outputs.tags }}
+         labels: ${{ steps.meta.outputs.labels }}
