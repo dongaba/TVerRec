@@ -46,7 +46,7 @@ RUN sed -i -e 's|\.\./src|/app/TVerRec/src|g' ./unix/*.sh \
 	&& sed -i -e "s|read -r -t $sleepTime|sleep $sleepTime|g" ./unix/start_tverrec.sh
 
 #youtube-dlインストール
-RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o ./bin/youtube-dl \
+RUN curl -L "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" -o ./bin/youtube-dl \
 	&& chmod a+x ./bin/youtube-dl \
 	&& cp `which ffmpeg` ./bin/. \
 	&& cp `which ffprobe` ./bin/.
