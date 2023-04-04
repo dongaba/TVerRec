@@ -79,6 +79,9 @@ try {
 #メイン処理
 
 checkRequiredFile			#設定で指定したファイル・フォルダの存在チェック
+if (!(Test-Path $script:saveBaseDir -PathType Container)) {
+	Write-Error 'ダウンロード作業フォルダが存在しません。終了します。' ; exit 1
+}
 
 #======================================================================
 #保存先ディレクトリの存在確認
