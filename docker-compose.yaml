@@ -6,7 +6,6 @@ services:
     image: dongaba/tverrec:latest
     hostname: 'tverrec'
     restart: unless-stopped
-    user: tverrec
     tty: true
     stdin_open: true
     network_mode: "host"
@@ -30,14 +29,8 @@ services:
         source: ~/ContainerData/Video
         target: /mnt/Video
       - type: bind
-        source: ~/ContainerData/conf/user_setting.ps1
-        target: /app/TVerRec/conf/user_setting.ps1
-      - type: bind
-        source: ~/ContainerData/db
-        target: /app/TVerRec/db
-      - type: bind
-        source: ~/ContainerData/list
-        target: /app/TVerRec/list
+        source: ~/ContainerData/container-data
+        target: /app/TVerRec/container-data
 
     cap_add:
       - ALL
