@@ -29,9 +29,9 @@ jobs:
           path: .\src
           #customRulePath: '".\customRule.ps1", "customRule2.ps1"'
           #recurseCustomRulePath: false
-          #excludeRule: "PSAlignAssignmentStatement"'
+          #excludeRule: '"PSUseBOMForUnicodeEncodedFile"'
           includeDefaultRules: true
-          #includeRule: '"PSAvoidGlobalAliases", "PSAvoidUsingConvertToSecureStringWithPlainText"'
+          #includeRule: '"PSAvoidUsingPlainTextForPassword", "PSAvoidUsingConvertToSecureStringWithPlainText"'
           severity: '"Error", "Warning"'
           recurse: true
           #suppressedOnly: false

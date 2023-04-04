@@ -208,7 +208,6 @@ foreach ($local:keywordName in $local:keywordNames) {
 		#TVer番組ダウンロードのメイン処理
 		generateTVerVideoList `
 			-Keyword $local:keywordName `
-			-URL $local:videoLink `
 			-Link $local:videoLink.Replace('https://tver.jp', '')
 
 	}

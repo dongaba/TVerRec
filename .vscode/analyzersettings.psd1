@@ -7,4 +7,9 @@
 		'PSAvoidUsingPlainTextForPassword',
 		'PSAvoidUsingConvertToSecureStringWithPlainText'
 	)
+	ExcludeRules = @(
+		'PSUseBOMForUnicodeEncodedFile',
+		'PSUseProcessBlockForPipelineCommand'
+	)
+
 }
