@@ -38,11 +38,11 @@ jobs:
           #fix: false
           #enableExit: true
           settings: .\.vscode\analyzersettings.psd1
-          output: results.sarif
+          output: pssanalyzer.sarif
           #ignorePattern: 'tests'
 
       # Upload the SARIF file generated in the previous step
       - name: Upload SARIF results file
         uses: github/codeql-action/upload-sarif@v2
         with:
-          sarif_file: results.sarif
+          sarif_file: pssanalyzer.sarif
