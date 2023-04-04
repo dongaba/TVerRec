@@ -130,7 +130,7 @@ function checkRequiredFile {
 	[OutputType([System.Void])]
 	Param ()
 
-	if (!(Test-Path $script:downloadBaseDir -PathType Container)) { 
+	if (!(Test-Path $script:downloadBaseDir -PathType Container)) {
 		Write-Error '番組ダウンロード先フォルダが存在しません。終了します。' ; exit 1
 	}
 	if (!(Test-Path $script:downloadWorkDir -PathType Container)) {
@@ -166,7 +166,7 @@ function checkRequiredFile {
 		if (!(Test-Path $script:keywordFileSamplePath -PathType Leaf)) {
 			Write-Error 'ダウンロード対象キーワードファイル(サンプル)が存在しません。終了します。' ; exit 1
 		}
-		Copy-Item -Path $script:keywordFileSamplePath -Destination $script:keywordFilePath -Force 
+		Copy-Item -Path $script:keywordFileSamplePath -Destination $script:keywordFilePath -Force
 	}
 	if (!(Test-Path $script:ignoreFilePath -PathType Leaf)) {
 		if (!(Test-Path $script:ignoreFileSamplePath -PathType Leaf)) {
