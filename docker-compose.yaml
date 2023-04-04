@@ -7,6 +7,8 @@ services:
     hostname: 'tverrec'
     restart: unless-stopped
     user: tverrec
+    tty: true
+    stdin_open: true
     network_mode: "host"
 
     build:
@@ -19,6 +21,7 @@ services:
 
     tmpfs:
       - /mnt/Temp
+
     volumes:
       - type: bind
         source: ~/ContainerData/Work

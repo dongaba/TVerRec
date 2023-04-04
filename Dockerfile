@@ -38,12 +38,12 @@ RUN git clone https://github.com/dongaba/TVerRec.git
 
 #コンテナ用修正
 WORKDIR /app/TVerRec
-RUN sed -i -e 's|\.\./src|/app/TVerRec/src|g' ./unix/*.sh \
-	&& sed -i -e "s|'TVerRec'|'TVerRecContainer'|g" ./conf/system_setting.ps1 \
+RUN sed -i -e "s|'TVerRec'|'TVerRecContainer'|g" ./conf/system_setting.ps1 \
 	&& sed -i -e "s|'W:'|'/mnt/Work'|g" ./conf/system_setting.ps1 \
 	&& sed -i -e "s|=\ \$env:TMP|=\ '/mnt/Temp'|g" ./conf/system_setting.ps1 \
 	&& sed -i -e "s|'V:'|'/mnt/Video'|g" ./conf/system_setting.ps1 \
-	&& sed -i -e "s|read -r -t $sleepTime|sleep $sleepTime|g" ./unix/start_tverrec.sh
+	&& sed -i -e "s|すぐに処理を再開するにはEnterを押してください。|すぐに処理を再開するにはコンテナを再起動してください。|g" ./unix/start_tverrec.sh
+
 
 #youtube-dlインストール
 RUN curl -L "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" -o ./bin/youtube-dl \

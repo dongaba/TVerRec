@@ -94,7 +94,6 @@ Write-ColorOutput ''
 
 #----------------------------------------------------------------------
 #動作環境チェック
-checkLatestTVerRec			#TVerRecの最新化チェック
 checkRequiredFile			#設定で指定したファイル・フォルダの存在チェック
 
 #処理
