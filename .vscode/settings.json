@@ -1,3 +1,34 @@
 {
-	"editor.formatOnSave": true
+	"[yaml]": {
+		"editor.autoIndent": "advanced"
+	},
+	"[jsonc]": {
+		"editor.autoIndent": "advanced",
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[markdown]": {
+		"editor.autoIndent": "advanced",
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[powershell]": {
+		"editor.autoIndent": "advanced",
+		"powershell.scriptAnalysis.enable": true,
+		"powershell.startAsLoginShell.linux": true,
+		"powershell.scriptAnalysis.settingsPath": ".vscode\\analyzersettings.psd1",
+		"powershell.codeFormatting.useCorrectCasing": true,
+		"powershell.codeFormatting.useConstantStrings": true,
+		"powershell.codeFormatting.newLineAfterOpenBrace": false,
+		"powershell.codeFormatting.newLineAfterCloseBrace": false,
+		"powershell.codeFormatting.addWhitespaceAroundPipe": true,
+		"powershell.codeFormatting.pipelineIndentationStyle": "IncreaseIndentationForFirstPipeline",
+		"powershell.integratedConsole.suppressStartupBanner": true,
+		"powershell.codeFormatting.whitespaceBetweenParameters": true,
+		"powershell.integratedConsole.forceClearScrollbackBuffer": true
+	},
+	"[dockercompose]": {
+		"editor.autoIndent": "advanced"
+	},
+	"editor.formatOnSave": true,
+	"editor.formatOnType": true,
+	"editor.formatOnPaste": true
 }

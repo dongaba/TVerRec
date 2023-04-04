@@ -1,8 +1,10 @@
 # PSScriptAnalyzerSettings.psd1
 @{
-	Severity     = @('Error', 'Warning')
+	Severity = @('Error', 'Warning')
 }
 @{
-	IncludeRules = @('PSAvoidUsingPlainTextForPassword',
-		'PSAvoidUsingConvertToSecureStringWithPlainText')
+	IncludeRules = @(
+		'PSAvoidUsingPlainTextForPassword',
+		'PSAvoidUsingConvertToSecureStringWithPlainText'
+	)
 }
