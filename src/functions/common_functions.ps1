@@ -26,6 +26,7 @@
 #
 ###################################################################################
 using namespace System.Text.RegularExpressions
+Add-Type -AssemblyName System.IO.Compression.FileSystem
 
 #Toast用AppID取得に必要
 if ($IsWindows) { Import-Module StartLayout -SkipEditionCheck }
@@ -286,10 +287,10 @@ function fileLock {
 		$script:fileStream = $script:fileInfo.Open([System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
 		$local:fileLocked = $true		# initialise variables
 	}
- catch {
+	catch {
 		$fileLocked = $false			# catch fileStream had falied
 	}
- finally {
+	finally {
 		# return result
 		[PSCustomObject]@{
 			path       = $local:Path
@@ -319,10 +320,10 @@ function fileUnlock {
 		if ($script:fileStream) { $script:fileStream.Close() }		# close stream if not lock
 		$local:fileLocked = $false		# initialise variables
 	}
- catch {
+	catch {
 		$local:fileLocked = $true		# catch fileStream had falied
 	}
- finally {
+	finally {
 		# return result
 		[PSCustomObject]@{
 			path       = $local:Path
@@ -355,10 +356,10 @@ function isLocked {
 		if ($local:isLockedfileStream) { $local:isLockedfileStream.Close() }		# close stream if not lock
 		$local:isFileLocked = $false		# initialise variables
 	}
- catch {
+	catch {
 		$local:isFileLocked = $true			# catch fileStream had falied
 	}
- finally {
+	finally {
 		# return result
 		[PSCustomObject]@{
 			path       = $local:isLockedPath
@@ -1203,4 +1204,20 @@ function unixTimeToDateTime($unixTime) {
 function dateTimeToUnixTime($dateTime) {
 	$origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
 	[Int]($dateTime - $origin).TotalSeconds
+}
+
+#----------------------------------------------------------------------
+#Zipファイルを解凍
+#----------------------------------------------------------------------
+function Unzip {
+	[OutputType([System.Void])]
+	param(
+		[Parameter(Mandatory = $true)]
+		[Alias('ZipFile')]
+		[string]$zipfile,
+		[Parameter(Mandatory = $true)]
+		[Alias('OutPath')]
+		[string]$outpath
+	)
+	[System.IO.Compression.ZipFile]::ExtractToDirectory($zipfile, $outpath)
 }

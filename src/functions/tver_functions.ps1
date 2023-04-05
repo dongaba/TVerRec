@@ -52,11 +52,11 @@ function checkLatestTVerRec {
 	if ($local:latestMajorVersion -gt $local:appMajorVersion ) {
 		$local:versionUp = $true			#最新バージョンのメジャーバージョンが大きい場合
 	}
- elseif ($local:latestMajorVersion -eq $local:appMajorVersion ) {
+	elseif ($local:latestMajorVersion -eq $local:appMajorVersion ) {
 		if ( $local:appMajorVersion -ne $script:appVersion) { $local:versionUp = $true }	#マイナーバージョンが設定されている場合
 		else { $local:versionUp = $false }	#バージョンが完全に一致する場合
 	}
- else {
+	else {
 		$local:versionUp = $false			#ローカルバージョンの方が新しい場合
 	}
 
@@ -104,7 +104,7 @@ function checkLatestYtdl {
 		else { Write-Error 'youtube-dlの取得元の指定が無効です' ; exit 1 }
 		if ($? -eq $false) { Write-Error 'youtube-dlの更新に失敗しました' ; exit 1 }
 	}
- else { }
+	else { }
 
 	$progressPreference = 'Continue'
 }
@@ -122,7 +122,7 @@ function checkLatestFfmpeg {
 		. $(Convert-Path (Join-Path $scriptRoot '.\functions\update_ffmpeg.ps1'))
 		if ($? -eq $false) { Write-Error 'ffmpegの更新に失敗しました' ; exit 1 }
 	}
- else { }
+	else { }
 
 	$progressPreference = 'Continue'
 }
@@ -218,7 +218,7 @@ function loadKeywordList {
 			| Where-Object { !($_ -match '^\s*$') } `		#空行を除く
 			| Where-Object { !($_ -match '^#.*$') })		#コメント行を除く
 	}
- catch { Write-ColorOutput 'ダウンロード対象キーワードの読み込みに失敗しました' -FgColor 'Green' ; exit 1 }
+	catch { Write-ColorOutput 'ダウンロード対象キーワードの読み込みに失敗しました' -FgColor 'Green' ; exit 1 }
 
 	return $local:keywordNames
 }
@@ -242,7 +242,7 @@ function loadDownloadList {
 			| Where-Object { !($_ -match '^\s*$') } `	#空行を除く
 			| Where-Object { !($_.episodeID -match '^#') })		#ダウンロード対象外を除く
 	}
- catch { Write-ColorOutput 'ダウンロードリストの読み込みに失敗しました' -FgColor 'Green' ; exit 1 }
+	catch { Write-ColorOutput 'ダウンロードリストの読み込みに失敗しました' -FgColor 'Green' ; exit 1 }
 	finally { $null = fileUnlock $script:listLockFilePath }
 
 	return $local:videoLinks
@@ -260,7 +260,7 @@ function getIgnoreList {
 			| Where-Object { !($_ -match '^\s*$') } `		#空行を除く
 			| Where-Object { !($_ -match '^;.*$') })		#コメント行を除く
 	}
- catch { Write-ColorOutput 'ダウンロード対象外の読み込みに失敗しました' -FgColor 'Green' ; exit 1 }
+	catch { Write-ColorOutput 'ダウンロード対象外の読み込みに失敗しました' -FgColor 'Green' ; exit 1 }
 
 	return $local:ignoreTitles
 }
@@ -315,48 +315,48 @@ function getVideoLinksFromKeyword {
 		catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:01' -FgColor 'Green' ; continue }
 		#saveGenrePage $script:keywordName						#デバッグ用ジャンルページの保存
 	}
- elseif ($local:keywordName.IndexOf('series/') -eq 0) {
+	elseif ($local:keywordName.IndexOf('series/') -eq 0) {
 		#番組IDによる番組検索から番組ページのLinkを取得
 		$local:seriesID = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('series/', '').Trim()
 		goAnal -Event 'search' -Type 'series' -ID $local:seriesID
 		try { $script:tverLinks = getVideoLinkFromSeriesID ($local:seriesID) }
 		catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:02' -FgColor 'Green' ; continue }
 	}
- elseif ($local:keywordName.IndexOf('talents/') -eq 0) {
+	elseif ($local:keywordName.IndexOf('talents/') -eq 0) {
 		#タレントIDによるタレント検索から番組ページのLinkを取得
 		$local:talentID = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('talents/', '').Trim()
 		goAnal -Event 'search' -Type 'talent' -ID $local:talentID
 		try { $script:tverLinks = getVideoLinkFromTalentID ($local:talentID) }
 		catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:03' -FgColor 'Green' ; continue }
 	}
- elseif ($local:keywordName.IndexOf('tag/') -eq 0) {
+	elseif ($local:keywordName.IndexOf('tag/') -eq 0) {
 		#ジャンルなどのTag情報から番組ページのLinkを取得
 		$local:tagID = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('tag/', '').Trim()
 		goAnal -Event 'search' -Type 'tag' -ID $local:tagID
 		try { $script:tverLinks = getVideoLinkFromTag ($local:tagID) }
 		catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:04' -FgColor 'Green' ; continue }
 	}
- elseif ($local:keywordName.IndexOf('new/') -eq 0) {
+	elseif ($local:keywordName.IndexOf('new/') -eq 0) {
 		#新着番組から番組ページのLinkを取得
 		$local:genre = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('new/', '').Trim()
 		goAnal -Event 'search' -Type 'new' -ID $local:genre
 		try { $script:tverLinks = getVideoLinkFromNew ($local:genre) }
 		catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:05' -FgColor 'Green' ; continue }
 	}
- elseif ($local:keywordName.IndexOf('ranking/') -eq 0) {
+	elseif ($local:keywordName.IndexOf('ranking/') -eq 0) {
 		#ランキングによる番組ページのLinkを取得
 		$local:genre = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('ranking/', '').Trim()
 		goAnal -Event 'search' -Type 'ranking' -ID $local:genre
 		try { $script:tverLinks = getVideoLinkFromRanking ($local:genre) }
 		catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:06' -FgColor 'Green' ; continue }
 	}
- elseif ($local:keywordName.IndexOf('toppage') -eq 0) {
+	elseif ($local:keywordName.IndexOf('toppage') -eq 0) {
 		#トップページから番組ページのLinkを取得
 		goAnal -Event 'search' -Type 'toppage'
 		try { $script:tverLinks = getVideoLinkFromTopPage }
 		catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:07' -FgColor 'Green' ; continue }
 	}
- elseif ($local:keywordName.IndexOf('title/') -eq 0) {
+	elseif ($local:keywordName.IndexOf('title/') -eq 0) {
 		#番組名による新着検索から番組ページのLinkを取得
 		$local:titleName = removeTrailingCommentsFromConfigFile($local:keywordName).Replace('title/', '').Trim()
 		goAnal -Event 'search' -Type 'title' -ID $local:titleName
@@ -364,7 +364,7 @@ function getVideoLinksFromKeyword {
 		# try { $script:tverLinks = getVideoLinkFromTitle ($local:titleName) }
 		# catch { Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:08' -FgColor 'Green' ; continue }
 	}
- else {
+	else {
 		#タレント名や番組名などURL形式でない場合APIで検索結果から番組ページのLinkを取得
 		goAnal -Event 'search' -Type 'free' -ID $local:keywordName
 		try { $script:tverLinks = getVideoLinkFromFreeKeyword ($local:keywordName) }
@@ -378,7 +378,7 @@ function getVideoLinksFromKeyword {
 			$script:tverLinks[$i] = 'https://tver.jp' + $script:tverLinks[$i]
 		}
 	}
- elseif ($null -ne $script:tverLinks) {
+	elseif ($null -ne $script:tverLinks) {
 		$script:tverLinks = 'https://tver.jp' + $script:tverLinks
 	}
 
@@ -513,7 +513,7 @@ function getVideoLinkFromRanking {
 	if ($local:genre -eq 'all') {
 		$local:callSearchURL = $local:callSearchBaseURL + '?platform_uid=' + $script:platformUID + '&platform_token=' + $script:platformToken
 	}
- else {
+	else {
 		$local:callSearchURL = $local:callSearchBaseURL + 'Detail/' + $local:genre + '?platform_uid=' + $script:platformUID + '&platform_token=' + $script:platformToken
 	}
 	$local:searchResultsRaw = Invoke-RestMethod -Uri $local:callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
@@ -715,11 +715,11 @@ function waitTillYtdlProcessGetFewer {
 			default { $local:ytdlCount = 0 ; break }
 		}
 	}
- catch { $local:ytdlCount = 0 }			#プロセス数が取れなくてもとりあえず先に進む
+	catch { $local:ytdlCount = 0 }			#プロセス数が取れなくてもとりあえず先に進む
 
 	Write-Verbose "現在のダウンロードプロセス一覧 ($local:ytdlCount 個)"
 
-	while ([int32]$local:ytdlCount -ge [int32]$local:parallelDownloadFileNum ) {
+	while ([int]$local:ytdlCount -ge [int]$local:parallelDownloadFileNum ) {
 		Write-ColorOutput "ダウンロードが $local:parallelDownloadFileNum 多重に達したので一時待機します。 ($(getTimeStamp))" -FgColor 'Gray'
 		Write-Verbose "現在のダウンロードプロセス一覧 ($local:ytdlCount 個)"
 		Start-Sleep -Seconds 60			#1分待機
@@ -776,7 +776,7 @@ function downloadTVerVideo {
 	try {
 		getVideoInfo -Link $script:videoLink
 	}
- catch {
+	catch {
 		Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:10' -FgColor 'Green'
 		continue			#次回再度トライするためダウンロード履歴に追加せずに次の番組へ
 	}
@@ -796,7 +796,7 @@ function downloadTVerVideo {
 				| Join-Path -ChildPath $(getFileNameWithoutInvalidChars $script:videoFileDir))
 		)
 	}
- else {
+	else {
 		$script:videoFileDir = $(Join-Path $script:downloadBaseDir $(getFileNameWithoutInvalidChars $script:videoFileDir))
 	}
 	$script:videoFilePath = $(Join-Path $script:videoFileDir $script:videoName)
@@ -841,7 +841,7 @@ function downloadTVerVideo {
 		else { Write-ColorOutput '　すでにダウンロード済・検証済の番組です。スキップします' -FgColor 'Gray' ; continue }
 
 	}
- else {
+	else {
 
 		#ダウンロード対象外に入っている番組の場合はスキップフラグを立ててダウンロード履歴書き込み処理へ
 		foreach ($local:ignoreTitle in $script:ignoreTitles) {
@@ -893,7 +893,7 @@ function downloadTVerVideo {
 			videoValidated  = '0' ;
 		}
 	}
- elseif ($script:skip -eq $true) {
+	elseif ($script:skip -eq $true) {
 		Write-ColorOutput '　スキップした未検証のファイルをダウンロード履歴に追加します'
 		$script:newVideo = [pscustomobject]@{
 			videoPage       = $script:videoPageURL ;
@@ -911,7 +911,7 @@ function downloadTVerVideo {
 			videoValidated  = '0' ;
 		}
 	}
- else {
+	else {
 		Write-ColorOutput '　ダウンロードするファイルをダウンロード履歴に追加します'
 		$script:newVideo = [pscustomobject]@{
 			videoPage       = $script:videoPageURL ;
@@ -941,17 +941,17 @@ function downloadTVerVideo {
 		$script:newVideo | Export-Csv $script:historyFilePath -NoTypeInformation -Encoding UTF8 -Append
 		Write-Debug 'ダウンロード履歴を書き込みました'
 	}
- catch {
+	catch {
 		Write-ColorOutput '　ダウンロード履歴を更新できませんでした。スキップします' -FgColor 'Green' ; continue
 	}
- finally { $null = fileUnlock $script:historyLockFilePath }
+	finally { $null = fileUnlock $script:historyLockFilePath }
 	$script:historyFileData = Import-Csv $script:historyFilePath -Encoding UTF8
 
 	#スキップやダウンロード対象外でなければyoutube-dl起動
 	if (($script:ignore -eq $true) -Or ($script:skip -eq $true)) {
 		continue			#スキップ対象やダウンロード対象外は飛ばして次のファイルへ
 	}
- else {
+	else {
 		#保存先ディレクトリがなければ作成
 		if (-Not (Test-Path $script:videoFileDir -PathType Container)) {
 			try { $null = New-Item -ItemType directory -Path $script:videoFileDir }
@@ -1000,7 +1000,7 @@ function generateTVerVideoList {
 	try {
 		getVideoInfo -Link $script:videoLink
 	}
- catch {
+	catch {
 		Write-ColorOutput '　TVerから情報を取得できませんでした。スキップします Err:10' -FgColor 'Green'
 		continue			#次回再度トライするため以降の処理をせずに次の番組へ
 	}
@@ -1053,7 +1053,7 @@ function generateTVerVideoList {
 			ignoreWord    = $local:ignoreWord ;
 		}
 	}
- else {
+	else {
 		Write-ColorOutput '　番組をリストファイルに追加します'
 		$script:newVideo = [pscustomobject]@{
 			seriesName    = $script:videoSeries ;
@@ -1083,10 +1083,10 @@ function generateTVerVideoList {
 		$script:newVideo | Export-Csv $script:listFilePath -NoTypeInformation -Encoding UTF8 -Append
 		Write-Debug 'ダウンロードリストを書き込みました'
 	}
- catch {
+	catch {
 		Write-ColorOutput '　ダウンロードリストを更新できませんでした。スキップします' -FgColor 'Green' ; continue
 	}
- finally { $null = fileUnlock $script:listLockFilePath }
+	finally { $null = fileUnlock $script:listLockFilePath }
 	$script:listFileData = Import-Csv $script:listFilePath -Encoding UTF8
 
 
@@ -1128,7 +1128,7 @@ function getVideoInfo {
 	if ($local:response.Result.Episode.Content.SeriesTitle.Length -le $local:response.Result.Series.Content.Title.Length ) {
 		$script:videoSeries = $(getSpecialCharacterReplaced (getNarrowChars ($local:response.Result.Episode.Content.SeriesTitle))).Trim()
 	}
- else {
+	else {
 		$script:videoSeries = $(getSpecialCharacterReplaced (getNarrowChars ($local:response.Result.Series.Content.Title))).Trim()
 	}
 	$script:videoSeriesID = $local:response.Result.Series.Content.Id
@@ -1249,7 +1249,7 @@ function getVideoFileName {
 	if ($script:addEpisodeNumber -eq $true) {
 		$local:videoName = $local:videoSeries + ' ' + $local:videoSeason + ' ' + $local:broadcastDate + ' Ep' + $local:videoEpisode + ' ' + $local:videoTitle
 	}
- else {
+	else {
 		$local:videoName = $local:videoSeries + ' ' + $local:videoSeason + ' ' + $local:broadcastDate + ' ' + $local:videoTitle
 	}
 
@@ -1470,7 +1470,7 @@ function executeYtdl {
 		}
 		catch { Write-Error 'youtube-dlの起動に失敗しました' ; return }
 	}
- else {
+	else {
 		Write-Debug "youtube-dl起動コマンド:nohup $script:ytdlPath $local:ytdlArgs"
 		try {
 			$null = (
@@ -1507,7 +1507,7 @@ function waitTillYtdlProcessIsZero () {
 			default { $local:ytdlCount = 0 ; break }
 		}
 	}
- catch {
+	catch {
 		$local:ytdlCount = 0			#プロセス数が取れなくてもとりあえず先に進む
 	}
 
@@ -1560,10 +1560,10 @@ function cleanDB {
 		$local:mergedHist | Sort-Object -Property downloadDate | Export-Csv $script:historyFilePath -NoTypeInformation -Encoding UTF8
 
 	}
- catch {
+	catch {
 		Write-ColorOutput '　ダウンロード履歴の更新に失敗しました' -FgColor 'Green'
 	}
- finally { $null = fileUnlock $script:historyLockFilePath }
+	finally { $null = fileUnlock $script:historyLockFilePath }
 }
 
 #----------------------------------------------------------------------
@@ -1587,13 +1587,13 @@ function purgeDB {
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
-		$local:purgedHist = ((Import-Csv $script:historyFilePath -Encoding UTF8).Where({ [DateTime]::ParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null) -gt $(Get-Date).AddDays(-1 * $local:retentionPeriod) }))
+		$local:purgedHist = ((Import-Csv $script:historyFilePath -Encoding UTF8).Where({ [DateTime]::ParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null) -gt $(Get-Date).AddDays(-1 * [Int32]$local:retentionPeriod) }))
 		$local:purgedHist | Export-Csv $script:historyFilePath -NoTypeInformation -Encoding UTF8
 	}
- catch {
+	catch {
 		Write-ColorOutput '　ダウンロード履歴のクリーンアップに失敗しました' -FgColor 'Green'
 	}
- finally { $null = fileUnlock $script:historyLockFilePath }
+	finally { $null = fileUnlock $script:historyLockFilePath }
 }
 
 #----------------------------------------------------------------------
@@ -1639,10 +1639,10 @@ function uniqueDB {
 		$local:mergedHist | Sort-Object -Property downloadDate | Export-Csv $script:historyFilePath -NoTypeInformation -Encoding UTF8
 
 	}
- catch {
+	catch {
 		Write-ColorOutput '　ダウンロード履歴の更新に失敗しました' -FgColor 'Green'
 	}
- finally { $null = fileUnlock $script:historyLockFilePath }
+	finally { $null = fileUnlock $script:historyLockFilePath }
 }
 
 #----------------------------------------------------------------------
@@ -1683,11 +1683,11 @@ function checkVideo {
 		$local:videoHists = Import-Csv $script:historyFilePath -Encoding UTF8
 		$local:checkStatus = $(($local:videoHists).Where({ $_.videoPath -eq $local:videoFileRelativePath })).videoValidated
 	}
- catch {
+	catch {
 		Write-ColorOutput "　既にダウンロード履歴から削除されたようです: $local:videoFileRelativePath" 'Gray'
 		return
 	}
- finally { $null = fileUnlock $script:historyLockFilePath }
+	finally { $null = fileUnlock $script:historyLockFilePath }
 
 	#0:未チェック、1:チェック済、2:チェック中
 	if ($local:checkStatus -eq 2 ) { Write-ColorOutput '　他プロセスでチェック中です' -FgColor 'Gray' ; return }
@@ -1742,7 +1742,7 @@ function checkVideo {
 		}
 		catch { Write-Error '　ffprobeを起動できませんでした' ; return }
 	}
- else {
+	else {
 		#ffmpegeを使った完全検査
 		$local:ffmpegArgs = "$local:decodeOption " `
 			+ ' -hide_banner -v error -xerror' `
@@ -1781,7 +1781,7 @@ function checkVideo {
 			Get-Content -LiteralPath $script:ffpmegErrorLogPath -Encoding UTF8 | ForEach-Object { Write-Debug $_ }
 		}
 	}
- catch { Write-ColorOutput '　ffmpegエラーの数をカウントできませんでした' -FgColor 'Green' ; $local:errorCount = 9999999 }
+	catch { Write-ColorOutput '　ffmpegエラーの数をカウントできませんでした' -FgColor 'Green' ; $local:errorCount = 9999999 }
 
 	#エラーをカウントしたらファイルを削除
 	try {
@@ -1789,7 +1789,7 @@ function checkVideo {
 			Remove-Item -LiteralPath $script:ffpmegErrorLogPath -Force -ErrorAction SilentlyContinue
 		}
 	}
- catch { Write-ColorOutput '　ffmpegエラーファイルを削除できませんでした' -FgColor 'Green' }
+	catch { Write-ColorOutput '　ffmpegエラーファイルを削除できませんでした' -FgColor 'Green' }
 
 	if ($local:proc.ExitCode -ne 0 -or $local:errorCount -gt 30) {
 		Write-ColorOutput '　チェックNGでした' -FgColor 'Green'
@@ -1816,7 +1816,7 @@ function checkVideo {
 		try { Remove-Item -LiteralPath $local:videoFilePath -Force -ErrorAction SilentlyContinue }
 		catch { Write-ColorOutput "　ファイル削除できませんでした: $local:videoFilePath" 'Green' }
 	}
- else {
+	else {
 		#終了コードが"0"のときはダウンロード履歴にチェック済フラグを立てる
 		Write-ColorOutput '　チェックOKでした' -FgColor 'Gray'
 		try {
