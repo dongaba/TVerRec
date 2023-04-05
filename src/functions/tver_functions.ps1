@@ -719,7 +719,7 @@ function waitTillYtdlProcessGetFewer {
 
 	Write-Verbose "現在のダウンロードプロセス一覧 ($local:ytdlCount 個)"
 
-	while ([int]$local:ytdlCount -ge [int]$local:parallelDownloadFileNum ) {
+	while ([int32]$local:ytdlCount -ge [int32]$local:parallelDownloadFileNum ) {
 		Write-ColorOutput "ダウンロードが $local:parallelDownloadFileNum 多重に達したので一時待機します。 ($(getTimeStamp))" -FgColor 'Gray'
 		Write-Verbose "現在のダウンロードプロセス一覧 ($local:ytdlCount 個)"
 		Start-Sleep -Seconds 60			#1分待機
@@ -1587,7 +1587,7 @@ function purgeDB {
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
-		$local:purgedHist = ((Import-Csv $script:historyFilePath -Encoding UTF8).Where({ [DateTime]::ParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null) -gt $(Get-Date).AddDays(-1 * [Int32]$local:retentionPeriod) }))
+		$local:purgedHist = ((Import-Csv $script:historyFilePath -Encoding UTF8).Where({ [DateTime]::ParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null) -gt $(Get-Date).AddDays(-1 * $local:retentionPeriod) }))
 		$local:purgedHist | Export-Csv $script:historyFilePath -NoTypeInformation -Encoding UTF8
 	}
  catch {
