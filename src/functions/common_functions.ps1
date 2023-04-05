@@ -50,8 +50,7 @@ try {
 	$script:ipapi = $script:ipapi.replace('callback(', '').replace(');', '')
 	$script:ipapi = $script:ipapi.replace('{', "{`n").replace('}', "`n}").replace(', ', ",`n")
 	$(ConvertFrom-Json $script:ipapi).psobject.properties | ForEach-Object { $script:clientEnv[$_.Name] = $_.Value }
-}
-catch { Write-Debug 'Geo IPのチェックに失敗しました' }
+} catch { Write-Debug 'Geo IPのチェックに失敗しました' }
 $script:clientEnv.Add('AppName', $script:appName)
 $script:clientEnv.Add('AppVersion', $script:appVersion)
 $script:clientEnv.Add('PSEdition', $PSVersionTable.PSEdition)
@@ -286,11 +285,9 @@ function fileLock {
 		$script:fileInfo = New-Object System.IO.FileInfo $local:Path		# attempt to open file and detect file lock
 		$script:fileStream = $script:fileInfo.Open([System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
 		$local:fileLocked = $true		# initialise variables
-	}
-	catch {
+	} catch {
 		$fileLocked = $false			# catch fileStream had falied
-	}
-	finally {
+	} finally {
 		# return result
 		[PSCustomObject]@{
 			path       = $local:Path
@@ -319,11 +316,9 @@ function fileUnlock {
 	try {
 		if ($script:fileStream) { $script:fileStream.Close() }		# close stream if not lock
 		$local:fileLocked = $false		# initialise variables
-	}
-	catch {
+	} catch {
 		$local:fileLocked = $true		# catch fileStream had falied
-	}
-	finally {
+	} finally {
 		# return result
 		[PSCustomObject]@{
 			path       = $local:Path
@@ -355,11 +350,9 @@ function isLocked {
 		$local:isLockedfileStream = $local:isLockedFileInfo.Open([System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
 		if ($local:isLockedfileStream) { $local:isLockedfileStream.Close() }		# close stream if not lock
 		$local:isFileLocked = $false		# initialise variables
-	}
-	catch {
+	} catch {
 		$local:isFileLocked = $true			# catch fileStream had falied
-	}
-	finally {
+	} finally {
 		# return result
 		[PSCustomObject]@{
 			path       = $local:isLockedPath

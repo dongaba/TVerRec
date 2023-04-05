@@ -162,7 +162,8 @@ try {
 		| Where-Object { $_.videoPath -ne '-- IGNORED --' } `
 		| Select-Object 'videoPath'
 	)
-} catch { Write-ColorOutput 'ダウンロード履歴の読み込みに失敗しました' -FgColor 'Green'
+} catch {
+ Write-ColorOutput 'ダウンロード履歴の読み込みに失敗しました' -FgColor 'Green'
 } finally { $null = fileUnlock $script:historyLockFilePath }
 
 
@@ -274,7 +275,8 @@ try {
 		$local:uncheckedVido.videoValidated = '0'
 	}
 	$local:videoHists | Export-Csv $script:historyFilePath -NoTypeInformation -Encoding UTF8
-} catch { Write-ColorOutput 'ダウンロード履歴の更新に失敗しました' -FgColor 'Green'
+} catch {
+ Write-ColorOutput 'ダウンロード履歴の更新に失敗しました' -FgColor 'Green'
 } finally { $null = fileUnlock $script:historyLockFilePath }
 
 #進捗表示

@@ -126,7 +126,8 @@ try {
 	}
 	#ファイル操作
 	$script:historyFileData = Import-Csv $script:historyFilePath -Encoding UTF8
-} catch { Write-ColorOutput '　ダウンロード履歴を読み込めなかったのでスキップしました' -FgColor 'Green' ; continue
+} catch {
+ Write-ColorOutput '　ダウンロード履歴を読み込めなかったのでスキップしました' -FgColor 'Green' ; continue
 } finally { $null = fileUnlock $script:historyLockFilePath }
 Write-ColorOutput ''
 

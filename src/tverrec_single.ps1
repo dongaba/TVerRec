@@ -125,7 +125,8 @@ while ($true) {
 		}
 		#ファイル操作
 		$script:historyFileData = Import-Csv $script:historyFilePath -Encoding UTF8
-	} catch { Write-ColorOutput '　ダウンロード履歴を読み込めなかったのでスキップしました' -FgColor 'Green' ; continue
+	} catch {
+		Write-ColorOutput '　ダウンロード履歴を読み込めなかったのでスキップしました' -FgColor 'Green' ; continue
 	} finally { $null = fileUnlock $script:historyLockFilePath }
 
 	$local:videoPageURL = Read-Host '番組URLを入力してください。何も入力しないで Enter を押すと終了します。'

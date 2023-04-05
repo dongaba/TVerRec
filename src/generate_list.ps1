@@ -143,7 +143,8 @@ foreach ($local:keywordName in $local:keywordNames) {
 		}
 		#ファイル操作
 		$script:listFileData = Import-Csv $script:listFilePath -Encoding UTF8
-	} catch { Write-ColorOutput '　ダウンロードリストを読み込めなかったのでスキップしました' -FgColor 'Green' ; continue
+	} catch {
+		Write-ColorOutput '　ダウンロードリストを読み込めなかったのでスキップしました' -FgColor 'Green' ; continue
 	} finally { $null = fileUnlock $script:listLockFilePath }
 
 	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
