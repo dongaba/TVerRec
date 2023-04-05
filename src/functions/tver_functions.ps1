@@ -748,21 +748,21 @@ function downloadTVerVideo {
 			Position = 0
 		)]
 		[Alias('Keyword')]
-		[String] $script:keywordName,
+		[String]$script:keywordName,
 
 		[Parameter(
 			Mandatory = $true,
 			Position = 1
 		)]
 		[Alias('URL')]
-		[String] $script:videoPageURL,
+		[String]$script:videoPageURL,
 
 		[Parameter(
 			Mandatory = $true,
 			Position = 2
 		)]
 		[Alias('Link')]
-		[String] $script:videoLink
+		[String]$script:videoLink
 	)
 
 	$script:videoName = '' ; $script:videoFilePath = '' ; $script:videoSeriesPageURL = ''
@@ -978,14 +978,14 @@ function generateTVerVideoList {
 			Position = 0
 		)]
 		[Alias('Keyword')]
-		[String] $script:keywordName,
+		[String]$script:keywordName,
 
 		[Parameter(
 			Mandatory = $true,
 			Position = 1
 		)]
 		[Alias('Link')]
-		[String] $script:videoLink
+		[String]$script:videoLink
 	)
 
 	$script:videoName = '' ; $script:videoFilePath = '' ; $script:videoSeriesPageURL = ''
@@ -1103,7 +1103,7 @@ function getVideoInfo {
 			Position = 0
 		)]
 		[Alias('Link')]
-		[String] $local:videoLink
+		[String]$local:videoLink
 	)
 
 	$local:episodeID = $local:videoLink.Replace('/episodes/', '')
@@ -1214,35 +1214,35 @@ function getVideoFileName {
 			Position = 0
 		)]
 		[Alias('Series')]
-		[String] $local:videoSeries,
+		[String]$local:videoSeries,
 
 		[Parameter(
 			Mandatory = $false,
 			Position = 1
 		)]
 		[Alias('Season')]
-		[String] $local:videoSeason,
+		[String]$local:videoSeason,
 
 		[Parameter(
 			Mandatory = $false,
 			Position = 2
 		)]
 		[Alias('Episode')]
-		[String] $local:videoEpisode,
+		[String]$local:videoEpisode,
 
 		[Parameter(
 			Mandatory = $false,
 			Position = 3
 		)]
 		[Alias('Title')]
-		[String] $local:videoTitle,
+		[String]$local:videoTitle,
 
 		[Parameter(
 			Mandatory = $false,
 			Position = 4
 		)]
 		[Alias('Date')]
-		[String] $local:broadcastDate
+		[String]$local:broadcastDate
 	)
 
 	#ファイル名を生成
@@ -1288,28 +1288,28 @@ function showVideoInfo {
 			Position = 0
 		)]
 		[Alias('Name')]
-		[String] $local:videoName,
+		[String]$local:videoName,
 
 		[Parameter(
 			Mandatory = $false,
 			Position = 1
 		)]
 		[Alias('Date')]
-		[String] $local:broadcastDate,
+		[String]$local:broadcastDate,
 
 		[Parameter(
 			Mandatory = $false,
 			Position = 2
 		)]
 		[Alias('Media')]
-		[String] $local:mediaName,
+		[String]$local:mediaName,
 
 		[Parameter(
 			Mandatory = $false,
 			Position = 3
 		)]
 		[Alias('Description')]
-		[String] $local:descriptionText
+		[String]$local:descriptionText
 	)
 
 	Write-ColorOutput ' '
@@ -1329,70 +1329,70 @@ function showVideoDebugInfo {
 			Position = 0
 		)]
 		[Alias('URL')]
-		[String] $local:videoPageURL,
+		[String]$local:videoPageURL,
 
 		[Parameter(
 			Mandatory = $false,
 			Position = 1
 		)]
 		[Alias('SeriesURL')]
-		[String] $local:videoSeriesPageURL,
+		[String]$local:videoSeriesPageURL,
 
 		[Parameter(
 			Mandatory = $false,
 			Position = 2
 		)]
 		[Alias('Keyword')]
-		[String] $local:keywordName,
+		[String]$local:keywordName,
 
 		[Parameter(
 			Mandatory = $false,
 			Position = 3
 		)]
 		[Alias('Series')]
-		[String] $local:videoSeries,
+		[String]$local:videoSeries,
 
 		[Parameter(
 			Mandatory = $false,
 			Position = 4
 		)]
 		[Alias('Season')]
-		[String] $local:videoSeason,
+		[String]$local:videoSeason,
 
 		[Parameter(
 			Mandatory = $false,
 			Position = 5
 		)]
 		[Alias('Episode')]
-		[String] $local:videoEpisode,
+		[String]$local:videoEpisode,
 
 		[Parameter(
 			Mandatory = $false,
 			Position = 6
 		)]
 		[Alias('Title')]
-		[String] $local:videoTitle,
+		[String]$local:videoTitle,
 
 		[Parameter(
 			Mandatory = $false,
 			Position = 7
 		)]
 		[Alias('Path')]
-		[String] $local:videoFilePath,
+		[String]$local:videoFilePath,
 
 		[Parameter(
 			Mandatory = $false,
 			Position = 8
 		)]
 		[Alias('Time')]
-		[String] $local:processedTime,
+		[String]$local:processedTime,
 
 		[Parameter(
 			Mandatory = $false,
 			Position = 9
 		)]
 		[Alias('EndTime')]
-		[String] $local:endTime
+		[String]$local:endTime
 	)
 
 	Write-Debug	"　番組エピソードページ:$local:videoPageURL"
@@ -1418,7 +1418,7 @@ function executeYtdl {
 			Position = 0
 		)]
 		[Alias('URL')]
-		[String] $local:videoPageURL
+		[String]$local:videoPageURL
 	)
 
 	goAnal -Event 'download'
@@ -1577,7 +1577,7 @@ function purgeDB {
 			Position = 0
 		)]
 		[Alias('RetentionPeriod')]
-		[Int32] $local:retentionPeriod
+		[Int32]$local:retentionPeriod
 	)
 
 	try {
@@ -1587,7 +1587,7 @@ function purgeDB {
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
-		$local:purgedHist = ((Import-Csv $script:historyFilePath -Encoding UTF8).Where({ [DateTime]::ParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null) -gt $(Get-Date).AddDays(-1 * $local:retentionPeriod) }))
+		$local:purgedHist = ((Import-Csv $script:historyFilePath -Encoding UTF8).Where({ [DateTime]::ParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null) -gt $(Get-Date).AddDays(-1 * [Int32]$local:retentionPeriod) }))
 		$local:purgedHist | Export-Csv $script:historyFilePath -NoTypeInformation -Encoding UTF8
 	}
  catch {
@@ -1656,14 +1656,14 @@ function checkVideo {
 			Position = 0
 		)]
 		[Alias('DecodeOption')]
-		[String] $local:decodeOption,
+		[String]$local:decodeOption,
 
 		[Parameter(
 			Mandatory = $false,
 			Position = 1
 		)]
 		[Alias('Path')]
-		[String] $local:videoFileRelativePath
+		[String]$local:videoFileRelativePath
 	)
 
 	$local:errorCount = 0

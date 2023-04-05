@@ -49,7 +49,8 @@ try {
 	$script:ipapi = $script:ipapi.replace('callback(', '').replace(');', '')
 	$script:ipapi = $script:ipapi.replace('{', "{`n").replace('}', "`n}").replace(', ', ",`n")
 	$(ConvertFrom-Json $script:ipapi).psobject.properties | ForEach-Object { $script:clientEnv[$_.Name] = $_.Value }
-} catch { Write-Debug 'Geo IPのチェックに失敗しました' }
+}
+catch { Write-Debug 'Geo IPのチェックに失敗しました' }
 $script:clientEnv.Add('AppName', $script:appName)
 $script:clientEnv.Add('AppVersion', $script:appVersion)
 $script:clientEnv.Add('PSEdition', $PSVersionTable.PSEdition)
@@ -230,7 +231,7 @@ function deleteFiles {
 			Position = 0
 		)]
 		[Alias('Path')]
-		[System.IO.FileInfo] $local:path,
+		[System.IO.FileInfo]$local:path,
 
 		[Parameter(
 			Mandatory = $true,
@@ -239,7 +240,7 @@ function deleteFiles {
 			Position = 0
 		)]
 		[Alias('Conditions')]
-		[Object] $local:conditions,
+		[Object]$local:conditions,
 
 		[Parameter(
 			Mandatory = $true,
@@ -248,7 +249,7 @@ function deleteFiles {
 			Position = 0
 		)]
 		[Alias('DatePast')]
-		[int32] $local:datePast
+		[int32]$local:datePast
 	)
 
 	#	try {
@@ -276,7 +277,7 @@ function fileLock {
 			Position = 0
 		)]
 		[Alias('Path')]
-		[System.IO.FileInfo] $local:Path
+		[System.IO.FileInfo]$local:Path
 	)
 
 	try {
@@ -284,9 +285,11 @@ function fileLock {
 		$script:fileInfo = New-Object System.IO.FileInfo $local:Path		# attempt to open file and detect file lock
 		$script:fileStream = $script:fileInfo.Open([System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
 		$local:fileLocked = $true		# initialise variables
-	} catch {
+	}
+ catch {
 		$fileLocked = $false			# catch fileStream had falied
-	} finally {
+	}
+ finally {
 		# return result
 		[PSCustomObject]@{
 			path       = $local:Path
@@ -309,15 +312,17 @@ function fileUnlock {
 			Position = 0
 		)]
 		[Alias('Path')]
-		[System.IO.FileInfo] $local:Path
+		[System.IO.FileInfo]$local:Path
 	)
 
 	try {
 		if ($script:fileStream) { $script:fileStream.Close() }		# close stream if not lock
 		$local:fileLocked = $false		# initialise variables
-	} catch {
+	}
+ catch {
 		$local:fileLocked = $true		# catch fileStream had falied
-	} finally {
+	}
+ finally {
 		# return result
 		[PSCustomObject]@{
 			path       = $local:Path
@@ -349,9 +354,11 @@ function isLocked {
 		$local:isLockedfileStream = $local:isLockedFileInfo.Open([System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
 		if ($local:isLockedfileStream) { $local:isLockedfileStream.Close() }		# close stream if not lock
 		$local:isFileLocked = $false		# initialise variables
-	} catch {
+	}
+ catch {
 		$local:isFileLocked = $true			# catch fileStream had falied
-	} finally {
+	}
+ finally {
 		# return result
 		[PSCustomObject]@{
 			path       = $local:isLockedPath
@@ -374,7 +381,7 @@ function Write-ColorOutput {
 			Position = 0
 		)]
 		[Alias('Text')]
-		[Object] $local:text,
+		[Object]$local:text,
 
 		[Parameter(
 			Mandatory = $false,
@@ -383,7 +390,7 @@ function Write-ColorOutput {
 			Position = 1
 		)]
 		[Alias('FgColor')]
-		[ConsoleColor] $local:foregroundColor,
+		[ConsoleColor]$local:foregroundColor,
 
 		[Parameter(
 			Mandatory = $false,
@@ -392,7 +399,7 @@ function Write-ColorOutput {
 			Position = 2
 		)]
 		[Alias('BgColor')]
-		[ConsoleColor] $local:backgroundColor,
+		[ConsoleColor]$local:backgroundColor,
 
 		[Parameter(
 			Mandatory = $false,
@@ -401,7 +408,7 @@ function Write-ColorOutput {
 			Position = 4
 		)]
 		[Alias('NoNewLine')]
-		[Boolean] $local:noLF
+		[Boolean]$local:noLF
 	)
 
 	# Save previous colors
@@ -448,7 +455,7 @@ function ShowToast {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Text1')]
-		[String] $local:toastText1,
+		[String]$local:toastText1,
 
 		[Parameter(
 			Mandatory = $false,
@@ -456,7 +463,7 @@ function ShowToast {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Text2')]
-		[String] $local:toastText2,
+		[String]$local:toastText2,
 
 		[Parameter(
 			Mandatory = $false,
@@ -465,7 +472,7 @@ function ShowToast {
 		)]
 		[Alias('Duration')]
 		[ValidateSet('Short', 'Long')]
-		[String] $local:toastDuration,
+		[String]$local:toastDuration,
 
 		[Parameter(
 			Mandatory = $false,
@@ -473,7 +480,7 @@ function ShowToast {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Silent')]
-		[Boolean] $local:toastSilent
+		[Boolean]$local:toastSilent
 	)
 
 	if ($IsWindows) {
@@ -530,7 +537,7 @@ function ShowProgressToast {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Text1')]
-		[String] $local:toastText1,
+		[String]$local:toastText1,
 
 		[Parameter(
 			Mandatory = $false,
@@ -538,7 +545,7 @@ function ShowProgressToast {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Text2')]
-		[String] $local:toastText2,
+		[String]$local:toastText2,
 
 		[Parameter(
 			Mandatory = $false,
@@ -546,7 +553,7 @@ function ShowProgressToast {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('WorkDetail')]
-		[String] $local:toastWorkDetail,
+		[String]$local:toastWorkDetail,
 
 		[Parameter(
 			Mandatory = $true,
@@ -554,7 +561,7 @@ function ShowProgressToast {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Tag')]
-		[String] $local:toastTag,
+		[String]$local:toastTag,
 
 		[Parameter(
 			Mandatory = $true,
@@ -562,7 +569,7 @@ function ShowProgressToast {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Group')]
-		[String] $local:toastGroup,
+		[String]$local:toastGroup,
 
 		[Parameter(
 			Mandatory = $false,
@@ -571,7 +578,7 @@ function ShowProgressToast {
 		)]
 		[ValidateSet('Short', 'Long')]
 		[Alias('Duration')]
-		[String] $local:toastDuration,
+		[String]$local:toastDuration,
 
 		[Parameter(
 			Mandatory = $false,
@@ -579,7 +586,7 @@ function ShowProgressToast {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Silent')]
-		[Boolean] $local:toastSilent
+		[Boolean]$local:toastSilent
 	)
 
 	if ($IsWindows) {
@@ -645,7 +652,7 @@ function UpdateProgressToast {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Title')]
-		[String] $local:toastTitle,
+		[String]$local:toastTitle,
 
 		[Parameter(
 			Mandatory = $true,
@@ -653,7 +660,7 @@ function UpdateProgressToast {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Rate')]
-		[String] $local:toastRate,
+		[String]$local:toastRate,
 
 		[Parameter(
 			Mandatory = $false,
@@ -661,7 +668,7 @@ function UpdateProgressToast {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('LeftText')]
-		[String] $local:toastLeftText,
+		[String]$local:toastLeftText,
 
 		[Parameter(
 			Mandatory = $false,
@@ -669,7 +676,7 @@ function UpdateProgressToast {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('RightText')]
-		[String] $local:toastRightText,
+		[String]$local:toastRightText,
 
 		[Parameter(
 			Mandatory = $true,
@@ -677,7 +684,7 @@ function UpdateProgressToast {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Tag')]
-		[String] $local:toastTag,
+		[String]$local:toastTag,
 
 		[Parameter(
 			Mandatory = $true,
@@ -685,7 +692,7 @@ function UpdateProgressToast {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Group')]
-		[String] $local:toastGroup
+		[String]$local:toastGroup
 	)
 
 	if ($IsWindows) {
@@ -714,7 +721,7 @@ function ShowProgressToast2 {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Text1')]
-		[String] $local:toastText1,
+		[String]$local:toastText1,
 
 		[Parameter(
 			Mandatory = $false,
@@ -722,7 +729,7 @@ function ShowProgressToast2 {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Text2')]
-		[String] $local:toastText2,
+		[String]$local:toastText2,
 
 		[Parameter(
 			Mandatory = $false,
@@ -730,7 +737,7 @@ function ShowProgressToast2 {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('WorkDetail1')]
-		[String] $local:toastWorkDetail1,
+		[String]$local:toastWorkDetail1,
 
 		[Parameter(
 			Mandatory = $false,
@@ -738,7 +745,7 @@ function ShowProgressToast2 {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('WorkDetail2')]
-		[String] $local:toastWorkDetail2,
+		[String]$local:toastWorkDetail2,
 
 		[Parameter(
 			Mandatory = $true,
@@ -746,7 +753,7 @@ function ShowProgressToast2 {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Tag')]
-		[String] $local:toastTag,
+		[String]$local:toastTag,
 
 		[Parameter(
 			Mandatory = $true,
@@ -754,7 +761,7 @@ function ShowProgressToast2 {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Group')]
-		[String] $local:toastGroup,
+		[String]$local:toastGroup,
 
 		[Parameter(
 			Mandatory = $false,
@@ -763,7 +770,7 @@ function ShowProgressToast2 {
 		)]
 		[ValidateSet('Short', 'Long')]
 		[Alias('Duration')]
-		[String] $local:toastDuration,
+		[String]$local:toastDuration,
 
 		[Parameter(
 			Mandatory = $false,
@@ -771,7 +778,7 @@ function ShowProgressToast2 {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Silent')]
-		[Boolean] $local:toastSilent
+		[Boolean]$local:toastSilent
 	)
 
 	if ($IsWindows) {
@@ -842,7 +849,7 @@ function UpdateProgressToast2 {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Title1')]
-		[String] $local:toastTitle1,
+		[String]$local:toastTitle1,
 
 		[Parameter(
 			Mandatory = $true,
@@ -850,7 +857,7 @@ function UpdateProgressToast2 {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Rate1')]
-		[String] $local:toastRate1,
+		[String]$local:toastRate1,
 
 		[Parameter(
 			Mandatory = $false,
@@ -858,7 +865,7 @@ function UpdateProgressToast2 {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('LeftText1')
-		][String] $local:toastLeftText1,
+		][String]$local:toastLeftText1,
 
 		[Parameter(
 			Mandatory = $false,
@@ -866,7 +873,7 @@ function UpdateProgressToast2 {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('RightText1')]
-		[String] $local:toastRightText1,
+		[String]$local:toastRightText1,
 
 		[Parameter(
 			Mandatory = $false,
@@ -874,7 +881,7 @@ function UpdateProgressToast2 {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Title2')]
-		[String] $local:toastTitle2,
+		[String]$local:toastTitle2,
 
 		[Parameter(
 			Mandatory = $true,
@@ -882,7 +889,7 @@ function UpdateProgressToast2 {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Rate2')]
-		[String] $local:toastRate2,
+		[String]$local:toastRate2,
 
 		[Parameter(
 			Mandatory = $false,
@@ -890,7 +897,7 @@ function UpdateProgressToast2 {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('LeftText2')]
-		[String] $local:toastLeftText2,
+		[String]$local:toastLeftText2,
 
 		[Parameter(
 			Mandatory = $false,
@@ -898,7 +905,7 @@ function UpdateProgressToast2 {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('RightText2')]
-		[String] $local:toastRightText2,
+		[String]$local:toastRightText2,
 
 		[Parameter(
 			Mandatory = $true,
@@ -906,7 +913,7 @@ function UpdateProgressToast2 {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Tag')]
-		[String] $local:toastTag,
+		[String]$local:toastTag,
 
 		[Parameter(
 			Mandatory = $true,
@@ -914,7 +921,7 @@ function UpdateProgressToast2 {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Group')]
-		[String] $local:toastGroup
+		[String]$local:toastGroup
 	)
 
 	if ($IsWindows) {
@@ -947,7 +954,7 @@ function ShowProgress2Row {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('ProgressText1')]
-		[String] $local:progressText1,
+		[String]$local:progressText1,
 
 		[Parameter(
 			Mandatory = $false,
@@ -955,7 +962,7 @@ function ShowProgress2Row {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('ProgressText2')]
-		[String] $local:progressText2,
+		[String]$local:progressText2,
 
 		[Parameter(
 			Mandatory = $false,
@@ -963,7 +970,7 @@ function ShowProgress2Row {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('WorkDetail1')]
-		[String] $local:toastWorkDetail1,
+		[String]$local:toastWorkDetail1,
 
 		[Parameter(
 			Mandatory = $false,
@@ -971,7 +978,7 @@ function ShowProgress2Row {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('WorkDetail2')]
-		[String] $local:toastWorkDetail2,
+		[String]$local:toastWorkDetail2,
 
 		[Parameter(
 			Mandatory = $false,
@@ -980,7 +987,7 @@ function ShowProgress2Row {
 		)]
 		[ValidateSet('Short', 'Long')]
 		[Alias('Duration')]
-		[String] $local:toastDuration,
+		[String]$local:toastDuration,
 
 		[Parameter(
 			Mandatory = $false,
@@ -988,7 +995,7 @@ function ShowProgress2Row {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Silent')]
-		[Boolean] $local:toastSilent,
+		[Boolean]$local:toastSilent,
 
 		[Parameter(
 			Mandatory = $true,
@@ -996,7 +1003,7 @@ function ShowProgress2Row {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Group')]
-		[String] $local:toastGroup
+		[String]$local:toastGroup
 	)
 
 	if (!($local:progressText2)) { $local:progressText2 = '' }
@@ -1027,7 +1034,7 @@ function UpdateProgress2Row {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('ProgressActivity1')]
-		[String] $local:progressActivity1,
+		[String]$local:progressActivity1,
 
 		[Parameter(
 			Mandatory = $false,
@@ -1035,7 +1042,7 @@ function UpdateProgress2Row {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('CurrentProcessing1')]
-		[String] $local:currentProcessing1,
+		[String]$local:currentProcessing1,
 
 		[Parameter(
 			Mandatory = $true,
@@ -1043,7 +1050,7 @@ function UpdateProgress2Row {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Rate1')]
-		[String] $local:progressRatio1,
+		[String]$local:progressRatio1,
 
 		[Parameter(
 			Mandatory = $false,
@@ -1051,7 +1058,7 @@ function UpdateProgress2Row {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('SecRemaining1')]
-		[String] $local:secRemaining1,
+		[String]$local:secRemaining1,
 
 		[Parameter(
 			Mandatory = $false,
@@ -1059,7 +1066,7 @@ function UpdateProgress2Row {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('ProgressActivity2')]
-		[String] $local:progressActivity2,
+		[String]$local:progressActivity2,
 
 		[Parameter(
 			Mandatory = $false,
@@ -1067,7 +1074,7 @@ function UpdateProgress2Row {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('CurrentProcessing2')]
-		[String] $local:currentProcessing2,
+		[String]$local:currentProcessing2,
 
 		[Parameter(
 			Mandatory = $true,
@@ -1075,7 +1082,7 @@ function UpdateProgress2Row {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Rate2')]
-		[String] $local:progressRatio2,
+		[String]$local:progressRatio2,
 
 		[Parameter(
 			Mandatory = $false,
@@ -1083,7 +1090,7 @@ function UpdateProgress2Row {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('SecRemaining2')]
-		[String] $local:secRemaining2,
+		[String]$local:secRemaining2,
 
 		[Parameter(
 			Mandatory = $true,
@@ -1091,7 +1098,7 @@ function UpdateProgress2Row {
 			ValueFromPipelineByPropertyName = $false
 		)]
 		[Alias('Group')]
-		[String] $local:toastGroup
+		[String]$local:toastGroup
 	)
 
 	if ($local:secRemaining1 -eq -1 -or $local:secRemaining1 -eq '' ) { $local:minRemaining1 = '計算中...' }
@@ -1125,15 +1132,15 @@ function goAnal {
 	Param (
 		[Parameter(Mandatory = $true)]
 		[Alias('Event')]
-		[String] $local:event,
+		[String]$local:event,
 
 		[Parameter(Mandatory = $false)]
 		[Alias('Type')]
-		[String] $local:type,
+		[String]$local:type,
 
 		[Parameter(Mandatory = $false)]
 		[Alias('ID')]
-		[String] $local:id
+		[String]$local:id
 	)
 
 	if (!($local:type)) { $local:type = '' }
