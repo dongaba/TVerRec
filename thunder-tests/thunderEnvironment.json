@@ -9,23 +9,23 @@
     "data": [
       {
         "name": "platform_uid",
-        "value": ""
+        "value": "af7eab493dd84186a96c5991ecc8e0ec2982"
       },
       {
         "name": "platform_token",
-        "value": ""
+        "value": "a7x28dw5qdxzi70gighc59ryfdovfpanqgo2zwr5"
       },
       {
         "name": "series_id",
-        "value": ""
+        "value": "srlhai96ey"
       },
       {
         "name": "episode_id",
-        "value": ""
+        "value": "epjwtmah0v"
       },
       {
         "name": "talent_id",
-        "value": ""
+        "value": "t0005f7"
       },
       {
         "name": "seadon_id",
@@ -33,31 +33,31 @@
       },
       {
         "name": "season_id",
-        "value": ""
+        "value": "ss0lcr6k7h"
       },
       {
         "name": "tag_id",
-        "value": ""
+        "value": "movie23-conan"
       },
       {
         "name": "genre_id",
-        "value": ""
+        "value": "drama"
       },
       {
         "name": "weekday_id",
-        "value": ""
+        "value": "mon"
       },
       {
         "name": "tvnetwork_id",
-        "value": ""
+        "value": "nns"
       },
       {
         "name": "caption_id",
-        "value": ""
+        "value": "texttrackon"
       },
       {
         "name": "content_type",
-        "value": ""
+        "value": "short"
       }
     ]
   }

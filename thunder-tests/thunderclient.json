@@ -1,1011 +1,1021 @@
 [
   {
     "_id": "d54169b6-1e8e-4953-b2a5-d461212713d3",
+    "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
+    "containerId": "",
+    "name": "Get Token",
+    "url": "https://platform-api.tver.jp/v2/api/platform_users/browser/create",
+    "method": "POST",
+    "sortNum": 110000,
+    "created": "2023-04-07T19:40:47.335Z",
+    "modified": "2023-04-07T23:27:52.840Z",
+    "headers": [
+      {
+        "name": "Accept",
+        "value": "*/*",
+        "isDisabled": true
+      },
+      {
+        "name": "User-Agent",
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
+      }
+    ],
+    "params": [],
     "body": {
+      "type": "formencoded",
+      "raw": "",
       "form": [
         {
           "name": "device_type",
           "value": "pc"
         }
-      ],
-      "raw": "",
-      "type": "formencoded"
+      ]
     },
-    "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
-    "containerId": "",
-    "created": "2023-04-07T19:40:47.335Z",
-    "headers": [
-      {
-        "isDisabled": true,
-        "name": "Accept",
-        "value": "*/*"
-      },
-      {
-        "isDisabled": true,
-        "name": "User-Agent",
-        "value": "Thunder Client (https://www.thunderclient.com)"
-      }
-    ],
-    "method": "POST",
-    "modified": "2023-04-07T22:53:31.987Z",
-    "name": "Get Token",
-    "params": [],
-    "sortNum": 110000,
     "tests": [
       {
-        "action": "setto",
-        "custom": "json.result.platform_uid",
         "type": "set-env-var",
+        "custom": "json.result.platform_uid",
+        "action": "setto",
         "value": "{{platform_uid}}"
       },
       {
-        "action": "setto",
-        "custom": "json.result.platform_token",
         "type": "set-env-var",
+        "custom": "json.result.platform_token",
+        "action": "setto",
         "value": "{{platform_token}}"
       },
       {
-        "action": "notequal",
+        "type": "json-query",
         "custom": "json.result.platform_uid",
-        "type": "json-query",
-        "value": ""
-      },
-      {
         "action": "notequal",
-        "custom": "json.result.platform_token",
-        "type": "json-query",
         "value": ""
       },
       {
-        "action": ">=",
-        "custom": "json.result",
         "type": "json-query",
+        "custom": "json.result.platform_token",
+        "action": "notequal",
+        "value": ""
+      },
+      {
+        "type": "json-query",
+        "custom": "json.result",
+        "action": ">=",
         "value": "2"
       }
-    ],
-    "url": "https://platform-api.tver.jp/v2/api/platform_users/browser/create"
+    ]
   },
   {
     "_id": "94223b33-b1be-42f5-85e8-2f12fda58ad1",
     "colId": "28e9c09b-f8ff-4e31-835c-c7aa3f53c7c9",
     "containerId": "",
+    "name": "Get Top Page info",
+    "url": "https://platform-api.tver.jp/service/api/v1/callHome?platform_uid={{platform_uid}}&platform_token={{platform_token}}",
+    "method": "GET",
+    "sortNum": 39.1,
     "created": "2023-04-07T19:55:41.999Z",
+    "modified": "2023-04-07T23:28:01.018Z",
     "headers": [
       {
-        "isDisabled": true,
         "name": "Accept",
-        "value": "*/*"
+        "value": "*/*",
+        "isDisabled": true
       },
       {
         "name": "x-tver-platform-type",
         "value": "web"
       },
       {
-        "isDisabled": true,
         "name": "User-Agent",
-        "value": "Thunder Client (https://www.thunderclient.com)"
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
       }
     ],
-    "method": "GET",
-    "modified": "2023-04-07T22:31:23.660Z",
-    "name": "Get Top Page info",
     "params": [
       {
-        "isPath": false,
         "name": "platform_uid",
-        "value": "{{platform_uid}}"
+        "value": "{{platform_uid}}",
+        "isPath": false
       },
       {
-        "isPath": false,
         "name": "platform_token",
-        "value": "{{platform_token}}"
+        "value": "{{platform_token}}",
+        "isPath": false
+      }
+    ],
+    "tests": [
+      {
+        "type": "json-query",
+        "custom": "json.result",
+        "action": "isjson",
+        "value": ""
       }
     ],
     "preReq": {
       "runRequests": [
         {
-          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "reqId": "d54169b6-1e8e-4953-b2a5-d461212713d3",
+          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "triggerCondition": "run-always",
           "triggerValue": ""
         }
       ]
-    },
-    "sortNum": 39.1,
-    "tests": [
-      {
-        "action": "isjson",
-        "custom": "json.result",
-        "type": "json-query",
-        "value": ""
-      }
-    ],
-    "url": "https://platform-api.tver.jp/service/api/v1/callHome?platform_uid={{platform_uid}}&platform_token={{platform_token}}"
+    }
   },
   {
     "_id": "5cfe62b0-62db-4c20-8ce4-d7e8df2400f5",
     "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
     "containerId": "",
+    "name": "Get Site Map",
+    "url": "https://tver.jp/sitemap.xml",
+    "method": "GET",
+    "sortNum": 10000,
     "created": "2023-04-07T20:12:55.098Z",
+    "modified": "2023-04-07T23:25:46.365Z",
     "headers": [
       {
-        "isDisabled": true,
         "name": "Accept",
-        "value": "*/*"
+        "value": "*/*",
+        "isDisabled": true
       },
       {
-        "isDisabled": true,
         "name": "User-Agent",
-        "value": "Thunder Client (https://www.thunderclient.com)"
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
       }
     ],
-    "method": "GET",
-    "modified": "2023-04-07T22:38:02.631Z",
-    "name": "Get Site Map",
     "params": [],
-    "sortNum": 10000,
     "tests": [
       {
-        "action": "equal",
-        "custom": "",
         "type": "res-code",
+        "custom": "",
+        "action": "equal",
         "value": "200"
       },
       {
-        "action": "contains",
-        "custom": "",
         "type": "res-body",
+        "custom": "",
+        "action": "contains",
         "value": "https://tver.jp/"
       }
-    ],
-    "url": "https://tver.jp/sitemap.xml"
+    ]
   },
   {
     "_id": "65256572-c746-4d73-8e7c-67567ff0dff0",
     "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
     "containerId": "",
+    "name": "Get Special Program",
+    "url": "https://service-api.tver.jp/api/v1/callSpecial",
+    "method": "GET",
+    "sortNum": 40000,
     "created": "2023-04-07T20:14:39.955Z",
+    "modified": "2023-04-07T23:26:01.145Z",
     "headers": [
       {
-        "isDisabled": true,
         "name": "Accept",
-        "value": "*/*"
+        "value": "*/*",
+        "isDisabled": true
       },
       {
-        "isDisabled": true,
         "name": "User-Agent",
-        "value": "Thunder Client (https://www.thunderclient.com)"
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
       },
       {
         "name": "x-tver-platform-type",
         "value": "web"
       }
     ],
-    "method": "GET",
-    "modified": "2023-04-07T22:41:11.925Z",
-    "name": "Get Special Program",
     "params": [],
-    "sortNum": 40000,
     "tests": [
       {
-        "action": "contains",
-        "custom": "json.result.contents[0].type",
         "type": "json-query",
+        "custom": "json.result.contents[0].type",
+        "action": "contains",
         "value": "special"
       },
       {
-        "action": "setto",
-        "custom": "json.result.contents[0].content.id",
         "type": "set-env-var",
+        "custom": "json.result.contents[0].content.id",
+        "action": "setto",
         "value": "{{tag_id}}"
       }
-    ],
-    "url": "https://service-api.tver.jp/api/v1/callSpecial"
+    ]
   },
   {
     "_id": "f5ffda0b-5b2c-486c-b671-151614bb56c5",
     "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
     "containerId": "",
+    "name": "Get New (All Genere)",
+    "url": "https://service-api.tver.jp/api/v1/callNewerDetail/all",
+    "method": "GET",
+    "sortNum": 50000,
     "created": "2023-04-07T20:16:27.494Z",
+    "modified": "2023-04-07T23:26:06.434Z",
     "headers": [
       {
-        "isDisabled": true,
         "name": "Accept",
-        "value": "*/*"
+        "value": "*/*",
+        "isDisabled": true
       },
       {
-        "isDisabled": true,
         "name": "User-Agent",
-        "value": "Thunder Client (https://www.thunderclient.com)"
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
       },
       {
         "name": "x-tver-platform-type",
         "value": "web"
       }
     ],
-    "method": "GET",
-    "modified": "2023-04-07T22:42:37.488Z",
-    "name": "Get New (All Genere)",
     "params": [],
-    "sortNum": 50000,
     "tests": [
       {
-        "action": "setto",
-        "custom": "json.result.contents.contents[0].content.id",
         "type": "set-env-var",
+        "custom": "json.result.contents.contents[0].content.id",
+        "action": "setto",
         "value": "{{episode_id}}"
       },
       {
-        "action": "equal",
-        "custom": "json.result.contents.type",
         "type": "json-query",
+        "custom": "json.result.contents.type",
+        "action": "equal",
         "value": "newer"
       },
       {
-        "action": "regex",
-        "custom": "json.result.contents.contents.content.id",
         "type": "json-query",
+        "custom": "json.result.contents.contents.content.id",
+        "action": "regex",
         "value": "ep*"
       }
-    ],
-    "url": "https://service-api.tver.jp/api/v1/callNewerDetail/all"
+    ]
   },
   {
     "_id": "fc966f14-78a1-48e2-ad44-e79040ebe96e",
     "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
     "containerId": "",
+    "name": "Get New by Genre ID",
+    "url": "https://service-api.tver.jp/api/v1/callNewerDetail/{{genre_id}}",
+    "method": "GET",
+    "sortNum": 60000,
     "created": "2023-04-07T20:17:11.312Z",
+    "modified": "2023-04-07T23:26:52.895Z",
     "headers": [
       {
-        "isDisabled": true,
         "name": "Accept",
-        "value": "*/*"
+        "value": "*/*",
+        "isDisabled": true
       },
       {
-        "isDisabled": true,
         "name": "User-Agent",
-        "value": "Thunder Client (https://www.thunderclient.com)"
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
       },
       {
         "name": "x-tver-platform-type",
         "value": "web"
       }
     ],
-    "method": "GET",
-    "modified": "2023-04-07T22:43:31.841Z",
-    "name": "Get New by Genre ID",
     "params": [],
-    "sortNum": 60000,
     "tests": [
       {
-        "action": "equal",
-        "custom": "json.result.contents.type",
         "type": "json-query",
+        "custom": "json.result.contents.type",
+        "action": "equal",
         "value": "newer"
       },
       {
-        "action": "regex",
-        "custom": "json.result.contents.contents[0].id",
         "type": "json-query",
+        "custom": "json.result.contents.contents[0].id",
+        "action": "regex",
         "value": "ep*"
       }
     ],
-    "url": "https://service-api.tver.jp/api/v1/callNewerDetail/{{genre_id}}"
+    "preReq": {
+      "runRequests": [
+        {
+          "reqId": "fef03e89-ec06-46a9-86cd-34bafe72c80f",
+          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
+          "triggerCondition": "run-always",
+          "triggerValue": ""
+        }
+      ]
+    }
   },
   {
     "_id": "b72cbe1d-552f-4893-80ef-8128127d47c2",
     "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
     "containerId": "",
+    "name": "Get End (All Genre)",
+    "url": "https://service-api.tver.jp/api/v1/callEnderDetail/all",
+    "method": "GET",
+    "sortNum": 70000,
     "created": "2023-04-07T20:17:58.887Z",
+    "modified": "2023-04-07T23:27:18.071Z",
     "headers": [
       {
-        "isDisabled": true,
         "name": "Accept",
-        "value": "*/*"
+        "value": "*/*",
+        "isDisabled": true
       },
       {
-        "isDisabled": true,
         "name": "User-Agent",
-        "value": "Thunder Client (https://www.thunderclient.com)"
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
       },
       {
         "name": "x-tver-platform-type",
         "value": "web"
       }
     ],
-    "method": "GET",
-    "modified": "2023-04-07T22:44:19.744Z",
-    "name": "Get End (All Genre)",
     "params": [],
-    "sortNum": 70000,
     "tests": [
       {
-        "action": "equal",
-        "custom": "json.result.contents.type",
         "type": "json-query",
+        "custom": "json.result.contents.type",
+        "action": "equal",
         "value": "ender"
       },
       {
-        "action": "regex",
-        "custom": "json.result.contents.contents[0].id",
         "type": "json-query",
+        "custom": "json.result.contents.contents[0].id",
+        "action": "regex",
         "value": "ep*"
       }
-    ],
-    "url": "https://service-api.tver.jp/api/v1/callEnderDetail/all"
+    ]
   },
   {
     "_id": "a939b64e-6f75-4839-be06-05982e406b8d",
     "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
     "containerId": "",
+    "name": "Get End by Genre ID",
+    "url": "https://service-api.tver.jp/api/v1/callEnderDetail/{{genre_id}}",
+    "method": "GET",
+    "sortNum": 80000,
     "created": "2023-04-07T20:18:34.702Z",
+    "modified": "2023-04-07T23:27:22.449Z",
     "headers": [
       {
-        "isDisabled": true,
         "name": "Accept",
-        "value": "*/*"
+        "value": "*/*",
+        "isDisabled": true
       },
       {
-        "isDisabled": true,
         "name": "User-Agent",
-        "value": "Thunder Client (https://www.thunderclient.com)"
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
       },
       {
         "name": "x-tver-platform-type",
         "value": "web"
       }
     ],
-    "method": "GET",
-    "modified": "2023-04-07T22:45:17.900Z",
-    "name": "Get End by Genre ID",
     "params": [],
+    "tests": [
+      {
+        "type": "json-query",
+        "custom": "json.result.contents.type",
+        "action": "equal",
+        "value": "ender"
+      },
+      {
+        "type": "json-query",
+        "custom": "json.result.contents.contents[0].id",
+        "action": "regex",
+        "value": "ep*"
+      }
+    ],
     "preReq": {
       "runRequests": [
         {
-          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "reqId": "fef03e89-ec06-46a9-86cd-34bafe72c80f",
+          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "triggerCondition": "run-always",
           "triggerValue": ""
         }
       ]
-    },
-    "sortNum": 80000,
-    "tests": [
-      {
-        "action": "equal",
-        "custom": "json.result.contents.type",
-        "type": "json-query",
-        "value": "ender"
-      },
-      {
-        "action": "regex",
-        "custom": "json.result.contents.contents[0].id",
-        "type": "json-query",
-        "value": "ep*"
-      }
-    ],
-    "url": "https://service-api.tver.jp/api/v1/callEnderDetail/{{genre_id}}"
+    }
   },
   {
     "_id": "e6fd3e9f-e74e-4bde-b5fd-b03292631679",
     "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
     "containerId": "",
+    "name": "Get Ranking (All Genere)",
+    "url": "https://service-api.tver.jp/api/v1/callEpisodeRanking",
+    "method": "GET",
+    "sortNum": 90000,
     "created": "2023-04-07T20:26:43.857Z",
+    "modified": "2023-04-07T23:27:30.199Z",
     "headers": [
       {
-        "isDisabled": true,
         "name": "Accept",
-        "value": "*/*"
+        "value": "*/*",
+        "isDisabled": true
       },
       {
-        "isDisabled": true,
         "name": "User-Agent",
-        "value": "Thunder Client (https://www.thunderclient.com)"
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
       },
       {
         "name": "x-tver-platform-type",
         "value": "web"
       }
     ],
-    "method": "GET",
-    "modified": "2023-04-07T22:46:55.518Z",
-    "name": "Get Ranking (All Genere)",
     "params": [],
-    "sortNum": 90000,
     "tests": [
       {
-        "action": "equal",
-        "custom": "json.result.contents[0].type",
         "type": "json-query",
+        "custom": "json.result.contents[0].type",
+        "action": "equal",
         "value": "episodeRanking"
       },
       {
-        "action": "regex",
-        "custom": "json.result.contents[0].contents[0].content.id",
         "type": "json-query",
+        "custom": "json.result.contents[0].contents[0].content.id",
+        "action": "regex",
         "value": "ep*"
       }
-    ],
-    "url": "https://service-api.tver.jp/api/v1/callEpisodeRanking"
+    ]
   },
   {
     "_id": "89cdb5f8-088f-481d-82ca-cbc4f2c33f57",
     "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
     "containerId": "",
+    "name": "Get Ranking by Genre ID",
+    "url": "https://service-api.tver.jp/api/v1/callEpisodeRankingDetail/{{genre_id}}",
+    "method": "GET",
+    "sortNum": 100000,
     "created": "2023-04-07T20:27:23.042Z",
+    "modified": "2023-04-07T23:27:33.949Z",
     "headers": [
       {
-        "isDisabled": true,
         "name": "Accept",
-        "value": "*/*"
+        "value": "*/*",
+        "isDisabled": true
       },
       {
-        "isDisabled": true,
         "name": "User-Agent",
-        "value": "Thunder Client (https://www.thunderclient.com)"
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
       },
       {
         "name": "x-tver-platform-type",
         "value": "web"
       }
     ],
-    "method": "GET",
-    "modified": "2023-04-07T22:48:52.348Z",
-    "name": "Get Ranking by Genre ID",
     "params": [],
+    "tests": [
+      {
+        "type": "json-query",
+        "custom": "json.result.contents.type",
+        "action": "equal",
+        "value": "episodeRanking"
+      },
+      {
+        "type": "json-query",
+        "custom": "json.result.contents.contents[0].content.id",
+        "action": "regex",
+        "value": "ep*"
+      }
+    ],
     "preReq": {
       "runRequests": [
         {
-          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "reqId": "fef03e89-ec06-46a9-86cd-34bafe72c80f",
+          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "triggerCondition": "run-always",
           "triggerValue": ""
         }
       ]
-    },
-    "sortNum": 100000,
-    "tests": [
-      {
-        "action": "equal",
-        "custom": "json.result.contents.type",
-        "type": "json-query",
-        "value": "episodeRanking"
-      },
-      {
-        "action": "regex",
-        "custom": "json.result.contents.contents[0].content.id",
-        "type": "json-query",
-        "value": "ep*"
-      }
-    ],
-    "url": "https://service-api.tver.jp/api/v1/callEpisodeRankingDetail/{{genre_id}}"
+    }
   },
   {
     "_id": "dd478983-9c97-4d0d-8c95-99997f915736",
     "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
     "containerId": "",
+    "name": "Get Series Info by Series ID",
+    "url": "https://statics.tver.jp/content/series/{{series_id}}.json",
+    "method": "GET",
+    "sortNum": 105000,
     "created": "2023-04-07T20:29:02.093Z",
+    "modified": "2023-04-07T23:27:39.633Z",
     "headers": [
       {
-        "isDisabled": true,
         "name": "Accept",
-        "value": "*/*"
+        "value": "*/*",
+        "isDisabled": true
       },
       {
-        "isDisabled": true,
         "name": "User-Agent",
-        "value": "Thunder Client (https://www.thunderclient.com)"
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
       }
     ],
-    "method": "GET",
-    "modified": "2023-04-07T22:49:30.279Z",
-    "name": "Get Series Info by Series ID",
     "params": [],
+    "tests": [
+      {
+        "type": "json-query",
+        "custom": "json.id",
+        "action": "regex",
+        "value": "sr*"
+      }
+    ],
     "preReq": {
       "runRequests": [
         {
-          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "reqId": "f9e6f8dd-c85e-402d-8deb-c60e378e402a",
+          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "triggerCondition": "run-always",
           "triggerValue": ""
         }
       ]
-    },
-    "sortNum": 105000,
-    "tests": [
-      {
-        "action": "regex",
-        "custom": "json.id",
-        "type": "json-query",
-        "value": "sr*"
-      }
-    ],
-    "url": "https://statics.tver.jp/content/series/{{series_id}}.json"
+    }
   },
   {
     "_id": "f41b1fea-7167-4bf8-8029-538ad9a725e5",
     "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
     "containerId": "",
+    "name": "Get Series Info by Episode ID",
+    "url": "https://statics.tver.jp/content/episode/{{episode_id}}.json",
+    "method": "GET",
+    "sortNum": 107500,
     "created": "2023-04-07T20:30:55.910Z",
+    "modified": "2023-04-07T23:27:44.032Z",
     "headers": [
       {
-        "isDisabled": true,
         "name": "Accept",
-        "value": "*/*"
+        "value": "*/*",
+        "isDisabled": true
       },
       {
-        "isDisabled": true,
         "name": "User-Agent",
-        "value": "Thunder Client (https://www.thunderclient.com)"
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
       }
     ],
-    "method": "GET",
-    "modified": "2023-04-07T22:49:51.768Z",
-    "name": "Get Series Info by Episode ID",
     "params": [],
+    "tests": [
+      {
+        "type": "json-query",
+        "custom": "json.id",
+        "action": "regex",
+        "value": "ep*"
+      }
+    ],
     "preReq": {
       "runRequests": [
         {
-          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "reqId": "f5ffda0b-5b2c-486c-b671-151614bb56c5",
+          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "triggerCondition": "run-always",
           "triggerValue": ""
         }
       ]
-    },
-    "sortNum": 107500,
-    "tests": [
-      {
-        "action": "regex",
-        "custom": "json.id",
-        "type": "json-query",
-        "value": "ep*"
-      }
-    ],
-    "url": "https://statics.tver.jp/content/episode/{{episode_id}}.json"
+    }
   },
   {
     "_id": "f9e6f8dd-c85e-402d-8deb-c60e378e402a",
     "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
     "containerId": "",
+    "name": "Get Series List",
+    "url": "https://statics.tver.jp/content/suggest/dictionary.json",
+    "method": "GET",
+    "sortNum": 25000,
     "created": "2023-04-07T20:32:20.365Z",
+    "modified": "2023-04-07T23:25:55.766Z",
     "headers": [
       {
-        "isDisabled": true,
         "name": "Accept",
-        "value": "*/*"
+        "value": "*/*",
+        "isDisabled": true
       },
       {
-        "isDisabled": true,
         "name": "User-Agent",
-        "value": "Thunder Client (https://www.thunderclient.com)"
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
       }
     ],
-    "method": "GET",
-    "modified": "2023-04-07T22:39:05.446Z",
-    "name": "Get Series List",
     "params": [],
-    "sortNum": 25000,
     "tests": [
       {
-        "action": "setto",
-        "custom": "json.contents[0].id",
         "type": "set-env-var",
+        "custom": "json.contents[0].id",
+        "action": "setto",
         "value": "{{series_id}}"
       },
       {
-        "action": "equal",
-        "custom": "json.contents[0].t",
         "type": "json-query",
+        "custom": "json.contents[0].t",
+        "action": "equal",
         "value": "series"
       }
-    ],
-    "url": "https://statics.tver.jp/content/suggest/dictionary.json"
+    ]
   },
   {
     "_id": "fef03e89-ec06-46a9-86cd-34bafe72c80f",
     "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
     "containerId": "",
+    "name": "Get Search Filter (Tag info)",
+    "url": "https://service-api.tver.jp/api/v1/callSearchFilter",
+    "method": "GET",
+    "sortNum": 108750,
     "created": "2023-04-07T20:46:28.869Z",
+    "modified": "2023-04-07T23:27:47.095Z",
     "headers": [
       {
-        "isDisabled": true,
         "name": "Accept",
-        "value": "*/*"
+        "value": "*/*",
+        "isDisabled": true
       },
       {
-        "isDisabled": true,
         "name": "User-Agent",
-        "value": "Thunder Client (https://www.thunderclient.com)"
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
       },
       {
         "name": "x-tver-platform-type",
         "value": "web"
       }
     ],
-    "method": "GET",
-    "modified": "2023-04-07T22:50:33.338Z",
-    "name": "Get Search Filter (Tag info)",
     "params": [],
-    "sortNum": 108750,
     "tests": [
       {
-        "action": "setto",
-        "custom": "json.result.contents[0].tags[0].id",
         "type": "set-env-var",
+        "custom": "json.result.contents[0].tags[0].id",
+        "action": "setto",
         "value": "{{genre_id}}"
       },
       {
-        "action": "setto",
-        "custom": "json.result.contents[1].tags[0].id",
         "type": "set-env-var",
+        "custom": "json.result.contents[1].tags[0].id",
+        "action": "setto",
         "value": "{{weekday_id}}"
       },
       {
-        "action": "setto",
-        "custom": "json.result.contents[2].tags[0].id",
         "type": "set-env-var",
+        "custom": "json.result.contents[2].tags[0].id",
+        "action": "setto",
         "value": "{{tvnetwork_id}}"
       },
       {
-        "action": "setto",
-        "custom": "json.result.contents[3].tags[0].id",
         "type": "set-env-var",
+        "custom": "json.result.contents[3].tags[0].id",
+        "action": "setto",
         "value": "{{caption_id}}"
       },
       {
-        "action": "setto",
-        "custom": "json.result.contents[4].tags[0].id",
         "type": "set-env-var",
+        "custom": "json.result.contents[4].tags[0].id",
+        "action": "setto",
         "value": "{{content_type}}"
       },
       {
-        "action": "equal",
-        "custom": "json.result.contents[0].id",
         "type": "json-query",
+        "custom": "json.result.contents[0].id",
+        "action": "equal",
         "value": "genre"
       }
-    ],
-    "url": "https://service-api.tver.jp/api/v1/callSearchFilter"
+    ]
   },
   {
     "_id": "e28cc114-f460-4f89-8b9b-ae700d069dbd",
     "colId": "28e9c09b-f8ff-4e31-835c-c7aa3f53c7c9",
     "containerId": "",
+    "name": "Get Episode info by Episode ID",
+    "url": "https://platform-api.tver.jp/service/api/v1/callEpisode/{{episode_id}}?platform_uid={{platform_uid}}&platform_token={{platform_token}}",
+    "method": "GET",
+    "sortNum": 78.2,
     "created": "2023-04-07T21:27:39.763Z",
+    "modified": "2023-04-07T23:28:11.482Z",
     "headers": [
       {
-        "isDisabled": true,
         "name": "Accept",
-        "value": "*/*"
+        "value": "*/*",
+        "isDisabled": true
       },
       {
         "name": "x-tver-platform-type",
         "value": "web"
       },
       {
-        "isDisabled": true,
         "name": "User-Agent",
-        "value": "Thunder Client (https://www.thunderclient.com)"
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
       }
     ],
-    "method": "GET",
-    "modified": "2023-04-07T22:30:13.228Z",
-    "name": "Get Episode info by Episode ID",
     "params": [
       {
-        "isPath": false,
         "name": "platform_uid",
-        "value": "{{platform_uid}}"
+        "value": "{{platform_uid}}",
+        "isPath": false
       },
       {
-        "isPath": false,
         "name": "platform_token",
-        "value": "{{platform_token}}"
+        "value": "{{platform_token}}",
+        "isPath": false
+      }
+    ],
+    "tests": [
+      {
+        "type": "json-query",
+        "custom": "json.result.episode.content.id",
+        "action": "regex",
+        "value": "ep*"
+      },
+      {
+        "type": "json-query",
+        "custom": "json.result.season.content.id",
+        "action": "regex",
+        "value": "s*"
+      },
+      {
+        "type": "json-query",
+        "custom": "json.result.series.content.id",
+        "action": "regex",
+        "value": "sr*"
       }
     ],
     "preReq": {
       "runRequests": [
         {
-          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "reqId": "d54169b6-1e8e-4953-b2a5-d461212713d3",
+          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "triggerCondition": "run-always",
           "triggerValue": ""
         },
         {
-          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "reqId": "f5ffda0b-5b2c-486c-b671-151614bb56c5",
+          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "triggerCondition": "run-always",
           "triggerValue": ""
         }
       ]
-    },
-    "sortNum": 78.2,
-    "tests": [
-      {
-        "action": "regex",
-        "custom": "json.result.episode.content.id",
-        "type": "json-query",
-        "value": "ep*"
-      },
-      {
-        "action": "regex",
-        "custom": "json.result.season.content.id",
-        "type": "json-query",
-        "value": "s*"
-      },
-      {
-        "action": "regex",
-        "custom": "json.result.series.content.id",
-        "type": "json-query",
-        "value": "sr*"
-      }
-    ],
-    "url": "https://platform-api.tver.jp/service/api/v1/callEpisode/{{episode_id}}?platform_uid={{platform_uid}}&platform_token={{platform_token}}"
+    }
   },
   {
     "_id": "97d8c82b-1178-4d5e-8a26-2c9c531553e1",
     "colId": "28e9c09b-f8ff-4e31-835c-c7aa3f53c7c9",
     "containerId": "",
+    "name": "Get Talent info by Episode ID",
+    "url": "https://platform-api.tver.jp/service/api/v1/callEpisodeTalent/{{episode_id}}?platform_uid={{platform_uid}}&platform_token={{platform_token}}",
+    "method": "GET",
+    "sortNum": 156.3,
     "created": "2023-04-07T21:41:00.106Z",
+    "modified": "2023-04-07T23:28:17.680Z",
     "headers": [
       {
-        "isDisabled": true,
         "name": "Accept",
-        "value": "*/*"
+        "value": "*/*",
+        "isDisabled": true
       },
       {
         "name": "x-tver-platform-type",
         "value": "web"
       },
       {
-        "isDisabled": true,
         "name": "User-Agent",
-        "value": "Thunder Client (https://www.thunderclient.com)"
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
       }
     ],
-    "method": "GET",
-    "modified": "2023-04-07T22:23:56.276Z",
-    "name": "Get Talent info by Episode ID",
     "params": [
       {
-        "isPath": false,
         "name": "platform_uid",
-        "value": "{{platform_uid}}"
+        "value": "{{platform_uid}}",
+        "isPath": false
       },
       {
-        "isPath": false,
         "name": "platform_token",
-        "value": "{{platform_token}}"
+        "value": "{{platform_token}}",
+        "isPath": false
+      }
+    ],
+    "tests": [
+      {
+        "type": "set-env-var",
+        "custom": "json.result.contents[0].content.id",
+        "action": "setto",
+        "value": "{{talent_id}}"
+      },
+      {
+        "type": "json-query",
+        "custom": "json.result.content.id",
+        "action": "regex",
+        "value": "t*"
       }
     ],
     "preReq": {
       "runRequests": [
         {
-          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "reqId": "d54169b6-1e8e-4953-b2a5-d461212713d3",
+          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "triggerCondition": "run-always",
           "triggerValue": ""
         },
         {
-          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "reqId": "f5ffda0b-5b2c-486c-b671-151614bb56c5",
+          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "triggerCondition": "run-always",
           "triggerValue": ""
         }
       ]
-    },
-    "sortNum": 156.3,
-    "tests": [
-      {
-        "action": "setto",
-        "custom": "json.result.contents[0].content.id",
-        "type": "set-env-var",
-        "value": "{{talent_id}}"
-      },
-      {
-        "action": "regex",
-        "custom": "json.result.content.id",
-        "type": "json-query",
-        "value": "t*"
-      }
-    ],
-    "url": "https://platform-api.tver.jp/service/api/v1/callEpisodeTalent/{{episode_id}}?platform_uid={{platform_uid}}&platform_token={{platform_token}}"
+    }
   },
   {
     "_id": "42b91ff8-93c3-4af2-955e-b6df5734ed70",
     "colId": "28e9c09b-f8ff-4e31-835c-c7aa3f53c7c9",
     "containerId": "",
+    "name": "Get Series info by Series ID",
+    "url": "https://platform-api.tver.jp/service/api/v1/callSeries/{{series_id}}?platform_uid={{platform_uid}}&platform_token={{platform_token}}",
+    "method": "GET",
+    "sortNum": 312.5,
     "created": "2023-04-07T21:43:04.069Z",
+    "modified": "2023-04-07T23:28:23.346Z",
     "headers": [
       {
-        "isDisabled": true,
         "name": "Accept",
-        "value": "*/*"
+        "value": "*/*",
+        "isDisabled": true
       },
       {
         "name": "x-tver-platform-type",
         "value": "web"
       },
       {
-        "isDisabled": true,
         "name": "User-Agent",
-        "value": "Thunder Client (https://www.thunderclient.com)"
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
       }
     ],
-    "method": "GET",
-    "modified": "2023-04-07T22:23:08.779Z",
-    "name": "Get Series info by Series ID",
     "params": [
       {
-        "isPath": false,
         "name": "platform_uid",
-        "value": "{{platform_uid}}"
+        "value": "{{platform_uid}}",
+        "isPath": false
       },
       {
-        "isPath": false,
         "name": "platform_token",
-        "value": "{{platform_token}}"
+        "value": "{{platform_token}}",
+        "isPath": false
+      }
+    ],
+    "tests": [
+      {
+        "type": "json-query",
+        "custom": "json.result.content.id",
+        "action": "regex",
+        "value": "sr*"
       }
     ],
     "preReq": {
       "runRequests": [
         {
-          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "reqId": "d54169b6-1e8e-4953-b2a5-d461212713d3",
+          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "triggerCondition": "run-always",
           "triggerValue": ""
         },
         {
-          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "reqId": "f5ffda0b-5b2c-486c-b671-151614bb56c5",
+          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "triggerCondition": "run-always",
           "triggerValue": ""
         }
       ]
-    },
-    "sortNum": 312.5,
-    "tests": [
-      {
-        "action": "regex",
-        "custom": "json.result.content.id",
-        "type": "json-query",
-        "value": "sr*"
-      }
-    ],
-    "url": "https://platform-api.tver.jp/service/api/v1/callSeries/{{series_id}}?platform_uid={{platform_uid}}&platform_token={{platform_token}}"
+    }
   },
   {
     "_id": "62f9baaf-95e3-4cc5-8f35-5bdc357a1940",
     "colId": "28e9c09b-f8ff-4e31-835c-c7aa3f53c7c9",
     "containerId": "",
+    "name": "Get Season info by Series ID",
+    "url": "https://platform-api.tver.jp/service/api/v1/callSeriesSeasons/{{series_id}}?platform_uid={{platform_uid}}&platform_token={{platform_token}}",
+    "method": "GET",
+    "sortNum": 625,
     "created": "2023-04-07T21:44:07.591Z",
+    "modified": "2023-04-07T23:28:28.604Z",
     "headers": [
       {
-        "isDisabled": true,
         "name": "Accept",
-        "value": "*/*"
+        "value": "*/*",
+        "isDisabled": true
       },
       {
         "name": "x-tver-platform-type",
         "value": "web"
       },
       {
-        "isDisabled": true,
         "name": "User-Agent",
-        "value": "Thunder Client (https://www.thunderclient.com)"
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
       }
     ],
-    "method": "GET",
-    "modified": "2023-04-07T22:32:31.420Z",
-    "name": "Get Season info by Series ID",
     "params": [
       {
-        "isPath": false,
         "name": "platform_uid",
-        "value": "{{platform_uid}}"
+        "value": "{{platform_uid}}",
+        "isPath": false
       },
       {
-        "isPath": false,
         "name": "platform_token",
-        "value": "{{platform_token}}"
+        "value": "{{platform_token}}",
+        "isPath": false
+      }
+    ],
+    "tests": [
+      {
+        "type": "set-env-var",
+        "custom": "json.result.contents[0].content.id",
+        "action": "setto",
+        "value": "{{season_id}}"
+      },
+      {
+        "type": "json-query",
+        "custom": "json.result.contents[0].content.id",
+        "action": "regex",
+        "value": "ss*"
       }
     ],
     "preReq": {
       "runRequests": [
         {
-          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "reqId": "d54169b6-1e8e-4953-b2a5-d461212713d3",
+          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "triggerCondition": "run-always",
           "triggerValue": ""
         },
         {
-          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "reqId": "f5ffda0b-5b2c-486c-b671-151614bb56c5",
+          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "triggerCondition": "run-always",
           "triggerValue": ""
         }
       ]
-    },
-    "sortNum": 625,
-    "tests": [
-      {
-        "action": "setto",
-        "custom": "json.result.contents[0].content.id",
-        "type": "set-env-var",
-        "value": "{{season_id}}"
-      },
-      {
-        "action": "regex",
-        "custom": "json.result.contents[0].content.id",
-        "type": "json-query",
-        "value": "ss*"
-      }
-    ],
-    "url": "https://platform-api.tver.jp/service/api/v1/callSeriesSeasons/{{series_id}}?platform_uid={{platform_uid}}&platform_token={{platform_token}}"
+    }
   },
   {
     "_id": "6298a0d0-e69a-451b-b6d2-70180179adeb",
     "colId": "28e9c09b-f8ff-4e31-835c-c7aa3f53c7c9",
     "containerId": "",
+    "name": "Get Episode info by Season ID",
+    "url": "https://platform-api.tver.jp/service/api/v1/callSeasonEpisodes/{{season_id}}?platform_uid={{platform_uid}}&platform_token={{platform_token}}",
+    "method": "GET",
+    "sortNum": 1250,
     "created": "2023-04-07T21:46:26.760Z",
+    "modified": "2023-04-07T23:28:33.847Z",
     "headers": [
       {
-        "isDisabled": true,
         "name": "Accept",
-        "value": "*/*"
+        "value": "*/*",
+        "isDisabled": true
       },
       {
         "name": "x-tver-platform-type",
         "value": "web"
       },
       {
-        "isDisabled": true,
         "name": "User-Agent",
-        "value": "Thunder Client (https://www.thunderclient.com)"
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
       }
     ],
-    "method": "GET",
-    "modified": "2023-04-07T22:33:14.258Z",
-    "name": "Get Episode info by Season ID",
     "params": [
       {
-        "isPath": false,
         "name": "platform_uid",
-        "value": "{{platform_uid}}"
+        "value": "{{platform_uid}}",
+        "isPath": false
       },
       {
-        "isPath": false,
         "name": "platform_token",
-        "value": "{{platform_token}}"
+        "value": "{{platform_token}}",
+        "isPath": false
+      }
+    ],
+    "tests": [
+      {
+        "type": "json-query",
+        "custom": "json.result.contents[0].id",
+        "action": "regex",
+        "value": "ep*"
       }
     ],
     "preReq": {
       "runRequests": [
         {
-          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "reqId": "d54169b6-1e8e-4953-b2a5-d461212713d3",
+          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "triggerCondition": "run-always",
           "triggerValue": ""
         },
         {
-          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "reqId": "f5ffda0b-5b2c-486c-b671-151614bb56c5",
+          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
           "triggerCondition": "run-always",
           "triggerValue": ""
         }
       ]
-    },
-    "sortNum": 1250,
-    "tests": [
-      {
-        "action": "regex",
-        "custom": "json.result.contents[0].id",
-        "type": "json-query",
-        "value": "ep*"
-      }
-    ],
-    "url": "https://platform-api.tver.jp/service/api/v1/callSeasonEpisodes/{{season_id}}?platform_uid={{platform_uid}}&platform_token={{platform_token}}"
+    }
   },
   {
     "_id": "04bbab09-a263-4a71-af77-022bbe542877",
