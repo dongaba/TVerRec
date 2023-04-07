@@ -44,6 +44,7 @@ mac-*
 win-*
 *.xlsx
 thunderActivity.json
+thunderEnvironment.json
 
 #その他雑多な不要ファイル
 * - コピー.*
