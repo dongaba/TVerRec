@@ -1,0 +1,14 @@
+[
+  {
+    "_id": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
+    "colName": "TVer",
+    "created": "2023-04-07T19:40:35.196Z",
+    "sortNum": 10000,
+    "folders": [],
+    "settings": {
+      "scripts": [
+        "custom-filters.js"
+      ]
+    }
+  }
+]

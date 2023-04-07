@@ -37,5 +37,7 @@
 	"powershell.scriptAnalysis.settingsPath": "./PSScriptAnalyzerSettings.psd1",
 	"powershell.startAsLoginShell.linux": true,
 	"prettier.bracketSameLine": true,
-	"prettier.useTabs": true
+	"prettier.useTabs": true,
+	"thunder-client.saveToWorkspace": true,
+	"thunder-client.workspaceRelativePath": ""
 }

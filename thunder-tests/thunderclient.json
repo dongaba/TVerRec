@@ -1,0 +1,270 @@
+[
+  {
+    "_id": "d54169b6-1e8e-4953-b2a5-d461212713d3",
+    "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
+    "containerId": "",
+    "name": "Get Token",
+    "url": "https://platform-api.tver.jp/v2/api/platform_users/browser/create",
+    "method": "POST",
+    "sortNum": 10000,
+    "created": "2023-04-07T19:40:47.335Z",
+    "modified": "2023-04-07T20:07:59.758Z",
+    "headers": [
+      {
+        "name": "Accept",
+        "value": "*/*",
+        "isDisabled": true
+      },
+      {
+        "name": "User-Agent",
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
+      }
+    ],
+    "params": [],
+    "body": {
+      "type": "formencoded",
+      "raw": "",
+      "form": [
+        {
+          "name": "device_type",
+          "value": "pc"
+        }
+      ]
+    },
+    "tests": [
+      {
+        "type": "set-env-var",
+        "custom": "json.result.platform_uid",
+        "action": "setto",
+        "value": "{{platform_uid}}"
+      },
+      {
+        "type": "set-env-var",
+        "custom": "json.result.platform_token",
+        "action": "setto",
+        "value": "{{platform_token}}"
+      }
+    ]
+  },
+  {
+    "_id": "94223b33-b1be-42f5-85e8-2f12fda58ad1",
+    "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
+    "containerId": "",
+    "name": "call Home",
+    "url": "https://platform-api.tver.jp/service/api/v1/callHome?platform_uid={{platform_uid}}&platform_token={{platform_token}}",
+    "method": "GET",
+    "sortNum": 20000,
+    "created": "2023-04-07T19:55:41.999Z",
+    "modified": "2023-04-07T20:08:23.272Z",
+    "headers": [
+      {
+        "name": "Accept",
+        "value": "*/*",
+        "isDisabled": true
+      },
+      {
+        "name": "x-tver-platform-type",
+        "value": "web"
+      },
+      {
+        "name": "User-Agent",
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
+      }
+    ],
+    "params": [
+      {
+        "name": "platform_uid",
+        "value": "{{platform_uid}}",
+        "isPath": false
+      },
+      {
+        "name": "platform_token",
+        "value": "{{platform_token}}",
+        "isPath": false
+      }
+    ],
+    "tests": [],
+    "preReq": {
+      "runRequests": [
+        {
+          "reqId": "d54169b6-1e8e-4953-b2a5-d461212713d3",
+          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
+          "triggerCondition": "run-always",
+          "triggerValue": ""
+        }
+      ]
+    }
+  },
+  {
+    "_id": "5cfe62b0-62db-4c20-8ce4-d7e8df2400f5",
+    "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
+    "containerId": "",
+    "name": "SiteMap",
+    "url": "https://tver.jp/sitemap.xml",
+    "method": "GET",
+    "sortNum": 30000,
+    "created": "2023-04-07T20:12:55.098Z",
+    "modified": "2023-04-07T20:12:55.098Z",
+    "headers": [
+      {
+        "name": "Accept",
+        "value": "*/*",
+        "isDisabled": true
+      },
+      {
+        "name": "User-Agent",
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
+      }
+    ],
+    "params": [],
+    "tests": []
+  },
+  {
+    "_id": "65256572-c746-4d73-8e7c-67567ff0dff0",
+    "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
+    "containerId": "",
+    "name": "Call Special",
+    "url": "https://service-api.tver.jp/api/v1/callSpecial",
+    "method": "GET",
+    "sortNum": 40000,
+    "created": "2023-04-07T20:14:39.955Z",
+    "modified": "2023-04-07T20:15:42.004Z",
+    "headers": [
+      {
+        "name": "Accept",
+        "value": "*/*",
+        "isDisabled": true
+      },
+      {
+        "name": "User-Agent",
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
+      },
+      {
+        "name": "x-tver-platform-type",
+        "value": "web"
+      }
+    ],
+    "params": [],
+    "tests": []
+  },
+  {
+    "_id": "f5ffda0b-5b2c-486c-b671-151614bb56c5",
+    "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
+    "containerId": "",
+    "name": "Call Newer Detail (all)",
+    "url": "https://service-api.tver.jp/api/v1/callNewerDetail/all",
+    "method": "GET",
+    "sortNum": 50000,
+    "created": "2023-04-07T20:16:27.494Z",
+    "modified": "2023-04-07T20:16:53.881Z",
+    "headers": [
+      {
+        "name": "Accept",
+        "value": "*/*",
+        "isDisabled": true
+      },
+      {
+        "name": "User-Agent",
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
+      },
+      {
+        "name": "x-tver-platform-type",
+        "value": "web"
+      }
+    ],
+    "params": [],
+    "tests": []
+  },
+  {
+    "_id": "fc966f14-78a1-48e2-ad44-e79040ebe96e",
+    "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
+    "containerId": "",
+    "name": "Call Newer Detail (drama)",
+    "url": "https://service-api.tver.jp/api/v1/callNewerDetail/drama",
+    "method": "GET",
+    "sortNum": 60000,
+    "created": "2023-04-07T20:17:11.312Z",
+    "modified": "2023-04-07T20:17:26.560Z",
+    "headers": [
+      {
+        "name": "Accept",
+        "value": "*/*",
+        "isDisabled": true
+      },
+      {
+        "name": "User-Agent",
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
+      },
+      {
+        "name": "x-tver-platform-type",
+        "value": "web"
+      }
+    ],
+    "params": [],
+    "tests": []
+  },
+  {
+    "_id": "b72cbe1d-552f-4893-80ef-8128127d47c2",
+    "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
+    "containerId": "",
+    "name": "Call Ender Detail (all)",
+    "url": "https://service-api.tver.jp/api/v1/callEnderDetail/all",
+    "method": "GET",
+    "sortNum": 70000,
+    "created": "2023-04-07T20:17:58.887Z",
+    "modified": "2023-04-07T20:18:27.781Z",
+    "headers": [
+      {
+        "name": "Accept",
+        "value": "*/*",
+        "isDisabled": true
+      },
+      {
+        "name": "User-Agent",
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
+      },
+      {
+        "name": "x-tver-platform-type",
+        "value": "web"
+      }
+    ],
+    "params": [],
+    "tests": []
+  },
+  {
+    "_id": "a939b64e-6f75-4839-be06-05982e406b8d",
+    "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
+    "containerId": "",
+    "name": "Call Ender Detail (drama)",
+    "url": "https://service-api.tver.jp/api/v1/callEnderDetail/drama",
+    "method": "GET",
+    "sortNum": 80000,
+    "created": "2023-04-07T20:18:34.702Z",
+    "modified": "2023-04-07T20:18:53.461Z",
+    "headers": [
+      {
+        "name": "Accept",
+        "value": "*/*",
+        "isDisabled": true
+      },
+      {
+        "name": "User-Agent",
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
+      },
+      {
+        "name": "x-tver-platform-type",
+        "value": "web"
+      }
+    ],
+    "params": [],
+    "tests": []
+  }
+]

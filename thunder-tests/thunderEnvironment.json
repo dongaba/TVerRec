@@ -1,0 +1,20 @@
+[
+  {
+    "_id": "3d6d3188-b46d-4cb2-984e-1da84d542b3e",
+    "name": "TVer",
+    "default": true,
+    "sortNum": 30000,
+    "created": "2023-04-07T20:07:48.463Z",
+    "modified": "2023-04-07T20:07:48.463Z",
+    "data": [
+      {
+        "name": "platform_uid",
+        "value": "2c813430d572420d8a62c90083a1f5fecf2b"
+      },
+      {
+        "name": "platform_token",
+        "value": "de3zvs56jqiq85fiffdb3kbals8x01qmp55usil6"
+      }
+    ]
+  }
+]
