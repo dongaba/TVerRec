@@ -43,6 +43,7 @@ linux-*
 mac-*
 win-*
 *.xlsx
+thunderActivity.json
 
 #その他雑多な不要ファイル
 * - コピー.*
