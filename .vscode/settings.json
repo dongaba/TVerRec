@@ -39,5 +39,6 @@
 	"prettier.bracketSameLine": true,
 	"prettier.useTabs": true,
 	"thunder-client.saveToWorkspace": true,
-	"thunder-client.workspaceRelativePath": ""
+	"thunder-client.saveTokenPerEnvironment": true,
+	"thunder-client.sidebar.showActivityFromCollection": true
 }

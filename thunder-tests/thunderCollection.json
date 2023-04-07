@@ -1,7 +1,7 @@
 [
   {
     "_id": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
-    "colName": "TVer",
+    "colName": "No Token",
     "created": "2023-04-07T19:40:35.196Z",
     "sortNum": 10000,
     "folders": [],
@@ -10,5 +10,13 @@
         "custom-filters.js"
       ]
     }
+  },
+  {
+    "_id": "28e9c09b-f8ff-4e31-835c-c7aa3f53c7c9",
+    "colName": "Token Required",
+    "created": "2023-04-07T22:19:34.362Z",
+    "sortNum": 20000,
+    "folders": [],
+    "settings": {}
   }
 ]
