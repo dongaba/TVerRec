@@ -88,7 +88,8 @@ function checkLatestTVerRec {
 			Start-Sleep 1
 		}
 		. $(Join-Path $script:scriptRoot 'update_tverrec.ps1')
-		exit
+
+		exit 1
 
 	}
 
