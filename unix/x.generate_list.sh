@@ -30,7 +30,7 @@
 
 echo -en "\033];TVerRec Video File List Generator\007"
 
-pwsh -NoProfile -ExecutionPolicy Unrestricted ../src/generate_list.ps1
+pwsh -NoProfile -ExecutionPolicy Unrestricted "../src/generate_list.ps1"
 
 echo "Finished ..."
 read -r

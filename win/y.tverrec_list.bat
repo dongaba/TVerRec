@@ -38,7 +38,7 @@ title TVerRec List Based Video File Downloader
 where /Q pwsh
 if %ERRORLEVEL% neq 0 (goto :INSTALL)
 
-pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\tverrec_list.ps1
+pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\tverrec_list.ps1"
 
 pause
 exit

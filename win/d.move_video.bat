@@ -38,7 +38,7 @@ title TVerRec Video File Mover
 where /Q pwsh
 if %ERRORLEVEL% neq 0 (goto :INSTALL)
 
-pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\move_video.ps1
+pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\move_video.ps1"
 
 pause
 exit

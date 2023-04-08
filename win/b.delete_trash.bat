@@ -38,7 +38,7 @@ title TVerRec Video File Deleter
 where /Q pwsh
 if %ERRORLEVEL% neq 0 (goto :INSTALL)
 
-pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\delete_trash.ps1
+pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\delete_trash.ps1"
 
 pause
 exit

@@ -38,7 +38,7 @@ title TVerRec Video File Bulk Downloader
 where /Q pwsh
 if %ERRORLEVEL% neq 0 (goto :INSTALL)
 
-pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\tverrec_bulk.ps1
+pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\tverrec_bulk.ps1"
 
 pause
 exit

@@ -39,7 +39,7 @@ echo $PPID > "$PIDFile"
 
 while true
 do
-	pwsh -NoProfile -ExecutionPolicy Unrestricted ../src/tverrec_bulk.ps1
+	pwsh -NoProfile -ExecutionPolicy Unrestricted "../src/tverrec_bulk.ps1"
 
 	#youtube-dlプロセスチェック
 	while [ "$(ps | grep -E "ffmpeg|youtube-dl" | grep -v grep | grep -c ^)" -gt 0 ]
@@ -50,14 +50,14 @@ do
 		sleep $retryTime
 	done
 
-	pwsh -NoProfile -ExecutionPolicy Unrestricted ../src/delete_trash.ps1
+	pwsh -NoProfile -ExecutionPolicy Unrestricted "../src/delete_trash.ps1"
 
-	pwsh -NoProfile -ExecutionPolicy Unrestricted ../src/validate_video.ps1
-	pwsh -NoProfile -ExecutionPolicy Unrestricted ../src/validate_video.ps1
+	pwsh -NoProfile -ExecutionPolicy Unrestricted "../src/validate_video.ps1"
+	pwsh -NoProfile -ExecutionPolicy Unrestricted "../src/validate_video.ps1"
 
-	pwsh -NoProfile -ExecutionPolicy Unrestricted ../src/move_video.ps1
+	pwsh -NoProfile -ExecutionPolicy Unrestricted "../src/move_video.ps1"
 
-	pwsh -NoProfile -ExecutionPolicy Unrestricted ../src/delete_trash.ps1
+	pwsh -NoProfile -ExecutionPolicy Unrestricted "../src/delete_trash.ps1"
 
 	echo $sleepTime "秒待機します。すぐに処理を再開するにはEnterを押してください。"
 	read -r -t $sleepTime

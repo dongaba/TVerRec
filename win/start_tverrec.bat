@@ -49,9 +49,7 @@ echo %myPID% > %PIDFile% 2> nul
 
 :LOOP
 	title TVerRec - Downloading
-	pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\tverrec_bulk.ps1
-
-	goto :PROCESSCHECKER
+	pwsh -NoProfile -ExecutionPolicy Unrestricted  "..\src\tverrec_bulk.ps1"
 
 :PROCESSCHECKER
 	rem youtube-dlプロセスチェック
@@ -65,14 +63,16 @@ echo %myPID% > %PIDFile% 2> nul
 	)
 
 	title TVerRec - Deleting
-	pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\delete_trash.ps1
+	pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\delete_trash.ps1"
+
 	title TVerRec - Validating
-	pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\validate_video.ps1
-	pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\validate_video.ps1
+	pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\validate_video.ps1"
+	pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\validate_video.ps1"
 	title TVerRec - Moving
-	pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\move_video.ps1
+	pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\move_video.ps1"
 	title TVerRec - Deleting
-	pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\delete_trash.ps1
+	pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\delete_trash.ps1"
+
 
 	title TVerRec
 	echo 終了するには Y と入力してください。何も入力しなければ処理を継続します。

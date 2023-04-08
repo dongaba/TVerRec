@@ -74,7 +74,7 @@
     "method": "GET",
     "sortNum": 39.1,
     "created": "2023-04-07T19:55:41.999Z",
-    "modified": "2023-04-07T23:28:01.018Z",
+    "modified": "2023-04-08T19:55:53.473Z",
     "headers": [
       {
         "name": "Accept",
@@ -1300,6 +1300,223 @@
     "modified": "2023-04-08T02:10:37.630Z",
     "headers": [],
     "params": [],
+    "tests": []
+  },
+  {
+    "_id": "6d65cd93-1098-43b1-b880-0b3722809aec",
+    "colId": "950457ef-9c73-4ed2-8ec9-5836b0d7577a",
+    "containerId": "",
+    "name": "Login",
+    "url": "https://member-api.tver.jp/v2/api/members/login",
+    "method": "POST",
+    "sortNum": 10000,
+    "created": "2023-04-08T21:32:13.127Z",
+    "modified": "2023-04-08T21:42:54.427Z",
+    "headers": [
+      {
+        "name": "accept-encoding",
+        "value": "gzip, deflate, br"
+      },
+      {
+        "name": "accept-language",
+        "value": "en-US,en;q=0.9,ja;q=0.8"
+      },
+      {
+        "name": "content-length",
+        "value": "1811"
+      },
+      {
+        "name": "content-type",
+        "value": "application/x-www-form-urlencoded"
+      },
+      {
+        "name": "origin",
+        "value": "https://s.tver.jp"
+      },
+      {
+        "name": "referer",
+        "value": "https://s.tver.jp/"
+      },
+      {
+        "name": "sec-ch-ua",
+        "value": "\"Chromium\";v=\"112\", \"Google Chrome\";v=\"112\", \"Not:A-Brand\";v=\"99\""
+      },
+      {
+        "name": "sec-ch-ua-mobile",
+        "value": "?0"
+      },
+      {
+        "name": "sec-ch-ua-platform",
+        "value": "\"Windows\""
+      },
+      {
+        "name": "sec-fetch-dest",
+        "value": "empty"
+      },
+      {
+        "name": "sec-fetch-mode",
+        "value": "cors"
+      },
+      {
+        "name": "sec-fetch-site",
+        "value": "same-site"
+      },
+      {
+        "name": "user-agent",
+        "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36"
+      }
+    ],
+    "params": [],
+    "body": {
+      "type": "formencoded",
+      "raw": "",
+      "form": [
+        {
+          "name": "email",
+          "value": "{{email}}"
+        },
+        {
+          "name": "passwd",
+          "value": "{{passwd}}"
+        },
+        {
+          "name": "platform_uid",
+          "value": "{{platform_uid}}"
+        },
+        {
+          "name": "save_session",
+          "value": "false"
+        },
+        {
+          "name": "recaptcha_action",
+          "value": "login"
+        },
+        {
+          "name": "recaptcha_token",
+          "value": "{{recaptcha_token}}"
+        }
+      ]
+    },
+    "tests": []
+  },
+  {
+    "_id": "0aa4da24-a86c-490a-bc57-e78c399a9c5e",
+    "colId": "950457ef-9c73-4ed2-8ec9-5836b0d7577a",
+    "containerId": "",
+    "name": "Favorite Series",
+    "url": "https://member-api.tver.jp/service/api/v1/callFavoriteSeries?member_sid={{member_sid}}&require_data=mylist",
+    "method": "GET",
+    "sortNum": 20000,
+    "created": "2023-04-08T21:48:03.029Z",
+    "modified": "2023-04-08T21:48:03.029Z",
+    "headers": [
+      {
+        "name": "Accept",
+        "value": "*/*",
+        "isDisabled": true
+      },
+      {
+        "name": "User-Agent",
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
+      },
+      {
+        "name": "x-tver-platform-type",
+        "value": " web"
+      }
+    ],
+    "params": [
+      {
+        "name": "member_sid",
+        "value": "{{member_sid}}",
+        "isPath": false
+      },
+      {
+        "name": "require_data",
+        "value": "mylist",
+        "isPath": false
+      }
+    ],
+    "tests": []
+  },
+  {
+    "_id": "3ee2fb04-1234-40f5-af27-6f57fcc19722",
+    "colId": "950457ef-9c73-4ed2-8ec9-5836b0d7577a",
+    "containerId": "",
+    "name": "Favorite Talent",
+    "url": "https://member-api.tver.jp/service/api/v1/callFavoriteSeries?member_sid={{member_sid}}&require_data=mylist",
+    "method": "GET",
+    "sortNum": 30000,
+    "created": "2023-04-08T21:48:22.223Z",
+    "modified": "2023-04-08T21:48:22.223Z",
+    "headers": [
+      {
+        "name": "Accept",
+        "value": "*/*",
+        "isDisabled": true
+      },
+      {
+        "name": "User-Agent",
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
+      },
+      {
+        "name": "x-tver-platform-type",
+        "value": " web"
+      }
+    ],
+    "params": [
+      {
+        "name": "member_sid",
+        "value": "{{member_sid}}",
+        "isPath": false
+      },
+      {
+        "name": "require_data",
+        "value": "mylist",
+        "isPath": false
+      }
+    ],
+    "tests": []
+  },
+  {
+    "_id": "c843c405-45ad-410a-aada-0bde2f739079",
+    "colId": "950457ef-9c73-4ed2-8ec9-5836b0d7577a",
+    "containerId": "",
+    "name": "Favorite Special",
+    "url": "https://member-api.tver.jp/service/api/v1/callFavoriteSeries?member_sid={{member_sid}}&require_data=mylist",
+    "method": "GET",
+    "sortNum": 40000,
+    "created": "2023-04-08T21:50:05.250Z",
+    "modified": "2023-04-08T21:50:05.250Z",
+    "headers": [
+      {
+        "name": "Accept",
+        "value": "*/*",
+        "isDisabled": true
+      },
+      {
+        "name": "User-Agent",
+        "value": "Thunder Client (https://www.thunderclient.com)",
+        "isDisabled": true
+      },
+      {
+        "name": "x-tver-platform-type",
+        "value": " web"
+      }
+    ],
+    "params": [
+      {
+        "name": "member_sid",
+        "value": "{{member_sid}}",
+        "isPath": false
+      },
+      {
+        "name": "require_data",
+        "value": "mylist",
+        "isPath": false
+      }
+    ],
     "tests": []
   }
 ]

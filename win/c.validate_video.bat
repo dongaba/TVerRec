@@ -38,7 +38,7 @@ title TVerRec Video File Checker
 where /Q pwsh
 if %ERRORLEVEL% neq 0 (goto :INSTALL)
 
-pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\validate_video.ps1
+pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\validate_video.ps1"
 
 pause
 exit

@@ -38,7 +38,7 @@ title TVerRec Video File List Generator
 where /Q pwsh
 if %ERRORLEVEL% neq 0 (goto :INSTALL)
 
-pwsh -NoProfile -ExecutionPolicy Unrestricted ..\src\generate_list.ps1
+pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\generate_list.ps1"
 
 pause
 exit
