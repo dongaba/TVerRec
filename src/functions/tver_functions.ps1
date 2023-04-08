@@ -61,6 +61,8 @@ function checkLatestTVerRec {
 		$local:versionUp = $false			#ローカルバージョンの方が新しい場合
 	}
 
+	$progressPreference = 'Continue'
+
 	#バージョンアップメッセージ
 	if ($local:versionUp -eq $true ) {
 		Write-ColorOutput 'TVerRecの更新版があるようです。' -FgColor 'Green'
@@ -79,23 +81,17 @@ function checkLatestTVerRec {
 			}
 		}
 
-		ShowToast `
-			-Text1 'TVerRecの更新版があるようです' `
-			-Text2 "  Version $script:appVersion → $local:latestVersion" `
-			-Duration 'long' `
-			-Silent $false
-
 		#アップデート実行
-		Write-Host '30秒でTVerRecをアップデートします。中止したい場合は Ctrl+C で中断してください'
-		for ($i = 30; $i -gt 0; $i--) {
-			Write-Host "$i"
+		Write-Host '60秒後にTVerRecをアップデートします。中止したい場合は Ctrl+C で中断してください'
+		for ($i = 60; $i -gt 0; $i--) {
+			Write-Host "  $i"
 			Start-Sleep 1
 		}
 		. $(Join-Path $script:scriptRoot 'update_tverrec.ps1')
+		exit
 
 	}
 
-	$progressPreference = 'Continue'
 }
 
 #----------------------------------------------------------------------

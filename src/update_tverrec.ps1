@@ -96,8 +96,6 @@ Write-Output '                          TVerRecアップデート処理         
 Write-Output '---------------------------------------------------------------------------'
 Write-Output '==========================================================================='
 
-$progressPreference = 'silentlyContinue'
-
 #念のため過去のバージョンがあれば削除し、作業フォルダを作成
 Write-Output ''
 Write-Output '-----------------------------------------------------------------'
@@ -141,8 +139,6 @@ Write-Output ''
 Write-Output '-----------------------------------------------------------------'
 Write-Output 'アップデートの作業フォルダを削除します'
 if (Test-Path $updateTemp ) { Remove-Item -Path $updateTemp -Force -Recurse }
-
-$progressPreference = 'Continue'
 
 Write-Output ''
 Write-Output 'TVerRecのアップデートを終了しました。'
