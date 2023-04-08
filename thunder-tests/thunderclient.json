@@ -1267,5 +1267,39 @@
       }
     ],
     "url": "https://platform-api.tver.jp/service/api/v1/callKeywordSearch?platform_uid={{platform_uid}}&platform_token={{platform_token}}&keyword=ランキング"
+  },
+  {
+    "_id": "c94c07b7-a6a0-4982-bfe8-1150fe924b3e",
+    "colId": "d4a4f664-af79-4953-b9ac-9482b27a82f1",
+    "containerId": "",
+    "name": "Releases",
+    "url": "https://api.github.com/repos/dongaba/tverrec/releases?per_page=100",
+    "method": "GET",
+    "sortNum": 10000,
+    "created": "2023-04-08T00:58:33.142Z",
+    "modified": "2023-04-08T01:12:56.769Z",
+    "headers": [],
+    "params": [
+      {
+        "name": "per_page",
+        "value": "100",
+        "isPath": false
+      }
+    ],
+    "tests": []
+  },
+  {
+    "_id": "ce559b00-924a-49c9-87e2-01b569e1acfa",
+    "colId": "d4a4f664-af79-4953-b9ac-9482b27a82f1",
+    "containerId": "",
+    "name": "Latest",
+    "url": "https://api.github.com/repos/dongaba/tverrec/releases/latest",
+    "method": "GET",
+    "sortNum": 20000,
+    "created": "2023-04-08T02:10:12.672Z",
+    "modified": "2023-04-08T02:10:37.630Z",
+    "headers": [],
+    "params": [],
+    "tests": []
   }
 ]

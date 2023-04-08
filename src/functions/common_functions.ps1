@@ -1206,11 +1206,41 @@ function Unzip {
 	[OutputType([System.Void])]
 	param(
 		[Parameter(Mandatory = $true)]
-		[Alias('ZipFile')]
-		[string]$zipfile,
+		[Alias('Path')]
+		[string]$zipArchive,
 		[Parameter(Mandatory = $true)]
-		[Alias('OutPath')]
+		[Alias('OutFile')]
 		[string]$outpath
 	)
-	[System.IO.Compression.ZipFile]::ExtractToDirectory($zipfile, $outpath)
+	[System.IO.Compression.ZipFile]::ExtractToDirectory($zipArchive, $outpath)
+}
+
+#----------------------------------------------------------------------
+#ディレクトリの上書き
+#----------------------------------------------------------------------
+function moveItem() {
+	[OutputType([System.Void])]
+	param(
+		[Parameter(Mandatory = $true)]
+		[Alias('Path')]
+		[string]$src,
+		[Parameter(Mandatory = $true)]
+		[Alias('Destination')]
+		[string]$dist
+	)
+
+	if ((Test-Path $dist) -and (Test-Path -PathType Container $src)) {
+		# フォルダ上書き(移動先に存在 かつ フォルダ)は再帰的に moveItem 呼び出し
+		Get-ChildItem $src | ForEach-Object {
+			moveItem $_.FullName $($dist + '\' + $_.Name);
+		}
+		# 移動し終わったフォルダを削除
+		Remove-Item $src -Recurse -Force;
+		#Write-Output "$src  ->  $dist"
+		#Move-Item $src -Destination $dist -Force;
+	} else {
+		# 移動先に対象なし または ファイルの Move-Item に -Forece つけて実行
+		Write-Output "$src  ->  $dist"
+		Move-Item $src -Destination $dist -Force;
+	}
 }

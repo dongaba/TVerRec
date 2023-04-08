@@ -21,6 +21,9 @@ youtube-dl
 #ダウンロードファイル
 *.mp4
 
+#アップデート作業フォルダ
+tverrec-update-temp
+
 #中間ファイル
 *.ytdl
 *.jpg

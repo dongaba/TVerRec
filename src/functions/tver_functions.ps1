@@ -44,8 +44,11 @@ function checkLatestTVerRec {
 	try { $local:appReleases = $((Invoke-WebRequest -Uri $local:releases -TimeoutSec $script:timeoutSec).content | ConvertFrom-Json) }
 	catch { return }
 
+	#GitHub側最新バージョンの整形
 	$local:latestVersion = $($local:appReleases)[0].tag_name.Trim('v', ' ')		# v1.2.3 → 1.2.3
 	$local:latestMajorVersion = $local:latestVersion.split(' ')[0]				# v1.2.3 beta 4 → 1.2.3
+
+	#ローカル側バージョンの整形
 	$local:appMajorVersion = $script:appVersion.split(' ')[0]					# v1.2.3 beta 4 → 1.2.3
 
 	#バージョン判定
@@ -81,11 +84,19 @@ function checkLatestTVerRec {
 			-Text2 "  Version $script:appVersion → $local:latestVersion" `
 			-Duration 'long' `
 			-Silent $false
+
+		#アップデート実行
+		Write-Host '30秒でTVerRecをアップデートします。中止したい場合は Ctrl+C で中断してください'
+		for ($i = 30; $i -gt 0; $i--) {
+			Write-Host "$i"
+			Start-Sleep 1
+		}
+		. $(Join-Path $script:scriptRoot 'update_tverrec.ps1')
+
 	}
 
 	$progressPreference = 'Continue'
 }
-
 
 #----------------------------------------------------------------------
 #ytdlの最新化確認
@@ -1274,8 +1285,8 @@ function showVideoInfo {
 	)
 
 	Write-ColorOutput ' '
-	Write-ColorOutput "　番組名  :$local:videoName" -FgColor 'Gray'
-	Write-ColorOutput "　放送日  :$local:broadcastDate" -FgColor 'Gray'
+	Write-ColorOutput "　番組名 :$local:videoName" -FgColor 'Gray'
+	Write-ColorOutput "　放送日 :$local:broadcastDate" -FgColor 'Gray'
 	Write-ColorOutput "　テレビ局:$local:mediaName" -FgColor 'Gray'
 	Write-ColorOutput "　番組説明:$local:descriptionText" -FgColor 'Gray'
 }
@@ -1357,15 +1368,15 @@ function showVideoDebugInfo {
 	)
 
 	Write-Debug	"　番組エピソードページ:$local:videoPageURL"
-	Write-Debug	"　番組シリーズページ  :$local:videoSeriesPageURL"
-	Write-Debug "　キーワード          :$local:keywordName"
-	Write-Debug "　シリーズ            :$local:videoSeries"
-	Write-Debug "　シーズン            :$local:videoSeason"
-	Write-Debug "　エピソード          :$local:videoEpisode"
-	Write-Debug "　サブタイトル        :$local:videoTitle"
-	Write-Debug "　ファイル            :$local:videoFilePath"
-	Write-Debug "　取得日付            :$local:processedTime"
-	Write-Debug "　配信終了            :$local:endTime"
+	Write-Debug	"　番組シリーズページ :$local:videoSeriesPageURL"
+	Write-Debug "　キーワード :$local:keywordName"
+	Write-Debug "　シリーズ :$local:videoSeries"
+	Write-Debug "　シーズン :$local:videoSeason"
+	Write-Debug "　エピソード :$local:videoEpisode"
+	Write-Debug "　サブタイトル :$local:videoTitle"
+	Write-Debug "　ファイル :$local:videoFilePath"
+	Write-Debug "　取得日付 :$local:processedTime"
+	Write-Debug "　配信終了 :$local:endTime"
 }
 
 #----------------------------------------------------------------------
@@ -1662,9 +1673,9 @@ function checkVideo {
 	if ($script:simplifiedValidation -eq $true) {
 		#ffprobeを使った簡易検査
 		$local:ffprobeArgs = ' -hide_banner -v error -err_detect explode' `
-			+ " -i $local:checkFile "
+			+ " -i $local:checkFile '
 
-		Write-Debug "ffprobe起動コマンド:$script:ffprobePath $local:ffprobeArgs"
+		Write-Debug 'ffprobe起動コマンド:$script:ffprobePath $local:ffprobeArgs"
 		try {
 			if ($IsWindows) {
 				$local:proc = (
@@ -1690,9 +1701,9 @@ function checkVideo {
 		#ffmpegeを使った完全検査
 		$local:ffmpegArgs = "$local:decodeOption " `
 			+ ' -hide_banner -v error -xerror' `
-			+ " -i $local:checkFile -f null - "
+			+ " -i $local:checkFile -f null - '
 
-		Write-Debug "ffmpeg起動コマンド:$script:ffmpegPath $local:ffmpegArgs"
+		Write-Debug 'ffmpeg起動コマンド:$script:ffmpegPath $local:ffmpegArgs"
 		try {
 			if ($IsWindows) {
 				$local:proc = (
@@ -1735,7 +1746,7 @@ function checkVideo {
 		Write-ColorOutput '　チェックNGでした' -FgColor 'Green'
 
 		#終了コードが"0"以外 または エラーが30行以上 はダウンロード履歴とファイルを削除
-		Write-ColorOutput "　exit code: $($local:proc.ExitCode)    error count: $local:errorCount" 'Green'
+		Write-ColorOutput "　exit code: $($local:proc.ExitCode) error count: $local:errorCount" 'Green'
 
 		#破損しているダウンロードファイルをダウンロード履歴から削除
 		try {
