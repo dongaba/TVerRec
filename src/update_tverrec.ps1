@@ -102,7 +102,7 @@ Write-Output '-----------------------------------------------------------------'
 Write-Output '作業フォルダを作成します'
 $updateTemp = $(Join-Path $script:scriptRoot '..\tverrec-update-temp' )
 if (Test-Path $updateTemp ) { Remove-Item -Path $updateTemp -Force -Recurse }
-New-Item -ItemType Directory -Path $updateTemp
+New-Item -ItemType Directory -Path $updateTemp > $null
 
 #TVerRecの最新バージョン取得
 Write-Output ''
@@ -140,6 +140,8 @@ Write-Output '-----------------------------------------------------------------'
 Write-Output 'アップデートの作業フォルダを削除します'
 if (Test-Path $updateTemp ) { Remove-Item -Path $updateTemp -Force -Recurse }
 
+Write-Output ''
+Write-Output '==========================================================================='
 Write-Output ''
 Write-Output 'TVerRecのアップデートを終了しました。'
 Write-Output ''

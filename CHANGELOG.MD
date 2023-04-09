@@ -5,7 +5,6 @@
 ### 2.7.0 Added
 
 - Docker コンテナの作成に対応
-  - https://hub.docker.com/r/dongaba/tverrec で linux/amd64 のイメージを公開
 - TVerRec の自動アップデート機能を追加
 
 ### 2.7.0 Changed
