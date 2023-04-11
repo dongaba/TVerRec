@@ -38,7 +38,7 @@ title TVerRec Updater
 where /Q pwsh
 if %ERRORLEVEL% neq 0 (goto :INSTALL)
 
-pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\update_tverrec.ps1"
+pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\functions\update_tverrec.ps1"
 
 pause
 exit

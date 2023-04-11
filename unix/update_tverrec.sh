@@ -30,7 +30,7 @@
 
 echo -en "\033];TVerRec Updater\007"
 
-pwsh -NoProfile -ExecutionPolicy Unrestricted "../src/update_tverrec.ps1"
+pwsh -NoProfile -ExecutionPolicy Unrestricted "../src/functions/update_tverrec.ps1"
 
 echo "Finished ..."
 read -r

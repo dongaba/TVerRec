@@ -25,23 +25,52 @@
 #	THE SOFTWARE.
 #
 ###################################################################################
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+#----------------------------------------------------------------------
+#Zipファイルを解凍
+#----------------------------------------------------------------------
+function unZip {
+	[CmdletBinding()]
+	[OutputType([System.Void])]
+	param(
+		[Parameter(Mandatory = $true)]
+		[Alias('File')]
+		[String]$zipArchive,
+		[Parameter(Mandatory = $true)]
+		[Alias('OutPath')]
+		[String]$path
+	)
+	[System.IO.Compression.ZipFile]::ExtractToDirectory($zipArchive, $path)
+}
+
+#━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#環境設定
+#━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Set-StrictMode -Version Latest
+try {
+	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
+		$local:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+		$local:scriptRoot = Split-Path -Parent -Path $local:scriptRoot
+	} else {
+		$local:scriptRoot = Convert-Path ..
+	}
+	Set-Location $local:scriptRoot
+} catch {
+	Write-Error 'ディレクトリ設定に失敗しました' ; exit 1
+}
+
+#━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#メイン処理
 
 #githubの設定
 $local:repo = 'yt-dlp/yt-dlp'
 $local:releases = "https://api.github.com/repos/$($local:repo)/releases"
 
 #yt-dlp保存先相対Path
-$local:ytdlRelDir = '../bin'
-$local:ytdlDir = $(Join-Path $script:scriptRoot $local:ytdlRelDir)
+$local:ytdlDir = $(Join-Path $local:scriptRoot '../bin')
 if ($IsWindows) { $local:ytdlPath = $(Join-Path $local:ytdlDir 'youtube-dl.exe') }
 else { $local:ytdlPath = $(Join-Path $local:ytdlDir 'youtube-dl') }
-
-#yt-dlpのディレクトリがなければ作成
-if (-Not (Test-Path $local:ytdlDir -PathType Container)) {
-	$null = New-Item `
-		-ItemType Directory `
-		-Path $local:ytdlDir
-}
 
 #yt-dlpのバージョン取得
 if (Test-Path $local:ytdlPath -PathType Leaf) {
@@ -56,22 +85,24 @@ if (Test-Path $local:ytdlPath -PathType Leaf) {
 try {
 	$local:latestVersion = (Invoke-RestMethod `
 			-Uri $local:releases `
-			-Method Get `
-			-TimeoutSec $script:timeoutSec `
+			-Method Get
 	)[0].Tag_Name
-} catch { Out-Msg 'youtube-dl(yt-dlp)の最新バージョンを特定できませんでした' -Fg 'Green' ; return }
+} catch {
+	Write-Output 'youtube-dl(yt-dlp)の最新バージョンを特定できませんでした'
+	return
+}
 
 #yt-dlpのダウンロード
 if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
-	Out-Msg 'youtube-dlは最新です。'
-	Out-Msg "　youtube-dl current: $local:ytdlCurrentVersion"
-	Out-Msg "　youtube-dl latest: $local:latestVersion"
-	Out-Msg ''
+	Write-Output 'youtube-dlは最新です。'
+	Write-Output "　youtube-dl current: $local:ytdlCurrentVersion"
+	Write-Output "　youtube-dl latest: $local:latestVersion"
+	Write-Output ''
 } else {
-	Out-Msg 'youtube-dlが古いため更新します。'
-	Out-Msg "　youtube-dl current: $local:ytdlCurrentVersion"
-	Out-Msg "　youtube-dl latest: $local:latestVersion"
-	Out-Msg ''
+	Write-Output 'youtube-dlが古いため更新します。'
+	Write-Output "　youtube-dl current: $local:ytdlCurrentVersion"
+	Write-Output "　youtube-dl latest: $local:latestVersion"
+	Write-Output ''
 	if ($IsWindows -eq $false) {
 		#githubの設定
 		$local:file = 'yt-dlp'
@@ -82,21 +113,22 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 		$local:fileAfterRename = 'youtube-dl.exe'
 	}
 
+	Write-Output 'youtube-dl(yt-dlp)の最新版をダウンロードします'
 	try {
 		#ダウンロード
 		$local:tag = (Invoke-RestMethod `
 				-Uri $local:releases `
-				-Method Get `
-				-TimeoutSec $script:timeoutSec `
+				-Method Get
 		)[0].Tag_Name
 		$local:download = `
 			"https://github.com/$($local:repo)/releases/download/$($local:tag)/$($local:file)"
 		$local:ytdlFileLocation = $(Join-Path $local:ytdlDir $local:fileAfterRename)
 		Invoke-WebRequest `
 			-Uri $local:download `
-			-Out $local:ytdlFileLocation `
-			-TimeoutSec $script:timeoutSec
-	} catch { exit 1 }
+			-Out $local:ytdlFileLocation
+	} catch {
+		Write-Error 'youtube-dl(yt-dlp)のダウンロードに失敗しました' ; exit 1
+	}
 
 	if ($IsWindows -eq $false) {
 		#実行権限の付与
@@ -107,9 +139,12 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 	try {
 		$local:ytdlCurrentVersion = (& $local:ytdlPath --version)
 		if ($? -eq $false) { throw '更新後のバージョン取得に失敗しました' }
-		Out-Msg "youtube-dlをversion $local:ytdlCurrentVersion に更新しました。"
-		Out-Msg ''
-	} catch { exit 1 }
+		Write-Output "youtube-dlをversion $local:ytdlCurrentVersion に更新しました。"
+		Write-Output ''
+	} catch {
+		Write-Error '更新後のバージョン取得に失敗しました' ; exit 1
+	}
+
 
 }
 

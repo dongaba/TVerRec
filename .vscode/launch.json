@@ -1,68 +1,75 @@
 {
     "version": "0.2.0",
     "configurations": [
-        {
-            "cwd": "${workspaceFolder}",
-            "name": "tverrec_bulk",
-            "request": "launch",
-            "script": "${workspaceFolder}/src/tverrec_bulk.ps1",
-            "type": "PowerShell"
-        },
-        {
-            "cwd": "${workspaceFolder}",
-            "name": "tverrec_single",
-            "request": "launch",
-            "script": "${workspaceFolder}/src/tverrec_single.ps1",
-            "type": "PowerShell"
-        },
-        {
-            "cwd": "${workspaceFolder}",
-            "name": "generate_list",
-            "request": "launch",
-            "script": "${workspaceFolder}/src/generate_list.ps1",
-            "type": "PowerShell"
-        },
-        {
-            "cwd": "${workspaceFolder}",
-            "name": "tverrec_list",
-            "request": "launch",
-            "script": "${workspaceFolder}/src/tverrec_list.ps1",
-            "type": "PowerShell"
-        },
-        {
-            "cwd": "${workspaceFolder}",
-            "name": "update_ffmpeg",
-            "request": "launch",
-            "script": "${workspaceFolder}/src/functions/update_ffmpeg.ps1",
-            "type": "PowerShell"
-        },
-        {
-            "cwd": "${workspaceFolder}",
-            "name": "update_ytdl-patched",
-            "request": "launch",
-            "script": "${workspaceFolder}/src/functions/update_ytdl-patched.ps1",
-            "type": "PowerShell"
-        },
-        {
-            "cwd": "${workspaceFolder}",
-            "name": "delete_trash",
-            "request": "launch",
-            "script": "${workspaceFolder}/src/delete_trash.ps1",
-            "type": "PowerShell"
-        },
-        {
-            "cwd": "${workspaceFolder}",
-            "name": "validate_video",
-            "request": "launch",
-            "script": "${workspaceFolder}/src/validate_video.ps1",
-            "type": "PowerShell"
-        },
-        {
-            "cwd": "${workspaceFolder}",
-            "name": "move_video",
-            "request": "launch",
-            "script": "${workspaceFolder}/src/move_video.ps1",
-            "type": "PowerShell"
-        }
-    ]
+			{
+				"cwd": "${workspaceFolder}",
+				"name": "tverrec_bulk",
+				"request": "launch",
+				"script": "${workspaceFolder}/src/tverrec_bulk.ps1",
+				"type": "PowerShell"
+			},
+			{
+				"cwd": "${workspaceFolder}",
+				"name": "tverrec_single",
+				"request": "launch",
+				"script": "${workspaceFolder}/src/tverrec_single.ps1",
+				"type": "PowerShell"
+			},
+			{
+				"cwd": "${workspaceFolder}",
+				"name": "generate_list",
+				"request": "launch",
+				"script": "${workspaceFolder}/src/generate_list.ps1",
+				"type": "PowerShell"
+			},
+			{
+				"cwd": "${workspaceFolder}",
+				"name": "tverrec_list",
+				"request": "launch",
+				"script": "${workspaceFolder}/src/tverrec_list.ps1",
+				"type": "PowerShell"
+			},
+			{
+				"cwd": "${workspaceFolder}",
+				"name": "update_ffmpeg",
+				"request": "launch",
+				"script": "${workspaceFolder}/src/functions/update_ffmpeg.ps1",
+				"type": "PowerShell"
+			},
+			{
+				"cwd": "${workspaceFolder}",
+				"name": "update_yt-dlp",
+				"request": "launch",
+				"script": "${workspaceFolder}/src/functions/update_yt-dlp.ps1",
+				"type": "PowerShell"
+			},
+			{
+				"cwd": "${workspaceFolder}",
+				"name": "update_ytdl-patched",
+				"request": "launch",
+				"script": "${workspaceFolder}/src/functions/update_ytdl-patched.ps1",
+				"type": "PowerShell"
+			},
+			{
+				"cwd": "${workspaceFolder}",
+				"name": "delete_trash",
+				"request": "launch",
+				"script": "${workspaceFolder}/src/delete_trash.ps1",
+				"type": "PowerShell"
+			},
+			{
+				"cwd": "${workspaceFolder}",
+				"name": "validate_video",
+				"request": "launch",
+				"script": "${workspaceFolder}/src/validate_video.ps1",
+				"type": "PowerShell"
+			},
+			{
+				"cwd": "${workspaceFolder}",
+				"name": "move_video",
+				"request": "launch",
+				"script": "${workspaceFolder}/src/move_video.ps1",
+				"type": "PowerShell"
+			}
+		]
 }

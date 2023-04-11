@@ -85,18 +85,19 @@ function moveItem() {
 Set-StrictMode -Version Latest
 try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$script:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
-		$script:scriptName = Split-Path -Leaf -Path $MyInvocation.MyCommand.Definition
+		$local:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+		$local:scriptRoot = Split-Path -Parent -Path $local:scriptRoot
 	} else {
-		$script:scriptRoot = Convert-Path .
+		$local:scriptRoot = Convert-Path ..
 	}
-	Set-Location $script:scriptRoot
+	Set-Location $local:scriptRoot
 } catch {
 	Write-Error 'ディレクトリ設定に失敗しました' ; exit 1
 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
+
 Write-Output ''
 Write-Output '==========================================================================='
 Write-Output '---------------------------------------------------------------------------'
@@ -108,7 +109,7 @@ Write-Output '==================================================================
 Write-Output ''
 Write-Output '-----------------------------------------------------------------'
 Write-Output '作業フォルダを作成します'
-$updateTemp = $(Join-Path $script:scriptRoot '../tverrec-update-temp' )
+$updateTemp = $(Join-Path $local:scriptRoot '../tverrec-update-temp' )
 if (Test-Path $updateTemp ) {
 	Remove-Item `
 		-Path $updateTemp `
@@ -148,7 +149,9 @@ Write-Output 'ダウンロードしたTVerRecを解凍します'
 try {
 	if (Test-Path $(Join-Path $updateTemp 'New.zip') -PathType Leaf) {
 		#配下に作成されるフォルダ名は不定「dongaba-TVerRec-xxxxxxxx」
-		unZip -File $(Join-Path $updateTemp 'New.zip') -OutPath $updateTemp
+		unZip `
+			-File $(Join-Path $updateTemp 'New.zip') `
+			-OutPath $updateTemp
 	} else {
 		Write-Output 'ダウンロードしたファイルが見つかりません' ; exit 1
 	}
@@ -165,7 +168,9 @@ try {
 	Get-ChildItem -Path $newTVerRecDir `
 	| ForEach-Object {
 		# Move-Item を行う function として moveItem 作成して呼び出す
-		moveItem $_.FullName -Destination $($( Convert-Path $(Join-Path $script:scriptRoot '../')) + $_.Name)
+		moveItem `
+			-Path $_.FullName `
+			-Destination $($( Convert-Path $(Join-Path $local:scriptRoot '../')) + $_.Name)
 	}
 } catch {
 	Write-Output 'ダウンロードしたTVerRecの配置に失敗しました' ; exit 1
@@ -193,4 +198,4 @@ Write-Output 'TVerRecのアップデートを終了しました。'
 Write-Output ''
 Write-Output '==========================================================================='
 
-exit
+exit 0

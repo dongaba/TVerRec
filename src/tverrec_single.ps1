@@ -33,14 +33,15 @@ Set-StrictMode -Version Latest
 try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
 		$script:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
-		$script:scriptName = Split-Path -Leaf -Path $MyInvocation.MyCommand.Definition
 	} else {
 		$script:scriptRoot = Convert-Path .
 	}
 	Set-Location $script:scriptRoot
 	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '../conf'))
 	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
-} catch { Write-Error 'ディレクトリ設定に失敗しました' ; exit 1 }
+} catch {
+	Write-Error 'ディレクトリ設定に失敗しました' ; exit 1
+}
 
 #----------------------------------------------------------------------
 #設定ファイル読み込み
@@ -148,6 +149,5 @@ while ($true) {
 		Out-Msg '---------------------------------------------------------------------------' -Fg 'Cyan'
 		Out-Msg '処理を終了しました。                                                       ' -Fg 'Cyan'
 		Out-Msg '---------------------------------------------------------------------------' -Fg 'Cyan'
-		exit
 	}
 }

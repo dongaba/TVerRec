@@ -101,10 +101,9 @@ function checkLatestTVerRec {
 			Write-Output "  $i"
 			Start-Sleep 1
 		}
-		. $(Join-Path $script:scriptRoot 'update_tverrec.ps1')
+		. $(Join-Path $script:scriptRoot '/functions/update_tverrec.ps1')
 
-		#再起動のため強制終了
-		exit 1
+		#再起動のため強制終了 ; exit 1
 
 	}
 
