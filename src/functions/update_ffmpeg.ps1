@@ -231,6 +231,12 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 
 	}
 
+	if ($IsWindows -eq $false) {
+		#実行権限の付与
+		(& chmod a+x $local:ffmpegPath)
+		(& chmod a+x $($local:ffmpegPath).Replace('ffmpeg', 'ffprobe'))
+	}
+
 	#バージョンチェック
 	try {
 		$local:ffmpegFileVersion = (& $local:ffmpegPath -version)

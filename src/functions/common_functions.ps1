@@ -65,9 +65,9 @@ try {
 		Invoke-RestMethod `
 		-Uri 'https://ipapi.co/jsonp/' `
 		-TimeoutSec $script:timeoutSec
-	$script:ipapi = $script:ipapi.replace('callback(', '').replace(');', '')
-	$script:ipapi = $script:ipapi.replace('{', "{`n").replace('}', "`n}")
-	$script:ipapi = $script:ipapi.replace(', ', ",`n")
+	$script:ipapi = $script:ipapi.Replace('callback(', '').Replace(');', '')
+	$script:ipapi = $script:ipapi.Replace('{', "{`n").Replace('}', "`n}")
+	$script:ipapi = $script:ipapi.Replace(', ', ",`n")
 	$(ConvertFrom-Json $script:ipapi).psobject.properties `
 	| ForEach-Object { $script:clientEnv[$_.Name] = $_.Value }
 } catch { Write-Debug 'Geo IPのチェックに失敗しました' }
