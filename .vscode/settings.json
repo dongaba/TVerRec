@@ -49,7 +49,7 @@
     "powershell.integratedConsole.forceClearScrollbackBuffer": true,
     "powershell.integratedConsole.suppressStartupBanner": true,
     "powershell.scriptAnalysis.enable": true,
-    "powershell.scriptAnalysis.settingsPath": "./PSScriptAnalyzerSettings.psd1",
+    "powershell.scriptAnalysis.settingsPath": "./.vscode/PSScriptAnalyzerSettings.psd1",
     "powershell.startAsLoginShell.linux": true,
     "prettier.bracketSameLine": true,
     "prettier.endOfLine": "auto",

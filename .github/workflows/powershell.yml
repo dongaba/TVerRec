@@ -37,7 +37,7 @@ jobs:
           #suppressedOnly: false
           #fix: false
           #enableExit: true
-          settings: ./PSScriptAnalyzerSettings.psd1
+          settings: ./.vscode/PSScriptAnalyzerSettings.psd1
           output: pssanalyzer.sarif
           #ignorePattern: 'tests'
 

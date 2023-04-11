@@ -24,13 +24,19 @@ TVerRec は、テレビ番組配信サイト TVer(ティーバー<https://tver.j
 ## 動作の前提条件
 
 - OS
+
   - Windows
   - MacOS
   - Linux
+
 - 必要なソフトウェア
-  - PowerShell Core(Windows 環境では自動インストール)
-  - youtube-dl(自動ダウンロード)
-  - ffmpeg(自動ダウンロード)
+  - PowerShell Core (Windows 環境では自動インストールされます)
+  - youtube-dl (自動ダウンロードされます)
+  - ffmpeg (自動ダウンロードされます)
+  - Python (Linux/Mac 環境のみ必要。Windows 環境では不要)
+
+または、Docker を使ってコンテナとしてどうさせることも可能です。
+コンテナは Linux のイメージで作成され、必要なツールは全て設定済みの状態で起動します。
 
 ## 主な機能
 
@@ -80,6 +86,11 @@ TVerRec の使い方・実行方法については[Wiki こちらのページ](h
 フォルダ構成は以下のようになっています。(ここをクリックすると展開)
 
     TVerRec/
+    │
+    ├─ .devcontainer/ ................... DevContainerの設定(配下のファイルは省略)
+    ├─ .github/ ......................... GitHubの設定(配下のファイルは省略)
+    ├─ .vscode/ ......................... VS Codeの設定(配下のファイルは省略)
+    │
     ├─ bin/ ............................. 実行ファイル格納用フォルダ(初期状態は空)
     │
     ├─ conf/ ............................. 設定
@@ -97,9 +108,9 @@ TVerRec の使い方・実行方法については[Wiki こちらのページ](h
     │  ├─ history.sample.csv ............... 空のダウンロード履歴
     │  └─ list.lock ........................ 複数インスタンス起動時のダウンロードリストファイルの排他制御用ファイル
     │
-    ├─ docker/ ........................... Docker用
-    │  ├─ Dockerfile.alpine ................ Alpine LinuxをベースにしたDockerイメージ用Dockerfile
-    │  └─ Dockerfile.ubuntu ................ Ubuntu LinuxをベースにしたDockerイメージ用Dockerfile
+    ├─ docker/ ........................... Docker用サンプル
+    │  ├─ Dockerfile.alpine ................ Alpine LinuxをベースにしたDockerイメージ用Dockerfileのサンプル
+    │  └─ Dockerfile.ubuntu ................ Ubuntu LinuxをベースにしたDockerイメージ用Dockerfileのサンプル
     │
     ├─ img/ .............................. 画像
     │  ├─ TVerRec-Logo.png ................. アプリロゴ
@@ -121,6 +132,7 @@ TVerRec の使い方・実行方法については[Wiki こちらのページ](h
     │  │  ├─ common_functions.ps1 ............ 共通関数定義
     │  │  ├─ tver_functions.ps1 .............. TVer用共通関数定義
     │  │  ├─ update_ffmpeg.ps1 ............... ffmpeg自動更新ツール
+    │  │  ├─ update_tverrec.ps1 .............. TVerRec自身の自動更新ツール
     │  │  ├─ update_yt-dlp.ps1 ............... yt-dlp自動更新ツール
     │  │  └─ update_ytdl-patched.ps1 ......... ytdl-patched自動更新ツール
     │  ├─ delete_trash.ps1 ................. ダウンロード対象外番組削除ツール
@@ -130,6 +142,8 @@ TVerRec の使い方・実行方法については[Wiki こちらのページ](h
     │  ├─ tverrec_list.ps1 ................. リストダウンロードツール
     │  ├─ tverrec_single.ps1 ............... 単体ダウンロードツール
     │  └─ validate_video.ps1 ............... ダウンロード済番組の整合性チェックツール
+    │
+    ├─ thunder-tests/ .................... VS CodeのプラグインThunder Client の設定(配下のファイルは省略)
     │
     ├─ unix/ ............................. Linux/Mac用シェルスクリプト
     │  ├─ a.download_video.sh .............. キーワードを元一括ダウンロードするシェルスクリプト
@@ -154,7 +168,7 @@ TVerRec の使い方・実行方法については[Wiki こちらのページ](h
     │  └─ z.download_single_video.bat ...... 番組を1本ずつダウンロードするBAT
     │
     ├─ CHANGELOG.md ......................... 変更履歴
-    ├─ docker-compose.yaml................... docker-composeファイル
+    ├─ docker-compose.yaml .................. docker-composeファイル
     ├─ Dockerfile ........................... Dockerファイル
     ├─ LICENSE .............................. ライセンス
     ├─ README.md ............................ このファイル
