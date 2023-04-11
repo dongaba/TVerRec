@@ -28,6 +28,9 @@ RUN mkdir -p -m 777 \
 	/mnt/Work \
 	/mnt/Video
 
+#COPY ./docker/ffmpeg ./bin/.
+#COPY ./docker/ffprobe ./bin/.
+
 #ユーザ切り替え
 USER tverrec
 
@@ -50,8 +53,6 @@ RUN sed -i -e "s|'TVerRec'|'TVerRecContainer'|g" ./conf/system_setting.ps1 \
 	&& sed -i -e "s|\$script:disableUpdateFfmpeg\ =\ \$false|\$script:disableUpdateFfmpeg\ =\ \$true|g" ./conf/system_setting.ps1 \
 	&& mkdir container-data
 
-#COPY ./docker/ffmpeg ./bin/.
-#COPY ./docker/ffprobe ./bin/.
 
 #youtube-dlインストール
 RUN curl -L "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" -o ./bin/youtube-dl \

@@ -14,9 +14,6 @@ debug/*
 #実行ファイル
 bin/*
 *.exe
-ffmpeg
-yt-dlp
-youtube-dl
 
 #ダウンロードファイル
 *.mp4
