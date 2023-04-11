@@ -28,9 +28,6 @@ RUN mkdir -p -m 777 \
 	/mnt/Work \
 	/mnt/Video
 
-#COPY ./docker/ffmpeg ./bin/.
-#COPY ./docker/ffprobe ./bin/.
-
 #ユーザ切り替え
 USER tverrec
 
@@ -57,8 +54,9 @@ RUN sed -i -e "s|'TVerRec'|'TVerRecContainer'|g" ./conf/system_setting.ps1 \
 #youtube-dlインストール
 RUN curl -L "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" -o ./bin/youtube-dl \
 	&& chmod a+x ./bin/youtube-dl \
-	&& copy ./docker/ff* ./bin/. \
-	&& chmod a+x ./bin/ff*
+	&& cp ./docker/ff* ./bin/. \
+	&& chmod a+x ./bin/ff* \
+	&& chmod a+x ./unix/*.sh
 #	&& cp "$(which ffmpeg)" ./bin/. \
 #	&& cp "$(which ffprobe)" ./bin/.
 
