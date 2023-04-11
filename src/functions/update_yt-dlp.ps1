@@ -98,6 +98,11 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 			-TimeoutSec $script:timeoutSec
 	} catch { exit 1 }
 
+	if ($IsWindows -eq $false) {
+		#実行権限の付与
+		(& chmod a+x $local:ytdlFileLocation)
+	}
+
 	#バージョンチェック
 	try {
 		$local:ytdlCurrentVersion = (& $local:ytdlPath --version)
