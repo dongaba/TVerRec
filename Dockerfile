@@ -50,10 +50,14 @@ RUN sed -i -e "s|'TVerRec'|'TVerRecContainer'|g" ./conf/system_setting.ps1 \
 	&& sed -i -e "s|\$script:disableUpdateFfmpeg\ =\ \$false|\$script:disableUpdateFfmpeg\ =\ \$true|g" ./conf/system_setting.ps1 \
 	&& mkdir container-data
 
+#COPY ./docker/ffmpeg ./bin/.
+#COPY ./docker/ffprobe ./bin/.
 
 #youtube-dlインストール
 RUN curl -L "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" -o ./bin/youtube-dl \
-	&& chmod a+x ./bin/youtube-dl
+	&& chmod a+x ./bin/youtube-dl \
+	&& copy ./docker/ff* ./bin/. \
+	&& chmod a+x ./bin/ff*
 #	&& cp "$(which ffmpeg)" ./bin/. \
 #	&& cp "$(which ffprobe)" ./bin/.
 
