@@ -48,7 +48,6 @@ RUN sed -i -e "s|'TVerRec'|'TVerRecContainer'|g" ./conf/system_setting.ps1 \
 	&& sed -i -e "s|\$script:listDir 'list.csv'|\$script:containerDir 'list.csv'|g" ./conf/system_setting.ps1 \
 	&& sed -i -e "s|\$script:confDir 'user_setting.ps1'|\$script:containerDir 'user_setting.ps1'|g" ./src/*.ps1 \
 	&& sed -i -e "s|Enterを押して|コンテナを再起動して|g" ./unix/start_tverrec.sh \
-	&& sed -i -e "s|\$script:disableUpdateFfmpeg\ =\ \$false|\$script:disableUpdateFfmpeg\ =\ \$true|g" ./conf/system_setting.ps1 \
 	&& mkdir container-data
 
 RUN chmod a+x ./unix/*.sh
