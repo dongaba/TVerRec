@@ -226,7 +226,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 			-Group 'ListGen'
 
 		#処理
-		Out-Msg "$($local:videoNum)/$($local:videoTotal) - $local:videoLink" -NoNewLine $true
+		Out-Msg "$($local:videoNum)/$($local:videoTotal) - $local:videoLink" -NoNL $true
 
 		#TVer番組ダウンロードのメイン処理
 		generateTVerVideoList `

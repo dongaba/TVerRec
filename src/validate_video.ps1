@@ -237,7 +237,7 @@ if ($null -eq $local:videoHists) {
 		if (Test-Path $script:downloadBaseDir -PathType Container) { }
 		else { Write-Error '番組ダウンロード先フォルダにアクセスできません。終了します。' -Fg 'Green' ; exit 1 }
 
-		Out-Msg "$($local:validateNum)/$($local:validateTotal) - $($local:videoFileRelPath)" -NoNewLine $true
+		Out-Msg "$($local:validateNum)/$($local:validateTotal) - $($local:videoFileRelPath)" -NoNL $true
 		checkVideo `
 			-DecodeOption $local:decodeOption `
 			-Path $local:videoFileRelPath		#番組の整合性チェック
