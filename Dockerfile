@@ -12,6 +12,7 @@ LABEL org.opencontainers.image.title="TVerRec" \
 RUN apk --update --no-cache add \
 	curl \
 	git \
+	bash \
 	python3 \
 	&& rm -rf /var/cache/apk/*
 
@@ -50,16 +51,8 @@ RUN sed -i -e "s|'TVerRec'|'TVerRecContainer'|g" ./conf/system_setting.ps1 \
 	&& sed -i -e "s|\$script:disableUpdateFfmpeg\ =\ \$false|\$script:disableUpdateFfmpeg\ =\ \$true|g" ./conf/system_setting.ps1 \
 	&& mkdir container-data
 
-
-#youtube-dlインストール
-RUN curl -L "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" -o ./bin/youtube-dl \
-	&& chmod a+x ./bin/youtube-dl \
-	&& cp ./docker/ff* ./bin/. \
-	&& chmod a+x ./bin/ff* \
-	&& chmod a+x ./unix/*.sh
-#	&& cp "$(which ffmpeg)" ./bin/. \
-#	&& cp "$(which ffprobe)" ./bin/.
+RUN chmod a+x ./unix/*.sh
 
 WORKDIR /app/TVerRec/unix
-ENTRYPOINT ["/bin/sh"]
+ENTRYPOINT ["/bin/bash"]
 CMD ["start_tverrec.sh"]

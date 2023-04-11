@@ -160,7 +160,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 		if ($null -eq $local:historyMatch) { $local:videoLinks += $local:resultLink }
 		else { $local:searchResultCount = $local:searchResultCount + 1
 			continue
-  }
+		}
 	}
 
 	$local:videoNum = 0								#ジャンル内の処理中の番組の番号
