@@ -43,6 +43,7 @@ linux-*
 mac-*
 win-*
 *.xlsx
+thunderclient.env
 thunderActivity.json
 thunderEnvironment.json
 .thunderCollection.json.tmp
@@ -61,4 +62,4 @@ keyword.conf
 user_setting.ps1
 #git update-index --assume-unchanged conf/dev_setting.ps1
 
-thunder-tests/thunderclient.env
+
