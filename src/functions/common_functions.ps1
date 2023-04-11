@@ -1243,7 +1243,7 @@ function goAnal {
 			-Uri "$($local:statisticsBase)$($local:event).svg" `
 			-TimeoutSec $script:timeoutSec `
 		| Out-Null
- } catch { Write-Debug 'Failed to collect statistics' }
+	} catch { Write-Debug 'Failed to collect statistics' }
 	finally { $progressPreference = 'Continue' }
 
 	if ($local:event -eq 'search') { return }

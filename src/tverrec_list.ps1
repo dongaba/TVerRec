@@ -130,7 +130,7 @@ try {
 		-Path $script:historyFilePath `
 		-Encoding UTF8
 } catch {
- Out-Msg '　ダウンロード履歴を読み込めなかったのでスキップしました' -Fg 'Green'
+	Out-Msg '　ダウンロード履歴を読み込めなかったのでスキップしました' -Fg 'Green'
 	continue
 } finally { $null = fileUnlock $script:historyLockFilePath }
 Out-Msg ''

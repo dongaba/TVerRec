@@ -165,7 +165,7 @@ try {
 		| Select-Object 'videoPath'
 	)
 } catch {
- Out-Msg 'ダウンロード履歴の読み込みに失敗しました' -Fg 'Green'
+	Out-Msg 'ダウンロード履歴の読み込みに失敗しました' -Fg 'Green'
 } finally { $null = fileUnlock $script:historyLockFilePath }
 
 
@@ -285,7 +285,7 @@ try {
 		-NoTypeInformation `
 		-Encoding UTF8
 } catch {
- Out-Msg 'ダウンロード履歴の更新に失敗しました' -Fg 'Green'
+	Out-Msg 'ダウンロード履歴の更新に失敗しました' -Fg 'Green'
 } finally { $null = fileUnlock $script:historyLockFilePath }
 
 #進捗表示
