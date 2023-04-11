@@ -30,14 +30,16 @@
 $local:releases = 'https://www.gyan.dev/ffmpeg/builds/release-version'
 
 #ffmpeg保存先相対Path
-$local:ffmpegRelativeDir = '..\bin'
-$local:ffmpegDir = $(Join-Path $script:scriptRoot $local:ffmpegRelativeDir)
+$local:ffmpegRelDir = '../bin'
+$local:ffmpegDir = $(Join-Path $script:scriptRoot $local:ffmpegRelDir)
 if ($IsWindows) { $local:ffmpegPath = $(Join-Path $local:ffmpegDir 'ffmpeg.exe') }
 else { $local:ffmpegPath = $(Join-Path $local:ffmpegDir 'ffmpeg') }
 
 #ffmpegのディレクトリがなければ作成
 if (-Not (Test-Path $local:ffmpegDir -PathType Container)) {
-	$null = New-Item -ItemType directory -Path $local:ffmpegDir
+	$null = New-Item `
+		-ItemType Directory `
+		-Path $local:ffmpegDir
 }
 
 #ffmpegのバージョン取得
@@ -53,55 +55,192 @@ if (Test-Path $local:ffmpegPath -PathType Leaf) {
 
 #ffmpegの最新バージョン取得
 $local:latestVersion = ''
-try { $local:latestRawVersion = Invoke-WebRequest -Uri $local:releases -TimeoutSec $script:timeoutSec }
-catch { Write-ColorOutput 'ffmpegの最新バージョンを特定できませんでした' -FgColor 'Green' ; return }
-$local:latestVersion = $([String]$local:latestRawVersion.rawcontent).remove(0, $([String]$local:latestRawVersion.rawcontent).LastIndexOf("`n") + 1)
+try {
+	$local:latestVersion = Invoke-RestMethod `
+		-Uri $local:releases `
+		-Method Get `
+	| ConvertTo-Json
+} catch {
+	Out-Msg 'ffmpegの最新バージョンを特定できませんでした' -Fg 'Green'
+	return
+}
 
 #ffmpegのダウンロード
 if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
-	Write-ColorOutput 'ffmpegは最新です。 '
-	Write-ColorOutput "　ffmpeg current: $local:ffmpegCurrentVersion"
-	Write-ColorOutput "　ffmpeg latest: $local:latestVersion"
-	Write-ColorOutput ''
+	Out-Msg 'ffmpegは最新です。'
+	Out-Msg "　ffmpeg current: $local:ffmpegCurrentVersion"
+	Out-Msg "　ffmpeg latest: $local:latestVersion"
+	Out-Msg ''
 } else {
-	if ($IsWindows -eq $false) {
-		Write-ColorOutput 'ffmpegの自動アップデートはWindowsでのみ動作します。' -FgColor 'Green'
-	} else {
-		#ダウンロード
-		try {
-			$local:ffmpegZipLink = 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip'
-			Write-ColorOutput "ffmpegをダウンロードします。 $local:ffmpegZipLink"
-			$local:ffmpegZipFileLocation = $(Join-Path $local:ffmpegDir 'ffmpeg-release-essentials.zip')
-			Invoke-WebRequest -Uri $local:ffmpegZipLink -OutFile $local:ffmpegZipFileLocation -TimeoutSec $script:timeoutSec
-		} catch { Write-ColorOutput 'ffmpegのダウンロードに失敗しました' -FgColor 'Green' }
+	Out-Msg 'ffmpegが古いため更新します。'
+	Out-Msg "　ffmpeg current: $local:ffmpegCurrentVersion"
+	Out-Msg "　ffmpeg latest: $local:latestVersion"
+	Out-Msg ''
 
-		#展開
-		try {
-			$local:extractedDir = $(Join-Path $script:scriptRoot $local:ffmpegRelativeDir)
-			Expand-Archive $local:ffmpegZipFileLocation -DestinationPath $local:extractedDir
-		} catch { Write-ColorOutput 'ffmpegの展開に失敗しました' -FgColor 'Green' }
+	switch ($true) {
+		$IsWindows {
+			#ダウンロード
+			try {
+				$local:donwloadURL = `
+					'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip'
+				Invoke-WebRequest `
+					-Uri $local:donwloadURL `
+					-OutFile "$($local:ffmpegDir)/ffmpeg.zip" `
+					-TimeoutSec $script:timeoutSec
+			} catch { Out-Msg 'ffmpegのダウンロードに失敗しました' -Fg 'Green' }
 
-		#配置
-		try {
-			$local:extractedDir = $local:extractedDir + '\ffmpeg-*-essentials_build'
-			$local:extractedFiles = $local:extractedDir + '\bin\*.exe'
-			Move-Item $local:extractedFiles $(Join-Path $script:scriptRoot $local:ffmpegRelativeDir) -Force
-		} catch { Write-ColorOutput 'ffmpegの配置に失敗しました' -FgColor 'Green' }
+			#展開
+			try {
+				unZip `
+					-File "$($local:ffmpegDir)/ffmpeg.zip" `
+					-OutPath "$($local:ffmpegDir)"
+			} catch { Out-Msg 'ffmpegの展開に失敗しました' -Fg 'Green' }
 
-		#ゴミ掃除
-		try { Remove-Item -Path $local:extractedDir -Force -Recurse -ErrorAction SilentlyContinue }
-		catch { Write-ColorOutput '中間フォルダの削除に失敗しました' -FgColor 'Green' }
-		try { Remove-Item -LiteralPath $local:ffmpegZipFileLocation -Force -ErrorAction SilentlyContinue }
-		catch { Write-ColorOutput '中間ファイルの削除に失敗しました' -FgColor 'Green' }
+			#配置
+			try {
+				Move-Item `
+					-Path "$($local:ffmpegDir)/ffmpeg-*-essentials_build/bin/ff*.exe" `
+					-Destination "$local:ffmpegDir" -Force
+			} catch { Out-Msg 'ffmpegの配置に失敗しました' -Fg 'Green' }
 
-		#バージョンチェック
-		try {
-			$local:ffmpegFileVersion = (& $local:ffmpegPath -version)
-			if ($? -eq $false) { throw '更新後のバージョン取得に失敗しました' }
-			$null = $local:ffmpegFileVersion[0] -match 'ffmpeg version (\d+\.\d+(\.\d+)?)-.*'
-			$local:ffmpegCurrentVersion = $local:matches[1]
-			Write-ColorOutput "ffmpegをversion $local:ffmpegCurrentVersion に更新しました。 "
-		} catch { exit 1 }
+			#ゴミ掃除
+			try {
+				Remove-Item `
+					-Path "$($local:ffmpegDir)/ffmpeg-*-essentials_build" `
+					-Force `
+					-Recurse `
+					-ErrorAction SilentlyContinue
+			} catch { Out-Msg '中間フォルダの削除に失敗しました' -Fg 'Green' }
+			try { Remove-Item `
+					-Path "$($local:ffmpegDir)/ffmpeg.zip" `
+					-Force `
+					-ErrorAction SilentlyContinue
+			} catch { Out-Msg '中間ファイルの削除に失敗しました' -Fg 'Green' }
+
+			break
+		}
+		$IsLinux {
+			if (($script:arch -eq 'aarch64') -Or ($script:arch -Contains 'armv8')) {
+				$local:cpu = 'arm64'
+				$donwloadURL = `
+					'https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-arm64-static.tar.xz'
+			} elseif (($script:arch -eq 'armhf') -Or ($script:arch -Contains 'armv7')) {
+				$local:cpu = 'armhf'
+				$donwloadURL = `
+					'https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-armhf-static.tar.xz'
+			} elseif (($script:arch -eq 'armel') -Or ($script:arch -Contains 'armv6')) {
+				$local:cpu = 'armel'
+				$donwloadURL = `
+					'https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-armel-static.tar.xz'
+			} elseif (($script:arch -eq 'x86_64') -Or ($script:arch -eq 'ia64')) {
+				$local:cpu = 'amd64'
+				$donwloadURL = `
+					'https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz'
+			} elseif (($script:arch -eq 'i686') -Or ($script:arch -eq 'i386')) {
+				$local:cpu = 'i686'
+				$donwloadURL = `
+					'https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-i686-static.tar.xz'
+			} else {
+				Out-Msg 'お使いのCPUに適合するffmpegを特定できませんでした。' -Fg 'Green'
+				Out-Msg "お使いのCPUは$($script:arch)に適合するffmpegをご自身で配置してください。" -Fg 'Green'
+				exit 1
+			}
+			Out-Msg "$($local:cpu)用のffmpegをダウンロードします。"
+
+			#ダウンロード
+			try {
+				Invoke-WebRequest `
+					-Uri $donwloadURL `
+					-OutFile "$($local:ffmpegDir)/ffmpeg.xz" `
+					-TimeoutSec $script:timeoutSec
+			} catch { Out-Msg 'ffmpegのダウンロードに失敗しました' -Fg 'Green' }
+
+			#展開
+			try {
+				(& tar xf "$($local:ffmpegDir)/ffmpeg.xz" -C "$local:ffmpegDir")
+			} catch { Out-Msg 'ffmpegの展開に失敗しました' -Fg 'Green' }
+
+			#配置
+			try {
+				Move-Item `
+					-Path "$($local:ffmpegDir)/ffmpeg-*-static/ff*" `
+					-Destination "$local:ffmpegDir" `
+					-Force
+			} catch { Out-Msg 'ffmpegの配置に失敗しました' -Fg 'Green' }
+
+			#ゴミ掃除
+			try {
+				Remove-Item `
+					-Path "$($local:ffmpegDir)/ffmpeg-*-static" `
+					-Force `
+					-Recurse `
+					-ErrorAction SilentlyContinue
+			} catch { Out-Msg '中間フォルダの削除に失敗しました' -Fg 'Green' }
+			try {
+				Remove-Item `
+					-Path "$($local:ffmpegDir)/ffmpeg.xz" `
+					-Force `
+					-ErrorAction SilentlyContinue
+			} catch { Out-Msg '中間ファイルの削除に失敗しました' -Fg 'Green' }
+
+			break
+		}
+		$IsMacOS {
+			#ダウンロード
+			try {
+				Invoke-WebRequest `
+					-Uri https://evermeet.cx/ffmpeg/getrelease/zip `
+					-OutFile "$($local:ffmpegDir)/ffmpeg.zip" `
+					-TimeoutSec $script:timeoutSec
+				Invoke-WebRequest `
+					-Uri https://evermeet.cx/ffmpeg/getrelease/ffprobe/zip `
+					-OutFile "$($local:ffmpegDir)/ffprobe.zip" `
+					-TimeoutSec $script:timeoutSec
+			} catch { Out-Msg 'ffmpegのダウンロードに失敗しました' -Fg 'Green' }
+
+			#展開
+			try {
+				unZip `
+					-File "$($local:ffmpegDir)/ffmpeg.zip" `
+					-OutPath "$($local:ffmpegDir)/ffmpeg"
+				unZip `
+					-File "$($local:ffmpegDir)/ffprobe.zip" `
+					-OutPath "$($local:ffmpegDir)/ffprobe"
+			} catch { Out-Msg 'ffmpegの展開に失敗しました' -Fg 'Green' }
+
+			#ゴミ掃除
+			try {
+				Remove-Item `
+					-Path "$($local:ffmpegDir)/ffmpeg.zip" `
+					-Force `
+					-ErrorAction SilentlyContinue
+				Remove-Item `
+					-Path "$($local:ffmpegDir)/ffprobe.zip" `
+					-Force `
+					-ErrorAction SilentlyContinue
+			} catch { Out-Msg '中間ファイルの削除に失敗しました' -Fg 'Green' }
+
+			break
+		}
+		default {
+			Out-Msg 'お使いのOSに適合するffmpegを特定できませんでした。' -Fg 'Green'
+			Out-Msg "お使いのOSは$($script:os)に適合するffmpegをご自身で配置してください。" -Fg 'Green'
+			exit 1
+			break
+		}
+
 	}
+
+	#バージョンチェック
+	try {
+		$local:ffmpegFileVersion = (& $local:ffmpegPath -version)
+		if ($? -eq $false) { throw '更新後のバージョン取得に失敗しました' }
+		$null = $local:ffmpegFileVersion[0] -match 'ffmpeg version (\d+\.\d+(\.\d+)?)-.*'
+		$local:ffmpegCurrentVersion = $local:matches[1]
+		Out-Msg "ffmpegをversion $local:ffmpegCurrentVersion に更新しました。"
+		Out-Msg ''
+	} catch { exit 1 }
+
 }
+
 

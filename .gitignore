@@ -48,6 +48,7 @@ win-*
 *.xlsx
 thunderActivity.json
 thunderEnvironment.json
+.thunderCollection.json.tmp
 
 #その他雑多な不要ファイル
 * - コピー.*

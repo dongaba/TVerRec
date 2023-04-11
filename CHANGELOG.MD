@@ -1,13 +1,17 @@
 ﻿# Change Log
 
-## [2.7.0]()
+## [2.7.0](https://github.com/dongaba/TVerRec/releases/tag/v2.7.0)
 
 ### 2.7.0 Added
 
 - Docker コンテナの作成に対応
 - TVerRec の自動アップデート機能を追加
+- Mac/Linux 環境向けの ffmpeg 自動更新機能を追加
 
 ### 2.7.0 Changed
+
+- ソースコード内の Path 表記を Unix 形式に統一
+- ソースコードの折り返しを極力短く
 
 ### 2.7.0 Fixed
 

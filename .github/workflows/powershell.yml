@@ -26,8 +26,8 @@ jobs:
       - name: Run PSScriptAnalyzer
         uses: microsoft/psscriptanalyzer-action@v1.1
         with:
-          path: .\src
-          #customRulePath: '".\customRule.ps1", "customRule2.ps1"'
+          path: ./src
+          #customRulePath: '"./customRule.ps1", "customRule2.ps1"'
           #recurseCustomRulePath: false
           #excludeRule: '"PSUseBOMForUnicodeEncodedFile"'
           includeDefaultRules: true

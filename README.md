@@ -16,7 +16,7 @@
 TVerRec は、テレビ番組配信サイト TVer(ティーバー<https://tver.jp>)の番組をダウンロード保存するためのダウンローダー、ダウンロード支援ツールです。
 
 - TVerRec は PowerShell Core をインストールした Windows/MacOS/Linux で動作します。
-- TVerRec Dockerイメージも[配布中](https://hub.docker.com/r/dongaba/tverrec)です。
+- TVerRec Docker イメージも[配布中](https://hub.docker.com/r/dongaba/tverrec)です。
 - **TVerRec は Windows PowerShell をサポートません。PowerShell Core でご利用ください。**
 - Windows 環境で PowerShell Core がインストールされていない場合は、TVerRec が自動的に PowerShell Core をインストールします。
 - Windows 環境に手動で PowerShell Core をインストールする方法や MacOS、Linux 環境への PowerShell のインストールについては[Wiki のこちらのページ](https://github.com/dongaba/TVerRec/wiki/PowerShell%E3%81%AE%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB)を参照してください。
@@ -30,7 +30,7 @@ TVerRec は、テレビ番組配信サイト TVer(ティーバー<https://tver.j
 - 必要なソフトウェア
   - PowerShell Core(Windows 環境では自動インストール)
   - youtube-dl(自動ダウンロード)
-  - ffmpeg(Windows 環境では自動ダウンロード)
+  - ffmpeg(自動ダウンロード)
 
 ## 主な機能
 
@@ -44,10 +44,9 @@ TVerRec は、テレビ番組配信サイト TVer(ティーバー<https://tver.j
 6. もちろん**番組を 1 本ずつ指定したダウンロード**も可能です。
 7. また、ダウンロードした**番組が破損していないかの検証**も行います。
 8. ダウンロードされたファイルは、最終保存先に**自動的に整理**可能です。
-9. 動作に必要な youtube-dl や ffmpeg などの必要コンポーネントは**自動的に最新版がダウンロード**されます。(ffmpeg の自動ダウンロードは Windows のみ)
+9. 動作に必要な youtube-dl や ffmpeg などの必要コンポーネントは**自動的に最新版がダウンロード**されます。
 10. Windows 環境ではトースト通知によりダウンロードの進捗状況などを通知します。
-11. 動作に必要なツールは自動インストール・ダウンロード
-12. **日本国外からも VPN 不要**で利用することができます。
+11. **日本国外からも VPN 不要**で利用することができます。
 
 ## 基本的な使い方
 

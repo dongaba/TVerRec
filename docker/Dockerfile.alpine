@@ -12,7 +12,6 @@ RUN apk --update --no-cache add \
 	curl \
 	git \
 	python3 \
-	ffmpeg \
 	&& rm -rf /var/cache/apk/*
 
 #User追加
@@ -22,7 +21,7 @@ RUN addgroup -g "$GID" tverrec \
 	&& adduser -D -u "$UID" tverrec -G tverrec
 
 #ディレクトリ準備
-RUN mkdir -p -m 777 \ 
+RUN mkdir -p -m 777 \
 	/app \
 	/mnt/Temp \
 	/mnt/Work \

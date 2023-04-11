@@ -36,28 +36,50 @@ if ($IsWindows) { Import-Module StartLayout -SkipEditionCheck }
 #----------------------------------------------------------------------
 $progressPreference = 'silentlyContinue'
 switch ($true) {
-	$IsWindows { $script:os = [String][System.Environment]::OSVersion ; break }
-	$IsLinux { $script:os = "Linux $([String][System.Environment]::OSVersion.Version)" ; break }
-	$IsMacOS { $script:os = "macOS $([String][System.Environment]::OSVersion.Version)" ; break }
-	default { $script:os = [String][System.Environment]::OSVersion ; break }
+	$IsWindows {
+		$script:os = [String][System.Environment]::OSVersion
+		$script:arch = $Env:PROCESSOR_ARCHITECTURE.ToLower()
+		break
+	}
+	$IsLinux {
+		$script:os = "Linux $([String][System.Environment]::OSVersion.Version)"
+		$script:arch = (& uname -m | tr '[:upper:]' '[:lower:]')
+		break
+	}
+	$IsMacOS {
+		$script:os = "macOS $([String][System.Environment]::OSVersion.Version)"
+		$script:arch = (& uname -m | tr '[:upper:]' '[:lower:]')
+		break
+	}
+	default {
+		$script:os = [String][System.Environment]::OSVersion
+		break
+	}
 }
 $script:tz = [String][TimeZoneInfo]::Local.BaseUtcOffset
 $script:guid = [guid]::NewGuid()
 $script:ipapi = ''
 $script:clientEnv = @{}
 try {
-	$script:ipapi = (Invoke-RestMethod -Uri 'https://ipapi.co/jsonp/ ' -TimeoutSec $script:timeoutSec)
+	$script:ipapi = `
+		Invoke-RestMethod `
+		-Uri 'https://ipapi.co/jsonp/' `
+		-TimeoutSec $script:timeoutSec
 	$script:ipapi = $script:ipapi.replace('callback(', '').replace(');', '')
-	$script:ipapi = $script:ipapi.replace('{', "{`n").replace('}', "`n}").replace(', ', ",`n")
-	$(ConvertFrom-Json $script:ipapi).psobject.properties | ForEach-Object { $script:clientEnv[$_.Name] = $_.Value }
+	$script:ipapi = $script:ipapi.replace('{', "{`n").replace('}', "`n}")
+	$script:ipapi = $script:ipapi.replace(', ', ",`n")
+	$(ConvertFrom-Json $script:ipapi).psobject.properties `
+	| ForEach-Object { $script:clientEnv[$_.Name] = $_.Value }
 } catch { Write-Debug 'Geo IPのチェックに失敗しました' }
 $script:clientEnv.Add('AppName', $script:appName)
 $script:clientEnv.Add('AppVersion', $script:appVersion)
 $script:clientEnv.Add('PSEdition', $PSVersionTable.PSEdition)
 $script:clientEnv.Add('PSVersion', $PSVersionTable.PSVersion)
 $script:clientEnv.Add('OS', $script:os)
+$script:clientEnv.Add('Arch', $script:arch)
 $script:clientEnv.Add('TZ', $script:tz)
-$script:clientEnv = $script:clientEnv.GetEnumerator() | Sort-Object -Property key
+$script:clientEnv = $script:clientEnv.GetEnumerator() `
+| Sort-Object -Property key
 $progressPreference = 'Continue'
 
 #----------------------------------------------------------------------
@@ -74,7 +96,7 @@ function getTimeStamp {
 #----------------------------------------------------------------------
 #ファイル名・フォルダ名に禁止文字の削除
 #----------------------------------------------------------------------
-function getFileNameWithoutInvalidChars {
+function getFileNameWoInvChars {
 	[CmdletBinding()]
 	[OutputType([String])]
 	Param (
@@ -130,7 +152,7 @@ function getFileNameWithoutInvalidChars {
 }
 
 #----------------------------------------------------------------------
-#全角→半角
+#英数のみ全角→半角(カタカナは全角)
 #----------------------------------------------------------------------
 function getNarrowChars {
 	[CmdletBinding()]
@@ -139,33 +161,47 @@ function getNarrowChars {
 
 	$local:wideKanaDaku = 'ガギグゲゴザジズゼゾダヂヅデドバビブベボ'
 	$local:narrowKanaDaku = 'ｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾊﾋﾌﾍﾎ'
-	$local:narrowWideKanaHanDaku = 'パピプペポ'
-	$local:narrowWideKanaHanDaku = 'ﾊﾋﾌﾍﾎ'
-	$local:wideKana = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン゛゜ァィゥェォャュョッ'
+	$local:wideKanaHanDaku = 'パピプペポ'
+	$local:narrowKanaHanDaku = 'ﾊﾋﾌﾍﾎ'
+	$local:wideKana = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホ'
+	$local:wideKana += 'マミムメモヤユヨラリルレロワヲン゛゜ァィゥェォャュョッ'
 	$local:narrowKana = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜｦﾝﾞﾟｧｨｩｪｫｬｭｮｯ'
 	$local:wideNum = '０１２３４５６７８９'
 	$local:narrowNum = '0123456789'
-	$local:wideAlpha = 'ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ'
+	$local:wideAlpha = 'ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ'
+	$local:wideAlpha += 'ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ'
 	$local:narrowAlpha = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 	$local:wideSimbol = '＠＃＄％＾＆＊－＋＿／［］｛｝（）＜＞　￥＼”；：．，'
 	$local:narrowSimbol = '@#$%^&*-+_/[]{}()<> \\";:.,'
 	for ($i = 0; $i -lt $local:wideKanaDaku.Length; $i++) {
-		$local:text = $local:text.Replace($local:narrowKanaDaku[$i] + 'ﾞ', $local:wideKanaDaku[$i])
+		$local:text = $local:text.Replace(
+			$local:narrowKanaDaku[$i] + 'ﾞ', $local:wideKanaDaku[$i]
+		)
 	}
-	for ($i = 0; $i -lt $local:narrowWideKanaHanDaku.Length; $i++) {
-		$local:text = $local:text.Replace($local:narrowWideKanaHanDaku[$i] + 'ﾟ', $local:narrowWideKanaHanDaku[$i])
+	for ($i = 0; $i -lt $local:wideKanaHanDaku.Length; $i++) {
+		$local:text = $local:text.Replace(
+			$local:narrowKanaHanDaku[$i] + 'ﾟ', $local:narrowKanaHanDaku[$i]
+		)
 	}
 	for ($i = 0; $i -lt $local:wideKana.Length; $i++) {
-		$local:text = $local:text.Replace($local:narrowKana[$i], $local:wideKana[$i])
+		$local:text = $local:text.Replace(
+			$local:narrowKana[$i], $local:wideKana[$i]
+		)
 	}
 	for ($i = 0; $i -lt $local:narrowNum.Length; $i++) {
-		$local:text = $local:text.Replace($local:wideNum[$i], $local:narrowNum[$i])
+		$local:text = $local:text.Replace(
+			$local:wideNum[$i], $local:narrowNum[$i]
+		)
 	}
 	for ($i = 0; $i -lt $local:narrowAlpha.Length; $i++) {
-		$local:text = $local:text.Replace($local:wideAlpha[$i], $local:narrowAlpha[$i])
+		$local:text = $local:text.Replace(
+			$local:wideAlpha[$i], $local:narrowAlpha[$i]
+		)
 	}
 	for ($i = 0; $i -lt $local:narrowSimbol.Length; $i++) {
-		$local:text = $local:text.Replace($local:wideSimbol[$i], $local:narrowSimbol[$i])
+		$local:text = $local:text.Replace(
+			$local:wideSimbol[$i], $local:narrowSimbol[$i]
+		)
 	}
 	return $local:text
 }
@@ -183,14 +219,14 @@ function getSpecialCharacterReplaced {
 	$local:text = $local:text.Replace('|', '｜')
 	$local:text = $local:text.Replace(':', '：')
 	$local:text = $local:text.Replace(';', '；')
-	$local:text = $local:text.Replace('"', '')
-	$local:text = $local:text.Replace('“', '')
-	$local:text = $local:text.Replace('”', '')
-	$local:text = $local:text.Replace(',', '')
+	$local:text = $local:text.Replace('"', '')	#削除
+	$local:text = $local:text.Replace('“', '')	#削除
+	$local:text = $local:text.Replace('”', '')	#削除
+	$local:text = $local:text.Replace(',', '')	#削除
 	$local:text = $local:text.Replace('?', '？')
 	$local:text = $local:text.Replace('!', '！')
-	$local:text = $local:text.Replace('/', '-')
-	$local:text = $local:text.Replace('\', '-')
+	$local:text = $local:text.Replace('/', '-')	#代替文字
+	$local:text = $local:text.Replace('\', '-')	#代替文字
 	$local:text = $local:text.Replace('<', '＜')
 	$local:text = $local:text.Replace('>', '＞')
 	return $local:text
@@ -210,7 +246,7 @@ function trimTabSpace {
 #----------------------------------------------------------------------
 #設定ファイルの行末コメントを削除
 #----------------------------------------------------------------------
-function removeTrailingCommentsFromConfigFile {
+function trimComment {
 	[OutputType([String])]
 	Param ([String]$local:text)		#変換元テキストを引数に指定
 
@@ -252,15 +288,19 @@ function deleteFiles {
 		[int32]$local:datePast
 	)
 
-	#	try {
 	foreach ($local:condition in $local:conditions.Split(',').Trim()) {
-		Write-ColorOutput "$($local:path) - $($local:condition)"
-		Get-ChildItem -LiteralPath $local:path -Recurse -File -Filter $local:condition `
+		Out-Msg "$($local:path) - $($local:condition)"
+		Get-ChildItem `
+			-LiteralPath $local:path `
+			-Recurse `
+			-File `
+			-Filter $local:condition `
 		| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays($local:datePast) } `
-		| Remove-Item -Force -ErrorAction SilentlyContinue `
+		| Remove-Item `
+			-Force `
+			-ErrorAction SilentlyContinue `
 		| Out-Null
 	}
-	#	} catch { Write-ColorOutput '　削除できないファイルがありました' -FgColor 'Green' }
 }
 
 #----------------------------------------------------------------------
@@ -281,12 +321,20 @@ function fileLock {
 	)
 
 	try {
-		$local:fileLocked = $false		# initialise variables
-		$script:fileInfo = New-Object System.IO.FileInfo $local:Path		# attempt to open file and detect file lock
-		$script:fileStream = $script:fileInfo.Open([System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
-		$local:fileLocked = $true		# initialise variables
+		# initialise variables
+		$local:fileLocked = $false
+		# attempt to open file and detect file lock
+		$script:fileInfo = New-Object System.IO.FileInfo $local:Path
+		$script:fileStream = $script:fileInfo.Open(
+			[System.IO.FileMode]::OpenOrCreate, `
+				[System.IO.FileAccess]::ReadWrite, `
+				[System.IO.FileShare]::None
+		)
+		# set status
+		$local:fileLocked = $true
 	} catch {
-		$fileLocked = $false			# catch fileStream had falied
+		# catch fileStream had falied
+		$fileLocked = $false
 	} finally {
 		# return result
 		[PSCustomObject]@{
@@ -314,10 +362,13 @@ function fileUnlock {
 	)
 
 	try {
-		if ($script:fileStream) { $script:fileStream.Close() }		# close stream if not lock
-		$local:fileLocked = $false		# initialise variables
+		# close stream if not lock
+		if ($script:fileStream) { $script:fileStream.Close() }
+		# set status
+		$local:fileLocked = $false
 	} catch {
-		$local:fileLocked = $true		# catch fileStream had falied
+		# catch fileStream had falied
+		$local:fileLocked = $true
 	} finally {
 		# return result
 		[PSCustomObject]@{
@@ -345,13 +396,22 @@ function isLocked {
 	)
 
 	try {
-		$local:isFileLocked = $false		# initialise variables
-		$local:isLockedFileInfo = New-Object System.IO.FileInfo $local:isLockedPath		# attempt to open file and detect file lock
-		$local:isLockedfileStream = $local:isLockedFileInfo.Open([System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
-		if ($local:isLockedfileStream) { $local:isLockedfileStream.Close() }		# close stream if not lock
-		$local:isFileLocked = $false		# initialise variables
+		# initialise variables
+		$local:isFileLocked = $false
+		# attempt to open file and detect file lock
+		$local:isLockedFileInfo = New-Object System.IO.FileInfo $local:isLockedPath
+		$local:isLockedfileStream = $local:isLockedFileInfo.Open(
+			[System.IO.FileMode]::OpenOrCreate, `
+				[System.IO.FileAccess]::ReadWrite, `
+				[System.IO.FileShare]::None
+		)
+		# close stream if not lock
+		if ($local:isLockedfileStream) { $local:isLockedfileStream.Close() }
+		# set status
+		$local:isFileLocked = $false
 	} catch {
-		$local:isFileLocked = $true			# catch fileStream had falied
+		# catch fileStream had falied
+		$local:isFileLocked = $true
 	} finally {
 		# return result
 		[PSCustomObject]@{
@@ -364,7 +424,7 @@ function isLocked {
 #----------------------------------------------------------------------
 #色付きWrite-Output
 #----------------------------------------------------------------------
-function Write-ColorOutput {
+function Out-Msg {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
@@ -383,7 +443,7 @@ function Write-ColorOutput {
 			ValueFromPipelineByPropertyName = $false,
 			Position = 1
 		)]
-		[Alias('FgColor')]
+		[Alias('Fg')]
 		[ConsoleColor]$local:foregroundColor,
 
 		[Parameter(
@@ -392,7 +452,7 @@ function Write-ColorOutput {
 			ValueFromPipelineByPropertyName = $false,
 			Position = 2
 		)]
-		[Alias('BgColor')]
+		[Alias('Bg')]
 		[ConsoleColor]$local:backgroundColor,
 
 		[Parameter(
@@ -401,7 +461,7 @@ function Write-ColorOutput {
 			ValueFromPipelineByPropertyName = $false,
 			Position = 4
 		)]
-		[Alias('NoNewLine')]
+		[Alias('NoNL')]
 		[Boolean]$local:noLF
 	)
 
@@ -410,8 +470,12 @@ function Write-ColorOutput {
 	$local:prevBackgroundColor = $host.UI.RawUI.BackgroundColor
 
 	# Set colors if available
-	if ($local:backgroundColor -ne $null) { $host.UI.RawUI.BackgroundColor = $local:backgroundColor }
-	if ($local:foregroundColor -ne $null) { $host.UI.RawUI.ForegroundColor = $local:foregroundColor }
+	if ($local:backgroundColor -ne $null) {
+		$host.UI.RawUI.BackgroundColor = $local:backgroundColor
+	}
+	if ($local:foregroundColor -ne $null) {
+		$host.UI.RawUI.ForegroundColor = $local:foregroundColor
+	}
 
 	# Always write (if we want just a NewLine)
 	if ($null -eq $local:text) { $local:text = '' }
@@ -431,7 +495,8 @@ function Get-WindowsAppId {
 	[OutputType([String])]
 	Param ()
 
-	$local:appID = (Get-StartApps -Name 'PowerShell').where({ $_.Name -like 'PowerShell*' })[0].AppId
+	$local:appID = (Get-StartApps -Name 'PowerShell').`
+		where({ $_.Name -like 'PowerShell*' })[0].AppId
 
 	return $local:appID
 }
@@ -439,7 +504,7 @@ function Get-WindowsAppId {
 #----------------------------------------------------------------------
 #トースト表示
 #----------------------------------------------------------------------
-function ShowToast {
+function showToast {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
@@ -478,8 +543,13 @@ function ShowToast {
 	)
 
 	if ($IsWindows) {
-		if ($local:toastSilent) { $local:toastSoundElement = '<audio silent="true" />' }
-		else { $local:toastSoundElement = '<audio src="ms-winsoundevent:Notification.Default" loop="false"/>' }
+		if ($local:toastSilent) {
+			$local:toastSoundElement = `
+				'<audio silent="true" />'
+		} else {
+			$local:toastSoundElement = `
+				'<audio src="ms-winsoundevent:Notification.Default" loop="false"/>'
+		}
 
 		if (!($local:toastDuration)) { $local:toastDuration = 'short' }
 		$local:toastTitle = $script:appName
@@ -488,9 +558,9 @@ function ShowToast {
 
 		if (-not ('Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder' -as [Type])) {
 			#For PowerShell Core v6.x & PowerShell v7+
-			Add-Type -Path (Join-Path $script:libDir 'win\core\Microsoft.Windows.SDK.NET.dll')
-			Add-Type -Path (Join-Path $script:libDir 'win\core\WinRT.Runtime.dll')
-			Add-Type -Path (Join-Path $script:libDir 'win\core\Microsoft.Toolkit.Uwp.Notifications.dll')
+			Add-Type -Path (Join-Path $script:libDir 'win/core/Microsoft.Windows.SDK.NET.dll')
+			Add-Type -Path (Join-Path $script:libDir 'win/core/WinRT.Runtime.dll')
+			Add-Type -Path (Join-Path $script:libDir 'win/core/Microsoft.Toolkit.Uwp.Notifications.dll')
 		}
 
 		$local:toastProgressContent = @"
@@ -513,7 +583,9 @@ function ShowToast {
 		$local:toastXML = New-Object Windows.Data.Xml.Dom.XmlDocument
 		$local:toastXML.LoadXml($local:toastProgressContent)
 		$local:toastBody = New-Object Windows.UI.Notifications.ToastNotification $local:toastXML
-		[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Show($local:toastBody) | Out-Null
+		[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).`
+			Show($local:toastBody) `
+		| Out-Null
 	}
 }
 
@@ -521,7 +593,7 @@ function ShowToast {
 #----------------------------------------------------------------------
 #進捗バー付きトースト表示
 #----------------------------------------------------------------------
-function ShowProgressToast {
+function showProgressToast {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
@@ -584,8 +656,13 @@ function ShowProgressToast {
 	)
 
 	if ($IsWindows) {
-		if ($local:toastSilent) { $local:toastSoundElement = '<audio silent="true" />' }
-		else { $local:toastSoundElement = '<audio src="ms-winsoundevent:Notification.Default" loop="false"/>' }
+		if ($local:toastSilent) {
+			$local:toastSoundElement = `
+				'<audio silent="true" />'
+		} else {
+			$local:toastSoundElement = `
+				'<audio src="ms-winsoundevent:Notification.Default" loop="false"/>'
+		}
 
 		if (!($local:toastDuration)) { $local:toastDuration = 'short' }
 		$local:toastTitle = $script:appName
@@ -594,9 +671,9 @@ function ShowProgressToast {
 
 		if (-not ('Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder' -as [Type])) {
 			#For PowerShell Core v6.x & PowerShell v7+
-			Add-Type -Path (Join-Path $script:libDir 'win\core\Microsoft.Windows.SDK.NET.dll')
-			Add-Type -Path (Join-Path $script:libDir 'win\core\WinRT.Runtime.dll')
-			Add-Type -Path (Join-Path $script:libDir 'win\core\Microsoft.Toolkit.Uwp.Notifications.dll')
+			Add-Type -Path (Join-Path $script:libDir 'win/core/Microsoft.Windows.SDK.NET.dll')
+			Add-Type -Path (Join-Path $script:libDir 'win/core/WinRT.Runtime.dll')
+			Add-Type -Path (Join-Path $script:libDir 'win/core/Microsoft.Toolkit.Uwp.Notifications.dll')
 		}
 
 		$local:toastContent = @"
@@ -622,21 +699,23 @@ function ShowProgressToast {
 		$local:toast = New-Object Windows.UI.Notifications.ToastNotification $local:toastXML
 		$local:toast.Tag = $local:toastTag
 		$local:toast.Group = $local:toastGroup
-		$local:toastData = New-Object 'system.collections.generic.dictionary[string,string]'
+		$local:toastData = New-Object 'system.collections.generic.dictionary[String,string]'
 		$local:toastData.add('progressTitle', $local:toastWorkDetail)
 		$local:toastData.add('progressValue', '')
 		$local:toastData.add('progressValueString', '')
 		$local:toastData.add('progressStatus', '')
 		$local:toast.Data = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
 		$local:toast.Data.SequenceNumber = 1
-		[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Show($local:toast) | Out-Null
+		[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).`
+			Show($local:toast) `
+		| Out-Null
 	}
 }
 
 #----------------------------------------------------------------------
 #進捗バー付きトースト更新
 #----------------------------------------------------------------------
-function UpdateProgressToast {
+function updateProgressToast {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
@@ -691,21 +770,23 @@ function UpdateProgressToast {
 
 	if ($IsWindows) {
 		$local:appID = Get-WindowsAppId
-		$local:toastData = New-Object 'system.collections.generic.dictionary[string,string]'
+		$local:toastData = New-Object 'system.collections.generic.dictionary[String,string]'
 		$local:toastData.add('progressTitle', $local:toastTitle)
 		$local:toastData.add('progressValue', $local:toastRate)
 		$local:toastData.add('progressValueString', $local:toastRightText)
 		$local:toastData.add('progressStatus', $local:toastLeftText)
 		$local:toastProgressData = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
 		$local:toastProgressData.SequenceNumber = 2
-		[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Update($local:toastProgressData, $local:toastTag , $local:toastGroup) | Out-Null
+		[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).`
+			Update($local:toastProgressData, $local:toastTag , $local:toastGroup) `
+		| Out-Null
 	}
 }
 
 #----------------------------------------------------------------------
 #進捗バー付きトースト表示
 #----------------------------------------------------------------------
-function ShowProgressToast2 {
+function showProgressToast2 {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
@@ -776,8 +857,13 @@ function ShowProgressToast2 {
 	)
 
 	if ($IsWindows) {
-		if ($local:toastSilent) { $local:toastSoundElement = '<audio silent="true" />' }
-		else { $local:toastSoundElement = '<audio src="ms-winsoundevent:Notification.Default" loop="false"/>' }
+		if ($local:toastSilent) {
+			$local:toastSoundElement = `
+				'<audio silent="true" />'
+		} else {
+			$local:toastSoundElement = `
+				'<audio src="ms-winsoundevent:Notification.Default" loop="false"/>'
+		}
 
 		if (!($local:toastDuration)) { $local:toastDuration = 'short' }
 		$local:toastTitle = $script:appName
@@ -786,9 +872,9 @@ function ShowProgressToast2 {
 
 		if (-not ('Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder' -as [Type])) {
 			#For PowerShell Core v6.x & PowerShell v7+
-			Add-Type -Path (Join-Path $script:libDir 'win\core\Microsoft.Windows.SDK.NET.dll')
-			Add-Type -Path (Join-Path $script:libDir 'win\core\WinRT.Runtime.dll')
-			Add-Type -Path (Join-Path $script:libDir 'win\core\Microsoft.Toolkit.Uwp.Notifications.dll')
+			Add-Type -Path (Join-Path $script:libDir 'win/core/Microsoft.Windows.SDK.NET.dll')
+			Add-Type -Path (Join-Path $script:libDir 'win/core/WinRT.Runtime.dll')
+			Add-Type -Path (Join-Path $script:libDir 'win/core/Microsoft.Toolkit.Uwp.Notifications.dll')
 		}
 
 		$local:toastContent = @"
@@ -815,7 +901,7 @@ function ShowProgressToast2 {
 		$local:toast = New-Object Windows.UI.Notifications.ToastNotification $local:toastXML
 		$local:toast.Tag = $local:toastTag
 		$local:toast.Group = $local:toastGroup
-		$local:toastData = New-Object 'system.collections.generic.dictionary[string,string]'
+		$local:toastData = New-Object 'system.collections.generic.dictionary[String,string]'
 		$local:toastData.add('progressTitle1', $local:toastWorkDetail1)
 		$local:toastData.add('progressValue1', '')
 		$local:toastData.add('progressValueString1', '')
@@ -826,14 +912,16 @@ function ShowProgressToast2 {
 		$local:toastData.add('progressStatus2', '')
 		$local:toast.Data = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
 		$local:toast.Data.SequenceNumber = 1
-		[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Show($local:toast) | Out-Null
+		[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).`
+			Show($local:toast) `
+		| Out-Null
 	}
 }
 
 #----------------------------------------------------------------------
 #進捗バー付きトースト更新
 #----------------------------------------------------------------------
-function UpdateProgressToast2 {
+function updateProgressToast2 {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
@@ -920,7 +1008,7 @@ function UpdateProgressToast2 {
 
 	if ($IsWindows) {
 		$local:appID = Get-WindowsAppId
-		$local:toastData = New-Object 'system.collections.generic.dictionary[string,string]'
+		$local:toastData = New-Object 'system.collections.generic.dictionary[String,string]'
 		$local:toastData.add('progressTitle1', $local:toastTitle1)
 		$local:toastData.add('progressValue1', $local:toastRate1)
 		$local:toastData.add('progressValueString1', $local:toastRightText1)
@@ -931,14 +1019,16 @@ function UpdateProgressToast2 {
 		$local:toastData.add('progressStatus2', $local:toastLeftText2)
 		$local:toastProgressData = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
 		$local:toastProgressData.SequenceNumber = 2
-		[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Update($local:toastProgressData, $local:toastTag , $local:toastGroup) | Out-Null
+		[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).`
+			Update($local:toastProgressData, $local:toastTag , $local:toastGroup) `
+		| Out-Null
 	}
 }
 
 #----------------------------------------------------------------------
 #進捗表示
 #----------------------------------------------------------------------
-function ShowProgress2Row {
+function showProgress2Row {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
@@ -1004,7 +1094,7 @@ function ShowProgress2Row {
 	if (!($local:toastWorkDetail1)) { $local:toastWorkDetail1 = '' }
 	if (!($local:toastWorkDetail2)) { $local:toastWorkDetail2 = '' }
 
-	ShowProgressToast2 `
+	showProgressToast2 `
 		-Text1 $local:progressText1 `
 		-Text2 $local:progressText2 `
 		-WorkDetail1 $local:toastWorkDetail1 `
@@ -1018,7 +1108,7 @@ function ShowProgress2Row {
 #----------------------------------------------------------------------
 #進捗更新
 #----------------------------------------------------------------------
-function UpdateProgress2Row {
+function updateProgress2Row {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
@@ -1095,17 +1185,23 @@ function UpdateProgress2Row {
 		[String]$local:toastGroup
 	)
 
-	if ($local:secRemaining1 -eq -1 -or $local:secRemaining1 -eq '' ) { $local:minRemaining1 = '計算中...' }
-	else { $local:minRemaining1 = "$([String]([math]::Ceiling($local:secRemaining1 / 60)))分" }
+	if ($local:secRemaining1 -eq -1 -Or $local:secRemaining1 -eq '' ) {
+		$local:minRemaining1 = '計算中...'
+	} else {
+		$local:minRemaining1 = "$([String]([math]::Ceiling($local:secRemaining1 / 60)))分"
+	}
 
-	if ($local:secRemaining2 -eq -1 -or $local:secRemaining2 -eq '' ) { $local:minRemaining2 = '計算中...' }
-	else { $local:minRemaining2 = "$([String]([math]::Ceiling($local:secRemaining2 / 60)))分" }
+	if ($local:secRemaining2 -eq -1 -Or $local:secRemaining2 -eq '' ) {
+		$local:minRemaining2 = '計算中...'
+	} else {
+		$local:minRemaining2 = "$([String]([math]::Ceiling($local:secRemaining2 / 60)))分"
+	}
 
 	if ($local:secRemaining1 -ne '') { $local:secRemaining1 = "残り時間 $local:minRemaining1" }
 	if ($local:secRemaining2 -ne '') { $local:secRemaining2 = "残り時間 $local:minRemaining2" }
 	if ($local:progressActivity2 -eq '') { $local:progressActivity2 = '　' }
 
-	UpdateProgressToast2 `
+	updateProgressToast2 `
 		-Title1 $local:currentProcessing1 `
 		-Rate1 $local:progressRatio1 `
 		-LeftText1 $local:progressActivity1 `
@@ -1143,8 +1239,11 @@ function goAnal {
 
 	$progressPreference = 'silentlyContinue'
 	$local:statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
-	try { Invoke-WebRequest "$($local:statisticsBase)$($local:event).svg" -TimeoutSec $script:timeoutSec | Out-Null }
-	catch { Write-Debug 'Failed to collect statistics' }
+	try { Invoke-WebRequest `
+			-Uri "$($local:statisticsBase)$($local:event).svg" `
+			-TimeoutSec $script:timeoutSec `
+		| Out-Null
+ } catch { Write-Debug 'Failed to collect statistics' }
 	finally { $progressPreference = 'Continue' }
 
 	if ($local:event -eq 'search') { return }
@@ -1158,7 +1257,9 @@ function goAnal {
 	$local:gaBody += "`"timestamp_micros`" : `"$local:epochTime`", "
 	$local:gaBody += "`"non_personalized_ads`" : false, "
 	$local:gaBody += "`"user_properties`":{ "
-	foreach ($item in $script:clientEnv) { $local:gaBody += "`"$($item.Key)`" : {`"value`" : `"$($item.Value)`"}, " }
+	foreach ($item in $script:clientEnv) {
+		$local:gaBody += "`"$($item.Key)`" : {`"value`" : `"$($item.Value)`"}, "
+	}
 	$local:gaBody += "`"DisableValidation`" : {`"value`" : `"$($script:disableValidation)`"}, "
 	$local:gaBody += "`"SortwareDecode`" : {`"value`" : `"$($script:forceSoftwareDecodeFlag)`"}, "
 	$local:gaBody += "`"DecodeOption`" : {`"value`" : `"$($script:ffmpegDecodeOption)`"}, "
@@ -1169,7 +1270,9 @@ function goAnal {
 	$local:gaBody += "`"Type`" : `"$local:type`", "
 	$local:gaBody += "`"ID`" : `"$local:id`", "
 	$local:gaBody += "`"Target`" : `"$local:type/$local:id`", "
-	foreach ($item in $script:clientEnv) { $local:gaBody += "`"$($item.Key)`" : `"$($item.Value)`", " }
+	foreach ($item in $script:clientEnv) {
+		$local:gaBody += "`"$($item.Key)`" : `"$($item.Value)`", "
+	}
 	$local:gaBody += "`"DisableValidation`" : `"$($script:disableValidation)`", "
 	$local:gaBody += "`"SortwareDecode`" : `"$($script:forceSoftwareDecodeFlag)`", "
 	$local:gaBody += "`"DecodeOption`" : `"$($script:ffmpegDecodeOption)`", "
@@ -1177,9 +1280,16 @@ function goAnal {
 	$local:gaBody += '} } ] }'
 
 	$progressPreference = 'silentlyContinue'
-	try { Invoke-RestMethod -Uri "$($local:gaURL)?$($local:gaKey)&$($local:gaID)" -Method 'POST' -Headers $local:gaHeaders -Body $local:gaBody -TimeoutSec $script:timeoutSec | Out-Null }
-	catch { Write-Debug 'Failed to collect statistics' }
-	finally { $progressPreference = 'Continue' }
+	try {
+		Invoke-RestMethod `
+			-Uri "$($local:gaURL)?$($local:gaKey)&$($local:gaID)" `
+			-Method 'POST' -Headers $local:gaHeaders `
+			-Body $local:gaBody `
+			-TimeoutSec $script:timeoutSec `
+		| Out-Null
+	}	catch {
+		Write-Debug 'Failed to collect statistics'
+	} finally { $progressPreference = 'Continue' }
 
 }
 
@@ -1202,45 +1312,53 @@ function dateTimeToUnixTime($dateTime) {
 #----------------------------------------------------------------------
 #Zipファイルを解凍
 #----------------------------------------------------------------------
-function Unzip {
+function unZip {
+	[CmdletBinding()]
 	[OutputType([System.Void])]
 	param(
 		[Parameter(Mandatory = $true)]
-		[Alias('Path')]
-		[string]$zipArchive,
+		[Alias('File')]
+		[String]$zipArchive,
 		[Parameter(Mandatory = $true)]
-		[Alias('OutFile')]
-		[string]$outpath
+		[Alias('OutPath')]
+		[String]$path
 	)
-	[System.IO.Compression.ZipFile]::ExtractToDirectory($zipArchive, $outpath)
+	[System.IO.Compression.ZipFile]::ExtractToDirectory($zipArchive, $path)
 }
 
 #----------------------------------------------------------------------
 #ディレクトリの上書き
 #----------------------------------------------------------------------
 function moveItem() {
+	[CmdletBinding()]
 	[OutputType([System.Void])]
 	param(
 		[Parameter(Mandatory = $true)]
 		[Alias('Path')]
-		[string]$src,
+		[String]$src,
 		[Parameter(Mandatory = $true)]
 		[Alias('Destination')]
-		[string]$dist
+		[String]$dist
 	)
 
-	if ((Test-Path $dist) -and (Test-Path -PathType Container $src)) {
+	if ((Test-Path $dist) -And (Test-Path -PathType Container $src)) {
 		# フォルダ上書き(移動先に存在 かつ フォルダ)は再帰的に moveItem 呼び出し
-		Get-ChildItem $src | ForEach-Object {
-			moveItem $_.FullName $($dist + '\' + $_.Name);
+		Get-ChildItem `
+			-Path $src `
+		| ForEach-Object {
+			moveItem $_.FullName $($dist + '\' + $_.Name)
 		}
 		# 移動し終わったフォルダを削除
-		Remove-Item $src -Recurse -Force;
-		#Write-Output "$src  ->  $dist"
-		#Move-Item $src -Destination $dist -Force;
+		Remove-Item `
+			-Path $src `
+			-Recurse `
+			-Force
 	} else {
 		# 移動先に対象なし または ファイルの Move-Item に -Forece つけて実行
 		Write-Output "$src  ->  $dist"
-		Move-Item $src -Destination $dist -Force;
+		Move-Item `
+			-Path $src `
+			-Destination $dist `
+			-Force
 	}
 }

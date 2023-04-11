@@ -38,8 +38,8 @@ try {
 		$script:scriptRoot = Convert-Path .
 	}
 	Set-Location $script:scriptRoot
-	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '..\conf'))
-	$script:devDir = $(Join-Path $script:scriptRoot '..\dev')
+	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '../conf'))
+	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
 } catch { Write-Error 'ディレクトリ設定に失敗しました' ; exit 1 }
 
 #----------------------------------------------------------------------
@@ -56,8 +56,8 @@ try {
 #----------------------------------------------------------------------
 #外部関数ファイルの読み込み
 try {
-	. $(Convert-Path (Join-Path $script:scriptRoot '..\src\functions\common_functions.ps1'))
-	. $(Convert-Path (Join-Path $script:scriptRoot '..\src\functions\tver_functions.ps1'))
+	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/common_functions.ps1'))
+	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/tver_functions.ps1'))
 } catch { Write-Error '外部関数ファイルの読み込みに失敗しました' ; exit 1 }
 
 #----------------------------------------------------------------------
@@ -67,30 +67,30 @@ try {
 	$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.ps1')
 	if (Test-Path $script:devFunctionFile) {
 		. $script:devFunctionFile
-		Write-ColorOutput '開発ファイル用共通関数ファイルを読み込みました' -FgColor 'Yellow'
+		Out-Msg '開発ファイル用共通関数ファイルを読み込みました' -Fg 'Yellow'
 	}
 	if (Test-Path $script:devConfFile) {
 		. $script:devConfFile
-		Write-ColorOutput '開発ファイル用設定ファイルを読み込みました' -FgColor 'Yellow'
+		Out-Msg '開発ファイル用設定ファイルを読み込みました' -Fg 'Yellow'
 	}
 } catch { Write-Error '開発用設定ファイルの読み込みに失敗しました' ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
-Write-ColorOutput ''
-Write-ColorOutput '===========================================================================' -FgColor 'Cyan'
-Write-ColorOutput '                                                                           ' -FgColor 'Cyan'
-Write-ColorOutput '        ████████ ██    ██ ███████ ██████  ██████  ███████  ██████          ' -FgColor 'Cyan'
-Write-ColorOutput '           ██    ██    ██ ██      ██   ██ ██   ██ ██      ██               ' -FgColor 'Cyan'
-Write-ColorOutput '           ██    ██    ██ █████   ██████  ██████  █████   ██               ' -FgColor 'Cyan'
-Write-ColorOutput '           ██     ██  ██  ██      ██   ██ ██   ██ ██      ██               ' -FgColor 'Cyan'
-Write-ColorOutput '           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          ' -FgColor 'Cyan'
-Write-ColorOutput '                                                                           ' -FgColor 'Cyan'
-Write-ColorOutput "        $script:appName : TVerダウンローダ                                 " -FgColor 'Cyan'
-Write-ColorOutput "                             一括ダウンロード version. $script:appVersion  " -FgColor 'Cyan'
-Write-ColorOutput '                                                                           ' -FgColor 'Cyan'
-Write-ColorOutput '===========================================================================' -FgColor 'Cyan'
-Write-ColorOutput ''
+Out-Msg ''
+Out-Msg '===========================================================================' -Fg 'Cyan'
+Out-Msg '                                                                           ' -Fg 'Cyan'
+Out-Msg '        ████████ ██    ██ ███████ ██████  ██████  ███████  ██████          ' -Fg 'Cyan'
+Out-Msg '           ██    ██    ██ ██      ██   ██ ██   ██ ██      ██               ' -Fg 'Cyan'
+Out-Msg '           ██    ██    ██ █████   ██████  ██████  █████   ██               ' -Fg 'Cyan'
+Out-Msg '           ██     ██  ██  ██      ██   ██ ██   ██ ██      ██               ' -Fg 'Cyan'
+Out-Msg '           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          ' -Fg 'Cyan'
+Out-Msg '                                                                           ' -Fg 'Cyan'
+Out-Msg "        $script:appName : TVerダウンローダ                                 " -Fg 'Cyan'
+Out-Msg "                             一括ダウンロード version. $script:appVersion  " -Fg 'Cyan'
+Out-Msg '                                                                           ' -Fg 'Cyan'
+Out-Msg '===========================================================================' -Fg 'Cyan'
+Out-Msg ''
 
 #----------------------------------------------------------------------
 #動作環境チェック
@@ -105,11 +105,11 @@ $script:ignoreTitles = getIgnoreList		#ダウンロード対象外番組の読�
 getToken
 
 $local:keywordNum = 0						#キーワードの番号
-if ($script:keywordNames -is [array]) { $local:keywordTotal = $script:keywordNames.Length }		#トータルキーワード数
+if ($script:keywordNames -is [Array]) { $local:keywordTotal = $script:keywordNames.Length }		#トータルキーワード数
 else { $local:keywordTotal = 1 }
 
 #進捗表示
-ShowProgress2Row `
+showProgress2Row `
 	-ProgressText1 '一括ダウンロード中' `
 	-ProgressText2 'キーワードから番組を抽出しダウンロード' `
 	-WorkDetail1 '読み込み中...' `
@@ -128,10 +128,10 @@ foreach ($local:keywordName in $local:keywordNames) {
 	$local:searchResultCount = 0
 
 	#ジャンルページチェックタイトルの表示
-	Write-ColorOutput ''
-	Write-ColorOutput '----------------------------------------------------------------------'
-	Write-ColorOutput "$(trimTabSpace ($local:keywordName))"
-	Write-ColorOutput '----------------------------------------------------------------------'
+	Out-Msg ''
+	Out-Msg '----------------------------------------------------------------------'
+	Out-Msg "$(trimTabSpace ($local:keywordName))"
+	Out-Msg '----------------------------------------------------------------------'
 
 	#処理
 	$local:resultLinks = getVideoLinksFromKeyword ($local:keywordName)
@@ -141,25 +141,31 @@ foreach ($local:keywordName in $local:keywordNames) {
 	try {
 		#ロックファイルをロック
 		while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true) {
-			Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
+			Out-Msg '　ファイルのロック解除待ち中です' -Fg 'Gray'
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
-		$script:historyFileData = Import-Csv $script:historyFilePath -Encoding UTF8
+		$script:historyFileData = `
+			Import-Csv `
+			-Path $script:historyFilePath `
+			-Encoding UTF8
 	} catch {
-		Write-ColorOutput '　ダウンロード履歴を読み込めなかったのでスキップしました' -FgColor 'Green' ; continue
+		Out-Msg '　ダウンロード履歴を読み込めなかったのでスキップしました' -Fg 'Green'
+		continue
 	} finally { $null = fileUnlock $script:historyLockFilePath }
 
 	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 	foreach ($local:resultLink in $local:resultLinks) {
 		$local:historyMatch = $script:historyFileData | Where-Object { $_.videoPage -eq $local:resultLink }
 		if ($null -eq $local:historyMatch) { $local:videoLinks += $local:resultLink }
-		else { $local:searchResultCount = $local:searchResultCount + 1 ; continue }
+		else { $local:searchResultCount = $local:searchResultCount + 1
+			continue
+  }
 	}
 
 	$local:videoNum = 0								#ジャンル内の処理中の番組の番号
 	$local:videoTotal = $local:videoLinks.Length	#ダウンロード対象のトータル番組数
-	Write-ColorOutput "　ダウンロード対象$($local:videoTotal)本 処理済$($local:searchResultCount)本" -FgColor 'Gray'
+	Out-Msg "　ダウンロード対象$($local:videoTotal)本 処理済$($local:searchResultCount)本" -Fg 'Gray'
 
 	#処理時間の推計
 	$local:secElapsed = (Get-Date) - $local:totalStartTime
@@ -173,7 +179,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 	$local:keywordNum = $local:keywordNum + 1		#キーワード数のインクリメント
 
 	#進捗更新
-	UpdateProgress2Row `
+	updateProgress2Row `
 		-ProgressActivity1 $local:keywordNum/$local:keywordTotal `
 		-CurrentProcessing1 $(trimTabSpace ($local:keywordName)) `
 		-Rate1 $local:progressRatio1 `
@@ -198,7 +204,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 		$local:progressRatio2 = $($local:videoNum / $local:videoTotal)
 
 		#進捗更新
-		UpdateProgress2Row `
+		updateProgress2Row `
 			-ProgressActivity1 $local:keywordNum/$local:keywordTotal `
 			-CurrentProcessing1 $(trimTabSpace ($local:keywordName)) `
 			-Rate1 $local:progressRatio1 `
@@ -210,8 +216,8 @@ foreach ($local:keywordName in $local:keywordNames) {
 			-Group 'Bulk'
 
 		#処理
-		Write-ColorOutput '--------------------------------------------------'
-		Write-ColorOutput "$($local:videoNum)/$($local:videoTotal) - $local:videoLink" -NoNewline $true
+		Out-Msg '--------------------------------------------------'
+		Out-Msg "$($local:videoNum)/$($local:videoTotal) - $local:videoLink" -NoNL $true
 
 		#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 		waitTillYtdlProcessGetFewer $script:parallelDownloadFileNum
@@ -229,7 +235,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 #======================================================================
 
 #進捗表示
-UpdateProgressToast2 `
+updateProgressToast2 `
 	-Title1 'キーワードから番組の抽出' `
 	-Rate1 '1' `
 	-LeftText1 '' `
@@ -242,9 +248,9 @@ UpdateProgressToast2 `
 	-Group 'Bulk'
 
 #youtube-dlのプロセスが終わるまで待機
-Write-ColorOutput 'ダウンロードの終了を待機しています'
+Out-Msg 'ダウンロードの終了を待機しています'
 waitTillYtdlProcessIsZero
 
-Write-ColorOutput '---------------------------------------------------------------------------' -FgColor 'Cyan'
-Write-ColorOutput '処理を終了しました。                                                       ' -FgColor 'Cyan'
-Write-ColorOutput '---------------------------------------------------------------------------' -FgColor 'Cyan'
+Out-Msg '---------------------------------------------------------------------------' -Fg 'Cyan'
+Out-Msg '処理を終了しました。                                                       ' -Fg 'Cyan'
+Out-Msg '---------------------------------------------------------------------------' -Fg 'Cyan'

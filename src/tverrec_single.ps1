@@ -38,8 +38,8 @@ try {
 		$script:scriptRoot = Convert-Path .
 	}
 	Set-Location $script:scriptRoot
-	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '..\conf'))
-	$script:devDir = $(Join-Path $script:scriptRoot '..\dev')
+	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '../conf'))
+	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
 } catch { Write-Error 'ディレクトリ設定に失敗しました' ; exit 1 }
 
 #----------------------------------------------------------------------
@@ -56,8 +56,8 @@ try {
 #----------------------------------------------------------------------
 #外部関数ファイルの読み込み
 try {
-	. $(Convert-Path (Join-Path $script:scriptRoot '..\src\functions\common_functions.ps1'))
-	. $(Convert-Path (Join-Path $script:scriptRoot '..\src\functions\tver_functions.ps1'))
+	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/common_functions.ps1'))
+	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/tver_functions.ps1'))
 } catch { Write-Error '外部関数ファイルの読み込みに失敗しました' ; exit 1 }
 
 #----------------------------------------------------------------------
@@ -67,30 +67,30 @@ try {
 	$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.ps1')
 	if (Test-Path $script:devFunctionFile) {
 		. $script:devFunctionFile
-		Write-ColorOutput '開発ファイル用共通関数ファイルを読み込みました' -FgColor 'Yellow'
+		Out-Msg '開発ファイル用共通関数ファイルを読み込みました' -Fg 'Yellow'
 	}
 	if (Test-Path $script:devConfFile) {
 		. $script:devConfFile
-		Write-ColorOutput '開発ファイル用設定ファイルを読み込みました' -FgColor 'Yellow'
+		Out-Msg '開発ファイル用設定ファイルを読み込みました' -Fg 'Yellow'
 	}
 } catch { Write-Error '開発用設定ファイルの読み込みに失敗しました' ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
-Write-ColorOutput ''
-Write-ColorOutput '===========================================================================' -FgColor 'Cyan'
-Write-ColorOutput '                                                                           ' -FgColor 'Cyan'
-Write-ColorOutput '        ████████ ██    ██ ███████ ██████  ██████  ███████  ██████          ' -FgColor 'Cyan'
-Write-ColorOutput '           ██    ██    ██ ██      ██   ██ ██   ██ ██      ██               ' -FgColor 'Cyan'
-Write-ColorOutput '           ██    ██    ██ █████   ██████  ██████  █████   ██               ' -FgColor 'Cyan'
-Write-ColorOutput '           ██     ██  ██  ██      ██   ██ ██   ██ ██      ██               ' -FgColor 'Cyan'
-Write-ColorOutput '           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          ' -FgColor 'Cyan'
-Write-ColorOutput '                                                                           ' -FgColor 'Cyan'
-Write-ColorOutput "        $script:appName : TVerダウンローダ                                 " -FgColor 'Cyan'
-Write-ColorOutput "                             個別ダウンロード version. $script:appVersion  " -FgColor 'Cyan'
-Write-ColorOutput '                                                                           ' -FgColor 'Cyan'
-Write-ColorOutput '===========================================================================' -FgColor 'Cyan'
-Write-ColorOutput ''
+Out-Msg ''
+Out-Msg '===========================================================================' -Fg 'Cyan'
+Out-Msg '                                                                           ' -Fg 'Cyan'
+Out-Msg '        ████████ ██    ██ ███████ ██████  ██████  ███████  ██████          ' -Fg 'Cyan'
+Out-Msg '           ██    ██    ██ ██      ██   ██ ██   ██ ██      ██               ' -Fg 'Cyan'
+Out-Msg '           ██    ██    ██ █████   ██████  ██████  █████   ██               ' -Fg 'Cyan'
+Out-Msg '           ██     ██  ██  ██      ██   ██ ██   ██ ██      ██               ' -Fg 'Cyan'
+Out-Msg '           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          ' -Fg 'Cyan'
+Out-Msg '                                                                           ' -Fg 'Cyan'
+Out-Msg "        $script:appName : TVerダウンローダ                                 " -Fg 'Cyan'
+Out-Msg "                             個別ダウンロード version. $script:appVersion  " -Fg 'Cyan'
+Out-Msg '                                                                           ' -Fg 'Cyan'
+Out-Msg '===========================================================================' -Fg 'Cyan'
+Out-Msg ''
 
 #----------------------------------------------------------------------
 #動作環境チェック
@@ -120,20 +120,24 @@ while ($true) {
 	try {
 		#ロックファイルをロック
 		while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true) {
-			Write-ColorOutput '　ファイルのロック解除待ち中です' -FgColor 'Gray'
+			Out-Msg '　ファイルのロック解除待ち中です' -Fg 'Gray'
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
-		$script:historyFileData = Import-Csv $script:historyFilePath -Encoding UTF8
+		$script:historyFileData = `
+			Import-Csv `
+			-Path $script:historyFilePath `
+			-Encoding UTF8
 	} catch {
-		Write-ColorOutput '　ダウンロード履歴を読み込めなかったのでスキップしました' -FgColor 'Green' ; continue
+		Out-Msg '　ダウンロード履歴を読み込めなかったのでスキップしました' -Fg 'Green'
+		continue
 	} finally { $null = fileUnlock $script:historyLockFilePath }
 
 	$local:videoPageURL = Read-Host '番組URLを入力してください。何も入力しないで Enter を押すと終了します。'
 	if ($videoPageURL -ne '') {
 		$local:videoLink = $local:videoPageURL.Replace('https://tver.jp', '').Trim()
 		$local:videoPageURL = 'https://tver.jp' + $local:videoLink
-		Write-ColorOutput $local:videoPageURL
+		Out-Msg $local:videoPageURL
 
 		#TVer番組ダウンロードのメイン処理
 		downloadTVerVideo `
@@ -141,9 +145,9 @@ while ($true) {
 			-URL $local:videoPageURL `
 			-Link $local:videoLink
 	} else {
-		Write-ColorOutput '---------------------------------------------------------------------------' -FgColor 'Cyan'
-		Write-ColorOutput '処理を終了しました。                                                       ' -FgColor 'Cyan'
-		Write-ColorOutput '---------------------------------------------------------------------------' -FgColor 'Cyan'
+		Out-Msg '---------------------------------------------------------------------------' -Fg 'Cyan'
+		Out-Msg '処理を終了しました。                                                       ' -Fg 'Cyan'
+		Out-Msg '---------------------------------------------------------------------------' -Fg 'Cyan'
 		exit
 	}
 }

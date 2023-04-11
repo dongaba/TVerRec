@@ -71,13 +71,13 @@ $script:parallelDownloadNumPerFile = 10
 
 #ダウンロード時に放送局毎のフォルダ配下にダウンロードファイルを保存
 #「$false」の際の保存先は以下
-#  ダウンロード先\
-#    └番組シリーズ名 番組シーズン名\
+#  ダウンロード先/
+#    └番組シリーズ名 番組シーズン名/
 #      └番組シリーズ名 番組シーズン名 放送日 番組タイトル名).mp4
 #「$true」の際の保存先は以下
-#  ダウンロード先\
-#    └放送局\
-#      └番組シリーズ名 番組シーズン名\
+#  ダウンロード先/
+#    └放送局/
+#      └番組シリーズ名 番組シーズン名/
 #        └番組シリーズ名 番組シーズン名 放送日 番組タイトル名).mp4
 $script:sortVideoByMedia = $false
 
@@ -132,7 +132,7 @@ $script:ffmpegDecodeOption = ''							#ffmpegのデコードオプションを�
 
 #アプリケーション名・バージョン番号
 $script:appName = 'TVerRec'
-$script:appVersion = Get-Content '..\VERSION'
+$script:appVersion = Get-Content '../VERSION'
 
 #デバッグレベル
 $VerbosePreference = 'SilentlyContinue'						#詳細メッセージなし
@@ -145,12 +145,12 @@ $script:fileNameLengthMax = 255
 $script:timeoutSec = 60
 
 #各種ディレクトリのパス
-$script:binDir = $(Join-Path $scriptRoot '..\bin')
-$script:dbDir = $(Join-Path $scriptRoot '..\db')
-$script:libDir = $(Join-Path $scriptRoot '..\lib')
-$script:imgDir = $(Join-Path $scriptRoot '..\img')
-$script:listDir = $(Join-Path $scriptRoot '..\list')
-$script:containerDir = $(Join-Path $scriptRoot '..\container-data')
+$script:binDir = $(Join-Path $scriptRoot '../bin')
+$script:dbDir = $(Join-Path $scriptRoot '../db')
+$script:libDir = $(Join-Path $scriptRoot '../lib')
+$script:imgDir = $(Join-Path $scriptRoot '../img')
+$script:listDir = $(Join-Path $scriptRoot '../list')
+$script:containerDir = $(Join-Path $scriptRoot '../container-data')
 
 #トースト通知用画像のパス
 $script:toastAppLogo = Convert-Path (Join-Path $script:imgDir 'TVerRec-Toast.png')

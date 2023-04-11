@@ -13,7 +13,6 @@ RUN apk --update --no-cache add \
 	curl \
 	git \
 	python3 \
-	ffmpeg \
 	&& rm -rf /var/cache/apk/*
 
 #User追加
@@ -23,7 +22,7 @@ RUN addgroup -g "$GID" tverrec \
 	&& adduser -D -u "$UID" tverrec -G tverrec
 
 #ディレクトリ準備
-RUN mkdir -p -m 777 \ 
+RUN mkdir -p -m 777 \
 	/app \
 	/mnt/Temp \
 	/mnt/Work \
@@ -54,9 +53,9 @@ RUN sed -i -e "s|'TVerRec'|'TVerRecContainer'|g" ./conf/system_setting.ps1 \
 
 #youtube-dlインストール
 RUN curl -L "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" -o ./bin/youtube-dl \
-	&& chmod a+x ./bin/youtube-dl \
-	&& cp "$(which ffmpeg)" ./bin/. \
-	&& cp "$(which ffprobe)" ./bin/.
+	&& chmod a+x ./bin/youtube-dl
+#	&& cp "$(which ffmpeg)" ./bin/. \
+#	&& cp "$(which ffprobe)" ./bin/.
 
 WORKDIR /app/TVerRec/unix
 ENTRYPOINT ["/bin/sh"]

@@ -38,8 +38,8 @@ try {
 		$script:scriptRoot = Convert-Path .
 	}
 	Set-Location $script:scriptRoot
-	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '..\conf'))
-	$script:devDir = $(Join-Path $script:scriptRoot '..\dev')
+	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '../conf'))
+	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
 } catch { Write-Error 'ディレクトリ設定に失敗しました' ; exit 1 }
 
 #----------------------------------------------------------------------
@@ -56,8 +56,8 @@ try {
 #----------------------------------------------------------------------
 #外部関数ファイルの読み込み
 try {
-	. $(Convert-Path (Join-Path $script:scriptRoot '..\src\functions\common_functions.ps1'))
-	. $(Convert-Path (Join-Path $script:scriptRoot '..\src\functions\tver_functions.ps1'))
+	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/common_functions.ps1'))
+	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/tver_functions.ps1'))
 } catch { Write-Error '外部関数ファイルの読み込みに失敗しました' ; exit 1 }
 
 #----------------------------------------------------------------------
@@ -67,18 +67,19 @@ try {
 	$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.ps1')
 	if (Test-Path $script:devFunctionFile) {
 		. $script:devFunctionFile
-		Write-ColorOutput '開発ファイル用共通関数ファイルを読み込みました' -FgColor 'Yellow'
+		Out-Msg '開発ファイル用共通関数ファイルを読み込みました' -Fg 'Yellow'
 	}
 	if (Test-Path $script:devConfFile) {
 		. $script:devConfFile
-		Write-ColorOutput '開発ファイル用設定ファイルを読み込みました' -FgColor 'Yellow'
+		Out-Msg '開発ファイル用設定ファイルを読み込みました' -Fg 'Yellow'
 	}
 } catch { Write-Error '開発用設定ファイルの読み込みに失敗しました' ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
 
-checkRequiredFile			#設定で指定したファイル・フォルダの存在チェック
+#設定で指定したファイル・フォルダの存在チェック
+checkRequiredFile
 if (!(Test-Path $script:saveBaseDir -PathType Container)) {
 	Write-Error 'ダウンロード作業フォルダが存在しません。終了します。' ; exit 1
 }
@@ -86,18 +87,18 @@ if (!(Test-Path $script:saveBaseDir -PathType Container)) {
 #======================================================================
 #保存先ディレクトリの存在確認
 if (Test-Path $script:downloadBaseDir -PathType Container) { }
-else { Write-Error '番組ダウンロード先フォルダにアクセスできません。終了します。' -FgColor 'Green' ; exit 1 }
+else { Write-Error '番組ダウンロード先フォルダにアクセスできません。終了します。' -Fg 'Green' ; exit 1 }
 if (Test-Path $script:saveBaseDir -PathType Container) { }
-else { Write-Error '番組移動先フォルダにアクセスできません。終了します。' -FgColor 'Green' ; exit 1 }
+else { Write-Error '番組移動先フォルダにアクセスできません。終了します。' -Fg 'Green' ; exit 1 }
 
 #======================================================================
 #1/2 移動先フォルダを起点として、配下のフォルダを取得
-Write-ColorOutput '----------------------------------------------------------------------'
-Write-ColorOutput '移動先フォルダの一覧を作成しています'
-Write-ColorOutput '----------------------------------------------------------------------'
+Out-Msg '----------------------------------------------------------------------'
+Out-Msg '移動先フォルダの一覧を作成しています'
+Out-Msg '----------------------------------------------------------------------'
 
 #進捗表示
-ShowProgressToast `
+showProgressToast `
 	-Text1 '番組の移動中' `
 	-Text2 '　処理1/2 - フォルダ一覧を作成' `
 	-WorkDetail '' `
@@ -109,12 +110,12 @@ ShowProgressToast `
 
 #======================================================================
 #2/2 移動先フォルダと同名のフォルダ配下の番組を移動
-Write-ColorOutput '----------------------------------------------------------------------'
-Write-ColorOutput 'ダウンロードファイルを移動しています'
-Write-ColorOutput '----------------------------------------------------------------------'
+Out-Msg '----------------------------------------------------------------------'
+Out-Msg 'ダウンロードファイルを移動しています'
+Out-Msg '----------------------------------------------------------------------'
 
 #進捗表示
-ShowProgressToast `
+showProgressToast `
 	-Text1 '番組の移動中' `
 	-Text2 '　処理2/2 - ダウンロードファイルを移動' `
 	-WorkDetail '' `
@@ -125,12 +126,22 @@ ShowProgressToast `
 
 #処理
 $local:moveToPaths = $null
-$local:moveToPaths = Get-ChildItem $script:saveBaseDir -Recurse | Where-Object { $_.PSIsContainer } | Sort-Object
+$local:moveToPaths = Get-ChildItem `
+	-Path $script:saveBaseDir `
+	-Recurse `
+| Where-Object { $_.PSIsContainer } `
+| Sort-Object
 
-$local:moveToPathNum = 0						#移動先パス番号
-if ($local:moveToPaths -is [array]) { $local:moveToPathTotal = $local:moveToPaths.Length }		#移動先パス合計数
-elseif ($null -ne $local:moveToPaths) { $local:moveToPathTotal = 1 }
-else { $local:moveToPathTotal = 0 }
+#移動先パス番号
+$local:moveToPathNum = 0
+if ($local:moveToPaths -is [Array]) {
+	#移動先パス合計数
+	$local:moveToPathTotal = $local:moveToPaths.Length
+} elseif ($null -ne $local:moveToPaths) {
+	$local:moveToPathTotal = 1
+} else {
+	$local:moveToPathTotal = 0
+}
 
 #----------------------------------------------------------------------
 $local:totalStartTime = Get-Date
@@ -142,7 +153,9 @@ if ($local:moveToPathTotal -ne 0) {
 		$local:secElapsed = (Get-Date) - $local:totalStartTime
 		$local:secRemaining = -1
 		if ($local:moveToPathNum -ne 0) {
-			$local:secRemaining = ($local:secElapsed.TotalSeconds / $local:moveToPathNum) * ($local:moveToPathTotal - $local:moveToPathNum)
+			$local:secRemaining = `
+			($local:secElapsed.TotalSeconds / $local:moveToPathNum) `
+				* ($local:moveToPathTotal - $local:moveToPathNum)
 			$local:minRemaining = "$([String]([math]::Ceiling($local:secRemaining / 60)))分"
 			$local:progressRatio = $($local:moveToPathNum / $local:moveToPathTotal)
 		} else {
@@ -152,7 +165,7 @@ if ($local:moveToPathTotal -ne 0) {
 		$local:moveToPathNum = $local:moveToPathNum + 1
 
 		#進捗表示
-		UpdateProgressToast `
+		updateProgressToast `
 			-Title $local:moveToPath `
 			-Rate $local:progressRatio `
 			-LeftText $local:moveToPathNum/$local:moveToPathTotal `
@@ -161,7 +174,7 @@ if ($local:moveToPathTotal -ne 0) {
 			-Group 'Move'
 
 		#処理
-		Write-ColorOutput "$($local:moveToPathNum)/$($local:moveToPathTotal) - $($local:moveToPath)" -NoNewline $true
+		Out-Msg "$($local:moveToPathNum)/$($local:moveToPathTotal) - $($local:moveToPath)" -NoNL $true
 		$local:targetFolderName = Split-Path -Leaf $local:moveToPath
 		if ($script:sortVideoByMedia) {
 			$local:mediaName = Split-Path -Leaf $(Split-Path -Parent $local:moveToPath)
@@ -171,16 +184,20 @@ if ($local:moveToPathTotal -ne 0) {
 		$local:moveFromPath = $(Join-Path $script:downloadBaseDir $local:targetFolderName)
 		if (Test-Path $local:moveFromPath) {
 			$local:moveFromPath = $local:moveFromPath + '\*.mp4'
-			Write-ColorOutput "　「$($local:moveFromPath)」を移動します" -FgColor 'Gray'
-			try { Move-Item $local:moveFromPath -Destination $local:moveToPath -Force }
-			catch { Write-ColorOutput '　移動できないファイルがありました' -FgColor 'Green' }
-		} else { Write-ColorOutput '' }
+			Out-Msg "　「$($local:moveFromPath)」を移動します" -Fg 'Gray'
+			try {
+				Move-Item `
+					-Path $local:moveFromPath `
+					-Destination $local:moveToPath `
+					-Force
+			} catch { Out-Msg '　移動できないファイルがありました' -Fg 'Green' }
+		} else { Out-Msg '' }
 	}
 }
 #----------------------------------------------------------------------
 
 #進捗表示
-UpdateProgressToast `
+updateProgressToast `
 	-Title '番組の移動' `
 	-Rate '1' `
 	-LeftText '' `

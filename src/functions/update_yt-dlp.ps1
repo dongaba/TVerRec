@@ -31,14 +31,16 @@ $local:repo = 'yt-dlp/yt-dlp'
 $local:releases = "https://api.github.com/repos/$($local:repo)/releases"
 
 #yt-dlp保存先相対Path
-$local:ytdlRelativeDir = '..\bin'
-$local:ytdlDir = $(Join-Path $script:scriptRoot $local:ytdlRelativeDir)
+$local:ytdlRelDir = '../bin'
+$local:ytdlDir = $(Join-Path $script:scriptRoot $local:ytdlRelDir)
 if ($IsWindows) { $local:ytdlPath = $(Join-Path $local:ytdlDir 'youtube-dl.exe') }
 else { $local:ytdlPath = $(Join-Path $local:ytdlDir 'youtube-dl') }
 
 #yt-dlpのディレクトリがなければ作成
 if (-Not (Test-Path $local:ytdlDir -PathType Container)) {
-	$null = New-Item -ItemType directory -Path $local:ytdlDir
+	$null = New-Item `
+		-ItemType Directory `
+		-Path $local:ytdlDir
 }
 
 #yt-dlpのバージョン取得
@@ -51,47 +53,58 @@ if (Test-Path $local:ytdlPath -PathType Leaf) {
 }
 
 #yt-dlpの最新バージョン取得
-try { $local:latestVersion = (Invoke-WebRequest -Uri $local:releases -TimeoutSec $script:timeoutSec | ConvertFrom-Json)[0].Tag_Name }
-catch { Write-ColorOutput 'youtube-dl(yt-dlp)の最新バージョンを特定できませんでした' -FgColor 'Green' ; return }
+try {
+	$local:latestVersion = (Invoke-RestMethod `
+			-Uri $local:releases `
+			-Method Get `
+			-TimeoutSec $script:timeoutSec `
+	)[0].Tag_Name
+} catch { Out-Msg 'youtube-dl(yt-dlp)の最新バージョンを特定できませんでした' -Fg 'Green' ; return }
 
 #yt-dlpのダウンロード
 if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
-	Write-ColorOutput 'youtube-dlは最新です。 '
-	Write-ColorOutput "　youtube-dl current: $local:ytdlCurrentVersion"
-	Write-ColorOutput "　youtube-dl latest: $local:latestVersion"
-	Write-ColorOutput ''
+	Out-Msg 'youtube-dlは最新です。'
+	Out-Msg "　youtube-dl current: $local:ytdlCurrentVersion"
+	Out-Msg "　youtube-dl latest: $local:latestVersion"
+	Out-Msg ''
 } else {
+	Out-Msg 'youtube-dlが古いため更新します。'
+	Out-Msg "　youtube-dl current: $local:ytdlCurrentVersion"
+	Out-Msg "　youtube-dl latest: $local:latestVersion"
+	Out-Msg ''
 	if ($IsWindows -eq $false) {
-		try {
-			#githubの設定
-			$local:file = 'yt-dlp'
-			$local:fileAfterRename = 'youtube-dl'
-			#ダウンロード
-			$local:tag = (Invoke-WebRequest $local:releases -TimeoutSec $script:timeoutSec | ConvertFrom-Json)[0].Tag_name
-			$local:download = "https://github.com/$($local:repo)/releases/latest/download/$($local:file)"
-			$local:ytdlFileLocation = $(Join-Path $local:ytdlDir $local:fileAfterRename)
-			Write-ColorOutput "youtube-dlをダウンロードします。 $local:download"
-			Invoke-WebRequest $local:download -Out $local:ytdlFileLocation -TimeoutSec $script:timeoutSec
-			#バージョンチェック
-			$local:ytdlCurrentVersion = (& $local:ytdlPath --version)
-			Write-ColorOutput "youtube-dlをversion $local:ytdlCurrentVersion に更新しました。 "
-		} catch { Write-ColorOutput 'youtube-dlの更新に失敗しました' -FgColor 'Green' }
+		#githubの設定
+		$local:file = 'yt-dlp'
+		$local:fileAfterRename = 'youtube-dl'
 	} else {
-		try {
-			#githubの設定
-			$local:file = 'yt-dlp.exe'
-			$local:fileAfterRename = 'youtube-dl.exe'
-			#ダウンロード
-			$local:tag = (Invoke-WebRequest $local:releases -TimeoutSec $script:timeoutSec | ConvertFrom-Json)[0].Tag_name
-			$local:download = "https://github.com/$($local:repo)/releases/download/$($local:tag)/$($local:file)"
-			$local:ytdlFileLocation = $(Join-Path $local:ytdlDir $local:fileAfterRename)
-			Write-ColorOutput "youtube-dlをダウンロードします。 $local:download"
-			Invoke-WebRequest $local:download -Out $local:ytdlFileLocation -TimeoutSec $script:timeoutSec
-			#バージョンチェック
-			$local:ytdlCurrentVersion = (& $local:ytdlPath --version)
-			if ($? -eq $false) { throw '更新後のバージョン取得に失敗しました' }
-			Write-ColorOutput "youtube-dlをversion $local:ytdlCurrentVersion に更新しました。 "
-		} catch { exit 1 }
+		#githubの設定
+		$local:file = 'yt-dlp.exe'
+		$local:fileAfterRename = 'youtube-dl.exe'
 	}
+
+	try {
+		#ダウンロード
+		$local:tag = (Invoke-RestMethod `
+				-Uri $local:releases `
+				-Method Get `
+				-TimeoutSec $script:timeoutSec `
+		)[0].Tag_Name
+		$local:download = `
+			"https://github.com/$($local:repo)/releases/download/$($local:tag)/$($local:file)"
+		$local:ytdlFileLocation = $(Join-Path $local:ytdlDir $local:fileAfterRename)
+		Invoke-WebRequest `
+			-Uri $local:download `
+			-Out $local:ytdlFileLocation `
+			-TimeoutSec $script:timeoutSec
+	} catch { exit 1 }
+
+	#バージョンチェック
+	try {
+		$local:ytdlCurrentVersion = (& $local:ytdlPath --version)
+		if ($? -eq $false) { throw '更新後のバージョン取得に失敗しました' }
+		Out-Msg "youtube-dlをversion $local:ytdlCurrentVersion に更新しました。"
+		Out-Msg ''
+	} catch { exit 1 }
+
 }
 
