@@ -98,6 +98,17 @@ Out-Msg ''
 checkLatestTVerRec			#TVerRecの最新化チェック
 checkLatestYtdl				#youtube-dlの最新化チェック
 checkLatestFfmpeg			#ffmpegの最新化チェック
+
+#設定ファイル再読み込み
+try {
+	$script:sysFile = $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
+	. $script:sysFile
+	if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
+		$script:confFile = $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
+		. $script:confFile
+	}
+} catch { Write-Error '設定ファイルの再読み込みに失敗しました' ; exit 1 }
+
 checkRequiredFile			#設定で指定したファイル・フォルダの存在チェック
 
 #いろいろ初期化
