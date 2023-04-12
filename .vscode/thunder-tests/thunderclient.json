@@ -1311,8 +1311,16 @@
     "method": "POST",
     "sortNum": 10000,
     "created": "2023-04-08T21:32:13.127Z",
-    "modified": "2023-04-08T21:42:54.427Z",
+    "modified": "2023-04-12T13:18:40.153Z",
     "headers": [
+      {
+        "name": "x-tver-platform-type",
+        "value": "web"
+      },
+      {
+        "name": "accept",
+        "value": "*/*"
+      },
       {
         "name": "accept-encoding",
         "value": "gzip, deflate, br"
@@ -1323,7 +1331,8 @@
       },
       {
         "name": "content-length",
-        "value": "1811"
+        "value": "1811",
+        "isDisabled": true
       },
       {
         "name": "content-type",
@@ -1397,7 +1406,17 @@
         }
       ]
     },
-    "tests": []
+    "tests": [],
+    "preReq": {
+      "runRequests": [
+        {
+          "reqId": "d54169b6-1e8e-4953-b2a5-d461212713d3",
+          "colId": "55a97955-c9fe-4218-87a6-81d9b54c31d3",
+          "triggerCondition": "run-always",
+          "triggerValue": ""
+        }
+      ]
+    }
   },
   {
     "_id": "0aa4da24-a86c-490a-bc57-e78c399a9c5e",
@@ -1514,6 +1533,27 @@
       {
         "name": "require_data",
         "value": "mylist",
+        "isPath": false
+      }
+    ],
+    "tests": []
+  },
+  {
+    "_id": "ca10bc37-861a-4c42-8e99-6a0216401356",
+    "colId": "950457ef-9c73-4ed2-8ec9-5836b0d7577a",
+    "containerId": "",
+    "name": "Member Profile",
+    "url": "https://member-api.tver.jp/v2/api/members/info",
+    "method": "GET",
+    "sortNum": 50000,
+    "created": "2023-04-12T12:32:56.417Z",
+    "modified": "2023-04-12T12:35:43.046Z",
+    "headers": [],
+    "params": [
+      {
+        "name": "member_sid",
+        "value": "{{member_sid}}",
+        "isDisabled": true,
         "isPath": false
       }
     ],
