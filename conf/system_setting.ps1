@@ -86,13 +86,13 @@ $script:sortVideoByMedia = $false
 #  番組シリーズ名 番組シーズン名 放送日 番組タイトル名.mp4
 #「$true」の際のファイル名は以下
 #  番組シリーズ名 番組シーズン名 放送日 Epエピソード番号 番組タイトル名.mp4
-$script:addEpisodeNumber = $false
+$script:addEpisodeNumber = $true
 
 #番組名に付くことがある不要なコメントを削除
 #「$false」の場合はTVerで配信されているとおりに番組名を設定
 #「$true」の場合は「《」と「》」で挟まれた部分を削除
 #  《ドラマ特区》、《新シリーズ放送記念》、《ドラマParavi》、《〇〇出演 「〇〇」スタート記念》などを除去する目的
-$script:removeSpecialNote = $false
+$script:removeSpecialNote = $true
 
 #youtube-dlの取得元
 $script:preferredYoutubedl = 'yt-dlp'	#'yt-dlp' or 'ytdl-patched'

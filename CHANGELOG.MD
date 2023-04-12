@@ -13,6 +13,8 @@
 - ソースコード内の Path 表記を Unix 形式に統一
 - ソースコードの折り返しを極力短く
 - bat ファイル以外を BOM なし UTF-8、LF に統一
+- `$script:addEpisodeNumber` のデフォルト値を `$true` に変更
+- `$script:removeSpecialNote` のデフォルト値を `$true` に変更
 
 ### 2.7.0 Fixed
 

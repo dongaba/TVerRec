@@ -35,7 +35,6 @@ brightcovenew*
 ffmpeg_error*
 
 #開発関連ファイル
-test.sh
 dev*
 dev*/*
 memo.txt
