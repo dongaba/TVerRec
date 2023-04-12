@@ -119,6 +119,8 @@ TVerRec の使い方・実行方法については[Wiki こちらのページ](h
     │  └─ list.lock ........................ 複数インスタンス起動時のダウンロードリストファイルの排他制御用ファイル
     │
     ├─ docker/ ........................... Docker用サンプル
+    │  ├─ docker-compose.yaml .............. docker-composeファイル
+    │  ├─ Dockerfile ....................... Dockerファイル
     │  ├─ Dockerfile.alpine ................ Alpine LinuxをベースにしたDockerイメージ用Dockerfileのサンプル
     │  └─ Dockerfile.ubuntu ................ Ubuntu LinuxをベースにしたDockerイメージ用Dockerfileのサンプル
     │
