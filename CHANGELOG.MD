@@ -126,8 +126,8 @@
 
 ### 2.6.2 Fixed
 
-- ダウンロード先フォルダが空の際にエラーとなる問題を修正
-- Linux と Mac でファイル名・フォルダ名に使えない文字のチェックが不完全だったのを修正
+- ダウンロード先ディレクトリが空の際にエラーとなる問題を修正
+- Linux と Mac でファイル名・ディレクトリ名に使えない文字のチェックが不完全だったのを修正
 
 ## [2.6.1](https://github.com/dongaba/TVerRec/releases/tag/v2.6.1)
 
@@ -167,7 +167,7 @@
 
 ### 2.5.8 Fixed
 
-- Linux 用の番組保存先先フォルダの指定が間違っている[問題](https://github.com/dongaba/TVerRec/issues/18)を修正
+- Linux 用の番組保存先先ディレクトリの指定が間違っている[問題](https://github.com/dongaba/TVerRec/issues/18)を修正
 
 ## [2.5.7](https://github.com/dongaba/TVerRec/releases/tag/v2.5.7)
 
@@ -211,7 +211,7 @@
 - コンソール表示を簡素化
 - PowerShell Core の存在チェックを改良(Microsoft Store 版も判定可能に)
 - ソースコードのリファクタリング
-- 番組移動時に空フォルダを削除しない仕様に変更
+- 番組移動時に空ディレクトリを削除しない仕様に変更
 
 ### 2.5.5 Fixed
 
@@ -383,7 +383,7 @@
 - 番組検証の高速化オプションを 2 つ追加(「$true」で高速化。いずれも初期値は$false)
   - ffprobe を使った簡易検証 $script:simplifiedValidation = $true
   - 番組検証を全く行わない $script:disableValidation = $true
-- 放送局ごとのフォルダを作ってからダウンロードするオプションを追加(「$true」で有効化。初期値は$false)
+- 放送局ごとのディレクトリを作ってからダウンロードするオプションを追加(「$true」で有効化。初期値は$false)
 
 ### 2.4.2 Changed
 
@@ -430,7 +430,7 @@
 
 ### 2.3.9 Changed
 
-- `src`フォルダ内の構成を変更
+- `src`ディレクトリ内の構成を変更
 - 設定ファイルの拡張子を変更
 - Windows PowerShell 環境用のソースコードの精製方法を変更
 

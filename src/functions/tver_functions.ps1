@@ -150,17 +150,17 @@ function checkLatestFfmpeg {
 }
 
 #----------------------------------------------------------------------
-#設定で指定したファイル・フォルダの存在チェック
+#設定で指定したファイル・ディレクトリの存在チェック
 #----------------------------------------------------------------------
 function checkRequiredFile {
 	[OutputType([System.Void])]
 	Param ()
 
 	if (!(Test-Path $script:downloadBaseDir -PathType Container)) {
-		Write-Error '番組ダウンロード先フォルダが存在しません。終了します。' ; exit 1
+		Write-Error '番組ダウンロード先ディレクトリが存在しません。終了します。' ; exit 1
 	}
 	if (!(Test-Path $script:downloadWorkDir -PathType Container)) {
-		Write-Error 'ダウンロード作業フォルダが存在しません。終了します。' ; exit 1
+		Write-Error 'ダウンロード作業ディレクトリが存在しません。終了します。' ; exit 1
 	}
 	if (!(Test-Path $script:ytdlPath -PathType Leaf)) {
 		Write-Error 'youtube-dlが存在しません。終了します。' ; exit 1

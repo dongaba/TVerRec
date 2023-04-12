@@ -109,7 +109,7 @@ try {
 	}
 } catch { Write-Error '設定ファイルの再読み込みに失敗しました' ; exit 1 }
 
-checkRequiredFile			#設定で指定したファイル・フォルダの存在チェック
+checkRequiredFile			#設定で指定したファイル・ディレクトリの存在チェック
 
 #処理
 $local:keywordNames = loadKeywordList		#ダウンロード対象キーワードの読み込み
@@ -208,9 +208,9 @@ foreach ($local:keywordName in $local:keywordNames) {
 		#いろいろ初期化
 		$local:videoNum = $local:videoNum + 1		#ジャンル内の番組番号のインクリメント
 
-		#保存先ディレクトリの存在確認(稼働中に共有フォルダが切断された場合に対応)
+		#保存先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
 		if (Test-Path $script:downloadBaseDir -PathType Container) { }
-		else { Write-Error '番組ダウンロード先フォルダにアクセスできません。終了します' ; exit 1 }
+		else { Write-Error '番組ダウンロード先ディレクトリにアクセスできません。終了します' ; exit 1 }
 
 		#進捗率の計算
 		$local:progressRatio2 = $($local:videoNum / $local:videoTotal)

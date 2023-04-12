@@ -109,7 +109,7 @@ try {
 	}
 } catch { Write-Error '設定ファイルの再読み込みに失敗しました' ; exit 1 }
 
-checkRequiredFile			#設定で指定したファイル・フォルダの存在チェック
+checkRequiredFile			#設定で指定したファイル・ディレクトリの存在チェック
 
 #処理
 $local:keywordName = '個別指定'
@@ -121,9 +121,9 @@ while ($true) {
 	#いろいろ初期化
 	$local:videoPageURL = ''
 
-	#保存先ディレクトリの存在確認(稼働中に共有フォルダが切断された場合に対応)
+	#保存先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
 	if (Test-Path $script:downloadBaseDir -PathType Container) { }
-	else { Write-Error '番組ダウンロード先フォルダにアクセスできません。終了します' ; exit 1 }
+	else { Write-Error '番組ダウンロード先ディレクトリにアクセスできません。終了します' ; exit 1 }
 
 	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 	waitTillYtdlProcessGetFewer $script:parallelDownloadFileNum

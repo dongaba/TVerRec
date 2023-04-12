@@ -94,7 +94,7 @@ function getTimeStamp {
 }
 
 #----------------------------------------------------------------------
-#ファイル名・フォルダ名に禁止文字の削除
+#ファイル名・ディレクトリ名に禁止文字の削除
 #----------------------------------------------------------------------
 function getFileNameWoInvChars {
 	[CmdletBinding()]
@@ -1342,13 +1342,13 @@ function moveItem() {
 	)
 
 	if ((Test-Path $dist) -And (Test-Path -PathType Container $src)) {
-		# フォルダ上書き(移動先に存在 かつ フォルダ)は再帰的に moveItem 呼び出し
+		# ディレクトリ上書き(移動先に存在 かつ ディレクトリ)は再帰的に moveItem 呼び出し
 		Get-ChildItem `
 			-Path $src `
 		| ForEach-Object {
 			moveItem $_.FullName $($dist + '\' + $_.Name)
 		}
-		# 移動し終わったフォルダを削除
+		# 移動し終わったディレクトリを削除
 		Remove-Item `
 			-Path $src `
 			-Recurse `

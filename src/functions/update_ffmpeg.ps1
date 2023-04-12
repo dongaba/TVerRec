@@ -164,7 +164,7 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 
 
 			#ゴミ掃除
-			Write-Output '中間フォルダと中間ファイルを削除します'
+			Write-Output '中間ディレクトリと中間ファイルを削除します'
 			try {
 				Remove-Item `
 					-Path "$($local:ffmpegDir)/ffmpeg-*-essentials_build" `
@@ -172,7 +172,7 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 					-Recurse `
 					-ErrorAction SilentlyContinue
 			} catch {
-				Write-Error '中間フォルダの削除に失敗しました' ; exit 1
+				Write-Error '中間ディレクトリの削除に失敗しました' ; exit 1
 			}
 
 
@@ -243,7 +243,7 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 			}
 
 			#ゴミ掃除
-			Write-Output '中間フォルダと中間ファイルを削除します'
+			Write-Output '中間ディレクトリと中間ファイルを削除します'
 			try {
 				Remove-Item `
 					-Path "$($local:ffmpegDir)/ffmpeg-*-static" `
@@ -251,7 +251,7 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 					-Recurse `
 					-ErrorAction SilentlyContinue
 			} catch {
-				Write-Error '中間フォルダの削除に失敗しました' ; exit 1
+				Write-Error '中間ディレクトリの削除に失敗しました' ; exit 1
 			}
 			try {
 				Remove-Item `

@@ -60,11 +60,11 @@ function moveItem() {
 	)
 
 	if ((Test-Path $dist) -And (Test-Path -PathType Container $src)) {
-		# フォルダ上書き(移動先に存在 かつ フォルダ)は再帰的に moveItem 呼び出し
+		# ディレクトリ上書き(移動先に存在 かつ ディレクトリ)は再帰的に moveItem 呼び出し
 		Get-ChildItem $src | ForEach-Object {
 			moveItem $_.FullName $($dist + '\' + $_.Name)
 		}
-		# 移動し終わったフォルダを削除
+		# 移動し終わったディレクトリを削除
 		Remove-Item `
 			-Path $src `
 			-Recurse `
@@ -105,10 +105,10 @@ Write-Output '                          TVerRecアップデート処理         
 Write-Output '---------------------------------------------------------------------------'
 Write-Output '==========================================================================='
 
-#念のため過去のバージョンがあれば削除し、作業フォルダを作成
+#念のため過去のバージョンがあれば削除し、作業ディレクトリを作成
 Write-Output ''
 Write-Output '-----------------------------------------------------------------'
-Write-Output '作業フォルダを作成します'
+Write-Output '作業ディレクトリを作成します'
 $updateTemp = $(Join-Path $local:scriptRoot '../tverrec-update-temp' )
 if (Test-Path $updateTemp ) {
 	Remove-Item `
@@ -121,7 +121,7 @@ try {
 		-ItemType Directory `
 		-Path $updateTemp
 } catch {
-	Write-Output '作業フォルダの作成に失敗しました' ; exit 1
+	Write-Output '作業ディレクトリの作成に失敗しました' ; exit 1
 }
 
 #TVerRecの最新バージョン取得
@@ -148,7 +148,7 @@ Write-Output '-----------------------------------------------------------------'
 Write-Output 'ダウンロードしたTVerRecを解凍します'
 try {
 	if (Test-Path $(Join-Path $updateTemp 'New.zip') -PathType Leaf) {
-		#配下に作成されるフォルダ名は不定「dongaba-TVerRec-xxxxxxxx」
+		#配下に作成されるディレクトリ名は不定「dongaba-TVerRec-xxxxxxxx」
 		unZip `
 			-File $(Join-Path $updateTemp 'New.zip') `
 			-OutPath $updateTemp
@@ -159,7 +159,7 @@ try {
 	Write-Output 'ダウンロードしたファイルの解凍に失敗しました' ; exit 1
 }
 
-#フォルダは上書きできないので独自関数で以下のフォルダをループ
+#ディレクトリは上書きできないので独自関数で以下のディレクトリをループ
 Write-Output ''
 Write-Output '-----------------------------------------------------------------'
 Write-Output 'ダウンロードしたTVerRecdを配置します'
@@ -176,10 +176,10 @@ try {
 	Write-Output 'ダウンロードしたTVerRecの配置に失敗しました' ; exit 1
 }
 
-#作業フォルダを削除
+#作業ディレクトリを削除
 Write-Output ''
 Write-Output '-----------------------------------------------------------------'
-Write-Output 'アップデートの作業フォルダを削除します'
+Write-Output 'アップデートの作業ディレクトリを削除します'
 try {
 	if (Test-Path $updateTemp ) {
 		Remove-Item `
@@ -188,7 +188,7 @@ try {
 			-Recurse
 	}
 } catch {
-	Write-Output '作業フォルダの削除に失敗しました' ; exit 1
+	Write-Output '作業ディレクトリの削除に失敗しました' ; exit 1
 }
 
 Write-Output ''

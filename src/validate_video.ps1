@@ -93,7 +93,7 @@ try {
 	}
 } catch { Write-Error '設定ファイルの再読み込みに失敗しました' ; exit 1 }
 
-checkRequiredFile					#設定で指定したファイル・フォルダの存在チェック
+checkRequiredFile					#設定で指定したファイル・ディレクトリの存在チェック
 
 #======================================================================
 #ダウンロード履歴ファイルのクリーンアップ
@@ -247,7 +247,7 @@ if ($null -eq $local:videoHists) {
 
 		#処理
 		if (Test-Path $script:downloadBaseDir -PathType Container) { }
-		else { Write-Error '番組ダウンロード先フォルダにアクセスできません。終了します。' -Fg 'Green' ; exit 1 }
+		else { Write-Error '番組ダウンロード先ディレクトリにアクセスできません。終了します。' -Fg 'Green' ; exit 1 }
 
 		Out-Msg "$($local:validateNum)/$($local:validateTotal) - $($local:videoFileRelPath)" -NoNL $true
 		checkVideo `

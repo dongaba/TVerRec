@@ -43,10 +43,10 @@ Set-StrictMode -Version Latest
 #　MacOSやLinuxでは $script:downloadBaseDir = '/mnt/Work' や $script:downloadBaseDir = '/Volumes/Work' などのように設定します。
 $script:downloadBaseDir = 'W:'
 
-#ダウンロード中の作業フォルダのフルパス(絶対パス指定)
-#　作業フォルダは、動画のダウンロード中に処理途中のファイルが配置される場所です。
+#ダウンロード中の作業ディレクトリのフルパス(絶対パス指定)
+#　作業ディレクトリは、動画のダウンロード中に処理途中のファイルが配置される場所です。
 #　多数のファイルが作成され読み書きが多発するので、SSDやRamDriveなどの高速なディスクを指定すると動作速度が向上します。
-#　規定の設定では各ユーザのTempフォルダ配下が設定されており、Windows環境であれば変更しなくても動作します。
+#　規定の設定では各ユーザのTempディレクトリ配下が設定されており、Windows環境であれば変更しなくても動作します。
 #　例えば C:\Temp にダウンロードするのであれば $script:downloadWorkDir = 'C:\Temp' と設定します。
 #　MacOSやLinuxでは $script:downloadWorkDir = '/var/tmp' や $script:downloadWorkDir = '/Volumes/RamDrive/Temp' などのように設定します。
 $script:downloadWorkDir = $env:TMP	#$env:TMP = C:\Users\<ユーザ名>\AppData\Local\Temp
@@ -54,7 +54,7 @@ $script:downloadWorkDir = $env:TMP	#$env:TMP = C:\Users\<ユーザ名>\AppData\L
 #保存先のフルパス(絶対パス指定)
 #　保存先とは、動画ファイルを最終的に整理するためのライブラリ等が配置されている場所です。
 #　規定の設定ではVドライブが設定されています。(通常のPCではVドライブはありませんので変更が必要です)
-#　ダウンロード先のフォルダで動画を再生するのであれば、適当な空フォルダを指定しておいてもOKです。
+#　ダウンロード先のディレクトリで動画を再生するのであれば、適当な空ディレクトリを指定しておいてもOKです。
 #　例えば C:\TverLibrary を保存先にするのであれば $script:saveBaseDir = 'C:\TverLibrary' と設定します。
 #　MacOSやLinuxでは $script:saveBaseDir = '/var/Video' や $script:saveBaseDir = '/Volumes/RamDrive/Video' などのように設定します。
 $script:saveBaseDir = 'V:'
@@ -69,7 +69,7 @@ $script:parallelDownloadFileNum = 5
 #1本の番組あたりの同時ダウンロード数
 $script:parallelDownloadNumPerFile = 10
 
-#ダウンロード時に放送局毎のフォルダ配下にダウンロードファイルを保存
+#ダウンロード時に放送局毎のディレクトリ配下にダウンロードファイルを保存
 #「$false」の際の保存先は以下
 #  ダウンロード先/
 #    └番組シリーズ名 番組シーズン名/

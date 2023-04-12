@@ -79,30 +79,30 @@ try {
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
 
-#設定で指定したファイル・フォルダの存在チェック
+#設定で指定したファイル・ディレクトリの存在チェック
 checkRequiredFile
 
 if (!(Test-Path $script:saveBaseDir -PathType Container)) {
-	Write-Error 'ダウンロード作業フォルダが存在しません。終了します。' ; exit 1
+	Write-Error 'ダウンロード作業ディレクトリが存在しません。終了します。' ; exit 1
 }
 
 #======================================================================
 #保存先ディレクトリの存在確認
 if (Test-Path $script:downloadBaseDir -PathType Container) { }
-else { Write-Error '番組ダウンロード先フォルダにアクセスできません。終了します。' -Fg 'Green' ; exit 1 }
+else { Write-Error '番組ダウンロード先ディレクトリにアクセスできません。終了します。' -Fg 'Green' ; exit 1 }
 if (Test-Path $script:saveBaseDir -PathType Container) { }
-else { Write-Error '番組移動先フォルダにアクセスできません。終了します。' -Fg 'Green' ; exit 1 }
+else { Write-Error '番組移動先ディレクトリにアクセスできません。終了します。' -Fg 'Green' ; exit 1 }
 
 #======================================================================
-#1/2 移動先フォルダを起点として、配下のフォルダを取得
+#1/2 移動先ディレクトリを起点として、配下のディレクトリを取得
 Out-Msg '----------------------------------------------------------------------'
-Out-Msg '移動先フォルダの一覧を作成しています'
+Out-Msg '移動先ディレクトリの一覧を作成しています'
 Out-Msg '----------------------------------------------------------------------'
 
 #進捗表示
 showProgressToast `
 	-Text1 '番組の移動中' `
-	-Text2 '　処理1/2 - フォルダ一覧を作成' `
+	-Text2 '　処理1/2 - ディレクトリ一覧を作成' `
 	-WorkDetail '' `
 	-Tag $script:appName `
 	-Group 'Move' `
@@ -111,7 +111,7 @@ showProgressToast `
 
 
 #======================================================================
-#2/2 移動先フォルダと同名のフォルダ配下の番組を移動
+#2/2 移動先ディレクトリと同名のディレクトリ配下の番組を移動
 Out-Msg '----------------------------------------------------------------------'
 Out-Msg 'ダウンロードファイルを移動しています'
 Out-Msg '----------------------------------------------------------------------'
@@ -182,7 +182,7 @@ if ($local:moveToPathTotal -ne 0) {
 			$local:mediaName = Split-Path -Leaf $(Split-Path -Parent $local:moveToPath)
 			$local:targetFolderName = $(Join-Path $local:mediaName $local:targetFolderName)
 		}
-		#同名フォルダが存在する場合は配下のファイルを移動
+		#同名ディレクトリが存在する場合は配下のファイルを移動
 		$local:moveFromPath = $(Join-Path $script:downloadBaseDir $local:targetFolderName)
 		if (Test-Path $local:moveFromPath) {
 			$local:moveFromPath = $local:moveFromPath + '\*.mp4'
