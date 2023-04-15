@@ -2356,7 +2356,7 @@ function checkIfIgnored {
 			$script:ignore = $true ; break
 		} elseif ($(getNarrowChars $local:videoTitle) -match $(getNarrowChars $local:ignoreTitle)) {
 			$script:ignore = $true ; break
-		} elseif ($(getNarrowChars $local:videoName) -match $(getNarrowChars $local:videoName)) {
+		} elseif ($(getNarrowChars $local:videoName) -match $(getNarrowChars $local:ignoreTitle)) {
 			$script:ignore = $true ; break
 		}
 
