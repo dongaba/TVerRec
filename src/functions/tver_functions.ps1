@@ -1170,6 +1170,7 @@ function downloadTVerVideo {
 			$script:ignore = checkIfIgnored `
 				-ignoreText $local:ignoreTitle `
 				-seriesTitle "$($script:videoSeries) " `
+				-seasonTitle "$($script:videoSeason) " `
 				-epsodeTitle "$($script:videoTitle) " `
 				-fileName "$($script:videoName) "
 		}
@@ -2330,6 +2331,15 @@ function checkIfIgnored {
 			ValueFromPipelineByPropertyName = $true,
 			Position = 2
 		)]
+		[Alias('seasonTitle')]
+		[String]$local:videoSeason,
+
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $true,
+			ValueFromPipelineByPropertyName = $true,
+			Position = 3
+		)]
 		[Alias('epsodeTitle')]
 		[String]$local:videoTitle,
 
@@ -2337,7 +2347,7 @@ function checkIfIgnored {
 			Mandatory = $true,
 			ValueFromPipeline = $true,
 			ValueFromPipelineByPropertyName = $true,
-			Position = 2
+			Position = 4
 		)]
 		[Alias('fileName')]
 		[String]$local:videoName
