@@ -15,6 +15,7 @@
 - bat ファイル以外を BOM なし UTF-8、LF に統一
 - `$script:addEpisodeNumber` のデフォルト値を `$true` に変更
 - `$script:removeSpecialNote` のデフォルト値を `$true` に変更
+- 無視判定の処理を高速化
 
 ### 2.7.0 Fixed
 
