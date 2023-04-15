@@ -2339,7 +2339,7 @@ function checkIfIgnored {
 			ValueFromPipelineByPropertyName = $true,
 			Position = 2
 		)]
-		[Alias('fileNmae')]
+		[Alias('fileName')]
 		[String]$local:videoName
 	)
 
