@@ -1612,13 +1612,15 @@ function getVideoFileName {
 
 	#ファイル名を生成
 	if ($script:addEpisodeNumber -eq $true) {
-		$local:videoName = $local:videoSeries `
+		$local:videoName = `
+			$local:videoSeries `
 			+ ' ' + $local:videoSeason `
 			+ ' ' + $local:broadcastDate `
 			+ ' Ep' + $local:videoEpisode `
 			+ ' ' + $local:videoTitle
 	} else {
-		$local:videoName = $local:videoSeries `
+		$local:videoName = `
+			$local:videoSeries `
 			+ ' ' + $local:videoSeason `
 			+ ' ' + $local:broadcastDate `
 			+ ' ' + $local:videoTitle
@@ -2354,6 +2356,8 @@ function checkIfIgnored {
 		#ダウンロード対象外と合致したものはそれ以上のチェック不要
 		if ($(getNarrowChars $local:videoSeries) -match $(getNarrowChars $local:ignoreTitle)) {
 			$script:ignore = $true ; break
+		} elseif ($(getNarrowChars $local:videoSeason) -match $(getNarrowChars $local:ignoreTitle)) {
+			$script:ignore = $true ; break
 		} elseif ($(getNarrowChars $local:videoTitle) -match $(getNarrowChars $local:ignoreTitle)) {
 			$script:ignore = $true ; break
 		} elseif ($(getNarrowChars $local:videoName) -match $(getNarrowChars $local:ignoreTitle)) {
@@ -2362,4 +2366,3 @@ function checkIfIgnored {
 
 	}
 }
-
