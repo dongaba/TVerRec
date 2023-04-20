@@ -7,6 +7,7 @@
 - Docker コンテナの作成に対応
 - TVerRec の自動アップデート機能を追加
 - Mac/Linux 環境向けの ffmpeg 自動更新機能を追加
+- Windows 環境で Zone Identifier 機能を追加
 
 ### 2.7.0 Changed
 

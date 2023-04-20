@@ -38,6 +38,9 @@ title TVerRec Video File List Generator
 where /Q pwsh
 if %ERRORLEVEL% neq 0 (goto :INSTALL)
 
+rem Zone Identifierの削除
+pwsh -Command "Get-ChildItem "..\" -Recurse | Unblock-File"
+
 pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\generate_list.ps1"
 
 pause

@@ -38,6 +38,9 @@ title TVerRec Video File Deleter
 where /Q pwsh
 if %ERRORLEVEL% neq 0 (goto :INSTALL)
 
+rem Zone Identifierの削除
+pwsh -Command "Get-ChildItem "..\" -Recurse | Unblock-File"
+
 pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\delete_trash.ps1"
 
 pause
