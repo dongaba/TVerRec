@@ -100,7 +100,7 @@ checkRequiredFile
 #ダウンロード対象キーワードの読み込み
 $local:keywordNames = loadKeywordList
 #ダウンロード対象外番組の読み込み
-$script:ignoreTitles = getIgnoreList
+$script:ignoreRegExTitles = getRegExIgnoreList
 getToken
 
 #キーワードの番号
@@ -169,12 +169,10 @@ foreach ($local:keywordName in $local:keywordNames) {
 		}
 	}
 
-	#ジャンル内の処理中の番組の番号
-	$local:videoNum = 0
+	#ダウンロード対象のトータル番組数
 	if ($null -eq $local:videoLinks) {
 		$local:videoTotal = 0
 	} else {
-		#ダウンロード対象のトータル番組数
 		$local:videoTotal = $local:videoLinks.Length
 	}
 	Out-Msg "　ダウンロード対象$($local:videoTotal)本 処理済$($local:searchResultCount)本" -Fg 'Gray'
@@ -207,34 +205,157 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 	#----------------------------------------------------------------------
 	#個々の番組の情報の取得ここから
-	foreach ($local:videoLink in $local:videoLinks) {
-		#ジャンル内の番組番号のインクリメント
-		$local:videoNum = $local:videoNum + 1
 
-		#進捗率の計算
-		$local:progressRatio2 = $($local:videoNum / $local:videoTotal)
+	#----------------------------------------------------------------------
+	#複数あるときは並列化と思ったら速くならなかったので
+	#現状では無条件でシングルスレッド処理に振り分ける。
+	#速くならなかった理由は不明。。。
+	#----------------------------------------------------------------------
+	if ($local:videoTotal -lt 0) {
 
-		#進捗更新
-		updateProgress2Row `
-			-ProgressActivity1 $local:keywordNum/$local:keywordTotal `
-			-CurrentProcessing1 $(trimTabSpace ($local:keywordName)) `
-			-Rate1 $local:progressRatio1 `
-			-SecRemaining1 $local:secRemaining1 `
-			-ProgressActivity2 $local:videoNum/$local:videoTotal `
-			-CurrentProcessing2 $local:videoLink `
-			-Rate2 $local:progressRatio2 `
-			-SecRemaining2 '' `
-			-Group 'ListGen'
+		#関数の定義
+		$funcGoAnal = ${function:goAnal}.ToString()
+		$funcGetVideoInfo = ${function:getVideoInfo}.ToString()
+		$funcGetNarrowChars = ${function:getNarrowChars}.ToString()
+		$funcFileLock = ${function:fileLock}.ToString()
+		$funcFileUnlock = ${function:fileUnlock}.ToString()
+		$funcGetSpecialCharacterReplaced = ${function:getSpecialCharacterReplaced}.ToString()
+		$funcUnixTimeToDateTime = ${function:unixTimeToDateTime}.ToString()
 
-		#処理
-		Out-Msg "$($local:videoNum)/$($local:videoTotal) - $local:videoLink" -NoNL $true
+		$local:videoLinks | ForEach-Object -Parallel {
+			#関数の取り込み
+			${function:goAnal} = $using:funcGoAnal
+			${function:getVideoInfo} = $using:funcGetVideoInfo
+			${function:getNarrowChars} = $using:funcGetNarrowChars
+			${function:fileLock} = $using:funcFileLock
+			${function:fileUnlock} = $using:funcFileUnlock
+			${function:getSpecialCharacterReplaced} = $using:funcGetSpecialCharacterReplaced
+			${function:unixTimeToDateTime} = $using:funcUnixTimeToDateTime
 
-		#TVer番組ダウンロードのメイン処理
-		generateTVerVideoList `
-			-Keyword $local:keywordName `
-			-Link $local:videoLink.Replace('https://tver.jp', '')
+			#変数の置き換え
+			$script:timeoutSec = $using:script:timeoutSec
+			$script:guid = $using:script:guid
+			$script:clientEnv = $using:script:clientEnv
+			$script:disableValidation = $using:script:disableValidation
+			$script:forceSoftwareDecodeFlag = $using:script:forceSoftwareDecodeFlag
+			$script:ffmpegDecodeOption = $using:script:ffmpegDecodeOption
+			$script:platformUID = $using:script:platformUID
+			$script:platformToken = $using:script:platformToken
+			$script:listLockFilePath = $using:script:listLockFilePath
+			$script:listFilePath = $using:script:listFilePath
+			$script:listFileData = $using:script:listFileData
+
+			#処理
+			Write-Output "$($([Array]::IndexOf($using:local:videoLinks, $_)) + 1 )/$($using:local:videoLinks.Count) - $($_)"
+
+			#TVer番組ダウンロードのメイン処理
+			$broadcastDate = '' ; $videoSeries = '' ; $videoSeason = ''
+			$videoEpisode = '' ; $videoTitle = ''
+			$mediaName = ''
+			$ignoreWord = ''
+			$newVideo = $null
+			$ignore = $false
+
+			#TVerのAPIを叩いて番組情報取得
+			goAnal -Event 'getinfo' -Type 'link' -ID $_
+			try {
+				getVideoInfo -Link $_
+			} catch {
+				Write-Output '　情報取得エラー。スキップします Err:10'
+				#次回再度トライするため以降の処理をせずに次の番組へ
+				continue
+			}
+
+			#ダウンロード対象外に入っている番組の場合はリスト出力しない
+			foreach ($ignoreRegexTitle in $using:script:ignoreRegexTitles) {
+
+				if ($(getNarrowChars $script:videoSeries) -match $(getNarrowChars $ignoreRegexTitle)) {
+					$ignoreWord = $ignoreRegexTitle
+					$ignore = $true
+					#ダウンロード対象外と合致したものはそれ以上のチェック不要
+					break
+				} elseif ($(getNarrowChars $script:videoTitle) -match $(getNarrowChars $ignoreRegexTitle)) {
+					$ignoreWord = $ignoreRegexTitle
+					$ignore = $true
+					#ダウンロード対象外と合致したものはそれ以上のチェック不要
+					break
+				}
+			}
+
+			#スキップフラグが立っているかチェック
+			if ($ignore -eq $true) {
+				Write-Output '　番組をコメントアウトした状態でリストファイルに追加します'
+				$newVideo = [pscustomobject]@{
+					seriesName    = $videoSeries
+					seriesID      = $videoSeriesID
+					seasonName    = $videoSeason
+					seasonID      = $videoSeasonID
+					episodeNo     = $videoEpisode
+					episodeName   = $videoTitle
+					episodeID     = '#' + $_
+					media         = $mediaName
+					provider      = $providerName
+					broadcastDate = $broadcastDate
+					endTime       = $endTime
+					keyword       = $local:keywordName
+					ignoreWord    = $ignoreWord
+				}
+			} else {
+				Write-Output '　番組をリストファイルに追加します'
+				$newVideo = [pscustomobject]@{
+					seriesName    = $videoSeries
+					seriesID      = $videoSeriesID
+					seasonName    = $videoSeason
+					seasonID      = $videoSeasonID
+					episodeNo     = $videoEpisode
+					episodeName   = $videoTitle
+					episodeID     = $_
+					media         = $mediaName
+					provider      = $providerName
+					broadcastDate = $broadcastDate
+					endTime       = $endTime
+					keyword       = $keywordName
+					ignoreWord    = ''
+				}
+			}
+
+			#ダウンロードリストCSV書き出し
+			try {
+				#ロックファイルをロック
+				while ($(fileLock $script:listLockFilePath).fileLocked -ne $true) {
+					Write-Output '　ファイルのロック解除待ち中です' -Fg 'Gray'
+					Start-Sleep -Seconds 1
+				}
+				#ファイル操作
+				$newVideo | Export-Csv `
+					-Path $script:listFilePath `
+					-NoTypeInformation `
+					-Encoding UTF8 `
+					-Append
+				Write-Debug 'ダウンロードリストを書き込みました'
+			} catch {
+				Write-Output '　ダウンロードリストを更新できませんでした。スキップします'
+				continue
+			} finally { $null = fileUnlock $script:listLockFilePath }
+			$script:listFileData = `
+				Import-Csv `
+				-Path $script:listFilePath `
+				-Encoding UTF8
+
+		} -ThrottleLimit 10
+
+	} else {
+
+		foreach ($local:videoLink in $local:videoLinks) {
+			Write-Output "$($([Array]::IndexOf($local:videoLinks, $local:videoLink)) + 1 )/$($local:videoLinks.Count) - $($local:videoLink)"
+			#TVer番組ダウンロードのメイン処理
+			generateTVerVideoList `
+				-Keyword $local:keywordName `
+				-Link $local:videoLink
+		}
 
 	}
+
 	#----------------------------------------------------------------------
 
 }

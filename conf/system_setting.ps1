@@ -57,7 +57,7 @@ $script:downloadWorkDir = $env:TMP	#$env:TMP = C:\Users\<ユーザ名>\AppData\L
 #　ダウンロード先のディレクトリで動画を再生するのであれば、適当な空ディレクトリを指定しておいてもOKです。
 #　例えば C:\TverLibrary を保存先にするのであれば $script:saveBaseDir = 'C:\TverLibrary' と設定します。
 #　MacOSやLinuxでは $script:saveBaseDir = '/var/Video' や $script:saveBaseDir = '/Volumes/RamDrive/Video' などのように設定します。
-$script:saveBaseDir = 'V:'
+$script:saveBaseDir = ''
 
 #----------------------------------------------------------------------
 # 高度な設定
@@ -120,15 +120,30 @@ $script:windowShowStyle = 'Hidden'
 #	以下は変更を推奨しない設定。変更の際は自己責任で。
 #----------------------------------------------------------------------
 #ffmpegのデコードオプション
-$script:ffmpegDecodeOption = ''							#ffmpegのデコードオプションを以下を参考に設定
+$script:ffmpegDecodeOption = ''
+
 #以下は$script:ffmpegDecodeOptionの設定例
-#$script:ffmpegDecodeOption = '-hwaccel qsv -c:v h264_qsv'											#QSV : for Intel CPUs (Intel内蔵グラフィックを使用)
-#$script:ffmpegDecodeOption = '-hwaccel d3d11va -hwaccel_output_format d3d11'						#Direct3D 11 : for Windows (GPUを使用)
-#$script:ffmpegDecodeOption = '-hwaccel dxva2 -hwaccel_output_format dxva2_vld'						#Direct3D 9 : for Windows (GPUを使用)
-#$script:ffmpegDecodeOption = '-hwaccel cuda -hwaccel_output_format cuda'							#CUDA : for NVIDIA Graphic Cards
-#$script:ffmpegDecodeOption = '-hwaccel videotoolbox'												#VideoToolBox : for Macs
-#$script:ffmpegDecodeOption = '-c:v h264_v4l2m2m -num_output_buffers 32 -num_capture_buffers 32'	#for Raspberry Pi 4 64bit
-#$script:ffmpegDecodeOption = '-c:v h264_omx'														#for Raspberry Pi 3/4 32bit
+
+#QSV : for Intel CPUs (Intel内蔵グラフィックを使用)
+#$script:ffmpegDecodeOption = '-hwaccel qsv -c:v h264_qsv'
+
+#Direct3D 11 : for Windows (GPUを使用)
+#$script:ffmpegDecodeOption = '-hwaccel d3d11va -hwaccel_output_format d3d11'
+
+#Direct3D 9 : for Windows (GPUを使用)
+#$script:ffmpegDecodeOption = '-hwaccel dxva2 -hwaccel_output_format dxva2_vld'
+
+#CUDA : for NVIDIA Graphic Cards
+#$script:ffmpegDecodeOption = '-hwaccel cuda -hwaccel_output_format cuda'
+
+#VideoToolBox : for Macs
+#$script:ffmpegDecodeOption = '-hwaccel videotoolbox'
+
+#for Raspberry Pi 4 64bit
+#$script:ffmpegDecodeOption = '-c:v h264_v4l2m2m -num_output_buffers 32 -num_capture_buffers 32'
+
+#for Raspberry Pi 3/4 32bit
+#$script:ffmpegDecodeOption = '-c:v h264_omx'
 
 #アプリケーション名・バージョン番号
 $script:appName = 'TVerRec'
@@ -162,11 +177,14 @@ $script:keywordFilePath = $(Join-Path $script:confDir 'keyword.conf')
 #ダウンロード対象外番組のパス
 $script:ignoreFileSamplePath = $(Join-Path $script:confDir 'ignore.sample.conf')
 $script:ignoreFilePath = $(Join-Path $script:confDir 'ignore.conf')
+$script:ignoreLockFilePath = $(Join-Path $script:dbDir 'ignore.lock')
 
 #ダウンロード履歴のパス
 $script:historyFilePath = $(Join-Path $script:dbDir 'history.csv')
 $script:historyFileSamplePath = $(Join-Path $script:dbDir 'history.sample.csv')
 $script:historyLockFilePath = $(Join-Path $script:dbDir 'history.lock')
+
+#ダウンロードリストのパス
 $script:listFilePath = $(Join-Path $script:listDir 'list.csv')
 $script:listFileSamplePath = $(Join-Path $script:listDir 'list.sample.csv')
 $script:listLockFilePath = $(Join-Path $script:dbDir 'list.lock')

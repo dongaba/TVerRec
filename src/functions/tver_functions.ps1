@@ -306,16 +306,167 @@ function getIgnoreList {
 	Param ()
 
 	try {
+		#ロックファイルをロック
+		while ($(fileLock $script:ignoreLockFilePath).fileLocked -ne $true) {
+			Out-Msg '　ファイルのロック解除待ち中です' -Fg 'Gray'
+			Start-Sleep -Seconds 1
+		}
+		#ファイル操作
 		$local:ignoreTitles = `
 			[String[]](Get-Content $script:ignoreFilePath -Encoding UTF8 `
 			| Where-Object { !($_ -match '^\s*$') } `		#空行を除く
 			| Where-Object { !($_ -match '^;.*$') })		#コメント行を除く
 	} catch {
 		Out-Msg 'ダウンロード対象外の読み込みに失敗しました' -Fg 'Green' ; exit 1
+	} finally {
+		$null = fileUnlock $script:ignoreLockFilePath
 	}
 
 	return $local:ignoreTitles
 }
+
+#----------------------------------------------------------------------
+#ダウンロード対象外番組の読み込(正規表現判定用)
+#----------------------------------------------------------------------
+function getRegexIgnoreList {
+	[OutputType([String[]])]
+	Param ()
+
+	try {
+		#ロックファイルをロック
+		while ($(fileLock $script:ignoreLockFilePath).fileLocked -ne $true) {
+			Out-Msg '　ファイルのロック解除待ち中です' -Fg 'Gray'
+			Start-Sleep -Seconds 1
+		}
+		#ファイル操作
+		$local:ignoreRegexTitles = `
+			[String[]](Get-Content $script:ignoreFilePath -Encoding UTF8 `
+			| Where-Object { !($_ -match '^\s*$') } `		#空行を除く
+			| Where-Object { !($_ -match '^;.*$') })		#コメント行を除く
+	} catch {
+		Out-Msg 'ダウンロード対象外の読み込みに失敗しました' -Fg 'Green' ; exit 1
+	} finally {
+		$null = fileUnlock $script:ignoreLockFilePath
+	}
+
+	foreach ($local:ignoreRegexTitle in $local:ignoreRegexTitles) {
+		#正規表現用のエスケープ
+		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('\', '\\')
+		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('*', '\*')
+		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('+', '\+')
+		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('.', '\.')
+		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('?', '\?')
+		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('{', '\{')
+		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('}', '\}')
+		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('(', '\(')
+		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace(')', '\)')
+		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('[', '\[')
+		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace(']', '\]')
+		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('^', '\^')
+		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('$', '\$')
+		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('-', '\-')
+		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('|', '\|')
+		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('/', '\/')
+	}
+
+	return $local:ignoreRegexTitles
+}
+
+#----------------------------------------------------------------------
+#ダウンロード対象外番組のソート(使用したものを上に移動)
+#----------------------------------------------------------------------
+function sortIgnoreList {
+	[OutputType([System.Void])]
+	Param (
+		[Parameter(
+			Mandatory = $true,
+			ValueFromPipeline = $true,
+			ValueFromPipelineByPropertyName = $true,
+			Position = 0
+		)]
+		[Alias('ignoreTitle')]
+		[String]$local:ignoreTitle
+	)
+
+	$local:ignoreListNew = @()
+	$local:ignoreComment = @()
+	$local:ignoreTarget = @()
+	$local:ignoreElse = @()
+	$local:timeStamp = $(Get-Date -Format 'yyyyMMddHHmmss')
+
+	#正規表現用のエスケープ解除
+	$local:ignoreTitle = $local:ignoreTitle.Replace('\\', '\')
+	$local:ignoreTitle = $local:ignoreTitle.Replace('\*', '*')
+	$local:ignoreTitle = $local:ignoreTitle.Replace('\+', '+')
+	$local:ignoreTitle = $local:ignoreTitle.Replace('\.', '.')
+	$local:ignoreTitle = $local:ignoreTitle.Replace('\?', '?')
+	$local:ignoreTitle = $local:ignoreTitle.Replace('\{', '{')
+	$local:ignoreTitle = $local:ignoreTitle.Replace('\}', '}')
+	$local:ignoreTitle = $local:ignoreTitle.Replace('\(', '(')
+	$local:ignoreTitle = $local:ignoreTitle.Replace('\)', ')')
+	$local:ignoreTitle = $local:ignoreTitle.Replace('\[', '[')
+	$local:ignoreTitle = $local:ignoreTitle.Replace('\]', ']')
+	$local:ignoreTitle = $local:ignoreTitle.Replace('\^', '^')
+	$local:ignoreTitle = $local:ignoreTitle.Replace('\$', '$')
+	$local:ignoreTitle = $local:ignoreTitle.Replace('\-', '-')
+	$local:ignoreTitle = $local:ignoreTitle.Replace('\|', '|')
+	$local:ignoreTitle = $local:ignoreTitle.Replace('\/', '/')
+
+	try {
+		#ロックファイルをロック
+		while ($(fileLock $script:ignoreLockFilePath).fileLocked -ne $true) {
+			Out-Msg '　ファイルのロック解除待ち中です' -Fg 'Gray'
+			Start-Sleep -Seconds 1
+		}
+		#ファイル操作
+		Copy-Item `
+			-Path $script:ignoreFilePath `
+			-Destination $($script:ignoreFilePath + '.' + $local:timeStamp) `
+			-Force
+		$local:ignoreLists = (Get-Content $script:ignoreFilePath -Encoding UTF8).`
+			Where( { !($_ -match '^\s*$') }).`		#空行を除く
+		Where( { !($_ -match '^;;.*$') })		#ヘッダ行を除く
+	} catch {
+		Out-Msg 'ダウンロード対象外リストの読み込みに失敗しました' -Fg 'Green' ; exit 1
+	} finally {
+		$null = fileUnlock $script:ignoreLockFilePath
+	}
+
+	$local:ignoreComment = (Get-Content $script:ignoreFileSamplePath -Encoding UTF8)
+	$local:ignoreTarget = $ignoreLists | Where-Object { $_ -eq $local:ignoreTitle }
+	$local:ignoreElse = $ignoreLists | Where-Object { $_ -ne $local:ignoreTitle }
+
+	$local:ignoreListNew += $local:ignoreComment
+	$local:ignoreListNew += $local:ignoreTarget
+	$local:ignoreListNew += $local:ignoreElse
+
+	try {
+		#ロックファイルをロック
+		while ($(fileLock $script:ignoreLockFilePath).fileLocked -ne $true) {
+			Out-Msg '　ファイルのロック解除待ち中です' -Fg 'Gray'
+			Start-Sleep -Seconds 1
+		}
+		#ファイル操作
+		#改行コードLFを強制
+		$local:ignoreListNew | ForEach-Object { $_ + "`n" } | Out-File `
+			-Path $script:ignoreFilePath `
+			-Encoding UTF8 `
+			-NoNewline
+		Write-Debug 'ダウンロード対象外リストのソート更新完了'
+	} catch {
+		Copy-Item `
+			Path $($script:ignoreFilePath + '.' + $local:timeStamp) `
+			-Destination $script:ignoreFilePath `
+			-Force
+		Out-Msg 'ダウンロード対象外リストのソートに失敗しました' -Fg 'Green' ; exit 1
+	} finally {
+		$null = fileUnlock $script:ignoreLockFilePath
+		#ダウンロード対象外番組の読み込み
+		$script:ignoreRegExTitles = getRegExIgnoreList
+	}
+
+}
+
 
 #----------------------------------------------------------------------
 #TVerのAPI Tokenを取得
@@ -488,7 +639,7 @@ function getLinkFromSeriesID {
 
 	#まずはSeries→Seasonに変換
 	$local:callSearchURL =
-	$local:callSearchBaseURL + $local:seriesID `
+	$local:callSearchBaseURL + $local:seriesID.Replace('series/', '') `
 		+ '?platform_uid=' + $script:platformUID `
 		+ '&platform_token=' + $script:platformToken
 	$local:searchResultsRaw = `
@@ -521,7 +672,7 @@ function getLinkFromTalentID {
 	$local:callSearchBaseURL = `
 		'https://platform-api.tver.jp/service/api/v1/callTalentEpisode/'
 	$local:callSearchURL = `
-		$local:callSearchBaseURL + $local:talentID `
+		$local:callSearchBaseURL + $local:talentID.Replace('talents/', '') `
 		+ '?platform_uid=' + $script:platformUID `
 		+ '&platform_token=' + $script:platformToken
 	$local:searchResultsRaw = `
@@ -573,7 +724,7 @@ function getLinkFromTag {
 	$local:callSearchBaseURL = `
 		'https://platform-api.tver.jp/service/api/v1/callTagSearch'
 	$local:callSearchURL = `
-		$local:callSearchBaseURL + '/' + $local:tagID `
+		$local:callSearchBaseURL + '/' + $local:tagID.Replace('tag/', '') `
 		+ '?platform_uid=' + $script:platformUID `
 		+ '&platform_token=' + $script:platformToken
 	$local:searchResultsRaw = `
@@ -625,7 +776,7 @@ function getLinkFromNew {
 	$local:callSearchBaseURL = `
 		'https://service-api.tver.jp/api/v1/callNewerDetail'
 	$local:callSearchURL = `
-		$local:callSearchBaseURL + '/' + $local:genre `
+		$local:callSearchBaseURL + '/' + $local:genre.Replace('new/', '') `
 		+ '?platform_uid=' + $script:platformUID `
 		+ '&platform_token=' + $script:platformToken
 	$local:searchResultsRaw = `
@@ -684,7 +835,7 @@ function getLinkFromRanking {
 	} else {
 		$local:callSearchURL = `
 			$local:callSearchBaseURL `
-			+ 'Detail/' + $local:genre `
+			+ 'Detail/' + $local:genre.Replace('ranking/', '') `
 			+ '?platform_uid=' + $script:platformUID `
 			+ '&platform_token=' + $script:platformToken
 	}
@@ -915,7 +1066,7 @@ function getLinkFromSeasonID {
 	$local:tverSearchBaseURL = `
 		'https://platform-api.tver.jp/service/api/v1/callSeasonEpisodes/'
 	$local:callSearchURL = `
-		$local:tverSearchBaseURL + $local:SeasonID `
+		$local:tverSearchBaseURL + $local:SeasonID.Replace('season/', '') `
 		+ '?platform_uid=' + $script:platformUID `
 		+ '&platform_token=' + $script:platformToken
 	$local:searchResultsRaw = `
@@ -1148,32 +1299,16 @@ function downloadTVerVideo {
 
 	} else {
 
-		# $funCheckIfIgnored = ${function:checkIfIgnored}.ToString()
-		# $funGetNarrowChars = ${function:getNarrowChars}.ToString()
-
-		# $script:ignoreTitles | ForEach-Object -Parallel {
-		# 	${function:checkIfIgnored} = $using:funCheckIfIgnored
-		# 	${function:getNarrowChars} = $using:funGetNarrowChars
-		# 	$series = $using:script:videoSeries
-		# 	$title = $using:script:videoTitle
-
-		# 	Write-Host $_
-
-		# 	checkIfIgnored `
-		# 		-ignoreText $_ `
-		# 		-seriesTitle "$($series) " `
-		# 		-epsodeTitle "$($title) "
-
-		# } -ThrottleLimit 10
-
-		foreach ($local:ignoreTitle in $script:ignoreTitles) {
+		Write-Debug "$(Get-Date) Ignore Check Start"
+		foreach ($local:ignoreRegexTitle in $script:ignoreRegexTitles) {
 			$script:ignore = checkIfIgnored `
-				-ignoreText $local:ignoreTitle `
-				-seriesTitle "$($script:videoSeries) " `
-				-seasonTitle "$($script:videoSeason) " `
-				-epsodeTitle "$($script:videoTitle) " `
-				-fileName "$($script:videoName) "
+				-ignoreRegexText $local:ignoreRegexTitle `
+				-seriesTitle $script:videoSeries `
+				-fileName $script:videoName
+			if ($script:ignore -eq $true) { break }
 		}
+		Write-Debug "$(Get-Date) Ignore Check End"
+		Write-Debug "$script:ignore"
 
 	}
 
@@ -1196,7 +1331,7 @@ function downloadTVerVideo {
 			videoValidated  = '0'
 		}
 	} elseif ($script:skip -eq $true) {
-		Out-Msg '　スキップした未検証のファイルをダウンロード履歴に追加します'
+		Out-Msg '　ダウンロード済の未検証のファイルをダウンロード履歴に追加します'
 		$script:newVideo = [pscustomobject]@{
 			videoPage       = $script:videoPageURL
 			videoSeriesPage = $script:videoSeriesPageURL
@@ -1321,29 +1456,15 @@ function generateTVerVideoList {
 	}
 
 	#ダウンロード対象外に入っている番組の場合はリスト出力しない
-	foreach ($local:ignoreTitle in $script:ignoreTitles) {
+	foreach ($local:ignoreRegexTitle in $script:ignoreRegexTitles) {
 
-		#正規表現用のエスケープ
-		$local:ignoreTitle = $local:ignoreTitle.Replace('\', '\\')
-		$local:ignoreTitle = $local:ignoreTitle.Replace('*', '\*')
-		$local:ignoreTitle = $local:ignoreTitle.Replace('+', '\+')
-		$local:ignoreTitle = $local:ignoreTitle.Replace('.', '\.')
-		$local:ignoreTitle = $local:ignoreTitle.Replace('?', '\?')
-		$local:ignoreTitle = $local:ignoreTitle.Replace('{', '\{')
-		$local:ignoreTitle = $local:ignoreTitle.Replace('}', '\}')
-		$local:ignoreTitle = $local:ignoreTitle.Replace('(', '\(')
-		$local:ignoreTitle = $local:ignoreTitle.Replace(')', '\)')
-		$local:ignoreTitle = $local:ignoreTitle.Replace('[', '\[')
-		$local:ignoreTitle = $local:ignoreTitle.Replace(']', '\]')
-		$local:ignoreTitle = $local:ignoreTitle.Replace('^', '\^')
-		$local:ignoreTitle = $local:ignoreTitle.Replace('$', '\$')
-		$local:ignoreTitle = $local:ignoreTitle.Replace('-', '\-')
-		$local:ignoreTitle = $local:ignoreTitle.Replace('|', '\|')
-		$local:ignoreTitle = $local:ignoreTitle.Replace('/', '\/')
-
-		if (($(getNarrowChars $script:videoSeries) -match $(getNarrowChars $local:ignoreTitle)) `
-				-Or ($(getNarrowChars $script:videoTitle) -match $(getNarrowChars $local:ignoreTitle))) {
-			$local:ignoreWord = $local:ignoreTitle
+		if ($(getNarrowChars $script:videoSeries) -match $(getNarrowChars $local:ignoreRegexTitle)) {
+			$local:ignoreWord = $local:ignoreRegexTitle
+			$script:ignore = $true
+			#ダウンロード対象外と合致したものはそれ以上のチェック不要
+			break
+		} elseif ($(getNarrowChars $script:videoTitle) -match $(getNarrowChars $local:ignoreRegexTitle)) {
+			$local:ignoreWord = $local:ignoreRegexTitle
 			$script:ignore = $true
 			#ダウンロード対象外と合致したものはそれ以上のチェック不要
 			break
@@ -1426,7 +1547,11 @@ function getVideoInfo {
 		[String]$local:videoLink
 	)
 
-	$local:episodeID = $local:videoLink.Replace('/episodes/', '')
+	$local:episodeID = $local:videoLink.`
+		Replace('https://tver.jp/', '').`
+		Replace('https://tver.jp', '').`
+		Replace('/episodes/', '').`
+		Replace('episodes/', '')
 
 	#----------------------------------------------------------------------
 	#番組説明以外
@@ -1939,10 +2064,10 @@ function cleanDB {
 	[OutputType([System.Void])]
 	Param ()
 
-	$local:historyData0 = $null
-	$local:historyData1 = $null
-	$local:historyData2 = $null
-	$local:mergedHist = @()
+	$local:historyData0 = @()
+	$local:historyData1 = @()
+	$local:historyData2 = @()
+	$local:mergedHistoryData = @()
 	#ダウンロード対象外とされたもの
 	try {
 		#ロックファイルをロック
@@ -1959,10 +2084,10 @@ function cleanDB {
 		$local:historyData1 = (($local:historyData).Where({ $_.videoValidated -eq '1' }))
 		$local:historyData2 = (($local:historyData).Where({ $_.videoValidated -eq '2' }))
 
-		if ($null -ne $local:historyData0) { $local:mergedHist += $local:historyData0 }
-		if ($null -ne $local:historyData1) { $local:mergedHist += $local:historyData1 }
-		if ($null -ne $local:historyData2) { $local:mergedHist += $local:historyData2 }
-		$local:mergedHist | Sort-Object -Property downloadDate `
+		$local:mergedHistoryData += $local:historyData0
+		$local:mergedHistoryData += $local:historyData1
+		$local:mergedHistoryData += $local:historyData2
+		$local:mergedHistoryData | Sort-Object -Property downloadDate `
 		| Export-Csv `
 			-Path $script:historyFilePath `
 			-NoTypeInformation `
@@ -2042,18 +2167,18 @@ function uniqueDB {
 			$null {
 				switch ($local:ignoredHist) {
 					$null { retrun }
-					default { $local:mergedHist = $local:ignoredHist; break }
+					default { $local:mergedHistoryData = $local:ignoredHist; break }
 				}; break		#breakがないと無限ループ
 			}
 			default {
 				switch ($local:ignoredHist) {
-					$null { $local:mergedHist = $local:processedHist; break }
-					default { $local:mergedHist = $local:processedHist + $local:ignoredHist; break }
+					$null { $local:mergedHistoryData = $local:processedHist; break }
+					default { $local:mergedHistoryData = $local:processedHist + $local:ignoredHist; break }
 				}; break		#breakがないと無限ループ
 			}
 		}
 
-		$local:mergedHist | Sort-Object -Property downloadDate `
+		$local:mergedHistoryData | Sort-Object -Property downloadDate `
 		| Export-Csv `
 			-Path $script:historyFilePath `
 			-NoTypeInformation `
@@ -2303,8 +2428,6 @@ function checkVideo {
 #番組が無視されているかチェック
 #----------------------------------------------------------------------
 function checkIfIgnored {
-	[CmdletBinding()]
-	#	[OutputType([Boolean])]
 	[OutputType([System.Void])]
 	Param (
 		[Parameter(
@@ -2313,8 +2436,8 @@ function checkIfIgnored {
 			ValueFromPipelineByPropertyName = $true,
 			Position = 0
 		)]
-		[Alias('ignoreText')]
-		[String]$local:ignoreTitle,
+		[Alias('ignoreRegexText')]
+		[String]$local:ignoreRegexTitle,
 
 		[Parameter(
 			Mandatory = $true,
@@ -2331,56 +2454,18 @@ function checkIfIgnored {
 			ValueFromPipelineByPropertyName = $true,
 			Position = 2
 		)]
-		[Alias('seasonTitle')]
-		[String]$local:videoSeason,
-
-		[Parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $true,
-			ValueFromPipelineByPropertyName = $true,
-			Position = 3
-		)]
-		[Alias('epsodeTitle')]
-		[String]$local:videoTitle,
-
-		[Parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $true,
-			ValueFromPipelineByPropertyName = $true,
-			Position = 4
-		)]
 		[Alias('fileName')]
 		[String]$local:videoName
 	)
 
 	process {
 
-		#正規表現用のエスケープ
-		$local:ignoreTitle = $local:ignoreTitle.Replace('\', '\\')
-		$local:ignoreTitle = $local:ignoreTitle.Replace('*', '\*')
-		$local:ignoreTitle = $local:ignoreTitle.Replace('+', '\+')
-		$local:ignoreTitle = $local:ignoreTitle.Replace('.', '\.')
-		$local:ignoreTitle = $local:ignoreTitle.Replace('?', '\?')
-		$local:ignoreTitle = $local:ignoreTitle.Replace('{', '\{')
-		$local:ignoreTitle = $local:ignoreTitle.Replace('}', '\}')
-		$local:ignoreTitle = $local:ignoreTitle.Replace('(', '\(')
-		$local:ignoreTitle = $local:ignoreTitle.Replace(')', '\)')
-		$local:ignoreTitle = $local:ignoreTitle.Replace('[', '\[')
-		$local:ignoreTitle = $local:ignoreTitle.Replace(']', '\]')
-		$local:ignoreTitle = $local:ignoreTitle.Replace('^', '\^')
-		$local:ignoreTitle = $local:ignoreTitle.Replace('$', '\$')
-		$local:ignoreTitle = $local:ignoreTitle.Replace('-', '\-')
-		$local:ignoreTitle = $local:ignoreTitle.Replace('|', '\|')
-		$local:ignoreTitle = $local:ignoreTitle.Replace('/', '\/')
-
 		#ダウンロード対象外と合致したものはそれ以上のチェック不要
-		if ($(getNarrowChars $local:videoSeries) -match $(getNarrowChars $local:ignoreTitle)) {
+		if ($(getNarrowChars $local:videoName) -match $(getNarrowChars $local:ignoreRegexTitle)) {
+			sortIgnoreList $local:ignoreRegexTitle
 			$script:ignore = $true ; break
-		} elseif ($(getNarrowChars $local:videoSeason) -match $(getNarrowChars $local:ignoreTitle)) {
-			$script:ignore = $true ; break
-		} elseif ($(getNarrowChars $local:videoTitle) -match $(getNarrowChars $local:ignoreTitle)) {
-			$script:ignore = $true ; break
-		} elseif ($(getNarrowChars $local:videoName) -match $(getNarrowChars $local:ignoreTitle)) {
+		} elseif ($(getNarrowChars $local:videoSeries) -match $(getNarrowChars $local:ignoreRegexTitle)) {
+			sortIgnoreList $local:ignoreRegexTitle
 			$script:ignore = $true ; break
 		}
 

@@ -33,6 +33,7 @@ pid*.txt
 .smb*
 brightcovenew*
 ffmpeg_error*
+ignore.conf.*
 
 #開発関連ファイル
 dev*

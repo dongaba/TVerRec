@@ -94,10 +94,12 @@ Out-Msg '=======================================================================
 Out-Msg ''
 
 #----------------------------------------------------------------------
-#動作環境チェック
-checkLatestTVerRec			#TVerRecの最新化チェック
-checkLatestYtdl				#youtube-dlの最新化チェック
-checkLatestFfmpeg			#ffmpegの最新化チェック
+#TVerRecの最新化チェック
+checkLatestTVerRec
+#youtube-dlの最新化チェック
+checkLatestYtdl
+#ffmpegの最新化チェック
+checkLatestFfmpeg
 
 #設定ファイル再読み込み
 try {
@@ -109,11 +111,14 @@ try {
 	}
 } catch { Write-Error '設定ファイルの再読み込みに失敗しました' ; exit 1 }
 
-checkRequiredFile			#設定で指定したファイル・ディレクトリの存在チェック
+#設定で指定したファイル・ディレクトリの存在チェック
+checkRequiredFile
 
 #処理
 $local:keywordName = '個別指定'
-$script:ignoreTitles = getIgnoreList		#ダウンロード対象外番組の読み込み
+#ダウンロード対象外番組の読み込み
+$script:ignoreRegExTitles = getRegExIgnoreList
+
 getToken
 
 #無限ループ

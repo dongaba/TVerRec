@@ -134,67 +134,38 @@ $local:moveToPaths = Get-ChildItem `
 | Where-Object { $_.PSIsContainer } `
 | Sort-Object
 
-#移動先パス番号
-$local:moveToPathNum = 0
+#移動先パス合計数
 if ($local:moveToPaths -is [Array]) {
-	#移動先パス合計数
 	$local:moveToPathTotal = $local:moveToPaths.Length
 } elseif ($null -ne $local:moveToPaths) {
 	$local:moveToPathTotal = 1
-} else {
-	$local:moveToPathTotal = 0
-}
+} else { $local:moveToPathTotal = 0 }
 
 #----------------------------------------------------------------------
-$local:totalStartTime = Get-Date
-
 if ($local:moveToPathTotal -ne 0) {
-	foreach ($local:moveToPath in $local:moveToPaths.FullName) {
 
-		#処理時間の推計
-		$local:secElapsed = (Get-Date) - $local:totalStartTime
-		$local:secRemaining = -1
-		if ($local:moveToPathNum -ne 0) {
-			$local:secRemaining = `
-			($local:secElapsed.TotalSeconds / $local:moveToPathNum) `
-				* ($local:moveToPathTotal - $local:moveToPathNum)
-			$local:minRemaining = "$([String]([math]::Ceiling($local:secRemaining / 60)))分"
-			$local:progressRatio = $($local:moveToPathNum / $local:moveToPathTotal)
-		} else {
-			$local:minRemaining = '計算中...'
-			$local:progressRatio = 0
-		}
-		$local:moveToPathNum = $local:moveToPathNum + 1
-
-		#進捗表示
-		updateProgressToast `
-			-Title $local:moveToPath `
-			-Rate $local:progressRatio `
-			-LeftText $local:moveToPathNum/$local:moveToPathTotal `
-			-RightText "残り時間 $local:minRemaining" `
-			-Tag $script:appName `
-			-Group 'Move'
-
+	$local:moveToPaths.FullName | ForEach-Object -Parallel {
 		#処理
-		Out-Msg "$($local:moveToPathNum)/$($local:moveToPathTotal) - $($local:moveToPath)" -NoNL $true
-		$local:targetFolderName = Split-Path -Leaf $local:moveToPath
+		Write-Output "$($([Array]::IndexOf($using:local:moveToPaths.FullName, $_)) + 1)/$($using:local:moveToPaths.Count) - $($_)"
+		$targetFolderName = Split-Path -Leaf $_
 		if ($script:sortVideoByMedia) {
-			$local:mediaName = Split-Path -Leaf $(Split-Path -Parent $local:moveToPath)
-			$local:targetFolderName = $(Join-Path $local:mediaName $local:targetFolderName)
+			$mediaName = Split-Path -Leaf $(Split-Path -Parent $_)
+			$targetFolderName = $(Join-Path $mediaName $targetFolderName)
 		}
 		#同名ディレクトリが存在する場合は配下のファイルを移動
-		$local:moveFromPath = $(Join-Path $script:downloadBaseDir $local:targetFolderName)
-		if (Test-Path $local:moveFromPath) {
-			$local:moveFromPath = $local:moveFromPath + '\*.mp4'
-			Out-Msg "　「$($local:moveFromPath)」を移動します" -Fg 'Gray'
+		$moveFromPath = $(Join-Path $using:script:downloadBaseDir $targetFolderName)
+		if (Test-Path $moveFromPath) {
+			$moveFromPath = $moveFromPath + '\*.mp4'
+			Write-Host "　「$($local:moveFromPath)」を「$($_)」に移動します"
 			try {
 				Move-Item `
 					-Path $local:moveFromPath `
-					-Destination $local:moveToPath `
+					-Destination $_ `
 					-Force
-			} catch { Out-Msg '　移動できないファイルがありました' -Fg 'Green' }
-		} else { Out-Msg '' }
-	}
+			} catch { Write-Output '　移動できないファイルがありました' }
+		}
+	} -ThrottleLimit 10
+
 }
 #----------------------------------------------------------------------
 

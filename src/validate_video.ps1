@@ -80,9 +80,9 @@ try {
 #メイン処理
 
 #======================================================================
-#動作環境チェック
+#ffmpegの最新化チェック
+checkLatestFfmpeg
 
-checkLatestFfmpeg					#ffmpegの最新化チェック
 #設定ファイル再読み込み
 try {
 	$script:sysFile = $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))

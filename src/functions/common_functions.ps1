@@ -267,7 +267,7 @@ function deleteFiles {
 			Position = 0
 		)]
 		[Alias('Path')]
-		[System.IO.FileInfo]$local:path,
+		[System.IO.FileInfo]$local:basePath,
 
 		[Parameter(
 			Mandatory = $true,
@@ -276,7 +276,7 @@ function deleteFiles {
 			Position = 0
 		)]
 		[Alias('Conditions')]
-		[Object]$local:conditions,
+		[Object]$local:delConditions,
 
 		[Parameter(
 			Mandatory = $true,
@@ -285,22 +285,23 @@ function deleteFiles {
 			Position = 0
 		)]
 		[Alias('DatePast')]
-		[int32]$local:datePast
+		[int32]$local:delPeriod
 	)
 
-	foreach ($local:condition in $local:conditions.Split(',').Trim()) {
-		Out-Msg "$($local:path) - $($local:condition)"
+	$local:delConditions.Split(',').Trim() | ForEach-Object -Parallel {
+		Write-Output "$($using:local:basePath) - $($_)"
 		Get-ChildItem `
-			-LiteralPath $local:path `
+			-LiteralPath $using:local:basePath `
 			-Recurse `
 			-File `
-			-Filter $local:condition `
-		| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays($local:datePast) } `
+			-Filter $using:local:delConditions `
+		| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays($using:local:delPeriod) } `
 		| Remove-Item `
 			-Force `
 			-ErrorAction SilentlyContinue `
 		| Out-Null
-	}
+	} -ThrottleLimit 10
+
 }
 
 #----------------------------------------------------------------------

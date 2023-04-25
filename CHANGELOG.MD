@@ -7,16 +7,19 @@
 - Docker コンテナの作成に対応
 - TVerRec の自動アップデート機能を追加
 - Mac/Linux 環境向けの ffmpeg 自動更新機能を追加
-- Windows 環境で Zone Identifier 機能を追加
+- Windows 環境で Zone Identifier 削除機能を追加
 
 ### 2.7.0 Changed
 
 - ソースコード内の Path 表記を Unix 形式に統一
 - ソースコードの折り返しを極力短く
-- bat ファイル以外を BOM なし UTF-8、LF に統一
+- bat ファイルを cmd ファイルに変更
+- cmd ファイル以外を BOM なし UTF-8、LF に統一
 - `$script:addEpisodeNumber` のデフォルト値を `$true` に変更
 - `$script:removeSpecialNote` のデフォルト値を `$true` に変更
-- 無視判定の処理を高速化
+- ダウンロード対象外番組判定を高速化(対象外判定されたキーワードを優先的に判定)
+- ファイルの削除処理の並列化(環境によっては高速化)
+- ファイルの移動処理の並列化(環境によっては高速化)
 
 ### 2.7.0 Fixed
 

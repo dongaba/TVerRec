@@ -94,10 +94,12 @@ Out-Msg '=======================================================================
 Out-Msg ''
 
 #----------------------------------------------------------------------
-#動作環境チェック
-checkLatestTVerRec			#TVerRecの最新化チェック
-checkLatestYtdl				#youtube-dlの最新化チェック
-checkLatestFfmpeg			#ffmpegの最新化チェック
+#TVerRecの最新化チェック
+checkLatestTVerRec
+#youtube-dlの最新化チェック
+checkLatestYtdl
+#ffmpegの最新化チェック
+checkLatestFfmpeg
 
 #設定ファイル再読み込み
 try {
@@ -109,21 +111,26 @@ try {
 	}
 } catch { Write-Error '設定ファイルの再読み込みに失敗しました' ; exit 1 }
 
-checkRequiredFile			#設定で指定したファイル・ディレクトリの存在チェック
+#設定で指定したファイル・ディレクトリの存在チェック
+checkRequiredFile
 
 #いろいろ初期化
 $local:videoLink = '　'
 $local:videoLinks = @()
-$local:videoNum = 0								#リスト内の処理中の番組の番号
+
+#リスト内の処理中の番組の番号
+$local:videoNum = 0
 
 #処理
 $local:keywordName = 'リスト指定'
-$script:ignoreTitles = getIgnoreList		#ダウンロード対象外番組の読み込み
+#ダウンロード対象外番組の読み込み
+$script:ignoreRegExTitles = getRegExIgnoreList
+
 getToken
 
 Out-Msg '----------------------------------------------------------------------'
 Out-Msg 'ダウンロードリストを読み込みます'
-$local:listLinks = loadDownloadList		#ダウンロードリストの読み込み
+$local:listLinks = loadDownloadList
 Out-Msg "　リスト件数$($local:listLinks.Length)件"
 Out-Msg ''
 
@@ -151,10 +158,12 @@ Out-Msg '----------------------------------------------------------------------'
 Out-Msg 'ダウンロード履歴に含まれる番組を除外します'
 #URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 foreach ($local:listLink in $local:listLinks.episodeID) {
-	$local:historyMatch = $script:historyFileData | Where-Object { $_.videoPage -eq $('https://tver.jp/episodes/' + $local:listLink) }
+	$local:historyMatch = $script:historyFileData `
+	| Where-Object { $_.videoPage -eq $('https://tver.jp/episodes/' + $local:listLink) }
 	if ($null -eq $local:historyMatch) { $local:videoLinks += $local:listLink }
 }
-$local:videoTotal = $local:videoLinks.Length	#ダウンロード対象のトータル番組数
+#ダウンロード対象のトータル番組数
+$local:videoTotal = $local:videoLinks.Length
 Out-Msg "　ダウンロード対象$($local:videoTotal)件"
 Out-Msg ''
 
@@ -176,8 +185,8 @@ showProgressToast `
 #----------------------------------------------------------------------
 #個々の番組ダウンロードここから
 foreach ($local:videoLink in $local:videoLinks) {
-	#いろいろ初期化
-	$local:videoNum = $local:videoNum + 1		#ジャンル内の番組番号のインクリメント
+	#ジャンル内の番組番号のインクリメント
+	$local:videoNum = $local:videoNum + 1
 
 	#保存先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
 	if (Test-Path $script:downloadBaseDir -PathType Container) { }

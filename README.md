@@ -15,11 +15,12 @@
 
 TVerRec は、テレビ番組配信サイト TVer(ティーバー<https://tver.jp>)の番組をダウンロード保存するためのダウンローダー、ダウンロード支援ツールです。
 
-- TVerRec は PowerShell Core をインストールした Windows/MacOS/Linux で動作します。
-- TVerRec Docker イメージも[配布中](https://hub.docker.com/r/dongaba/tverrec)です。
 - **TVerRec は Windows PowerShell をサポートません。PowerShell Core でご利用ください。**
+- TVerRec は PowerShell Core をインストールした Windows/MacOS/Linux で動作します。
 - Windows 環境で PowerShell Core がインストールされていない場合は、TVerRec が自動的に PowerShell Core をインストールします。
 - Windows 環境に手動で PowerShell Core をインストールする方法や MacOS、Linux 環境への PowerShell のインストールについては[Wiki のこちらのページ](https://github.com/dongaba/TVerRec/wiki/PowerShell%E3%81%AE%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB)を参照してください。
+- TVerRec Docker イメージも[配布中](https://hub.docker.com/r/dongaba/tverrec)です。
+- 安定版は[リリース](https://github.com/dongaba/TVerRec/releases)から取得してください。
 
 ## 動作の前提条件
 
@@ -54,6 +55,7 @@ TVerRec は、テレビ番組配信サイト TVer(ティーバー<https://tver.j
 9. 動作に必要な youtube-dl や ffmpeg などの必要コンポーネントは**自動的に最新版がダウンロード**されます。
 10. Windows 環境ではトースト通知によりダウンロードの進捗状況などを通知します。
 11. **日本国外からも VPN 不要**で利用することができます。
+12. TVerRec の安定版が更新されると自動アップデートされます。
 
 ## 基本的な使い方
 
@@ -116,6 +118,7 @@ TVerRec の使い方・実行方法については[Wiki こちらのページ](h
     │  ├─ history.csv ...................... ダウンロード履歴(存在しない場合は起動時に作成されます)
     │  ├─ history.lock ..................... 複数インスタンス起動時のダウンロード履歴ファイルの排他制御用ファイル
     │  ├─ history.sample.csv ............... 空のダウンロード履歴
+    │  ├─ ignore.lock ...................... 複数インスタンス起動時のダウンロード大障害キーワードファイルの排他制御用ファイル
     │  └─ list.lock ........................ 複数インスタンス起動時のダウンロードリストファイルの排他制御用ファイル
     │
     ├─ docker/ ........................... Docker用サンプル
@@ -166,16 +169,16 @@ TVerRec の使い方・実行方法については[Wiki こちらのページ](h
     │  ├─ y.tverrec_list.sh ................ ダウンロードリストを元にダンロードするシェルスクリプト
     │  └─ z.download_single_video.sh ....... 番組を1本ずつダウンロードするシェルスクリプト
     │
-    ├─ win/ .............................. Windows用BATファイル
-    │  ├─ a.download_video.bat ............. キーワードを元一括ダウンロードするBAT
-    │  ├─ b.delete_video.bat ............... ダウンロード対象外番組・中間ファイル削除BAT
-    │  ├─ c.validate_video.bat ............. ダウンロード済番組の整合性チェックBAT
-    │  ├─ d.move_video.bat ................. 番組を保存先に移動するBAT(もし必要であれば)
-    │  ├─ start_tverrec.bat ................ キーワードを元に無限一括ダウンロード起動BAT
-    │  ├─ stop_tverrec.bat ................. 無限一括ダウンロード終了BAT
-    │  ├─ x.generate_list.bat .............. ダウンロードリストを生成するBAT
-    │  ├─ y.tverrec_list.bat ............... ダウンロードリストを元にダンロードするBAT
-    │  └─ z.download_single_video.bat ...... 番組を1本ずつダウンロードするBAT
+    ├─ win/ .............................. Windows用CMDファイル
+    │  ├─ a.download_video.cmd ............. キーワードを元一括ダウンロードするCMD
+    │  ├─ b.delete_video.cmd ............... ダウンロード対象外番組・中間ファイル削除CMD
+    │  ├─ c.validate_video.cmd ............. ダウンロード済番組の整合性チェックCMD
+    │  ├─ d.move_video.cmd ................. 番組を保存先に移動するCMD(もし必要であれば)
+    │  ├─ start_tverrec.cmd ................ キーワードを元に無限一括ダウンロード起動CMD
+    │  ├─ stop_tverrec.cmd ................. 無限一括ダウンロード終了CMD
+    │  ├─ x.generate_list.cmd .............. ダウンロードリストを生成するCMD
+    │  ├─ y.tverrec_list.cmd ............... ダウンロードリストを元にダンロードするCMD
+    │  └─ z.download_single_video.cmd ...... 番組を1本ずつダウンロードするCMD
     │
     ├─ CHANGELOG.md ......................... 変更履歴
     ├─ LICENSE .............................. ライセンス

@@ -94,10 +94,13 @@ Out-Msg '=======================================================================
 Out-Msg ''
 
 #----------------------------------------------------------------------
-#動作環境チェック
-checkLatestTVerRec			#TVerRecの最新化チェック
-checkLatestYtdl				#youtube-dlの最新化チェック
-checkLatestFfmpeg			#ffmpegの最新化チェック
+#TVerRecの最新化チェック
+checkLatestTVerRec
+#youtube-dlの最新化チェック
+checkLatestYtdl
+#ffmpegの最新化チェック
+checkLatestFfmpeg
+
 
 #設定ファイル再読み込み
 try {
@@ -109,16 +112,19 @@ try {
 	}
 } catch { Write-Error '設定ファイルの再読み込みに失敗しました' ; exit 1 }
 
-checkRequiredFile			#設定で指定したファイル・ディレクトリの存在チェック
+#設定で指定したファイル・ディレクトリの存在チェック
+checkRequiredFile
 
-#処理
-$local:keywordNames = loadKeywordList		#ダウンロード対象キーワードの読み込み
-$script:ignoreTitles = getIgnoreList		#ダウンロード対象外番組の読み込み
+#ダウンロード対象キーワードの読み込み
+$local:keywordNames = loadKeywordList
+#ダウンロード対象外番組の読み込み
+$script:ignoreRegExTitles = getRegExIgnoreList
 getToken
 
 $local:keywordNum = 0						#キーワードの番号
-if ($script:keywordNames -is [Array]) { $local:keywordTotal = $script:keywordNames.Length }		#トータルキーワード数
-else { $local:keywordTotal = 1 }
+if ($script:keywordNames -is [Array]) {
+	$local:keywordTotal = $script:keywordNames.Length	#トータルキーワード数
+} else { $local:keywordTotal = 1 }
 
 #進捗表示
 showProgress2Row `
@@ -168,22 +174,32 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 	foreach ($local:resultLink in $local:resultLinks) {
-		$local:historyMatch = $script:historyFileData | Where-Object { $_.videoPage -eq $local:resultLink }
-		if ($null -eq $local:historyMatch) { $local:videoLinks += $local:resultLink }
-		else { $local:searchResultCount = $local:searchResultCount + 1
+		$local:historyMatch = $script:historyFileData `
+		| Where-Object { $_.videoPage -eq $local:resultLink }
+		if ($null -eq $local:historyMatch) {
+			$local:videoLinks += $local:resultLink
+		} else {
+			$local:searchResultCount = $local:searchResultCount + 1
 			continue
 		}
 	}
 
-	$local:videoNum = 0								#ジャンル内の処理中の番組の番号
-	$local:videoTotal = $local:videoLinks.Length	#ダウンロード対象のトータル番組数
+	#ジャンル内の処理中の番組の番号
+	$local:videoNum = 0
+	if ($null -eq $local:videoLinks) {
+		$local:videoTotal = 0
+	} else {
+		#ダウンロード対象のトータル番組数
+		$local:videoTotal = $local:videoLinks.Length
+	}
 	Out-Msg "　ダウンロード対象$($local:videoTotal)本 処理済$($local:searchResultCount)本" -Fg 'Gray'
 
 	#処理時間の推計
 	$local:secElapsed = (Get-Date) - $local:totalStartTime
 	$local:secRemaining1 = -1
 	if ($local:keywordNum -ne 0) {
-		$local:secRemaining1 = ($local:secElapsed.TotalSeconds / $local:keywordNum) * ($local:keywordTotal - $local:keywordNum)
+		$local:secRemaining1 = `
+		($local:secElapsed.TotalSeconds / $local:keywordNum) * ($local:keywordTotal - $local:keywordNum)
 	}
 	$local:progressRatio1 = $($local:keywordNum / $local:keywordTotal)
 	$local:progressRatio2 = 0
