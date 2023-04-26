@@ -440,12 +440,12 @@ function sortIgnoreList {
 	}
 
 	$local:ignoreComment = (Get-Content $script:ignoreFileSamplePath -Encoding UTF8)
-	$local:ignoreTarget = $ignoreLists | Where-Object { $_ -eq $local:ignoreTitle }
+	$local:ignoreTarget = $ignoreLists | Where-Object { $_ -eq $local:ignoreTitle } | Sort-Object
 	$local:ignoreElse = $ignoreLists | Where-Object { $_ -ne $local:ignoreTitle }
 
 	$local:ignoreListNew += $local:ignoreComment
 	$local:ignoreListNew += $local:ignoreTarget
-	$local:ignoreListNew += $local:ignoreElse | Sort-Object
+	$local:ignoreListNew += $local:ignoreElse
 
 	try {
 		#ロックファイルをロック
