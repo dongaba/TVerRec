@@ -162,6 +162,8 @@ function checkRequiredFile {
 	if (!(Test-Path $script:downloadWorkDir -PathType Container)) {
 		Write-Error 'ダウンロード作業ディレクトリが存在しません。終了します。' ; exit 1
 	}
+	$script:saveBaseDirArray = @()
+	$script:saveBaseDirArray = $script:saveBaseDir.split(';')
 	foreach ($saveDir in $script:saveBaseDirArray) {
 		if (!(Test-Path $saveDir -PathType Container)) {
 			Write-Error '番組移動先ディレクトリが存在しません。終了します。' ; exit 1
@@ -443,7 +445,7 @@ function sortIgnoreList {
 
 	$local:ignoreListNew += $local:ignoreComment
 	$local:ignoreListNew += $local:ignoreTarget
-	$local:ignoreListNew += $local:ignoreElse
+	$local:ignoreListNew += $local:ignoreElse | Sort-Object
 
 	try {
 		#ロックファイルをロック
