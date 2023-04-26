@@ -440,7 +440,7 @@ function sortIgnoreList {
 	}
 
 	$local:ignoreComment = (Get-Content $script:ignoreFileSamplePath -Encoding UTF8)
-	$local:ignoreTarget = $ignoreLists | Where-Object { $_ -eq $local:ignoreTitle } | Sort-Object
+	$local:ignoreTarget = $ignoreLists | Where-Object { $_ -eq $local:ignoreTitle }
 	$local:ignoreElse = $ignoreLists | Where-Object { $_ -ne $local:ignoreTitle }
 
 	$local:ignoreListNew += $local:ignoreComment
