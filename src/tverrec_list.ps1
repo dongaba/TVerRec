@@ -188,8 +188,8 @@ foreach ($local:videoLink in $local:videoLinks) {
 	#ジャンル内の番組番号のインクリメント
 	$local:videoNum = $local:videoNum + 1
 
-	#保存先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
-	if (Test-Path $script:downloadBaseDir -PathType Container) { }
+	#移動先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
+	if (Test-Path $script:downloadBaseDir -PathType Container) {}
 	else { Write-Error '番組ダウンロード先ディレクトリにアクセスできません。終了します' ; exit 1 }
 
 	#進捗率の計算

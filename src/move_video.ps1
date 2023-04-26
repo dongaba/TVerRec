@@ -82,16 +82,19 @@ try {
 #設定で指定したファイル・ディレクトリの存在チェック
 checkRequiredFile
 
-if (!(Test-Path $script:saveBaseDir -PathType Container)) {
+#======================================================================
+#ディレクトリの存在確認
+if (!(Test-Path $script:downloadWorkDir -PathType Container)) {
 	Write-Error 'ダウンロード作業ディレクトリが存在しません。終了します。' ; exit 1
 }
-
-#======================================================================
-#保存先ディレクトリの存在確認
-if (Test-Path $script:downloadBaseDir -PathType Container) { }
-else { Write-Error '番組ダウンロード先ディレクトリにアクセスできません。終了します。' -Fg 'Green' ; exit 1 }
-if (Test-Path $script:saveBaseDir -PathType Container) { }
-else { Write-Error '番組移動先ディレクトリにアクセスできません。終了します。' -Fg 'Green' ; exit 1 }
+if (!(Test-Path $script:downloadBaseDir -PathType Container)) {
+	Write-Error '番組ダウンロード先ディレクトリにアクセスできません。終了します。' -Fg 'Green' ; exit 1
+}
+foreach ($local:saveDir in $script:saveBaseDirArray) {
+	if (!(Test-Path $local:saveDir -PathType Container)) {
+		Write-Error '番組移動先ディレクトリが存在しません。終了します。' ; exit 1
+	}
+}
 
 #======================================================================
 #1/2 移動先ディレクトリを起点として、配下のディレクトリを取得
@@ -116,6 +119,7 @@ Out-Msg '----------------------------------------------------------------------'
 Out-Msg 'ダウンロードファイルを移動しています'
 Out-Msg '----------------------------------------------------------------------'
 
+
 #進捗表示
 showProgressToast `
 	-Text1 '番組の移動中' `
@@ -128,11 +132,14 @@ showProgressToast `
 
 #処理
 $local:moveToPaths = $null
-$local:moveToPaths = Get-ChildItem `
-	-Path $script:saveBaseDir `
-	-Recurse `
-| Where-Object { $_.PSIsContainer } `
-| Sort-Object
+
+foreach ($local:saveDir in $script:saveBaseDirArray) {
+	$local:moveToPaths += Get-ChildItem `
+		-Path $local:saveDir `
+		-Recurse `
+	| Where-Object { $_.PSIsContainer } `
+	| Sort-Object
+}
 
 #移動先パス合計数
 if ($local:moveToPaths -is [Array]) {

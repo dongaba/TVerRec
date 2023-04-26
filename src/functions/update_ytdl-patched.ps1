@@ -67,7 +67,7 @@ try {
 $local:repo = 'ytdl-patched/ytdl-patched'
 $local:releases = "https://api.github.com/repos/$($local:repo)/releases"
 
-#ytdl-patched保存先相対Path
+#ytdl-patched移動先相対Path
 $local:ytdlDir = $(Join-Path $local:scriptRoot '../bin')
 if ($IsWindows) { $local:ytdlPath = $(Join-Path $local:ytdlDir 'youtube-dl.exe') }
 else { $local:ytdlPath = $(Join-Path $local:ytdlDir 'youtube-dl') }

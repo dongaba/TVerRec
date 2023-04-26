@@ -88,7 +88,7 @@ switch ($true) {
 #ダウンロード先の設定
 $local:releases = 'https://www.gyan.dev/ffmpeg/builds/release-version'
 
-#ffmpeg保存先相対Path
+#ffmpeg移動先相対Path
 $local:ffmpegDir = $(Join-Path $local:scriptRoot '../bin')
 if ($IsWindows) { $local:ffmpegPath = $(Join-Path $local:ffmpegDir 'ffmpeg.exe') }
 else { $local:ffmpegPath = $(Join-Path $local:ffmpegDir 'ffmpeg') }

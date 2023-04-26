@@ -20,6 +20,7 @@
 - ダウンロード対象外番組判定を高速化(対象外判定されたキーワードを優先的に判定)
 - ファイルの削除処理の並列化(環境によっては高速化)
 - ファイルの移動処理の並列化(環境によっては高速化)
+- 番組移動先ディレクトリ`$script:saveBaseDir`に複数ディレクトリを指定可能に
 
 ### 2.7.0 Fixed
 
@@ -38,7 +39,7 @@
 
 ### 2.6.9 Fixed
 
-- TV 局毎のディレクトリに保存している際に、番組を最終保存先に正しく移動できるように修正
+- TV 局毎のディレクトリに保存している際に、番組を最終移動先に正しく移動できるように修正
 - youtube-dl の実行監視の不具合を修正
 
 ## [2.6.8](https://github.com/dongaba/TVerRec/releases/tag/v2.6.8)
@@ -175,7 +176,7 @@
 
 ### 2.5.8 Fixed
 
-- Linux 用の番組保存先先ディレクトリの指定が間違っている[問題](https://github.com/dongaba/TVerRec/issues/18)を修正
+- Linux 用の番組移動先先ディレクトリの指定が間違っている[問題](https://github.com/dongaba/TVerRec/issues/18)を修正
 
 ## [2.5.7](https://github.com/dongaba/TVerRec/releases/tag/v2.5.7)
 

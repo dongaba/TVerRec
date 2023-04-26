@@ -51,11 +51,13 @@ $script:downloadBaseDir = 'W:'
 #　MacOSやLinuxでは $script:downloadWorkDir = '/var/tmp' や $script:downloadWorkDir = '/Volumes/RamDrive/Temp' などのように設定します。
 $script:downloadWorkDir = $env:TMP	#$env:TMP = C:\Users\<ユーザ名>\AppData\Local\Temp
 
-#保存先のフルパス(絶対パス指定)
-#　保存先とは、動画ファイルを最終的に整理するためのライブラリ等が配置されている場所です。
-#　規定の設定ではVドライブが設定されています。(通常のPCではVドライブはありませんので変更が必要です)
-#　ダウンロード先のディレクトリで動画を再生するのであれば、適当な空ディレクトリを指定しておいてもOKです。
-#　例えば C:\TverLibrary を保存先にするのであれば $script:saveBaseDir = 'C:\TverLibrary' と設定します。
+#移動先のフルパス(絶対パス指定)
+#　移動先とは、動画ファイルを最終的に整理するためのライブラリ等が配置されている場所です。
+#　規定の設定では設定されていません。
+#　ダウンロード先のディレクトリで動画を再生するのであれば、指定しなくてもOKです。
+#　例えば C:\TverLibrary を移動先にするのであれば $script:saveBaseDir = 'C:\TverLibrary' と設定します。
+#　複数のディレクトリを移動先として指定する場合には $script:saveBaseDir = 'V:;X:' のようにセミコロン区切りで複数指定可能です。
+#　ただし、複数のディレクトリに同名のディレクトリがある場合には、先に指定したディレクトリが優先されます。
 #　MacOSやLinuxでは $script:saveBaseDir = '/var/Video' や $script:saveBaseDir = '/Volumes/RamDrive/Video' などのように設定します。
 $script:saveBaseDir = ''
 
@@ -70,11 +72,11 @@ $script:parallelDownloadFileNum = 5
 $script:parallelDownloadNumPerFile = 10
 
 #ダウンロード時に放送局毎のディレクトリ配下にダウンロードファイルを保存
-#「$false」の際の保存先は以下
+#「$false」の際の移動先は以下
 #  ダウンロード先/
 #    └番組シリーズ名 番組シーズン名/
 #      └番組シリーズ名 番組シーズン名 放送日 番組タイトル名).mp4
-#「$true」の際の保存先は以下
+#「$true」の際の移動先は以下
 #  ダウンロード先/
 #    └放送局/
 #      └番組シリーズ名 番組シーズン名/

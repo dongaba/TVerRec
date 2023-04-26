@@ -126,8 +126,8 @@ while ($true) {
 	#いろいろ初期化
 	$local:videoPageURL = ''
 
-	#保存先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
-	if (Test-Path $script:downloadBaseDir -PathType Container) { }
+	#移動先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
+	if (Test-Path $script:downloadBaseDir -PathType Container) {}
 	else { Write-Error '番組ダウンロード先ディレクトリにアクセスできません。終了します' ; exit 1 }
 
 	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機

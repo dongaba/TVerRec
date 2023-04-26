@@ -154,20 +154,26 @@ deleteFiles `
 	-Conditions '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*' `
 	-DatePast 0
 
-#進捗表示
-updateProgressToast `
-	-Title $script:saveBaseDir `
-	-Rate $( 4 / 4 ) `
-	-LeftText '' `
-	-RightText '' `
-	-Tag $script:appName `
-	-Group 'Delete'
 
-#処理 - 保存先
-deleteFiles `
-	-Path $script:saveBaseDir `
-	-Conditions '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*' `
-	-DatePast 0
+foreach ($local:saveDir in $script:saveBaseDirArray) {
+
+	#進捗表示
+	updateProgressToast `
+		-Title $local:saveDir `
+		-Rate $( 4 / 4 ) `
+		-LeftText '' `
+		-RightText '' `
+		-Tag $script:appName `
+		-Group 'Delete'
+
+	#処理 - 移動先
+	deleteFiles `
+		-Path $local:saveDir `
+		-Conditions '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*' `
+		-DatePast 0
+
+}
+
 
 #======================================================================
 #2/3 ダウンロード対象外に入っている番組は削除

@@ -67,7 +67,7 @@ try {
 $local:repo = 'yt-dlp/yt-dlp'
 $local:releases = "https://api.github.com/repos/$($local:repo)/releases"
 
-#yt-dlp保存先相対Path
+#yt-dlp移動先相対Path
 $local:ytdlDir = $(Join-Path $local:scriptRoot '../bin')
 if ($IsWindows) { $local:ytdlPath = $(Join-Path $local:ytdlDir 'youtube-dl.exe') }
 else { $local:ytdlPath = $(Join-Path $local:ytdlDir 'youtube-dl') }

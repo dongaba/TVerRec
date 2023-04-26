@@ -246,7 +246,7 @@ if ($null -eq $local:videoHists) {
 			-Group 'Validate'
 
 		#処理
-		if (Test-Path $script:downloadBaseDir -PathType Container) { }
+		if (Test-Path $script:downloadBaseDir -PathType Container) {}
 		else { Write-Error '番組ダウンロード先ディレクトリにアクセスできません。終了します。' -Fg 'Green' ; exit 1 }
 
 		Out-Msg "$($local:validateNum)/$($local:validateTotal) - $($local:videoFileRelPath)" -NoNL $true

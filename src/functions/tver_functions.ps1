@@ -127,7 +127,7 @@ function checkLatestYtdl {
 			Write-Error 'youtube-dlの取得元の指定が無効です' ; exit 1
 		}
 		if ($? -eq $false) { Write-Error 'youtube-dlの更新に失敗しました' ; exit 1 }
-	} else { }
+	} else {}
 
 	$progressPreference = 'Continue'
 }
@@ -144,7 +144,7 @@ function checkLatestFfmpeg {
 	if ($script:disableUpdateFfmpeg -eq $false) {
 		. $(Convert-Path (Join-Path $scriptRoot './functions/update_ffmpeg.ps1'))
 		if ($? -eq $false) { Write-Error 'ffmpegの更新に失敗しました' ; exit 1 }
-	} else { }
+	} else {}
 
 	$progressPreference = 'Continue'
 }
@@ -161,6 +161,11 @@ function checkRequiredFile {
 	}
 	if (!(Test-Path $script:downloadWorkDir -PathType Container)) {
 		Write-Error 'ダウンロード作業ディレクトリが存在しません。終了します。' ; exit 1
+	}
+	foreach ($saveDir in $script:saveBaseDirArray) {
+		if (!(Test-Path $saveDir -PathType Container)) {
+			Write-Error '番組移動先ディレクトリが存在しません。終了します。' ; exit 1
+		}
 	}
 	if (!(Test-Path $script:ytdlPath -PathType Leaf)) {
 		Write-Error 'youtube-dlが存在しません。終了します。' ; exit 1
@@ -1394,14 +1399,14 @@ function downloadTVerVideo {
 		#スキップ対象やダウンロード対象外は飛ばして次のファイルへ
 		continue
 	} else {
-		#保存先ディレクトリがなければ作成
+		#移動先ディレクトリがなければ作成
 		if (-Not (Test-Path $script:videoFileDir -PathType Container)) {
 			try {
 				$null = New-Item `
 					-ItemType Directory `
 					-Path $script:videoFileDir `
 					-Force
-			} catch { Out-Msg '　保存先ディレクトリを作成できませんでした' -Fg 'Green'
+			} catch { Out-Msg '　移動先ディレクトリを作成できませんでした' -Fg 'Green'
 				continue
 			}
 		}
@@ -1460,11 +1465,13 @@ function generateTVerVideoList {
 
 		if ($(getNarrowChars $script:videoSeries) -match $(getNarrowChars $local:ignoreRegexTitle)) {
 			$local:ignoreWord = $local:ignoreRegexTitle
+			sortIgnoreList $local:ignoreRegexTitle
 			$script:ignore = $true
 			#ダウンロード対象外と合致したものはそれ以上のチェック不要
 			break
 		} elseif ($(getNarrowChars $script:videoTitle) -match $(getNarrowChars $local:ignoreRegexTitle)) {
 			$local:ignoreWord = $local:ignoreRegexTitle
+			sortIgnoreList $local:ignoreRegexTitle
 			$script:ignore = $true
 			#ダウンロード対象外と合致したものはそれ以上のチェック不要
 			break
