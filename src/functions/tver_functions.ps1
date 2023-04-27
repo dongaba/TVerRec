@@ -269,7 +269,7 @@ function loadKeywordList {
 			| Where-Object { !($_ -match '^\s*$') } `	#空行を除く
 			| Where-Object { !($_ -match '^#.*$') })	#コメント行を除く
 	} catch {
-		Out-Msg 'ダウンロード対象キーワードの読み込みに失敗しました' -Fg 'Green' ; exit 1
+		Write-Error 'ダウンロード対象キーワードの読み込みに失敗しました' -Fg 'Green' ; exit 1
 	}
 
 	return $local:keywordNames
@@ -297,7 +297,7 @@ function loadDownloadList {
 		| Where-Object { !($_ -match '^\s*$') } `		#空行を除く
 		| Where-Object { !($_.episodeID -match '^#') }	#ダウンロード対象外を除く
 	} catch {
-		Out-Msg 'ダウンロードリストの読み込みに失敗しました' -Fg 'Green' ; exit 1
+		Write-Error 'ダウンロードリストの読み込みに失敗しました' -Fg 'Green' ; exit 1
 	} finally {
 		$null = fileUnlock $script:listLockFilePath
 	}
@@ -324,7 +324,7 @@ function getIgnoreList {
 			| Where-Object { !($_ -match '^\s*$') } `		#空行を除く
 			| Where-Object { !($_ -match '^;.*$') })		#コメント行を除く
 	} catch {
-		Out-Msg 'ダウンロード対象外の読み込みに失敗しました' -Fg 'Green' ; exit 1
+		Write-Error 'ダウンロード対象外の読み込みに失敗しました' -Fg 'Green' ; exit 1
 	} finally {
 		$null = fileUnlock $script:ignoreLockFilePath
 	}
@@ -351,29 +351,30 @@ function getRegexIgnoreList {
 			| Where-Object { !($_ -match '^\s*$') } `		#空行を除く
 			| Where-Object { !($_ -match '^;.*$') })		#コメント行を除く
 	} catch {
-		Out-Msg 'ダウンロード対象外の読み込みに失敗しました' -Fg 'Green' ; exit 1
+		Write-Error 'ダウンロード対象外の読み込みに失敗しました' -Fg 'Green' ; exit 1
 	} finally {
 		$null = fileUnlock $script:ignoreLockFilePath
 	}
 
-	foreach ($local:ignoreRegexTitle in $local:ignoreRegexTitles) {
+
+	for ($i = 0; $i -lt $local:ignoreRegexTitles.Length; $i++) {
 		#正規表現用のエスケープ
-		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('\', '\\')
-		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('*', '\*')
-		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('+', '\+')
-		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('.', '\.')
-		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('?', '\?')
-		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('{', '\{')
-		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('}', '\}')
-		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('(', '\(')
-		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace(')', '\)')
-		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('[', '\[')
-		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace(']', '\]')
-		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('^', '\^')
-		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('$', '\$')
-		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('-', '\-')
-		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('|', '\|')
-		$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('/', '\/')
+		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('\', '\\')
+		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('*', '\*')
+		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('+', '\+')
+		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('.', '\.')
+		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('?', '\?')
+		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('{', '\{')
+		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('}', '\}')
+		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('(', '\(')
+		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace(')', '\)')
+		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('[', '\[')
+		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace(']', '\]')
+		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('^', '\^')
+		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('$', '\$')
+		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('-', '\-')
+		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('|', '\|')
+		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('/', '\/')
 	}
 
 	return $local:ignoreRegexTitles
@@ -422,7 +423,7 @@ function sortIgnoreList {
 	try {
 		#ロックファイルをロック
 		while ($(fileLock $script:ignoreLockFilePath).fileLocked -ne $true) {
-			Out-Msg '　ファイルのロック解除待ち中です' -Fg 'Gray'
+			Write-Output '　ファイルのロック解除待ち中です'
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
@@ -434,7 +435,7 @@ function sortIgnoreList {
 			Where( { !($_ -match '^\s*$') }).`		#空行を除く
 		Where( { !($_ -match '^;;.*$') })		#ヘッダ行を除く
 	} catch {
-		Out-Msg 'ダウンロード対象外リストの読み込みに失敗しました' -Fg 'Green' ; exit 1
+		Write-Error 'ダウンロード対象外リストの読み込みに失敗しました' ; exit 1
 	} finally {
 		$null = fileUnlock $script:ignoreLockFilePath
 	}
@@ -450,7 +451,7 @@ function sortIgnoreList {
 	try {
 		#ロックファイルをロック
 		while ($(fileLock $script:ignoreLockFilePath).fileLocked -ne $true) {
-			Out-Msg '　ファイルのロック解除待ち中です' -Fg 'Gray'
+			Write-Output '　ファイルのロック解除待ち中です'
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
@@ -465,7 +466,7 @@ function sortIgnoreList {
 			Path $($script:ignoreFilePath + '.' + $local:timeStamp) `
 			-Destination $script:ignoreFilePath `
 			-Force
-		Out-Msg 'ダウンロード対象外リストのソートに失敗しました' -Fg 'Green' ; exit 1
+		Write-Error 'ダウンロード対象外リストのソートに失敗しました' ; exit 1
 	} finally {
 		$null = fileUnlock $script:ignoreLockFilePath
 		#ダウンロード対象外番組の読み込み
@@ -1315,7 +1316,7 @@ function downloadTVerVideo {
 			if ($script:ignore -eq $true) { break }
 		}
 		Write-Debug "$(Get-Date) Ignore Check End"
-		Write-Debug "$script:ignore"
+		Write-Debug "Ignored: $($script:ignore)"
 
 	}
 

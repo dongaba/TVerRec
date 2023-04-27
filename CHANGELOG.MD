@@ -26,6 +26,7 @@
 
 - Linux 環境で nohup のエラーメッセージが出ないように修正
 - Windows 環境で WindowsTerminal.exe で実行されたプロセスが終了されない問題を修正
+- 特殊文字を含むダンロード対象外判定が正しく実行されていなかった不具合を修正
 
 ## [2.6.9](https://github.com/dongaba/TVerRec/releases/tag/v2.6.9)
 

@@ -210,8 +210,9 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#複数あるときは並列化と思ったら速くならなかったので
 	#現状では無条件でシングルスレッド処理に振り分ける。
 	#速くならなかった理由は不明。。。
+	#と思ったけどもう一回試してみる
 	#----------------------------------------------------------------------
-	if ($local:videoTotal -lt 0) {
+	if ($local:videoTotal -gt 1) {
 
 		#関数の定義
 		$funcGoAnal = ${function:goAnal}.ToString()
@@ -221,6 +222,8 @@ foreach ($local:keywordName in $local:keywordNames) {
 		$funcFileUnlock = ${function:fileUnlock}.ToString()
 		$funcGetSpecialCharacterReplaced = ${function:getSpecialCharacterReplaced}.ToString()
 		$funcUnixTimeToDateTime = ${function:unixTimeToDateTime}.ToString()
+		$funcSortIgnoreList = ${function:sortIgnoreList}.ToString()
+		$funcGetRegExIgnoreList = ${function:getRegExIgnoreList}.ToString()
 
 		$local:videoLinks | ForEach-Object -Parallel {
 			#関数の取り込み
@@ -231,6 +234,8 @@ foreach ($local:keywordName in $local:keywordNames) {
 			${function:fileUnlock} = $using:funcFileUnlock
 			${function:getSpecialCharacterReplaced} = $using:funcGetSpecialCharacterReplaced
 			${function:unixTimeToDateTime} = $using:funcUnixTimeToDateTime
+			${function:sortIgnoreList} = $using:funcSortIgnoreList
+			${function:getRegExIgnoreList} = $using:funcGetRegExIgnoreList
 
 			#変数の置き換え
 			$script:timeoutSec = $using:script:timeoutSec
@@ -244,6 +249,9 @@ foreach ($local:keywordName in $local:keywordNames) {
 			$script:listLockFilePath = $using:script:listLockFilePath
 			$script:listFilePath = $using:script:listFilePath
 			$script:listFileData = $using:script:listFileData
+			$script:ignoreLockFilePath = $using:script:ignoreLockFilePath
+			$script:ignoreFileSamplePath = $using:script:ignoreFileSamplePath
+			$script:ignoreFilePath = $using:script:ignoreFilePath
 
 			#処理
 			Write-Output "$($([Array]::IndexOf($using:local:videoLinks, $_)) + 1 )/$($using:local:videoLinks.Count) - $($_)"
@@ -271,11 +279,13 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 				if ($(getNarrowChars $script:videoSeries) -match $(getNarrowChars $ignoreRegexTitle)) {
 					$ignoreWord = $ignoreRegexTitle
+					sortIgnoreList $ignoreRegexTitle
 					$ignore = $true
 					#ダウンロード対象外と合致したものはそれ以上のチェック不要
 					break
 				} elseif ($(getNarrowChars $script:videoTitle) -match $(getNarrowChars $ignoreRegexTitle)) {
 					$ignoreWord = $ignoreRegexTitle
+					sortIgnoreList $ignoreRegexTitle
 					$ignore = $true
 					#ダウンロード対象外と合致したものはそれ以上のチェック不要
 					break

@@ -204,7 +204,7 @@ try {
 		| Where-Object { !($_ -match '^\s*$') } `
 		| Where-Object { !($_ -match '^;.*$') })
 } catch {
-	Out-Msg 'ダウンロード対象外の読み込みに失敗しました' -Fg 'Green' ; exit 1
+	Write-Error 'ダウンロード対象外の読み込みに失敗しました' -Fg 'Green' ; exit 1
 } finally {
 	$null = fileUnlock $script:ignoreLockFilePath
 }
