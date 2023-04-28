@@ -167,6 +167,7 @@ $script:dbDir = $(Join-Path $scriptRoot '../db')
 $script:libDir = $(Join-Path $scriptRoot '../lib')
 $script:imgDir = $(Join-Path $scriptRoot '../img')
 $script:listDir = $(Join-Path $scriptRoot '../list')
+$script:winDir = $(Join-Path $scriptRoot '../win')
 $script:containerDir = $(Join-Path $scriptRoot '../container-data')
 
 #トースト通知用画像のパス

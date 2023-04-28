@@ -121,7 +121,7 @@ try {
 		-ItemType Directory `
 		-Path $updateTemp
 } catch {
-	Write-Output '作業ディレクトリの作成に失敗しました' ; exit 1
+	Write-Error '作業ディレクトリの作成に失敗しました' ; exit 1
 }
 
 #TVerRecの最新バージョン取得
@@ -137,9 +137,9 @@ try {
 	).zipball_url
 	Invoke-WebRequest `
 		-Uri $local:zipURL `
-		-OutFile $(Join-Path $updateTemp 'New.zip')
+		-OutFile $(Join-Path $updateTemp 'TVerRecLatest.zip')
 } catch {
-	Write-Output 'ダウンロードに失敗しました' ; exit 1
+	Write-Error 'ダウンロードに失敗しました' ; exit 1
 }
 
 #最新バージョンがダウンロードできていたら展開
@@ -147,16 +147,16 @@ Write-Output ''
 Write-Output '-----------------------------------------------------------------'
 Write-Output 'ダウンロードしたTVerRecを解凍します'
 try {
-	if (Test-Path $(Join-Path $updateTemp 'New.zip') -PathType Leaf) {
+	if (Test-Path $(Join-Path $updateTemp 'TVerRecLatest.zip') -PathType Leaf) {
 		#配下に作成されるディレクトリ名は不定「dongaba-TVerRec-xxxxxxxx」
 		unZip `
-			-File $(Join-Path $updateTemp 'New.zip') `
+			-File $(Join-Path $updateTemp 'TVerRecLatest.zip') `
 			-OutPath $updateTemp
 	} else {
-		Write-Output 'ダウンロードしたファイルが見つかりません' ; exit 1
+		Write-Error 'ダウンロードしたファイルが見つかりません' ; exit 1
 	}
 } catch {
-	Write-Output 'ダウンロードしたファイルの解凍に失敗しました' ; exit 1
+	Write-Error 'ダウンロードしたファイルの解凍に失敗しました' ; exit 1
 }
 
 #ディレクトリは上書きできないので独自関数で以下のディレクトリをループ
@@ -173,7 +173,7 @@ try {
 			-Destination $($( Convert-Path $(Join-Path $local:scriptRoot '../')) + $_.Name)
 	}
 } catch {
-	Write-Output 'ダウンロードしたTVerRecの配置に失敗しました' ; exit 1
+	Write-Error 'ダウンロードしたTVerRecの配置に失敗しました' ; exit 1
 }
 
 #作業ディレクトリを削除
@@ -188,7 +188,7 @@ try {
 			-Recurse
 	}
 } catch {
-	Write-Output '作業ディレクトリの削除に失敗しました' ; exit 1
+	Write-Error '作業ディレクトリの削除に失敗しました' ; exit 1
 }
 
 Write-Output ''

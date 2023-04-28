@@ -96,14 +96,15 @@ function checkLatestTVerRec {
 		}
 
 		#アップデート実行
-		Write-Output '60秒後にTVerRecをアップデートします。中止したい場合は Ctrl+C で中断してください'
-		for ($i = 60; $i -gt 0; $i--) {
+		Write-Output '10秒後にTVerRecをアップデートします。中止したい場合は Ctrl+C で中断してください'
+		for ($i = 10; $i -gt 0; $i--) {
 			Write-Output "  $i"
 			Start-Sleep 1
 		}
 		. $(Join-Path $script:scriptRoot '/functions/update_tverrec.ps1')
 
-		#再起動のため強制終了 ; exit 1
+		#再起動のため強制終了
+		exit 1
 
 	}
 
@@ -162,11 +163,13 @@ function checkRequiredFile {
 	if (!(Test-Path $script:downloadWorkDir -PathType Container)) {
 		Write-Error 'ダウンロード作業ディレクトリが存在しません。終了します。' ; exit 1
 	}
-	$script:saveBaseDirArray = @()
-	$script:saveBaseDirArray = $script:saveBaseDir.split(';')
-	foreach ($saveDir in $script:saveBaseDirArray) {
-		if (!(Test-Path $saveDir -PathType Container)) {
-			Write-Error '番組移動先ディレクトリが存在しません。終了します。' ; exit 1
+	if ($script:saveBaseDir -ne '') {
+		$script:saveBaseDirArray = @()
+		$script:saveBaseDirArray = $script:saveBaseDir.split(';')
+		foreach ($saveDir in $script:saveBaseDirArray) {
+			if (!(Test-Path $saveDir -PathType Container)) {
+				Write-Error '番組移動先ディレクトリが存在しません。終了します。' ; exit 1
+			}
 		}
 	}
 	if (!(Test-Path $script:ytdlPath -PathType Leaf)) {
@@ -202,6 +205,13 @@ function checkRequiredFile {
 			-NewName history.csv `
 			-Force
 	}
+	#*.batを*.cmdに移行(v2.6.9→v2.7.0)
+	if (Test-Path "$($script:winDir)/*.bat" -PathType Leaf) {
+		Remove-Item `
+			-Path "$($script:winDir)/*.bat" `
+			-Force
+	}
+
 
 	#ファイルが存在しない場合はサンプルファイルをコピー
 	if (!(Test-Path $script:keywordFilePath -PathType Leaf)) {
