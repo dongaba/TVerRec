@@ -150,8 +150,13 @@ while ($true) {
 		continue
 	} finally { $null = fileUnlock $script:historyLockFilePath }
 
-	$local:videoPageURL = Read-Host '番組URLを入力してください。何も入力しないで Enter を押すと終了します。'
+	$local:videoPageURL = $(Read-Host '番組URLを入力してください。何も入力しないで Enter を押すと終了します。').Trim()
+	#正しいURLが入力されるまでループ
 	if ($videoPageURL -ne '') {
+		while ($local:videoPageURL -notmatch '^https://tver.jp/(/?.*)') {
+			Write-Output '    URLが正しくありません。もう一度入力してください。'
+			$local:videoPageURL = (Read-Host '番組URLを入力してください。何も入力しないで Enter を押すと終了します。').Trim()
+		}
 		$local:videoLink = $local:videoPageURL.Replace('https://tver.jp', '').Trim()
 		$local:videoPageURL = 'https://tver.jp' + $local:videoLink
 		Out-Msg $local:videoPageURL
@@ -165,5 +170,6 @@ while ($true) {
 		Out-Msg '---------------------------------------------------------------------------' -Fg 'Cyan'
 		Out-Msg '処理を終了しました。                                                       ' -Fg 'Cyan'
 		Out-Msg '---------------------------------------------------------------------------' -Fg 'Cyan'
+		exit 0
 	}
 }

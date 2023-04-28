@@ -333,7 +333,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 			try {
 				#ロックファイルをロック
 				while ($(fileLock $script:listLockFilePath).fileLocked -ne $true) {
-					Write-Output '　ファイルのロック解除待ち中です' -Fg 'Gray'
+					Write-Output '　ファイルのロック解除待ち中です'
 					Start-Sleep -Seconds 1
 				}
 				#ファイル操作
