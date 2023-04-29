@@ -207,7 +207,7 @@ try {
 }
 
 #----------------------------------------------------------------------
-if ($null -ne $local:ignoreRegexTitles ) {
+if ($null -ne $local:ignoreTitles ) {
 	$local:ignoreTitles | ForEach-Object -Parallel {
 		#処理
 		Write-Output "$($([Array]::IndexOf($using:local:ignoreTitles, $_)) + 1 )/$($using:local:ignoreTitles.Count) - $($_)"
