@@ -352,7 +352,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 				-Path $script:listFilePath `
 				-Encoding UTF8
 
-		} -ThrottleLimit 10
+		} -AsJob -ThrottleLimit 10 | Wait-Job | Receive-Job
 
 	} else {
 

@@ -290,7 +290,8 @@ function deleteFiles {
 
 	$local:delConditions.Split(',').Trim() | ForEach-Object -Parallel {
 		Write-Output "$($using:local:basePath) - $($_)"
-		Get-ChildItem `
+		$null = `
+			Get-ChildItem `
 			-LiteralPath $using:local:basePath `
 			-Recurse `
 			-File `
@@ -298,9 +299,8 @@ function deleteFiles {
 		| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays($using:local:delPeriod) } `
 		| Remove-Item `
 			-Force `
-			-ErrorAction SilentlyContinue `
-		| Out-Null
-	} -ThrottleLimit 10
+			-ErrorAction SilentlyContinue
+	} -AsJob -ThrottleLimit 10 | Wait-Job | Receive-Job
 
 }
 
@@ -584,9 +584,8 @@ function showToast {
 		$local:toastXML = New-Object Windows.Data.Xml.Dom.XmlDocument
 		$local:toastXML.LoadXml($local:toastProgressContent)
 		$local:toastBody = New-Object Windows.UI.Notifications.ToastNotification $local:toastXML
-		[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).`
-			Show($local:toastBody) `
-		| Out-Null
+		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).`
+			Show($local:toastBody)
 	}
 }
 
@@ -707,9 +706,8 @@ function showProgressToast {
 		$local:toastData.add('progressStatus', '')
 		$local:toast.Data = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
 		$local:toast.Data.SequenceNumber = 1
-		[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).`
-			Show($local:toast) `
-		| Out-Null
+		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).`
+			Show($local:toast)
 	}
 }
 
@@ -778,9 +776,8 @@ function updateProgressToast {
 		$local:toastData.add('progressStatus', $local:toastLeftText)
 		$local:toastProgressData = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
 		$local:toastProgressData.SequenceNumber = 2
-		[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).`
-			Update($local:toastProgressData, $local:toastTag , $local:toastGroup) `
-		| Out-Null
+		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).`
+			Update($local:toastProgressData, $local:toastTag , $local:toastGroup)
 	}
 }
 
@@ -913,9 +910,8 @@ function showProgressToast2 {
 		$local:toastData.add('progressStatus2', '')
 		$local:toast.Data = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
 		$local:toast.Data.SequenceNumber = 1
-		[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).`
-			Show($local:toast) `
-		| Out-Null
+		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).`
+			Show($local:toast)
 	}
 }
 
@@ -1020,9 +1016,8 @@ function updateProgressToast2 {
 		$local:toastData.add('progressStatus2', $local:toastLeftText2)
 		$local:toastProgressData = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
 		$local:toastProgressData.SequenceNumber = 2
-		[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).`
-			Update($local:toastProgressData, $local:toastTag , $local:toastGroup) `
-		| Out-Null
+		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).`
+			Update($local:toastProgressData, $local:toastTag , $local:toastGroup)
 	}
 }
 
@@ -1240,10 +1235,9 @@ function goAnal {
 
 	$progressPreference = 'silentlyContinue'
 	$local:statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
-	try { Invoke-WebRequest `
+	try { $null = Invoke-WebRequest `
 			-Uri "$($local:statisticsBase)$($local:event).svg" `
-			-TimeoutSec $script:timeoutSec `
-		| Out-Null
+			-TimeoutSec $script:timeoutSec
 	} catch { Write-Debug 'Failed to collect statistics' }
 	finally { $progressPreference = 'Continue' }
 
@@ -1282,12 +1276,11 @@ function goAnal {
 
 	$progressPreference = 'silentlyContinue'
 	try {
-		Invoke-RestMethod `
+		$null = Invoke-RestMethod `
 			-Uri "$($local:gaURL)?$($local:gaKey)&$($local:gaID)" `
 			-Method 'POST' -Headers $local:gaHeaders `
 			-Body $local:gaBody `
-			-TimeoutSec $script:timeoutSec `
-		| Out-Null
+			-TimeoutSec $script:timeoutSec
 	}	catch {
 		Write-Debug 'Failed to collect statistics'
 	} finally { $progressPreference = 'Continue' }

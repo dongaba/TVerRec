@@ -171,7 +171,7 @@ if ($local:moveToPathTotal -ne 0) {
 					-Force
 			} catch { Write-Output '　移動できないファイルがありました' }
 		}
-	} -ThrottleLimit 10
+	} -AsJob -ThrottleLimit 10 | Wait-Job | Receive-Job
 
 }
 #----------------------------------------------------------------------

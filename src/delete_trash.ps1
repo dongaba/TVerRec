@@ -227,7 +227,8 @@ $local:ignoreTitles | ForEach-Object -Parallel {
 			}
 		}
 	} catch { Write-Output '　削除できないファイルがありました' }
-} -ThrottleLimit 10
+} -AsJob -ThrottleLimit 10 | Wait-Job | Receive-Job
+
 
 #----------------------------------------------------------------------
 
@@ -279,7 +280,7 @@ if ($local:subDirTotal -ne 0) {
 				Write-Output "　空ディレクトリの削除に失敗しました: $_"
 			}
 		}
-	} -ThrottleLimit 100
+	} -AsJob -ThrottleLimit 100 | Wait-Job | Receive-Job
 }
 #----------------------------------------------------------------------
 
