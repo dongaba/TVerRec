@@ -4,6 +4,8 @@
 
 ### 2.7.1 Added
 
+- Google Colab用のテンプレートを追加
+
 ### 2.7.1 Changed
 
 ### 2.7.1 Fixed
