@@ -26,8 +26,8 @@ services:
         source: ~/ContainerData/Work
         target: /mnt/Work
       - type: bind
-        source: ~/ContainerData/Video
-        target: /mnt/Video
+        source: ~/ContainerData/Save
+        target: /mnt/Save
       - type: bind
         source: ~/ContainerData/container-data
         target: /app/TVerRec/container-data

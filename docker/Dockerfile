@@ -27,7 +27,7 @@ RUN mkdir -p -m 777 \
 	/app \
 	/mnt/Temp \
 	/mnt/Work \
-	/mnt/Video
+	/mnt/Save
 
 #ユーザ切り替え
 USER tverrec
@@ -41,7 +41,7 @@ WORKDIR /app/TVerRec
 RUN sed -i -e "s|'TVerRec'|'TVerRecContainer'|g" ./conf/system_setting.ps1 \
 	&& sed -i -e "s|'W:'|'/mnt/Work'|g" ./conf/system_setting.ps1 \
 	&& sed -i -e "s|\$env:TMP|'/mnt/Temp'|g" ./conf/system_setting.ps1 \
-	&& sed -i -e "s|'V:'|'/mnt/Video'|g" ./conf/system_setting.ps1 \
+	&& sed -i -e "s|''|'/mnt/Save'|g" ./conf/system_setting.ps1 \
 	&& sed -i -e "s|\$script:confDir 'keyword.conf'|\$script:containerDir 'keyword.conf'|g" ./conf/system_setting.ps1 \
 	&& sed -i -e "s|\$script:confDir 'ignore.conf'|\$script:containerDir 'ignore.conf'|g" ./conf/system_setting.ps1 \
 	&& sed -i -e "s|\$script:dbDir 'history.csv'|\$script:containerDir 'history.csv'|g" ./conf/system_setting.ps1 \

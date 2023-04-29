@@ -1,5 +1,16 @@
 ﻿# Change Log
 
+## [2.7.1](https://github.com/dongaba/TVerRec/releases/tag/v2.7.1)
+
+### 2.7.1 Added
+
+### 2.7.1 Changed
+
+### 2.7.1 Fixed
+
+- Dockerコンテナ版の設定ファイル不備を修正
+- ダウンロード対象外リストが0件の際にエラーとなる不具合を修正
+
 ## [2.7.0](https://github.com/dongaba/TVerRec/releases/tag/v2.7.0)
 
 ### 2.7.0 Added

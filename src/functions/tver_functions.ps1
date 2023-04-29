@@ -356,6 +356,7 @@ function getRegexIgnoreList {
 			Start-Sleep -Seconds 1
 		}
 		#ファイル操作
+		$local:ignoreRegexTitles = @()
 		$local:ignoreRegexTitles = `
 			[String[]](Get-Content $script:ignoreFilePath -Encoding UTF8 `
 			| Where-Object { !($_ -match '^\s*$') } `		#空行を除く
@@ -365,7 +366,6 @@ function getRegexIgnoreList {
 	} finally {
 		$null = fileUnlock $script:ignoreLockFilePath
 	}
-
 
 	for ($i = 0; $i -lt $local:ignoreRegexTitles.Length; $i++) {
 		#正規表現用のエスケープ
