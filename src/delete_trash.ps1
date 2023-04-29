@@ -207,28 +207,29 @@ try {
 }
 
 #----------------------------------------------------------------------
-$local:ignoreTitles | ForEach-Object -Parallel {
-	#処理
-	Write-Output "$($([Array]::IndexOf($using:local:ignoreTitles, $_)) + 1 )/$($using:local:ignoreTitles.Count) - $($_)"
-	try {
-		$delTargets = Get-ChildItem `
-			-LiteralPath $using:script:downloadBaseDir `
-			-Name -Filter "*$($_)*"
-	} catch { Write-Output '　削除対象を特定できませんでした' }
-	try {
-		if ($null -ne $delTargets) {
-			foreach ($delTarget in $delTargets) {
-				Write-Output "　「$(Join-Path $using:script:downloadBaseDir $delTarget)」を削除します"
-				Remove-Item `
-					-Path $(Join-Path $using:script:downloadBaseDir $delTarget) `
-					-Recurse `
-					-Force `
-					-ErrorAction SilentlyContinue
+if ($null -ne $local:ignoreRegexTitles ) {
+	$local:ignoreTitles | ForEach-Object -Parallel {
+		#処理
+		Write-Output "$($([Array]::IndexOf($using:local:ignoreTitles, $_)) + 1 )/$($using:local:ignoreTitles.Count) - $($_)"
+		try {
+			$delTargets = Get-ChildItem `
+				-LiteralPath $using:script:downloadBaseDir `
+				-Name -Filter "*$($_)*"
+		} catch { Write-Output '　削除対象を特定できませんでした' }
+		try {
+			if ($null -ne $delTargets) {
+				foreach ($delTarget in $delTargets) {
+					Write-Output "　「$(Join-Path $using:script:downloadBaseDir $delTarget)」を削除します"
+					Remove-Item `
+						-Path $(Join-Path $using:script:downloadBaseDir $delTarget) `
+						-Recurse `
+						-Force `
+						-ErrorAction SilentlyContinue
+				}
 			}
-		}
-	} catch { Write-Output '　削除できないファイルがありました' }
-} -AsJob -ThrottleLimit 10 | Wait-Job | Receive-Job
-
+		} catch { Write-Output '　削除できないファイルがありました' }
+	} -AsJob -ThrottleLimit 10 | Wait-Job | Receive-Job
+}
 
 #----------------------------------------------------------------------
 
