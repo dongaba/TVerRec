@@ -367,24 +367,26 @@ function getRegexIgnoreList {
 		$null = fileUnlock $script:ignoreLockFilePath
 	}
 
-	for ($i = 0; $i -lt $local:ignoreRegexTitles.Length; $i++) {
-		#正規表現用のエスケープ
-		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('\', '\\')
-		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('*', '\*')
-		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('+', '\+')
-		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('.', '\.')
-		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('?', '\?')
-		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('{', '\{')
-		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('}', '\}')
-		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('(', '\(')
-		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace(')', '\)')
-		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('[', '\[')
-		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace(']', '\]')
-		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('^', '\^')
-		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('$', '\$')
-		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('-', '\-')
-		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('|', '\|')
-		$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('/', '\/')
+	if ($null -ne $local:ignoreRegexTitles ) {
+		for ($i = 0; $i -lt $local:ignoreRegexTitles.Length; $i++) {
+			#正規表現用のエスケープ
+			$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('\', '\\')
+			$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('*', '\*')
+			$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('+', '\+')
+			$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('.', '\.')
+			$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('?', '\?')
+			$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('{', '\{')
+			$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('}', '\}')
+			$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('(', '\(')
+			$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace(')', '\)')
+			$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('[', '\[')
+			$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace(']', '\]')
+			$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('^', '\^')
+			$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('$', '\$')
+			$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('-', '\-')
+			$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('|', '\|')
+			$local:ignoreRegexTitles[$i] = $local:ignoreRegexTitles[$i].Replace('/', '\/')
+		}
 	}
 
 	return $local:ignoreRegexTitles
