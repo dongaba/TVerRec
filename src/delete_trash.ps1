@@ -228,7 +228,7 @@ if ($null -ne $local:ignoreTitles ) {
 				}
 			}
 		} catch { Write-Output '　削除できないファイルがありました' }
-	} -AsJob -ThrottleLimit 10 | Wait-Job | Receive-Job
+	} -ThrottleLimit 10
 }
 
 #----------------------------------------------------------------------
@@ -281,7 +281,7 @@ if ($local:subDirTotal -ne 0) {
 				Write-Output "　空ディレクトリの削除に失敗しました: $_"
 			}
 		}
-	} -AsJob -ThrottleLimit 100 | Wait-Job | Receive-Job
+	} -ThrottleLimit 10
 }
 #----------------------------------------------------------------------
 

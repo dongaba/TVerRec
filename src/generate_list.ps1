@@ -207,10 +207,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#個々の番組の情報の取得ここから
 
 	#----------------------------------------------------------------------
-	#複数あるときは並列化と思ったら速くならなかったので
-	#現状では無条件でシングルスレッド処理に振り分ける。
-	#速くならなかった理由は不明。。。
-	#と思ったけどもう一回試してみる
+	#複数あるときは並列化して極力高速化
 	#----------------------------------------------------------------------
 	if ($local:videoTotal -gt 1) {
 
@@ -352,7 +349,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 				-Path $script:listFilePath `
 				-Encoding UTF8
 
-		} -AsJob -ThrottleLimit 10 | Wait-Job | Receive-Job
+		} -ThrottleLimit 10
 
 	} else {
 

@@ -1,17 +1,29 @@
 ﻿# Change Log
 
-## [2.7.1](https://github.com/dongaba/TVerRec/releases/tag/v2.7.1)
+## [2.7.2](https://github.com/dongaba/TVerRec/releases/tag/v2.7.2)
+
+### 2.7.2 Added
+
+### 2.7.2 Changed
+
+- 並列処理時に逐次進捗を表示するように変更
+- Google Colab 用のテンプレートを複数 Cell に分割
+- Google Colab 用のテンプレートに Google Drive をマウントする処理を追加
+
+### 2.7.2 Fixed
+
+- ## [2.7.1](https://github.com/dongaba/TVerRec/releases/tag/v2.7.1)
 
 ### 2.7.1 Added
 
-- Google Colab用のテンプレートを追加
+- Google Colab 用のテンプレートを追加
 
 ### 2.7.1 Changed
 
 ### 2.7.1 Fixed
 
-- Dockerコンテナ版の設定ファイル不備を修正
-- ダウンロード対象外リストが0件の際にエラーとなる不具合を修正
+- Docker コンテナ版の設定ファイル不備を修正
+- ダウンロード対象外リストが 0 件の際にエラーとなる不具合を修正
 
 ## [2.7.0](https://github.com/dongaba/TVerRec/releases/tag/v2.7.0)
 

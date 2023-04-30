@@ -300,7 +300,7 @@ function deleteFiles {
 		| Remove-Item `
 			-Force `
 			-ErrorAction SilentlyContinue
-	} -AsJob -ThrottleLimit 10 | Wait-Job | Receive-Job
+	} -ThrottleLimit 10
 
 }
 
