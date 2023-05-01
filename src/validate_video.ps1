@@ -33,15 +33,11 @@ Set-StrictMode -Version Latest
 try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
 		$script:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
-	} else {
-		$script:scriptRoot = Convert-Path .
-	}
+	} else { $script:scriptRoot = Convert-Path . }
 	Set-Location $script:scriptRoot
 	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '../conf'))
 	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
-} catch {
-	Write-Error 'ディレクトリ設定に失敗しました' ; exit 1
-}
+} catch { Write-Error 'ディレクトリ設定に失敗しました' ; exit 1 }
 
 #----------------------------------------------------------------------
 #設定ファイル読み込み
@@ -68,11 +64,11 @@ try {
 	$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.ps1')
 	if (Test-Path $script:devFunctionFile) {
 		. $script:devFunctionFile
-		Out-Msg '開発ファイル用共通関数ファイルを読み込みました' -Fg 'Yellow'
+		Write-Warning '開発ファイル用共通関数ファイルを読み込みました'
 	}
 	if (Test-Path $script:devConfFile) {
 		. $script:devConfFile
-		Out-Msg '開発ファイル用設定ファイルを読み込みました' -Fg 'Yellow'
+		Write-Warning '開発ファイル用設定ファイルを読み込みました'
 	}
 } catch { Write-Error '開発用設定ファイルの読み込みに失敗しました' ; exit 1 }
 
@@ -97,9 +93,9 @@ checkRequiredFile					#設定で指定したファイル・ディレクトリの
 
 #======================================================================
 #ダウンロード履歴ファイルのクリーンアップ
-Out-Msg '----------------------------------------------------------------------'
-Out-Msg 'ダウンロード履歴の不整合レコードを削除します'
-Out-Msg '----------------------------------------------------------------------'
+Write-Output '----------------------------------------------------------------------'
+Write-Output 'ダウンロード履歴の不整合レコードを削除します'
+Write-Output '----------------------------------------------------------------------'
 
 #進捗表示
 showProgressToast `
@@ -113,11 +109,11 @@ showProgressToast `
 
 #処理
 cleanDB							#ダウンロード履歴の破損レコード削除
-Out-Msg ''
+Write-Output ''
 
-Out-Msg '----------------------------------------------------------------------'
-Out-Msg '30日以上前に処理したものはダウンロード履歴から削除します'
-Out-Msg '----------------------------------------------------------------------'
+Write-Output '----------------------------------------------------------------------'
+Write-Output '30日以上前に処理したものはダウンロード履歴から削除します'
+Write-Output '----------------------------------------------------------------------'
 
 #進捗表示
 showProgressToast `
@@ -131,11 +127,11 @@ showProgressToast `
 
 #処理
 purgeDB -RetentionPeriod 30				#30日以上前に処理したものはダウンロード履歴から削除
-Out-Msg ''
+Write-Output ''
 
-Out-Msg '----------------------------------------------------------------------'
-Out-Msg 'ダウンロード履歴の重複レコードを削除します'
-Out-Msg '----------------------------------------------------------------------'
+Write-Output '----------------------------------------------------------------------'
+Write-Output 'ダウンロード履歴の重複レコードを削除します'
+Write-Output '----------------------------------------------------------------------'
 
 #進捗表示
 showProgressToast `
@@ -149,24 +145,22 @@ showProgressToast `
 
 #処理
 uniqueDB							#ダウンロード履歴の重複削除
-Out-Msg ''
+Write-Output ''
 
 if ($script:disableValidation -eq $true) {
-	Out-Msg 'ダウンロードファイルの整合性検証が無効化されているので、検証せずに終了します'
+	Write-Warning 'ダウンロードファイルの整合性検証が無効化されているので、検証せずに終了します'
 	exit
 }
 
 #======================================================================
 #ダウンロード履歴から番組チェックが終わっていないものを読み込み
-Out-Msg '----------------------------------------------------------------------'
-Out-Msg '整合性検証が終わっていない番組を検証します'
-Out-Msg '----------------------------------------------------------------------'
+Write-Output '----------------------------------------------------------------------'
+Write-Output '整合性検証が終わっていない番組を検証します'
+Write-Output '----------------------------------------------------------------------'
 try {
 	#ロックファイルをロック
-	while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true) {
-		Out-Msg 'ファイルのロック解除待ち中です' -Fg 'Gray'
-		Start-Sleep -Seconds 1
-	}
+	while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true)
+	{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 	#ファイル操作
 	$local:videoHists = (
 		Import-Csv `
@@ -176,32 +170,30 @@ try {
 		| Where-Object { $_.videoPath -ne '-- IGNORED --' } `
 		| Select-Object 'videoPath'
 	)
-} catch {
-	Out-Msg 'ダウンロード履歴の読み込みに失敗しました' -Fg 'Green'
+} catch { Write-Warning 'ダウンロード履歴の読み込みに失敗しました'
 } finally { $null = fileUnlock $script:historyLockFilePath }
 
 
 if ($null -eq $local:videoHists) {
 	#チェックする番組なし
-	Out-Msg '　すべての番組を検証済です' -Fg 'Gray'
-	Out-Msg ''
+	Write-Output '　すべての番組を検証済です'
+	Write-Output ''
 } else {
 	#ダウンロードファイルをチェック
 	$local:validateTotal = 0
 	$local:validateTotal = $local:videoHists.Length
 
 	#ffmpegのデコードオプションの設定
-	if ($script:forceSoftwareDecodeFlag -eq $true ) {
-		$local:decodeOption = ''
-	} else {
+	if ($script:forceSoftwareDecodeFlag -eq $true ) { $local:decodeOption = '' }
+	else {
 		if ($script:ffmpegDecodeOption -ne '') {
-			Out-Msg '---------------------------------------------------------------------------' -Fg 'Green'
-			Out-Msg 'ffmpegのデコードオプションが設定されてます                                 ' -Fg 'Green'
-			Out-Msg "　・$($script:ffmpegDecodeOption)                                          " -Fg 'Green'
-			Out-Msg 'もし整合性検証がうまく進まない場合は、以下のどちらかをお試しください       ' -Fg 'Green'
-			Out-Msg '　・user_setting.ps1 でデコードオプションを変更する                        ' -Fg 'Green'
-			Out-Msg '　・user_setting.ps1 で $script:forceSoftwareDecodeFlag = $true と設定する ' -Fg 'Green'
-			Out-Msg '---------------------------------------------------------------------------' -Fg 'Green'
+			Write-Output '---------------------------------------------------------------------------'
+			Write-Output 'ffmpegのデコードオプションが設定されてます                                 '
+			Write-Output "　・$($script:ffmpegDecodeOption)                                          "
+			Write-Output 'もし整合性検証がうまく進まない場合は、以下のどちらかをお試しください       '
+			Write-Output '　・user_setting.ps1 でデコードオプションを変更する                        '
+			Write-Output '　・user_setting.ps1 で $script:forceSoftwareDecodeFlag = $true と設定する '
+			Write-Output '---------------------------------------------------------------------------'
 		}
 		$local:decodeOption = $script:ffmpegDecodeOption
 	}
@@ -247,9 +239,9 @@ if ($null -eq $local:videoHists) {
 
 		#処理
 		if (Test-Path $script:downloadBaseDir -PathType Container) {}
-		else { Write-Error '番組ダウンロード先ディレクトリにアクセスできません。終了します。' -Fg 'Green' ; exit 1 }
+		else { Write-Error '番組ダウンロード先ディレクトリにアクセスできません。終了します。' ; exit 1 }
 
-		Out-Msg "$($local:validateNum)/$($local:validateTotal) - $($local:videoFileRelPath)" -NoNL $true
+		Write-Output "$($local:validateNum)/$($local:validateTotal) - $($local:videoFileRelPath)"
 		checkVideo `
 			-DecodeOption $local:decodeOption `
 			-Path $local:videoFileRelPath		#番組の整合性チェック
@@ -262,10 +254,10 @@ if ($null -eq $local:videoHists) {
 
 #======================================================================
 #ダウンロード履歴から整合性検証が終わっていないもののステータスを初期化
-Out-Msg '----------------------------------------------------------------------'
-Out-Msg 'ダウンロード履歴から検証が終わっていない番組のステータスを変更します'
-Out-Msg '----------------------------------------------------------------------'
-Out-Msg ''
+Write-Output '----------------------------------------------------------------------'
+Write-Output 'ダウンロード履歴から検証が終わっていない番組のステータスを変更します'
+Write-Output '----------------------------------------------------------------------'
+Write-Output ''
 #進捗表示
 showProgressToast `
 	-Text1 'ダウンロードファイルの整合性検証中' `
@@ -279,10 +271,8 @@ showProgressToast `
 #処理
 try {
 	#ロックファイルをロック
-	while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true) {
-		Out-Msg 'ファイルのロック解除待ち中です' -Fg 'Gray'
-		Start-Sleep -Seconds 1
-	}
+	while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true)
+	{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 	#ファイル操作
 	$local:videoHists = `
 		Import-Csv `
@@ -296,8 +286,7 @@ try {
 		-Path $script:historyFilePath `
 		-NoTypeInformation `
 		-Encoding UTF8
-} catch {
-	Out-Msg 'ダウンロード履歴の更新に失敗しました' -Fg 'Green'
+} catch { Write-Warning 'ダウンロード履歴の更新に失敗しました'
 } finally { $null = fileUnlock $script:historyLockFilePath }
 
 #進捗表示

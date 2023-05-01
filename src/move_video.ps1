@@ -33,15 +33,11 @@ Set-StrictMode -Version Latest
 try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
 		$script:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
-	} else {
-		$script:scriptRoot = Convert-Path .
-	}
+	} else { $script:scriptRoot = Convert-Path . }
 	Set-Location $script:scriptRoot
 	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '../conf'))
 	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
-} catch {
-	Write-Error 'ディレクトリ設定に失敗しました' ; exit 1
-}
+} catch { Write-Error 'ディレクトリ設定に失敗しました' ; exit 1 }
 
 #----------------------------------------------------------------------
 #設定ファイル読み込み
@@ -68,11 +64,11 @@ try {
 	$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.ps1')
 	if (Test-Path $script:devFunctionFile) {
 		. $script:devFunctionFile
-		Out-Msg '開発ファイル用共通関数ファイルを読み込みました' -Fg 'Yellow'
+		Write-Warning '開発ファイル用共通関数ファイルを読み込みました'
 	}
 	if (Test-Path $script:devConfFile) {
 		. $script:devConfFile
-		Out-Msg '開発ファイル用設定ファイルを読み込みました' -Fg 'Yellow'
+		Write-Warning '開発ファイル用設定ファイルを読み込みました'
 	}
 } catch { Write-Error '開発用設定ファイルの読み込みに失敗しました' ; exit 1 }
 
@@ -84,23 +80,20 @@ checkRequiredFile
 
 #======================================================================
 #ディレクトリの存在確認
-if (!(Test-Path $script:downloadWorkDir -PathType Container)) {
-	Write-Error 'ダウンロード作業ディレクトリが存在しません。終了します。' ; exit 1
-}
-if (!(Test-Path $script:downloadBaseDir -PathType Container)) {
-	Write-Error '番組ダウンロード先ディレクトリにアクセスできません。終了します。' -Fg 'Green' ; exit 1
-}
+if (!(Test-Path $script:downloadWorkDir -PathType Container))
+{ Write-Error 'ダウンロード作業ディレクトリが存在しません。終了します。' ; exit 1 }
+if (!(Test-Path $script:downloadBaseDir -PathType Container))
+{ Write-Error '番組ダウンロード先ディレクトリにアクセスできません。終了します。' ; exit 1 }
 foreach ($local:saveDir in $script:saveBaseDirArray) {
-	if (!(Test-Path $local:saveDir -PathType Container)) {
-		Write-Error '番組移動先ディレクトリが存在しません。終了します。' ; exit 1
-	}
+	if (!(Test-Path $local:saveDir -PathType Container))
+	{ Write-Error '番組移動先ディレクトリが存在しません。終了します。' ; exit 1 }
 }
 
 #======================================================================
 #1/2 移動先ディレクトリを起点として、配下のディレクトリを取得
-Out-Msg '----------------------------------------------------------------------'
-Out-Msg '移動先ディレクトリの一覧を作成しています'
-Out-Msg '----------------------------------------------------------------------'
+Write-Output '----------------------------------------------------------------------'
+Write-Output '移動先ディレクトリの一覧を作成しています'
+Write-Output '----------------------------------------------------------------------'
 
 #進捗表示
 showProgressToast `
@@ -115,9 +108,9 @@ showProgressToast `
 
 #======================================================================
 #2/2 移動先ディレクトリと同名のディレクトリ配下の番組を移動
-Out-Msg '----------------------------------------------------------------------'
-Out-Msg 'ダウンロードファイルを移動しています'
-Out-Msg '----------------------------------------------------------------------'
+Write-Output '----------------------------------------------------------------------'
+Write-Output 'ダウンロードファイルを移動しています'
+Write-Output '----------------------------------------------------------------------'
 
 
 #進捗表示
@@ -142,11 +135,9 @@ foreach ($local:saveDir in $script:saveBaseDirArray) {
 }
 
 #移動先パス合計数
-if ($local:moveToPaths -is [Array]) {
-	$local:moveToPathTotal = $local:moveToPaths.Length
-} elseif ($null -ne $local:moveToPaths) {
-	$local:moveToPathTotal = 1
-} else { $local:moveToPathTotal = 0 }
+if ($local:moveToPaths -is [Array]) { $local:moveToPathTotal = $local:moveToPaths.Length }
+elseif ($null -ne $local:moveToPaths) { $local:moveToPathTotal = 1 }
+else { $local:moveToPathTotal = 0 }
 
 #----------------------------------------------------------------------
 if ($local:moveToPathTotal -ne 0) {

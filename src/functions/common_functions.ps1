@@ -322,7 +322,6 @@ function fileLock {
 	)
 
 	try {
-		# initialise variables
 		$local:fileLocked = $false
 		# attempt to open file and detect file lock
 		$script:fileInfo = New-Object System.IO.FileInfo $local:Path
@@ -331,11 +330,8 @@ function fileLock {
 				[System.IO.FileAccess]::ReadWrite, `
 				[System.IO.FileShare]::None
 		)
-		# set status
 		$local:fileLocked = $true
-	} catch {
-		# catch fileStream had falied
-		$fileLocked = $false
+	} catch { $fileLocked = $false
 	} finally {
 		# return result
 		[PSCustomObject]@{
@@ -365,11 +361,8 @@ function fileUnlock {
 	try {
 		# close stream if not lock
 		if ($script:fileStream) { $script:fileStream.Close() }
-		# set status
 		$local:fileLocked = $false
-	} catch {
-		# catch fileStream had falied
-		$local:fileLocked = $true
+	} catch { $local:fileLocked = $true
 	} finally {
 		# return result
 		[PSCustomObject]@{
@@ -397,7 +390,6 @@ function isLocked {
 	)
 
 	try {
-		# initialise variables
 		$local:isFileLocked = $false
 		# attempt to open file and detect file lock
 		$local:isLockedFileInfo = New-Object System.IO.FileInfo $local:isLockedPath
@@ -408,11 +400,8 @@ function isLocked {
 		)
 		# close stream if not lock
 		if ($local:isLockedfileStream) { $local:isLockedfileStream.Close() }
-		# set status
 		$local:isFileLocked = $false
-	} catch {
-		# catch fileStream had falied
-		$local:isFileLocked = $true
+	} catch { $local:isFileLocked = $true
 	} finally {
 		# return result
 		[PSCustomObject]@{
@@ -471,12 +460,8 @@ function Out-Msg {
 	$local:prevBackgroundColor = $host.UI.RawUI.BackgroundColor
 
 	# Set colors if available
-	if ($local:backgroundColor -ne $null) {
-		$host.UI.RawUI.BackgroundColor = $local:backgroundColor
-	}
-	if ($local:foregroundColor -ne $null) {
-		$host.UI.RawUI.ForegroundColor = $local:foregroundColor
-	}
+	if ($local:backgroundColor -ne $null) {	$host.UI.RawUI.BackgroundColor = $local:backgroundColor }
+	if ($local:foregroundColor -ne $null) {	$host.UI.RawUI.ForegroundColor = $local:foregroundColor	}
 
 	# Always write (if we want just a NewLine)
 	if ($null -eq $local:text) { $local:text = '' }
@@ -719,7 +704,7 @@ function updateProgressToast {
 	[OutputType([System.Void])]
 	Param (
 		[Parameter(
-			Mandatory = $true,
+			Mandatory = $false,
 			ValueFromPipeline = $false,
 			ValueFromPipelineByPropertyName = $false
 		)]
@@ -1181,17 +1166,11 @@ function updateProgress2Row {
 		[String]$local:toastGroup
 	)
 
-	if ($local:secRemaining1 -eq -1 -Or $local:secRemaining1 -eq '' ) {
-		$local:minRemaining1 = '計算中...'
-	} else {
-		$local:minRemaining1 = "$([String]([math]::Ceiling($local:secRemaining1 / 60)))分"
-	}
+	if ($local:secRemaining1 -eq -1 -Or $local:secRemaining1 -eq '' ) { $local:minRemaining1 = '計算中...' }
+	else { $local:minRemaining1 = "$([String]([math]::Ceiling($local:secRemaining1 / 60)))分" }
 
-	if ($local:secRemaining2 -eq -1 -Or $local:secRemaining2 -eq '' ) {
-		$local:minRemaining2 = '計算中...'
-	} else {
-		$local:minRemaining2 = "$([String]([math]::Ceiling($local:secRemaining2 / 60)))分"
-	}
+	if ($local:secRemaining2 -eq -1 -Or $local:secRemaining2 -eq '' ) { $local:minRemaining2 = '計算中...' }
+	else { $local:minRemaining2 = "$([String]([math]::Ceiling($local:secRemaining2 / 60)))分" }
 
 	if ($local:secRemaining1 -ne '') { $local:secRemaining1 = "残り時間 $local:minRemaining1" }
 	if ($local:secRemaining2 -ne '') { $local:secRemaining2 = "残り時間 $local:minRemaining2" }
@@ -1235,7 +1214,8 @@ function goAnal {
 
 	$progressPreference = 'silentlyContinue'
 	$local:statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
-	try { $null = Invoke-WebRequest `
+	try {
+		$null = Invoke-WebRequest `
 			-Uri "$($local:statisticsBase)$($local:event).svg" `
 			-TimeoutSec $script:timeoutSec
 	} catch { Write-Debug 'Failed to collect statistics' }
@@ -1281,8 +1261,7 @@ function goAnal {
 			-Method 'POST' -Headers $local:gaHeaders `
 			-Body $local:gaBody `
 			-TimeoutSec $script:timeoutSec
-	}	catch {
-		Write-Debug 'Failed to collect statistics'
+	} catch { Write-Debug 'Failed to collect statistics'
 	} finally { $progressPreference = 'Continue' }
 
 }
@@ -1339,9 +1318,7 @@ function moveItem() {
 		# ディレクトリ上書き(移動先に存在 かつ ディレクトリ)は再帰的に moveItem 呼び出し
 		Get-ChildItem `
 			-Path $src `
-		| ForEach-Object {
-			moveItem $_.FullName $($dist + '\' + $_.Name)
-		}
+		| ForEach-Object { moveItem $_.FullName $($dist + '\' + $_.Name) }
 		# 移動し終わったディレクトリを削除
 		Remove-Item `
 			-Path $src `

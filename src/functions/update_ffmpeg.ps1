@@ -52,13 +52,9 @@ try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
 		$local:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
 		$local:scriptRoot = Split-Path -Parent -Path $local:scriptRoot
-	} else {
-		$local:scriptRoot = Convert-Path ..
-	}
+	} else { $local:scriptRoot = Convert-Path .. }
 	Set-Location $local:scriptRoot
-} catch {
-	Write-Error 'ディレクトリ設定に失敗しました' ; exit 1
-}
+} catch { Write-Error 'ディレクトリ設定に失敗しました' ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -99,10 +95,7 @@ if (Test-Path $local:ffmpegPath -PathType Leaf) {
 	$local:ffmpegFileVersion = (& $local:ffmpegPath -version)
 	$null = $local:ffmpegFileVersion[0] -match 'ffmpeg version (\d+\.\d+(\.\d+)?).*'
 	$local:ffmpegCurrentVersion = $matches[1]
-} else {
-	# if ffmpeg.exe not found, will download it
-	$local:ffmpegCurrentVersion = ''
-}
+} else { $local:ffmpegCurrentVersion = '' }
 
 #ffmpegの最新バージョン取得
 $local:latestVersion = ''
@@ -111,21 +104,18 @@ try {
 		-Uri $local:releases `
 		-Method Get `
 	| ConvertTo-Json
-} catch {
-	Write-Output 'ffmpegの最新バージョンを特定できませんでした'
-	return
-}
+} catch { Write-Warning 'ffmpegの最新バージョンを特定できませんでした'; return }
 
 #ffmpegのダウンロード
 if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 	Write-Output 'ffmpegは最新です。'
-	Write-Output "　ffmpeg current: $local:ffmpegCurrentVersion"
-	Write-Output "　ffmpeg latest: $local:latestVersion"
+	Write-Output "　Local version: $local:ffmpegCurrentVersion"
+	Write-Output "　Latest version: $local:latestVersion"
 	Write-Output ''
 } else {
-	Write-Output 'ffmpegが古いため更新します。'
-	Write-Output "　ffmpeg current: $local:ffmpegCurrentVersion"
-	Write-Output "　ffmpeg latest: $local:latestVersion"
+	Write-Warning 'ffmpegが古いため更新します。'
+	Write-Warning "　Local version: $local:ffmpegCurrentVersion"
+	Write-Warning "　Latest version: $local:latestVersion"
 	Write-Output ''
 
 	switch ($true) {
@@ -138,9 +128,7 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 				Invoke-WebRequest `
 					-Uri $local:donwloadURL `
 					-OutFile $(Join-Path $local:ffmpegDir 'ffmpeg.zip')
-			} catch {
-				Write-Error 'ffmpegのダウンロードに失敗しました' ; exit 1
-			}
+			} catch { Write-Error 'ffmpegのダウンロードに失敗しました' ; exit 1 }
 
 			#展開
 			Write-Output 'ダウンロードしたffmpegを解凍します'
@@ -148,9 +136,7 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 				unZip `
 					-File "$($local:ffmpegDir)/ffmpeg.zip" `
 					-OutPath "$($local:ffmpegDir)"
-			} catch {
-				Write-Error 'ffmpegの解凍に失敗しました' ; exit 1
-			}
+			} catch { Write-Error 'ffmpegの解凍に失敗しました' ; exit 1 }
 
 			#配置
 			Write-Output '解凍したffmpegを配置します'
@@ -158,9 +144,7 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 				Move-Item `
 					-Path "$($local:ffmpegDir)/ffmpeg-*-essentials_build/bin/ff*.exe" `
 					-Destination "$local:ffmpegDir" -Force
-			} catch {
-				Write-Error 'ffmpegの配置に失敗しました' ; exit 1
-			}
+			} catch { Write-Error 'ffmpegの配置に失敗しました' ; exit 1 }
 
 
 			#ゴミ掃除
@@ -171,18 +155,15 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 					-Force `
 					-Recurse `
 					-ErrorAction SilentlyContinue
-			} catch {
-				Write-Error '中間ディレクトリの削除に失敗しました' ; exit 1
-			}
+			} catch { Write-Error '中間ディレクトリの削除に失敗しました' ; exit 1 }
 
 
-			try { Remove-Item `
+			try {
+				Remove-Item `
 					-Path "$($local:ffmpegDir)/ffmpeg.zip" `
 					-Force `
 					-ErrorAction SilentlyContinue
-			} catch {
-				Write-Error '中間ファイルの削除に失敗しました' ; exit 1
-			}
+			} catch { Write-Error '中間ファイルの削除に失敗しました' ; exit 1 }
 
 
 			break
@@ -209,8 +190,9 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 				$donwloadURL = `
 					'https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-i686-static.tar.xz'
 			} else {
-				Write-Error 'お使いのCPUに適合するffmpegを特定できませんでした。'
-				Write-Error "お使いのCPUは$($local:arch)に適合するffmpegをご自身で配置してください。" ; exit 1
+				Write-Warning 'お使いのCPUに適合するffmpegを特定できませんでした。'
+				Write-Warning "お使いのCPUは$($local:arch)に適合するffmpegをご自身で配置してください。"
+				return
 			}
 
 			#ダウンロード
@@ -219,17 +201,13 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 				Invoke-WebRequest `
 					-Uri $donwloadURL `
 					-OutFile "$($local:ffmpegDir)/ffmpeg.xz"
-			} catch {
-				Write-Error 'ffmpegのダウンロードに失敗しました' ; exit 1
-			}
+			} catch { Write-Error 'ffmpegのダウンロードに失敗しました' ; exit 1 }
 
 			#展開
 			Write-Output 'ダウンロードしたffmpegを解凍します'
 			try {
 				(& tar xf "$($local:ffmpegDir)/ffmpeg.xz" -C "$local:ffmpegDir")
-			} catch {
-				Write-Error 'ffmpegの展開に失敗しました' ; exit 1
-			}
+			} catch { Write-Error 'ffmpegの展開に失敗しました' ; exit 1 }
 
 			#配置
 			Write-Output '解凍したffmpegを配置します'
@@ -238,9 +216,7 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 					-Path "$($local:ffmpegDir)/ffmpeg-*-static/ff*" `
 					-Destination "$local:ffmpegDir" `
 					-Force
-			} catch {
-				Write-Error 'ffmpegの配置に失敗しました' ; exit 1
-			}
+			} catch { Write-Error 'ffmpegの配置に失敗しました' ; exit 1 }
 
 			#ゴミ掃除
 			Write-Output '中間ディレクトリと中間ファイルを削除します'
@@ -250,17 +226,13 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 					-Force `
 					-Recurse `
 					-ErrorAction SilentlyContinue
-			} catch {
-				Write-Error '中間ディレクトリの削除に失敗しました' ; exit 1
-			}
+			} catch { Write-Error '中間ディレクトリの削除に失敗しました' ; exit 1 }
 			try {
 				Remove-Item `
 					-Path "$($local:ffmpegDir)/ffmpeg.xz" `
 					-Force `
 					-ErrorAction SilentlyContinue
-			} catch {
-				Write-Error '中間ファイルの削除に失敗しました' ; exit 1
-			}
+			} catch { Write-Error '中間ファイルの削除に失敗しました' ; exit 1 }
 
 			break
 		}
@@ -270,14 +242,11 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 			try {
 				Invoke-WebRequest `
 					-Uri https://evermeet.cx/ffmpeg/getrelease/zip `
-					-OutFile "$($local:ffmpegDir)/ffmpeg.zip" `
-					Invoke-WebRequest `
+					-OutFile "$($local:ffmpegDir)/ffmpeg.zip"
+				Invoke-WebRequest `
 					-Uri https://evermeet.cx/ffmpeg/getrelease/ffprobe/zip `
-					-OutFile "$($local:ffmpegDir)/ffprobe.zip" `
-
-			} catch {
-				Write-Error 'ffmpegのダウンロードに失敗しました' ; exit 1
-			}
+					-OutFile "$($local:ffmpegDir)/ffprobe.zip"
+			} catch { Write-Error 'ffmpegのダウンロードに失敗しました' ; exit 1 }
 
 			#展開
 			Write-Output 'ダウンロードしたffmpegを解凍します'
@@ -288,9 +257,7 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 				unZip `
 					-File "$($local:ffmpegDir)/ffprobe.zip" `
 					-OutPath "$($local:ffmpegDir)/ffprobe"
-			} catch {
-				Write-Error 'ffmpegの展開に失敗しました' ; exit 1
-			}
+			} catch { Write-Error 'ffmpegの展開に失敗しました' ; exit 1 }
 
 			#ゴミ掃除
 			Write-Output '中間ファイルを削除します'
@@ -303,15 +270,14 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 					-Path "$($local:ffmpegDir)/ffprobe.zip" `
 					-Force `
 					-ErrorAction SilentlyContinue
-			} catch {
-				Write-Error '中間ファイルの削除に失敗しました' ; exit 1
-			}
+			} catch { Write-Error '中間ファイルの削除に失敗しました' ; exit 1 }
 
 			break
 		}
 		default {
-			Write-Error 'お使いのOSに適合するffmpegを特定できませんでした。'
-			Write-Error "お使いのOSは$($local:os)に適合するffmpegをご自身で配置してください。" ; exit 1
+			Write-Warning 'お使いのOSに適合するffmpegを特定できませんでした。'
+			Write-Warning "お使いのOSは$($local:os)に適合するffmpegをご自身で配置してください。"
+			return
 			break
 		}
 
@@ -330,9 +296,7 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 		$local:ffmpegCurrentVersion = $local:matches[1]
 		Write-Output "ffmpegをversion $local:ffmpegCurrentVersion に更新しました。"
 		Write-Output ''
-	} catch {
-		Write-Error '更新後のバージョン取得に失敗しました' ; exit 1
-	}
+	} catch { Write-Error '更新後のバージョン取得に失敗しました' ; exit 1 }
 
 }
 

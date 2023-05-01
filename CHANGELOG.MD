@@ -9,8 +9,12 @@
 - 並列処理時に逐次進捗を表示するように変更
 - Google Colab 用のテンプレートを複数 Cell に分割
 - Google Colab 用のテンプレートに Google Drive をマウントする処理を追加
+- Write-Host の廃止
 
 ### 2.7.2 Fixed
+
+- ytdl-patched の自動更新でエラーメッセージの間違いを修正
+- ffmpeg の自動更新で ffprobe のダウンロード不具合を修正
 
 - ## [2.7.1](https://github.com/dongaba/TVerRec/releases/tag/v2.7.1)
 

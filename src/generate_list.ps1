@@ -33,15 +33,11 @@ Set-StrictMode -Version Latest
 try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
 		$script:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
-	} else {
-		$script:scriptRoot = Convert-Path .
-	}
+	} else { $script:scriptRoot = Convert-Path . }
 	Set-Location $script:scriptRoot
 	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '../conf'))
 	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
-} catch {
-	Write-Error 'ディレクトリ設定に失敗しました' ; exit 1
-}
+} catch { Write-Error 'ディレクトリ設定に失敗しました' ; exit 1 }
 
 #----------------------------------------------------------------------
 #設定ファイル読み込み
@@ -68,30 +64,32 @@ try {
 	$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.ps1')
 	if (Test-Path $script:devFunctionFile) {
 		. $script:devFunctionFile
-		Out-Msg '開発ファイル用共通関数ファイルを読み込みました' -Fg 'Yellow'
+		Write-Warning '開発ファイル用共通関数ファイルを読み込みました'
 	}
 	if (Test-Path $script:devConfFile) {
 		. $script:devConfFile
-		Out-Msg '開発ファイル用設定ファイルを読み込みました' -Fg 'Yellow'
+		Write-Warning '開発ファイル用設定ファイルを読み込みました'
 	}
 } catch { Write-Error '開発用設定ファイルの読み込みに失敗しました' ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
-Out-Msg ''
-Out-Msg '===========================================================================' -Fg 'Cyan'
-Out-Msg '                                                                           ' -Fg 'Cyan'
-Out-Msg '        ████████ ██    ██ ███████ ██████  ██████  ███████  ██████          ' -Fg 'Cyan'
-Out-Msg '           ██    ██    ██ ██      ██   ██ ██   ██ ██      ██               ' -Fg 'Cyan'
-Out-Msg '           ██    ██    ██ █████   ██████  ██████  █████   ██               ' -Fg 'Cyan'
-Out-Msg '           ██     ██  ██  ██      ██   ██ ██   ██ ██      ██               ' -Fg 'Cyan'
-Out-Msg '           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          ' -Fg 'Cyan'
-Out-Msg '                                                                           ' -Fg 'Cyan'
-Out-Msg "        $script:appName : TVerダウンローダ                                 " -Fg 'Cyan'
-Out-Msg "                             番組リスト生成 version. $script:appVersion    " -Fg 'Cyan'
-Out-Msg '                                                                           ' -Fg 'Cyan'
-Out-Msg '===========================================================================' -Fg 'Cyan'
-Out-Msg ''
+[Console]::ForegroundColor = 'Cyan'
+Write-Output ''
+Write-Output '==========================================================================='
+Write-Output '                                                                           '
+Write-Output '        ████████ ██    ██ ███████ ██████  ██████  ███████  ██████          '
+Write-Output '           ██    ██    ██ ██      ██   ██ ██   ██ ██      ██               '
+Write-Output '           ██    ██    ██ █████   ██████  ██████  █████   ██               '
+Write-Output '           ██     ██  ██  ██      ██   ██ ██   ██ ██      ██               '
+Write-Output '           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          '
+Write-Output '                                                                           '
+Write-Output "        $script:appName : TVerダウンローダ                                 "
+Write-Output "                             番組リスト生成 version. $script:appVersion    "
+Write-Output '                                                                           '
+Write-Output '==========================================================================='
+Write-Output ''
+[Console]::ResetColor()
 
 #----------------------------------------------------------------------
 #設定で指定したファイル・ディレクトリの存在チェック
@@ -111,14 +109,14 @@ if ($script:keywordNames -is [Array]) {
 } else { $local:keywordTotal = 1 }
 
 #進捗表示
-showProgress2Row `
-	-ProgressText1 'キーワードから番組リスト作成中' `
-	-ProgressText2 'キーワードから番組を抽出しダウンロード' `
-	-WorkDetail1 '読み込み中...' `
-	-WorkDetail2 '読み込み中...' `
+showProgressToast `
+	-Text1 'キーワードから番組リスト作成中' `
+	-Text2 'キーワードから番組を抽出しダウンロード' `
+	-WorkDetail '' `
+	-Tag $script:appName `
+	-Group 'ListGen' `
 	-Duration 'long' `
-	-Silent $false `
-	-Group 'ListGen'
+	-Silent $false
 
 #======================================================================
 #個々のジャンルページチェックここから
@@ -130,10 +128,10 @@ foreach ($local:keywordName in $local:keywordNames) {
 	$local:searchResultCount = 0
 
 	#ジャンルページチェックタイトルの表示
-	Out-Msg ''
-	Out-Msg '----------------------------------------------------------------------'
-	Out-Msg "$(trimTabSpace ($local:keywordName))"
-	Out-Msg '----------------------------------------------------------------------'
+	Write-Output ''
+	Write-Output '----------------------------------------------------------------------'
+	Write-Output "$(trimTabSpace ($local:keywordName))"
+	Write-Output '----------------------------------------------------------------------'
 
 	#処理
 	$local:resultLinks = getVideoLinksFromKeyword ($local:keywordName)
@@ -142,18 +140,14 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#ダウンロード履歴ファイルのデータを読み込み
 	try {
 		#ロックファイルをロック
-		while ($(fileLock $script:listLockFilePath).fileLocked -ne $true) {
-			Out-Msg '　ファイルのロック解除待ち中です' -Fg 'Gray'
-			Start-Sleep -Seconds 1
-		}
+		while ($(fileLock $script:listLockFilePath).fileLocked -ne $true)
+		{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 		#ファイル操作
 		$script:listFileData = `
 			Import-Csv `
 			-Path $script:listFilePath `
 			-Encoding UTF8
-	} catch {
-		Out-Msg '　ダウンロードリストを読み込めなかったのでスキップしました' -Fg 'Green'
-		continue
+	} catch { Write-Warning 'ダウンロードリストを読み込めなかったのでスキップしました'; continue
 	} finally { $null = fileUnlock $script:listLockFilePath }
 
 	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
@@ -161,54 +155,46 @@ foreach ($local:keywordName in $local:keywordNames) {
 		$local:listMatch = $script:listFileData `
 		| Where-Object { $_.episodeID -like "*$($local:resultLink.`
 		replace('https://tver.jp/episodes/', ''))" }
-		if ($null -eq $local:listMatch) {
-			$local:videoLinks += $local:resultLink
-		} else {
-			$local:searchResultCount = $local:searchResultCount + 1
-			continue
-		}
+		if ($null -eq $local:listMatch) { $local:videoLinks += $local:resultLink }
+		else { $local:searchResultCount = $local:searchResultCount + 1; continue }
 	}
 
+	#ジャンル内の処理中の番組の番号
+	#$local:videoNum = 0
 	#ダウンロード対象のトータル番組数
-	if ($null -eq $local:videoLinks) {
-		$local:videoTotal = 0
-	} else {
-		$local:videoTotal = $local:videoLinks.Length
-	}
-	Out-Msg "　ダウンロード対象$($local:videoTotal)本 処理済$($local:searchResultCount)本" -Fg 'Gray'
+	if ($null -eq $local:videoLinks) { $local:videoTotal = 0 }
+	else { $local:videoTotal = $local:videoLinks.Length }
+	Write-Output "　ダウンロード対象$($local:videoTotal)本 処理済$($local:searchResultCount)本"
 
 	#処理時間の推計
 	$local:secElapsed = (Get-Date) - $local:totalStartTime
-	$local:secRemaining1 = -1
+	$local:secRemaining = -1
 	if ($local:keywordNum -ne 0) {
-		$local:secRemaining1 = `
+		$local:secRemaining = `
 		($local:secElapsed.TotalSeconds / $local:keywordNum) `
 			* ($local:keywordTotal - $local:keywordNum)
 	}
+	if ($local:secRemaining -eq -1 -Or $local:secRemaining -eq '' ) { $local:minRemaining = '計算中...' }
+	else { $local:minRemaining = "$([String]([math]::Ceiling($local:secRemaining / 60)))分" }
 	$local:progressRatio1 = $($local:keywordNum / $local:keywordTotal)
-	$local:progressRatio2 = 0
+	#$local:progressRatio2 = 0
 
 	#キーワード数のインクリメント
 	$local:keywordNum = $local:keywordNum + 1
 
 	#進捗更新
-	updateProgress2Row `
-		-ProgressActivity1 $local:keywordNum/$local:keywordTotal `
-		-CurrentProcessing1 $(trimTabSpace ($local:keywordName)) `
-		-Rate1 $local:progressRatio1 `
-		-SecRemaining1 $local:secRemaining1 `
-		-ProgressActivity2 '' `
-		-CurrentProcessing2 $local:videoLink `
-		-Rate2 $local:progressRatio2 `
-		-SecRemaining2 '' `
+	updateProgressToast `
+		-Title $(trimTabSpace ($local:keywordName)) `
+		-Rate $local:progressRatio1 `
+		-LeftText $local:keywordNum/$local:keywordTotal `
+		-RightText $local:minRemaining `
+		-Tag $script:appName `
 		-Group 'ListGen'
 
 	#----------------------------------------------------------------------
 	#個々の番組の情報の取得ここから
 
-	#----------------------------------------------------------------------
 	#複数あるときは並列化して極力高速化
-	#----------------------------------------------------------------------
 	if ($local:videoTotal -gt 1) {
 
 		#関数の定義
@@ -263,13 +249,8 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 			#TVerのAPIを叩いて番組情報取得
 			goAnal -Event 'getinfo' -Type 'link' -ID $_
-			try {
-				getVideoInfo -Link $_
-			} catch {
-				Write-Output '　情報取得エラー。スキップします Err:10'
-				#次回再度トライするため以降の処理をせずに次の番組へ
-				continue
-			}
+			try { getVideoInfo -Link $_ }
+			catch { Write-Warning '情報取得エラー。スキップします Err:10'; continue }
 
 			#ダウンロード対象外に入っている番組の場合はリスト出力しない
 			foreach ($ignoreRegexTitle in $using:script:ignoreRegexTitles) {
@@ -329,10 +310,8 @@ foreach ($local:keywordName in $local:keywordNames) {
 			#ダウンロードリストCSV書き出し
 			try {
 				#ロックファイルをロック
-				while ($(fileLock $script:listLockFilePath).fileLocked -ne $true) {
-					Write-Output '　ファイルのロック解除待ち中です'
-					Start-Sleep -Seconds 1
-				}
+				while ($(fileLock $script:listLockFilePath).fileLocked -ne $true)
+				{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 				#ファイル操作
 				$newVideo | Export-Csv `
 					-Path $script:listFilePath `
@@ -340,9 +319,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 					-Encoding UTF8 `
 					-Append
 				Write-Debug 'ダウンロードリストを書き込みました'
-			} catch {
-				Write-Output '　ダウンロードリストを更新できませんでした。スキップします'
-				continue
+			} catch {Write-Warning 'ダウンロードリストを更新できませんでした。スキップします';continue
 			} finally { $null = fileUnlock $script:listLockFilePath }
 			$script:listFileData = `
 				Import-Csv `
@@ -369,22 +346,18 @@ foreach ($local:keywordName in $local:keywordNames) {
 #======================================================================
 
 #進捗表示
-updateProgressToast2 `
-	-Title1 'キーワードから番組リストの作成' `
-	-Rate1 '1' `
-	-LeftText1 '' `
-	-RightText1 '完了' `
-	-Title2 '番組のダウンロード' `
-	-Rate2 '1' `
-	-LeftText2 '' `
-	-RightText2 '完了' `
+updateProgressToast `
+	-Title '' `
+	-Rate 1 `
+	-LeftText $local:keywordNum/$local:keywordTotal `
+	-RightText '完了' `
 	-Tag $script:appName `
 	-Group 'ListGen'
 
 #youtube-dlのプロセスが終わるまで待機
-Out-Msg 'ダウンロードの終了を待機しています'
+Write-Output 'ダウンロードの終了を待機しています'
 waitTillYtdlProcessIsZero
 
-Out-Msg '---------------------------------------------------------------------------' -Fg 'Cyan'
-Out-Msg '処理を終了しました。                                                       ' -Fg 'Cyan'
-Out-Msg '---------------------------------------------------------------------------' -Fg 'Cyan'
+Write-Output '---------------------------------------------------------------------------'
+Write-Output '処理を終了しました。                                                       '
+Write-Output '---------------------------------------------------------------------------'

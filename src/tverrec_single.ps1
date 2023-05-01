@@ -33,15 +33,11 @@ Set-StrictMode -Version Latest
 try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
 		$script:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
-	} else {
-		$script:scriptRoot = Convert-Path .
-	}
+	} else { $script:scriptRoot = Convert-Path . }
 	Set-Location $script:scriptRoot
 	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '../conf'))
 	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
-} catch {
-	Write-Error 'ディレクトリ設定に失敗しました' ; exit 1
-}
+} catch { Write-Error 'ディレクトリ設定に失敗しました' ; exit 1 }
 
 #----------------------------------------------------------------------
 #設定ファイル読み込み
@@ -68,30 +64,32 @@ try {
 	$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.ps1')
 	if (Test-Path $script:devFunctionFile) {
 		. $script:devFunctionFile
-		Out-Msg '開発ファイル用共通関数ファイルを読み込みました' -Fg 'Yellow'
+		Write-Warning '開発ファイル用共通関数ファイルを読み込みました'
 	}
 	if (Test-Path $script:devConfFile) {
 		. $script:devConfFile
-		Out-Msg '開発ファイル用設定ファイルを読み込みました' -Fg 'Yellow'
+		Write-Warning '開発ファイル用設定ファイルを読み込みました'
 	}
 } catch { Write-Error '開発用設定ファイルの読み込みに失敗しました' ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
-Out-Msg ''
-Out-Msg '===========================================================================' -Fg 'Cyan'
-Out-Msg '                                                                           ' -Fg 'Cyan'
-Out-Msg '        ████████ ██    ██ ███████ ██████  ██████  ███████  ██████          ' -Fg 'Cyan'
-Out-Msg '           ██    ██    ██ ██      ██   ██ ██   ██ ██      ██               ' -Fg 'Cyan'
-Out-Msg '           ██    ██    ██ █████   ██████  ██████  █████   ██               ' -Fg 'Cyan'
-Out-Msg '           ██     ██  ██  ██      ██   ██ ██   ██ ██      ██               ' -Fg 'Cyan'
-Out-Msg '           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          ' -Fg 'Cyan'
-Out-Msg '                                                                           ' -Fg 'Cyan'
-Out-Msg "        $script:appName : TVerダウンローダ                                 " -Fg 'Cyan'
-Out-Msg "                             個別ダウンロード version. $script:appVersion  " -Fg 'Cyan'
-Out-Msg '                                                                           ' -Fg 'Cyan'
-Out-Msg '===========================================================================' -Fg 'Cyan'
-Out-Msg ''
+[Console]::ForegroundColor = 'Cyan'
+Write-Output ''
+Write-Output '==========================================================================='
+Write-Output '                                                                           '
+Write-Output '        ████████ ██    ██ ███████ ██████  ██████  ███████  ██████          '
+Write-Output '           ██    ██    ██ ██      ██   ██ ██   ██ ██      ██               '
+Write-Output '           ██    ██    ██ █████   ██████  ██████  █████   ██               '
+Write-Output '           ██     ██  ██  ██      ██   ██ ██   ██ ██      ██               '
+Write-Output '           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          '
+Write-Output '                                                                           '
+Write-Output "        $script:appName : TVerダウンローダ                                 "
+Write-Output "                             個別ダウンロード version. $script:appVersion  "
+Write-Output '                                                                           '
+Write-Output '==========================================================================='
+Write-Output ''
+[Console]::ResetColor()
 
 #----------------------------------------------------------------------
 #TVerRecの最新化チェック
@@ -136,18 +134,14 @@ while ($true) {
 	#ダウンロード履歴ファイルのデータを読み込み
 	try {
 		#ロックファイルをロック
-		while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true) {
-			Out-Msg '　ファイルのロック解除待ち中です' -Fg 'Gray'
-			Start-Sleep -Seconds 1
-		}
+		while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true)
+		{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 		#ファイル操作
 		$script:historyFileData = `
 			Import-Csv `
 			-Path $script:historyFilePath `
 			-Encoding UTF8
-	} catch {
-		Out-Msg '　ダウンロード履歴を読み込めなかったのでスキップしました' -Fg 'Green'
-		continue
+	} catch { Write-Warning 'ダウンロード履歴を読み込めなかったのでスキップしました'; continue
 	} finally { $null = fileUnlock $script:historyLockFilePath }
 
 	$local:videoPageURL = $(Read-Host '番組URLを入力してください。何も入力しないで Enter を押すと終了します。').Trim()
@@ -159,7 +153,7 @@ while ($true) {
 		}
 		$local:videoLink = $local:videoPageURL.Replace('https://tver.jp', '').Trim()
 		$local:videoPageURL = 'https://tver.jp' + $local:videoLink
-		Out-Msg $local:videoPageURL
+		Write-Output $local:videoPageURL
 
 		#TVer番組ダウンロードのメイン処理
 		downloadTVerVideo `
@@ -167,9 +161,9 @@ while ($true) {
 			-URL $local:videoPageURL `
 			-Link $local:videoLink
 	} else {
-		Out-Msg '---------------------------------------------------------------------------' -Fg 'Cyan'
-		Out-Msg '処理を終了しました。                                                       ' -Fg 'Cyan'
-		Out-Msg '---------------------------------------------------------------------------' -Fg 'Cyan'
+		Write-Output '---------------------------------------------------------------------------'
+		Write-Output '処理を終了しました。                                                       '
+		Write-Output '---------------------------------------------------------------------------'
 		exit 0
 	}
 }

@@ -52,13 +52,9 @@ try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
 		$local:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
 		$local:scriptRoot = Split-Path -Parent -Path $local:scriptRoot
-	} else {
-		$local:scriptRoot = Convert-Path ..
-	}
+	} else { $local:scriptRoot = Convert-Path .. }
 	Set-Location $local:scriptRoot
-} catch {
-	Write-Error 'ディレクトリ設定に失敗しました' ; exit 1
-}
+} catch { Write-Error 'ディレクトリ設定に失敗しました' ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -73,35 +69,28 @@ if ($IsWindows) { $local:ytdlPath = $(Join-Path $local:ytdlDir 'youtube-dl.exe')
 else { $local:ytdlPath = $(Join-Path $local:ytdlDir 'youtube-dl') }
 
 #ytdl-patchedのバージョン取得
-if (Test-Path $local:ytdlPath -PathType Leaf) {
-	# get version of current ytdl-patched.exe
-	$local:ytdlCurrentVersion = (& $local:ytdlPath --version)
-} else {
-	# if yt-dlp.exe not found, will download it
-	$local:ytdlCurrentVersion = ''
-}
+if (Test-Path $local:ytdlPath -PathType Leaf) { $local:ytdlCurrentVersion = (& $local:ytdlPath --version) }
+else { $local:ytdlCurrentVersion = '' }
 
 #ytdl-patchedの最新バージョン取得
 try {
-	$local:latestVersion = (Invoke-RestMethod `
+	$local:latestVersion = (
+		Invoke-RestMethod `
 			-Uri $local:releases `
 			-Method Get
 	)[0].Tag_Name
-} catch {
-	Write-Output 'youtube-dl(ytdl-patched)の最新バージョンを特定できませんでした'
-	return
-}
+} catch { Write-Warning 'ytdl-patchedの最新バージョンを特定できませんでした'; return }
 
 #ytdl-patchedのダウンロード
 if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
-	Write-Output 'youtube-dlは最新です。'
-	Write-Output "　youtube-dl current: $local:ytdlCurrentVersion"
-	Write-Output "　youtube-dl latest: $local:latestVersion"
+	Write-Output 'ytdl-patchedは最新です。'
+	Write-Output "　Local version: $local:ytdlCurrentVersion"
+	Write-Output "　Latest version: $local:latestVersion"
 	Write-Output ''
 } else {
-	Write-Output 'youtube-dlが古いため更新します。'
-	Write-Output "　youtube-dl current: $local:ytdlCurrentVersion"
-	Write-Output "　youtube-dl latest: $local:latestVersion"
+	Write-Warning 'ytdl-patchedが古いため更新します。'
+	Write-Warning "　Local version: $local:ytdlCurrentVersion"
+	Write-Warning "　Latest version: $local:latestVersion"
 	Write-Output ''
 	if ($IsWindows -eq $false) {
 		#githubの設定
@@ -113,10 +102,11 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 		$local:fileAfterRename = 'youtube-dl.exe'
 	}
 
-	Write-Output 'youtube-dl(ytdl-patched)の最新版をダウンロードします'
+	Write-Output 'ytdl-patchedの最新版をダウンロードします'
 	try {
 		#ダウンロード
-		$local:tag = (Invoke-RestMethod `
+		$local:tag = (
+			Invoke-RestMethod `
 				-Uri $local:releases `
 				-Method Get
 		)[0].Tag_Name
@@ -126,24 +116,17 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 		Invoke-WebRequest `
 			-Uri $local:download `
 			-Out $local:ytdlFileLocation
-	} catch {
-		Write-Error 'ffmpegのダウンロードに失敗しました' ; exit 1
-	}
+	} catch { Write-Error 'ytdl-patchedのダウンロードに失敗しました' ; exit 1 }
 
-	if ($IsWindows -eq $false) {
-		#実行権限の付与
-		(& chmod a+x $local:ytdlFileLocation)
-	}
+	if ($IsWindows -eq $false) { (& chmod a+x $local:ytdlFileLocation) }
 
 	#バージョンチェック
 	try {
 		$local:ytdlCurrentVersion = (& $local:ytdlPath --version)
 		if ($? -eq $false) { throw '更新後のバージョン取得に失敗しました' }
-		Write-Output "youtube-dlをversion $local:ytdlCurrentVersion に更新しました。"
+		Write-Output "ytdl-patchedをversion $local:ytdlCurrentVersion に更新しました。"
 		Write-Output ''
-	} catch {
-		Write-Error '更新後のバージョン取得に失敗しました' ; exit 1
-	}
+	} catch { Write-Error '更新後のバージョン取得に失敗しました' ; exit 1 }
 
 
 }

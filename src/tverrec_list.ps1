@@ -33,15 +33,11 @@ Set-StrictMode -Version Latest
 try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
 		$script:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
-	} else {
-		$script:scriptRoot = Convert-Path .
-	}
+	} else { $script:scriptRoot = Convert-Path . }
 	Set-Location $script:scriptRoot
 	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '../conf'))
 	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
-} catch {
-	Write-Error 'ディレクトリ設定に失敗しました' ; exit 1
-}
+} catch { Write-Error 'ディレクトリ設定に失敗しました' ; exit 1 }
 
 #----------------------------------------------------------------------
 #設定ファイル読み込み
@@ -68,30 +64,32 @@ try {
 	$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.ps1')
 	if (Test-Path $script:devFunctionFile) {
 		. $script:devFunctionFile
-		Out-Msg '開発ファイル用共通関数ファイルを読み込みました' -Fg 'Yellow'
+		Write-Warning '開発ファイル用共通関数ファイルを読み込みました'
 	}
 	if (Test-Path $script:devConfFile) {
 		. $script:devConfFile
-		Out-Msg '開発ファイル用設定ファイルを読み込みました' -Fg 'Yellow'
+		Write-Warning '開発ファイル用設定ファイルを読み込みました'
 	}
 } catch { Write-Error '開発用設定ファイルの読み込みに失敗しました' ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
-Out-Msg ''
-Out-Msg '===========================================================================' -Fg 'Cyan'
-Out-Msg '                                                                           ' -Fg 'Cyan'
-Out-Msg '        ████████ ██    ██ ███████ ██████  ██████  ███████  ██████          ' -Fg 'Cyan'
-Out-Msg '           ██    ██    ██ ██      ██   ██ ██   ██ ██      ██               ' -Fg 'Cyan'
-Out-Msg '           ██    ██    ██ █████   ██████  ██████  █████   ██               ' -Fg 'Cyan'
-Out-Msg '           ██     ██  ██  ██      ██   ██ ██   ██ ██      ██               ' -Fg 'Cyan'
-Out-Msg '           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          ' -Fg 'Cyan'
-Out-Msg '                                                                           ' -Fg 'Cyan'
-Out-Msg "        $script:appName : TVerダウンローダ                                 " -Fg 'Cyan'
-Out-Msg "                             リストダウンロード version. $script:appVersion  " -Fg 'Cyan'
-Out-Msg '                                                                           ' -Fg 'Cyan'
-Out-Msg '===========================================================================' -Fg 'Cyan'
-Out-Msg ''
+[Console]::ForegroundColor = 'Cyan'
+Write-Output ''
+Write-Output '==========================================================================='
+Write-Output '                                                                           '
+Write-Output '        ████████ ██    ██ ███████ ██████  ██████  ███████  ██████          '
+Write-Output '           ██    ██    ██ ██      ██   ██ ██   ██ ██      ██               '
+Write-Output '           ██    ██    ██ █████   ██████  ██████  █████   ██               '
+Write-Output '           ██     ██  ██  ██      ██   ██ ██   ██ ██      ██               '
+Write-Output '           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          '
+Write-Output '                                                                           '
+Write-Output "        $script:appName : TVerダウンローダ                                 "
+Write-Output "                             リストダウンロード version. $script:appVersion  "
+Write-Output '                                                                           '
+Write-Output '==========================================================================='
+Write-Output ''
+[Console]::ResetColor()
 
 #----------------------------------------------------------------------
 #TVerRecの最新化チェック
@@ -128,34 +126,30 @@ $script:ignoreRegExTitles = getRegExIgnoreList
 
 getToken
 
-Out-Msg '----------------------------------------------------------------------'
-Out-Msg 'ダウンロードリストを読み込みます'
+Write-Output '----------------------------------------------------------------------'
+Write-Output 'ダウンロードリストを読み込みます'
 $local:listLinks = loadDownloadList
-Out-Msg "　リスト件数$($local:listLinks.Length)件"
-Out-Msg ''
+Write-Output "　リスト件数$($local:listLinks.Length)件"
+Write-Output ''
 
-Out-Msg '----------------------------------------------------------------------'
-Out-Msg 'ダウンロード履歴を読み込みます'
+Write-Output '----------------------------------------------------------------------'
+Write-Output 'ダウンロード履歴を読み込みます'
 #ダウンロード履歴ファイルのデータを読み込み
 try {
 	#ロックファイルをロック
-	while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true) {
-		Out-Msg '　ファイルのロック解除待ち中です' -Fg 'Gray'
-		Start-Sleep -Seconds 1
-	}
+	while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true)
+	{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 	#ファイル操作
 	$script:historyFileData = `
 		Import-Csv `
 		-Path $script:historyFilePath `
 		-Encoding UTF8
-} catch {
-	Out-Msg '　ダウンロード履歴を読み込めなかったのでスキップしました' -Fg 'Green'
-	continue
+} catch { Write-Warning 'ダウンロード履歴を読み込めなかったのでスキップしました'; continue
 } finally { $null = fileUnlock $script:historyLockFilePath }
-Out-Msg ''
+Write-Output ''
 
-Out-Msg '----------------------------------------------------------------------'
-Out-Msg 'ダウンロード履歴に含まれる番組を除外します'
+Write-Output '----------------------------------------------------------------------'
+Write-Output 'ダウンロード履歴に含まれる番組を除外します'
 #URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 foreach ($local:listLink in $local:listLinks.episodeID) {
 	$local:historyMatch = $script:historyFileData `
@@ -164,8 +158,8 @@ foreach ($local:listLink in $local:listLinks.episodeID) {
 }
 #ダウンロード対象のトータル番組数
 $local:videoTotal = $local:videoLinks.Length
-Out-Msg "　ダウンロード対象$($local:videoTotal)件"
-Out-Msg ''
+Write-Output "　ダウンロード対象$($local:videoTotal)件"
+Write-Output ''
 
 
 #処理時間の推計
@@ -208,8 +202,8 @@ foreach ($local:videoLink in $local:videoLinks) {
 		-Group 'List'
 
 	#処理
-	Out-Msg '--------------------------------------------------'
-	Out-Msg "$($local:videoNum)/$($local:videoTotal) - $($local:videoLink)" -NoNL $true
+	Write-Output '--------------------------------------------------'
+	Write-Output "$($local:videoNum)/$($local:videoTotal) - $($local:videoLink)"
 
 	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 	waitTillYtdlProcessGetFewer $script:parallelDownloadFileNum
@@ -233,12 +227,12 @@ updateProgressToast `
 	-Group 'List'
 
 #youtube-dlのプロセスが終わるまで待機
-Out-Msg 'ダウンロードの終了を待機しています'
-Out-Msg ''
+Write-Output 'ダウンロードの終了を待機しています'
+Write-Output ''
 waitTillYtdlProcessIsZero
 
-Out-Msg '---------------------------------------------------------------------------' -Fg 'Cyan'
-Out-Msg '処理を終了しました。                                                       ' -Fg 'Cyan'
-Out-Msg '---------------------------------------------------------------------------' -Fg 'Cyan'
-Out-Msg '必要に応じてリストファイルを編集してダウンロード不要な番組を削除してください'
-Out-Msg "　リストファイルパス: $($script:listFilePath)"
+Write-Output '---------------------------------------------------------------------------'
+Write-Output '処理を終了しました。                                                       '
+Write-Output '---------------------------------------------------------------------------'
+Write-Output '必要に応じてリストファイルを編集してダウンロード不要な番組を削除してください'
+Write-Output "　リストファイルパス: $($script:listFilePath)"

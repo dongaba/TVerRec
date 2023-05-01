@@ -87,23 +87,21 @@ try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
 		$local:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
 		$local:scriptRoot = Split-Path -Parent -Path $local:scriptRoot
-	} else {
-		$local:scriptRoot = Convert-Path ..
-	}
+	} else { $local:scriptRoot = Convert-Path .. }
 	Set-Location $local:scriptRoot
-} catch {
-	Write-Error 'ディレクトリ設定に失敗しました' ; exit 1
-}
+} catch { Write-Error 'ディレクトリ設定に失敗しました' ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
-
 Write-Output ''
 Write-Output '==========================================================================='
 Write-Output '---------------------------------------------------------------------------'
 Write-Output '                          TVerRecアップデート処理                          '
 Write-Output '---------------------------------------------------------------------------'
 Write-Output '==========================================================================='
+
+$local:repo = 'dongaba/TVerRec'
+$local:releases = "https://api.github.com/repos/$($local:repo)/releases/latest"
 
 #念のため過去のバージョンがあれば削除し、作業ディレクトリを作成
 Write-Output ''
@@ -120,27 +118,22 @@ try {
 	$null = New-Item `
 		-ItemType Directory `
 		-Path $updateTemp
-} catch {
-	Write-Error '作業ディレクトリの作成に失敗しました' ; exit 1
-}
+} catch { Write-Error '作業ディレクトリの作成に失敗しました' ; exit 1 }
 
 #TVerRecの最新バージョン取得
 Write-Output ''
 Write-Output '-----------------------------------------------------------------'
 Write-Output 'TVerRecの最新版をダウンロードします'
-$local:repo = 'dongaba/TVerRec'
-$local:releases = "https://api.github.com/repos/$($local:repo)/releases/latest"
 try {
-	$local:zipURL = (Invoke-RestMethod `
+	$local:zipURL = (
+		Invoke-RestMethod `
 			-Uri $local:releases `
 			-Method Get `
 	).zipball_url
 	Invoke-WebRequest `
 		-Uri $local:zipURL `
 		-OutFile $(Join-Path $updateTemp 'TVerRecLatest.zip')
-} catch {
-	Write-Error 'ダウンロードに失敗しました' ; exit 1
-}
+} catch { Write-Error 'ダウンロードに失敗しました' ; exit 1 }
 
 #最新バージョンがダウンロードできていたら展開
 Write-Output ''
@@ -152,12 +145,8 @@ try {
 		unZip `
 			-File $(Join-Path $updateTemp 'TVerRecLatest.zip') `
 			-OutPath $updateTemp
-	} else {
-		Write-Error 'ダウンロードしたファイルが見つかりません' ; exit 1
-	}
-} catch {
-	Write-Error 'ダウンロードしたファイルの解凍に失敗しました' ; exit 1
-}
+	} else { Write-Error 'ダウンロードしたファイルが見つかりません' ; exit 1 }
+} catch { Write-Error 'ダウンロードしたファイルの解凍に失敗しました' ; exit 1 }
 
 #ディレクトリは上書きできないので独自関数で以下のディレクトリをループ
 Write-Output ''
@@ -172,9 +161,7 @@ try {
 			-Path $_.FullName `
 			-Destination $($( Convert-Path $(Join-Path $local:scriptRoot '../')) + $_.Name)
 	}
-} catch {
-	Write-Error 'ダウンロードしたTVerRecの配置に失敗しました' ; exit 1
-}
+} catch { Write-Error 'ダウンロードしたTVerRecの配置に失敗しました' ; exit 1 }
 
 #作業ディレクトリを削除
 Write-Output ''
@@ -187,9 +174,7 @@ try {
 			-Force `
 			-Recurse
 	}
-} catch {
-	Write-Error '作業ディレクトリの削除に失敗しました' ; exit 1
-}
+} catch { Write-Error '作業ディレクトリの削除に失敗しました' ; exit 1 }
 
 Write-Output ''
 Write-Output '==========================================================================='

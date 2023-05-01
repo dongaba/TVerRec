@@ -33,15 +33,11 @@ Set-StrictMode -Version Latest
 try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
 		$script:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
-	} else {
-		$script:scriptRoot = Convert-Path .
-	}
+	} else { $script:scriptRoot = Convert-Path . }
 	Set-Location $script:scriptRoot
 	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '../conf'))
 	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
-} catch {
-	Write-Error 'ディレクトリ設定に失敗しました'; exit 1
-}
+} catch { Write-Error 'ディレクトリ設定に失敗しました'; exit 1 }
 
 #----------------------------------------------------------------------
 #設定ファイル読み込み
@@ -68,11 +64,11 @@ try {
 	$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.ps1')
 	if (Test-Path $script:devFunctionFile) {
 		. $script:devFunctionFile
-		Out-Msg '開発ファイル用共通関数ファイルを読み込みました' -Fg 'Yellow'
+		Write-Warning '開発ファイル用共通関数ファイルを読み込みました'
 	}
 	if (Test-Path $script:devConfFile) {
 		. $script:devConfFile
-		Out-Msg '開発ファイル用設定ファイルを読み込みました' -Fg 'Yellow'
+		Write-Warning '開発ファイル用設定ファイルを読み込みました'
 	}
 } catch { Write-Error '開発用設定ファイルの読み込みに失敗しました' ; exit 1 }
 
@@ -84,9 +80,9 @@ checkRequiredFile
 
 #======================================================================
 #1/3 ダウンロードが中断した際にできたゴミファイルは削除
-Out-Msg '----------------------------------------------------------------------'
-Out-Msg '処理が中断した際にできたゴミファイルを削除します'
-Out-Msg '----------------------------------------------------------------------'
+Write-Output '----------------------------------------------------------------------'
+Write-Output '処理が中断した際にできたゴミファイルを削除します'
+Write-Output '----------------------------------------------------------------------'
 #進捗表示
 showProgressToast `
 	-Text1 'ファイルの掃除中' `
@@ -174,9 +170,9 @@ if ($script:saveBaseDir -ne '') {
 
 #======================================================================
 #2/3 ダウンロード対象外に入っている番組は削除
-Out-Msg '----------------------------------------------------------------------'
-Out-Msg 'ダウンロード対象外の番組を削除します'
-Out-Msg '----------------------------------------------------------------------'
+Write-Output '----------------------------------------------------------------------'
+Write-Output 'ダウンロード対象外の番組を削除します'
+Write-Output '----------------------------------------------------------------------'
 #進捗表示
 showProgressToast `
 	-Text1 'ファイルの掃除中' `
@@ -190,21 +186,16 @@ showProgressToast `
 #ダウンロード対象外番組の読み込み
 try {
 	#ロックファイルをロック
-	while ($(fileLock $script:ignoreLockFilePath).fileLocked -ne $true) {
-		Out-Msg '　ファイルのロック解除待ち中です' -Fg 'Gray'
-		Start-Sleep -Seconds 1
-	}
+	while ($(fileLock $script:ignoreLockFilePath).fileLocked -ne $true)
+	{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 	#ファイル操作
 	$local:ignoreTitles = [String[]](Get-Content `
 			-Path $script:ignoreFilePath `
 			-Encoding UTF8 `
 		| Where-Object { !($_ -match '^\s*$') } `
 		| Where-Object { !($_ -match '^;.*$') })
-} catch {
-	Write-Error 'ダウンロード対象外の読み込みに失敗しました' -Fg 'Green' ; exit 1
-} finally {
-	$null = fileUnlock $script:ignoreLockFilePath
-}
+} catch { Write-Error 'ダウンロード対象外の読み込みに失敗しました' ; exit 1
+} finally { $null = fileUnlock $script:ignoreLockFilePath }
 
 #----------------------------------------------------------------------
 if ($null -ne $local:ignoreTitles ) {
@@ -215,7 +206,7 @@ if ($null -ne $local:ignoreTitles ) {
 			$delTargets = Get-ChildItem `
 				-LiteralPath $using:script:downloadBaseDir `
 				-Name -Filter "*$($_)*"
-		} catch { Write-Output '　削除対象を特定できませんでした' }
+		} catch { Write-Warning '削除対象を特定できませんでした' }
 		try {
 			if ($null -ne $delTargets) {
 				foreach ($delTarget in $delTargets) {
@@ -227,7 +218,7 @@ if ($null -ne $local:ignoreTitles ) {
 						-ErrorAction SilentlyContinue
 				}
 			}
-		} catch { Write-Output '　削除できないファイルがありました' }
+		} catch { Write-Warning '削除できないファイルがありました' }
 	} -ThrottleLimit 10
 }
 
@@ -235,9 +226,9 @@ if ($null -ne $local:ignoreTitles ) {
 
 #======================================================================
 #3/3 空ディレクトリと隠しファイルしか入っていないディレクトリを一気に削除
-Out-Msg '----------------------------------------------------------------------'
-Out-Msg '空ディレクトリを削除します'
-Out-Msg '----------------------------------------------------------------------'
+Write-Output '----------------------------------------------------------------------'
+Write-Output '空ディレクトリを削除します'
+Write-Output '----------------------------------------------------------------------'
 #進捗表示
 showProgressToast `
 	-Text1 'ファイルの掃除中' `
@@ -254,14 +245,12 @@ try {
 	$local:allSubDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).`
 			Where({ $_.PSIsContainer })).FullName `
 	| Sort-Object -Descending
-} catch { Out-Msg '　ディレクトリを見つけられませんでした' -Fg 'Green' }
+} catch { Write-Warning 'ディレクトリを見つけられませんでした' }
 
 #サブディレクトリの合計数
-if ($local:allSubDirs -is [Array]) {
-	$local:subDirTotal = $local:allSubDirs.Length
-} elseif ($null -ne $local:allSubDirs) {
-	$local:subDirTotal = 1
-} else { $local:subDirTotal = 0 }
+if ($local:allSubDirs -is [Array]) { $local:subDirTotal = $local:allSubDirs.Length }
+elseif ($null -ne $local:allSubDirs) { $local:subDirTotal = 1 }
+else { $local:subDirTotal = 0 }
 
 #----------------------------------------------------------------------
 if ($local:subDirTotal -ne 0) {
@@ -275,11 +264,8 @@ if ($local:subDirTotal -ne 0) {
 				Remove-Item `
 					-LiteralPath $_ `
 					-Recurse `
-					-Force #`
-				#-ErrorAction SilentlyContinue
-			} catch {
-				Write-Output "　空ディレクトリの削除に失敗しました: $_"
-			}
+					-Force
+			} catch { Write-Output "　空ディレクトリの削除に失敗しました: $_" }
 		}
 	} -ThrottleLimit 10
 }
@@ -287,8 +273,8 @@ if ($local:subDirTotal -ne 0) {
 
 #進捗表示
 updateProgressToast `
-	-Title 'ファイルの掃除' `
-	-Rate '1' `
+	-Title '' `
+	-Rate 1 `
 	-LeftText '' `
 	-RightText '完了' `
 	-Tag $script:appName `
