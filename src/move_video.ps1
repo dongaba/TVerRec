@@ -162,7 +162,7 @@ if ($local:moveToPathTotal -ne 0) {
 					-Force
 			} catch { Write-Output '　移動できないファイルがありました' }
 		}
-	} -ThrottleLimit 10
+	} -ThrottleLimit $script:multithreadNum
 
 }
 #----------------------------------------------------------------------

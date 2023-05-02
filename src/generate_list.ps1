@@ -319,14 +319,14 @@ foreach ($local:keywordName in $local:keywordNames) {
 					-Encoding UTF8 `
 					-Append
 				Write-Debug 'ダウンロードリストを書き込みました'
-			} catch {Write-Warning 'ダウンロードリストを更新できませんでした。スキップします';continue
+			} catch { Write-Warning 'ダウンロードリストを更新できませんでした。スキップします'; continue
 			} finally { $null = fileUnlock $script:listLockFilePath }
 			$script:listFileData = `
 				Import-Csv `
 				-Path $script:listFilePath `
 				-Encoding UTF8
 
-		} -ThrottleLimit 10
+		} -ThrottleLimit $script:multithreadNum
 
 	} else {
 

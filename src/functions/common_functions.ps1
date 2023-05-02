@@ -281,7 +281,7 @@ function deleteFiles {
 		| Remove-Item `
 			-Force `
 			-ErrorAction SilentlyContinue
-	} -ThrottleLimit 10
+	} -ThrottleLimit $script:multithreadNum
 
 }
 

@@ -37,7 +37,7 @@
 - [ ] Google Colab で user_settings.ps1 を使用するようにする
 - [x] Write-Host を廃止する
 - [ ] 並列処理時に Toast 通知を更新する
-- [ ] 並列処理時に並列度を指定できるようにする
+- [x] 並列処理時に並列度を指定できるようにする
 
 ## youtube-dl 制御機能
 

@@ -153,7 +153,7 @@ Write-Output 'ダウンロード履歴に含まれる番組を除外します'
 #URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 foreach ($local:listLink in $local:listLinks.episodeID) {
 	$local:historyMatch = $script:historyFileData `
-	| Where-Object { $_.videoPage -eq $('https://tver.jp/episodes/' + $local:listLink) }
+	| Where-Object { $_.videoPage -eq $($local:listLink) }
 	if ($null -eq $local:historyMatch) { $local:videoLinks += $local:listLink }
 }
 #ダウンロード対象のトータル番組数

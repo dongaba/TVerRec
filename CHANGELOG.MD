@@ -15,6 +15,7 @@
 
 - ytdl-patched の自動更新でエラーメッセージの間違いを修正
 - ffmpeg の自動更新で ffprobe のダウンロード不具合を修正
+- リストダウンロードでダウンロード済判定の不具合を修正
 
 - ## [2.7.1](https://github.com/dongaba/TVerRec/releases/tag/v2.7.1)
 

@@ -219,7 +219,7 @@ if ($null -ne $local:ignoreTitles ) {
 				}
 			}
 		} catch { Write-Warning '削除できないファイルがありました' }
-	} -ThrottleLimit 10
+	} -ThrottleLimit $script:multithreadNum
 }
 
 #----------------------------------------------------------------------
@@ -267,7 +267,7 @@ if ($local:subDirTotal -ne 0) {
 					-Force
 			} catch { Write-Output "　空ディレクトリの削除に失敗しました: $_" }
 		}
-	} -ThrottleLimit 10
+	} -ThrottleLimit $script:multithreadNum
 }
 #----------------------------------------------------------------------
 
