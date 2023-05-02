@@ -100,11 +100,7 @@ function getFileNameWoInvChars {
 	[CmdletBinding()]
 	[OutputType([String])]
 	Param (
-		[Parameter(
-			Mandatory = $true,
-			Position = 0,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false)]
+		[Parameter(Mandatory = $true, Position = 0)]
 		[String]$local:Name
 	)
 
@@ -260,30 +256,15 @@ function deleteFiles {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
-		[parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $true,
-			ValueFromPipelineByPropertyName = $false,
-			Position = 0
-		)]
+		[parameter(Mandatory = $true, Position = 0)]
 		[Alias('Path')]
 		[System.IO.FileInfo]$local:basePath,
 
-		[Parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false,
-			Position = 0
-		)]
+		[Parameter(Mandatory = $true, Position = 0)]
 		[Alias('Conditions')]
 		[Object]$local:delConditions,
 
-		[Parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false,
-			Position = 0
-		)]
+		[Parameter(Mandatory = $true, Position = 0)]
 		[Alias('DatePast')]
 		[int32]$local:delPeriod
 	)
@@ -311,12 +292,7 @@ function fileLock {
 	[CmdletBinding()]
 	[OutputType([PSCustomObject])]
 	Param (
-		[parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $true,
-			ValueFromPipelineByPropertyName = $false,
-			Position = 0
-		)]
+		[parameter(Mandatory = $true, Position = 0)]
 		[Alias('Path')]
 		[System.IO.FileInfo]$local:Path
 	)
@@ -348,12 +324,7 @@ function fileUnlock {
 	[CmdletBinding()]
 	[OutputType([PSCustomObject])]
 	Param (
-		[parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $true,
-			ValueFromPipelineByPropertyName = $false,
-			Position = 0
-		)]
+		[parameter(Mandatory = $true, Position = 0)]
 		[Alias('Path')]
 		[System.IO.FileInfo]$local:Path
 	)
@@ -379,12 +350,7 @@ function isLocked {
 	[CmdletBinding()]
 	[OutputType([PSCustomObject])]
 	Param (
-		[parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $true,
-			ValueFromPipelineByPropertyName = $false,
-			Position = 0
-		)]
+		[parameter(Mandatory = $true, Position = 0)]
 		[Alias('Path')]
 		[String]$local:isLockedPath
 	)
@@ -418,39 +384,19 @@ function Out-Msg {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false,
-			Position = 0
-		)]
+		[Parameter(Mandatory = $false, Position = 0)]
 		[Alias('Text')]
 		[Object]$local:text,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false,
-			Position = 1
-		)]
+		[Parameter(Mandatory = $false, Position = 1)]
 		[Alias('Fg')]
 		[ConsoleColor]$local:foregroundColor,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false,
-			Position = 2
-		)]
+		[Parameter(Mandatory = $false, Position = 2)]
 		[Alias('Bg')]
 		[ConsoleColor]$local:backgroundColor,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false,
-			Position = 4
-		)]
+		[Parameter(Mandatory = $false, Position = 4)]
 		[Alias('NoNL')]
 		[Boolean]$local:noLF
 	)
@@ -494,36 +440,20 @@ function showToast {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $true, Position = 0)]
 		[Alias('Text1')]
 		[String]$local:toastText1,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 1)]
 		[Alias('Text2')]
 		[String]$local:toastText2,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 2)]
 		[Alias('Duration')]
 		[ValidateSet('Short', 'Long')]
 		[String]$local:toastDuration,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 4)]
 		[Alias('Silent')]
 		[Boolean]$local:toastSilent
 	)
@@ -582,60 +512,32 @@ function showProgressToast {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $true, Position = 0)]
 		[Alias('Text1')]
 		[String]$local:toastText1,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 1)]
 		[Alias('Text2')]
 		[String]$local:toastText2,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 2)]
 		[Alias('WorkDetail')]
 		[String]$local:toastWorkDetail,
 
-		[Parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $true, Position = 3)]
 		[Alias('Tag')]
 		[String]$local:toastTag,
 
-		[Parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $true, Position = 4)]
 		[Alias('Group')]
 		[String]$local:toastGroup,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 5)]
 		[ValidateSet('Short', 'Long')]
 		[Alias('Duration')]
 		[String]$local:toastDuration,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 6)]
 		[Alias('Silent')]
 		[Boolean]$local:toastSilent
 	)
@@ -703,51 +605,27 @@ function updateProgressToast {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 0)]
 		[Alias('Title')]
 		[String]$local:toastTitle,
 
-		[Parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $true, Position = 1)]
 		[Alias('Rate')]
 		[String]$local:toastRate,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 2)]
 		[Alias('LeftText')]
 		[String]$local:toastLeftText,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 3)]
 		[Alias('RightText')]
 		[String]$local:toastRightText,
 
-		[Parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $true, Position = 4)]
 		[Alias('Tag')]
 		[String]$local:toastTag,
 
-		[Parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $true, Position = 5)]
 		[Alias('Group')]
 		[String]$local:toastGroup
 	)
@@ -773,68 +651,36 @@ function showProgressToast2 {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $true, Position = 0)]
 		[Alias('Text1')]
 		[String]$local:toastText1,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 1)]
 		[Alias('Text2')]
 		[String]$local:toastText2,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 2)]
 		[Alias('WorkDetail1')]
 		[String]$local:toastWorkDetail1,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 3)]
 		[Alias('WorkDetail2')]
 		[String]$local:toastWorkDetail2,
 
-		[Parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $true, Position = 4)]
 		[Alias('Tag')]
 		[String]$local:toastTag,
 
-		[Parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $true, Position = 5)]
 		[Alias('Group')]
 		[String]$local:toastGroup,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 6)]
 		[ValidateSet('Short', 'Long')]
 		[Alias('Duration')]
 		[String]$local:toastDuration,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 7)]
 		[Alias('Silent')]
 		[Boolean]$local:toastSilent
 	)
@@ -907,83 +753,43 @@ function updateProgressToast2 {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 0)]
 		[Alias('Title1')]
 		[String]$local:toastTitle1,
 
-		[Parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $true, Position = 1)]
 		[Alias('Rate1')]
 		[String]$local:toastRate1,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 2)]
 		[Alias('LeftText1')
 		][String]$local:toastLeftText1,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 3)]
 		[Alias('RightText1')]
 		[String]$local:toastRightText1,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 4)]
 		[Alias('Title2')]
 		[String]$local:toastTitle2,
 
-		[Parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $true, Position = 5)]
 		[Alias('Rate2')]
 		[String]$local:toastRate2,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 6)]
 		[Alias('LeftText2')]
 		[String]$local:toastLeftText2,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 7)]
 		[Alias('RightText2')]
 		[String]$local:toastRightText2,
 
-		[Parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $true, Position = 8)]
 		[Alias('Tag')]
 		[String]$local:toastTag,
 
-		[Parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $true, Position = 9)]
 		[Alias('Group')]
 		[String]$local:toastGroup
 	)
@@ -1013,60 +819,32 @@ function showProgress2Row {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $true, Position = 0)]
 		[Alias('ProgressText1')]
 		[String]$local:progressText1,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 1)]
 		[Alias('ProgressText2')]
 		[String]$local:progressText2,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 2)]
 		[Alias('WorkDetail1')]
 		[String]$local:toastWorkDetail1,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 3)]
 		[Alias('WorkDetail2')]
 		[String]$local:toastWorkDetail2,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 4)]
 		[ValidateSet('Short', 'Long')]
 		[Alias('Duration')]
 		[String]$local:toastDuration,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 5)]
 		[Alias('Silent')]
 		[Boolean]$local:toastSilent,
 
-		[Parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $true, Position = 6)]
 		[Alias('Group')]
 		[String]$local:toastGroup
 	)
@@ -1093,75 +871,39 @@ function updateProgress2Row {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 0)]
 		[Alias('ProgressActivity1')]
 		[String]$local:progressActivity1,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 1)]
 		[Alias('CurrentProcessing1')]
 		[String]$local:currentProcessing1,
 
-		[Parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $true, Position = 2)]
 		[Alias('Rate1')]
 		[String]$local:progressRatio1,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 3)]
 		[Alias('SecRemaining1')]
 		[String]$local:secRemaining1,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 4)]
 		[Alias('ProgressActivity2')]
 		[String]$local:progressActivity2,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 5)]
 		[Alias('CurrentProcessing2')]
 		[String]$local:currentProcessing2,
 
-		[Parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $true, Position = 6)]
 		[Alias('Rate2')]
 		[String]$local:progressRatio2,
 
-		[Parameter(
-			Mandatory = $false,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $false, Position = 7)]
 		[Alias('SecRemaining2')]
 		[String]$local:secRemaining2,
 
-		[Parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $false,
-			ValueFromPipelineByPropertyName = $false
-		)]
+		[Parameter(Mandatory = $true, Position = 8)]
 		[Alias('Group')]
 		[String]$local:toastGroup
 	)
@@ -1195,15 +937,15 @@ function updateProgress2Row {
 function goAnal {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true)]
+		[Parameter(Mandatory = $true, Position = 0)]
 		[Alias('Event')]
 		[String]$local:event,
 
-		[Parameter(Mandatory = $false)]
+		[Parameter(Mandatory = $false, Position = 1)]
 		[Alias('Type')]
 		[String]$local:type,
 
-		[Parameter(Mandatory = $false)]
+		[Parameter(Mandatory = $false, Position = 2)]
 		[Alias('ID')]
 		[String]$local:id
 	)
@@ -1289,10 +1031,10 @@ function unZip {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	param(
-		[Parameter(Mandatory = $true)]
+		[Parameter(Mandatory = $true, Position = 0)]
 		[Alias('File')]
 		[String]$zipArchive,
-		[Parameter(Mandatory = $true)]
+		[Parameter(Mandatory = $true, Position = 1)]
 		[Alias('OutPath')]
 		[String]$path
 	)
@@ -1306,10 +1048,10 @@ function moveItem() {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	param(
-		[Parameter(Mandatory = $true)]
+		[Parameter(Mandatory = $true, Position = 0)]
 		[Alias('Path')]
 		[String]$src,
-		[Parameter(Mandatory = $true)]
+		[Parameter(Mandatory = $true, Position = 1)]
 		[Alias('Destination')]
 		[String]$dist
 	)

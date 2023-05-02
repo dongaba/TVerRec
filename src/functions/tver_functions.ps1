@@ -363,12 +363,7 @@ function getRegexIgnoreList {
 function sortIgnoreList {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $true,
-			ValueFromPipelineByPropertyName = $true,
-			Position = 0
-		)]
+		[Parameter(Mandatory = $true, Position = 0)]
 		[Alias('ignoreTitle')]
 		[String]$local:ignoreTitle
 	)
@@ -1122,24 +1117,15 @@ function waitTillYtdlProcessGetFewer {
 function downloadTVerVideo {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(
-			Mandatory = $true,
-			Position = 0
-		)]
+		[Parameter(Mandatory = $true, Position = 0)]
 		[Alias('Keyword')]
 		[String]$script:keywordName,
 
-		[Parameter(
-			Mandatory = $true,
-			Position = 1
-		)]
+		[Parameter(Mandatory = $true, Position = 1)]
 		[Alias('URL')]
 		[String]$script:videoPageURL,
 
-		[Parameter(
-			Mandatory = $true,
-			Position = 2
-		)]
+		[Parameter(Mandatory = $true, Position = 2)]
 		[Alias('Link')]
 		[String]$script:videoLink
 	)
@@ -1165,8 +1151,7 @@ function downloadTVerVideo {
 		-Date $script:broadcastDate
 
 	$script:videoFileDir = getSpecialCharacterReplaced (
-		getNarrowChars $($script:videoSeries + ' ' + $script:videoSeason)
-	).Trim()
+		getNarrowChars $($script:videoSeries + ' ' + $script:videoSeason)).Trim()
 	if ($script:sortVideoByMedia -eq $true) {
 		$script:videoFileDir = $(
 			Join-Path $script:downloadBaseDir $(getFileNameWoInvChars $script:mediaName) `
@@ -1179,8 +1164,7 @@ function downloadTVerVideo {
 	}
 	$script:videoFilePath = $(Join-Path $script:videoFileDir $script:videoName)
 	$script:videoFileRelPath = $script:videoFilePath.`
-		Replace($script:downloadBaseDir, '').`
-		Replace('\', '/')
+		Replace($script:downloadBaseDir, '').Replace('\', '/')
 	$script:videoFileRelPath = $script:videoFileRelPath.`
 		Substring(1, $($script:videoFileRelPath.Length - 1))
 
@@ -1205,11 +1189,8 @@ function downloadTVerVideo {
 	}
 
 	#番組タイトルが取得できなかった場合はスキップ次の番組へ
-	if ($script:videoName -eq '.mp4') {
-		Write-Warning '番組タイトルを特定できませんでした。スキップします'
-		#次回再度ダウンロードをトライするためダウンロード履歴に追加せずに次の番組へ
-		continue
-	}
+	if ($script:videoName -eq '.mp4')
+	{ Write-Warning '番組タイトルを特定できませんでした。スキップします'; continue }
 
 	#ファイルが既に存在する場合はスキップフラグを立ててダウンロード履歴に書き込み処理へ
 	if (Test-Path $script:videoFilePath) {
@@ -1344,17 +1325,11 @@ function downloadTVerVideo {
 function generateTVerVideoList {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(
-			Mandatory = $true,
-			Position = 0
-		)]
+		[Parameter(Mandatory = $true, Position = 0)]
 		[Alias('Keyword')]
 		[String]$script:keywordName,
 
-		[Parameter(
-			Mandatory = $true,
-			Position = 1
-		)]
+		[Parameter(Mandatory = $true, Position = 1)]
 		[Alias('Link')]
 		[String]$script:videoLink
 	)
@@ -1454,10 +1429,7 @@ function generateTVerVideoList {
 function getVideoInfo {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(
-			Mandatory = $true,
-			Position = 0
-		)]
+		[Parameter(Mandatory = $true, Position = 0)]
 		[Alias('Link')]
 		[String]$local:videoLink
 	)
@@ -1605,38 +1577,23 @@ function getVideoInfo {
 function getVideoFileName {
 	[OutputType([String])]
 	Param (
-		[Parameter(
-			Mandatory = $false,
-			Position = 0
-		)]
+		[Parameter(Mandatory = $false, Position = 0)]
 		[Alias('Series')]
 		[String]$local:videoSeries,
 
-		[Parameter(
-			Mandatory = $false,
-			Position = 1
-		)]
+		[Parameter(Mandatory = $false, Position = 1)]
 		[Alias('Season')]
 		[String]$local:videoSeason,
 
-		[Parameter(
-			Mandatory = $false,
-			Position = 2
-		)]
+		[Parameter(Mandatory = $false, Position = 2)]
 		[Alias('Episode')]
 		[String]$local:videoEpisode,
 
-		[Parameter(
-			Mandatory = $false,
-			Position = 3
-		)]
+		[Parameter(Mandatory = $false, Position = 3)]
 		[Alias('Title')]
 		[String]$local:videoTitle,
 
-		[Parameter(
-			Mandatory = $false,
-			Position = 4
-		)]
+		[Parameter(Mandatory = $false, Position = 4)]
 		[Alias('Date')]
 		[String]$local:broadcastDate
 	)
@@ -1690,36 +1647,23 @@ function getVideoFileName {
 function showVideoInfo {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(
-			Mandatory = $false,
-			Position = 0
-		)]
+		[Parameter(Mandatory = $false, Position = 0)]
 		[Alias('Name')]
 		[String]$local:videoName,
 
-		[Parameter(
-			Mandatory = $false,
-			Position = 1
-		)]
+		[Parameter(Mandatory = $false, Position = 1)]
 		[Alias('Date')]
 		[String]$local:broadcastDate,
 
-		[Parameter(
-			Mandatory = $false,
-			Position = 2
-		)]
+		[Parameter(Mandatory = $false, Position = 2)]
 		[Alias('Media')]
 		[String]$local:mediaName,
 
-		[Parameter(
-			Mandatory = $false,
-			Position = 3
-		)]
+		[Parameter(Mandatory = $false, Position = 3)]
 		[Alias('Description')]
 		[String]$local:descriptionText
 	)
 
-	Write-Output ''
 	Write-Output "　番組名 :$local:videoName"
 	Write-Output "　放送日 :$local:broadcastDate"
 	Write-Output "　テレビ局:$local:mediaName"
@@ -1731,73 +1675,43 @@ function showVideoInfo {
 function showVideoDebugInfo {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(
-			Mandatory = $false,
-			Position = 0
-		)]
+		[Parameter(Mandatory = $false, Position = 0)]
 		[Alias('URL')]
 		[String]$local:videoPageURL,
 
-		[Parameter(
-			Mandatory = $false,
-			Position = 1
-		)]
+		[Parameter(Mandatory = $false, Position = 1)]
 		[Alias('SeriesURL')]
 		[String]$local:videoSeriesPageURL,
 
-		[Parameter(
-			Mandatory = $false,
-			Position = 2
-		)]
+		[Parameter(Mandatory = $false, Position = 2)]
 		[Alias('Keyword')]
 		[String]$local:keywordName,
 
-		[Parameter(
-			Mandatory = $false,
-			Position = 3
-		)]
+		[Parameter(Mandatory = $false, Position = 3)]
 		[Alias('Series')]
 		[String]$local:videoSeries,
 
-		[Parameter(
-			Mandatory = $false,
-			Position = 4
-		)]
+		[Parameter(Mandatory = $false, Position = 4)]
 		[Alias('Season')]
 		[String]$local:videoSeason,
 
-		[Parameter(
-			Mandatory = $false,
-			Position = 5
-		)]
+		[Parameter(Mandatory = $false, Position = 5)]
 		[Alias('Episode')]
 		[String]$local:videoEpisode,
 
-		[Parameter(
-			Mandatory = $false,
-			Position = 6
-		)]
+		[Parameter(Mandatory = $false, Position = 6)]
 		[Alias('Title')]
 		[String]$local:videoTitle,
 
-		[Parameter(
-			Mandatory = $false,
-			Position = 7
-		)]
+		[Parameter(Mandatory = $false, Position = 7)]
 		[Alias('Path')]
 		[String]$local:videoFilePath,
 
-		[Parameter(
-			Mandatory = $false,
-			Position = 8
-		)]
+		[Parameter(Mandatory = $false, Position = 8)]
 		[Alias('Time')]
 		[String]$local:processedTime,
 
-		[Parameter(
-			Mandatory = $false,
-			Position = 9
-		)]
+		[Parameter(Mandatory = $false, Position = 9)]
 		[Alias('EndTime')]
 		[String]$local:endTime
 	)
@@ -1820,10 +1734,7 @@ function showVideoDebugInfo {
 function executeYtdl {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(
-			Mandatory = $false,
-			Position = 0
-		)]
+		[Parameter(Mandatory = $false, Position = 0)]
 		[Alias('URL')]
 		[String]$local:videoPageURL
 	)
@@ -1990,10 +1901,7 @@ function cleanDB {
 function purgeDB {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(
-			Mandatory = $true,
-			Position = 0
-		)]
+		[Parameter(Mandatory = $true, Position = 0)]
 		[Alias('RetentionPeriod')]
 		[Int32]$local:retentionPeriod
 	)
@@ -2062,17 +1970,11 @@ function uniqueDB {
 function checkVideo {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(
-			Mandatory = $false,
-			Position = 0
-		)]
+		[Parameter(Mandatory = $false, Position = 0)]
 		[Alias('DecodeOption')]
 		[String]$local:decodeOption,
 
-		[Parameter(
-			Mandatory = $false,
-			Position = 1
-		)]
+		[Parameter(Mandatory = $false, Position = 1)]
 		[Alias('Path')]
 		[String]$local:videoFileRelPath
 	)
@@ -2098,8 +2000,7 @@ function checkVideo {
 			-Path $script:historyFilePath `
 			-Encoding UTF8
 		$local:checkStatus = $(($local:videoHists).`
-				Where({ $_.videoPath -eq $local:videoFileRelPath })).`
-			videoValidated
+				Where({ $_.videoPath -eq $local:videoFileRelPath })).videoValidated
 	} catch { Write-Warning "　既にダウンロード履歴から削除されたようです: $local:videoFileRelPath"; return
 	} finally { $null = fileUnlock $script:historyLockFilePath }
 
@@ -2110,8 +2011,7 @@ function checkVideo {
 		#該当の番組のチェックステータスを"2"にして後続のチェックを実行
 		try {
 			$(($local:videoHists).`
-					Where({ $_.videoPath -eq $local:videoFileRelPath })).`
-				videoValidated = '2'
+					Where({ $_.videoPath -eq $local:videoFileRelPath })).videoValidated = '2'
 		} catch { Write-Warning "　該当のレコードが見つかりませんでした: $local:videoFileRelPath"; return }
 		try {
 			#ロックファイルをロック
@@ -2131,8 +2031,7 @@ function checkVideo {
 
 	if ($script:simplifiedValidation -eq $true) {
 		#ffprobeを使った簡易検査
-		$local:ffprobeArgs = ' -hide_banner -v error -err_detect explode' `
-			+ " -i $local:checkFile '
+		$local:ffprobeArgs = ' -hide_banner -v error -err_detect explode' + " -i $local:checkFile '
 
 		Write-Debug 'ffprobe起動コマンド:$script:ffprobePath $local:ffprobeArgs"
 		try {
@@ -2157,8 +2056,7 @@ function checkVideo {
 	} else {
 		#ffmpegeを使った完全検査
 		$local:ffmpegArgs = "$local:decodeOption " `
-			+ ' -hide_banner -v error -xerror' `
-			+ " -i $local:checkFile -f null - "
+			+ ' -hide_banner -v error -xerror' + " -i $local:checkFile -f null - "
 
 		Write-Debug "ffmpeg起動コマンド:$script:ffmpegPath $local:ffmpegArgs"
 		try {
@@ -2247,8 +2145,7 @@ function checkVideo {
 				-Encoding UTF8
 			#該当の番組のチェックステータスを"1"に
 			$(($local:videoHists).`
-					Where({ $_.videoPath -eq $local:videoFileRelPath })).`
-				videoValidated = '1'
+					Where({ $_.videoPath -eq $local:videoFileRelPath })).videoValidated = '1'
 			$local:videoHists | Export-Csv `
 				-Path $script:historyFilePath `
 				-NoTypeInformation `
@@ -2265,44 +2162,26 @@ function checkVideo {
 function checkIfIgnored {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $true,
-			ValueFromPipelineByPropertyName = $true,
-			Position = 0
-		)]
+		[Parameter(Mandatory = $true, Position = 0)]
 		[Alias('ignoreRegexText')]
 		[String]$local:ignoreRegexTitle,
 
-		[Parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $true,
-			ValueFromPipelineByPropertyName = $true,
-			Position = 1
-		)]
+		[Parameter(Mandatory = $true, Position = 1)]
 		[Alias('seriesTitle')]
 		[String]$local:videoSeries,
 
-		[Parameter(
-			Mandatory = $true,
-			ValueFromPipeline = $true,
-			ValueFromPipelineByPropertyName = $true,
-			Position = 2
-		)]
+		[Parameter(Mandatory = $true, Position = 2)]
 		[Alias('fileName')]
 		[String]$local:videoName
 	)
 
-	process {
-
-		#ダウンロード対象外と合致したものはそれ以上のチェック不要
-		if ($(getNarrowChars $local:videoName) -match $(getNarrowChars $local:ignoreRegexTitle)) {
-			sortIgnoreList $local:ignoreRegexTitle
-			$script:ignore = $true ; break
-		} elseif ($(getNarrowChars $local:videoSeries) -match $(getNarrowChars $local:ignoreRegexTitle)) {
-			sortIgnoreList $local:ignoreRegexTitle
-			$script:ignore = $true ; break
-		}
-
+	#ダウンロード対象外と合致したものはそれ以上のチェック不要
+	if ($(getNarrowChars $local:videoName) -match $(getNarrowChars $local:ignoreRegexTitle)) {
+		sortIgnoreList $local:ignoreRegexTitle
+		$script:ignore = $true ; break
+	} elseif ($(getNarrowChars $local:videoSeries) -match $(getNarrowChars $local:ignoreRegexTitle)) {
+		sortIgnoreList $local:ignoreRegexTitle
+		$script:ignore = $true ; break
 	}
+
 }

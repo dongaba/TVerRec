@@ -34,10 +34,10 @@ function unZip {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	param(
-		[Parameter(Mandatory = $true)]
+		[Parameter(Mandatory = $true, Position = 0)]
 		[Alias('File')]
 		[String]$zipArchive,
-		[Parameter(Mandatory = $true)]
+		[Parameter(Mandatory = $true, Position = 1)]
 		[Alias('OutPath')]
 		[String]$path
 	)
