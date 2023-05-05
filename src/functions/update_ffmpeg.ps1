@@ -191,7 +191,7 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 					'https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-i686-static.tar.xz'
 			} else {
 				Write-Warning 'お使いのCPUに適合するffmpegを特定できませんでした。'
-				Write-Warning "お使いのCPUは$($local:arch)に適合するffmpegをご自身で配置してください。"
+				Write-Warning "お使いのCPU $($local:arch)に適合するffmpegをご自身で配置してください。"
 				return
 			}
 

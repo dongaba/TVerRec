@@ -143,8 +143,10 @@ else { $local:moveToPathTotal = 0 }
 if ($local:moveToPathTotal -ne 0) {
 
 	$local:moveToPaths.FullName | ForEach-Object -Parallel {
+		$local:i = $([Array]::IndexOf($using:local:moveToPaths.FullName, $_)) + 1
+		$local:total = $using:local:moveToPaths.Count
 		#処理
-		Write-Output "$($([Array]::IndexOf($using:local:moveToPaths.FullName, $_)) + 1)/$($using:local:moveToPaths.Count) - $($_)"
+		Write-Output "$($local:i)/$($local:total) - $($_)"
 		$targetFolderName = Split-Path -Leaf $_
 		if ($script:sortVideoByMedia) {
 			$mediaName = Split-Path -Leaf $(Split-Path -Parent $_)
@@ -154,7 +156,7 @@ if ($local:moveToPathTotal -ne 0) {
 		$moveFromPath = $(Join-Path $using:script:downloadBaseDir $targetFolderName)
 		if (Test-Path $moveFromPath) {
 			$moveFromPath = $moveFromPath + '\*.mp4'
-			Write-Host "　「$($local:moveFromPath)」を「$($_)」に移動します"
+			Write-Host "　$($local:i)/$($local:total) - 「$($local:moveFromPath)」を「$($_)」に移動します"
 			try {
 				Move-Item `
 					-Path $local:moveFromPath `

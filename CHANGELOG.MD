@@ -10,6 +10,7 @@
 - Google Colab 用のテンプレートを複数 Cell に分割
 - Google Colab 用のテンプレートに Google Drive をマウントする処理を追加
 - Write-Host の廃止
+- TVer の仕様変更に伴いダウンロード履歴の重複削除ロジックを変更
 
 ### 2.7.2 Fixed
 

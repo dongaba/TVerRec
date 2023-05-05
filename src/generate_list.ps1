@@ -137,7 +137,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 	$local:resultLinks = getVideoLinksFromKeyword ($local:keywordName)
 	$local:keywordName = $local:keywordName.Replace('https://tver.jp/', '')
 
-	#ダウンロード履歴ファイルのデータを読み込み
+	#ダウンロードリストファイルのデータを読み込み
 	try {
 		#ロックファイルをロック
 		while ($(fileLock $script:listLockFilePath).fileLocked -ne $true)
@@ -150,11 +150,10 @@ foreach ($local:keywordName in $local:keywordNames) {
 	} catch { Write-Warning 'ダウンロードリストを読み込めなかったのでスキップしました'; continue
 	} finally { $null = fileUnlock $script:listLockFilePath }
 
-	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
+	#URLがすでにダウンロードリストに存在する場合は検索結果から除外
 	foreach ($local:resultLink in $local:resultLinks) {
 		$local:listMatch = $script:listFileData `
-		| Where-Object { $_.episodeID -like "*$($local:resultLink.`
-		replace('https://tver.jp/episodes/', ''))" }
+		| Where-Object { $_.episodeID -like "*$($local:resultLink.Replace('https://tver.jp/episodes/', ''))" }
 		if ($null -eq $local:listMatch) { $local:videoLinks += $local:resultLink }
 		else { $local:searchResultCount = $local:searchResultCount + 1; continue }
 	}
@@ -236,8 +235,10 @@ foreach ($local:keywordName in $local:keywordNames) {
 			$script:ignoreFileSamplePath = $using:script:ignoreFileSamplePath
 			$script:ignoreFilePath = $using:script:ignoreFilePath
 
+			$local:i = $([Array]::IndexOf($using:local:videoLinks, $_)) + 1
+			$local:total = $using:local:videoLinks.Count
 			#処理
-			Write-Output "$($([Array]::IndexOf($using:local:videoLinks, $_)) + 1 )/$($using:local:videoLinks.Count) - $($_)"
+			Write-Output "$($local:i)/$($local:total) - $($_)"
 
 			#TVer番組ダウンロードのメイン処理
 			$broadcastDate = '' ; $videoSeries = '' ; $videoSeason = ''
@@ -272,7 +273,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 			#スキップフラグが立っているかチェック
 			if ($ignore -eq $true) {
-				Write-Output '　番組をコメントアウトした状態でリストファイルに追加します'
+				Write-Output "　$($local:i)/$($local:total) - 番組をコメントアウトした状態でリストファイルに追加します"
 				$newVideo = [pscustomobject]@{
 					seriesName    = $videoSeries
 					seriesID      = $videoSeriesID
@@ -280,7 +281,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 					seasonID      = $videoSeasonID
 					episodeNo     = $videoEpisode
 					episodeName   = $videoTitle
-					episodeID     = '#' + $_
+					episodeID     = '#' + $_.Replace('https://tver.jp/episodes/', '')
 					media         = $mediaName
 					provider      = $providerName
 					broadcastDate = $broadcastDate
@@ -289,7 +290,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 					ignoreWord    = $ignoreWord
 				}
 			} else {
-				Write-Output '　番組をリストファイルに追加します'
+				Write-Output "　$($local:i)/$($local:total) - 番組をリストファイルに追加します"
 				$newVideo = [pscustomobject]@{
 					seriesName    = $videoSeries
 					seriesID      = $videoSeriesID
@@ -297,7 +298,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 					seasonID      = $videoSeasonID
 					episodeNo     = $videoEpisode
 					episodeName   = $videoTitle
-					episodeID     = $_
+					episodeID     = $_.Replace('https://tver.jp/episodes/', '')
 					media         = $mediaName
 					provider      = $providerName
 					broadcastDate = $broadcastDate

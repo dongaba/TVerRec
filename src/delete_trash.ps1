@@ -200,25 +200,28 @@ try {
 #----------------------------------------------------------------------
 if ($null -ne $local:ignoreTitles ) {
 	$local:ignoreTitles | ForEach-Object -Parallel {
+		$local:i = $([Array]::IndexOf($using:local:ignoreTitles, $_)) + 1
+		$local:total = $using:local:ignoreTitles.Count
 		#処理
-		Write-Output "$($([Array]::IndexOf($using:local:ignoreTitles, $_)) + 1 )/$($using:local:ignoreTitles.Count) - $($_)"
+		Write-Output "$($local:i)/$($local:total) - $($_)"
 		try {
-			$delTargets = Get-ChildItem `
+			$local:delTargets = Get-ChildItem `
 				-LiteralPath $using:script:downloadBaseDir `
 				-Name -Filter "*$($_)*"
 		} catch { Write-Warning '削除対象を特定できませんでした' }
 		try {
 			if ($null -ne $delTargets) {
-				foreach ($delTarget in $delTargets) {
-					Write-Output "　「$(Join-Path $using:script:downloadBaseDir $delTarget)」を削除します"
+				foreach ($local:delTarget in $local:delTargets) {
+					$local:delPath = Join-Path $using:script:downloadBaseDir $local:delTarget
+					Write-Output "　$($local:i)/$($local:total) -「$($local:delPath)」を削除します"
 					Remove-Item `
-						-Path $(Join-Path $using:script:downloadBaseDir $delTarget) `
+						-Path $local:delPath `
 						-Recurse `
 						-Force `
 						-ErrorAction SilentlyContinue
 				}
 			}
-		} catch { Write-Warning '削除できないファイルがありました' }
+		} catch { Write-Warning '　$($local:i)/$($local:total) - 削除できないファイルがありました' }
 	} -ThrottleLimit $script:multithreadNum
 }
 
@@ -255,17 +258,19 @@ else { $local:subDirTotal = 0 }
 #----------------------------------------------------------------------
 if ($local:subDirTotal -ne 0) {
 	$local:allSubDirs | ForEach-Object -Parallel {
+		$local:i = $([Array]::IndexOf($using:local:allSubDirs, $_)) + 1
+		$local:total = $using:local:allSubDirs.Count
 		#処理
-		Write-Output "$($([Array]::IndexOf($using:local:allSubDirs, $_)) + 1)/$($using:local:allSubDirs.Count) - $($_)"
+		Write-Output "$($local:i)/$($local:total) - $($_)"
 		if (@((Get-ChildItem -LiteralPath $_ -Recurse).`
 					Where({ ! $_.PSIsContainer })).Count -eq 0) {
-			Write-Output "　「$($_)」を削除します"
+			Write-Output "　$($local:i)/$($local:total) - 「$($_)」を削除します"
 			try {
 				Remove-Item `
 					-LiteralPath $_ `
 					-Recurse `
 					-Force
-			} catch { Write-Output "　空ディレクトリの削除に失敗しました: $_" }
+			} catch { Write-Output "　$($local:i)/$($local:total) - 空ディレクトリの削除に失敗しました: $_" }
 		}
 	} -ThrottleLimit $script:multithreadNum
 }

@@ -203,7 +203,7 @@ foreach ($local:videoLink in $local:videoLinks) {
 
 	#処理
 	Write-Output '--------------------------------------------------'
-	Write-Output "$($local:videoNum)/$($local:videoTotal) - $($local:videoLink)"
+	Write-Output "$($local:videoNum)/$($local:videoTotal) - https://tver.jp/episodes/$($local:videoLink)"
 
 	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 	waitTillYtdlProcessGetFewer $script:parallelDownloadFileNum

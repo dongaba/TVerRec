@@ -372,7 +372,6 @@ function sortIgnoreList {
 	$local:ignoreComment = @()
 	$local:ignoreTarget = @()
 	$local:ignoreElse = @()
-	$local:timeStamp = $(Get-Date -Format 'yyyyMMddHHmmss')
 
 	#正規表現用のエスケープ解除
 	$local:ignoreTitle = $local:ignoreTitle.Replace('\\', '\')
@@ -397,10 +396,6 @@ function sortIgnoreList {
 		while ($(fileLock $script:ignoreLockFilePath).fileLocked -ne $true)
 		{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 		#ファイル操作
-		Copy-Item `
-			-Path $script:ignoreFilePath `
-			-Destination $($script:ignoreFilePath + '.' + $local:timeStamp) `
-			-Force
 		$local:ignoreLists = (Get-Content $script:ignoreFilePath -Encoding UTF8).`
 			Where( { !($_ -match '^\s*$') }).`		#空行を除く
 		Where( { !($_ -match '^;;.*$') })		#ヘッダ行を除く
@@ -1375,7 +1370,7 @@ function generateTVerVideoList {
 			seasonID      = $script:videoSeasonID
 			episodeNo     = $script:videoEpisode
 			episodeName   = $script:videoTitle
-			episodeID     = '#' + $($script:videoLink.Replace('/episodes/', ''))
+			episodeID     = '#' + $($script:videoLink.Replace('https://tver.jp/episodes/', ''))
 			media         = $script:mediaName
 			provider      = $script:providerName
 			broadcastDate = $script:broadcastDate
@@ -1392,7 +1387,7 @@ function generateTVerVideoList {
 			seasonID      = $script:videoSeasonID
 			episodeNo     = $script:videoEpisode
 			episodeName   = $script:videoTitle
-			episodeID     = $($script:videoLink.Replace('/episodes/', ''))
+			episodeID     = $($script:videoLink.Replace('https://tver.jp/episodes/', ''))
 			media         = $script:mediaName
 			provider      = $script:providerName
 			broadcastDate = $script:broadcastDate
@@ -1868,7 +1863,7 @@ function cleanDB {
 	$local:historyData1 = @()
 	$local:historyData2 = @()
 	$local:mergedHistoryData = @()
-	#ダウンロード対象外とされたもの
+
 	try {
 		#ロックファイルをロック
 		while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true)
@@ -1929,32 +1924,24 @@ function uniqueDB {
 	[OutputType([System.Void])]
 	Param ()
 
-	$local:processedHist = @()
-	$local:ignoredHist = @()
-	#ダウンロード対象外とされたもの
+	$local:uniquedHist = @()
+
 	try {
 		#ロックファイルをロック
 		while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true)
 		{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 
-		#ファイル操作
-		#ダウンロード対象外とされたもの
-		$local:ignoredHist = ((Import-Csv -Path $script:historyFilePath -Encoding UTF8).`
-				Where({ $_.videoPath -eq '-- IGNORED --' }))
-
-		#ダウンロード対象外とされなかったものの重複削除。ファイル名で1つしかないもの残す
-		$local:processedHist = `
+		#videoPageで1つしかないもの残す
+		$local:uniquedHist = `
 			Import-Csv `
 			-Path $script:historyFilePath `
 			-Encoding UTF8 `
-		| Group-Object -Property 'videoPath' `
+		| Group-Object -Property 'videoPage' `
 		| Where-Object count -EQ 1 `
 		| Select-Object -ExpandProperty group
 
-		#ダウンロード対象外とされたものとダウンロード対象外とされなかったものを結合し出力
-		$local:mergedHistoryData += $local:processedHist
-		$local:mergedHistoryData += $local:ignoredHist
-		$local:mergedHistoryData | Sort-Object -Property downloadDate `
+		#ダウンロード日時でソートし出力
+		$local:uniquedHist | Sort-Object -Property downloadDate `
 		| Export-Csv `
 			-Path $script:historyFilePath `
 			-NoTypeInformation `

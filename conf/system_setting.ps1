@@ -72,10 +72,10 @@ $script:parallelDownloadFileNum = 5
 $script:parallelDownloadNumPerFile = 10
 
 #並列処理の同時スレッド数
-#　CPUのコア数に応じて設定してください。
-#　CPUのコア数を超えた数を指定すると逆に遅くなる可能性があります。
-$script:multithreadNum = 10
-
+#　PCの性能に応じて適度に設定してください。
+#　最近のPCであれば100くらいの値を設定しても十分に動作すると思います。
+#　あまり大きな数を指定すると逆に処理時間が長くなる可能性があります。
+$script:multithreadNum = 100
 
 #ダウンロード時に放送局毎のディレクトリ配下にダウンロードファイルを保存
 #　「$false」の際の移動先は以下
