@@ -123,7 +123,7 @@ showProgressToast `
 $local:totalStartTime = Get-Date
 foreach ($local:keywordName in $local:keywordNames) {
 	#いろいろ初期化
-	$local:videoLink = '　'
+	$local:videoLink = ''
 	$local:videoLinks = @()
 	$local:searchResultCount = 0
 

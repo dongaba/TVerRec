@@ -113,7 +113,7 @@ try {
 checkRequiredFile
 
 #いろいろ初期化
-$local:videoLink = '　'
+$local:videoLink = ''
 $local:videoLinks = @()
 
 #リスト内の処理中の番組の番号
@@ -128,8 +128,14 @@ getToken
 
 Write-Output '----------------------------------------------------------------------'
 Write-Output 'ダウンロードリストを読み込みます'
+$local:listLinks = @()
 $local:listLinks = loadDownloadList
-Write-Output "　リスト件数$($local:listLinks.Length)件"
+if ($null -eq $local:listLinks) { Write-Warning 'ダウンロードリストが0件です' ; exit 0 }
+
+$local:listTotal = 0
+if ($local:listLinks -is [Array]) { $local:listTotal = $script:listLinks.Length }
+else { $local:listTotal = 1 }
+Write-Output "　リスト件数$($local:listTotal)件"
 Write-Output ''
 
 Write-Output '----------------------------------------------------------------------'
@@ -152,10 +158,13 @@ Write-Output '------------------------------------------------------------------
 Write-Output 'ダウンロード履歴に含まれる番組を除外します'
 #URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 foreach ($local:listLink in $local:listLinks.episodeID) {
-	$local:historyMatch = $script:historyFileData `
-	| Where-Object { $_.videoPage -eq $($local:listLink) }
-	if ($null -eq $local:historyMatch) { $local:videoLinks += $local:listLink }
+	if ($null -ne $script:historyFileData) {
+		$local:historyMatch = $script:historyFileData `
+		| Where-Object { $_.videoPage -eq $($local:listLink) }
+		if ($null -eq $local:historyMatch) { $local:videoLinks += $local:listLink }
+	} else { $local:videoLinks += $local:listLink }
 }
+
 #ダウンロード対象のトータル番組数
 $local:videoTotal = $local:videoLinks.Length
 Write-Output "　ダウンロード対象$($local:videoTotal)件"

@@ -916,7 +916,6 @@ function updateProgress2Row {
 
 	if ($local:secRemaining1 -ne '') { $local:secRemaining1 = "残り時間 $local:minRemaining1" }
 	if ($local:secRemaining2 -ne '') { $local:secRemaining2 = "残り時間 $local:minRemaining2" }
-	if ($local:progressActivity2 -eq '') { $local:progressActivity2 = '　' }
 
 	updateProgressToast2 `
 		-Title1 $local:currentProcessing1 `
