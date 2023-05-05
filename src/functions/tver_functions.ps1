@@ -2018,9 +2018,9 @@ function checkVideo {
 
 	if ($script:simplifiedValidation -eq $true) {
 		#ffprobeを使った簡易検査
-		$local:ffprobeArgs = ' -hide_banner -v error -err_detect explode' + " -i $local:checkFile '
+		$local:ffprobeArgs = ' -hide_banner -v error -err_detect explode' + " -i $local:checkFile "
 
-		Write-Debug 'ffprobe起動コマンド:$script:ffprobePath $local:ffprobeArgs"
+		Write-Debug "ffprobe起動コマンド:$script:ffprobePath $local:ffprobeArgs"
 		try {
 			if ($IsWindows) {
 				$local:proc = Start-Process `
