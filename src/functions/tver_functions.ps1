@@ -1146,7 +1146,7 @@ function downloadTVerVideo {
 		-Date $script:broadcastDate
 
 	$script:videoFileDir = getSpecialCharacterReplaced (
-		getNarrowChars $($script:videoSeries + ' ' + $script:videoSeason)).Trim()
+		getNarrowChars $($script:videoSeries + ' ' + $script:videoSeason)).Trim(' ', '.')
 	if ($script:sortVideoByMedia -eq $true) {
 		$script:videoFileDir = $(
 			Join-Path $script:downloadBaseDir $(getFileNameWoInvChars $script:mediaName) `
@@ -1758,6 +1758,7 @@ function executeYtdl {
 	$local:ytdlArgs += ' --newline'
 	$local:ytdlArgs += " --concurrent-fragments $script:parallelDownloadNumPerFile"
 	$local:ytdlArgs += ' --embed-thumbnail'
+	$local:ytdlArgs += ' --all-subs'
 	$local:ytdlArgs += ' --embed-subs'
 	$local:ytdlArgs += ' --embed-metadata'
 	$local:ytdlArgs += ' --embed-chapters'
@@ -1997,8 +1998,9 @@ function checkVideo {
 	} else {
 		#該当の番組のチェックステータスを"2"にして後続のチェックを実行
 		try {
-			$(($local:videoHists).`
-					Where({ $_.videoPath -eq $local:videoFileRelPath })).videoValidated = '2'
+			$local:videoHists `
+			| Where-Object { $_.videoPath -eq $local:videoFileRelPath } `
+			| Where-Object { $_.videoValidated = '2' }
 		} catch { Write-Warning "　該当のレコードが見つかりませんでした: $local:videoFileRelPath"; return }
 		try {
 			#ロックファイルをロック
@@ -2090,9 +2092,9 @@ function checkVideo {
 	} catch { Write-Warning 'ffmpegエラーファイルを削除できませんでした' }
 
 	if ($local:proc.ExitCode -ne 0 -Or $local:errorCount -gt 30) {
-		Write-Warning 'チェックNGでした'
 
-		#終了コードが"0"以外 または エラーが30行以上 はダウンロード履歴とファイルを削除
+		#終了コードが"0"以外 または エラーが一定以上 はダウンロード履歴とファイルを削除
+		Write-Warning 'チェックNGでした'
 		Write-Warning "　exit code: $($local:proc.ExitCode) error count: $local:errorCount"
 
 		#破損しているダウンロードファイルをダウンロード履歴から削除
@@ -2101,13 +2103,16 @@ function checkVideo {
 			while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true)
 			{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 			#ファイル操作
-			(Select-String `
-				-Pattern $local:videoFileRelPath `
-				-LiteralPath $script:historyFilePath `
-				-Encoding UTF8 `
-				-SimpleMatch `
-				-NotMatch).Line `
-			| Out-File $script:historyFilePath -Encoding UTF8
+			$local:videoHists = `
+				Import-Csv `
+				-Path $script:historyFilePath `
+				-Encoding UTF8
+			#該当の番組のレコードを削除
+			$local:videoHists | Where-Object { $_.videoPath -ne $local:videoFileRelPath } `
+				$local:videoHists | Export-Csv `
+				-Path $script:historyFilePath `
+				-NoTypeInformation `
+				-Encoding UTF8
 		} catch { Write-Warning "　ダウンロード履歴の更新に失敗しました: $local:videoFileRelPath"
 		} finally { $null = fileUnlock $script:historyLockFilePath }
 
@@ -2118,7 +2123,9 @@ function checkVideo {
 				-Force `
 				-ErrorAction SilentlyContinue
 		} catch { Write-Warning "　ファイル削除できませんでした: $local:videoFilePath" }
+
 	} else {
+
 		#終了コードが"0"のときはダウンロード履歴にチェック済フラグを立てる
 		Write-Output '　チェックOKでした'
 		try {
@@ -2131,14 +2138,16 @@ function checkVideo {
 				-Path $script:historyFilePath `
 				-Encoding UTF8
 			#該当の番組のチェックステータスを"1"に
-			$(($local:videoHists).`
-					Where({ $_.videoPath -eq $local:videoFileRelPath })).videoValidated = '1'
+			$local:videoHists `
+			| Where-Object { $_.videoPath -eq $local:videoFileRelPath } `
+			| Where-Object { $_.videoValidated = '1' }
 			$local:videoHists | Export-Csv `
 				-Path $script:historyFilePath `
 				-NoTypeInformation `
 				-Encoding UTF8
 		} catch { Write-Warning "　ダウンロード履歴を更新できませんでした: $local:videoFileRelPath"
 		} finally { $null = fileUnlock $script:historyLockFilePath }
+
 	}
 
 }

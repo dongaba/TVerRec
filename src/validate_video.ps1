@@ -168,7 +168,7 @@ try {
 			-Encoding UTF8 `
 		| Where-Object { $_.videoValidated -eq '0' } `
 		| Where-Object { $_.videoPath -ne '-- IGNORED --' } `
-		| Select-Object 'videoPath'
+		| Select-Object 'videoPage', 'videoPath', 'videoValidated'
 	)
 } catch { Write-Warning 'ダウンロード履歴の読み込みに失敗しました'
 } finally { $null = fileUnlock $script:historyLockFilePath }

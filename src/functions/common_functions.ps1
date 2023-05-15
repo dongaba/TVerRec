@@ -56,6 +56,7 @@ switch ($true) {
 		break
 	}
 }
+$script:locale = (Get-Culture).Name
 $script:tz = [String][TimeZoneInfo]::Local.BaseUtcOffset
 $script:guid = [guid]::NewGuid()
 $script:ipapi = ''
@@ -77,6 +78,7 @@ $script:clientEnv.Add('PSEdition', $PSVersionTable.PSEdition)
 $script:clientEnv.Add('PSVersion', $PSVersionTable.PSVersion)
 $script:clientEnv.Add('OS', $script:os)
 $script:clientEnv.Add('Arch', $script:arch)
+$script:clientEnv.Add('Locale', $script:locale)
 $script:clientEnv.Add('TZ', $script:tz)
 $script:clientEnv = $script:clientEnv.GetEnumerator() `
 | Sort-Object -Property key
@@ -269,19 +271,15 @@ function deleteFiles {
 		[int32]$local:delPeriod
 	)
 
-	$local:delConditions.Split(',').Trim() | ForEach-Object -Parallel {
-		Write-Output "$($using:local:basePath) - $($_)"
-		$null = `
-			Get-ChildItem `
-			-LiteralPath $using:local:basePath `
-			-Recurse `
-			-File `
-			-Filter $using:local:delConditions `
-		| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays($using:local:delPeriod) } `
-		| Remove-Item `
-			-Force `
-			-ErrorAction SilentlyContinue
-	} -ThrottleLimit $script:multithreadNum
+	try {
+		foreach ($local:delCondition in $local:delConditions.Split(',').Trim()) {
+			Write-Output "$($local:basePath) - $($local:delCondition)"
+			Get-ChildItem -LiteralPath $local:basePath -Recurse -File -Filter $local:delCondition `
+			| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays($local:delPeriod) } `
+			| Remove-Item -Force -ErrorAction SilentlyContinue `
+			| Out-Null
+		}
+	} catch { Write-Warning '　削除できないファイルがありました' }
 
 }
 
@@ -380,7 +378,7 @@ function isLocked {
 #----------------------------------------------------------------------
 #色付きWrite-Output
 #----------------------------------------------------------------------
-function Out-Msg {
+function Out-Msg-Color {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
@@ -544,11 +542,9 @@ function showProgressToast {
 
 	if ($IsWindows) {
 		if ($local:toastSilent) {
-			$local:toastSoundElement = `
-				'<audio silent="true" />'
+			$local:toastSoundElement = '<audio silent="true" />'
 		} else {
-			$local:toastSoundElement = `
-				'<audio src="ms-winsoundevent:Notification.Default" loop="false"/>'
+			$local:toastSoundElement = '<audio src="ms-winsoundevent:Notification.Default" loop="false"/>'
 		}
 
 		if (!($local:toastDuration)) { $local:toastDuration = 'short' }
@@ -687,11 +683,9 @@ function showProgressToast2 {
 
 	if ($IsWindows) {
 		if ($local:toastSilent) {
-			$local:toastSoundElement = `
-				'<audio silent="true" />'
+			$local:toastSoundElement = '<audio silent="true" />'
 		} else {
-			$local:toastSoundElement = `
-				'<audio src="ms-winsoundevent:Notification.Default" loop="false"/>'
+			$local:toastSoundElement = '<audio src="ms-winsoundevent:Notification.Default" loop="false"/>'
 		}
 
 		if (!($local:toastDuration)) { $local:toastDuration = 'short' }
@@ -979,7 +973,7 @@ function goAnal {
 	$local:gaBody += "`"DisableValidation`" : {`"value`" : `"$($script:disableValidation)`"}, "
 	$local:gaBody += "`"SortwareDecode`" : {`"value`" : `"$($script:forceSoftwareDecodeFlag)`"}, "
 	$local:gaBody += "`"DecodeOption`" : {`"value`" : `"$($script:ffmpegDecodeOption)`"}, "
-	$local:gaBody = $local:gaBody.Trim().Trim(',', ' ')		#delete last comma
+	$local:gaBody = $local:gaBody.Trim(',', ' ')		#delete last comma
 	$local:gaBody += "}, `"events`" : [ { "
 	$local:gaBody += "`"name`" : `"$local:event`", "
 	$local:gaBody += "`"params`" : {"
@@ -992,7 +986,7 @@ function goAnal {
 	$local:gaBody += "`"DisableValidation`" : `"$($script:disableValidation)`", "
 	$local:gaBody += "`"SortwareDecode`" : `"$($script:forceSoftwareDecodeFlag)`", "
 	$local:gaBody += "`"DecodeOption`" : `"$($script:ffmpegDecodeOption)`", "
-	$local:gaBody = $local:gaBody.Trim().Trim(',', ' ')		#delete last comma
+	$local:gaBody = $local:gaBody.Trim(',', ' ')		#delete last comma
 	$local:gaBody += '} } ] }'
 
 	$progressPreference = 'silentlyContinue'

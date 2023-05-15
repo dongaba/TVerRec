@@ -121,7 +121,7 @@ $script:simplifiedValidation = $false
 $script:disableValidation = $false
 
 #youtube-dlとffmpegのウィンドウの表示方法(Windowsのみ) Normal/Maximized/Minimized/Hidden
-$script:windowShowStyle = 'Hidden'
+$script:windowShowStyle = 'Minimized'
 
 
 #----------------------------------------------------------------------

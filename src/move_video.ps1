@@ -90,7 +90,7 @@ foreach ($local:saveDir in $script:saveBaseDirArray) {
 }
 
 #======================================================================
-#1/2 移動先ディレクトリを起点として、配下のディレクトリを取得
+#1/3 移動先ディレクトリを起点として、配下のディレクトリを取得
 Write-Output '----------------------------------------------------------------------'
 Write-Output '移動先ディレクトリの一覧を作成しています'
 Write-Output '----------------------------------------------------------------------'
@@ -98,7 +98,7 @@ Write-Output '------------------------------------------------------------------
 #進捗表示
 showProgressToast `
 	-Text1 '番組の移動中' `
-	-Text2 '　処理1/2 - ディレクトリ一覧を作成' `
+	-Text2 '　処理1/3 - ディレクトリ一覧を作成' `
 	-WorkDetail '' `
 	-Tag $script:appName `
 	-Group 'Move' `
@@ -107,7 +107,7 @@ showProgressToast `
 
 
 #======================================================================
-#2/2 移動先ディレクトリと同名のディレクトリ配下の番組を移動
+#2/3 移動先ディレクトリと同名のディレクトリ配下の番組を移動
 Write-Output '----------------------------------------------------------------------'
 Write-Output 'ダウンロードファイルを移動しています'
 Write-Output '----------------------------------------------------------------------'
@@ -116,7 +116,7 @@ Write-Output '------------------------------------------------------------------
 #進捗表示
 showProgressToast `
 	-Text1 '番組の移動中' `
-	-Text2 '　処理2/2 - ダウンロードファイルを移動' `
+	-Text2 '　処理2/3 - ダウンロードファイルを移動' `
 	-WorkDetail '' `
 	-Tag $script:appName `
 	-Group 'Move' `
@@ -134,38 +134,106 @@ foreach ($local:saveDir in $script:saveBaseDirArray) {
 	| Sort-Object
 }
 
+#移動先パス番号
+$local:moveToPathNum = 0
 #移動先パス合計数
 if ($local:moveToPaths -is [Array]) { $local:moveToPathTotal = $local:moveToPaths.Length }
 elseif ($null -ne $local:moveToPaths) { $local:moveToPathTotal = 1 }
 else { $local:moveToPathTotal = 0 }
 
 #----------------------------------------------------------------------
-if ($local:moveToPathTotal -ne 0) {
+$local:totalStartTime = Get-Date
 
-	$local:moveToPaths.FullName | ForEach-Object -Parallel {
-		$local:i = $([Array]::IndexOf($using:local:moveToPaths.FullName, $_)) + 1
-		$local:total = $using:local:moveToPaths.Count
+if ($local:moveToPathTotal -ne 0) {
+	foreach ($local:moveToPath in $local:moveToPaths.FullName) {
+
+		#処理時間の推計
+		$local:secElapsed = (Get-Date) - $local:totalStartTime
+		$local:secRemaining = -1
+		if ($local:moveToPathNum -ne 0) {
+			$local:secRemaining = ($local:secElapsed.TotalSeconds / $local:moveToPathNum) * ($local:moveToPathTotal - $local:moveToPathNum)
+			$local:minRemaining = "$([String]([math]::Ceiling($local:secRemaining / 60)))分"
+			$local:progressRatio = $($local:moveToPathNum / $local:moveToPathTotal)
+		} else {
+			$local:minRemaining = '計算中...'
+			$local:progressRatio = 0
+		}
+		$local:moveToPathNum = $local:moveToPathNum + 1
+
+		#進捗表示
+		UpdateProgressToast `
+			-Title $local:moveToPath `
+			-Rate $local:progressRatio `
+			-LeftText $local:moveToPathNum/$local:moveToPathTotal `
+			-RightText "残り時間 $local:minRemaining" `
+			-Tag $script:appName `
+			-Group 'Move'
+
+		#処理
+		Write-Output "$($local:moveToPathNum)/$($local:moveToPathTotal) - $($local:moveToPath)"
+		$local:targetFolderName = Split-Path -Leaf $local:moveToPath
+		if ($script:sortVideoByMedia) {
+			$local:mediaName = Split-Path -Leaf $(Split-Path -Parent $local:moveToPath)
+			$local:targetFolderName = $(Join-Path $local:mediaName $local:targetFolderName)
+		}
+		#同名フォルダが存在する場合は配下のファイルを移動
+		$local:moveFromPath = $(Join-Path $script:downloadBaseDir $local:targetFolderName)
+		if (Test-Path $local:moveFromPath) {
+			$local:moveFromPath = $local:moveFromPath + '\*.mp4'
+			Write-Output "　「$($local:moveFromPath)」を移動します"
+			try { Move-Item $local:moveFromPath -Destination $local:moveToPath -Force }
+			catch { Write-Warning '　移動できないファイルがありました' }
+		}
+	}
+}
+#----------------------------------------------------------------------
+
+#======================================================================
+#3/3 空ディレクトリと隠しファイルしか入っていないディレクトリを一気に削除
+Write-Output '----------------------------------------------------------------------'
+Write-Output '空ディレクトリを削除します'
+Write-Output '----------------------------------------------------------------------'
+#進捗表示
+showProgressToast `
+	-Text1 '番組の移動中' `
+	-Text2 '　処理3/3 - 空ディレクトリを削除' `
+	-WorkDetail '' `
+	-Tag $script:appName `
+	-Group 'Move' `
+	-Duration 'long' `
+	-Silent $false
+
+#処理
+$local:allSubDirs = $null
+try {
+	$local:allSubDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).`
+			Where({ $_.PSIsContainer })).FullName `
+	| Sort-Object -Descending
+} catch { Write-Warning 'ディレクトリを見つけられませんでした' }
+
+#サブディレクトリの合計数
+if ($local:allSubDirs -is [Array]) { $local:subDirTotal = $local:allSubDirs.Length }
+elseif ($null -ne $local:allSubDirs) { $local:subDirTotal = 1 }
+else { $local:subDirTotal = 0 }
+
+#----------------------------------------------------------------------
+if ($local:subDirTotal -ne 0) {
+	$local:allSubDirs | ForEach-Object -Parallel {
+		$local:i = $([Array]::IndexOf($using:local:allSubDirs, $_)) + 1
+		$local:total = $using:local:allSubDirs.Count
 		#処理
 		Write-Output "$($local:i)/$($local:total) - $($_)"
-		$targetFolderName = Split-Path -Leaf $_
-		if ($script:sortVideoByMedia) {
-			$mediaName = Split-Path -Leaf $(Split-Path -Parent $_)
-			$targetFolderName = $(Join-Path $mediaName $targetFolderName)
-		}
-		#同名ディレクトリが存在する場合は配下のファイルを移動
-		$moveFromPath = $(Join-Path $using:script:downloadBaseDir $targetFolderName)
-		if (Test-Path $moveFromPath) {
-			$moveFromPath = $moveFromPath + '\*.mp4'
-			Write-Host "　$($local:i)/$($local:total) - 「$($local:moveFromPath)」を「$($_)」に移動します"
+		if (@((Get-ChildItem -LiteralPath $_ -Recurse).`
+					Where({ ! $_.PSIsContainer })).Count -eq 0) {
+			Write-Output "　$($local:i)/$($local:total) - 「$($_)」を削除します"
 			try {
-				Move-Item `
-					-Path $local:moveFromPath `
-					-Destination $_ `
+				Remove-Item `
+					-LiteralPath $_ `
+					-Recurse `
 					-Force
-			} catch { Write-Output '　移動できないファイルがありました' }
+			} catch { Write-Output "　$($local:i)/$($local:total) - 空ディレクトリの削除に失敗しました: $_" }
 		}
 	} -ThrottleLimit $script:multithreadNum
-
 }
 #----------------------------------------------------------------------
 

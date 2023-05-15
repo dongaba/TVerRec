@@ -150,33 +150,51 @@ foreach ($local:keywordName in $local:keywordNames) {
 	} catch { Write-Warning 'ダウンロードリストを読み込めなかったのでスキップしました'; continue
 	} finally { $null = fileUnlock $script:listLockFilePath }
 
-	#URLがすでにダウンロードリストに存在する場合は検索結果から除外
+	#ダウンロード履歴ファイルのデータを読み込み
+	try {
+		#ロックファイルをロック
+		while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true)
+		{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
+		#ファイル操作
+		$script:historyFileData = `
+			Import-Csv `
+			-Path $script:historyFilePath `
+			-Encoding UTF8
+	} catch { Write-Warning 'ダウンロード履歴を読み込めなかったのでスキップしました'; continue
+	} finally { $null = fileUnlock $script:historyLockFilePath }
+
 	foreach ($local:resultLink in $local:resultLinks) {
+		#URLがすでにダウンロードリストに存在するかチェック
 		$local:listMatch = $script:listFileData `
 		| Where-Object { $_.episodeID -like "*$($local:resultLink.Replace('https://tver.jp/episodes/', ''))" }
-		if ($null -eq $local:listMatch) { $local:videoLinks += $local:resultLink }
+
+		#URLがすでにダウンロードリストに存在するかチェック
+		$local:histMatch = $script:historyFileData `
+		| Where-Object { $_.videoPage -like "*$($local:resultLink)" }
+
+		#どちらにも含まれない場合はリストへの出力対象
+		if (($null -eq $local:listMatch) -And ($null -eq $local:histMatch)) { $local:videoLinks += $local:resultLink }
 		else { $local:searchResultCount = $local:searchResultCount + 1; continue }
 	}
 
-	#ジャンル内の処理中の番組の番号
-	#$local:videoNum = 0
 	#ダウンロード対象のトータル番組数
 	if ($null -eq $local:videoLinks) { $local:videoTotal = 0 }
 	else { $local:videoTotal = $local:videoLinks.Length }
 	Write-Output "　ダウンロード対象$($local:videoTotal)本 処理済$($local:searchResultCount)本"
+
+	#ダウンロード対象番組がない場合は次のキーワード
+	if ( $local:videoTotal -eq 0 ) { continue }
 
 	#処理時間の推計
 	$local:secElapsed = (Get-Date) - $local:totalStartTime
 	$local:secRemaining = -1
 	if ($local:keywordNum -ne 0) {
 		$local:secRemaining = `
-		($local:secElapsed.TotalSeconds / $local:keywordNum) `
-			* ($local:keywordTotal - $local:keywordNum)
+		($local:secElapsed.TotalSeconds / $local:keywordNum) * ($local:keywordTotal - $local:keywordNum)
 	}
 	if ($local:secRemaining -eq -1 -Or $local:secRemaining -eq '' ) { $local:minRemaining = '計算中...' }
 	else { $local:minRemaining = "$([String]([math]::Ceiling($local:secRemaining / 60)))分" }
 	$local:progressRatio1 = $($local:keywordNum / $local:keywordTotal)
-	#$local:progressRatio2 = 0
 
 	#キーワード数のインクリメント
 	$local:keywordNum = $local:keywordNum + 1
