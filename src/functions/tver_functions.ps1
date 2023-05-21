@@ -2108,8 +2108,7 @@ function checkVideo {
 			#ファイル操作
 			$local:videoHists = `
 				Import-Csv `
-				-Path $script:his`
-			toryFilePath `
+				-Path $script:historyFilePath `
 				-Encoding UTF8
 			#該当の番組のレコードを削除
 			$local:videoHists `
