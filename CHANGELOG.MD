@@ -1,5 +1,15 @@
 ﻿# Change Log
 
+## [2.7.4](https://github.com/dongaba/TVerRec/releases/tag/v2.7.4)
+
+### 2.7.4 Added
+
+### 2.7.4 Changed
+
+### 2.7.4 Fixed
+
+- 整合性チェックに失敗した履歴の削除ができなかった問題を修正
+
 ## [2.7.3](https://github.com/dongaba/TVerRec/releases/tag/v2.7.3)
 
 ### 2.7.3 Added
