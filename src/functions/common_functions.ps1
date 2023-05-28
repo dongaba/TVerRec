@@ -25,11 +25,9 @@
 #	THE SOFTWARE.
 #
 ###################################################################################
-using namespace System.Text.RegularExpressions
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
-#Toast用AppID取得に必要
-if ($IsWindows) { Import-Module StartLayout -SkipEditionCheck }
+#region 環境
 
 #----------------------------------------------------------------------
 #GUID取得
@@ -85,6 +83,87 @@ $script:clientEnv = $script:clientEnv.GetEnumerator() `
 $progressPreference = 'Continue'
 
 #----------------------------------------------------------------------
+#統計取得
+#----------------------------------------------------------------------
+function goAnal {
+	[OutputType([System.Void])]
+	Param (
+		[Parameter(Mandatory = $true, Position = 0)]
+		[Alias('Event')]
+		[String]$local:event,
+
+		[Parameter(Mandatory = $false, Position = 1)]
+		[Alias('Type')]
+		[String]$local:type,
+
+		[Parameter(Mandatory = $false, Position = 2)]
+		[Alias('ID')]
+		[String]$local:id
+	)
+
+	if (!($local:type)) { $local:type = '' }
+	if (!($local:id)) { $local:id = '' }
+	$local:epochTime = [decimal]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() * 1000)
+
+	$progressPreference = 'silentlyContinue'
+	$local:statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
+	try {
+		$null = Invoke-WebRequest `
+			-Uri "$($local:statisticsBase)$($local:event).svg" `
+			-TimeoutSec $script:timeoutSec
+	} catch { Write-Debug 'Failed to collect statistics' }
+	finally { $progressPreference = 'Continue' }
+
+	if ($local:event -eq 'search') { return }
+	$local:gaURL = 'https://www.google-analytics.com/mp/collect'
+	$local:gaKey = 'api_secret=UZ3InfgkTgGiR4FU-in9sw'
+	$local:gaID = 'measurement_id=G-NMSF9L531G'
+	$local:gaHeaders = New-Object 'System.Collections.Generic.Dictionary[[String],[String]]'
+	$local:gaHeaders.Add('HOST', 'www.google-analytics.com')
+	$local:gaHeaders.Add('Content-Type', 'application/json')
+	$local:gaBody = "{ `"client_id`" : `"$script:guid`", "
+	$local:gaBody += "`"timestamp_micros`" : `"$local:epochTime`", "
+	$local:gaBody += "`"non_personalized_ads`" : false, "
+	$local:gaBody += "`"user_properties`":{ "
+	foreach ($item in $script:clientEnv) {
+		$local:gaBody += "`"$($item.Key)`" : {`"value`" : `"$($item.Value)`"}, "
+	}
+	$local:gaBody += "`"DisableValidation`" : {`"value`" : `"$($script:disableValidation)`"}, "
+	$local:gaBody += "`"SortwareDecode`" : {`"value`" : `"$($script:forceSoftwareDecodeFlag)`"}, "
+	$local:gaBody += "`"DecodeOption`" : {`"value`" : `"$($script:ffmpegDecodeOption)`"}, "
+	$local:gaBody = $local:gaBody.Trim(',', ' ')		#delete last comma
+	$local:gaBody += "}, `"events`" : [ { "
+	$local:gaBody += "`"name`" : `"$local:event`", "
+	$local:gaBody += "`"params`" : {"
+	$local:gaBody += "`"Type`" : `"$local:type`", "
+	$local:gaBody += "`"ID`" : `"$local:id`", "
+	$local:gaBody += "`"Target`" : `"$local:type/$local:id`", "
+	foreach ($item in $script:clientEnv) {
+		$local:gaBody += "`"$($item.Key)`" : `"$($item.Value)`", "
+	}
+	$local:gaBody += "`"DisableValidation`" : `"$($script:disableValidation)`", "
+	$local:gaBody += "`"SortwareDecode`" : `"$($script:forceSoftwareDecodeFlag)`", "
+	$local:gaBody += "`"DecodeOption`" : `"$($script:ffmpegDecodeOption)`", "
+	$local:gaBody = $local:gaBody.Trim(',', ' ')		#delete last comma
+	$local:gaBody += '} } ] }'
+
+	$progressPreference = 'silentlyContinue'
+	try {
+		$null = Invoke-RestMethod `
+			-Uri "$($local:gaURL)?$($local:gaKey)&$($local:gaID)" `
+			-Method 'POST' -Headers $local:gaHeaders `
+			-Body $local:gaBody `
+			-TimeoutSec $script:timeoutSec
+	} catch { Write-Debug 'Failed to collect statistics'
+	} finally { $progressPreference = 'Continue' }
+
+}
+
+#endregion 環境
+
+#region タイムスタンプ
+
+#----------------------------------------------------------------------
 #タイムスタンプ更新
 #----------------------------------------------------------------------
 function getTimeStamp {
@@ -94,6 +173,26 @@ function getTimeStamp {
 	$local:timeStamp = Get-Date -UFormat '%Y-%m-%d %H:%M:%S'
 	return $local:timeStamp
 }
+
+#----------------------------------------------------------------------
+#UNIX時間をDateTime型に変換
+#----------------------------------------------------------------------
+function unixTimeToDateTime($unixTime) {
+	$origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
+	$origin.AddSeconds($unixTime)
+}
+
+#----------------------------------------------------------------------
+#DateTime型をUNIX時間に変換
+#----------------------------------------------------------------------
+function dateTimeToUnixTime($dateTime) {
+	$origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
+	[Int]($dateTime - $origin).TotalSeconds
+}
+
+#endregion タイムスタンプ
+
+#region 文字列操作
 
 #----------------------------------------------------------------------
 #ファイル名・ディレクトリ名に禁止文字の削除
@@ -251,6 +350,10 @@ function trimComment {
 	return $local:text.Split("`t")[0].Split(' ')[0].Split('#')[0]
 }
 
+#endregion 文字列操作
+
+#region ファイル操作
+
 #----------------------------------------------------------------------
 #指定したPath配下の指定した条件でファイルを削除
 #----------------------------------------------------------------------
@@ -282,6 +385,62 @@ function deleteFiles {
 	} catch { Write-Warning '　削除できないファイルがありました' }
 
 }
+
+#----------------------------------------------------------------------
+#Zipファイルを解凍
+#----------------------------------------------------------------------
+function unZip {
+	[CmdletBinding()]
+	[OutputType([System.Void])]
+	param(
+		[Parameter(Mandatory = $true, Position = 0)]
+		[Alias('File')]
+		[String]$zipArchive,
+		[Parameter(Mandatory = $true, Position = 1)]
+		[Alias('OutPath')]
+		[String]$path
+	)
+	[System.IO.Compression.ZipFile]::ExtractToDirectory($zipArchive, $path)
+}
+
+#----------------------------------------------------------------------
+#ディレクトリの上書き
+#----------------------------------------------------------------------
+function moveItem() {
+	[CmdletBinding()]
+	[OutputType([System.Void])]
+	param(
+		[Parameter(Mandatory = $true, Position = 0)]
+		[Alias('Path')]
+		[String]$src,
+		[Parameter(Mandatory = $true, Position = 1)]
+		[Alias('Destination')]
+		[String]$dist
+	)
+
+	if ((Test-Path $dist) -And (Test-Path -PathType Container $src)) {
+		# ディレクトリ上書き(移動先に存在 かつ ディレクトリ)は再帰的に moveItem 呼び出し
+		Get-ChildItem `
+			-Path $src `
+		| ForEach-Object { moveItem $_.FullName $($dist + '\' + $_.Name) }
+		# 移動し終わったディレクトリを削除
+		Remove-Item `
+			-Path $src `
+			-Recurse `
+			-Force
+	} else {
+		# 移動先に対象なし または ファイルの Move-Item に -Forece つけて実行
+		Write-Output "$src  →  $dist"
+		Move-Item `
+			-Path $src `
+			-Destination $dist `
+			-Force
+	}
+}
+
+#endregion ファイル操作
+
+#region ファイルロック
 
 #----------------------------------------------------------------------
 #ファイルのロック
@@ -375,6 +534,81 @@ function isLocked {
 	}
 }
 
+#endregion ファイルロック
+
+#region メモリマップトファイル
+
+#----------------------------------------------------------------------
+#メモリマップトファイルの作成
+#----------------------------------------------------------------------
+function New-MemoryMappedFile {
+	[CmdletBinding()]
+	param(
+		[Parameter(Mandatory)][String]$Name,
+		[Parameter()][Int64]$Size
+	)
+
+	[System.IO.MemoryMappedFiles.MemoryMappedFile]::CreateNew($Name, $Size);
+}
+
+#----------------------------------------------------------------------
+#メモリマップトファイルを開く
+#----------------------------------------------------------------------
+function Open-MemoryMappedFile {
+	param([String]$Name)
+
+	[System.IO.MemoryMappedFiles.MemoryMappedFile]::OpenExisting($Name);
+}
+
+#----------------------------------------------------------------------
+#メモリマップトファイルへの書き込み
+#----------------------------------------------------------------------
+function Out-MemoryMappedFile {
+	[CmdletBinding()]
+	param(
+		[Parameter(Mandatory)][System.IO.MemoryMappedFiles.MemoryMappedFile]$MemoryMappedFile,
+		[Parameter(ValueFromPipeline = $true, Mandatory)][String]$String
+	)
+
+	$Stream = $MemoryMappedFile.CreateViewStream()
+	$StreamWriter = New-Object System.IO.StreamWriter -ArgumentList $Stream
+	$StreamWriter.Write($String)
+	$StreamWriter.Dispose()
+	$Stream.Dispose()
+}
+
+#----------------------------------------------------------------------
+#メモリマップトファイルの読み込み
+#----------------------------------------------------------------------
+function Read-MemoryMappedFile {
+	[CmdletBinding()]
+	param(
+		[Parameter(Mandatory)][System.IO.MemoryMappedFiles.MemoryMappedFile]$MemoryMappedFile
+	)
+
+	$Stream = $MemoryMappedFile.CreateViewStream()
+	$StreamReader = New-Object System.IO.StreamReader -ArgumentList $Stream
+	$StreamReader.ReadToEnd().Replace("`0", '')
+	$StreamReader.Dispose()
+	$Stream.Dispose()
+}
+
+#----------------------------------------------------------------------
+#メモリマップトファイルの削除
+#----------------------------------------------------------------------
+function Remove-MemoryMappedFile {
+	[CmdletBinding()]
+	param(
+		[Parameter(Mandatory)][System.IO.MemoryMappedFiles.MemoryMappedFile]$MemoryMappedFile
+	)
+
+	$MemoryMappedFile.Dispose()
+}
+
+#endregion メモリマップトファイル
+
+#region コンソール出力
+
 #----------------------------------------------------------------------
 #色付きWrite-Output
 #----------------------------------------------------------------------
@@ -417,6 +651,13 @@ function Out-Msg-Color {
 	$host.UI.RawUI.ForegroundColor = $local:prevForegroundColor
 	$host.UI.RawUI.BackgroundColor = $local:prevBackgroundColor
 }
+
+#endregion コンソール出力
+
+#region トースト通知
+
+#Toast用AppID取得に必要
+if ($IsWindows) { Import-Module StartLayout -SkipEditionCheck }
 
 #----------------------------------------------------------------------
 #Windows Application ID取得
@@ -924,147 +1165,4 @@ function updateProgress2Row {
 		-Group $local:toastGroup
 }
 
-#----------------------------------------------------------------------
-#統計取得
-#----------------------------------------------------------------------
-function goAnal {
-	[OutputType([System.Void])]
-	Param (
-		[Parameter(Mandatory = $true, Position = 0)]
-		[Alias('Event')]
-		[String]$local:event,
-
-		[Parameter(Mandatory = $false, Position = 1)]
-		[Alias('Type')]
-		[String]$local:type,
-
-		[Parameter(Mandatory = $false, Position = 2)]
-		[Alias('ID')]
-		[String]$local:id
-	)
-
-	if (!($local:type)) { $local:type = '' }
-	if (!($local:id)) { $local:id = '' }
-	$local:epochTime = [decimal]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() * 1000)
-
-	$progressPreference = 'silentlyContinue'
-	$local:statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
-	try {
-		$null = Invoke-WebRequest `
-			-Uri "$($local:statisticsBase)$($local:event).svg" `
-			-TimeoutSec $script:timeoutSec
-	} catch { Write-Debug 'Failed to collect statistics' }
-	finally { $progressPreference = 'Continue' }
-
-	if ($local:event -eq 'search') { return }
-	$local:gaURL = 'https://www.google-analytics.com/mp/collect'
-	$local:gaKey = 'api_secret=UZ3InfgkTgGiR4FU-in9sw'
-	$local:gaID = 'measurement_id=G-NMSF9L531G'
-	$local:gaHeaders = New-Object 'System.Collections.Generic.Dictionary[[String],[String]]'
-	$local:gaHeaders.Add('HOST', 'www.google-analytics.com')
-	$local:gaHeaders.Add('Content-Type', 'application/json')
-	$local:gaBody = "{ `"client_id`" : `"$script:guid`", "
-	$local:gaBody += "`"timestamp_micros`" : `"$local:epochTime`", "
-	$local:gaBody += "`"non_personalized_ads`" : false, "
-	$local:gaBody += "`"user_properties`":{ "
-	foreach ($item in $script:clientEnv) {
-		$local:gaBody += "`"$($item.Key)`" : {`"value`" : `"$($item.Value)`"}, "
-	}
-	$local:gaBody += "`"DisableValidation`" : {`"value`" : `"$($script:disableValidation)`"}, "
-	$local:gaBody += "`"SortwareDecode`" : {`"value`" : `"$($script:forceSoftwareDecodeFlag)`"}, "
-	$local:gaBody += "`"DecodeOption`" : {`"value`" : `"$($script:ffmpegDecodeOption)`"}, "
-	$local:gaBody = $local:gaBody.Trim(',', ' ')		#delete last comma
-	$local:gaBody += "}, `"events`" : [ { "
-	$local:gaBody += "`"name`" : `"$local:event`", "
-	$local:gaBody += "`"params`" : {"
-	$local:gaBody += "`"Type`" : `"$local:type`", "
-	$local:gaBody += "`"ID`" : `"$local:id`", "
-	$local:gaBody += "`"Target`" : `"$local:type/$local:id`", "
-	foreach ($item in $script:clientEnv) {
-		$local:gaBody += "`"$($item.Key)`" : `"$($item.Value)`", "
-	}
-	$local:gaBody += "`"DisableValidation`" : `"$($script:disableValidation)`", "
-	$local:gaBody += "`"SortwareDecode`" : `"$($script:forceSoftwareDecodeFlag)`", "
-	$local:gaBody += "`"DecodeOption`" : `"$($script:ffmpegDecodeOption)`", "
-	$local:gaBody = $local:gaBody.Trim(',', ' ')		#delete last comma
-	$local:gaBody += '} } ] }'
-
-	$progressPreference = 'silentlyContinue'
-	try {
-		$null = Invoke-RestMethod `
-			-Uri "$($local:gaURL)?$($local:gaKey)&$($local:gaID)" `
-			-Method 'POST' -Headers $local:gaHeaders `
-			-Body $local:gaBody `
-			-TimeoutSec $script:timeoutSec
-	} catch { Write-Debug 'Failed to collect statistics'
-	} finally { $progressPreference = 'Continue' }
-
-}
-
-#----------------------------------------------------------------------
-#UNIX時間をDateTime型に変換
-#----------------------------------------------------------------------
-function unixTimeToDateTime($unixTime) {
-	$origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
-	$origin.AddSeconds($unixTime)
-}
-
-#----------------------------------------------------------------------
-#DateTime型をUNIX時間に変換
-#----------------------------------------------------------------------
-function dateTimeToUnixTime($dateTime) {
-	$origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
-	[Int]($dateTime - $origin).TotalSeconds
-}
-
-#----------------------------------------------------------------------
-#Zipファイルを解凍
-#----------------------------------------------------------------------
-function unZip {
-	[CmdletBinding()]
-	[OutputType([System.Void])]
-	param(
-		[Parameter(Mandatory = $true, Position = 0)]
-		[Alias('File')]
-		[String]$zipArchive,
-		[Parameter(Mandatory = $true, Position = 1)]
-		[Alias('OutPath')]
-		[String]$path
-	)
-	[System.IO.Compression.ZipFile]::ExtractToDirectory($zipArchive, $path)
-}
-
-#----------------------------------------------------------------------
-#ディレクトリの上書き
-#----------------------------------------------------------------------
-function moveItem() {
-	[CmdletBinding()]
-	[OutputType([System.Void])]
-	param(
-		[Parameter(Mandatory = $true, Position = 0)]
-		[Alias('Path')]
-		[String]$src,
-		[Parameter(Mandatory = $true, Position = 1)]
-		[Alias('Destination')]
-		[String]$dist
-	)
-
-	if ((Test-Path $dist) -And (Test-Path -PathType Container $src)) {
-		# ディレクトリ上書き(移動先に存在 かつ ディレクトリ)は再帰的に moveItem 呼び出し
-		Get-ChildItem `
-			-Path $src `
-		| ForEach-Object { moveItem $_.FullName $($dist + '\' + $_.Name) }
-		# 移動し終わったディレクトリを削除
-		Remove-Item `
-			-Path $src `
-			-Recurse `
-			-Force
-	} else {
-		# 移動先に対象なし または ファイルの Move-Item に -Forece つけて実行
-		Write-Output "$src  ->  $dist"
-		Move-Item `
-			-Path $src `
-			-Destination $dist `
-			-Force
-	}
-}
+#endregion トースト通知

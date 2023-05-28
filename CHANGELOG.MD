@@ -1,5 +1,21 @@
 ﻿# Change Log
 
+## [2.7.6](https://github.com/dongaba/TVerRec/releases/tag/v2.7.6)
+
+### 2.7.6 Added
+
+- Windows 環境向けに GUI 画面を追加(予定)
+
+### 2.7.6 Changed
+
+- 移動先フォルダを複数指定した際に区切り文字前後にスペースがあっても動作するように
+- 文言の微調整
+
+### 2.7.6 Fixed
+
+- 個別ダウンロードで TVer の番組 URL 以外を入力した際に無限ループになっていた問題を修正
+- ffmpeg と youtube-dl のバー助演チェックに失敗する場合がある問題を修正
+
 ## [2.7.5](https://github.com/dongaba/TVerRec/releases/tag/v2.7.5)
 
 ### 2.7.5 Added

@@ -90,12 +90,14 @@ if ($IsWindows) { $local:ffmpegPath = $(Join-Path $local:ffmpegDir 'ffmpeg.exe')
 else { $local:ffmpegPath = $(Join-Path $local:ffmpegDir 'ffmpeg') }
 
 #ffmpegのバージョン取得
-if (Test-Path $local:ffmpegPath -PathType Leaf) {
-	# get version of current ffmpeg.exe
-	$local:ffmpegFileVersion = (& $local:ffmpegPath -version)
-	$null = $local:ffmpegFileVersion[0] -match 'ffmpeg version (\d+\.\d+(\.\d+)?).*'
-	$local:ffmpegCurrentVersion = $matches[1]
-} else { $local:ffmpegCurrentVersion = '' }
+try {
+	if (Test-Path $local:ffmpegPath -PathType Leaf) {
+		# get version of current ffmpeg.exe
+		$local:ffmpegFileVersion = (& $local:ffmpegPath -version)
+		$null = $local:ffmpegFileVersion[0] -match 'ffmpeg version (\d+\.\d+(\.\d+)?).*'
+		$local:ffmpegCurrentVersion = $matches[1]
+	} else { $local:ffmpegCurrentVersion = '' }
+} catch { $local:ffmpegCurrentVersion = '' }
 
 #ffmpegの最新バージョン取得
 $local:latestVersion = ''

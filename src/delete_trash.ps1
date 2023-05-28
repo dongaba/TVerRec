@@ -1,7 +1,7 @@
 ###################################################################################
 #  TVerRec : TVerダウンローダ
 #
-#		ダウンロード対象外番組削除処理スクリプト
+#		不要ファイル削除処理スクリプト
 #
 #	Copyright (c) 2022 dongaba
 #
@@ -42,11 +42,9 @@ try {
 #----------------------------------------------------------------------
 #設定ファイル読み込み
 try {
-	$script:sysFile = $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
-	. $script:sysFile
+	. $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
 	if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
-		$script:confFile = $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
-		. $script:confFile
+		. $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
 	}
 } catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
 
@@ -154,7 +152,7 @@ if ($script:saveBaseDir -ne '') {
 	foreach ($local:saveDir in $script:saveBaseDirArray) {
 		#進捗表示
 		updateProgressToast `
-			-Title $local:saveDir `
+			-Title $local:saveDir.Trim() `
 			-Rate $( 4 / 4 ) `
 			-LeftText '' `
 			-RightText '' `
@@ -285,3 +283,6 @@ updateProgressToast `
 	-Tag $script:appName `
 	-Group 'Delete'
 
+Write-Output '---------------------------------------------------------------------------'
+Write-Output '不要ファイル削除処理を終了しました。                                       '
+Write-Output '---------------------------------------------------------------------------'

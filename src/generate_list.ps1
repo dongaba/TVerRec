@@ -42,11 +42,9 @@ try {
 #----------------------------------------------------------------------
 #設定ファイル読み込み
 try {
-	$script:sysFile = $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
-	. $script:sysFile
+	. $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
 	if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
-		$script:confFile = $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
-		. $script:confFile
+		. $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
 	}
 } catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
 
@@ -103,9 +101,9 @@ getToken
 
 #キーワードの番号
 $local:keywordNum = 0
-if ($script:keywordNames -is [Array]) {
+if ($local:keywordNames -is [Array]) {
 	#トータルキーワード数
-	$local:keywordTotal = $script:keywordNames.Length
+	$local:keywordTotal = $local:keywordNames.Length
 } else { $local:keywordTotal = 1 }
 
 #進捗表示
@@ -114,9 +112,10 @@ showProgressToast `
 	-Text2 'キーワードから番組を抽出しダウンロード' `
 	-WorkDetail '' `
 	-Tag $script:appName `
-	-Group 'ListGen' `
+
 	-Duration 'long' `
-	-Silent $false
+	-Silent $false `
+	-Group 'ListGen'
 
 #======================================================================
 #個々のジャンルページチェックここから
@@ -177,12 +176,12 @@ foreach ($local:keywordName in $local:keywordNames) {
 		else { $local:searchResultCount = $local:searchResultCount + 1; continue }
 	}
 
-	#ダウンロード対象のトータル番組数
+	#処理対象のトータル番組数
 	if ($null -eq $local:videoLinks) { $local:videoTotal = 0 }
 	else { $local:videoTotal = $local:videoLinks.Length }
-	Write-Output "　ダウンロード対象$($local:videoTotal)本 処理済$($local:searchResultCount)本"
+	Write-Output "　処理対象$($local:videoTotal)本 処理済$($local:searchResultCount)本"
 
-	#ダウンロード対象番組がない場合は次のキーワード
+	#処理対象番組がない場合は次のキーワード
 	if ( $local:videoTotal -eq 0 ) { continue }
 
 	#処理時間の推計
@@ -372,10 +371,6 @@ updateProgressToast `
 	-RightText '完了' `
 	-Tag $script:appName `
 	-Group 'ListGen'
-
-#youtube-dlのプロセスが終わるまで待機
-Write-Output 'ダウンロードの終了を待機しています'
-waitTillYtdlProcessIsZero
 
 Write-Output '---------------------------------------------------------------------------'
 Write-Output '処理を終了しました。                                                       '

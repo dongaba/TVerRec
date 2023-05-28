@@ -69,8 +69,10 @@ if ($IsWindows) { $local:ytdlPath = $(Join-Path $local:ytdlDir 'youtube-dl.exe')
 else { $local:ytdlPath = $(Join-Path $local:ytdlDir 'youtube-dl') }
 
 #ytdl-patchedのバージョン取得
-if (Test-Path $local:ytdlPath -PathType Leaf) { $local:ytdlCurrentVersion = (& $local:ytdlPath --version) }
-else { $local:ytdlCurrentVersion = '' }
+try {
+	if (Test-Path $local:ytdlPath -PathType Leaf) { $local:ytdlCurrentVersion = (& $local:ytdlPath --version) }
+	else { $local:ytdlCurrentVersion = '' }
+} catch { $local:ytdlCurrentVersion = '' }
 
 #ytdl-patchedの最新バージョン取得
 try {

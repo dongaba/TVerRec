@@ -42,11 +42,9 @@ try {
 #----------------------------------------------------------------------
 #設定ファイル読み込み
 try {
-	$script:sysFile = $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
-	. $script:sysFile
+	. $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
 	if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
-		$script:confFile = $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
-		. $script:confFile
+		. $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
 	}
 } catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
 
@@ -99,15 +97,14 @@ checkLatestYtdl
 #ffmpegの最新化チェック
 checkLatestFfmpeg
 
-#設定ファイル再読み込み
+#----------------------------------------------------------------------
+#設定ファイル読み込み
 try {
-	$script:sysFile = $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
-	. $script:sysFile
+	. $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
 	if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
-		$script:confFile = $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
-		. $script:confFile
+		. $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
 	}
-} catch { Write-Error '設定ファイルの再読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
 
 #設定で指定したファイル・ディレクトリの存在チェック
 checkRequiredFile
@@ -241,7 +238,7 @@ Write-Output ''
 waitTillYtdlProcessIsZero
 
 Write-Output '---------------------------------------------------------------------------'
-Write-Output '処理を終了しました。                                                       '
+Write-Output 'リストダウンロード処理を終了しました。                                     '
 Write-Output '---------------------------------------------------------------------------'
 Write-Output '必要に応じてリストファイルを編集してダウンロード不要な番組を削除してください'
 Write-Output "　リストファイルパス: $($script:listFilePath)"

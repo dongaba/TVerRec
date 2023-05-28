@@ -37,7 +37,7 @@ Set-StrictMode -Version Latest
 #----------------------------------------------------------------------
 
 #ダウンロード先のフルパス(絶対パス指定)
-#　ダウンロード先とは、検証が終わった動画ファイルが配置される場所です。
+#　ダウンロード先とは、ダウンロードが終わった動画ファイルが配置される場所です。
 #　規定の設定ではWドライブが設定されています。(通常のPCではWドライブはありませんので変更が必要です)
 #　例えば C:\Users\yamada-taro\Video にダウンロードするのであれば $script:downloadBaseDir = 'C:\Users\yamada-taro\Video' と設定します。
 #　MacOSやLinuxでは $script:downloadBaseDir = '/mnt/Work' や $script:downloadBaseDir = '/Volumes/Work' などのように設定します。
@@ -68,7 +68,7 @@ $script:saveBaseDir = ''
 #同時ダウンロードファイル数
 $script:parallelDownloadFileNum = 5
 
-#1本の番組あたりの同時ダウンロード数
+#番組あたりの同時ダウンロード数
 $script:parallelDownloadNumPerFile = 10
 
 #並列処理の同時スレッド数
@@ -77,7 +77,10 @@ $script:parallelDownloadNumPerFile = 10
 #　あまり大きな数を指定すると逆に処理時間が長くなる可能性があります。
 $script:multithreadNum = 100
 
-#ダウンロード時に放送局毎のディレクトリ配下にダウンロードファイルを保存
+#HTTPアクセスのタイムアウト(sec)
+$script:timeoutSec = 60
+
+#放送局毎のディレクトリ配下にダウンロードファイルを保存
 #　「$false」の際の移動先は以下
 #　  ダウンロード先/
 #　    └番組シリーズ名 番組シーズン名/
@@ -123,10 +126,6 @@ $script:disableValidation = $false
 #youtube-dlとffmpegのウィンドウの表示方法(Windowsのみ) Normal/Maximized/Minimized/Hidden
 $script:windowShowStyle = 'Minimized'
 
-
-#----------------------------------------------------------------------
-#	以下は変更を推奨しない設定。変更の際は自己責任で。
-#----------------------------------------------------------------------
 #ffmpegのデコードオプション
 $script:ffmpegDecodeOption = ''
 
@@ -153,6 +152,9 @@ $script:ffmpegDecodeOption = ''
 #for Raspberry Pi 3/4 32bit
 #$script:ffmpegDecodeOption = '-c:v h264_omx'
 
+#----------------------------------------------------------------------
+#	以下は変更を推奨しない設定。変更の際は自己責任で。
+#----------------------------------------------------------------------
 #アプリケーション名・バージョン番号
 $script:appName = 'TVerRec'
 $script:appVersion = Get-Content '../VERSION'
@@ -163,9 +165,6 @@ $DebugPreference = 'SilentlyContinue'						#デバッグメッセージなし
 
 #ファイルシステムが許容するファイル名の最大長(byte)
 $script:fileNameLengthMax = 255
-
-#Httpアクセスのタイムアウト(sec)
-$script:timeoutSec = 60
 
 #各種ディレクトリのパス
 $script:binDir = $(Join-Path $scriptRoot '../bin')
@@ -178,6 +177,9 @@ $script:containerDir = $(Join-Path $scriptRoot '../container-data')
 
 #トースト通知用画像のパス
 $script:toastAppLogo = Convert-Path (Join-Path $script:imgDir 'TVerRec-Toast.png')
+
+#ウィンドウアイコン用画像のパス
+$script:iconPath = Convert-Path (Join-Path $script:imgDir 'TVerRec-Icon.png')
 
 #ダウンロード対象キーワードのパス
 $script:keywordFileSamplePath = $(Join-Path $script:confDir 'keyword.sample.conf')

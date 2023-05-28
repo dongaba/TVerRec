@@ -42,11 +42,9 @@ try {
 #----------------------------------------------------------------------
 #設定ファイル読み込み
 try {
-	$script:sysFile = $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
-	. $script:sysFile
+	. $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
 	if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
-		$script:confFile = $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
-		. $script:confFile
+		. $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
 	}
 } catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
 
@@ -85,7 +83,7 @@ if (!(Test-Path $script:downloadWorkDir -PathType Container))
 if (!(Test-Path $script:downloadBaseDir -PathType Container))
 { Write-Error '番組ダウンロード先ディレクトリにアクセスできません。終了します。' ; exit 1 }
 foreach ($local:saveDir in $script:saveBaseDirArray) {
-	if (!(Test-Path $local:saveDir -PathType Container))
+	if (!(Test-Path $local:saveDir.Trim() -PathType Container))
 	{ Write-Error '番組移動先ディレクトリが存在しません。終了します。' ; exit 1 }
 }
 
@@ -128,7 +126,7 @@ $local:moveToPaths = $null
 
 foreach ($local:saveDir in $script:saveBaseDirArray) {
 	$local:moveToPaths += Get-ChildItem `
-		-Path $local:saveDir `
+		-Path $local:saveDir.Trim() `
 		-Recurse `
 	| Where-Object { $_.PSIsContainer } `
 	| Sort-Object
@@ -245,3 +243,7 @@ updateProgressToast `
 	-RightText '完了' `
 	-Tag $script:appName `
 	-Group 'Move'
+
+Write-Output '---------------------------------------------------------------------------'
+Write-Output '番組移動処理を終了しました。                                               '
+Write-Output '---------------------------------------------------------------------------'

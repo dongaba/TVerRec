@@ -71,7 +71,7 @@ function moveItem() {
 			-Force
 	} else {
 		# 移動先に対象なし または ファイルの Move-Item に -Forece つけて実行
-		Write-Output "$src  ->  $dist"
+		Write-Output "$src  →  $dist"
 		Move-Item `
 			-Path $src `
 			-Destination $dist `

@@ -42,11 +42,9 @@ try {
 #----------------------------------------------------------------------
 #設定ファイル読み込み
 try {
-	$script:sysFile = $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
-	. $script:sysFile
+	. $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
 	if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
-		$script:confFile = $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
-		. $script:confFile
+		. $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
 	}
 } catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
 
@@ -100,15 +98,14 @@ checkLatestYtdl
 checkLatestFfmpeg
 
 
-#設定ファイル再読み込み
+#----------------------------------------------------------------------
+#設定ファイル読み込み
 try {
-	$script:sysFile = $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
-	. $script:sysFile
+	. $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
 	if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
-		$script:confFile = $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
-		. $script:confFile
+		. $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
 	}
-} catch { Write-Error '設定ファイルの再読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
 
 #設定で指定したファイル・ディレクトリの存在チェック
 checkRequiredFile
@@ -119,9 +116,11 @@ $local:keywordNames = loadKeywordList
 $script:ignoreRegExTitles = getRegExIgnoreList
 getToken
 
-$local:keywordNum = 0						#キーワードの番号
+#キーワードの番号
+$local:keywordNum = 0
 if ($script:keywordNames -is [Array]) {
-	$local:keywordTotal = $script:keywordNames.Length	#トータルキーワード数
+	#トータルキーワード数
+	$local:keywordTotal = $script:keywordNames.Length
 } else { $local:keywordTotal = 1 }
 
 #進捗表示
@@ -182,7 +181,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 	$local:videoNum = 0
 	if ($null -eq $local:videoLinks) { $local:videoTotal = 0 }
 	else { $local:videoTotal = $local:videoLinks.Length }
-	Write-Output "　ダウンロード対象$($local:videoTotal)本 処理済$($local:searchResultCount)本"
+	Write-Output "　処理対象$($local:videoTotal)本 処理済$($local:searchResultCount)本"
 
 	#処理時間の推計
 	$local:secElapsed = (Get-Date) - $local:totalStartTime
@@ -270,5 +269,5 @@ Write-Output 'ダウンロードの終了を待機しています'
 waitTillYtdlProcessIsZero
 
 Write-Output '---------------------------------------------------------------------------'
-Write-Output '処理を終了しました。                                                       '
+Write-Output '一括ダウンロード処理を終了しました。                                       '
 Write-Output '---------------------------------------------------------------------------'

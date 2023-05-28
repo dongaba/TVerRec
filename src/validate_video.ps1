@@ -1,7 +1,7 @@
 ###################################################################################
 #  TVerRec : TVerダウンローダ
 #
-#		番組チェック処理スクリプト
+#		番組整合性チェック処理スクリプト
 #
 #	Copyright (c) 2022 dongaba
 #
@@ -42,11 +42,9 @@ try {
 #----------------------------------------------------------------------
 #設定ファイル読み込み
 try {
-	$script:sysFile = $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
-	. $script:sysFile
+	. $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
 	if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
-		$script:confFile = $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
-		. $script:confFile
+		. $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
 	}
 } catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
 
@@ -79,17 +77,17 @@ try {
 #ffmpegの最新化チェック
 checkLatestFfmpeg
 
-#設定ファイル再読み込み
+#----------------------------------------------------------------------
+#設定ファイル読み込み
 try {
-	$script:sysFile = $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
-	. $script:sysFile
+	. $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
 	if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
-		$script:confFile = $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
-		. $script:confFile
+		. $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
 	}
-} catch { Write-Error '設定ファイルの再読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
 
-checkRequiredFile					#設定で指定したファイル・ディレクトリの存在チェック
+#設定で指定したファイル・ディレクトリの存在チェック
+checkRequiredFile
 
 #======================================================================
 #ダウンロード履歴ファイルのクリーンアップ
@@ -107,8 +105,8 @@ showProgressToast `
 	-Duration 'long' `
 	-Silent $false
 
-#処理
-cleanDB							#ダウンロード履歴の破損レコード削除
+#ダウンロード履歴の破損レコード削除
+cleanDB
 Write-Output ''
 
 Write-Output '----------------------------------------------------------------------'
@@ -125,8 +123,8 @@ showProgressToast `
 	-Duration 'long' `
 	-Silent $false
 
-#処理
-purgeDB -RetentionPeriod 30				#30日以上前に処理したものはダウンロード履歴から削除
+#30日以上前に処理したものはダウンロード履歴から削除
+purgeDB -RetentionPeriod 30
 Write-Output ''
 
 Write-Output '----------------------------------------------------------------------'
@@ -143,8 +141,8 @@ showProgressToast `
 	-Duration 'long' `
 	-Silent $false
 
-#処理
-uniqueDB							#ダウンロード履歴の重複削除
+#ダウンロード履歴の重複削除
+uniqueDB
 Write-Output ''
 
 if ($script:disableValidation -eq $true) {
@@ -242,9 +240,10 @@ if ($null -eq $local:videoHists) {
 		else { Write-Error '番組ダウンロード先ディレクトリにアクセスできません。終了します。' ; exit 1 }
 
 		Write-Output "$($local:validateNum)/$($local:validateTotal) - $($local:videoFileRelPath)"
+		#番組の整合性チェック
 		checkVideo `
 			-DecodeOption $local:decodeOption `
-			-Path $local:videoFileRelPath		#番組の整合性チェック
+			-Path $local:videoFileRelPath
 
 		Start-Sleep -Seconds 1
 	}
@@ -297,3 +296,7 @@ updateProgressToast `
 	-RightText '完了' `
 	-Tag $script:appName `
 	-Group 'Validate'
+
+Write-Output '---------------------------------------------------------------------------'
+Write-Output '番組整合性チェック処理を終了しました。                                           '
+Write-Output '---------------------------------------------------------------------------'
