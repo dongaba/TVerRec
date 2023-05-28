@@ -1,6 +1,6 @@
 # :tv:**TVerRec**:tv: TVer 一括ダウンロード・保存
 
-![Logo](https://raw.githubusercontent.com/dongaba/TVerRec/master/img/TVerRec-Logo-Low.png)
+![Logo](https://raw.githubusercontent.com/dongaba/TVerRec/master/img/TVerRec-Logo.png)
 
 [![GitHub release](https://img.shields.io/github/v/release/dongaba/TVerRec?color=blue)](https://github.com/dongaba/TVerRec/releases)
 [![License](https://img.shields.io/github/license/dongaba/TVerRec?color=blue)](https://opensource.org/licenses/MIT)
@@ -56,6 +56,7 @@ TVerRec は、テレビ番組配信サイト TVer(ティーバー<https://tver.j
 10. Windows 環境ではトースト通知によりダウンロードの進捗状況などを通知します。
 11. **日本国外からも VPN 不要**で利用することができます。
 12. TVerRec の安定版が更新されると自動アップデートされます。
+13. Windows 環境のみ GUI を提供予定です。
 
 ## 基本的な使い方
 
@@ -131,8 +132,10 @@ TVerRec の使い方・実行方法については[Wiki こちらのページ](h
     │  └─ Dockerfile.ubuntu ................ Ubuntu LinuxをベースにしたDockerイメージ用Dockerfileのサンプル
     │
     ├─ img/ .............................. 画像
+    │  ├─ TVerRec-Logo-Social.png .......... アプリロゴ(GitHub Social Preview用)
+    │  ├─ TVerRec-Icon.png ................. アイコン用アプリロゴ
     │  ├─ TVerRec-Logo.png ................. アプリロゴ
-    │  ├─ TVerRec-Logo-Low.png ............. アプリロゴ(低いやつ)
+    │  ├─ TVerRec-Logo-Small.png ........... アプリロゴ(小さいやつ)
     │  ├─ TVerRec-Toast.png ................ トースト通知用アプリロゴ
     │  └─ TVerRec-Toast-Large.png .......... トースト通知用アプリロゴ(デカいやつ)
     │
@@ -145,6 +148,10 @@ TVerRec の使い方・実行方法については[Wiki こちらのページ](h
     │  ├─ list.csv ......................... ダウンロードリスト(存在しない場合は起動時に作成されます)
     │  └─ list.sample.csv .................. 空のダウンロードリスト
     │
+    ├─ resources/ ........................ GUI設定
+    │  ├─ TVerRecMain.xaml ................ TVerRecのメイン画面のXAML
+    │  └─ TVerRecSetting.xaml ............. TVerRecの設定用のXAML
+    │
     ├─ src/ .............................. 各種ソース
     │  ├─ functions/ ....................... 各種共通関数
     │  │  ├─ common_functions.ps1 ............ 共通関数定義
@@ -153,6 +160,9 @@ TVerRec の使い方・実行方法については[Wiki こちらのページ](h
     │  │  ├─ update_tverrec.ps1 .............. TVerRec自身の自動更新ツール
     │  │  ├─ update_yt-dlp.ps1 ............... yt-dlp自動更新ツール
     │  │  └─ update_ytdl-patched.ps1 ......... ytdl-patched自動更新ツール
+    │  ├─ gui/ ............................. GUI設定
+    │  │  ├─ tverrec_gui.ps1 ................. GUI版のTVerRecを起動するツール
+    │  │  └─ tverrec_setting.ps1 ............. TVerRecの設定用画面を起動するツール
     │  ├─ delete_trash.ps1 ................. ダウンロード対象外番組削除ツール
     │  ├─ generate_list.ps1 ................ ダウンロードリスト作成ツール
     │  ├─ move_vide.ps1 .................... 番組を移動先に移動するツール
@@ -179,6 +189,7 @@ TVerRec の使い方・実行方法については[Wiki こちらのページ](h
     │  ├─ d.move_video.cmd ................. 番組を移動先に移動するCMD(もし必要であれば)
     │  ├─ start_tverrec.cmd ................ キーワードを元に無限一括ダウンロード起動CMD
     │  ├─ stop_tverrec.cmd ................. 無限一括ダウンロード終了CMD
+    │  ├─ TVerRec.cmd ...................... GUI版のTVerRecを起動するCMD
     │  ├─ x.generate_list.cmd .............. ダウンロードリストを生成するCMD
     │  ├─ y.tverrec_list.cmd ............... ダウンロードリストを元にダンロードするCMD
     │  └─ z.download_single_video.cmd ...... 番組を1本ずつダウンロードするCMD
@@ -197,7 +208,7 @@ TVerRec の使い方・実行方法については[Wiki こちらのページ](h
 
 - 免責
   - このソフトウェアを使用して発生したいかなる損害にも、作者は責任を負わないものとします。
-    各自の自己責任で使用してください。
+    ご利用の際は各自の自己責任で使用してください。
 
 ## ライセンス
 
