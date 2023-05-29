@@ -66,6 +66,13 @@
 		},
 		{
 			"type": "PowerShell",
+			"script": "${workspaceFolder}/src/functions/update_tverrec.ps1",
+			"request": "launch",
+			"name": "Update TVerRec",
+			"cwd": "${workspaceFolder}/src"
+		},
+		{
+			"type": "PowerShell",
 			"script": "${workspaceFolder}/src/delete_trash.ps1",
 			"request": "launch",
 			"name": "Delete",

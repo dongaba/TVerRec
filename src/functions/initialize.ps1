@@ -67,28 +67,39 @@ try {
 } catch { Write-Error '開発用設定ファイルの読み込みに失敗しました' ; exit 1 }
 
 #----------------------------------------------------------------------
-#バナー表示
-[Console]::ForegroundColor = 'Cyan'
-$bannerVersion = ' ' * $(56 - $script:appVersion.Length) + "Version. $script:appVersion"
-Write-Output ''
-Write-Output '==========================================================================='
-Write-Output '                                                                           '
-Write-Output '        ████████ ██    ██ ███████ ██████  ██████  ███████  ██████          '
-Write-Output '           ██    ██    ██ ██      ██   ██ ██   ██ ██      ██               '
-Write-Output '           ██    ██    ██ █████   ██████  ██████  █████   ██               '
-Write-Output '           ██     ██  ██  ██      ██   ██ ██   ██ ██      ██               '
-Write-Output '           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          '
-Write-Output '                                                                           '
-Write-Output "$bannerVersion"
-Write-Output '                                                                           '
-Write-Output '==========================================================================='
-Write-Output ''
-[Console]::ResetColor()
+#GUI起動を判定
+Write-Output $script:myInvocation.ScriptName
+$script:myInvocation.ScriptName.Contains('gui')
+if ( $script:myInvocation.ScriptName.Contains('gui')) {
+} else {
+	#----------------------------------------------------------------------
+	#バナー表示
+	[Console]::ForegroundColor = 'Cyan'
+	$bannerVersion = ' ' * $(56 - $script:appVersion.Length) + "Version. $script:appVersion"
+	Write-Output ''
+	Write-Output '==========================================================================='
+	Write-Output '                                                                           '
+	Write-Output '        ████████ ██    ██ ███████ ██████  ██████  ███████  ██████          '
+	Write-Output '           ██    ██    ██ ██      ██   ██ ██   ██ ██      ██               '
+	Write-Output '           ██    ██    ██ █████   ██████  ██████  █████   ██               '
+	Write-Output '           ██     ██  ██  ██      ██   ██ ██   ██ ██      ██               '
+	Write-Output '           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          '
+	Write-Output '                                                                           '
+	Write-Output "$bannerVersion"
+	Write-Output '                                                                           '
+	Write-Output '==========================================================================='
+	Write-Output ''
+	[Console]::ResetColor()
 
-#----------------------------------------------------------------------
+	#----------------------------------------------------------------------
+	#最新化チェック
+
+	#youtube-dlの最新化チェック
+	checkLatestYtdl
+	#ffmpegの最新化チェック
+	checkLatestFfmpeg
+}
+
 #TVerRecの最新化チェック
 checkLatestTVerRec
-#youtube-dlの最新化チェック
-checkLatestYtdl
-#ffmpegの最新化チェック
-checkLatestFfmpeg
+checkLatestTVerRec

@@ -48,8 +48,8 @@ function unZip {
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Set-StrictMode -Version Latest
 try {
-	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$local:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+	if ($script:myInvocation.MyCommand.CommandType -eq 'ExternalScript') {
+		$local:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition
 		$local:scriptRoot = Split-Path -Parent -Path $local:scriptRoot
 	} else { $local:scriptRoot = Convert-Path .. }
 	Set-Location $local:scriptRoot

@@ -96,6 +96,12 @@ function checkLatestTVerRec {
 			}
 		}
 
+		#最新のアップデータを取得
+		$local:latestUpdater = 'https://raw.githubusercontent.com/dongaba/TVerRec/master/src/functions/update_tverrec.ps1'
+		Invoke-WebRequest `
+			-Uri $local:latestUpdater `
+			-OutFile $(Join-Path $script:scriptRoot './functions//update_tverrec.ps1')
+
 		#アップデート実行
 		Write-Warning '10秒後にTVerRecをアップデートします。中止したい場合は Ctrl+C で中断してください'
 		foreach ($i in (1..10)) {

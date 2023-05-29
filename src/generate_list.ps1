@@ -32,8 +32,8 @@ Set-StrictMode -Version Latest
 #----------------------------------------------------------------------
 #初期化
 try {
-	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$script:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+	if ($script:myInvocation.MyCommand.CommandType -eq 'ExternalScript') {
+		$script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition
 	} else { $script:scriptRoot = Convert-Path . }
 	Set-Location $script:scriptRoot
 	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '../conf'))
