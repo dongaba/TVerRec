@@ -68,9 +68,13 @@ try {
 
 #----------------------------------------------------------------------
 #GUI起動を判定
-Write-Output $script:myInvocation.ScriptName
-$script:myInvocation.ScriptName.Contains('gui')
 if ( $script:myInvocation.ScriptName.Contains('gui')) {
+	#----------------------------------------------------------------------
+	#最新化チェック
+
+	#TVerRecの最新化チェック
+	checkLatestTVerRec
+	if ($? -eq $false) { exit 1 }
 } else {
 	#----------------------------------------------------------------------
 	#バナー表示
@@ -98,8 +102,7 @@ if ( $script:myInvocation.ScriptName.Contains('gui')) {
 	checkLatestYtdl
 	#ffmpegの最新化チェック
 	checkLatestFfmpeg
+	#TVerRecの最新化チェック
+	checkLatestTVerRec
+	if ($? -eq $false) { exit 1 }
 }
-
-#TVerRecの最新化チェック
-checkLatestTVerRec
-checkLatestTVerRec

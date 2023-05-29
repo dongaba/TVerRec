@@ -46,6 +46,7 @@ try {
 } catch { Write-Error 'ディレクトリ設定に失敗しました'; exit 1 }
 try {
 	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
+	if ($? -eq $false) { exit 1 }
 } catch { Write-Error '関数の読み込みに失敗しました' ; exit 1 }
 
 #endregion 環境設定
