@@ -112,7 +112,6 @@ showProgressToast `
 	-Text2 'キーワードから番組を抽出しダウンロード' `
 	-WorkDetail '' `
 	-Tag $script:appName `
-
 	-Duration 'long' `
 	-Silent $false `
 	-Group 'ListGen'
