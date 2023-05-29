@@ -26,6 +26,8 @@
 #
 ###################################################################################
 
+try{ $local:uiMode = [string]$args[0] } catch { $local:uiMode = '' }
+
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -42,11 +44,9 @@ try {
 #----------------------------------------------------------------------
 #設定ファイル読み込み
 try {
-	$script:sysFile = $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
-	. $script:sysFile
+	. $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
 	if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
-		$script:confFile = $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
-		. $script:confFile
+		. $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
 	}
 } catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
 
@@ -99,20 +99,21 @@ checkLatestYtdl
 #ffmpegの最新化チェック
 checkLatestFfmpeg
 
-#設定ファイル再読み込み
+#----------------------------------------------------------------------
+#設定ファイル読み込み
 try {
-	$script:sysFile = $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
-	. $script:sysFile
+	. $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
 	if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
-		$script:confFile = $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
-		. $script:confFile
+		. $(Convert-Path $(Join-Path $script:confDir 'user_setting.ps1'))
 	}
-} catch { Write-Error '設定ファイルの再読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
 
 #設定で指定したファイル・ディレクトリの存在チェック
 checkRequiredFile
 
-#処理
+#GUI起動を判定
+if ($local:uiMode -ne 'GUI') { $local:uiMode = 'CUI' }
+
 $local:keywordName = '個別指定'
 #ダウンロード対象外番組の読み込み
 $script:ignoreRegExTitles = getRegExIgnoreList
@@ -144,26 +145,35 @@ while ($true) {
 	} catch { Write-Warning 'ダウンロード履歴を読み込めなかったのでスキップしました'; continue
 	} finally { $null = fileUnlock $script:historyLockFilePath }
 
-	$local:videoPageURL = $(Read-Host '番組URLを入力してください。何も入力しないで Enter を押すと終了します。').Trim()
+	if ($local:uiMode -eq 'CUI') {
+		$local:videoPageURL = $(Read-Host '番組URLを入力してください。何も入力しないで Enter を押すと終了します。').Trim()
+	} else {
+		#アセンブリの読み込み
+		[void][System.Reflection.Assembly]::Load('Microsoft.VisualBasic, Version=8.0.0.0, Culture=Neutral, PublicKeyToken=b03f5f7f11d50a3a')
+
+		#インプットボックスの表示
+		$local:videoPageURL = [String][Microsoft.VisualBasic.Interaction]::InputBox("番組URLを入力してください。`n何も入力しないで OK を押すと終了します。", 'TVerRec個別ダウンロード').Trim()
+		Write-Output $local:videoPageURL
+	}
+
 	#正しいURLが入力されるまでループ
 	if ($videoPageURL -ne '') {
-		while ($local:videoPageURL -notmatch '^https://tver.jp/(/?.*)') {
-			Write-Output '    URLが正しくありません。もう一度入力してください。'
-			$local:videoPageURL = (Read-Host '番組URLを入力してください。何も入力しないで Enter を押すと終了します。').Trim()
-		}
-		$local:videoLink = $local:videoPageURL.Replace('https://tver.jp', '').Trim()
-		$local:videoPageURL = 'https://tver.jp' + $local:videoLink
-		Write-Output $local:videoPageURL
+		if ($local:videoPageURL -notmatch '^https://tver.jp/(/?.*)') {
+			continue
+		} else {
+			$local:videoLink = $local:videoPageURL.Replace('https://tver.jp', '').Trim()
+			$local:videoPageURL = 'https://tver.jp' + $local:videoLink
+			Write-Output $local:videoPageURL
 
-		#TVer番組ダウンロードのメイン処理
-		downloadTVerVideo `
-			-Keyword $local:keywordName `
-			-URL $local:videoPageURL `
-			-Link $local:videoLink
-	} else {
-		Write-Output '---------------------------------------------------------------------------'
-		Write-Output '処理を終了しました。                                                       '
-		Write-Output '---------------------------------------------------------------------------'
-		exit 0
-	}
+			#TVer番組ダウンロードのメイン処理
+			downloadTVerVideo `
+				-Keyword $local:keywordName `
+				-URL $local:videoPageURL `
+				-Link $local:videoLink
+		}
+	} else { break }
+
 }
+Write-Output '---------------------------------------------------------------------------'
+Write-Output 'ダウンロード処理を終了しました。                                           '
+Write-Output '---------------------------------------------------------------------------'

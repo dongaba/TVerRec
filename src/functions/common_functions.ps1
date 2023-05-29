@@ -536,77 +536,6 @@ function isLocked {
 
 #endregion ファイルロック
 
-#region メモリマップトファイル
-
-#----------------------------------------------------------------------
-#メモリマップトファイルの作成
-#----------------------------------------------------------------------
-function New-MemoryMappedFile {
-	[CmdletBinding()]
-	param(
-		[Parameter(Mandatory)][String]$Name,
-		[Parameter()][Int64]$Size
-	)
-
-	[System.IO.MemoryMappedFiles.MemoryMappedFile]::CreateNew($Name, $Size);
-}
-
-#----------------------------------------------------------------------
-#メモリマップトファイルを開く
-#----------------------------------------------------------------------
-function Open-MemoryMappedFile {
-	param([String]$Name)
-
-	[System.IO.MemoryMappedFiles.MemoryMappedFile]::OpenExisting($Name);
-}
-
-#----------------------------------------------------------------------
-#メモリマップトファイルへの書き込み
-#----------------------------------------------------------------------
-function Out-MemoryMappedFile {
-	[CmdletBinding()]
-	param(
-		[Parameter(Mandatory)][System.IO.MemoryMappedFiles.MemoryMappedFile]$MemoryMappedFile,
-		[Parameter(ValueFromPipeline = $true, Mandatory)][String]$String
-	)
-
-	$Stream = $MemoryMappedFile.CreateViewStream()
-	$StreamWriter = New-Object System.IO.StreamWriter -ArgumentList $Stream
-	$StreamWriter.Write($String)
-	$StreamWriter.Dispose()
-	$Stream.Dispose()
-}
-
-#----------------------------------------------------------------------
-#メモリマップトファイルの読み込み
-#----------------------------------------------------------------------
-function Read-MemoryMappedFile {
-	[CmdletBinding()]
-	param(
-		[Parameter(Mandatory)][System.IO.MemoryMappedFiles.MemoryMappedFile]$MemoryMappedFile
-	)
-
-	$Stream = $MemoryMappedFile.CreateViewStream()
-	$StreamReader = New-Object System.IO.StreamReader -ArgumentList $Stream
-	$StreamReader.ReadToEnd().Replace("`0", '')
-	$StreamReader.Dispose()
-	$Stream.Dispose()
-}
-
-#----------------------------------------------------------------------
-#メモリマップトファイルの削除
-#----------------------------------------------------------------------
-function Remove-MemoryMappedFile {
-	[CmdletBinding()]
-	param(
-		[Parameter(Mandatory)][System.IO.MemoryMappedFiles.MemoryMappedFile]$MemoryMappedFile
-	)
-
-	$MemoryMappedFile.Dispose()
-}
-
-#endregion メモリマップトファイル
-
 #region コンソール出力
 
 #----------------------------------------------------------------------
@@ -726,7 +655,7 @@ function showToast {
 			<text>$local:toastTitle</text>
 			<text>$local:toastText1</text>
 			<text>$local:toastText2</text>
-			<image placement="appLogoOverride" hint-crop="circle" src="$local:toastAppLogo"/>
+			<image placement="appLogoOverride" src="$local:toastAppLogo"/>
 			<text placement="attribution">$local:toastAttribution</text>
 		</binding>
 	</visual>
@@ -808,7 +737,7 @@ function showProgressToast {
 			<text>$local:toastTitle</text>
 			<text>$local:toastText1</text>
 			<text>$local:toastText2</text>
-			<image placement="appLogoOverride" hint-crop="circle" src="$local:toastAppLogo"/>
+			<image placement="appLogoOverride" src="$local:toastAppLogo"/>
 			<progress value="{progressValue}" title="{progressTitle}" valueStringOverride="{progressValueString}" status="{progressStatus}" />
 			<text placement="attribution">$($local:toastAttribution)</text>
 		</binding>
@@ -949,7 +878,7 @@ function showProgressToast2 {
 			<text>$local:toastTitle</text>
 			<text>$local:toastText1</text>
 			<text>$local:toastText2</text>
-			<image placement="appLogoOverride" hint-crop="circle" src="$local:toastAppLogo"/>
+			<image placement="appLogoOverride" src="$local:toastAppLogo"/>
 			<progress value="{progressValue1}" title="{progressTitle1}" valueStringOverride="{progressValueString1}" status="{progressStatus1}" />
 			<progress value="{progressValue2}" title="{progressTitle2}" valueStringOverride="{progressValueString2}" status="{progressStatus2}" />
 			<text placement="attribution">$($local:toastAttribution)</text>
