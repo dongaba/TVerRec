@@ -132,7 +132,7 @@ function writeSetting {
 	#自動生成より前の部分
 	if ( $local:totalLineNum -ne 0 ) {
 		try { $local:newSetting += Get-Content $userSettingFile -Head $local:headLineNum }
-		catch {}
+		catch { Write-Warning '自動生成の開始部分を特定できませんでした' }
 	}
 
 	#自動生成の部分
@@ -155,7 +155,7 @@ function writeSetting {
 	#自動生成より後の部分
 	if ( $local:totalLineNum -ne 0 ) {
 		try { $local:newSetting += Get-Content $script:userSettingFile -Tail $local:tailLineNum }
-		catch {}
+		catch { Write-Warning '自動生成の終了部分を特定できませんでした' }
 	}
 
 	#改行コードをLFで出力
