@@ -185,7 +185,7 @@ Add-Type -Name Window -Namespace Console -MemberDefinition '
 [DllImport("user32.dll")]public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow);
 '
 $local:console = [Console.Window]::GetConsoleWindow()
-[Console.Window]::ShowWindow($local:console, 0) | Out-Null
+$null = [Console.Window]::ShowWindow($local:console, 0)
 
 #タスクバーのアイコンにオーバーレイ表示
 $local:icon = New-Object System.Windows.Media.Imaging.BitmapImage
@@ -300,7 +300,7 @@ foreach ($local:settingAttribute in $script:settingAttributes) {
 try {
 	$null = $script:settingWindow.Show()
 	$null = $script:settingWindow.Activate()
-	[Console.Window]::ShowWindow($local:console, 0) | Out-Null
+	$null = [Console.Window]::ShowWindow($local:console, 0)
 } catch {
 	Write-Error 'ウィンドウを描画できませんでした。TVerRecが破損しています。'
 	exit 1

@@ -376,10 +376,9 @@ function deleteFiles {
 	try {
 		foreach ($local:delCondition in $local:delConditions.Split(',').Trim()) {
 			Write-Output "$($local:basePath) - $($local:delCondition)"
-			Get-ChildItem -LiteralPath $local:basePath -Recurse -File -Filter $local:delCondition `
+			$null = Get-ChildItem -LiteralPath $local:basePath -Recurse -File -Filter $local:delCondition `
 			| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays($local:delPeriod) } `
 			| Remove-Item -Force -ErrorAction SilentlyContinue `
-			| Out-Null
 		}
 	} catch { Write-Warning '　削除できないファイルがありました' }
 
