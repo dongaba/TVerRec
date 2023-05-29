@@ -3,7 +3,7 @@
 ###################################################################################
 #  TVerRec : TVerダウンローダ
 #
-#		個別ダウンロードスクリプト
+#		一括ダウンロード処理スクリプト
 #
 #	Copyright (c) 2022 dongaba
 #
@@ -28,9 +28,9 @@
 #
 ###################################################################################
 
-echo -en "\033];TVerRec Video File Downloader\007"
+echo -en "\033];TVerRec Video File Bulk Downloader\007"
 
-pwsh -NoProfile -ExecutionPolicy Unrestricted "../src/tverrec_single.ps1"
+pwsh -NoProfile -ExecutionPolicy Unrestricted "../src/download_bulk.ps1"
 
 echo "Finished ..."
 read -r

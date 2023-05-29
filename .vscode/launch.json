@@ -3,28 +3,28 @@
 	"configurations": [
 		{
 			"type": "PowerShell",
-			"script": "${workspaceFolder}/src/gui/tverrec_gui.ps1",
+			"script": "${workspaceFolder}/src/gui/gui_main.ps1",
 			"request": "launch",
 			"name": "GUI-Main",
 			"cwd": "${workspaceFolder}/src"
 		},
 		{
 			"type": "PowerShell",
-			"script": "${workspaceFolder}/src/gui/tverrec_setting.ps1",
+			"script": "${workspaceFolder}/src/gui/gui_setting.ps1",
 			"request": "launch",
 			"name": "GUI-Setting",
 			"cwd": "${workspaceFolder}/src"
 		},
 		{
 			"type": "PowerShell",
-			"script": "${workspaceFolder}/src/tverrec_bulk.ps1",
+			"script": "${workspaceFolder}/src/download_bulk.ps1",
 			"request": "launch",
 			"name": "Bulk",
 			"cwd": "${workspaceFolder}/src"
 		},
 		{
 			"type": "PowerShell",
-			"script": "${workspaceFolder}/src/tverrec_single.ps1",
+			"script": "${workspaceFolder}/src/download_single.ps1",
 			"request": "launch",
 			"name": "Single",
 			"cwd": "${workspaceFolder}/src"
@@ -38,7 +38,7 @@
 		},
 		{
 			"type": "PowerShell",
-			"script": "${workspaceFolder}/src/tverrec_list.ps1",
+			"script": "${workspaceFolder}/src/download_list.ps1",
 			"request": "launch",
 			"name": "List",
 			"cwd": "${workspaceFolder}/src"

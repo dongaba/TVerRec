@@ -163,16 +163,16 @@ $script:mainWindow.FindName('btnLoop')
 
 #バックグラウンドジョブ化するボタンの処理内容
 $script:scriptBlocks = @{
-	$script:btns[0] = { . './tverrec_single.ps1' 'GUI' }
-	$script:btns[1] = { . './tverrec_bulk.ps1' }
+	$script:btns[0] = { . './download_single.ps1' 'GUI' }
+	$script:btns[1] = { . './download_bulk.ps1' }
 	$script:btns[2] = { . './generate_list.ps1' }
-	$script:btns[3] = { . './tverrec_list.ps1' }
+	$script:btns[3] = { . './download_list.ps1' }
 	$script:btns[4] = { . './delete_trash.ps1' }
 	$script:btns[5] = { . './validate_video.ps1' }
 	$script:btns[6] = { . './move_video.ps1' }
 	$script:btns[7] = {
 		while ($true) {
-			. './tverrec_bulk.ps1'
+			. './download_bulk.ps1'
 			. './delete_trash.ps1'
 			. './validate_video.ps1'
 			. './validate_video.ps1'
@@ -238,7 +238,7 @@ $script:btnKillAll.add_Click({
 	})
 $script:btnWiki.add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
 $script:btnSetting.add_Click({
-		. './gui/tverrec_setting.ps1'
+		. './gui/gui_setting.ps1'
 		if ( Test-Path $(Join-Path $script:confDir './user_setting.ps1') ) {
 			. $(Convert-Path $(Join-Path $script:confDir './user_setting.ps1'))
 		}

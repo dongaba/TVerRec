@@ -39,7 +39,7 @@ echo $PPID > "$PIDFile"
 
 while true
 do
-	pwsh -NoProfile -ExecutionPolicy Unrestricted "../src/tverrec_bulk.ps1"
+	pwsh -NoProfile -ExecutionPolicy Unrestricted "../src/download_bulk.ps1"
 
 	#youtube-dlプロセスチェック
 	while [ "$(ps | grep -E "ffmpeg|youtube-dl" | grep -v grep | grep -c ^)" -gt 0 ]

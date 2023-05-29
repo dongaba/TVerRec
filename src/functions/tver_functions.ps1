@@ -202,7 +202,7 @@ function checkRequiredFile {
 	if (Test-Path $(Join-Path $script:dbDir './tver.csv') -PathType Leaf) {
 		Rename-Item `
 			-Path $(Join-Path $script:dbDir './tver.csv') `
-			-NewName history.csv `
+			-NewName 'history.csv' `
 			-Force
 	}
 	#*.batを*.cmdに移行(v2.6.9→v2.7.0)
@@ -215,6 +215,61 @@ function checkRequiredFile {
 	if (Test-Path $(Join-Path $script:imgDir './TVerRec-Logo-Low.png') -PathType Leaf) {
 		Remove-Item `
 			-Path $(Join-Path $script:imgDir './TVerRec-Logo-Low.png') `
+			-Force
+	}
+	#ダウンロード用のps1をリネーム(v2.7.5→v2.7.6)
+	if (Test-Path $(Join-Path $script:scriptRoot './tverrec_bulk.ps1') -PathType Leaf) {
+		Rename-Item `
+			-Path $(Join-Path $script:scriptRoot './tverrec_bulk.ps1') `
+			-NewName 'download_bulk.ps1' `
+			-Force
+	}
+	if (Test-Path $(Join-Path $script:scriptRoot './tverrec_list.ps1') -PathType Leaf) {
+		Rename-Item `
+			-Path $(Join-Path $script:scriptRoot './tverrec_list.ps1') `
+			-NewName 'download_list.ps1' `
+			-Force
+	}
+	if (Test-Path $(Join-Path $script:scriptRoot './tverrec_single.ps1') -PathType Leaf) {
+		Rename-Item `
+			-Path $(Join-Path $script:scriptRoot './tverrec_single.ps1') `
+			-NewName 'download_single.ps1' `
+			-Force
+	}
+	if (Test-Path $(Join-Path $script:winDir './a.download_video.cmd') -PathType Leaf) {
+		Rename-Item `
+			-Path $(Join-Path $script:winDir './a.download_video.cmd') `
+			-NewName 'a.download_bulk.cmd' `
+			-Force
+	}
+	if (Test-Path $(Join-Path $script:winDir './y.tverrec_list.cmd') -PathType Leaf) {
+		Rename-Item `
+			-Path $(Join-Path $script:winDir './y.tverrec_list.cmd') `
+			-NewName 'y.tverrec_list.cmd' `
+			-Force
+	}
+	if (Test-Path $(Join-Path $script:winDir './z.download_single_video.cmd') -PathType Leaf) {
+		Rename-Item `
+			-Path $(Join-Path $script:winDir './z.download_single_video.cmd') `
+			-NewName 'z.download_single.cmd' `
+			-Force
+	}
+	if (Test-Path $(Join-Path $script:unixDir './a.download_video.sh') -PathType Leaf) {
+		Rename-Item `
+			-Path $(Join-Path $script:unixDir './a.download_video.sh') `
+			-NewName 'a.download_bulk.sh' `
+			-Force
+	}
+	if (Test-Path $(Join-Path $script:unixDir './y.tverrec_list.sh') -PathType Leaf) {
+		Rename-Item `
+			-Path $(Join-Path $script:unixDir './y.tverrec_list.sh') `
+			-NewName 'y.tverrec_list.sh' `
+			-Force
+	}
+	if (Test-Path $(Join-Path $script:unixDir './z.download_single_video.sh') -PathType Leaf) {
+		Rename-Item `
+			-Path $(Join-Path $script:unixDir './z.download_single_video.sh') `
+			-NewName 'z.download_single.sh' `
 			-Force
 	}
 

@@ -52,7 +52,7 @@ echo %myPID% > %PIDFile% 2> nul
 
 :LOOP
 	title TVerRec - Downloading
-	pwsh -NoProfile -ExecutionPolicy Unrestricted  "..\src\tverrec_bulk.ps1"
+	pwsh -NoProfile -ExecutionPolicy Unrestricted  "..\src\download_bulk.ps1"
 
 :PROCESSCHECKER
 	rem youtube-dlプロセスチェック

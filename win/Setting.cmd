@@ -41,7 +41,7 @@ if %ERRORLEVEL% neq 0 (goto :INSTALL)
 rem Zone Identifierの削除
 pwsh -Command "Get-ChildItem "..\" -Recurse | Unblock-File"
 
-pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\gui\tverrec_setting.ps1"
+pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\gui\gui_setting.ps1"
 
 exit
 

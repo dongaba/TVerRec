@@ -2,7 +2,7 @@
 rem ###################################################################################
 rem #  TVerRec : TVerダウンローダ
 rem #
-rem #		一括ダウンロード処理スクリプト
+rem #		TVerRec GUI
 rem #
 rem #	Copyright (c) 2022 dongaba
 rem #
@@ -33,7 +33,7 @@ chcp 65001
 setlocal enabledelayedexpansion
 cd /d %~dp0
 
-title TVerRec Video File Bulk Downloader
+title TVerRec
 
 where /Q pwsh
 if %ERRORLEVEL% neq 0 (goto :INSTALL)
@@ -41,9 +41,8 @@ if %ERRORLEVEL% neq 0 (goto :INSTALL)
 rem Zone Identifierの削除
 pwsh -Command "Get-ChildItem "..\" -Recurse | Unblock-File"
 
-pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\tverrec_bulk.ps1"
+pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\gui\gui_main.ps1"
 
-pause
 exit
 
 :INSTALL
@@ -53,3 +52,5 @@ exit
 	echo PowerShell Coreをインストールしました。TVerRecを再実行してください。
 	pause
 	exit
+
+

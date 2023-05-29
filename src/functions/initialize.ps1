@@ -34,7 +34,7 @@ try {
 	} elseif ($IsWindows) {
 		while (!( Test-Path $(Join-Path $script:confDir './user_setting.ps1')) ) {
 			Write-Output 'ユーザ設定ファイルを作成する必要があります'
-			. './gui/tverrec_setting.ps1'
+			. './gui/gui_setting.ps1'
 			if ( Test-Path $(Join-Path $script:confDir './user_setting.ps1') ) {
 				. $(Convert-Path $(Join-Path $script:confDir './user_setting.ps1'))
 			}
