@@ -48,7 +48,7 @@ try {
 #----------------------------------------------------------------------
 #設定ファイル読み込み
 try {
-	. $(Convert-Path $(Join-Path $script:confDir 'system_setting.ps1'))
+	. $(Convert-Path $(Join-Path $script:confDir './system_setting.ps1'))
 } catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
 
 #----------------------------------------------------------------------
@@ -61,8 +61,8 @@ try {
 #----------------------------------------------------------------------
 #開発環境用に設定上書き
 try {
-	$script:devFunctionFile = $(Join-Path $script:devDir 'dev_funcitons.ps1')
-	$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.ps1')
+	$script:devFunctionFile = $(Join-Path $script:devDir './dev_funcitons.ps1')
+	$script:devConfFile = $(Join-Path $script:devDir './dev_setting.ps1')
 	if (Test-Path $script:devFunctionFile) {
 		. $script:devFunctionFile
 		Write-Warning '開発ファイル用共通関数ファイルを読み込みました'
@@ -117,7 +117,7 @@ function writeSetting {
 	$local:endSegment = '##End Setting Generated from GUI'
 
 	#自動生成部分の行数を取得
-	if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
+	if ( Test-Path $(Join-Path $script:confDir './user_setting.ps1') ) {
 		try {
 			$local:totalLineNum = (Get-Content -Path $script:userSettingFile).Length
 		} catch { $local:totalLineNum = 0 }
@@ -175,13 +175,13 @@ function writeSetting {
 #メイン処理
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-$script:userSettingFile = $(Join-Path $script:confDir 'user_setting.ps1')
+$script:userSettingFile = $(Join-Path $script:confDir './user_setting.ps1')
 
 #----------------------------------------------------------------------
 #region WPFのWindow設定
 
 try {
-	[string]$local:mainXaml = Get-Content -Path '../resources/TVerRecSetting.xaml'
+	[string]$local:mainXaml = Get-Content -Path $(Join-Path $script:wpfDir './TVerRecSetting.xaml')
 	$local:mainXaml = $local:mainXaml `
 		-replace 'mc:Ignorable="d"', '' `
 		-replace 'x:N', 'N' `

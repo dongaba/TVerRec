@@ -105,7 +105,7 @@ function checkLatestTVerRec {
 				-PercentComplete ([int]((100 * $i) / 10))
 			Start-Sleep -Second 1
 		}
-		. $(Join-Path $script:scriptRoot '/functions/update_tverrec.ps1')
+		. $(Join-Path $script:scriptRoot './functions/update_tverrec.ps1')
 
 		#再起動のため強制終了
 		exit 1
@@ -180,23 +180,23 @@ function checkRequiredFile {
 
 	#過去のバージョンで使用していたファイルを削除、または移行
 	#tver.lockをhistory.lockに移行(v2.6.5→v2.6.6)
-	if (Test-Path $(Join-Path $script:dbDir 'tver.lock') -PathType Leaf) {
+	if (Test-Path $(Join-Path $script:dbDir './tver.lock') -PathType Leaf) {
 		Move-Item `
-			-Path $(Join-Path $script:dbDir 'tver.lock') `
+			-Path $(Join-Path $script:dbDir './tver.lock') `
 			-Destination $script:historyLockFilePath `
 			-Force
 	}
 	#tver.sample.csvをhistory.sample.csvに移行(v2.6.5→v2.6.6)
-	if (Test-Path $(Join-Path $script:dbDir 'tver.sample.csv') -PathType Leaf) {
+	if (Test-Path $(Join-Path $script:dbDir './tver.sample.csv') -PathType Leaf) {
 		Move-Item `
-			-Path $(Join-Path $script:dbDir 'tver.sample.csv') `
+			-Path $(Join-Path $script:dbDir './tver.sample.csv') `
 			-Destination $script:historyFilePath `
 			-Force
 	}
 	#tver.csvをhistory.csvに移行(v2.6.5→v2.6.6)
-	if (Test-Path $(Join-Path $script:dbDir 'tver.csv') -PathType Leaf) {
+	if (Test-Path $(Join-Path $script:dbDir './tver.csv') -PathType Leaf) {
 		Rename-Item `
-			-Path $(Join-Path $script:dbDir 'tver.csv') `
+			-Path $(Join-Path $script:dbDir './tver.csv') `
 			-NewName history.csv `
 			-Force
 	}
@@ -206,7 +206,12 @@ function checkRequiredFile {
 			-Path "$($script:winDir)/*.bat" `
 			-Force
 	}
-
+	#TVerRec-Logo-Low.pngを削除(v2.7.5→v2.7.6)
+	if (Test-Path $(Join-Path $script:imgDir './TVerRec-Logo-Low.png') -PathType Leaf) {
+		Remove-Item `
+			-Path $(Join-Path $script:imgDir './TVerRec-Logo-Low.png') `
+			-Force
+	}
 
 	#ファイルが存在しない場合はサンプルファイルをコピー
 	if (!(Test-Path $script:keywordFilePath -PathType Leaf)) {

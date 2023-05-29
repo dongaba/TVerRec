@@ -65,8 +65,8 @@ $local:releases = "https://api.github.com/repos/$($local:repo)/releases"
 
 #yt-dlp移動先相対Path
 $local:ytdlDir = $(Join-Path $local:scriptRoot '../bin')
-if ($IsWindows) { $local:ytdlPath = $(Join-Path $local:ytdlDir 'youtube-dl.exe') }
-else { $local:ytdlPath = $(Join-Path $local:ytdlDir 'youtube-dl') }
+if ($IsWindows) { $local:ytdlPath = $(Join-Path $local:ytdlDir './youtube-dl.exe') }
+else { $local:ytdlPath = $(Join-Path $local:ytdlDir './youtube-dl') }
 
 #yt-dlpのバージョン取得
 try {

@@ -132,7 +132,7 @@ try {
 	).zipball_url
 	Invoke-WebRequest `
 		-Uri $local:zipURL `
-		-OutFile $(Join-Path $updateTemp 'TVerRecLatest.zip')
+		-OutFile $(Join-Path $updateTemp './TVerRecLatest.zip')
 } catch { Write-Error 'ダウンロードに失敗しました' ; exit 1 }
 
 #最新バージョンがダウンロードできていたら展開
@@ -140,10 +140,10 @@ Write-Output ''
 Write-Output '-----------------------------------------------------------------'
 Write-Output 'ダウンロードしたTVerRecを解凍します'
 try {
-	if (Test-Path $(Join-Path $updateTemp 'TVerRecLatest.zip') -PathType Leaf) {
+	if (Test-Path $(Join-Path $updateTemp './TVerRecLatest.zip') -PathType Leaf) {
 		#配下に作成されるディレクトリ名は不定「dongaba-TVerRec-xxxxxxxx」
 		unZip `
-			-File $(Join-Path $updateTemp 'TVerRecLatest.zip') `
+			-File $(Join-Path $updateTemp './TVerRecLatest.zip') `
 			-OutPath $updateTemp
 	} else { Write-Error 'ダウンロードしたファイルが見つかりません' ; exit 1 }
 } catch { Write-Error 'ダウンロードしたファイルの解凍に失敗しました' ; exit 1 }

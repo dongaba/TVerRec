@@ -642,9 +642,9 @@ function showToast {
 
 		if (-not ('Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder' -as [Type])) {
 			#For PowerShell Core v6.x & PowerShell v7+
-			Add-Type -Path (Join-Path $script:libDir 'win/core/Microsoft.Windows.SDK.NET.dll')
-			Add-Type -Path (Join-Path $script:libDir 'win/core/WinRT.Runtime.dll')
-			Add-Type -Path (Join-Path $script:libDir 'win/core/Microsoft.Toolkit.Uwp.Notifications.dll')
+			Add-Type -Path (Join-Path $script:libDir './win/core/Microsoft.Windows.SDK.NET.dll')
+			Add-Type -Path (Join-Path $script:libDir './win/core/WinRT.Runtime.dll')
+			Add-Type -Path (Join-Path $script:libDir './win/core/Microsoft.Toolkit.Uwp.Notifications.dll')
 		}
 
 		$local:toastProgressContent = @"
@@ -724,9 +724,9 @@ function showProgressToast {
 
 		if (-not ('Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder' -as [Type])) {
 			#For PowerShell Core v6.x & PowerShell v7+
-			Add-Type -Path (Join-Path $script:libDir 'win/core/Microsoft.Windows.SDK.NET.dll')
-			Add-Type -Path (Join-Path $script:libDir 'win/core/WinRT.Runtime.dll')
-			Add-Type -Path (Join-Path $script:libDir 'win/core/Microsoft.Toolkit.Uwp.Notifications.dll')
+			Add-Type -Path (Join-Path $script:libDir './win/core/Microsoft.Windows.SDK.NET.dll')
+			Add-Type -Path (Join-Path $script:libDir './win/core/WinRT.Runtime.dll')
+			Add-Type -Path (Join-Path $script:libDir './win/core/Microsoft.Toolkit.Uwp.Notifications.dll')
 		}
 
 		$local:toastContent = @"
@@ -865,9 +865,9 @@ function showProgressToast2 {
 
 		if (-not ('Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder' -as [Type])) {
 			#For PowerShell Core v6.x & PowerShell v7+
-			Add-Type -Path (Join-Path $script:libDir 'win/core/Microsoft.Windows.SDK.NET.dll')
-			Add-Type -Path (Join-Path $script:libDir 'win/core/WinRT.Runtime.dll')
-			Add-Type -Path (Join-Path $script:libDir 'win/core/Microsoft.Toolkit.Uwp.Notifications.dll')
+			Add-Type -Path (Join-Path $script:libDir './win/core/Microsoft.Windows.SDK.NET.dll')
+			Add-Type -Path (Join-Path $script:libDir './win/core/WinRT.Runtime.dll')
+			Add-Type -Path (Join-Path $script:libDir './win/core/Microsoft.Toolkit.Uwp.Notifications.dll')
 		}
 
 		$local:toastContent = @"

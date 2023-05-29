@@ -86,7 +86,7 @@ $local:releases = 'https://www.gyan.dev/ffmpeg/builds/release-version'
 
 #ffmpeg移動先相対Path
 $local:ffmpegDir = $(Join-Path $local:scriptRoot '../bin')
-if ($IsWindows) { $local:ffmpegPath = $(Join-Path $local:ffmpegDir 'ffmpeg.exe') }
+if ($IsWindows) { $local:ffmpegPath = $(Join-Path $local:ffmpegDir './ffmpeg.exe') }
 else { $local:ffmpegPath = $(Join-Path $local:ffmpegDir 'ffmpeg') }
 
 #ffmpegのバージョン取得
@@ -129,7 +129,7 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 					'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip'
 				Invoke-WebRequest `
 					-Uri $local:donwloadURL `
-					-OutFile $(Join-Path $local:ffmpegDir 'ffmpeg.zip')
+					-OutFile $(Join-Path $local:ffmpegDir './ffmpeg.zip')
 			} catch { Write-Error 'ffmpegのダウンロードに失敗しました' ; exit 1 }
 
 			#展開
