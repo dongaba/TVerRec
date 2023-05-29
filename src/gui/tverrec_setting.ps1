@@ -65,16 +65,16 @@ try {
 
 #GUIイベントの処理
 function DoWpfEvents {
-	[DispatcherFrame] $local:frame = [DispatcherFrame]::new($true)
+	[DispatcherFrame] $script:frame = [DispatcherFrame]::new($true)
 	$null = [Dispatcher]::CurrentDispatcher.BeginInvoke(
 		'Background',
 		[DispatcherOperationCallback] {
-			param([object] $local:f)
-			($local:f -as [DispatcherFrame]).Continue = $false
+			param([object] $script:f)
+			($script:f -as [DispatcherFrame]).Continue = $false
 			return $null
 		},
-		$local:frame)
-	[Dispatcher]::PushFrame($local:frame)
+		$script:frame)
+	[Dispatcher]::PushFrame($script:frame)
 }
 
 #user_setting.ps1から各設定項目を読み込む

@@ -80,6 +80,7 @@ Write-Output '           ██     ██  ██  ██      ██   ██ 
 Write-Output '           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          '
 Write-Output '                                                                           '
 Write-Output "$bannerVersion"
+Write-Output '                                                                           '
 Write-Output '==========================================================================='
 Write-Output ''
 [Console]::ResetColor()
