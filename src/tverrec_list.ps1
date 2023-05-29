@@ -1,5 +1,4 @@
 ###################################################################################
-#  TVerRec : TVerダウンローダ
 #
 #		リストダウンロード処理スクリプト
 #
@@ -30,6 +29,8 @@
 #環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Set-StrictMode -Version Latest
+#----------------------------------------------------------------------
+#初期化
 try {
 	if ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript') {
 		$script:scriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
@@ -37,65 +38,13 @@ try {
 	Set-Location $script:scriptRoot
 	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '../conf'))
 	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
-} catch { Write-Error 'ディレクトリ設定に失敗しました' ; exit 1 }
-
-#----------------------------------------------------------------------
-#設定ファイル読み込み
+} catch { Write-Error 'カレントディレクトリの設定に失敗しました' ; exit 1 }
 try {
-	. $(Convert-Path $(Join-Path $script:confDir './system_setting.ps1'))
-	if ( Test-Path $(Join-Path $script:confDir './user_setting.ps1') ) {
-		. $(Convert-Path $(Join-Path $script:confDir './user_setting.ps1'))
-	}
-} catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
-
-#----------------------------------------------------------------------
-#外部関数ファイルの読み込み
-try {
-	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/common_functions.ps1'))
-	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/tver_functions.ps1'))
-} catch { Write-Error '外部関数ファイルの読み込みに失敗しました' ; exit 1 }
-
-#----------------------------------------------------------------------
-#開発環境用に設定上書き
-try {
-	$script:devFunctionFile = $(Join-Path $script:devDir './dev_funcitons.ps1')
-	$script:devConfFile = $(Join-Path $script:devDir './dev_setting.ps1')
-	if (Test-Path $script:devFunctionFile) {
-		. $script:devFunctionFile
-		Write-Warning '開発ファイル用共通関数ファイルを読み込みました'
-	}
-	if (Test-Path $script:devConfFile) {
-		. $script:devConfFile
-		Write-Warning '開発ファイル用設定ファイルを読み込みました'
-	}
-} catch { Write-Error '開発用設定ファイルの読み込みに失敗しました' ; exit 1 }
+	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
+} catch { Write-Error '関数の読み込みに失敗しました' ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
-[Console]::ForegroundColor = 'Cyan'
-Write-Output ''
-Write-Output '==========================================================================='
-Write-Output '                                                                           '
-Write-Output '        ████████ ██    ██ ███████ ██████  ██████  ███████  ██████          '
-Write-Output '           ██    ██    ██ ██      ██   ██ ██   ██ ██      ██               '
-Write-Output '           ██    ██    ██ █████   ██████  ██████  █████   ██               '
-Write-Output '           ██     ██  ██  ██      ██   ██ ██   ██ ██      ██               '
-Write-Output '           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          '
-Write-Output '                                                                           '
-Write-Output "        $script:appName : TVerダウンローダ                                 "
-Write-Output "                             リストダウンロード version. $script:appVersion  "
-Write-Output '                                                                           '
-Write-Output '==========================================================================='
-Write-Output ''
-[Console]::ResetColor()
-
-#----------------------------------------------------------------------
-#TVerRecの最新化チェック
-checkLatestTVerRec
-#youtube-dlの最新化チェック
-checkLatestYtdl
-#ffmpegの最新化チェック
-checkLatestFfmpeg
 
 #----------------------------------------------------------------------
 #設定ファイル読み込み

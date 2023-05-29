@@ -1,5 +1,4 @@
 ###################################################################################
-#  TVerRec : TVerダウンローダ
 #
 #		GUI設定スクリプト
 #
@@ -49,7 +48,7 @@ try {
 #設定ファイル読み込み
 try {
 	. $(Convert-Path $(Join-Path $script:confDir './system_setting.ps1'))
-} catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error 'システム設定ファイルの読み込みに失敗しました' ; exit 1 }
 
 #----------------------------------------------------------------------
 #外部関数ファイルの読み込み
@@ -57,21 +56,6 @@ try {
 	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/common_functions.ps1'))
 	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/tver_functions.ps1'))
 } catch { Write-Error '外部関数ファイルの読み込みに失敗しました' ; exit 1 }
-
-#----------------------------------------------------------------------
-#開発環境用に設定上書き
-try {
-	$script:devFunctionFile = $(Join-Path $script:devDir './dev_funcitons.ps1')
-	$script:devConfFile = $(Join-Path $script:devDir './dev_setting.ps1')
-	if (Test-Path $script:devFunctionFile) {
-		. $script:devFunctionFile
-		Write-Warning '開発ファイル用共通関数ファイルを読み込みました'
-	}
-	if (Test-Path $script:devConfFile) {
-		. $script:devConfFile
-		Write-Warning '開発ファイル用設定ファイルを読み込みました'
-	}
-} catch { Write-Error '開発用設定ファイルの読み込みに失敗しました' ; exit 1 }
 
 #endregion 環境設定
 
@@ -137,17 +121,19 @@ function writeSetting {
 
 	#自動生成の部分
 	$local:newSetting += $local:startSegment
-	foreach ($local:settingAttribute in $local:settingAttributes) {
-		$local:settingBoxName = $local:settingAttribute.Replace('$script:', '')
-		$local:settingBox = $script:settingWindow.FindName($local:settingBoxName)
-		if ($local:settingBox.Text -eq '') {
-		} elseif ($local:settingBox.Text.Contains('$') `
-				-Or $local:settingBox.Text.Contains('{') `
-				-Or $local:settingBox.Text.Contains('(') `
-				-Or [int]::TryParse($local:settingBox.Text, [ref]$null) ) {
-			$local:newSetting += $local:settingAttribute + ' = ' + $local:settingBox.Text
-		} else {
-			$local:newSetting += $local:settingAttribute + ' = ' + '''' + $local:settingBox.Text + ''''
+	if ($null -ne $script:settingAttributes) {
+		foreach ($local:settingAttribute in $script:settingAttributes) {
+			$local:settingBoxName = $local:settingAttribute.Replace('$script:', '')
+			$local:settingBox = $script:settingWindow.FindName($local:settingBoxName)
+			if ($local:settingBox.Text -eq '') {
+			} elseif ($local:settingBox.Text.Contains('$') `
+					-Or $local:settingBox.Text.Contains('{') `
+					-Or $local:settingBox.Text.Contains('(') `
+					-Or [int]::TryParse($local:settingBox.Text, [ref]$null) ) {
+				$local:newSetting += $local:settingAttribute + ' = ' + $local:settingBox.Text
+			} else {
+				$local:newSetting += $local:settingAttribute + ' = ' + '''' + $local:settingBox.Text + ''''
+			}
 		}
 	}
 	$local:newSetting += $local:endSegment
@@ -210,12 +196,12 @@ $local:icon.Freeze()
 $script:settingWindow.TaskbarItemInfo.Overlay = $local:icon
 $script:settingWindow.TaskbarItemInfo.Description = $script:settingWindow.Title
 
-#ウィンドウアイコン設定
+#ウィンドウを読み込み時の処理
 $script:settingWindow.add_Loaded({
 		$script:settingWindow.Icon = $script:iconPath
 	})
 
-#閉じるボタン押下時
+#ウィンドウを閉じる際の処理
 $script:settingWindow.Add_Closing({
 	})
 
@@ -276,29 +262,29 @@ $script:btnsaveBaseDir.add_Click({
 #----------------------------------------------------------------------
 #region 設定ファイルの読み込み
 
-$local:settingAttributes = @()
-$local:settingAttributes += '$script:downloadBaseDir'
-$local:settingAttributes += '$script:downloadWorkDir'
-$local:settingAttributes += '$script:saveBaseDir'
-$local:settingAttributes += '$script:parallelDownloadFileNum'
-$local:settingAttributes += '$script:parallelDownloadNumPerFile'
-$local:settingAttributes += '$script:multithreadNum'
-$local:settingAttributes += '$script:timeoutSec'
-$local:settingAttributes += '$script:sortVideoByMedia'
-$local:settingAttributes += '$script:addEpisodeNumber'
-$local:settingAttributes += '$script:removeSpecialNote'
-$local:settingAttributes += '$script:preferredYoutubedl'
-$local:settingAttributes += '$script:disableUpdateYoutubedl'
-$local:settingAttributes += '$script:disableUpdateFfmpeg'
-$local:settingAttributes += '$script:forceSoftwareDecodeFlag'
-$local:settingAttributes += '$script:simplifiedValidation'
-$local:settingAttributes += '$script:disableValidation'
-$local:settingAttributes += '$script:windowShowStyle'
-$local:settingAttributes += '$script:ffmpegDecodeOption'
+$script:settingAttributes = @()
+$script:settingAttributes += '$script:downloadBaseDir'
+$script:settingAttributes += '$script:downloadWorkDir'
+$script:settingAttributes += '$script:saveBaseDir'
+$script:settingAttributes += '$script:parallelDownloadFileNum'
+$script:settingAttributes += '$script:parallelDownloadNumPerFile'
+$script:settingAttributes += '$script:multithreadNum'
+$script:settingAttributes += '$script:timeoutSec'
+$script:settingAttributes += '$script:sortVideoByMedia'
+$script:settingAttributes += '$script:addEpisodeNumber'
+$script:settingAttributes += '$script:removeSpecialNote'
+$script:settingAttributes += '$script:preferredYoutubedl'
+$script:settingAttributes += '$script:disableUpdateYoutubedl'
+$script:settingAttributes += '$script:disableUpdateFfmpeg'
+$script:settingAttributes += '$script:forceSoftwareDecodeFlag'
+$script:settingAttributes += '$script:simplifiedValidation'
+$script:settingAttributes += '$script:disableValidation'
+$script:settingAttributes += '$script:windowShowStyle'
+$script:settingAttributes += '$script:ffmpegDecodeOption'
 
 $local:currentSetting = @{}
 
-foreach ($local:settingAttribute in $local:settingAttributes) {
+foreach ($local:settingAttribute in $script:settingAttributes) {
 	$local:currentSetting[$local:settingAttribute] = loadCurrentSetting $local:settingAttribute
 	$local:settingBoxName = $local:settingAttribute.Replace('$script:', '')
 	$local:settingBox = $script:settingWindow.FindName($local:settingBoxName)

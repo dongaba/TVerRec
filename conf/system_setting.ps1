@@ -1,5 +1,4 @@
 ###################################################################################
-#  TVerRec : TVerダウンローダ
 #
 #		システム設定
 #
@@ -38,18 +37,16 @@ Set-StrictMode -Version Latest
 
 #ダウンロード先のフルパス(絶対パス指定)
 #　ダウンロード先とは、ダウンロードが終わった動画ファイルが配置される場所です。
-#　規定の設定ではWドライブが設定されています。(通常のPCではWドライブはありませんので変更が必要です)
 #　例えば C:\Users\yamada-taro\Video にダウンロードするのであれば $script:downloadBaseDir = 'C:\Users\yamada-taro\Video' と設定します。
 #　MacOSやLinuxでは $script:downloadBaseDir = '/mnt/Work' や $script:downloadBaseDir = '/Volumes/Work' などのように設定します。
-$script:downloadBaseDir = 'W:'
+$script:downloadBaseDir = ''
 
 #ダウンロード中の作業ディレクトリのフルパス(絶対パス指定)
 #　作業ディレクトリは、動画のダウンロード中に処理途中のファイルが配置される場所です。
 #　多数のファイルが作成され読み書きが多発するので、SSDやRamDriveなどの高速なディスクを指定すると動作速度が向上します。
-#　規定の設定では各ユーザのTempディレクトリ配下が設定されており、Windows環境であれば変更しなくても動作します。
 #　例えば C:\Temp にダウンロードするのであれば $script:downloadWorkDir = 'C:\Temp' と設定します。
 #　MacOSやLinuxでは $script:downloadWorkDir = '/var/tmp' や $script:downloadWorkDir = '/Volumes/RamDrive/Temp' などのように設定します。
-$script:downloadWorkDir = $env:TMP	#$env:TMP = C:\Users\<ユーザ名>\AppData\Local\Temp
+$script:downloadWorkDir = ''
 
 #移動先のフルパス(絶対パス指定)
 #　移動先とは、動画ファイルを最終的に整理するためのライブラリ等が配置されている場所です。
