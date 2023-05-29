@@ -511,18 +511,6 @@
                                     Value="{StaticResource Button.MouseOver.Border}"/>
                             </Trigger>
                             <Trigger
-                                Property="IsFocused"
-                                Value="true">
-                                <Setter
-                                    Property="Background"
-                                    TargetName="border"
-                                    Value="{StaticResource Button.MouseOver.Background}"/>
-                                <Setter
-                                    Property="BorderBrush"
-                                    TargetName="border"
-                                    Value="{StaticResource Button.MouseOver.Border}"/>
-                            </Trigger>
-                            <Trigger
                                 Property="IsPressed"
                                 Value="true">
                                 <Setter

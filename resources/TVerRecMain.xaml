@@ -180,20 +180,19 @@
                                 VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
                         </Border>
                         <ControlTemplate.Triggers>
-                            <Trigger
-                                Property="IsMouseOver"
+                            <Trigger Property="IsDefaulted"
                                 Value="true">
                                 <Setter
                                     Property="Background"
                                     TargetName="border"
-                                    Value="{StaticResource Button.MouseOver.Background}"/>
+                                    Value="{StaticResource Button.Static.Background}"/>
                                 <Setter
                                     Property="BorderBrush"
                                     TargetName="border"
                                     Value="{StaticResource Button.MouseOver.Border}"/>
                             </Trigger>
                             <Trigger
-                                Property="IsFocused"
+                                Property="IsMouseOver"
                                 Value="true">
                                 <Setter
                                     Property="Background"
