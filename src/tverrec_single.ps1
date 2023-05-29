@@ -26,7 +26,7 @@
 #
 ###################################################################################
 
-try{ $local:uiMode = [string]$args[0] } catch { $local:uiMode = '' }
+try { $local:uiMode = [string]$args[0] } catch { $local:uiMode = '' }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定
