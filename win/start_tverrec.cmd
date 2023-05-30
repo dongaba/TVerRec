@@ -44,7 +44,7 @@ set retryTime=60
 set sleepTime=3600
 
 rem Zone Identifierの削除
-pwsh -Command "Get-ChildItem "..\" -Recurse | Unblock-File"
+pwsh -Command "Get-ChildItem ..\ -Recurse | Unblock-File"
 
 rem PIDファイルを作成するする
 for /f "tokens=2" %%i in ('tasklist /FI "WINDOWTITLE eq TVerRec" /NH') do set myPID=%%i

@@ -39,7 +39,7 @@ where /Q pwsh
 if %ERRORLEVEL% neq 0 (goto :INSTALL)
 
 rem Zone Identifierの削除
-pwsh -Command "Get-ChildItem "..\" -Recurse | Unblock-File"
+pwsh -Command "Get-ChildItem ..\ -Recurse | Unblock-File"
 
 pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\download_list.ps1"
 
