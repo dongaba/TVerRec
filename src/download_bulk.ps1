@@ -116,6 +116,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 	foreach ($local:resultLink in $local:resultLinks) {
+		Write-Output "　$($local:resultLink)をチェック中"
 		$local:historyMatch = $script:historyFileData `
 		| Where-Object { $_.videoPage -eq $local:resultLink }
 		if ($null -eq $local:historyMatch) {
