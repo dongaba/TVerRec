@@ -5,6 +5,7 @@
 ### 2.7.6 Added
 
 - Windows 環境向けに GUI 画面を追加(予定)
+- Windows Sandbox環境の設定ファイルを追加
 
 ### 2.7.6 Changed
 
