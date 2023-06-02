@@ -1,0 +1,13 @@
+<Configuration Name="TVerRec">
+  <Networking>Default</Networking>
+  <MappedFolders>
+    <MappedFolder>
+      <HostFolder>.\setup</HostFolder>
+      <SandboxFolder>C:\users\WDAGUtilityAccount\setup</SandboxFolder>
+    </MappedFolder>
+  </MappedFolders>
+  <LogonCommand>
+    <Command>C:\users\WDAGUtilityAccount\setup\setup.cmd</Command>
+  </LogonCommand>
+  <MemoryInMB>4096</MemoryInMB>
+</Configuration>
