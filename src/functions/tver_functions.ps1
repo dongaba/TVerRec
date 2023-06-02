@@ -101,6 +101,7 @@ function checkLatestTVerRec {
 		Invoke-WebRequest `
 			-Uri $local:latestUpdater `
 			-OutFile $(Join-Path $script:scriptRoot './functions//update_tverrec.ps1')
+		Unblock-File -Path $(Join-Path $script:scriptRoot './functions//update_tverrec.ps1')
 
 		#アップデート実行
 		Write-Warning '10秒後にTVerRecをアップデートします。中止したい場合は Ctrl+C で中断してください'
