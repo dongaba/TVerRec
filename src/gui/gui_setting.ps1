@@ -24,8 +24,6 @@
 #	THE SOFTWARE.
 #
 ###################################################################################
-using namespace System.Windows.Threading
-
 if ($IsWindows -ne $true) { Write-Error 'Windows以外では動作しません'; Start-Sleep 10 ; exit 1 }
 Add-Type -AssemblyName PresentationFramework
 Add-Type -AssemblyName System.Windows.Forms
