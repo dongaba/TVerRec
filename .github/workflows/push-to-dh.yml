@@ -73,8 +73,6 @@ jobs:
           push: true
           tags: ${{ steps.prep.outputs.tag }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
       #Push README.md to Docker Hub
       - name: Docker Hub Description
