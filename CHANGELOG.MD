@@ -1,5 +1,15 @@
 ﻿# Change Log
 
+## [2.7.9](https://github.com/dongaba/TVerRec/releases/tag/v2.7.9)
+
+### 2.7.9 Added
+
+### 2.7.9 Changed
+
+### 2.7.9 Fixed
+
+- GUIの設定画面がフリーズする問題を修正
+
 ## [2.7.8](https://github.com/dongaba/TVerRec/releases/tag/v2.7.8)
 
 ### 2.7.8 Added
