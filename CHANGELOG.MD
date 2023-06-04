@@ -1,5 +1,16 @@
 ﻿# Change Log
 
+## [2.7.8](https://github.com/dongaba/TVerRec/releases/tag/v2.7.8)
+
+### 2.7.8 Added
+
+### 2.7.8 Changed
+
+### 2.7.8 Fixed
+
+- TVerRec の自動更新時に win フォルダ内が消失する問題を修正
+- Windows 環境で user_setting.ps1 が存在しない際にフリーズする問題を修正
+
 ## [2.7.7](https://github.com/dongaba/TVerRec/releases/tag/v2.7.7)
 
 ### 2.7.7 Added
