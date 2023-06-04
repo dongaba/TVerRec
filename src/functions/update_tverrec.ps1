@@ -199,9 +199,9 @@ if (Test-Path $(Join-Path $script:scriptRoot '../db/tver.csv') -PathType Leaf) {
 		-Force
 }
 #*.batを*.cmdに移行(v2.6.9→v2.7.0)
-if (Test-Path $(Join-Path $script:scriptRoot '../win/*.cmd') -PathType Leaf) {
+if (Test-Path $(Join-Path $script:scriptRoot '../win/*.bat') -PathType Leaf) {
 	Remove-Item `
-		-Path $(Join-Path $script:scriptRoot '../win/*.cmd') `
+		-Path $(Join-Path $script:scriptRoot '../win/*.bat') `
 		-Force
 }
 #TVerRec-Logo-Low.pngを削除(v2.7.5→v2.7.6)
