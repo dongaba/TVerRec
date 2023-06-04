@@ -40,7 +40,7 @@ try {
 			. $(Convert-Path $(Join-Path $script:confDir './user_setting.ps1'))
 		}
 	} else {
-		Write-Error 'ユーザ設定ファイルが完了してません' ; exit 1
+		Write-Error 'ユーザ設定が完了してません' ; exit 1
 	}
 } catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
 
