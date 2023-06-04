@@ -14,6 +14,9 @@
 [![Video Validate](https://hits.sh/github.com/dongaba/TVerRec/validate.svg?view=total&color=9f9f9f&label=Video%20Validated)](https://hits.sh/github.com/dongaba/TVerRec/validate)
 
 TVerRec は、テレビ番組配信サイト TVer(ティーバー<https://tver.jp>)の番組をダウンロード保存するためのダウンローダー、ダウンロード支援ツールです。
+番組のジャンルや出演タレント、番組名などを指定して一括ダウンロードする支援をします。
+CMは入っていないため気に入った番組を配信終了後も残しておくことができます。
+1回起動すれば新しい番組が配信される度にダウンロードされます。
 
 - **TVerRec は Windows PowerShell をサポートません。PowerShell Core でご利用ください。**
 - TVerRec は PowerShell Core をインストールした Windows/MacOS/Linux で動作します。
