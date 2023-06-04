@@ -6,6 +6,8 @@
 
 ### 2.7.9 Changed
 
+- Windows環境でuser_setting.ps1が存在しない場合に、GUIの設定画面を表示するように変更
+
 ### 2.7.9 Fixed
 
 - GUIの設定画面がフリーズする問題を修正
