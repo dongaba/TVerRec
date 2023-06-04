@@ -85,7 +85,9 @@ Set-StrictMode -Version Latest
 try {
 	if ($script:myInvocation.MyCommand.CommandType -eq 'ExternalScript') {
 		$local:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition
-		$local:scriptRoot = Split-Path -Parent -Path $local:scriptRoot
+		if ($local:scriptRoot -like '*functions') {
+			$local:scriptRoot = Split-Path -Parent -Path $local:scriptRoot
+		}
 	} else { $local:scriptRoot = Convert-Path .. }
 	Set-Location $local:scriptRoot
 } catch { Write-Error 'ディレクトリ設定に失敗しました' ; exit 1 }
