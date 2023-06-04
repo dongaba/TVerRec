@@ -256,6 +256,13 @@ if (Test-Path $(Join-Path $script:scriptRoot '../unix/z.download_single_video.sh
 		-Path $(Join-Path $script:scriptRoot '../unix/z.download_single_video.sh') `
 		-Force
 }
+#ダウンロード用のps1をリネーム(v2.7.6→v2.7.7)
+if (Test-Path $(Join-Path $script:scriptRoot '../.wsb/setup/TVerRec')) {
+	Remove-Item `
+		-Path $(Join-Path $script:scriptRoot '../.wsb/setup/TVerRec') `
+		-Recurse `
+		-Force
+}
 
 #実行権限の付与
 Write-Output ''

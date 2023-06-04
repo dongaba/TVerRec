@@ -1,5 +1,16 @@
 ﻿# Change Log
 
+## [2.7.7](https://github.com/dongaba/TVerRec/releases/tag/v2.7.7)
+
+### 2.7.7 Added
+
+### 2.7.7 Changed
+
+### 2.7.7 Fixed
+
+- TVerRec の自動更新機能の不具合を修正(まだ残っているかも。。)
+- Alpine Linux の Dockerfile の不具合を修正
+
 ## [2.7.6](https://github.com/dongaba/TVerRec/releases/tag/v2.7.6)
 
 ### 2.7.6 Added
