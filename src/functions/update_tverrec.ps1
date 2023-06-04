@@ -180,6 +180,8 @@ Write-Output '==================================================================
 Write-Output ''
 Write-Output 'TVerRecのアップデートを終了しました。'
 Write-Output ''
+Write-Output 'TVerRecを再起動してください。'
+Write-Output ''
 Write-Output '==========================================================================='
 
 exit 0

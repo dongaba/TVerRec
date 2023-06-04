@@ -101,7 +101,9 @@ function checkLatestTVerRec {
 		Invoke-WebRequest `
 			-Uri $local:latestUpdater `
 			-OutFile $(Join-Path $script:scriptRoot './functions//update_tverrec.ps1')
-		Unblock-File -Path $(Join-Path $script:scriptRoot './functions//update_tverrec.ps1')
+		if ($IsWindows) {
+			Unblock-File -Path $(Join-Path $script:scriptRoot './functions//update_tverrec.ps1')
+		}
 
 		#アップデート実行
 		Write-Warning '10秒後にTVerRecをアップデートします。中止したい場合は Ctrl+C で中断してください'
@@ -111,7 +113,20 @@ function checkLatestTVerRec {
 				-PercentComplete ([int]((100 * $i) / 10))
 			Start-Sleep -Second 1
 		}
-		. $(Join-Path $script:scriptRoot './functions/update_tverrec.ps1')
+
+		#. $(Join-Path $script:scriptRoot './functions/update_tverrec.ps1')
+		try {
+			# Start-Process `
+			#	-FilePath 'pwsh' `
+			#	-ArgumentList "-Command  $(Join-Path $script:scriptRoot './functions/update_tverrec.ps1')" `
+			#	-PassThru `
+			#	-Wait
+			$null = Start-Process `
+				-FilePath 'pwsh' `
+				-ArgumentList "-Command $(Join-Path $script:scriptRoot './functions/update_tverrec.ps1')" `
+				-PassThru `
+				-Wait
+		} catch { Write-Error '　TVerRecのアップデータを起動できませんでした' ; return }
 
 		#再起動のため強制終了
 		exit 1

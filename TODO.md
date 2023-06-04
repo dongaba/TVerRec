@@ -34,7 +34,8 @@
 - [x] ダウンロード履歴破損時に破損レコードを削除
 - [ ] フリーワードで指定で特定のジャンルからのみダウンロード
 - [x] コンテナによる仮想化に対応
-- [x] Google Colab で user_settings.ps1 を使用するようにする
+- [x] Google Colab で user_setting.ps1 を使用するようにする
+- [x] Docker コンテナで user_setting.ps1 を使用するようにする
 - [x] Write-Host を廃止する
 - [ ] 並列処理時に Toast 通知を更新する
 - [x] 並列処理時に並列度を指定できるようにする
