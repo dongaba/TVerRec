@@ -85,9 +85,7 @@ Set-StrictMode -Version Latest
 try {
 	if ($script:myInvocation.MyCommand.CommandType -eq 'ExternalScript') {
 		$local:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition
-		if ($local:scriptRoot -like '*functions') {
-			$local:scriptRoot = Split-Path -Parent -Path $local:scriptRoot
-		}
+		$local:scriptRoot = Split-Path -Parent -Path $local:scriptRoot
 	} else { $local:scriptRoot = Convert-Path .. }
 	Set-Location $local:scriptRoot
 } catch { Write-Error 'ディレクトリ設定に失敗しました' ; exit 1 }
@@ -176,6 +174,96 @@ try {
 			-Recurse
 	}
 } catch { Write-Error '作業ディレクトリの削除に失敗しました' ; exit 1 }
+
+#過去のバージョンで使用していたファイルを削除、または移行
+Write-Output ''
+Write-Output '-----------------------------------------------------------------'
+Write-Output '過去のバージョンで使用していたファイルを削除、または移行'
+#tver.lockをhistory.lockに移行(v2.6.5→v2.6.6)
+if (Test-Path $(Join-Path $script:scriptRoot '../db/tver.lock') -PathType Leaf) {
+	Remove-Item `
+		-Path $(Join-Path $script:scriptRoot '../db/tver.lock') `
+		-Force
+}
+#tver.sample.csvをhistory.sample.csvに移行(v2.6.5→v2.6.6)
+if (Test-Path $(Join-Path $script:scriptRoot '../db/tver.sample.csv') -PathType Leaf) {
+	Remove-Item `
+		-Path $(Join-Path $script:scriptRoot '../db/tver.sample.csv') `
+		-Force
+}
+#tver.csvをhistory.csvに移行(v2.6.5→v2.6.6)
+if (Test-Path $(Join-Path $script:scriptRoot '../db/tver.csv') -PathType Leaf) {
+	Rename-Item `
+		-Path $(Join-Path $script:scriptRoot '../db/tver.csv') `
+		-NewName 'history.csv' `
+		-Force
+}
+#*.batを*.cmdに移行(v2.6.9→v2.7.0)
+if (Test-Path $(Join-Path $script:scriptRoot '../win/*.cmd') -PathType Leaf) {
+	Remove-Item `
+		-Path $(Join-Path $script:scriptRoot '../win/*.cmd') `
+		-Force
+}
+#TVerRec-Logo-Low.pngを削除(v2.7.5→v2.7.6)
+if (Test-Path $(Join-Path $script:imgDir './TVerRec-Logo-Low.png') -PathType Leaf) {
+	Remove-Item `
+		-Path $(Join-Path $script:imgDir './TVerRec-Logo-Low.png') `
+		-Force
+}
+#ダウンロード用のps1をリネーム(v2.7.5→v2.7.6)
+if (Test-Path $(Join-Path $script:scriptRoot './tverrec_bulk.ps1') -PathType Leaf) {
+	Remove-Item `
+		-Path $(Join-Path $script:scriptRoot './tverrec_bulk.ps1') `
+		-Force
+}
+if (Test-Path $(Join-Path $script:scriptRoot './tverrec_list.ps1') -PathType Leaf) {
+	Remove-Item `
+		-Path $(Join-Path $script:scriptRoot './tverrec_list.ps1') `
+		-Force
+}
+if (Test-Path $(Join-Path $script:scriptRoot './tverrec_single.ps1') -PathType Leaf) {
+	Remove-Item `
+		-Path $(Join-Path $script:scriptRoot './tverrec_single.ps1') `
+		-Force
+}
+if (Test-Path $(Join-Path $script:scriptRoot '../win/a.download_video.cmd') -PathType Leaf) {
+	Remove-Item `
+		-Path $(Join-Path $script:scriptRoot '../win/a.download_video.cmd') `
+		-Force
+}
+if (Test-Path $(Join-Path $script:scriptRoot '../win/y.tverrec_list.cmd') -PathType Leaf) {
+	Remove-Item `
+		-Path $(Join-Path $script:scriptRoot '../win/y.tverrec_list.cmd') `
+		-Force
+}
+if (Test-Path $(Join-Path $script:scriptRoot '../win/z.download_single_video.cmd') -PathType Leaf) {
+	Remove-Item `
+		-Path $(Join-Path $script:scriptRoot '../win/z.download_single_video.cmd') `
+		-Force
+}
+if (Test-Path $(Join-Path $script:scriptRoot '../unix/a.download_video.sh') -PathType Leaf) {
+	Remove-Item `
+		-Path $(Join-Path $script:scriptRoot '../unix/a.download_video.sh') `
+		-Force
+}
+if (Test-Path $(Join-Path $script:scriptRoot '../unix/y.tverrec_list.sh') -PathType Leaf) {
+	Remove-Item `
+		-Path $(Join-Path $script:scriptRoot '../unix/y.tverrec_list.sh') `
+		-Force
+}
+if (Test-Path $(Join-Path $script:scriptRoot '../unix/z.download_single_video.sh') -PathType Leaf) {
+	Remove-Item `
+		-Path $(Join-Path $script:scriptRoot '../unix/z.download_single_video.sh') `
+		-Force
+}
+
+#実行権限の付与
+Write-Output ''
+Write-Output '-----------------------------------------------------------------'
+Write-Output '実行権限の付与'
+if ($IsWindows -eq $false) {
+	(& chmod a+x $(Join-Path $script:scriptRoot '../unix/*.sh'))
+}
 
 Write-Output ''
 Write-Output '==========================================================================='
