@@ -205,9 +205,9 @@ if (Test-Path $(Join-Path $script:scriptRoot '../win/*.cmd') -PathType Leaf) {
 		-Force
 }
 #TVerRec-Logo-Low.pngを削除(v2.7.5→v2.7.6)
-if (Test-Path $(Join-Path $script:imgDir './TVerRec-Logo-Low.png') -PathType Leaf) {
+if (Test-Path $(Join-Path $script:scriptRoot '../img/TVerRec-Logo-Low.png') -PathType Leaf) {
 	Remove-Item `
-		-Path $(Join-Path $script:imgDir './TVerRec-Logo-Low.png') `
+		-Path $(Join-Path $script:scriptRoot '../img/TVerRec-Logo-Low.png') `
 		-Force
 }
 #ダウンロード用のps1をリネーム(v2.7.5→v2.7.6)
