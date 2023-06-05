@@ -61,9 +61,9 @@ CMは入っていないため気に入った番組を配信終了後も残して
 12. TVerRec の安定版が更新されると自動アップデートされます。
 13. Windows 環境のみ GUI も利用可能です。
 
-## 基本的な使い方
+## 使い方
 
-基本的な使い方については[Wiki のこちらのページ](https://github.com/dongaba/TVerRec/wiki/%E5%9F%BA%E6%9C%AC%E7%9A%84%E3%81%AA%E4%BD%BF%E3%81%84%E6%96%B9)を参照してください。
+使い方については[Wiki のこちらのページ](https://github.com/dongaba/TVerRec/wiki/TVerRec%E3%81%AE%E4%BD%BF%E3%81%84%E6%96%B9)を参照してください。
 
 ## ダウンロード対象の設定
 
