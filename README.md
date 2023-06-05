@@ -45,8 +45,8 @@ CM は入っていないため気に入った番組を配信終了後も残し�
 
 ## Windows GUI 版の動作イメージ
 
-<img src="https://github.com/dongaba/TVerRec/assets/83079591/a170ace1-7ec0-40df-bb33-d7fa92a2e780" height="500">
-<img src="https://github.com/dongaba/TVerRec/assets/83079591/0b787ffc-05e7-409b-a958-cb42501210d6" height="500">
+<img src="https://github.com/dongaba/TVerRec/assets/83079591/a170ace1-7ec0-40df-bb33-d7fa92a2e780" height="600">
+<img src="https://github.com/dongaba/TVerRec/assets/83079591/0b787ffc-05e7-409b-a958-cb42501210d6" height="600">
 
 ## Windows CUI 版の動作イメージ
 
