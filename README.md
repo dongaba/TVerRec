@@ -64,6 +64,7 @@ CMは入っていないため気に入った番組を配信終了後も残して
 ## 使い方
 
 使い方については[Wiki のこちらのページ](https://github.com/dongaba/TVerRec/wiki/TVerRec%E3%81%AE%E4%BD%BF%E3%81%84%E6%96%B9)を参照してください。
+それ以外についても、ご不明点があれば[Wiki](https://github.com/dongaba/TVerRec/wiki)を確認するようにしてください。
 
 ## ダウンロード対象の設定
 
@@ -72,10 +73,6 @@ CMは入っていないため気に入った番組を配信終了後も残して
 ## 環境設定方法
 
 初期設定や環境設定の方法については[Wiki のこちらのページ](https://github.com/dongaba/TVerRec/wiki/%E5%88%9D%E6%9C%9F%E8%A8%AD%E5%AE%9A%E3%83%BB%E7%92%B0%E5%A2%83%E8%A8%AD%E5%AE%9A%E3%81%AE%E6%96%B9%E6%B3%95)を参照してください。
-
-## 実行方法
-
-TVerRec の使い方・実行方法については[Wiki こちらのページ](https://github.com/dongaba/TVerRec/wiki/TVerRec%E3%81%AE%E4%BD%BF%E3%81%84%E6%96%B9)を参照してください。
 
 ## ディレクトリ構成
 
