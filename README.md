@@ -15,8 +15,8 @@
 
 TVerRec は、テレビ番組配信サイト TVer(ティーバー<https://tver.jp>)の番組をダウンロード保存するためのダウンローダー、ダウンロード支援ツールです。
 番組のジャンルや出演タレント、番組名などを指定して一括ダウンロードする支援をします。
-CMは入っていないため気に入った番組を配信終了後も残しておくことができます。
-1回起動すれば新しい番組が配信される度にダウンロードされます。
+CM は入っていないため気に入った番組を配信終了後も残しておくことができます。
+1 回起動すれば新しい番組が配信される度にダウンロードされます。
 
 - **TVerRec は Windows PowerShell をサポートません。PowerShell Core でご利用ください。**
 - TVerRec は PowerShell Core をインストールした Windows/MacOS/Linux で動作します。
@@ -42,6 +42,15 @@ CMは入っていないため気に入った番組を配信終了後も残して
 または、Docker を使ってコンテナとして動作させることも可能です。
 コンテナは Linux のイメージで作成されており、必要なツールは全て設定済みの状態で起動します。
 設定ファイルを用意・修正し、ディスクのマウント・バインドを設定すればすぐに利用開始できます。
+
+## Windows GUI 版の動作イメージ
+
+<img src="https://github.com/dongaba/TVerRec/assets/83079591/a170ace1-7ec0-40df-bb33-d7fa92a2e780" height="700">
+<img src="https://github.com/dongaba/TVerRec/assets/83079591/0b787ffc-05e7-409b-a958-cb42501210d6" height="700">
+
+## Windows CUI 版の動作イメージ
+
+<img src="https://github.com/dongaba/TVerRec/assets/83079591/e9f5b227-4b59-45f8-875b-3d60b24e46a9">
 
 ## 主な機能
 
