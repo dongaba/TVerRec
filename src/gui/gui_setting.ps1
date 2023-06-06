@@ -306,7 +306,6 @@ foreach ($local:settingAttribute in $script:settingAttributes) {
 	$local:settingBox.Text = $(loadCurrentSetting $local:settingAttribute)[1].Trim("'")
 	if ($local:settingBox.Text -eq '$true') { $local:settingBox.Text = 'する' }
 	if ($local:settingBox.Text -eq '$false') { $local:settingBox.Text = 'しない' }
-	Write-Output $(loadCurrentSetting $local:settingAttribute)[1].Trim("'")
 }
 
 #endregion 設定ファイルの読み込み
