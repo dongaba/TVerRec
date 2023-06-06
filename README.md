@@ -11,7 +11,7 @@
 [![TVerRec Launch](https://hits.sh/github.com/dongaba/TVerRec/launch.svg?view=total&color=d8453e&labelColor=333333&label=TVerRec%20Launched)](https://hits.sh/github.com/dongaba/TVerRec/launch)
 [![Video Search](https://hits.sh/github.com/dongaba/TVerRec/search.svg?view=total&color=d8453e&labelColor=333333&label=Video%20Searched)](https://hits.sh/github.com/dongaba/TVerRec/search)
 [![Video Download](https://hits.sh/github.com/dongaba/TVerRec/download.svg?view=total&color=d8453e&labelColor=333333&label=Video%20Downloaded)](https://hits.sh/github.com/dongaba/TVerRec/download)
-[![Video Validate](https://hits.sh/github.com/dongaba/TVerRec/validate.svg?view=total&color=d8453e&labelColor=333333&labelColor=333333453e&label=Video%20Validated)](https://hits.sh/github.com/dongaba/TVerRec/validate)
+[![Video Validate](https://hits.sh/github.com/dongaba/TVerRec/validate.svg?view=total&color=d8453e&labelColor=333333&label=Video%20Validated)](https://hits.sh/github.com/dongaba/TVerRec/validate)
 
 TVerRec は、テレビ番組配信サイト TVer(ティーバー<https://tver.jp>)の番組をダウンロード保存するためのダウンローダー、ダウンロード支援ツールです。
 番組のジャンルや出演タレント、番組名などを指定して一括ダウンロードする支援をします。
@@ -28,6 +28,7 @@ CM は入っていないため気に入った番組を配信終了後も残し�
 ## 動作の前提条件
 
 - OS
+
   - Windows
   - MacOS
   - Linux
