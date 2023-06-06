@@ -126,12 +126,27 @@ function writeSetting {
 			$local:settingBoxName = $local:settingAttribute.Replace('$script:', '')
 			$local:settingBox = $script:settingWindow.FindName($local:settingBoxName)
 			if ($local:settingBox.Text -eq '') {
+			} elseif ($local:settingBox.Text -eq 'する') {
+				#するを置換
+				$local:newSetting += $local:settingAttribute + ' = ' + '$true'
+			} elseif ($local:settingBox.Text -eq 'しない') {
+				#しないを置換
+				$local:newSetting += $local:settingAttribute + ' = ' + '$false'
+			} elseif ( [int]::TryParse($local:settingBox.Text, [ref]$null) ) {
+				#数字はシングルクォーテーション不要
+				$local:newSetting += $local:settingAttribute + ' = ' + $local:settingBox.Text
+			} elseif ($local:settingBox.Text -match '^[a-zA-Z]:') {
+				#ドライブ文字列で開始する場合はシングルクォーテーション必要
+				$local:newSetting += $local:settingAttribute + ' = ' + '''' + $local:settingBox.Text + ''''
 			} elseif ($local:settingBox.Text.Contains('$') `
 					-Or $local:settingBox.Text.Contains('{') `
 					-Or $local:settingBox.Text.Contains('(') `
-					-Or [int]::TryParse($local:settingBox.Text, [ref]$null) ) {
+					-Or $local:settingBox.Text.Contains('}') `
+					-Or $local:settingBox.Text.Contains(')') ) {
+				#Powershellの変数や関数等を含む場合はシングルクォーテーション不要
 				$local:newSetting += $local:settingAttribute + ' = ' + $local:settingBox.Text
 			} else {
+				#それ以外はシングルクォーテーション必要
 				$local:newSetting += $local:settingAttribute + ' = ' + '''' + $local:settingBox.Text + ''''
 			}
 		}
@@ -289,6 +304,9 @@ foreach ($local:settingAttribute in $script:settingAttributes) {
 	$local:settingBoxName = $local:settingAttribute.Replace('$script:', '')
 	$local:settingBox = $script:settingWindow.FindName($local:settingBoxName)
 	$local:settingBox.Text = $(loadCurrentSetting $local:settingAttribute)[1].Trim("'")
+	if ($local:settingBox.Text -eq '$true') { $local:settingBox.Text = 'する' }
+	if ($local:settingBox.Text -eq '$false') { $local:settingBox.Text = 'しない' }
+	Write-Output $(loadCurrentSetting $local:settingAttribute)[1].Trim("'")
 }
 
 #endregion 設定ファイルの読み込み

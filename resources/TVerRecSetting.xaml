@@ -958,8 +958,8 @@
                         Margin="20,0,20,0"
                         Width="100"
                         HorizontalAlignment="Left">
-                        <ComboBoxItem>$false</ComboBoxItem>
-                        <ComboBoxItem>$true</ComboBoxItem>
+                        <ComboBoxItem>しない</ComboBoxItem>
+                        <ComboBoxItem>する</ComboBoxItem>
                     </ComboBox>
 
                     <Expander
@@ -979,8 +979,8 @@
                         Style="{DynamicResource ComboBoxStyle}"
                         Margin="20,0,20,0"
                         Width="100" HorizontalAlignment="Left">
-                        <ComboBoxItem>$false</ComboBoxItem>
-                        <ComboBoxItem>$true</ComboBoxItem>
+                        <ComboBoxItem>しない</ComboBoxItem>
+                        <ComboBoxItem>する</ComboBoxItem>
                     </ComboBox>
 
                     <Expander
@@ -1000,8 +1000,8 @@
                         Margin="20,0,20,0"
                         Width="100"
                         HorizontalAlignment="Left">
-                        <ComboBoxItem>$false</ComboBoxItem>
-                        <ComboBoxItem>$true</ComboBoxItem>
+                        <ComboBoxItem>しない</ComboBoxItem>
+                        <ComboBoxItem>する</ComboBoxItem>
                     </ComboBox>
 
                     <Expander
@@ -1044,8 +1044,8 @@
                         Margin="20,0,20,0"
                         Width="100"
                         HorizontalAlignment="Left">
-                        <ComboBoxItem>$false</ComboBoxItem>
-                        <ComboBoxItem>$true</ComboBoxItem>
+                        <ComboBoxItem>しない</ComboBoxItem>
+                        <ComboBoxItem>する</ComboBoxItem>
                     </ComboBox>
 
                     <Expander
@@ -1065,8 +1065,8 @@
                         Margin="20,0,20,0"
                         Width="100"
                         HorizontalAlignment="Left">
-                        <ComboBoxItem>$false</ComboBoxItem>
-                        <ComboBoxItem>$true</ComboBoxItem>
+                        <ComboBoxItem>しない</ComboBoxItem>
+                        <ComboBoxItem>する</ComboBoxItem>
                     </ComboBox>
 
                     <Expander
@@ -1088,8 +1088,8 @@
                         Margin="20,0,20,0"
                         Width="100"
                         HorizontalAlignment="Left">
-                        <ComboBoxItem>$false</ComboBoxItem>
-                        <ComboBoxItem>$true</ComboBoxItem>
+                        <ComboBoxItem>しない</ComboBoxItem>
+                        <ComboBoxItem>する</ComboBoxItem>
                     </ComboBox>
 
                     <Expander
@@ -1111,8 +1111,8 @@
                         Margin="20,0,20,0"
                         Width="100"
                         HorizontalAlignment="Left">
-                        <ComboBoxItem>$false</ComboBoxItem>
-                        <ComboBoxItem>$true</ComboBoxItem>
+                        <ComboBoxItem>しない</ComboBoxItem>
+                        <ComboBoxItem>する</ComboBoxItem>
                     </ComboBox>
 
                     <Expander
@@ -1132,8 +1132,8 @@
                         Margin="20,0,20,0"
                         Width="100"
                         HorizontalAlignment="Left">
-                        <ComboBoxItem>$false</ComboBoxItem>
-                        <ComboBoxItem>$true</ComboBoxItem>
+                        <ComboBoxItem>しない</ComboBoxItem>
+                        <ComboBoxItem>する</ComboBoxItem>
                     </ComboBox>
 
                     <Expander
