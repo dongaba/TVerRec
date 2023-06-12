@@ -537,11 +537,17 @@ function getVideoLinksFromKeyword {
 		Write-Warning '番組名検索は廃止されました。スキップします Err:08'
 		continue
 
+	} elseif ($local:keywordName.IndexOf('sitemap') -eq 0) {
+		#サイトマップから番組ページのLinkを取得
+		goAnal -Event 'search' -Type 'sitemap'
+		try { $script:tverLinks = getLinkFromSiteMap }
+		catch { Write-Warning '情報取得エラー。スキップします Err:09'; continue }
+
 	} else {
 		#タレント名や番組名などURL形式でない場合APIで検索結果から番組ページのLinkを取得
 		goAnal -Event 'search' -Type 'free' -ID $local:keywordName
 		try { $script:tverLinks = getLinkFromFreeKeyword ($local:keywordName) }
-		catch { Write-Warning '情報取得エラー。スキップします Err:09'; continue }
+		catch { Write-Warning '情報取得エラー。スキップします Err:10'; continue }
 	}
 
 	$script:tverLinks = $script:tverLinks | Sort-Object | Get-Unique
@@ -985,6 +991,73 @@ function getLinkFromFreeKeyword {
 }
 
 #----------------------------------------------------------------------
+#サイトマップから番組ページのLinkを取得
+#----------------------------------------------------------------------
+function getLinkFromSiteMap {
+	[OutputType([System.Object[]])]
+	Param ()
+
+	$local:callSearchURL = 'https://tver.jp/sitemap.xml'
+	$local:searchResultsRaw = `
+		Invoke-RestMethod `
+		-Uri $local:callSearchURL `
+		-Method 'GET' `
+		-Headers $script:requestHeader `
+		-TimeoutSec $script:timeoutSec
+	$local:searchResults = $local:searchResultsRaw.urlset.url.loc | Sort-Object | Get-Unique
+	$local:searchResultCount = $local:searchResults.Length
+
+	for ($i = 0; $i -lt $local:searchResultCount; $i++) {
+		if ($local:searchResults[$i] -like '*/episodes/*') {
+			$script:tverLinks += $local:searchResults[$i].Replace('https://tver.jp', '')
+		} elseif ($script:sitemapParseEpisodeOnly -eq $true) {
+			Write-Warning 'Episodeではないためスキップします'
+		} else {
+			if ($local:searchResults[$i] -like '*/seasons/*') {
+				try {
+					$script:tverLinks += getLinkFromSeasonID ($local:searchResults[$i].Replace('https://tver.jp/', ''))
+					$script:tverLinks = $script:tverLinks | Sort-Object | Get-Unique
+				} catch { Write-Warning '情報取得エラー。スキップします Err:11'; continue }
+			} elseif ($local:searchResults[$i] -like '*/series/*') {
+				try {
+					$script:tverLinks += getLinkFromSeriesID ($local:searchResults[$i].Replace('https://tver.jp/', ''))
+					$script:tverLinks = $script:tverLinks | Sort-Object | Get-Unique
+				} catch { Write-Warning '情報取得エラー。スキップします Err:12'; continue }
+			} elseif ($local:searchResults[$i] -eq 'https://tver.jp/') {
+				#トップページ
+				#別のキーワードがあるためため対応予定なし
+			} elseif ($local:searchResults[$i] -like '*/info/*') {
+				#お知らせ
+				#番組ページではないため対応予定なし
+			} elseif ($local:searchResults[$i] -like '*/live/*') {
+				#追っかけ再生
+				#対応していない
+			} elseif ($local:searchResults[$i] -like '*/mypage/*') {
+				#マイページ
+				#ブラウザのCookieを処理しないといけないと思われるため対応予定なし
+			} elseif ($local:searchResults[$i] -like '*/program*') {
+				#番組表
+				#番組ページではないため対応予定なし
+			} elseif ($local:searchResults[$i] -like '*/ranking*') {
+				#ランキング
+				#他でカバーできるため対応予定なし
+			} elseif ($local:searchResults[$i] -like '*/specials*') {
+				#特集
+				#他でカバーできるため対応予定なし
+			} elseif ($local:searchResults[$i] -like '*/topics*') {
+				#トピック
+				#番組ページではないため対応予定なし
+			} else {
+				Write-Warning "未知のパターンです。 - $($local:searchResults[$i])"
+			}
+		}
+	}
+	[System.GC]::Collect()
+
+	return $script:tverLinks | Sort-Object | Get-Unique
+}
+
+#----------------------------------------------------------------------
 #SeasonIDによる番組検索から番組ページのLinkを取得
 #----------------------------------------------------------------------
 function getLinkFromSeasonID {
@@ -1131,7 +1204,7 @@ function downloadTVerVideo {
 	#TVerのAPIを叩いて番組情報取得
 	goAnal -Event 'getinfo' -Type 'link' -ID $script:videoLink
 	try { getVideoInfo -Link $script:videoLink }
-	catch { Write-Warning '情報取得エラー。スキップします Err:10'; continue }
+	catch { Write-Warning '情報取得エラー。スキップします Err:90'; continue }
 
 	#ダウンロードファイル情報をセット
 	$script:videoName = getVideoFileName `
@@ -1336,7 +1409,7 @@ function generateTVerVideoList {
 	#TVerのAPIを叩いて番組情報取得
 	goAnal -Event 'getinfo' -Type 'link' -ID $script:videoLink
 	try { getVideoInfo -Link $script:videoLink }
-	catch { Write-Warning '情報取得エラー。スキップします Err:10'; continue }
+	catch { Write-Warning '情報取得エラー。スキップします Err:90'; continue }
 
 	#ダウンロード対象外に入っている番組の場合はリスト出力しない
 	foreach ($local:ignoreRegexTitle in $script:ignoreRegexTitles) {
@@ -1751,7 +1824,7 @@ function executeYtdl {
 	$local:ytdlArgs += ' --abort-on-error'
 	$local:ytdlArgs += ' --no-continue'
 	$local:ytdlArgs += ' --windows-filenames'
-	$local:ytdlArgs += ' --newline'
+	#	$local:ytdlArgs += ' --newline'
 	$local:ytdlArgs += " --concurrent-fragments $script:parallelDownloadNumPerFile"
 	$local:ytdlArgs += ' --embed-thumbnail'
 	$local:ytdlArgs += ' --all-subs'

@@ -126,6 +126,9 @@ $script:windowShowStyle = 'Minimized'
 #ffmpegのデコードオプション
 $script:ffmpegDecodeOption = ''
 
+#SiteMap処理時にEpisodeだけ取得
+$script:sitemapParseEpisodeOnly = $true
+
 #以下は$script:ffmpegDecodeOptionの設定例
 
 #QSV : for Intel CPUs (Intel内蔵グラフィックを使用)

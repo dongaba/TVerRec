@@ -225,7 +225,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 			#TVerのAPIを叩いて番組情報取得
 			goAnal -Event 'getinfo' -Type 'link' -ID $_
 			try { getVideoInfo -Link $_ }
-			catch { Write-Warning '情報取得エラー。スキップします Err:10'; continue }
+			catch { Write-Warning '情報取得エラー。スキップします Err:90'; continue }
 
 			#ダウンロード対象外に入っている番組の場合はリスト出力しない
 			foreach ($ignoreRegexTitle in $using:script:ignoreRegexTitles) {

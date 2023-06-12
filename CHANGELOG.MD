@@ -1,5 +1,15 @@
 ﻿# Change Log
 
+## [2.8.0](https://github.com/dongaba/TVerRec/releases/tag/v2.8.0)
+
+### 2.7.9 Added
+
+- サイトマップを処理して番組をダウンロードする機能を追加
+
+### 2.8.0 Changed
+
+### 2.8.0 Fixed
+
 ## [2.7.9](https://github.com/dongaba/TVerRec/releases/tag/v2.7.9)
 
 ### 2.7.9 Added
