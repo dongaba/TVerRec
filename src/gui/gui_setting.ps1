@@ -126,17 +126,21 @@ function writeSetting {
 			$local:settingBoxName = $local:settingAttribute.Replace('$script:', '')
 			$local:settingBox = $script:settingWindow.FindName($local:settingBoxName)
 			if ($local:settingBox.Text -eq '') {
+				#設定していないときは出力しない
 			} elseif ($local:settingBox.Text -eq 'する') {
-				#するを置換
+				#するを$trueに置換
 				$local:newSetting += $local:settingAttribute + ' = ' + '$true'
 			} elseif ($local:settingBox.Text -eq 'しない') {
-				#しないを置換
+				#しないを$falseに置換
 				$local:newSetting += $local:settingAttribute + ' = ' + '$false'
 			} elseif ( [int]::TryParse($local:settingBox.Text, [ref]$null) ) {
 				#数字はシングルクォーテーション不要
 				$local:newSetting += $local:settingAttribute + ' = ' + $local:settingBox.Text
 			} elseif ($local:settingBox.Text -match '^[a-zA-Z]:') {
 				#ドライブ文字列で開始する場合はシングルクォーテーション必要
+				$local:newSetting += $local:settingAttribute + ' = ' + '''' + $local:settingBox.Text + ''''
+			} elseif ($local:settingBox.Text -match '^\\\\') {
+				#UNCパスの場合はシングルクォーテーション必要
 				$local:newSetting += $local:settingAttribute + ' = ' + '''' + $local:settingBox.Text + ''''
 			} elseif ($local:settingBox.Text.Contains('$') `
 					-Or $local:settingBox.Text.Contains('{') `

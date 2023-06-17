@@ -34,18 +34,30 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 $progressPreference = 'silentlyContinue'
 switch ($true) {
 	$IsWindows {
-		$script:os = [String][System.Environment]::OSVersion
+		#		$script:os = [String][System.Environment]::OSVersion
+		$script:os = (Get-WmiObject -Class Win32_OperatingSystem).Caption
+		$script:kernel = (Get-WmiObject -Class Win32_OperatingSystem).Version
 		$script:arch = $Env:PROCESSOR_ARCHITECTURE.ToLower()
+		$script:guid = (Get-WmiObject -Class Win32_ComputerSystemProduct).UUID
 		break
 	}
 	$IsLinux {
-		$script:os = "Linux $([String][System.Environment]::OSVersion.Version)"
+		if ((Test-Path '/etc/os-release')) {
+			$script:os = (& grep 'PRETTY_NAME' /etc/os-release).replace('PRETTY_NAME=', '').Replace('"', '')
+		} else { $script:os = (& uname -n) }
+		$script:kernel = [String][System.Environment]::OSVersion.Version
 		$script:arch = (& uname -m | tr '[:upper:]' '[:lower:]')
+		$script:guid = (Get-Content /etc/machine-id)
+		if ((Test-Path '/etc/machine-id')) { $script:guid = (Get-Content /etc/machine-id) }
+		else { $script:guid = [guid]::NewGuid() }
 		break
 	}
 	$IsMacOS {
-		$script:os = "macOS $([String][System.Environment]::OSVersion.Version)"
+		$script:os = (& sw_vers -productName)
+		$script:kernel = [String][System.Environment]::OSVersion.Version
 		$script:arch = (& uname -m | tr '[:upper:]' '[:lower:]')
+		if ((Test-Path '/etc/machine-id')) { $script:guid = (Get-Content /etc/machine-id) }
+		else { $script:guid = [guid]::NewGuid() }
 		break
 	}
 	default {
@@ -55,7 +67,6 @@ switch ($true) {
 }
 $script:locale = (Get-Culture).Name
 $script:tz = [String][TimeZoneInfo]::Local.BaseUtcOffset
-$script:guid = [guid]::NewGuid()
 $script:ipapi = ''
 $script:clientEnv = @{}
 try {
@@ -74,11 +85,12 @@ $script:clientEnv.Add('AppVersion', $script:appVersion)
 $script:clientEnv.Add('PSEdition', $PSVersionTable.PSEdition)
 $script:clientEnv.Add('PSVersion', $PSVersionTable.PSVersion)
 $script:clientEnv.Add('OS', $script:os)
+$script:clientEnv.Add('Kernel', $script:kernel)
 $script:clientEnv.Add('Arch', $script:arch)
 $script:clientEnv.Add('Locale', $script:locale)
 $script:clientEnv.Add('TZ', $script:tz)
-$script:clientEnv = $script:clientEnv.GetEnumerator() `
-| Sort-Object -Property key
+$script:clientEnv.Add('GUID', $script:guid)
+$script:clientEnv = $script:clientEnv.GetEnumerator() | Sort-Object -Property key
 $progressPreference = 'Continue'
 
 #----------------------------------------------------------------------
@@ -379,7 +391,8 @@ function deleteFiles {
 			$null = Get-ChildItem -LiteralPath $local:basePath -Recurse -File -Filter $local:delCondition `
 			| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays($local:delPeriod) } `
 			| Remove-Item -Force -ErrorAction SilentlyContinue `
-		}
+
+  }
 	} catch { Write-Warning '　削除できないファイルがありました' }
 
 }

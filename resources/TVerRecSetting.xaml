@@ -1140,6 +1140,29 @@
                         Margin="10,10,10,0"
                         IsExpanded="False"
                         FontFamily="Yu Gothic UI"
+                        Header="サイトマップ処理時にエピソードのみ処理">
+                        <TextBlock
+                            Margin="20,0,20,5"
+                            TextWrapping="Wrap">
+                            キーワードファイルでサイトマップ指定をした際にエピソードのみを処理するかどうかを設定します。<LineBreak/>
+                            現在のところ、エピソードだけの処理でもすべての番組動画が含まれているようなので、エピソードだけの処理でも全番組のダウンロードが可能なようです。<LineBreak/>
+                            処理時間が長くなりますが、エピソード以外も処理することでダウンロード対象番組が増える可能性があります。<LineBreak/>
+                        </TextBlock>
+                    </Expander>
+                    <ComboBox
+                        x:Name="sitemapParseEpisodeOnly"
+                        Style="{DynamicResource ComboBoxStyle}"
+                        Margin="20,0,20,0"
+                        Width="100"
+                        HorizontalAlignment="Left">
+                        <ComboBoxItem>しない</ComboBoxItem>
+                        <ComboBoxItem>する</ComboBoxItem>
+                    </ComboBox>
+
+                    <Expander
+                        Margin="10,10,10,0"
+                        IsExpanded="False"
+                        FontFamily="Yu Gothic UI"
                         Header="youtube-dlとffmpegのウィンドウの表示方法">
                         <TextBlock
                             Margin="20,0,20,5"
