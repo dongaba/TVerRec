@@ -2,11 +2,13 @@
 
 ## [2.8.0](https://github.com/dongaba/TVerRec/releases/tag/v2.8.0)
 
-### 2.7.9 Added
+### 2.8.0 Added
 
 - サイトマップを処理して番組をダウンロードする機能を追加
 
 ### 2.8.0 Changed
+
+- GUI の設定画面で設定をしない場合の表示を変更
 
 ### 2.8.0 Fixed
 
@@ -16,11 +18,11 @@
 
 ### 2.7.9 Changed
 
-- Windows環境でuser_setting.ps1が存在しない場合に、GUIの設定画面を表示するように変更
+- Windows 環境で user_setting.ps1 が存在しない場合に、GUI の設定画面を表示するように変更
 
 ### 2.7.9 Fixed
 
-- GUIの設定画面がフリーズする問題を修正
+- GUI の設定画面がフリーズする問題を修正
 
 ## [2.7.8](https://github.com/dongaba/TVerRec/releases/tag/v2.7.8)
 

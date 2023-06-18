@@ -739,6 +739,7 @@
                         </Grid.ColumnDefinitions>
                         <TextBox
                             x:Name="downloadBaseDir"
+                            Text="未設定"
                             Style="{DynamicResource TextBoxStyle}"
                             Margin="20,0,0,0"
                             VerticalScrollBarVisibility="Auto"
@@ -774,6 +775,7 @@
                         </Grid.ColumnDefinitions>
                         <TextBox
                             x:Name="downloadWorkDir"
+                            Text="未設定"
                             Style="{DynamicResource TextBoxStyle}"
                             Margin="20,0,20,0"
                             VerticalScrollBarVisibility="Auto"
@@ -810,6 +812,7 @@
                         </Grid.ColumnDefinitions>
                         <TextBox
                             x:Name="saveBaseDir"
+                            Text="未設定"
                             Style="{DynamicResource TextBoxStyle}"
                             Margin="20,0,20,0"
                             VerticalScrollBarVisibility="Auto"
@@ -878,6 +881,7 @@
                     </Expander>
                     <TextBox
                         x:Name="parallelDownloadFileNum"
+                        Text="デフォルト値"
                         Style="{DynamicResource TextBoxStyle}"
                         Margin="20,0,20,0"
                         VerticalScrollBarVisibility="Auto"
@@ -897,6 +901,7 @@
                     </Expander>
                     <TextBox
                         x:Name="parallelDownloadNumPerFile"
+                        Text="デフォルト値"
                         Style="{DynamicResource TextBoxStyle}"
                         Margin="20,0,20,0"
                         VerticalScrollBarVisibility="Auto"
@@ -917,6 +922,7 @@
                     </Expander>
                     <TextBox
                         x:Name="multithreadNum"
+                        Text="デフォルト値"
                         Style="{DynamicResource TextBoxStyle}"
                         Margin="20,0,20,0"
                         VerticalScrollBarVisibility="Auto"
@@ -936,6 +942,7 @@
                     </Expander>
                     <TextBox
                         x:Name="timeoutSec"
+                        Text="デフォルト値"
                         Style="{DynamicResource TextBoxStyle}"
                         Margin="20,0,20,0"
                         VerticalScrollBarVisibility="Auto"
@@ -954,10 +961,12 @@
                     </Expander>
                     <ComboBox
                         x:Name="sortVideoByMedia"
+                        SelectedIndex="0"
                         Style="{DynamicResource ComboBoxStyle}"
                         Margin="20,0,20,0"
                         Width="100"
                         HorizontalAlignment="Left">
+                        <ComboBoxItem>デフォルト値</ComboBoxItem>
                         <ComboBoxItem>しない</ComboBoxItem>
                         <ComboBoxItem>する</ComboBoxItem>
                     </ComboBox>
@@ -976,9 +985,11 @@
                     </Expander>
                     <ComboBox
                         x:Name="addEpisodeNumber"
+                        SelectedIndex="0"
                         Style="{DynamicResource ComboBoxStyle}"
                         Margin="20,0,20,0"
                         Width="100" HorizontalAlignment="Left">
+                        <ComboBoxItem>デフォルト値</ComboBoxItem>
                         <ComboBoxItem>しない</ComboBoxItem>
                         <ComboBoxItem>する</ComboBoxItem>
                     </ComboBox>
@@ -996,10 +1007,12 @@
                     </Expander>
                     <ComboBox
                         x:Name="removeSpecialNote"
+                        SelectedIndex="0"
                         Style="{DynamicResource ComboBoxStyle}"
                         Margin="20,0,20,0"
                         Width="100"
                         HorizontalAlignment="Left">
+                        <ComboBoxItem>デフォルト値</ComboBoxItem>
                         <ComboBoxItem>しない</ComboBoxItem>
                         <ComboBoxItem>する</ComboBoxItem>
                     </ComboBox>
@@ -1019,10 +1032,12 @@
                     </Expander>
                     <ComboBox
                         x:Name="preferredYoutubedl"
+                        SelectedIndex="0"
                         Style="{DynamicResource ComboBoxStyle}"
                         Margin="20,0,20,0"
                         Width="100"
                         HorizontalAlignment="Left">
+                        <ComboBoxItem>デフォルト値</ComboBoxItem>
                         <ComboBoxItem>yt-dlp</ComboBoxItem>
                         <ComboBoxItem>ytdl-patched</ComboBoxItem>
                     </ComboBox>
@@ -1040,10 +1055,12 @@
                     </Expander>
                     <ComboBox
                         x:Name="disableUpdateYoutubedl"
+                        SelectedIndex="0"
                         Style="{DynamicResource ComboBoxStyle}"
                         Margin="20,0,20,0"
                         Width="100"
                         HorizontalAlignment="Left">
+                        <ComboBoxItem>デフォルト値</ComboBoxItem>
                         <ComboBoxItem>しない</ComboBoxItem>
                         <ComboBoxItem>する</ComboBoxItem>
                     </ComboBox>
@@ -1061,10 +1078,12 @@
                     </Expander>
                     <ComboBox
                         x:Name="disableUpdateFfmpeg"
+                        SelectedIndex="0"
                         Style="{DynamicResource ComboBoxStyle}"
                         Margin="20,0,20,0"
                         Width="100"
                         HorizontalAlignment="Left">
+                        <ComboBoxItem>デフォルト値</ComboBoxItem>
                         <ComboBoxItem>しない</ComboBoxItem>
                         <ComboBoxItem>する</ComboBoxItem>
                     </ComboBox>
@@ -1084,10 +1103,12 @@
                     </Expander>
                     <ComboBox
                         x:Name="forceSoftwareDecodeFlag"
+                        SelectedIndex="0"
                         Style="{DynamicResource ComboBoxStyle}"
                         Margin="20,0,20,0"
                         Width="100"
                         HorizontalAlignment="Left">
+                        <ComboBoxItem>デフォルト値</ComboBoxItem>
                         <ComboBoxItem>しない</ComboBoxItem>
                         <ComboBoxItem>する</ComboBoxItem>
                     </ComboBox>
@@ -1107,10 +1128,12 @@
                     </Expander>
                     <ComboBox
                         x:Name="simplifiedValidation"
+                        SelectedIndex="0"
                         Style="{DynamicResource ComboBoxStyle}"
                         Margin="20,0,20,0"
                         Width="100"
                         HorizontalAlignment="Left">
+                        <ComboBoxItem>デフォルト値</ComboBoxItem>
                         <ComboBoxItem>しない</ComboBoxItem>
                         <ComboBoxItem>する</ComboBoxItem>
                     </ComboBox>
@@ -1128,10 +1151,12 @@
                     </Expander>
                     <ComboBox
                         x:Name="disableValidation"
+                        SelectedIndex="0"
                         Style="{DynamicResource ComboBoxStyle}"
                         Margin="20,0,20,0"
                         Width="100"
                         HorizontalAlignment="Left">
+                        <ComboBoxItem>デフォルト値</ComboBoxItem>
                         <ComboBoxItem>しない</ComboBoxItem>
                         <ComboBoxItem>する</ComboBoxItem>
                     </ComboBox>
@@ -1151,10 +1176,12 @@
                     </Expander>
                     <ComboBox
                         x:Name="sitemapParseEpisodeOnly"
+                        SelectedIndex="0"
                         Style="{DynamicResource ComboBoxStyle}"
                         Margin="20,0,20,0"
                         Width="100"
                         HorizontalAlignment="Left">
+                        <ComboBoxItem>デフォルト値</ComboBoxItem>
                         <ComboBoxItem>しない</ComboBoxItem>
                         <ComboBoxItem>する</ComboBoxItem>
                     </ComboBox>
@@ -1176,10 +1203,12 @@
                     </Expander>
                     <ComboBox
                         x:Name="windowShowStyle"
+                        SelectedIndex="0"
                         Style="{DynamicResource ComboBoxStyle}"
                         Margin="20,0,20,0"
                         Width="100"
                         HorizontalAlignment="Left">
+                        <ComboBoxItem>デフォルト値</ComboBoxItem>
                         <ComboBoxItem>Minimized</ComboBoxItem>
                         <ComboBoxItem>Hidden</ComboBoxItem>
                         <ComboBoxItem>Normal</ComboBoxItem>
@@ -1202,6 +1231,7 @@
                     </Expander>
                     <TextBox
                         x:Name="ffmpegDecodeOption"
+                        Text="未設定"
                         Style="{DynamicResource TextBoxStyle}"
                         Margin="20,0,20,0"
                         VerticalScrollBarVisibility="Auto"

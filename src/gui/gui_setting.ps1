@@ -26,6 +26,10 @@
 ###################################################################################
 using namespace System.Windows.Threading
 
+$VerbosePreference = 'Continue'						#詳細メッセージ
+$DebugPreference = 'Continue'						#デバッグメッセージ
+$ErrorActionPreference = 'Stop'						#エラー時中断
+
 if ($IsWindows -eq $false) { Write-Error 'Windows以外では動作しません'; Start-Sleep 10 ; exit 1 }
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName PresentationFramework
@@ -77,6 +81,23 @@ function DoWpfEvents {
 	[Dispatcher]::PushFrame($script:frame)
 }
 
+#system_setting.ps1から各設定項目を読み込む
+function loadDefaultSetting {
+	Param (
+		[Parameter(Mandatory = $true, Position = 0)]
+		[String]$local:key
+	)
+	try {
+		$local:defaultSetting = `
+		$(Select-String `
+				-Pattern "^$($local:key.Replace('$', '\$'))" `
+				-Path $script:systemSettingFile `
+			| ForEach-Object { $_.Line }).split('=')[1].Trim()
+	} catch { $local:defaultSetting = '' }
+
+	return $local:defaultSetting.Trim("'")
+}
+
 #user_setting.ps1から各設定項目を読み込む
 function loadCurrentSetting {
 	Param (
@@ -84,13 +105,14 @@ function loadCurrentSetting {
 		[String]$local:key
 	)
 	try {
-		$local:lineNum = Select-String $local:key.Replace('$', '\$') $script:userSettingFile `
-		| ForEach-Object { $_.LineNumber }
-		$local:currentSetting = $(Select-String $local:key.Replace('$', '\$') $script:userSettingFile `
+		$local:currentSetting = `
+		$(Select-String `
+				-Pattern "^$($local:key.Replace('$', '\$'))" `
+				-Path $script:userSettingFile `
 			| ForEach-Object { $_.Line }).split('=')[1].Trim()
-	} catch { $local:lineNum = ''; $local:currentSetting = '' }
+	} catch { $local:currentSetting = '' }
 
-	return $local:lineNum, $local:currentSetting
+	return $local:currentSetting.Trim("'")
 }
 
 #user_setting.ps1に各設定項目を書き込む
@@ -126,6 +148,10 @@ function writeSetting {
 			$local:settingBoxName = $local:settingAttribute.Replace('$script:', '')
 			$local:settingBox = $script:settingWindow.FindName($local:settingBoxName)
 			if ($local:settingBox.Text -eq '') {
+				#設定していないときは出力しない
+			} elseif ($local:settingBox.Text -eq 'デフォルト値') {
+				#設定していないときは出力しない
+			} elseif ($local:settingBox.Text -eq '未設定') {
 				#設定していないときは出力しない
 			} elseif ($local:settingBox.Text -eq 'する') {
 				#するを$trueに置換
@@ -180,6 +206,7 @@ function writeSetting {
 #メイン処理
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+$script:systemSettingFile = $(Join-Path $script:confDir './system_setting.ps1')
 $script:userSettingFile = $(Join-Path $script:confDir './user_setting.ps1')
 
 #----------------------------------------------------------------------
@@ -298,18 +325,23 @@ $script:settingAttributes += '$script:disableUpdateFfmpeg'
 $script:settingAttributes += '$script:forceSoftwareDecodeFlag'
 $script:settingAttributes += '$script:simplifiedValidation'
 $script:settingAttributes += '$script:disableValidation'
+$script:settingAttributes += '$script:sitemapParseEpisodeOnly'
 $script:settingAttributes += '$script:windowShowStyle'
 $script:settingAttributes += '$script:ffmpegDecodeOption'
 
+$local:defaultSetting = @{}
 $local:currentSetting = @{}
 
 foreach ($local:settingAttribute in $script:settingAttributes) {
+	$local:defaultSetting[$local:settingAttribute] = loadDefaultSetting $local:settingAttribute
 	$local:currentSetting[$local:settingAttribute] = loadCurrentSetting $local:settingAttribute
 	$local:settingBoxName = $local:settingAttribute.Replace('$script:', '')
 	$local:settingBox = $script:settingWindow.FindName($local:settingBoxName)
-	$local:settingBox.Text = $(loadCurrentSetting $local:settingAttribute)[1].Trim("'")
-	if ($local:settingBox.Text -eq '$true') { $local:settingBox.Text = 'する' }
-	if ($local:settingBox.Text -eq '$false') { $local:settingBox.Text = 'しない' }
+	if ( $(loadCurrentSetting $local:settingAttribute) -ne '') {
+		$local:settingBox.Text = loadCurrentSetting $local:settingAttribute
+		if ($local:settingBox.Text -eq '$true') { $local:settingBox.Text = 'する' }
+		if ($local:settingBox.Text -eq '$false') { $local:settingBox.Text = 'しない' }
+	}
 }
 
 #endregion 設定ファイルの読み込み
