@@ -35,10 +35,10 @@ $progressPreference = 'silentlyContinue'
 switch ($true) {
 	$IsWindows {
 		#		$script:os = [String][System.Environment]::OSVersion
-		$script:os = (Get-WmiObject -Class Win32_OperatingSystem).Caption
-		$script:kernel = (Get-WmiObject -Class Win32_OperatingSystem).Version
+		$script:os = (Get-CimInstance -Class Win32_OperatingSystem).Caption
+		$script:kernel = (Get-CimInstance -Class Win32_OperatingSystem).Version
 		$script:arch = $Env:PROCESSOR_ARCHITECTURE.ToLower()
-		$script:guid = (Get-WmiObject -Class Win32_ComputerSystemProduct).UUID
+		$script:guid = (Get-CimInstance -Class Win32_ComputerSystemProduct).UUID
 		break
 	}
 	$IsLinux {
