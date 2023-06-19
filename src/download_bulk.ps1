@@ -89,7 +89,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#いろいろ初期化
 	$local:videoLink = ''
 	$local:videoLinks = @()
-	$local:searchResultCount = 0
+	$local:processedCount = 0
 
 	#ジャンルページチェックタイトルの表示
 	Write-Output ''
@@ -116,13 +116,14 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 	foreach ($local:resultLink in $local:resultLinks) {
-		Write-Output "　$($local:resultLink)をチェック中"
 		$local:historyMatch = $script:historyFileData `
 		| Where-Object { $_.videoPage -eq $local:resultLink }
 		if ($null -eq $local:historyMatch) {
 			$local:videoLinks += $local:resultLink
+			Write-Output "　処理履歴との照合 $($local:resultLink.Replace('https://tver.jp/episodes/','')) ... ❗ 未処理"
 		} else {
-			$local:searchResultCount = $local:searchResultCount + 1
+			$local:processedCount = $local:processedCount + 1
+			Write-Output "　処理履歴との照合 $($local:resultLink.Replace('https://tver.jp/episodes/','')) ... ✔️"
 			continue
 		}
 	}
@@ -131,7 +132,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 	$local:videoNum = 0
 	if ($null -eq $local:videoLinks) { $local:videoTotal = 0 }
 	else { $local:videoTotal = $local:videoLinks.Length }
-	Write-Output "　処理対象$($local:videoTotal)本 処理済$($local:searchResultCount)本"
+	Write-Output "　処理対象$($local:videoTotal)本 処理済$($local:processedCount)本"
 
 	#処理時間の推計
 	$local:secElapsed = (Get-Date) - $local:totalStartTime

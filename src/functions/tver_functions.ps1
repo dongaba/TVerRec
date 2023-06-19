@@ -467,7 +467,8 @@ function getVideoLinksFromKeyword {
 		'Origin'               = 'https://tver.jp'
 		'Referer'              = 'https://tver.jp'
 	}
-	$script:tverLinks = @()
+	$script:episodeLinks = @()
+	$script:seriesLinks = @()
 	if ( $local:keywordName.IndexOf('https://tver.jp') -eq 0) {
 		#URL形式の場合番組ページのLinkを取得
 		try {
@@ -476,7 +477,7 @@ function getVideoLinksFromKeyword {
 				-TimeoutSec $script:timeoutSec
 		} catch { Write-Warning '情報取得エラー。スキップします Err:00' ; continue }
 		try {
-			$script:tverLinks = (
+			$script:episodeLinks = (
 				$local:keywordNamePage.Links `
 				| Where-Object { `
 					(href -Like '*lp*') `
@@ -493,41 +494,41 @@ function getVideoLinksFromKeyword {
 		#番組IDによる番組検索から番組ページのLinkを取得
 		$local:seriesID = trimComment($local:keywordName).Replace('series/', '').Trim()
 		goAnal -Event 'search' -Type 'series' -ID $local:seriesID
-		try { $script:tverLinks = getLinkFromSeriesID ($local:seriesID) }
+		try { $script:episodeLinks = getLinkFromSeriesID ($local:seriesID) }
 		catch { Write-Warning '情報取得エラー。スキップします Err:02' ; continue }
 
 	} elseif ($local:keywordName.IndexOf('talents/') -eq 0) {
 		#タレントIDによるタレント検索から番組ページのLinkを取得
 		$local:talentID = trimComment($local:keywordName).Replace('talents/', '').Trim()
 		goAnal -Event 'search' -Type 'talent' -ID $local:talentID
-		try { $script:tverLinks = getLinkFromTalentID ($local:talentID) }
+		try { $script:episodeLinks = getLinkFromTalentID ($local:talentID) }
 		catch { Write-Warning '情報取得エラー。スキップします Err:03' ; continue }
 
 	} elseif ($local:keywordName.IndexOf('tag/') -eq 0) {
 		#ジャンルなどのTag情報から番組ページのLinkを取得
 		$local:tagID = trimComment($local:keywordName).Replace('tag/', '').Trim()
 		goAnal -Event 'search' -Type 'tag' -ID $local:tagID
-		try { $script:tverLinks = getLinkFromTag ($local:tagID) }
+		try { $script:episodeLinks = getLinkFromTag ($local:tagID) }
 		catch { Write-Warning '情報取得エラー。スキップします Err:04'; continue }
 
 	} elseif ($local:keywordName.IndexOf('new/') -eq 0) {
 		#新着番組から番組ページのLinkを取得
 		$local:genre = trimComment($local:keywordName).Replace('new/', '').Trim()
 		goAnal -Event 'search' -Type 'new' -ID $local:genre
-		try { $script:tverLinks = getLinkFromNew ($local:genre) }
+		try { $script:episodeLinks = getLinkFromNew ($local:genre) }
 		catch { Write-Warning '情報取得エラー。スキップします Err:05'; continue }
 
 	} elseif ($local:keywordName.IndexOf('ranking/') -eq 0) {
 		#ランキングによる番組ページのLinkを取得
 		$local:genre = trimComment($local:keywordName).Replace('ranking/', '').Trim()
 		goAnal -Event 'search' -Type 'ranking' -ID $local:genre
-		try { $script:tverLinks = getLinkFromRanking ($local:genre) }
+		try { $script:episodeLinks = getLinkFromRanking ($local:genre) }
 		catch { Write-Warning '情報取得エラー。スキップします Err:06'; continue }
 
 	} elseif ($local:keywordName.IndexOf('toppage') -eq 0) {
 		#トップページから番組ページのLinkを取得
 		goAnal -Event 'search' -Type 'toppage'
-		try { $script:tverLinks = getLinkFromTopPage }
+		try { $script:episodeLinks = getLinkFromTopPage }
 		catch { Write-Warning '情報取得エラー。スキップします Err:07'; continue }
 
 	} elseif ($local:keywordName.IndexOf('title/') -eq 0) {
@@ -540,26 +541,26 @@ function getVideoLinksFromKeyword {
 	} elseif ($local:keywordName.IndexOf('sitemap') -eq 0) {
 		#サイトマップから番組ページのLinkを取得
 		goAnal -Event 'search' -Type 'sitemap'
-		try { $script:tverLinks = getLinkFromSiteMap }
+		try { $script:episodeLinks = getLinkFromSiteMap }
 		catch { Write-Warning '情報取得エラー。スキップします Err:09'; continue }
 
 	} else {
 		#タレント名や番組名などURL形式でない場合APIで検索結果から番組ページのLinkを取得
 		goAnal -Event 'search' -Type 'free' -ID $local:keywordName
-		try { $script:tverLinks = getLinkFromFreeKeyword ($local:keywordName) }
+		try { $script:episodeLinks = getLinkFromFreeKeyword ($local:keywordName) }
 		catch { Write-Warning '情報取得エラー。スキップします Err:10'; continue }
 	}
 
-	$script:tverLinks = $script:tverLinks | Sort-Object | Get-Unique
+	$script:episodeLinks = $script:episodeLinks | Sort-Object | Get-Unique
 
-	if ($script:tverLinks -is [Array]) {
-		for ( $i = 0; $i -lt $script:tverLinks.Length; $i++) {
-			$script:tverLinks[$i] = 'https://tver.jp' + $script:tverLinks[$i]
+	if ($script:episodeLinks -is [Array]) {
+		for ( $i = 0; $i -lt $script:episodeLinks.Length; $i++) {
+			$script:episodeLinks[$i] = 'https://tver.jp' + $script:episodeLinks[$i]
 		}
-	} elseif ($null -ne $script:tverLinks)
-	{ $script:tverLinks = 'https://tver.jp' + $script:tverLinks }
+	} elseif ($null -ne $script:episodeLinks)
+	{ $script:episodeLinks = 'https://tver.jp' + $script:episodeLinks }
 
-	return $script:tverLinks
+	return $script:episodeLinks
 }
 
 #----------------------------------------------------------------------
@@ -590,10 +591,64 @@ function getLinkFromSeriesID {
 
 	#次にSeason→Episodeに変換
 	foreach ( $local:seasonLink in $local:seasonLinks)
-	{ $script:tverLinks += getLinkFromSeasonID ($local:seasonLink) }
+	{ $script:episodeLinks += getLinkFromSeasonID ($local:seasonLink) }
 	[System.GC]::Collect()
 
-	return $script:tverLinks | Sort-Object | Get-Unique
+	return $script:episodeLinks | Sort-Object | Get-Unique
+}
+
+#----------------------------------------------------------------------
+#SeasonIDによる番組検索から番組ページのLinkを取得
+#----------------------------------------------------------------------
+function getLinkFromSeasonID {
+	[OutputType([System.Object[]])]
+	Param ([String]$local:SeasonID)
+
+	$local:tverSearchBaseURL = `
+		'https://platform-api.tver.jp/service/api/v1/callSeasonEpisodes/'
+	$local:callSearchURL = `
+		$local:tverSearchBaseURL + $local:SeasonID.Replace('season/', '') `
+		+ '?platform_uid=' + $script:platformUID `
+		+ '&platform_token=' + $script:platformToken
+	$local:searchResultsRaw = `
+		Invoke-RestMethod `
+		-Uri $local:callSearchURL `
+		-Method 'GET' `
+		-Headers $script:requestHeader `
+		-TimeoutSec $script:timeoutSec
+	$local:searchResults = $local:searchResultsRaw.Result.Contents
+	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
+		switch ($local:searchResults[$i].type) {
+			'live' { break }
+			'episode' {
+				$script:episodeLinks += `
+					'/episodes/' + $local:searchResults[$i].Content.Id
+				break
+			}
+			'season' {
+				Write-Host "　Season $($local:searchResults[$i].Content.Id) からEpisodeを抽出中..."
+				$script:episodeLinks += `
+					getLinkFromSeasonID ($local:searchResults[$i].Content.Id)
+				break
+			}
+			'series' {
+				Write-Host "　Series $($local:searchResults[$i].Content.Id) からEpisodeを抽出中..."
+				$script:episodeLinks += `
+					getLinkFromSeriesID ($local:searchResults[$i].Content.Id)
+				break
+			}
+			default {
+				#他にはないと思われるが念のため
+				$script:episodeLinks += `
+					'/' + $local:searchResults[$i].type `
+					+ '/' + $local:searchResults[$i].Content.Id
+				break
+			}
+		}
+	}
+	[System.GC]::Collect()
+
+	return $script:episodeLinks | Sort-Object | Get-Unique
 }
 
 #----------------------------------------------------------------------
@@ -618,25 +673,27 @@ function getLinkFromTalentID {
 	$local:searchResults = $local:searchResultsRaw.Result.Contents
 	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
 		switch ($local:searchResults[$i].type) {
+			'live' { break }
 			'episode' {
-				$script:tverLinks += `
+				$script:episodeLinks += `
 					'/episodes/' + $local:searchResults[$i].Content.Id
 				break
 			}
 			'season' {
-				$script:tverLinks += `
+				Write-Host "　Season $($local:searchResults[$i].Content.Id) からEpisodeを抽出中..."
+				$script:episodeLinks += `
 					getLinkFromSeasonID ($local:searchResults[$i].Content.Id)
 				break
 			}
 			'series' {
-				$script:tverLinks += `
+				Write-Host "　Series $($local:searchResults[$i].Content.Id) からEpisodeを抽出中..."
+				$script:episodeLinks += `
 					getLinkFromSeriesID ($local:searchResults[$i].Content.Id)
 				break
 			}
-			'live' { break }
-			#他にはないと思われるが念のため
 			default {
-				$script:tverLinks += `
+				#他にはないと思われるが念のため
+				$script:episodeLinks += `
 					'/' + $local:searchResults[$i].type `
 					+ '/' + $local:searchResults[$i].Content.Id
 				break
@@ -645,7 +702,125 @@ function getLinkFromTalentID {
 	}
 	[System.GC]::Collect()
 
-	return $script:tverLinks | Sort-Object | Get-Unique
+	return $script:episodeLinks | Sort-Object | Get-Unique
+}
+
+#----------------------------------------------------------------------
+#SpecialIDによる特集ページのLinkを取得
+#----------------------------------------------------------------------
+function getLinkFromSpecialMainID {
+	[OutputType([System.Object[]])]
+	Param ([String]$local:specialMainID)
+
+	$local:callSearchBaseURL = `
+		'https://platform-api.tver.jp/service/api/v1/callSpecialContents/'
+	$local:callSearchURL = `
+		$local:callSearchBaseURL + $local:specialMainID `
+		+ '?platform_uid=' + $script:platformUID `
+		+ '&platform_token=' + $script:platformToken
+	$local:searchResultsRaw = `
+		Invoke-RestMethod `
+		-Uri $local:callSearchURL `
+		-Method 'GET' `
+		-Headers $script:requestHeader `
+		-TimeoutSec $script:timeoutSec
+	$local:searchResults = $local:searchResultsRaw.Result.specialContents
+	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
+		switch ($local:searchResults[$i].type) {
+			'live' { break }
+			'episode' {
+				$script:episodeLinks += `
+					'/episodes/' + $local:searchResults[$i].Content.Id
+				break
+			}
+			'season' {
+				Write-Host "　Season $($local:searchResults[$i].Content.Id) からEpisodeを抽出中..."
+				$script:episodeLinks += `
+					getLinkFromSeasonID ($local:searchResults[$i].Content.Id)
+				break
+			}
+			'series' {
+				#Seriesは重複が多いので高速化のためにバッファにためて最後に処理
+				Write-Host "　Series $($local:searchResults[$i].Content.Id) をバッファに保存中..."
+				$script:seriesLinks += $local:searchResults[$i].Content.Id
+				break
+			}
+			'special' {
+				Write-Host "　Special Detail $($local:searchResults[$i].Content.Id) からEpisodeを抽出中..."
+				$script:episodeLinks += `
+					getLinkFromSpecialDetailID ($local:searchResults[$i].Content.Id)
+				break
+			}
+			default {
+				#他にはないと思われるが念のため
+				$script:episodeLinks += `
+					'/' + $local:searchResults[$i].type `
+					+ '/' + $local:searchResults[$i].Content.Id
+				break
+			}
+		}
+	}
+	[System.GC]::Collect()
+
+	return $script:episodeLinks | Sort-Object | Get-Unique
+}
+
+#----------------------------------------------------------------------
+#SpecialDetailIDによる特集ページのLinkを取得
+#----------------------------------------------------------------------
+function getLinkFromSpecialDetailID {
+	[OutputType([System.Object[]])]
+	Param ([String]$local:specialDetailID)
+
+	$local:callSearchBaseURL = `
+		'https://platform-api.tver.jp/service/api/v1/callSpecialContentsDetail/'
+	$local:callSearchURL = `
+		$local:callSearchBaseURL + $local:specialDetailID `
+		+ '?platform_uid=' + $script:platformUID `
+		+ '&platform_token=' + $script:platformToken
+	$local:searchResultsRaw = `
+		Invoke-RestMethod `
+		-Uri $local:callSearchURL `
+		-Method 'GET' `
+		-Headers $script:requestHeader `
+		-TimeoutSec $script:timeoutSec
+	$local:searchResults = $local:searchResultsRaw.Result.Contents.Content.Contents
+	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
+		switch ($local:searchResults[$i].type) {
+			'live' { break }
+			'episode' {
+				$script:episodeLinks += '/episodes/' + $local:searchResults[$i].Content.Id
+				break
+			}
+			'season' {
+				Write-Host "　Season $($local:searchResults[$i].Content.Id) からEpisodeを抽出中..."
+				$script:episodeLinks += getLinkFromSeasonID ($local:searchResults[$i].Content.Id)
+				break
+			}
+			'series' {
+				#Seriesは重複が多いので高速化のためにバッファにためて最後に処理
+				Write-Host "　Series $($local:searchResults[$i].Content.Id) をバッファに保存中..."
+				$script:seriesLinks += $local:searchResults[$i].Content.Id
+				break
+			}
+			'special' {
+				#再度Specialが出てきた際は再帰呼び出し
+				Write-Host "　Special Detail $($local:searchResults[$i].Content.Id) からEpisodeを抽出中..."
+				$script:episodeLinks += getLinkFromSpecialDetailID ($local:searchResults[$i].Content.Id)
+				break
+			}
+			default {
+				#他にはないと思われるが念のため
+				$script:episodeLinks += `
+					'/' + $local:searchResults[$i].type `
+					+ '/' + $local:searchResults[$i].Content.Id
+				break
+			}
+		}
+	}
+	[System.GC]::Collect()
+
+	return $script:episodeLinks | Sort-Object | Get-Unique
 }
 
 #----------------------------------------------------------------------
@@ -670,25 +845,27 @@ function getLinkFromTag {
 	$local:searchResults = $local:searchResultsRaw.Result.Contents
 	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
 		switch ($local:searchResults[$i].type) {
+			'live' { break }
 			'episode' {
-				$script:tverLinks += `
+				$script:episodeLinks += `
 					'/episodes/' + $local:searchResults[$i].Content.Id
 				break
 			}
 			'season' {
-				$script:tverLinks += `
+				Write-Host "　Season $($local:searchResults[$i].Content.Id) からEpisodeを抽出中..."
+				$script:episodeLinks += `
 					getLinkFromSeasonID ($local:searchResults[$i].Content.Id)
 				break
 			}
 			'series' {
-				$script:tverLinks += `
+				Write-Host "　Series $($local:searchResults[$i].Content.Id) からEpisodeを抽出中..."
+				$script:episodeLinks += `
 					getLinkFromSeriesID ($local:searchResults[$i].Content.Id)
 				break
 			}
-			'live' { break }
-			#他にはないと思われるが念のため
 			default {
-				$script:tverLinks += `
+				#他にはないと思われるが念のため
+				$script:episodeLinks += `
 					'/' + $local:searchResults[$i].type `
 					+ '/' + $local:searchResults[$i].Content.Id
 				break
@@ -697,7 +874,7 @@ function getLinkFromTag {
 	}
 	[System.GC]::Collect()
 
-	return $script:tverLinks | Sort-Object | Get-Unique
+	return $script:episodeLinks | Sort-Object | Get-Unique
 }
 
 #----------------------------------------------------------------------
@@ -722,25 +899,27 @@ function getLinkFromNew {
 	$local:searchResults = $local:searchResultsRaw.Result.Contents.Contents
 	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
 		switch ($local:searchResults[$i].type) {
+			'live' { break }
 			'episode' {
-				$script:tverLinks += `
+				$script:episodeLinks += `
 					'/episodes/' + $local:searchResults[$i].Content.Id
 				break
 			}
 			'season' {
-				$script:tverLinks += `
+				Write-Host "　Season $($local:searchResults[$i].Content.Id) からEpisodeを抽出中..."
+				$script:episodeLinks += `
 					getLinkFromSeasonID ($local:searchResults[$i].Content.Id)
 				break
 			}
 			'series' {
-				$script:tverLinks += `
+				Write-Host "　Series $($local:searchResults[$i].Content.Id) からEpisodeを抽出中..."
+				$script:episodeLinks += `
 					getLinkFromSeriesID ($local:searchResults[$i].Content.Id)
 				break
 			}
-			'live' { break }
-			#他にはないと思われるが念のため
 			default {
-				$script:tverLinks += `
+				#他にはないと思われるが念のため
+				$script:episodeLinks += `
 					'/' + $local:searchResults[$i].type `
 					+ '/' + $local:searchResults[$i].Content.Id
 				break
@@ -749,7 +928,7 @@ function getLinkFromNew {
 	}
 	[System.GC]::Collect()
 
-	return $script:tverLinks | Sort-Object | Get-Unique
+	return $script:episodeLinks | Sort-Object | Get-Unique
 }
 
 #----------------------------------------------------------------------
@@ -782,25 +961,27 @@ function getLinkFromRanking {
 	$local:searchResults = $local:searchResultsRaw.Result.Contents.Contents
 	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
 		switch ($local:searchResults[$i].type) {
+			'live' { break }
 			'episode' {
-				$script:tverLinks += `
+				$script:episodeLinks += `
 					'/episodes/' + $local:searchResults[$i].Content.Id
 				break
 			}
 			'season' {
-				$script:tverLinks += `
+				Write-Host "　Season $($local:searchResults[$i].Content.Id) からEpisodeを抽出中..."
+				$script:episodeLinks += `
 					getLinkFromSeasonID ($local:searchResults[$i].Content.Id)
 				break
 			}
 			'series' {
-				$script:tverLinks += `
+				Write-Host "　Series $($local:searchResults[$i].Content.Id) からEpisodeを抽出中..."
+				$script:episodeLinks += `
 					getLinkFromSeriesID ($local:searchResults[$i].Content.Id)
 				break
 			}
-			'live' { break }
-			#他にはないと思われるが念のため
 			default {
-				$script:tverLinks += `
+				#他にはないと思われるが念のため
+				$script:episodeLinks += `
 					'/' + $local:searchResults[$i].type `
 					+ '/' + $local:searchResults[$i].Content.Id
 				break
@@ -809,7 +990,7 @@ function getLinkFromRanking {
 	}
 	[System.GC]::Collect()
 
-	return $script:tverLinks | Sort-Object | Get-Unique
+	return $script:episodeLinks | Sort-Object | Get-Unique
 }
 
 #----------------------------------------------------------------------
@@ -847,40 +1028,45 @@ function getLinkFromTopPage {
 			$local:searchSectionResultCount = $local:searchResults[$i].Contents.Length
 			for ($j = 0; $j -lt $local:searchSectionResultCount; $j++) {
 				switch ($local:searchResults[$i].contents[$j].type) {
+					'live' { break }
 					'episode' {
-						$script:tverLinks += `
+						$script:episodeLinks += `
 							'/episodes/' + $local:searchResults[$i].contents[$j].Content.Id
 						break
 					}
 					'season' {
-						$script:tverLinks += `
+						Write-Host "　Season $($local:searchResults[$i].contents[$j].Content.Id) からEpisodeを抽出中..."
+						$script:episodeLinks += `
 							getLinkFromSeasonID ($local:searchResults[$i].contents[$j].Content.Id)
 						break
 					}
 					'series' {
-						$script:tverLinks += `
-							getLinkFromSeriesID ($local:searchResults[$i].contents[$j].Content.Id)
+						#Seriesは重複が多いので高速化のためにバッファにためて最後に処理
+						Write-Host "　Series $($local:searchResults[$i].contents[$j].Content.Id) をバッファに保存中..."
+						$script:seriesLinks += $local:searchResults[$i].contents[$j].Content.Id
 						break
 					}
 					'talent' {
-						$script:tverLinks += `
+						Write-Host "　Talent $($local:searchResults[$i].contents[$j].Content.Id) からEpisodeを抽出中..."
+						$script:episodeLinks += `
 							getLinkFromTalentID ($local:searchResults[$i].contents[$j].Content.Id)
 						break
 					}
-					'live' { break }
 					'specialMain' {
-						#特集ページ。パース方法不明
-						#https://tver.jp/specials/$($local:searchResults[4].contents.content.id)
-						#$local:searchResults[4].contents.content.id
-						#callSpecialContentsDetailを再帰的に呼び出す必要がありそう
-						#https://platform-api.tver.jp/service/api/v1/callSpecialContents/drama-digest?require_data=mylist[special][drama-digest]
-						#を呼んで得られたspecialContents>[TypeがSpecialのもの]>contents.content.idを使って、再度以下のように呼び出し。(以下の例ではsum22-latterhal)
-						#https://platform-api.tver.jp/service/api/v1/callSpecialContentsDetail/sum22-latterhalf?sort_key=newer&require_data=mylist, later
-						#他にはないと思われるが念のため
+						Write-Host "　Special Main $($local:searchResults[$i].contents[$j].Content.Id) からEpisodeを抽出中..."
+						$script:episodeLinks += `
+							getLinkFromSpecialMainID ($local:searchResults[$i].contents[$j].Content.Id)
+						break
+					}
+					'special' {
+						Write-Host "　Special Detail $($local:searchResults[$i].contents[$j].Content.Id) からEpisodeを抽出中..."
+						$script:episodeLinks += `
+							getLinkFromSpecialDetailID ($local:searchResults[$i].contents[$j].Content.Id)
 						break
 					}
 					default {
-						$script:tverLinks += `
+						#他にはないと思われるが念のため
+						$script:episodeLinks += `
 							'/' + $local:searchResults[$i].contents[$j].type `
 							+ '/' + $local:searchResults[$i].contents[$j].Content.Id
 						break
@@ -893,31 +1079,34 @@ function getLinkFromTopPage {
 				$local:searchSectionResultCount = $local:searchResults[$i].Contents.Length
 				for ($j = 0; $j -lt $local:searchSectionResultCount; $j++) {
 					switch ($local:searchResults[$i].contents[$j].Content.Content.type) {
+						'live' { break }
 						'episode' {
-							$script:tverLinks += `
+							$script:episodeLinks += `
 								'/episodes/' + $local:searchResults[$i].contents[$j].Content.Content.Content.Id
 							break
 						}
 						'season' {
-							$script:tverLinks += `
+							Write-Host "　Season $($local:searchResults[$i].contents[$j].Content.Content.Content.Id) からEpisodeを抽出中..."
+							$script:episodeLinks += `
 								getLinkFromSeasonID ($local:searchResults[$i].contents[$j].Content.Content.Content.Id)
 							break
 						}
 						'series' {
-							$script:tverLinks += `
-								getLinkFromSeriesID ($local:searchResults[$i].contents[$j].Content.Content.Content.Id)
+							#Seriesは重複が多いので高速化のためにバッファにためて最後に処理
+							Write-Host "　Series $($local:searchResults[$i].contents[$j].Content.Content.Content.Id) をバッファに保存中..."
+							$script:seriesLinks += $local:searchResults[$i].contents[$j].Content.Content.Content.Id
 							break
 						}
 						'talent' {
-							$script:tverLinks += `
+							Write-Host "　Talent $($local:searchResults[$i].contents[$j].Content.Content.Content.Id) からEpisodeを抽出中..."
+							$script:episodeLinks += `
 								getLinkFromTalentID ($local:searchResults[$i].contents[$j].Content.Content.Content.Id)
 							break
 						}
-						'live' { break }
-						#他にはないと思われるが念のため
 						default {
-							$script:tverLinks += `
-								'/' + $local:searchResults[$i].contents[$j].type `
+							#他にはないと思われるが念のため
+							$script:episodeLinks += `
+								'/' + $local:searchResults[$i].contents[$j].Content.Content.type `
 								+ '/' + $local:searchResults[$i].contents[$j].Content.Content.Content.Id
 							break
 						}
@@ -933,61 +1122,17 @@ function getLinkFromTopPage {
 			#ブラウザのCookieを処理しないといけないと思われるため対応予定なし
 		} else {}
 	}
-	[System.GC]::Collect()
 
-	return $script:tverLinks | Sort-Object | Get-Unique
-}
-
-#----------------------------------------------------------------------
-#TVerのAPIを叩いてフリーワード検索
-#----------------------------------------------------------------------
-function getLinkFromFreeKeyword {
-	[OutputType([System.Object[]])]
-	Param ([String]$local:keywordName)
-
-	$local:tverSearchBaseURL = `
-		'https://platform-api.tver.jp/service/api/v1/callKeywordSearch'
-	$local:tverSearchURL = `
-		$local:tverSearchBaseURL `
-		+ '?platform_uid=' + $script:platformUID `
-		+ '&platform_token=' + $script:platformToken `
-		+ '&keyword=' + $local:keywordName
-	$local:searchResultsRaw = `
-		Invoke-RestMethod `
-		-Uri $local:tverSearchURL `
-		-Method 'GET' `
-		-Headers $script:requestHeader `
-		-TimeoutSec $script:timeoutSec
-	$local:searchResults = $local:searchResultsRaw.Result.Contents
-	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
-		switch ($local:searchResults[$i].type) {
-			'episode' {
-				$script:tverLinks += '/episodes/' + $local:searchResults[$i].Content.Id
-				break
-			}
-			'season' {
-				$script:tverLinks += `
-					getLinkFromSeasonID ($local:searchResults[$i].Content.Id)
-				break
-			}
-			'series' {
-				$script:tverLinks += `
-					getLinkFromSeriesID ($local:searchResults[$i].Content.Id)
-				break
-			}
-			'live' { break }
-			#他にはないと思われるが念のため
-			default {
-				$script:tverLinks += `
-					'/' + $local:searchResults[$i].type `
-					+ '/' + $local:searchResults[$i].Content.Id
-				break
-			}
-		}
+	#バッファしておいたSeriesの重複を削除しEpisodeを抽出
+	$script:seriesLinks = $script:seriesLinks | Sort-Object | Get-Unique
+	foreach ($local:seriesID in $script:seriesLinks) {
+		Write-Host "　Series $($local:seriesID) からEpisodeを抽出中..."
+		$script:episodeLinks += getLinkFromSeriesID ($local:seriesID)
 	}
+
 	[System.GC]::Collect()
 
-	return $script:tverLinks | Sort-Object | Get-Unique
+	return $script:episodeLinks | Sort-Object | Get-Unique
 }
 
 #----------------------------------------------------------------------
@@ -1009,19 +1154,20 @@ function getLinkFromSiteMap {
 
 	for ($i = 0; $i -lt $local:searchResultCount; $i++) {
 		if ($local:searchResults[$i] -like '*/episodes/*') {
-			$script:tverLinks += $local:searchResults[$i].Replace('https://tver.jp', '')
+			$script:episodeLinks += $local:searchResults[$i].Replace('https://tver.jp', '')
 		} elseif ($script:sitemapParseEpisodeOnly -eq $true) {
-			Write-Warning 'Episodeではないためスキップします'
+			Write-Debug 'Episodeではないためスキップします'
 		} else {
+			Write-Host "　$($local:searchResults[$i]) からEpisodeを抽出中..."
 			if ($local:searchResults[$i] -like '*/seasons/*') {
 				try {
-					$script:tverLinks += getLinkFromSeasonID ($local:searchResults[$i].Replace('https://tver.jp/', ''))
-					$script:tverLinks = $script:tverLinks | Sort-Object | Get-Unique
+					$script:episodeLinks += getLinkFromSeasonID ($local:searchResults[$i].Replace('https://tver.jp/', ''))
+					$script:episodeLinks = $script:episodeLinks | Sort-Object | Get-Unique
 				} catch { Write-Warning '情報取得エラー。スキップします Err:11'; continue }
 			} elseif ($local:searchResults[$i] -like '*/series/*') {
 				try {
-					$script:tverLinks += getLinkFromSeriesID ($local:searchResults[$i].Replace('https://tver.jp/', ''))
-					$script:tverLinks = $script:tverLinks | Sort-Object | Get-Unique
+					$script:episodeLinks += getLinkFromSeriesID ($local:searchResults[$i].Replace('https://tver.jp/', ''))
+					$script:episodeLinks = $script:episodeLinks | Sort-Object | Get-Unique
 				} catch { Write-Warning '情報取得エラー。スキップします Err:12'; continue }
 			} elseif ($local:searchResults[$i] -eq 'https://tver.jp/') {
 				#トップページ
@@ -1054,50 +1200,52 @@ function getLinkFromSiteMap {
 	}
 	[System.GC]::Collect()
 
-	return $script:tverLinks | Sort-Object | Get-Unique
+	return $script:episodeLinks | Sort-Object | Get-Unique
 }
 
 #----------------------------------------------------------------------
-#SeasonIDによる番組検索から番組ページのLinkを取得
+#TVerのAPIを叩いてフリーワード検索
 #----------------------------------------------------------------------
-function getLinkFromSeasonID {
+function getLinkFromFreeKeyword {
 	[OutputType([System.Object[]])]
-	Param ([String]$local:SeasonID)
+	Param ([String]$local:keywordName)
 
 	$local:tverSearchBaseURL = `
-		'https://platform-api.tver.jp/service/api/v1/callSeasonEpisodes/'
-	$local:callSearchURL = `
-		$local:tverSearchBaseURL + $local:SeasonID.Replace('season/', '') `
+		'https://platform-api.tver.jp/service/api/v1/callKeywordSearch'
+	$local:tverSearchURL = `
+		$local:tverSearchBaseURL `
 		+ '?platform_uid=' + $script:platformUID `
-		+ '&platform_token=' + $script:platformToken
+		+ '&platform_token=' + $script:platformToken `
+		+ '&keyword=' + $local:keywordName
 	$local:searchResultsRaw = `
 		Invoke-RestMethod `
-		-Uri $local:callSearchURL `
+		-Uri $local:tverSearchURL `
 		-Method 'GET' `
 		-Headers $script:requestHeader `
 		-TimeoutSec $script:timeoutSec
 	$local:searchResults = $local:searchResultsRaw.Result.Contents
 	for ($i = 0; $i -lt $local:searchResults.Length; $i++) {
 		switch ($local:searchResults[$i].type) {
+			'live' { break }
 			'episode' {
-				$script:tverLinks += `
-					'/episodes/' + $local:searchResults[$i].Content.Id
+				$script:episodeLinks += '/episodes/' + $local:searchResults[$i].Content.Id
 				break
 			}
 			'season' {
-				$script:tverLinks += `
+				Write-Host "　Season $($local:searchResults[$i].Content.Id) からEpisodeを抽出中..."
+				$script:episodeLinks += `
 					getLinkFromSeasonID ($local:searchResults[$i].Content.Id)
 				break
 			}
 			'series' {
-				$script:tverLinks += `
+				Write-Host "　Series $($local:searchResults[$i].Content.Id) からEpisodeを抽出中..."
+				$script:episodeLinks += `
 					getLinkFromSeriesID ($local:searchResults[$i].Content.Id)
 				break
 			}
-			'live' { break }
-			#他にはないと思われるが念のため
 			default {
-				$script:tverLinks += `
+				#他にはないと思われるが念のため
+				$script:episodeLinks += `
 					'/' + $local:searchResults[$i].type `
 					+ '/' + $local:searchResults[$i].Content.Id
 				break
@@ -1106,7 +1254,7 @@ function getLinkFromSeasonID {
 	}
 	[System.GC]::Collect()
 
-	return $script:tverLinks | Sort-Object | Get-Unique
+	return $script:episodeLinks | Sort-Object | Get-Unique
 }
 
 #----------------------------------------------------------------------

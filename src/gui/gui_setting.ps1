@@ -26,10 +26,6 @@
 ###################################################################################
 using namespace System.Windows.Threading
 
-$VerbosePreference = 'Continue'						#詳細メッセージ
-$DebugPreference = 'Continue'						#デバッグメッセージ
-$ErrorActionPreference = 'Stop'						#エラー時中断
-
 if ($IsWindows -eq $false) { Write-Error 'Windows以外では動作しません'; Start-Sleep 10 ; exit 1 }
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName PresentationFramework
