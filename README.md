@@ -1,4 +1,4 @@
-# :tv:**TVerRec**:tv: TVer 一括ダウンロード・保存
+# 📺**TVerRec**🎞 TVer 一括ダウンロード・保存
 
 ![Logo](https://raw.githubusercontent.com/dongaba/TVerRec/master/img/TVerRec-Logo.png)
 
