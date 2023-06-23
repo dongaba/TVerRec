@@ -177,6 +177,7 @@ $script:scriptBlocks = @{
 			. './validate_video.ps1'
 			. './validate_video.ps1'
 			. './move_video.ps1'
+			[System.GC]::Collect()
 			Write-Output '3600秒待機します...'
 			Start-Sleep 3600
 		}

@@ -1158,13 +1158,14 @@ function getLinkFromSiteMap {
 		} elseif ($script:sitemapParseEpisodeOnly -eq $true) {
 			Write-Debug 'Episodeではないためスキップします'
 		} else {
-			Write-Host "　$($local:searchResults[$i]) からEpisodeを抽出中..."
 			if ($local:searchResults[$i] -like '*/seasons/*') {
+				Write-Host "　$($local:searchResults[$i]) からEpisodeを抽出中..."
 				try {
 					$script:episodeLinks += getLinkFromSeasonID ($local:searchResults[$i].Replace('https://tver.jp/', ''))
 					$script:episodeLinks = $script:episodeLinks | Sort-Object | Get-Unique
 				} catch { Write-Warning '情報取得エラー。スキップします Err:11'; continue }
 			} elseif ($local:searchResults[$i] -like '*/series/*') {
+				Write-Host "　$($local:searchResults[$i]) からEpisodeを抽出中..."
 				try {
 					$script:episodeLinks += getLinkFromSeriesID ($local:searchResults[$i].Replace('https://tver.jp/', ''))
 					$script:episodeLinks = $script:episodeLinks | Sort-Object | Get-Unique
