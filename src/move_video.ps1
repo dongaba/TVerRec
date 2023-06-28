@@ -38,11 +38,11 @@ try {
 	Set-Location $script:scriptRoot
 	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '../conf'))
 	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
-} catch { Write-Error 'カレントディレクトリの設定に失敗しました' ; exit 1 }
+} catch { Write-Error '❗ カレントディレクトリの設定に失敗しました' ; exit 1 }
 try {
 	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 	if ($? -eq $false) { exit 1 }
-} catch { Write-Error '関数の読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error '❗ 関数の読み込みに失敗しました' ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -53,12 +53,12 @@ checkRequiredFile
 #======================================================================
 #ディレクトリの存在確認
 if (!(Test-Path $script:downloadWorkDir -PathType Container))
-{ Write-Error 'ダウンロード作業ディレクトリが存在しません。終了します。' ; exit 1 }
+{ Write-Error '❗ ダウンロード作業ディレクトリが存在しません。終了します。' ; exit 1 }
 if (!(Test-Path $script:downloadBaseDir -PathType Container))
-{ Write-Error '番組ダウンロード先ディレクトリにアクセスできません。終了します。' ; exit 1 }
+{ Write-Error '❗ 番組ダウンロード先ディレクトリにアクセスできません。終了します。' ; exit 1 }
 foreach ($local:saveDir in $script:saveBaseDirArray) {
 	if (!(Test-Path $local:saveDir.Trim() -PathType Container))
-	{ Write-Error '番組移動先ディレクトリが存在しません。終了します。' ; exit 1 }
+	{ Write-Error '❗ 番組移動先ディレクトリが存在しません。終了します。' ; exit 1 }
 }
 
 #======================================================================
@@ -152,9 +152,9 @@ if ($local:moveToPathTotal -ne 0) {
 		$local:moveFromPath = $(Join-Path $script:downloadBaseDir $local:targetFolderName)
 		if (Test-Path $local:moveFromPath) {
 			$local:moveFromPath = $local:moveFromPath + '\*.mp4'
-			Write-Output "　「$($local:moveFromPath)」を移動します"
+			Write-Output "　💡 「$($local:moveFromPath)」を移動します"
 			try { Move-Item $local:moveFromPath -Destination $local:moveToPath -Force }
-			catch { Write-Warning '　移動できないファイルがありました' }
+			catch { Write-Warning '　❗ 移動できないファイルがありました' }
 		}
 	}
 }
@@ -181,7 +181,7 @@ try {
 	$local:allSubDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).`
 			Where({ $_.PSIsContainer })).FullName `
 	| Sort-Object -Descending
-} catch { Write-Warning 'ディレクトリを見つけられませんでした' }
+} catch { Write-Warning '❗ ディレクトリを見つけられませんでした' }
 
 #サブディレクトリの合計数
 if ($local:allSubDirs -is [Array]) { $local:subDirTotal = $local:allSubDirs.Length }
@@ -197,13 +197,13 @@ if ($local:subDirTotal -ne 0) {
 		Write-Output "$($local:i)/$($local:total) - $($_)"
 		if (@((Get-ChildItem -LiteralPath $_ -Recurse).`
 					Where({ ! $_.PSIsContainer })).Count -eq 0) {
-			Write-Output "　$($local:i)/$($local:total) - 「$($_)」を削除します"
+			Write-Output "　💡 $($local:i)/$($local:total) - 「$($_)」を削除します"
 			try {
 				Remove-Item `
 					-LiteralPath $_ `
 					-Recurse `
 					-Force
-			} catch { Write-Output "　$($local:i)/$($local:total) - 空ディレクトリの削除に失敗しました: $_" }
+			} catch { Write-Warning "　❗ $($local:i)/$($local:total) - 空ディレクトリの削除に失敗しました: $_" }
 		}
 	} -ThrottleLimit $script:multithreadNum
 }

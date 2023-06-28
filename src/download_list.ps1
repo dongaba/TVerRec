@@ -38,11 +38,11 @@ try {
 	Set-Location $script:scriptRoot
 	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '../conf'))
 	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
-} catch { Write-Error 'カレントディレクトリの設定に失敗しました' ; exit 1 }
+} catch { Write-Error '❗ カレントディレクトリの設定に失敗しました' ; exit 1 }
 try {
 	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 	if ($? -eq $false) { exit 1 }
-} catch { Write-Error '関数の読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error '❗ 関数の読み込みに失敗しました' ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -54,7 +54,7 @@ try {
 	if ( Test-Path $(Join-Path $script:confDir './user_setting.ps1') ) {
 		. $(Convert-Path $(Join-Path $script:confDir './user_setting.ps1'))
 	}
-} catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error '❗ 設定ファイルの読み込みに失敗しました' ; exit 1 }
 
 #設定で指定したファイル・ディレクトリの存在チェック
 checkRequiredFile
@@ -77,7 +77,7 @@ Write-Output '------------------------------------------------------------------
 Write-Output 'ダウンロードリストを読み込みます'
 $local:listLinks = @()
 $local:listLinks = loadDownloadList
-if ($null -eq $local:listLinks) { Write-Warning 'ダウンロードリストが0件です' ; exit 0 }
+if ($null -eq $local:listLinks) { Write-Warning '💡 ダウンロードリストが0件です' ; exit 0 }
 
 $local:listTotal = 0
 if ($local:listLinks -is [Array]) { $local:listTotal = $script:listLinks.Length }
@@ -97,7 +97,7 @@ try {
 		Import-Csv `
 		-Path $script:historyFilePath `
 		-Encoding UTF8
-} catch { Write-Warning 'ダウンロード履歴を読み込めなかったのでスキップしました'; continue
+} catch { Write-Warning '❗ ダウンロード履歴を読み込めなかったのでスキップしました'; continue
 } finally { $null = fileUnlock $script:historyLockFilePath }
 Write-Output ''
 
@@ -114,7 +114,7 @@ foreach ($local:listLink in $local:listLinks.episodeID) {
 
 #ダウンロード対象のトータル番組数
 $local:videoTotal = $local:videoLinks.Length
-Write-Output "　ダウンロード対象$($local:videoTotal)件"
+Write-Output "　💡 ダウンロード対象$($local:videoTotal)件"
 Write-Output ''
 
 
@@ -140,7 +140,7 @@ foreach ($local:videoLink in $local:videoLinks) {
 
 	#移動先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
 	if (Test-Path $script:downloadBaseDir -PathType Container) {}
-	else { Write-Error '番組ダウンロード先ディレクトリにアクセスできません。終了します' ; exit 1 }
+	else { Write-Error '❗ 番組ダウンロード先ディレクトリにアクセスできません。終了します' ; exit 1 }
 
 	#進捗率の計算
 	$local:progressRatio = $($local:videoNum / $local:videoTotal)
@@ -190,5 +190,5 @@ waitTillYtdlProcessIsZero
 Write-Output '---------------------------------------------------------------------------'
 Write-Output 'リストダウンロード処理を終了しました。                                     '
 Write-Output '---------------------------------------------------------------------------'
-Write-Output '必要に応じてリストファイルを編集してダウンロード不要な番組を削除してください'
+Write-Output '💡 必要に応じてリストファイルを編集してダウンロード不要な番組を削除してください'
 Write-Output "　リストファイルパス: $($script:listFilePath)"

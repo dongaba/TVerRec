@@ -53,7 +53,7 @@ try {
 		$local:scriptRoot = Split-Path -Parent -Path $local:scriptRoot
 	} else { $local:scriptRoot = Convert-Path .. }
 	Set-Location $local:scriptRoot
-} catch { Write-Error 'ディレクトリ設定に失敗しました' ; exit 1 }
+} catch { Write-Error '❗ ディレクトリ設定に失敗しました' ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -80,7 +80,7 @@ try {
 			-Uri $local:releases `
 			-Method Get
 	)[0].Tag_Name
-} catch { Write-Warning 'yt-dlpの最新バージョンを特定できませんでした'; return }
+} catch { Write-Warning '❗ yt-dlpの最新バージョンを特定できませんでした'; return }
 
 #yt-dlpのダウンロード
 if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
@@ -89,7 +89,7 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 	Write-Output "　Latest version: $local:latestVersion"
 	Write-Output ''
 } else {
-	Write-Warning 'yt-dlpが古いため更新します。'
+	Write-Warning '💡 yt-dlpが古いため更新します。'
 	Write-Warning "　Local version: $local:ytdlCurrentVersion"
 	Write-Warning "　Latest version: $local:latestVersion"
 	Write-Output ''
@@ -117,7 +117,7 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 		Invoke-WebRequest `
 			-Uri $local:download `
 			-Out $local:ytdlFileLocation
-	} catch { Write-Error 'yt-dlpのダウンロードに失敗しました' ; exit 1 }
+	} catch { Write-Error '❗ yt-dlpのダウンロードに失敗しました' ; exit 1 }
 
 	if ($IsWindows -eq $false) { (& chmod a+x $local:ytdlFileLocation) }
 
@@ -125,9 +125,9 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 	try {
 		$local:ytdlCurrentVersion = (& $local:ytdlPath --version)
 		if ($? -eq $false) { throw '更新後のバージョン取得に失敗しました' }
-		Write-Output "yt-dlpをversion $local:ytdlCurrentVersion に更新しました。"
+		Write-Output "💡 yt-dlpをversion $local:ytdlCurrentVersion に更新しました。"
 		Write-Output ''
-	} catch { Write-Error '更新後のバージョン取得に失敗しました' ; exit 1 }
+	} catch { Write-Error '❗ 更新後のバージョン取得に失敗しました' ; exit 1 }
 
 
 }

@@ -38,11 +38,11 @@ try {
 	Set-Location $script:scriptRoot
 	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '../conf'))
 	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
-} catch { Write-Error 'カレントディレクトリの設定に失敗しました' ; exit 1 }
+} catch { Write-Error '❗ カレントディレクトリの設定に失敗しました' ; exit 1 }
 try {
 	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 	if ($? -eq $false) { exit 1 }
-} catch { Write-Error '関数の読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error '❗ 関数の読み込みに失敗しました' ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -54,7 +54,7 @@ try {
 	if ( Test-Path $(Join-Path $script:confDir './user_setting.ps1') ) {
 		. $(Convert-Path $(Join-Path $script:confDir './user_setting.ps1'))
 	}
-} catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error '❗ 設定ファイルの読み込みに失敗しました' ; exit 1 }
 
 #設定で指定したファイル・ディレクトリの存在チェック
 checkRequiredFile
@@ -116,7 +116,7 @@ uniqueDB
 Write-Output ''
 
 if ($script:disableValidation -eq $true) {
-	Write-Warning 'ダウンロードファイルの整合性検証が無効化されているので、検証せずに終了します'
+	Write-Warning '💡 ダウンロードファイルの整合性検証が無効化されているので、検証せずに終了します'
 	exit
 }
 
@@ -138,7 +138,7 @@ try {
 		| Where-Object { $_.videoPath -ne '-- IGNORED --' } `
 		| Select-Object 'videoPage', 'videoPath', 'videoValidated'
 	)
-} catch { Write-Warning 'ダウンロード履歴の読み込みに失敗しました'
+} catch { Write-Warning '❗ ダウンロード履歴の読み込みに失敗しました'
 } finally { $null = fileUnlock $script:historyLockFilePath }
 
 
@@ -156,9 +156,9 @@ if ($null -eq $local:videoHists) {
 	else {
 		if ($script:ffmpegDecodeOption -ne '') {
 			Write-Output '---------------------------------------------------------------------------'
-			Write-Output 'ffmpegのデコードオプションが設定されてます                                 '
+			Write-Output '💡 ffmpegのデコードオプションが設定されてます                                 '
 			Write-Output "　・$($script:ffmpegDecodeOption)                                          "
-			Write-Output 'もし整合性検証がうまく進まない場合は、以下のどちらかをお試しください       '
+			Write-Output '💡 もし整合性検証がうまく進まない場合は、以下のどちらかをお試しください       '
 			Write-Output '　・user_setting.ps1 でデコードオプションを変更する                        '
 			Write-Output '　・user_setting.ps1 で $script:forceSoftwareDecodeFlag = $true と設定する '
 			Write-Output '---------------------------------------------------------------------------'
@@ -207,7 +207,7 @@ if ($null -eq $local:videoHists) {
 
 		#処理
 		if (Test-Path $script:downloadBaseDir -PathType Container) {}
-		else { Write-Error '番組ダウンロード先ディレクトリにアクセスできません。終了します。' ; exit 1 }
+		else { Write-Error '❗ 番組ダウンロード先ディレクトリにアクセスできません。終了します。' ; exit 1 }
 
 		Write-Output "$($local:validateNum)/$($local:validateTotal) - $($local:videoFileRelPath)"
 		#番組の整合性チェック
@@ -255,7 +255,7 @@ try {
 		-Path $script:historyFilePath `
 		-NoTypeInformation `
 		-Encoding UTF8
-} catch { Write-Warning 'ダウンロード履歴の更新に失敗しました'
+} catch { Write-Warning '❗ ダウンロード履歴の更新に失敗しました'
 } finally { $null = fileUnlock $script:historyLockFilePath }
 
 #進捗表示

@@ -38,11 +38,11 @@ try {
 	Set-Location $script:scriptRoot
 	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '../conf'))
 	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
-} catch { Write-Error 'カレントディレクトリの設定に失敗しました' ; exit 1 }
+} catch { Write-Error '❗ カレントディレクトリの設定に失敗しました' ; exit 1 }
 try {
 	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 	if ($? -eq $false) { exit 1 }
-} catch { Write-Error '関数の読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error '❗ 関数の読み込みに失敗しました' ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -166,7 +166,7 @@ try {
 			-Encoding UTF8 `
 		| Where-Object { !($_ -match '^\s*$') } `
 		| Where-Object { !($_ -match '^;.*$') })
-} catch { Write-Error 'ダウンロード対象外の読み込みに失敗しました' ; exit 1
+} catch { Write-Error '❗ ダウンロード対象外の読み込みに失敗しました' ; exit 1
 } finally { $null = fileUnlock $script:ignoreLockFilePath }
 
 #----------------------------------------------------------------------
@@ -180,12 +180,12 @@ if ($null -ne $local:ignoreTitles ) {
 			$local:delTargets = Get-ChildItem `
 				-LiteralPath $using:script:downloadBaseDir `
 				-Name -Filter "*$($_)*"
-		} catch { Write-Warning '削除対象を特定できませんでした' }
+		} catch { Write-Warning '❗ 削除対象を特定できませんでした' }
 		try {
 			if ($null -ne $delTargets) {
 				foreach ($local:delTarget in $local:delTargets) {
 					$local:delPath = Join-Path $using:script:downloadBaseDir $local:delTarget
-					Write-Output "　$($local:i)/$($local:total) -「$($local:delPath)」を削除します"
+					Write-Output "　💡 $($local:i)/$($local:total) -「$($local:delPath)」を削除します"
 					Remove-Item `
 						-Path $local:delPath `
 						-Recurse `
@@ -193,7 +193,7 @@ if ($null -ne $local:ignoreTitles ) {
 						-ErrorAction SilentlyContinue
 				}
 			}
-		} catch { Write-Warning '　$($local:i)/$($local:total) - 削除できないファイルがありました' }
+		} catch { Write-Warning '　❗ $($local:i)/$($local:total) - 削除できないファイルがありました' }
 	} -ThrottleLimit $script:multithreadNum
 }
 
@@ -220,7 +220,7 @@ try {
 	$local:allSubDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).`
 			Where({ $_.PSIsContainer })).FullName `
 	| Sort-Object -Descending
-} catch { Write-Warning 'ディレクトリを見つけられませんでした' }
+} catch { Write-Warning '❗ ディレクトリを見つけられませんでした' }
 
 #サブディレクトリの合計数
 if ($local:allSubDirs -is [Array]) { $local:subDirTotal = $local:allSubDirs.Length }
@@ -236,13 +236,13 @@ if ($local:subDirTotal -ne 0) {
 		Write-Output "$($local:i)/$($local:total) - $($_)"
 		if (@((Get-ChildItem -LiteralPath $_ -Recurse).`
 					Where({ ! $_.PSIsContainer })).Count -eq 0) {
-			Write-Output "　$($local:i)/$($local:total) - 「$($_)」を削除します"
+			Write-Output "　💡 $($local:i)/$($local:total) - 「$($_)」を削除します"
 			try {
 				Remove-Item `
 					-LiteralPath $_ `
 					-Recurse `
 					-Force
-			} catch { Write-Output "　$($local:i)/$($local:total) - 空ディレクトリの削除に失敗しました: $_" }
+			} catch { Write-Warning "　❗ $($local:i)/$($local:total) - 空ディレクトリの削除に失敗しました: $_" }
 		}
 	} -ThrottleLimit $script:multithreadNum
 }

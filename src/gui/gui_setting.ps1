@@ -26,7 +26,7 @@
 ###################################################################################
 using namespace System.Windows.Threading
 
-if ($IsWindows -eq $false) { Write-Error 'Windows以外では動作しません'; Start-Sleep 10 ; exit 1 }
+if ($IsWindows -eq $false) { Write-Error '❗ Windows以外では動作しません'; Start-Sleep 10 ; exit 1 }
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName PresentationFramework
 
@@ -42,20 +42,20 @@ try {
 	Set-Location $script:scriptRoot
 	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '../conf'))
 	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
-} catch { Write-Error 'ディレクトリ設定に失敗しました'; exit 1 }
+} catch { Write-Error '❗ ディレクトリ設定に失敗しました'; exit 1 }
 
 #----------------------------------------------------------------------
 #設定ファイル読み込み
 try {
 	. $(Convert-Path $(Join-Path $script:confDir './system_setting.ps1'))
-} catch { Write-Error 'システム設定ファイルの読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error '❗ システム設定ファイルの読み込みに失敗しました' ; exit 1 }
 
 #----------------------------------------------------------------------
 #外部関数ファイルの読み込み
 try {
 	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/common_functions.ps1'))
 	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/tver_functions.ps1'))
-} catch { Write-Error '外部関数ファイルの読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error '❗ 外部関数ファイルの読み込みに失敗しました' ; exit 1 }
 
 #endregion 環境設定
 
@@ -134,7 +134,7 @@ function writeSetting {
 	#自動生成より前の部分
 	if ( $local:totalLineNum -ne 0 ) {
 		try { $local:newSetting += Get-Content $userSettingFile -Head $local:headLineNum }
-		catch { Write-Warning '自動生成の開始部分を特定できませんでした' }
+		catch { Write-Warning '❗ 自動生成の開始部分を特定できませんでした' }
 	}
 
 	#自動生成の部分
@@ -182,7 +182,7 @@ function writeSetting {
 	#自動生成より後の部分
 	if ( $local:totalLineNum -ne 0 ) {
 		try { $local:newSetting += Get-Content $script:userSettingFile -Tail $local:tailLineNum }
-		catch { Write-Warning '自動生成の終了部分を特定できませんでした' }
+		catch { Write-Warning '❗ 自動生成の終了部分を特定できませんでした' }
 	}
 
 	#改行コードをLFで出力
@@ -217,7 +217,7 @@ try {
 	[xml]$local:mainCleanXaml = $local:mainXaml
 	$script:settingWindow = [System.Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $local:mainCleanXaml))
 } catch {
-	Write-Error 'ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。'
+	Write-Error '❗ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。'
 	exit 1
 }
 
@@ -351,7 +351,7 @@ try {
 	$null = $script:settingWindow.Activate()
 	$null = [Console.Window]::ShowWindow($local:console, 0)
 } catch {
-	Write-Error 'ウィンドウを描画できませんでした。TVerRecが破損しています。'
+	Write-Error '❗ ウィンドウを描画できませんでした。TVerRecが破損しています。'
 	exit 1
 }
 

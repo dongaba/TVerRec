@@ -26,7 +26,7 @@
 ###################################################################################
 using namespace System.Windows.Threading
 
-if ($IsWindows -eq $false) { Write-Error 'Windows以外では動作しません'; Start-Sleep 10 ; exit 1 }
+if ($IsWindows -eq $false) { Write-Error '❗ Windows以外では動作しません'; Start-Sleep 10 ; exit 1 }
 Add-Type -AssemblyName PresentationFramework
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -43,11 +43,11 @@ try {
 	Set-Location $script:scriptRoot
 	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '../conf'))
 	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
-} catch { Write-Error 'ディレクトリ設定に失敗しました'; exit 1 }
+} catch { Write-Error '❗ ディレクトリ設定に失敗しました'; exit 1 }
 try {
 	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 	if ($? -eq $false) { exit 1 }
-} catch { Write-Error '関数の読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error '❗ 関数の読み込みに失敗しました' ; exit 1 }
 
 #endregion 環境設定
 
@@ -97,7 +97,7 @@ try {
 	[xml]$local:mainCleanXaml = $local:mainXaml
 	$script:mainWindow = [System.Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $local:mainCleanXaml))
 } catch {
-	Write-Error 'ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。'
+	Write-Error '❗ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。'
 	exit 1
 }
 
@@ -236,6 +236,7 @@ $script:btnKillAll.add_Click({
 		$script:btnExit.IsEnabled = $true
 		$script:btnKillAll.IsEnabled = $false
 		$script:lblStatus.Content = '処理を強制停止しました'
+		[System.GC]::Collect()
 	})
 $script:btnWiki.add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
 $script:btnSetting.add_Click({
@@ -243,6 +244,7 @@ $script:btnSetting.add_Click({
 		if ( Test-Path $(Join-Path $script:confDir './user_setting.ps1') ) {
 			. $(Convert-Path $(Join-Path $script:confDir './user_setting.ps1'))
 		}
+		[System.GC]::Collect()
 	})
 $script:btnExit.add_Click({ $script:mainWindow.close() })
 
@@ -259,7 +261,7 @@ try {
 	$null = $script:mainWindow.Activate()
 	$null = [Console.Window]::ShowWindow($local:console, 0)
 } catch {
-	Write-Error 'ウィンドウを描画できませんでした。TVerRecが破損しています。'
+	Write-Error '❗ ウィンドウを描画できませんでした。TVerRecが破損しています。'
 	exit 1
 }
 

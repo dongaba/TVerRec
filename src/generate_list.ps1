@@ -38,11 +38,11 @@ try {
 	Set-Location $script:scriptRoot
 	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '../conf'))
 	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
-} catch { Write-Error 'カレントディレクトリの設定に失敗しました' ; exit 1 }
+} catch { Write-Error '❗ カレントディレクトリの設定に失敗しました' ; exit 1 }
 try {
 	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 	if ($? -eq $false) { exit 1 }
-} catch { Write-Error '関数の読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error '❗ 関数の読み込みに失敗しました' ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -103,7 +103,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 			Import-Csv `
 			-Path $script:listFilePath `
 			-Encoding UTF8
-	} catch { Write-Warning 'ダウンロードリストを読み込めなかったのでスキップしました'; continue
+	} catch { Write-Warning '❗ ダウンロードリストを読み込めなかったのでスキップしました'; continue
 	} finally { $null = fileUnlock $script:listLockFilePath }
 
 	#ダウンロード履歴ファイルのデータを読み込み
@@ -116,7 +116,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 			Import-Csv `
 			-Path $script:historyFilePath `
 			-Encoding UTF8
-	} catch { Write-Warning 'ダウンロード履歴を読み込めなかったのでスキップしました'; continue
+	} catch { Write-Warning '❗ ダウンロード履歴を読み込めなかったのでスキップしました'; continue
 	} finally { $null = fileUnlock $script:historyLockFilePath }
 
 	foreach ($local:resultLink in $local:resultLinks) {
@@ -225,7 +225,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 			#TVerのAPIを叩いて番組情報取得
 			goAnal -Event 'getinfo' -Type 'link' -ID $_
 			try { getVideoInfo -Link $_ }
-			catch { Write-Warning '情報取得エラー。スキップします Err:90'; continue }
+			catch { Write-Warning '❗ 情報取得エラー。スキップします Err:90'; continue }
 
 			#ダウンロード対象外に入っている番組の場合はリスト出力しない
 			foreach ($ignoreRegexTitle in $using:script:ignoreRegexTitles) {
@@ -247,7 +247,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 			#スキップフラグが立っているかチェック
 			if ($ignore -eq $true) {
-				Write-Output "　$($local:i)/$($local:total) - 番組をコメントアウトした状態でリストファイルに追加します"
+				Write-Output "　💡 $($local:i)/$($local:total) - 番組をコメントアウトした状態でリストファイルに追加します"
 				$newVideo = [pscustomobject]@{
 					seriesName    = $videoSeries
 					seriesID      = $videoSeriesID
@@ -294,7 +294,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 					-Encoding UTF8 `
 					-Append
 				Write-Debug 'ダウンロードリストを書き込みました'
-			} catch { Write-Warning 'ダウンロードリストを更新できませんでした。スキップします'; continue
+			} catch { Write-Warning '❗ ダウンロードリストを更新できませんでした。スキップします'; continue
 			} finally { $null = fileUnlock $script:listLockFilePath }
 			$script:listFileData = `
 				Import-Csv `

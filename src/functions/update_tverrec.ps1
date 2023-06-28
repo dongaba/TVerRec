@@ -88,7 +88,7 @@ try {
 		$local:scriptRoot = Split-Path -Parent -Path $local:scriptRoot
 	} else { $local:scriptRoot = Convert-Path .. }
 	Set-Location $local:scriptRoot
-} catch { Write-Error 'ディレクトリ設定に失敗しました' ; exit 1 }
+} catch { Write-Error '❗ ディレクトリ設定に失敗しました' ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -117,7 +117,7 @@ try {
 	$null = New-Item `
 		-ItemType Directory `
 		-Path $updateTemp
-} catch { Write-Error '作業ディレクトリの作成に失敗しました' ; exit 1 }
+} catch { Write-Error '❗ 作業ディレクトリの作成に失敗しました' ; exit 1 }
 
 #TVerRecの最新バージョン取得
 Write-Output ''
@@ -132,7 +132,7 @@ try {
 	Invoke-WebRequest `
 		-Uri $local:zipURL `
 		-OutFile $(Join-Path $updateTemp './TVerRecLatest.zip')
-} catch { Write-Error 'ダウンロードに失敗しました' ; exit 1 }
+} catch { Write-Error '❗ ダウンロードに失敗しました' ; exit 1 }
 
 #最新バージョンがダウンロードできていたら展開
 Write-Output ''
@@ -144,8 +144,8 @@ try {
 		unZip `
 			-File $(Join-Path $updateTemp './TVerRecLatest.zip') `
 			-OutPath $updateTemp
-	} else { Write-Error 'ダウンロードしたファイルが見つかりません' ; exit 1 }
-} catch { Write-Error 'ダウンロードしたファイルの解凍に失敗しました' ; exit 1 }
+	} else { Write-Error '❗ ダウンロードしたファイルが見つかりません' ; exit 1 }
+} catch { Write-Error '❗ ダウンロードしたファイルの解凍に失敗しました' ; exit 1 }
 
 #ディレクトリは上書きできないので独自関数で以下のディレクトリをループ
 Write-Output ''
@@ -160,7 +160,7 @@ try {
 			-Path $_.FullName `
 			-Destination $($( Convert-Path $(Join-Path $local:scriptRoot '../')) + $_.Name)
 	}
-} catch { Write-Error 'ダウンロードしたTVerRecの配置に失敗しました' ; exit 1 }
+} catch { Write-Error '❗ ダウンロードしたTVerRecの配置に失敗しました' ; exit 1 }
 
 #作業ディレクトリを削除
 Write-Output ''
@@ -173,7 +173,7 @@ try {
 			-Force `
 			-Recurse
 	}
-} catch { Write-Error '作業ディレクトリの削除に失敗しました' ; exit 1 }
+} catch { Write-Error '❗ 作業ディレクトリの削除に失敗しました' ; exit 1 }
 
 #過去のバージョンで使用していたファイルを削除、または移行
 Write-Output ''
@@ -275,9 +275,9 @@ if ($IsWindows -eq $false) {
 Write-Output ''
 Write-Output '==========================================================================='
 Write-Output ''
-Write-Output 'TVerRecのアップデートを終了しました。'
+Write-Output '💡 TVerRecのアップデートを終了しました。'
 Write-Output ''
-Write-Output 'TVerRecを再起動してください。'
+Write-Output '💡 TVerRecを再起動してください。'
 Write-Output ''
 Write-Output '==========================================================================='
 

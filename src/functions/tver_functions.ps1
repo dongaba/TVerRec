@@ -77,7 +77,7 @@ function checkLatestTVerRec {
 	#バージョンアップメッセージ
 	if ($local:versionUp -eq $true ) {
 		[Console]::ForegroundColor = 'Green'
-		Write-Warning 'TVerRecの更新版があるようです。'
+		Write-Warning '💡 TVerRecの更新版があるようです。'
 		Write-Warning "　Local Version $script:appVersion "
 		Write-Warning "　Latest Version  $local:latestVersion"
 		Write-Output ''
@@ -126,7 +126,7 @@ function checkLatestTVerRec {
 				-ArgumentList "-Command $(Join-Path $script:scriptRoot './functions/update_tverrec.ps1')" `
 				-PassThru `
 				-Wait
-		} catch { Write-Error '　TVerRecのアップデータを起動できませんでした' ; return }
+		} catch { Write-Error '　❗ TVerRecのアップデータを起動できませんでした' ; return }
 
 		#再起動のため強制終了
 		exit 1
@@ -149,8 +149,8 @@ function checkLatestYtdl {
 		{ . $(Convert-Path (Join-Path $scriptRoot './functions/update_yt-dlp.ps1')) }
 		elseif ($script:preferredYoutubedl -eq 'ytdl-patched')
 		{ . $(Convert-Path (Join-Path $scriptRoot './functions/update_ytdl-patched.ps1')) }
-		else { Write-Error 'youtube-dlの取得元の指定が無効です' ; exit 1 }
-		if ($? -eq $false) { Write-Error 'youtube-dlの更新に失敗しました' ; exit 1 }
+		else { Write-Error '❗ youtube-dlの取得元の指定が無効です' ; exit 1 }
+		if ($? -eq $false) { Write-Error '❗ youtube-dlの更新に失敗しました' ; exit 1 }
 	}
 
 	$progressPreference = 'Continue'
@@ -167,7 +167,7 @@ function checkLatestFfmpeg {
 
 	if ($script:disableUpdateFfmpeg -eq $false) {
 		. $(Convert-Path (Join-Path $scriptRoot './functions/update_ffmpeg.ps1'))
-		if ($? -eq $false) { Write-Error 'ffmpegの更新に失敗しました' ; exit 1 }
+		if ($? -eq $false) { Write-Error '❗ ffmpegの更新に失敗しました' ; exit 1 }
 	}
 
 	$progressPreference = 'Continue'
@@ -181,28 +181,28 @@ function checkRequiredFile {
 	Param ()
 
 	if (!(Test-Path $script:downloadBaseDir -PathType Container))
-	{ Write-Error '番組ダウンロード先ディレクトリが存在しません。終了します。' ; exit 1 }
+	{ Write-Error '❗ 番組ダウンロード先ディレクトリが存在しません。終了します。' ; exit 1 }
 	if (!(Test-Path $script:downloadWorkDir -PathType Container))
-	{ Write-Error 'ダウンロード作業ディレクトリが存在しません。終了します。' ; exit 1 }
+	{ Write-Error '❗ ダウンロード作業ディレクトリが存在しません。終了します。' ; exit 1 }
 	if ($script:saveBaseDir -ne '') {
 		$script:saveBaseDirArray = @()
 		$script:saveBaseDirArray = $script:saveBaseDir.split(';').Trim()
 		foreach ($saveDir in $script:saveBaseDirArray) {
 			if (!(Test-Path $saveDir.Trim() -PathType Container))
-			{ Write-Error '番組移動先ディレクトリが存在しません。終了します。' ; exit 1 }
+			{ Write-Error '❗ 番組移動先ディレクトリが存在しません。終了します。' ; exit 1 }
 		}
 	}
 	if (!(Test-Path $script:ytdlPath -PathType Leaf))
-	{ Write-Error 'youtube-dlが存在しません。終了します。' ; exit 1 }
+	{ Write-Error '❗ youtube-dlが存在しません。終了します。' ; exit 1 }
 	if (!(Test-Path $script:ffmpegPath -PathType Leaf))
-	{ Write-Error 'ffmpegが存在しません。終了します。' ; exit 1 }
+	{ Write-Error '❗ ffmpegが存在しません。終了します。' ; exit 1 }
 	if ((!(Test-Path $script:ffprobePath -PathType Leaf)) -And ($script:simplifiedValidation -eq $true))
-	{ Write-Error 'ffprobeが存在しません。終了します。' ; exit 1 }
+	{ Write-Error '❗ ffprobeが存在しません。終了します。' ; exit 1 }
 
 	#ファイルが存在しない場合はサンプルファイルをコピー
 	if (!(Test-Path $script:keywordFilePath -PathType Leaf)) {
 		if (!(Test-Path $script:keywordFileSamplePath -PathType Leaf))
-		{ Write-Error 'ダウンロード対象キーワードファイル(サンプル)が存在しません。終了します。' ; exit 1 }
+		{ Write-Error '❗ ダウンロード対象キーワードファイル(サンプル)が存在しません。終了します。' ; exit 1 }
 		Copy-Item `
 			-Path $script:keywordFileSamplePath `
 			-Destination $script:keywordFilePath `
@@ -210,7 +210,7 @@ function checkRequiredFile {
 	}
 	if (!(Test-Path $script:ignoreFilePath -PathType Leaf)) {
 		if (!(Test-Path $script:ignoreFileSamplePath -PathType Leaf))
-		{ Write-Error 'ダウンロード対象外番組ファイル(サンプル)が存在しません。終了します。' ; exit 1 }
+		{ Write-Error '❗ ダウンロード対象外番組ファイル(サンプル)が存在しません。終了します。' ; exit 1 }
 		Copy-Item `
 			-Path $script:ignoreFileSamplePath `
 			-Destination $script:ignoreFilePath `
@@ -218,7 +218,7 @@ function checkRequiredFile {
 	}
 	if (!(Test-Path $script:historyFilePath -PathType Leaf)) {
 		if (!(Test-Path $script:historyFileSamplePath -PathType Leaf))
-		{ Write-Error 'ダウンロード履歴ファイル(サンプル)が存在しません。終了します。' ; exit 1 }
+		{ Write-Error '❗ ダウンロード履歴ファイル(サンプル)が存在しません。終了します。' ; exit 1 }
 		Copy-Item `
 			-Path $script:historyFileSamplePath `
 			-Destination $script:historyFilePath `
@@ -226,7 +226,7 @@ function checkRequiredFile {
 	}
 	if (!(Test-Path $script:listFilePath -PathType Leaf)) {
 		if (!(Test-Path $script:listFileSamplePath -PathType Leaf))
-		{ Write-Error 'ダウンロードリストファイル(サンプル)が存在しません。終了します。' ; exit 1 }
+		{ Write-Error '❗ ダウンロードリストファイル(サンプル)が存在しません。終了します。' ; exit 1 }
 		Copy-Item `
 			-Path $script:listFileSamplePath `
 			-Destination $script:listFilePath `
@@ -235,13 +235,13 @@ function checkRequiredFile {
 
 	#念のためチェック
 	if (!(Test-Path $script:keywordFilePath -PathType Leaf))
-	{ Write-Error 'ダウンロード対象キーワードファイルが存在しません。終了します。' ; exit 1 }
+	{ Write-Error '❗ ダウンロード対象キーワードファイルが存在しません。終了します。' ; exit 1 }
 	if (!(Test-Path $script:ignoreFilePath -PathType Leaf))
-	{ Write-Error 'ダウンロード対象外番組ファイルが存在しません。終了します。' ; exit 1 }
+	{ Write-Error '❗ ダウンロード対象外番組ファイルが存在しません。終了します。' ; exit 1 }
 	if (!(Test-Path $script:historyFilePath -PathType Leaf))
-	{ Write-Error 'ダウンロード履歴ファイルが存在しません。終了します。' ; exit 1 }
+	{ Write-Error '❗ ダウンロード履歴ファイルが存在しません。終了します。' ; exit 1 }
 	if (!(Test-Path $script:listFilePath -PathType Leaf))
-	{ Write-Error 'ダウンロードリストファイルが存在しません。終了します。' ; exit 1 }
+	{ Write-Error '❗ ダウンロードリストファイルが存在しません。終了します。' ; exit 1 }
 }
 
 #----------------------------------------------------------------------
@@ -256,7 +256,7 @@ function loadKeywordList {
 			[String[]](Get-Content $script:keywordFilePath -Encoding UTF8 `
 			| Where-Object { !($_ -match '^\s*$') } `	#空行を除く
 			| Where-Object { !($_ -match '^#.*$') })	#コメント行を除く
-	} catch { Write-Error 'ダウンロード対象キーワードの読み込みに失敗しました' ; exit 1 }
+	} catch { Write-Error '❗ ダウンロード対象キーワードの読み込みに失敗しました' ; exit 1 }
 
 	return $local:keywordNames
 }
@@ -280,7 +280,7 @@ function loadDownloadList {
 		| Select-Object episodeID `						#EpisodeIDのみ抽出
 		| Where-Object { !($_ -match '^\s*$') } `		#空行を除く
 		| Where-Object { !($_.episodeID -match '^#') }	#ダウンロード対象外を除く
-	} catch { Write-Error 'ダウンロードリストの読み込みに失敗しました' ; exit 1
+	} catch { Write-Error '❗ ダウンロードリストの読み込みに失敗しました' ; exit 1
 	} finally { $null = fileUnlock $script:listLockFilePath }
 
 	return $local:videoLinks
@@ -302,7 +302,7 @@ function getIgnoreList {
 			[String[]](Get-Content $script:ignoreFilePath -Encoding UTF8 `
 			| Where-Object { !($_ -match '^\s*$') } `		#空行を除く
 			| Where-Object { !($_ -match '^;.*$') })		#コメント行を除く
-	} catch { Write-Error 'ダウンロード対象外の読み込みに失敗しました' ; exit 1
+	} catch { Write-Error '❗ ダウンロード対象外の読み込みに失敗しました' ; exit 1
 	} finally { $null = fileUnlock $script:ignoreLockFilePath }
 
 	return $local:ignoreTitles
@@ -325,7 +325,7 @@ function getRegexIgnoreList {
 			[String[]](Get-Content $script:ignoreFilePath -Encoding UTF8 `
 			| Where-Object { !($_ -match '^\s*$') } `		#空行を除く
 			| Where-Object { !($_ -match '^;.*$') })		#コメント行を除く
-	} catch { Write-Error 'ダウンロード対象外の読み込みに失敗しました' ; exit 1
+	} catch { Write-Error '❗ ダウンロード対象外の読み込みに失敗しました' ; exit 1
 	} finally { $null = fileUnlock $script:ignoreLockFilePath }
 
 	if ($null -ne $local:ignoreRegexTitles ) {
@@ -395,7 +395,7 @@ function sortIgnoreList {
 		$local:ignoreLists = (Get-Content $script:ignoreFilePath -Encoding UTF8).`
 			Where( { !($_ -match '^\s*$') }).`		#空行を除く
 		Where( { !($_ -match '^;;.*$') })		#ヘッダ行を除く
-	} catch { Write-Error 'ダウンロード対象外リストの読み込みに失敗しました' ; exit 1
+	} catch { Write-Error '❗ ダウンロード対象外リストの読み込みに失敗しました' ; exit 1
 	} finally { $null = fileUnlock $script:ignoreLockFilePath }
 
 	$local:ignoreComment = (Get-Content $script:ignoreFileSamplePath -Encoding UTF8)
@@ -409,7 +409,7 @@ function sortIgnoreList {
 	try {
 		#ロックファイルをロック
 		while ($(fileLock $script:ignoreLockFilePath).fileLocked -ne $true)
-		{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
+		{ Write-Warning '❗ ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 		#ファイル操作
 		#改行コードLFを強制
 		$local:ignoreListNew | ForEach-Object { $_ + "`n" } | Out-File `
@@ -422,7 +422,7 @@ function sortIgnoreList {
 			Path $($script:ignoreFilePath + '.' + $local:timeStamp) `
 			-Destination $script:ignoreFilePath `
 			-Force
-		Write-Error 'ダウンロード対象外リストのソートに失敗しました' ; exit 1
+		Write-Error '❗ ダウンロード対象外リストのソートに失敗しました' ; exit 1
 	} finally {
 		$null = fileUnlock $script:ignoreLockFilePath
 		#ダウンロード対象外番組の読み込み
@@ -475,7 +475,7 @@ function getVideoLinksFromKeyword {
 			$local:keywordNamePage = Invoke-WebRequest `
 				-Uri $local:keywordName `
 				-TimeoutSec $script:timeoutSec
-		} catch { Write-Warning '情報取得エラー。スキップします Err:00' ; continue }
+		} catch { Write-Warning '❗ 情報取得エラー。スキップします Err:00' ; continue }
 		try {
 			$script:episodeLinks = (
 				$local:keywordNamePage.Links `
@@ -488,67 +488,67 @@ function getVideoLinksFromKeyword {
 				} `
 				| Select-Object href
 			).href
-		} catch { Write-Warning '情報取得エラー。スキップします Err:01'; continue }
+		} catch { Write-Warning '❗ 情報取得エラー。スキップします Err:01'; continue }
 
 	} elseif ($local:keywordName.IndexOf('series/') -eq 0) {
 		#番組IDによる番組検索から番組ページのLinkを取得
 		$local:seriesID = trimComment($local:keywordName).Replace('series/', '').Trim()
 		goAnal -Event 'search' -Type 'series' -ID $local:seriesID
 		try { $script:episodeLinks = getLinkFromSeriesID ($local:seriesID) }
-		catch { Write-Warning '情報取得エラー。スキップします Err:02' ; continue }
+		catch { Write-Warning '❗ 情報取得エラー。スキップします Err:02' ; continue }
 
 	} elseif ($local:keywordName.IndexOf('talents/') -eq 0) {
 		#タレントIDによるタレント検索から番組ページのLinkを取得
 		$local:talentID = trimComment($local:keywordName).Replace('talents/', '').Trim()
 		goAnal -Event 'search' -Type 'talent' -ID $local:talentID
 		try { $script:episodeLinks = getLinkFromTalentID ($local:talentID) }
-		catch { Write-Warning '情報取得エラー。スキップします Err:03' ; continue }
+		catch { Write-Warning '❗ 情報取得エラー。スキップします Err:03' ; continue }
 
 	} elseif ($local:keywordName.IndexOf('tag/') -eq 0) {
 		#ジャンルなどのTag情報から番組ページのLinkを取得
 		$local:tagID = trimComment($local:keywordName).Replace('tag/', '').Trim()
 		goAnal -Event 'search' -Type 'tag' -ID $local:tagID
 		try { $script:episodeLinks = getLinkFromTag ($local:tagID) }
-		catch { Write-Warning '情報取得エラー。スキップします Err:04'; continue }
+		catch { Write-Warning '❗ 情報取得エラー。スキップします Err:04'; continue }
 
 	} elseif ($local:keywordName.IndexOf('new/') -eq 0) {
 		#新着番組から番組ページのLinkを取得
 		$local:genre = trimComment($local:keywordName).Replace('new/', '').Trim()
 		goAnal -Event 'search' -Type 'new' -ID $local:genre
 		try { $script:episodeLinks = getLinkFromNew ($local:genre) }
-		catch { Write-Warning '情報取得エラー。スキップします Err:05'; continue }
+		catch { Write-Warning '❗ 情報取得エラー。スキップします Err:05'; continue }
 
 	} elseif ($local:keywordName.IndexOf('ranking/') -eq 0) {
 		#ランキングによる番組ページのLinkを取得
 		$local:genre = trimComment($local:keywordName).Replace('ranking/', '').Trim()
 		goAnal -Event 'search' -Type 'ranking' -ID $local:genre
 		try { $script:episodeLinks = getLinkFromRanking ($local:genre) }
-		catch { Write-Warning '情報取得エラー。スキップします Err:06'; continue }
+		catch { Write-Warning '❗ 情報取得エラー。スキップします Err:06'; continue }
 
 	} elseif ($local:keywordName.IndexOf('toppage') -eq 0) {
 		#トップページから番組ページのLinkを取得
 		goAnal -Event 'search' -Type 'toppage'
 		try { $script:episodeLinks = getLinkFromTopPage }
-		catch { Write-Warning '情報取得エラー。スキップします Err:07'; continue }
+		catch { Write-Warning '❗ 情報取得エラー。スキップします Err:07'; continue }
 
 	} elseif ($local:keywordName.IndexOf('title/') -eq 0) {
 		#番組名による新着検索から番組ページのLinkを取得
 		$local:titleName = trimComment($local:keywordName).Replace('title/', '').Trim()
 		goAnal -Event 'search' -Type 'title' -ID $local:titleName
-		Write-Warning '番組名検索は廃止されました。スキップします Err:08'
+		Write-Warning '❗ 番組名検索は廃止されました。スキップします Err:08'
 		continue
 
 	} elseif ($local:keywordName.IndexOf('sitemap') -eq 0) {
 		#サイトマップから番組ページのLinkを取得
 		goAnal -Event 'search' -Type 'sitemap'
 		try { $script:episodeLinks = getLinkFromSiteMap }
-		catch { Write-Warning '情報取得エラー。スキップします Err:09'; continue }
+		catch { Write-Warning '❗ 情報取得エラー。スキップします Err:09'; continue }
 
 	} else {
 		#タレント名や番組名などURL形式でない場合APIで検索結果から番組ページのLinkを取得
 		goAnal -Event 'search' -Type 'free' -ID $local:keywordName
 		try { $script:episodeLinks = getLinkFromFreeKeyword ($local:keywordName) }
-		catch { Write-Warning '情報取得エラー。スキップします Err:10'; continue }
+		catch { Write-Warning '❗ 情報取得エラー。スキップします Err:10'; continue }
 	}
 
 	$script:episodeLinks = $script:episodeLinks | Sort-Object | Get-Unique
@@ -1163,13 +1163,13 @@ function getLinkFromSiteMap {
 				try {
 					$script:episodeLinks += getLinkFromSeasonID ($local:searchResults[$i].Replace('https://tver.jp/', ''))
 					$script:episodeLinks = $script:episodeLinks | Sort-Object | Get-Unique
-				} catch { Write-Warning '情報取得エラー。スキップします Err:11'; continue }
+				} catch { Write-Warning '❗ 情報取得エラー。スキップします Err:11'; continue }
 			} elseif ($local:searchResults[$i] -like '*/series/*') {
 				Write-Host "　$($local:searchResults[$i]) からEpisodeを抽出中..."
 				try {
 					$script:episodeLinks += getLinkFromSeriesID ($local:searchResults[$i].Replace('https://tver.jp/', ''))
 					$script:episodeLinks = $script:episodeLinks | Sort-Object | Get-Unique
-				} catch { Write-Warning '情報取得エラー。スキップします Err:12'; continue }
+				} catch { Write-Warning '❗ 情報取得エラー。スキップします Err:12'; continue }
 			} elseif ($local:searchResults[$i] -eq 'https://tver.jp/') {
 				#トップページ
 				#別のキーワードがあるためため対応予定なし
@@ -1195,7 +1195,7 @@ function getLinkFromSiteMap {
 				#トピック
 				#番組ページではないため対応予定なし
 			} else {
-				Write-Warning "未知のパターンです。 - $($local:searchResults[$i])"
+				Write-Warning "❗ 未知のパターンです。 - $($local:searchResults[$i])"
 			}
 		}
 	}
@@ -1353,7 +1353,7 @@ function downloadTVerVideo {
 	#TVerのAPIを叩いて番組情報取得
 	goAnal -Event 'getinfo' -Type 'link' -ID $script:videoLink
 	try { getVideoInfo -Link $script:videoLink }
-	catch { Write-Warning '情報取得エラー。スキップします Err:90'; continue }
+	catch { Write-Warning '❗ 情報取得エラー。スキップします Err:90'; continue }
 
 	#ダウンロードファイル情報をセット
 	$script:videoName = getVideoFileName `
@@ -1403,7 +1403,7 @@ function downloadTVerVideo {
 
 	#番組タイトルが取得できなかった場合はスキップ次の番組へ
 	if ($script:videoName -eq '.mp4')
-	{ Write-Warning '番組タイトルを特定できませんでした。スキップします'; continue }
+	{ Write-Warning '❗ 番組タイトルを特定できませんでした。スキップします'; continue }
 
 	#ファイルが既に存在する場合はスキップフラグを立ててダウンロード履歴に書き込み処理へ
 	if (Test-Path $script:videoFilePath) {
@@ -1415,9 +1415,9 @@ function downloadTVerVideo {
 
 		#結果が0件ということは未検証のファイルがあるということ
 		if ( $null -eq $local:historyMatch) {
-			Write-Warning 'すでにダウンロード済ですが未検証の番組です。ダウンロード履歴に追加します'
+			Write-Warning '💡 すでにダウンロード済ですが未検証の番組です。ダウンロード履歴に追加します'
 			$script:skip = $true
-		} else { Write-Warning 'すでにダウンロード済・検証済の番組です。スキップします'; continue }
+		} else { Write-Warning '💡 すでにダウンロード済・検証済の番組です。スキップします'; continue }
 
 	} else {
 
@@ -1436,7 +1436,7 @@ function downloadTVerVideo {
 
 	#スキップフラグが立っているかチェック
 	if ($script:ignore -eq $true) {
-		Write-Output '　ダウンロード対象外としたファイルをダウンロード履歴に追加します'
+		Write-Output '　💡 ダウンロード対象外としたファイルをダウンロード履歴に追加します'
 		$script:newVideo = [pscustomobject]@{
 			videoPage       = $script:videoPageURL
 			videoSeriesPage = $script:videoSeriesPageURL
@@ -1453,7 +1453,7 @@ function downloadTVerVideo {
 			videoValidated  = '0'
 		}
 	} elseif ($script:skip -eq $true) {
-		Write-Output '　ダウンロード済の未検証のファイルをダウンロード履歴に追加します'
+		Write-Output '　💡 ダウンロード済の未検証のファイルをダウンロード履歴に追加します'
 		$script:newVideo = [pscustomobject]@{
 			videoPage       = $script:videoPageURL
 			videoSeriesPage = $script:videoSeriesPageURL
@@ -1500,7 +1500,7 @@ function downloadTVerVideo {
 			-Encoding UTF8 `
 			-Append
 		Write-Debug 'ダウンロード履歴を書き込みました'
-	} catch { Write-Warning 'ダウンロード履歴を更新できませんでした。スキップします'; continue
+	} catch { Write-Warning '❗ ダウンロード履歴を更新できませんでした。スキップします'; continue
 	} finally { $null = fileUnlock $script:historyLockFilePath }
 	$script:historyFileData = `
 		Import-Csv `
@@ -1519,12 +1519,12 @@ function downloadTVerVideo {
 					-ItemType Directory `
 					-Path $script:videoFileDir `
 					-Force
-			} catch { Write-Warning '移動先ディレクトリを作成できませんでした'; continue }
+			} catch { Write-Warning '❗ 移動先ディレクトリを作成できませんでした'; continue }
 		}
 
 		#youtube-dl起動
 		try { executeYtdl $script:videoPageURL }
-		catch { Write-Warning 'youtube-dlの起動に失敗しました' }
+		catch { Write-Warning '❗ youtube-dlの起動に失敗しました' }
 		#5秒待機
 		Start-Sleep -Seconds 5
 
@@ -1558,7 +1558,7 @@ function generateTVerVideoList {
 	#TVerのAPIを叩いて番組情報取得
 	goAnal -Event 'getinfo' -Type 'link' -ID $script:videoLink
 	try { getVideoInfo -Link $script:videoLink }
-	catch { Write-Warning '情報取得エラー。スキップします Err:90'; continue }
+	catch { Write-Warning '❗ 情報取得エラー。スキップします Err:90'; continue }
 
 	#ダウンロード対象外に入っている番組の場合はリスト出力しない
 	foreach ($local:ignoreRegexTitle in $script:ignoreRegexTitles) {
@@ -1580,7 +1580,7 @@ function generateTVerVideoList {
 
 	#スキップフラグが立っているかチェック
 	if ($script:ignore -eq $true) {
-		Write-Output '　番組をコメントアウトした状態でリストファイルに追加します'
+		Write-Output '　💡 番組をコメントアウトした状態でリストファイルに追加します'
 		$script:newVideo = [pscustomobject]@{
 			seriesName    = $script:videoSeries
 			seriesID      = $script:videoSeriesID
@@ -1627,7 +1627,7 @@ function generateTVerVideoList {
 			-Encoding UTF8 `
 			-Append
 		Write-Debug 'ダウンロードリストを書き込みました'
-	} catch { Write-Warning 'ダウンロードリストを更新できませんでした。スキップします'; continue
+	} catch { Write-Warning '❗ ダウンロードリストを更新できませんでした。スキップします'; continue
 	} finally { $null = fileUnlock $script:listLockFilePath }
 	$script:listFileData = `
 		Import-Csv `
@@ -1998,7 +1998,7 @@ function executeYtdl {
 				-ArgumentList $local:ytdlArgs `
 				-PassThru `
 				-WindowStyle $script:windowShowStyle
-		} catch { Write-Error 'youtube-dlの起動に失敗しました' ; return }
+		} catch { Write-Error '　❗ youtube-dlの起動に失敗しました' ; return }
 	} else {
 		Write-Debug "youtube-dl起動コマンド:nohup $script:ytdlPath $local:ytdlArgs"
 		try {
@@ -2008,7 +2008,7 @@ function executeYtdl {
 				-PassThru `
 				-RedirectStandardOutput /dev/null `
 				-RedirectStandardError /dev/zero
-		} catch { Write-Error '　youtube-dlの起動に失敗しました' ; return }
+		} catch { Write-Error '　❗ youtube-dlの起動に失敗しました' ; return }
 	}
 }
 
@@ -2105,7 +2105,7 @@ function cleanDB {
 			-NoTypeInformation `
 			-Encoding UTF8
 
-	} catch { Write-Warning 'ダウンロード履歴の更新に失敗しました'
+	} catch { Write-Warning '❗ ダウンロード履歴の更新に失敗しました'
 	} finally { $null = fileUnlock $script:historyLockFilePath }
 }
 
@@ -2132,7 +2132,7 @@ function purgeDB {
 			-Path $script:historyFilePath `
 			-NoTypeInformation `
 			-Encoding UTF8
-	} catch { Write-Warning 'ダウンロード履歴のクリーンアップに失敗しました'
+	} catch { Write-Warning '❗ ダウンロード履歴のクリーンアップに失敗しました'
 	} finally { $null = fileUnlock $script:historyLockFilePath }
 }
 
@@ -2166,7 +2166,7 @@ function uniqueDB {
 			-NoTypeInformation `
 			-Encoding UTF8
 
-	} catch { Write-Warning 'ダウンロード履歴の更新に失敗しました'
+	} catch { Write-Warning '❗ ダウンロード履歴の更新に失敗しました'
 	} finally { $null = fileUnlock $script:historyLockFilePath }
 }
 
@@ -2193,7 +2193,7 @@ function checkVideo {
 			-Path $script:ffpmegErrorLogPath `
 			-ItemType File `
 			-Force
-	} catch { Write-Warning 'ffmpegエラーファイルを初期化できませんでした' ; return }
+	} catch { Write-Warning '❗ ffmpegエラーファイルを初期化できませんでした' ; return }
 
 	#これからチェックする番組のステータスをチェック
 	try {
@@ -2207,19 +2207,19 @@ function checkVideo {
 			-Encoding UTF8
 		$local:checkStatus = $(($local:videoHists).`
 				Where({ $_.videoPath -eq $local:videoFileRelPath })).videoValidated
-	} catch { Write-Warning "　既にダウンロード履歴から削除されたようです: $local:videoFileRelPath"; return
+	} catch { Write-Warning "　❗ 既にダウンロード履歴から削除されたようです: $local:videoFileRelPath"; return
 	} finally { $null = fileUnlock $script:historyLockFilePath }
 
 	#0:未チェック、1:チェック済、2:チェック中
-	if ($local:checkStatus -eq 2 ) { Write-Warning '他プロセスでチェック中です';	return
-	} elseif ($local:checkStatus -eq 1 ) { Write-Warning '他プロセスでチェック済です'; return
+	if ($local:checkStatus -eq 2 ) { Write-Warning '💡 他プロセスでチェック中です';	return
+	} elseif ($local:checkStatus -eq 1 ) { Write-Warning '💡 他プロセスでチェック済です'; return
 	} else {
 		#該当の番組のチェックステータスを"2"にして後続のチェックを実行
 		try {
 			$local:videoHists `
 			| Where-Object { $_.videoPath -eq $local:videoFileRelPath } `
 			| Where-Object { $_.videoValidated = '2' }
-		} catch { Write-Warning "　該当のレコードが見つかりませんでした: $local:videoFileRelPath"; return }
+		} catch { Write-Warning "　❗ 該当のレコードが見つかりませんでした: $local:videoFileRelPath"; return }
 		try {
 			#ロックファイルをロック
 			while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true)
@@ -2229,7 +2229,7 @@ function checkVideo {
 				-Path $script:historyFilePath `
 				-NoTypeInformation `
 				-Encoding UTF8
-		} catch { Write-Warning "　ダウンロード履歴を更新できませんでした: $local:videoFileRelPath"; return
+		} catch { Write-Warning "　❗ ダウンロード履歴を更新できませんでした: $local:videoFileRelPath"; return
 		} finally { $null = fileUnlock $script:historyLockFilePath }
 	}
 
@@ -2259,7 +2259,7 @@ function checkVideo {
 					-RedirectStandardError $script:ffpmegErrorLogPath `
 					-Wait
 			}
-		} catch { Write-Error '　ffprobeを起動できませんでした' ; return }
+		} catch { Write-Error '　❗ ffprobeを起動できませんでした' ; return }
 	} else {
 		#ffmpegeを使った完全検査
 		$local:ffmpegArgs = "$local:decodeOption " `
@@ -2284,7 +2284,7 @@ function checkVideo {
 					-RedirectStandardError $script:ffpmegErrorLogPath `
 					-Wait
 			}
-		} catch { Write-Error '　ffmpegを起動できませんでした' ; return }
+		} catch { Write-Error '　❗ ffmpegを起動できませんでした' ; return }
 	}
 
 	#ffmpegが正常終了しても、大量エラーが出ることがあるのでエラーをカウント
@@ -2297,7 +2297,7 @@ function checkVideo {
 				-Encoding UTF8 `
 			| ForEach-Object { Write-Debug $_ }
 		}
-	} catch { Write-Warning 'ffmpegエラーの数をカウントできませんでした'; $local:errorCount = 9999999 }
+	} catch { Write-Warning '❗ ffmpegエラーの数をカウントできませんでした'; $local:errorCount = 9999999 }
 
 	#エラーをカウントしたらファイルを削除
 	try {
@@ -2307,12 +2307,12 @@ function checkVideo {
 				-Force `
 				-ErrorAction SilentlyContinue
 		}
-	} catch { Write-Warning 'ffmpegエラーファイルを削除できませんでした' }
+	} catch { Write-Warning '❗ ffmpegエラーファイルを削除できませんでした' }
 
 	if ($local:proc.ExitCode -ne 0 -Or $local:errorCount -gt 30) {
 
 		#終了コードが"0"以外 または エラーが一定以上 はダウンロード履歴とファイルを削除
-		Write-Warning 'チェックNGでした'
+		Write-Warning '❗ チェックNGでした'
 		Write-Warning "　exit code: $($local:proc.ExitCode) error count: $local:errorCount"
 
 		#破損しているダウンロードファイルをダウンロード履歴から削除
@@ -2332,7 +2332,7 @@ function checkVideo {
 				-Path $script:historyFilePath `
 				-NoTypeInformation `
 				-Encoding UTF8
-		} catch { Write-Warning "　ダウンロード履歴の更新に失敗しました: $local:videoFileRelPath"
+		} catch { Write-Warning "　❗ ダウンロード履歴の更新に失敗しました: $local:videoFileRelPath"
 		} finally { $null = fileUnlock $script:historyLockFilePath }
 
 		#破損しているダウンロードファイルを削除
@@ -2341,12 +2341,12 @@ function checkVideo {
 				-LiteralPath $local:videoFilePath `
 				-Force `
 				-ErrorAction SilentlyContinue
-		} catch { Write-Warning "　ファイル削除できませんでした: $local:videoFilePath" }
+		} catch { Write-Warning "　❗ ファイル削除できませんでした: $local:videoFilePath" }
 
 	} else {
 
 		#終了コードが"0"のときはダウンロード履歴にチェック済フラグを立てる
-		Write-Output '　チェックOKでした'
+		Write-Output '　✔️'
 		try {
 			#ロックファイルをロック
 			while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true)
@@ -2364,7 +2364,7 @@ function checkVideo {
 				-Path $script:historyFilePath `
 				-NoTypeInformation `
 				-Encoding UTF8
-		} catch { Write-Warning "　ダウンロード履歴を更新できませんでした: $local:videoFileRelPath"
+		} catch { Write-Warning "　❗ ダウンロード履歴を更新できませんでした: $local:videoFileRelPath"
 		} finally { $null = fileUnlock $script:historyLockFilePath }
 
 	}

@@ -38,11 +38,11 @@ try {
 	Set-Location $script:scriptRoot
 	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '../conf'))
 	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
-} catch { Write-Error 'カレントディレクトリの設定に失敗しました' ; exit 1 }
+} catch { Write-Error '❗ カレントディレクトリの設定に失敗しました' ; exit 1 }
 try {
 	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 	if ($? -eq $false) { exit 1 }
-} catch { Write-Error '関数の読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error '❗ 関数の読み込みに失敗しました' ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -54,7 +54,7 @@ try {
 	if ( Test-Path $(Join-Path $script:confDir './user_setting.ps1') ) {
 		. $(Convert-Path $(Join-Path $script:confDir './user_setting.ps1'))
 	}
-} catch { Write-Error '設定ファイルの読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error '❗ 設定ファイルの読み込みに失敗しました' ; exit 1 }
 
 #設定で指定したファイル・ディレクトリの存在チェック
 checkRequiredFile
@@ -111,7 +111,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 			Import-Csv `
 			-Path $script:historyFilePath `
 			-Encoding UTF8
-	} catch { Write-Warning 'ダウンロード履歴を読み込めなかったのでスキップしました'; continue
+	} catch { Write-Warning '❗ ダウンロード履歴を読み込めなかったのでスキップしました'; continue
 	} finally { $null = fileUnlock $script:historyLockFilePath }
 
 	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
@@ -132,7 +132,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 	$local:videoNum = 0
 	if ($null -eq $local:videoLinks) { $local:videoTotal = 0 }
 	else { $local:videoTotal = $local:videoLinks.Length }
-	Write-Output "　処理対象$($local:videoTotal)本 処理済$($local:processedCount)本"
+	Write-Output "　💡 処理対象$($local:videoTotal)本 処理済$($local:processedCount)本"
 
 	#処理時間の推計
 	$local:secElapsed = (Get-Date) - $local:totalStartTime
@@ -166,7 +166,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 		#移動先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
 		if (Test-Path $script:downloadBaseDir -PathType Container) {}
-		else { Write-Error '番組ダウンロード先ディレクトリにアクセスできません。終了します' ; exit 1 }
+		else { Write-Error '❗ 番組ダウンロード先ディレクトリにアクセスできません。終了します' ; exit 1 }
 
 		#進捗率の計算
 		$local:progressRatio2 = $($local:videoNum / $local:videoTotal)
