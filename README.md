@@ -1,13 +1,14 @@
 # 📺**TVerRec**🎞 TVer 一括ダウンロード・保存
 
 ![Logo](https://raw.githubusercontent.com/dongaba/TVerRec/master/img/TVerRec-Logo.png)
-
 [![GitHub release](https://img.shields.io/github/v/release/dongaba/TVerRec?color=blue)](https://github.com/dongaba/TVerRec/releases)
 [![License](https://img.shields.io/github/license/dongaba/TVerRec?color=blue)](https://opensource.org/licenses/MIT)
 [![CodeFactor](https://www.codefactor.io/repository/github/dongaba/tverrec/badge)](https://www.codefactor.io/repository/github/dongaba/tverrec)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/1b42499be57b48818db8c3c90d73adb3)](https://app.codacy.com/gh/dongaba/TVerRec/dashboard)
 [![DevSkim](https://github.com/dongaba/TVerRec/actions/workflows/devskim.yml/badge.svg)](https://github.com/dongaba/TVerRec/actions/workflows/devskim.yml)
 [![PSScriptAnalyzer](https://github.com/dongaba/TVerRec/actions/workflows/powershell.yml/badge.svg)](https://github.com/dongaba/TVerRec/actions/workflows/powershell.yml)
+[![Push to Docker Hub](https://github.com/dongaba/TVerRec/actions/workflows/push-to-dh.yml/badge.svg)](https://github.com/dongaba/TVerRec/actions/workflows/push-to-dh.yml)
+
 [![TVerRec Launch](https://hits.sh/github.com/dongaba/TVerRec/launch.svg?view=total&color=d8453e&labelColor=333333&label=TVerRec%20Launched)](https://hits.sh/github.com/dongaba/TVerRec/launch)
 [![Video Search](https://hits.sh/github.com/dongaba/TVerRec/search.svg?view=total&color=d8453e&labelColor=333333&label=Video%20Searched)](https://hits.sh/github.com/dongaba/TVerRec/search)
 [![Video Download](https://hits.sh/github.com/dongaba/TVerRec/download.svg?view=total&color=d8453e&labelColor=333333&label=Video%20Downloaded)](https://hits.sh/github.com/dongaba/TVerRec/download)
