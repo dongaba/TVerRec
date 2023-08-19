@@ -1,5 +1,15 @@
 ﻿# Change Log
 
+## [2.8.1](https://github.com/dongaba/TVerRec/releases/tag/v2.8.1)
+
+### 2.8.1 Added
+
+### 2.8.1 Changed
+
+### 2.8.1 Fixed
+
+- Mac 環境で ffmpeg が正常に更新されない問題を修正
+
 ## [2.8.0](https://github.com/dongaba/TVerRec/releases/tag/v2.8.0)
 
 ### 2.8.0 Added

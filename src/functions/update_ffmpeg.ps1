@@ -254,10 +254,10 @@ if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
 			try {
 				unZip `
 					-File "$($local:ffmpegDir)/ffmpeg.zip" `
-					-OutPath "$($local:ffmpegDir)/ffmpeg"
+					-OutPath "$($local:ffmpegDir)"
 				unZip `
 					-File "$($local:ffmpegDir)/ffprobe.zip" `
-					-OutPath "$($local:ffmpegDir)/ffprobe"
+					-OutPath "$($local:ffmpegDir)"
 			} catch { Write-Error '❗ ffmpegの展開に失敗しました' ; exit 1 }
 
 			#ゴミ掃除
