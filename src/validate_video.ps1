@@ -86,7 +86,7 @@ Write-Output '------------------------------------------------------------------
 #進捗表示
 showProgressToast `
 	-Text1 'ダウンロードファイルの整合性検証中' `
-	-Text2 '　処理2/5 - 30日以上前のダウンロード履歴を削除' `
+	-Text2 "　処理2/5 - $($script:historyRetentionPeriod)日以上前のダウンロード履歴を削除" `
 	-WorkDetail '' `
 	-Tag $script:appName `
 	-Group 'Validate' `
@@ -94,7 +94,7 @@ showProgressToast `
 	-Silent $false
 
 #30日以上前に処理したものはダウンロード履歴から削除
-purgeDB -RetentionPeriod 30
+purgeDB -RetentionPeriod $script:historyRetentionPeriod
 Write-Output ''
 
 Write-Output '----------------------------------------------------------------------'

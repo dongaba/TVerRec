@@ -37,25 +37,32 @@ Set-StrictMode -Version Latest
 
 #ダウンロード先のフルパス(絶対パス指定)
 #　ダウンロード先とは、ダウンロードが終わった動画ファイルが配置される場所です。
-#　例えば C:\Users\yamada-taro\Video にダウンロードするのであれば $script:downloadBaseDir = 'C:\Users\yamada-taro\Video' と設定します。
-#　MacOSやLinuxでは $script:downloadBaseDir = '/mnt/Work' や $script:downloadBaseDir = '/Volumes/Work' などのように設定します。
+#　例えば C:\Users\yamada-taro\Video にダウンロードするのであれば
+#　$script:downloadBaseDir = 'C:\Users\yamada-taro\Video' と設定します。
+#　MacOSやLinuxでは $script:downloadBaseDir = '/mnt/Work' や
+#　$script:downloadBaseDir = '/Volumes/Work' などのように設定します。
 $script:downloadBaseDir = ''
 
 #ダウンロード中の作業ディレクトリのフルパス(絶対パス指定)
 #　作業ディレクトリは、動画のダウンロード中に処理途中のファイルが配置される場所です。
-#　多数のファイルが作成され読み書きが多発するので、SSDやRamDriveなどの高速なディスクを指定すると動作速度が向上します。
+#　多数のファイルが作成され読み書きが多発するので、SSDやRamDriveなどの
+#　高速なディスクを指定すると動作速度が向上します。
 #　例えば C:\Temp にダウンロードするのであれば $script:downloadWorkDir = 'C:\Temp' と設定します。
-#　MacOSやLinuxでは $script:downloadWorkDir = '/var/tmp' や $script:downloadWorkDir = '/Volumes/RamDrive/Temp' などのように設定します。
+#　MacOSやLinuxでは $script:downloadWorkDir = '/var/tmp' や
+#　$script:downloadWorkDir = '/Volumes/RamDrive/Temp' などのように設定します。
 $script:downloadWorkDir = ''
 
 #移動先のフルパス(絶対パス指定)
 #　移動先とは、動画ファイルを最終的に整理するためのライブラリ等が配置されている場所です。
 #　規定の設定では設定されていません。
 #　ダウンロード先のディレクトリで動画を再生するのであれば、指定しなくてもOKです。
-#　例えば C:\TverLibrary を移動先にするのであれば $script:saveBaseDir = 'C:\TverLibrary' と設定します。
-#　複数のディレクトリを移動先として指定する場合には $script:saveBaseDir = 'V:;X:' のようにセミコロン区切りで複数指定可能です。
+#　例えば C:\TverLibrary を移動先にするのであれば
+#　$script:saveBaseDir = 'C:\TverLibrary' と設定します。
+#　複数のディレクトリを移動先として指定する場合には
+#　$script:saveBaseDir = 'V:;X:' のようにセミコロン区切りで複数指定可能です。
 #　ただし、複数のディレクトリに同名のディレクトリがある場合には、先に指定したディレクトリが優先されます。
-#　MacOSやLinuxでは $script:saveBaseDir = '/var/Video' や $script:saveBaseDir = '/Volumes/RamDrive/Video' などのように設定します。
+#　MacOSやLinuxでは $script:saveBaseDir = '/var/Video' や
+#　$script:saveBaseDir = '/Volumes/RamDrive/Video' などのように設定します。
 $script:saveBaseDir = ''
 
 #----------------------------------------------------------------------
@@ -63,30 +70,47 @@ $script:saveBaseDir = ''
 #----------------------------------------------------------------------
 
 #同時ダウンロードファイル数
+#　同時に並行でダウンロードする番組の数を設定します。
+#　ここの数字を増やすことで同時ダウンロード数を増やすことはできますが、
+#　PCへの負荷が高まり逆にダウンロード効率が下がるのでご注意ください。
 $script:parallelDownloadFileNum = 5
 
 #番組あたりの同時ダウンロード数
+#　それぞれの番組をダウンロードする際の並行ダウンロード数を設定します。
+#　ここの数字を増やすことで同時ダウンロード数を増やすことはできますが、
+#　PCへの負荷が高まり逆にダウンロード効率が下がるのでご注意ください。
 $script:parallelDownloadNumPerFile = 10
 
 #並列処理の同時スレッド数
 #　PCの性能に応じて適度に設定してください。
 #　最近のPCであれば100くらいの値を設定しても十分に動作すると思います。
 #　あまり大きな数を指定すると逆に処理時間が長くなる可能性があります。
+#　現在のところ、並列処理を行うのはダウンロードリストの作成処理とダウンロード対象外番組の削除処理、
+#　空フォルダの削除処理です。
 $script:multithreadNum = 100
 
 #HTTPアクセスのタイムアウト(sec)
+#　各種 HTTP のアクセス時のタイムアウト値(秒)です。
+#　設定した時間以内に HTTP の応答がなければエラーとして判断されます。
 $script:timeoutSec = 60
 
+#ダウンロード履歴保持日数
+#　ダウンロード履歴を保持する日数を指定します。
+#　保持期間を長くすると、同じ番組の再配信があった際に重複ダウンロードしなくて住む可能性が高くなりますが、
+#　処理時間が長くなる可能性があります。
+$script:historyRetentionPeriod = 30
+
 #放送局毎のディレクトリ配下にダウンロードファイルを保存
+#　放送局(テレビ局)ごとのディレクトリを作って番組をダウンロードするかを設定します。
 #　「$false」の際の移動先は以下
 #　  ダウンロード先/
 #　    └番組シリーズ名 番組シーズン名/
-#　      └番組シリーズ名 番組シーズン名 放送日 番組タイトル名).mp4
+#　      └番組シリーズ名 番組シーズン名 放送日 番組タイトル名.mp4
 #　「$true」の際の移動先は以下
 #　  ダウンロード先/
 #　    └放送局/
 #　      └番組シリーズ名 番組シーズン名/
-#　        └番組シリーズ名 番組シーズン名 放送日 番組タイトル名).mp4
+#　        └番組シリーズ名 番組シーズン名 放送日 番組タイトル名.mp4
 #　※厳密にはファイル名は他のオプションによって決定されます
 $script:sortVideoByMedia = $false
 
@@ -129,31 +153,56 @@ $script:addEpisodeNumber = $true
 $script:removeSpecialNote = $true
 
 #youtube-dlの取得元
+#　youtube-dlに起因する問題(例えばダウンロードできないなど)が起きた際には2種類のyoutube-dlを使い分けることが可能です。
+#　yt-dlpを設定するとyt-dlp(https://github.com/yt-dlp/yt-dlp)から取得します。
+#　ytdl-patchedを設定するとytdl-patched(https://github.com/ytdl-patched/ytdl-patched)から取得します。
 $script:preferredYoutubedl = 'yt-dlp'	#'yt-dlp' or 'ytdl-patched'
 
 #youtube-dlの自動アップデートを無効化
+#　youtube-dlの配布元の不具合等により自動アップデートがうまく動作しない場合には無効化することが可能です。
 $script:disableUpdateYoutubedl = $false
 
 #ffmpegの自動アップデートを無効化
+#　ffmpegの配布元の不具合等により自動アップデートがうまく動作しない場合には無効化することが可能です。
 $script:disableUpdateFfmpeg = $false
 
 #ソフトウェアデコードの強制(「$true」でソフトウェアデコードの強制。ただしCPU使用率が上がる)
+#　ダウンロードファイルの整合性検証時にハードウェアアクセラレーションを使わなくすることができます。
+#　高速なCPUが搭載されている場合はハードウェアアクセラレーションよりもCPUで処理したほうが処理が早いことがあります。
+#　概ね10世代以降のIntel Core CPUであれば、GPUを搭載していてもソフトウェアデコードの方が高速です。
+#　Apple Silicon搭載のMacでもソフトウェアデコードのほうが高速です。
 $script:forceSoftwareDecodeFlag = $false
 
-#番組の整合性検証の高速化(「$true」で高速化。ただし検証の精度は落ちる)
+#番組の整合性検証の高速化
+#　番組検証を簡素化するかどうかを設定します。
+#　簡素化した場合、ffmpegによる番組の完全検証ではなく、ffprobeによる簡易検証に切り替えます。
+#　番組1本あたり数秒で検証が完了しますが、検証精度は低いです。(おそらくメタデータの検査だけの模様)
 $script:simplifiedValidation = $false
 
-#番組の整合性検証の無効化(「$true」で無効化)
+#番組の整合性検証の無効化
 $script:disableValidation = $false
 
+#サイトマップ処理時にエピソードのみ処理
+#　キーワードファイルでサイトマップ指定をした際にエピソードのみを処理するかどうかを設定します。
+#　現在のところ、エピソードだけの処理でもすべての番組動画が含まれているようなので、
+#　エピソードだけの処理でも全番組のダウンロードが可能なようです。
+#　処理時間が長くなりますが、エピソード以外も処理することでダウンロード対象番組が増える可能性があります。
+$script:sitemapParseEpisodeOnly = $true
+
 #youtube-dlとffmpegのウィンドウの表示方法(Windowsのみ) Normal/Maximized/Minimized/Hidden
+#　youtube-dl と ffmpeg のウィンドウをどのように表示するかを設定します。
+#　Minimizedに設定することで最小化状態でウィンドウが作成されるようになり必要なときにだけ進捗確認をすることができます。
+#　Hiddenに設定すると非表示となります。
+#　Normalに設定すると多数のウィンドウが表示され鬱陶しいのでおすすめしません。
+#　Maximizedに設定すると最大化した状態でウィンドウが表示されますが、通常利用では利用することはないと思います。
 $script:windowShowStyle = 'Minimized'
 
 #ffmpegのデコードオプション
+#　直接ffmpegのオプションを記載することができます。
+#　ダウンロードファイルの整合性検証時にハードウェアアクセラレーションを有効化する際などに使用します。
+#　例えばIntel CPUを搭載した一般的なPCであれば、-hwaccel qsv -c:v h264_qsvを設定することで、CPU内蔵のアクセラレータを使ってCPU負荷を下げつつ高速に処理することが可能です。
+#　この設定はソフトウェアデコードの強制を有効に設定されていると無効化されます。
 $script:ffmpegDecodeOption = ''
-
-#SiteMap処理時にEpisodeだけ取得
-$script:sitemapParseEpisodeOnly = $true
 
 #以下は$script:ffmpegDecodeOptionの設定例
 

@@ -729,7 +729,8 @@
                         <TextBlock
                             Margin="20,0,20,5"
                             TextWrapping="Wrap">
-                            ダウンロード先とは、ダウンロードが終わった動画ファイルが配置される場所です。
+                            ダウンロード先とは、ダウンロードが終わった動画ファイルが配置される場所です。<LineBreak/>
+                            例えば C:\Users\yamada-taro\Video にダウンロードするのであれば C:\Users\yamada-taro\Video と設定します。
                         </TextBlock>
                     </Expander>
                     <Grid>
@@ -765,7 +766,8 @@
                             Margin="20,0,20,5"
                             TextWrapping="Wrap">
                             作業ディレクトリは、動画のダウンロード中に処理途中のファイルが配置される場所です。<LineBreak/>
-                            多数のファイルが作成され読み書きが多発するので、SSDやRamDriveなどの高速なディスクを指定すると動作速度が向上します。
+                            多数のファイルが作成され読み書きが多発するので、SSDやRamDriveなどの高速なディスクを指定すると動作速度が向上します。<LineBreak/>
+                            例えば C:\Temp にダウンロードするのであれば $script:downloadWorkDir = 'C:\Temp' と設定します。
                         </TextBlock>
                     </Expander>
                     <Grid>
@@ -802,7 +804,9 @@
                             TextWrapping="Wrap">
                             移動先とは、動画ファイルを最終的に整理するためのライブラリ等が配置されている場所です。<LineBreak/>
                             番組移動機能使用しない場合は設定しなくてもOKです。<LineBreak/>
-                            複数のディレクトリを移動先として指定する場合には V:;X: のようにセミコロン区切りで複数指定可能です。
+                            例えば C:\TverLibrary を移動先にするのであれば C:\TverLibrary と設定します。<LineBreak/>
+                            複数のディレクトリを移動先として指定する場合には V:;X: のようにセミコロン区切りで複数指定可能です。<LineBreak/>
+                            ただし、複数のディレクトリに同名のディレクトリがある場合には、先に指定したディレクトリが優先されます。
                         </TextBlock>
                     </Expander>
                     <Grid>
@@ -952,11 +956,41 @@
                         Margin="10,10,10,0"
                         IsExpanded="False"
                         FontFamily="Yu Gothic UI"
+                        Header="ダウンロード履歴保持日数">
+                        <TextBlock
+                            Margin="20,0,20,5"
+                            TextWrapping="Wrap">
+                            ダウンロード履歴を保持する日数を指定します。<LineBreak/>
+                            保持期間を長くすると、同じ番組の再配信があった際に重複ダウンロードしなくて住む可能性が高くなりますが、処理時間が長くなる可能性があります。
+                        </TextBlock>
+                    </Expander>
+                    <TextBox
+                        x:Name="historyRetentionPeriod"
+                        Text="デフォルト値"
+                        Style="{DynamicResource TextBoxStyle}"
+                        Margin="20,0,20,0"
+                        VerticalScrollBarVisibility="Auto"
+                        BorderThickness="0,0,0,1"/>
+
+                    <Expander
+                        Margin="10,10,10,0"
+                        IsExpanded="False"
+                        FontFamily="Yu Gothic UI"
                         Header="放送局毎のディレクトリ配下にダウンロードファイルを保存">
                         <TextBlock
                             Margin="20,0,20,5"
                             TextWrapping="Wrap">
-                            放送局(テレビ局)ごとのディレクトリを作って番組をダウンロードするかを設定します。
+                            放送局(テレビ局)ごとのディレクトリを作って番組をダウンロードするかを設定します。<LineBreak/>
+                            「しない」の際の移動先は以下<LineBreak/>
+                            　ダウンロード先/<LineBreak/>
+                            　　└番組シリーズ名 番組シーズン名/<LineBreak/>
+                            　　　└番組シリーズ名 番組シーズン名 放送日 番組タイトル名.mp4<LineBreak/>
+                            「する」の際の移動先は以下<LineBreak/>
+                            　ダウンロード先/<LineBreak/>
+                            　　└放送局/<LineBreak/>
+                            　　　└番組シリーズ名 番組シーズン名/<LineBreak/>
+                            　　　　└番組シリーズ名 番組シーズン名 放送日 番組タイトル名.mp4<LineBreak/>
+                            ※厳密にはファイル名は他のオプションによって決定されます
                         </TextBlock>
                     </Expander>
                     <ComboBox
@@ -971,8 +1005,6 @@
                         <ComboBoxItem>する</ComboBoxItem>
                     </ComboBox>
 
-
-
                     <Expander
                         Margin="10,10,10,0"
                         IsExpanded="False"
@@ -981,7 +1013,12 @@
                         <TextBlock
                             Margin="20,0,20,5"
                             TextWrapping="Wrap">
-                            ダウンロードファイル名に番組シリーズ名を付加するかを設定します。
+                            ダウンロードファイル名に番組シリーズ名を付加するかを設定します。<LineBreak/>
+                            「しない」の場合のファイル名は以下<LineBreak/>
+                            　番組シーズン名 放送日 Epエピソード番号 番組タイトル名.mp4<LineBreak/>
+                            「する」の際のファイル名は以下<LineBreak/>
+                            　番組シリーズ名 番組シーズン名 放送日 Epエピソード番号 番組タイトル名.mp4<LineBreak/>
+                            ※厳密にはファイル名は他のオプションによって決定されます
                         </TextBlock>
                     </Expander>
                     <ComboBox
@@ -1004,7 +1041,12 @@
                         <TextBlock
                             Margin="20,0,20,5"
                             TextWrapping="Wrap">
-                            ダウンロードファイル名に番組シーズン名を付加するかを設定します。
+                            ダウンロードファイル名に番組シーズン名を付加するかを設定します。<LineBreak/>
+                            「しない」の場合のファイル名は以下<LineBreak/>
+                            　番組シリーズ名 放送日 Epエピソード番号 番組タイトル名.mp4<LineBreak/>
+                            「する」の際のファイル名は以下<LineBreak/>
+                            　番組シリーズ名 番組シーズン名 放送日 Epエピソード番号 番組タイトル名.mp4<LineBreak/>
+                            ※厳密にはファイル名は他のオプションによって決定されます
                         </TextBlock>
                     </Expander>
                     <ComboBox
@@ -1027,7 +1069,12 @@
                         <TextBlock
                             Margin="20,0,20,5"
                             TextWrapping="Wrap">
-                            ダウンロードファイル名に番組放送日を付加するかを設定します。
+                            ダウンロードファイル名に番組放送日を付加するかを設定します。<LineBreak/>
+                            「しない」の場合のファイル名は以下<LineBreak/>
+                            　番組シリーズ名 番組シーズン名 Epエピソード番号 番組タイトル名.mp4<LineBreak/>
+                            「する」の際のファイル名は以下<LineBreak/>
+                            　番組シリーズ名 番組シーズン名 放送日 Epエピソード番号 番組タイトル名.mp4<LineBreak/>
+                            ※厳密にはファイル名は他のオプションによって決定されます
                         </TextBlock>
                     </Expander>
                     <ComboBox
@@ -1051,7 +1098,12 @@
                             Margin="20,0,20,5"
                             TextWrapping="Wrap">
                             ダウンロードファイル名にエピソード番号を付加するかを設定します。<LineBreak/>
-                            ただし、番組によってはエピソード番号が固定になっている番組やエピソード番号が取得できない番組もありますのでご注意ください。
+                            ただし、番組によってはエピソード番号が固定になっている番組やエピソード番号が取得できない番組もありますのでご注意ください。<LineBreak/>
+                            「しない」の場合のファイル名は以下<LineBreak/>
+                            　番組シリーズ名 番組シーズン名 放送日 番組タイトル名.mp4<LineBreak/>
+                            「する」の際のファイル名は以下<LineBreak/>
+                            　番組シリーズ名 番組シーズン名 放送日 Epエピソード番号 番組タイトル名.mp4<LineBreak/>
+                            ※厳密にはファイル名は他のオプションによって決定されます
                         </TextBlock>
                     </Expander>
                     <ComboBox
@@ -1073,7 +1125,9 @@
                         <TextBlock
                             Margin="20,0,20,5"
                             TextWrapping="Wrap">
-                            番組名に付く《ドラマ特区》、《新シリーズ放送記念》、《ドラマ Paravi》、《〇〇出演 「〇〇」スタート記念》などの不要なコメント(補足情報?)を削除するかを設定します。
+                            番組名に付く《ドラマ特区》、《新シリーズ放送記念》、《ドラマ Paravi》、《〇〇出演 「〇〇」スタート記念》などの不要なコメント(補足情報?)を削除するかを設定します。<LineBreak/>
+                            「しない」の場合はTVerで配信されているとおりに番組名を設定<LineBreak/>
+                            「する」の場合は「《」と「》」で挟まれた部分を削除
                         </TextBlock>
                     </Expander>
                     <ComboBox
@@ -1169,7 +1223,8 @@
                             TextWrapping="Wrap">
                             ダウンロードファイルの整合性検証時にハードウェアアクセラレーションを使わなくすることができます。<LineBreak/>
                             高速なCPUが搭載されている場合はハードウェアアクセラレーションよりもCPUで処理したほうが処理が早いことがあります。<LineBreak/>
-                            概ね10世代以降のIntel Core CPUであれば、GPUを搭載していてもソフトウェアデコードの方が高速です。
+                            概ね10世代以降のIntel Core CPUであれば、GPUを搭載していてもソフトウェアデコードの方が高速です。<LineBreak/>
+                            Apple Silicon搭載のMacでもソフトウェアデコードのほうが高速です。
                         </TextBlock>
                     </Expander>
                     <ComboBox
@@ -1295,7 +1350,7 @@
                             Margin="20,0,20,5"
                             TextWrapping="Wrap">
                             直接ffmpegのオプションを記載することができます。<LineBreak/>
-                            ダウンロードファイルの整合性検証時にハードウェアアクセラレーションを有効化するさいなどに使用します。<LineBreak/>
+                            ダウンロードファイルの整合性検証時にハードウェアアクセラレーションを有効化する際などに使用します。<LineBreak/>
                             例えばIntel CPUを搭載した一般的なPCであれば、-hwaccel qsv -c:v h264_qsvを設定することで、CPU内蔵のアクセラレータを使ってCPU負荷を下げつつ高速に処理することが可能です。<LineBreak/>
                             この設定はソフトウェアデコードの強制を有効に設定されていると無効化されます。
                         </TextBlock>
