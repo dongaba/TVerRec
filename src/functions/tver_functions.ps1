@@ -1405,8 +1405,25 @@ function downloadTVerVideo {
 	if ($script:videoName -eq '.mp4')
 	{ Write-Warning '❗ 番組タイトルを特定できませんでした。スキップします'; continue }
 
-	#ファイルが既に存在する場合はスキップフラグを立ててダウンロード履歴に書き込み処理へ
-	if (Test-Path $script:videoFilePath) {
+
+
+	$local:historyMatch = $script:historyFileData | Where-Object { $_.videoName -eq $script:videoName }
+	if ($null -ne $local:historyMatch) {
+		#ファイル名がすでにダウンロード履歴に存在する場合はスキップフラグを立ててダウンロード履歴に書き込み処理へ
+
+		#リストファイルにチェック済の状態で存在するかチェック
+		$local:historyMatch = $script:historyFileData `
+		| Where-Object { $_.videoPath -eq $script:videoFileRelPath } `
+		| Where-Object { $_.videoValidated -eq '1' }
+
+		#結果が0件ということは未検証のファイルがあるということ
+		if ( $null -eq $local:historyMatch) {
+			Write-Warning '💡 すでにダウンロード済ですが未検証の番組です。ダウンロード履歴に追加します'
+			$script:skip = $true
+		} else { Write-Warning '💡 すでにダウンロード済・検証済の番組です。スキップします'; continue }
+
+	} elseif (Test-Path $script:videoFilePath) {
+		#ファイルが既に存在する場合はスキップフラグを立ててダウンロード履歴に書き込み処理へ
 
 		#リストファイルにチェック済の状態で存在するかチェック
 		$local:historyMatch = $script:historyFileData `
@@ -1824,7 +1841,7 @@ function getVideoFileName {
 		$local:videoName += $local:broadcastDate + ' '
 	}
 	if ($script:addEpisodeNumber -eq $true) {
-		$local:videoName += 'Ep' + $local:videoEpisode ` + ' '
+		$local:videoName += 'Ep' + $local:videoEpisode + ' '
 	}
 	$local:videoName += $local:videoTitle
 
