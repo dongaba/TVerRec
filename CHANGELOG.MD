@@ -12,6 +12,7 @@
 ### 2.8.1 Fixed
 
 - Mac 環境で ffmpeg が正常に更新されない問題を修正
+- Mac 環境/Linux 環境で stop_tverrec.sh が正しく動作しなかった問題を修正
 
 ## [2.8.0](https://github.com/dongaba/TVerRec/releases/tag/v2.8.0)
 
