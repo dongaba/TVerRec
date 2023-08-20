@@ -1811,21 +1811,22 @@ function getVideoFileName {
 		[String]$local:broadcastDate
 	)
 
+	$local:videoName = ''
+
 	#ファイル名を生成
-	if ($script:addEpisodeNumber -eq $true) {
-		$local:videoName = `
-			$local:videoSeries `
-			+ ' ' + $local:videoSeason `
-			+ ' ' + $local:broadcastDate `
-			+ ' Ep' + $local:videoEpisode `
-			+ ' ' + $local:videoTitle
-	} else {
-		$local:videoName = `
-			$local:videoSeries `
-			+ ' ' + $local:videoSeason `
-			+ ' ' + $local:broadcastDate `
-			+ ' ' + $local:videoTitle
+	if ($script:addSeriesName -eq $true) {
+		$local:videoName += $local:videoSeries + ' '
 	}
+	if ($script:addSeasonName -eq $true) {
+		$local:videoName += $local:videoSeason + ' '
+	}
+	if ($script:addBrodcastDate -eq $true) {
+		$local:videoName += $local:broadcastDate + ' '
+	}
+	if ($script:addEpisodeNumber -eq $true) {
+		$local:videoName += 'Ep' + $local:videoEpisode ` + ' '
+	}
+	$local:videoName += $local:videoTitle
 
 	#ファイル名にできない文字列を除去
 	$local:videoName = $(getFileNameWoInvChars (getSpecialCharacterReplaced (
@@ -2262,7 +2263,7 @@ function checkVideo {
 		} catch { Write-Error '　❗ ffprobeを起動できませんでした' ; return }
 	} else {
 		#ffmpegeを使った完全検査
-		$local:ffmpegArgs = "$local:decodeOption " `
+		$local:ffmpegArgs = "$local:decodeOption" `
 			+ ' -hide_banner -v error -xerror' + " -i $local:checkFile -f null - "
 
 		Write-Debug "ffmpeg起動コマンド:$script:ffmpegPath $local:ffmpegArgs"

@@ -971,6 +971,77 @@
                         <ComboBoxItem>する</ComboBoxItem>
                     </ComboBox>
 
+
+
+                    <Expander
+                        Margin="10,10,10,0"
+                        IsExpanded="False"
+                        FontFamily="Yu Gothic UI"
+                        Header="ダウンロードファイル名に番組シリーズ名を付加">
+                        <TextBlock
+                            Margin="20,0,20,5"
+                            TextWrapping="Wrap">
+                            ダウンロードファイル名に番組シリーズ名を付加するかを設定します。
+                        </TextBlock>
+                    </Expander>
+                    <ComboBox
+                        x:Name="addSeriesName"
+                        SelectedIndex="0"
+                        Style="{DynamicResource ComboBoxStyle}"
+                        Margin="20,0,20,0"
+                        Width="100"
+                        HorizontalAlignment="Left">
+                        <ComboBoxItem>デフォルト値</ComboBoxItem>
+                        <ComboBoxItem>しない</ComboBoxItem>
+                        <ComboBoxItem>する</ComboBoxItem>
+                    </ComboBox>
+
+                    <Expander
+                        Margin="10,10,10,0"
+                        IsExpanded="False"
+                        FontFamily="Yu Gothic UI"
+                        Header="ダウンロードファイル名に番組シーズン名を付加">
+                        <TextBlock
+                            Margin="20,0,20,5"
+                            TextWrapping="Wrap">
+                            ダウンロードファイル名に番組シーズン名を付加するかを設定します。
+                        </TextBlock>
+                    </Expander>
+                    <ComboBox
+                        x:Name="addSeasonName"
+                        SelectedIndex="0"
+                        Style="{DynamicResource ComboBoxStyle}"
+                        Margin="20,0,20,0"
+                        Width="100"
+                        HorizontalAlignment="Left">
+                        <ComboBoxItem>デフォルト値</ComboBoxItem>
+                        <ComboBoxItem>しない</ComboBoxItem>
+                        <ComboBoxItem>する</ComboBoxItem>
+                    </ComboBox>
+
+                    <Expander
+                        Margin="10,10,10,0"
+                        IsExpanded="False"
+                        FontFamily="Yu Gothic UI"
+                        Header="ダウンロードファイル名に番組放送日を付加">
+                        <TextBlock
+                            Margin="20,0,20,5"
+                            TextWrapping="Wrap">
+                            ダウンロードファイル名に番組放送日を付加するかを設定します。
+                        </TextBlock>
+                    </Expander>
+                    <ComboBox
+                        x:Name="addBrodcastDate"
+                        SelectedIndex="0"
+                        Style="{DynamicResource ComboBoxStyle}"
+                        Margin="20,0,20,0"
+                        Width="100"
+                        HorizontalAlignment="Left">
+                        <ComboBoxItem>デフォルト値</ComboBoxItem>
+                        <ComboBoxItem>しない</ComboBoxItem>
+                        <ComboBoxItem>する</ComboBoxItem>
+                    </ComboBox>
+
                     <Expander
                         Margin="10,10,10,0"
                         IsExpanded="False"
