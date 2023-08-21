@@ -326,6 +326,8 @@ $script:settingAttributes += '$script:forceSoftwareDecodeFlag'
 $script:settingAttributes += '$script:simplifiedValidation'
 $script:settingAttributes += '$script:disableValidation'
 $script:settingAttributes += '$script:sitemapParseEpisodeOnly'
+$script:settingAttributes += '$script:embedSubtitle'
+$script:settingAttributes += '$script:embedMetatag'
 $script:settingAttributes += '$script:windowShowStyle'
 $script:settingAttributes += '$script:ffmpegDecodeOption'
 

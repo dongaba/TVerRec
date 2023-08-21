@@ -189,6 +189,15 @@ $script:disableValidation = $false
 #　処理時間が長くなりますが、エピソード以外も処理することでダウンロード対象番組が増える可能性があります。
 $script:sitemapParseEpisodeOnly = $true
 
+#番組ファイルへの字幕データの埋め込み
+#　ダウンロードしたファイルに字幕データを埋め込むかを設定します。
+#　字幕データが提供されていない番組も多くありますのでご注意ください。
+$script:embedSubtitle = $true
+
+#番組ファイルへのメタタグの埋め込み
+#　ダウンロードしたファイルにメタタグを埋め込むかを設定します。
+$script:embedMetatag = $true
+
 #youtube-dlとffmpegのウィンドウの表示方法(Windowsのみ) Normal/Maximized/Minimized/Hidden
 #　youtube-dl と ffmpeg のウィンドウをどのように表示するかを設定します。
 #　Minimizedに設定することで最小化状態でウィンドウが作成されるようになり必要なときにだけ進捗確認をすることができます。

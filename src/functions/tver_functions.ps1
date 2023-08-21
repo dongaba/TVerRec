@@ -1991,12 +1991,11 @@ function executeYtdl {
 	$local:ytdlArgs += ' --abort-on-error'
 	$local:ytdlArgs += ' --no-continue'
 	$local:ytdlArgs += ' --windows-filenames'
-	#	$local:ytdlArgs += ' --newline'
 	$local:ytdlArgs += " --concurrent-fragments $script:parallelDownloadNumPerFile"
 	$local:ytdlArgs += ' --embed-thumbnail'
 	$local:ytdlArgs += ' --all-subs'
-	$local:ytdlArgs += ' --embed-subs'
-	$local:ytdlArgs += ' --embed-metadata'
+	if ($script:embedSubtitle -eq $true) { $local:ytdlArgs += ' --embed-subs' }
+	if ($script:embedMetatag -eq $true) { $local:ytdlArgs += ' --embed-metadata' }
 	$local:ytdlArgs += ' --embed-chapters'
 	$local:ytdlArgs += " --paths $local:saveDir"
 	$local:ytdlArgs += " --paths $local:tmpDir"

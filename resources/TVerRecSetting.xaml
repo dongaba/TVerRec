@@ -1249,7 +1249,7 @@
                             TextWrapping="Wrap">
                             番組検証を簡素化するかどうかを設定します。<LineBreak/>
                             簡素化した場合、ffmpegによる番組の完全検証ではなく、ffprobeによる簡易検証に切り替えます。<LineBreak/>
-                            番組1本あたり数秒で検証が完了しますが、検証精度は低いです。(おそらくメタデータの検査だけの模様)<LineBreak/>
+                            番組1本あたり数秒で検証が完了しますが、検証精度は低いです。(おそらくメタデータの検査だけの模様)
                         </TextBlock>
                     </Expander>
                     <ComboBox
@@ -1297,11 +1297,58 @@
                             TextWrapping="Wrap">
                             キーワードファイルでサイトマップ指定をした際にエピソードのみを処理するかどうかを設定します。<LineBreak/>
                             現在のところ、エピソードだけの処理でもすべての番組動画が含まれているようなので、エピソードだけの処理でも全番組のダウンロードが可能なようです。<LineBreak/>
-                            処理時間が長くなりますが、エピソード以外も処理することでダウンロード対象番組が増える可能性があります。<LineBreak/>
+                            処理時間が長くなりますが、エピソード以外も処理することでダウンロード対象番組が増える可能性があります。
                         </TextBlock>
                     </Expander>
                     <ComboBox
                         x:Name="sitemapParseEpisodeOnly"
+                        SelectedIndex="0"
+                        Style="{DynamicResource ComboBoxStyle}"
+                        Margin="20,0,20,0"
+                        Width="100"
+                        HorizontalAlignment="Left">
+                        <ComboBoxItem>デフォルト値</ComboBoxItem>
+                        <ComboBoxItem>しない</ComboBoxItem>
+                        <ComboBoxItem>する</ComboBoxItem>
+                    </ComboBox>
+
+                    <Expander
+                        Margin="10,10,10,0"
+                        IsExpanded="False"
+                        FontFamily="Yu Gothic UI"
+                        Header="番組ファイルへの字幕データの埋め込み">
+                        <TextBlock
+                            Margin="20,0,20,5"
+                            TextWrapping="Wrap">
+                            ダウンロードしたファイルに字幕データを埋め込むかを設定します。<LineBreak/>
+                            字幕データが提供されていない番組も多くありますのでご注意ください。
+                        </TextBlock>
+                    </Expander>
+                    <ComboBox
+                        x:Name="embedSubtitle"
+                        SelectedIndex="0"
+                        Style="{DynamicResource ComboBoxStyle}"
+                        Margin="20,0,20,0"
+                        Width="100"
+                        HorizontalAlignment="Left">
+                        <ComboBoxItem>デフォルト値</ComboBoxItem>
+                        <ComboBoxItem>しない</ComboBoxItem>
+                        <ComboBoxItem>する</ComboBoxItem>
+                    </ComboBox>
+
+                    <Expander
+                        Margin="10,10,10,0"
+                        IsExpanded="False"
+                        FontFamily="Yu Gothic UI"
+                        Header="番組ファイルへのメタタグの埋め込み">
+                        <TextBlock
+                            Margin="20,0,20,5"
+                            TextWrapping="Wrap">
+                            ダウンロードしたファイルにメタタグを埋め込むかを設定します。
+                        </TextBlock>
+                    </Expander>
+                    <ComboBox
+                        x:Name="embedMetatag"
                         SelectedIndex="0"
                         Style="{DynamicResource ComboBoxStyle}"
                         Margin="20,0,20,0"
