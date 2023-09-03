@@ -1,5 +1,15 @@
 ﻿# Change Log
 
+## [2.8.2](https://github.com/dongaba/TVerRec/releases/tag/v2.8.2)
+
+### 2.8.2 Added
+
+### 2.8.2 Changed
+
+### 2.8.2 Fixed
+
+- Docker 環境で xz-utils が漏れていた問題修正
+
 ## [2.8.1](https://github.com/dongaba/TVerRec/releases/tag/v2.8.1)
 
 ### 2.8.1 Added

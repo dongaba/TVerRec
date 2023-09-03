@@ -15,6 +15,7 @@ RUN	apt-get update \
 	git \
 	bash \
 	python3 \
+	xz-utils \
 	&& apt-get autoremove -y \
 	&& apt-get clean -y \
 	&& rm -rf /var/lib/apt/lists/*

@@ -2,9 +2,6 @@
 	"[dockercompose]": {
 		"editor.autoIndent": "advanced"
 	},
-	"[dockerfile]": {
-		"editor.defaultFormatter": "ms-azuretools.vscode-docker"
-	},
 	"[jsonc]": {
 		"editor.autoIndent": "advanced",
 		"editor.defaultFormatter": "esbenp.prettier-vscode"
