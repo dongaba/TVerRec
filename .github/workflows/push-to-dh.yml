@@ -32,7 +32,7 @@ jobs:
 
       #Check out
       - name: Check out the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       #Collect metadata
       - name: Extract metadata for Docker
