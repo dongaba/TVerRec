@@ -34,8 +34,8 @@ export HostName="$(hostname)"
 export PIDFile="pid-$HostName.txt"
 
 if [ -e "$PIDFile" ]; then
-	export targetPPID=$(pgrep -P `cat "$PIDFile"`)
-	export targetPID=$(pgrep -P $targetPPID)
+	export targetPPID=$(pgrep -P $(cat "$PIDFile"))
+	export targetPID=$(pgrep -P "$targetPPID")
 	kill -9 "$targetPID"
 	kill -9 "$targetPPID"
 	rm -f "$PIDFile"
