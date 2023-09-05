@@ -50,10 +50,15 @@ RUN sed -i -e "s|'TVerRec'|'TVerRecContainer'|g" ./conf/system_setting.ps1 \
 	&& sed -i -e "s|\$script:confDir './user_setting.ps1'|\$script:containerDir 'user_setting.ps1'|g" ./src/*.ps1 \
 	&& sed -i -e "s|\$script:confDir './user_setting.ps1'|\$script:containerDir 'user_setting.ps1'|g" ./src/*/*.ps1 \
 	&& sed -i -e "s|Enterを押して|コンテナを再起動して|g" ./unix/start_tverrec.sh \
-	&& echo '$script:downloadBaseDir = '\''/mnt/Work'\''' >> ./conf/user_setting.ps1 \
-	&& echo '$script:downloadWorkDir = '\''/mnt/Temp'\''' >> ./conf/user_setting.ps1 \
-	&& echo '$script:saveBaseDir = '\''/mnt/Save'\''' >> ./conf/user_setting.ps1 \
-	&& mkdir container-data
+	&& mkdir container-data \
+	&& cp ./conf/keyword.conf ./container-data/. \
+	&& cp ./conf/ignore.conf ./container-data/. \
+	&& cp ./db/history.db ./container-data/. \
+	&& cp ./list/list.csv ./container-data/. \
+	&& mkdir container-data \
+	&& echo '$script:downloadBaseDir = '\''/mnt/Work'\''' >> ./container-data/user_setting.ps1 \
+	&& echo '$script:downloadWorkDir = '\''/mnt/Temp'\''' >> ./container-data/user_setting.ps1 \
+	&& echo '$script:saveBaseDir = '\''/mnt/Save'\''' >> ./container-data/user_setting.ps1
 
 RUN chmod a+x ./unix/*.sh
 
