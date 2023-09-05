@@ -2003,7 +2003,7 @@ function executeYtdl {
 	$local:ytdlArgs += " --paths $local:thumbDir"
 	$local:ytdlArgs += " --paths $local:chaptDir"
 	$local:ytdlArgs += " --paths $local:descDir"
-	$local:ytdlArgs += " --ffmpeg-location $local:ffmpegPath"
+	if ($script:appName -ne 'TVerRecContainer') { $local:ytdlArgs += " --ffmpeg-location $local:ffmpegPath"}
 	$local:ytdlArgs += " --output $local:saveFile"
 	$local:ytdlArgs += " $local:videoPageURL"
 
