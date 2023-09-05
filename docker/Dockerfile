@@ -51,10 +51,10 @@ RUN sed -i -e "s|'TVerRec'|'TVerRecContainer'|g" ./conf/system_setting.ps1 \
 	&& sed -i -e "s|\$script:confDir './user_setting.ps1'|\$script:containerDir 'user_setting.ps1'|g" ./src/*/*.ps1 \
 	&& sed -i -e "s|Enterを押して|コンテナを再起動して|g" ./unix/start_tverrec.sh \
 	&& mkdir container-data \
-	&& cp ./conf/keyword.conf ./container-data/. \
-	&& cp ./conf/ignore.conf ./container-data/. \
-	&& cp ./db/history.db ./container-data/. \
-	&& cp ./list/list.csv ./container-data/. \
+	&& cp ./conf/keyword.sample.conf ./container-data/keyword.conf \
+	&& cp ./conf/ignore.sample.conf ./container-data/ignore.conf \
+	&& cp ./db/history.sample.csv ./container-data/history.csv \
+	&& cp ./list/list.sample.csv ./container-data/list.csv \
 	&& echo '$script:downloadBaseDir = '\''/mnt/Work'\''' >> ./container-data/user_setting.ps1 \
 	&& echo '$script:downloadWorkDir = '\''/mnt/Temp'\''' >> ./container-data/user_setting.ps1 \
 	&& echo '$script:saveBaseDir = '\''/mnt/Save'\''' >> ./container-data/user_setting.ps1
