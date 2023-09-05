@@ -6,9 +6,12 @@
 
 ### 2.8.2 Changed
 
+- Doceker 環境で各種設定ファイルを container-data フォルダにコピーするように
+
 ### 2.8.2 Fixed
 
 - Docker 環境で xz-utils が漏れていた問題修正
+- Docker 環境で sed による置換が間違っていた問題を修正
 
 ## [2.8.1](https://github.com/dongaba/TVerRec/releases/tag/v2.8.1)
 
