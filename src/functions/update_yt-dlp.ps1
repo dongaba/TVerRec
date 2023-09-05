@@ -80,7 +80,7 @@ try {
 			-Uri $local:releases `
 			-Method Get
 	)[0].Tag_Name
-} catch { Write-Warning '❗ yt-dlpの最新バージョンを特定できませんでした' ; $local:updateFlag = $true }
+} catch { Write-Warning '❗ yt-dlpの最新バージョンを特定できませんでした'; return }
 
 #yt-dlpのダウンロード
 if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
@@ -88,12 +88,10 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 	Write-Output "　Local version: $local:ytdlCurrentVersion"
 	Write-Output "　Latest version: $local:latestVersion"
 	Write-Output ''
-} else { $local:updateFlag = $true }
-
-if ($local:updateFlag -eq $true) {
+} else {
 	Write-Warning '💡 yt-dlpが古いため更新します。'
 	Write-Warning "　Local version: $local:ytdlCurrentVersion"
-	if ($null -ne $local:latestVersion) { Write-Warning "　Latest version: $local:latestVersion" }
+	Write-Warning "　Latest version: $local:latestVersion"
 	Write-Output ''
 	if ($IsWindows -eq $false) {
 		#githubの設定
@@ -130,6 +128,7 @@ if ($local:updateFlag -eq $true) {
 		Write-Output "💡 yt-dlpをversion $local:ytdlCurrentVersion に更新しました。"
 		Write-Output ''
 	} catch { Write-Error '❗ 更新後のバージョン取得に失敗しました' ; exit 1 }
+
 
 }
 
