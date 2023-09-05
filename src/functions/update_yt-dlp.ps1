@@ -80,7 +80,7 @@ try {
 			-Uri $local:releases `
 			-Method Get
 	)[0].Tag_Name
-} catch { Write-Warning '❗ yt-dlpの最新バージョンを特定できませんでした'; return }
+} catch { Write-Warning '❗ yt-dlpの最新バージョンを特定できませんでした' }
 
 #yt-dlpのダウンロード
 if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
