@@ -50,6 +50,7 @@ RUN sed -i -e "s|'TVerRec'|'TVerRecContainer'|g" ./conf/system_setting.ps1 \
 	&& sed -i -e "s|\$script:confDir './user_setting.ps1'|\$script:containerDir 'user_setting.ps1'|g" ./src/*.ps1 \
 	&& sed -i -e "s|\$script:confDir './user_setting.ps1'|\$script:containerDir 'user_setting.ps1'|g" ./src/*/*.ps1 \
 	&& sed -i -e "s|Enterを押して|コンテナを再起動して|g" ./unix/start_tverrec.sh \
+	&& sed -i -e "s|read -r -t|sleep|g" ./unix/start_tverrec.sh \
 	&& mkdir container-data \
 	&& cp ./conf/keyword.sample.conf ./container-data/keyword.conf \
 	&& cp ./conf/ignore.sample.conf ./container-data/ignore.conf \
