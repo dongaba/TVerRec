@@ -90,7 +90,7 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 	Write-Output ''
 } else { $local:updateFlag = $true }
 
-if ($local:updateFlag -eq $true) {}
+if ($local:updateFlag -eq $true) {
 	Write-Warning '💡 yt-dlpが古いため更新します。'
 	Write-Warning "　Local version: $local:ytdlCurrentVersion"
 	Write-Warning "　Latest version: $local:latestVersion"
