@@ -83,7 +83,48 @@ try {
 } catch { Write-Warning '❗ yt-dlpの最新バージョンを特定できませんでした' }
 
 #yt-dlpのダウンロード
-if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
+if ($null -eq $local:latestVersion) {
+	Write-Warning '💡 yt-dlpが古いため更新します。'
+	Write-Warning "　Local version: $local:ytdlCurrentVersion"
+	Write-Warning "　Latest version: $local:latestVersion"
+	Write-Output ''
+	if ($IsWindows -eq $false) {
+		#githubの設定
+		$local:file = 'yt-dlp'
+		$local:fileAfterRename = 'youtube-dl'
+	} else {
+		#githubの設定
+		$local:file = 'yt-dlp.exe'
+		$local:fileAfterRename = 'youtube-dl.exe'
+	}
+
+	Write-Output 'yt-dlpの最新版をダウンロードします'
+	try {
+		#ダウンロード
+		$local:tag = (
+			Invoke-RestMethod `
+				-Uri $local:releases `
+				-Method Get
+		)[0].Tag_Name
+		$local:download = `
+			"https://github.com/$($local:repo)/releases/download/$($local:tag)/$($local:file)"
+		$local:ytdlFileLocation = $(Join-Path $local:ytdlDir $local:fileAfterRename)
+		Invoke-WebRequest `
+			-Uri $local:download `
+			-Out $local:ytdlFileLocation
+	} catch { Write-Error '❗ yt-dlpのダウンロードに失敗しました' ; exit 1 }
+
+	if ($IsWindows -eq $false) { (& chmod a+x $local:ytdlFileLocation) }
+
+	#バージョンチェック
+	try {
+		$local:ytdlCurrentVersion = (& $local:ytdlPath --version)
+		if ($? -eq $false) { throw '更新後のバージョン取得に失敗しました' }
+		Write-Output "💡 yt-dlpをversion $local:ytdlCurrentVersion に更新しました。"
+		Write-Output ''
+	} catch { Write-Error '❗ 更新後のバージョン取得に失敗しました' ; exit 1 }
+
+} elseif ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 	Write-Output 'yt-dlpは最新です。'
 	Write-Output "　Local version: $local:ytdlCurrentVersion"
 	Write-Output "　Latest version: $local:latestVersion"
@@ -128,7 +169,6 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 		Write-Output "💡 yt-dlpをversion $local:ytdlCurrentVersion に更新しました。"
 		Write-Output ''
 	} catch { Write-Error '❗ 更新後のバージョン取得に失敗しました' ; exit 1 }
-
 
 }
 
