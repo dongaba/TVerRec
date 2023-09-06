@@ -7,13 +7,15 @@
 ### 2.8.2 Changed
 
 - Doceker 環境で各種設定ファイルを container-data フォルダにコピーするように
+- Linux 環境での ffmpeg の取得先を yt-dlp の自動ビルド版に変更
 
 ### 2.8.2 Fixed
 
 - Docker 環境で xz-utils が漏れていた問題修正
 - Docker 環境で sed による置換が間違っていた問題を修正
 - Docker 環境で sleep が効いていなかった問題を修正
-- Docker 環境で動画ダウンロードが失敗していた問題を修正
+- Linux 環境で自動ダウンロードする ffmpeg に起因するダウンロードエラーが発生する問題を修正
+- ファイル削除時にアクセスできないファイルの存在を無視するように修正
 
 ## [2.8.1](https://github.com/dongaba/TVerRec/releases/tag/v2.8.1)
 
