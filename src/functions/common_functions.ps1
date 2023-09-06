@@ -388,7 +388,7 @@ function deleteFiles {
 	try {
 		foreach ($local:delCondition in $local:delConditions.Split(',').Trim()) {
 			Write-Output "$($local:basePath) - $($local:delCondition)"
-			$null = Get-ChildItem -LiteralPath $local:basePath -Recurse -File -Filter $local:delCondition `
+			$null = Get-ChildItem -LiteralPath $local:basePath -Recurse -File -Filter $local:delCondition -ErrorAction SilentlyContinue `
 			| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays($local:delPeriod) } `
 			| Remove-Item -Force -ErrorAction SilentlyContinue `
 
