@@ -1348,7 +1348,7 @@ function downloadTVerVideo {
 	$script:videoEpisode = '' ; $script:videoTitle = ''
 	$script:mediaName = '' ; $script:descriptionText = ''
 	$script:newVideo = $null
-	$script:ignore = $false ; $script:skip = $false
+	$script:ignore = $false ; $script:skipWithValidation = $false ; $script:skipWithoutValidation = $false
 
 	#TVerのAPIを叩いて番組情報取得
 	goAnal -Event 'getinfo' -Type 'link' -ID $script:videoLink
@@ -1418,12 +1418,15 @@ function downloadTVerVideo {
 
 		#結果が0件ということは未検証のファイルがあるということ
 		if ( $null -eq $local:historyMatch) {
-			Write-Warning '💡 すでにダウンロード済ですが未検証の番組です。ダウンロード履歴に追加します'
-			$script:skip = $true
-		} else { Write-Warning '💡 すでにダウンロード済・検証済の番組です。スキップします'; continue }
+			Write-Warning '💡 すでにダウンロード済ですが未検証の番組です。スキップします'
+			$script:skipWithoutValidation = $true
+		} else {
+			Write-Warning '💡 すでにダウンロード済・検証済の番組です。番組IDが変更になった可能性があります。スキップします'
+			$script:skipWithoutValidation = $true
+		}
 
 	} elseif (Test-Path $script:videoFilePath) {
-		#ファイルが既に存在する場合はスキップフラグを立ててダウンロード履歴に書き込み処理へ
+		#ダウンロード履歴にファイル名が存在しないがファイルが既に存在する場合はスキップフラグを立ててダウンロード履歴に書き込み処理へ
 
 		#リストファイルにチェック済の状態で存在するかチェック
 		$local:historyMatch = $script:historyFileData `
@@ -1433,7 +1436,7 @@ function downloadTVerVideo {
 		#結果が0件ということは未検証のファイルがあるということ
 		if ( $null -eq $local:historyMatch) {
 			Write-Warning '💡 すでにダウンロード済ですが未検証の番組です。ダウンロード履歴に追加します'
-			$script:skip = $true
+			$script:skipWithValidation = $true
 		} else { Write-Warning '💡 すでにダウンロード済・検証済の番組です。スキップします'; continue }
 
 	} else {
@@ -1469,7 +1472,7 @@ function downloadTVerVideo {
 			videoPath       = '-- IGNORED --'
 			videoValidated  = '0'
 		}
-	} elseif ($script:skip -eq $true) {
+	} elseif ($script:skipWithValidation -eq $true) {
 		Write-Output '　💡 ダウンロード済の未検証のファイルをダウンロード履歴に追加します'
 		$script:newVideo = [pscustomobject]@{
 			videoPage       = $script:videoPageURL
@@ -1485,6 +1488,23 @@ function downloadTVerVideo {
 			videoName       = '-- SKIPPED --'
 			videoPath       = $videoFileRelPath
 			videoValidated  = '0'
+		}
+	} elseif ($script:skipWithoutValidation -eq $true) {
+		Write-Output '　💡 番組IDが変更になったダウンロード済の未検証のファイルをダウンロード履歴に追加します'
+		$script:newVideo = [pscustomobject]@{
+			videoPage       = $script:videoPageURL
+			videoSeriesPage = $script:videoSeriesPageURL
+			genre           = $script:keywordName
+			series          = $script:videoSeries
+			season          = $script:videoSeason
+			title           = $script:videoTitle
+			media           = $script:mediaName
+			broadcastDate   = $script:broadcastDate
+			downloadDate    = $(getTimeStamp)
+			videoDir        = $script:videoFileDir
+			videoName       = '-- SKIPPED --'
+			videoPath       = $videoFileRelPath
+			videoValidated  = '1'
 		}
 	} else {
 		Write-Output '　ダウンロードするファイルをダウンロード履歴に追加します'
@@ -1525,7 +1545,7 @@ function downloadTVerVideo {
 		-Encoding UTF8
 
 	#スキップやダウンロード対象外でなければyoutube-dl起動
-	if (($script:ignore -eq $true) -Or ($script:skip -eq $true)) {
+	if (($script:ignore -eq $true) -Or ($script:skipWithValidation -eq $true) -Or ($script:skipWithoutValidation -eq $true)) {
 		#スキップ対象やダウンロード対象外は飛ばして次のファイルへ
 		continue
 	} else {
@@ -1570,7 +1590,6 @@ function generateTVerVideoList {
 	$script:mediaName = '' ; $script:descriptionText = ''
 	$local:ignoreWord = ''
 	$script:newVideo = $null
-	$script:ignore = $false ; $script:skip = $false
 
 	#TVerのAPIを叩いて番組情報取得
 	goAnal -Event 'getinfo' -Type 'link' -ID $script:videoLink
