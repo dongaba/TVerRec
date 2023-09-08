@@ -68,26 +68,25 @@ switch ($true) {
 		$local:os = [String][System.Environment]::OSVersion
 		$local:arch = $Env:PROCESSOR_ARCHITECTURE.ToLower()
 
-		#ダウンロード先の設定
-		$local:releases = 'https://www.gyan.dev/ffmpeg/builds/release-version'
-
 		#ffmpegのバージョン取得
 		try {
 			if (Test-Path $local:ffmpegPath -PathType Leaf) {
 				# get version of current ffmpeg.exe
 				$local:ffmpegFileVersion = (& $local:ffmpegPath -version)
-				$null = $local:ffmpegFileVersion[0] -match 'ffmpeg version (\d+\.\d+(\.\d+)?).*'
+				$null = $local:ffmpegFileVersion[0] -match 'ffmpeg version (.*) Copyright'
 				$local:ffmpegCurrentVersion = $matches[1]
 			} else { $local:ffmpegCurrentVersion = '' }
 		} catch { $local:ffmpegCurrentVersion = '' }
 
 		#ffmpegの最新バージョン取得
+		$local:releases = 'https://github.com/yt-dlp/FFmpeg-Builds/wiki/Latest'
 		$local:latestVersion = ''
 		try {
 			$local:latestVersion = Invoke-RestMethod `
 				-Uri $local:releases `
-				-Method Get `
-	| ConvertTo-Json
+				-Method Get
+			$null = $local:latestVersion -match 'yt-dlp/FFmpeg-Builds/releases/download/autobuild-(\d+)-(\d+)-(\d+)-\d+-\d+(.*)ffmpeg-(.*)-win64-gpl.zip'
+			$local:latestVersion = $matches[5] + '-' + $matches[1] + $matches[2] + $matches[3]
 		} catch { Write-Warning '❗ ffmpegの最新バージョンを特定できませんでした'; return }
 
 		#ffmpegのダウンロード
@@ -102,14 +101,22 @@ switch ($true) {
 			Write-Warning "　Latest version: $local:latestVersion"
 			Write-Output ''
 
+			if ([System.Environment]::IS64bitOperatingSystem -eq $true) {
+				$local:cpu = 'x64'
+				$donwloadURL = `
+					'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip'
+			} else {
+				$local:cpu = 'x86'
+				$donwloadURL = `
+					'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win32-gpl.zip'
+			}
+
 			#ダウンロード
-			Write-Output 'ffmpegの最新版をダウンロードします'
+			Write-Output "ffmpegの最新版$($local:cpu)用をダウンロードします"
 			try {
-				$local:donwloadURL = `
-					'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip'
 				Invoke-WebRequest `
-					-Uri $local:donwloadURL `
-					-OutFile $(Join-Path $local:ffmpegDir './ffmpeg.zip')
+					-Uri $donwloadURL `
+					-OutFile "$($local:ffmpegDir)/ffmpeg.zip"
 			} catch { Write-Error '❗ ffmpegのダウンロードに失敗しました' ; exit 1 }
 
 			#展開
@@ -124,7 +131,7 @@ switch ($true) {
 			Write-Output '解凍したffmpegを配置します'
 			try {
 				Move-Item `
-					-Path "$($local:ffmpegDir)/ffmpeg-*-essentials_build/bin/ff*.exe" `
+					-Path "$($local:ffmpegDir)/ffmpeg-master-latest-*-gpl/bin/ff*.exe" `
 					-Destination "$local:ffmpegDir" -Force
 			} catch { Write-Error '❗ ffmpegの配置に失敗しました' ; exit 1 }
 
@@ -132,7 +139,7 @@ switch ($true) {
 			Write-Output '中間ディレクトリと中間ファイルを削除します'
 			try {
 				Remove-Item `
-					-Path "$($local:ffmpegDir)/ffmpeg-*-essentials_build" `
+					-Path "$($local:ffmpegDir)/ffmpeg-master-latest-*-gpl" `
 					-Force `
 					-Recurse `
 					-ErrorAction SilentlyContinue
@@ -147,7 +154,7 @@ switch ($true) {
 			#バージョンチェック
 			try {
 				$local:ffmpegFileVersion = (& $local:ffmpegPath -version)
-				$null = $local:ffmpegFileVersion[0] -match 'ffmpeg version (\d+\.\d+(\.\d+)?)-.*'
+				$null = $local:ffmpegFileVersion[0] -match 'ffmpeg version (.*) Copyright'
 				$local:ffmpegCurrentVersion = $local:matches[1]
 				Write-Output "💡 ffmpegをversion $local:ffmpegCurrentVersion に更新しました。"
 				Write-Output ''
@@ -162,9 +169,6 @@ switch ($true) {
 		$local:os = "Linux $([String][System.Environment]::OSVersion.Version)"
 		$local:arch = (& uname -m | tr '[:upper:]' '[:lower:]')
 
-		#ダウンロード先の設定
-		$local:releases = 'https://github.com/yt-dlp/FFmpeg-Builds/wiki/Latest'
-
 		#ffmpegのバージョン取得
 		try {
 			if (Test-Path $local:ffmpegPath -PathType Leaf) {
@@ -176,6 +180,7 @@ switch ($true) {
 		} catch { $local:ffmpegCurrentVersion = '' }
 
 		#ffmpegの最新バージョン取得
+		$local:releases = 'https://github.com/yt-dlp/FFmpeg-Builds/wiki/Latest'
 		$local:latestVersion = ''
 		try {
 			$local:latestVersion = Invoke-RestMethod `
@@ -205,7 +210,7 @@ switch ($true) {
 			} elseif (($local:arch -eq 'x86_64') -Or ($local:arch -eq 'ia64')) {
 				$local:cpu = 'amd64'
 				$donwloadURL = `
-					'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz '
+					'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz'
 			} else {
 				Write-Warning '❗ お使いのCPUに適合するffmpegを特定できませんでした。'
 				Write-Warning "❗ お使いのCPU $($local:arch) に適合するffmpegをご自身で配置してください。"
@@ -273,9 +278,6 @@ switch ($true) {
 		$local:os = "macOS $([String][System.Environment]::OSVersion.Version)"
 		$local:arch = (& uname -m | tr '[:upper:]' '[:lower:]')
 
-		#ダウンロード先の設定
-		$local:releases = 'https://www.gyan.dev/ffmpeg/builds/release-version'
-
 		#ffmpegのバージョン取得
 		try {
 			if (Test-Path $local:ffmpegPath -PathType Leaf) {
@@ -287,12 +289,19 @@ switch ($true) {
 		} catch { $local:ffmpegCurrentVersion = '' }
 
 		#ffmpegの最新バージョン取得
+		$local:ffmpegReleases = 'https://evermeet.cx/ffmpeg/info/ffmpeg/release'
+		$local:ffprobeReleases = 'https://evermeet.cx/ffmpeg/info/ffprobe/release'
+		$local:ffmpegReleaseInfo = ''
+		$local:ffprobeReleases = ''
 		$local:latestVersion = ''
 		try {
-			$local:latestVersion = Invoke-RestMethod `
-				-Uri $local:releases `
-				-Method Get `
-	| ConvertTo-Json
+			$local:ffmpegReleaseInfo = Invoke-RestMethod `
+				-Uri $local:ffmpegReleases `
+				-Method Get
+			$local:latestVersion = $local:ffmpegReleaseInfo.version
+			$local:ffprobeReleaseInfo = Invoke-RestMethod `
+				-Uri $local:ffprobeReleases `
+				-Method Get
 		} catch { Write-Warning '❗ ffmpegの最新バージョンを特定できませんでした'; return }
 
 		#ffmpegのダウンロード
@@ -311,16 +320,24 @@ switch ($true) {
 			Write-Output 'ffmpegの最新版をダウンロードします'
 			try {
 				Invoke-WebRequest `
-					-Uri https://evermeet.cx/ffmpeg/getrelease/zip `
+					-Uri $local:ffmpegReleaseInfo.download.zip.url `
 					-OutFile "$($local:ffmpegDir)/ffmpeg.zip"
 				Invoke-WebRequest `
-					-Uri https://evermeet.cx/ffmpeg/getrelease/ffprobe/zip `
+					-Uri $local:ffprobeReleaseInfo.download.zip.url `
 					-OutFile "$($local:ffmpegDir)/ffprobe.zip"
 			} catch { Write-Error '❗ ffmpegのダウンロードに失敗しました' ; exit 1 }
 
 			#展開
 			Write-Output 'ダウンロードしたffmpegを解凍します'
 			try {
+				Remove-Item `
+					-Path "$($local:ffmpegDir)/ffmpeg" `
+					-Force `
+					-ErrorAction SilentlyContinue
+				Remove-Item `
+					-Path "$($local:ffmpegDir)/ffprobe" `
+					-Force `
+					-ErrorAction SilentlyContinue
 				unZip `
 					-File "$($local:ffmpegDir)/ffmpeg.zip" `
 					-OutPath "$($local:ffmpegDir)"
@@ -340,7 +357,7 @@ switch ($true) {
 					-Path "$($local:ffmpegDir)/ffprobe.zip" `
 					-Force `
 					-ErrorAction SilentlyContinue
-			} catch { Write-Error '❗ 中間ファイルの削除に失敗しました' ; exit 1 }s
+			} catch { Write-Error '❗ 中間ファイルの削除に失敗しました' ; exit 1 }
 
 			#実行権限の付与
 		(& chmod a+x $local:ffmpegPath)
