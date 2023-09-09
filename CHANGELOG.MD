@@ -13,6 +13,7 @@
 - Mac 環境での ffmpeg の最新バージョンの取得方法を改善
 - Linux/Mac 環境で ExecutionPolicy の指定を削除
 - Docker 環境では TVerRec の自動更新を無効化
+- youtube-dl の更新スクリプトを 1 本化
 
 ### 2.8.2 Fixed
 

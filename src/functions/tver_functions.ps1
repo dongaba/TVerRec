@@ -145,11 +145,7 @@ function checkLatestYtdl {
 	$progressPreference = 'silentlyContinue'
 
 	if ($script:disableUpdateYoutubedl -eq $false) {
-		if ($script:preferredYoutubedl -eq 'yt-dlp')
-		{ . $(Convert-Path (Join-Path $scriptRoot './functions/update_yt-dlp.ps1')) }
-		elseif ($script:preferredYoutubedl -eq 'ytdl-patched')
-		{ . $(Convert-Path (Join-Path $scriptRoot './functions/update_ytdl-patched.ps1')) }
-		else { Write-Error '❗ youtube-dlの取得元の指定が無効です' ; exit 1 }
+		. $(Convert-Path (Join-Path $scriptRoot './functions/update_youtube-dl.ps1'))
 		if ($? -eq $false) { Write-Error '❗ youtube-dlの更新に失敗しました' ; exit 1 }
 	}
 

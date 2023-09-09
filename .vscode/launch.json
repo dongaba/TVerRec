@@ -52,16 +52,9 @@
 		},
 		{
 			"type": "PowerShell",
-			"script": "${workspaceFolder}/src/functions/update_yt-dlp.ps1",
+			"script": "${workspaceFolder}/src/functions/update_youtube-dl.ps1",
 			"request": "launch",
-			"name": "yt-dlp-Up",
-			"cwd": "${workspaceFolder}/src"
-		},
-		{
-			"type": "PowerShell",
-			"script": "${workspaceFolder}/src/functions/update_ytdl-patched.ps1",
-			"request": "launch",
-			"name": "ytdl-patched-Up",
+			"name": "youtube-dl-Up",
 			"cwd": "${workspaceFolder}/src"
 		},
 		{
