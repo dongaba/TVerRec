@@ -30,7 +30,7 @@
 
 echo -en "\033];TVerRec Video File Downloader\007"
 
-pwsh -NoProfile -ExecutionPolicy Unrestricted "../src/download_single.ps1"
+pwsh -NoProfile "../src/download_single.ps1"
 
 echo "Finished ..."
 read -r
