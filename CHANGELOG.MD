@@ -12,6 +12,7 @@
 - Windows/Linux 環境での ffmpeg の取得先を yt-dlp の自動ビルド版に変更
 - Mac 環境での ffmpeg の最新バージョンの取得方法を改善
 - Linux/Mac 環境で ExecutionPolicy の指定を削除
+- Docker 環境では TVerRec の自動更新を無効化
 
 ### 2.8.2 Fixed
 

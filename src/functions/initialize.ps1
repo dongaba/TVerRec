@@ -69,17 +69,12 @@ try {
 #----------------------------------------------------------------------
 #GUI起動を判定
 if ( $script:myInvocation.ScriptName.Contains('gui')) {
-	#----------------------------------------------------------------------
-	#最新化チェック
-
 	#TVerRecの最新化チェック
 	checkLatestTVerRec
 	if ($? -eq $false) { exit 1 }
 } else {
-	#----------------------------------------------------------------------
-	#バナー表示
 	[Console]::ForegroundColor = 'Cyan'
-	$bannerVersion = ' ' * $(56 - $script:appVersion.Length) + "Version. $script:appVersion"
+	$versionBanner = ' ' * $(56 - $script:appVersion.Length) + "Version. $script:appVersion"
 	Write-Output ''
 	Write-Output '==========================================================================='
 	Write-Output '                                                                           '
@@ -89,20 +84,22 @@ if ( $script:myInvocation.ScriptName.Contains('gui')) {
 	Write-Output '           ██     ██  ██  ██      ██   ██ ██   ██ ██      ██               '
 	Write-Output '           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          '
 	Write-Output '                                                                           '
-	Write-Output "$bannerVersion"
+	Write-Output "$versionBanner"
 	Write-Output '                                                                           '
 	Write-Output '==========================================================================='
 	Write-Output ''
 	[Console]::ResetColor()
 
-	#----------------------------------------------------------------------
-	#最新化チェック
-
 	#youtube-dlの最新化チェック
 	checkLatestYtdl
+
 	#ffmpegの最新化チェック
 	checkLatestFfmpeg
+
 	#TVerRecの最新化チェック
-	checkLatestTVerRec
-	if ($? -eq $false) { exit 1 }
+	if ($script:appName -eq 'TVerRec') {
+		checkLatestTVerRec
+		if ($? -eq $false) { exit 1 }
+	}
+
 }

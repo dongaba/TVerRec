@@ -150,7 +150,7 @@ try {
 #ディレクトリは上書きできないので独自関数で以下のディレクトリをループ
 Write-Output ''
 Write-Output '-----------------------------------------------------------------'
-Write-Output 'ダウンロードしたTVerRecdを配置します'
+Write-Output 'ダウンロードしたTVerRecを配置します'
 try {
 	$newTVerRecDir = $(Get-ChildItem -Path $updateTemp -Directory ).fullname
 	Get-ChildItem -Path $newTVerRecDir -Force `
@@ -178,7 +178,7 @@ try {
 #過去のバージョンで使用していたファイルを削除、または移行
 Write-Output ''
 Write-Output '-----------------------------------------------------------------'
-Write-Output '過去のバージョンで使用していたファイルを削除、または移行'
+Write-Output '過去のバージョンで使用していたファイルを削除、または移行します'
 #tver.lockをhistory.lockに移行(v2.6.5→v2.6.6)
 if (Test-Path $(Join-Path $script:scriptRoot '../db/tver.lock') -PathType Leaf) {
 	Remove-Item `
@@ -265,10 +265,10 @@ if (Test-Path $(Join-Path $script:scriptRoot '../.wsb/setup/TVerRec')) {
 }
 
 #実行権限の付与
-Write-Output ''
-Write-Output '-----------------------------------------------------------------'
-Write-Output '実行権限の付与'
 if ($IsWindows -eq $false) {
+	Write-Output ''
+	Write-Output '-----------------------------------------------------------------'
+	Write-Output '実行権限の付与します'
 	(& chmod a+x $(Join-Path $script:scriptRoot '../unix/*.sh'))
 }
 
