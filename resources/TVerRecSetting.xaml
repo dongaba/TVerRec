@@ -936,6 +936,26 @@
                         Margin="10,10,10,0"
                         IsExpanded="False"
                         FontFamily="Yu Gothic UI"
+                        Header="ダウンロード帯域制限">
+                        <TextBlock
+                            Margin="20,0,20,5"
+                            TextWrapping="Wrap">
+                            ネットワーク帯域を使い切らないようにダウンロード速度制限を設定することができます。<LineBreak/>
+                            単位はMbpsです。
+                        </TextBlock>
+                    </Expander>
+                    <TextBox
+                        x:Name="rateLimit"
+                        Text="デフォルト値"
+                        Style="{DynamicResource TextBoxStyle}"
+                        Margin="20,0,20,0"
+                        VerticalScrollBarVisibility="Auto"
+                        BorderThickness="0,0,0,1"/>
+
+                    <Expander
+                        Margin="10,10,10,0"
+                        IsExpanded="False"
+                        FontFamily="Yu Gothic UI"
                         Header="HTTPアクセスのタイムアウト">
                         <TextBlock
                             Margin="20,0,20,5"

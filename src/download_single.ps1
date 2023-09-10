@@ -38,7 +38,7 @@ try {
 		$script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition
 	} else { $script:scriptRoot = Convert-Path . }
 	Set-Location $script:scriptRoot
-	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '../conf'))
+	$script:confDir = $(Convert-Path (Join-Path $script:scriptRoot '../conf'))
 	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
 } catch { Write-Error '❗ カレントディレクトリの設定に失敗しました' ; exit 1 }
 try {
@@ -52,9 +52,9 @@ try {
 #----------------------------------------------------------------------
 #設定ファイル読み込み
 try {
-	. $(Convert-Path $(Join-Path $script:confDir './system_setting.ps1'))
-	if ( Test-Path $(Join-Path $script:confDir './user_setting.ps1') ) {
-		. $(Convert-Path $(Join-Path $script:confDir './user_setting.ps1'))
+	. $(Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
+	if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
+		. $(Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
 	}
 } catch { Write-Error '❗ 設定ファイルの読み込みに失敗しました' ; exit 1 }
 

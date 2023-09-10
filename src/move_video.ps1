@@ -36,7 +36,7 @@ try {
 		$script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition
 	} else { $script:scriptRoot = Convert-Path . }
 	Set-Location $script:scriptRoot
-	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '../conf'))
+	$script:confDir = $(Convert-Path (Join-Path $script:scriptRoot '../conf'))
 	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
 } catch { Write-Error '❗ カレントディレクトリの設定に失敗しました' ; exit 1 }
 try {
@@ -46,6 +46,15 @@ try {
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
+
+#----------------------------------------------------------------------
+#設定ファイル読み込み
+try {
+	. $(Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
+	if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
+		. $(Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
+	}
+} catch { Write-Error '❗ 設定ファイルの読み込みに失敗しました' ; exit 1 }
 
 #設定で指定したファイル・ディレクトリの存在チェック
 checkRequiredFile
@@ -146,10 +155,10 @@ if ($local:moveToPathTotal -ne 0) {
 		$local:targetFolderName = Split-Path -Leaf $local:moveToPath
 		if ($script:sortVideoByMedia) {
 			$local:mediaName = Split-Path -Leaf $(Split-Path -Parent $local:moveToPath)
-			$local:targetFolderName = $(Join-Path $local:mediaName $local:targetFolderName)
+			$local:targetFolderName = Join-Path $local:mediaName $local:targetFolderName
 		}
 		#同名フォルダが存在する場合は配下のファイルを移動
-		$local:moveFromPath = $(Join-Path $script:downloadBaseDir $local:targetFolderName)
+		$local:moveFromPath = Join-Path $script:downloadBaseDir $local:targetFolderName
 		if (Test-Path $local:moveFromPath) {
 			$local:moveFromPath = $local:moveFromPath + '\*.mp4'
 			Write-Output "　💡 「$($local:moveFromPath)」を移動します"

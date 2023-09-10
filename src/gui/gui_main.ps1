@@ -39,9 +39,9 @@ try {
 	if ($script:myInvocation.MyCommand.CommandType -eq 'ExternalScript') {
 		$script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition
 	} else { $script:scriptRoot = Convert-Path . }
-	$script:scriptRoot = $(Convert-Path $(Join-Path $script:scriptRoot '../'))
+	$script:scriptRoot = $(Convert-Path (Join-Path $script:scriptRoot '../'))
 	Set-Location $script:scriptRoot
-	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '../conf'))
+	$script:confDir = $(Convert-Path (Join-Path $script:scriptRoot '../conf'))
 	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
 } catch { Write-Error '❗ ディレクトリ設定に失敗しました'; exit 1 }
 try {
@@ -240,9 +240,9 @@ $script:btnKillAll.add_Click({
 	})
 $script:btnWiki.add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
 $script:btnSetting.add_Click({
-		. './gui/gui_setting.ps1'
-		if ( Test-Path $(Join-Path $script:confDir './user_setting.ps1') ) {
-			. $(Convert-Path $(Join-Path $script:confDir './user_setting.ps1'))
+		. 'gui/gui_setting.ps1'
+		if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
+			. $(Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
 		}
 		[System.GC]::Collect()
 	})

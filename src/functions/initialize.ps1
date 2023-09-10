@@ -28,16 +28,16 @@
 #----------------------------------------------------------------------
 #設定ファイル読み込み
 try {
-	. $(Convert-Path $(Join-Path $script:confDir './system_setting.ps1'))
-	if ( Test-Path $(Join-Path $script:confDir './user_setting.ps1') ) {
-		. $(Convert-Path $(Join-Path $script:confDir './user_setting.ps1'))
+	. $(Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
+	if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
+		. $(Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
 	} elseif ($IsWindows) {
-		while (!( Test-Path $(Join-Path $script:confDir './user_setting.ps1')) ) {
+		while (!( Test-Path $(Join-Path $script:confDir 'user_setting.ps1')) ) {
 			Write-Output 'ユーザ設定ファイルを作成する必要があります'
-			. './gui/gui_setting.ps1'
+			. 'gui/gui_setting.ps1'
 		}
-		if ( Test-Path $(Join-Path $script:confDir './user_setting.ps1') ) {
-			. $(Convert-Path $(Join-Path $script:confDir './user_setting.ps1'))
+		if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
+			. $(Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
 		}
 	} else {
 		Write-Error '❗ ユーザ設定が完了してません' ; exit 1
@@ -54,8 +54,8 @@ try {
 #----------------------------------------------------------------------
 #開発環境用に設定上書き
 try {
-	$script:devFunctionFile = $(Join-Path $script:devDir './dev_funcitons.ps1')
-	$script:devConfFile = $(Join-Path $script:devDir './dev_setting.ps1')
+	$script:devFunctionFile = $(Join-Path $script:devDir 'dev_funcitons.ps1')
+	$script:devConfFile = $(Join-Path $script:devDir 'dev_setting.ps1')
 	if (Test-Path $script:devFunctionFile) {
 		. $script:devFunctionFile
 		Write-Warning '💡 開発ファイル用共通関数ファイルを読み込みました'
@@ -73,7 +73,7 @@ if ( $script:myInvocation.ScriptName.Contains('gui')) {
 	checkLatestTVerRec
 	if ($? -eq $false) { exit 1 }
 } else {
-	[Console]::ForegroundColor = 'Cyan'
+	[Console]::ForegroundColor = 'Red'
 	$versionBanner = ' ' * $(56 - $script:appVersion.Length) + "Version. $script:appVersion"
 	Write-Output ''
 	Write-Output '==========================================================================='

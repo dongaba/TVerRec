@@ -38,16 +38,16 @@ try {
 	if ($script:myInvocation.MyCommand.CommandType -eq 'ExternalScript') {
 		$script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition
 	} else { $script:scriptRoot = Convert-Path . }
-	$script:scriptRoot = $(Convert-Path $(Join-Path $script:scriptRoot '../'))
+	$script:scriptRoot = $(Convert-Path (Join-Path $script:scriptRoot '../'))
 	Set-Location $script:scriptRoot
-	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '../conf'))
+	$script:confDir = $(Convert-Path (Join-Path $script:scriptRoot '../conf'))
 	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
 } catch { Write-Error '❗ ディレクトリ設定に失敗しました'; exit 1 }
 
 #----------------------------------------------------------------------
 #設定ファイル読み込み
 try {
-	. $(Convert-Path $(Join-Path $script:confDir './system_setting.ps1'))
+	. $(Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
 } catch { Write-Error '❗ システム設定ファイルの読み込みに失敗しました' ; exit 1 }
 
 #----------------------------------------------------------------------
@@ -119,7 +119,7 @@ function writeSetting {
 	$local:endSegment = '##End Setting Generated from GUI'
 
 	#自動生成部分の行数を取得
-	if ( Test-Path $(Join-Path $script:confDir './user_setting.ps1') ) {
+	if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
 		try {
 			$local:totalLineNum = (Get-Content -Path $script:userSettingFile).Length
 		} catch { $local:totalLineNum = 0 }
@@ -202,14 +202,14 @@ function writeSetting {
 #メイン処理
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-$script:systemSettingFile = $(Join-Path $script:confDir './system_setting.ps1')
-$script:userSettingFile = $(Join-Path $script:confDir './user_setting.ps1')
+$script:systemSettingFile = $(Join-Path $script:confDir 'system_setting.ps1')
+$script:userSettingFile = $(Join-Path $script:confDir 'user_setting.ps1')
 
 #----------------------------------------------------------------------
 #region WPFのWindow設定
 
 try {
-	[string]$local:mainXaml = Get-Content -Path $(Join-Path $script:wpfDir './TVerRecSetting.xaml')
+	[string]$local:mainXaml = Get-Content -Path $(Join-Path $script:wpfDir 'TVerRecSetting.xaml')
 	$local:mainXaml = $local:mainXaml `
 		-replace 'mc:Ignorable="d"', '' `
 		-replace 'x:N', 'N' `
@@ -311,6 +311,7 @@ $script:settingAttributes += '$script:saveBaseDir'
 $script:settingAttributes += '$script:parallelDownloadFileNum'
 $script:settingAttributes += '$script:parallelDownloadNumPerFile'
 $script:settingAttributes += '$script:multithreadNum'
+$script:settingAttributes += '$script:rateLimit'
 $script:settingAttributes += '$script:timeoutSec'
 $script:settingAttributes += '$script:historyRetentionPeriod'
 $script:settingAttributes += '$script:sortVideoByMedia'

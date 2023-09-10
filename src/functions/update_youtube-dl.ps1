@@ -53,22 +53,22 @@ try {
 		$local:scriptRoot = Split-Path -Parent -Path $local:scriptRoot
 	} else { $local:scriptRoot = Convert-Path .. }
 	Set-Location $script:scriptRoot
-	$script:confDir = $(Convert-Path $(Join-Path $script:scriptRoot '../conf'))
+	$script:confDir = $(Convert-Path (Join-Path $script:scriptRoot '../conf'))
 	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
 } catch { Write-Error '❗ ディレクトリ設定に失敗しました' ; exit 1 }
 
 #設定ファイル読み込み
 try {
-	. $(Convert-Path $(Join-Path $script:confDir './system_setting.ps1'))
-	if ( Test-Path $(Join-Path $script:confDir './user_setting.ps1') ) {
-		. $(Convert-Path $(Join-Path $script:confDir './user_setting.ps1'))
+	. $(Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
+	if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
+		. $(Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
 	} elseif ($IsWindows) {
-		while (!( Test-Path $(Join-Path $script:confDir './user_setting.ps1')) ) {
+		while (!( Test-Path $(Join-Path $script:confDir 'user_setting.ps1')) ) {
 			Write-Output 'ユーザ設定ファイルを作成する必要があります'
-			. './gui/gui_setting.ps1'
+			. 'gui/gui_setting.ps1'
 		}
-		if ( Test-Path $(Join-Path $script:confDir './user_setting.ps1') ) {
-			. $(Convert-Path $(Join-Path $script:confDir './user_setting.ps1'))
+		if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
+			. $(Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
 		}
 	} else {
 		Write-Error '❗ ユーザ設定が完了してません' ; exit 1
@@ -85,9 +85,9 @@ else { Write-Error '❗ youtube-dlの取得元の指定が無効です' ; exit 1
 $local:releases = "https://api.github.com/repos/$($local:repo)/releases"
 
 #youtube-dl移動先相対Path
-$local:ytdlDir = $(Join-Path $local:scriptRoot '../bin')
-if ($IsWindows) { $local:ytdlPath = $(Join-Path $local:ytdlDir './youtube-dl.exe') }
-else { $local:ytdlPath = $(Join-Path $local:ytdlDir './youtube-dl') }
+$local:binDir = Convert-Path (Join-Path $local:scriptRoot '../bin')
+if ($IsWindows) { $local:ytdlPath = $(Join-Path $local:binDir 'youtube-dl.exe') }
+else { $local:ytdlPath = $(Join-Path $local:binDir 'youtube-dl') }
 
 #youtube-dlのバージョン取得
 try {
@@ -135,7 +135,7 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 		)[0].Tag_Name
 		$local:download = `
 			"https://github.com/$($local:repo)/releases/download/$($local:tag)/$($local:file)"
-		$local:ytdlFileLocation = $(Join-Path $local:ytdlDir $local:fileAfterRename)
+		$local:ytdlFileLocation = Join-Path $local:binDir $local:fileAfterRename
 		Invoke-WebRequest `
 			-Uri $local:download `
 			-Out $local:ytdlFileLocation

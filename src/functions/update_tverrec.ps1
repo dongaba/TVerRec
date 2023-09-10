@@ -131,7 +131,7 @@ try {
 	).zipball_url
 	Invoke-WebRequest `
 		-Uri $local:zipURL `
-		-OutFile $(Join-Path $updateTemp './TVerRecLatest.zip')
+		-OutFile $(Join-Path $updateTemp 'TVerRecLatest.zip')
 } catch { Write-Error '❗ ダウンロードに失敗しました' ; exit 1 }
 
 #最新バージョンがダウンロードできていたら展開
@@ -139,10 +139,10 @@ Write-Output ''
 Write-Output '-----------------------------------------------------------------'
 Write-Output 'ダウンロードしたTVerRecを解凍します'
 try {
-	if (Test-Path $(Join-Path $updateTemp './TVerRecLatest.zip') -PathType Leaf) {
+	if (Test-Path $(Join-Path $updateTemp 'TVerRecLatest.zip') -PathType Leaf) {
 		#配下に作成されるディレクトリ名は不定「dongaba-TVerRec-xxxxxxxx」
 		unZip `
-			-File $(Join-Path $updateTemp './TVerRecLatest.zip') `
+			-File $(Join-Path $updateTemp 'TVerRecLatest.zip') `
 			-OutPath $updateTemp
 	} else { Write-Error '❗ ダウンロードしたファイルが見つかりません' ; exit 1 }
 } catch { Write-Error '❗ ダウンロードしたファイルの解凍に失敗しました' ; exit 1 }
@@ -158,7 +158,7 @@ try {
 		# Move-Item を行う function として moveItem 作成して呼び出す
 		moveItem `
 			-Path $_.FullName `
-			-Destination $($( Convert-Path $(Join-Path $local:scriptRoot '../')) + $_.Name)
+			-Destination $($(Join-Path $local:scriptRoot '../') + $_.Name)
 	}
 } catch { Write-Error '❗ ダウンロードしたTVerRecの配置に失敗しました' ; exit 1 }
 
@@ -211,19 +211,19 @@ if (Test-Path $(Join-Path $script:scriptRoot '../img/TVerRec-Logo-Low.png') -Pat
 		-Force
 }
 #ダウンロード用のps1をリネーム(v2.7.5→v2.7.6)
-if (Test-Path $(Join-Path $script:scriptRoot './tverrec_bulk.ps1') -PathType Leaf) {
+if (Test-Path $(Join-Path $script:scriptRoot 'tverrec_bulk.ps1') -PathType Leaf) {
 	Remove-Item `
-		-Path $(Join-Path $script:scriptRoot './tverrec_bulk.ps1') `
+		-Path $(Join-Path $script:scriptRoot 'tverrec_bulk.ps1') `
 		-Force
 }
-if (Test-Path $(Join-Path $script:scriptRoot './tverrec_list.ps1') -PathType Leaf) {
+if (Test-Path $(Join-Path $script:scriptRoot 'tverrec_list.ps1') -PathType Leaf) {
 	Remove-Item `
-		-Path $(Join-Path $script:scriptRoot './tverrec_list.ps1') `
+		-Path $(Join-Path $script:scriptRoot 'tverrec_list.ps1') `
 		-Force
 }
-if (Test-Path $(Join-Path $script:scriptRoot './tverrec_single.ps1') -PathType Leaf) {
+if (Test-Path $(Join-Path $script:scriptRoot 'tverrec_single.ps1') -PathType Leaf) {
 	Remove-Item `
-		-Path $(Join-Path $script:scriptRoot './tverrec_single.ps1') `
+		-Path $(Join-Path $script:scriptRoot 'tverrec_single.ps1') `
 		-Force
 }
 if (Test-Path $(Join-Path $script:scriptRoot '../win/a.download_video.cmd') -PathType Leaf) {
@@ -264,14 +264,14 @@ if (Test-Path $(Join-Path $script:scriptRoot '../.wsb/setup/TVerRec')) {
 		-Force
 }
 #youtube-dlの旧更新スクリプトの削除(v2.8.1→v2.8.2)
-if (Test-Path $(Join-Path $script:scriptRoot './functions/update_yt-dlp.ps1') -PathType Leaf) {
+if (Test-Path $(Join-Path $script:scriptRoot 'functions/update_yt-dlp.ps1') -PathType Leaf) {
 	Remove-Item `
-		-Path $(Join-Path $script:scriptRoot './functions/update_yt-dlp.ps1') `
+		-Path $(Join-Path $script:scriptRoot 'functions/update_yt-dlp.ps1') `
 		-Force
 }
-if (Test-Path $(Join-Path $script:scriptRoot './functions/update_ytdl-patched.ps1') -PathType Leaf) {
+if (Test-Path $(Join-Path $script:scriptRoot 'functions/update_ytdl-patched.ps1') -PathType Leaf) {
 	Remove-Item `
-		-Path $(Join-Path $script:scriptRoot './functions/update_ytdl-patched.ps1') `
+		-Path $(Join-Path $script:scriptRoot 'functions/update_ytdl-patched.ps1') `
 		-Force
 }
 

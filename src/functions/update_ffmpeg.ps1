@@ -59,9 +59,9 @@ try {
 #メイン処理
 
 #ffmpeg移動先相対Path
-$local:ffmpegDir = $(Join-Path $local:scriptRoot '../bin')
-if ($IsWindows) { $local:ffmpegPath = $(Join-Path $local:ffmpegDir './ffmpeg.exe') }
-else { $local:ffmpegPath = $(Join-Path $local:ffmpegDir 'ffmpeg') }
+$local:binDir = Convert-Path (Join-Path $local:scriptRoot '../bin')
+if ($IsWindows) { $local:ffmpegPath = $(Join-Path $local:binDir './ffmpeg.exe') }
+else { $local:ffmpegPath = $(Join-Path $local:binDir 'ffmpeg') }
 
 switch ($true) {
 	$IsWindows {
@@ -116,37 +116,38 @@ switch ($true) {
 			try {
 				Invoke-WebRequest `
 					-Uri $donwloadURL `
-					-OutFile "$($local:ffmpegDir)/ffmpeg.zip"
+					-OutFile $(Join-Path $local:binDir 'ffmpeg.zip')
 			} catch { Write-Error '❗ ffmpegのダウンロードに失敗しました' ; exit 1 }
 
 			#展開
 			Write-Output 'ダウンロードしたffmpegを解凍します'
 			try {
 				unZip `
-					-File "$($local:ffmpegDir)/ffmpeg.zip" `
-					-OutPath "$($local:ffmpegDir)"
+					-File $(Join-Path $local:binDir 'ffmpeg.zip') `
+					-OutPath $local:binDir
 			} catch { Write-Error '❗ ffmpegの解凍に失敗しました' ; exit 1 }
 
 			#配置
 			Write-Output '解凍したffmpegを配置します'
 			try {
 				Move-Item `
-					-Path "$($local:ffmpegDir)/ffmpeg-master-latest-*-gpl/bin/ff*.exe" `
-					-Destination "$local:ffmpegDir" -Force
+					-Path "$($local:binDir)/ffmpeg-master-latest-*-gpl/bin/ff*.exe" `
+					-Destination "$local:binDir" `
+					-Force
 			} catch { Write-Error '❗ ffmpegの配置に失敗しました' ; exit 1 }
 
 			#ゴミ掃除
 			Write-Output '中間ディレクトリと中間ファイルを削除します'
 			try {
 				Remove-Item `
-					-Path "$($local:ffmpegDir)/ffmpeg-master-latest-*-gpl" `
+					-Path "$($local:binDir)/ffmpeg-master-latest-*-gpl" `
 					-Force `
 					-Recurse `
 					-ErrorAction SilentlyContinue
 			} catch { Write-Error '❗ 中間ディレクトリの削除に失敗しました' ; exit 1 }
 			try {
 				Remove-Item `
-					-Path "$($local:ffmpegDir)/ffmpeg.zip" `
+					-Path $(Join-Path $local:binDir 'ffmpeg.zip') `
 					-Force `
 					-ErrorAction SilentlyContinue
 			} catch { Write-Error '❗ 中間ファイルの削除に失敗しました' ; exit 1 }
@@ -222,21 +223,21 @@ switch ($true) {
 			try {
 				Invoke-WebRequest `
 					-Uri $donwloadURL `
-					-OutFile "$($local:ffmpegDir)/ffmpeg.tar.xz"
+					-OutFile $(Join-Path $local:binDir 'ffmpeg.tar.xz')
 			} catch { Write-Error '❗ ffmpegのダウンロードに失敗しました' ; exit 1 }
 
 			#展開
 			Write-Output 'ダウンロードしたffmpegを解凍します'
 			try {
-				(& tar Jxfv "$($local:ffmpegDir)/ffmpeg.tar.xz" -C "$local:ffmpegDir")
+				(& tar Jxfv $(Join-Path $local:binDir 'ffmpeg.tar.xz') -C "$local:binDir")
 			} catch { Write-Error '❗ ffmpegの展開に失敗しました' ; exit 1 }
 
 			#配置
 			Write-Output '解凍したffmpegを配置します'
 			try {
 				Move-Item `
-					-Path "$($local:ffmpegDir)/ffmpeg-master-latest-*-gpl/bin/ff*" `
-					-Destination "$local:ffmpegDir" `
+					-Path "$($local:binDir)/ffmpeg-master-latest-*-gpl/bin/ff*" `
+					-Destination "$local:binDir" `
 					-Force
 			} catch { Write-Error '❗ ffmpegの配置に失敗しました' ; exit 1 }
 
@@ -244,14 +245,14 @@ switch ($true) {
 			Write-Output '中間ディレクトリと中間ファイルを削除します'
 			try {
 				Remove-Item `
-					-Path "$($local:ffmpegDir)/ffmpeg-master-latest-*-gpl" `
+					-Path "$($local:binDir)/ffmpeg-master-latest-*-gpl" `
 					-Force `
 					-Recurse `
 					-ErrorAction SilentlyContinue
 			} catch { Write-Error '❗ 中間ディレクトリの削除に失敗しました' ; exit 1 }
 			try {
 				Remove-Item `
-					-Path "$($local:ffmpegDir)/ffmpeg.tar.xz" `
+					-Path $(Join-Path $local:binDir 'ffmpeg.tar.xz') `
 					-Force `
 					-ErrorAction SilentlyContinue
 			} catch { Write-Error '❗ 中間ファイルの削除に失敗しました' ; exit 1 }
@@ -292,7 +293,7 @@ switch ($true) {
 		$local:ffmpegReleases = 'https://evermeet.cx/ffmpeg/info/ffmpeg/release'
 		$local:ffprobeReleases = 'https://evermeet.cx/ffmpeg/info/ffprobe/release'
 		$local:ffmpegReleaseInfo = ''
-		$local:ffprobeReleases = ''
+		$local:ffprobeReleaseInfo = ''
 		$local:latestVersion = ''
 		try {
 			$local:ffmpegReleaseInfo = Invoke-RestMethod `
@@ -321,40 +322,40 @@ switch ($true) {
 			try {
 				Invoke-WebRequest `
 					-Uri $local:ffmpegReleaseInfo.download.zip.url `
-					-OutFile "$($local:ffmpegDir)/ffmpeg.zip"
+					-OutFile $(Join-Path $local:binDir 'ffmpeg.zip')
 				Invoke-WebRequest `
 					-Uri $local:ffprobeReleaseInfo.download.zip.url `
-					-OutFile "$($local:ffmpegDir)/ffprobe.zip"
+					-OutFile $(Join-Path $local:binDir 'ffprobe.zip')
 			} catch { Write-Error '❗ ffmpegのダウンロードに失敗しました' ; exit 1 }
 
 			#展開
 			Write-Output 'ダウンロードしたffmpegを解凍します'
 			try {
 				Remove-Item `
-					-Path "$($local:ffmpegDir)/ffmpeg" `
+					-Path $(Join-Path $local:binDir 'ffmpeg') `
 					-Force `
 					-ErrorAction SilentlyContinue
 				Remove-Item `
-					-Path "$($local:ffmpegDir)/ffprobe" `
+					-Path $(Join-Path $local:binDir 'ffprobe') `
 					-Force `
 					-ErrorAction SilentlyContinue
 				unZip `
-					-File "$($local:ffmpegDir)/ffmpeg.zip" `
-					-OutPath "$($local:ffmpegDir)"
+					-File $(Join-Path $local:binDir 'ffmpeg.zip') `
+					-OutPath $local:binDir
 				unZip `
-					-File "$($local:ffmpegDir)/ffprobe.zip" `
-					-OutPath "$($local:ffmpegDir)"
+					-File $(Join-Path $local:binDir 'ffprobe.zip') `
+					-OutPath $local:binDir
 			} catch { Write-Error '❗ ffmpegの展開に失敗しました' ; exit 1 }
 
 			#ゴミ掃除
 			Write-Output '中間ファイルを削除します'
 			try {
 				Remove-Item `
-					-Path "$($local:ffmpegDir)/ffmpeg.zip" `
+					-Path $(Join-Path $local:binDir 'ffmpeg.zip') `
 					-Force `
 					-ErrorAction SilentlyContinue
 				Remove-Item `
-					-Path "$($local:ffmpegDir)/ffprobe.zip" `
+					-Path $(Join-Path $local:binDir 'ffprobe.zip') `
 					-Force `
 					-ErrorAction SilentlyContinue
 			} catch { Write-Error '❗ 中間ファイルの削除に失敗しました' ; exit 1 }

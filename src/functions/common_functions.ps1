@@ -122,7 +122,7 @@ function goAnal {
 		$null = Invoke-WebRequest `
 			-Uri "$($local:statisticsBase)$($local:event).svg" `
 			-TimeoutSec $script:timeoutSec
-	} catch { Write-Debug 'Failed to collect statistics' }
+	} catch { Write-Debug 'Failed to collect count' }
 	finally { $progressPreference = 'Continue' }
 
 	if ($local:event -eq 'search') { return }
@@ -388,11 +388,17 @@ function deleteFiles {
 	try {
 		foreach ($local:delCondition in $local:delConditions.Split(',').Trim()) {
 			Write-Output "$($local:basePath) - $($local:delCondition)"
-			$null = Get-ChildItem -LiteralPath $local:basePath -Recurse -File -Filter $local:delCondition -ErrorAction SilentlyContinue `
+			$null = Get-ChildItem `
+				-LiteralPath $local:basePath `
+				-Recurse `
+				-File `
+				-Filter $local:delCondition `
+				-ErrorAction SilentlyContinue `
 			| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays($local:delPeriod) } `
-			| Remove-Item -Force -ErrorAction SilentlyContinue `
-
-  }
+			| Remove-Item `
+				-Force `
+				-ErrorAction SilentlyContinue
+		}
 	} catch { Write-Warning '　❗ 削除できないファイルがありました' }
 
 }
@@ -653,9 +659,9 @@ function showToast {
 
 		if (-not ('Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder' -as [Type])) {
 			#For PowerShell Core v6.x & PowerShell v7+
-			Add-Type -Path (Join-Path $script:libDir './win/core/Microsoft.Windows.SDK.NET.dll')
-			Add-Type -Path (Join-Path $script:libDir './win/core/WinRT.Runtime.dll')
-			Add-Type -Path (Join-Path $script:libDir './win/core/Microsoft.Toolkit.Uwp.Notifications.dll')
+			Add-Type -Path (Join-Path $script:libDir 'win/core/Microsoft.Windows.SDK.NET.dll')
+			Add-Type -Path (Join-Path $script:libDir 'win/core/WinRT.Runtime.dll')
+			Add-Type -Path (Join-Path $script:libDir 'win/core/Microsoft.Toolkit.Uwp.Notifications.dll')
 		}
 
 		$local:toastProgressContent = @"
@@ -735,9 +741,9 @@ function showProgressToast {
 
 		if (-not ('Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder' -as [Type])) {
 			#For PowerShell Core v6.x & PowerShell v7+
-			Add-Type -Path (Join-Path $script:libDir './win/core/Microsoft.Windows.SDK.NET.dll')
-			Add-Type -Path (Join-Path $script:libDir './win/core/WinRT.Runtime.dll')
-			Add-Type -Path (Join-Path $script:libDir './win/core/Microsoft.Toolkit.Uwp.Notifications.dll')
+			Add-Type -Path (Join-Path $script:libDir 'win/core/Microsoft.Windows.SDK.NET.dll')
+			Add-Type -Path (Join-Path $script:libDir 'win/core/WinRT.Runtime.dll')
+			Add-Type -Path (Join-Path $script:libDir 'win/core/Microsoft.Toolkit.Uwp.Notifications.dll')
 		}
 
 		$local:toastContent = @"
@@ -876,9 +882,9 @@ function showProgressToast2 {
 
 		if (-not ('Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder' -as [Type])) {
 			#For PowerShell Core v6.x & PowerShell v7+
-			Add-Type -Path (Join-Path $script:libDir './win/core/Microsoft.Windows.SDK.NET.dll')
-			Add-Type -Path (Join-Path $script:libDir './win/core/WinRT.Runtime.dll')
-			Add-Type -Path (Join-Path $script:libDir './win/core/Microsoft.Toolkit.Uwp.Notifications.dll')
+			Add-Type -Path (Join-Path $script:libDir 'win/core/Microsoft.Windows.SDK.NET.dll')
+			Add-Type -Path (Join-Path $script:libDir 'win/core/WinRT.Runtime.dll')
+			Add-Type -Path (Join-Path $script:libDir 'win/core/Microsoft.Toolkit.Uwp.Notifications.dll')
 		}
 
 		$local:toastContent = @"
