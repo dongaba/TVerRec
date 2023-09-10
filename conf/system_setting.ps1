@@ -304,18 +304,12 @@ $script:ffpmegErrorLogPath = $(Join-Path $script:dbDir "ffmpeg_error_$($PID).log
 
 #youtube-dlのパス
 if ($IsWindows) { $script:ytdlPath = $(Join-Path $script:binDir 'youtube-dl.exe') }
-else {
-	$script:ytdlPath = $(Join-Path $script:binDir 'youtube-dl')
-}
+else { $script:ytdlPath = $(Join-Path $script:binDir 'youtube-dl') }
 
 #ffmpegのパス
 if ($IsWindows) { $script:ffmpegPath = $(Join-Path $script:binDir 'ffmpeg.exe') }
-else {
-	$script:ffmpegPath = $(Join-Path $script:binDir 'ffmpeg')
-}
+else { $script:ffmpegPath = $(Join-Path $script:binDir 'ffmpeg') }
 
 #ffprobeのパス
 if ($IsWindows) { $script:ffprobePath = $(Join-Path $script:binDir 'ffprobe.exe') }
-else {
-	$script:ffprobePath = $(Join-Path $script:binDir 'ffprobe')
-}
+else { $script:ffprobePath = $(Join-Path $script:binDir 'ffprobe') }
