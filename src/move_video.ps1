@@ -32,15 +32,14 @@ Set-StrictMode -Version Latest
 #----------------------------------------------------------------------
 #初期化
 try {
-	if ($script:myInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition
-	} else { $script:scriptRoot = Convert-Path . }
+	if ($script:myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
+	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
-	$script:confDir = $(Convert-Path (Join-Path $script:scriptRoot '../conf'))
-	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
+	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
+	$script:devDir = Join-Path $script:scriptRoot '../dev'
 } catch { Write-Error '❗ カレントディレクトリの設定に失敗しました' ; exit 1 }
 try {
-	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
+	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 	if ($? -eq $false) { exit 1 }
 } catch { Write-Error '❗ 関数の読み込みに失敗しました' ; exit 1 }
 
@@ -50,9 +49,9 @@ try {
 #----------------------------------------------------------------------
 #設定ファイル読み込み
 try {
-	. $(Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
-	if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
-		. $(Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
+	. (Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
+	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
+		. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
 	}
 } catch { Write-Error '❗ 設定ファイルの読み込みに失敗しました' ; exit 1 }
 
@@ -133,8 +132,8 @@ if ($local:moveToPathTotal -ne 0) {
 		$local:secRemaining = -1
 		if ($local:moveToPathNum -ne 0) {
 			$local:secRemaining = ($local:secElapsed.TotalSeconds / $local:moveToPathNum) * ($local:moveToPathTotal - $local:moveToPathNum)
-			$local:minRemaining = "$([String]([math]::Ceiling($local:secRemaining / 60)))分"
-			$local:progressRatio = $($local:moveToPathNum / $local:moveToPathTotal)
+			$local:minRemaining = ([String]([math]::Ceiling($local:secRemaining / 60)) + '分')
+			$local:progressRatio = ($local:moveToPathNum / $local:moveToPathTotal)
 		} else {
 			$local:minRemaining = '計算中...'
 			$local:progressRatio = 0
@@ -145,23 +144,23 @@ if ($local:moveToPathTotal -ne 0) {
 		UpdateProgressToast `
 			-Title $local:moveToPath `
 			-Rate $local:progressRatio `
-			-LeftText $local:moveToPathNum/$local:moveToPathTotal `
-			-RightText "残り時間 $local:minRemaining" `
+			-LeftText ([String]$local:moveToPathNum + '/' + [String]$local:moveToPathTotal) `
+			-RightText ('残り時間 ' + $local:minRemaining) `
 			-Tag $script:appName `
 			-Group 'Move'
 
 		#処理
-		Write-Output "$($local:moveToPathNum)/$($local:moveToPathTotal) - $($local:moveToPath)"
+		Write-Output ([String]$local:moveToPathNum + '/' + [String]$local:moveToPathTotal + ' - ' + $local:moveToPath)
 		$local:targetFolderName = Split-Path -Leaf $local:moveToPath
 		if ($script:sortVideoByMedia) {
-			$local:mediaName = Split-Path -Leaf $(Split-Path -Parent $local:moveToPath)
+			$local:mediaName = Split-Path -Leaf (Split-Path -Parent $local:moveToPath)
 			$local:targetFolderName = Join-Path $local:mediaName $local:targetFolderName
 		}
 		#同名フォルダが存在する場合は配下のファイルを移動
 		$local:moveFromPath = Join-Path $script:downloadBaseDir $local:targetFolderName
 		if (Test-Path $local:moveFromPath) {
 			$local:moveFromPath = $local:moveFromPath + '\*.mp4'
-			Write-Output "　💡 「$($local:moveFromPath)」を移動します"
+			Write-Output ('　💡 ' + $local:moveFromPath + 'を移動します')
 			try { Move-Item $local:moveFromPath -Destination $local:moveToPath -Force }
 			catch { Write-Warning '　❗ 移動できないファイルがありました' }
 		}
@@ -187,8 +186,7 @@ showProgressToast `
 #処理
 $local:allSubDirs = $null
 try {
-	$local:allSubDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).`
-			Where({ $_.PSIsContainer })).FullName `
+	$local:allSubDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer })).FullName `
 	| Sort-Object -Descending
 } catch { Write-Warning '❗ ディレクトリを見つけられませんでした' }
 
@@ -200,19 +198,18 @@ else { $local:subDirTotal = 0 }
 #----------------------------------------------------------------------
 if ($local:subDirTotal -ne 0) {
 	$local:allSubDirs | ForEach-Object -Parallel {
-		$local:i = $([Array]::IndexOf($using:local:allSubDirs, $_)) + 1
+		$local:i = ([Array]::IndexOf($using:local:allSubDirs, $_)) + 1
 		$local:total = $using:local:allSubDirs.Count
 		#処理
-		Write-Output "$($local:i)/$($local:total) - $($_)"
-		if (@((Get-ChildItem -LiteralPath $_ -Recurse).`
-					Where({ ! $_.PSIsContainer })).Count -eq 0) {
-			Write-Output "　💡 $($local:i)/$($local:total) - 「$($_)」を削除します"
+		Write-Output ([String]$local:i + '/' + [String]$local:total + ' - ' + $_)
+		if (@((Get-ChildItem -LiteralPath $_ -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
+			Write-Output ('　💡 ' + [String]$local:i + '/' + [String]$local:total + ' - ' + $_ + 'を削除します')
 			try {
 				Remove-Item `
 					-LiteralPath $_ `
 					-Recurse `
 					-Force
-			} catch { Write-Warning "　❗ $($local:i)/$($local:total) - 空ディレクトリの削除に失敗しました: $_" }
+			} catch { Write-Warning ('　❗ ' + [String]$local:i + '/' + [String]$local:total + ' - 空ディレクトリの削除に失敗しました:' + $_) }
 		}
 	} -ThrottleLimit $script:multithreadNum
 }

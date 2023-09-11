@@ -32,15 +32,14 @@ Set-StrictMode -Version Latest
 #----------------------------------------------------------------------
 #初期化
 try {
-	if ($script:myInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition
-	} else { $script:scriptRoot = Convert-Path . }
+	if ($script:myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
+	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
-	$script:confDir = $(Convert-Path (Join-Path $script:scriptRoot '../conf'))
-	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
+	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
+	$script:devDir = Join-Path $script:scriptRoot '../dev'
 } catch { Write-Error '❗ カレントディレクトリの設定に失敗しました' ; exit 1 }
 try {
-	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
+	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 	if ($? -eq $false) { exit 1 }
 } catch { Write-Error '❗ 関数の読み込みに失敗しました' ; exit 1 }
 
@@ -50,9 +49,9 @@ try {
 #----------------------------------------------------------------------
 #設定ファイル読み込み
 try {
-	. $(Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
-	if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
-		. $(Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
+	. (Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
+	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
+		. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
 	}
 } catch { Write-Error '❗ 設定ファイルの読み込みに失敗しました' ; exit 1 }
 
@@ -82,7 +81,7 @@ if ($null -eq $local:listLinks) { Write-Warning '💡 ダウンロードリス�
 $local:listTotal = 0
 if ($local:listLinks -is [Array]) { $local:listTotal = $script:listLinks.Length }
 else { $local:listTotal = 1 }
-Write-Output "　リスト件数$($local:listTotal)件"
+Write-Output ('　リスト件数' + $local:listTotal + '件')
 Write-Output ''
 
 Write-Output '----------------------------------------------------------------------'
@@ -90,11 +89,10 @@ Write-Output 'ダウンロード履歴を読み込みます'
 #ダウンロード履歴ファイルのデータを読み込み
 try {
 	#ロックファイルをロック
-	while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true)
+	while ((fileLock $script:historyLockFilePath).fileLocked -ne $true)
 	{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 	#ファイル操作
-	$script:historyFileData = `
-		Import-Csv `
+	$script:historyFileData = Import-Csv `
 		-Path $script:historyFilePath `
 		-Encoding UTF8
 } catch { Write-Warning '❗ ダウンロード履歴を読み込めなかったのでスキップしました'; continue
@@ -107,14 +105,14 @@ Write-Output 'ダウンロード履歴に含まれる番組を除外します'
 foreach ($local:listLink in $local:listLinks.episodeID) {
 	if ($null -ne $script:historyFileData) {
 		$local:historyMatch = $script:historyFileData `
-		| Where-Object { $_.videoPage -eq $($local:listLink) }
+		| Where-Object { $_.videoPage -eq $local:listLink }
 		if ($null -eq $local:historyMatch) { $local:videoLinks += $local:listLink }
 	} else { $local:videoLinks += $local:listLink }
 }
 
 #ダウンロード対象のトータル番組数
 $local:videoTotal = $local:videoLinks.Length
-Write-Output "　💡 ダウンロード対象$($local:videoTotal)件"
+Write-Output ('　💡 ダウンロード対象' + $local:videoTotal + '件')
 Write-Output ''
 
 
@@ -143,10 +141,10 @@ foreach ($local:videoLink in $local:videoLinks) {
 	else { Write-Error '❗ 番組ダウンロード先ディレクトリにアクセスできません。終了します' ; exit 1 }
 
 	#進捗率の計算
-	$local:progressRatio = $($local:videoNum / $local:videoTotal)
+	$local:progressRatio = ($local:videoNum / $local:videoTotal)
 	$local:secElapsed = (Get-Date) - $local:totalStartTime
 	$local:secRemaining = ($local:secElapsed.TotalSeconds / $local:videoNum) * ($local:videoTotal - $local:videoNum)
-	$local:minRemaining = "$([String]([math]::Ceiling($local:secRemaining / 60)))分"
+	$local:minRemaining = [String]([math]::Ceiling($local:secRemaining / 60)) + '分'
 
 	#進捗更新
 	updateProgressToast `
@@ -159,7 +157,7 @@ foreach ($local:videoLink in $local:videoLinks) {
 
 	#処理
 	Write-Output '--------------------------------------------------'
-	Write-Output "$($local:videoNum)/$($local:videoTotal) - https://tver.jp/episodes/$($local:videoLink)"
+	Write-Output ([String]$local:videoNum + '/' + [String]$local:videoTotal + ' - ' + $local:videoLink)
 
 	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 	waitTillYtdlProcessGetFewer $script:parallelDownloadFileNum
@@ -167,8 +165,8 @@ foreach ($local:videoLink in $local:videoLinks) {
 	#TVer番組ダウンロードのメイン処理
 	downloadTVerVideo `
 		-Keyword $local:keywordName `
-		-URL $('https://tver.jp/episodes/' + $local:videoLink) `
-		-Link $('/episodes/' + $local:videoLink)
+		-URL ('https://tver.jp/episodes/' + $local:videoLink) `
+		-Link ('/episodes/' + $local:videoLink)
 
 }
 #----------------------------------------------------------------------
@@ -191,4 +189,4 @@ Write-Output '------------------------------------------------------------------
 Write-Output 'リストダウンロード処理を終了しました。                                     '
 Write-Output '---------------------------------------------------------------------------'
 Write-Output '💡 必要に応じてリストファイルを編集してダウンロード不要な番組を削除してください'
-Write-Output "　リストファイルパス: $($script:listFilePath)"
+Write-Output ('　リストファイルパス:' + $script:listFilePath)

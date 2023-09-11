@@ -70,15 +70,13 @@ $script:tz = [String][TimeZoneInfo]::Local.BaseUtcOffset
 $script:ipapi = ''
 $script:clientEnv = @{}
 try {
-	$script:ipapi = `
-		Invoke-RestMethod `
+	$script:ipapi = Invoke-RestMethod `
 		-Uri 'https://ipapi.co/jsonp/' `
 		-TimeoutSec $script:timeoutSec
 	$script:ipapi = $script:ipapi.Replace('callback(', '').Replace(');', '')
 	$script:ipapi = $script:ipapi.Replace('{', "{`n").Replace('}', "`n}")
 	$script:ipapi = $script:ipapi.Replace(', ', ",`n")
-	$(ConvertFrom-Json $script:ipapi).psobject.properties `
-	| ForEach-Object { $script:clientEnv[$_.Name] = $_.Value }
+	$(ConvertFrom-Json $script:ipapi).psobject.properties | ForEach-Object { $script:clientEnv[$_.Name] = $_.Value }
 } catch { Write-Debug 'Geo IPのチェックに失敗しました' }
 $script:clientEnv.Add('AppName', $script:appName)
 $script:clientEnv.Add('AppVersion', $script:appVersion)
@@ -120,7 +118,7 @@ function goAnal {
 	$local:statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
 	try {
 		$null = Invoke-WebRequest `
-			-Uri "$($local:statisticsBase)$($local:event).svg" `
+			-Uri ($local:statisticsBase + $local:event + '.svg') `
 			-TimeoutSec $script:timeoutSec
 	} catch { Write-Debug 'Failed to collect count' }
 	finally { $progressPreference = 'Continue' }
@@ -132,36 +130,32 @@ function goAnal {
 	$local:gaHeaders = New-Object 'System.Collections.Generic.Dictionary[[String],[String]]'
 	$local:gaHeaders.Add('HOST', 'www.google-analytics.com')
 	$local:gaHeaders.Add('Content-Type', 'application/json')
-	$local:gaBody = "{ `"client_id`" : `"$script:guid`", "
-	$local:gaBody += "`"timestamp_micros`" : `"$local:epochTime`", "
-	$local:gaBody += "`"non_personalized_ads`" : false, "
-	$local:gaBody += "`"user_properties`":{ "
-	foreach ($item in $script:clientEnv) {
-		$local:gaBody += "`"$($item.Key)`" : {`"value`" : `"$($item.Value)`"}, "
-	}
-	$local:gaBody += "`"DisableValidation`" : {`"value`" : `"$($script:disableValidation)`"}, "
-	$local:gaBody += "`"SortwareDecode`" : {`"value`" : `"$($script:forceSoftwareDecodeFlag)`"}, "
-	$local:gaBody += "`"DecodeOption`" : {`"value`" : `"$($script:ffmpegDecodeOption)`"}, "
+	$local:gaBody = '{ `"client_id`" : `"' + $script:guid + '`", '
+	$local:gaBody += '`"timestamp_micros`" : `"' + $local:epochTime + '`", '
+	$local:gaBody += '`"non_personalized_ads`" : false, '
+	$local:gaBody += '`"user_properties`":{ '
+	foreach ($item in $script:clientEnv) { $local:gaBody += '`"' + $item.Key + '`" : {`"value`" : `"' + $item.Value + '`"}, ' }
+	$local:gaBody += '`"DisableValidation`" : {`"value`" : `"' + $script:disableValidation + '`"}, '
+	$local:gaBody += '`"SortwareDecode`" : {`"value`" : `"' + $script:forceSoftwareDecodeFlag + '`"}, '
+	$local:gaBody += '`"DecodeOption`" : {`"value`" : `"' + $script:ffmpegDecodeOption + '`"}, '
 	$local:gaBody = $local:gaBody.Trim(',', ' ')		#delete last comma
-	$local:gaBody += "}, `"events`" : [ { "
-	$local:gaBody += "`"name`" : `"$local:event`", "
-	$local:gaBody += "`"params`" : {"
-	$local:gaBody += "`"Type`" : `"$local:type`", "
-	$local:gaBody += "`"ID`" : `"$local:id`", "
-	$local:gaBody += "`"Target`" : `"$local:type/$local:id`", "
-	foreach ($item in $script:clientEnv) {
-		$local:gaBody += "`"$($item.Key)`" : `"$($item.Value)`", "
-	}
-	$local:gaBody += "`"DisableValidation`" : `"$($script:disableValidation)`", "
-	$local:gaBody += "`"SortwareDecode`" : `"$($script:forceSoftwareDecodeFlag)`", "
-	$local:gaBody += "`"DecodeOption`" : `"$($script:ffmpegDecodeOption)`", "
+	$local:gaBody += '}, `"events`" : [ { '
+	$local:gaBody += '`"name`" : `"' + $local:event + '`", '
+	$local:gaBody += '`"params`" : {'
+	$local:gaBody += '`"Type`" : `"' + $local:type + '`", '
+	$local:gaBody += '`"ID`" : `"' + $local:id + '`", '
+	$local:gaBody += '`"Target`" : `"' + $local:type + '/' + $local:id + '`", '
+	foreach ($item in $script:clientEnv) { $local:gaBody += '`"' + $item.Key + '`" : `"' + $item.Value + '`", ' }
+	$local:gaBody += '`"DisableValidation`" : `"' + $script:disableValidation + '`", '
+	$local:gaBody += '`"SortwareDecode`" : `"' + $script:forceSoftwareDecodeFlag + '`", '
+	$local:gaBody += '`"DecodeOption`" : `"' + $script:ffmpegDecodeOption + '`", '
 	$local:gaBody = $local:gaBody.Trim(',', ' ')		#delete last comma
 	$local:gaBody += '} } ] }'
 
 	$progressPreference = 'silentlyContinue'
 	try {
 		$null = Invoke-RestMethod `
-			-Uri "$($local:gaURL)?$($local:gaKey)&$($local:gaID)" `
+			-Uri ($local:gaURL + '?' + $local:gaKey + '&' + $local:gaID) `
 			-Method 'POST' -Headers $local:gaHeaders `
 			-Body $local:gaBody `
 			-TimeoutSec $script:timeoutSec
@@ -387,7 +381,7 @@ function deleteFiles {
 
 	try {
 		foreach ($local:delCondition in $local:delConditions.Split(',').Trim()) {
-			Write-Output "$($local:basePath) - $($local:delCondition)"
+			Write-Output ('　' + (Join-Path $local:basePath $local:delCondition))
 			$null = Get-ChildItem `
 				-LiteralPath $local:basePath `
 				-Recurse `
@@ -417,7 +411,7 @@ function unZip {
 		[Alias('OutPath')]
 		[String]$path
 	)
-	[System.IO.Compression.ZipFile]::ExtractToDirectory($zipArchive, $path)
+	[System.IO.Compression.ZipFile]::ExtractToDirectory($zipArchive, $path, $true)
 }
 
 #----------------------------------------------------------------------
@@ -439,7 +433,12 @@ function moveItem() {
 		# ディレクトリ上書き(移動先に存在 かつ ディレクトリ)は再帰的に moveItem 呼び出し
 		Get-ChildItem `
 			-Path $src `
-		| ForEach-Object { moveItem $_.FullName $($dist + '\' + $_.Name) }
+		| ForEach-Object {
+			moveItem `
+				-Force `
+				-Path $_.FullName `
+				-Destination ($dist + '/' + $_.Name)
+		}
 		# 移動し終わったディレクトリを削除
 		Remove-Item `
 			-Path $src `
@@ -447,7 +446,7 @@ function moveItem() {
 			-Force
 	} else {
 		# 移動先に対象なし または ファイルの Move-Item に -Forece つけて実行
-		Write-Output "$src  →  $dist"
+		Write-Output ($src + '  →  ' + $dist)
 		Move-Item `
 			-Path $src `
 			-Destination $dist `
@@ -475,11 +474,7 @@ function fileLock {
 		$local:fileLocked = $false
 		# attempt to open file and detect file lock
 		$script:fileInfo = New-Object System.IO.FileInfo $local:Path
-		$script:fileStream = $script:fileInfo.Open(
-			[System.IO.FileMode]::OpenOrCreate, `
-				[System.IO.FileAccess]::ReadWrite, `
-				[System.IO.FileShare]::None
-		)
+		$script:fileStream = $script:fileInfo.Open([System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
 		$local:fileLocked = $true
 	} catch { $fileLocked = $false
 	} finally {
@@ -533,11 +528,7 @@ function isLocked {
 		$local:isFileLocked = $false
 		# attempt to open file and detect file lock
 		$local:isLockedFileInfo = New-Object System.IO.FileInfo $local:isLockedPath
-		$local:isLockedfileStream = $local:isLockedFileInfo.Open(
-			[System.IO.FileMode]::OpenOrCreate, `
-				[System.IO.FileAccess]::ReadWrite, `
-				[System.IO.FileShare]::None
-		)
+		$local:isLockedfileStream = $local:isLockedFileInfo.Open([System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
 		# close stream if not lock
 		if ($local:isLockedfileStream) { $local:isLockedfileStream.Close() }
 		$local:isFileLocked = $false
@@ -612,8 +603,7 @@ function Get-WindowsAppId {
 	[OutputType([String])]
 	Param ()
 
-	$local:appID = (Get-StartApps -Name 'PowerShell').`
-		where({ $_.Name -like 'PowerShell*' })[0].AppId
+	$local:appID = (Get-StartApps -Name 'PowerShell').where({ $_.Name -like 'PowerShell*' })[0].AppId
 
 	return $local:appID
 }
@@ -645,11 +635,9 @@ function showToast {
 
 	if ($IsWindows) {
 		if ($local:toastSilent) {
-			$local:toastSoundElement = `
-				'<audio silent="true" />'
+			$local:toastSoundElement = '<audio silent="true" />'
 		} else {
-			$local:toastSoundElement = `
-				'<audio src="ms-winsoundevent:Notification.Default" loop="false"/>'
+			$local:toastSoundElement = '<audio src="ms-winsoundevent:Notification.Default" loop="false"/>'
 		}
 
 		if (!($local:toastDuration)) { $local:toastDuration = 'short' }
@@ -684,8 +672,7 @@ function showToast {
 		$local:toastXML = New-Object Windows.Data.Xml.Dom.XmlDocument
 		$local:toastXML.LoadXml($local:toastProgressContent)
 		$local:toastBody = New-Object Windows.UI.Notifications.ToastNotification $local:toastXML
-		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).`
-			Show($local:toastBody)
+		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Show($local:toastBody)
 	}
 }
 
@@ -756,7 +743,7 @@ function showProgressToast {
 			<text>$local:toastText2</text>
 			<image placement="appLogoOverride" src="$local:toastAppLogo"/>
 			<progress value="{progressValue}" title="{progressTitle}" valueStringOverride="{progressValueString}" status="{progressStatus}" />
-			<text placement="attribution">$($local:toastAttribution)</text>
+			<text placement="attribution">$local:toastAttribution</text>
 		</binding>
 	</visual>
 	$local:toastSoundElement
@@ -776,8 +763,7 @@ function showProgressToast {
 		$local:toastData.add('progressStatus', '')
 		$local:toast.Data = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
 		$local:toast.Data.SequenceNumber = 1
-		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).`
-			Show($local:toast)
+		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Show($local:toast)
 	}
 }
 
@@ -822,8 +808,7 @@ function updateProgressToast {
 		$local:toastData.add('progressStatus', $local:toastLeftText)
 		$local:toastProgressData = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
 		$local:toastProgressData.SequenceNumber = 2
-		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).`
-			Update($local:toastProgressData, $local:toastTag , $local:toastGroup)
+		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Update($local:toastProgressData, $local:toastTag , $local:toastGroup)
 	}
 }
 
@@ -898,7 +883,7 @@ function showProgressToast2 {
 			<image placement="appLogoOverride" src="$local:toastAppLogo"/>
 			<progress value="{progressValue1}" title="{progressTitle1}" valueStringOverride="{progressValueString1}" status="{progressStatus1}" />
 			<progress value="{progressValue2}" title="{progressTitle2}" valueStringOverride="{progressValueString2}" status="{progressStatus2}" />
-			<text placement="attribution">$($local:toastAttribution)</text>
+			<text placement="attribution">$local:toastAttribution</text>
 		</binding>
 	</visual>
 	$local:toastSoundElement
@@ -922,8 +907,7 @@ function showProgressToast2 {
 		$local:toastData.add('progressStatus2', '')
 		$local:toast.Data = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
 		$local:toast.Data.SequenceNumber = 1
-		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).`
-			Show($local:toast)
+		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Show($local:toast)
 	}
 }
 
@@ -988,8 +972,7 @@ function updateProgressToast2 {
 		$local:toastData.add('progressStatus2', $local:toastLeftText2)
 		$local:toastProgressData = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
 		$local:toastProgressData.SequenceNumber = 2
-		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).`
-			Update($local:toastProgressData, $local:toastTag , $local:toastGroup)
+		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Update($local:toastProgressData, $local:toastTag , $local:toastGroup)
 	}
 }
 
@@ -1090,13 +1073,13 @@ function updateProgress2Row {
 	)
 
 	if ($local:secRemaining1 -eq -1 -Or $local:secRemaining1 -eq '' ) { $local:minRemaining1 = '計算中...' }
-	else { $local:minRemaining1 = "$([String]([math]::Ceiling($local:secRemaining1 / 60)))分" }
+	else { $local:minRemaining1 = [String]([math]::Ceiling($local:secRemaining1 / 60)) + '分' }
 
 	if ($local:secRemaining2 -eq -1 -Or $local:secRemaining2 -eq '' ) { $local:minRemaining2 = '計算中...' }
-	else { $local:minRemaining2 = "$([String]([math]::Ceiling($local:secRemaining2 / 60)))分" }
+	else { $local:minRemaining2 = [String]([math]::Ceiling($local:secRemaining2 / 60)) + '分' }
 
-	if ($local:secRemaining1 -ne '') { $local:secRemaining1 = "残り時間 $local:minRemaining1" }
-	if ($local:secRemaining2 -ne '') { $local:secRemaining2 = "残り時間 $local:minRemaining2" }
+	if ($local:secRemaining1 -ne '') { $local:secRemaining1 = '残り時間 ' + $local:minRemaining1 }
+	if ($local:secRemaining2 -ne '') { $local:secRemaining2 = '残り時間 ' + $local:minRemaining2 }
 
 	updateProgressToast2 `
 		-Title1 $local:currentProcessing1 `

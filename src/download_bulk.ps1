@@ -32,15 +32,14 @@ Set-StrictMode -Version Latest
 #----------------------------------------------------------------------
 #初期化
 try {
-	if ($script:myInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition
-	} else { $script:scriptRoot = Convert-Path . }
+	if ($script:myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
+	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
-	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
+	$script:devDir = Join-Path $script:scriptRoot '../dev'
 } catch { Write-Error '❗ カレントディレクトリの設定に失敗しました' ; exit 1 }
 try {
-	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
+	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 	if ($? -eq $false) { exit 1 }
 } catch { Write-Error '❗ 関数の読み込みに失敗しました' ; exit 1 }
 
@@ -50,9 +49,9 @@ try {
 #----------------------------------------------------------------------
 #設定ファイル読み込み
 try {
-	. $(Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
-	if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
-		. $(Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
+	. (Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
+	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
+		. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
 	}
 } catch { Write-Error '❗ 設定ファイルの読み込みに失敗しました' ; exit 1 }
 
@@ -90,11 +89,12 @@ foreach ($local:keywordName in $local:keywordNames) {
 	$local:videoLink = ''
 	$local:videoLinks = @()
 	$local:processedCount = 0
+	$local:keywordName = trimTabSpace ($local:keywordName)
 
 	#ジャンルページチェックタイトルの表示
 	Write-Output ''
 	Write-Output '----------------------------------------------------------------------'
-	Write-Output "$(trimTabSpace ($local:keywordName))"
+	Write-Output $local:keywordName
 	Write-Output '----------------------------------------------------------------------'
 
 	#処理
@@ -104,11 +104,10 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#ダウンロード履歴ファイルのデータを読み込み
 	try {
 		#ロックファイルをロック
-		while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true)
+		while ((fileLock $script:historyLockFilePath).fileLocked -ne $true)
 		{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 		#ファイル操作
-		$script:historyFileData = `
-			Import-Csv `
+		$script:historyFileData = Import-Csv `
 			-Path $script:historyFilePath `
 			-Encoding UTF8
 	} catch { Write-Warning '❗ ダウンロード履歴を読み込めなかったのでスキップしました'; continue
@@ -116,14 +115,13 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 	foreach ($local:resultLink in $local:resultLinks) {
-		$local:historyMatch = $script:historyFileData `
-		| Where-Object { $_.videoPage -eq $local:resultLink }
+		$local:historyMatch = $script:historyFileData | Where-Object { $_.videoPage -eq $local:resultLink }
 		if ($null -eq $local:historyMatch) {
 			$local:videoLinks += $local:resultLink
-			Write-Output "　処理履歴との照合 $($local:resultLink.Replace('https://tver.jp/episodes/','')) ... ❗ 未処理"
+			Write-Output ('　処理履歴との照合 ' + $local:resultLink.Replace('https://tver.jp/episodes/', '') + ' ... ❗ 未処理')
 		} else {
 			$local:processedCount = $local:processedCount + 1
-			Write-Output "　処理履歴との照合 $($local:resultLink.Replace('https://tver.jp/episodes/','')) ... ✔️"
+			Write-Output ('　処理履歴との照合 ' + $local:resultLink.Replace('https://tver.jp/episodes/', '') + ' ... ✔️')
 			continue
 		}
 	}
@@ -132,16 +130,15 @@ foreach ($local:keywordName in $local:keywordNames) {
 	$local:videoNum = 0
 	if ($null -eq $local:videoLinks) { $local:videoTotal = 0 }
 	else { $local:videoTotal = $local:videoLinks.Length }
-	Write-Output "　💡 処理対象$($local:videoTotal)本 処理済$($local:processedCount)本"
+	Write-Output ('　💡 処理対象' + $local:videoTotal + '本　処理済' + $local:processedCount + '本')
 
 	#処理時間の推計
 	$local:secElapsed = (Get-Date) - $local:totalStartTime
 	$local:secRemaining1 = -1
 	if ($local:keywordNum -ne 0) {
-		$local:secRemaining1 = `
-		($local:secElapsed.TotalSeconds / $local:keywordNum) * ($local:keywordTotal - $local:keywordNum)
+		$local:secRemaining1 = ($local:secElapsed.TotalSeconds / $local:keywordNum) * ($local:keywordTotal - $local:keywordNum)
 	}
-	$local:progressRatio1 = $($local:keywordNum / $local:keywordTotal)
+	$local:progressRatio1 = ($local:keywordNum / $local:keywordTotal)
 	$local:progressRatio2 = 0
 
 	$local:keywordNum = $local:keywordNum + 1		#キーワード数のインクリメント
@@ -149,7 +146,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#進捗更新
 	updateProgress2Row `
 		-ProgressActivity1 $local:keywordNum/$local:keywordTotal `
-		-CurrentProcessing1 $(trimTabSpace ($local:keywordName)) `
+		-CurrentProcessing1 (trimTabSpace ($local:keywordName)) `
 		-Rate1 $local:progressRatio1 `
 		-SecRemaining1 $local:secRemaining1 `
 		-ProgressActivity2 '' `
@@ -169,12 +166,12 @@ foreach ($local:keywordName in $local:keywordNames) {
 		else { Write-Error '❗ 番組ダウンロード先ディレクトリにアクセスできません。終了します' ; exit 1 }
 
 		#進捗率の計算
-		$local:progressRatio2 = $($local:videoNum / $local:videoTotal)
+		$local:progressRatio2 = ($local:videoNum / $local:videoTotal)
 
 		#進捗更新
 		updateProgress2Row `
 			-ProgressActivity1 $local:keywordNum/$local:keywordTotal `
-			-CurrentProcessing1 $(trimTabSpace ($local:keywordName)) `
+			-CurrentProcessing1 (trimTabSpace ($local:keywordName)) `
 			-Rate1 $local:progressRatio1 `
 			-SecRemaining1 $local:secRemaining1 `
 			-ProgressActivity2 $local:videoNum/$local:videoTotal `
@@ -185,7 +182,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 		#処理
 		Write-Output '--------------------------------------------------'
-		Write-Output "$($local:videoNum)/$($local:videoTotal) - $local:videoLink"
+		Write-Output ([String]$local:videoNum + '/' + [String]$local:videoTotal + ' - ' + $local:videoLink)
 
 		#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 		waitTillYtdlProcessGetFewer $script:parallelDownloadFileNum

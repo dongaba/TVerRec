@@ -35,26 +35,25 @@ Add-Type -AssemblyName PresentationFramework
 
 Set-StrictMode -Version Latest
 try {
-	if ($script:myInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition
-	} else { $script:scriptRoot = Convert-Path . }
-	$script:scriptRoot = $(Convert-Path (Join-Path $script:scriptRoot '../'))
+	if ($script:myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
+	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition }
+	$script:scriptRoot = Convert-Path (Join-Path $script:scriptRoot '../')
 	Set-Location $script:scriptRoot
-	$script:confDir = $(Convert-Path (Join-Path $script:scriptRoot '../conf'))
-	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
+	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
+	$script:devDir = Join-Path $script:scriptRoot '../dev'
 } catch { Write-Error '❗ ディレクトリ設定に失敗しました'; exit 1 }
 
 #----------------------------------------------------------------------
 #設定ファイル読み込み
 try {
-	. $(Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
+	. (Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
 } catch { Write-Error '❗ システム設定ファイルの読み込みに失敗しました' ; exit 1 }
 
 #----------------------------------------------------------------------
 #外部関数ファイルの読み込み
 try {
-	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/common_functions.ps1'))
-	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/tver_functions.ps1'))
+	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/common_functions.ps1'))
+	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/tver_functions.ps1'))
 } catch { Write-Error '❗ 外部関数ファイルの読み込みに失敗しました' ; exit 1 }
 
 #endregion 環境設定
@@ -84,11 +83,11 @@ function loadDefaultSetting {
 		[String]$local:key
 	)
 	try {
-		$local:defaultSetting = `
-		$(Select-String `
-				-Pattern "^$($local:key.Replace('$', '\$'))" `
+		$local:defaultSetting = (Select-String `
+				-Pattern ('^' + $local:key.Replace('$', '\$')) `
 				-Path $script:systemSettingFile `
-			| ForEach-Object { $_.Line }).split('=')[1].Trim()
+			| ForEach-Object { $_.Line }
+		).split('=')[1].Trim()
 	} catch { $local:defaultSetting = '' }
 
 	return $local:defaultSetting.Trim("'")
@@ -101,11 +100,12 @@ function loadCurrentSetting {
 		[String]$local:key
 	)
 	try {
-		$local:currentSetting = `
-		$(Select-String `
-				-Pattern "^$($local:key.Replace('$', '\$'))" `
+		$local:currentSetting = (
+			Select-String `
+				-Pattern ('^' + $local:key.Replace('$', '\$')) `
 				-Path $script:userSettingFile `
-			| ForEach-Object { $_.Line }).split('=')[1].Trim()
+			| ForEach-Object { $_.Line }
+		).split('=')[1].Trim()
 	} catch { $local:currentSetting = '' }
 
 	return $local:currentSetting.Trim("'")
@@ -119,15 +119,15 @@ function writeSetting {
 	$local:endSegment = '##End Setting Generated from GUI'
 
 	#自動生成部分の行数を取得
-	if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
+	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 		try {
 			$local:totalLineNum = (Get-Content -Path $script:userSettingFile).Length
 		} catch { $local:totalLineNum = 0 }
 		try {
-			$local:headLineNum = $(Select-String $local:startSegment $script:userSettingFile | ForEach-Object { $_.LineNumber }) - 1
+			$local:headLineNum = (Select-String $local:startSegment $script:userSettingFile | ForEach-Object { $_.LineNumber }) - 1
 		} catch { $local:headLineNum = 0 }
 		try {
-			$local:tailLineNum = $local:totalLineNum - $(Select-String $local:endSegment $script:userSettingFile | ForEach-Object { $_.LineNumber })
+			$local:tailLineNum = $local:totalLineNum - (Select-String $local:endSegment $script:userSettingFile | ForEach-Object { $_.LineNumber })
 		} catch { $local:tailLineNum = 0 }
 	} else { $local:totalLineNum = 0; $local:headLineNum = 0; $local:tailLineNum = 0 }
 
@@ -202,24 +202,21 @@ function writeSetting {
 #メイン処理
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-$script:systemSettingFile = $(Join-Path $script:confDir 'system_setting.ps1')
-$script:userSettingFile = $(Join-Path $script:confDir 'user_setting.ps1')
+$script:systemSettingFile = Join-Path $script:confDir 'system_setting.ps1'
+$script:userSettingFile = Join-Path $script:confDir 'user_setting.ps1'
 
 #----------------------------------------------------------------------
 #region WPFのWindow設定
 
 try {
-	[string]$local:mainXaml = Get-Content -Path $(Join-Path $script:wpfDir 'TVerRecSetting.xaml')
+	[String]$local:mainXaml = Get-Content -Path (Join-Path $script:wpfDir 'TVerRecSetting.xaml')
 	$local:mainXaml = $local:mainXaml `
 		-replace 'mc:Ignorable="d"', '' `
 		-replace 'x:N', 'N' `
 		-replace 'x:Class=".*?"', ''
 	[xml]$local:mainCleanXaml = $local:mainXaml
 	$script:settingWindow = [System.Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $local:mainCleanXaml))
-} catch {
-	Write-Error '❗ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。'
-	exit 1
-}
+} catch { Write-Error '❗ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。' ; exit 1 }
 
 #PowerShellのウィンドウを非表示に
 Add-Type -Name Window -Namespace Console -MemberDefinition '
@@ -340,7 +337,7 @@ foreach ($local:settingAttribute in $script:settingAttributes) {
 	$local:currentSetting[$local:settingAttribute] = loadCurrentSetting $local:settingAttribute
 	$local:settingBoxName = $local:settingAttribute.Replace('$script:', '')
 	$local:settingBox = $script:settingWindow.FindName($local:settingBoxName)
-	if ( $(loadCurrentSetting $local:settingAttribute) -ne '') {
+	if ( (loadCurrentSetting $local:settingAttribute) -ne '') {
 		$local:settingBox.Text = loadCurrentSetting $local:settingAttribute
 		if ($local:settingBox.Text -eq '$true') { $local:settingBox.Text = 'する' }
 		if ($local:settingBox.Text -eq '$false') { $local:settingBox.Text = 'しない' }
@@ -357,10 +354,7 @@ try {
 	$null = $script:settingWindow.Show()
 	$null = $script:settingWindow.Activate()
 	$null = [Console.Window]::ShowWindow($local:console, 0)
-} catch {
-	Write-Error '❗ ウィンドウを描画できませんでした。TVerRecが破損しています。'
-	exit 1
-}
+} catch { Write-Error '❗ ウィンドウを描画できませんでした。TVerRecが破損しています。' ; exit 1 }
 
 # メインウィンドウ取得
 $script:process = [Diagnostics.Process]::GetCurrentProcess()

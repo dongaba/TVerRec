@@ -272,44 +272,44 @@ $script:listDir = Convert-Path (Join-Path $scriptRoot '../list')
 $script:unixDir = Convert-Path (Join-Path $scriptRoot '../unix')
 $script:winDir = Convert-Path (Join-Path $scriptRoot '../win')
 $script:wpfDir = Convert-Path (Join-Path $scriptRoot '../resources')
-$script:containerDir = $(Join-Path $scriptRoot '../container-data')
+$script:containerDir = Join-Path $scriptRoot '../container-data'
 
 #トースト通知用画像のパス
-$script:toastAppLogo = $(Join-Path $script:imgDir 'TVerRec-Toast.png')
+$script:toastAppLogo = Join-Path $script:imgDir 'TVerRec-Toast.png'
 
 #ウィンドウアイコン用画像のパス
-$script:iconPath = $(Join-Path $script:imgDir 'TVerRec-Icon.png')
+$script:iconPath = Join-Path $script:imgDir 'TVerRec-Icon.png'
 
 #ダウンロード対象キーワードのパス
-$script:keywordFileSamplePath = $(Join-Path $script:confDir 'keyword.sample.conf')
-$script:keywordFilePath = $(Join-Path $script:confDir 'keyword.conf')
+$script:keywordFileSamplePath = Join-Path $script:confDir 'keyword.sample.conf'
+$script:keywordFilePath = Join-Path $script:confDir 'keyword.conf'
 
 #ダウンロード対象外番組のパス
-$script:ignoreFileSamplePath = $(Join-Path $script:confDir 'ignore.sample.conf')
-$script:ignoreFilePath = $(Join-Path $script:confDir 'ignore.conf')
-$script:ignoreLockFilePath = $(Join-Path $script:dbDir 'ignore.lock')
+$script:ignoreFileSamplePath = Join-Path $script:confDir 'ignore.sample.conf'
+$script:ignoreFilePath = Join-Path $script:confDir 'ignore.conf'
+$script:ignoreLockFilePath = Join-Path $script:dbDir 'ignore.lock'
 
 #ダウンロード履歴のパス
-$script:historyFilePath = $(Join-Path $script:dbDir 'history.csv')
-$script:historyFileSamplePath = $(Join-Path $script:dbDir 'history.sample.csv')
-$script:historyLockFilePath = $(Join-Path $script:dbDir 'history.lock')
+$script:historyFilePath = Join-Path $script:dbDir 'history.csv'
+$script:historyFileSamplePath = Join-Path $script:dbDir 'history.sample.csv'
+$script:historyLockFilePath = Join-Path $script:dbDir 'history.lock'
 
 #ダウンロードリストのパス
-$script:listFilePath = $(Join-Path $script:listDir 'list.csv')
-$script:listFileSamplePath = $(Join-Path $script:listDir 'list.sample.csv')
-$script:listLockFilePath = $(Join-Path $script:dbDir 'list.lock')
+$script:listFilePath = Join-Path $script:listDir 'list.csv'
+$script:listFileSamplePath = Join-Path $script:listDir 'list.sample.csv'
+$script:listLockFilePath = Join-Path $script:dbDir 'list.lock'
 
 #ffpmegで番組検証時のエラーファイルのパス
-$script:ffpmegErrorLogPath = $(Join-Path $script:dbDir "ffmpeg_error_$($PID).log")
+$script:ffpmegErrorLogPath = Join-Path $script:dbDir ('ffmpeg_error_' + $PID + '.log')
 
 #youtube-dlのパス
-if ($IsWindows) { $script:ytdlPath = $(Join-Path $script:binDir 'youtube-dl.exe') }
-else { $script:ytdlPath = $(Join-Path $script:binDir 'youtube-dl') }
+if ($IsWindows) { $script:ytdlPath = Join-Path $script:binDir 'youtube-dl.exe' }
+else { $script:ytdlPath = Join-Path $script:binDir 'youtube-dl' }
 
 #ffmpegのパス
-if ($IsWindows) { $script:ffmpegPath = $(Join-Path $script:binDir 'ffmpeg.exe') }
-else { $script:ffmpegPath = $(Join-Path $script:binDir 'ffmpeg') }
+if ($IsWindows) { $script:ffmpegPath = Join-Path $script:binDir 'ffmpeg.exe' }
+else { $script:ffmpegPath = Join-Path $script:binDir 'ffmpeg' }
 
 #ffprobeのパス
-if ($IsWindows) { $script:ffprobePath = $(Join-Path $script:binDir 'ffprobe.exe') }
-else { $script:ffprobePath = $(Join-Path $script:binDir 'ffprobe') }
+if ($IsWindows) { $script:ffprobePath = Join-Path $script:binDir 'ffprobe.exe' }
+else { $script:ffprobePath = Join-Path $script:binDir 'ffprobe' }

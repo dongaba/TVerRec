@@ -40,7 +40,7 @@ function unZip {
 		[Alias('OutPath')]
 		[String]$path
 	)
-	[System.IO.Compression.ZipFile]::ExtractToDirectory($zipArchive, $path)
+	[System.IO.Compression.ZipFile]::ExtractToDirectory($zipArchive, $path, $true)
 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -53,22 +53,22 @@ try {
 		$local:scriptRoot = Split-Path -Parent -Path $local:scriptRoot
 	} else { $local:scriptRoot = Convert-Path .. }
 	Set-Location $script:scriptRoot
-	$script:confDir = $(Convert-Path (Join-Path $script:scriptRoot '../conf'))
-	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
+	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
+	$script:devDir = Join-Path $script:scriptRoot '../dev'
 } catch { Write-Error '❗ ディレクトリ設定に失敗しました' ; exit 1 }
 
 #設定ファイル読み込み
 try {
-	. $(Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
-	if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
-		. $(Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
+	. (Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
+	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
+		. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
 	} elseif ($IsWindows) {
-		while (!( Test-Path $(Join-Path $script:confDir 'user_setting.ps1')) ) {
+		while (!( Test-Path (Join-Path $script:confDir 'user_setting.ps1')) ) {
 			Write-Output 'ユーザ設定ファイルを作成する必要があります'
 			. 'gui/gui_setting.ps1'
 		}
-		if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
-			. $(Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
+		if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
+			. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
 		}
 	} else {
 		Write-Error '❗ ユーザ設定が完了してません' ; exit 1
@@ -82,12 +82,12 @@ try {
 if ($script:preferredYoutubedl -eq 'yt-dlp') { $local:repo = 'yt-dlp/yt-dlp' }
 elseif ($script:preferredYoutubedl -eq 'ytdl-patched') { $local:repo = 'ytdl-patched/ytdl-patched' }
 else { Write-Error '❗ youtube-dlの取得元の指定が無効です' ; exit 1 }
-$local:releases = "https://api.github.com/repos/$($local:repo)/releases"
+$local:releases = 'https://api.github.com/repos/' + $local:repo + '/releases'
 
 #youtube-dl移動先相対Path
 $local:binDir = Convert-Path (Join-Path $local:scriptRoot '../bin')
-if ($IsWindows) { $local:ytdlPath = $(Join-Path $local:binDir 'youtube-dl.exe') }
-else { $local:ytdlPath = $(Join-Path $local:binDir 'youtube-dl') }
+if ($IsWindows) { $local:ytdlPath = Join-Path $local:binDir 'youtube-dl.exe' }
+else { $local:ytdlPath = Join-Path $local:binDir 'youtube-dl' }
 
 #youtube-dlのバージョン取得
 try {
@@ -102,44 +102,42 @@ try {
 			-Uri $local:releases `
 			-Method Get
 	)[0].Tag_Name
-} catch { Write-Warning "❗ $($script:preferredYoutubedl)の最新バージョンを特定できませんでした"; return }
+} catch { Write-Warning '❗ youtube-dlの最新バージョンを特定できませんでした'; return }
 
 #youtube-dlのダウンロード
 if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
-	Write-Output "$($script:preferredYoutubedl)は最新です。"
+	Write-Output 'youtube-dlは最新です。'
 	Write-Output "　Local version: $local:ytdlCurrentVersion"
 	Write-Output "　Latest version: $local:latestVersion"
 	Write-Output ''
 } else {
-	Write-Warning "💡 $($script:preferredYoutubedl)が古いため更新します。"
+	Write-Warning '💡 youtube-dlが古いため更新します。'
 	Write-Warning "　Local version: $local:ytdlCurrentVersion"
 	Write-Warning "　Latest version: $local:latestVersion"
 	Write-Output ''
 	if ($IsWindows -eq $false) {
 		#githubの設定
-		$local:file = $($script:preferredYoutubedl)
+		$local:file = $script:preferredYoutubedl
 		$local:fileAfterRename = 'youtube-dl'
 	} else {
 		#githubの設定
-		$local:file = "$($script:preferredYoutubedl).exe"
+		$local:file = $script:preferredYoutubedl + '.exe'
 		$local:fileAfterRename = 'youtube-dl.exe'
 	}
 
-	Write-Output "$($script:preferredYoutubedl)の最新版をダウンロードします"
+	Write-Output 'youtube-dlの最新版をダウンロードします'
 	try {
 		#ダウンロード
-		$local:tag = (
-			Invoke-RestMethod `
+		$local:tag = (Invoke-RestMethod `
 				-Uri $local:releases `
 				-Method Get
 		)[0].Tag_Name
-		$local:download = `
-			"https://github.com/$($local:repo)/releases/download/$($local:tag)/$($local:file)"
+		$local:downloadURL = 'https://github.com/' + $local:repo + '/releases/download/' + $local:tag + '/' + $local:file
 		$local:ytdlFileLocation = Join-Path $local:binDir $local:fileAfterRename
 		Invoke-WebRequest `
-			-Uri $local:download `
+			-Uri $local:downloadURL `
 			-Out $local:ytdlFileLocation
-	} catch { Write-Error "❗ $($script:preferredYoutubedl)のダウンロードに失敗しました" ; exit 1 }
+	} catch { Write-Error '❗ youtube-dlのダウンロードに失敗しました' ; exit 1 }
 
 	if ($IsWindows -eq $false) { (& chmod a+x $local:ytdlFileLocation) }
 
@@ -147,7 +145,7 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 	try {
 		$local:ytdlCurrentVersion = (& $local:ytdlPath --version)
 		if ($? -eq $false) { throw '更新後のバージョン取得に失敗しました' }
-		Write-Output "💡 $($script:preferredYoutubedl)をversion $local:ytdlCurrentVersion に更新しました。"
+		Write-Output ('💡 youtube-dlをversion' + $local:ytdlCurrentVersion + 'に更新しました。')
 		Write-Output ''
 	} catch { Write-Error '❗ 更新後のバージョン取得に失敗しました' ; exit 1 }
 

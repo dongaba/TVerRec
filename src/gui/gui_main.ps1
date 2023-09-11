@@ -36,16 +36,15 @@ Set-StrictMode -Version Latest
 #----------------------------------------------------------------------
 #初期化
 try {
-	if ($script:myInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition
-	} else { $script:scriptRoot = Convert-Path . }
-	$script:scriptRoot = $(Convert-Path (Join-Path $script:scriptRoot '../'))
+	if ($script:myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
+	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition }
+	$script:scriptRoot = Convert-Path (Join-Path $script:scriptRoot '../')
 	Set-Location $script:scriptRoot
-	$script:confDir = $(Convert-Path (Join-Path $script:scriptRoot '../conf'))
-	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
+	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
+	$script:devDir = Join-Path $script:scriptRoot '../dev'
 } catch { Write-Error '❗ ディレクトリ設定に失敗しました'; exit 1 }
 try {
-	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
+	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 	if ($? -eq $false) { exit 1 }
 } catch { Write-Error '❗ 関数の読み込みに失敗しました' ; exit 1 }
 
@@ -71,9 +70,9 @@ function DoWpfEvents {
 
 #テキストボックスへのログ出力と再描画
 function AddOutput {
-	Param ([string]$script:Message)
+	Param ([String]$script:Message)
 	$script:mainWindow.Dispatcher.Invoke(
-		[action] { $script:outText.AddText("$($script:Message)`n") }, 'Render'
+		[action] { $script:outText.AddText($script:Message + "`n") }, 'Render'
 	)
 	$script:outText.ScrollToEnd()
 }
@@ -89,17 +88,14 @@ function AddOutput {
 #region WPFのWindow設定
 
 try {
-	[string]$local:mainXaml = Get-Content -Path '../resources/TVerRecMain.xaml'
+	[String]$local:mainXaml = Get-Content -Path '../resources/TVerRecMain.xaml'
 	$local:mainXaml = $local:mainXaml `
 		-replace 'mc:Ignorable="d"', '' `
 		-replace 'x:N', 'N' `
 		-replace 'x:Class=".*?"', ''
 	[xml]$local:mainCleanXaml = $local:mainXaml
 	$script:mainWindow = [System.Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $local:mainCleanXaml))
-} catch {
-	Write-Error '❗ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。'
-	exit 1
-}
+} catch { Write-Error '❗ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。' ; exit 1 }
 
 #PowerShellのウィンドウを非表示に
 Add-Type -Name Window -Namespace Console -MemberDefinition '
@@ -202,7 +198,7 @@ foreach ($script:btn in $script:btns) {
 			#ジョブの稼働中はボタンを無効化
 			foreach ($script:btn in $script:btns) { $script:btn.IsEnabled = $false }
 			$script:btnExit.IsEnabled = $false
-			$script:lblStatus.Content = $([string]$script:threadNames[$this]).Trim()
+			$script:lblStatus.Content = ([String]$script:threadNames[$this]).Trim()
 
 			#処理停止ボタンの有効化
 			$script:btnKillAll.IsEnabled = $true
@@ -241,8 +237,8 @@ $script:btnKillAll.add_Click({
 $script:btnWiki.add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
 $script:btnSetting.add_Click({
 		. 'gui/gui_setting.ps1'
-		if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
-			. $(Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
+		if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
+			. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
 		}
 		[System.GC]::Collect()
 	})
@@ -260,10 +256,7 @@ try {
 	$null = $script:mainWindow.Show()
 	$null = $script:mainWindow.Activate()
 	$null = [Console.Window]::ShowWindow($local:console, 0)
-} catch {
-	Write-Error '❗ ウィンドウを描画できませんでした。TVerRecが破損しています。'
-	exit 1
-}
+} catch { Write-Error '❗ ウィンドウを描画できませんでした。TVerRecが破損しています。'; exit 1 }
 
 #endregion ウィンドウ表示
 
@@ -282,7 +275,7 @@ while ($script:mainWindow.IsVisible) {
 		$local:completed = $_.State -in 'Completed', 'Failed', 'Stopped'
 
 		#ジョブからの出力をテキストボックスに出力
-		if ($script:data = Receive-Job $_ *>&1) { AddOutput $($script:data -join "`n") }
+		if ($script:data = Receive-Job $_ *>&1) { AddOutput ($script:data -join "`n") }
 
 		#終了したジョブのボタンの再有効化
 		if ($local:completed) {

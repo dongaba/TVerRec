@@ -32,15 +32,14 @@ Set-StrictMode -Version Latest
 #----------------------------------------------------------------------
 #初期化
 try {
-	if ($script:myInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition
-	} else { $script:scriptRoot = Convert-Path . }
+	if ($script:myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
+	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
-	$script:confDir = $(Convert-Path (Join-Path $script:scriptRoot '../conf'))
-	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
+	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
+	$script:devDir = Join-Path $script:scriptRoot '../dev'
 } catch { Write-Error '❗ カレントディレクトリの設定に失敗しました' ; exit 1 }
 try {
-	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
+	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 	if ($? -eq $false) { exit 1 }
 } catch { Write-Error '❗ 関数の読み込みに失敗しました' ; exit 1 }
 
@@ -50,9 +49,9 @@ try {
 #----------------------------------------------------------------------
 #設定ファイル読み込み
 try {
-	. $(Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
-	if ( Test-Path $(Join-Path $script:confDir 'user_setting.ps1') ) {
-		. $(Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
+	. (Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
+	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
+		. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
 	}
 } catch { Write-Error '❗ 設定ファイルの読み込みに失敗しました' ; exit 1 }
 
@@ -80,13 +79,13 @@ cleanDB
 Write-Output ''
 
 Write-Output '----------------------------------------------------------------------'
-Write-Output "$($script:historyRetentionPeriod)日以上前に処理したものはダウンロード履歴から削除します"
+Write-Output '古いダウンロード履歴を削除します'
 Write-Output '----------------------------------------------------------------------'
 
 #進捗表示
 showProgressToast `
 	-Text1 'ダウンロードファイルの整合性検証中' `
-	-Text2 "　処理2/5 - $($script:historyRetentionPeriod)日以上前のダウンロード履歴を削除" `
+	-Text2 ('　処理2/5 - ' + $script:historyRetentionPeriod + '日以上前のダウンロード履歴を削除') `
 	-WorkDetail '' `
 	-Tag $script:appName `
 	-Group 'Validate' `
@@ -127,7 +126,7 @@ Write-Output '整合性検証が終わっていない番組を検証します'
 Write-Output '----------------------------------------------------------------------'
 try {
 	#ロックファイルをロック
-	while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true)
+	while ((fileLock $script:historyLockFilePath).fileLocked -ne $true)
 	{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 	#ファイル操作
 	$local:videoHists = (
@@ -156,11 +155,11 @@ if ($null -eq $local:videoHists) {
 	else {
 		if ($script:ffmpegDecodeOption -ne '') {
 			Write-Output '---------------------------------------------------------------------------'
-			Write-Output '💡 ffmpegのデコードオプションが設定されてます                                 '
-			Write-Output "　・$($script:ffmpegDecodeOption)                                          "
-			Write-Output '💡 もし整合性検証がうまく進まない場合は、以下のどちらかをお試しください       '
-			Write-Output '　・user_setting.ps1 でデコードオプションを変更する                        '
-			Write-Output '　・user_setting.ps1 で $script:forceSoftwareDecodeFlag = $true と設定する '
+			Write-Output '💡 ffmpegのデコードオプションが設定されてます'
+			Write-Output "　　　$script:ffmpegDecodeOption"
+			Write-Output '💡 もし整合性検証がうまく進まない場合は、以下のどちらかをお試しください'
+			Write-Output '　・user_setting.ps1 でデコードオプションを変更する'
+			Write-Output '　・user_setting.ps1 で $script:forceSoftwareDecodeFlag = $true と設定する'
 			Write-Output '---------------------------------------------------------------------------'
 		}
 		$local:decodeOption = $script:ffmpegDecodeOption
@@ -188,8 +187,8 @@ if ($null -eq $local:videoHists) {
 		$local:secRemaining = -1
 		if ($local:validateNum -ne 0) {
 			$local:secRemaining = ($local:secElapsed.TotalSeconds / $local:validateNum) * ($local:validateTotal - $local:validateNum)
-			$local:minRemaining = "$([String]([math]::Ceiling($local:secRemaining / 60)))分"
-			$local:progressRatio = $($local:validateNum / $local:validateTotal)
+			$local:minRemaining = [String]([math]::Ceiling($local:secRemaining / 60)) + '分'
+			$local:progressRatio = ($local:validateNum / $local:validateTotal)
 		} else {
 			$local:minRemaining = '計算中...'
 			$local:progressRatio = 0
@@ -201,7 +200,7 @@ if ($null -eq $local:videoHists) {
 			-Title $local:videoFileRelPath `
 			-Rate $local:progressRatio `
 			-LeftText $local:validateNum/$local:validateTotal `
-			-RightText "残り時間 $local:minRemaining" `
+			-RightText ('残り時間 ' + $local:minRemaining) `
 			-Tag $script:appName `
 			-Group 'Validate'
 
@@ -209,7 +208,7 @@ if ($null -eq $local:videoHists) {
 		if (Test-Path $script:downloadBaseDir -PathType Container) {}
 		else { Write-Error '❗ 番組ダウンロード先ディレクトリにアクセスできません。終了します。' ; exit 1 }
 
-		Write-Output "$($local:validateNum)/$($local:validateTotal) - $($local:videoFileRelPath)"
+		Write-Output ([String]$local:validateNum + '/' + [String]$local:validateTotal + ' - ' + $local:videoFileRelPath)
 		#番組の整合性チェック
 		checkVideo `
 			-DecodeOption $local:decodeOption `
@@ -240,15 +239,13 @@ showProgressToast `
 #処理
 try {
 	#ロックファイルをロック
-	while ($(fileLock $script:historyLockFilePath).fileLocked -ne $true)
+	while ((fileLock $script:historyLockFilePath).fileLocked -ne $true)
 	{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 	#ファイル操作
-	$local:videoHists = `
-		Import-Csv `
+	$local:videoHists = Import-Csv `
 		-Path $script:historyFilePath `
 		-Encoding UTF8
-	foreach ($local:uncheckedVido in $(($local:videoHists).`
-				Where({ $_.videoValidated -eq 2 }))) {
+	foreach ($local:uncheckedVido in ($local:videoHists).Where({ $_.videoValidated -eq 2 })) {
 		$local:uncheckedVido.videoValidated = '0'
 	}
 	$local:videoHists | Export-Csv `

@@ -32,15 +32,14 @@ Set-StrictMode -Version Latest
 #----------------------------------------------------------------------
 #初期化
 try {
-	if ($script:myInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition
-	} else { $script:scriptRoot = Convert-Path . }
+	if ($script:myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
+	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
-	$script:confDir = $(Convert-Path (Join-Path $script:scriptRoot '../conf'))
-	$script:devDir = $(Join-Path $script:scriptRoot '../dev')
+	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
+	$script:devDir = Join-Path $script:scriptRoot '../dev'
 } catch { Write-Error '❗ カレントディレクトリの設定に失敗しました' ; exit 1 }
 try {
-	. $(Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
+	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 	if ($? -eq $false) { exit 1 }
 } catch { Write-Error '❗ 関数の読み込みに失敗しました' ; exit 1 }
 
@@ -67,16 +66,14 @@ showProgressToast `
 
 updateProgressToast `
 	-Title $script:downloadWorkDir `
-	-Rate $( 1 / 4 ) `
+	-Rate ( 1 / 4 ) `
 	-LeftText '' `
 	-RightText '' `
 	-Tag $script:appName `
 	-Group 'Delete'
 
 #処理 - 半日以上前のログファイル・ロックファイルを削除
-$script:ffmpegErrorLogDir = `
-	Split-Path $script:ffpmegErrorLogPath `
-| Convert-Path
+$script:ffmpegErrorLogDir = Convert-Path (Split-Path $script:ffpmegErrorLogPath)
 deleteFiles `
 	-Path $script:ffmpegErrorLogDir `
 	-Conditions 'ffmpeg_error_*.log' `
@@ -95,7 +92,7 @@ deleteFiles `
 #進捗表示
 updateProgressToast `
 	-Title $script:downloadWorkDir `
-	-Rate $( 2 / 4 ) `
+	-Rate ( 2 / 4 ) `
 	-LeftText '' `
 	-RightText '' `
 	-Tag $script:appName `
@@ -110,7 +107,7 @@ deleteFiles `
 #進捗表示
 updateProgressToast `
 	-Title $script:downloadBaseDir `
-	-Rate $( 3 / 4 ) `
+	-Rate ( 3 / 4 ) `
 	-LeftText '' `
 	-RightText '' `
 	-Tag $script:appName `
@@ -127,7 +124,7 @@ if ($script:saveBaseDir -ne '') {
 		#進捗表示
 		updateProgressToast `
 			-Title $local:saveDir.Trim() `
-			-Rate $( 4 / 4 ) `
+			-Rate ( 4 / 4 ) `
 			-LeftText '' `
 			-RightText '' `
 			-Tag $script:appName `
@@ -159,7 +156,7 @@ showProgressToast `
 if (Test-Path $script:ignoreFilePath -PathType Leaf) {
 	try {
 		#ロックファイルをロック
-		while ($(fileLock $script:ignoreLockFilePath).fileLocked -ne $true)
+		while ((fileLock $script:ignoreLockFilePath).fileLocked -ne $true)
 		{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 		#ファイル操作
 		$local:ignoreTitles = [String[]](Get-Content `
@@ -174,20 +171,21 @@ if (Test-Path $script:ignoreFilePath -PathType Leaf) {
 #----------------------------------------------------------------------
 if ($null -ne $local:ignoreTitles ) {
 	$local:ignoreTitles | ForEach-Object -Parallel {
-		$local:i = $([Array]::IndexOf($using:local:ignoreTitles, $_)) + 1
+		$local:i = ([Array]::IndexOf($using:local:ignoreTitles, $_)) + 1
 		$local:total = $using:local:ignoreTitles.Count
 		#処理
-		Write-Output "$($local:i)/$($local:total) - $($_)"
+		Write-Output ([String]$local:i + '/' + [String]$local:total + ' - ' + $_)
 		try {
 			$local:delTargets = Get-ChildItem `
 				-LiteralPath $using:script:downloadBaseDir `
-				-Name -Filter "*$($_)*"
+				-Name `
+				-Filter ('*' + $_ + '*')
 		} catch { Write-Warning '❗ 削除対象を特定できませんでした' }
 		try {
 			if ($null -ne $delTargets) {
 				foreach ($local:delTarget in $local:delTargets) {
-					$local:delPath = $(Join-Path $using:script:downloadBaseDir $local:delTarget)
-					Write-Output "　💡 $($local:i)/$($local:total) -「$($local:delPath)」を削除します"
+					$local:delPath = Join-Path $using:script:downloadBaseDir $local:delTarget
+					Write-Output ('　💡 ' + [String]$local:i + '/' + [String]$local:total + ' - ' + $local:delPath + 'を削除します')
 					Remove-Item `
 						-Path $local:delPath `
 						-Recurse `
@@ -195,7 +193,7 @@ if ($null -ne $local:ignoreTitles ) {
 						-ErrorAction SilentlyContinue
 				}
 			}
-		} catch { Write-Warning '　❗ $($local:i)/$($local:total) - 削除できないファイルがありました' }
+		} catch { Write-Warning '　❗ $local:i/$local:total - 削除できないファイルがありました' }
 	} -ThrottleLimit $script:multithreadNum
 }
 
@@ -218,11 +216,8 @@ showProgressToast `
 
 #処理
 $local:allSubDirs = $null
-try {
-	$local:allSubDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).`
-			Where({ $_.PSIsContainer })).FullName `
-	| Sort-Object -Descending
-} catch { Write-Warning '❗ ディレクトリを見つけられませんでした' }
+try { $local:allSubDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer })).FullName | Sort-Object -Descending }
+catch { Write-Warning '❗ ディレクトリを見つけられませんでした' }
 
 #サブディレクトリの合計数
 if ($local:allSubDirs -is [Array]) { $local:subDirTotal = $local:allSubDirs.Length }
@@ -232,19 +227,18 @@ else { $local:subDirTotal = 0 }
 #----------------------------------------------------------------------
 if ($local:subDirTotal -ne 0) {
 	$local:allSubDirs | ForEach-Object -Parallel {
-		$local:i = $([Array]::IndexOf($using:local:allSubDirs, $_)) + 1
+		$local:i = ([Array]::IndexOf($using:local:allSubDirs, $_)) + 1
 		$local:total = $using:local:allSubDirs.Count
 		#処理
-		Write-Output "$($local:i)/$($local:total) - $($_)"
-		if (@((Get-ChildItem -LiteralPath $_ -Recurse).`
-					Where({ ! $_.PSIsContainer })).Count -eq 0) {
-			Write-Output "　💡 $($local:i)/$($local:total) - 「$($_)」を削除します"
+		Write-Output ([String]$local:i + '/' + [String]$local:total + ' - ' + $_)
+		if (@((Get-ChildItem -LiteralPath $_ -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
+			Write-Output ('　💡 ' + [String]$local:i + '/' + [String]$local:total + ' - ' + $_ + 'を削除します')
 			try {
 				Remove-Item `
 					-LiteralPath $_ `
 					-Recurse `
 					-Force
-			} catch { Write-Warning "　❗ $($local:i)/$($local:total) - 空ディレクトリの削除に失敗しました: $_" }
+			} catch { Write-Warning ('　❗ ' + [String]$local:i + '/' + [String]$local:total + ' - 空ディレクトリの削除に失敗しました: ' + $_) }
 		}
 	} -ThrottleLimit $script:multithreadNum
 }
