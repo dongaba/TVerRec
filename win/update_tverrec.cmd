@@ -38,8 +38,10 @@ title TVerRec Updater
 where /Q pwsh
 if %ERRORLEVEL% neq 0 (goto :INSTALL)
 
+pwsh -NoProfile -ExecutionPolicy Unrestricted -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/dongaba/TVerRec/master/src/functions/update_tverrec.ps1' -OutFile '..\src\functions\update_tverrec.ps1'"
+
 rem Zone Identifierの削除
-pwsh -Command "Get-ChildItem ..\ -Recurse | Unblock-File"
+pwsh -NoProfile -ExecutionPolicy Unrestricted -Command "Get-ChildItem ..\ -Recurse | Unblock-File"
 
 pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\functions\update_tverrec.ps1"
 

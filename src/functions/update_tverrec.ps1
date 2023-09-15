@@ -115,7 +115,8 @@ if (Test-Path $updateTemp ) {
 	Remove-Item `
 		-Path $updateTemp `
 		-Force `
-		-Recurse
+		-Recurse `
+		-ErrorAction SilentlyContinue
 }
 try {
 	$null = New-Item `
