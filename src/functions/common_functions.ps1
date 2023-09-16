@@ -673,6 +673,17 @@ function showToast {
 		$local:toastXML.LoadXml($local:toastProgressContent)
 		$local:toastBody = New-Object Windows.UI.Notifications.ToastNotification $local:toastXML
 		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Show($local:toastBody)
+
+	} elseif ($IsMacOS) {
+		$local:notificationTitle = 'Title'
+		$local:notificationSubTitle = 'Sub Title'
+		$local:notificationBody = 'Lorem ipsum dolor sit amet'
+		$local:notificationParams = `
+			'display notification "' + $local:notificationBody + `
+			'" with title "' + $local:notificationTitle + `
+			'" subtitle "' + $local:notificationSubTitle + `
+			'" sound name "Blow"'
+		$notificationParams | & osascript
 	}
 }
 
@@ -764,6 +775,17 @@ function showProgressToast {
 		$local:toast.Data = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
 		$local:toast.Data.SequenceNumber = 1
 		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Show($local:toast)
+
+	} elseif ($IsMacOS) {
+		$local:notificationTitle = 'TVerRec'
+		$local:notificationSubTitle = $local:toastText1
+		$local:notificationBody = $local:toastText2
+		$local:notificationParams = `
+			'display notification "' + $local:notificationBody + `
+			'" with title "' + $local:notificationTitle + `
+			'" subtitle "' + $local:notificationSubTitle + `
+			'" sound name "Blow"'
+		$notificationParams | & osascript
 	}
 }
 
@@ -809,6 +831,9 @@ function updateProgressToast {
 		$local:toastProgressData = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
 		$local:toastProgressData.SequenceNumber = 2
 		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Update($local:toastProgressData, $local:toastTag , $local:toastGroup)
+
+	} elseif ($IsMacOS) {
+		#1ディレクトリ毎に出てしまうため表示しない(Delete時)
 	}
 }
 
@@ -908,6 +933,17 @@ function showProgressToast2 {
 		$local:toast.Data = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
 		$local:toast.Data.SequenceNumber = 1
 		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Show($local:toast)
+
+	} elseif ($IsMacOS) {
+		$local:notificationTitle = 'TVerRec'
+		$local:notificationSubTitle = $local:toastText1
+		$local:notificationBody = $local:toastText2
+		$local:notificationParams = `
+			'display notification "' + $local:notificationBody + `
+			'" with title "' + $local:notificationTitle + `
+			'" subtitle "' + $local:notificationSubTitle + `
+			'" sound name "Blow"'
+		$notificationParams | & osascript
 	}
 }
 
@@ -973,6 +1009,9 @@ function updateProgressToast2 {
 		$local:toastProgressData = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
 		$local:toastProgressData.SequenceNumber = 2
 		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Update($local:toastProgressData, $local:toastTag , $local:toastGroup)
+
+	} elseif ($IsMacOS) {
+		#1キーワード毎に出てしまうため表示しない(Bulk時)
 	}
 }
 
