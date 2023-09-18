@@ -63,5 +63,6 @@
 	"workbench.iconTheme": "vscode-icons",
 	"workbench.preferredLightColorTheme": "Default Dark+",
 	"workbench.startupEditor": "newUntitledFile",
-	"gitlens.graph.dimMergeCommits": true
+	"gitlens.graph.dimMergeCommits": true,
+	"workbench.colorTheme": "Default Dark+"
 }
