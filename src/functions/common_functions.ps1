@@ -641,9 +641,7 @@ function showToast {
 		}
 
 		if (!($local:toastDuration)) { $local:toastDuration = 'short' }
-		$local:toastTitle = $script:appName
 		$local:toastAttribution = ''
-		$local:toastAppLogo = $script:toastAppLogo
 
 		if (-not ('Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder' -as [Type])) {
 			#For PowerShell Core v6.x & PowerShell v7+
@@ -657,10 +655,10 @@ function showToast {
 <toast duration="$local:toastDuration">
 	<visual>
 		<binding template="ToastGeneric">
-			<text>$local:toastTitle</text>
+			<text>$script:appName</text>
 			<text>$local:toastText1</text>
 			<text>$local:toastText2</text>
-			<image placement="appLogoOverride" src="$local:toastAppLogo"/>
+			<image placement="appLogoOverride" src="$script:toastAppLogo"/>
 			<text placement="attribution">$local:toastAttribution</text>
 		</binding>
 	</visual>
@@ -675,15 +673,24 @@ function showToast {
 		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Show($local:toastBody)
 
 	} elseif ($IsMacOS) {
-		$local:notificationTitle = 'Title'
-		$local:notificationSubTitle = 'Sub Title'
-		$local:notificationBody = 'Lorem ipsum dolor sit amet'
-		$local:notificationParams = `
-			'display notification "' + $local:notificationBody + `
-			'" with title "' + $local:notificationTitle + `
-			'" subtitle "' + $local:notificationSubTitle + `
-			'" sound name "Blow"'
-		$notificationParams | & osascript
+		if (Get-Command osascript -ea SilentlyContinue) {
+			$local:toastTitle = $local:toastText1
+			$local:toastBody = $local:toastText2
+			$local:toastParams = `
+				'display notification "' + $local:toastBody + `
+				'" with title "' + $script:appName + `
+				'" subtitle "' + $local:toastTitle + `
+				'" sound name "Blow"'
+			$local:toastParams | & osascript
+		}
+
+	} elseif ($IsLinux) {
+		if (Get-Command notify-send -ea SilentlyContinue) {
+			$local:notificationTitle = 'TVerRec'
+			$local:toastTitle = $local:toastText1
+			$local:toastBody = $local:toastText2
+			& notify-send -a $local:notificationTitle -t 5000 -i $script:toastAppLogo $local:toastTitle $local:toastBody
+		}
 	}
 }
 
@@ -733,9 +740,7 @@ function showProgressToast {
 		}
 
 		if (!($local:toastDuration)) { $local:toastDuration = 'short' }
-		$local:toastTitle = $script:appName
 		$local:toastAttribution = ''
-		$local:toastAppLogo = $script:toastAppLogo
 
 		if (-not ('Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder' -as [Type])) {
 			#For PowerShell Core v6.x & PowerShell v7+
@@ -749,10 +754,10 @@ function showProgressToast {
 <toast duration="$local:toastDuration">
 	<visual>
 		<binding template="ToastGeneric">
-			<text>$local:toastTitle</text>
+			<text>$script:appName</text>
 			<text>$local:toastText1</text>
 			<text>$local:toastText2</text>
-			<image placement="appLogoOverride" src="$local:toastAppLogo"/>
+			<image placement="appLogoOverride" src="$script:toastAppLogo"/>
 			<progress value="{progressValue}" title="{progressTitle}" valueStringOverride="{progressValueString}" status="{progressStatus}" />
 			<text placement="attribution">$local:toastAttribution</text>
 		</binding>
@@ -777,15 +782,23 @@ function showProgressToast {
 		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Show($local:toast)
 
 	} elseif ($IsMacOS) {
-		$local:notificationTitle = 'TVerRec'
-		$local:notificationSubTitle = $local:toastText1
-		$local:notificationBody = $local:toastText2
-		$local:notificationParams = `
-			'display notification "' + $local:notificationBody + `
-			'" with title "' + $local:notificationTitle + `
-			'" subtitle "' + $local:notificationSubTitle + `
-			'" sound name "Blow"'
-		$notificationParams | & osascript
+		if (Get-Command osascript -ea SilentlyContinue) {
+			$local:toastTitle = $local:toastText1
+			$local:toastBody = $local:toastText2
+			$local:toastParams = `
+				'display notification "' + $local:toastBody + `
+				'" with title "' + $script:appName + `
+				'" subtitle "' + $local:toastTitle + `
+				'" sound name "Blow"'
+			$local:toastParams | & osascript
+		}
+
+	} elseif ($IsLinux) {
+		if (Get-Command notify-send -ea SilentlyContinue) {
+			$local:toastTitle = $local:toastText1
+			$local:toastBody = $local:toastText2
+			& notify-send -a $script:appName -t 5000 -i $script:toastAppLogo $local:toastTitle $local:toastBody
+		}
 	}
 }
 
@@ -798,7 +811,7 @@ function updateProgressToast {
 	Param (
 		[Parameter(Mandatory = $false, Position = 0)]
 		[Alias('Title')]
-		[String]$local:toastTitle,
+		[String]$script:appName,
 
 		[Parameter(Mandatory = $true, Position = 1)]
 		[Alias('Rate')]
@@ -824,7 +837,7 @@ function updateProgressToast {
 	if ($IsWindows) {
 		$local:appID = Get-WindowsAppId
 		$local:toastData = New-Object 'system.collections.generic.dictionary[String,string]'
-		$local:toastData.add('progressTitle', $local:toastTitle)
+		$local:toastData.add('progressTitle', $script:appName)
 		$local:toastData.add('progressValue', $local:toastRate)
 		$local:toastData.add('progressValueString', $local:toastRightText)
 		$local:toastData.add('progressStatus', $local:toastLeftText)
@@ -833,6 +846,8 @@ function updateProgressToast {
 		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Update($local:toastProgressData, $local:toastTag , $local:toastGroup)
 
 	} elseif ($IsMacOS) {
+		#1ディレクトリ毎に出てしまうため表示しない(Delete時)
+	} elseif ($IsLinux) {
 		#1ディレクトリ毎に出てしまうため表示しない(Delete時)
 	}
 }
@@ -886,9 +901,7 @@ function showProgressToast2 {
 		}
 
 		if (!($local:toastDuration)) { $local:toastDuration = 'short' }
-		$local:toastTitle = $script:appName
 		$local:toastAttribution = ''
-		$local:toastAppLogo = $script:toastAppLogo
 
 		if (-not ('Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder' -as [Type])) {
 			#For PowerShell Core v6.x & PowerShell v7+
@@ -902,10 +915,10 @@ function showProgressToast2 {
 <toast duration="$local:toastDuration">
 	<visual>
 		<binding template="ToastGeneric">
-			<text>$local:toastTitle</text>
+			<text>$script:appName</text>
 			<text>$local:toastText1</text>
 			<text>$local:toastText2</text>
-			<image placement="appLogoOverride" src="$local:toastAppLogo"/>
+			<image placement="appLogoOverride" src="$script:toastAppLogo"/>
 			<progress value="{progressValue1}" title="{progressTitle1}" valueStringOverride="{progressValueString1}" status="{progressStatus1}" />
 			<progress value="{progressValue2}" title="{progressTitle2}" valueStringOverride="{progressValueString2}" status="{progressStatus2}" />
 			<text placement="attribution">$local:toastAttribution</text>
@@ -935,15 +948,23 @@ function showProgressToast2 {
 		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Show($local:toast)
 
 	} elseif ($IsMacOS) {
-		$local:notificationTitle = 'TVerRec'
-		$local:notificationSubTitle = $local:toastText1
-		$local:notificationBody = $local:toastText2
-		$local:notificationParams = `
-			'display notification "' + $local:notificationBody + `
-			'" with title "' + $local:notificationTitle + `
-			'" subtitle "' + $local:notificationSubTitle + `
-			'" sound name "Blow"'
-		$notificationParams | & osascript
+		if (Get-Command osascript -ea SilentlyContinue) {
+			$local:toastTitle = $local:toastText1
+			$local:toastBody = $local:toastText2
+			$local:toastParams = `
+				'display notification "' + $local:toastBody + `
+				'" with title "' + $script:appName + `
+				'" subtitle "' + $local:toastTitle + `
+				'" sound name "Blow"'
+			$local:toastParams | & osascript
+		}
+
+	} elseif ($IsLinux) {
+		if (Get-Command notify-send -ea SilentlyContinue) {
+			$local:toastTitle = $local:toastText1
+			$local:toastBody = $local:toastText2
+			& notify-send -a $script:appName -t 5000 -i $script:toastAppLogo $local:toastTitle $local:toastBody
+		}
 	}
 }
 
@@ -956,7 +977,7 @@ function updateProgressToast2 {
 	Param (
 		[Parameter(Mandatory = $false, Position = 0)]
 		[Alias('Title1')]
-		[String]$local:toastTitle1,
+		[String]$script:appName1,
 
 		[Parameter(Mandatory = $true, Position = 1)]
 		[Alias('Rate1')]
@@ -972,7 +993,7 @@ function updateProgressToast2 {
 
 		[Parameter(Mandatory = $false, Position = 4)]
 		[Alias('Title2')]
-		[String]$local:toastTitle2,
+		[String]$script:appName2,
 
 		[Parameter(Mandatory = $true, Position = 5)]
 		[Alias('Rate2')]
@@ -998,11 +1019,11 @@ function updateProgressToast2 {
 	if ($IsWindows) {
 		$local:appID = Get-WindowsAppId
 		$local:toastData = New-Object 'system.collections.generic.dictionary[String,string]'
-		$local:toastData.add('progressTitle1', $local:toastTitle1)
+		$local:toastData.add('progressTitle1', $script:appName1)
 		$local:toastData.add('progressValue1', $local:toastRate1)
 		$local:toastData.add('progressValueString1', $local:toastRightText1)
 		$local:toastData.add('progressStatus1', $local:toastLeftText1)
-		$local:toastData.add('progressTitle2', $local:toastTitle2)
+		$local:toastData.add('progressTitle2', $script:appName2)
 		$local:toastData.add('progressValue2', $local:toastRate2)
 		$local:toastData.add('progressValueString2', $local:toastRightText2)
 		$local:toastData.add('progressStatus2', $local:toastLeftText2)
@@ -1011,6 +1032,8 @@ function updateProgressToast2 {
 		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Update($local:toastProgressData, $local:toastTag , $local:toastGroup)
 
 	} elseif ($IsMacOS) {
+		#1キーワード毎に出てしまうため表示しない(Bulk時)
+	} elseif ($IsLinux) {
 		#1キーワード毎に出てしまうため表示しない(Bulk時)
 	}
 }
