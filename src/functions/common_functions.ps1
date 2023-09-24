@@ -669,17 +669,15 @@ function showToast {
 		$local:appID = Get-WindowsAppId
 		$local:toastXML = New-Object Windows.Data.Xml.Dom.XmlDocument
 		$local:toastXML.LoadXml($local:toastProgressContent)
-		$local:toastBody = New-Object Windows.UI.Notifications.ToastNotification $local:toastXML
-		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Show($local:toastBody)
+		$local:toastText2 = New-Object Windows.UI.Notifications.ToastNotification $local:toastXML
+		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Show($local:toastText2)
 
 	} elseif ($IsMacOS) {
 		if (Get-Command osascript -ea SilentlyContinue) {
-			$local:toastTitle = $local:toastText1
-			$local:toastBody = $local:toastText2
 			$local:toastParams = `
-				'display notification "' + $local:toastBody + `
+				'display notification "' + $local:toastText2 + `
 				'" with title "' + $script:appName + `
-				'" subtitle "' + $local:toastTitle + `
+				'" subtitle "' + $local:toastText1 + `
 				'" sound name "Blow"'
 			$local:toastParams | & osascript
 		}
@@ -687,9 +685,7 @@ function showToast {
 	} elseif ($IsLinux) {
 		if (Get-Command notify-send -ea SilentlyContinue) {
 			$local:notificationTitle = 'TVerRec'
-			$local:toastTitle = $local:toastText1
-			$local:toastBody = $local:toastText2
-			& notify-send -a $local:notificationTitle -t 5000 -i $script:toastAppLogo $local:toastTitle $local:toastBody
+			& notify-send -a $local:notificationTitle -t 5000 -i $script:toastAppLogo $local:toastText1 $local:toastText2
 		}
 	}
 }
@@ -783,21 +779,17 @@ function showProgressToast {
 
 	} elseif ($IsMacOS) {
 		if (Get-Command osascript -ea SilentlyContinue) {
-			$local:toastTitle = $local:toastText1
-			$local:toastBody = $local:toastText2
 			$local:toastParams = `
-				'display notification "' + $local:toastBody + `
+				'display notification "' + $local:toastText2 + `
 				'" with title "' + $script:appName + `
-				'" subtitle "' + $local:toastTitle + `
+				'" subtitle "' + $local:toastText1 + `
 				'" sound name "Blow"'
 			$local:toastParams | & osascript
 		}
 
 	} elseif ($IsLinux) {
 		if (Get-Command notify-send -ea SilentlyContinue) {
-			$local:toastTitle = $local:toastText1
-			$local:toastBody = $local:toastText2
-			& notify-send -a $script:appName -t 5000 -i $script:toastAppLogo $local:toastTitle $local:toastBody
+			& notify-send -a $script:appName -t 5000 -i $script:toastAppLogo $local:toastText1 $local:toastText2
 		}
 	}
 }
@@ -811,7 +803,7 @@ function updateProgressToast {
 	Param (
 		[Parameter(Mandatory = $false, Position = 0)]
 		[Alias('Title')]
-		[String]$script:appName,
+		[String]$script:toastTitle,
 
 		[Parameter(Mandatory = $true, Position = 1)]
 		[Alias('Rate')]
@@ -949,21 +941,17 @@ function showProgressToast2 {
 
 	} elseif ($IsMacOS) {
 		if (Get-Command osascript -ea SilentlyContinue) {
-			$local:toastTitle = $local:toastText1
-			$local:toastBody = $local:toastText2
 			$local:toastParams = `
-				'display notification "' + $local:toastBody + `
+				'display notification "' + $local:toastText2 + `
 				'" with title "' + $script:appName + `
-				'" subtitle "' + $local:toastTitle + `
+				'" subtitle "' + $local:toastText1 + `
 				'" sound name "Blow"'
 			$local:toastParams | & osascript
 		}
 
 	} elseif ($IsLinux) {
 		if (Get-Command notify-send -ea SilentlyContinue) {
-			$local:toastTitle = $local:toastText1
-			$local:toastBody = $local:toastText2
-			& notify-send -a $script:appName -t 5000 -i $script:toastAppLogo $local:toastTitle $local:toastBody
+			& notify-send -a $script:appName -t 5000 -i $script:toastAppLogo $local:toastText1 $local:toastText2
 		}
 	}
 }
@@ -977,7 +965,7 @@ function updateProgressToast2 {
 	Param (
 		[Parameter(Mandatory = $false, Position = 0)]
 		[Alias('Title1')]
-		[String]$script:appName1,
+		[String]$script:toastTitle1,
 
 		[Parameter(Mandatory = $true, Position = 1)]
 		[Alias('Rate1')]
@@ -993,7 +981,7 @@ function updateProgressToast2 {
 
 		[Parameter(Mandatory = $false, Position = 4)]
 		[Alias('Title2')]
-		[String]$script:appName2,
+		[String]$script:toastTitle2,
 
 		[Parameter(Mandatory = $true, Position = 5)]
 		[Alias('Rate2')]
@@ -1019,11 +1007,11 @@ function updateProgressToast2 {
 	if ($IsWindows) {
 		$local:appID = Get-WindowsAppId
 		$local:toastData = New-Object 'system.collections.generic.dictionary[String,string]'
-		$local:toastData.add('progressTitle1', $script:appName1)
+		$local:toastData.add('progressTitle1', $script:toastTitle1)
 		$local:toastData.add('progressValue1', $local:toastRate1)
 		$local:toastData.add('progressValueString1', $local:toastRightText1)
 		$local:toastData.add('progressStatus1', $local:toastLeftText1)
-		$local:toastData.add('progressTitle2', $script:appName2)
+		$local:toastData.add('progressTitle2', $script:toastTitle2)
 		$local:toastData.add('progressValue2', $local:toastRate2)
 		$local:toastData.add('progressValueString2', $local:toastRightText2)
 		$local:toastData.add('progressStatus2', $local:toastLeftText2)

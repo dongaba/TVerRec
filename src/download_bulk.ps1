@@ -114,14 +114,19 @@ foreach ($local:keywordName in $local:keywordNames) {
 	} finally { $null = fileUnlock $script:historyLockFilePath }
 
 	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
+	Write-Output '処理履歴との照合 '
+	$local:resultNum = 0
+	if ($null -eq $local:resultLinks) { $local:resultTotal = 0 }
+	else { $local:resultTotal = $local:resultLinks.Length }
 	foreach ($local:resultLink in $local:resultLinks) {
+		$local:resultNum = $local:resultNum + 1
 		$local:historyMatch = $script:historyFileData | Where-Object { $_.videoPage -eq $local:resultLink }
 		if ($null -eq $local:historyMatch) {
 			$local:videoLinks += $local:resultLink
-			Write-Output ('　処理履歴との照合 ' + $local:resultLink.Replace('https://tver.jp/episodes/', '') + ' ... ❗ 未処理')
+			Write-Output ('　' + $local:resultNum + '/' + $local:resultTotal + ' ' + $local:resultLink + ' ... ❗ 未処理')
 		} else {
 			$local:processedCount = $local:processedCount + 1
-			Write-Output ('　処理履歴との照合 ' + $local:resultLink.Replace('https://tver.jp/episodes/', '') + ' ... ✔️')
+			Write-Output ('　' + $local:resultNum + '/' + $local:resultTotal + ' ' + $local:resultLink + ' ... ✔️')
 			continue
 		}
 	}
