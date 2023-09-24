@@ -471,11 +471,10 @@ function fileLock {
 	)
 
 	try {
-		$local:fileLocked = $false
+		$local:fileLocked = $true
 		# attempt to open file and detect file lock
 		$script:fileInfo = New-Object System.IO.FileInfo $local:Path
 		$script:fileStream = $script:fileInfo.Open([System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
-		$local:fileLocked = $true
 	} catch { $fileLocked = $false
 	} finally {
 		# return result
