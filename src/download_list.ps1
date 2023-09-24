@@ -112,7 +112,7 @@ foreach ($local:listLink in $local:listLinks.episodeID) {
 
 #ダウンロード対象のトータル番組数
 $local:videoTotal = $local:videoLinks.Length
-Write-Output ('　💡 ダウンロード対象' + $local:videoTotal + '件')
+Write-Output ('💡 ダウンロード対象' + $local:videoTotal + '件')
 Write-Output ''
 
 

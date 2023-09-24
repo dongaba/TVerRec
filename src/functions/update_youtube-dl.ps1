@@ -106,12 +106,12 @@ try {
 
 #youtube-dlのダウンロード
 if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
-	Write-Output 'youtube-dlは最新です。'
+	Write-Output '💡 youtube-dlは最新です。'
 	Write-Output "　Local version: $local:ytdlCurrentVersion"
 	Write-Output "　Latest version: $local:latestVersion"
 	Write-Output ''
 } else {
-	Write-Warning '💡 youtube-dlが古いため更新します。'
+	Write-Warning '❗ youtube-dlが古いため更新します。'
 	Write-Warning "　Local version: $local:ytdlCurrentVersion"
 	Write-Warning "　Latest version: $local:latestVersion"
 	Write-Output ''

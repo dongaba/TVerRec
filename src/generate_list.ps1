@@ -141,7 +141,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#処理対象のトータル番組数
 	if ($null -eq $local:videoLinks) { $local:videoTotal = 0 }
 	else { $local:videoTotal = $local:videoLinks.Length }
-	Write-Output ('　処理対象' + $local:videoTotal + '本　処理済' + $local:searchResultCount + '本')
+	Write-Output ('💡 処理対象' + $local:videoTotal + '本　処理済' + $local:searchResultCount + '本')
 
 	#処理対象番組がない場合は次のキーワード
 	if ( $local:videoTotal -eq 0 ) { continue }
@@ -251,7 +251,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 			#スキップフラグが立っているかチェック
 			if ($ignore -eq $true) {
-				Write-Output ('　💡 ' + [String]$local:i + '/' + [String]$local:total + ' - 番組をコメントアウトした状態でリストファイルに追加します')
+				Write-Output ('❗ ' + [String]$local:i + '/' + [String]$local:total + ' - 番組をコメントアウトした状態でリストファイルに追加します')
 				$newVideo = [pscustomobject]@{
 					seriesName    = $videoSeries
 					seriesID      = $videoSeriesID
@@ -268,7 +268,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 					ignoreWord    = $ignoreWord
 				}
 			} else {
-				Write-Output ('　' + [String]$local:i + '/' + [String]$local:total + ' - 番組をリストファイルに追加します')
+				Write-Output ('💡 ' + [String]$local:i + '/' + [String]$local:total + ' - 番組をリストファイルに追加します')
 				$newVideo = [pscustomobject]@{
 					seriesName    = $videoSeries
 					seriesID      = $videoSeriesID
@@ -309,7 +309,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 	} else {
 
 		foreach ($local:videoLink in $local:videoLinks) {
-			Write-Output [String](([Array]::IndexOf($local:videoLinks, $local:videoLink)) + 1 ) + '/' + [String]$local:videoLinks.Count + ' - ' + $local:videoLink
+			Write-Output ('　' + [String](([Array]::IndexOf($local:videoLinks, $local:videoLink)) + 1 ) + '/' + [String]$local:videoLinks.Count + ' - ' + $local:videoLink)
 			#TVer番組ダウンロードのメイン処理
 			generateTVerVideoList `
 				-Keyword $local:keywordName `

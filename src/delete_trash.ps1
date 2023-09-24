@@ -185,7 +185,7 @@ if ($null -ne $local:ignoreTitles ) {
 			if ($null -ne $delTargets) {
 				foreach ($local:delTarget in $local:delTargets) {
 					$local:delPath = Join-Path $using:script:downloadBaseDir $local:delTarget
-					Write-Output ('　💡 ' + [String]$local:i + '/' + [String]$local:total + ' - ' + $local:delPath + 'を削除します')
+					Write-Output ('💡 ' + [String]$local:i + '/' + [String]$local:total + ' - ' + $local:delPath + 'を削除します')
 					Remove-Item `
 						-Path $local:delPath `
 						-Recurse `
@@ -193,7 +193,7 @@ if ($null -ne $local:ignoreTitles ) {
 						-ErrorAction SilentlyContinue
 				}
 			}
-		} catch { Write-Warning '　❗ $local:i/$local:total - 削除できないファイルがありました' }
+		} catch { Write-Warning '❗ $local:i/$local:total - 削除できないファイルがありました' }
 	} -ThrottleLimit $script:multithreadNum
 }
 
@@ -232,13 +232,13 @@ if ($local:subDirTotal -ne 0) {
 		#処理
 		Write-Output ([String]$local:i + '/' + [String]$local:total + ' - ' + $_)
 		if (@((Get-ChildItem -LiteralPath $_ -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
-			Write-Output ('　💡 ' + [String]$local:i + '/' + [String]$local:total + ' - ' + $_ + 'を削除します')
+			Write-Output ('💡 ' + [String]$local:i + '/' + [String]$local:total + ' - ' + $_ + 'を削除します')
 			try {
 				Remove-Item `
 					-LiteralPath $_ `
 					-Recurse `
 					-Force
-			} catch { Write-Warning ('　❗ ' + [String]$local:i + '/' + [String]$local:total + ' - 空ディレクトリの削除に失敗しました: ' + $_) }
+			} catch { Write-Warning ('❗ ' + [String]$local:i + '/' + [String]$local:total + ' - 空ディレクトリの削除に失敗しました: ' + $_) }
 		}
 	} -ThrottleLimit $script:multithreadNum
 }

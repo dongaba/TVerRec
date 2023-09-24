@@ -91,12 +91,12 @@ switch ($true) {
 
 		#ffmpegのダウンロード
 		if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
-			Write-Output 'ffmpegは最新です。'
+			Write-Output '💡 ffmpegは最新です。'
 			Write-Output "　Local version: $local:ffmpegCurrentVersion"
 			Write-Output "　Latest version: $local:latestVersion"
 			Write-Output ''
 		} else {
-			Write-Warning '💡 ffmpegが古いため更新します。'
+			Write-Warning '❗ ffmpegが古いため更新します。'
 			Write-Warning "　Local version: $local:ffmpegCurrentVersion"
 			Write-Warning "　Latest version: $local:latestVersion"
 			Write-Output ''
@@ -192,12 +192,12 @@ switch ($true) {
 
 		#ffmpegのダウンロード
 		if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
-			Write-Output 'ffmpegは最新です。'
+			Write-Output '💡 ffmpegは最新です。'
 			Write-Output "　Local version: $local:ffmpegCurrentVersion"
 			Write-Output "　Latest version: $local:latestVersion"
 			Write-Output ''
 		} else {
-			Write-Warning '💡 ffmpegが古いため更新します。'
+			Write-Warning '❗ ffmpegが古いため更新します。'
 			Write-Warning "　Local version: $local:ffmpegCurrentVersion"
 			Write-Warning "　Latest version: $local:latestVersion"
 			Write-Output ''
@@ -303,12 +303,12 @@ switch ($true) {
 
 		#ffmpegのダウンロード
 		if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
-			Write-Output 'ffmpegは最新です。'
+			Write-Output '💡 ffmpegは最新です。'
 			Write-Output "　Local version: $local:ffmpegCurrentVersion"
 			Write-Output "　Latest version: $local:latestVersion"
 			Write-Output ''
 		} else {
-			Write-Warning '💡 ffmpegが古いため更新します。'
+			Write-Warning '❗ ffmpegが古いため更新します。'
 			Write-Warning "　Local version: $local:ffmpegCurrentVersion"
 			Write-Warning "　Latest version: $local:latestVersion"
 			Write-Output ''

@@ -160,9 +160,9 @@ if ($local:moveToPathTotal -ne 0) {
 		$local:moveFromPath = Join-Path $script:downloadBaseDir $local:targetFolderName
 		if (Test-Path $local:moveFromPath) {
 			$local:moveFromPath = $local:moveFromPath + '\*.mp4'
-			Write-Output ('　💡 ' + $local:moveFromPath + 'を移動します')
+			Write-Output ('💡 ' + $local:moveFromPath + 'を移動します')
 			try { Move-Item $local:moveFromPath -Destination $local:moveToPath -Force }
-			catch { Write-Warning '　❗ 移動できないファイルがありました' }
+			catch { Write-Warning '❗ 移動できないファイルがありました' }
 		}
 	}
 }
@@ -203,13 +203,13 @@ if ($local:subDirTotal -ne 0) {
 		#処理
 		Write-Output ([String]$local:i + '/' + [String]$local:total + ' - ' + $_)
 		if (@((Get-ChildItem -LiteralPath $_ -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
-			Write-Output ('　💡 ' + [String]$local:i + '/' + [String]$local:total + ' - ' + $_ + 'を削除します')
+			Write-Output ('💡 ' + [String]$local:i + '/' + [String]$local:total + ' - ' + $_ + 'を削除します')
 			try {
 				Remove-Item `
 					-LiteralPath $_ `
 					-Recurse `
 					-Force
-			} catch { Write-Warning ('　❗ ' + [String]$local:i + '/' + [String]$local:total + ' - 空ディレクトリの削除に失敗しました:' + $_) }
+			} catch { Write-Warning ('❗ ' + [String]$local:i + '/' + [String]$local:total + ' - 空ディレクトリの削除に失敗しました:' + $_) }
 		}
 	} -ThrottleLimit $script:multithreadNum
 }

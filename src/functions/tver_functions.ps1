@@ -72,7 +72,7 @@ function checkLatestTVerRec {
 	#バージョンアップメッセージ
 	if ($local:versionUp -eq $true ) {
 		[Console]::ForegroundColor = 'Green'
-		Write-Warning '💡 TVerRecの更新版があるようです。'
+		Write-Warning '❗ TVerRecの更新版があるようです。'
 		Write-Warning ('　Local Version ' + $script:appVersion)
 		Write-Warning ('　Latest Version ' + $local:latestVersion)
 		Write-Output ''
@@ -117,7 +117,7 @@ function checkLatestTVerRec {
 				-ArgumentList "-Command (Join-Path $script:scriptRoot 'functions/update_tverrec.ps1')" `
 				-PassThru `
 				-Wait
-		} catch { Write-Error '　❗ TVerRecのアップデータを起動できませんでした' ; return }
+		} catch { Write-Error '❗ TVerRecのアップデータを起動できませんでした' ; return }
 
 		#再起動のため強制終了
 		exit 1
@@ -1280,10 +1280,10 @@ function downloadTVerVideo {
 
 		#結果が0件ということは未検証のファイルがあるということ
 		if ( $null -eq $local:historyMatch) {
-			Write-Warning '💡 すでにダウンロード済ですが未検証の番組です。スキップします'
+			Write-Warning '❗ すでにダウンロード済ですが未検証の番組です。スキップします'
 			$script:skipWithoutValidation = $true
 		} else {
-			Write-Warning '💡 すでにダウンロード済・検証済の番組です。番組IDが変更になった可能性があります。スキップします'
+			Write-Warning '❗ すでにダウンロード済・検証済の番組です。番組IDが変更になった可能性があります。スキップします'
 			$script:skipWithoutValidation = $true
 		}
 
@@ -1297,9 +1297,9 @@ function downloadTVerVideo {
 
 		#結果が0件ということは未検証のファイルがあるということ
 		if ( $null -eq $local:historyMatch) {
-			Write-Warning '💡 すでにダウンロード済ですが未検証の番組です。ダウンロード履歴に追加します'
+			Write-Warning '❗ すでにダウンロード済ですが未検証の番組です。ダウンロード履歴に追加します'
 			$script:skipWithValidation = $true
-		} else { Write-Warning '💡 すでにダウンロード済・検証済の番組です。スキップします'; continue }
+		} else { Write-Warning '❗ すでにダウンロード済・検証済の番組です。スキップします'; continue }
 
 	} else {
 		foreach ($local:ignoreRegexTitle in $script:ignoreRegexTitles) {
@@ -1315,7 +1315,7 @@ function downloadTVerVideo {
 
 	#スキップフラグが立っているかチェック
 	if ($script:ignore -eq $true) {
-		Write-Output '　💡 ダウンロード対象外としたファイルをダウンロード履歴に追加します'
+		Write-Output '❗ ダウンロード対象外としたファイルをダウンロード履歴に追加します'
 		$script:newVideo = [pscustomobject]@{
 			videoPage       = $script:videoPageURL
 			videoSeriesPage = $script:videoSeriesPageURL
@@ -1332,7 +1332,7 @@ function downloadTVerVideo {
 			videoValidated  = '0'
 		}
 	} elseif ($script:skipWithValidation -eq $true) {
-		Write-Output '　💡 ダウンロード済の未検証のファイルをダウンロード履歴に追加します'
+		Write-Output '❗ ダウンロード済の未検証のファイルをダウンロード履歴に追加します'
 		$script:newVideo = [pscustomobject]@{
 			videoPage       = $script:videoPageURL
 			videoSeriesPage = $script:videoSeriesPageURL
@@ -1349,7 +1349,7 @@ function downloadTVerVideo {
 			videoValidated  = '0'
 		}
 	} elseif ($script:skipWithoutValidation -eq $true) {
-		Write-Output '　💡 番組IDが変更になったダウンロード済の未検証のファイルをダウンロード履歴に追加します'
+		Write-Output '❗ 番組IDが変更になったダウンロード済の未検証のファイルをダウンロード履歴に追加します'
 		$script:newVideo = [pscustomobject]@{
 			videoPage       = $script:videoPageURL
 			videoSeriesPage = $script:videoSeriesPageURL
@@ -1366,7 +1366,7 @@ function downloadTVerVideo {
 			videoValidated  = '1'
 		}
 	} else {
-		Write-Output '　ダウンロードするファイルをダウンロード履歴に追加します'
+		Write-Output '💡 ダウンロードするファイルをダウンロード履歴に追加します'
 		$script:newVideo = [pscustomobject]@{
 			videoPage       = $script:videoPageURL
 			videoSeriesPage = $script:videoSeriesPageURL
@@ -1475,7 +1475,7 @@ function generateTVerVideoList {
 
 	#スキップフラグが立っているかチェック
 	if ($script:ignore -eq $true) {
-		Write-Output '　💡 番組をコメントアウトした状態でリストファイルに追加します'
+		Write-Output '❗ 番組をコメントアウトした状態でリストファイルに追加します'
 		$script:newVideo = [pscustomobject]@{
 			seriesName    = $script:videoSeries
 			seriesID      = $script:videoSeriesID
@@ -1492,7 +1492,7 @@ function generateTVerVideoList {
 			ignoreWord    = $local:ignoreWord
 		}
 	} else {
-		Write-Output '　番組をリストファイルに追加します'
+		Write-Output '💡 番組をリストファイルに追加します'
 		$script:newVideo = [pscustomobject]@{
 			seriesName    = $script:videoSeries
 			seriesID      = $script:videoSeriesID
@@ -1843,15 +1843,15 @@ function executeYtdl {
 
 	if ($IsWindows) {
 		try {
-			Write-Debug ('youtube-dl起動コマンド:' + $script:ytdlPath + $local:ytdlArgs)
+			Write-Debug ('youtube-dl起動コマンド:' + $script:ytdlPath + ' ' + $local:ytdlArgs)
 			$null = Start-Process `
 				-FilePath $script:ytdlPath `
 				-ArgumentList $local:ytdlArgs `
 				-PassThru `
 				-WindowStyle $script:windowShowStyle
-		} catch { Write-Error '　❗ youtube-dlの起動に失敗しました' ; return }
+		} catch { Write-Error '❗ youtube-dlの起動に失敗しました' ; return }
 	} else {
-		Write-Debug ('youtube-dl起動コマンド:nohup ' + $script:ytdlPath + $local:ytdlArgs)
+		Write-Debug ('youtube-dl起動コマンド:nohup ' + $script:ytdlPath + ' ' + $local:ytdlArgs)
 		try {
 			$null = Start-Process `
 				-FilePath nohup `
@@ -1859,7 +1859,7 @@ function executeYtdl {
 				-PassThru `
 				-RedirectStandardOutput /dev/null `
 				-RedirectStandardError /dev/zero
-		} catch { Write-Error '　❗ youtube-dlの起動に失敗しました' ; return }
+		} catch { Write-Error '❗ youtube-dlの起動に失敗しました' ; return }
 	}
 }
 
@@ -2051,7 +2051,7 @@ function checkVideo {
 			-Path $script:historyFilePath `
 			-Encoding UTF8
 		$local:checkStatus = (($local:videoHists).Where({ $_.videoPath -eq $local:videoFileRelPath })).videoValidated
-	} catch { Write-Warning ('　❗ 既にダウンロード履歴から削除されたようです: ' + $local:videoFileRelPath); return
+	} catch { Write-Warning ('❗ 既にダウンロード履歴から削除されたようです: ' + $local:videoFileRelPath); return
 	} finally { $null = fileUnlock $script:historyLockFilePath }
 
 	#0:未チェック、1:チェック済、2:チェック中
@@ -2063,7 +2063,7 @@ function checkVideo {
 			$local:videoHists `
 			| Where-Object { $_.videoPath -eq $local:videoFileRelPath } `
 			| Where-Object { $_.videoValidated = '2' }
-		} catch { Write-Warning ('　❗ 該当のレコードが見つかりませんでした: ' + $local:videoFileRelPath); return }
+		} catch { Write-Warning ('❗ 該当のレコードが見つかりませんでした: ' + $local:videoFileRelPath); return }
 		try {
 			#ロックファイルをロック
 			while ((fileLock $script:historyLockFilePath).fileLocked -ne $true)
@@ -2073,7 +2073,7 @@ function checkVideo {
 				-Path $script:historyFilePath `
 				-NoTypeInformation `
 				-Encoding UTF8
-		} catch { Write-Warning ('　❗ ダウンロード履歴を更新できませんでした: ' + $local:videoFileRelPath); return
+		} catch { Write-Warning ('❗ ダウンロード履歴を更新できませんでした: ' + $local:videoFileRelPath); return
 		} finally { $null = fileUnlock $script:historyLockFilePath }
 	}
 
@@ -2084,7 +2084,7 @@ function checkVideo {
 		#ffprobeを使った簡易検査
 		$local:ffprobeArgs = ' -hide_banner -v error -err_detect explode' + ' -i ' + $local:checkFile
 
-		Write-Debug ('ffprobe起動コマンド: ' + $script:ffprobePath + $local:ffprobeArgs)
+		Write-Debug ('ffprobe起動コマンド: ' + $script:ffprobePath + ' ' + $local:ffprobeArgs)
 		try {
 			if ($IsWindows) {
 				$local:proc = Start-Process `
@@ -2103,12 +2103,12 @@ function checkVideo {
 					-RedirectStandardError $script:ffpmegErrorLogPath `
 					-Wait
 			}
-		} catch { Write-Error '　❗ ffprobeを起動できませんでした' ; return }
+		} catch { Write-Error '❗ ffprobeを起動できませんでした' ; return }
 	} else {
 		#ffmpegeを使った完全検査
 		$local:ffmpegArgs = ' ' + $local:decodeOption + ' -hide_banner -v error -xerror' + ' -i ' + $local:checkFile + ' -f null - '
 
-		Write-Debug ('ffmpeg起動コマンド: ' + $script:ffmpegPath + $local:ffmpegArgs)
+		Write-Debug ('ffmpeg起動コマンド: ' + $script:ffmpegPath + ' ' + $local:ffmpegArgs)
 		try {
 			if ($IsWindows) {
 				$local:proc = Start-Process `
@@ -2127,7 +2127,7 @@ function checkVideo {
 					-RedirectStandardError $script:ffpmegErrorLogPath `
 					-Wait
 			}
-		} catch { Write-Error '　❗ ffmpegを起動できませんでした' ; return }
+		} catch { Write-Error '❗ ffmpegを起動できませんでした' ; return }
 	}
 
 	#ffmpegが正常終了しても、大量エラーが出ることがあるのでエラーをカウント
@@ -2174,7 +2174,7 @@ function checkVideo {
 				-Path $script:historyFilePath `
 				-NoTypeInformation `
 				-Encoding UTF8
-		} catch { Write-Warning ('　❗ ダウンロード履歴の更新に失敗しました: ' + $local:videoFileRelPath)
+		} catch { Write-Warning ('❗ ダウンロード履歴の更新に失敗しました: ' + $local:videoFileRelPath)
 		} finally { $null = fileUnlock $script:historyLockFilePath }
 
 		#破損しているダウンロードファイルを削除
@@ -2183,7 +2183,7 @@ function checkVideo {
 				-LiteralPath $local:videoFilePath `
 				-Force `
 				-ErrorAction SilentlyContinue
-		} catch { Write-Warning ('　❗ ファイル削除できませんでした: ' + $local:videoFilePath) }
+		} catch { Write-Warning ('❗ ファイル削除できませんでした: ' + $local:videoFilePath) }
 
 	} else {
 
@@ -2205,7 +2205,7 @@ function checkVideo {
 				-Path $script:historyFilePath `
 				-NoTypeInformation `
 				-Encoding UTF8
-		} catch { Write-Warning ('　❗ ダウンロード履歴を更新できませんでした: ' + $local:videoFileRelPath)
+		} catch { Write-Warning ('❗ ダウンロード履歴を更新できませんでした: ' + $local:videoFileRelPath)
 		} finally { $null = fileUnlock $script:historyLockFilePath }
 
 	}

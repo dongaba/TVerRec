@@ -135,7 +135,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 	$local:videoNum = 0
 	if ($null -eq $local:videoLinks) { $local:videoTotal = 0 }
 	else { $local:videoTotal = $local:videoLinks.Length }
-	Write-Output ('　💡 処理対象' + $local:videoTotal + '本　処理済' + $local:processedCount + '本')
+	Write-Output ('💡 処理対象' + $local:videoTotal + '本　処理済' + $local:processedCount + '本')
 
 	#処理時間の推計
 	$local:secElapsed = (Get-Date) - $local:totalStartTime

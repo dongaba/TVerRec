@@ -393,7 +393,7 @@ function deleteFiles {
 				-Force `
 				-ErrorAction SilentlyContinue
 		}
-	} catch { Write-Warning '　❗ 削除できないファイルがありました' }
+	} catch { Write-Warning '❗ 削除できないファイルがありました' }
 
 }
 
