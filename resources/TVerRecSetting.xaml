@@ -915,13 +915,37 @@
                         Margin="10,10,10,0"
                         IsExpanded="False"
                         FontFamily="Yu Gothic UI"
+                        Header="並列処理の有効化">
+                        <TextBlock
+                            Margin="20,0,20,5"
+                            TextWrapping="Wrap">
+                            並列処理を有効化して処理を高速化するかを設定します。<LineBreak/>
+                            ただし、並列処理を有効化すると履歴ファイルや無視リストの破損リスクが高まります。<LineBreak/>
+                            現在のところ、並列処理を行うのはダウンロードリストの作成処理とダウンロード対象外番組の削除処理、　空フォルダの削除処理です。
+                        </TextBlock>
+                    </Expander>
+                    <ComboBox
+                        x:Name="enableMultithread"
+                        SelectedIndex="0"
+                        Style="{DynamicResource ComboBoxStyle}"
+                        Margin="20,0,20,0"
+                        Width="100"
+                        HorizontalAlignment="Left">
+                        <ComboBoxItem>デフォルト値</ComboBoxItem>
+                        <ComboBoxItem>しない</ComboBoxItem>
+                        <ComboBoxItem>する</ComboBoxItem>
+                    </ComboBox>
+
+                    <Expander
+                        Margin="10,10,10,0"
+                        IsExpanded="False"
+                        FontFamily="Yu Gothic UI"
                         Header="並列処理の同時スレッド数">
                         <TextBlock
                             Margin="20,0,20,5"
                             TextWrapping="Wrap">
                             並列処理の際に同時に起動するスレッド数を指定します。<LineBreak/>
-                            最近の PC であれば100くらいの値を設定しても十分に動作すると思いますが、あまり大きな数を指定すると逆に処理時間が長くなる可能性があります。<LineBreak/>
-                            現在のところ、並列処理を行うのはダウンロードリストの作成処理とダウンロード対象外番組の削除処理、空フォルダの削除処理です。
+                            最近の PC であれば100くらいの値を設定しても十分に動作すると思いますが、あまり大きな数を指定すると逆に処理時間が長くなる可能性があります。
                         </TextBlock>
                     </Expander>
                     <TextBox
@@ -936,7 +960,7 @@
                         Margin="10,10,10,0"
                         IsExpanded="False"
                         FontFamily="Yu Gothic UI"
-                        Header="ダウンロード帯域制限">
+                        Header="ダウンロード帯域制限(Mbps)">
                         <TextBlock
                             Margin="20,0,20,5"
                             TextWrapping="Wrap">
@@ -956,7 +980,7 @@
                         Margin="10,10,10,0"
                         IsExpanded="False"
                         FontFamily="Yu Gothic UI"
-                        Header="HTTPアクセスのタイムアウト">
+                        Header="HTTPアクセスのタイムアウト(秒)">
                         <TextBlock
                             Margin="20,0,20,5"
                             TextWrapping="Wrap">

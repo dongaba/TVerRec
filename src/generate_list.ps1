@@ -59,17 +59,15 @@ try {
 checkRequiredFile
 
 #ダウンロード対象キーワードの読み込み
-$local:keywordNames = loadKeywordList
+$local:keywordNames = @(loadKeywordList)
 #ダウンロード対象外番組の読み込み
 $script:ignoreRegExTitles = getRegExIgnoreList
 getToken
 
 #キーワードの番号
 $local:keywordNum = 0
-if ($local:keywordNames -is [Array]) {
-	#トータルキーワード数
-	$local:keywordTotal = $local:keywordNames.Length
-} else { $local:keywordTotal = 1 }
+#トータルキーワード数
+$local:keywordTotal = $local:keywordNames.Count
 
 #進捗表示
 showProgressToast `
@@ -107,9 +105,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 		while ((fileLock $script:listLockFilePath).fileLocked -ne $true)
 		{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 		#ファイル操作
-		$script:listFileData = Import-Csv `
-			-Path $script:listFilePath `
-			-Encoding UTF8
+		$script:listFileData = Import-Csv -Path $script:listFilePath -Encoding UTF8
 	} catch { Write-Warning '❗ ダウンロードリストを読み込めなかったのでスキップしました'; continue
 	} finally { $null = fileUnlock $script:listLockFilePath }
 
@@ -119,9 +115,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 		while ((fileLock $script:historyLockFilePath).fileLocked -ne $true)
 		{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 		#ファイル操作
-		$script:historyFileData = Import-Csv `
-			-Path $script:historyFilePath `
-			-Encoding UTF8
+		$script:historyFileData = Import-Csv -Path $script:historyFilePath -Encoding UTF8
 	} catch { Write-Warning '❗ ダウンロード履歴を読み込めなかったのでスキップしました'; continue
 	} finally { $null = fileUnlock $script:historyLockFilePath }
 
@@ -140,7 +134,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 	#処理対象のトータル番組数
 	if ($null -eq $local:videoLinks) { $local:videoTotal = 0 }
-	else { $local:videoTotal = $local:videoLinks.Length }
+	else { $local:videoTotal = $local:videoLinks.Count }
 	Write-Output ('💡 処理対象' + $local:videoTotal + '本　処理済' + $local:searchResultCount + '本')
 
 	#処理対象番組がない場合は次のキーワード
@@ -171,8 +165,8 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#----------------------------------------------------------------------
 	#個々の番組の情報の取得ここから
 
-	#複数あるときは並列化して極力高速化
-	if ($local:videoTotal -gt 1) {
+	if ($script:enableMultithread -eq $true) {
+		#並列化が有効の場合は並列化
 
 		#関数の定義
 		$funcGoAnal = ${function:goAnal}.ToString()
@@ -292,22 +286,16 @@ foreach ($local:keywordName in $local:keywordNames) {
 				while ((fileLock $script:listLockFilePath).fileLocked -ne $true)
 				{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 				#ファイル操作
-				$newVideo | Export-Csv `
-					-Path $script:listFilePath `
-					-NoTypeInformation `
-					-Encoding UTF8 `
-					-Append
+				$newVideo | Export-Csv -Path $script:listFilePath -NoTypeInformation -Encoding UTF8 -Append
 				Write-Debug 'ダウンロードリストを書き込みました'
 			} catch { Write-Warning '❗ ダウンロードリストを更新できませんでした。スキップします'; continue
 			} finally { $null = fileUnlock $script:listLockFilePath }
-			$script:listFileData = Import-Csv `
-				-Path $script:listFilePath `
-				-Encoding UTF8
+			$script:listFileData = Import-Csv -Path $script:listFilePath -Encoding UTF8
 
 		} -ThrottleLimit $script:multithreadNum
 
 	} else {
-
+		#並列化が無効の場合は従来型処理
 		foreach ($local:videoLink in $local:videoLinks) {
 			Write-Output ('　' + [String](([Array]::IndexOf($local:videoLinks, $local:videoLink)) + 1 ) + '/' + [String]$local:videoLinks.Count + ' - ' + $local:videoLink)
 			#TVer番組ダウンロードのメイン処理
@@ -315,7 +303,6 @@ foreach ($local:keywordName in $local:keywordNames) {
 				-Keyword $local:keywordName `
 				-Link $local:videoLink
 		}
-
 	}
 
 	#----------------------------------------------------------------------
@@ -333,5 +320,5 @@ updateProgressToast `
 	-Group 'ListGen'
 
 Write-Output '---------------------------------------------------------------------------'
-Write-Output '番組リストファイル出力処理を終了しました。                                                       '
+Write-Output '番組リストファイル出力処理を終了しました。'
 Write-Output '---------------------------------------------------------------------------'
