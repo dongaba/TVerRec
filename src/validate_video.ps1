@@ -130,9 +130,7 @@ try {
 	{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 	#ファイル操作
 	$local:videoHists = (
-		Import-Csv `
-			-Path $script:historyFilePath `
-			-Encoding UTF8 `
+		Import-Csv -Path $script:historyFilePath -Encoding UTF8 `
 		| Where-Object { $_.videoValidated -eq '0' } `
 		| Where-Object { $_.videoPath -ne '-- IGNORED --' } `
 		| Select-Object 'videoPage', 'videoPath', 'videoValidated'
@@ -148,7 +146,7 @@ if ($null -eq $local:videoHists) {
 } else {
 	#ダウンロードファイルをチェック
 	$local:validateTotal = 0
-	$local:validateTotal = $local:videoHists.Length
+	$local:validateTotal = $local:videoHists.Count
 
 	#ffmpegのデコードオプションの設定
 	if ($script:forceSoftwareDecodeFlag -eq $true ) { $local:decodeOption = '' }
@@ -248,10 +246,7 @@ try {
 	foreach ($local:uncheckedVido in ($local:videoHists).Where({ $_.videoValidated -eq 2 })) {
 		$local:uncheckedVido.videoValidated = '0'
 	}
-	$local:videoHists | Export-Csv `
-		-Path $script:historyFilePath `
-		-NoTypeInformation `
-		-Encoding UTF8
+	$local:videoHists | Export-Csv -Path $script:historyFilePath -NoTypeInformation -Encoding UTF8
 } catch { Write-Warning '❗ ダウンロード履歴の更新に失敗しました'
 } finally { $null = fileUnlock $script:historyLockFilePath }
 

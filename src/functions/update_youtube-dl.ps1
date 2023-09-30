@@ -97,11 +97,7 @@ try {
 
 #youtube-dlの最新バージョン取得
 try {
-	$local:latestVersion = (
-		Invoke-RestMethod `
-			-Uri $local:releases `
-			-Method Get
-	)[0].Tag_Name
+	$local:latestVersion = (Invoke-RestMethod -Uri $local:releases -Method Get)[0].Tag_Name
 } catch { Write-Warning '❗ youtube-dlの最新バージョンを特定できませんでした'; return }
 
 #youtube-dlのダウンロード
@@ -128,15 +124,10 @@ if ($local:latestVersion -eq $local:ytdlCurrentVersion) {
 	Write-Output 'youtube-dlの最新版をダウンロードします'
 	try {
 		#ダウンロード
-		$local:tag = (Invoke-RestMethod `
-				-Uri $local:releases `
-				-Method Get
-		)[0].Tag_Name
+		$local:tag = (Invoke-RestMethod -Uri $local:releases -Method Get)[0].Tag_Name
 		$local:downloadURL = 'https://github.com/' + $local:repo + '/releases/download/' + $local:tag + '/' + $local:file
 		$local:ytdlFileLocation = Join-Path $local:binDir $local:fileAfterRename
-		Invoke-WebRequest `
-			-Uri $local:downloadURL `
-			-Out $local:ytdlFileLocation
+		Invoke-WebRequest -Uri $local:downloadURL -Out $local:ytdlFileLocation
 	} catch { Write-Error '❗ youtube-dlのダウンロードに失敗しました' ; exit 1 }
 
 	if ($IsWindows -eq $false) { (& chmod a+x $local:ytdlFileLocation) }

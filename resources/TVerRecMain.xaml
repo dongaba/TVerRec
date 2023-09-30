@@ -363,7 +363,7 @@
                 <Button
                     x:Name="btnLoop"
                     Style="{DynamicResource ButtonStyle}"
-                    Content="ループ実行"
+                    Content="連続実行"
                     Margin="10,0,10,0"
                     Width="200"/>
             </StackPanel>

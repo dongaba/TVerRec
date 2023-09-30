@@ -59,17 +59,15 @@ try {
 checkRequiredFile
 
 #ダウンロード対象キーワードの読み込み
-$local:keywordNames = loadKeywordList
+$local:keywordNames = @(loadKeywordList)
 #ダウンロード対象外番組の読み込み
 $script:ignoreRegExTitles = getRegExIgnoreList
 getToken
 
 #キーワードの番号
 $local:keywordNum = 0
-if ($script:keywordNames -is [Array]) {
-	#トータルキーワード数
-	$local:keywordTotal = $script:keywordNames.Length
-} else { $local:keywordTotal = 1 }
+#トータルキーワード数
+$local:keywordTotal = $script:keywordNames.Count
 
 #進捗表示
 showProgress2Row `
@@ -88,6 +86,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#いろいろ初期化
 	$local:videoLink = ''
 	$local:videoLinks = @()
+	$local:resultLinks = @()
 	$local:processedCount = 0
 	$local:keywordName = trimTabSpace ($local:keywordName)
 
@@ -98,7 +97,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 	Write-Output '----------------------------------------------------------------------'
 
 	#処理
-	$local:resultLinks = getVideoLinksFromKeyword ($local:keywordName)
+	$local:resultLinks = @(getVideoLinksFromKeyword ($local:keywordName))
 	$local:keywordName = $local:keywordName.Replace('https://tver.jp/', '')
 
 	#ダウンロード履歴ファイルのデータを読み込み
@@ -107,17 +106,14 @@ foreach ($local:keywordName in $local:keywordNames) {
 		while ((fileLock $script:historyLockFilePath).fileLocked -ne $true)
 		{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 		#ファイル操作
-		$script:historyFileData = Import-Csv `
-			-Path $script:historyFilePath `
-			-Encoding UTF8
+		$script:historyFileData = Import-Csv -Path $script:historyFilePath -Encoding UTF8
 	} catch { Write-Warning '❗ ダウンロード履歴を読み込めなかったのでスキップしました'; continue
 	} finally { $null = fileUnlock $script:historyLockFilePath }
 
 	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 	Write-Output '処理履歴との照合 '
 	$local:resultNum = 0
-	if ($null -eq $local:resultLinks) { $local:resultTotal = 0 }
-	else { $local:resultTotal = $local:resultLinks.Length }
+	$local:resultTotal = $local:resultLinks.Count
 	foreach ($local:resultLink in $local:resultLinks) {
 		$local:resultNum = $local:resultNum + 1
 		$local:historyMatch = $script:historyFileData | Where-Object { $_.videoPage -eq $local:resultLink }
@@ -134,7 +130,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#ジャンル内の処理中の番組の番号
 	$local:videoNum = 0
 	if ($null -eq $local:videoLinks) { $local:videoTotal = 0 }
-	else { $local:videoTotal = $local:videoLinks.Length }
+	else { $local:videoTotal = $local:videoLinks.Count }
 	Write-Output ('💡 処理対象' + $local:videoTotal + '本　処理済' + $local:processedCount + '本')
 
 	#処理時間の推計
@@ -146,7 +142,8 @@ foreach ($local:keywordName in $local:keywordNames) {
 	$local:progressRatio1 = ($local:keywordNum / $local:keywordTotal)
 	$local:progressRatio2 = 0
 
-	$local:keywordNum = $local:keywordNum + 1		#キーワード数のインクリメント
+	#キーワード数のインクリメント
+	$local:keywordNum = $local:keywordNum + 1
 
 	#進捗更新
 	updateProgress2Row `

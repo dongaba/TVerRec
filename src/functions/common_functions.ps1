@@ -67,17 +67,16 @@ switch ($true) {
 }
 $script:locale = (Get-Culture).Name
 $script:tz = [String][TimeZoneInfo]::Local.BaseUtcOffset
-$script:ipapi = ''
+$local:ipapi = ''
 $script:clientEnv = @{}
 try {
-	$script:ipapi = Invoke-RestMethod `
-		-Uri 'https://ipapi.co/jsonp/' `
-		-TimeoutSec $script:timeoutSec
-	$script:ipapi = $script:ipapi.Replace('callback(', '').Replace(');', '')
-	$script:ipapi = $script:ipapi.Replace('{', "{`n").Replace('}', "`n}")
-	$script:ipapi = $script:ipapi.Replace(', ', ",`n")
-	$(ConvertFrom-Json $script:ipapi).psobject.properties | ForEach-Object { $script:clientEnv[$_.Name] = $_.Value }
+	$local:ipapi = Invoke-RestMethod -Uri 'https://ipapi.co/jsonp/' -TimeoutSec $script:timeoutSec
+	$local:ipapi = $local:ipapi.Replace('callback(', '').Replace(');', '')
+	$local:ipapi = $local:ipapi.Replace('{', "{`n").Replace('}', "`n}")
+	$local:ipapi = $local:ipapi.Replace(', ', ",`n")
+	$local:GeoIPValues = $(ConvertFrom-Json $local:ipapi).psobject.properties
 } catch { Write-Debug 'Geo IPのチェックに失敗しました' }
+foreach ($local:GeoIPValue in $local:GeoIPValues) { $script:clientEnv.Add($local:GeoIPValue.Name, $local:GeoIPValue.Value) }
 $script:clientEnv.Add('AppName', $script:appName)
 $script:clientEnv.Add('AppVersion', $script:appVersion)
 $script:clientEnv.Add('PSEdition', $PSVersionTable.PSEdition)
@@ -116,11 +115,8 @@ function goAnal {
 
 	$progressPreference = 'silentlyContinue'
 	$local:statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
-	try {
-		$null = Invoke-WebRequest `
-			-Uri ($local:statisticsBase + $local:event + '.svg') `
-			-TimeoutSec $script:timeoutSec
-	} catch { Write-Debug 'Failed to collect count' }
+	try { $null = Invoke-WebRequest -Uri ($local:statisticsBase + $local:event + '.svg') -TimeoutSec $script:timeoutSec }
+	catch { Write-Debug 'Failed to collect count' }
 	finally { $progressPreference = 'Continue' }
 
 	if ($local:event -eq 'search') { return }
@@ -154,11 +150,7 @@ function goAnal {
 
 	$progressPreference = 'silentlyContinue'
 	try {
-		$null = Invoke-RestMethod `
-			-Uri ($local:gaURL + '?' + $local:gaKey + '&' + $local:gaID) `
-			-Method 'POST' -Headers $local:gaHeaders `
-			-Body $local:gaBody `
-			-TimeoutSec $script:timeoutSec
+		$null = Invoke-RestMethod -Uri ($local:gaURL + '?' + $local:gaKey + '&' + $local:gaID) -Method 'POST' -Headers $local:gaHeaders -Body $local:gaBody -TimeoutSec $script:timeoutSec
 	} catch { Write-Debug 'Failed to collect statistics'
 	} finally { $progressPreference = 'Continue' }
 
@@ -212,7 +204,7 @@ function getFileNameWoInvChars {
 
 	$local:invalidChars = [IO.Path]::GetInvalidFileNameChars() -join ''
 	$local:result = '[{0}]' -f [RegEx]::Escape($local:invalidChars)
-	$local:Name = $local:Name -replace $local:result , ''
+	$local:Name = $local:Name.Replace($local:result , '')
 
 	#Linux/MacではGetInvalidFileNameChars()が不完全なため、ダメ押しで置換
 	$local:Name = $local:Name.Replace('*', '-')
@@ -275,36 +267,26 @@ function getNarrowChars {
 	$local:narrowAlpha = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 	$local:wideSimbol = '＠＃＄％＾＆＊－＋＿／［］｛｝（）＜＞　￥＼”；：．，'
 	$local:narrowSimbol = '@#$%^&*-+_/[]{}()<> \\";:.,'
+
 	for ($i = 0; $i -lt $local:wideKanaDaku.Length; $i++) {
-		$local:text = $local:text.Replace(
-			$local:narrowKanaDaku[$i] + 'ﾞ', $local:wideKanaDaku[$i]
-		)
+		$local:text = $local:text.Replace($local:narrowKanaDaku[$i] + 'ﾞ', $local:wideKanaDaku[$i])
 	}
 	for ($i = 0; $i -lt $local:wideKanaHanDaku.Length; $i++) {
-		$local:text = $local:text.Replace(
-			$local:narrowKanaHanDaku[$i] + 'ﾟ', $local:narrowKanaHanDaku[$i]
-		)
+		$local:text = $local:text.Replace($local:narrowKanaHanDaku[$i] + 'ﾟ', $local:narrowKanaHanDaku[$i])
 	}
 	for ($i = 0; $i -lt $local:wideKana.Length; $i++) {
-		$local:text = $local:text.Replace(
-			$local:narrowKana[$i], $local:wideKana[$i]
-		)
+		$local:text = $local:text.Replace($local:narrowKana[$i], $local:wideKana[$i])
 	}
 	for ($i = 0; $i -lt $local:narrowNum.Length; $i++) {
-		$local:text = $local:text.Replace(
-			$local:wideNum[$i], $local:narrowNum[$i]
-		)
+		$local:text = $local:text.Replace($local:wideNum[$i], $local:narrowNum[$i])
 	}
 	for ($i = 0; $i -lt $local:narrowAlpha.Length; $i++) {
-		$local:text = $local:text.Replace(
-			$local:wideAlpha[$i], $local:narrowAlpha[$i]
-		)
+		$local:text = $local:text.Replace($local:wideAlpha[$i], $local:narrowAlpha[$i])
 	}
 	for ($i = 0; $i -lt $local:narrowSimbol.Length; $i++) {
-		$local:text = $local:text.Replace(
-			$local:wideSimbol[$i], $local:narrowSimbol[$i]
-		)
+		$local:text = $local:text.Replace($local:wideSimbol[$i], $local:narrowSimbol[$i])
 	}
+
 	return $local:text
 }
 
@@ -382,16 +364,9 @@ function deleteFiles {
 	try {
 		foreach ($local:delCondition in $local:delConditions.Split(',').Trim()) {
 			Write-Output ('　' + (Join-Path $local:basePath $local:delCondition))
-			$null = Get-ChildItem `
-				-LiteralPath $local:basePath `
-				-Recurse `
-				-File `
-				-Filter $local:delCondition `
-				-ErrorAction SilentlyContinue `
+			$null = Get-ChildItem -LiteralPath $local:basePath -Recurse -File -Filter $local:delCondition -ErrorAction SilentlyContinue `
 			| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays($local:delPeriod) } `
-			| Remove-Item `
-				-Force `
-				-ErrorAction SilentlyContinue
+			| Remove-Item -Force -ErrorAction SilentlyContinue
 		}
 	} catch { Write-Warning '❗ 削除できないファイルがありました' }
 
@@ -423,34 +398,23 @@ function moveItem() {
 	param(
 		[Parameter(Mandatory = $true, Position = 0)]
 		[Alias('Path')]
-		[String]$src,
+		[String]$local:src,
 		[Parameter(Mandatory = $true, Position = 1)]
 		[Alias('Destination')]
-		[String]$dist
+		[String]$local:dist
 	)
 
-	if ((Test-Path $dist) -And (Test-Path -PathType Container $src)) {
+	if ((Test-Path $local:dist) -And (Test-Path -PathType Container $local:src)) {
 		# ディレクトリ上書き(移動先に存在 かつ ディレクトリ)は再帰的に moveItem 呼び出し
-		Get-ChildItem `
-			-Path $src `
-		| ForEach-Object {
-			moveItem `
-				-Force `
-				-Path $_.FullName `
-				-Destination ($dist + '/' + $_.Name)
+		foreach ($local:srcChild in (Get-ChildItem -Path $local:src)) {
+			moveItem -Force -Path $local:srcChild.FullName -Destination ($local:dist + '/' + $local:srcChild.Name)
 		}
 		# 移動し終わったディレクトリを削除
-		Remove-Item `
-			-Path $src `
-			-Recurse `
-			-Force
+		Remove-Item -Path $local:src -Recurse -Force
 	} else {
 		# 移動先に対象なし または ファイルの Move-Item に -Forece つけて実行
-		Write-Output ($src + '  →  ' + $dist)
-		Move-Item `
-			-Path $src `
-			-Destination $dist `
-			-Force
+		Write-Output ($local:src + '  →  ' + $local:dist)
+		Move-Item -Path $local:src -Destination $local:dist -Force
 	}
 }
 

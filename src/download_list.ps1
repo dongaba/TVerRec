@@ -75,12 +75,11 @@ getToken
 Write-Output '----------------------------------------------------------------------'
 Write-Output 'ダウンロードリストを読み込みます'
 $local:listLinks = @()
-$local:listLinks = loadDownloadList
+$local:listLinks = @(loadDownloadList)
 if ($null -eq $local:listLinks) { Write-Warning '💡 ダウンロードリストが0件です' ; exit 0 }
 
 $local:listTotal = 0
-if ($local:listLinks -is [Array]) { $local:listTotal = $script:listLinks.Length }
-else { $local:listTotal = 1 }
+$local:listTotal = $script:listLinks.Count
 Write-Output ('　リスト件数' + $local:listTotal + '件')
 Write-Output ''
 
@@ -92,9 +91,7 @@ try {
 	while ((fileLock $script:historyLockFilePath).fileLocked -ne $true)
 	{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 	#ファイル操作
-	$script:historyFileData = Import-Csv `
-		-Path $script:historyFilePath `
-		-Encoding UTF8
+	$script:historyFileData = Import-Csv -Path $script:historyFilePath -Encoding UTF8
 } catch { Write-Warning '❗ ダウンロード履歴を読み込めなかったのでスキップしました'; continue
 } finally { $null = fileUnlock $script:historyLockFilePath }
 Write-Output ''
@@ -111,7 +108,7 @@ foreach ($local:listLink in $local:listLinks.episodeID) {
 }
 
 #ダウンロード対象のトータル番組数
-$local:videoTotal = $local:videoLinks.Length
+$local:videoTotal = $local:videoLinks.Count
 Write-Output ('💡 ダウンロード対象' + $local:videoTotal + '件')
 Write-Output ''
 

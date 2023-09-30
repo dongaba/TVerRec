@@ -89,10 +89,7 @@ function AddOutput {
 
 try {
 	[String]$local:mainXaml = Get-Content -Path '../resources/TVerRecMain.xaml'
-	$local:mainXaml = $local:mainXaml `
-		-replace 'mc:Ignorable="d"', '' `
-		-replace 'x:N', 'N' `
-		-replace 'x:Class=".*?"', ''
+	$local:mainXaml = $local:mainXaml -replace 'mc:Ignorable="d"', '' -replace 'x:N', 'N' -replace 'x:Class=".*?"', ''
 	[xml]$local:mainCleanXaml = $local:mainXaml
 	$script:mainWindow = [System.Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $local:mainCleanXaml))
 } catch { Write-Error '❗ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。' ; exit 1 }
@@ -126,8 +123,7 @@ $script:mainWindow.Add_Closing({
 	})
 
 #Name属性を持つ要素のオブジェクト作成
-$local:mainCleanXaml.SelectNodes('//*[@Name]') `
-| ForEach-Object { Set-Variable -Name ($_.Name) -Value $script:mainWindow.FindName($_.Name) -Scope Local }
+$local:mainCleanXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $script:mainWindow.FindName($_.Name) -Scope Local }
 
 #WPFにロゴをロード
 $local:logo = New-Object System.Windows.Media.Imaging.BitmapImage
@@ -267,19 +263,19 @@ while ($script:mainWindow.IsVisible) {
 	DoWpfEvents
 
 	#ジョブがある場合の処理
-	Get-Job | ForEach-Object {
+	foreach ($local:job in Get-Job){
 		# Get the originating button via the job name.
-		$script:btn = $script:mainWindow.FindName($_.Name)
+		$script:btn = $script:mainWindow.FindName($local:job.Name)
 
 		#ジョブが終了したかどうか判定
-		$local:completed = $_.State -in 'Completed', 'Failed', 'Stopped'
+		$local:completed = $local:job.State -in 'Completed', 'Failed', 'Stopped'
 
 		#ジョブからの出力をテキストボックスに出力
-		if ($script:data = Receive-Job $_ *>&1) { AddOutput ($script:data -join "`n") }
+		if ($script:data = Receive-Job $local:job *>&1) { AddOutput ($script:data -join "`n") }
 
 		#終了したジョブのボタンの再有効化
 		if ($local:completed) {
-			Remove-Job $_
+			Remove-Job $local:job
 			foreach ($script:btn in $script:btns) { $script:btn.IsEnabled = $true }
 			$script:btnExit.IsEnabled = $true
 			$script:btnKillAll.IsEnabled = $false

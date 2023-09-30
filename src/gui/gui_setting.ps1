@@ -82,13 +82,8 @@ function loadDefaultSetting {
 		[Parameter(Mandatory = $true, Position = 0)]
 		[String]$local:key
 	)
-	try {
-		$local:defaultSetting = (Select-String `
-				-Pattern ('^' + $local:key.Replace('$', '\$')) `
-				-Path $script:systemSettingFile `
-			| ForEach-Object { $_.Line }
-		).split('=')[1].Trim()
-	} catch { $local:defaultSetting = '' }
+	try { $local:defaultSetting = (Select-String -Pattern ('^' + $local:key.Replace('$', '\$')) -Path $script:systemSettingFile | ForEach-Object { $_.Line }).split('=')[1].Trim() }
+	catch { $local:defaultSetting = '' }
 
 	return $local:defaultSetting.Trim("'")
 }
@@ -99,14 +94,8 @@ function loadCurrentSetting {
 		[Parameter(Mandatory = $true, Position = 0)]
 		[String]$local:key
 	)
-	try {
-		$local:currentSetting = (
-			Select-String `
-				-Pattern ('^' + $local:key.Replace('$', '\$')) `
-				-Path $script:userSettingFile `
-			| ForEach-Object { $_.Line }
-		).split('=')[1].Trim()
-	} catch { $local:currentSetting = '' }
+	try { $local:currentSetting = (Select-String -Pattern ('^' + $local:key.Replace('$', '\$')) -Path $script:userSettingFile | ForEach-Object { $_.Line }).split('=')[1].Trim() }
+	catch { $local:currentSetting = '' }
 
 	return $local:currentSetting.Trim("'")
 }
@@ -121,7 +110,7 @@ function writeSetting {
 	#自動生成部分の行数を取得
 	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 		try {
-			$local:totalLineNum = (Get-Content -Path $script:userSettingFile).Length
+			$local:totalLineNum = (Get-Content -Path $script:userSettingFile).Count
 		} catch { $local:totalLineNum = 0 }
 		try {
 			$local:headLineNum = (Select-String $local:startSegment $script:userSettingFile | ForEach-Object { $_.LineNumber }) - 1
@@ -186,12 +175,8 @@ function writeSetting {
 	}
 
 	#改行コードをLFで出力
-	Write-Output $local:newSetting `
-	| ForEach-Object { $_ + "`n" } `
-	| Out-File `
-		-Path $script:userSettingFile `
-		-Encoding UTF8 `
-		-NoNewline
+	Write-Output $local:newSetting | ForEach-Object { $_ + "`n" } `
+	| Out-File -Path $script:userSettingFile -Encoding UTF8 -NoNewline
 
 }
 
@@ -210,10 +195,7 @@ $script:userSettingFile = Join-Path $script:confDir 'user_setting.ps1'
 
 try {
 	[String]$local:mainXaml = Get-Content -Path (Join-Path $script:wpfDir 'TVerRecSetting.xaml')
-	$local:mainXaml = $local:mainXaml `
-		-replace 'mc:Ignorable="d"', '' `
-		-replace 'x:N', 'N' `
-		-replace 'x:Class=".*?"', ''
+	$local:mainXaml = $local:mainXaml -replace 'mc:Ignorable="d"', '' -replace 'x:N', 'N' -replace 'x:Class=".*?"', ''
 	[xml]$local:mainCleanXaml = $local:mainXaml
 	$script:settingWindow = [System.Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $local:mainCleanXaml))
 } catch { Write-Error '❗ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。' ; exit 1 }
@@ -245,8 +227,7 @@ $script:settingWindow.Add_Closing({
 	})
 
 #Name属性を持つ要素のオブジェクト作成
-$local:mainCleanXaml.SelectNodes('//*[@Name]') `
-| ForEach-Object { Set-Variable -Name ($_.Name) -Value $script:settingWindow.FindName($_.Name) -Scope Script }
+$local:mainCleanXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $script:settingWindow.FindName($_.Name) -Scope Script }
 
 #WPFにロゴをロード
 $local:logo = New-Object System.Windows.Media.Imaging.BitmapImage
@@ -307,6 +288,7 @@ $script:settingAttributes += '$script:downloadWorkDir'
 $script:settingAttributes += '$script:saveBaseDir'
 $script:settingAttributes += '$script:parallelDownloadFileNum'
 $script:settingAttributes += '$script:parallelDownloadNumPerFile'
+$script:settingAttributes += '$script:enableMultithread'
 $script:settingAttributes += '$script:multithreadNum'
 $script:settingAttributes += '$script:rateLimit'
 $script:settingAttributes += '$script:timeoutSec'
