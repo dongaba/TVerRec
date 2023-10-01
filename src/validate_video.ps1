@@ -126,8 +126,7 @@ Write-Output '整合性検証が終わっていない番組を検証します'
 Write-Output '----------------------------------------------------------------------'
 try {
 	#ロックファイルをロック
-	while ((fileLock $script:historyLockFilePath).fileLocked -ne $true)
-	{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
+	while ((fileLock $script:historyLockFilePath).fileLocked -ne $true) { Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 	#ファイル操作
 	$local:videoHists = (
 		Import-Csv -Path $script:historyFilePath -Encoding UTF8 `
@@ -135,8 +134,8 @@ try {
 		| Where-Object { $_.videoPath -ne '-- IGNORED --' } `
 		| Select-Object 'videoPage', 'videoPath', 'videoValidated'
 	)
-} catch { Write-Warning '❗ ダウンロード履歴の読み込みに失敗しました'
-} finally { $null = fileUnlock $script:historyLockFilePath }
+} catch { Write-Warning '❗ ダウンロード履歴の読み込みに失敗しました' }
+finally { $null = fileUnlock $script:historyLockFilePath }
 
 
 if ($null -eq $local:videoHists) {
@@ -237,8 +236,7 @@ showProgressToast `
 #処理
 try {
 	#ロックファイルをロック
-	while ((fileLock $script:historyLockFilePath).fileLocked -ne $true)
-	{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
+	while ((fileLock $script:historyLockFilePath).fileLocked -ne $true) { Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 	#ファイル操作
 	$local:videoHists = Import-Csv `
 		-Path $script:historyFilePath `
@@ -247,8 +245,8 @@ try {
 		$local:uncheckedVido.videoValidated = '0'
 	}
 	$local:videoHists | Export-Csv -Path $script:historyFilePath -NoTypeInformation -Encoding UTF8
-} catch { Write-Warning '❗ ダウンロード履歴の更新に失敗しました'
-} finally { $null = fileUnlock $script:historyLockFilePath }
+} catch { Write-Warning '❗ ダウンロード履歴の更新に失敗しました' }
+finally { $null = fileUnlock $script:historyLockFilePath }
 
 #進捗表示
 updateProgressToast `

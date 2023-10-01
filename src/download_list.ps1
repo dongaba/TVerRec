@@ -60,7 +60,7 @@ checkRequiredFile
 
 #いろいろ初期化
 $local:videoLink = ''
-$local:videoLinks = @()
+$local:videoLinks = [System.Collections.Generic.List[string]]::new()
 
 #リスト内の処理中の番組の番号
 $local:videoNum = 0
@@ -88,12 +88,11 @@ Write-Output 'ダウンロード履歴を読み込みます'
 #ダウンロード履歴ファイルのデータを読み込み
 try {
 	#ロックファイルをロック
-	while ((fileLock $script:historyLockFilePath).fileLocked -ne $true)
-	{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
+	while ((fileLock $script:historyLockFilePath).fileLocked -ne $true) { Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 	#ファイル操作
 	$script:historyFileData = Import-Csv -Path $script:historyFilePath -Encoding UTF8
-} catch { Write-Warning '❗ ダウンロード履歴を読み込めなかったのでスキップしました'; continue
-} finally { $null = fileUnlock $script:historyLockFilePath }
+} catch { Write-Warning '❗ ダウンロード履歴を読み込めなかったのでスキップしました'; continue }
+finally { $null = fileUnlock $script:historyLockFilePath }
 Write-Output ''
 
 Write-Output '----------------------------------------------------------------------'
@@ -103,8 +102,8 @@ foreach ($local:listLink in $local:listLinks.episodeID) {
 	if ($null -ne $script:historyFileData) {
 		$local:historyMatch = $script:historyFileData `
 		| Where-Object { $_.videoPage -eq $local:listLink }
-		if ($null -eq $local:historyMatch) { $local:videoLinks += $local:listLink }
-	} else { $local:videoLinks += $local:listLink }
+		if ($null -eq $local:historyMatch) { $local:videoLinks.Add($local:listLink) }
+	} else { $local:videoLinks.Add($local:listLink) }
 }
 
 #ダウンロード対象のトータル番組数

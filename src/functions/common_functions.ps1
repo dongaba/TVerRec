@@ -26,6 +26,8 @@
 ###################################################################################
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
+Write-Debug $myInvocation.MyCommand.name
+
 #region 環境
 
 #----------------------------------------------------------------------
@@ -109,6 +111,8 @@ function goAnal {
 		[String]$local:id
 	)
 
+	Write-Debug $myInvocation.MyCommand.name
+
 	if (!($local:type)) { $local:type = '' }
 	if (!($local:id)) { $local:id = '' }
 	$local:epochTime = [decimal]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() * 1000)
@@ -151,8 +155,8 @@ function goAnal {
 	$progressPreference = 'silentlyContinue'
 	try {
 		$null = Invoke-RestMethod -Uri ($local:gaURL + '?' + $local:gaKey + '&' + $local:gaID) -Method 'POST' -Headers $local:gaHeaders -Body $local:gaBody -TimeoutSec $script:timeoutSec
-	} catch { Write-Debug 'Failed to collect statistics'
-	} finally { $progressPreference = 'Continue' }
+	} catch { Write-Debug 'Failed to collect statistics' }
+	finally { $progressPreference = 'Continue' }
 
 }
 
@@ -167,6 +171,8 @@ function getTimeStamp {
 	[OutputType([System.Void])]
 	Param ()
 
+	Write-Debug $myInvocation.MyCommand.name
+
 	$local:timeStamp = Get-Date -UFormat '%Y-%m-%d %H:%M:%S'
 	return $local:timeStamp
 }
@@ -175,6 +181,8 @@ function getTimeStamp {
 #UNIX時間をDateTime型に変換
 #----------------------------------------------------------------------
 function unixTimeToDateTime($unixTime) {
+	Write-Debug $myInvocation.MyCommand.name
+
 	$origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
 	$origin.AddSeconds($unixTime)
 }
@@ -183,6 +191,8 @@ function unixTimeToDateTime($unixTime) {
 #DateTime型をUNIX時間に変換
 #----------------------------------------------------------------------
 function dateTimeToUnixTime($dateTime) {
+	Write-Debug $myInvocation.MyCommand.name
+
 	$origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
 	[Int]($dateTime - $origin).TotalSeconds
 }
@@ -201,6 +211,8 @@ function getFileNameWoInvChars {
 		[Parameter(Mandatory = $true, Position = 0)]
 		[String]$local:Name
 	)
+
+	Write-Debug $myInvocation.MyCommand.name
 
 	$local:invalidChars = [IO.Path]::GetInvalidFileNameChars() -join ''
 	$local:result = '[{0}]' -f [RegEx]::Escape($local:invalidChars)
@@ -253,6 +265,8 @@ function getNarrowChars {
 	[OutputType([String])]
 	Param ([String]$local:text)
 
+	Write-Debug $myInvocation.MyCommand.name
+
 	$local:wideKanaDaku = 'ガギグゲゴザジズゼゾダヂヅデドバビブベボ'
 	$local:narrowKanaDaku = 'ｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾊﾋﾌﾍﾎ'
 	$local:wideKanaHanDaku = 'パピプペポ'
@@ -298,6 +312,8 @@ function getSpecialCharacterReplaced {
 	[OutputType([String])]
 	Param ([String]$local:text)
 
+	Write-Debug $myInvocation.MyCommand.name
+
 	$local:text = $local:text.Replace('&amp;', '&')
 	$local:text = $local:text.Replace('*', '＊')
 	$local:text = $local:text.Replace('|', '｜')
@@ -324,6 +340,8 @@ function trimTabSpace {
 	[OutputType([String])]
 	Param ([String]$local:text)
 
+	Write-Debug $myInvocation.MyCommand.name
+
 	return $local:text.Replace("`t", ' ').Replace('  ', ' ')
 }
 
@@ -333,6 +351,8 @@ function trimTabSpace {
 function trimComment {
 	[OutputType([String])]
 	Param ([String]$local:text)
+
+	Write-Debug $myInvocation.MyCommand.name
 
 	return $local:text.Split("`t")[0].Split(' ')[0].Split('#')[0]
 }
@@ -361,6 +381,8 @@ function deleteFiles {
 		[int32]$local:delPeriod
 	)
 
+	Write-Debug $myInvocation.MyCommand.name
+
 	try {
 		foreach ($local:delCondition in $local:delConditions.Split(',').Trim()) {
 			Write-Output ('　' + (Join-Path $local:basePath $local:delCondition))
@@ -386,6 +408,9 @@ function unZip {
 		[Alias('OutPath')]
 		[String]$path
 	)
+
+	Write-Debug $myInvocation.MyCommand.name
+
 	[System.IO.Compression.ZipFile]::ExtractToDirectory($zipArchive, $path, $true)
 }
 
@@ -403,6 +428,8 @@ function moveItem() {
 		[Alias('Destination')]
 		[String]$local:dist
 	)
+
+	Write-Debug $myInvocation.MyCommand.name
 
 	if ((Test-Path $local:dist) -And (Test-Path -PathType Container $local:src)) {
 		# ディレクトリ上書き(移動先に存在 かつ ディレクトリ)は再帰的に moveItem 呼び出し
@@ -434,11 +461,13 @@ function fileLock {
 		[System.IO.FileInfo]$local:Path
 	)
 
+	Write-Debug $myInvocation.MyCommand.name
+
 	try {
-		$local:fileLocked = $true
 		# attempt to open file and detect file lock
 		$script:fileInfo = New-Object System.IO.FileInfo $local:Path
 		$script:fileStream = $script:fileInfo.Open([System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+		$local:fileLocked = $true
 	} catch { $fileLocked = $false
 	} finally {
 		# return result
@@ -460,6 +489,8 @@ function fileUnlock {
 		[Alias('Path')]
 		[System.IO.FileInfo]$local:Path
 	)
+
+	Write-Debug $myInvocation.MyCommand.name
 
 	try {
 		# close stream if not lock
@@ -486,6 +517,8 @@ function isLocked {
 		[Alias('Path')]
 		[String]$local:isLockedPath
 	)
+
+	Write-Debug $myInvocation.MyCommand.name
 
 	try {
 		$local:isFileLocked = $false
@@ -533,6 +566,8 @@ function Out-Msg-Color {
 		[Boolean]$local:noLF
 	)
 
+	Write-Debug $myInvocation.MyCommand.name
+
 	# Save previous colors
 	$local:prevForegroundColor = $host.UI.RawUI.ForegroundColor
 	$local:prevBackgroundColor = $host.UI.RawUI.BackgroundColor
@@ -566,6 +601,8 @@ function Get-WindowsAppId {
 	[OutputType([String])]
 	Param ()
 
+	Write-Debug $myInvocation.MyCommand.name
+
 	$local:appID = (Get-StartApps -Name 'PowerShell').where({ $_.Name -like 'PowerShell*' })[0].AppId
 
 	return $local:appID
@@ -596,12 +633,11 @@ function showToast {
 		[Boolean]$local:toastSilent
 	)
 
+	Write-Debug $myInvocation.MyCommand.name
+
 	if ($IsWindows) {
-		if ($local:toastSilent) {
-			$local:toastSoundElement = '<audio silent="true" />'
-		} else {
-			$local:toastSoundElement = '<audio src="ms-winsoundevent:Notification.Default" loop="false"/>'
-		}
+		if ($local:toastSilent) { $local:toastSoundElement = '<audio silent="true" />' }
+		else { $local:toastSoundElement = '<audio src="ms-winsoundevent:Notification.Default" loop="false"/>' }
 
 		if (!($local:toastDuration)) { $local:toastDuration = 'short' }
 		$local:toastAttribution = ''
@@ -637,19 +673,12 @@ function showToast {
 
 	} elseif ($IsMacOS) {
 		if (Get-Command osascript -ea SilentlyContinue) {
-			$local:toastParams = `
-				'display notification "' + $local:toastText2 + `
-				'" with title "' + $script:appName + `
-				'" subtitle "' + $local:toastText1 + `
-				'" sound name "Blow"'
+			$local:toastParams = 'display notification "' + $local:toastText2 + '" with title "' + $script:appName + '" subtitle "' + $local:toastText1 + '" sound name "Blow"'
 			$local:toastParams | & osascript
 		}
 
 	} elseif ($IsLinux) {
-		if (Get-Command notify-send -ea SilentlyContinue) {
-			$local:notificationTitle = 'TVerRec'
-			& notify-send -a $local:notificationTitle -t 5000 -i $script:toastAppLogo $local:toastText1 $local:toastText2
-		}
+		if (Get-Command notify-send -ea SilentlyContinue) { & notify-send -a $script:appName -t 5000 -i $script:toastAppLogo $local:toastText1 $local:toastText2 }
 	}
 }
 
@@ -691,12 +720,11 @@ function showProgressToast {
 		[Boolean]$local:toastSilent
 	)
 
+	Write-Debug $myInvocation.MyCommand.name
+
 	if ($IsWindows) {
-		if ($local:toastSilent) {
-			$local:toastSoundElement = '<audio silent="true" />'
-		} else {
-			$local:toastSoundElement = '<audio src="ms-winsoundevent:Notification.Default" loop="false"/>'
-		}
+		if ($local:toastSilent) { $local:toastSoundElement = '<audio silent="true" />' }
+		else { $local:toastSoundElement = '<audio src="ms-winsoundevent:Notification.Default" loop="false"/>' }
 
 		if (!($local:toastDuration)) { $local:toastDuration = 'short' }
 		$local:toastAttribution = ''
@@ -742,18 +770,12 @@ function showProgressToast {
 
 	} elseif ($IsMacOS) {
 		if (Get-Command osascript -ea SilentlyContinue) {
-			$local:toastParams = `
-				'display notification "' + $local:toastText2 + `
-				'" with title "' + $script:appName + `
-				'" subtitle "' + $local:toastText1 + `
-				'" sound name "Blow"'
+			$local:toastParams = 'display notification "' + $local:toastText2 + '" with title "' + $script:appName + '" subtitle "' + $local:toastText1 + '" sound name "Blow"'
 			$local:toastParams | & osascript
 		}
 
 	} elseif ($IsLinux) {
-		if (Get-Command notify-send -ea SilentlyContinue) {
-			& notify-send -a $script:appName -t 5000 -i $script:toastAppLogo $local:toastText1 $local:toastText2
-		}
+		if (Get-Command notify-send -ea SilentlyContinue) { & notify-send -a $script:appName -t 5000 -i $script:toastAppLogo $local:toastText1 $local:toastText2 }
 	}
 }
 
@@ -789,6 +811,8 @@ function updateProgressToast {
 		[String]$local:toastGroup
 	)
 
+	Write-Debug $myInvocation.MyCommand.name
+
 	if ($IsWindows) {
 		$local:appID = Get-WindowsAppId
 		$local:toastData = New-Object 'system.collections.generic.dictionary[String,string]'
@@ -799,7 +823,6 @@ function updateProgressToast {
 		$local:toastProgressData = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
 		$local:toastProgressData.SequenceNumber = 2
 		$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Update($local:toastProgressData, $local:toastTag , $local:toastGroup)
-
 	} elseif ($IsMacOS) {
 		#1ディレクトリ毎に出てしまうため表示しない(Delete時)
 	} elseif ($IsLinux) {
@@ -848,12 +871,11 @@ function showProgressToast2 {
 		[Boolean]$local:toastSilent
 	)
 
+	Write-Debug $myInvocation.MyCommand.name
+
 	if ($IsWindows) {
-		if ($local:toastSilent) {
-			$local:toastSoundElement = '<audio silent="true" />'
-		} else {
-			$local:toastSoundElement = '<audio src="ms-winsoundevent:Notification.Default" loop="false"/>'
-		}
+		if ($local:toastSilent) { $local:toastSoundElement = '<audio silent="true" />' }
+		else { $local:toastSoundElement = '<audio src="ms-winsoundevent:Notification.Default" loop="false"/>' }
 
 		if (!($local:toastDuration)) { $local:toastDuration = 'short' }
 		$local:toastAttribution = ''
@@ -904,18 +926,12 @@ function showProgressToast2 {
 
 	} elseif ($IsMacOS) {
 		if (Get-Command osascript -ea SilentlyContinue) {
-			$local:toastParams = `
-				'display notification "' + $local:toastText2 + `
-				'" with title "' + $script:appName + `
-				'" subtitle "' + $local:toastText1 + `
-				'" sound name "Blow"'
+			$local:toastParams = 'display notification "' + $local:toastText2 + '" with title "' + $script:appName + '" subtitle "' + $local:toastText1 + '" sound name "Blow"'
 			$local:toastParams | & osascript
 		}
 
 	} elseif ($IsLinux) {
-		if (Get-Command notify-send -ea SilentlyContinue) {
-			& notify-send -a $script:appName -t 5000 -i $script:toastAppLogo $local:toastText1 $local:toastText2
-		}
+		if (Get-Command notify-send -ea SilentlyContinue) { & notify-send -a $script:appName -t 5000 -i $script:toastAppLogo $local:toastText1 $local:toastText2 }
 	}
 }
 
@@ -966,6 +982,8 @@ function updateProgressToast2 {
 		[Alias('Group')]
 		[String]$local:toastGroup
 	)
+
+	Write-Debug $myInvocation.MyCommand.name
 
 	if ($IsWindows) {
 		$local:appID = Get-WindowsAppId
@@ -1026,6 +1044,8 @@ function showProgress2Row {
 		[String]$local:toastGroup
 	)
 
+	Write-Debug $myInvocation.MyCommand.name
+
 	if (!($local:progressText2)) { $local:progressText2 = '' }
 	if (!($local:toastWorkDetail1)) { $local:toastWorkDetail1 = '' }
 	if (!($local:toastWorkDetail2)) { $local:toastWorkDetail2 = '' }
@@ -1084,6 +1104,8 @@ function updateProgress2Row {
 		[Alias('Group')]
 		[String]$local:toastGroup
 	)
+
+	Write-Debug $myInvocation.MyCommand.name
 
 	if ($local:secRemaining1 -eq -1 -Or $local:secRemaining1 -eq '' ) { $local:minRemaining1 = '計算中...' }
 	else { $local:minRemaining1 = [String]([math]::Ceiling($local:secRemaining1 / 60)) + '分' }

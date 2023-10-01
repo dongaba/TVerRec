@@ -84,12 +84,11 @@ while ($true) {
 	#ダウンロード履歴ファイルのデータを読み込み
 	try {
 		#ロックファイルをロック
-		while ((fileLock $script:historyLockFilePath).fileLocked -ne $true)
-		{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
+		while ((fileLock $script:historyLockFilePath).fileLocked -ne $true) { Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 		#ファイル操作
 		$script:historyFileData = Import-Csv -Path $script:historyFilePath -Encoding UTF8
-		} catch { Write-Warning '❗ ダウンロード履歴を読み込めなかったのでスキップしました'; continue
-	} finally { $null = fileUnlock $script:historyLockFilePath }
+	} catch { Write-Warning '❗ ダウンロード履歴を読み込めなかったのでスキップしました'; continue }
+	finally { $null = fileUnlock $script:historyLockFilePath }
 
 	if ($local:uiMode -eq 'CUI') {
 		$local:videoPageURL = (Read-Host '番組URLを入力してください。何も入力しないで Enter を押すと終了します。').Trim()

@@ -85,7 +85,7 @@ $local:totalStartTime = Get-Date
 foreach ($local:keywordName in $local:keywordNames) {
 	#いろいろ初期化
 	$local:videoLink = ''
-	$local:videoLinks = @()
+	$local:videoLinks = [System.Collections.Generic.List[string]]::new()
 	$local:searchResultCount = 0
 	$local:keywordName = trimTabSpace ($local:keywordName)
 
@@ -102,22 +102,20 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#ダウンロードリストファイルのデータを読み込み
 	try {
 		#ロックファイルをロック
-		while ((fileLock $script:listLockFilePath).fileLocked -ne $true)
-		{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
+		while ((fileLock $script:listLockFilePath).fileLocked -ne $true) { Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 		#ファイル操作
 		$script:listFileData = Import-Csv -Path $script:listFilePath -Encoding UTF8
-	} catch { Write-Warning '❗ ダウンロードリストを読み込めなかったのでスキップしました'; continue
-	} finally { $null = fileUnlock $script:listLockFilePath }
+	} catch { Write-Warning '❗ ダウンロードリストを読み込めなかったのでスキップしました'; continue }
+	finally { $null = fileUnlock $script:listLockFilePath }
 
 	#ダウンロード履歴ファイルのデータを読み込み
 	try {
 		#ロックファイルをロック
-		while ((fileLock $script:historyLockFilePath).fileLocked -ne $true)
-		{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
+		while ((fileLock $script:historyLockFilePath).fileLocked -ne $true) { Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 		#ファイル操作
 		$script:historyFileData = Import-Csv -Path $script:historyFilePath -Encoding UTF8
-	} catch { Write-Warning '❗ ダウンロード履歴を読み込めなかったのでスキップしました'; continue
-	} finally { $null = fileUnlock $script:historyLockFilePath }
+	} catch { Write-Warning '❗ ダウンロード履歴を読み込めなかったのでスキップしました'; continue }
+	finally { $null = fileUnlock $script:historyLockFilePath }
 
 	foreach ($local:resultLink in $local:resultLinks) {
 		$local:resultEpisodeID = $local:resultLink.Replace('https://tver.jp/episodes/', '')
@@ -128,7 +126,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 		$local:histMatch = $script:historyFileData | Where-Object { $_.videoPage -like "*$local:resultLink" }
 
 		#どちらにも含まれない場合はリストへの出力対象
-		if (($null -eq $local:listMatch) -And ($null -eq $local:histMatch)) { $local:videoLinks += $local:resultLink }
+		if (($null -eq $local:listMatch) -And ($null -eq $local:histMatch)) { $local:videoLinks.Add($local:resultLink) }
 		else { $local:searchResultCount = $local:searchResultCount + 1; continue }
 	}
 
@@ -223,11 +221,10 @@ foreach ($local:keywordName in $local:keywordNames) {
 			#TVerのAPIを叩いて番組情報取得
 			goAnal -Event 'getinfo' -Type 'link' -ID $_
 			try { getVideoInfo -Link $_ }
-			catch { Write-Warning '❗ 情報取得エラー。スキップします Err:90'; continue }
+			catch { Write-Warning '❗ 情報取得エラー。スキップします Err:91'; continue }
 
 			#ダウンロード対象外に入っている番組の場合はリスト出力しない
 			foreach ($ignoreRegexTitle in $using:script:ignoreRegexTitles) {
-
 				if ((getNarrowChars $script:videoSeries) -match (getNarrowChars $ignoreRegexTitle)) {
 					$ignoreWord = $ignoreRegexTitle
 					sortIgnoreList $ignoreRegexTitle
@@ -283,13 +280,12 @@ foreach ($local:keywordName in $local:keywordNames) {
 			#ダウンロードリストCSV書き出し
 			try {
 				#ロックファイルをロック
-				while ((fileLock $script:listLockFilePath).fileLocked -ne $true)
-				{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
+				while ((fileLock $script:listLockFilePath).fileLocked -ne $true) { Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 				#ファイル操作
 				$newVideo | Export-Csv -Path $script:listFilePath -NoTypeInformation -Encoding UTF8 -Append
 				Write-Debug 'ダウンロードリストを書き込みました'
-			} catch { Write-Warning '❗ ダウンロードリストを更新できませんでした。スキップします'; continue
-			} finally { $null = fileUnlock $script:listLockFilePath }
+			} catch { Write-Warning '❗ ダウンロードリストを更新できませんでした。スキップします'; continue }
+			finally { $null = fileUnlock $script:listLockFilePath }
 			$script:listFileData = Import-Csv -Path $script:listFilePath -Encoding UTF8
 
 		} -ThrottleLimit $script:multithreadNum

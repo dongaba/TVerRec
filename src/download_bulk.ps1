@@ -85,7 +85,7 @@ $local:totalStartTime = Get-Date
 foreach ($local:keywordName in $local:keywordNames) {
 	#いろいろ初期化
 	$local:videoLink = ''
-	$local:videoLinks = @()
+	$local:videoLinks = [System.Collections.Generic.List[string]]::new()
 	$local:resultLinks = @()
 	$local:processedCount = 0
 	$local:keywordName = trimTabSpace ($local:keywordName)
@@ -103,12 +103,11 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#ダウンロード履歴ファイルのデータを読み込み
 	try {
 		#ロックファイルをロック
-		while ((fileLock $script:historyLockFilePath).fileLocked -ne $true)
-		{ Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
+		while ((fileLock $script:historyLockFilePath).fileLocked -ne $true) { Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 		#ファイル操作
 		$script:historyFileData = Import-Csv -Path $script:historyFilePath -Encoding UTF8
-	} catch { Write-Warning '❗ ダウンロード履歴を読み込めなかったのでスキップしました'; continue
-	} finally { $null = fileUnlock $script:historyLockFilePath }
+	} catch { Write-Warning '❗ ダウンロード履歴を読み込めなかったのでスキップしました'; continue }
+	finally { $null = fileUnlock $script:historyLockFilePath }
 
 	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 	Write-Output '処理履歴との照合 '
@@ -118,7 +117,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 		$local:resultNum = $local:resultNum + 1
 		$local:historyMatch = $script:historyFileData | Where-Object { $_.videoPage -eq $local:resultLink }
 		if ($null -eq $local:historyMatch) {
-			$local:videoLinks += $local:resultLink
+			$local:videoLinks.Add($local:resultLink)
 			Write-Output ('　' + $local:resultNum + '/' + $local:resultTotal + ' ' + $local:resultLink + ' ... ❗ 未処理')
 		} else {
 			$local:processedCount = $local:processedCount + 1

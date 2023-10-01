@@ -105,7 +105,6 @@ showProgressToast `
 
 #処理
 $local:moveToPaths = @()
-
 foreach ($local:saveDir in $script:saveBaseDirArray) {
 	$local:moveToPaths += Get-ChildItem -Path $local:saveDir.Trim() -Recurse `
 	| Where-Object { $_.PSIsContainer } `
