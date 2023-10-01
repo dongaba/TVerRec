@@ -349,8 +349,7 @@ function sortIgnoreList {
 		while ((fileLock $script:ignoreLockFilePath).fileLocked -ne $true) { Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
 		#ファイル操作
 		#改行コードLFを強制
-		$local:ignoreListNew | ForEach-Object { $_ + "`n" } `
-		| Out-File -Path $script:ignoreFilePath -Encoding UTF8 -NoNewline
+		$local:ignoreListNew | ForEach-Object { $_ + "`n" } | Out-File -Path $script:ignoreFilePath -Encoding UTF8 -NoNewline
 		#ダウンロード対象外番組の読み込み
 		$script:ignoreRegExTitles = getRegExIgnoreList
 	} catch { Write-Error '❗ ダウンロード対象外リストのソートに失敗しました' ; exit 1 }
@@ -487,7 +486,7 @@ function getLinkFromSeriesID {
 	$local:callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callSeriesSeasons/'
 
 	#まずはSeries→Seasonに変換
-	$local:callSearchURL = $local:callSearchBaseURL + $local:seriesID.Replace('series/', '').Trim() + '?platform_uid=' + $script:platformUID + '&platform_token=' + $script:platformToken
+	$local:callSearchURL = $local:callSearchBaseURL + $local:seriesID.Replace('series/', '') + '?platform_uid=' + $script:platformUID + '&platform_token=' + $script:platformToken
 	$local:searchResultsRaw = Invoke-RestMethod -Uri $local:callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
 	$local:searchResults = $local:searchResultsRaw.Result.Contents
 	foreach ($local:searchResult in $local:searchResults) { $local:seasonLinks.Add($local:searchResult.Content.Id) }
@@ -508,7 +507,7 @@ function getLinkFromSeasonID {
 	Write-Debug $myInvocation.MyCommand.name
 
 	$local:tverSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callSeasonEpisodes/'
-	$local:callSearchURL = $local:tverSearchBaseURL + $local:SeasonID.Replace('season/', '').Trim() + '?platform_uid=' + $script:platformUID + '&platform_token=' + $script:platformToken
+	$local:callSearchURL = $local:tverSearchBaseURL + $local:SeasonID.Replace('season/', '') + '?platform_uid=' + $script:platformUID + '&platform_token=' + $script:platformToken
 	$local:searchResultsRaw = Invoke-RestMethod -Uri $local:callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
 	$local:searchResults = $local:searchResultsRaw.Result.Contents
 	foreach ($local:searchResult in $local:searchResults) {
@@ -685,7 +684,7 @@ function getLinkFromTag {
 	Write-Debug $myInvocation.MyCommand.name
 
 	$local:callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callTagSearch'
-	$local:callSearchURL = $local:callSearchBaseURL + '/' + $local:tagID.Replace('tag/', '').Trim() + '?platform_uid=' + $script:platformUID + '&platform_token=' + $script:platformToken
+	$local:callSearchURL = $local:callSearchBaseURL + '/' + $local:tagID.Replace('tag/', '') + '?platform_uid=' + $script:platformUID + '&platform_token=' + $script:platformToken
 	$local:searchResultsRaw = Invoke-RestMethod -Uri $local:callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
 	$local:searchResults = $local:searchResultsRaw.Result.Contents
 	foreach ($local:searchResult in $local:searchResults) {
@@ -726,7 +725,7 @@ function getLinkFromNew {
 	Write-Debug $myInvocation.MyCommand.name
 
 	$local:callSearchBaseURL = 'https://service-api.tver.jp/api/v1/callNewerDetail'
-	$local:callSearchURL = $local:callSearchBaseURL + '/' + $local:genre.Replace('new/', '').Trim() + '?platform_uid=' + $script:platformUID + '&platform_token=' + $script:platformToken
+	$local:callSearchURL = $local:callSearchBaseURL + '/' + $local:genre.Replace('new/', '') + '?platform_uid=' + $script:platformUID + '&platform_token=' + $script:platformToken
 	$local:searchResultsRaw = Invoke-RestMethod -Uri $local:callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
 	$local:searchResults = $local:searchResultsRaw.Result.Contents.Contents
 	foreach ($local:searchResult in $local:searchResults) {
