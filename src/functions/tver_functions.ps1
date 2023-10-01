@@ -916,13 +916,8 @@ function getLinkFromTopPage {
 					}
 				}
 			}
-		} elseif ($local:searchResult.type -eq 'banner') {
-			#広告
-			#URLは $local:searchResult.contents.content.targetURL
-			#$local:searchResult.contents.content.targetURL
-		} elseif ($local:searchResult.type -eq 'resume') {
-			#続きを見る
-			#ブラウザのCookieを処理しないといけないと思われるため対応予定なし
+		} elseif ($local:searchResult.type -eq 'banner') { #広告	URLは $local:searchResult.contents.content.targetURL
+		} elseif ($local:searchResult.type -eq 'resume') { #続きを見る	ブラウザのCookieを処理しないといけないと思われるため対応予定なし
 		} else {}
 	}
 
@@ -932,7 +927,6 @@ function getLinkFromTopPage {
 		Write-Host ('　Series ' + $local:seriesID + ' からEpisodeを抽出中...')
 		$script:episodeLinks += getLinkFromSeriesID ($local:seriesID)
 	}
-
 	[System.GC]::Collect()
 
 	return $script:episodeLinks | Sort-Object | Get-Unique
@@ -967,33 +961,15 @@ function getLinkFromSiteMap {
 					$script:episodeLinks += getLinkFromSeriesID ($local:searchResult)
 					$script:episodeLinks = $script:episodeLinks | Sort-Object | Get-Unique
 				} catch { Write-Warning '❗ 情報取得エラー。スキップします Err:12'; continue }
-			} elseif ($local:searchResult -eq 'https://tver.jp/') {
-				#トップページ
-				#別のキーワードがあるためため対応予定なし
-			} elseif ($local:searchResult -like '*/info/*') {
-				#お知らせ
-				#番組ページではないため対応予定なし
-			} elseif ($local:searchResult -like '*/live/*') {
-				#追っかけ再生
-				#対応していない
-			} elseif ($local:searchResult -like '*/mypage/*') {
-				#マイページ
-				#ブラウザのCookieを処理しないといけないと思われるため対応予定なし
-			} elseif ($local:searchResult -like '*/program*') {
-				#番組表
-				#番組ページではないため対応予定なし
-			} elseif ($local:searchResult -like '*/ranking*') {
-				#ランキング
-				#他でカバーできるため対応予定なし
-			} elseif ($local:searchResult -like '*/specials*') {
-				#特集
-				#他でカバーできるため対応予定なし
-			} elseif ($local:searchResult -like '*/topics*') {
-				#トピック
-				#番組ページではないため対応予定なし
-			} else {
-				Write-Warning ('❗ 未知のパターンです。 - ' + $local:searchResult)
-			}
+			} elseif ($local:searchResult -eq 'https://tver.jp/') { #トップページ	別のキーワードがあるためため対応予定なし
+			} elseif ($local:searchResult -like '*/info/*') { #お知らせ	番組ページではないため対応予定なし
+			} elseif ($local:searchResult -like '*/live/*') { #追っかけ再生	対応していない
+			} elseif ($local:searchResult -like '*/mypage/*') { #マイページ	ブラウザのCookieを処理しないといけないと思われるため対応予定なし
+			} elseif ($local:searchResult -like '*/program*') { #番組表	番組ページではないため対応予定なし
+			} elseif ($local:searchResult -like '*/ranking*') { #ランキング	他でカバーできるため対応予定なし
+			} elseif ($local:searchResult -like '*/specials*') { #特集	他でカバーできるため対応予定なし
+			} elseif ($local:searchResult -like '*/topics*') { #トピック	番組ページではないため対応予定なし
+			} else { Write-Warning ('❗ 未知のパターンです。 - ' + $local:searchResult) }
 		}
 	}
 	[System.GC]::Collect()
@@ -1077,11 +1053,10 @@ function waitTillYtdlProcessGetFewer {
 	} catch { $local:ytdlCount = 0 }			#プロセス数が取れなくてもとりあえず先に進む
 
 	Write-Verbose ('現在のダウンロードプロセス一覧 (' + $local:ytdlCount + '個)')
-
 	while ([int]$local:ytdlCount -ge [int]$local:parallelDownloadFileNum ) {
 		Write-Output ('ダウンロードが' + $local:parallelDownloadFileNum + '多重に達したので一時待機します。 (' + (getTimeStamp) + ')')
 		Write-Verbose ('現在のダウンロードプロセス一覧 (' + $local:ytdlCount + '個)')
-		Start-Sleep -Seconds 60			#1分待機
+		Start-Sleep -Seconds 60
 		try {
 			switch ($true) {
 				$IsWindows {
@@ -1180,8 +1155,6 @@ function downloadTVerVideo {
 	#番組タイトルが取得できなかった場合はスキップ次の番組へ
 	if ($script:videoName -eq '.mp4')
 	{ Write-Warning '❗ 番組タイトルを特定できませんでした。スキップします'; continue }
-
-
 
 	$local:historyMatch = $script:historyFileData | Where-Object { $_.videoName -eq $script:videoName }
 	if ($null -ne $local:historyMatch) {
@@ -1791,7 +1764,7 @@ function waitTillYtdlProcessIsZero () {
 	while ($local:ytdlCount -ne 0) {
 		try {
 			Write-Verbose ('現在のダウンロードプロセス一覧 (' + $local:ytdlCount + '個)')
-			Start-Sleep -Seconds 60			#1分待機
+			Start-Sleep -Seconds 60
 			switch ($true) {
 				$IsWindows {
 					$local:ytdlCount = [Math]::Round((Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero )

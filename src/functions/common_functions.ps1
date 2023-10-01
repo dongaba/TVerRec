@@ -251,7 +251,7 @@ function getFileNameWoInvChars {
 function getNarrowChars {
 	[CmdletBinding()]
 	[OutputType([String])]
-	Param ([String]$local:text)		#変換元テキストを引数に指定
+	Param ([String]$local:text)
 
 	$local:wideKanaDaku = 'ガギグゲゴザジズゼゾダヂヅデドバビブベボ'
 	$local:narrowKanaDaku = 'ｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾊﾋﾌﾍﾎ'
@@ -296,7 +296,7 @@ function getNarrowChars {
 function getSpecialCharacterReplaced {
 	[CmdletBinding()]
 	[OutputType([String])]
-	Param ([String]$local:text)		#変換元テキストを引数に指定
+	Param ([String]$local:text)
 
 	$local:text = $local:text.Replace('&amp;', '&')
 	$local:text = $local:text.Replace('*', '＊')
@@ -322,7 +322,7 @@ function getSpecialCharacterReplaced {
 function trimTabSpace {
 	[CmdletBinding()]
 	[OutputType([String])]
-	Param ([String]$local:text)		#変換元テキストを引数に指定
+	Param ([String]$local:text)
 
 	return $local:text.Replace("`t", ' ').Replace('  ', ' ')
 }
@@ -332,7 +332,7 @@ function trimTabSpace {
 #----------------------------------------------------------------------
 function trimComment {
 	[OutputType([String])]
-	Param ([String]$local:text)		#変換元テキストを引数に指定
+	Param ([String]$local:text)
 
 	return $local:text.Split("`t")[0].Split(' ')[0].Split('#')[0]
 }

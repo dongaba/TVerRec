@@ -166,9 +166,9 @@ $script:removeSpecialNote = $true
 
 #youtube-dlの取得元
 #　youtube-dlに起因する問題(例えばダウンロードできないなど)が起きた際には2種類のyoutube-dlを使い分けることが可能です。
-#　yt-dlpを設定するとyt-dlp(https://github.com/yt-dlp/yt-dlp)から取得します。
-#　ytdl-patchedを設定するとytdl-patched(https://github.com/ytdl-patched/ytdl-patched)から取得します。
-$script:preferredYoutubedl = 'yt-dlp'	#'yt-dlp' or 'ytdl-patched'
+#　'yt-dlp'を設定するとyt-dlp(https://github.com/yt-dlp/yt-dlp)から取得します。
+#　'ytdl-patched'を設定するとytdl-patched(https://github.com/ytdl-patched/ytdl-patched)から取得します。
+$script:preferredYoutubedl = 'yt-dlp'
 
 #youtube-dlの自動アップデートを無効化
 #　youtube-dlの配布元の不具合等により自動アップデートがうまく動作しない場合には無効化することが可能です。

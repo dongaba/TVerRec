@@ -68,6 +68,10 @@ switch ($true) {
 		$local:os = [String][System.Environment]::OSVersion
 		$local:arch = $Env:PROCESSOR_ARCHITECTURE.ToLower()
 
+		#残っているかもしれない中間ファイルを削除
+		Remove-Item -Path "$local:binDir/ffmpeg-master-latest-*-gpl" -Force -Recurse -ErrorAction SilentlyContinue
+		Remove-Item -Path (Join-Path $local:binDir 'ffmpeg.zip') -Force -ErrorAction SilentlyContinue
+
 		#ffmpegのバージョン取得
 		try {
 			if (Test-Path $local:ffmpegPath -PathType Leaf) {
@@ -109,24 +113,24 @@ switch ($true) {
 
 			#ダウンロード
 			Write-Output "ffmpegの最新版 $local:cpu 用をダウンロードします"
-			try {Invoke-WebRequest -Uri $donwloadURL -OutFile (Join-Path $local:binDir 'ffmpeg.zip')}
+			try { Invoke-WebRequest -Uri $donwloadURL -OutFile (Join-Path $local:binDir 'ffmpeg.zip') }
 			catch { Write-Error '❗ ffmpegのダウンロードに失敗しました' ; exit 1 }
 
 			#展開
 			Write-Output 'ダウンロードしたffmpegを解凍します'
-			try {unZip -File (Join-Path $local:binDir 'ffmpeg.zip') -OutPath $local:binDir}
+			try { unZip -File (Join-Path $local:binDir 'ffmpeg.zip') -OutPath $local:binDir }
 			catch { Write-Error '❗ ffmpegの解凍に失敗しました' ; exit 1 }
 
 			#配置
 			Write-Output '解凍したffmpegを配置します'
-			try {Move-Item -Path "$local:binDir/ffmpeg-master-latest-*-gpl/bin/ff*.exe" -Destination $local:binDir -Force}
+			try { Move-Item -Path "$local:binDir/ffmpeg-master-latest-*-gpl/bin/ff*.exe" -Destination $local:binDir -Force }
 			catch { Write-Error '❗ ffmpegの配置に失敗しました' ; exit 1 }
 
 			#ゴミ掃除
 			Write-Output '中間ディレクトリと中間ファイルを削除します'
-			try {Remove-Item -Path "$local:binDir/ffmpeg-master-latest-*-gpl" -Force -Recurse -ErrorAction SilentlyContinue}
+			try { Remove-Item -Path "$local:binDir/ffmpeg-master-latest-*-gpl" -Force -Recurse -ErrorAction SilentlyContinue }
 			catch { Write-Error '❗ 中間ディレクトリの削除に失敗しました' ; exit 1 }
-			try {Remove-Item -Path (Join-Path $local:binDir 'ffmpeg.zip') -Force -ErrorAction SilentlyContinue}
+			try { Remove-Item -Path (Join-Path $local:binDir 'ffmpeg.zip') -Force -ErrorAction SilentlyContinue }
 			catch { Write-Error '❗ 中間ファイルの削除に失敗しました' ; exit 1 }
 
 			#バージョンチェック
@@ -146,6 +150,10 @@ switch ($true) {
 	$IsLinux {
 		$local:os = 'Linux ' + [String][System.Environment]::OSVersion.Version
 		$local:arch = (& uname -m | tr '[:upper:]' '[:lower:]')
+
+		#残っているかもしれない中間ファイルを削除
+		Remove-Item -Path "$local:binDir/ffmpeg-master-latest-*-gpl" -Force -Recurse -ErrorAction SilentlyContinue
+		Remove-Item -Path (Join-Path $local:binDir 'ffmpeg.tar.xz') -Force -ErrorAction SilentlyContinue
 
 		#ffmpegのバージョン取得
 		try {
@@ -192,24 +200,24 @@ switch ($true) {
 
 			#ダウンロード
 			Write-Output "ffmpegの最新版 $local:cpu 用をダウンロードします"
-			try {Invoke-WebRequest -Uri $donwloadURL -OutFile (Join-Path $local:binDir 'ffmpeg.tar.xz')}
+			try { Invoke-WebRequest -Uri $donwloadURL -OutFile (Join-Path $local:binDir 'ffmpeg.tar.xz') }
 			catch { Write-Error '❗ ffmpegのダウンロードに失敗しました' ; exit 1 }
 
 			#展開
 			Write-Output 'ダウンロードしたffmpegを解凍します'
-			try {(& tar Jxf (Join-Path $local:binDir 'ffmpeg.tar.xz') -C "$local:binDir")}
+			try { (& tar Jxf (Join-Path $local:binDir 'ffmpeg.tar.xz') -C "$local:binDir") }
 			catch { Write-Error '❗ ffmpegの展開に失敗しました' ; exit 1 }
 
 			#配置
 			Write-Output '解凍したffmpegを配置します'
-			try {Move-Item -Path "$local:binDir/ffmpeg-master-latest-*-gpl/bin/ff*" -Destination $local:binDir -Force}
+			try { Move-Item -Path "$local:binDir/ffmpeg-master-latest-*-gpl/bin/ff*" -Destination $local:binDir -Force }
 			catch { Write-Error '❗ ffmpegの配置に失敗しました' ; exit 1 }
 
 			#ゴミ掃除
 			Write-Output '中間ディレクトリと中間ファイルを削除します'
-			try {Remove-Item -Path "$local:binDir/ffmpeg-master-latest-*-gpl" -Force -Recurse -ErrorAction SilentlyContinue}
+			try { Remove-Item -Path "$local:binDir/ffmpeg-master-latest-*-gpl" -Force -Recurse -ErrorAction SilentlyContinue }
 			catch { Write-Error '❗ 中間ディレクトリの削除に失敗しました' ; exit 1 }
-			try {Remove-Item -Path (Join-Path $local:binDir 'ffmpeg.tar.xz') -Force -ErrorAction SilentlyContinue}
+			try { Remove-Item -Path (Join-Path $local:binDir 'ffmpeg.tar.xz') -Force -ErrorAction SilentlyContinue }
 			catch { Write-Error '❗ 中間ファイルの削除に失敗しました' ; exit 1 }
 
 			#実行権限の付与
@@ -233,6 +241,10 @@ switch ($true) {
 	$IsMacOS {
 		$local:os = 'macOS ' + [String][System.Environment]::OSVersion.Version
 		$local:arch = (& uname -m | tr '[:upper:]' '[:lower:]')
+
+		#残っているかもしれない中間ファイルを削除
+		Remove-Item -Path (Join-Path $local:binDir 'ffmpeg.zip') -Force -ErrorAction SilentlyContinue
+		Remove-Item -Path (Join-Path $local:binDir 'ffprobe.zip') -Force -ErrorAction SilentlyContinue
 
 		#ffmpegのバージョン取得
 		try {

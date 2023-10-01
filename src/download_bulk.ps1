@@ -160,8 +160,8 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#----------------------------------------------------------------------
 	#個々の番組ダウンロードここから
 	foreach ($local:videoLink in $local:videoLinks) {
-		#いろいろ初期化
-		$local:videoNum = $local:videoNum + 1		#ジャンル内の番組番号のインクリメント
+		#ジャンル内の番組番号のインクリメント
+		$local:videoNum = $local:videoNum + 1
 
 		#移動先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
 		if (Test-Path $script:downloadBaseDir -PathType Container) {}
