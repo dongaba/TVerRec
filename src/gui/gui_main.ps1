@@ -263,7 +263,7 @@ while ($script:mainWindow.IsVisible) {
 	DoWpfEvents
 
 	#ジョブがある場合の処理
-	foreach ($local:job in Get-Job){
+	foreach ($local:job in Get-Job) {
 		# Get the originating button via the job name.
 		$script:btn = $script:mainWindow.FindName($local:job.Name)
 

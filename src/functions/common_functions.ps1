@@ -96,67 +96,67 @@ $progressPreference = 'Continue'
 #統計取得
 #----------------------------------------------------------------------
 function goAnal {
-	[OutputType([System.Void])]
-	Param (
-		[Parameter(Mandatory = $true, Position = 0)]
-		[Alias('Event')]
-		[String]$local:event,
+	# 	[OutputType([System.Void])]
+	# 	Param (
+	# 		[Parameter(Mandatory = $true, Position = 0)]
+	# 		[Alias('Event')]
+	# 		[String]$local:event,
 
-		[Parameter(Mandatory = $false, Position = 1)]
-		[Alias('Type')]
-		[String]$local:type,
+	# 		[Parameter(Mandatory = $false, Position = 1)]
+	# 		[Alias('Type')]
+	# 		[String]$local:type,
 
-		[Parameter(Mandatory = $false, Position = 2)]
-		[Alias('ID')]
-		[String]$local:id
-	)
+	# 		[Parameter(Mandatory = $false, Position = 2)]
+	# 		[Alias('ID')]
+	# 		[String]$local:id
+	# 	)
 
-	Write-Debug $myInvocation.MyCommand.name
+	# 	Write-Debug $myInvocation.MyCommand.name
 
-	if (!($local:type)) { $local:type = '' }
-	if (!($local:id)) { $local:id = '' }
-	$local:epochTime = [decimal]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() * 1000)
+	# 	if (!($local:type)) { $local:type = '' }
+	# 	if (!($local:id)) { $local:id = '' }
+	# 	$local:epochTime = [decimal]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() * 1000)
 
-	$progressPreference = 'silentlyContinue'
-	$local:statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
-	try { $null = Invoke-WebRequest -Uri ($local:statisticsBase + $local:event + '.svg') -TimeoutSec $script:timeoutSec }
-	catch { Write-Debug 'Failed to collect count' }
-	finally { $progressPreference = 'Continue' }
+	# 	$progressPreference = 'silentlyContinue'
+	# 	$local:statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
+	# 	try { $null = Invoke-WebRequest -Uri ($local:statisticsBase + $local:event + '.svg') -TimeoutSec $script:timeoutSec }
+	# 	catch { Write-Debug 'Failed to collect count' }
+	# 	finally { $progressPreference = 'Continue' }
 
-	if ($local:event -eq 'search') { return }
-	$local:gaURL = 'https://www.google-analytics.com/mp/collect'
-	$local:gaKey = 'api_secret=UZ3InfgkTgGiR4FU-in9sw'
-	$local:gaID = 'measurement_id=G-NMSF9L531G'
-	$local:gaHeaders = New-Object 'System.Collections.Generic.Dictionary[[String],[String]]'
-	$local:gaHeaders.Add('HOST', 'www.google-analytics.com')
-	$local:gaHeaders.Add('Content-Type', 'application/json')
-	$local:gaBody = '{ `"client_id`" : `"' + $script:guid + '`", '
-	$local:gaBody += '`"timestamp_micros`" : `"' + $local:epochTime + '`", '
-	$local:gaBody += '`"non_personalized_ads`" : false, '
-	$local:gaBody += '`"user_properties`":{ '
-	foreach ($item in $script:clientEnv) { $local:gaBody += '`"' + $item.Key + '`" : {`"value`" : `"' + $item.Value + '`"}, ' }
-	$local:gaBody += '`"DisableValidation`" : {`"value`" : `"' + $script:disableValidation + '`"}, '
-	$local:gaBody += '`"SortwareDecode`" : {`"value`" : `"' + $script:forceSoftwareDecodeFlag + '`"}, '
-	$local:gaBody += '`"DecodeOption`" : {`"value`" : `"' + $script:ffmpegDecodeOption + '`"}, '
-	$local:gaBody = $local:gaBody.Trim(',', ' ')		#delete last comma
-	$local:gaBody += '}, `"events`" : [ { '
-	$local:gaBody += '`"name`" : `"' + $local:event + '`", '
-	$local:gaBody += '`"params`" : {'
-	$local:gaBody += '`"Type`" : `"' + $local:type + '`", '
-	$local:gaBody += '`"ID`" : `"' + $local:id + '`", '
-	$local:gaBody += '`"Target`" : `"' + $local:type + '/' + $local:id + '`", '
-	foreach ($item in $script:clientEnv) { $local:gaBody += '`"' + $item.Key + '`" : `"' + $item.Value + '`", ' }
-	$local:gaBody += '`"DisableValidation`" : `"' + $script:disableValidation + '`", '
-	$local:gaBody += '`"SortwareDecode`" : `"' + $script:forceSoftwareDecodeFlag + '`", '
-	$local:gaBody += '`"DecodeOption`" : `"' + $script:ffmpegDecodeOption + '`", '
-	$local:gaBody = $local:gaBody.Trim(',', ' ')		#delete last comma
-	$local:gaBody += '} } ] }'
+	# 	if ($local:event -eq 'search') { return }
+	# 	$local:gaURL = 'https://www.google-analytics.com/mp/collect'
+	# 	$local:gaKey = 'api_secret=UZ3InfgkTgGiR4FU-in9sw'
+	# 	$local:gaID = 'measurement_id=G-NMSF9L531G'
+	# 	$local:gaHeaders = New-Object 'System.Collections.Generic.Dictionary[[String],[String]]'
+	# 	$local:gaHeaders.Add('HOST', 'www.google-analytics.com')
+	# 	$local:gaHeaders.Add('Content-Type', 'application/json')
+	# 	$local:gaBody = '{ `"client_id`" : `"' + $script:guid + '`", '
+	# 	$local:gaBody += '`"timestamp_micros`" : `"' + $local:epochTime + '`", '
+	# 	$local:gaBody += '`"non_personalized_ads`" : false, '
+	# 	$local:gaBody += '`"user_properties`":{ '
+	# 	foreach ($item in $script:clientEnv) { $local:gaBody += '`"' + $item.Key + '`" : {`"value`" : `"' + $item.Value + '`"}, ' }
+	# 	$local:gaBody += '`"DisableValidation`" : {`"value`" : `"' + $script:disableValidation + '`"}, '
+	# 	$local:gaBody += '`"SortwareDecode`" : {`"value`" : `"' + $script:forceSoftwareDecodeFlag + '`"}, '
+	# 	$local:gaBody += '`"DecodeOption`" : {`"value`" : `"' + $script:ffmpegDecodeOption + '`"}, '
+	# 	$local:gaBody = $local:gaBody.Trim(',', ' ')		#delete last comma
+	# 	$local:gaBody += '}, `"events`" : [ { '
+	# 	$local:gaBody += '`"name`" : `"' + $local:event + '`", '
+	# 	$local:gaBody += '`"params`" : {'
+	# 	$local:gaBody += '`"Type`" : `"' + $local:type + '`", '
+	# 	$local:gaBody += '`"ID`" : `"' + $local:id + '`", '
+	# 	$local:gaBody += '`"Target`" : `"' + $local:type + '/' + $local:id + '`", '
+	# 	foreach ($item in $script:clientEnv) { $local:gaBody += '`"' + $item.Key + '`" : `"' + $item.Value + '`", ' }
+	# 	$local:gaBody += '`"DisableValidation`" : `"' + $script:disableValidation + '`", '
+	# 	$local:gaBody += '`"SortwareDecode`" : `"' + $script:forceSoftwareDecodeFlag + '`", '
+	# 	$local:gaBody += '`"DecodeOption`" : `"' + $script:ffmpegDecodeOption + '`", '
+	# 	$local:gaBody = $local:gaBody.Trim(',', ' ')		#delete last comma
+	# 	$local:gaBody += '} } ] }'
 
-	$progressPreference = 'silentlyContinue'
-	try {
-		$null = Invoke-RestMethod -Uri ($local:gaURL + '?' + $local:gaKey + '&' + $local:gaID) -Method 'POST' -Headers $local:gaHeaders -Body $local:gaBody -TimeoutSec $script:timeoutSec
-	} catch { Write-Debug 'Failed to collect statistics' }
-	finally { $progressPreference = 'Continue' }
+	# 	$progressPreference = 'silentlyContinue'
+	# 	try {
+	# 		$null = Invoke-RestMethod -Uri ($local:gaURL + '?' + $local:gaKey + '&' + $local:gaID) -Method 'POST' -Headers $local:gaHeaders -Body $local:gaBody -TimeoutSec $script:timeoutSec
+	# 	} catch { Write-Debug 'Failed to collect statistics' }
+	# 	finally { $progressPreference = 'Continue' }
 
 }
 
@@ -464,7 +464,6 @@ function fileLock {
 	Write-Debug $myInvocation.MyCommand.name
 
 	try {
-		$local:fileLocked = $false
 		# attempt to open file and detect file lock
 		$script:fileInfo = New-Object System.IO.FileInfo $local:Path
 		$script:fileStream = $script:fileInfo.Open([System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
@@ -1130,4 +1129,5 @@ function updateProgress2Row {
 		-Group $local:toastGroup
 }
 
+#endregion トースト通知#endregion トースト通知
 #endregion トースト通知

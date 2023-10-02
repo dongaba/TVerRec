@@ -352,8 +352,13 @@ function sortIgnoreList {
 		$local:ignoreListNew | ForEach-Object { $_ + "`n" } | Out-File -Path $script:ignoreFilePath -Encoding UTF8 -NoNewline
 		#ダウンロード対象外番組の読み込み
 		$script:ignoreRegExTitles = getRegExIgnoreList
-	} catch { Write-Error '❗ ダウンロード対象外リストのソートに失敗しました' ; exit 1 }
-	finally { $null = fileUnlock $script:ignoreLockFilePath }
+	} catch {
+		Write-Error '❗ ダウンロード対象外リストのソートに失敗しました' ; exit 1
+	} finally {
+		$null = fileUnlock $script:ignoreLockFilePath
+		#ダウンロード対象外番組の読み込み
+		$script:ignoreRegExTitles = getRegExIgnoreList
+	}
 
 }
 
