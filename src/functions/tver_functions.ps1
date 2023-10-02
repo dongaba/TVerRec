@@ -350,8 +350,7 @@ function sortIgnoreList {
 		#ファイル操作
 		#改行コードLFを強制
 		$local:ignoreListNew | ForEach-Object { $_ + "`n" } | Out-File -Path $script:ignoreFilePath -Encoding UTF8 -NoNewline
-		#ダウンロード対象外番組の読み込み
-		$script:ignoreRegExTitles = getRegExIgnoreList
+		Write-Debug 'ダウンロード対象外リストのソート更新完了'
 	} catch {
 		Write-Error '❗ ダウンロード対象外リストのソートに失敗しました' ; exit 1
 	} finally {

@@ -464,11 +464,12 @@ function fileLock {
 	Write-Debug $myInvocation.MyCommand.name
 
 	try {
+		$local:fileLocked = $false
 		# attempt to open file and detect file lock
 		$script:fileInfo = New-Object System.IO.FileInfo $local:Path
 		$script:fileStream = $script:fileInfo.Open([System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
 		$local:fileLocked = $true
-	} catch { $fileLocked = $false
+	} catch { $local:fileLocked = $false
 	} finally {
 		# return result
 		[PSCustomObject]@{
@@ -1129,5 +1130,5 @@ function updateProgress2Row {
 		-Group $local:toastGroup
 }
 
-#endregion トースト通知#endregion トースト通知
+#endregion トースト通知#endregion トースト通知#endregion トースト通知#endregion トースト通知#endregion トースト通知#endregion トースト通知
 #endregion トースト通知
