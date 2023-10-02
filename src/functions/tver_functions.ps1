@@ -1101,7 +1101,7 @@ function downloadTVerVideo {
 			-Episode $script:videoEpisode `
 			-Title $script:videoTitle `
 			-Path $script:videoFilePath `
-			-Time getTimeStamp `
+			-Time (getTimeStamp) `
 			-EndTime $script:endTime
 	}
 
