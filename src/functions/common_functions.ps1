@@ -214,7 +214,7 @@ function getFileNameWoInvChars {
 
 	Write-Debug $myInvocation.MyCommand.name
 
-	$local:invalidChars = [IO.Path]::GetInvalidFileNameChars() -join ''
+	$local:invalidChars = [IO.Path]::GetInvalidFileNameChars() -Join ''
 	$local:result = '[{0}]' -f [RegEx]::Escape($local:invalidChars)
 	$local:Name = $local:Name.Replace($local:result , '')
 

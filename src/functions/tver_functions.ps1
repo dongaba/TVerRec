@@ -263,16 +263,10 @@ function getRegexIgnoreList {
 		$local:ignoreRegexTitles = @()
 		$local:ignoreRegexTitles = [String[]](Get-Content $script:ignoreFilePath -Encoding UTF8 `
 			| Where-Object { !($_ -match '^\s*$') } `		#空行を除く
-			| Where-Object { !($_ -match '^;.*$') })		#コメント行を除く
+			| Where-Object { !($_ -match '^;.*$') }) `		#コメント行を除く
+			| Foreach-Object { [RegEx]::escape($_) }		##正規表現用のエスケープ
 	} catch { Write-Error '❗ ダウンロード対象外の読み込みに失敗しました' ; exit 1 }
 	finally { $null = fileUnlock $script:ignoreLockFilePath }
-
-	if ($null -ne $local:ignoreRegexTitles ) {
-		for ($i = 0; $i -lt $local:ignoreRegexTitles.Length; $i++) {
-			#正規表現用のエスケープ
-			$local:ignoreRegexTitles[$i] = [Regex]::Escape($local:ignoreRegexTitles[$i])
-		}
-	}
 
 	return $local:ignoreRegexTitles
 }
@@ -296,7 +290,7 @@ function sortIgnoreList {
 	$local:ignoreElse = @()
 
 	#正規表現用のエスケープ解除
-	$local:ignoreTitle = [Regex]::Unescape($local:ignoreTitle)
+#	$local:ignoreTitle = [Regex]::Unescape($local:ignoreTitle)
 
 	try {
 		#ロックファイルをロック
@@ -307,7 +301,7 @@ function sortIgnoreList {
 	finally { $null = fileUnlock $script:ignoreLockFilePath }
 
 	$local:ignoreComment = (Get-Content $script:ignoreFileSamplePath -Encoding UTF8)
-	$local:ignoreTarget = $ignoreLists | Where-Object { $_ -eq $local:ignoreTitle } | Sort-Object | Get-Unique
+	$local:ignoreTarget = $ignoreLists | Where-Object { $_ -eq [RegEx]::Unescape($local:ignoreTitle) } | Sort-Object | Get-Unique
 	$local:ignoreElse = $ignoreLists | Where-Object { $_ -ne $local:ignoreTitle }
 
 	$local:ignoreListNew += $local:ignoreComment
