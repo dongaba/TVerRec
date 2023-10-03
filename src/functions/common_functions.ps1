@@ -96,67 +96,67 @@ $progressPreference = 'Continue'
 #統計取得
 #----------------------------------------------------------------------
 function goAnal {
-		[OutputType([System.Void])]
-		Param (
-			[Parameter(Mandatory = $true, Position = 0)]
-			[Alias('Event')]
-			[String]$local:event,
+	[OutputType([System.Void])]
+	Param (
+		[Parameter(Mandatory = $true, Position = 0)]
+		[Alias('Event')]
+		[String]$local:event,
 
-			[Parameter(Mandatory = $false, Position = 1)]
-			[Alias('Type')]
-			[String]$local:type,
+		[Parameter(Mandatory = $false, Position = 1)]
+		[Alias('Type')]
+		[String]$local:type,
 
-			[Parameter(Mandatory = $false, Position = 2)]
-			[Alias('ID')]
-			[String]$local:id
-		)
+		[Parameter(Mandatory = $false, Position = 2)]
+		[Alias('ID')]
+		[String]$local:id
+	)
 
-		Write-Debug $myInvocation.MyCommand.name
+	Write-Debug $myInvocation.MyCommand.name
 
-		if (!($local:type)) { $local:type = '' }
-		if (!($local:id)) { $local:id = '' }
-		$local:epochTime = [decimal]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() * 1000)
+	if (!($local:type)) { $local:type = '' }
+	if (!($local:id)) { $local:id = '' }
+	$local:epochTime = [decimal]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() * 1000)
 
-		$progressPreference = 'silentlyContinue'
-		$local:statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
-		try { $null = Invoke-WebRequest -Uri ($local:statisticsBase + $local:event + '.svg') -TimeoutSec $script:timeoutSec }
-		catch { Write-Debug 'Failed to collect count' }
-		finally { $progressPreference = 'Continue' }
+	$progressPreference = 'silentlyContinue'
+	$local:statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
+	try { $null = Invoke-WebRequest -Uri ($local:statisticsBase + $local:event + '.svg') -TimeoutSec $script:timeoutSec }
+	catch { Write-Debug 'Failed to collect count' }
+	finally { $progressPreference = 'Continue' }
 
-		if ($local:event -eq 'search') { return }
-		$local:gaURL = 'https://www.google-analytics.com/mp/collect'
-		$local:gaKey = 'api_secret=UZ3InfgkTgGiR4FU-in9sw'
-		$local:gaID = 'measurement_id=G-NMSF9L531G'
-		$local:gaHeaders = New-Object 'System.Collections.Generic.Dictionary[[String],[String]]'
-		$local:gaHeaders.Add('HOST', 'www.google-analytics.com')
-		$local:gaHeaders.Add('Content-Type', 'application/json')
-		$local:gaBody = '{ `"client_id`" : `"' + $script:guid + '`", '
-		$local:gaBody += '`"timestamp_micros`" : `"' + $local:epochTime + '`", '
-		$local:gaBody += '`"non_personalized_ads`" : false, '
-		$local:gaBody += '`"user_properties`":{ '
-		foreach ($item in $script:clientEnv) { $local:gaBody += '`"' + $item.Key + '`" : {`"value`" : `"' + $item.Value + '`"}, ' }
-		$local:gaBody += '`"DisableValidation`" : {`"value`" : `"' + $script:disableValidation + '`"}, '
-		$local:gaBody += '`"SortwareDecode`" : {`"value`" : `"' + $script:forceSoftwareDecodeFlag + '`"}, '
-		$local:gaBody += '`"DecodeOption`" : {`"value`" : `"' + $script:ffmpegDecodeOption + '`"}, '
-		$local:gaBody = $local:gaBody.Trim(',', ' ')		#delete last comma
-		$local:gaBody += '}, `"events`" : [ { '
-		$local:gaBody += '`"name`" : `"' + $local:event + '`", '
-		$local:gaBody += '`"params`" : {'
-		$local:gaBody += '`"Type`" : `"' + $local:type + '`", '
-		$local:gaBody += '`"ID`" : `"' + $local:id + '`", '
-		$local:gaBody += '`"Target`" : `"' + $local:type + '/' + $local:id + '`", '
-		foreach ($item in $script:clientEnv) { $local:gaBody += '`"' + $item.Key + '`" : `"' + $item.Value + '`", ' }
-		$local:gaBody += '`"DisableValidation`" : `"' + $script:disableValidation + '`", '
-		$local:gaBody += '`"SortwareDecode`" : `"' + $script:forceSoftwareDecodeFlag + '`", '
-		$local:gaBody += '`"DecodeOption`" : `"' + $script:ffmpegDecodeOption + '`", '
-		$local:gaBody = $local:gaBody.Trim(',', ' ')		#delete last comma
-		$local:gaBody += '} } ] }'
+	if ($local:event -eq 'search') { return }
+	$local:gaURL = 'https://www.google-analytics.com/mp/collect'
+	$local:gaKey = 'api_secret=UZ3InfgkTgGiR4FU-in9sw'
+	$local:gaID = 'measurement_id=G-NMSF9L531G'
+	$local:gaHeaders = New-Object 'System.Collections.Generic.Dictionary[[String],[String]]'
+	$local:gaHeaders.Add('HOST', 'www.google-analytics.com')
+	$local:gaHeaders.Add('Content-Type', 'application/json')
+	$local:gaBody = '{ `"client_id`" : `"' + $script:guid + '`", '
+	$local:gaBody += '`"timestamp_micros`" : `"' + $local:epochTime + '`", '
+	$local:gaBody += '`"non_personalized_ads`" : false, '
+	$local:gaBody += '`"user_properties`":{ '
+	foreach ($item in $script:clientEnv) { $local:gaBody += '`"' + $item.Key + '`" : {`"value`" : `"' + $item.Value + '`"}, ' }
+	$local:gaBody += '`"DisableValidation`" : {`"value`" : `"' + $script:disableValidation + '`"}, '
+	$local:gaBody += '`"SortwareDecode`" : {`"value`" : `"' + $script:forceSoftwareDecodeFlag + '`"}, '
+	$local:gaBody += '`"DecodeOption`" : {`"value`" : `"' + $script:ffmpegDecodeOption + '`"}, '
+	$local:gaBody = $local:gaBody.Trim(',', ' ')		#delete last comma
+	$local:gaBody += '}, `"events`" : [ { '
+	$local:gaBody += '`"name`" : `"' + $local:event + '`", '
+	$local:gaBody += '`"params`" : {'
+	$local:gaBody += '`"Type`" : `"' + $local:type + '`", '
+	$local:gaBody += '`"ID`" : `"' + $local:id + '`", '
+	$local:gaBody += '`"Target`" : `"' + $local:type + '/' + $local:id + '`", '
+	foreach ($item in $script:clientEnv) { $local:gaBody += '`"' + $item.Key + '`" : `"' + $item.Value + '`", ' }
+	$local:gaBody += '`"DisableValidation`" : `"' + $script:disableValidation + '`", '
+	$local:gaBody += '`"SortwareDecode`" : `"' + $script:forceSoftwareDecodeFlag + '`", '
+	$local:gaBody += '`"DecodeOption`" : `"' + $script:ffmpegDecodeOption + '`", '
+	$local:gaBody = $local:gaBody.Trim(',', ' ')		#delete last comma
+	$local:gaBody += '} } ] }'
 
-		$progressPreference = 'silentlyContinue'
-		try {
-			$null = Invoke-RestMethod -Uri ($local:gaURL + '?' + $local:gaKey + '&' + $local:gaID) -Method 'POST' -Headers $local:gaHeaders -Body $local:gaBody -TimeoutSec $script:timeoutSec
-		} catch { Write-Debug 'Failed to collect statistics' }
-		finally { $progressPreference = 'Continue' }
+	$progressPreference = 'silentlyContinue'
+	try {
+		$null = Invoke-RestMethod -Uri ($local:gaURL + '?' + $local:gaKey + '&' + $local:gaID) -Method 'POST' -Headers $local:gaHeaders -Body $local:gaBody -TimeoutSec $script:timeoutSec
+	} catch { Write-Debug 'Failed to collect statistics' }
+	finally { $progressPreference = 'Continue' }
 
 }
 
@@ -271,33 +271,31 @@ function getNarrowChars {
 	$local:narrowKanaDaku = 'ｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾊﾋﾌﾍﾎ'
 	$local:wideKanaHanDaku = 'パピプペポ'
 	$local:narrowKanaHanDaku = 'ﾊﾋﾌﾍﾎ'
-	$local:wideKana = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホ'
-	$local:wideKana += 'マミムメモヤユヨラリルレロワヲン゛゜ァィゥェォャュョッ'
+	$local:wideKana = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン゛゜ァィゥェォャュョッ'
 	$local:narrowKana = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜｦﾝﾞﾟｧｨｩｪｫｬｭｮｯ'
 	$local:wideNum = '０１２３４５６７８９'
 	$local:narrowNum = '0123456789'
-	$local:wideAlpha = 'ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ'
-	$local:wideAlpha += 'ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ'
+	$local:wideAlpha = 'ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ'
 	$local:narrowAlpha = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 	$local:wideSimbol = '＠＃＄％＾＆＊－＋＿／［］｛｝（）＜＞　￥＼”；：．，'
 	$local:narrowSimbol = '@#$%^&*-+_/[]{}()<> \\";:.,'
 
-	for ($i = 0; $i -lt $local:wideKanaDaku.Length; $i++) {
+	for ($i = 0; $i -lt $local:narrowKanaDaku.Length; $i++) {
 		$local:text = $local:text.Replace($local:narrowKanaDaku[$i] + 'ﾞ', $local:wideKanaDaku[$i])
 	}
-	for ($i = 0; $i -lt $local:wideKanaHanDaku.Length; $i++) {
-		$local:text = $local:text.Replace($local:narrowKanaHanDaku[$i] + 'ﾟ', $local:narrowKanaHanDaku[$i])
+	for ($i = 0; $i -lt $local:narrowKanaHanDaku.Length; $i++) {
+		$local:text = $local:text.Replace($local:narrowKanaHanDaku[$i] + 'ﾟ', $local:wideKanaHanDaku[$i])
 	}
-	for ($i = 0; $i -lt $local:wideKana.Length; $i++) {
+	for ($i = 0; $i -lt $local:narrowKana.Length; $i++) {
 		$local:text = $local:text.Replace($local:narrowKana[$i], $local:wideKana[$i])
 	}
-	for ($i = 0; $i -lt $local:narrowNum.Length; $i++) {
+	for ($i = 0; $i -lt $local:wideNum.Length; $i++) {
 		$local:text = $local:text.Replace($local:wideNum[$i], $local:narrowNum[$i])
 	}
-	for ($i = 0; $i -lt $local:narrowAlpha.Length; $i++) {
+	for ($i = 0; $i -lt $local:wideAlpha.Length; $i++) {
 		$local:text = $local:text.Replace($local:wideAlpha[$i], $local:narrowAlpha[$i])
 	}
-	for ($i = 0; $i -lt $local:narrowSimbol.Length; $i++) {
+	for ($i = 0; $i -lt $local:wideSimbol.Length; $i++) {
 		$local:text = $local:text.Replace($local:wideSimbol[$i], $local:narrowSimbol[$i])
 	}
 
@@ -383,14 +381,27 @@ function deleteFiles {
 
 	Write-Debug $myInvocation.MyCommand.name
 
-	try {
-		foreach ($local:delCondition in $local:delConditions.Split(',').Trim()) {
-			Write-Output ('　' + (Join-Path $local:basePath $local:delCondition))
-			$null = Get-ChildItem -LiteralPath $local:basePath -Recurse -File -Filter $local:delCondition -ErrorAction SilentlyContinue `
-			| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays($local:delPeriod) } `
-			| Remove-Item -Force -ErrorAction SilentlyContinue
-		}
-	} catch { Write-Warning '❗ 削除できないファイルがありました' }
+	if ($script:enableMultithread -eq $true) {
+		#並列化が有効の場合は並列化
+		try {
+			$local:delConditions.Split(',').Trim() | ForEach-Object -Parallel {
+				Write-Output ('　' + (Join-Path $using:local:basePath $_))
+				$null = Get-ChildItem -LiteralPath $using:local:basePath -Recurse -File -Filter $_ -ErrorAction SilentlyContinue `
+				| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays($using:local:delPeriod) } `
+				| Remove-Item -Force -ErrorAction SilentlyContinue
+			} -ThrottleLimit $script:multithreadNum
+		} catch { Write-Warning '❗ 削除できないファイルがありました' }
+	} else {
+		#並列化が無効の場合は従来型処理
+		try {
+			foreach ($local:delCondition in $local:delConditions.Split(',').Trim()) {
+				Write-Output ('　' + (Join-Path $local:basePath $local:delCondition))
+				$null = Get-ChildItem -LiteralPath $local:basePath -Recurse -File -Filter $local:delCondition -ErrorAction SilentlyContinue `
+				| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays($local:delPeriod) } `
+				| Remove-Item -Force -ErrorAction SilentlyContinue
+			}
+		} catch { Write-Warning '❗ 削除できないファイルがありました' }
+	}
 
 }
 

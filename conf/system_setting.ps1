@@ -86,7 +86,7 @@ $script:parallelDownloadNumPerFile = 10
 #　ただし、並列処理を有効化すると履歴ファイルや無視リストの破損リスクが高まります。
 #　現在のところ、並列処理を行うのはダウンロードリストの作成処理とダウンロード対象外番組の削除処理、
 #　空フォルダの削除処理です。
-$script:enableMultithread = $false
+$script:enableMultithread = $true
 
 #並列処理の同時スレッド数
 #　PCの性能に応じて適度に設定してください。
@@ -94,7 +94,7 @@ $script:enableMultithread = $false
 #　あまり大きな数を指定すると逆に処理時間が長くなる可能性があります。
 #　現在のところ、並列処理を行うのはダウンロードリストの作成処理とダウンロード対象外番組の削除処理、
 #　空フォルダの削除処理です。
-$script:multithreadNum = 100
+$script:multithreadNum = 50
 
 #ダウンロード帯域制限
 #　ネットワーク帯域を使い切らないようにダウンロード速度制限を設定することができます。
