@@ -268,24 +268,9 @@ function getRegexIgnoreList {
 	finally { $null = fileUnlock $script:ignoreLockFilePath }
 
 	if ($null -ne $local:ignoreRegexTitles ) {
-		foreach ($local:ignoreRegexTitle in $local:ignoreRegexTitles) {
+		for ($i = 0; $i -lt $local:ignoreRegexTitles.Length; $i++) {
 			#正規表現用のエスケープ
-			$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('\', '\\')
-			$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('*', '\*')
-			$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('+', '\+')
-			$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('.', '\.')
-			$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('?', '\?')
-			$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('{', '\{')
-			$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('}', '\}')
-			$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('(', '\(')
-			$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace(')', '\)')
-			$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('[', '\[')
-			$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace(']', '\]')
-			$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('^', '\^')
-			$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('$', '\$')
-			$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('-', '\-')
-			$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('|', '\|')
-			$local:ignoreRegexTitle = $local:ignoreRegexTitle.Replace('/', '\/')
+			$local:ignoreRegexTitles[$i] = [Regex]::Escape($local:ignoreRegexTitles[$i])
 		}
 	}
 
@@ -311,22 +296,7 @@ function sortIgnoreList {
 	$local:ignoreElse = @()
 
 	#正規表現用のエスケープ解除
-	$local:ignoreTitle = $local:ignoreTitle.Replace('\\', '\')
-	$local:ignoreTitle = $local:ignoreTitle.Replace('\*', '*')
-	$local:ignoreTitle = $local:ignoreTitle.Replace('\+', '+')
-	$local:ignoreTitle = $local:ignoreTitle.Replace('\.', '.')
-	$local:ignoreTitle = $local:ignoreTitle.Replace('\?', '?')
-	$local:ignoreTitle = $local:ignoreTitle.Replace('\{', '{')
-	$local:ignoreTitle = $local:ignoreTitle.Replace('\}', '}')
-	$local:ignoreTitle = $local:ignoreTitle.Replace('\(', '(')
-	$local:ignoreTitle = $local:ignoreTitle.Replace('\)', ')')
-	$local:ignoreTitle = $local:ignoreTitle.Replace('\[', '[')
-	$local:ignoreTitle = $local:ignoreTitle.Replace('\]', ']')
-	$local:ignoreTitle = $local:ignoreTitle.Replace('\^', '^')
-	$local:ignoreTitle = $local:ignoreTitle.Replace('\$', '$')
-	$local:ignoreTitle = $local:ignoreTitle.Replace('\-', '-')
-	$local:ignoreTitle = $local:ignoreTitle.Replace('\|', '|')
-	$local:ignoreTitle = $local:ignoreTitle.Replace('\/', '/')
+	$local:ignoreTitle = [Regex]::Unescape($local:ignoreTitle)
 
 	try {
 		#ロックファイルをロック
@@ -337,7 +307,7 @@ function sortIgnoreList {
 	finally { $null = fileUnlock $script:ignoreLockFilePath }
 
 	$local:ignoreComment = (Get-Content $script:ignoreFileSamplePath -Encoding UTF8)
-	$local:ignoreTarget = $ignoreLists | Where-Object { $_ -eq $local:ignoreTitle }
+	$local:ignoreTarget = $ignoreLists | Where-Object { $_ -eq $local:ignoreTitle } | Sort-Object | Get-Unique
 	$local:ignoreElse = $ignoreLists | Where-Object { $_ -ne $local:ignoreTitle }
 
 	$local:ignoreListNew += $local:ignoreComment
