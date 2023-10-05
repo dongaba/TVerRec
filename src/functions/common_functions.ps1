@@ -508,6 +508,8 @@ function fileUnlock {
 		# close stream if not lock
 		if ($script:fileStream) { $script:fileStream.Close() }
 		$local:fileLocked = $false
+		$script:fileStream.Dispose()
+		$script:fileInfo.Dispose()
 	} catch { $local:fileLocked = $true
 	} finally {
 		# return result
@@ -1141,5 +1143,4 @@ function updateProgress2Row {
 		-Group $local:toastGroup
 }
 
-#endregion トースト通知#endregion トースト通知#endregion トースト通知#endregion トースト通知#endregion トースト通知#endregion トースト通知
 #endregion トースト通知

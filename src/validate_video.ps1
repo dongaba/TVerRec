@@ -257,6 +257,10 @@ updateProgressToast `
 	-Tag $script:appName `
 	-Group 'Validate'
 
+[System.GC]::Collect()
+[System.GC]::WaitForPendingFinalizers()
+[System.GC]::Collect()
+
 Write-Output '---------------------------------------------------------------------------'
 Write-Output '番組整合性チェック処理を終了しました。                                           '
 Write-Output '---------------------------------------------------------------------------'

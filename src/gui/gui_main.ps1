@@ -170,6 +170,8 @@ $script:scriptBlocks = @{
 			. './validate_video.ps1'
 			. './move_video.ps1'
 			[System.GC]::Collect()
+			[System.GC]::WaitForPendingFinalizers()
+			[System.GC]::Collect()
 			Write-Output '3600秒待機します...'
 			Start-Sleep 3600
 		}
@@ -209,7 +211,7 @@ foreach ($script:btn in $script:btns) {
 #----------------------------------------------------------------------
 #region ジョブ化しないボタンのアクション
 
-$script:btnWorkSaveOpen.add_Click({ Invoke-Item $script:downloadWorkDir })
+$script:btnWorkOpen.add_Click({ Invoke-Item $script:downloadWorkDir })
 $script:btnDownloadOpen.add_Click({ Invoke-Item $script:downloadBaseDir })
 $script:btnSaveOpen.add_Click({
 		if ($script:saveBaseDir -ne '') {
@@ -221,13 +223,20 @@ $script:btnSaveOpen.add_Click({
 $script:btnKeywordOpen.add_Click({ Invoke-Item $script:keywordFilePath })
 $script:btnIgnoreOpen.add_Click({ Invoke-Item $script:ignoreFilePath })
 $script:btnListOpen.add_Click({ Invoke-Item $script:listFilePath })
-$script:btnClearLog.add_Click({ $script:outText.Clear() })
+$script:btnClearLog.add_Click({
+		$script:outText.Clear()
+		[System.GC]::Collect()
+		[System.GC]::WaitForPendingFinalizers()
+		[System.GC]::Collect()
+	})
 $script:btnKillAll.add_Click({
 		Get-Job | Remove-Job -Force
 		foreach ($btn in $script:btns) { $btn.IsEnabled = $true }
 		$script:btnExit.IsEnabled = $true
 		$script:btnKillAll.IsEnabled = $false
 		$script:lblStatus.Content = '処理を強制停止しました'
+		[System.GC]::Collect()
+		[System.GC]::WaitForPendingFinalizers()
 		[System.GC]::Collect()
 	})
 $script:btnWiki.add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
@@ -236,6 +245,8 @@ $script:btnSetting.add_Click({
 		if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 			. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
 		}
+		[System.GC]::Collect()
+		[System.GC]::WaitForPendingFinalizers()
 		[System.GC]::Collect()
 	})
 $script:btnExit.add_Click({ $script:mainWindow.close() })
@@ -280,6 +291,9 @@ while ($script:mainWindow.IsVisible) {
 			$script:btnExit.IsEnabled = $true
 			$script:btnKillAll.IsEnabled = $false
 			$script:lblStatus.Content = '処理を終了しました'
+			[System.GC]::Collect()
+			[System.GC]::WaitForPendingFinalizers()
+			[System.GC]::Collect()
 		}
 	}
 

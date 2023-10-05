@@ -264,7 +264,7 @@ function getRegexIgnoreList {
 		$local:ignoreRegexTitles = [String[]](Get-Content $script:ignoreFilePath -Encoding UTF8 `
 			| Where-Object { !($_ -match '^\s*$') } `		#空行を除く
 			| Where-Object { !($_ -match '^;.*$') }) `		#コメント行を除く
-			| Foreach-Object { [RegEx]::escape($_) }		##正規表現用のエスケープ
+		| ForEach-Object { [RegEx]::Escape($_) }		##正規表現用のエスケープ
 	} catch { Write-Error '❗ ダウンロード対象外の読み込みに失敗しました' ; exit 1 }
 	finally { $null = fileUnlock $script:ignoreLockFilePath }
 
@@ -279,7 +279,7 @@ function sortIgnoreList {
 	Param (
 		[Parameter(Mandatory = $true, Position = 0)]
 		[Alias('ignoreTitle')]
-		[String]$local:ignoreTitle
+		[String]$local:ignoreRegexTitle
 	)
 
 	Write-Debug $myInvocation.MyCommand.name
@@ -290,7 +290,7 @@ function sortIgnoreList {
 	$local:ignoreElse = @()
 
 	#正規表現用のエスケープ解除
-#	$local:ignoreTitle = [Regex]::Unescape($local:ignoreTitle)
+	$local:ignoreTitle = [Regex]::Unescape($local:ignoreRegexTitle)
 
 	try {
 		#ロックファイルをロック
@@ -301,7 +301,7 @@ function sortIgnoreList {
 	finally { $null = fileUnlock $script:ignoreLockFilePath }
 
 	$local:ignoreComment = (Get-Content $script:ignoreFileSamplePath -Encoding UTF8)
-	$local:ignoreTarget = $ignoreLists | Where-Object { $_ -eq [RegEx]::Unescape($local:ignoreTitle) } | Sort-Object | Get-Unique
+	$local:ignoreTarget = $ignoreLists | Where-Object { $_ -eq $local:ignoreTitle } | Sort-Object | Get-Unique
 	$local:ignoreElse = $ignoreLists | Where-Object { $_ -ne $local:ignoreTitle }
 
 	$local:ignoreListNew += $local:ignoreComment
@@ -315,9 +315,8 @@ function sortIgnoreList {
 		#改行コードLFを強制
 		$local:ignoreListNew | ForEach-Object { $_ + "`n" } | Out-File -Path $script:ignoreFilePath -Encoding UTF8 -NoNewline
 		Write-Debug 'ダウンロード対象外リストのソート更新完了'
-	} catch {
-		Write-Error '❗ ダウンロード対象外リストのソートに失敗しました' ; exit 1
-	} finally {
+	} catch { Write-Error '❗ ダウンロード対象外リストのソートに失敗しました' ; exit 1 }
+	finally {
 		$null = fileUnlock $script:ignoreLockFilePath
 		#ダウンロード対象外番組の読み込み
 		$script:ignoreRegExTitles = getRegExIgnoreList
@@ -434,11 +433,7 @@ function getVideoLinksFromKeyword {
 		catch { Write-Warning '❗ 情報取得エラー。スキップします Err:10'; continue }
 	}
 
-	$script:episodeLinks = @($script:episodeLinks | Sort-Object | Get-Unique)
-
-	[System.GC]::Collect()
-
-	return $script:episodeLinks
+	return $script:episodeLinks | Sort-Object | Get-Unique
 }
 
 #----------------------------------------------------------------------
@@ -487,12 +482,12 @@ function getLinkFromSeasonID {
 			}
 			'season' {
 				Write-Host ('　Season ' + $local:searchResult.Content.Id + ' からEpisodeを抽出中...')
-				$script:episodeLinks.Add((getLinkFromSeasonID $local:searchResult.Content.Id))
+				getLinkFromSeasonID $local:searchResult.Content.Id
 				break
 			}
 			'series' {
 				Write-Host ('　Series ' + $local:searchResults[$i].Content.Id + ' からEpisodeを抽出中...')
-				$script:episodeLinks.Add((getLinkFromSeriesID $local:searchResult.Content.Id))
+				getLinkFromSeriesID $local:searchResult.Content.Id
 				break
 			}
 			default {
@@ -528,12 +523,12 @@ function getLinkFromTalentID {
 			}
 			'season' {
 				Write-Host ('　Season ' + $local:searchResult.Content.Id + ' からEpisodeを抽出中...')
-				$script:episodeLinks.Add((getLinkFromSeasonID $local:searchResult.Content.Id))
+				getLinkFromSeasonID $local:searchResult.Content.Id
 				break
 			}
 			'series' {
 				Write-Host ('　Series ' + $local:searchResult.Content.Id + ' からEpisodeを抽出中...')
-				$script:episodeLinks.Add((getLinkFromSeriesID $local:searchResult.Content.Id))
+				getLinkFromSeriesID $local:searchResult.Content.Id
 				break
 			}
 			default {
@@ -569,7 +564,7 @@ function getLinkFromSpecialMainID {
 			}
 			'season' {
 				Write-Host ('　Season ' + $local:searchResult.Content.Id + ' からEpisodeを抽出中...')
-				$script:episodeLinks.Add((getLinkFromSeasonID ($local:searchResult.Content.Id)))
+				getLinkFromSeasonID ($local:searchResult.Content.Id)
 				break
 			}
 			'series' {
@@ -580,7 +575,7 @@ function getLinkFromSpecialMainID {
 			}
 			'special' {
 				Write-Host ('　Special Detail ' + $local:searchResult.Content.Id + ' からEpisodeを抽出中...')
-				$script:episodeLinks.Add((getLinkFromSpecialDetailID ($local:searchResult.Content.Id)))
+				getLinkFromSpecialDetailID ($local:searchResult.Content.Id)
 				break
 			}
 			default {
@@ -616,7 +611,7 @@ function getLinkFromSpecialDetailID {
 			}
 			'season' {
 				Write-Host ('　Season ' + $local:searchResult.Content.Id + ' からEpisodeを抽出中...')
-				$script:episodeLinks.Add((getLinkFromSeasonID ($local:searchResult.Content.Id)))
+				getLinkFromSeasonID ($local:searchResult.Content.Id)
 				break
 			}
 			'series' {
@@ -628,7 +623,7 @@ function getLinkFromSpecialDetailID {
 			'special' {
 				#再度Specialが出てきた際は再帰呼び出し
 				Write-Host ('　Special Detail ' + $local:searchResult.Content.Id + ' からEpisodeを抽出中...')
-				$script:episodeLinks.Add((getLinkFromSpecialDetailID ($local:searchResult.Content.Id)))
+				getLinkFromSpecialDetailID ($local:searchResult.Content.Id)
 				break
 			}
 			default {
@@ -664,12 +659,12 @@ function getLinkFromTag {
 			}
 			'season' {
 				Write-Host ('　Season ' + $local:searchResult.Content.Id + ' からEpisodeを抽出中...')
-				$script:episodeLinks.Add((getLinkFromSeasonID ($local:searchResult.Content.Id)))
+				getLinkFromSeasonID ($local:searchResult.Content.Id)
 				break
 			}
 			'series' {
 				Write-Host ('　Series ' + $local:searchResult.Content.Id + ' からEpisodeを抽出中...')
-				$script:episodeLinks.Add((getLinkFromSeriesID ($local:searchResult.Content.Id)))
+				getLinkFromSeriesID ($local:searchResult.Content.Id)
 				break
 			}
 			default {
@@ -705,12 +700,12 @@ function getLinkFromNew {
 			}
 			'season' {
 				Write-Host ('　Season ' + $local:searchResult.Content.Id + ' からEpisodeを抽出中...')
-				$script:episodeLinks.Add((getLinkFromSeasonID ($local:searchResult.Content.Id)))
+				getLinkFromSeasonID ($local:searchResult.Content.Id)
 				break
 			}
 			'series' {
 				Write-Host ('　Series ' + $local:searchResult.Content.Id + ' からEpisodeを抽出中...')
-				$script:episodeLinks.Add((getLinkFromSeriesID ($local:searchResult.Content.Id)))
+				getLinkFromSeriesID ($local:searchResult.Content.Id)
 				break
 			}
 			default {
@@ -747,12 +742,12 @@ function getLinkFromRanking {
 			}
 			'season' {
 				Write-Host ('　Season ' + $local:searchResult.Content.Id + ' からEpisodeを抽出中...')
-				$script:episodeLinks.Add((getLinkFromSeasonID ($local:searchResult.Content.Id)))
+				getLinkFromSeasonID ($local:searchResult.Content.Id)
 				break
 			}
 			'series' {
 				Write-Host ('　Series ' + $local:searchResult.Content.Id + ' からEpisodeを抽出中...')
-				$script:episodeLinks.Add((getLinkFromSeriesID ($local:searchResult.Content.Id)))
+				getLinkFromSeriesID ($local:searchResult.Content.Id)
 				break
 			}
 			default {
@@ -799,7 +794,7 @@ function getLinkFromTopPage {
 					}
 					'season' {
 						Write-Host ('　Season ' + $local:searchResultContent.Content.Id + ' からEpisodeを抽出中...')
-						$script:episodeLinks.Add((getLinkFromSeasonID ($local:searchResultContent.Content.Id)))
+						getLinkFromSeasonID ($local:searchResultContent.Content.Id)
 						break
 					}
 					'series' {
@@ -810,17 +805,17 @@ function getLinkFromTopPage {
 					}
 					'talent' {
 						Write-Host ('　Talent ' + $local:searchResultContent.Content.Id + ' からEpisodeを抽出中...')
-						$script:episodeLinks.Add((getLinkFromTalentID ($local:searchResultContent.Content.Id)))
+						getLinkFromTalentID ($local:searchResultContent.Content.Id)
 						break
 					}
 					'specialMain' {
 						Write-Host ('　Special Main ' + $local:searchResultContent.Content.Id + ' からEpisodeを抽出中...')
-						$script:episodeLinks.Add((getLinkFromSpecialMainID ($local:searchResultContent.Content.Id)))
+						getLinkFromSpecialMainID ($local:searchResultContent.Content.Id)
 						break
 					}
 					'special' {
 						Write-Host ('　Special Detail ' + $local:searchResultContent.Content.Id + ' からEpisodeを抽出中...')
-						$script:episodeLinks.Add((getLinkFromSpecialDetailID ($local:searchResultContent.Content.Id)))
+						getLinkFromSpecialDetailID ($local:searchResultContent.Content.Id)
 						break
 					}
 					default {
@@ -840,7 +835,7 @@ function getLinkFromTopPage {
 					}
 					'season' {
 						Write-Host ('　Season ' + $local:searchResultContent.Content.Content.Content.Id + ' からEpisodeを抽出中...')
-						$script:episodeLinks.Add((getLinkFromSeasonID ($local:searchResultContent.Content.Content.Content.Id)))
+						getLinkFromSeasonID ($local:searchResultContent.Content.Content.Content.Id)
 						break
 					}
 					'series' {
@@ -851,7 +846,7 @@ function getLinkFromTopPage {
 					}
 					'talent' {
 						Write-Host ('　Talent ' + $local:searchResultContent.Content.Content.Content.Id + ' からEpisodeを抽出中...')
-						$script:episodeLinks.Add((getLinkFromTalentID ($local:searchResultContent.Content.Content.Content.Id)))
+						getLinkFromTalentID ($local:searchResultContent.Content.Content.Content.Id)
 						break
 					}
 					default {
@@ -864,13 +859,14 @@ function getLinkFromTopPage {
 		} elseif ($local:searchResult.type -eq 'banner') { #広告	URLは $local:searchResult.contents.content.targetURL
 		} elseif ($local:searchResult.type -eq 'resume') { #続きを見る	ブラウザのCookieを処理しないといけないと思われるため対応予定なし
 		} else {}
+
 	}
 
 	#バッファしておいたSeriesの重複を削除しEpisodeを抽出
 	$script:seriesLinks = $script:seriesLinks | Sort-Object | Get-Unique
 	foreach ($local:seriesID in $script:seriesLinks) {
 		Write-Host ('　Series ' + $local:seriesID + ' からEpisodeを抽出中...')
-		$script:episodeLinks.Add((getLinkFromSeriesID ($local:seriesID)))
+		getLinkFromSeriesID ($local:seriesID)
 	}
 
 	return $script:episodeLinks | Sort-Object | Get-Unique
@@ -895,11 +891,11 @@ function getLinkFromSiteMap {
 		else {
 			if ($local:searchResult -like '*/seasons/*') {
 				Write-Host ('　' + $local:searchResult + 'からEpisodeを抽出中...')
-				try { $script:episodeLinks.Add((getLinkFromSeasonID ($local:searchResult))) }
+				try { getLinkFromSeasonID ($local:searchResult) }
 				catch { Write-Warning '❗ 情報取得エラー。スキップします Err:11'; continue }
 			} elseif ($local:searchResult -like '*/series/*') {
 				Write-Host ('　' + $local:searchResult + ' からEpisodeを抽出中...')
-				try { $script:episodeLinks.Add((getLinkFromSeriesID ($local:searchResult))) }
+				try { getLinkFromSeriesID ($local:searchResult) }
 				catch { Write-Warning '❗ 情報取得エラー。スキップします Err:12'; continue }
 			} elseif ($local:searchResult -eq 'https://tver.jp/') { #トップページ	別のキーワードがあるためため対応予定なし
 			} elseif ($local:searchResult -like '*/info/*') { #お知らせ	番組ページではないため対応予定なし
@@ -939,12 +935,12 @@ function getLinkFromFreeKeyword {
 			}
 			'season' {
 				Write-Host ('　Season ' + $local:searchResult.Content.Id + ' からEpisodeを抽出中...')
-				$script:episodeLinks.Add((getLinkFromSeasonID ($local:searchResult.Content.Id)))
+				getLinkFromSeasonID ($local:searchResult.Content.Id)
 				break
 			}
 			'series' {
 				Write-Host ('　Series ' + $local:searchResult.Content.Id + ' からEpisodeを抽出中...')
-				$script:episodeLinks.Add((getLinkFromSeriesID ($local:searchResult.Content.Id)))
+				getLinkFromSeriesID ($local:searchResult.Content.Id)
 				break
 			}
 			default {
@@ -1616,7 +1612,7 @@ function executeYtdl {
 	$local:ytdlArgs += ' --no-continue'
 	$local:ytdlArgs += ' --windows-filenames'
 	$local:ytdlArgs += ' --concurrent-fragments ' + $script:parallelDownloadNumPerFile
-	$local:ytdlArgs += ' --limit-rate ' + ([int]$script:rateLimit / 8) + 'M'
+	$local:ytdlArgs += ' --limit-rate ' + ([int]$script:rateLimit / [int]$script:parallelDownloadNumPerFile / 8) + 'M'
 	$local:ytdlArgs += ' --embed-thumbnail'
 	$local:ytdlArgs += ' --all-subs'
 	if ($script:embedSubtitle -eq $true) { $local:ytdlArgs += ' --embed-subs' }

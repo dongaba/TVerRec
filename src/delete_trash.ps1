@@ -56,7 +56,7 @@ Write-Output '処理が中断した際にできたゴミファイルを削除し
 Write-Output '----------------------------------------------------------------------'
 #進捗表示
 showProgressToast `
-	-Text1 'ファイルの掃除中' `
+	-Text1 '不要ファイル削除中' `
 	-Text2 '　処理1/3 - ダウンロード中断時のゴミファイルを削除' `
 	-WorkDetail '' `
 	-Tag $script:appName `
@@ -144,7 +144,7 @@ Write-Output 'ダウンロード対象外の番組を削除します'
 Write-Output '----------------------------------------------------------------------'
 #進捗表示
 showProgressToast `
-	-Text1 'ファイルの掃除中' `
+	-Text1 '不要ファイル削除中' `
 	-Text2 '　処理2/3 - ダウンロード対象外の番組を削除' `
 	-WorkDetail '' `
 	-Tag $script:appName `
@@ -247,7 +247,7 @@ Write-Output '空ディレクトリを削除します'
 Write-Output '----------------------------------------------------------------------'
 #進捗表示
 showProgressToast `
-	-Text1 'ファイルの掃除中' `
+	-Text1 '不要ファイル削除中' `
 	-Text2 '　処理3/3 - 空ディレクトリを削除' `
 	-WorkDetail '' `
 	-Tag $script:appName `
@@ -256,7 +256,7 @@ showProgressToast `
 	-Silent $false
 
 #処理
-$local:allSubDirs = $null
+$local:allSubDirs = @()
 try { $local:allSubDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer }).FullName | Sort-Object -Descending) }
 catch { Write-Warning '❗ ディレクトリを見つけられませんでした' }
 
@@ -308,7 +308,7 @@ if ($local:subDirTotal -ne 0) {
 				-LeftText ([String]$local:subDirNum + '/' + [String]$local:subDirTotal) `
 				-RightText ('残り時間 ' + $local:minRemaining) `
 				-Tag $script:appName `
-				-Group 'Move'
+				-Group 'Delete'
 
 			#処理
 			Write-Output ([String]$local:subDirNum + '/' + [String]$local:subDirTotal + ' - ' + $local:subDir)
@@ -325,12 +325,16 @@ if ($local:subDirTotal -ne 0) {
 
 #進捗表示
 updateProgressToast `
-	-Title '' `
+	-Title '不要ファイル削除' `
 	-Rate 1 `
 	-LeftText '' `
 	-RightText '完了' `
 	-Tag $script:appName `
 	-Group 'Delete'
+
+[System.GC]::Collect()
+[System.GC]::WaitForPendingFinalizers()
+[System.GC]::Collect()
 
 Write-Output '---------------------------------------------------------------------------'
 Write-Output '不要ファイル削除処理を終了しました。                                       '

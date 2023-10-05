@@ -217,6 +217,10 @@ updateProgressToast2 `
 Write-Output 'ダウンロードの終了を待機しています'
 waitTillYtdlProcessIsZero
 
+[System.GC]::Collect()
+[System.GC]::WaitForPendingFinalizers()
+[System.GC]::Collect()
+
 Write-Output '---------------------------------------------------------------------------'
 Write-Output '一括ダウンロード処理を終了しました。                                       '
 Write-Output '---------------------------------------------------------------------------'

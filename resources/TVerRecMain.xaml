@@ -499,7 +499,7 @@
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center">
                 <Button
-                    x:Name="btnWorkSaveOpen"
+                    x:Name="btnWorkOpen"
                     Style="{DynamicResource ButtonStyle}"
                     Content="作業フォルダ"
                     Margin="10,0,10,0"

@@ -181,6 +181,10 @@ Write-Output 'ダウンロードの終了を待機しています'
 Write-Output ''
 waitTillYtdlProcessIsZero
 
+[System.GC]::Collect()
+[System.GC]::WaitForPendingFinalizers()
+[System.GC]::Collect()
+
 Write-Output '---------------------------------------------------------------------------'
 Write-Output 'リストダウンロード処理を終了しました。                                     '
 Write-Output '---------------------------------------------------------------------------'

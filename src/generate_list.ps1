@@ -96,7 +96,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 	Write-Output '----------------------------------------------------------------------'
 
 	#処理
-	$local:resultLinks = getVideoLinksFromKeyword ($local:keywordName)
+	$local:resultLinks = @(getVideoLinksFromKeyword ($local:keywordName))
 	$local:keywordName = $local:keywordName.Replace('https://tver.jp/', '')
 
 	#ダウンロードリストファイルのデータを読み込み
@@ -117,7 +117,11 @@ foreach ($local:keywordName in $local:keywordNames) {
 	} catch { Write-Warning '❗ ダウンロード履歴を読み込めなかったのでスキップしました'; continue }
 	finally { $null = fileUnlock $script:historyLockFilePath }
 
+	Write-Output '処理履歴との照合 '
+	$local:resultNum = 0
+	$local:resultTotal = $local:resultLinks.Count
 	foreach ($local:resultLink in $local:resultLinks) {
+		$local:resultNum = $local:resultNum + 1
 		$local:resultEpisodeID = $local:resultLink.Replace('https://tver.jp/episodes/', '')
 		#URLがすでにダウンロードリストに存在するかチェック
 		$local:listMatch = $script:listFileData | Where-Object { $_.episodeID -like "*$local:resultEpisodeID" }
@@ -126,8 +130,14 @@ foreach ($local:keywordName in $local:keywordNames) {
 		$local:histMatch = $script:historyFileData | Where-Object { $_.videoPage -like "*$local:resultLink" }
 
 		#どちらにも含まれない場合はリストへの出力対象
-		if (($null -eq $local:listMatch) -And ($null -eq $local:histMatch)) { $local:videoLinks.Add($local:resultLink) }
-		else { $local:searchResultCount = $local:searchResultCount + 1; continue }
+		if (($null -eq $local:listMatch) -And ($null -eq $local:histMatch)) {
+			$local:videoLinks.Add($local:resultLink)
+			Write-Output ('　' + $local:resultNum + '/' + $local:resultTotal + ' ' + $local:resultLink + ' ... ❗ 未処理')
+		} else {
+			$local:searchResultCount = $local:searchResultCount + 1
+			Write-Output ('　' + $local:resultNum + '/' + $local:resultTotal + ' ' + $local:resultLink + ' ... ✔️')
+			continue
+		}
 	}
 
 	#処理対象のトータル番組数
@@ -314,6 +324,10 @@ updateProgressToast `
 	-RightText '完了' `
 	-Tag $script:appName `
 	-Group 'ListGen'
+
+[System.GC]::Collect()
+[System.GC]::WaitForPendingFinalizers()
+[System.GC]::Collect()
 
 Write-Output '---------------------------------------------------------------------------'
 Write-Output '番組リストファイル出力処理を終了しました。'

@@ -85,6 +85,11 @@ showProgressToast `
 	-Duration 'long' `
 	-Silent $false
 
+#処理
+$local:moveToPaths = @()
+foreach ($local:saveDir in $script:saveBaseDirArray) {
+	$local:moveToPaths += (Get-ChildItem -Path $local:saveDir.Trim() -Recurse | Where-Object { $_.PSIsContainer } | Sort-Object).FullName
+}
 
 #======================================================================
 #2/3 移動先ディレクトリと同名のディレクトリ配下の番組を移動
@@ -104,14 +109,6 @@ showProgressToast `
 	-Silent $false
 
 #処理
-$local:moveToPaths = @()
-foreach ($local:saveDir in $script:saveBaseDirArray) {
-	$local:moveToPaths += Get-ChildItem -Path $local:saveDir.Trim() -Recurse `
-	| Where-Object { $_.PSIsContainer } `
-	| Sort-Object
-}
-$local:moveToPaths = @($local:moveToPaths)
-
 #移動先パス番号
 $local:moveToPathNum = 0
 #移動先パス合計数
@@ -121,7 +118,7 @@ $local:moveToPathTotal = $local:moveToPaths.Count
 $local:totalStartTime = Get-Date
 
 if ($local:moveToPathTotal -ne 0) {
-	foreach ($local:moveToPath in $local:moveToPaths.FullName) {
+	foreach ($local:moveToPath in $local:moveToPaths) {
 
 		#処理時間の推計
 		$local:secElapsed = (Get-Date) - $local:totalStartTime
@@ -181,9 +178,8 @@ showProgressToast `
 
 #処理
 $local:allSubDirs = @()
-try {
-	$local:allSubDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer }).FullName | Sort-Object -Descending)
-} catch { Write-Warning '❗ ディレクトリを見つけられませんでした' }
+try { $local:allSubDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer }).FullName | Sort-Object -Descending) }
+catch { Write-Warning '❗ ディレクトリを見つけられませんでした' }
 
 #サブディレクトリの合計数
 $local:subDirTotal = $local:allSubDirs.Count
@@ -193,29 +189,30 @@ if ($local:subDirTotal -ne 0) {
 	if ($script:enableMultithread -eq $true) {
 		#並列化が有効の場合は並列化
 		$local:allSubDirs | ForEach-Object -Parallel {
-			$local:i = ([Array]::IndexOf($using:local:allSubDirs, $_)) + 1
-			$local:total = $using:local:allSubDirs.Count
+			$local:subDirNum = ([Array]::IndexOf($using:local:allSubDirs, $_)) + 1
+			$local:subDirTotal = $using:local:allSubDirs.Count
 			#処理
-			Write-Output ([String]$local:i + '/' + [String]$local:total + ' - ' + $_)
+			Write-Output ([String]$local:subDirNum + '/' + [String]$local:subDirTotal + ' - ' + $_)
 			if (@((Get-ChildItem -LiteralPath $_ -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
-				Write-Output ('💡 ' + [String]$local:i + '/' + [String]$local:total + ' - ' + $_ + 'を削除します')
+				Write-Output ('💡 ' + [String]$local:subDirNum + '/' + [String]$local:subDirTotal + ' - ' + $_ + 'を削除します')
 				try { Remove-Item -LiteralPath $_ -Recurse -Force }
-				catch { Write-Warning ('❗ - 空ディレクトリの削除に失敗しました:' + $_) }
+				catch { Write-Warning ('❗ - 空ディレクトリの削除に失敗しました: ' + $_) }
 			}
 		} -ThrottleLimit $script:multithreadNum
 
 	} else {
 		#並列化が無効の場合は従来型処理
-		#サブディレクトリの番号
-		$local:subDirNum = 0
 		#サブディレクトリの合計数
 		$local:subDirTotal = $local:allSubDirs.Count
 		$local:totalStartTime = Get-Date
+
 		foreach ($local:subDir in $local:allSubDirs) {
+			$local:subDirNum = ([Array]::IndexOf($local:allSubDirs, $local:subDir)) + 1
+
 			#処理時間の推計
 			$local:secElapsed = (Get-Date) - $local:totalStartTime
 			$local:secRemaining = -1
-			if ($local:subDirNum -ne 0) {
+			if ($local:subDirNum -ne 1) {
 				$local:secRemaining = ($local:secElapsed.TotalSeconds / $local:subDirNum) * ($local:subDirTotal - $local:subDirNum)
 				$local:minRemaining = "$([String]([math]::Ceiling($local:secRemaining / 60)))分"
 				$local:progressRatio = $($local:subDirNum / $local:subDirTotal)
@@ -237,13 +234,11 @@ if ($local:subDirTotal -ne 0) {
 			#処理
 			Write-Output ([String]$local:subDirNum + '/' + [String]$local:subDirTotal + ' - ' + $local:subDir)
 			if (@((Get-ChildItem -LiteralPath $local:subDir -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
-				Write-Output ('💡 ' + [String]$local:subDirNum + '/' + [String]$local:subDirTotal + $local:subDir + 'を削除します')
+				Write-Output ('💡 ' + [String]$local:subDirNum + '/' + [String]$local:subDirTotal + ' - ' + $local:subDir + 'を削除します')
 				try { Remove-Item -LiteralPath $local:subDir -Recurse -Force -ErrorAction SilentlyContinue
 				} catch { Write-Warning ('❗ - 空ディレクトリの削除に失敗しました:' + $local:subDir) }
 			}
 		}
-
-
 	}
 }
 #----------------------------------------------------------------------
@@ -256,6 +251,10 @@ updateProgressToast `
 	-RightText '完了' `
 	-Tag $script:appName `
 	-Group 'Move'
+
+[System.GC]::Collect()
+[System.GC]::WaitForPendingFinalizers()
+[System.GC]::Collect()
 
 Write-Output '---------------------------------------------------------------------------'
 Write-Output '番組移動処理を終了しました。                                               '
