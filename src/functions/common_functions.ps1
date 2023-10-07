@@ -472,7 +472,7 @@ function fileLock {
 		[System.IO.FileInfo]$local:Path
 	)
 
-	Write-Debug $myInvocation.MyCommand.name
+	Write-Debug ($myInvocation.MyCommand.name + ' - ' + $local:Path)
 
 	try {
 		$local:fileLocked = $false
@@ -502,7 +502,7 @@ function fileUnlock {
 		[System.IO.FileInfo]$local:Path
 	)
 
-	Write-Debug $myInvocation.MyCommand.name
+	Write-Debug ($myInvocation.MyCommand.name + ' - ' + $local:Path)
 
 	try {
 		# close stream if not lock
@@ -532,7 +532,7 @@ function isLocked {
 		[String]$local:isLockedPath
 	)
 
-	Write-Debug $myInvocation.MyCommand.name
+	Write-Debug ($myInvocation.MyCommand.name + ' - ' + $local:Path)
 
 	try {
 		$local:isFileLocked = $false

@@ -69,7 +69,7 @@ switch ($true) {
 		$local:arch = $Env:PROCESSOR_ARCHITECTURE.ToLower()
 
 		#残っているかもしれない中間ファイルを削除
-		Remove-Item -Path "$local:binDir/ffmpeg-master-latest-*-gpl" -Force -Recurse -ErrorAction SilentlyContinue
+		Remove-Item -Path "$local:binDir/ffmpeg-*-gpl-*" -Force -Recurse -ErrorAction SilentlyContinue
 		Remove-Item -Path (Join-Path $local:binDir 'ffmpeg.zip') -Force -ErrorAction SilentlyContinue
 
 		#ffmpegのバージョン取得
@@ -84,15 +84,16 @@ switch ($true) {
 
 		#ffmpegの最新バージョン取得
 		$local:releases = 'https://github.com/yt-dlp/FFmpeg-Builds/wiki/Latest'
+		$local:latestRelease = ''
 		$local:latestVersion = ''
 		try {
-			$local:latestVersion = Invoke-RestMethod -Uri $local:releases -Method Get
-			$null = $local:latestVersion -match 'yt-dlp/FFmpeg-Builds/releases/download/autobuild-(\d+)-(\d+)-(\d+)-\d+-\d+(.*)ffmpeg-(.*)-win64-gpl.zip'
-			$local:latestVersion = $matches[5] + '-' + $matches[1] + $matches[2] + $matches[3]
+			$local:latestRelease = Invoke-RestMethod -Uri $local:releases -Method Get
+			$null = $local:latestRelease -match 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)/ffmpeg-(n\d+\.\d+-\d+-[0-9a-z]*)(-win64-gpl-)(.*).zip'
+			$local:latestVersion = $matches[6]
 		} catch { Write-Warning '❗ ffmpegの最新バージョンを特定できませんでした'; return }
 
 		#ffmpegのダウンロード
-		if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
+		if ($local:ffmpegCurrentVersion -match $local:latestVersion) {
 			Write-Output '💡 ffmpegは最新です。'
 			Write-Output "　Local version: $local:ffmpegCurrentVersion"
 			Write-Output "　Latest version: $local:latestVersion"
@@ -105,15 +106,17 @@ switch ($true) {
 
 			if ([System.Environment]::IS64bitOperatingSystem -eq $true) {
 				$local:cpu = 'x64'
-				$donwloadURL = 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip'
+				$null = $local:latestRelease -match 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-win64-gpl-)(.*).zip'
+				$local:donwloadURL = $matches[0]
 			} else {
 				$local:cpu = 'x86'
-				$donwloadURL = 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win32-gpl.zip'
+				$null = $local:latestRelease -match 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-win32-gpl-)(.*).zip'
+				$local:donwloadURL = $matches[0]
 			}
 
 			#ダウンロード
 			Write-Output "ffmpegの最新版 $local:cpu 用をダウンロードします"
-			try { Invoke-WebRequest -Uri $donwloadURL -OutFile (Join-Path $local:binDir 'ffmpeg.zip') }
+			try { Invoke-WebRequest -Uri $local:donwloadURL -OutFile (Join-Path $local:binDir 'ffmpeg.zip') }
 			catch { Write-Error '❗ ffmpegのダウンロードに失敗しました' ; exit 1 }
 
 			#展開
@@ -123,12 +126,12 @@ switch ($true) {
 
 			#配置
 			Write-Output '解凍したffmpegを配置します'
-			try { Move-Item -Path "$local:binDir/ffmpeg-master-latest-*-gpl/bin/ff*.exe" -Destination $local:binDir -Force }
+			try { Move-Item -Path "$local:binDir/ffmpeg-*-gpl-*/bin/ff*.exe" -Destination $local:binDir -Force }
 			catch { Write-Error '❗ ffmpegの配置に失敗しました' ; exit 1 }
 
 			#ゴミ掃除
 			Write-Output '中間ディレクトリと中間ファイルを削除します'
-			try { Remove-Item -Path "$local:binDir/ffmpeg-master-latest-*-gpl" -Force -Recurse -ErrorAction SilentlyContinue }
+			try { Remove-Item -Path "$local:binDir/ffmpeg-*-gpl-*" -Force -Recurse -ErrorAction SilentlyContinue }
 			catch { Write-Error '❗ 中間ディレクトリの削除に失敗しました' ; exit 1 }
 			try { Remove-Item -Path (Join-Path $local:binDir 'ffmpeg.zip') -Force -ErrorAction SilentlyContinue }
 			catch { Write-Error '❗ 中間ファイルの削除に失敗しました' ; exit 1 }
@@ -152,7 +155,7 @@ switch ($true) {
 		$local:arch = (& uname -m | tr '[:upper:]' '[:lower:]')
 
 		#残っているかもしれない中間ファイルを削除
-		Remove-Item -Path "$local:binDir/ffmpeg-master-latest-*-gpl" -Force -Recurse -ErrorAction SilentlyContinue
+		Remove-Item -Path "$local:binDir/ffmpeg-*-gpl-*" -Force -Recurse -ErrorAction SilentlyContinue
 		Remove-Item -Path (Join-Path $local:binDir 'ffmpeg.tar.xz') -Force -ErrorAction SilentlyContinue
 
 		#ffmpegのバージョン取得
@@ -167,15 +170,16 @@ switch ($true) {
 
 		#ffmpegの最新バージョン取得
 		$local:releases = 'https://github.com/yt-dlp/FFmpeg-Builds/wiki/Latest'
+		$local:latestRelease = ''
 		$local:latestVersion = ''
 		try {
-			$local:latestVersion = Invoke-RestMethod -Uri $local:releases -Method Get | grep 'linux64-gpl.tar.xz'
-			$null = $local:latestVersion -match 'yt-dlp/FFmpeg-Builds/releases/download/autobuild-(\d+)-(\d+)-(\d+)-\d+-\d+(.*)ffmpeg-(.*)-linux64-gpl.tar.xz'
-			$local:latestVersion = $matches[5] + '-' + $matches[1] + $matches[2] + $matches[3]
+			$local:latestRelease = Invoke-RestMethod -Uri $local:releases -Method Get
+			$null = $local:latestRelease -match 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)/ffmpeg-(n\d+\.\d+-\d+-[0-9a-z]*)(-linux64-gpl-)(.*).tar.xz'
+			$local:latestVersion = $matches[6]
 		} catch { Write-Warning '❗ ffmpegの最新バージョンを特定できませんでした'; return }
 
 		#ffmpegのダウンロード
-		if ($local:latestVersion -eq $local:ffmpegCurrentVersion) {
+		if ($local:ffmpegCurrentVersion -match $local:latestVersion) {
 			Write-Output '💡 ffmpegは最新です。'
 			Write-Output "　Local version: $local:ffmpegCurrentVersion"
 			Write-Output "　Latest version: $local:latestVersion"
@@ -188,10 +192,12 @@ switch ($true) {
 
 			if (($local:arch -eq 'aarch64') -Or ($local:arch -Contains 'armv8')) {
 				$local:cpu = 'arm64'
-				$donwloadURL = 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linuxarm64-gpl.tar.xz'
+				$null = $local:latestRelease -match 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-linuxarm64-gpl-)(.*).tar.xz'
+				$local:donwloadURL = $matches[0]
 			} elseif (($local:arch -eq 'x86_64') -Or ($local:arch -eq 'ia64')) {
 				$local:cpu = 'amd64'
-				$donwloadURL = 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz'
+				$null = $local:latestRelease -match 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-linux64-gpl-)(.*).tar.xz'
+				$local:donwloadURL = $matches[0]
 			} else {
 				Write-Warning '❗ お使いのCPUに適合するffmpegを特定できませんでした。'
 				Write-Warning "❗ お使いのCPU $local:arch に適合するffmpegをご自身で配置してください。"
@@ -200,7 +206,7 @@ switch ($true) {
 
 			#ダウンロード
 			Write-Output "ffmpegの最新版 $local:cpu 用をダウンロードします"
-			try { Invoke-WebRequest -Uri $donwloadURL -OutFile (Join-Path $local:binDir 'ffmpeg.tar.xz') }
+			try { Invoke-WebRequest -Uri $local:donwloadURL -OutFile (Join-Path $local:binDir 'ffmpeg.tar.xz') }
 			catch { Write-Error '❗ ffmpegのダウンロードに失敗しました' ; exit 1 }
 
 			#展開
@@ -210,12 +216,12 @@ switch ($true) {
 
 			#配置
 			Write-Output '解凍したffmpegを配置します'
-			try { Move-Item -Path "$local:binDir/ffmpeg-master-latest-*-gpl/bin/ff*" -Destination $local:binDir -Force }
+			try { Move-Item -Path "$local:binDir/ffmpeg-*-gpl-*/bin/ff*" -Destination $local:binDir -Force }
 			catch { Write-Error '❗ ffmpegの配置に失敗しました' ; exit 1 }
 
 			#ゴミ掃除
 			Write-Output '中間ディレクトリと中間ファイルを削除します'
-			try { Remove-Item -Path "$local:binDir/ffmpeg-master-latest-*-gpl" -Force -Recurse -ErrorAction SilentlyContinue }
+			try { Remove-Item -Path "$local:binDir/ffmpeg-*-gpl-*" -Force -Recurse -ErrorAction SilentlyContinue }
 			catch { Write-Error '❗ 中間ディレクトリの削除に失敗しました' ; exit 1 }
 			try { Remove-Item -Path (Join-Path $local:binDir 'ffmpeg.tar.xz') -Force -ErrorAction SilentlyContinue }
 			catch { Write-Error '❗ 中間ファイルの削除に失敗しました' ; exit 1 }

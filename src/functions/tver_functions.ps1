@@ -1037,10 +1037,12 @@ function downloadTVerVideo {
 		-Title $script:videoTitle `
 		-Date $script:broadcastDate
 
-	$script:videoFileDir = getSpecialCharacterReplaced (
-		getNarrowChars ($script:videoSeries + ' ' + $script:videoSeason)).Trim(' ', '.')
-	if ($script:sortVideoByMedia -eq $true) { $script:videoFileDir = (Join-Path $script:downloadBaseDir (getFileNameWoInvChars $script:mediaName) | Join-Path -ChildPath (getFileNameWoInvChars $script:videoFileDir)) }
-	else { $script:videoFileDir = (Join-Path $script:downloadBaseDir (getFileNameWoInvChars $script:videoFileDir)) }
+	$script:videoFileDir = getSpecialCharacterReplaced ($script:videoSeries + ' ' + $script:videoSeason).Trim(' ', '.')
+	if ($script:sortVideoByMedia -eq $true) {
+		$script:videoFileDir = (Join-Path $script:downloadBaseDir (getFileNameWoInvChars $script:mediaName) | Join-Path -ChildPath (getFileNameWoInvChars $script:videoFileDir))
+	} else {
+		$script:videoFileDir = (Join-Path $script:downloadBaseDir (getFileNameWoInvChars $script:videoFileDir))
+	}
 	$script:videoFilePath = Join-Path $script:videoFileDir $script:videoName
 	$script:videoFileRelPath = $script:videoFilePath.Replace($script:downloadBaseDir, '').Replace('\', '/')
 	$script:videoFileRelPath = $script:videoFileRelPath.Substring(1, ($script:videoFileRelPath.Length - 1))
@@ -1248,13 +1250,13 @@ function generateTVerVideoList {
 	#ダウンロード対象外に入っている番組の場合はリスト出力しない
 	foreach ($local:ignoreRegexTitle in $script:ignoreRegexTitles) {
 
-		if ((getNarrowChars $script:videoSeries) -match (getNarrowChars $local:ignoreRegexTitle)) {
+		if ($script:videoSeries -match $local:ignoreRegexTitle) {
 			$local:ignoreWord = $local:ignoreRegexTitle
 			sortIgnoreList $local:ignoreRegexTitle
 			$script:ignore = $true
 			#ダウンロード対象外と合致したものはそれ以上のチェック不要
 			break
-		} elseif ((getNarrowChars $script:videoTitle) -match (getNarrowChars $local:ignoreRegexTitle)) {
+		} elseif (script:videoTitle -match $local:ignoreRegexTitle) {
 			$local:ignoreWord = $local:ignoreRegexTitle
 			sortIgnoreList $local:ignoreRegexTitle
 			$script:ignore = $true
@@ -1365,17 +1367,16 @@ function getVideoInfo {
 	#放送局
 	#	$response.Result.Episode.Content.BroadcasterName
 	#	$response.Result.Episode.Content.ProductionProviderName
-	$script:mediaName = (getSpecialCharacterReplaced (getNarrowChars ($local:response.Result.Episode.Content.BroadcasterName))).Trim()
-	$script:providerName = (getSpecialCharacterReplaced (getNarrowChars ($local:response.Result.Episode.Content.ProductionProviderName))).Trim()
+	$script:mediaName = (getNarrowChars ($local:response.Result.Episode.Content.BroadcasterName)).Trim()
+	$script:providerName = (getNarrowChars ($local:response.Result.Episode.Content.ProductionProviderName)).Trim()
 
 	#放送日
 	#	$response.Result.Episode.Content.BroadcastDateLabel
-	$script:broadcastDate = (getNarrowChars ($response.Result.Episode.Content.BroadcastDateLabel).Replace('ほか', '').Replace('放送分', '放送')).Trim()
+	$script:broadcastDate = (($response.Result.Episode.Content.BroadcastDateLabel).Replace('ほか', '').Replace('放送分', '放送')).Trim()
 
 	#配信終了日時
 	#	$response.Result.Episode.Content.endAt
-	$script:endTime = (getNarrowChars $response.Result.Episode.Content.endAt).Trim()
-	$script:endTime = (unixTimeToDateTime $script:endTime).AddHours(9)
+	$script:endTime = (unixTimeToDateTime ($response.Result.Episode.Content.endAt)).AddHours(9)
 
 	#----------------------------------------------------------------------
 	#番組説明
@@ -1392,7 +1393,7 @@ function getVideoInfo {
 		-Headers $local:requestHeader `
 		-TimeoutSec $script:timeoutSec
 	$script:descriptionText = (getNarrowChars ($local:videoInfo.Description).Replace('&amp;', '&')).Trim()
-	$script:videoEpisode = getNarrowChars ($local:videoInfo.No)
+	$script:videoEpisode = (getNarrowChars ($local:videoInfo.No)).Trim()
 
 	#----------------------------------------------------------------------
 	#各種整形
@@ -1463,7 +1464,7 @@ function getVideoFileName {
 	$local:videoName += $local:videoTitle
 
 	#ファイル名にできない文字列を除去
-	$local:videoName = (getFileNameWoInvChars (getSpecialCharacterReplaced (getNarrowChars $local:videoName))).Replace('  ', ' ').Trim()
+	$local:videoName = (getFileNameWoInvChars $local:videoName).Replace('  ', ' ').Trim()
 
 	#SMBで255バイトまでしかファイル名を持てないらしいので、超えないようにファイル名をトリミング
 	$local:videoNameTemp = ''
@@ -1958,10 +1959,10 @@ function checkIfIgnored {
 	Write-Debug $myInvocation.MyCommand.name
 
 	#ダウンロード対象外と合致したものはそれ以上のチェック不要
-	if ((getNarrowChars $local:videoName) -match (getNarrowChars $local:ignoreRegexTitle)) {
+	if ($local:videoName -match $local:ignoreRegexTitle) {
 		sortIgnoreList $local:ignoreRegexTitle
 		$script:ignore = $true ; break
-	} elseif ((getNarrowChars $local:videoSeries) -match (getNarrowChars $local:ignoreRegexTitle)) {
+	} elseif ($local:videoSeries -match $local:ignoreRegexTitle) {
 		sortIgnoreList $local:ignoreRegexTitle
 		$script:ignore = $true ; break
 	}
