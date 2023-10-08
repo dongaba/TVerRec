@@ -1104,11 +1104,16 @@ function downloadTVerVideo {
 
 	} else {
 		foreach ($local:ignoreRegexTitle in $script:ignoreRegexTitles) {
-			$script:ignore = checkIfIgnored `
-				-ignoreRegexText $local:ignoreRegexTitle `
-				-seriesTitle $script:videoSeries `
-				-fileName $script:videoName
-			if ($script:ignore -eq $true) { break }
+			if ($local:ignoreRegexTitle -ne '') {
+				#ダウンロード対象外と合致したものはそれ以上のチェック不要
+				if ($script:videoName -match $local:ignoreRegexTitle) {
+					sortIgnoreList $local:ignoreRegexTitle
+					$script:ignore = $true ; break
+				} elseif ($script:videoSeries -match $local:ignoreRegexTitle) {
+					sortIgnoreList $local:ignoreRegexTitle
+					$script:ignore = $true ; break
+				}
+			}
 		}
 		Write-Debug ('Ignored: ' + $script:ignore)
 
@@ -1249,19 +1254,20 @@ function generateTVerVideoList {
 
 	#ダウンロード対象外に入っている番組の場合はリスト出力しない
 	foreach ($local:ignoreRegexTitle in $script:ignoreRegexTitles) {
-
-		if ($script:videoSeries -match $local:ignoreRegexTitle) {
-			$local:ignoreWord = $local:ignoreRegexTitle
-			sortIgnoreList $local:ignoreRegexTitle
-			$script:ignore = $true
-			#ダウンロード対象外と合致したものはそれ以上のチェック不要
-			break
-		} elseif (script:videoTitle -match $local:ignoreRegexTitle) {
-			$local:ignoreWord = $local:ignoreRegexTitle
-			sortIgnoreList $local:ignoreRegexTitle
-			$script:ignore = $true
-			#ダウンロード対象外と合致したものはそれ以上のチェック不要
-			break
+		if ($local:ignoreRegexTitle -ne '') {
+			if ($script:videoSeries -match $local:ignoreRegexTitle) {
+				$local:ignoreWord = $local:ignoreRegexTitle
+				sortIgnoreList $local:ignoreRegexTitle
+				$script:ignore = $true
+				#ダウンロード対象外と合致したものはそれ以上のチェック不要
+				break
+			} elseif (script:videoTitle -match $local:ignoreRegexTitle) {
+				$local:ignoreWord = $local:ignoreRegexTitle
+				sortIgnoreList $local:ignoreRegexTitle
+				$script:ignore = $true
+				#ダウンロード対象外と合致したものはそれ以上のチェック不要
+				break
+			}
 		}
 	}
 
@@ -1933,38 +1939,6 @@ function checkVideo {
 		} catch { Write-Warning ('❗ ダウンロード履歴を更新できませんでした: ' + $local:videoFileRelPath) }
 		finally { $null = fileUnlock $script:historyLockFilePath }
 
-	}
-
-}
-
-#----------------------------------------------------------------------
-#番組が無視されているかチェック
-#----------------------------------------------------------------------
-function checkIfIgnored {
-	[OutputType([System.Void])]
-	Param (
-		[Parameter(Mandatory = $true, Position = 0)]
-		[Alias('ignoreRegexText')]
-		[String]$local:ignoreRegexTitle,
-
-		[Parameter(Mandatory = $true, Position = 1)]
-		[Alias('seriesTitle')]
-		[String]$local:videoSeries,
-
-		[Parameter(Mandatory = $true, Position = 2)]
-		[Alias('fileName')]
-		[String]$local:videoName
-	)
-
-	Write-Debug $myInvocation.MyCommand.name
-
-	#ダウンロード対象外と合致したものはそれ以上のチェック不要
-	if ($local:videoName -match $local:ignoreRegexTitle) {
-		sortIgnoreList $local:ignoreRegexTitle
-		$script:ignore = $true ; break
-	} elseif ($local:videoSeries -match $local:ignoreRegexTitle) {
-		sortIgnoreList $local:ignoreRegexTitle
-		$script:ignore = $true ; break
 	}
 
 }

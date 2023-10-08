@@ -235,18 +235,20 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 			#ダウンロード対象外に入っている番組の場合はリスト出力しない
 			foreach ($ignoreRegexTitle in $using:script:ignoreRegexTitles) {
-				if ((getNarrowChars $script:videoSeries) -match (getNarrowChars $ignoreRegexTitle)) {
-					$ignoreWord = $ignoreRegexTitle
-					sortIgnoreList $ignoreRegexTitle
-					$ignore = $true
-					#ダウンロード対象外と合致したものはそれ以上のチェック不要
-					break
-				} elseif ((getNarrowChars $script:videoTitle) -match (getNarrowChars $ignoreRegexTitle)) {
-					$ignoreWord = $ignoreRegexTitle
-					sortIgnoreList $ignoreRegexTitle
-					$ignore = $true
-					#ダウンロード対象外と合致したものはそれ以上のチェック不要
-					break
+				if ($ignoreRegexTitle -ne '') {
+					if ((getNarrowChars $script:videoSeries) -match (getNarrowChars $ignoreRegexTitle)) {
+						$ignoreWord = $ignoreRegexTitle
+						sortIgnoreList $ignoreRegexTitle
+						$ignore = $true
+						#ダウンロード対象外と合致したものはそれ以上のチェック不要
+						break
+					} elseif ((getNarrowChars $script:videoTitle) -match (getNarrowChars $ignoreRegexTitle)) {
+						$ignoreWord = $ignoreRegexTitle
+						sortIgnoreList $ignoreRegexTitle
+						$ignore = $true
+						#ダウンロード対象外と合致したものはそれ以上のチェック不要
+						break
+					}
 				}
 			}
 
