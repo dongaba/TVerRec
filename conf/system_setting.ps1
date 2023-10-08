@@ -96,6 +96,10 @@ $script:enableMultithread = $true
 #　空フォルダの削除処理です。
 $script:multithreadNum = 50
 
+#トースト通知の無効化
+#　トースト通知を無効化することが可能です。
+$script:disableToastNotification = $false
+
 #ダウンロード帯域制限
 #　ネットワーク帯域を使い切らないようにダウンロード速度制限を設定することができます。
 #　単位はMbpsです。

@@ -960,6 +960,29 @@
                         Margin="10,10,10,0"
                         IsExpanded="False"
                         FontFamily="Yu Gothic UI"
+                        Header="トースト通知の無効化">
+                        <TextBlock
+                            Margin="20,0,20,5"
+                            TextWrapping="Wrap">
+                            トースト通知を無効化することが可能です。。
+                        </TextBlock>
+                    </Expander>
+                    <ComboBox
+                        x:Name="disableToastNotification"
+                        SelectedIndex="0"
+                        Style="{DynamicResource ComboBoxStyle}"
+                        Margin="20,0,20,0"
+                        Width="100"
+                        HorizontalAlignment="Left">
+                        <ComboBoxItem>デフォルト値</ComboBoxItem>
+                        <ComboBoxItem>しない</ComboBoxItem>
+                        <ComboBoxItem>する</ComboBoxItem>
+                    </ComboBox>
+
+                    <Expander
+                        Margin="10,10,10,0"
+                        IsExpanded="False"
+                        FontFamily="Yu Gothic UI"
                         Header="ダウンロード帯域制限(Mbps)">
                         <TextBlock
                             Margin="20,0,20,5"

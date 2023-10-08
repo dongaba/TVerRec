@@ -339,14 +339,16 @@ function getToken () {
 		'Content-Type' = 'application/x-www-form-urlencoded'
 	}
 	$local:requestBody = 'device_type=pc'
-	$local:tokenResponse = Invoke-RestMethod `
-		-Uri $local:tverTokenURL `
-		-Method 'POST' `
-		-Headers $local:requestHeader `
-		-Body $local:requestBody `
-		-TimeoutSec $script:timeoutSec
-	$script:platformUID = $local:tokenResponse.Result.platform_uid
-	$script:platformToken = $local:tokenResponse.Result.platform_token
+	try {
+		$local:tokenResponse = Invoke-RestMethod `
+			-Uri $local:tverTokenURL `
+			-Method 'POST' `
+			-Headers $local:requestHeader `
+			-Body $local:requestBody `
+			-TimeoutSec $script:timeoutSec
+		$script:platformUID = $local:tokenResponse.Result.platform_uid
+		$script:platformToken = $local:tokenResponse.Result.platform_token
+	} catch { Write-Warning '❗ トークンエラー、終了します' ; exit 1 }
 }
 
 #----------------------------------------------------------------------
