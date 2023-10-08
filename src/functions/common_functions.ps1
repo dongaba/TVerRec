@@ -77,8 +77,8 @@ try {
 	$local:ipapi = $local:ipapi.Replace('{', "{`n").Replace('}', "`n}")
 	$local:ipapi = $local:ipapi.Replace(', ', ",`n")
 	$local:GeoIPValues = $(ConvertFrom-Json $local:ipapi).psobject.properties
+	foreach ($local:GeoIPValue in $local:GeoIPValues) { $script:clientEnv.Add($local:GeoIPValue.Name, $local:GeoIPValue.Value) }
 } catch { Write-Debug 'Geo IPのチェックに失敗しました' }
-foreach ($local:GeoIPValue in $local:GeoIPValues) { $script:clientEnv.Add($local:GeoIPValue.Name, $local:GeoIPValue.Value) }
 $script:clientEnv.Add('AppName', $script:appName)
 $script:clientEnv.Add('AppVersion', $script:appVersion)
 $script:clientEnv.Add('PSEdition', $PSVersionTable.PSEdition)
