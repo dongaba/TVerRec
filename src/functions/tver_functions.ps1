@@ -26,6 +26,134 @@
 ###################################################################################
 Write-Debug $myInvocation.MyCommand.name
 
+#region 環境
+
+#----------------------------------------------------------------------
+#GUID取得
+#----------------------------------------------------------------------
+$progressPreference = 'silentlyContinue'
+switch ($true) {
+	$IsWindows {
+		$script:os = (Get-CimInstance -Class Win32_OperatingSystem).Caption
+		$script:kernel = (Get-CimInstance -Class Win32_OperatingSystem).Version
+		$script:arch = $Env:PROCESSOR_ARCHITECTURE.ToLower()
+		$script:guid = (Get-CimInstance -Class Win32_ComputerSystemProduct).UUID
+		break
+	}
+	$IsLinux {
+		if ((Test-Path '/etc/os-release')) {
+			$script:os = (& grep 'PRETTY_NAME' /etc/os-release).replace('PRETTY_NAME=', '').Replace('"', '')
+		} else { $script:os = (& uname -n) }
+		$script:kernel = [String][System.Environment]::OSVersion.Version
+		$script:arch = (& uname -m | tr '[:upper:]' '[:lower:]')
+		$script:guid = (Get-Content /etc/machine-id)
+		if ((Test-Path '/etc/machine-id')) { $script:guid = (Get-Content /etc/machine-id) }
+		else { $script:guid = [guid]::NewGuid() }
+		break
+	}
+	$IsMacOS {
+		$script:os = (& sw_vers -productName)
+		$script:kernel = [String][System.Environment]::OSVersion.Version
+		$script:arch = (& uname -m | tr '[:upper:]' '[:lower:]')
+		if ((Test-Path '/etc/machine-id')) { $script:guid = (Get-Content /etc/machine-id) }
+		else { $script:guid = [guid]::NewGuid() }
+		break
+	}
+	default {
+		$script:os = [String][System.Environment]::OSVersion
+		break
+	}
+}
+$script:locale = (Get-Culture).Name
+$script:tz = [String][TimeZoneInfo]::Local.BaseUtcOffset
+$local:ipapi = ''
+$script:clientEnv = @{}
+try {
+	$local:ipapi = Invoke-RestMethod -Uri 'http://ip-api.com/json/?fields=66846719' -TimeoutSec $script:timeoutSec
+	$local:GeoIPValues = $local:ipapi.psobject.properties
+	foreach ($local:GeoIPValue in $local:GeoIPValues) { $script:clientEnv.Add($local:GeoIPValue.Name, $local:GeoIPValue.Value) }
+} catch { Write-Debug 'Geo IPのチェックに失敗しました' }
+$script:clientEnv.Add('AppName', $script:appName)
+$script:clientEnv.Add('AppVersion', $script:appVersion)
+$script:clientEnv.Add('PSEdition', $PSVersionTable.PSEdition)
+$script:clientEnv.Add('PSVersion', $PSVersionTable.PSVersion)
+$script:clientEnv.Add('OS', $script:os)
+$script:clientEnv.Add('Kernel', $script:kernel)
+$script:clientEnv.Add('Arch', $script:arch)
+$script:clientEnv.Add('Locale', $script:locale)
+$script:clientEnv.Add('TZ', $script:tz)
+$script:clientEnv.Add('GUID', $script:guid)
+$script:clientEnv = $script:clientEnv.GetEnumerator() | Sort-Object -Property key
+$progressPreference = 'Continue'
+
+#----------------------------------------------------------------------
+#統計取得
+#----------------------------------------------------------------------
+function goAnal {
+	[OutputType([System.Void])]
+	Param (
+		[Parameter(Mandatory = $true, Position = 0)]
+		[Alias('Event')]
+		[String]$local:event,
+		[Parameter(Mandatory = $false, Position = 1)]
+		[Alias('Type')]
+		[String]$local:type,
+		[Parameter(Mandatory = $false, Position = 2)]
+		[Alias('ID')]
+		[String]$local:id
+	)
+
+	Write-Debug $myInvocation.MyCommand.name
+
+	if (!($local:type)) { $local:type = '' }
+	if (!($local:id)) { $local:id = '' }
+	$local:epochTime = [decimal]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() * 1000)
+
+	$progressPreference = 'silentlyContinue'
+	$local:statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
+	try { $null = Invoke-WebRequest -Uri ($local:statisticsBase + $local:event + '.svg') -TimeoutSec $script:timeoutSec }
+	catch { Write-Debug 'Failed to collect count' }
+	finally { $progressPreference = 'Continue' }
+
+	if ($local:event -eq 'search') { return }
+	$local:gaURL = 'https://www.google-analytics.com/mp/collect'
+	$local:gaKey = 'api_secret=UZ3InfgkTgGiR4FU-in9sw'
+	$local:gaID = 'measurement_id=G-NMSF9L531G'
+	$local:gaHeaders = New-Object 'System.Collections.Generic.Dictionary[[String],[String]]'
+	$local:gaHeaders.Add('HOST', 'www.google-analytics.com')
+	$local:gaHeaders.Add('Content-Type', 'application/json')
+	$local:gaBody = '{ `"client_id`" : `"' + $script:guid + '`", '
+	$local:gaBody += '`"timestamp_micros`" : `"' + $local:epochTime + '`", '
+	$local:gaBody += '`"non_personalized_ads`" : false, '
+	$local:gaBody += '`"user_properties`":{ '
+	foreach ($item in $script:clientEnv) { $local:gaBody += '`"' + $item.Key + '`" : {`"value`" : `"' + $item.Value + '`"}, ' }
+	$local:gaBody += '`"DisableValidation`" : {`"value`" : `"' + $script:disableValidation + '`"}, '
+	$local:gaBody += '`"SortwareDecode`" : {`"value`" : `"' + $script:forceSoftwareDecodeFlag + '`"}, '
+	$local:gaBody += '`"DecodeOption`" : {`"value`" : `"' + $script:ffmpegDecodeOption + '`"}, '
+	$local:gaBody = $local:gaBody.Trim(',', ' ')		#delete last comma
+	$local:gaBody += '}, `"events`" : [ { '
+	$local:gaBody += '`"name`" : `"' + $local:event + '`", '
+	$local:gaBody += '`"params`" : {'
+	$local:gaBody += '`"Type`" : `"' + $local:type + '`", '
+	$local:gaBody += '`"ID`" : `"' + $local:id + '`", '
+	$local:gaBody += '`"Target`" : `"' + $local:type + '/' + $local:id + '`", '
+	foreach ($item in $script:clientEnv) { $local:gaBody += '`"' + $item.Key + '`" : `"' + $item.Value + '`", ' }
+	$local:gaBody += '`"DisableValidation`" : `"' + $script:disableValidation + '`", '
+	$local:gaBody += '`"SortwareDecode`" : `"' + $script:forceSoftwareDecodeFlag + '`", '
+	$local:gaBody += '`"DecodeOption`" : `"' + $script:ffmpegDecodeOption + '`", '
+	$local:gaBody = $local:gaBody.Trim(',', ' ')		#delete last comma
+	$local:gaBody += '} } ] }'
+
+	$progressPreference = 'silentlyContinue'
+	try {
+		$null = Invoke-RestMethod -Uri ($local:gaURL + '?' + $local:gaKey + '&' + $local:gaID) -Method 'POST' -Headers $local:gaHeaders -Body $local:gaBody -TimeoutSec $script:timeoutSec
+	} catch { Write-Debug 'Failed to collect statistics' }
+	finally { $progressPreference = 'Continue' }
+
+}
+
+#endregion 環境
+
 #----------------------------------------------------------------------
 #TVerRec最新化確認
 #----------------------------------------------------------------------
@@ -1233,7 +1361,6 @@ function generateTVerVideoList {
 		[Parameter(Mandatory = $true, Position = 0)]
 		[Alias('Keyword')]
 		[String]$script:keywordName,
-
 		[Parameter(Mandatory = $true, Position = 1)]
 		[Alias('Link')]
 		[String]$script:videoLink
@@ -1504,15 +1631,12 @@ function showVideoInfo {
 		[Parameter(Mandatory = $false, Position = 0)]
 		[Alias('Name')]
 		[String]$local:videoName,
-
 		[Parameter(Mandatory = $false, Position = 1)]
 		[Alias('Date')]
 		[String]$local:broadcastDate,
-
 		[Parameter(Mandatory = $false, Position = 2)]
 		[Alias('Media')]
 		[String]$local:mediaName,
-
 		[Parameter(Mandatory = $false, Position = 3)]
 		[Alias('Description')]
 		[String]$local:descriptionText
@@ -1793,7 +1917,6 @@ function checkVideo {
 		[Parameter(Mandatory = $false, Position = 0)]
 		[Alias('DecodeOption')]
 		[String]$local:decodeOption,
-
 		[Parameter(Mandatory = $false, Position = 1)]
 		[Alias('Path')]
 		[String]$local:videoFileRelPath
