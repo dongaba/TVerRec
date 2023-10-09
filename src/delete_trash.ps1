@@ -163,7 +163,7 @@ if (Test-Path $script:ignoreFilePath -PathType Leaf) {
 				| Where-Object { !($_ -match '^;.*$') }))
 	} catch { Write-Error '❗ ダウンロード対象外の読み込みに失敗しました' ; exit 1 }
 	finally { $null = fileUnlock $script:ignoreLockFilePath }
-}
+} else { $local:ignoreTitles = $null }
 
 #----------------------------------------------------------------------
 if ($null -ne $local:ignoreTitles ) {
