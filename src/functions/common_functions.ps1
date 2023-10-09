@@ -672,7 +672,7 @@ function updateProgressToast {
 		if ($IsWindows) {
 			$local:appID = Get-WindowsAppId
 			$local:toastData = New-Object 'system.collections.generic.dictionary[String,string]'
-			$local:toastData.add('progressTitle', $local:appName)
+			$local:toastData.add('progressTitle', $script:appName)
 			$local:toastData.add('progressValue', $local:toastRate)
 			$local:toastData.add('progressValueString', $local:toastRightText)
 			$local:toastData.add('progressStatus', $local:toastLeftText)
