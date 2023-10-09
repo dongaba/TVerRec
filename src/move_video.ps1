@@ -46,28 +46,8 @@ try {
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
 
-#----------------------------------------------------------------------
-#設定ファイル読み込み
-try {
-	. (Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
-	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
-		. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
-	}
-} catch { Write-Error '❗ 設定ファイルの読み込みに失敗しました' ; exit 1 }
-
 #設定で指定したファイル・ディレクトリの存在チェック
 checkRequiredFile
-
-#======================================================================
-#ディレクトリの存在確認
-if (!(Test-Path $script:downloadWorkDir -PathType Container))
-{ Write-Error '❗ ダウンロード作業ディレクトリが存在しません。終了します。' ; exit 1 }
-if (!(Test-Path $script:downloadBaseDir -PathType Container))
-{ Write-Error '❗ 番組ダウンロード先ディレクトリにアクセスできません。終了します。' ; exit 1 }
-foreach ($local:saveDir in $script:saveBaseDirArray) {
-	if (!(Test-Path $local:saveDir.Trim() -PathType Container))
-	{ Write-Error '❗ 番組移動先ディレクトリが存在しません。終了します。' ; exit 1 }
-}
 
 #======================================================================
 #1/3 移動先ディレクトリを起点として、配下のディレクトリを取得
@@ -87,8 +67,12 @@ showProgressToast `
 
 #処理
 $local:moveToPaths = @()
-foreach ($local:saveDir in $script:saveBaseDirArray) {
-	$local:moveToPaths += (Get-ChildItem -Path $local:saveDir.Trim() -Recurse | Where-Object { $_.PSIsContainer } | Sort-Object).FullName
+if ($script:saveBaseDir -ne '') {
+	$script:saveBaseDirArray = @()
+	$script:saveBaseDirArray = $script:saveBaseDir.split(';').Trim()
+	foreach ($saveDir in $script:saveBaseDirArray) {
+		$local:moveToPaths += (Get-ChildItem -Path $local:saveDir.Trim() -Recurse | Where-Object { $_.PSIsContainer } | Sort-Object).FullName
+	}
 }
 
 #======================================================================
