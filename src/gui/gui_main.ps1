@@ -203,6 +203,7 @@ foreach ($script:btn in $script:btns) {
 
 			#バックグラウンドジョブの起動
 			$null = Start-ThreadJob -Name $this.Name $script:scriptBlocks[$this]
+			#$null = Start-Job -Name $this.Name $script:scriptBlocks[$this]	#こっちにするとWrite-Debugがコンソールに出る
 		})
 }
 
@@ -300,7 +301,7 @@ while ($script:mainWindow.IsVisible) {
 	#GUIイベント処理
 	DoWpfEvents
 
-	Start-Sleep -Milliseconds 10
+	Start-Sleep -Milliseconds 100
 }
 
 #endregion ウィンドウ表示後のループ処理

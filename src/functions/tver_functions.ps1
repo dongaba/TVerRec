@@ -122,25 +122,25 @@ function goAnal {
 	$local:gaHeaders = New-Object 'System.Collections.Generic.Dictionary[[String],[String]]'
 	$local:gaHeaders.Add('HOST', 'www.google-analytics.com')
 	$local:gaHeaders.Add('Content-Type', 'application/json')
-	$local:gaBody = '{ `"client_id`" : `"' + $script:guid + '`", '
-	$local:gaBody += '`"timestamp_micros`" : `"' + $local:epochTime + '`", '
-	$local:gaBody += '`"non_personalized_ads`" : false, '
-	$local:gaBody += '`"user_properties`":{ '
-	foreach ($item in $script:clientEnv) { $local:gaBody += '`"' + $item.Key + '`" : {`"value`" : `"' + $item.Value + '`"}, ' }
-	$local:gaBody += '`"DisableValidation`" : {`"value`" : `"' + $script:disableValidation + '`"}, '
-	$local:gaBody += '`"SortwareDecode`" : {`"value`" : `"' + $script:forceSoftwareDecodeFlag + '`"}, '
-	$local:gaBody += '`"DecodeOption`" : {`"value`" : `"' + $script:ffmpegDecodeOption + '`"}, '
+	$local:gaBody = '{ "client_id" : "' + $script:guid + '", '
+	$local:gaBody += '"timestamp_micros" : "' + $local:epochTime + '", '
+	$local:gaBody += '"non_personalized_ads" : false, '
+	$local:gaBody += '"user_properties":{ '
+	foreach ($item in $script:clientEnv) { $local:gaBody += '"' + $item.Key + '" : {"value" : "' + $item.Value + '"}, ' }
+	$local:gaBody += '"DisableValidation" : {"value" : "' + $script:disableValidation + '"}, '
+	$local:gaBody += '"SortwareDecode" : {"value" : "' + $script:forceSoftwareDecodeFlag + '"}, '
+	$local:gaBody += '"DecodeOption" : {"value" : "' + $script:ffmpegDecodeOption + '"}, '
 	$local:gaBody = $local:gaBody.Trim(',', ' ')		#delete last comma
-	$local:gaBody += '}, `"events`" : [ { '
-	$local:gaBody += '`"name`" : `"' + $local:event + '`", '
-	$local:gaBody += '`"params`" : {'
-	$local:gaBody += '`"Type`" : `"' + $local:type + '`", '
-	$local:gaBody += '`"ID`" : `"' + $local:id + '`", '
-	$local:gaBody += '`"Target`" : `"' + $local:type + '/' + $local:id + '`", '
-	foreach ($item in $script:clientEnv) { $local:gaBody += '`"' + $item.Key + '`" : `"' + $item.Value + '`", ' }
-	$local:gaBody += '`"DisableValidation`" : `"' + $script:disableValidation + '`", '
-	$local:gaBody += '`"SortwareDecode`" : `"' + $script:forceSoftwareDecodeFlag + '`", '
-	$local:gaBody += '`"DecodeOption`" : `"' + $script:ffmpegDecodeOption + '`", '
+	$local:gaBody += '}, "events" : [ { '
+	$local:gaBody += '"name" : "' + $local:event + '", '
+	$local:gaBody += '"params" : {'
+	$local:gaBody += '"Type" : "' + $local:type + '", '
+	$local:gaBody += '"ID" : "' + $local:id + '", '
+	$local:gaBody += '"Target" : "' + $local:type + '/' + $local:id + '", '
+	foreach ($item in $script:clientEnv) { $local:gaBody += '"' + $item.Key + '" : "' + $item.Value + '", ' }
+	$local:gaBody += '"DisableValidation" : "' + $script:disableValidation + '", '
+	$local:gaBody += '"SortwareDecode" : "' + $script:forceSoftwareDecodeFlag + '", '
+	$local:gaBody += '"DecodeOption" : "' + $script:ffmpegDecodeOption + '", '
 	$local:gaBody = $local:gaBody.Trim(',', ' ')		#delete last comma
 	$local:gaBody += '} } ] }'
 
