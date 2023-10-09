@@ -162,20 +162,7 @@ $script:scriptBlocks = @{
 	$script:btns[4] = { . './delete_trash.ps1' }
 	$script:btns[5] = { . './validate_video.ps1' }
 	$script:btns[6] = { . './move_video.ps1' }
-	$script:btns[7] = {
-		while ($true) {
-			. './download_bulk.ps1'
-			. './delete_trash.ps1'
-			. './validate_video.ps1'
-			. './validate_video.ps1'
-			. './move_video.ps1'
-			[System.GC]::Collect()
-			[System.GC]::WaitForPendingFinalizers()
-			[System.GC]::Collect()
-			Write-Output '3600秒待機します...'
-			Start-Sleep 3600
-		}
-	}
+	$script:btns[7] = { . './loop.ps1' }
 }
 
 #バックグラウンドジョブ化する処理の名前
@@ -203,6 +190,7 @@ foreach ($script:btn in $script:btns) {
 
 			#バックグラウンドジョブの起動
 			$null = Start-ThreadJob -Name $this.Name $script:scriptBlocks[$this]
+			#$null = Start-Job -Name $this.Name $script:scriptBlocks[$this]	#こっちにするとWrite-Debugがコンソールに出る
 		})
 }
 
@@ -300,7 +288,10 @@ while ($script:mainWindow.IsVisible) {
 	#GUIイベント処理
 	DoWpfEvents
 
-	Start-Sleep -Milliseconds 10
+	[System.GC]::WaitForPendingFinalizers()
+	[System.GC]::Collect()
+
+	Start-Sleep -Milliseconds 100
 }
 
 #endregion ウィンドウ表示後のループ処理

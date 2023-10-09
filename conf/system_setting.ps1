@@ -81,6 +81,9 @@ $script:parallelDownloadFileNum = 5
 #　PCへの負荷が高まり逆にダウンロード効率が下がるのでご注意ください。
 $script:parallelDownloadNumPerFile = 10
 
+#ループ処理の間隔(秒)
+$script:loopCycle = 3600
+
 #並列処理の有効化
 #　並列処理を有効化して処理を高速化するかを設定します。
 #　ただし、並列処理を有効化すると履歴ファイルや無視リストの破損リスクが高まります。

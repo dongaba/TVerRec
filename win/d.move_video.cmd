@@ -43,7 +43,6 @@ pwsh -Command "Get-ChildItem ..\ -Recurse | Unblock-File"
 
 pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\move_video.ps1"
 
-pause
 exit
 
 :INSTALL

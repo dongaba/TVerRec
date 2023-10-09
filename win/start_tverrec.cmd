@@ -40,8 +40,6 @@ if %ERRORLEVEL% neq 0 (goto :INSTALL)
 
 for /f %%i in ('hostname') do set HostName=%%i
 set PIDFile=pid-%HostName%.txt
-set retryTime=60
-set sleepTime=3600
 
 rem Zone Identifierの削除
 pwsh -Command "Get-ChildItem ..\ -Recurse | Unblock-File"
@@ -50,49 +48,9 @@ rem PIDファイルを作成するする
 for /f "tokens=2" %%i in ('tasklist /FI "WINDOWTITLE eq TVerRec" /NH') do set myPID=%%i
 echo %myPID% > %PIDFile% 2> nul
 
-:LOOP
-	title TVerRec - Downloading
-	pwsh -NoProfile -ExecutionPolicy Unrestricted  "..\src\download_bulk.ps1"
+pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\loop.ps1"
 
-:PROCESSCHECKER
-	rem youtube-dlプロセスチェック
-	tasklist | findstr /i "ffmpeg youtube-dl" > nul 2>&1
-	if %ERRORLEVEL% == 0 (
-		echo ダウンロードが進行中です...
-		tasklist /v | findstr /i "ffmpeg youtube-dl" 2> nul
-		echo %retryTime%秒待機します...
-		timeout /T %retryTime% /nobreak > nul 2> nul
-		goto :PROCESSCHECKER
-	)
-
-	title TVerRec - Deleting
-	pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\delete_trash.ps1"
-
-	title TVerRec - Validating
-	pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\validate_video.ps1"
-	pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\validate_video.ps1"
-	title TVerRec - Moving
-	pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\move_video.ps1"
-	title TVerRec - Deleting
-	pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\delete_trash.ps1"
-
-
-	title TVerRec
-	echo 終了するには Y と入力してください。何も入力しなければ処理を継続します。
-
-	choice /C YN /T %sleepTime% /D N /M "%sleepTime%秒待機します..."
-	goto OPTION-%ERRORLEVEL%
-
-:OPTION-1
-	goto :END
-
-:OPTION-2
-	goto :LOOP
-
-:END
-	rem PIDファイルを削除する
-	del %PIDFile% 2> nul
-	exit
+exit
 
 :INSTALL
 	echo PowerShell Coreをインストールします。インストールしたくない場合はこのままウィンドウを閉じてください。

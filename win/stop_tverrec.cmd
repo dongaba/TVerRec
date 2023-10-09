@@ -61,5 +61,4 @@ if exist %PIDFile% (
 	goto :END
 
 :END
-	pause
 	exit
