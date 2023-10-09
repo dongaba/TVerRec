@@ -288,7 +288,6 @@ while ($script:mainWindow.IsVisible) {
 	#GUIイベント処理
 	DoWpfEvents
 
-	[System.GC]::Collect()
 	[System.GC]::WaitForPendingFinalizers()
 	[System.GC]::Collect()
 
