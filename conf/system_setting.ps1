@@ -222,6 +222,9 @@ $script:embedMetatag = $true
 #　Maximizedに設定すると最大化した状態でウィンドウが表示されますが、通常利用では利用することはないと思います。
 $script:windowShowStyle = 'Minimized'
 
+#YoutubeDLOptionの動画サイズ指定
+$script:YoutubeDLOption = 'bestvideo[height<=720]+bestaudio/best[height<=720]'
+
 #ffmpegのデコードオプション
 #　直接ffmpegのオプションを記載することができます。
 #　ダウンロードファイルの整合性検証時にハードウェアアクセラレーションを有効化する際などに使用します。
