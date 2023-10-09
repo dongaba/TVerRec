@@ -45,7 +45,6 @@ pwsh -NoProfile -ExecutionPolicy Unrestricted -Command "Get-ChildItem ..\ -Recur
 
 pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\functions\update_tverrec.ps1"
 
-pause
 exit
 
 :INSTALL

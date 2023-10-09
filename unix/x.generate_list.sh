@@ -33,4 +33,3 @@ echo -en "\033];TVerRec Video File List Generator\007"
 pwsh -NoProfile "../src/generate_list.ps1"
 
 echo "Finished ..."
-read -r

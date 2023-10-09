@@ -162,20 +162,7 @@ $script:scriptBlocks = @{
 	$script:btns[4] = { . './delete_trash.ps1' }
 	$script:btns[5] = { . './validate_video.ps1' }
 	$script:btns[6] = { . './move_video.ps1' }
-	$script:btns[7] = {
-		while ($true) {
-			. './download_bulk.ps1'
-			. './delete_trash.ps1'
-			. './validate_video.ps1'
-			. './validate_video.ps1'
-			. './move_video.ps1'
-			[System.GC]::Collect()
-			[System.GC]::WaitForPendingFinalizers()
-			[System.GC]::Collect()
-			Write-Output '3600秒待機します...'
-			Start-Sleep 3600
-		}
-	}
+	$script:btns[7] = { . './loop.ps1' }
 }
 
 #バックグラウンドジョブ化する処理の名前

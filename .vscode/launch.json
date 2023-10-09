@@ -17,6 +17,13 @@
 		},
 		{
 			"type": "PowerShell",
+			"script": "${workspaceFolder}/src/loop.ps1",
+			"request": "launch",
+			"name": "Loop",
+			"cwd": "${workspaceFolder}/src"
+		},
+		{
+			"type": "PowerShell",
 			"script": "${workspaceFolder}/src/download_bulk.ps1",
 			"request": "launch",
 			"name": "Bulk",

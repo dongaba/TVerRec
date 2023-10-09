@@ -33,4 +33,3 @@ echo -en "\033];TVerRec Video File Mover\007"
 pwsh -NoProfile "../src/move_video.ps1"
 
 echo "Finished ..."
-read -r
