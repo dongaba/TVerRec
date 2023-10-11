@@ -58,18 +58,13 @@ try {
 #設定で指定したファイル・ディレクトリの存在チェック
 checkRequiredFile
 
-#ダウンロード対象キーワードの読み込み
 $local:keywordNames = @(loadKeywordList)
-#ダウンロード対象外番組の読み込み
 $script:ignoreRegExTitles = getRegExIgnoreList
 getToken
 
-#キーワードの番号
 $local:keywordNum = 0
-#トータルキーワード数
 $local:keywordTotal = $script:keywordNames.Count
 
-#進捗表示
 showProgress2Row `
 	-ProgressText1 '一括ダウンロード中' `
 	-ProgressText2 'キーワードから番組を抽出しダウンロード' `
@@ -96,15 +91,12 @@ foreach ($local:keywordName in $local:keywordNames) {
 	Write-Output $local:keywordName
 	Write-Output '----------------------------------------------------------------------'
 
-	#処理
 	$local:resultLinks = @(getVideoLinksFromKeyword ($local:keywordName))
 	$local:keywordName = $local:keywordName.Replace('https://tver.jp/', '')
 
 	#ダウンロード履歴ファイルのデータを読み込み
 	try {
-		#ロックファイルをロック
 		while ((fileLock $script:historyLockFilePath).fileLocked -ne $true) { Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
-		#ファイル操作
 		$script:historyFileData = Import-Csv -Path $script:historyFilePath -Encoding UTF8
 	} catch { Write-Warning '❗ ダウンロード履歴を読み込めなかったのでスキップしました'; continue }
 	finally { $null = fileUnlock $script:historyLockFilePath }
@@ -115,8 +107,8 @@ foreach ($local:keywordName in $local:keywordNames) {
 	$local:resultTotal = $local:resultLinks.Count
 	foreach ($local:resultLink in $local:resultLinks) {
 		$local:resultNum = $local:resultNum + 1
-		$local:historyMatch = $script:historyFileData | Where-Object { $_.videoPage -eq $local:resultLink }
-		if ($null -eq $local:historyMatch) {
+		$local:historyMatch = $script:historyFileData.Where({ $_.videoPage -eq $local:resultLink })
+		if ($local:historyMatch.Count -eq 0) {
 			$local:videoLinks.Add($local:resultLink)
 			Write-Output ('　' + $local:resultNum + '/' + $local:resultTotal + ' ' + $local:resultLink + ' ... ❗ 未処理')
 		} else {
@@ -126,7 +118,6 @@ foreach ($local:keywordName in $local:keywordNames) {
 		}
 	}
 
-	#ジャンル内の処理中の番組の番号
 	$local:videoNum = 0
 	if ($null -eq $local:videoLinks) { $local:videoTotal = 0 }
 	else { $local:videoTotal = $local:videoLinks.Count }
@@ -159,7 +150,6 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#----------------------------------------------------------------------
 	#個々の番組ダウンロードここから
 	foreach ($local:videoLink in $local:videoLinks) {
-		#ジャンル内の番組番号のインクリメント
 		$local:videoNum = $local:videoNum + 1
 
 		#移動先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
@@ -181,7 +171,6 @@ foreach ($local:keywordName in $local:keywordNames) {
 			-SecRemaining2 '' `
 			-Group 'Bulk'
 
-		#処理
 		Write-Output '--------------------------------------------------'
 		Write-Output ([String]$local:videoNum + '/' + [String]$local:videoTotal + ' - ' + $local:videoLink)
 
@@ -200,7 +189,6 @@ foreach ($local:keywordName in $local:keywordNames) {
 }
 #======================================================================
 
-#進捗表示
 updateProgressToast2 `
 	-Title1 'キーワードから番組の抽出' `
 	-Rate1 '1' `

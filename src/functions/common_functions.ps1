@@ -241,7 +241,7 @@ function deleteFiles {
 		[Object]$local:delConditions,
 
 		[Parameter(Mandatory = $true, Position = 0)]
-		[Alias('DatePast')]
+		[Alias('DaysPassed')]
 		[int32]$local:delPeriod
 	)
 
@@ -252,9 +252,7 @@ function deleteFiles {
 		try {
 			$local:delConditions.Split(',').Trim() | ForEach-Object -Parallel {
 				Write-Output ('　' + (Join-Path $using:local:basePath $_))
-				$null = Get-ChildItem -LiteralPath $using:local:basePath -Recurse -File -Filter $_ -ErrorAction SilentlyContinue `
-				| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays($using:local:delPeriod) } `
-				| Remove-Item -Force -ErrorAction SilentlyContinue
+				$null = (Get-ChildItem -LiteralPath $using:local:basePath -Recurse -File -Filter $_ -ErrorAction SilentlyContinue).Where({ $_.LastWriteTime -lt (Get-Date).AddDays($using:local:delPeriod) }) | Remove-Item -Force -ErrorAction SilentlyContinue
 			} -ThrottleLimit $script:multithreadNum
 		} catch { Write-Warning '❗ 削除できないファイルがありました' }
 	} else {
@@ -262,9 +260,7 @@ function deleteFiles {
 		try {
 			foreach ($local:delCondition in $local:delConditions.Split(',').Trim()) {
 				Write-Output ('　' + (Join-Path $local:basePath $local:delCondition))
-				$null = Get-ChildItem -LiteralPath $local:basePath -Recurse -File -Filter $local:delCondition -ErrorAction SilentlyContinue `
-				| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays($local:delPeriod) } `
-				| Remove-Item -Force -ErrorAction SilentlyContinue
+				$null = (Get-ChildItem -LiteralPath $local:basePath -Recurse -File -Filter $local:delCondition -ErrorAction SilentlyContinue).Where({ $_.LastWriteTime -lt (Get-Date).AddDays($local:delPeriod) }) | Remove-Item -Force -ErrorAction SilentlyContinue
 			}
 		} catch { Write-Warning '❗ 削除できないファイルがありました' }
 	}

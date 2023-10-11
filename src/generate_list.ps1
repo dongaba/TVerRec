@@ -64,12 +64,9 @@ $local:keywordNames = @(loadKeywordList)
 $script:ignoreRegExTitles = getRegExIgnoreList
 getToken
 
-#キーワードの番号
 $local:keywordNum = 0
-#トータルキーワード数
 $local:keywordTotal = $local:keywordNames.Count
 
-#進捗表示
 showProgressToast `
 	-Text1 'キーワードから番組リスト作成中' `
 	-Text2 'キーワードから番組を抽出しダウンロード' `
@@ -95,24 +92,19 @@ foreach ($local:keywordName in $local:keywordNames) {
 	Write-Output $local:keywordName
 	Write-Output '----------------------------------------------------------------------'
 
-	#処理
 	$local:resultLinks = @(getVideoLinksFromKeyword ($local:keywordName))
 	$local:keywordName = $local:keywordName.Replace('https://tver.jp/', '')
 
 	#ダウンロードリストファイルのデータを読み込み
 	try {
-		#ロックファイルをロック
 		while ((fileLock $script:listLockFilePath).fileLocked -ne $true) { Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
-		#ファイル操作
 		$script:listFileData = Import-Csv -Path $script:listFilePath -Encoding UTF8
 	} catch { Write-Warning '❗ ダウンロードリストを読み込めなかったのでスキップしました'; continue }
 	finally { $null = fileUnlock $script:listLockFilePath }
 
 	#ダウンロード履歴ファイルのデータを読み込み
 	try {
-		#ロックファイルをロック
 		while ((fileLock $script:historyLockFilePath).fileLocked -ne $true) { Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
-		#ファイル操作
 		$script:historyFileData = Import-Csv -Path $script:historyFilePath -Encoding UTF8
 	} catch { Write-Warning '❗ ダウンロード履歴を読み込めなかったのでスキップしました'; continue }
 	finally { $null = fileUnlock $script:historyLockFilePath }
@@ -124,13 +116,13 @@ foreach ($local:keywordName in $local:keywordNames) {
 		$local:resultNum = $local:resultNum + 1
 		$local:resultEpisodeID = $local:resultLink.Replace('https://tver.jp/episodes/', '')
 		#URLがすでにダウンロードリストに存在するかチェック
-		$local:listMatch = $script:listFileData | Where-Object { $_.episodeID -like "*$local:resultEpisodeID" }
+		$local:listMatch = $script:listFileData.Where({ $_.episodeID -like "*$local:resultEpisodeID" })
 
 		#URLがすでにダウンロードリストに存在するかチェック
-		$local:histMatch = $script:historyFileData | Where-Object { $_.videoPage -like "*$local:resultLink" }
+		$local:histMatch = $script:historyFileData.Where({ $_.videoPage -like "*$local:resultLink" })
 
 		#どちらにも含まれない場合はリストへの出力対象
-		if (($null -eq $local:listMatch) -And ($null -eq $local:histMatch)) {
+		if (($local:listMatch.Count -eq 0) -And ($local:histMatch.Count -eq 0)) {
 			$local:videoLinks.Add($local:resultLink)
 			Write-Output ('　' + $local:resultNum + '/' + $local:resultTotal + ' ' + $local:resultLink + ' ... ❗ 未処理')
 		} else {
@@ -140,7 +132,6 @@ foreach ($local:keywordName in $local:keywordNames) {
 		}
 	}
 
-	#処理対象のトータル番組数
 	if ($null -eq $local:videoLinks) { $local:videoTotal = 0 }
 	else { $local:videoTotal = $local:videoLinks.Count }
 	Write-Output ('💡 処理対象' + $local:videoTotal + '本　処理済' + $local:searchResultCount + '本')
@@ -158,7 +149,6 @@ foreach ($local:keywordName in $local:keywordNames) {
 	else { $local:minRemaining = [String]([math]::Ceiling($local:secRemaining / 60)) + '分' }
 	$local:progressRatio1 = ($local:keywordNum / $local:keywordTotal)
 
-	#キーワード数のインクリメント
 	$local:keywordNum = $local:keywordNum + 1
 
 	#進捗更新
@@ -217,7 +207,6 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 			$local:i = ([Array]::IndexOf($using:local:videoLinks, $_)) + 1
 			$local:total = $using:local:videoLinks.Count
-			#処理
 			Write-Output ([String]$local:i + '/' + [String]$local:total + ' - ' + $_)
 
 			#TVer番組ダウンロードのメイン処理
@@ -291,10 +280,8 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 			#ダウンロードリストCSV書き出し
 			try {
-				#ロックファイルをロック
 				while ((fileLock $script:listLockFilePath).fileLocked -ne $true) { Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
-				#ファイル操作
-				$newVideo | Export-Csv -Path $script:listFilePath -NoTypeInformation -Encoding UTF8 -Append
+				$newVideo | Export-Csv -Path $script:listFilePath -Encoding UTF8 -Append
 				Write-Debug 'ダウンロードリストを書き込みました'
 			} catch { Write-Warning '❗ ダウンロードリストを更新できませんでした。スキップします'; continue }
 			finally { $null = fileUnlock $script:listLockFilePath }
@@ -318,7 +305,6 @@ foreach ($local:keywordName in $local:keywordNames) {
 }
 #======================================================================
 
-#進捗表示
 updateProgressToast `
 	-Title '' `
 	-Rate 1 `

@@ -83,9 +83,7 @@ while ($true) {
 
 	#ダウンロード履歴ファイルのデータを読み込み
 	try {
-		#ロックファイルをロック
 		while ((fileLock $script:historyLockFilePath).fileLocked -ne $true) { Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
-		#ファイル操作
 		$script:historyFileData = Import-Csv -Path $script:historyFilePath -Encoding UTF8
 	} catch { Write-Warning '❗ ダウンロード履歴を読み込めなかったのでスキップしました'; continue }
 	finally { $null = fileUnlock $script:historyLockFilePath }

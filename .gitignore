@@ -51,6 +51,7 @@ thunderEnvironment.json
 #その他雑多な不要ファイル
 * - コピー.*
 * - Copy.*
+* copy.*
 *.bak
 
 #ローカルの変更をGitHubにアップしないために

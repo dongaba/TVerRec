@@ -62,10 +62,8 @@ checkRequiredFile
 $local:videoLink = ''
 $local:videoLinks = [System.Collections.Generic.List[string]]::new()
 
-#リスト内の処理中の番組の番号
 $local:videoNum = 0
 
-#処理
 $local:keywordName = 'リスト指定'
 #ダウンロード対象外番組の読み込み
 $script:ignoreRegExTitles = getRegExIgnoreList
@@ -80,6 +78,7 @@ if ($null -eq $local:listLinks) { Write-Warning '💡 ダウンロードリス�
 
 $local:listTotal = 0
 $local:listTotal = $script:listLinks.Count
+if ($local:listTotal -eq 0) { Write-Warning '💡 ダウンロードリストが0件です' ; exit 0 }
 Write-Output ('　リスト件数' + $local:listTotal + '件')
 Write-Output ''
 
@@ -87,9 +86,7 @@ Write-Output '------------------------------------------------------------------
 Write-Output 'ダウンロード履歴を読み込みます'
 #ダウンロード履歴ファイルのデータを読み込み
 try {
-	#ロックファイルをロック
 	while ((fileLock $script:historyLockFilePath).fileLocked -ne $true) { Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
-	#ファイル操作
 	$script:historyFileData = Import-Csv -Path $script:historyFilePath -Encoding UTF8
 } catch { Write-Warning '❗ ダウンロード履歴を読み込めなかったのでスキップしました'; continue }
 finally { $null = fileUnlock $script:historyLockFilePath }
@@ -100,23 +97,19 @@ Write-Output 'ダウンロード履歴に含まれる番組を除外します'
 #URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 foreach ($local:listLink in $local:listLinks.episodeID) {
 	if ($null -ne $script:historyFileData) {
-		$local:historyMatch = $script:historyFileData `
-		| Where-Object { $_.videoPage -eq $local:listLink }
-		if ($null -eq $local:historyMatch) { $local:videoLinks.Add($local:listLink) }
+		$local:historyMatch = $script:historyFileData.Where{ $_.videoPage -eq $local:listLink }
+		if ($local:historyMatch.Count -eq 0) { $local:videoLinks.Add($local:listLink) }
 	} else { $local:videoLinks.Add($local:listLink) }
 }
 
-#ダウンロード対象のトータル番組数
 $local:videoTotal = $local:videoLinks.Count
 Write-Output ('💡 ダウンロード対象' + $local:videoTotal + '件')
 Write-Output ''
-
 
 #処理時間の推計
 $local:totalStartTime = Get-Date
 $local:secRemaining = -1
 
-#進捗表示
 showProgressToast `
 	-Text1 'リストからの番組のダウンロード' `
 	-Text2 'リストファイルから番組をダウンロード' `
@@ -129,7 +122,6 @@ showProgressToast `
 #----------------------------------------------------------------------
 #個々の番組ダウンロードここから
 foreach ($local:videoLink in $local:videoLinks) {
-	#ジャンル内の番組番号のインクリメント
 	$local:videoNum = $local:videoNum + 1
 
 	#移動先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
@@ -151,7 +143,6 @@ foreach ($local:videoLink in $local:videoLinks) {
 		-Tag $script:appName `
 		-Group 'List'
 
-	#処理
 	Write-Output '--------------------------------------------------'
 	Write-Output ([String]$local:videoNum + '/' + [String]$local:videoTotal + ' - ' + $local:videoLink)
 
@@ -167,7 +158,6 @@ foreach ($local:videoLink in $local:videoLinks) {
 }
 #----------------------------------------------------------------------
 
-#進捗表示
 updateProgressToast `
 	-Title 'リストからの番組のダウンロード' `
 	-Rate '1' `

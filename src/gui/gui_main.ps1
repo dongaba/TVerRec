@@ -261,35 +261,38 @@ while ($script:mainWindow.IsVisible) {
 	#GUIイベント処理
 	DoWpfEvents
 
-	#ジョブがある場合の処理
-	foreach ($local:job in Get-Job) {
-		# Get the originating button via the job name.
-		$script:btn = $script:mainWindow.FindName($local:job.Name)
+	if ($null -eq (Get-Job)) {
+		#ジョブがない場合はメモリ解放
+		[System.GC]::WaitForPendingFinalizers()
+		[System.GC]::Collect()
+	} else {
+		#ジョブがある場合の処理
+		foreach ($local:job in Get-Job) {
+			# Get the originating button via the job name.
+			$script:btn = $script:mainWindow.FindName($local:job.Name)
 
-		#ジョブが終了したかどうか判定
-		$local:completed = $local:job.State -in 'Completed', 'Failed', 'Stopped'
+			#ジョブが終了したかどうか判定
+			$local:completed = $local:job.State -in 'Completed', 'Failed', 'Stopped'
 
-		#ジョブからの出力をテキストボックスに出力
-		if ($script:data = Receive-Job $local:job *>&1) { AddOutput ($script:data -join "`n") }
+			#ジョブからの出力をテキストボックスに出力
+			if ($script:data = Receive-Job $local:job *>&1) { AddOutput ($script:data -join "`n") }
 
-		#終了したジョブのボタンの再有効化
-		if ($local:completed) {
-			Remove-Job $local:job
-			foreach ($script:btn in $script:btns) { $script:btn.IsEnabled = $true }
-			$script:btnExit.IsEnabled = $true
-			$script:btnKillAll.IsEnabled = $false
-			$script:lblStatus.Content = '処理を終了しました'
-			[System.GC]::Collect()
-			[System.GC]::WaitForPendingFinalizers()
-			[System.GC]::Collect()
+			#終了したジョブのボタンの再有効化
+			if ($local:completed) {
+				Remove-Job $local:job
+				foreach ($script:btn in $script:btns) { $script:btn.IsEnabled = $true }
+				$script:btnExit.IsEnabled = $true
+				$script:btnKillAll.IsEnabled = $false
+				$script:lblStatus.Content = '処理を終了しました'
+				[System.GC]::Collect()
+				[System.GC]::WaitForPendingFinalizers()
+				[System.GC]::Collect()
+			}
 		}
 	}
 
 	#GUIイベント処理
 	DoWpfEvents
-
-	[System.GC]::WaitForPendingFinalizers()
-	[System.GC]::Collect()
 
 	Start-Sleep -Milliseconds 100
 }
