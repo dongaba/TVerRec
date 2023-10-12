@@ -1758,7 +1758,8 @@ function executeYtdl {
 	$local:ytdlArgs += ' --paths ' + $local:chaptDir
 	$local:ytdlArgs += ' --paths ' + $local:descDir
 	$local:ytdlArgs += ' --ffmpeg-location ' + $local:ffmpegPath
-	if ($script:YoutubeDLOption) { $local:ytdlArgs += " -f $script:YoutubeDLOption" }
+ #	likecoffee add code next 1 line
+	if  ($script:YoutubeDLOption) { $local:ytdlArgs += " -f $script:YoutubeDLOption" }
 	$local:ytdlArgs += ' --output ' + $local:saveFile
 	$local:ytdlArgs += ' ' + $local:videoPageURL
 
