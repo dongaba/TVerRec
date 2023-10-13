@@ -35,7 +35,7 @@ try {
 	if ($script:myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
 	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
-} catch { Write-Error '❗ カレントディレクトリの設定に失敗しました' ; exit 1 }
+} catch { Write-Error ('❗ カレントディレクトリの設定に失敗しました') ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -52,7 +52,7 @@ while ($true) {
 	[System.GC]::WaitForPendingFinalizers()
 	[System.GC]::Collect()
 
-	Write-Output ([String]$script:loopCycle + '秒待機します。')
+	Write-Output ('{0}秒待機します。' -f $script:loopCycle)
 	Start-Sleep $script:loopCycle
 
 	[System.GC]::Collect()

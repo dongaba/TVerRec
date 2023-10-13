@@ -39,11 +39,11 @@ try {
 	Set-Location $script:scriptRoot
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	$script:devDir = Join-Path $script:scriptRoot '../dev'
-} catch { Write-Error '❗ カレントディレクトリの設定に失敗しました' ; exit 1 }
+} catch { Write-Error ('❗ カレントディレクトリの設定に失敗しました') ; exit 1 }
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 	if ($? -eq $false) { exit 1 }
-} catch { Write-Error '❗ 関数の読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error ('❗ 関数の読み込みに失敗しました') ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -55,7 +55,7 @@ try {
 	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 		. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
 	}
-} catch { Write-Error '❗ 設定ファイルの読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error ('❗ 設定ファイルの読み込みに失敗しました') ; exit 1 }
 
 #設定で指定したファイル・ディレクトリの存在チェック
 checkRequiredFile
@@ -76,16 +76,16 @@ while ($true) {
 
 	#移動先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
 	if (Test-Path $script:downloadBaseDir -PathType Container) {}
-	else { Write-Error '❗ 番組ダウンロード先ディレクトリにアクセスできません。終了します' ; exit 1 }
+	else { Write-Error ('❗ 番組ダウンロード先ディレクトリにアクセスできません。終了します') ; exit 1 }
 
 	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 	waitTillYtdlProcessGetFewer $script:parallelDownloadFileNum
 
 	#ダウンロード履歴ファイルのデータを読み込み
 	try {
-		while ((fileLock $script:historyLockFilePath).fileLocked -ne $true) { Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
+		while ((fileLock $script:historyLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$script:historyFileData = Import-Csv -Path $script:historyFilePath -Encoding UTF8
-	} catch { Write-Warning '❗ ダウンロード履歴を読み込めなかったのでスキップしました'; continue }
+	} catch { Write-Warning ('❗ ダウンロード履歴を読み込めなかったのでスキップしました') ; continue }
 	finally { $null = fileUnlock $script:historyLockFilePath }
 
 	if ($local:uiMode -eq 'CUI') {
@@ -105,7 +105,7 @@ while ($true) {
 			continue
 		} else {
 			$local:videoLink = $local:videoPageURL.Replace('https://tver.jp', '').Trim()
-			$local:videoPageURL = 'https://tver.jp' + $local:videoLink
+			$local:videoPageURL = ('https://tver.jp{0}' -f $local:videoLink)
 			Write-Output $local:videoPageURL
 
 			#TVer番組ダウンロードのメイン処理
@@ -126,6 +126,6 @@ while ($true) {
 [System.GC]::WaitForPendingFinalizers()
 [System.GC]::Collect()
 
-Write-Output '---------------------------------------------------------------------------'
-Write-Output 'ダウンロード処理を終了しました。                                           '
-Write-Output '---------------------------------------------------------------------------'
+Write-Output ('---------------------------------------------------------------------------')
+Write-Output ('ダウンロード処理を終了しました。                                           ')
+Write-Output ('---------------------------------------------------------------------------')

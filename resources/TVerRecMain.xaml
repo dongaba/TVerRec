@@ -501,19 +501,19 @@
                 <Button
                     x:Name="btnWorkOpen"
                     Style="{DynamicResource ButtonStyle}"
-                    Content="作業フォルダ"
+                    Content="作業ディレクトリ"
                     Margin="10,0,10,0"
                     Width="100"/>
                 <Button
                     x:Name="btnDownloadOpen"
                     Style="{DynamicResource ButtonStyle}"
-                    Content="ダウンロードフォルダ"
+                    Content="ダウンロードディレクトリ"
                     Margin="10,0,10,0"
                     Width="100"/>
                 <Button
                     x:Name="btnSaveOpen"
                     Style="{DynamicResource ButtonStyle}"
-                    Content="保存フォルダ"
+                    Content="保存ディレクトリ"
                     Margin="10,0,10,0"
                     Width="100"/>
             </StackPanel>

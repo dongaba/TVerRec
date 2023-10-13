@@ -37,11 +37,11 @@ try {
 	Set-Location $script:scriptRoot
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	$script:devDir = Join-Path $script:scriptRoot '../dev'
-} catch { Write-Error '❗ カレントディレクトリの設定に失敗しました' ; exit 1 }
+} catch { Write-Error ('❗ カレントディレクトリの設定に失敗しました') ; exit 1 }
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 	if ($? -eq $false) { exit 1 }
-} catch { Write-Error '❗ 関数の読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error ('❗ 関数の読み込みに失敗しました') ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -53,7 +53,7 @@ try {
 	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 		. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
 	}
-} catch { Write-Error '❗ 設定ファイルの読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error ('❗ 設定ファイルの読み込みに失敗しました') ; exit 1 }
 
 #設定で指定したファイル・ディレクトリの存在チェック
 checkRequiredFile
@@ -87,54 +87,54 @@ foreach ($local:keywordName in $local:keywordNames) {
 	$local:keywordName = trimTabSpace ($local:keywordName)
 
 	#ジャンルページチェックタイトルの表示
-	Write-Output ''
-	Write-Output '----------------------------------------------------------------------'
+	Write-Output ('')
+	Write-Output ('----------------------------------------------------------------------')
 	Write-Output $local:keywordName
-	Write-Output '----------------------------------------------------------------------'
+	Write-Output ('----------------------------------------------------------------------')
 
 	$local:resultLinks = @(getVideoLinksFromKeyword ($local:keywordName))
 	$local:keywordName = $local:keywordName.Replace('https://tver.jp/', '')
 
 	#ダウンロードリストファイルのデータを読み込み
 	try {
-		while ((fileLock $script:listLockFilePath).fileLocked -ne $true) { Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
+		while ((fileLock $script:listLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$script:listFileData = Import-Csv -Path $script:listFilePath -Encoding UTF8
-	} catch { Write-Warning '❗ ダウンロードリストを読み込めなかったのでスキップしました'; continue }
+	} catch { Write-Warning ('❗ ダウンロードリストを読み込めなかったのでスキップしました') ; continue }
 	finally { $null = fileUnlock $script:listLockFilePath }
 
 	#ダウンロード履歴ファイルのデータを読み込み
 	try {
-		while ((fileLock $script:historyLockFilePath).fileLocked -ne $true) { Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
+		while ((fileLock $script:historyLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$script:historyFileData = Import-Csv -Path $script:historyFilePath -Encoding UTF8
-	} catch { Write-Warning '❗ ダウンロード履歴を読み込めなかったのでスキップしました'; continue }
+	} catch { Write-Warning ('❗ ダウンロード履歴を読み込めなかったのでスキップしました') ; continue }
 	finally { $null = fileUnlock $script:historyLockFilePath }
 
-	Write-Output '処理履歴との照合 '
+	Write-Output ('処理履歴との照合 ')
 	$local:resultNum = 0
 	$local:resultTotal = $local:resultLinks.Count
 	foreach ($local:resultLink in $local:resultLinks) {
-		$local:resultNum = $local:resultNum + 1
+		$local:resultNum += 1
 		$local:resultEpisodeID = $local:resultLink.Replace('https://tver.jp/episodes/', '')
 		#URLがすでにダウンロードリストに存在するかチェック
-		$local:listMatch = $script:listFileData.Where({ $_.episodeID -like "*$local:resultEpisodeID" })
+		$local:listMatch = $script:listFileData.Where({ $_.episodeID -like ('*{0}' -f $local:resultEpisodeID) })
 
 		#URLがすでにダウンロードリストに存在するかチェック
-		$local:histMatch = $script:historyFileData.Where({ $_.videoPage -like "*$local:resultLink" })
+		$local:histMatch = $script:historyFileData.Where({ $_.videoPage -like ('*{0}' -f $local:resultLink) })
 
 		#どちらにも含まれない場合はリストへの出力対象
 		if (($local:listMatch.Count -eq 0) -And ($local:histMatch.Count -eq 0)) {
 			$local:videoLinks.Add($local:resultLink)
-			Write-Output ('　' + $local:resultNum + '/' + $local:resultTotal + ' ' + $local:resultLink + ' ... ❗ 未処理')
+			Write-Output ('　{0}/{1} - {2} ... ❗ 未処理' -f $local:resultNum, $local:resultTotal, $local:resultLink)
 		} else {
-			$local:searchResultCount = $local:searchResultCount + 1
-			Write-Output ('　' + $local:resultNum + '/' + $local:resultTotal + ' ' + $local:resultLink + ' ... ✔️')
+			$local:searchResultCount += 1
+			Write-Output ('　{0}/{1} - {2} ... ✔️' -f $local:resultNum, $local:resultTotal, $local:resultLink)
 			continue
 		}
 	}
 
 	if ($null -eq $local:videoLinks) { $local:videoTotal = 0 }
 	else { $local:videoTotal = $local:videoLinks.Count }
-	Write-Output ('💡 処理対象' + $local:videoTotal + '本　処理済' + $local:searchResultCount + '本')
+	Write-Output ('💡 処理対象{0}本　処理済{1}本' -f $local:videoTotal, $local:searchResultCount)
 
 	#処理対象番組がない場合は次のキーワード
 	if ( $local:videoTotal -eq 0 ) { continue }
@@ -143,18 +143,17 @@ foreach ($local:keywordName in $local:keywordNames) {
 	$local:secElapsed = (Get-Date) - $local:totalStartTime
 	$local:secRemaining = -1
 	if ($local:keywordNum -ne 0) {
-		$local:secRemaining = ($local:secElapsed.TotalSeconds / $local:keywordNum) * ($local:keywordTotal - $local:keywordNum)
+		$local:secRemaining = [Int][Math]::Ceiling(($local:secElapsed.TotalSeconds / $local:keywordNum) * ($local:keywordTotal - $local:keywordNum))
 	}
-	if ($local:secRemaining -eq -1 -Or $local:secRemaining -eq '' ) { $local:minRemaining = '計算中...' }
-	else { $local:minRemaining = [String]([math]::Ceiling($local:secRemaining / 60)) + '分' }
-	$local:progressRatio1 = ($local:keywordNum / $local:keywordTotal)
-
-	$local:keywordNum = $local:keywordNum + 1
+	if ($local:secRemaining -eq -1 -Or $local:secRemaining -eq '' ) { $local:minRemaining = '' }
+	else { $local:minRemaining = ('{0}分' -f ([Int][Math]::Ceiling($local:secRemaining / 60))) }
+	$local:progressRate1 = [Float]($local:keywordNum / $local:keywordTotal)
+	$local:keywordNum += 1
 
 	#進捗更新
 	updateProgressToast `
 		-Title (trimTabSpace ($local:keywordName)) `
-		-Rate $local:progressRatio1 `
+		-Rate $local:progressRate1 `
 		-LeftText $local:keywordNum/$local:keywordTotal `
 		-RightText $local:minRemaining `
 		-Tag $script:appName `
@@ -207,7 +206,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 			$local:i = ([Array]::IndexOf($using:local:videoLinks, $_)) + 1
 			$local:total = $using:local:videoLinks.Count
-			Write-Output ([String]$local:i + '/' + [String]$local:total + ' - ' + $_)
+			Write-Output ('　{0}/{1} - {2}' -f $local:i, $local:total, $_)
 
 			#TVer番組ダウンロードのメイン処理
 			$broadcastDate = '' ; $videoSeries = '' ; $videoSeason = ''
@@ -220,7 +219,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 			#TVerのAPIを叩いて番組情報取得
 			goAnal -Event 'getinfo' -Type 'link' -ID $_
 			try { getVideoInfo -Link $_ }
-			catch { Write-Warning '❗ 情報取得エラー。スキップします Err:92'; continue }
+			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:92') ; continue }
 
 			#ダウンロード対象外に入っている番組の場合はリスト出力しない
 			foreach ($ignoreRegexTitle in $using:script:ignoreRegexTitles) {
@@ -243,7 +242,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 			#スキップフラグが立っているかチェック
 			if ($ignore -eq $true) {
-				Write-Output ('❗ ' + [String]$local:i + '/' + [String]$local:total + ' - 番組をコメントアウトした状態でリストファイルに追加します')
+				Write-Output ('❗ {0}/{1} - 番組をコメントアウトした状態でリストファイルに追加します' -f $local:i, $local:total)
 				$newVideo = [pscustomobject]@{
 					seriesName    = $videoSeries
 					seriesID      = $videoSeriesID
@@ -251,7 +250,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 					seasonID      = $videoSeasonID
 					episodeNo     = $videoEpisode
 					episodeName   = $videoTitle
-					episodeID     = '#' + $_.Replace('https://tver.jp/episodes/', '')
+					episodeID     = ('#{0}' -f $_.Replace('https://tver.jp/episodes/', ''))
 					media         = $mediaName
 					provider      = $providerName
 					broadcastDate = $broadcastDate
@@ -260,7 +259,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 					ignoreWord    = $ignoreWord
 				}
 			} else {
-				Write-Output ('💡 ' + [String]$local:i + '/' + [String]$local:total + ' - 番組をリストファイルに追加します')
+				Write-Output ('💡 {0}/{1} - 番組をリストファイルに追加します' -f $local:i, $local:total)
 				$newVideo = [pscustomobject]@{
 					seriesName    = $videoSeries
 					seriesID      = $videoSeriesID
@@ -268,7 +267,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 					seasonID      = $videoSeasonID
 					episodeNo     = $videoEpisode
 					episodeName   = $videoTitle
-					episodeID     = $_.Replace('https://tver.jp/episodes/', '')
+					episodeID     = ('{0}' -f $_.Replace('https://tver.jp/episodes/', ''))
 					media         = $mediaName
 					provider      = $providerName
 					broadcastDate = $broadcastDate
@@ -280,10 +279,10 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 			#ダウンロードリストCSV書き出し
 			try {
-				while ((fileLock $script:listLockFilePath).fileLocked -ne $true) { Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
+				while ((fileLock $script:listLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 				$newVideo | Export-Csv -Path $script:listFilePath -Encoding UTF8 -Append
-				Write-Debug 'ダウンロードリストを書き込みました'
-			} catch { Write-Warning '❗ ダウンロードリストを更新できませんでした。スキップします'; continue }
+				Write-Debug ('ダウンロードリストを書き込みました')
+			} catch { Write-Warning ('❗ ダウンロードリストを更新できませんでした。スキップします') ; continue }
 			finally { $null = fileUnlock $script:listLockFilePath }
 			$script:listFileData = Import-Csv -Path $script:listFilePath -Encoding UTF8
 
@@ -291,8 +290,11 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 	} else {
 		#並列化が無効の場合は従来型処理
+		$local:i = 0
+		$local:total = $local:videoLinks.Count
 		foreach ($local:videoLink in $local:videoLinks) {
-			Write-Output ('　' + [String](([Array]::IndexOf($local:videoLinks, $local:videoLink)) + 1 ) + '/' + [String]$local:videoLinks.Count + ' - ' + $local:videoLink)
+			$local:i += 1
+			Write-Output ('　{0}/{1} - {2}' -f $local:i, $local:total, $local:videoLink)
 			#TVer番組ダウンロードのメイン処理
 			generateTVerVideoList `
 				-Keyword $local:keywordName `
@@ -317,6 +319,6 @@ updateProgressToast `
 [System.GC]::WaitForPendingFinalizers()
 [System.GC]::Collect()
 
-Write-Output '---------------------------------------------------------------------------'
-Write-Output '番組リストファイル出力処理を終了しました。'
-Write-Output '---------------------------------------------------------------------------'
+Write-Output ('---------------------------------------------------------------------------')
+Write-Output ('番組リストファイル出力処理を終了しました。')
+Write-Output ('---------------------------------------------------------------------------')

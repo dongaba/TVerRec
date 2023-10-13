@@ -26,7 +26,7 @@
 ###################################################################################
 using namespace System.Windows.Threading
 
-if ($IsWindows -eq $false) { Write-Error '❗ Windows以外では動作しません'; Start-Sleep 10 ; exit 1 }
+if ($IsWindows -eq $false) { Write-Error ('❗ Windows以外では動作しません') ; Start-Sleep 10 ; exit 1 }
 Add-Type -AssemblyName PresentationFramework
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -42,11 +42,11 @@ try {
 	Set-Location $script:scriptRoot
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	$script:devDir = Join-Path $script:scriptRoot '../dev'
-} catch { Write-Error '❗ ディレクトリ設定に失敗しました'; exit 1 }
+} catch { Write-Error ('❗ ディレクトリ設定に失敗しました') ; exit 1 }
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 	if ($? -eq $false) { exit 1 }
-} catch { Write-Error '❗ 関数の読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error ('❗ 関数の読み込みに失敗しました') ; exit 1 }
 
 #endregion 環境設定
 
@@ -71,9 +71,7 @@ function DoWpfEvents {
 #テキストボックスへのログ出力と再描画
 function AddOutput {
 	Param ([String]$script:Message)
-	$script:mainWindow.Dispatcher.Invoke(
-		[action] { $script:outText.AddText($script:Message + "`n") }, 'Render'
-	)
+	$script:mainWindow.Dispatcher.Invoke([action] { $script:outText.AddText("{0}`n" -f $script:Message) }, 'Render')
 	$script:outText.ScrollToEnd()
 }
 
@@ -92,12 +90,12 @@ try {
 	$local:mainXaml = $local:mainXaml -replace 'mc:Ignorable="d"', '' -replace 'x:N', 'N' -replace 'x:Class=".*?"', ''
 	[xml]$local:mainCleanXaml = $local:mainXaml
 	$script:mainWindow = [System.Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $local:mainCleanXaml))
-} catch { Write-Error '❗ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。' ; exit 1 }
+} catch { Write-Error ('❗ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。') ; exit 1 }
 
 #PowerShellのウィンドウを非表示に
 Add-Type -Name Window -Namespace Console -MemberDefinition '
-[DllImport("Kernel32.dll")]public static extern IntPtr GetConsoleWindow();
-[DllImport("user32.dll")]public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow);
+[DllImport("Kernel32.dll")]public static extern IntPtr GetConsoleWindow() ;
+[DllImport("user32.dll")]public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow) ;
 '
 $local:console = [Console.Window]::GetConsoleWindow()
 $null = [Console.Window]::ShowWindow($local:console, 0)
@@ -134,7 +132,7 @@ $local:logo.Freeze()
 $script:LogoImage.Source = $local:logo
 
 #バージョン表記
-$script:lblVersion.Content = 'Version ' + $script:appVersion
+$script:lblVersion.Content = ('Version {0}' -f $script:appVersion)
 
 #ログ出力するためのテキストボックス
 $script:outText = $script:mainWindow.FindName('tbOutText')
@@ -206,7 +204,7 @@ $script:btnSaveOpen.add_Click({
 			$script:saveBaseDirArray = @()
 			$script:saveBaseDirArray = $script:saveBaseDir.split(';').Trim()
 			foreach ($saveDir in $script:saveBaseDirArray) { Invoke-Item $saveDir.Trim() }
-		} else { [System.Windows.MessageBox]::Show('保存フォルダが設定されていません') }
+		} else { [System.Windows.MessageBox]::Show('保存ディレクトリが設定されていません') }
 	})
 $script:btnKeywordOpen.add_Click({ Invoke-Item $script:keywordFilePath })
 $script:btnIgnoreOpen.add_Click({ Invoke-Item $script:ignoreFilePath })
@@ -251,7 +249,7 @@ try {
 	$null = $script:mainWindow.Show()
 	$null = $script:mainWindow.Activate()
 	$null = [Console.Window]::ShowWindow($local:console, 0)
-} catch { Write-Error '❗ ウィンドウを描画できませんでした。TVerRecが破損しています。'; exit 1 }
+} catch { Write-Error ('❗ ウィンドウを描画できませんでした。TVerRecが破損しています。') ; exit 1 }
 
 #endregion ウィンドウ表示
 

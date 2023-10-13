@@ -52,25 +52,26 @@ function moveItem() {
 	param(
 		[Parameter(Mandatory = $true, Position = 0)]
 		[Alias('Path')]
-		[String]$src,
+		[String]$local:src,
 		[Parameter(Mandatory = $true, Position = 1)]
 		[Alias('Destination')]
-		[String]$dist
+		[String]$local:dist
 	)
 
-	if ((Test-Path $dist) -And (Test-Path -PathType Container $src)) {
+	if ((Test-Path $local:dist) -And (Test-Path -PathType Container $local:src)) {
 		# ディレクトリ上書き(移動先に存在 かつ ディレクトリ)は再帰的に moveItem 呼び出し
-		Get-ChildItem $src | ForEach-Object {
+		Get-ChildItem $local:src | ForEach-Object {
 			if ($_.Name -notLike '*update_tverrec.ps1') {
-				moveItem -Path $_.FullName -Destination ($dist + '\' + $_.Name)
+				moveItem -Path $_.FullName -Destination ('{0}/{1}' -f $local:dist, $_.Name)
 			}
 		}
 		# 移動し終わったディレクトリを削除
-		Remove-Item -Path $src -Recurse -Force
+		Remove-Item -Path $local:src -Recurse -Force
 	} else {
 		# 移動先に対象なし または ファイルの Move-Item に -Forece つけて実行
-		Write-Output "$src  →  $dist"
-		Move-Item -Path $src -Destination $dist -Force
+		Write-Output ('{0} → {1}' -f $local:src, $local:dist)
+
+		Move-Item -Path $local:src -Destination $local:dist -Force
 	}
 }
 
@@ -84,75 +85,75 @@ try {
 		$local:scriptRoot = Split-Path -Parent -Path $local:scriptRoot
 	} else { $local:scriptRoot = Convert-Path .. }
 	Set-Location $local:scriptRoot
-} catch { Write-Error '❗ ディレクトリ設定に失敗しました' ; exit 1 }
+} catch { Write-Error ('❗ ディレクトリ設定に失敗しました') ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
-Write-Output ''
-Write-Output '==========================================================================='
-Write-Output '---------------------------------------------------------------------------'
-Write-Output '                          TVerRecアップデート処理                          '
-Write-Output '---------------------------------------------------------------------------'
-Write-Output '==========================================================================='
+Write-Output ('')
+Write-Output ('===========================================================================')
+Write-Output ('---------------------------------------------------------------------------')
+Write-Output ('                          TVerRecアップデート処理                          ')
+Write-Output ('---------------------------------------------------------------------------')
+Write-Output ('===========================================================================')
 
 $local:repo = 'dongaba/TVerRec'
-$local:releases = 'https://api.github.com/repos/' + $local:repo + '/releases/latest'
+$local:releases = ('https://api.github.com/repos/{0}/releases/latest' -f $local:repo)
 
 #念のため過去のバージョンがあれば削除し、作業ディレクトリを作成
-Write-Output ''
-Write-Output '-----------------------------------------------------------------'
-Write-Output '作業ディレクトリを作成します'
+Write-Output ('')
+Write-Output ('-----------------------------------------------------------------')
+Write-Output ('作業ディレクトリを作成します')
 $updateTemp = Join-Path $local:scriptRoot '../tverrec-update-temp'
 if (Test-Path $updateTemp ) { Remove-Item -Path $updateTemp -Force -Recurse -ErrorAction SilentlyContinue }
 try { $null = New-Item -ItemType Directory -Path $updateTemp }
-catch { Write-Error '❗ 作業ディレクトリの作成に失敗しました' ; exit 1 }
+catch { Write-Error ('❗ 作業ディレクトリの作成に失敗しました') ; exit 1 }
 
 #TVerRecの最新バージョン取得
-Write-Output ''
-Write-Output '-----------------------------------------------------------------'
-Write-Output 'TVerRecの最新版をダウンロードします'
+Write-Output ('')
+Write-Output ('-----------------------------------------------------------------')
+Write-Output ('TVerRecの最新版をダウンロードします')
 try {
-	$local:zipURL = (Invoke-RestMethod -Uri $local:releases -Method Get ).zipball_url
+	$local:zipURL = (Invoke-RestMethod -Uri $local:releases -Method 'GET' ).zipball_url
 	Invoke-WebRequest -Uri $local:zipURL -OutFile (Join-Path $updateTemp 'TVerRecLatest.zip')
-} catch { Write-Error '❗ ダウンロードに失敗しました' ; exit 1 }
+} catch { Write-Error ('❗ ダウンロードに失敗しました') ; exit 1 }
 
 #最新バージョンがダウンロードできていたら展開
-Write-Output ''
-Write-Output '-----------------------------------------------------------------'
-Write-Output 'ダウンロードしたTVerRecを解凍します'
+Write-Output ('')
+Write-Output ('-----------------------------------------------------------------')
+Write-Output ('ダウンロードしたTVerRecを解凍します')
 try {
 	if (Test-Path (Join-Path $updateTemp 'TVerRecLatest.zip') -PathType Leaf) {
 		#配下に作成されるディレクトリ名は不定「dongaba-TVerRec-xxxxxxxx」
 		unZip -File (Join-Path $updateTemp 'TVerRecLatest.zip') -OutPath $updateTemp
-	} else { Write-Error '❗ ダウンロードしたファイルが見つかりません' ; exit 1 }
-} catch { Write-Error '❗ ダウンロードしたファイルの解凍に失敗しました' ; exit 1 }
+	} else { Write-Error ('❗ ダウンロードしたファイルが見つかりません') ; exit 1 }
+} catch { Write-Error ('❗ ダウンロードしたファイルの解凍に失敗しました') ; exit 1 }
 
 #ディレクトリは上書きできないので独自関数で以下のディレクトリをループ
-Write-Output ''
-Write-Output '-----------------------------------------------------------------'
-Write-Output 'ダウンロードしたTVerRecを配置します'
+Write-Output ('')
+Write-Output ('-----------------------------------------------------------------')
+Write-Output ('ダウンロードしたTVerRecを配置します')
 try {
 	$newTVerRecDir = (Get-ChildItem -Path $updateTemp -Directory ).fullname
 	Get-ChildItem -Path $newTVerRecDir -Force | ForEach-Object {
 		# Move-Item を行う function として moveItem 作成して呼び出す
-		moveItem -Path $_.FullName -Destination ((Join-Path $local:scriptRoot '../') + $_.Name)
+		moveItem -Path $_.FullName -Destination ('{0}{1}' -f (Join-Path $local:scriptRoot '../'), $_.Name )
 	}
-} catch { Write-Error '❗ ダウンロードしたTVerRecの配置に失敗しました' ; exit 1 }
+} catch { Write-Error ('❗ ダウンロードしたTVerRecの配置に失敗しました') ; exit 1 }
 
 #作業ディレクトリを削除
-Write-Output ''
-Write-Output '-----------------------------------------------------------------'
-Write-Output 'アップデートの作業ディレクトリを削除します'
+Write-Output ('')
+Write-Output ('-----------------------------------------------------------------')
+Write-Output ('アップデートの作業ディレクトリを削除します')
 try {
 	if (Test-Path $updateTemp ) {
 		Remove-Item -Path $updateTemp -Force -Recurse
 	}
-} catch { Write-Error '❗ 作業ディレクトリの削除に失敗しました' ; exit 1 }
+} catch { Write-Error ('❗ 作業ディレクトリの削除に失敗しました') ; exit 1 }
 
 #過去のバージョンで使用していたファイルを削除、または移行
-Write-Output ''
-Write-Output '-----------------------------------------------------------------'
-Write-Output '過去のバージョンで使用していたファイルを削除、または移行します'
+Write-Output ('')
+Write-Output ('-----------------------------------------------------------------')
+Write-Output ('過去のバージョンで使用していたファイルを削除、または移行します')
 #tver.lockをhistory.lockに移行(v2.6.5→v2.6.6)
 if (Test-Path (Join-Path $script:scriptRoot '../db/tver.lock') -PathType Leaf) {
 	Remove-Item -Path (Join-Path $script:scriptRoot '../db/tver.lock') -Force
@@ -219,19 +220,19 @@ if (Test-Path (Join-Path $script:scriptRoot '../.devcontainer')) {
 
 #実行権限の付与
 if ($IsWindows -eq $false) {
-	Write-Output ''
-	Write-Output '-----------------------------------------------------------------'
-	Write-Output '実行権限の付与します'
+	Write-Output ('')
+	Write-Output ('-----------------------------------------------------------------')
+	Write-Output ('実行権限の付与します')
 	(& chmod a+x (Join-Path $script:scriptRoot '../unix/*.sh'))
 }
 
-Write-Output ''
-Write-Output '==========================================================================='
-Write-Output ''
-Write-Output '💡 TVerRecのアップデートを終了しました。'
-Write-Output ''
-Write-Output '💡 TVerRecを再起動してください。'
-Write-Output ''
-Write-Output '==========================================================================='
+Write-Output ('')
+Write-Output ('===========================================================================')
+Write-Output ('')
+Write-Output ('💡 TVerRecのアップデートを終了しました。')
+Write-Output ('')
+Write-Output ('💡 TVerRecを再起動してください。')
+Write-Output ('')
+Write-Output ('===========================================================================')
 
 exit 0

@@ -26,7 +26,7 @@
 ###################################################################################
 using namespace System.Windows.Threading
 
-if ($IsWindows -eq $false) { Write-Error '❗ Windows以外では動作しません'; Start-Sleep 10 ; exit 1 }
+if ($IsWindows -eq $false) { Write-Error ('❗ Windows以外では動作しません') ; Start-Sleep 10 ; exit 1 }
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName PresentationFramework
 
@@ -41,20 +41,20 @@ try {
 	Set-Location $script:scriptRoot
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	$script:devDir = Join-Path $script:scriptRoot '../dev'
-} catch { Write-Error '❗ ディレクトリ設定に失敗しました'; exit 1 }
+} catch { Write-Error ('❗ ディレクトリ設定に失敗しました') ; exit 1 }
 
 #----------------------------------------------------------------------
 #設定ファイル読み込み
 try {
 	. (Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
-} catch { Write-Error '❗ システム設定ファイルの読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error ('❗ システム設定ファイルの読み込みに失敗しました') ; exit 1 }
 
 #----------------------------------------------------------------------
 #外部関数ファイルの読み込み
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/common_functions.ps1'))
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/tver_functions.ps1'))
-} catch { Write-Error '❗ 外部関数ファイルの読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error ('❗ 外部関数ファイルの読み込みに失敗しました') ; exit 1 }
 
 #endregion 環境設定
 
@@ -82,7 +82,7 @@ function loadDefaultSetting {
 		[Parameter(Mandatory = $true, Position = 0)]
 		[String]$local:key
 	)
-	try { $local:defaultSetting = (Select-String -Pattern ('^' + $local:key.Replace('$', '\$')) -Path $script:systemSettingFile | ForEach-Object { $_.Line }).split('=')[1].Trim() }
+	try { $local:defaultSetting = (Select-String -Pattern ('^{0}' -f $local:key.Replace('$', '\$')) -Path $script:systemSettingFile | ForEach-Object { $_.Line }).split('=')[1].Trim() }
 	catch { $local:defaultSetting = '' }
 
 	return $local:defaultSetting.Trim("'")
@@ -94,7 +94,7 @@ function loadCurrentSetting {
 		[Parameter(Mandatory = $true, Position = 0)]
 		[String]$local:key
 	)
-	try { $local:currentSetting = (Select-String -Pattern ('^' + $local:key.Replace('$', '\$')) -Path $script:userSettingFile | ForEach-Object { $_.Line }).split('=')[1].Trim() }
+	try { $local:currentSetting = (Select-String -Pattern ('^{0}' -f $local:key.Replace('$', '\$')) -Path $script:userSettingFile | ForEach-Object { $_.Line }).split('=')[1].Trim() }
 	catch { $local:currentSetting = '' }
 
 	return $local:currentSetting.Trim("'")
@@ -118,12 +118,12 @@ function writeSetting {
 		try {
 			$local:tailLineNum = $local:totalLineNum - (Select-String $local:endSegment $script:userSettingFile | ForEach-Object { $_.LineNumber })
 		} catch { $local:tailLineNum = 0 }
-	} else { $local:totalLineNum = 0; $local:headLineNum = 0; $local:tailLineNum = 0 }
+	} else { $local:totalLineNum = 0 ; $local:headLineNum = 0 ; $local:tailLineNum = 0 }
 
 	#自動生成より前の部分
 	if ( $local:totalLineNum -ne 0 ) {
 		try { $local:newSetting += Get-Content $userSettingFile -Head $local:headLineNum }
-		catch { Write-Warning '❗ 自動生成の開始部分を特定できませんでした' }
+		catch { Write-Warning ('❗ 自動生成の開始部分を特定できませんでした') }
 	}
 
 	#自動生成の部分
@@ -140,29 +140,29 @@ function writeSetting {
 				#設定していないときは出力しない
 			} elseif ($local:settingBox.Text -eq 'する') {
 				#するを$trueに置換
-				$local:newSetting += $local:settingAttribute + ' = ' + '$true'
+				$local:newSetting += ('{0} = {1}' -f $local:settingAttribute, '$true')
 			} elseif ($local:settingBox.Text -eq 'しない') {
 				#しないを$falseに置換
-				$local:newSetting += $local:settingAttribute + ' = ' + '$false'
-			} elseif ( [int]::TryParse($local:settingBox.Text, [ref]$null) ) {
+				$local:newSetting += ('{0} = {1}' -f $local:settingAttribute, '$false')
+			} elseif ( [Int]::TryParse($local:settingBox.Text, [ref]$null) ) {
 				#数字はシングルクォーテーション不要
-				$local:newSetting += $local:settingAttribute + ' = ' + $local:settingBox.Text
+				$local:newSetting += ('{0} = {1}' -f $local:settingAttribute, $local:settingBox.Text)
 			} elseif ($local:settingBox.Text -match '^[a-zA-Z]:') {
 				#ドライブ文字列で開始する場合はシングルクォーテーション必要
-				$local:newSetting += $local:settingAttribute + ' = ' + '''' + $local:settingBox.Text + ''''
+				$local:newSetting += ('{0} = ''{1}''' -f $local:settingAttribute, $local:settingBox.Text)
 			} elseif ($local:settingBox.Text -match '^\\\\') {
 				#UNCパスの場合はシングルクォーテーション必要
-				$local:newSetting += $local:settingAttribute + ' = ' + '''' + $local:settingBox.Text + ''''
+				$local:newSetting += ('{0} = ''{1}''' -f $local:settingAttribute, $local:settingBox.Text)
 			} elseif ($local:settingBox.Text.Contains('$') `
 					-Or $local:settingBox.Text.Contains('{') `
 					-Or $local:settingBox.Text.Contains('(') `
 					-Or $local:settingBox.Text.Contains('}') `
 					-Or $local:settingBox.Text.Contains(')') ) {
 				#Powershellの変数や関数等を含む場合はシングルクォーテーション不要
-				$local:newSetting += $local:settingAttribute + ' = ' + $local:settingBox.Text
+				$local:newSetting += ('{0} = {1}' -f $local:settingAttribute, $local:settingBox.Text)
 			} else {
 				#それ以外はシングルクォーテーション必要
-				$local:newSetting += $local:settingAttribute + ' = ' + '''' + $local:settingBox.Text + ''''
+				$local:newSetting += ('{0} = ''{1}''' -f $local:settingAttribute, $local:settingBox.Text)
 			}
 		}
 	}
@@ -171,12 +171,11 @@ function writeSetting {
 	#自動生成より後の部分
 	if ( $local:totalLineNum -ne 0 ) {
 		try { $local:newSetting += Get-Content $script:userSettingFile -Tail $local:tailLineNum }
-		catch { Write-Warning '❗ 自動生成の終了部分を特定できませんでした' }
+		catch { Write-Warning ('❗ 自動生成の終了部分を特定できませんでした') }
 	}
 
 	#改行コードをLFで出力
-	Write-Output $local:newSetting | ForEach-Object { $_ + "`n" } `
-	| Out-File -Path $script:userSettingFile -Encoding UTF8 -NoNewline
+	$local:newSetting | ForEach-Object { ("{0}`n" -f $_) } | Out-File -Path $script:userSettingFile -Encoding UTF8 -NoNewline
 
 }
 
@@ -198,12 +197,12 @@ try {
 	$local:mainXaml = $local:mainXaml -replace 'mc:Ignorable="d"', '' -replace 'x:N', 'N' -replace 'x:Class=".*?"', ''
 	[xml]$local:mainCleanXaml = $local:mainXaml
 	$script:settingWindow = [System.Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $local:mainCleanXaml))
-} catch { Write-Error '❗ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。' ; exit 1 }
+} catch { Write-Error ('❗ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。') ; exit 1 }
 
 #PowerShellのウィンドウを非表示に
 Add-Type -Name Window -Namespace Console -MemberDefinition '
-[DllImport("Kernel32.dll")]public static extern IntPtr GetConsoleWindow();
-[DllImport("user32.dll")]public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow);
+[DllImport("Kernel32.dll")]public static extern IntPtr GetConsoleWindow() ;
+[DllImport("user32.dll")]public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow) ;
 '
 $local:console = [Console.Window]::GetConsoleWindow()
 $null = [Console.Window]::ShowWindow($local:console, 0)
@@ -238,7 +237,7 @@ $local:logo.Freeze()
 $script:LogoImage.Source = $local:logo
 
 #バージョン表記
-$script:lblVersion.Content = 'Version ' + $script:appVersion
+$script:lblVersion.Content = ('Version {0}' -f $script:appVersion)
 
 #endregion WPFのWindow設定
 #----------------------------------------------------------------------
@@ -288,6 +287,7 @@ $script:settingAttributes += '$script:downloadWorkDir'
 $script:settingAttributes += '$script:saveBaseDir'
 $script:settingAttributes += '$script:parallelDownloadFileNum'
 $script:settingAttributes += '$script:parallelDownloadNumPerFile'
+$script:settingAttributes += '$script:loopCycle'
 $script:settingAttributes += '$script:enableMultithread'
 $script:settingAttributes += '$script:multithreadNum'
 $script:settingAttributes += '$script:disableToastNotification'
@@ -337,7 +337,7 @@ try {
 	$null = $script:settingWindow.Show()
 	$null = $script:settingWindow.Activate()
 	$null = [Console.Window]::ShowWindow($local:console, 0)
-} catch { Write-Error '❗ ウィンドウを描画できませんでした。TVerRecが破損しています。' ; exit 1 }
+} catch { Write-Error ('❗ ウィンドウを描画できませんでした。TVerRecが破損しています。') ; exit 1 }
 
 # メインウィンドウ取得
 $script:process = [Diagnostics.Process]::GetCurrentProcess()

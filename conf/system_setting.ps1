@@ -82,21 +82,22 @@ $script:parallelDownloadFileNum = 5
 $script:parallelDownloadNumPerFile = 10
 
 #ループ処理の間隔(秒)
+#　ループ処理の実行間隔を指定します。
 $script:loopCycle = 3600
 
 #並列処理の有効化
 #　並列処理を有効化して処理を高速化するかを設定します。
 #　ただし、並列処理を有効化すると履歴ファイルや無視リストの破損リスクが高まります。
 #　現在のところ、並列処理を行うのはダウンロードリストの作成処理とダウンロード対象外番組の削除処理、
-#　空フォルダの削除処理です。
+#　空ディレクトリの削除処理です。
 $script:enableMultithread = $true
 
 #並列処理の同時スレッド数
 #　PCの性能に応じて適度に設定してください。
-#　最近のPCであれば100くらいの値を設定しても十分に動作すると思います。
+#　最近のPCであれば50くらいの値を設定しても十分に動作すると思います。
 #　あまり大きな数を指定すると逆に処理時間が長くなる可能性があります。
 #　現在のところ、並列処理を行うのはダウンロードリストの作成処理とダウンロード対象外番組の削除処理、
-#　空フォルダの削除処理です。
+#　空ディレクトリの削除処理です。
 $script:multithreadNum = 50
 
 #トースト通知の無効化
@@ -314,7 +315,7 @@ $script:listFileSamplePath = Join-Path $script:listDir 'list.sample.csv'
 $script:listLockFilePath = Join-Path $script:dbDir 'list.lock'
 
 #ffpmegで番組検証時のエラーファイルのパス
-$script:ffpmegErrorLogPath = Join-Path $script:dbDir ('ffmpeg_error_' + $PID + '.log')
+$script:ffpmegErrorLogPath = Join-Path $script:dbDir ('ffmpeg_error_{0}.log' -f $PID)
 
 #youtube-dlのパス
 if ($IsWindows) { $script:ytdlPath = Join-Path $script:binDir 'youtube-dl.exe' }

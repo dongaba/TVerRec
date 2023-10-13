@@ -37,11 +37,11 @@ try {
 	Set-Location $script:scriptRoot
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	$script:devDir = Join-Path $script:scriptRoot '../dev'
-} catch { Write-Error '❗ カレントディレクトリの設定に失敗しました' ; exit 1 }
+} catch { Write-Error ('❗ カレントディレクトリの設定に失敗しました') ; exit 1 }
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 	if ($? -eq $false) { exit 1 }
-} catch { Write-Error '❗ 関数の読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error ('❗ 関数の読み込みに失敗しました') ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -53,7 +53,7 @@ try {
 	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 		. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
 	}
-} catch { Write-Error '❗ 設定ファイルの読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error ('❗ 設定ファイルの読み込みに失敗しました') ; exit 1 }
 
 #設定で指定したファイル・ディレクトリの存在チェック
 checkRequiredFile
@@ -86,34 +86,34 @@ foreach ($local:keywordName in $local:keywordNames) {
 	$local:keywordName = trimTabSpace ($local:keywordName)
 
 	#ジャンルページチェックタイトルの表示
-	Write-Output ''
-	Write-Output '----------------------------------------------------------------------'
+	Write-Output ('')
+	Write-Output ('----------------------------------------------------------------------')
 	Write-Output $local:keywordName
-	Write-Output '----------------------------------------------------------------------'
+	Write-Output ('----------------------------------------------------------------------')
 
 	$local:resultLinks = @(getVideoLinksFromKeyword ($local:keywordName))
 	$local:keywordName = $local:keywordName.Replace('https://tver.jp/', '')
 
 	#ダウンロード履歴ファイルのデータを読み込み
 	try {
-		while ((fileLock $script:historyLockFilePath).fileLocked -ne $true) { Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
+		while ((fileLock $script:historyLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$script:historyFileData = Import-Csv -Path $script:historyFilePath -Encoding UTF8
-	} catch { Write-Warning '❗ ダウンロード履歴を読み込めなかったのでスキップしました'; continue }
+	} catch { Write-Warning ('❗ ダウンロード履歴を読み込めなかったのでスキップしました') ; continue }
 	finally { $null = fileUnlock $script:historyLockFilePath }
 
 	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
-	Write-Output '処理履歴との照合 '
+	Write-Output ('処理履歴との照合 ')
 	$local:resultNum = 0
 	$local:resultTotal = $local:resultLinks.Count
 	foreach ($local:resultLink in $local:resultLinks) {
-		$local:resultNum = $local:resultNum + 1
+		$local:resultNum += 1
 		$local:historyMatch = $script:historyFileData.Where({ $_.videoPage -eq $local:resultLink })
 		if ($local:historyMatch.Count -eq 0) {
 			$local:videoLinks.Add($local:resultLink)
-			Write-Output ('　' + $local:resultNum + '/' + $local:resultTotal + ' ' + $local:resultLink + ' ... ❗ 未処理')
+			Write-Output ('{0}/{1} - {2} ... ❗ 未処理' -f $local:resultNum, $local:resultTotal, $local:resultLink)
 		} else {
-			$local:processedCount = $local:processedCount + 1
-			Write-Output ('　' + $local:resultNum + '/' + $local:resultTotal + ' ' + $local:resultLink + ' ... ✔️')
+			$local:processedCount += 1
+			Write-Output ('{0}/{1} - {2} ... ✔️' -f $local:resultNum, $local:resultTotal, $local:resultLink)
 			continue
 		}
 	}
@@ -121,58 +121,58 @@ foreach ($local:keywordName in $local:keywordNames) {
 	$local:videoNum = 0
 	if ($null -eq $local:videoLinks) { $local:videoTotal = 0 }
 	else { $local:videoTotal = $local:videoLinks.Count }
-	Write-Output ('💡 処理対象' + $local:videoTotal + '本　処理済' + $local:processedCount + '本')
+	Write-Output ('💡 処理対象{0}本　処理済{1}本' -f $local:videoTotal, $local:processedCount)
 
 	#処理時間の推計
 	$local:secElapsed = (Get-Date) - $local:totalStartTime
 	$local:secRemaining1 = -1
 	if ($local:keywordNum -ne 0) {
-		$local:secRemaining1 = ($local:secElapsed.TotalSeconds / $local:keywordNum) * ($local:keywordTotal - $local:keywordNum)
+		$local:secRemaining1 = [Int][Math]::Ceiling(($local:secElapsed.TotalSeconds / $local:keywordNum) * ($local:keywordTotal - $local:keywordNum))
 	}
-	$local:progressRatio1 = ($local:keywordNum / $local:keywordTotal)
-	$local:progressRatio2 = 0
+	$local:progressRate1 = [Float]($local:keywordNum / $local:keywordTotal)
+	$local:progressRate2 = 0
 
 	#キーワード数のインクリメント
-	$local:keywordNum = $local:keywordNum + 1
+	$local:keywordNum += 1
 
 	#進捗更新
 	updateProgress2Row `
 		-ProgressActivity1 $local:keywordNum/$local:keywordTotal `
 		-CurrentProcessing1 (trimTabSpace ($local:keywordName)) `
-		-Rate1 $local:progressRatio1 `
+		-Rate1 $local:progressRate1 `
 		-SecRemaining1 $local:secRemaining1 `
 		-ProgressActivity2 '' `
 		-CurrentProcessing2 $local:videoLink `
-		-Rate2 $local:progressRatio2 `
+		-Rate2 $local:progressRate2 `
 		-SecRemaining2 '' `
 		-Group 'Bulk'
 
 	#----------------------------------------------------------------------
 	#個々の番組ダウンロードここから
 	foreach ($local:videoLink in $local:videoLinks) {
-		$local:videoNum = $local:videoNum + 1
+		$local:videoNum += 1
 
 		#移動先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
 		if (Test-Path $script:downloadBaseDir -PathType Container) {}
-		else { Write-Error '❗ 番組ダウンロード先ディレクトリにアクセスできません。終了します' ; exit 1 }
+		else { Write-Error ('❗ 番組ダウンロード先ディレクトリにアクセスできません。終了します') ; exit 1 }
 
 		#進捗率の計算
-		$local:progressRatio2 = ($local:videoNum / $local:videoTotal)
+		$local:progressRate2 = [Float]($local:videoNum / $local:videoTotal)
 
 		#進捗更新
 		updateProgress2Row `
 			-ProgressActivity1 $local:keywordNum/$local:keywordTotal `
 			-CurrentProcessing1 (trimTabSpace ($local:keywordName)) `
-			-Rate1 $local:progressRatio1 `
+			-Rate1 $local:progressRate1 `
 			-SecRemaining1 $local:secRemaining1 `
 			-ProgressActivity2 $local:videoNum/$local:videoTotal `
 			-CurrentProcessing2 $local:videoLink `
-			-Rate2 $local:progressRatio2 `
+			-Rate2 $local:progressRate2 `
 			-SecRemaining2 '' `
 			-Group 'Bulk'
 
-		Write-Output '--------------------------------------------------'
-		Write-Output ([String]$local:videoNum + '/' + [String]$local:videoTotal + ' - ' + $local:videoLink)
+		Write-Output ('--------------------------------------------------')
+		Write-Output ('{0}/{1} - {2}' -f $local:videoNum, $local:videoTotal, $local:videoLink)
 
 		#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 		waitTillYtdlProcessGetFewer $script:parallelDownloadFileNum
@@ -202,13 +202,13 @@ updateProgressToast2 `
 	-Group 'Bulk'
 
 #youtube-dlのプロセスが終わるまで待機
-Write-Output 'ダウンロードの終了を待機しています'
+Write-Output ('ダウンロードの終了を待機しています')
 waitTillYtdlProcessIsZero
 
 [System.GC]::Collect()
 [System.GC]::WaitForPendingFinalizers()
 [System.GC]::Collect()
 
-Write-Output '---------------------------------------------------------------------------'
-Write-Output '一括ダウンロード処理を終了しました。                                       '
-Write-Output '---------------------------------------------------------------------------'
+Write-Output ('---------------------------------------------------------------------------')
+Write-Output ('一括ダウンロード処理を終了しました。                                       ')
+Write-Output ('---------------------------------------------------------------------------')
