@@ -33,7 +33,7 @@ Set-StrictMode -Version Latest
 #初期化
 try {
 	if ($script:myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
-	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition }
+	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition  }
 	Set-Location $script:scriptRoot
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	$script:devDir = Join-Path $script:scriptRoot '../dev'
@@ -72,7 +72,7 @@ updateProgressToast `
 	-Group 'Delete'
 
 #半日以上前のログファイル・ロックファイルを削除
-$script:ffmpegErrorLogDir = Convert-Path (Split-Path $script:ffpmegErrorLogPath)
+$script:ffmpegErrorLogDir = Convert-Path (Split-Path -Parent -Path $script:ffpmegErrorLogPath)
 deleteFiles `
 	-Path $script:ffmpegErrorLogDir `
 	-Conditions 'ffmpeg_error_*.log' `
@@ -151,7 +151,7 @@ showProgressToast `
 if (Test-Path $script:ignoreFilePath -PathType Leaf) {
 	try {
 		while ((fileLock $script:ignoreLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-		$local:ignoreTitles = (Get-Content -Path $script:ignoreFilePath -Encoding UTF8).Where({ $_ -notmatch '^\s*$' }).Where({ $_ -notmatch '^;.*$' })
+		$local:ignoreTitles = (Get-Content -LiteralPath $script:ignoreFilePath -Encoding UTF8).Where({ $_ -notmatch '^\s*$' }).Where({ $_ -notmatch '^;.*$' })
 	} catch { Write-Error ('❗ ダウンロード対象外の読み込みに失敗しました') ; exit 1 }
 	finally { $null = fileUnlock $script:ignoreLockFilePath }
 } else { $local:ignoreTitles = $null }
@@ -173,10 +173,9 @@ if ($local:ignoreDirs.Count -ne 0) {
 			try {
 				$local:delPath = Join-Path $using:script:downloadBaseDir $_
 				Write-Output ('💡 {0}/{1} - {2}を削除します' -f $local:ignoreNum, $local:ignoreTotal, $local:delPath)
-				Remove-Item -Path $local:delPath -Recurse -Force #-ErrorAction SilentlyContinue
+				Remove-Item -LiteralPath $local:delPath -Recurse -Force
 			} catch { Write-Warning ('❗ 削除できないファイルがありました') }
 		} -ThrottleLimit $script:multithreadNum
-
 	} else {
 		#並列化が無効の場合は従来型処理
 		#ダウンロード対象外内のエントリ合計数
@@ -185,7 +184,6 @@ if ($local:ignoreDirs.Count -ne 0) {
 		$local:totalStartTime = Get-Date
 		foreach ($local:ignoreDir in $local:ignoreDirs.InputObject) {
 			$local:ignoreNum += 1
-
 			#処理時間の推計
 			$local:secElapsed = (Get-Date) - $local:totalStartTime
 			$local:secRemaining = -1
@@ -197,7 +195,6 @@ if ($local:ignoreDirs.Count -ne 0) {
 				$local:minRemaining = ''
 				$local:progressRate = 0
 			}
-
 			UpdateProgressToast `
 				-Title $local:ignoreDir `
 				-Rate $local:progressRate `
@@ -205,17 +202,14 @@ if ($local:ignoreDirs.Count -ne 0) {
 				-RightText ('残り時間 {0}' -f $local:minRemaining) `
 				-Tag $script:appName `
 				-Group 'Delete'
-
 			Write-Output ('{0}/{1} - {2}' -f $local:ignoreNum, $local:ignoreTotal, $local:ignoreDir)
 			try {
 				$local:delPath = Join-Path $script:downloadBaseDir $local:ignoreDir
 				Write-Output ('💡 {0}/{1} - {2}を削除します' -f $local:ignoreNum, $local:ignoreTotal, $local:delPath)
-				Remove-Item -Path $local:delPath -Recurse -Force #-ErrorAction SilentlyContinue
+				Remove-Item -Path $local:delPath -Recurse -Force
 			} catch { Write-Warning ('❗ 削除できないファイルがありました') }
 		}
-
 	}
-
 }
 
 #----------------------------------------------------------------------
@@ -254,7 +248,6 @@ if ($local:subDirTotal -ne 0) {
 				catch { Write-Warning ('❗ - 空ディレクトリの削除に失敗しました: {0}' -f $_) }
 			}
 		} -ThrottleLimit $script:multithreadNum
-
 	} else {
 		#並列化が無効の場合は従来型処理
 		$local:subDirNum = 0
@@ -262,7 +255,6 @@ if ($local:subDirTotal -ne 0) {
 		$local:totalStartTime = Get-Date
 		foreach ($local:subDir in $local:allSubDirs) {
 			$local:subDirNum += 1
-
 			#処理時間の推計
 			$local:secElapsed = (Get-Date) - $local:totalStartTime
 			$local:secRemaining = -1
@@ -274,7 +266,6 @@ if ($local:subDirTotal -ne 0) {
 				$local:minRemaining = ''
 				$local:progressRate = 0
 			}
-
 			UpdateProgressToast `
 				-Title $local:subDir `
 				-Rate $local:progressRate `
@@ -282,7 +273,6 @@ if ($local:subDirTotal -ne 0) {
 				-RightText ('残り時間 {0}' -f $local:minRemaining) `
 				-Tag $script:appName `
 				-Group 'Delete'
-
 			Write-Output ('{0}/{1} - {2}' -f $local:subDirNum, $local:subDirTotal, $local:subDir)
 			if (@((Get-ChildItem -LiteralPath $local:subDir -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
 				Write-Output ('💡 {0}/{1} - {2}を削除します' -f $local:subDirNum, $local:subDirTotal, $local:subDir)
@@ -290,7 +280,6 @@ if ($local:subDirTotal -ne 0) {
 				} catch { Write-Warning ('❗ - 空ディレクトリの削除に失敗しました: {0}' -f $local:subDir) }
 			}
 		}
-
 	}
 }
 #----------------------------------------------------------------------

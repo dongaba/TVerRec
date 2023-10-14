@@ -37,7 +37,7 @@ Set-StrictMode -Version Latest
 #初期化
 try {
 	if ($script:myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
-	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition }
+	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition  }
 	$script:scriptRoot = Convert-Path (Join-Path $script:scriptRoot '../')
 	Set-Location $script:scriptRoot
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
@@ -86,7 +86,7 @@ function AddOutput {
 #region WPFのWindow設定
 
 try {
-	[String]$local:mainXaml = Get-Content -Path '../resources/TVerRecMain.xaml'
+	[String]$local:mainXaml = Get-Content -LiteralPath '../resources/TVerRecMain.xaml'
 	$local:mainXaml = $local:mainXaml -replace 'mc:Ignorable="d"', '' -replace 'x:N', 'N' -replace 'x:Class=".*?"', ''
 	[xml]$local:mainCleanXaml = $local:mainXaml
 	$script:mainWindow = [System.Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $local:mainCleanXaml))

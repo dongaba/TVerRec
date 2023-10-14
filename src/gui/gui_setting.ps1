@@ -36,7 +36,7 @@ Add-Type -AssemblyName PresentationFramework
 Set-StrictMode -Version Latest
 try {
 	if ($script:myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
-	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition }
+	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition  }
 	$script:scriptRoot = Convert-Path (Join-Path $script:scriptRoot '../')
 	Set-Location $script:scriptRoot
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
@@ -82,7 +82,7 @@ function loadDefaultSetting {
 		[Parameter(Mandatory = $true, Position = 0)]
 		[String]$local:key
 	)
-	try { $local:defaultSetting = (Select-String -Pattern ('^{0}' -f $local:key.Replace('$', '\$')) -Path $script:systemSettingFile | ForEach-Object { $_.Line }).split('=')[1].Trim() }
+	try { $local:defaultSetting = (Select-String -Pattern ('^{0}' -f $local:key.Replace('$', '\$')) -LiteralPath $script:systemSettingFile | ForEach-Object { $_.Line }).split('=')[1].Trim() }
 	catch { $local:defaultSetting = '' }
 
 	return $local:defaultSetting.Trim("'")
@@ -94,7 +94,7 @@ function loadCurrentSetting {
 		[Parameter(Mandatory = $true, Position = 0)]
 		[String]$local:key
 	)
-	try { $local:currentSetting = (Select-String -Pattern ('^{0}' -f $local:key.Replace('$', '\$')) -Path $script:userSettingFile | ForEach-Object { $_.Line }).split('=')[1].Trim() }
+	try { $local:currentSetting = (Select-String -Pattern ('^{0}' -f $local:key.Replace('$', '\$')) -LiteralPath $script:userSettingFile | ForEach-Object { $_.Line }).split('=')[1].Trim() }
 	catch { $local:currentSetting = '' }
 
 	return $local:currentSetting.Trim("'")
@@ -110,7 +110,7 @@ function writeSetting {
 	#自動生成部分の行数を取得
 	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 		try {
-			$local:totalLineNum = (Get-Content -Path $script:userSettingFile).Count
+			$local:totalLineNum = (Get-Content -LiteralPath $script:userSettingFile).Count
 		} catch { $local:totalLineNum = 0 }
 		try {
 			$local:headLineNum = (Select-String $local:startSegment $script:userSettingFile | ForEach-Object { $_.LineNumber }) - 1
@@ -188,7 +188,7 @@ function writeSetting {
 	}
 
 	#改行コードをLFで出力
-	$local:newSetting | ForEach-Object { ("{0}`n" -f $_) } | Out-File -Path $script:userSettingFile -Encoding UTF8 -NoNewline
+	$local:newSetting | ForEach-Object { ("{0}`n" -f $_) } | Out-File -LiteralPath $script:userSettingFile -Encoding UTF8 -NoNewline
 
 }
 
@@ -206,7 +206,7 @@ $script:userSettingFile = Join-Path $script:confDir 'user_setting.ps1'
 #region WPFのWindow設定
 
 try {
-	[String]$local:mainXaml = Get-Content -Path (Join-Path $script:wpfDir 'TVerRecSetting.xaml')
+	[String]$local:mainXaml = Get-Content -LiteralPath (Join-Path $script:wpfDir 'TVerRecSetting.xaml')
 	$local:mainXaml = $local:mainXaml -replace 'mc:Ignorable="d"', '' -replace 'x:N', 'N' -replace 'x:Class=".*?"', ''
 	[xml]$local:mainCleanXaml = $local:mainXaml
 	$script:settingWindow = [System.Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $local:mainCleanXaml))

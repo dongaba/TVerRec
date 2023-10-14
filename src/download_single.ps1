@@ -35,7 +35,7 @@ Set-StrictMode -Version Latest
 #初期化
 try {
 	if ($script:myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
-	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition }
+	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition  }
 	Set-Location $script:scriptRoot
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	$script:devDir = Join-Path $script:scriptRoot '../dev'
@@ -47,15 +47,6 @@ try {
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
-
-#----------------------------------------------------------------------
-#設定ファイル読み込み
-try {
-	. (Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
-	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
-		. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
-	}
-} catch { Write-Error ('❗ 設定ファイルの読み込みに失敗しました') ; exit 1 }
 
 #設定で指定したファイル・ディレクトリの存在チェック
 checkRequiredFile
@@ -69,36 +60,31 @@ $script:ignoreRegExTitles = getRegExIgnoreList
 
 getToken
 
+#----------------------------------------------------------------------
 #無限ループ
 while ($true) {
 	#いろいろ初期化
 	$local:videoPageURL = ''
-
 	#移動先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
 	if (Test-Path $script:downloadBaseDir -PathType Container) {}
 	else { Write-Error ('❗ 番組ダウンロード先ディレクトリにアクセスできません。終了します') ; exit 1 }
-
 	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 	waitTillYtdlProcessGetFewer $script:parallelDownloadFileNum
-
 	#ダウンロード履歴ファイルのデータを読み込み
 	try {
 		while ((fileLock $script:historyLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-		$script:historyFileData = Import-Csv -Path $script:historyFilePath -Encoding UTF8
+		$script:historyFileData = Import-Csv -LiteralPath $script:historyFilePath -Encoding UTF8
 	} catch { Write-Warning ('❗ ダウンロード履歴を読み込めなかったのでスキップしました') ; continue }
 	finally { $null = fileUnlock $script:historyLockFilePath }
-
 	if ($local:uiMode -eq 'CUI') {
 		$local:videoPageURL = (Read-Host '番組URLを入力してください。何も入力しないで Enter を押すと終了します。').Trim()
 	} else {
 		#アセンブリの読み込み
 		$null = [System.Reflection.Assembly]::Load('Microsoft.VisualBasic, Version=8.0.0.0, Culture=Neutral, PublicKeyToken=b03f5f7f11d50a3a')
-
 		#インプットボックスの表示
 		$local:videoPageURL = [String][Microsoft.VisualBasic.Interaction]::InputBox("番組URLを入力してください。`n何も入力しないで OK を押すと終了します。", 'TVerRec個別ダウンロード').Trim()
 		Write-Output $local:videoPageURL
 	}
-
 	#正しいURLが入力されるまでループ
 	if ($videoPageURL -ne '') {
 		if ($local:videoPageURL -notmatch '^https://tver.jp/(/?.*)') {
@@ -107,20 +93,18 @@ while ($true) {
 			$local:videoLink = $local:videoPageURL.Replace('https://tver.jp', '').Trim()
 			$local:videoPageURL = ('https://tver.jp{0}' -f $local:videoLink)
 			Write-Output $local:videoPageURL
-
 			#TVer番組ダウンロードのメイン処理
 			downloadTVerVideo `
 				-Keyword $local:keywordName `
 				-URL $local:videoPageURL `
 				-Link $local:videoLink
-
 			[System.GC]::Collect()
 			[System.GC]::WaitForPendingFinalizers()
 			[System.GC]::Collect()
 		}
 	} else { break }
-
 }
+#----------------------------------------------------------------------
 
 [System.GC]::Collect()
 [System.GC]::WaitForPendingFinalizers()

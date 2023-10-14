@@ -33,7 +33,7 @@ Set-StrictMode -Version Latest
 #初期化
 try {
 	if ($script:myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
-	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition }
+	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition  }
 	Set-Location $script:scriptRoot
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	$script:devDir = Join-Path $script:scriptRoot '../dev'
@@ -45,15 +45,6 @@ try {
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
-
-#----------------------------------------------------------------------
-#設定ファイル読み込み
-try {
-	. (Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
-	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
-		. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
-	}
-} catch { Write-Error ('❗ 設定ファイルの読み込みに失敗しました') ; exit 1 }
 
 #設定で指定したファイル・ディレクトリの存在チェック
 checkRequiredFile
@@ -98,14 +89,14 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#ダウンロードリストファイルのデータを読み込み
 	try {
 		while ((fileLock $script:listLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-		$script:listFileData = Import-Csv -Path $script:listFilePath -Encoding UTF8
+		$script:listFileData = Import-Csv -LiteralPath $script:listFilePath -Encoding UTF8
 	} catch { Write-Warning ('❗ ダウンロードリストを読み込めなかったのでスキップしました') ; continue }
 	finally { $null = fileUnlock $script:listLockFilePath }
 
 	#ダウンロード履歴ファイルのデータを読み込み
 	try {
 		while ((fileLock $script:historyLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-		$script:historyFileData = Import-Csv -Path $script:historyFilePath -Encoding UTF8
+		$script:historyFileData = Import-Csv -LiteralPath $script:historyFilePath -Encoding UTF8
 	} catch { Write-Warning ('❗ ダウンロード履歴を読み込めなかったのでスキップしました') ; continue }
 	finally { $null = fileUnlock $script:historyLockFilePath }
 
@@ -280,11 +271,11 @@ foreach ($local:keywordName in $local:keywordNames) {
 			#ダウンロードリストCSV書き出し
 			try {
 				while ((fileLock $script:listLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-				$newVideo | Export-Csv -Path $script:listFilePath -Encoding UTF8 -Append
+				$newVideo | Export-Csv -LiteralPath $script:listFilePath -Encoding UTF8 -Append
 				Write-Debug ('ダウンロードリストを書き込みました')
 			} catch { Write-Warning ('❗ ダウンロードリストを更新できませんでした。スキップします') ; continue }
 			finally { $null = fileUnlock $script:listLockFilePath }
-			$script:listFileData = Import-Csv -Path $script:listFilePath -Encoding UTF8
+			$script:listFileData = Import-Csv -LiteralPath $script:listFilePath -Encoding UTF8
 
 		} -ThrottleLimit $script:multithreadNum
 

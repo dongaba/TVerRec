@@ -33,7 +33,7 @@ Set-StrictMode -Version Latest
 #初期化
 try {
 	if ($script:myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
-	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition }
+	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition  }
 	Set-Location $script:scriptRoot
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	$script:devDir = Join-Path $script:scriptRoot '../dev'
@@ -68,7 +68,7 @@ $local:moveToPathsArray = @()
 if ($script:saveBaseDir -ne '') {
 	$script:saveBaseDirArray = @($script:saveBaseDir.split(';').Trim())
 	foreach ($saveDir in $script:saveBaseDirArray) {
-		$local:moveToPathsArray += @((Get-ChildItem -Path $local:saveDir.Trim() -Recurse).Where({ $_.PSIsContainer }) | Select-Object Name, FullName)
+		$local:moveToPathsArray += @((Get-ChildItem -LiteralPath $local:saveDir.Trim() -Recurse).Where({ $_.PSIsContainer }) | Select-Object Name, FullName)
 	}
 }
 for ($i = 0 ; $i -lt $local:moveToPathsArray.Count ; $i++) {
@@ -100,7 +100,6 @@ showProgressToast `
 
 #----------------------------------------------------------------------
 $local:totalStartTime = Get-Date
-
 if (($null -ne $local:moveToPaths) -And ($local:moveToPaths.Count -ne 0)) {
 	$local:moveToPathNum = 0
 	$local:moveToPathTotal = $local:moveToPaths.Count
@@ -117,7 +116,6 @@ if (($null -ne $local:moveToPaths) -And ($local:moveToPaths.Count -ne 0)) {
 			$local:progressRate = 0
 		}
 		$local:moveToPathNum += 1
-
 		UpdateProgressToast `
 			-Title $local:moveToPath.InputObject `
 			-Rate $local:progressRate `
@@ -125,11 +123,10 @@ if (($null -ne $local:moveToPaths) -And ($local:moveToPaths.Count -ne 0)) {
 			-RightText ('残り時間 {0}' -f $local:minRemaining) `
 			-Tag $script:appName `
 			-Group 'Move'
-
 		Write-Output ('{0}/{1} - {2}' -f $local:moveToPathNum, $local:moveToPathTotal, $local:moveToPath.InputObject)
 		$local:targetFolderName = $local:moveToPath.InputObject
 		if ($script:sortVideoByMedia) {
-			$local:mediaName = Split-Path -Leaf (Split-Path -Parent $local:moveToPathsHash[$local:moveToPath.InputObject])
+			$local:mediaName = Split-Path -Leaf -Path (Split-Path -Parent -Path $local:moveToPathsHash[$local:moveToPath.InputObject])
 			$local:targetFolderName = Join-Path $local:mediaName $local:targetFolderName
 		}
 		#同名ディレクトリが存在する場合は配下のファイルを移動
@@ -172,14 +169,12 @@ if ($local:subDirTotal -ne 0) {
 			$local:subDirNum = ([Array]::IndexOf($using:local:allSubDirs, $_)) + 1
 			$local:subDirTotal = $using:local:allSubDirs.Count
 			Write-Output ('{0}/{1} - {2}' -f $local:subDirNum, $local:subDirTotal, $_)
-
 			if (@((Get-ChildItem -LiteralPath $_ -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
 				Write-Output ('💡 {0}/{1} - {2}を削除します' -f $local:subDirNum, $local:subDirTotal, $_)
 				try { Remove-Item -LiteralPath $_ -Recurse -Force }
 				catch { Write-Warning ('❗ - 空ディレクトリの削除に失敗しました: {0}' -f $_) }
 			}
 		} -ThrottleLimit $script:multithreadNum
-
 	} else {
 		#並列化が無効の場合は従来型処理
 		$local:subDirNum = 0
@@ -187,7 +182,6 @@ if ($local:subDirTotal -ne 0) {
 		$local:totalStartTime = Get-Date
 		foreach ($local:subDir in $local:allSubDirs) {
 			$local:subDirNum += 1
-
 			#処理時間の推計
 			$local:secElapsed = (Get-Date) - $local:totalStartTime
 			$local:secRemaining = -1
@@ -199,7 +193,6 @@ if ($local:subDirTotal -ne 0) {
 				$local:minRemaining = ''
 				$local:progressRate = 0
 			}
-
 			UpdateProgressToast `
 				-Title $local:subDir `
 				-Rate $local:progressRate `
@@ -207,7 +200,6 @@ if ($local:subDirTotal -ne 0) {
 				-RightText ('残り時間 {0}' -f $local:minRemaining) `
 				-Tag $script:appName `
 				-Group 'Move'
-
 			Write-Output ('{0}/{1} - {2}' -f $local:subDirNum, $local:subDirTotal, $local:subDir)
 			if (@((Get-ChildItem -LiteralPath $local:subDir -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
 				Write-Output ('💡 {0}/{1} - {2}を削除します' -f $local:subDirNum, $local:subDirTotal, $local:subDir)
