@@ -79,9 +79,11 @@ try {
 #メイン処理
 
 #githubの設定
-if ($script:preferredYoutubedl -eq 'yt-dlp') { $local:repo = 'yt-dlp/yt-dlp' }
-elseif ($script:preferredYoutubedl -eq 'ytdl-patched') { $local:repo = 'ytdl-patched/ytdl-patched' }
-else { Write-Error ('❗ youtube-dlの取得元の指定が無効です') ; exit 1 }
+switch ($script:preferredYoutubedl) {
+	'yt-dlp' { $local:repo = 'yt-dlp/yt-dlp' ; break }
+	'ytdl-patched' { $local:repo = 'ytdl-patched/ytdl-patched' ; break }
+	default { Write-Error ('❗ youtube-dlの取得元の指定が無効です') ; exit 1 ; break }
+}
 $local:releases = ('https://api.github.com/repos/{0}/releases' -f $local:repo)
 
 #youtube-dl移動先相対Path

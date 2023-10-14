@@ -103,6 +103,25 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 	Write-Output ('処理履歴との照合 ')
+	# if ($script:enableMultithread -eq $true) {
+	# 	#並列化が有効の場合は並列化
+	# 	$local:urlList = @{}
+	# 	$local:resultLinks | ForEach-Object -Parallel {
+	# 		$local:resultNum = ([Array]::IndexOf($using:local:resultLinks, $_)) + 1
+	# 		$local:resultTotal = $using:local:resultLinks.Count
+	# 		$local:resultLink = $_
+	# 		$local:historyMatch = $using:script:historyFileData | Where-Object { $_.videoPage -eq $local:resultLink }
+	# 		if ($local:historyMatch.Count -eq 0) {
+	# 		($using:local:urlList).urlList = ($using:local:urlList).urlList + $local:resultLink + ' '
+	# 			Write-Output ('{0}/{1} - {2} ... ❗ 未処理' -f $local:resultNum, $local:resultTotal, $local:resultLink)
+	# 		} else {
+	# 			Write-Output ('{0}/{1} - {2} ... ✔️' -f $local:resultNum, $local:resultTotal, $local:resultLink)
+	# 			continue
+	# 		}
+	# 	} -ThrottleLimit $script:multithreadNum
+	# 	if ($null -ne $local:urlList['urlList']) { $local:videoLinks = @($local:urlList['urlList'].Split(' ')) }
+	# } else {
+	#並列化が無効の場合は従来型処理
 	$local:resultNum = 0
 	$local:resultTotal = $local:resultLinks.Count
 	foreach ($local:resultLink in $local:resultLinks) {
@@ -117,6 +136,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 			continue
 		}
 	}
+	# }
 
 	$local:videoNum = 0
 	if ($null -eq $local:videoLinks) { $local:videoTotal = 0 }
@@ -146,6 +166,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 		-Rate2 $local:progressRate2 `
 		-SecRemaining2 '' `
 		-Group 'Bulk'
+
 
 	#----------------------------------------------------------------------
 	#個々の番組ダウンロードここから

@@ -192,15 +192,21 @@ function checkLatestTVerRec {
 	$local:appMajorVersion = $script:appVersion.split(' ')[0]
 
 	#バージョン判定
-	#最新バージョンのメジャーバージョンが大きい場合
-	if ($local:latestMajorVersion -gt $local:appMajorVersion ) { $local:versionUp = $true }
-	elseif ($local:latestMajorVersion -eq $local:appMajorVersion ) {
-		#マイナーバージョンが設定されている場合
-		if ( $local:appMajorVersion -ne $script:appVersion) { $local:versionUp = $true }
-		#バージョンが完全に一致する場合
-		else { $local:versionUp = $false }
-		#ローカルバージョンの方が新しい場合
-	} else { $local:versionUp = $false }
+	switch ($true) {
+		($local:latestMajorVersion -gt $local:appMajorVersion ) {
+			#最新バージョンのメジャーバージョンが大きい場合
+			$local:versionUp = $true ; break
+		}
+		($local:latestMajorVersion -eq $local:appMajorVersion ) {
+			#マイナーバージョンが設定されている場合
+			if ( $local:appMajorVersion -ne $script:appVersion) { $local:versionUp = $true }
+			#バージョンが完全に一致する場合
+			else { $local:versionUp = $false }
+			#ローカルバージョンの方が新しい場合
+			break
+		}
+		default { $local:versionUp = $false ; break }
+	}
 
 	$progressPreference = 'Continue'
 
@@ -490,65 +496,78 @@ function getVideoLinksFromKeyword {
 	}
 	$script:episodeLinks = [System.Collections.Generic.List[string]]::new()
 	$script:seriesLinks = [System.Collections.Generic.List[string]]::new()
-	if ($local:keywordName.IndexOf('series/') -eq 0) {
-		#番組IDによる番組検索から番組ページのLinkを取得
-		$local:seriesID = trimComment($local:keywordName).Replace('series/', '').Trim()
-		goAnal -Event 'search' -Type 'series' -ID $local:seriesID
-		try { $script:episodeLinks = getLinkFromSeriesID ($local:seriesID) }
-		catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:02') ; continue }
 
-	} elseif ($local:keywordName.IndexOf('talents/') -eq 0) {
-		#タレントIDによるタレント検索から番組ページのLinkを取得
-		$local:talentID = trimComment($local:keywordName).Replace('talents/', '').Trim()
-		goAnal -Event 'search' -Type 'talent' -ID $local:talentID
-		try { $script:episodeLinks = getLinkFromTalentID ($local:talentID) }
-		catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:03') ; continue }
 
-	} elseif ($local:keywordName.IndexOf('tag/') -eq 0) {
-		#ジャンルなどのTag情報から番組ページのLinkを取得
-		$local:tagID = trimComment($local:keywordName).Replace('tag/', '').Trim()
-		goAnal -Event 'search' -Type 'tag' -ID $local:tagID
-		try { $script:episodeLinks = getLinkFromTag ($local:tagID) }
-		catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:04') ; continue }
-
-	} elseif ($local:keywordName.IndexOf('new/') -eq 0) {
-		#新着番組から番組ページのLinkを取得
-		$local:genre = trimComment($local:keywordName).Replace('new/', '').Trim()
-		goAnal -Event 'search' -Type 'new' -ID $local:genre
-		try { $script:episodeLinks = getLinkFromNew ($local:genre) }
-		catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:05') ; continue }
-
-	} elseif ($local:keywordName.IndexOf('ranking/') -eq 0) {
-		#ランキングによる番組ページのLinkを取得
-		$local:genre = trimComment($local:keywordName).Replace('ranking/', '').Trim()
-		goAnal -Event 'search' -Type 'ranking' -ID $local:genre
-		try { $script:episodeLinks = getLinkFromRanking ($local:genre) }
-		catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:06') ; continue }
-
-	} elseif ($local:keywordName.IndexOf('toppage') -eq 0) {
-		#トップページから番組ページのLinkを取得
-		goAnal -Event 'search' -Type 'toppage'
-		try { $script:episodeLinks = getLinkFromTopPage }
-		catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:07') ; continue }
-
-	} elseif ($local:keywordName.IndexOf('title/') -eq 0) {
-		#番組名による新着検索から番組ページのLinkを取得
-		$local:titleName = trimComment($local:keywordName).Replace('title/', '').Trim()
-		goAnal -Event 'search' -Type 'title' -ID $local:titleName
-		Write-Warning ('❗ 番組名検索は廃止されました。スキップします Err:08')
-		continue
-
-	} elseif ($local:keywordName.IndexOf('sitemap') -eq 0) {
-		#サイトマップから番組ページのLinkを取得
-		goAnal -Event 'search' -Type 'sitemap'
-		try { $script:episodeLinks = getLinkFromSiteMap }
-		catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:09') ; continue }
-
-	} else {
-		#タレント名や番組名などURL形式でない場合APIで検索結果から番組ページのLinkを取得
-		goAnal -Event 'search' -Type 'free' -ID $local:keywordName
-		try { $script:episodeLinks = getLinkFromFreeKeyword ($local:keywordName) }
-		catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:10') ; continue }
+	switch ($true) {
+		($local:keywordName.IndexOf('series/') -eq 0) {
+			#番組IDによる番組検索から番組ページのLinkを取得
+			$local:seriesID = trimComment($local:keywordName).Replace('series/', '').Trim()
+			goAnal -Event 'search' -Type 'series' -ID $local:seriesID
+			try { $script:episodeLinks = getLinkFromSeriesID ($local:seriesID) }
+			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:02') ; continue }
+			break
+		}
+		($local:keywordName.IndexOf('talents/') -eq 0) {
+			#タレントIDによるタレント検索から番組ページのLinkを取得
+			$local:talentID = trimComment($local:keywordName).Replace('talents/', '').Trim()
+			goAnal -Event 'search' -Type 'talent' -ID $local:talentID
+			try { $script:episodeLinks = getLinkFromTalentID ($local:talentID) }
+			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:03') ; continue }
+			break
+		}
+		($local:keywordName.IndexOf('tag/') -eq 0) {
+			#ジャンルなどのTag情報から番組ページのLinkを取得
+			$local:tagID = trimComment($local:keywordName).Replace('tag/', '').Trim()
+			goAnal -Event 'search' -Type 'tag' -ID $local:tagID
+			try { $script:episodeLinks = getLinkFromTag ($local:tagID) }
+			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:04') ; continue }
+			break
+		}
+		($local:keywordName.IndexOf('new/') -eq 0) {
+			#新着番組から番組ページのLinkを取得
+			$local:genre = trimComment($local:keywordName).Replace('new/', '').Trim()
+			goAnal -Event 'search' -Type 'new' -ID $local:genre
+			try { $script:episodeLinks = getLinkFromNew ($local:genre) }
+			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:05') ; continue }
+			break
+		}
+		($local:keywordName.IndexOf('ranking/') -eq 0) {
+			#ランキングによる番組ページのLinkを取得
+			$local:genre = trimComment($local:keywordName).Replace('ranking/', '').Trim()
+			goAnal -Event 'search' -Type 'ranking' -ID $local:genre
+			try { $script:episodeLinks = getLinkFromRanking ($local:genre) }
+			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:06') ; continue }
+			break
+		}
+		($local:keywordName.IndexOf('toppage') -eq 0) {
+			#トップページから番組ページのLinkを取得
+			goAnal -Event 'search' -Type 'toppage'
+			try { $script:episodeLinks = getLinkFromTopPage }
+			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:07') ; continue }
+			break
+		}
+		($local:keywordName.IndexOf('title/') -eq 0) {
+			#番組名による新着検索から番組ページのLinkを取得
+			$local:titleName = trimComment($local:keywordName).Replace('title/', '').Trim()
+			goAnal -Event 'search' -Type 'title' -ID $local:titleName
+			Write-Warning ('❗ 番組名検索は廃止されました。スキップします Err:08')
+			continue
+			break
+		}
+		($local:keywordName.IndexOf('sitemap') -eq 0) {
+			#サイトマップから番組ページのLinkを取得
+			goAnal -Event 'search' -Type 'sitemap'
+			try { $script:episodeLinks = getLinkFromSiteMap }
+			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:09') ; continue }
+			break
+		}
+		default {
+			#タレント名や番組名などURL形式でない場合APIで検索結果から番組ページのLinkを取得
+			goAnal -Event 'search' -Type 'free' -ID $local:keywordName
+			try { $script:episodeLinks = getLinkFromFreeKeyword ($local:keywordName) }
+			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:10') ; continue }
+			break
+		}
 	}
 
 	return $script:episodeLinks | Sort-Object | Get-Unique
@@ -1010,23 +1029,29 @@ function getLinkFromSiteMap {
 		if ($local:searchResult -like '*/episodes/*') { $script:episodeLinks.Add($local:searchResult) }
 		elseif ($script:sitemapParseEpisodeOnly -eq $true) { Write-Debug ('Episodeではないためスキップします') }
 		else {
-			if ($local:searchResult -like '*/seasons/*') {
-				Write-Host ('　{0} からEpisodeを抽出中...' -f $local:searchResult)
-				try { getLinkFromSeasonID ($local:searchResult) }
-				catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:11') ; continue }
-			} elseif ($local:searchResult -like '*/series/*') {
-				Write-Host ('　{0} からEpisodeを抽出中...' -f $local:searchResult)
-				try { getLinkFromSeriesID ($local:searchResult) }
-				catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:12') ; continue }
-			} elseif ($local:searchResult -eq 'https://tver.jp/') { #トップページ	別のキーワードがあるためため対応予定なし
-			} elseif ($local:searchResult -like '*/info/*') { #お知らせ	番組ページではないため対応予定なし
-			} elseif ($local:searchResult -like '*/live/*') { #追っかけ再生	対応していない
-			} elseif ($local:searchResult -like '*/mypage/*') { #マイページ	ブラウザのCookieを処理しないといけないと思われるため対応予定なし
-			} elseif ($local:searchResult -like '*/program*') { #番組表	番組ページではないため対応予定なし
-			} elseif ($local:searchResult -like '*/ranking*') { #ランキング	他でカバーできるため対応予定なし
-			} elseif ($local:searchResult -like '*/specials*') { #特集	他でカバーできるため対応予定なし
-			} elseif ($local:searchResult -like '*/topics*') { #トピック	番組ページではないため対応予定なし
-			} else { Write-Warning ('❗ 未知のパターンです。 - {0}' -f $local:searchResult) }
+			switch ($true) {
+				($local:searchResult -like '*/seasons/*') {
+					Write-Host ('　{0} からEpisodeを抽出中...' -f $local:searchResult)
+					try { getLinkFromSeasonID ($local:searchResult) }
+					catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:11') ; continue }
+					break
+				}
+				($local:searchResult -like '*/series/*') {
+					Write-Host ('　{0} からEpisodeを抽出中...' -f $local:searchResult)
+					try { getLinkFromSeriesID ($local:searchResult) }
+					catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:12') ; continue }
+					break
+				}
+				($local:searchResult -eq 'https://tver.jp/') { break }	#トップページ	別のキーワードがあるためため対応予定なし
+				($local:searchResult -like '*/info/*') { break }	#お知らせ	番組ページではないため対応予定なし
+				($local:searchResult -like '*/live/*') { break }	#追っかけ再生	対応していない
+				($local:searchResult -like '*/mypage/*') { break }	#マイページ	ブラウザのCookieを処理しないといけないと思われるため対応予定なし
+				($local:searchResult -like '*/program*') { break }	#番組表	番組ページではないため対応予定なし
+				($local:searchResult -like '*/ranking*') { break }	#ランキング	他でカバーできるため対応予定なし
+				($local:searchResult -like '*/specials*') { break }	#特集	他でカバーできるため対応予定なし
+				($local:searchResult -like '*/topics*') { break }	#トピック	番組ページではないため対応予定なし
+				default { Write-Warning ('❗ 未知のパターンです。 - {0}' -f $local:searchResult) ; break }
+			}
 		}
 	}
 
@@ -1223,73 +1248,83 @@ function downloadTVerVideo {
 	}
 
 	#スキップフラグが立っているかチェック
-	if ($script:ignore -eq $true) {
-		Write-Output ('❗ ダウンロード対象外としたファイルをダウンロード履歴に追加します')
-		$script:newVideo = [pscustomobject]@{
-			videoPage       = $script:videoPageURL
-			videoSeriesPage = $script:videoSeriesPageURL
-			genre           = $script:keywordName
-			series          = $script:videoSeries
-			season          = $script:videoSeason
-			title           = $script:videoTitle
-			media           = $script:mediaName
-			broadcastDate   = $script:broadcastDate
-			downloadDate    = getTimeStamp
-			videoDir        = $script:videoFileDir
-			videoName       = '-- IGNORED --'
-			videoPath       = '-- IGNORED --'
-			videoValidated  = '0'
+
+	switch ($true) {
+		($script:ignore -eq $true) {
+			Write-Output ('❗ ダウンロード対象外としたファイルをダウンロード履歴に追加します')
+			$script:newVideo = [pscustomobject]@{
+				videoPage       = $script:videoPageURL
+				videoSeriesPage = $script:videoSeriesPageURL
+				genre           = $script:keywordName
+				series          = $script:videoSeries
+				season          = $script:videoSeason
+				title           = $script:videoTitle
+				media           = $script:mediaName
+				broadcastDate   = $script:broadcastDate
+				downloadDate    = getTimeStamp
+				videoDir        = $script:videoFileDir
+				videoName       = '-- IGNORED --'
+				videoPath       = '-- IGNORED --'
+				videoValidated  = '0'
+			}
+			break
 		}
-	} elseif ($script:skipWithValidation -eq $true) {
-		Write-Output ('❗ ダウンロード済の未検証のファイルをダウンロード履歴に追加します')
-		$script:newVideo = [pscustomobject]@{
-			videoPage       = $script:videoPageURL
-			videoSeriesPage = $script:videoSeriesPageURL
-			genre           = $script:keywordName
-			series          = $script:videoSeries
-			season          = $script:videoSeason
-			title           = $script:videoTitle
-			media           = $script:mediaName
-			broadcastDate   = $script:broadcastDate
-			downloadDate    = getTimeStamp
-			videoDir        = $script:videoFileDir
-			videoName       = '-- SKIPPED --'
-			videoPath       = $videoFileRelPath
-			videoValidated  = '0'
+		($script:skipWithValidation -eq $true) {
+			Write-Output ('❗ ダウンロード済の未検証のファイルをダウンロード履歴に追加します')
+			$script:newVideo = [pscustomobject]@{
+				videoPage       = $script:videoPageURL
+				videoSeriesPage = $script:videoSeriesPageURL
+				genre           = $script:keywordName
+				series          = $script:videoSeries
+				season          = $script:videoSeason
+				title           = $script:videoTitle
+				media           = $script:mediaName
+				broadcastDate   = $script:broadcastDate
+				downloadDate    = getTimeStamp
+				videoDir        = $script:videoFileDir
+				videoName       = '-- SKIPPED --'
+				videoPath       = $videoFileRelPath
+				videoValidated  = '0'
+			}
+			break
 		}
-	} elseif ($script:skipWithoutValidation -eq $true) {
-		Write-Output ('❗ 番組IDが変更になった可能性があるダウンロード済の未検証のファイルをダウンロード履歴に追加します')
-		$script:newVideo = [pscustomobject]@{
-			videoPage       = $script:videoPageURL
-			videoSeriesPage = $script:videoSeriesPageURL
-			genre           = $script:keywordName
-			series          = $script:videoSeries
-			season          = $script:videoSeason
-			title           = $script:videoTitle
-			media           = $script:mediaName
-			broadcastDate   = $script:broadcastDate
-			downloadDate    = getTimeStamp
-			videoDir        = $script:videoFileDir
-			videoName       = '-- SKIPPED --'
-			videoPath       = $videoFileRelPath
-			videoValidated  = '1'
+		($script:skipWithoutValidation -eq $true) {
+			Write-Output ('❗ 番組IDが変更になった可能性があるダウンロード済の未検証のファイルをダウンロード履歴に追加します')
+			$script:newVideo = [pscustomobject]@{
+				videoPage       = $script:videoPageURL
+				videoSeriesPage = $script:videoSeriesPageURL
+				genre           = $script:keywordName
+				series          = $script:videoSeries
+				season          = $script:videoSeason
+				title           = $script:videoTitle
+				media           = $script:mediaName
+				broadcastDate   = $script:broadcastDate
+				downloadDate    = getTimeStamp
+				videoDir        = $script:videoFileDir
+				videoName       = '-- SKIPPED --'
+				videoPath       = $videoFileRelPath
+				videoValidated  = '1'
+			}
+			break
 		}
-	} else {
-		Write-Output ('💡 ダウンロードするファイルをダウンロード履歴に追加します')
-		$script:newVideo = [pscustomobject]@{
-			videoPage       = $script:videoPageURL
-			videoSeriesPage = $script:videoSeriesPageURL
-			genre           = $script:keywordName
-			series          = $script:videoSeries
-			season          = $script:videoSeason
-			title           = $script:videoTitle
-			media           = $script:mediaName
-			broadcastDate   = $script:broadcastDate
-			downloadDate    = getTimeStamp
-			videoDir        = $script:videoFileDir
-			videoName       = $script:videoName
-			videoPath       = $script:videoFileRelPath
-			videoValidated  = '0'
+		default {
+			Write-Output ('💡 ダウンロードするファイルをダウンロード履歴に追加します')
+			$script:newVideo = [pscustomobject]@{
+				videoPage       = $script:videoPageURL
+				videoSeriesPage = $script:videoSeriesPageURL
+				genre           = $script:keywordName
+				series          = $script:videoSeries
+				season          = $script:videoSeason
+				title           = $script:videoTitle
+				media           = $script:mediaName
+				broadcastDate   = $script:broadcastDate
+				downloadDate    = getTimeStamp
+				videoDir        = $script:videoFileDir
+				videoName       = $script:videoName
+				videoPath       = $script:videoFileRelPath
+				videoValidated  = '0'
+			}
+			break
 		}
 	}
 

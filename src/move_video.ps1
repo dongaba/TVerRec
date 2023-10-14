@@ -79,7 +79,9 @@ for ($i = 0 ; $i -lt $local:moveToPathsArray.Count ; $i++) {
 $local:moveFromPaths = @(Get-ChildItem -LiteralPath $script:downloadBaseDir -Name)
 
 #移動先ディレクトリと作業ディレクトリの一致を抽出
-$local:moveToPaths = @(Compare-Object -IncludeEqual -ExcludeDifferent $local:moveToPathsArray.Name $local:moveFromPaths)
+if ($local:moveToPathsArray.Count -ne 0) {
+	$local:moveToPaths = @(Compare-Object -IncludeEqual -ExcludeDifferent $local:moveToPathsArray.Name $local:moveFromPaths)
+} else { $local:moveToPaths = $null }
 
 #======================================================================
 #2/3 移動先ディレクトリと同名のディレクトリ配下の番組を移動
@@ -96,13 +98,12 @@ showProgressToast `
 	-Duration 'long' `
 	-Silent $false
 
-$local:moveToPathNum = 0
-$local:moveToPathTotal = $local:moveToPaths.Count
-
 #----------------------------------------------------------------------
 $local:totalStartTime = Get-Date
 
-if ($local:moveToPaths.Count -ne 0) {
+if (($null -ne $local:moveToPaths) -And ($local:moveToPaths.Count -ne 0)) {
+	$local:moveToPathNum = 0
+	$local:moveToPathTotal = $local:moveToPaths.Count
 	foreach ($local:moveToPath in $local:moveToPaths) {
 		#処理時間の推計
 		$local:secElapsed = (Get-Date) - $local:totalStartTime

@@ -190,18 +190,25 @@ switch ($true) {
 			Write-Output ('　Latest version: {0}' -f $local:latestVersion)
 			Write-Output ('')
 
-			if (($local:arch -eq 'aarch64') -Or ($local:arch -Contains 'armv8')) {
-				$local:cpu = 'arm64'
-				$null = $local:latestRelease -match 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-linuxarm64-gpl-)(.*).tar.xz'
-				$local:donwloadURL = $matches[0]
-			} elseif (($local:arch -eq 'x86_64') -Or ($local:arch -eq 'ia64')) {
-				$local:cpu = 'amd64'
-				$null = $local:latestRelease -match 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-linux64-gpl-)(.*).tar.xz'
-				$local:donwloadURL = $matches[0]
-			} else {
-				Write-Warning ('❗ お使いのCPUに適合するffmpegを特定できませんでした。')
-				Write-Warning ('❗ {0}に適合するffmpegをご自身で配置してください。' -f $local:arch)
-				return
+			switch ($true) {
+				(($local:arch -eq 'aarch64') -Or ($local:arch -Contains 'armv8')) {
+					$local:cpu = 'arm64'
+					$null = $local:latestRelease -match 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-linuxarm64-gpl-)(.*).tar.xz'
+					$local:donwloadURL = $matches[0]
+					break
+				}
+				(($local:arch -eq 'x86_64') -Or ($local:arch -eq 'ia64')) {
+					$local:cpu = 'amd64'
+					$null = $local:latestRelease -match 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-linux64-gpl-)(.*).tar.xz'
+					$local:donwloadURL = $matches[0]
+					break
+				}
+				default {
+					Write-Warning ('❗ お使いのCPUに適合するffmpegを特定できませんでした。')
+					Write-Warning ('❗ {0}に適合するffmpegをご自身で配置してください。' -f $local:arch)
+					return
+					break
+				}
 			}
 
 			#ダウンロード

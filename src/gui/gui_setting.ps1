@@ -132,37 +132,50 @@ function writeSetting {
 		foreach ($local:settingAttribute in $script:settingAttributes) {
 			$local:settingBoxName = $local:settingAttribute.Replace('$script:', '')
 			$local:settingBox = $script:settingWindow.FindName($local:settingBoxName)
-			if ($local:settingBox.Text -eq '') {
-				#設定していないときは出力しない
-			} elseif ($local:settingBox.Text -eq 'デフォルト値') {
-				#設定していないときは出力しない
-			} elseif ($local:settingBox.Text -eq '未設定') {
-				#設定していないときは出力しない
-			} elseif ($local:settingBox.Text -eq 'する') {
-				#するを$trueに置換
-				$local:newSetting += ('{0} = {1}' -f $local:settingAttribute, '$true')
-			} elseif ($local:settingBox.Text -eq 'しない') {
-				#しないを$falseに置換
-				$local:newSetting += ('{0} = {1}' -f $local:settingAttribute, '$false')
-			} elseif ( [Int]::TryParse($local:settingBox.Text, [ref]$null) ) {
-				#数字はシングルクォーテーション不要
-				$local:newSetting += ('{0} = {1}' -f $local:settingAttribute, $local:settingBox.Text)
-			} elseif ($local:settingBox.Text -match '^[a-zA-Z]:') {
-				#ドライブ文字列で開始する場合はシングルクォーテーション必要
-				$local:newSetting += ('{0} = ''{1}''' -f $local:settingAttribute, $local:settingBox.Text)
-			} elseif ($local:settingBox.Text -match '^\\\\') {
-				#UNCパスの場合はシングルクォーテーション必要
-				$local:newSetting += ('{0} = ''{1}''' -f $local:settingAttribute, $local:settingBox.Text)
-			} elseif ($local:settingBox.Text.Contains('$') `
+
+			switch ($true) {
+				(($local:settingBox.Text -eq '') `
+					-Or ($local:settingBox.Text -eq 'デフォルト値') `
+					-Or ($local:settingBox.Text -eq '未設定')) {
+					#設定していないときは出力しない
+					break
+				}
+				($local:settingBox.Text -eq 'する') {
+					#するを$trueに置換
+					$local:newSetting += ('{0} = {1}' -f $local:settingAttribute, '$true') ; break
+				}
+				($local:settingBox.Text -eq 'しない') {
+					#しないを$falseに置換
+					$local:newSetting += ('{0} = {1}' -f $local:settingAttribute, '$false') ; break
+				}
+				( [Int]::TryParse($local:settingBox.Text, [ref]$null) ) {
+					#数字はシングルクォーテーション不要
+					$local:newSetting += ('{0} = {1}' -f $local:settingAttribute, $local:settingBox.Text) ; break
+				}
+				($local:settingBox.Text -match '^[a-zA-Z]:') {
+					#ドライブ文字列で開始する場合はシングルクォーテーション必要
+					$local:newSetting += ('{0} = ''{1}''' -f $local:settingAttribute, $local:settingBox.Text)
+					break
+				}
+				($local:settingBox.Text -match '^\\\\') {
+					#UNCパスの場合はシングルクォーテーション必要
+					$local:newSetting += ('{0} = ''{1}''' -f $local:settingAttribute, $local:settingBox.Text)
+					break
+				}
+				($local:settingBox.Text.Contains('$') `
 					-Or $local:settingBox.Text.Contains('{') `
 					-Or $local:settingBox.Text.Contains('(') `
 					-Or $local:settingBox.Text.Contains('}') `
 					-Or $local:settingBox.Text.Contains(')') ) {
-				#Powershellの変数や関数等を含む場合はシングルクォーテーション不要
-				$local:newSetting += ('{0} = {1}' -f $local:settingAttribute, $local:settingBox.Text)
-			} else {
-				#それ以外はシングルクォーテーション必要
-				$local:newSetting += ('{0} = ''{1}''' -f $local:settingAttribute, $local:settingBox.Text)
+					#Powershellの変数や関数等を含む場合はシングルクォーテーション不要
+					$local:newSetting += ('{0} = {1}' -f $local:settingAttribute, $local:settingBox.Text)
+					break
+				}
+				default {
+					#それ以外はシングルクォーテーション必要
+					$local:newSetting += ('{0} = ''{1}''' -f $local:settingAttribute, $local:settingBox.Text)
+					break
+				}
 			}
 		}
 	}
