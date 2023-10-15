@@ -62,7 +62,7 @@ function moveItem() {
 		# ディレクトリ上書き(移動先に存在 かつ ディレクトリ)は再帰的に moveItem 呼び出し
 		Get-ChildItem $local:src | ForEach-Object {
 			if ($_.Name -notLike '*update_tverrec.ps1') {
-				moveItem -LiteralPath $_.FullName -Destination ('{0}/{1}' -f $local:dist, $_.Name)
+				moveItem -Path $_.FullName -Destination ('{0}/{1}' -f $local:dist, $_.Name)
 			}
 		}
 		# 移動し終わったディレクトリを削除
@@ -136,7 +136,7 @@ try {
 	$newTVerRecDir = (Get-ChildItem -LiteralPath $updateTemp -Directory ).fullname
 	Get-ChildItem -LiteralPath $newTVerRecDir -Force | ForEach-Object {
 		# Move-Item を行う function として moveItem 作成して呼び出す
-		moveItem -LiteralPath $_.FullName -Destination ('{0}{1}' -f (Join-Path $local:scriptRoot '../'), $_.Name )
+		moveItem -Path $_.FullName -Destination ('{0}{1}' -f (Join-Path $local:scriptRoot '../'), $_.Name )
 	}
 } catch { Write-Error ('❗ ダウンロードしたTVerRecの配置に失敗しました') ; exit 1 }
 
