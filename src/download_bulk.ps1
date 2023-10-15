@@ -33,7 +33,7 @@ Set-StrictMode -Version Latest
 #初期化
 try {
 	if ($script:myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
-	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition  }
+	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	$script:devDir = Join-Path $script:scriptRoot '../dev'
@@ -88,48 +88,21 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#ダウンロード履歴ファイルのデータを読み込み
 	try {
 		while ((fileLock $script:historyLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-		$script:historyFileData = Import-Csv -LiteralPath $script:historyFilePath -Encoding UTF8
+		$script:historyFileData = @(Import-Csv -LiteralPath $script:historyFilePath -Encoding UTF8)
 	} catch { Write-Warning ('❗ ダウンロード履歴を読み込めなかったのでスキップしました') ; continue }
 	finally { $null = fileUnlock $script:historyLockFilePath }
 
 	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
-	Write-Output ('処理履歴との照合 ')
-	# if ($script:enableMultithread -eq $true) {
-	# 	#並列化が有効の場合は並列化
-	# 	$local:urlList = @{}
-	# 	$local:resultLinks | ForEach-Object -Parallel {
-	# 		$local:resultNum = ([Array]::IndexOf($using:local:resultLinks, $_)) + 1
-	# 		$local:resultTotal = $using:local:resultLinks.Count
-	# 		$local:resultLink = $_
-	# 		$local:historyMatch = $using:script:historyFileData | Where-Object { $_.videoPage -eq $local:resultLink }
-	# 		if ($local:historyMatch.Count -eq 0) {
-	# 		($using:local:urlList).urlList = ($using:local:urlList).urlList + $local:resultLink + ' '
-	# 			Write-Output ('{0}/{1} - {2} ... ❗ 未処理' -f $local:resultNum, $local:resultTotal, $local:resultLink)
-	# 		} else {
-	# 			Write-Output ('{0}/{1} - {2} ... ✔️' -f $local:resultNum, $local:resultTotal, $local:resultLink)
-	# 			continue
-	# 		}
-	# 	} -ThrottleLimit $script:multithreadNum
-	# 	if ($null -ne $local:urlList['urlList']) { $local:videoLinks = @($local:urlList['urlList'].Split(' ')) }
-	# } else {
-	#並列化が無効の場合は従来型処理
-	$local:resultNum = 0
-	$local:resultTotal = $local:resultLinks.Count
-	foreach ($local:resultLink in $local:resultLinks) {
-		$local:resultNum += 1
-		$local:historyMatch = $script:historyFileData.Where({ $_.videoPage -eq $local:resultLink })
-		if ($local:historyMatch.Count -eq 0) {
-			$local:videoLinks.Add($local:resultLink)
-			Write-Output ('{0}/{1} - {2} ... ❗ 未処理' -f $local:resultNum, $local:resultTotal, $local:resultLink)
-		} else {
-			$local:processedCount += 1
-			Write-Output ('{0}/{1} - {2} ... ✔️' -f $local:resultNum, $local:resultTotal, $local:resultLink)
-			continue
-		}
+	$local:histVideoPages = @($script:historyFileData.VideoPage)
+	$local:histCompareResult = @(Compare-Object -IncludeEqual $local:resultLinks $local:histVideoPages).where({ $_.SideIndicator -ne '=>' })
+	$local:histMatch = @($local:histCompareResult.where({ $_.SideIndicator -eq '==' }))
+	$local:histUnmatch = @($local:histCompareResult.where({ $_.SideIndicator -eq '<=' }))
+	if ($local:histUnmatch.Count -ne 0) {
+		$local:videoLinks = @($local:histUnmatch.InputObject)
+		$local:videoTotal = $local:histUnmatch.Count
 	}
-	# }
+	if ($local:histMatch.Count -ne 0) { $local:processedCount = $local:histMatch.Count }
 
-	$local:videoNum = 0
 	if ($null -eq $local:videoLinks) { $local:videoTotal = 0 }
 	else { $local:videoTotal = $local:videoLinks.Count }
 	Write-Output ('💡 処理対象{0}本　処理済{1}本' -f $local:videoTotal, $local:processedCount)
@@ -158,9 +131,9 @@ foreach ($local:keywordName in $local:keywordNames) {
 		-SecRemaining2 '' `
 		-Group 'Bulk'
 
-
 	#----------------------------------------------------------------------
 	#個々の番組ダウンロードここから
+	$local:videoNum = 0
 	foreach ($local:videoLink in $local:videoLinks) {
 		$local:videoNum += 1
 		#移動先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)

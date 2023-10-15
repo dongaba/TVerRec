@@ -33,7 +33,7 @@ Set-StrictMode -Version Latest
 #初期化
 try {
 	if ($script:myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
-	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition  }
+	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	$script:devDir = Join-Path $script:scriptRoot '../dev'
@@ -73,8 +73,8 @@ $local:totalStartTime = Get-Date
 foreach ($local:keywordName in $local:keywordNames) {
 	#いろいろ初期化
 	$local:videoLink = ''
+	$local:processedCount = 0
 	$local:videoLinks = [System.Collections.Generic.List[string]]::new()
-	$local:searchResultCount = 0
 	$local:keywordName = trimTabSpace ($local:keywordName)
 
 	#ジャンルページチェックタイトルの表示
@@ -89,43 +89,46 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#ダウンロードリストファイルのデータを読み込み
 	try {
 		while ((fileLock $script:listLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-		$script:listFileData = Import-Csv -LiteralPath $script:listFilePath -Encoding UTF8
+		$script:listFileData = @(Import-Csv -LiteralPath $script:listFilePath -Encoding UTF8)
 	} catch { Write-Warning ('❗ ダウンロードリストを読み込めなかったのでスキップしました') ; continue }
 	finally { $null = fileUnlock $script:listLockFilePath }
 
 	#ダウンロード履歴ファイルのデータを読み込み
 	try {
 		while ((fileLock $script:historyLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-		$script:historyFileData = Import-Csv -LiteralPath $script:historyFilePath -Encoding UTF8
+		$script:historyFileData = @(Import-Csv -LiteralPath $script:historyFilePath -Encoding UTF8)
 	} catch { Write-Warning ('❗ ダウンロード履歴を読み込めなかったのでスキップしました') ; continue }
 	finally { $null = fileUnlock $script:historyLockFilePath }
 
-	Write-Output ('処理履歴との照合 ')
-	$local:resultNum = 0
-	$local:resultTotal = $local:resultLinks.Count
-	foreach ($local:resultLink in $local:resultLinks) {
-		$local:resultNum += 1
-		$local:resultEpisodeID = $local:resultLink.Replace('https://tver.jp/episodes/', '')
-		#URLがすでにダウンロードリストに存在するかチェック
-		$local:listMatch = $script:listFileData.Where({ $_.episodeID -like ('*{0}' -f $local:resultEpisodeID) })
-
-		#URLがすでにダウンロードリストに存在するかチェック
-		$local:histMatch = $script:historyFileData.Where({ $_.videoPage -like ('*{0}' -f $local:resultLink) })
-
-		#どちらにも含まれない場合はリストへの出力対象
-		if (($local:listMatch.Count -eq 0) -And ($local:histMatch.Count -eq 0)) {
-			$local:videoLinks.Add($local:resultLink)
-			Write-Output ('　{0}/{1} - {2} ... ❗ 未処理' -f $local:resultNum, $local:resultTotal, $local:resultLink)
-		} else {
-			$local:searchResultCount += 1
-			Write-Output ('　{0}/{1} - {2} ... ✔️' -f $local:resultNum, $local:resultTotal, $local:resultLink)
-			continue
-		}
+	#----------------------------------------------------------------------
+	#EpisodeIDがすでにダウンロードリストに存在する場合は検索結果から除外
+	$local:listEpisodeIDs = @($script:listFileData.episodeID)
+	$local:listVideoPages = [System.Collections.Generic.List[string]]::new()
+	foreach ($local:listEpisodeID in $local:listEpisodeIDs) {
+		$local:listVideoPages.Add('https://tver.jp/episodes/{0}' -f $local:listEpisodeID)
 	}
+	$local:listCompareResult = @(Compare-Object -IncludeEqual $local:resultLinks $local:listVideoPages).where({ $_.SideIndicator -ne '=>' })
+	$local:listMatch = @($local:listCompareResult.where({ $_.SideIndicator -eq '==' }))
+	$local:listUnmatch = @($local:listCompareResult.where({ $_.SideIndicator -eq '<=' }))
+	$local:tempLinks = [System.Collections.Generic.List[string]]::new()
+	if ($local:listUnmatch.Count -ne 0) { $local:tempLinks = @($local:listUnmatch.InputObject) }
+	if ($local:listMatch.Count -ne 0) { $local:processedCount += $local:listMatch.Count }
+
+	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
+	$local:histVideoPages = $script:historyFileData.VideoPage
+	$local:histCompareResult = @(Compare-Object -IncludeEqual $local:tempLinks $local:histVideoPages).where({ $_.SideIndicator -ne '=>' })
+	$local:histMatch = @($local:histCompareResult.where({ $_.SideIndicator -eq '==' }))
+	$local:histUnmatch = @($local:histCompareResult.where({ $_.SideIndicator -eq '<=' }))
+	if ($local:histUnmatch.Count -ne 0) {
+		$local:videoLinks = @($local:histUnmatch.InputObject)
+		$local:videoTotal = $local:histUnmatch.Count
+	}
+	if ($local:histMatch.Count -ne 0) { $local:processedCount = $local:histMatch.Count }
 
 	if ($null -eq $local:videoLinks) { $local:videoTotal = 0 }
 	else { $local:videoTotal = $local:videoLinks.Count }
-	Write-Output ('💡 処理対象{0}本　処理済{1}本' -f $local:videoTotal, $local:searchResultCount)
+	Write-Output ('💡 処理対象{0}本　処理済{1}本' -f $local:videoTotal, $local:processedCount)
+	#----------------------------------------------------------------------
 
 	#処理対象番組がない場合は次のキーワード
 	if ( $local:videoTotal -eq 0 ) { continue }

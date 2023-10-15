@@ -151,7 +151,7 @@ showProgressToast `
 if (Test-Path $script:ignoreFilePath -PathType Leaf) {
 	try {
 		while ((fileLock $script:ignoreLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-		$local:ignoreTitles = (Get-Content -LiteralPath $script:ignoreFilePath -Encoding UTF8).Where({ $_ -notmatch '^\s*$' }).Where({ $_ -notmatch '^;.*$' })
+		$local:ignoreTitles = @((Get-Content -LiteralPath $script:ignoreFilePath -Encoding UTF8).Where({ $_ -notmatch '^\s*$' }).Where({ $_ -notmatch '^;.*$' }))
 	} catch { Write-Error ('❗ ダウンロード対象外の読み込みに失敗しました') ; exit 1 }
 	finally { $null = fileUnlock $script:ignoreLockFilePath }
 } else { $local:ignoreTitles = $null }

@@ -119,7 +119,7 @@ while ($local:videoNotValidatedNum -ne 0) {
 
 	try {
 		while ((fileLock $script:historyLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-		$local:videoHists = (Import-Csv -LiteralPath $script:historyFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' }) | Select-Object 'videoPage', 'videoPath', 'videoValidated'
+		$local:videoHists = @((Import-Csv -LiteralPath $script:historyFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' }) | Select-Object 'videoPage', 'videoPath', 'videoValidated')
 	} catch { Write-Warning ('❗ ダウンロード履歴の読み込みに失敗しました') }
 	finally { $null = fileUnlock $script:historyLockFilePath }
 
@@ -205,9 +205,7 @@ while ($local:videoNotValidatedNum -ne 0) {
 		-Silent $false
 	try {
 		while ((fileLock $script:historyLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-		$local:videoHists = Import-Csv `
-			-Path $script:historyFilePath `
-			-Encoding UTF8
+		$local:videoHists = @(Import-Csv -Path $script:historyFilePath -Encoding UTF8)
 		foreach ($local:uncheckedVido in ($local:videoHists).Where({ $_.videoValidated -eq 2 })) {
 			$local:uncheckedVido.videoValidated = '0'
 		}
