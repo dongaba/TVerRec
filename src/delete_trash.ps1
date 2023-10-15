@@ -228,40 +228,37 @@ showProgressToast `
 	-Duration 'long' `
 	-Silent $false
 
-$local:allSubDirs = @()
-try { $local:allSubDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer }).FullName | Sort-Object -Descending) }
-catch { Write-Warning ('❗ ディレクトリを見つけられませんでした') }
+$local:emptyDirs = @()
+try { $local:emptyDirs = @(((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).where({ $_.PSIsContainer -eq $true })).Where({ ($_.GetFiles().Count -eq 0) -And ($_.GetDirectories().Count -eq 0) }).FullName)
+} catch { Write-Warning ('❗ ディレクトリを見つけられませんでした') }
 
-$local:subDirTotal = $local:allSubDirs.Count
+$local:emptyDirTotal = $local:emptyDirs.Count
 
 #----------------------------------------------------------------------
-if ($local:subDirTotal -ne 0) {
+if ($local:emptyDirTotal -ne 0) {
 	if ($script:enableMultithread -eq $true) {
 		#並列化が有効の場合は並列化
-		$local:allSubDirs | ForEach-Object -Parallel {
-			$local:subDirNum = ([Array]::IndexOf($using:local:allSubDirs, $_)) + 1
-			$local:subDirTotal = $using:local:allSubDirs.Count
-			Write-Output ('{0}/{1} - {2}' -f $local:subDirNum, $local:subDirTotal, $_)
-			if (@((Get-ChildItem -LiteralPath $_ -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
-				Write-Output ('💡 {0}/{1} - {2}を削除します' -f $local:subDirNum, $local:subDirTotal, $_)
-				try { Remove-Item -LiteralPath $_ -Recurse -Force }
-				catch { Write-Warning ('❗ - 空ディレクトリの削除に失敗しました: {0}' -f $_) }
-			}
+		$local:emptyDirs | ForEach-Object -Parallel {
+			$local:emptyDirNum = ([Array]::IndexOf($using:local:emptyDirs, $_)) + 1
+			$local:emptyDirTotal = $using:local:emptyDirs.Count
+			Write-Output ('💡 {0}/{1} - {2}を削除します' -f $local:emptyDirNum, $local:emptyDirTotal, $_)
+			try { Remove-Item -LiteralPath $_ -Recurse -Force }
+			catch { Write-Warning ('❗ - 空ディレクトリの削除に失敗しました: {0}' -f $_) }
 		} -ThrottleLimit $script:multithreadNum
 	} else {
 		#並列化が無効の場合は従来型処理
-		$local:subDirNum = 0
-		$local:subDirTotal = $local:allSubDirs.Count
+		$local:emptyDirNum = 0
+		$local:emptyDirTotal = $local:emptyDirs.Count
 		$local:totalStartTime = Get-Date
-		foreach ($local:subDir in $local:allSubDirs) {
-			$local:subDirNum += 1
+		foreach ($local:subDir in $local:emptyDirs) {
+			$local:emptyDirNum += 1
 			#処理時間の推計
 			$local:secElapsed = (Get-Date) - $local:totalStartTime
 			$local:secRemaining = -1
-			if ($local:subDirNum -ne 0) {
-				$local:secRemaining = [Int][Math]::Ceiling(($local:secElapsed.TotalSeconds / $local:subDirNum) * ($local:subDirTotal - $local:subDirNum))
+			if ($local:emptyDirNum -ne 1) {
+				$local:secRemaining = [Int][Math]::Ceiling(($local:secElapsed.TotalSeconds / $local:emptyDirNum) * ($local:emptyDirTotal - $local:emptyDirNum))
 				$local:minRemaining = ('{0}分' -f ([Int][Math]::Ceiling($local:secRemaining / 60)))
-				$local:progressRate = [Float]($local:subDirNum / $local:subDirTotal)
+				$local:progressRate = [Float]($local:emptyDirNum / $local:emptyDirTotal)
 			} else {
 				$local:minRemaining = ''
 				$local:progressRate = 0
@@ -269,16 +266,13 @@ if ($local:subDirTotal -ne 0) {
 			UpdateProgressToast `
 				-Title $local:subDir `
 				-Rate $local:progressRate `
-				-LeftText ('{0}/{1}' -f $local:subDirNum, $local:subDirTotal) `
+				-LeftText ('{0}/{1}' -f $local:emptyDirNum, $local:emptyDirTotal) `
 				-RightText ('残り時間 {0}' -f $local:minRemaining) `
 				-Tag $script:appName `
-				-Group 'Delete'
-			Write-Output ('{0}/{1} - {2}' -f $local:subDirNum, $local:subDirTotal, $local:subDir)
-			if (@((Get-ChildItem -LiteralPath $local:subDir -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
-				Write-Output ('💡 {0}/{1} - {2}を削除します' -f $local:subDirNum, $local:subDirTotal, $local:subDir)
-				try { Remove-Item -LiteralPath $local:subDir -Recurse -Force
-				} catch { Write-Warning ('❗ - 空ディレクトリの削除に失敗しました: {0}' -f $local:subDir) }
-			}
+				-Group 'Move'
+			Write-Output ('💡 {0}/{1} - {2}を削除します' -f $local:emptyDirNum, $local:emptyDirTotal, $local:subDir)
+			try { Remove-Item -LiteralPath $local:subDir -Recurse -Force -ErrorAction SilentlyContinue
+			} catch { Write-Warning ('❗ - 空ディレクトリの削除に失敗しました: {0}' -f $local:subDir) }
 		}
 	}
 }

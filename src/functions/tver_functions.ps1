@@ -316,36 +316,48 @@ function checkRequiredFile {
 		$script:saveBaseDirArray = @()
 		$script:saveBaseDirArray = $script:saveBaseDir.split(';').Trim()
 		foreach ($saveDir in $script:saveBaseDirArray) {
-			if (!(Test-Path $saveDir.Trim() -PathType Container)) { Write-Error ('❗ 番組移動先ディレクトリが存在しません。終了します。') ; exit 1 }
+			if (!(Test-Path $saveDir.Trim() -PathType Container))
+			{ Write-Error ('❗ 番組移動先ディレクトリが存在しません。終了します。') ; exit 1 }
 		}
 	}
-	if (!(Test-Path $script:ytdlPath -PathType Leaf)) { Write-Error ('❗ youtube-dlが存在しません。終了します。') ; exit 1 }
-	if (!(Test-Path $script:ffmpegPath -PathType Leaf)) { Write-Error ('❗ ffmpegが存在しません。終了します。') ; exit 1 }
-	if ((!(Test-Path $script:ffprobePath -PathType Leaf)) -And ($script:simplifiedValidation -eq $true)) { Write-Error ('❗ ffprobeが存在しません。終了します。') ; exit 1 }
+	if (!(Test-Path $script:ytdlPath -PathType Leaf))
+	{ Write-Error ('❗ youtube-dlが存在しません。終了します。') ; exit 1 }
+	if (!(Test-Path $script:ffmpegPath -PathType Leaf))
+	{ Write-Error ('❗ ffmpegが存在しません。終了します。') ; exit 1 }
+	if ((!(Test-Path $script:ffprobePath -PathType Leaf)) -And ($script:simplifiedValidation -eq $true))
+	{ Write-Error ('❗ ffprobeが存在しません。終了します。') ; exit 1 }
 
 	#ファイルが存在しない場合はサンプルファイルをコピー
 	if (!(Test-Path $script:keywordFilePath -PathType Leaf)) {
-		if (!(Test-Path $script:keywordFileSamplePath -PathType Leaf)) { Write-Error ('❗ ダウンロード対象キーワードファイル(サンプル)が存在しません。終了します。') ; exit 1 }
+		if (!(Test-Path $script:keywordFileSamplePath -PathType Leaf))
+		{ Write-Error ('❗ ダウンロード対象キーワードファイル(サンプル)が存在しません。終了します。') ; exit 1 }
 		Copy-Item -LiteralPath $script:keywordFileSamplePath -Destination $script:keywordFilePath -Force
 	}
 	if (!(Test-Path $script:ignoreFilePath -PathType Leaf)) {
-		if (!(Test-Path $script:ignoreFileSamplePath -PathType Leaf)) { Write-Error ('❗ ダウンロード対象外番組ファイル(サンプル)が存在しません。終了します。') ; exit 1 }
+		if (!(Test-Path $script:ignoreFileSamplePath -PathType Leaf))
+		{ Write-Error ('❗ ダウンロード対象外番組ファイル(サンプル)が存在しません。終了します。') ; exit 1 }
 		Copy-Item -LiteralPath $script:ignoreFileSamplePath -Destination $script:ignoreFilePath -Force
 	}
 	if (!(Test-Path $script:historyFilePath -PathType Leaf)) {
-		if (!(Test-Path $script:historyFileSamplePath -PathType Leaf)) { Write-Error ('❗ ダウンロード履歴ファイル(サンプル)が存在しません。終了します。') ; exit 1 }
+		if (!(Test-Path $script:historyFileSamplePath -PathType Leaf))
+		{ Write-Error ('❗ ダウンロード履歴ファイル(サンプル)が存在しません。終了します。') ; exit 1 }
 		Copy-Item -LiteralPath $script:historyFileSamplePath -Destination $script:historyFilePath -Force
 	}
 	if (!(Test-Path $script:listFilePath -PathType Leaf)) {
-		if (!(Test-Path $script:listFileSamplePath -PathType Leaf)) { Write-Error ('❗ ダウンロードリストファイル(サンプル)が存在しません。終了します。') ; exit 1 }
+		if (!(Test-Path $script:listFileSamplePath -PathType Leaf))
+		{ Write-Error ('❗ ダウンロードリストファイル(サンプル)が存在しません。終了します。') ; exit 1 }
 		Copy-Item -LiteralPath $script:listFileSamplePath -Destination $script:listFilePath -Force
 	}
 
 	#念のためチェック
-	if (!(Test-Path $script:keywordFilePath -PathType Leaf)) { Write-Error ('❗ ダウンロード対象キーワードファイルが存在しません。終了します。') ; exit 1 }
-	if (!(Test-Path $script:ignoreFilePath -PathType Leaf)) { Write-Error ('❗ ダウンロード対象外番組ファイルが存在しません。終了します。') ; exit 1 }
-	if (!(Test-Path $script:historyFilePath -PathType Leaf)) { Write-Error ('❗ ダウンロード履歴ファイルが存在しません。終了します。') ; exit 1 }
-	if (!(Test-Path $script:listFilePath -PathType Leaf)) { Write-Error ('❗ ダウンロードリストファイルが存在しません。終了します。') ; exit 1 }
+	if (!(Test-Path $script:keywordFilePath -PathType Leaf))
+	{ Write-Error ('❗ ダウンロード対象キーワードファイルが存在しません。終了します。') ; exit 1 }
+	if (!(Test-Path $script:ignoreFilePath -PathType Leaf))
+	{ Write-Error ('❗ ダウンロード対象外番組ファイルが存在しません。終了します。') ; exit 1 }
+	if (!(Test-Path $script:historyFilePath -PathType Leaf))
+	{ Write-Error ('❗ ダウンロード履歴ファイルが存在しません。終了します。') ; exit 1 }
+	if (!(Test-Path $script:listFilePath -PathType Leaf))
+	{ Write-Error ('❗ ダウンロードリストファイルが存在しません。終了します。') ; exit 1 }
 }
 
 #----------------------------------------------------------------------
@@ -497,7 +509,6 @@ function getVideoLinksFromKeyword {
 	$script:episodeLinks = [System.Collections.Generic.List[string]]::new()
 	$script:seriesLinks = [System.Collections.Generic.List[string]]::new()
 
-
 	switch ($true) {
 		($local:keywordName.IndexOf('series/') -eq 0) {
 			#番組IDによる番組検索から番組ページのLinkを取得
@@ -550,8 +561,7 @@ function getVideoLinksFromKeyword {
 			#番組名による新着検索から番組ページのLinkを取得
 			$local:titleName = trimComment($local:keywordName).Replace('title/', '').Trim()
 			goAnal -Event 'search' -Type 'title' -ID $local:titleName
-			Write-Warning ('❗ 番組名検索は廃止されました。スキップします Err:08')
-			continue
+			Write-Warning ('❗ 番組名検索は廃止されました。スキップします Err:08') ; continue
 			break
 		}
 		($local:keywordName.IndexOf('sitemap') -eq 0) {
