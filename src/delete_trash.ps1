@@ -226,9 +226,9 @@ showProgressToast `
 	-Silent $false
 
 $local:emptyDirs = @()
-try { $local:emptyDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).where({ $_.PSIsContainer -eq $true })).Where({ ($_.GetFiles().Count -eq 0) -And ($_.GetDirectories().Count -eq 0) })
-	if ($local:emptyDirs.Count -ne 0) { $local:emptyDirs = $local:emptyDirs.FullName }
-} catch { Write-Warning ('❗ ディレクトリを見つけられませんでした') }
+$local:emptyDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).where({ $_.PSIsContainer -eq $true })).Where({ ($_.GetFiles().Count -eq 0) -And ($_.GetDirectories().Count -eq 0) })
+try { if ($local:emptyDirs.Count -ne 0) { $local:emptyDirs = $local:emptyDirs.FullName } }
+catch { Write-Warning ('❗ 削除できないディレクトリがありました') }
 
 $local:emptyDirTotal = $local:emptyDirs.Count
 
