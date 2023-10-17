@@ -71,8 +71,8 @@ $local:listTotal = 0
 $local:listTotal = $script:listLinks.Count
 if ($local:listTotal -eq 0) { Write-Warning ('💡 ダウンロードリストが0件です') ; exit 0 }
 Write-Output ('　リスト件数{0}件' -f $local:listTotal)
-Write-Output ('')
 
+Write-Output ('')
 Write-Output ('----------------------------------------------------------------------')
 Write-Output ('ダウンロード履歴を読み込みます')
 #ダウンロード履歴ファイルのデータを読み込み
@@ -81,8 +81,8 @@ try {
 	$script:historyFileData = Import-Csv -LiteralPath $script:historyFilePath -Encoding UTF8
 } catch { Write-Warning ('❗ ダウンロード履歴を読み込めなかったのでスキップしました') ; continue }
 finally { $null = fileUnlock $script:historyLockFilePath }
-Write-Output ('')
 
+Write-Output ('')
 Write-Output ('----------------------------------------------------------------------')
 Write-Output ('ダウンロード履歴に含まれる番組を除外します')
 #URLがすでにダウンロード履歴に存在する場合は検索結果から除外
@@ -95,7 +95,6 @@ foreach ($local:listLink in $local:listLinks.episodeID) {
 
 $local:videoTotal = $local:videoLinks.Count
 Write-Output ('💡 ダウンロード対象{0}件' -f $local:videoTotal)
-Write-Output ('')
 
 #処理時間の推計
 $local:totalStartTime = Get-Date
@@ -152,13 +151,13 @@ updateProgressToast `
 
 #youtube-dlのプロセスが終わるまで待機
 Write-Output ('ダウンロードの終了を待機しています')
-Write-Output ('')
 waitTillYtdlProcessIsZero
 
 [System.GC]::Collect()
 [System.GC]::WaitForPendingFinalizers()
 [System.GC]::Collect()
 
+Write-Output ('')
 Write-Output ('---------------------------------------------------------------------------')
 Write-Output ('リストダウンロード処理を終了しました。                                     ')
 Write-Output ('---------------------------------------------------------------------------')

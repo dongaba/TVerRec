@@ -53,7 +53,6 @@ checkRequiredFile
 #1/3 移動先ディレクトリを起点として、配下のディレクトリを取得
 Write-Output ('----------------------------------------------------------------------')
 Write-Output ('移動先ディレクトリの一覧を作成しています')
-Write-Output ('----------------------------------------------------------------------')
 showProgressToast `
 	-Text1 '番組の移動中' `
 	-Text2 '　処理1/3 - ディレクトリ一覧を作成' `
@@ -85,9 +84,9 @@ if ($local:moveToPathsArray.Count -ne 0) {
 
 #======================================================================
 #2/3 移動先ディレクトリと同名のディレクトリ配下の番組を移動
+Write-Output ('')
 Write-Output ('----------------------------------------------------------------------')
 Write-Output ('ダウンロードファイルを移動しています')
-Write-Output ('----------------------------------------------------------------------')
 
 showProgressToast `
 	-Text1 '番組の移動中' `
@@ -123,7 +122,6 @@ if (($null -ne $local:moveToPaths) -And ($local:moveToPaths.Count -ne 0)) {
 			-RightText ('残り時間 {0}' -f $local:minRemaining) `
 			-Tag $script:appName `
 			-Group 'Move'
-		Write-Output ('{0}/{1} - {2}' -f $local:moveToPathNum, $local:moveToPathTotal, $local:moveToPath.InputObject)
 		$local:targetFolderName = $local:moveToPath.InputObject
 		if ($script:sortVideoByMedia) {
 			$local:mediaName = Split-Path -Leaf -Path (Split-Path -Parent -Path $local:moveToPathsHash[$local:moveToPath.InputObject])
@@ -132,8 +130,7 @@ if (($null -ne $local:moveToPaths) -And ($local:moveToPaths.Count -ne 0)) {
 		#同名ディレクトリが存在する場合は配下のファイルを移動
 		$local:moveFromPath = Join-Path $script:downloadBaseDir $local:targetFolderName
 		if (Test-Path $local:moveFromPath) {
-			$local:moveFromPath = ('{0}\*.mp4' -f $local:moveFromPath)
-			Write-Output ('💡 {0}を移動します' -f $local:moveFromPath)
+			Write-Output ('　{0}\*.mp4' -f $local:moveFromPath)
 			try { Move-Item $local:moveFromPath -Destination $local:moveToPathsHash[$local:moveToPath.InputObject] -Force }
 			catch { Write-Warning ('❗ 移動できないファイルがありました') }
 		}
@@ -143,9 +140,9 @@ if (($null -ne $local:moveToPaths) -And ($local:moveToPaths.Count -ne 0)) {
 
 #======================================================================
 #3/3 空ディレクトリと隠しファイルしか入っていないディレクトリを一気に削除
+Write-Output ('')
 Write-Output ('----------------------------------------------------------------------')
 Write-Output ('空ディレクトリを削除します')
-Write-Output ('----------------------------------------------------------------------')
 showProgressToast `
 	-Text1 '番組の移動中' `
 	-Text2 '　処理3/3 - 空ディレクトリを削除' `
@@ -156,8 +153,9 @@ showProgressToast `
 	-Silent $false
 
 $local:emptyDirs = @()
-try { $local:emptyDirs = @(((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).where({ $_.PSIsContainer -eq $true })).Where({ ($_.GetFiles().Count -eq 0) -And ($_.GetDirectories().Count -eq 0) }).FullName)
-} catch { Write-Warning ('❗ ディレクトリを見つけられませんでした') }
+$local:emptyDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).where({ $_.PSIsContainer -eq $true })).Where({ ($_.GetFiles().Count -eq 0) -And ($_.GetDirectories().Count -eq 0) })
+try { if ($local:emptyDirs.Count -ne 0) { $local:emptyDirs = $local:emptyDirs.FullName } }
+catch { Write-Warning ('❗ 空ディレクトリを見つけられませんでした') }
 
 $local:emptyDirTotal = $local:emptyDirs.Count
 
@@ -168,7 +166,7 @@ if ($local:emptyDirTotal -ne 0) {
 		$local:emptyDirs | ForEach-Object -Parallel {
 			$local:emptyDirNum = ([Array]::IndexOf($using:local:emptyDirs, $_)) + 1
 			$local:emptyDirTotal = $using:local:emptyDirs.Count
-			Write-Output ('💡 {0}/{1} - {2}を削除します' -f $local:emptyDirNum, $local:emptyDirTotal, $_)
+			Write-Output ('　{0}/{1} - {2}' -f $local:emptyDirNum, $local:emptyDirTotal, $_)
 			try { Remove-Item -LiteralPath $_ -Recurse -Force }
 			catch { Write-Warning ('❗ - 空ディレクトリの削除に失敗しました: {0}' -f $_) }
 		} -ThrottleLimit $script:multithreadNum
@@ -197,7 +195,7 @@ if ($local:emptyDirTotal -ne 0) {
 				-RightText ('残り時間 {0}' -f $local:minRemaining) `
 				-Tag $script:appName `
 				-Group 'Move'
-			Write-Output ('💡 {0}/{1} - {2}を削除します' -f $local:emptyDirNum, $local:emptyDirTotal, $local:subDir)
+			Write-Output ('　{0}/{1} - {2}' -f $local:emptyDirNum, $local:emptyDirTotal, $local:subDir)
 			try { Remove-Item -LiteralPath $local:subDir -Recurse -Force -ErrorAction SilentlyContinue
 			} catch { Write-Warning ('❗ - 空ディレクトリの削除に失敗しました: {0}' -f $local:subDir) }
 		}
@@ -217,6 +215,7 @@ updateProgressToast `
 [System.GC]::WaitForPendingFinalizers()
 [System.GC]::Collect()
 
+Write-Output ('')
 Write-Output ('---------------------------------------------------------------------------')
 Write-Output ('番組移動処理を終了しました。                                               ')
 Write-Output ('---------------------------------------------------------------------------')

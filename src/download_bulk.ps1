@@ -79,8 +79,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#ジャンルページチェックタイトルの表示
 	Write-Output ('')
 	Write-Output ('----------------------------------------------------------------------')
-	Write-Output $local:keywordName
-	Write-Output ('----------------------------------------------------------------------')
+	Write-Output ('{0}}' -f $local:keywordName)
 
 	$local:resultLinks = @(getVideoLinksFromKeyword ($local:keywordName))
 	$local:keywordName = $local:keywordName.Replace('https://tver.jp/', '')
@@ -103,9 +102,13 @@ foreach ($local:keywordName in $local:keywordNames) {
 	}
 	if ($local:histMatch.Count -ne 0) { $local:processedCount = $local:histMatch.Count }
 
-	if ($null -eq $local:videoLinks) { $local:videoTotal = 0 }
-	else { $local:videoTotal = $local:videoLinks.Count }
-	Write-Output ('💡 処理対象{0}本　処理済{1}本' -f $local:videoTotal, $local:processedCount)
+	if ($null -eq $local:videoLinks) {
+		$local:videoTotal = 0
+		Write-Output ('　処理対象{0}本　処理済{1}本' -f $local:videoTotal, $local:processedCount)
+	} else {
+		$local:videoTotal = $local:videoLinks.Count
+		Write-Output ('　💡 処理対象{0}本　処理済{1}本' -f $local:videoTotal, $local:processedCount)
+	}
 
 	#処理時間の推計
 	$local:secElapsed = (Get-Date) - $local:totalStartTime
@@ -187,6 +190,7 @@ waitTillYtdlProcessIsZero
 [System.GC]::WaitForPendingFinalizers()
 [System.GC]::Collect()
 
+Write-Output ('')
 Write-Output ('---------------------------------------------------------------------------')
 Write-Output ('一括ダウンロード処理を終了しました。                                       ')
 Write-Output ('---------------------------------------------------------------------------')

@@ -51,6 +51,7 @@ while ($true) {
 	[System.GC]::Collect()
 	[System.GC]::WaitForPendingFinalizers()
 	[System.GC]::Collect()
+	Write-Output ('')
 	Write-Output ('{0}秒待機します。' -f $script:loopCycle)
 	Start-Sleep $script:loopCycle
 	[System.GC]::Collect()

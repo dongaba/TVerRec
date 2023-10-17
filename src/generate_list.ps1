@@ -80,8 +80,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#ジャンルページチェックタイトルの表示
 	Write-Output ('')
 	Write-Output ('----------------------------------------------------------------------')
-	Write-Output $local:keywordName
-	Write-Output ('----------------------------------------------------------------------')
+	Write-Output ('{0}}' -f $local:keywordName)
 
 	$local:resultLinks = @(getVideoLinksFromKeyword ($local:keywordName))
 	$local:keywordName = $local:keywordName.Replace('https://tver.jp/', '')
@@ -313,6 +312,7 @@ updateProgressToast `
 [System.GC]::WaitForPendingFinalizers()
 [System.GC]::Collect()
 
+Write-Output ('')
 Write-Output ('---------------------------------------------------------------------------')
 Write-Output ('番組リストファイル出力処理を終了しました。')
 Write-Output ('---------------------------------------------------------------------------')

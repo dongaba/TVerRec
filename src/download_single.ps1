@@ -83,7 +83,8 @@ while ($true) {
 		$null = [System.Reflection.Assembly]::Load('Microsoft.VisualBasic, Version=8.0.0.0, Culture=Neutral, PublicKeyToken=b03f5f7f11d50a3a')
 		#インプットボックスの表示
 		$local:videoPageURL = [String][Microsoft.VisualBasic.Interaction]::InputBox("番組URLを入力してください。`n何も入力しないで OK を押すと終了します。", 'TVerRec個別ダウンロード').Trim()
-		Write-Output $local:videoPageURL
+		Write-Output ('{0}}' -f $local:videoPageURL)
+
 	}
 	#正しいURLが入力されるまでループ
 	if ($videoPageURL -ne '') {
@@ -92,7 +93,7 @@ while ($true) {
 		} else {
 			$local:videoLink = $local:videoPageURL.Replace('https://tver.jp', '').Trim()
 			$local:videoPageURL = ('https://tver.jp{0}' -f $local:videoLink)
-			Write-Output $local:videoPageURL
+			Write-Output ('{0}}' -f $local:videoPageURL)
 			#TVer番組ダウンロードのメイン処理
 			downloadTVerVideo `
 				-Keyword $local:keywordName `
@@ -110,6 +111,7 @@ while ($true) {
 [System.GC]::WaitForPendingFinalizers()
 [System.GC]::Collect()
 
+Write-Output ('')
 Write-Output ('---------------------------------------------------------------------------')
 Write-Output ('ダウンロード処理を終了しました。                                           ')
 Write-Output ('---------------------------------------------------------------------------')
