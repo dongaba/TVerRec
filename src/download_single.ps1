@@ -35,7 +35,7 @@ Set-StrictMode -Version Latest
 #初期化
 try {
 	if ($script:myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
-	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition  }
+	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	$script:devDir = Join-Path $script:scriptRoot '../dev'
@@ -56,7 +56,7 @@ if ($local:uiMode -ne 'GUI') { $local:uiMode = 'CUI' }
 
 $local:keywordName = '個別指定'
 #ダウンロード対象外番組の読み込み
-$script:ignoreRegExTitles = getRegExIgnoreList
+$script:ignoreTitles = loadIgnoreList
 
 getToken
 

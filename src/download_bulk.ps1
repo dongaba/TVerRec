@@ -50,7 +50,7 @@ try {
 checkRequiredFile
 
 $local:keywordNames = @(loadKeywordList)
-$script:ignoreRegExTitles = getRegExIgnoreList
+$script:ignoreTitles = loadIgnoreList
 getToken
 
 $local:keywordNum = 0

@@ -52,7 +52,7 @@ checkRequiredFile
 #ダウンロード対象キーワードの読み込み
 $local:keywordNames = @(loadKeywordList)
 #ダウンロード対象外番組の読み込み
-$script:ignoreRegExTitles = getRegExIgnoreList
+$script:ignoreTitles = loadIgnoreList
 getToken
 
 $local:keywordNum = 0
@@ -168,7 +168,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 		$funcGetSpecialCharacterReplaced = ${function:getSpecialCharacterReplaced}.ToString()
 		$funcUnixTimeToDateTime = ${function:unixTimeToDateTime}.ToString()
 		$funcSortIgnoreList = ${function:sortIgnoreList}.ToString()
-		$funcGetRegExIgnoreList = ${function:getRegExIgnoreList}.ToString()
+		$funcloadIgnoreList = ${function:loadIgnoreList}.ToString()
 
 		$local:videoLinks | ForEach-Object -Parallel {
 			#関数の取り込み
@@ -180,7 +180,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 			${function:getSpecialCharacterReplaced} = $using:funcGetSpecialCharacterReplaced
 			${function:unixTimeToDateTime} = $using:funcUnixTimeToDateTime
 			${function:sortIgnoreList} = $using:funcSortIgnoreList
-			${function:getRegExIgnoreList} = $using:funcGetRegExIgnoreList
+			${function:loadIgnoreList} = $using:funcloadIgnoreList
 
 			#変数の置き換え
 			$script:timeoutSec = $using:script:timeoutSec
@@ -216,17 +216,17 @@ foreach ($local:keywordName in $local:keywordNames) {
 			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:92') ; continue }
 
 			#ダウンロード対象外に入っている番組の場合はリスト出力しない
-			foreach ($ignoreRegexTitle in $using:script:ignoreRegexTitles) {
-				if ($ignoreRegexTitle -ne '') {
-					if ((getNarrowChars $script:videoSeries) -match (getNarrowChars $ignoreRegexTitle)) {
-						$ignoreWord = $ignoreRegexTitle
-						sortIgnoreList $ignoreRegexTitle
+			foreach ($ignoreTitle in $using:script:ignoreTitles) {
+				if ($ignoreTitle -ne '') {
+					if ($script:videoSeries -like ('*{0}*' -f $local:ignoreTitle)) {
+						$ignoreWord = $ignoreTitle
+						sortIgnoreList $ignoreTitle
 						$ignore = $true
 						#ダウンロード対象外と合致したものはそれ以上のチェック不要
 						break
-					} elseif ((getNarrowChars $script:videoTitle) -match (getNarrowChars $ignoreRegexTitle)) {
-						$ignoreWord = $ignoreRegexTitle
-						sortIgnoreList $ignoreRegexTitle
+					} elseif ($script:videoTitle -like ('*{0}*' -f $local:ignoreTitle)) {
+						$ignoreWord = $ignoreTitle
+						sortIgnoreList $ignoreTitle
 						$ignore = $true
 						#ダウンロード対象外と合致したものはそれ以上のチェック不要
 						break

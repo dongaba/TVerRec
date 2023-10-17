@@ -148,33 +148,33 @@ showProgressToast `
 	-Silent $false
 
 #ダウンロード対象外番組の読み込み
-if (Test-Path $script:ignoreFilePath -PathType Leaf) {
-	try {
-		while ((fileLock $script:ignoreLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-		$local:ignoreTitles = @((Get-Content -LiteralPath $script:ignoreFilePath -Encoding UTF8).Where({ $_ -notmatch '^\s*$' }).Where({ $_ -notmatch '^;.*$' }))
-	} catch { Write-Error ('❗ ダウンロード対象外の読み込みに失敗しました') ; exit 1 }
-	finally { $null = fileUnlock $script:ignoreLockFilePath }
-} else { $local:ignoreTitles = $null }
+if (Test-Path $script:ignoreFilePath -PathType Leaf) { $script:ignoreTitles = loadIgnoreList }
+else { $local:ignoreTitles = @() }
 
-#作業ディレクトリの一覧
-$workDirEntities = @(Get-ChildItem -LiteralPath $script:downloadBaseDir -Name)
-
-#ダウンロード対象外番組と作業ディレクトリの一致を抽出
-$local:ignoreDirs = @(Compare-Object -IncludeEqual -ExcludeDifferent $local:ignoreTitles $workDirEntities)
+$local:ignoreDirs = [System.Collections.Generic.List[string]]::new()
+$local:workDirEntities = @(Get-ChildItem -LiteralPath $script:downloadBaseDir).FullName
+foreach ($local:workDirEntity in $local:workDirEntities) {
+	foreach ($local:ignoreTitle in $script:ignoreTitles) {
+		if ($local:ignoreTitle -ne '') {
+			#ダウンロード対象外と合致したものは削除対象
+			if ($local:workDirEntity -like ('*{0}*' -f $local:ignoreTitle) ) {
+				sortIgnoreList $local:ignoreTitle
+				$local:ignoreDirs.Add($local:workDirEntity)
+			}
+		}
+	}
+}
 
 #----------------------------------------------------------------------
 if ($local:ignoreDirs.Count -ne 0) {
 	if ($script:enableMultithread -eq $true) {
 		#並列化が有効の場合は並列化
-		$local:ignoreDirs.InputObject | ForEach-Object -Parallel {
+		$local:ignoreDirs | ForEach-Object -Parallel {
 			$local:ignoreNum = ([Array]::IndexOf($using:local:ignoreDirs, $_)) + 1
 			$local:ignoreTotal = $using:local:ignoreDirs.Count
 			Write-Output ('{0}/{1} - {2}' -f $local:ignoreNum, $local:ignoreTotal, $_)
-			try {
-				$local:delPath = Join-Path $using:script:downloadBaseDir $_
-				Write-Output ('💡 {0}/{1} - {2}を削除します' -f $local:ignoreNum, $local:ignoreTotal, $local:delPath)
-				Remove-Item -LiteralPath $local:delPath -Recurse -Force
-			} catch { Write-Warning ('❗ 削除できないファイルがありました') }
+			try { Remove-Item -LiteralPath $_ -Recurse -Force }
+			catch { Write-Warning ('❗ 削除できないファイルがありました') }
 		} -ThrottleLimit $script:multithreadNum
 	} else {
 		#並列化が無効の場合は従来型処理
@@ -182,7 +182,7 @@ if ($local:ignoreDirs.Count -ne 0) {
 		$local:ignoreNum = 0
 		$local:ignoreTotal = $local:ignoreDirs.Count
 		$local:totalStartTime = Get-Date
-		foreach ($local:ignoreDir in $local:ignoreDirs.InputObject) {
+		foreach ($local:ignoreDir in $local:ignoreDirs) {
 			$local:ignoreNum += 1
 			#処理時間の推計
 			$local:secElapsed = (Get-Date) - $local:totalStartTime
@@ -203,11 +203,8 @@ if ($local:ignoreDirs.Count -ne 0) {
 				-Tag $script:appName `
 				-Group 'Delete'
 			Write-Output ('{0}/{1} - {2}' -f $local:ignoreNum, $local:ignoreTotal, $local:ignoreDir)
-			try {
-				$local:delPath = Join-Path $script:downloadBaseDir $local:ignoreDir
-				Write-Output ('💡 {0}/{1} - {2}を削除します' -f $local:ignoreNum, $local:ignoreTotal, $local:delPath)
-				Remove-Item -Path $local:delPath -Recurse -Force
-			} catch { Write-Warning ('❗ 削除できないファイルがありました') }
+			try { Remove-Item -LiteralPath $local:ignoreDir -Recurse -Force }
+			catch { Write-Warning ('❗ 削除できないファイルがありました') }
 		}
 	}
 }

@@ -399,7 +399,7 @@ function loadDownloadList {
 #----------------------------------------------------------------------
 #ダウンロード対象外番組の読み込(正規表現判定用)
 #----------------------------------------------------------------------
-function getRegexIgnoreList {
+function loadIgnoreList {
 	[OutputType([String[]])]
 	Param ()
 
@@ -407,13 +407,13 @@ function getRegexIgnoreList {
 
 	try {
 		while ((fileLock $script:ignoreLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-		$local:ignoreRegexTitles = @()
+		$local:ignoreTitles = @()
 		#コメントと空行を除いて抽出
-		$local:ignoreRegexTitles = [String[]]((Get-Content $script:ignoreFilePath -Encoding UTF8).Where({ !($_ -match '^\s*$') }).Where({ !($_ -match '^;.*$') })) | ForEach-Object { [RegEx]::Escape($_) }
+		$local:ignoreTitles = @((Get-Content $script:ignoreFilePath -Encoding UTF8).Where({ !($_ -match '^\s*$') }).Where({ !($_ -match '^;.*$') }))
 	} catch { Write-Error ('❗ ダウンロード対象外の読み込みに失敗しました') ; exit 1 }
 	finally { $null = fileUnlock $script:ignoreLockFilePath }
 
-	return $local:ignoreRegexTitles
+	return $local:ignoreTitles
 }
 
 #----------------------------------------------------------------------
@@ -424,7 +424,7 @@ function sortIgnoreList {
 	Param (
 		[Parameter(Mandatory = $true, Position = 0)]
 		[Alias('ignoreTitle')]
-		[String]$local:ignoreRegexTitle
+		[String]$local:ignoreTitle
 	)
 
 	Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
@@ -433,9 +433,6 @@ function sortIgnoreList {
 	$local:ignoreComment = @()
 	$local:ignoreTarget = @()
 	$local:ignoreElse = @()
-
-	#正規表現用のエスケープ解除
-	$local:ignoreTitle = [Regex]::Unescape($local:ignoreRegexTitle)
 
 	try {
 		while ((fileLock $script:ignoreLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
@@ -460,7 +457,7 @@ function sortIgnoreList {
 	finally {
 		$null = fileUnlock $script:ignoreLockFilePath
 		#ダウンロード対象外番組の読み込み
-		$script:ignoreRegExTitles = getRegExIgnoreList
+		$script:ignoreTitles = loadIgnoreList
 	}
 
 }
@@ -1244,11 +1241,11 @@ function downloadTVerVideo {
 			$script:skipWithValidation = $true
 		} else { Write-Warning ('❗ すでにダウンロード済・検証済の番組です。スキップします') ; continue }
 	} else {
-		foreach ($local:ignoreRegexTitle in $script:ignoreRegexTitles) {
-			if ($local:ignoreRegexTitle -ne '') {
+		foreach ($local:ignoreTitle in $script:ignoreTitles) {
+			if ($local:ignoreTitle -ne '') {
 				#ダウンロード対象外と合致したものはそれ以上のチェック不要
-				if (($script:videoName -match $local:ignoreRegexTitle) -Or ($script:videoSeries -match $local:ignoreRegexTitle)) {
-					sortIgnoreList $local:ignoreRegexTitle
+				if (($script:videoName -like ('*{0}*' -f $local:ignoreTitle)) -Or ($script:videoSeries -like ('*{0}*' -f $local:ignoreTitle))) {
+					sortIgnoreList $local:ignoreTitle
 					$script:ignore = $true ; break
 				}
 			}
@@ -1398,17 +1395,17 @@ function generateTVerVideoList {
 	catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:91') ; continue }
 
 	#ダウンロード対象外に入っている番組の場合はリスト出力しない
-	foreach ($local:ignoreRegexTitle in $script:ignoreRegexTitles) {
-		if ($local:ignoreRegexTitle -ne '') {
-			if ($script:videoSeries -match $local:ignoreRegexTitle) {
-				$local:ignoreWord = $local:ignoreRegexTitle
-				sortIgnoreList $local:ignoreRegexTitle
+	foreach ($local:ignoreTitle in $script:ignoreTitles) {
+		if ($local:ignoreTitle -ne '') {
+			if ($script:videoSeries -like ('*{0}*' -f $local:ignoreTitle)) {
+				$local:ignoreWord = $local:ignoreTitle
+				sortIgnoreList $local:ignoreTitle
 				$script:ignore = $true
 				#ダウンロード対象外と合致したものはそれ以上のチェック不要
 				break
-			} elseif ($script:videoTitle -match $local:ignoreRegexTitle) {
-				$local:ignoreWord = $local:ignoreRegexTitle
-				sortIgnoreList $local:ignoreRegexTitle
+			} elseif ($script:videoTitle -like ('*{0}*' -f $local:ignoreTitle)) {
+				$local:ignoreWord = $local:ignoreTitle
+				sortIgnoreList $local:ignoreTitle
 				$script:ignore = $true
 				#ダウンロード対象外と合致したものはそれ以上のチェック不要
 				break
