@@ -7,7 +7,6 @@
 debug/
 dev/
 bin/*
-!bin/
 
 #アーカイブ
 *.7z
