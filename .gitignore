@@ -3,10 +3,9 @@
 .vs/*
 *.lnk
 
-.vs/*
-debug/
-dev/
-bin/*
+#debugディレクトリ配下は調査用
+debug
+debug/*
 
 #アーカイブ
 *.7z
@@ -37,6 +36,8 @@ ffmpeg_error*
 ignore.conf.*
 
 #開発関連ファイル
+dev*
+dev*/*
 memo.txt
 linux-*
 mac-*
@@ -50,7 +51,7 @@ thunderEnvironment.json
 #その他雑多な不要ファイル
 * - コピー.*
 * - Copy.*
-* copy.*
+* copy.csv
 *.bak
 
 #ローカルの変更をGitHubにアップしないために
@@ -68,3 +69,4 @@ user_setting.ps1
 .wsb/setup/TVerRec
 .vscode/thunder-tests/collections/tc_col_github.json
 .vscode/thunder-tests/collections/tc_col_test.json
+
