@@ -66,8 +66,8 @@ showProgressToast `
 cleanDB
 
 Write-Output ('')
-Write-Output ('古いダウンロード履歴を削除します')
 Write-Output ('----------------------------------------------------------------------')
+Write-Output ('古いダウンロード履歴を削除します')
 showProgressToast `
 	-Text1 'ダウンロードファイルの整合性検証中' `
 	-Text2 ('　処理2/5 - {0}日以上前のダウンロード履歴を削除' -f $script:historyRetentionPeriod) `
