@@ -3,9 +3,11 @@
 .vs/*
 *.lnk
 
-#debugディレクトリ配下は調査用
-debug
-debug/*
+.vs/*
+debug/
+dev/
+bin/*
+!bin/
 
 #アーカイブ
 *.7z
@@ -36,8 +38,6 @@ ffmpeg_error*
 ignore.conf.*
 
 #開発関連ファイル
-dev*
-dev*/*
 memo.txt
 linux-*
 mac-*
