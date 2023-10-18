@@ -51,6 +51,7 @@ checkRequiredFile
 
 #======================================================================
 #1/3 移動先ディレクトリを起点として、配下のディレクトリを取得
+Write-Output ('')
 Write-Output ('----------------------------------------------------------------------')
 Write-Output ('移動先ディレクトリの一覧を作成しています')
 showProgressToast `
@@ -202,6 +203,8 @@ if ($local:emptyDirTotal -ne 0) {
 	}
 }
 #----------------------------------------------------------------------
+
+try { $script:uiMode = [String]$args[0] } catch { $script:uiMode = '' }
 
 updateProgressToast `
 	-Title '番組の移動' `

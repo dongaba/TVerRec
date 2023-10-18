@@ -104,15 +104,15 @@ try {
 
 #youtube-dlのダウンロード
 if ($local:latestVersion -eq $local:currentVersion) {
+	Write-Output ('')
 	Write-Output ('💡 youtube-dlは最新です。')
 	Write-Output ('　Local version: {0}' -f $local:currentVersion)
 	Write-Output ('　Latest version: {0}' -f $local:latestVersion)
-	Write-Output ('')
 } else {
+	Write-Output ('')
 	Write-Output ('❗ youtube-dlが古いため更新します。')
 	Write-Output ('　Local version: {0}' -f $local:currentVersion)
 	Write-Output ('　Latest version: {0}' -f $local:latestVersion)
-	Write-Output ('')
 	if ($IsWindows -eq $false) {
 		#githubの設定
 		$local:file = $script:preferredYoutubedl
@@ -139,7 +139,6 @@ if ($local:latestVersion -eq $local:currentVersion) {
 		$local:currentVersion = (& $local:ytdlPath --version)
 		if ($? -eq $false) { throw '更新後のバージョン取得に失敗しました' }
 		Write-Output ('💡 youtube-dlをversion{0}に更新しました。' -f $local:currentVersion)
-		Write-Output ('')
 	} catch { Write-Error ('❗ 更新後のバージョン取得に失敗しました') ; exit 1 }
 
 

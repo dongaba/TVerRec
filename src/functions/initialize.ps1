@@ -73,21 +73,23 @@ if ( $script:myInvocation.ScriptName.Contains('gui')) {
 	checkLatestTVerRec
 	if ($? -eq $false) { exit 1 }
 } else {
-	[Console]::ForegroundColor = 'Red'
+	if ($script:uiMode -eq '') {
+		[Console]::ForegroundColor = 'Red'
 		Write-Output ('')
-	Write-Output ('===========================================================================')
-	Write-Output ('                                                                           ')
-	Write-Output ('        ████████ ██    ██ ███████ ██████  ██████  ███████  ██████          ')
-	Write-Output ('           ██    ██    ██ ██      ██   ██ ██   ██ ██      ██               ')
-	Write-Output ('           ██    ██    ██ █████   ██████  ██████  █████   ██               ')
-	Write-Output ('           ██     ██  ██  ██      ██   ██ ██   ██ ██      ██               ')
-	Write-Output ('           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          ')
-	Write-Output ('                                                                           ')
-	Write-Output ("{0,$(56 - $script:appVersion.Length)}Version. {1}" -f ' ', $script:appVersion)
-	Write-Output ('                                                                           ')
-	Write-Output ('===========================================================================')
-	Write-Output ('')
-	[Console]::ResetColor()
+		Write-Output ('===========================================================================')
+		Write-Output ('                                                                           ')
+		Write-Output ('        ████████ ██    ██ ███████ ██████  ██████  ███████  ██████          ')
+		Write-Output ('           ██    ██    ██ ██      ██   ██ ██   ██ ██      ██               ')
+		Write-Output ('           ██    ██    ██ █████   ██████  ██████  █████   ██               ')
+		Write-Output ('           ██     ██  ██  ██      ██   ██ ██   ██ ██      ██               ')
+		Write-Output ('           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          ')
+		Write-Output ('                                                                           ')
+		Write-Output ("{0,$(56 - $script:appVersion.Length)}Version. {1}" -f ' ', $script:appVersion)
+		Write-Output ('                                                                           ')
+		Write-Output ('===========================================================================')
+		Write-Output ('')
+		[Console]::ResetColor()
+	}
 
 	#youtube-dlの最新化チェック
 	checkLatestYtdl

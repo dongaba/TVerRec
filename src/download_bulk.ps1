@@ -25,6 +25,8 @@
 #
 ###################################################################################
 
+try { $script:uiMode = [String]$args[0] } catch { $script:uiMode = '' }
+
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -102,13 +104,9 @@ foreach ($local:keywordName in $local:keywordNames) {
 	}
 	if ($local:histMatch.Count -ne 0) { $local:processedCount = $local:histMatch.Count }
 
-	if ($null -eq $local:videoLinks) {
-		$local:videoTotal = 0
-		Write-Output ('　処理対象{0}本　処理済{1}本' -f $local:videoTotal, $local:processedCount)
-	} else {
-		$local:videoTotal = $local:videoLinks.Count
-		Write-Output ('　💡 処理対象{0}本　処理済{1}本' -f $local:videoTotal, $local:processedCount)
-	}
+	$local:videoTotal = $local:videoLinks.Count
+	if ($local:videoTotal -eq 0) { Write-Output ('　処理対象{0}本　処理済{1}本' -f $local:videoTotal, $local:processedCount) }
+	else { Write-Output ('　💡 処理対象{0}本　処理済{1}本' -f $local:videoTotal, $local:processedCount) }
 
 	#処理時間の推計
 	$local:secElapsed = (Get-Date) - $local:totalStartTime

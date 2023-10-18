@@ -154,13 +154,13 @@ $script:mainWindow.FindName('btnLoop')
 #バックグラウンドジョブ化するボタンの処理内容
 $script:scriptBlocks = @{
 	$script:btns[0] = { . './download_single.ps1' 'GUI' }
-	$script:btns[1] = { . './download_bulk.ps1' }
-	$script:btns[2] = { . './generate_list.ps1' }
-	$script:btns[3] = { . './download_list.ps1' }
-	$script:btns[4] = { . './delete_trash.ps1' }
-	$script:btns[5] = { . './validate_video.ps1' }
-	$script:btns[6] = { . './move_video.ps1' }
-	$script:btns[7] = { . './loop.ps1' }
+	$script:btns[1] = { . './download_bulk.ps1' 'GUI' }
+	$script:btns[2] = { . './generate_list.ps1' 'GUI' }
+	$script:btns[3] = { . './download_list.ps1' 'GUI' }
+	$script:btns[4] = { . './delete_trash.ps1' 'GUI' }
+	$script:btns[5] = { . './validate_video.ps1' 'GUI' }
+	$script:btns[6] = { . './move_video.ps1' 'GUI' }
+	$script:btns[7] = { . './loop.ps1' 'GUI' }
 }
 
 #バックグラウンドジョブ化する処理の名前

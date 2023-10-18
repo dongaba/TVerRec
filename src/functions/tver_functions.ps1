@@ -1206,7 +1206,8 @@ function downloadTVerVideo {
 	showVideoInfo `
 		-Name $script:videoName `
 		-Date $script:broadcastDate `
-		-Media $script:mediaName
+		-Media $script:mediaName `
+		-EndTime $script:endTime
 	if ($DebugPreference -ne 'SilentlyContinue') {
 		showVideoDebugInfo `
 			-URL $script:videoPageURL `
@@ -1218,7 +1219,6 @@ function downloadTVerVideo {
 			-Title $script:videoTitle `
 			-Path $script:videoFilePath `
 			-Time (getTimeStamp) `
-			-EndTime $script:endTime `
 			-Description $descriptionText
 	}
 

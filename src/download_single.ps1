@@ -25,7 +25,7 @@
 #
 ###################################################################################
 
-try { $local:uiMode = [String]$args[0] } catch { $local:uiMode = '' }
+try { $script:uiMode = [String]$args[0] } catch { $script:uiMode = '' }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定
@@ -52,7 +52,7 @@ try {
 checkRequiredFile
 
 #GUI起動を判定
-if ($local:uiMode -ne 'GUI') { $local:uiMode = 'CUI' }
+if ($script:uiMode -ne 'GUI') { $script:uiMode = 'CUI' }
 
 $local:keywordName = '個別指定'
 #ダウンロード対象外番組の読み込み
@@ -76,7 +76,7 @@ while ($true) {
 		$script:historyFileData = Import-Csv -LiteralPath $script:historyFilePath -Encoding UTF8
 	} catch { Write-Warning ('❗ ダウンロード履歴を読み込めなかったのでスキップしました') ; continue }
 	finally { $null = fileUnlock $script:historyLockFilePath }
-	if ($local:uiMode -eq 'CUI') {
+	if ($script:uiMode -eq 'CUI') {
 		$local:videoPageURL = (Read-Host '番組URLを入力してください。何も入力しないで Enter を押すと終了します。').Trim()
 	} else {
 		#アセンブリの読み込み

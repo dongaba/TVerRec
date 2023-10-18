@@ -25,6 +25,8 @@
 #
 ###################################################################################
 
+try { $script:uiMode = [String]$args[0] } catch { $script:uiMode = '' }
+
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -43,11 +45,11 @@ try {
 while ($true) {
 	$script:validationFailed = $true
 	while ($script:validationFailed) {
-		. $script:scriptRoot/download_bulk.ps1
-		. $script:scriptRoot/delete_trash.ps1
-		. $script:scriptRoot/validate_video.ps1
+		. ('{0}/download_bulk.ps1' -f $script:scriptRoot) $script:uiMode
+		. ('{0}/delete_trash.ps1' -f $script:scriptRoot) $script:uiMode
+		. ('{0}/validate_video.ps1' -f $script:scriptRoot) $script:uiMode
 	}
-	. $script:scriptRoot/move_video.ps1
+	. ('{0}/move_video.ps1' -f $script:scriptRoot) $script:uiMode
 	[System.GC]::Collect()
 	[System.GC]::WaitForPendingFinalizers()
 	[System.GC]::Collect()

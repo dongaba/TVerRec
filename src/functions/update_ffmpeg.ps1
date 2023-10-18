@@ -94,15 +94,15 @@ switch ($true) {
 
 		#ffmpegのダウンロード
 		if ($local:currentVersion -match $local:latestVersion) {
+			Write-Output ('')
 			Write-Output ('💡 ffmpegは最新です。')
 			Write-Output ('　Local version: {0}' -f $local:currentVersion)
 			Write-Output ('　Latest version: {0}' -f $local:latestVersion)
-			Write-Output ('')
 		} else {
+			Write-Output ('')
 			Write-Output ('❗ ffmpegが古いため更新します。')
 			Write-Output ('　Local version: {0}' -f $local:currentVersion)
 			Write-Output ('　Latest version: {0}' -f $local:latestVersion)
-			Write-Output ('')
 
 			if ([System.Environment]::IS64bitOperatingSystem -eq $true) {
 				$local:cpu = 'x64'
@@ -142,7 +142,6 @@ switch ($true) {
 				$null = $local:ffmpegFileVersion[0] -match 'ffmpeg version (.*) Copyright'
 				$local:currentVersion = $local:matches[1]
 				Write-Output ('💡 ffmpegをversion{0}に更新しました。' -f $local:currentVersion)
-				Write-Output ('')
 			} catch { Write-Error ('❗ 更新後のバージョン取得に失敗しました') ; exit 1 }
 
 		}
@@ -180,15 +179,15 @@ switch ($true) {
 
 		#ffmpegのダウンロード
 		if ($local:currentVersion -match $local:latestVersion) {
+			Write-Output ('')
 			Write-Output ('💡 ffmpegは最新です。')
 			Write-Output ('　Local version: {0}' -f $local:currentVersion)
 			Write-Output ('　Latest version: {0}' -f $local:latestVersion)
-			Write-Output ('')
 		} else {
+			Write-Output ('')
 			Write-Output ('❗ ffmpegが古いため更新します。')
 			Write-Output ('　Local version: {0}' -f $local:currentVersion)
 			Write-Output ('　Latest version: {0}' -f $local:latestVersion)
-			Write-Output ('')
 
 			switch ($true) {
 				(($local:arch -eq 'aarch64') -Or ($local:arch -Contains 'armv8')) {
@@ -243,7 +242,6 @@ switch ($true) {
 				$null = $local:ffmpegFileVersion[0] -match 'ffmpeg version (.*) Copyright'
 				$local:currentVersion = $local:matches[1]
 				Write-Output ('💡 ffmpegをversion{0}に更新しました。' -f $local:currentVersion)
-				Write-Output ('')
 			} catch { Write-Error ('❗ 更新後のバージョン取得に失敗しました') ; exit 1 }
 
 		}
@@ -283,15 +281,15 @@ switch ($true) {
 
 		#ffmpegのダウンロード
 		if ($local:latestVersion -eq $local:currentVersion) {
+			Write-Output ('')
 			Write-Output ('💡 ffmpegは最新です。')
 			Write-Output ('　Local version: {0}' -f $local:currentVersion)
 			Write-Output ('　Latest version: {0}' -f $local:latestVersion)
-			Write-Output ('')
 		} else {
+			Write-Output ('')
 			Write-Output ('❗ ffmpegが古いため更新します。')
 			Write-Output ('　Local version: {0}' -f $local:currentVersion)
 			Write-Output ('　Latest version: {0}' -f $local:latestVersion)
-			Write-Output ('')
 
 			#ダウンロード
 			Write-Output ('ffmpegの最新版をダウンロードします')
@@ -326,7 +324,6 @@ switch ($true) {
 				$null = $local:ffmpegFileVersion[0] -match 'ffmpeg version (\d+\.\d+(\.\d+)?)-.*'
 				$local:currentVersion = $local:matches[1]
 				Write-Output ('💡 ffmpegをversion{0}に更新しました。' -f $local:currentVersion)
-				Write-Output ('')
 			} catch { Write-Error ('❗ 更新後のバージョン取得に失敗しました') ; exit 1 }
 
 		}
