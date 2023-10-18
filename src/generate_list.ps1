@@ -80,7 +80,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#ジャンルページチェックタイトルの表示
 	Write-Output ('')
 	Write-Output ('----------------------------------------------------------------------')
-	Write-Output ('{0}}' -f $local:keywordName)
+	Write-Output ('{0}' -f $local:keywordName)
 
 	$local:resultLinks = @(getVideoLinksFromKeyword ($local:keywordName))
 	$local:keywordName = $local:keywordName.Replace('https://tver.jp/', '')
