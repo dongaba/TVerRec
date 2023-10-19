@@ -134,7 +134,7 @@ if (($null -ne $local:moveToPaths) -And ($local:moveToPaths.Count -ne 0)) {
 		$local:moveFromPath = Join-Path $script:downloadBaseDir $local:targetFolderName
 		if (Test-Path $local:moveFromPath) {
 			Write-Output ('　{0}\*.mp4' -f $local:moveFromPath)
-			try { Move-Item $local:moveFromPath -Destination $local:moveToPathsHash[$local:moveToPath.InputObject] -Force }
+			try { Move-Item ('{0}\*.mp4' -f $local:moveFromPath) -Destination $local:moveToPathsHash[$local:moveToPath.InputObject] -Force }
 			catch { Write-Warning ('❗ 移動できないファイルがありました') }
 		}
 	}
