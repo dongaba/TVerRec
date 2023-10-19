@@ -73,7 +73,7 @@ if ( $script:myInvocation.ScriptName.Contains('gui')) {
 	checkLatestTVerRec
 	if ($? -eq $false) { exit 1 }
 } else {
-	if ($script:uiMode -eq '') {
+	if (($null -eq $script:uiMode) -Or ($script:uiMode -eq '')) {
 		[Console]::ForegroundColor = 'Red'
 		Write-Output ('')
 		Write-Output ('===========================================================================')
