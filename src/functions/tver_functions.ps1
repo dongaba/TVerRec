@@ -1437,10 +1437,10 @@ function downloadTVerVideo_Single {
 
 		#結果が0件ということは未検証のファイルがあるということ
 		if ( $null -eq $local:historyMatch) {
-			Write-Warning '❗ すでにダウンロード済ですが未検証の番組です。スキップします'
+			Write-Warning '❗ すでにダウンロード済ですが未検証の番組です。'
 			$script:skipWithoutValidation = $true
 		} else {
-			Write-Warning '❗ すでにダウンロード済・検証済の番組です。番組IDが変更になった可能性があります。スキップします'
+			Write-Warning '❗ すでにダウンロード済・検証済の番組です。番組IDが変更になった可能性があります。'
 			$script:skipWithoutValidation = $true
 		}
 
@@ -1558,7 +1558,10 @@ function downloadTVerVideo_Single {
 	$script:historyFileData = Import-Csv -Path $script:historyFilePath -Encoding UTF8
 
 	#スキップやダウンロード対象外でなければyoutube-dl起動
-#	if (($script:ignore -eq $true) -Or ($script:skipWithValidation -eq $true) -Or ($script:skipWithoutValidation -eq $true)) {
+#	if (($script:ignore -eq $true) -Or
+#		($script:skipWithValidation -eq $true) -Or
+#		($script:skipWithoutValidation -eq $true))
+#		{
 #		#スキップ対象やダウンロード対象外は飛ばして次のファイルへ
 #		continue
 #	} else {
