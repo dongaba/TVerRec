@@ -1353,6 +1353,232 @@ function downloadTVerVideo {
 }
 
 #----------------------------------------------------------------------
+#TVer番組ダウンロードのメイン処理
+#----------------------------------------------------------------------
+function downloadTVerVideo_Single {
+	[OutputType([System.Void])]
+	Param (
+		[Parameter(Mandatory = $true, Position = 0)]
+		[Alias('Keyword')]
+		[String]$script:keywordName,
+
+		[Parameter(Mandatory = $true, Position = 1)]
+		[Alias('URL')]
+		[String]$script:videoPageURL,
+
+		[Parameter(Mandatory = $true, Position = 2)]
+		[Alias('Link')]
+		[String]$script:videoLink
+	)
+
+	Write-Debug $myInvocation.MyCommand.name
+
+	$script:videoName = '' ; $script:videoFilePath = '' ; $script:videoSeriesPageURL = ''
+	$script:broadcastDate = '' ; $script:videoSeries = '' ; $script:videoSeason = ''
+	$script:videoEpisode = '' ; $script:videoTitle = '' ; $script:mediaName = '' ; $script:descriptionText = ''
+	$script:newVideo = $null
+	$script:ignore = $false
+	$script:skipWithValidation = $false ; $script:skipWithoutValidation = $false
+
+	#TVerのAPIを叩いて番組情報取得
+	goAnal -Event 'getinfo' -Type 'link' -ID $script:videoLink
+	try { getVideoInfo -Link $script:videoLink }
+	catch { Write-Warning '❗ 情報取得エラー。スキップします Err:90'; continue }
+
+	#ダウンロードファイル情報をセット
+	$script:videoName = getVideoFileName `
+		-Series $script:videoSeries `
+		-Season $script:videoSeason `
+		-Episode $script:videoEpisode `
+		-Title $script:videoTitle `
+		-Date $script:broadcastDate
+
+	$script:videoFileDir = getSpecialCharacterReplaced ($script:videoSeries + ' ' + $script:videoSeason).Trim(' ', '.')
+	if ($script:sortVideoByMedia -eq $true) {
+		$script:videoFileDir = (Join-Path $script:downloadBaseDir (getFileNameWoInvChars $script:mediaName) | Join-Path -ChildPath (getFileNameWoInvChars $script:videoFileDir))
+	} else {
+		$script:videoFileDir = (Join-Path $script:downloadBaseDir (getFileNameWoInvChars $script:videoFileDir))
+	}
+	$script:videoFilePath = Join-Path $script:videoFileDir $script:videoName
+	$script:videoFileRelPath = $script:videoFilePath.Replace($script:downloadBaseDir, '').Replace('\', '/')
+	$script:videoFileRelPath = $script:videoFileRelPath.Substring(1, ($script:videoFileRelPath.Length - 1))
+
+	#番組情報のコンソール出力
+	showVideoInfo `
+		-Name $script:videoName `
+		-Date $script:broadcastDate `
+		-Media $script:mediaName `
+		-Description $descriptionText
+	if ($DebugPreference -ne 'SilentlyContinue') {
+		showVideoDebugInfo `
+			-URL $script:videoPageURL `
+			-SeriesURL $script:videoSeriesPageURL `
+			-Keyword $script:keywordName `
+			-Series $script:videoSeries `
+			-Season $script:videoSeason `
+			-Episode $script:videoEpisode `
+			-Title $script:videoTitle `
+			-Path $script:videoFilePath `
+			-Time (getTimeStamp) `
+			-EndTime $script:endTime
+	}
+
+	#番組タイトルが取得できなかった場合はスキップ次の番組へ
+	if ($script:videoName -eq '.mp4') { Write-Warning '❗ 番組タイトルを特定できませんでした。スキップします'; continue }
+
+	$local:historyMatch = $script:historyFileData | Where-Object { $_.videoName -eq $script:videoName }
+	if ($null -ne $local:historyMatch) {
+		#ファイル名がすでにダウンロード履歴に存在する場合はスキップフラグを立ててダウンロード履歴に書き込み処理へ
+
+		#リストファイルにチェック済の状態で存在するかチェック
+		$local:historyMatch = $script:historyFileData `
+		| Where-Object { $_.videoPath -eq $script:videoFileRelPath } `
+		| Where-Object { $_.videoValidated -eq '1' }
+
+		#結果が0件ということは未検証のファイルがあるということ
+		if ( $null -eq $local:historyMatch) {
+			Write-Warning '❗ すでにダウンロード済ですが未検証の番組です。スキップします'
+			$script:skipWithoutValidation = $true
+		} else {
+			Write-Warning '❗ すでにダウンロード済・検証済の番組です。番組IDが変更になった可能性があります。スキップします'
+			$script:skipWithoutValidation = $true
+		}
+
+	} elseif (Test-Path $script:videoFilePath) {
+		#ダウンロード履歴にファイル名が存在しないがファイルが既に存在する場合はスキップフラグを立ててダウンロード履歴に書き込み処理へ
+
+		#リストファイルにチェック済の状態で存在するかチェック
+		$local:historyMatch = $script:historyFileData `
+		| Where-Object { $_.videoPath -eq $script:videoFileRelPath } `
+		| Where-Object { $_.videoValidated -eq '1' }
+
+		#結果が0件ということは未検証のファイルがあるということ
+		if ( $null -eq $local:historyMatch) {
+			Write-Warning '❗ すでにダウンロード済ですが未検証の番組です。ダウンロード履歴に追加します'
+			$script:skipWithValidation = $true
+		} else { Write-Warning '❗ すでにダウンロード済・検証済の番組です。スキップします'; continue }
+
+	} else {
+		foreach ($local:ignoreRegexTitle in $script:ignoreRegexTitles) {
+			if ($local:ignoreRegexTitle -ne '') {
+				#ダウンロード対象外と合致したものはそれ以上のチェック不要
+				if ($script:videoName -match $local:ignoreRegexTitle) {
+					sortIgnoreList $local:ignoreRegexTitle
+					$script:ignore = $true ; break
+				} elseif ($script:videoSeries -match $local:ignoreRegexTitle) {
+					sortIgnoreList $local:ignoreRegexTitle
+					$script:ignore = $true ; break
+				}
+			}
+		}
+		Write-Debug ('Ignored: ' + $script:ignore)
+
+	}
+
+	#スキップフラグが立っているかチェック
+	if ($script:ignore -eq $true) {
+		Write-Output '❗ ダウンロード対象外としたファイルをダウンロード履歴に追加します'
+		$script:newVideo = [pscustomobject]@{
+			videoPage       = $script:videoPageURL
+			videoSeriesPage = $script:videoSeriesPageURL
+			genre           = $script:keywordName
+			series          = $script:videoSeries
+			season          = $script:videoSeason
+			title           = $script:videoTitle
+			media           = $script:mediaName
+			broadcastDate   = $script:broadcastDate
+			downloadDate    = getTimeStamp
+			videoDir        = $script:videoFileDir
+			videoName       = '-- IGNORED --'
+			videoPath       = '-- IGNORED --'
+			videoValidated  = '0'
+		}
+	} elseif ($script:skipWithValidation -eq $true) {
+		Write-Output '❗ ダウンロード済の未検証のファイルをダウンロード履歴に追加します'
+		$script:newVideo = [pscustomobject]@{
+			videoPage       = $script:videoPageURL
+			videoSeriesPage = $script:videoSeriesPageURL
+			genre           = $script:keywordName
+			series          = $script:videoSeries
+			season          = $script:videoSeason
+			title           = $script:videoTitle
+			media           = $script:mediaName
+			broadcastDate   = $script:broadcastDate
+			downloadDate    = getTimeStamp
+			videoDir        = $script:videoFileDir
+			videoName       = '-- SKIPPED --'
+			videoPath       = $videoFileRelPath
+			videoValidated  = '0'
+		}
+	} elseif ($script:skipWithoutValidation -eq $true) {
+		Write-Output '❗ 番組IDが変更になったダウンロード済の未検証のファイルをダウンロード履歴に追加します'
+		$script:newVideo = [pscustomobject]@{
+			videoPage       = $script:videoPageURL
+			videoSeriesPage = $script:videoSeriesPageURL
+			genre           = $script:keywordName
+			series          = $script:videoSeries
+			season          = $script:videoSeason
+			title           = $script:videoTitle
+			media           = $script:mediaName
+			broadcastDate   = $script:broadcastDate
+			downloadDate    = getTimeStamp
+			videoDir        = $script:videoFileDir
+			videoName       = '-- SKIPPED --'
+			videoPath       = $videoFileRelPath
+			videoValidated  = '1'
+		}
+	} else {
+		Write-Output '💡 ダウンロードするファイルをダウンロード履歴に追加します'
+		$script:newVideo = [pscustomobject]@{
+			videoPage       = $script:videoPageURL
+			videoSeriesPage = $script:videoSeriesPageURL
+			genre           = $script:keywordName
+			series          = $script:videoSeries
+			season          = $script:videoSeason
+			title           = $script:videoTitle
+			media           = $script:mediaName
+			broadcastDate   = $script:broadcastDate
+			downloadDate    = getTimeStamp
+			videoDir        = $script:videoFileDir
+			videoName       = $script:videoName
+			videoPath       = $script:videoFileRelPath
+			videoValidated  = '0'
+		}
+	}
+
+	#ダウンロード履歴CSV書き出し
+	try {
+		#ロックファイルをロック
+		while ((fileLock $script:historyLockFilePath).fileLocked -ne $true) { Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
+		#ファイル操作
+		$script:newVideo | Export-Csv -Path $script:historyFilePath -NoTypeInformation -Encoding UTF8 -Append
+		Write-Debug 'ダウンロード履歴を書き込みました'
+	} catch { Write-Warning '❗ ダウンロード履歴を更新できませんでした。スキップします'; continue }
+	finally { $null = fileUnlock $script:historyLockFilePath }
+	$script:historyFileData = Import-Csv -Path $script:historyFilePath -Encoding UTF8
+
+	#スキップやダウンロード対象外でなければyoutube-dl起動
+#	if (($script:ignore -eq $true) -Or ($script:skipWithValidation -eq $true) -Or ($script:skipWithoutValidation -eq $true)) {
+#		#スキップ対象やダウンロード対象外は飛ばして次のファイルへ
+#		continue
+#	} else {
+		#移動先ディレクトリがなければ作成
+		if (-Not (Test-Path $script:videoFileDir -PathType Container)) {
+			try { $null = New-Item -ItemType Directory -Path $script:videoFileDir -Force }
+			catch { Write-Warning '❗ 移動先ディレクトリを作成できませんでした'; continue }
+		}
+
+		#youtube-dl起動
+		try { executeYtdl $script:videoPageURL }
+		catch { Write-Warning '❗ youtube-dlの起動に失敗しました' }
+		#5秒待機
+		Start-Sleep -Seconds 5
+
+#	}
+
+}
+
+#----------------------------------------------------------------------
 #TVer番組ダウンロードリスト作成のメイン処理
 #----------------------------------------------------------------------
 function generateTVerVideoList {

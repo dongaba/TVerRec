@@ -111,7 +111,7 @@ while ($true) {
 			Write-Output $local:videoPageURL
 
 			#TVer番組ダウンロードのメイン処理
-			downloadTVerVideo `
+			downloadTVerVideo_Single `
 				-Keyword $local:keywordName `
 				-URL $local:videoPageURL `
 				-Link $local:videoLink
