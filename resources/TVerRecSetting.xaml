@@ -1496,6 +1496,26 @@
                         Margin="20,0,20,0"
                         VerticalScrollBarVisibility="Auto"
                         BorderThickness="0,0,0,1"/>
+
+                    <Expander
+                        Margin="10,10,10,0"
+                        IsExpanded="False"
+                        FontFamily="Yu Gothic UI"
+                        Header="youtube-dlオプション">
+                        <TextBlock
+                            Margin="20,0,20,5"
+                            TextWrapping="Wrap">
+                            直接youtube-dlのオプションを記載することができます。<LineBreak/>
+                            動画の解像度を指定する場合などに使用します。
+                        </TextBlock>
+                    </Expander>
+                    <TextBox
+                        x:Name="ytdlOption"
+                        Text="未設定"
+                        Style="{DynamicResource TextBoxStyle}"
+                        Margin="20,0,20,0"
+                        VerticalScrollBarVisibility="Auto"
+                        BorderThickness="0,0,0,1"/>
                 </StackPanel>
             </ScrollViewer>
         </Border>

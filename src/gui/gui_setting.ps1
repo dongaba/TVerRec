@@ -36,7 +36,7 @@ Add-Type -AssemblyName PresentationFramework
 Set-StrictMode -Version Latest
 try {
 	if ($script:myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
-	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition  }
+	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition }
 	$script:scriptRoot = Convert-Path (Join-Path $script:scriptRoot '../')
 	Set-Location $script:scriptRoot
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
@@ -324,6 +324,7 @@ $script:settingAttributes += '$script:embedSubtitle'
 $script:settingAttributes += '$script:embedMetatag'
 $script:settingAttributes += '$script:windowShowStyle'
 $script:settingAttributes += '$script:ffmpegDecodeOption'
+$script:settingAttributes += '$script:ytdlOption'
 
 $local:defaultSetting = @{}
 $local:currentSetting = @{}

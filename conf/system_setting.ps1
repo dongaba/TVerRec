@@ -233,6 +233,11 @@ $script:windowShowStyle = 'Minimized'
 #　この設定はソフトウェアデコードの強制を有効に設定されていると無効化されます。
 $script:ffmpegDecodeOption = ''
 
+#youtube-dlオプション
+#　直接youtube-dlのオプションを記載することができます。
+#　動画の解像度を指定する場合などに使用します。
+$script:ytdlOption = ''
+
 #以下は$script:ffmpegDecodeOptionの設定例
 
 #QSV : for Intel CPUs (Intel内蔵グラフィックを使用)

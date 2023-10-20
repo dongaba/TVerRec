@@ -73,6 +73,7 @@ try {
 	$local:GeoIPValues = $local:ipapi.psobject.properties
 	foreach ($local:GeoIPValue in $local:GeoIPValues) { $script:clientEnv.Add($local:GeoIPValue.Name, $local:GeoIPValue.Value) }
 } catch { Write-Debug ('Geo IPのチェックに失敗しました') }
+if (Test-Path $script:devDir) { $script:appVersion += ' dev' }
 $script:clientEnv.Add('AppName', $script:appName)
 $script:clientEnv.Add('AppVersion', $script:appVersion)
 $script:clientEnv.Add('PSEdition', $PSVersionTable.PSEdition)
@@ -85,7 +86,6 @@ $script:clientEnv.Add('TZ', $script:tz)
 $script:clientEnv.Add('GUID', $script:guid)
 $script:clientEnv = $script:clientEnv.GetEnumerator() | Sort-Object -Property key
 $progressPreference = 'Continue'
-if (Test-Path $script:devDir) { $script:appVersion += ' dev' }
 
 #----------------------------------------------------------------------
 #統計取得
@@ -1756,6 +1756,7 @@ function executeYtdl {
 	$local:ytdlArgs += (' {0} {1}' -f '--paths', $local:descDir)
 	$local:ytdlArgs += (' {0} {1}' -f '--ffmpeg-location', $local:ffmpegPath)
 	$local:ytdlArgs += (' {0} {1}' -f '--output', $local:saveFile)
+	$local:ytdlArgs += (' {0}' -f $script:ytdlOption)
 	$local:ytdlArgs += (' {0}' -f $local:videoPageURL)
 
 	if ($IsWindows) {
