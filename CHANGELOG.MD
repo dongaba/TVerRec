@@ -1,5 +1,15 @@
 ﻿# Change Log
 
+## [2.8.4](https://github.com/dongaba/TVerRec/releases/tag/v2.8.4)
+
+### 2.8.4 Added
+
+### 2.8.4 Changed
+
+- likeをmatchに置き換えることによる性能改善
+
+### 2.8.4 Fixed
+
 ## [2.8.3](https://github.com/dongaba/TVerRec/releases/tag/v2.8.3)
 
 ### 2.8.3 Added

@@ -1024,30 +1024,30 @@ function getLinkFromSiteMap {
 	$local:searchResults = $local:searchResultsRaw.urlset.url.loc | Sort-Object | Get-Unique
 
 	foreach ($local:searchResult in $local:searchResults) {
-		if ($local:searchResult -like '*/episodes/*') { $script:episodeLinks.Add($local:searchResult) }
+		if ($local:searchResult -match '\/episodes\/') { $script:episodeLinks.Add($local:searchResult) }
 		elseif ($script:sitemapParseEpisodeOnly -eq $true) { Write-Debug ('Episodeではないためスキップします') }
 		else {
 			switch ($true) {
-				($local:searchResult -like '*/seasons/*') {
+				($local:searchResult -match '\/seasons\/') {
 					Write-Output ('　{0} からEpisodeを抽出中...' -f $local:searchResult)
 					try { getLinkFromSeasonID ($local:searchResult) }
 					catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:11') ; continue }
 					break
 				}
-				($local:searchResult -like '*/series/*') {
+				($local:searchResult -match '\/series\/') {
 					Write-Output ('　{0} からEpisodeを抽出中...' -f $local:searchResult)
 					try { getLinkFromSeriesID ($local:searchResult) }
 					catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:12') ; continue }
 					break
 				}
 				($local:searchResult -eq 'https://tver.jp/') { break }	#トップページ	別のキーワードがあるためため対応予定なし
-				($local:searchResult -like '*/info/*') { break }	#お知らせ	番組ページではないため対応予定なし
-				($local:searchResult -like '*/live/*') { break }	#追っかけ再生	対応していない
-				($local:searchResult -like '*/mypage/*') { break }	#マイページ	ブラウザのCookieを処理しないといけないと思われるため対応予定なし
-				($local:searchResult -like '*/program*') { break }	#番組表	番組ページではないため対応予定なし
-				($local:searchResult -like '*/ranking*') { break }	#ランキング	他でカバーできるため対応予定なし
-				($local:searchResult -like '*/specials*') { break }	#特集	他でカバーできるため対応予定なし
-				($local:searchResult -like '*/topics*') { break }	#トピック	番組ページではないため対応予定なし
+				($local:searchResult -match '\/info\/') { break }	#お知らせ	番組ページではないため対応予定なし
+				($local:searchResult -match '\/live\/') { break }	#追っかけ再生	対応していない
+				($local:searchResult -match '\/mypage\/') { break }	#マイページ	ブラウザのCookieを処理しないといけないと思われるため対応予定なし
+				($local:searchResult -match '\/program') { break }	#番組表	番組ページではないため対応予定なし
+				($local:searchResult -match '\/ranking') { break }	#ランキング	他でカバーできるため対応予定なし
+				($local:searchResult -match '\/specials') { break }	#特集	他でカバーできるため対応予定なし
+				($local:searchResult -match '\/topics') { break }	#トピック	番組ページではないため対応予定なし
 				default { Write-Warning ('❗ 未知のパターンです。 - {0}' -f $local:searchResult) ; break }
 			}
 		}
@@ -1235,7 +1235,7 @@ function downloadTVerVideo {
 		foreach ($local:ignoreTitle in $script:ignoreTitles) {
 			if ($local:ignoreTitle -ne '') {
 				#ダウンロード対象外と合致したものはそれ以上のチェック不要
-				if (($script:videoName -like ('*{0}*' -f $local:ignoreTitle)) -Or ($script:videoSeries -like ('*{0}*' -f $local:ignoreTitle))) {
+				if (($script:videoName -match [Regex]::Escape($local:ignoreTitle)) -Or ($script:videoSeries -match [Regex]::Escape($local:ignoreTitle))) {
 					sortIgnoreList $local:ignoreTitle
 					$script:ignore = $true ; break
 				}
@@ -1384,13 +1384,13 @@ function generateTVerVideoList {
 	#ダウンロード対象外に入っている番組の場合はリスト出力しない
 	foreach ($local:ignoreTitle in $script:ignoreTitles) {
 		if ($local:ignoreTitle -ne '') {
-			if ($script:videoSeries -like ('*{0}*' -f $local:ignoreTitle)) {
+			if ($script:videoSeries -match [Regex]::Escape($local:ignoreTitle)) {
 				$local:ignoreWord = $local:ignoreTitle
 				sortIgnoreList $local:ignoreTitle
 				$script:ignore = $true
 				#ダウンロード対象外と合致したものはそれ以上のチェック不要
 				break
-			} elseif ($script:videoTitle -like ('*{0}*' -f $local:ignoreTitle)) {
+			} elseif ($script:videoTitle -match [Regex]::Escape($local:ignoreTitle)) {
 				$local:ignoreWord = $local:ignoreTitle
 				sortIgnoreList $local:ignoreTitle
 				$script:ignore = $true
@@ -1542,7 +1542,7 @@ function getVideoInfo {
 	if ($script:videoSeason -eq '本編') { $script:videoSeason = '' }
 
 	#シリーズ名がシーズン名を含む場合はシーズン名をクリア
-	if ($script:videoSeries -like ('*{0}*' -f $script:videoSeason)) { $script:videoSeason = '' }
+	if ($script:videoSeries -match [Regex]::Escape($script:videoSeason)) { $script:videoSeason = '' }
 
 	#放送日を整形
 	$local:broadcastYMD = $null
