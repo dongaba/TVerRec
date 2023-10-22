@@ -6,7 +6,7 @@
 
 ### 2.8.4 Changed
 
-- likeをmatchに置き換えることによる性能改善
+- like を match に置き換えることによる性能改善
 
 ### 2.8.4 Fixed
 
