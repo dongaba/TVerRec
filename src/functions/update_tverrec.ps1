@@ -211,12 +211,12 @@ if (Test-Path (Join-Path $script:scriptRoot '../.devcontainer')) {
 	Remove-Item -LiteralPath (Join-Path $script:scriptRoot '../.devcontainer') -Recurse -Force
 }
 #youtube-dlの旧更新スクリプトの削除(v2.8.1→v2.8.2)
-#if (Test-Path (Join-Path $script:scriptRoot 'functions/update_yt-dlp.ps1') -PathType Leaf) {
-#	Remove-Item -LiteralPath (Join-Path $script:scriptRoot 'functions/update_yt-dlp.ps1') -Force
-#}
-#if (Test-Path (Join-Path $script:scriptRoot 'functions/update_ytdl-patched.ps1') -PathType Leaf) {
-#	Remove-Item -LiteralPath (Join-Path $script:scriptRoot 'functions/update_ytdl-patched.ps1') -Force
-#}
+if (Test-Path (Join-Path $script:scriptRoot 'functions/update_yt-dlp.ps1') -PathType Leaf) {
+	Remove-Item -LiteralPath (Join-Path $script:scriptRoot 'functions/update_yt-dlp.ps1') -Force
+}
+if (Test-Path (Join-Path $script:scriptRoot 'functions/update_ytdl-patched.ps1') -PathType Leaf) {
+	Remove-Item -LiteralPath (Join-Path $script:scriptRoot 'functions/update_ytdl-patched.ps1') -Force
+}
 
 #実行権限の付与
 if ($IsWindows -eq $false) {

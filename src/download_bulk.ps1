@@ -157,11 +157,13 @@ foreach ($local:keywordName in $local:keywordNames) {
 		Write-Output ('{0}/{1} - {2}' -f $local:videoNum, $local:videoTotal, $local:videoLink)
 		#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 		waitTillYtdlProcessGetFewer $script:parallelDownloadFileNum
+
 		#TVer番組ダウンロードのメイン処理
 		downloadTVerVideo `
 			-Keyword $local:keywordName `
 			-URL $local:videoLink `
-			-Link $local:videoLink.Replace('https://tver.jp', '')
+			-Link $local:videoLink.Replace('https://tver.jp', '') `
+			=Single $false
 	}
 	#----------------------------------------------------------------------
 

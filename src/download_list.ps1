@@ -136,10 +136,12 @@ foreach ($local:videoLink in $local:videoLinks) {
 	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 	waitTillYtdlProcessGetFewer $script:parallelDownloadFileNum
 	#TVer番組ダウンロードのメイン処理
+
 	downloadTVerVideo `
 		-Keyword $local:keywordName `
 		-URL ('https://tver.jp/episodes/{0}' -f $local:videoLink) `
-		-Link ('/episodes/{0}' -f $local:videoLink)
+		-Link ('/episodes/{0}' -f $local:videoLink) `
+		-Single $false
 }
 #----------------------------------------------------------------------
 
