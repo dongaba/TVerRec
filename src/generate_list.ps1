@@ -187,7 +187,6 @@ foreach ($local:keywordName in $local:keywordNames) {
 			#変数の置き換え
 			$script:timeoutSec = $using:script:timeoutSec
 			$script:guid = $using:script:guid
-			$script:clientEnv = $using:script:clientEnv
 			$script:disableValidation = $using:script:disableValidation
 			$script:forceSoftwareDecodeFlag = $using:script:forceSoftwareDecodeFlag
 			$script:ffmpegDecodeOption = $using:script:ffmpegDecodeOption

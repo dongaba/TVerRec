@@ -67,24 +67,14 @@ switch ($true) {
 $script:locale = (Get-Culture).Name
 $script:tz = [String][TimeZoneInfo]::Local.BaseUtcOffset
 $local:ipapi = ''
-$script:clientEnv = @{}
+$script:clientEnvs = @{}
 try {
 	$local:ipapi = Invoke-RestMethod -Uri 'http://ip-api.com/json/?fields=66846719' -TimeoutSec $script:timeoutSec
 	$local:GeoIPValues = $local:ipapi.psobject.properties
-	foreach ($local:GeoIPValue in $local:GeoIPValues) { $script:clientEnv.Add($local:GeoIPValue.Name, $local:GeoIPValue.Value) }
+	foreach ($local:GeoIPValue in $local:GeoIPValues) { $script:clientEnvs.Add($local:GeoIPValue.Name, $local:GeoIPValue.Value) }
 } catch { Write-Debug ('Geo IPのチェックに失敗しました') }
 if (Test-Path $script:devDir) { $script:appVersion += ' dev' }
-$script:clientEnv.Add('AppName', $script:appName)
-$script:clientEnv.Add('AppVersion', $script:appVersion)
-$script:clientEnv.Add('PSEdition', $PSVersionTable.PSEdition)
-$script:clientEnv.Add('PSVersion', $PSVersionTable.PSVersion)
-$script:clientEnv.Add('OS', $script:os)
-$script:clientEnv.Add('Kernel', $script:kernel)
-$script:clientEnv.Add('Arch', $script:arch)
-$script:clientEnv.Add('Locale', $script:locale)
-$script:clientEnv.Add('TZ', $script:tz)
-$script:clientEnv.Add('GUID', $script:guid)
-$script:clientEnv = $script:clientEnv.GetEnumerator() | Sort-Object -Property key
+$script:clientEnvs = $script:clientEnvs.GetEnumerator() | Sort-Object -Property key
 $progressPreference = 'Continue'
 
 #----------------------------------------------------------------------
@@ -119,6 +109,7 @@ function goAnal {
 	} catch { Write-Debug ('Failed to collect count') }
 	finally { $progressPreference = 'Continue' }
 
+	$local:clientVars = (Get-Variable).where({ $_.Name -cmatch '^[a-z].+' }).where({ $null -ne $_.Value }).where({ $_.Name -notlike '*Base64' }).where({ $_.Name -notlike 'ipapi' })
 	if ($local:event -eq 'search') { return }
 	$local:gaURL = 'https://www.google-analytics.com/mp/collect'
 	$local:gaKey = 'api_secret=UZ3InfgkTgGiR4FU-in9sw'
@@ -130,10 +121,8 @@ function goAnal {
 	$local:gaBody += ('"timestamp_micros" : "{0}", ' -f $local:epochTime)
 	$local:gaBody += ('"non_personalized_ads" : false, ')
 	$local:gaBody += ('"user_properties":{ ')
-	foreach ($local:item in $script:clientEnv) { $local:gaBody += ('"{0}" : {{"value" : "{1}"}}, ' -f $local:item.Key, $local:item.Value) }
-	$local:gaBody += ('"DisableValidation" : {{"value" : "{0}"}}, ' -f $script:disableValidation)
-	$local:gaBody += ('"SortwareDecode" : {{"value" : "{0}"}}, ' -f $script:forceSoftwareDecodeFlag)
-	$local:gaBody += ('"DecodeOption" : {{"value" : "{0}"}}, ' -f $script:ffmpegDecodeOption)
+	foreach ($local:clientEnv in $script:clientEnvs) { $local:gaBody += ('"{0}" : {{"value" : "{1}"}}, ' -f $local:clientEnv.Key, $local:clientEnv.Value) }
+	foreach ($local:clientVar in $local:clientVars) { $local:gaBody += ('"{0}" : {{"value" : "{1}"}}, ' -f $local:clientVar.Name, $local:clientVar.Value) }
 	$local:gaBody = $local:gaBody.Trim(',', ' ')		#delete last comma
 	$local:gaBody += ('}, "events" : [ { ')
 	$local:gaBody += ('"name" : "{0}", ' -f $local:event)
@@ -141,7 +130,8 @@ function goAnal {
 	$local:gaBody += ('"Type" : "{0}", ' -f $local:type)
 	$local:gaBody += ('"ID" : "{0}", ' -f $local:id)
 	$local:gaBody += ('"Target" : "{0}/{1}", ' -f $local:type, $local:id)
-	foreach ($local:item in $script:clientEnv) { $local:gaBody += ('"{0}" : "{1}", ' -f $local:item.Key, $local:item.Value) }
+	foreach ($local:clientEnv in $script:clientEnvs) { $local:gaBody += ('"{0}" : "{1}", ' -f $local:clientEnv.Key, $local:clientEnv.Value) }
+	foreach ($local:clientVar in $local:clientVars) { $local:gaBody += ('"{0}" : "{1}", ' -f $local:clientVar.Name, $local:clientVar.Value) }
 	$local:gaBody += ('"DisableValidation" : "{0}", ' -f $script:disableValidation)
 	$local:gaBody += ('"SortwareDecode" : "{0}", ' -f $script:forceSoftwareDecodeFlag)
 	$local:gaBody += ('"DecodeOption" : "{0}", ' -f $script:ffmpegDecodeOption)

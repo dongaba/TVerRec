@@ -1,5 +1,15 @@
 ﻿# Change Log
 
+## [2.8.3](https://github.com/dongaba/TVerRec/releases/tag/v2.8.3)
+
+### 2.8.3 Added
+
+### 2.8.3 Changed
+
+### 2.8.3 Fixed
+
+- からディレクトリ削除時のメッセージ出力不正を修正
+
 ## [2.8.2](https://github.com/dongaba/TVerRec/releases/tag/v2.8.2)
 
 ### 2.8.2 Added
