@@ -158,7 +158,6 @@ showProgressToast `
 $local:emptyDirs = @()
 $local:emptyDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).where({ $_.PSIsContainer -eq $true })).Where({ ($_.GetFiles().Count -eq 0) -And ($_.GetDirectories().Count -eq 0) })
 if ($local:emptyDirs.Count -ne 0) { $local:emptyDirs = @($local:emptyDirs.Fullname) }
-else { { Write-Warning ('❗ 空ディレクトリを見つけられませんでした') } }
 
 $local:emptyDirTotal = $local:emptyDirs.Count
 

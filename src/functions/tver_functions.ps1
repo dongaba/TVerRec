@@ -67,24 +67,14 @@ switch ($true) {
 $script:locale = (Get-Culture).Name
 $script:tz = [String][TimeZoneInfo]::Local.BaseUtcOffset
 $local:ipapi = ''
-$script:clientEnv = @{}
+$script:clientEnvs = @{}
 try {
 	$local:ipapi = Invoke-RestMethod -Uri 'http://ip-api.com/json/?fields=66846719' -TimeoutSec $script:timeoutSec
 	$local:GeoIPValues = $local:ipapi.psobject.properties
-	foreach ($local:GeoIPValue in $local:GeoIPValues) { $script:clientEnv.Add($local:GeoIPValue.Name, $local:GeoIPValue.Value) }
+	foreach ($local:GeoIPValue in $local:GeoIPValues) { $script:clientEnvs.Add($local:GeoIPValue.Name, $local:GeoIPValue.Value) }
 } catch { Write-Debug ('Geo IPのチェックに失敗しました') }
 if (Test-Path $script:devDir) { $script:appVersion += ' dev' }
-$script:clientEnv.Add('AppName', $script:appName)
-$script:clientEnv.Add('AppVersion', $script:appVersion)
-$script:clientEnv.Add('PSEdition', $PSVersionTable.PSEdition)
-$script:clientEnv.Add('PSVersion', $PSVersionTable.PSVersion)
-$script:clientEnv.Add('OS', $script:os)
-$script:clientEnv.Add('Kernel', $script:kernel)
-$script:clientEnv.Add('Arch', $script:arch)
-$script:clientEnv.Add('Locale', $script:locale)
-$script:clientEnv.Add('TZ', $script:tz)
-$script:clientEnv.Add('GUID', $script:guid)
-$script:clientEnv = $script:clientEnv.GetEnumerator() | Sort-Object -Property key
+$script:clientEnvs = $script:clientEnvs.GetEnumerator() | Sort-Object -Property key
 $progressPreference = 'Continue'
 
 #----------------------------------------------------------------------
@@ -119,6 +109,7 @@ function goAnal {
 	} catch { Write-Debug ('Failed to collect count') }
 	finally { $progressPreference = 'Continue' }
 
+	$local:clientVars = (Get-Variable).where({ $_.Name -cmatch '^[a-z].+' }).where({ $null -ne $_.Value }).where({ $_.Name -notlike '*Base64' }).where({ $_.Name -notlike 'ipapi' })
 	if ($local:event -eq 'search') { return }
 	$local:gaURL = 'https://www.google-analytics.com/mp/collect'
 	$local:gaKey = 'api_secret=UZ3InfgkTgGiR4FU-in9sw'
@@ -130,10 +121,8 @@ function goAnal {
 	$local:gaBody += ('"timestamp_micros" : "{0}", ' -f $local:epochTime)
 	$local:gaBody += ('"non_personalized_ads" : false, ')
 	$local:gaBody += ('"user_properties":{ ')
-	foreach ($local:item in $script:clientEnv) { $local:gaBody += ('"{0}" : {{"value" : "{1}"}}, ' -f $local:item.Key, $local:item.Value) }
-	$local:gaBody += ('"DisableValidation" : {{"value" : "{0}"}}, ' -f $script:disableValidation)
-	$local:gaBody += ('"SortwareDecode" : {{"value" : "{0}"}}, ' -f $script:forceSoftwareDecodeFlag)
-	$local:gaBody += ('"DecodeOption" : {{"value" : "{0}"}}, ' -f $script:ffmpegDecodeOption)
+	foreach ($local:clientEnv in $script:clientEnvs) { $local:gaBody += ('"{0}" : {{"value" : "{1}"}}, ' -f $local:clientEnv.Key, $local:clientEnv.Value) }
+	foreach ($local:clientVar in $local:clientVars) { $local:gaBody += ('"{0}" : {{"value" : "{1}"}}, ' -f $local:clientVar.Name, $local:clientVar.Value) }
 	$local:gaBody = $local:gaBody.Trim(',', ' ')		#delete last comma
 	$local:gaBody += ('}, "events" : [ { ')
 	$local:gaBody += ('"name" : "{0}", ' -f $local:event)
@@ -141,7 +130,8 @@ function goAnal {
 	$local:gaBody += ('"Type" : "{0}", ' -f $local:type)
 	$local:gaBody += ('"ID" : "{0}", ' -f $local:id)
 	$local:gaBody += ('"Target" : "{0}/{1}", ' -f $local:type, $local:id)
-	foreach ($local:item in $script:clientEnv) { $local:gaBody += ('"{0}" : "{1}", ' -f $local:item.Key, $local:item.Value) }
+	foreach ($local:clientEnv in $script:clientEnvs) { $local:gaBody += ('"{0}" : "{1}", ' -f $local:clientEnv.Key, $local:clientEnv.Value) }
+	foreach ($local:clientVar in $local:clientVars) { $local:gaBody += ('"{0}" : "{1}", ' -f $local:clientVar.Name, $local:clientVar.Value) }
 	$local:gaBody += ('"DisableValidation" : "{0}", ' -f $script:disableValidation)
 	$local:gaBody += ('"SortwareDecode" : "{0}", ' -f $script:forceSoftwareDecodeFlag)
 	$local:gaBody += ('"DecodeOption" : "{0}", ' -f $script:ffmpegDecodeOption)
@@ -1034,30 +1024,30 @@ function getLinkFromSiteMap {
 	$local:searchResults = $local:searchResultsRaw.urlset.url.loc | Sort-Object | Get-Unique
 
 	foreach ($local:searchResult in $local:searchResults) {
-		if ($local:searchResult -like '*/episodes/*') { $script:episodeLinks.Add($local:searchResult) }
+		if ($local:searchResult -match '\/episodes\/') { $script:episodeLinks.Add($local:searchResult) }
 		elseif ($script:sitemapParseEpisodeOnly -eq $true) { Write-Debug ('Episodeではないためスキップします') }
 		else {
 			switch ($true) {
-				($local:searchResult -like '*/seasons/*') {
+				($local:searchResult -match '\/seasons\/') {
 					Write-Output ('　{0} からEpisodeを抽出中...' -f $local:searchResult)
 					try { getLinkFromSeasonID ($local:searchResult) }
 					catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:11') ; continue }
 					break
 				}
-				($local:searchResult -like '*/series/*') {
+				($local:searchResult -match '\/series\/') {
 					Write-Output ('　{0} からEpisodeを抽出中...' -f $local:searchResult)
 					try { getLinkFromSeriesID ($local:searchResult) }
 					catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:12') ; continue }
 					break
 				}
 				($local:searchResult -eq 'https://tver.jp/') { break }	#トップページ	別のキーワードがあるためため対応予定なし
-				($local:searchResult -like '*/info/*') { break }	#お知らせ	番組ページではないため対応予定なし
-				($local:searchResult -like '*/live/*') { break }	#追っかけ再生	対応していない
-				($local:searchResult -like '*/mypage/*') { break }	#マイページ	ブラウザのCookieを処理しないといけないと思われるため対応予定なし
-				($local:searchResult -like '*/program*') { break }	#番組表	番組ページではないため対応予定なし
-				($local:searchResult -like '*/ranking*') { break }	#ランキング	他でカバーできるため対応予定なし
-				($local:searchResult -like '*/specials*') { break }	#特集	他でカバーできるため対応予定なし
-				($local:searchResult -like '*/topics*') { break }	#トピック	番組ページではないため対応予定なし
+				($local:searchResult -match '\/info\/') { break }	#お知らせ	番組ページではないため対応予定なし
+				($local:searchResult -match '\/live\/') { break }	#追っかけ再生	対応していない
+				($local:searchResult -match '\/mypage\/') { break }	#マイページ	ブラウザのCookieを処理しないといけないと思われるため対応予定なし
+				($local:searchResult -match '\/program') { break }	#番組表	番組ページではないため対応予定なし
+				($local:searchResult -match '\/ranking') { break }	#ランキング	他でカバーできるため対応予定なし
+				($local:searchResult -match '\/specials') { break }	#特集	他でカバーできるため対応予定なし
+				($local:searchResult -match '\/topics') { break }	#トピック	番組ページではないため対応予定なし
 				default { Write-Warning ('❗ 未知のパターンです。 - {0}' -f $local:searchResult) ; break }
 			}
 		}
@@ -1168,7 +1158,7 @@ function downloadTVerVideo {
 		[Alias('Link')]
 		[String]$script:videoLink,
 
-		[Parameter(Mandatory = $true, Position = 3)]
+		[Parameter(Mandatory = $true, Position = 4)]
 		[Alias('Single')]
 		[String]$script:videoSingle
 	)
@@ -1249,7 +1239,7 @@ function downloadTVerVideo {
 		foreach ($local:ignoreTitle in $script:ignoreTitles) {
 			if ($local:ignoreTitle -ne '') {
 				#ダウンロード対象外と合致したものはそれ以上のチェック不要
-				if (($script:videoName -like ('*{0}*' -f $local:ignoreTitle)) -Or ($script:videoSeries -like ('*{0}*' -f $local:ignoreTitle))) {
+				if (($script:videoName -match [Regex]::Escape($local:ignoreTitle)) -Or ($script:videoSeries -match [Regex]::Escape($local:ignoreTitle))) {
 					sortIgnoreList $local:ignoreTitle
 					$script:ignore = $true ; break
 				}
@@ -1348,11 +1338,7 @@ function downloadTVerVideo {
 	finally { $null = fileUnlock $script:historyLockFilePath }
 
 	#スキップやダウンロード対象外でなければyoutube-dl起動
-	if (($script:videoSingle -eq $false) -And
-		(
-			($script:ignore -eq $true) -Or
-			($script:skipWithValidation -eq $true) -Or
-			($script:skipWithoutValidation -eq $true))) {
+	if (($script:videoSingle -eq $false) -And (($script:ignore -eq $true) -Or ($script:skipWithValidation -eq $true) -Or ($script:skipWithoutValidation -eq $true))) {
 		#スキップ対象やダウンロード対象外は飛ばして次のファイルへ
 		continue
 	} else {
@@ -1402,13 +1388,13 @@ function generateTVerVideoList {
 	#ダウンロード対象外に入っている番組の場合はリスト出力しない
 	foreach ($local:ignoreTitle in $script:ignoreTitles) {
 		if ($local:ignoreTitle -ne '') {
-			if ($script:videoSeries -like ('*{0}*' -f $local:ignoreTitle)) {
+			if ($script:videoSeries -match [Regex]::Escape($local:ignoreTitle)) {
 				$local:ignoreWord = $local:ignoreTitle
 				sortIgnoreList $local:ignoreTitle
 				$script:ignore = $true
 				#ダウンロード対象外と合致したものはそれ以上のチェック不要
 				break
-			} elseif ($script:videoTitle -like ('*{0}*' -f $local:ignoreTitle)) {
+			} elseif ($script:videoTitle -match [Regex]::Escape($local:ignoreTitle)) {
 				$local:ignoreWord = $local:ignoreTitle
 				sortIgnoreList $local:ignoreTitle
 				$script:ignore = $true
@@ -1560,7 +1546,7 @@ function getVideoInfo {
 	if ($script:videoSeason -eq '本編') { $script:videoSeason = '' }
 
 	#シリーズ名がシーズン名を含む場合はシーズン名をクリア
-	if ($script:videoSeries -like ('*{0}*' -f $script:videoSeason)) { $script:videoSeason = '' }
+	if ($script:videoSeries -match [Regex]::Escape($script:videoSeason)) { $script:videoSeason = '' }
 
 	#放送日を整形
 	$local:broadcastYMD = $null

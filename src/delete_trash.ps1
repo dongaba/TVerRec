@@ -154,13 +154,15 @@ if (Test-Path $script:ignoreFilePath -PathType Leaf) { $script:ignoreTitles = lo
 else { $local:ignoreTitles = @() }
 
 $local:ignoreDirs = [System.Collections.Generic.List[string]]::new()
-$local:workDirEntities = @(Get-ChildItem -LiteralPath $script:downloadBaseDir).FullName
+$local:workDirEntities = @(Get-ChildItem -LiteralPath $script:downloadBaseDir).Name
+$local:completeMatches = @(Compare-Object -IncludeEqual -ExcludeDifferent $workDirEntities $script:ignoreTitles)
+if ($local:completeMatches.Count -ne 0) { $local:completeMatches = $local:completeMatches.InputObject }
+foreach ($local:completeMatch in $local:completeMatches) { $local:ignoreDirs.Add($local:completeMatch) }
 foreach ($local:workDirEntity in $local:workDirEntities) {
 	foreach ($local:ignoreTitle in $script:ignoreTitles) {
 		if ($local:ignoreTitle -ne '') {
 			#ダウンロード対象外と合致したものは削除対象
-			if ($local:workDirEntity -like ('*{0}*' -f $local:ignoreTitle) ) {
-				sortIgnoreList $local:ignoreTitle
+			if ($local:workDirEntity -match [Regex]::Escape($local:ignoreTitle) ) {
 				$local:ignoreDirs.Add($local:workDirEntity)
 			}
 		}
@@ -175,8 +177,9 @@ if ($local:ignoreDirs.Count -ne 0) {
 		$local:ignoreDirs | ForEach-Object -Parallel {
 			$local:ignoreNum = ([Array]::IndexOf($using:local:ignoreDirs, $_)) + 1
 			$local:ignoreTotal = $using:local:ignoreDirs.Count
-			Write-Output ('　{0}/{1} - {2}' -f $local:ignoreNum, $local:ignoreTotal, $_)
-			try { Remove-Item -LiteralPath $_ -Recurse -Force }
+			$local:delTarget = Join-Path $using:script:downloadBaseDir $_
+			Write-Output ('　{0}/{1} - {2}' -f $local:ignoreNum, $local:ignoreTotal, $local:delTarget)
+			try { Remove-Item -LiteralPath $local:delTarget -Recurse -Force }
 			catch { Write-Warning ('❗ 削除できないファイルがありました') }
 		} -ThrottleLimit $script:multithreadNum
 	} else {
@@ -184,6 +187,7 @@ if ($local:ignoreDirs.Count -ne 0) {
 		#ダウンロード対象外内のエントリ合計数
 		$local:ignoreNum = 0
 		$local:ignoreTotal = $local:ignoreDirs.Count
+		$local:delTarget = Join-Path $script:downloadBaseDir $local:ignoreDir
 		$local:totalStartTime = Get-Date
 		foreach ($local:ignoreDir in $local:ignoreDirs) {
 			$local:ignoreNum += 1
@@ -199,14 +203,14 @@ if ($local:ignoreDirs.Count -ne 0) {
 				$local:progressRate = 0
 			}
 			UpdateProgressToast `
-				-Title $local:ignoreDir `
+				-Title $local:delTarget `
 				-Rate $local:progressRate `
 				-LeftText ('{0}/{1}' -f $local:ignoreNum, $local:ignoreTotal) `
 				-RightText ('残り時間 {0}' -f $local:minRemaining) `
 				-Tag $script:appName `
 				-Group 'Delete'
-			Write-Output ('　{0}/{1} - {2}' -f $local:ignoreNum, $local:ignoreTotal, $local:ignoreDir)
-			try { Remove-Item -LiteralPath $local:ignoreDir -Recurse -Force }
+			Write-Output ('　{0}/{1} - {2}' -f $local:ignoreNum, $local:ignoreTotal, $local:delTarget)
+			try { Remove-Item -LiteralPath $local:delTarget -Recurse -Force }
 			catch { Write-Warning ('❗ 削除できないファイルがありました') }
 		}
 	}
@@ -231,7 +235,6 @@ showProgressToast `
 $local:emptyDirs = @()
 $local:emptyDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).where({ $_.PSIsContainer -eq $true })).Where({ ($_.GetFiles().Count -eq 0) -And ($_.GetDirectories().Count -eq 0) })
 if ($local:emptyDirs.Count -ne 0) { $local:emptyDirs = @($local:emptyDirs.Fullname) }
-else { { Write-Warning ('❗ 空ディレクトリを見つけられませんでした') } }
 
 $local:emptyDirTotal = $local:emptyDirs.Count
 

@@ -187,7 +187,6 @@ foreach ($local:keywordName in $local:keywordNames) {
 			#変数の置き換え
 			$script:timeoutSec = $using:script:timeoutSec
 			$script:guid = $using:script:guid
-			$script:clientEnv = $using:script:clientEnv
 			$script:disableValidation = $using:script:disableValidation
 			$script:forceSoftwareDecodeFlag = $using:script:forceSoftwareDecodeFlag
 			$script:ffmpegDecodeOption = $using:script:ffmpegDecodeOption
@@ -220,13 +219,13 @@ foreach ($local:keywordName in $local:keywordNames) {
 			#ダウンロード対象外に入っている番組の場合はリスト出力しない
 			foreach ($ignoreTitle in $using:script:ignoreTitles) {
 				if ($ignoreTitle -ne '') {
-					if ($script:videoSeries -like ('*{0}*' -f $local:ignoreTitle)) {
+					if ($script:videoSeries -match [Regex]::Escape($local:ignoreTitle)) {
 						$ignoreWord = $ignoreTitle
 						sortIgnoreList $ignoreTitle
 						$ignore = $true
 						#ダウンロード対象外と合致したものはそれ以上のチェック不要
 						break
-					} elseif ($script:videoTitle -like ('*{0}*' -f $local:ignoreTitle)) {
+					} elseif ($script:videoTitle -match [Regex]::Escape($local:ignoreTitle)) {
 						$ignoreWord = $ignoreTitle
 						sortIgnoreList $ignoreTitle
 						$ignore = $true

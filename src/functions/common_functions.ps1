@@ -545,7 +545,7 @@ function Get-WindowsAppId {
 
 	Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
 
-	$local:appID = (Get-StartApps -Name 'PowerShell').where({ $_.Name -like 'PowerShell*' })[0].AppId
+	$local:appID = (Get-StartApps -Name 'PowerShell').where({ $_.Name -match 'PowerShell*' })[0].AppId
 
 	return $local:appID
 }
