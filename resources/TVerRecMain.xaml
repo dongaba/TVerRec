@@ -7,9 +7,9 @@
     xmlns:local="clr-namespace:TVerRec"
     mc:Ignorable="d"
     Title="TVerRec"
-    Height="640"
+    Height="700"
     Width="600"
-    MinHeight="555"
+    MinHeight="600"
     MinWidth="600"
     Background="#f1f1f1"
     WindowStartupLocation="CenterScreen">
@@ -22,17 +22,17 @@
 
         <!-- テキストボックス -->
         <SolidColorBrush
-            x:Key="TextBox.Static.Border"
+            x:Key="RichTextBox.Static.Border"
             Color="#BBBBBB"/>
         <Style
-            x:Key="TextBoxStyle"
-            TargetType="{x:Type TextBox}">
+            x:Key="RichTextBoxStyle"
+            TargetType="{x:Type RichTextBox}">
             <Setter
                 Property="Background"
                 Value="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"/>
             <Setter
                 Property="BorderBrush"
-                Value="{StaticResource TextBox.Static.Border}"/>
+                Value="{StaticResource RichTextBox.Static.Border}"/>
             <Setter
                 Property="Foreground"
                 Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
@@ -57,7 +57,7 @@
             <Setter
                 Property="Template">
                 <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type TextBox}">
+                    <ControlTemplate TargetType="{x:Type RichTextBox}">
                         <Border
                             x:Name="border"
                             Background="{TemplateBinding Background}"
@@ -77,7 +77,7 @@
                                 <Setter
                                     Property="Background"
                                     TargetName="border"
-                                    Value="{StaticResource TextBox.Static.Border}"/>
+                                    Value="{StaticResource RichTextBox.Static.Border}"/>
                                 <Setter
                                     Property="Opacity"
                                     TargetName="border"
@@ -501,19 +501,19 @@
                 <Button
                     x:Name="btnWorkOpen"
                     Style="{DynamicResource ButtonStyle}"
-                    Content="作業フォルダ"
+                    Content="作業ディレクトリ"
                     Margin="10,0,10,0"
                     Width="100"/>
                 <Button
                     x:Name="btnDownloadOpen"
                     Style="{DynamicResource ButtonStyle}"
-                    Content="ダウンロードフォルダ"
+                    Content="ダウンロードディレクトリ"
                     Margin="10,0,10,0"
                     Width="100"/>
                 <Button
                     x:Name="btnSaveOpen"
                     Style="{DynamicResource ButtonStyle}"
-                    Content="保存フォルダ"
+                    Content="保存ディレクトリ"
                     Margin="10,0,10,0"
                     Width="100"/>
             </StackPanel>
@@ -589,10 +589,10 @@
             Grid.Row="12"
             Grid.Column="1"
             Grid.ColumnSpan="2">
-            <TextBox
+            <RichTextBox
                 x:Name="tbOutText"
-                Style="{DynamicResource TextBoxStyle}"
-                TextWrapping="Wrap"
+                Style="{DynamicResource RichTextBoxStyle}"
+                Block.LineHeight="1"
                 Margin="10,0,10,10"
                 IsReadOnly="True"
                 VerticalScrollBarVisibility="Auto"

@@ -82,21 +82,22 @@ $script:parallelDownloadFileNum = 5
 $script:parallelDownloadNumPerFile = 10
 
 #ループ処理の間隔(秒)
+#　ループ処理の実行間隔を指定します。
 $script:loopCycle = 3600
 
 #並列処理の有効化
 #　並列処理を有効化して処理を高速化するかを設定します。
 #　ただし、並列処理を有効化すると履歴ファイルや無視リストの破損リスクが高まります。
 #　現在のところ、並列処理を行うのはダウンロードリストの作成処理とダウンロード対象外番組の削除処理、
-#　空フォルダの削除処理です。
+#　空ディレクトリの削除処理です。
 $script:enableMultithread = $true
 
 #並列処理の同時スレッド数
 #　PCの性能に応じて適度に設定してください。
-#　最近のPCであれば100くらいの値を設定しても十分に動作すると思います。
+#　最近のPCであれば50くらいの値を設定しても十分に動作すると思います。
 #　あまり大きな数を指定すると逆に処理時間が長くなる可能性があります。
 #　現在のところ、並列処理を行うのはダウンロードリストの作成処理とダウンロード対象外番組の削除処理、
-#　空フォルダの削除処理です。
+#　空ディレクトリの削除処理です。
 $script:multithreadNum = 50
 
 #トースト通知の無効化
@@ -225,17 +226,17 @@ $script:embedMetatag = $true
 #　Maximizedに設定すると最大化した状態でウィンドウが表示されますが、通常利用では利用することはないと思います。
 $script:windowShowStyle = 'Minimized'
 
-#
-#YoutubeDLOptionの動画サイズ指定
-#
-$script:YoutubeDLOption =  'bestvideo[height<=720]+bestaudio/best[height<=720]'
-
 #ffmpegのデコードオプション
 #　直接ffmpegのオプションを記載することができます。
 #　ダウンロードファイルの整合性検証時にハードウェアアクセラレーションを有効化する際などに使用します。
 #　例えばIntel CPUを搭載した一般的なPCであれば、-hwaccel qsv -c:v h264_qsvを設定することで、CPU内蔵のアクセラレータを使ってCPU負荷を下げつつ高速に処理することが可能です。
 #　この設定はソフトウェアデコードの強制を有効に設定されていると無効化されます。
 $script:ffmpegDecodeOption = ''
+
+#youtube-dlオプション
+#　直接youtube-dlのオプションを記載することができます。
+#　動画の解像度を指定する場合などに使用します。
+$script:ytdlOption = ''
 
 #以下は$script:ffmpegDecodeOptionの設定例
 
@@ -274,6 +275,7 @@ $script:logoBase64 = Get-Content '../resources/Logo.b64'
 #デバッグレベル
 $VerbosePreference = 'SilentlyContinue'						#詳細メッセージなし
 $DebugPreference = 'SilentlyContinue'						#デバッグメッセージなし
+$PSStyle.Formatting.Error = $PSStyle.Foreground.BrightRed
 $PSStyle.Formatting.Warning = $PSStyle.Foreground.BrightYellow
 $PSStyle.Formatting.Verbose = $PSStyle.Foreground.BrightBlack
 $PSStyle.Formatting.Debug = $PSStyle.Foreground.BrightBlue
@@ -319,7 +321,7 @@ $script:listFileSamplePath = Join-Path $script:listDir 'list.sample.csv'
 $script:listLockFilePath = Join-Path $script:dbDir 'list.lock'
 
 #ffpmegで番組検証時のエラーファイルのパス
-$script:ffpmegErrorLogPath = Join-Path $script:dbDir ('ffmpeg_error_' + $PID + '.log')
+$script:ffpmegErrorLogPath = Join-Path $script:dbDir ('ffmpeg_error_{0}.log' -f $PID)
 
 #youtube-dlのパス
 if ($IsWindows) { $script:ytdlPath = Join-Path $script:binDir 'youtube-dl.exe' }
@@ -332,3 +334,6 @@ else { $script:ffmpegPath = Join-Path $script:binDir 'ffmpeg' }
 #ffprobeのパス
 if ($IsWindows) { $script:ffprobePath = Join-Path $script:binDir 'ffprobe.exe' }
 else { $script:ffprobePath = Join-Path $script:binDir 'ffprobe' }
+
+#youtube-dlの引数
+$script:ytdlBaseArgs = '--format bestvideo+bestaudio/best --merge-output-format mp4 --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --embed-thumbnail --embed-chapters --no-cache-dir --verbose'

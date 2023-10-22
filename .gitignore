@@ -2,6 +2,7 @@
 .DS_Store
 .vs/*
 *.lnk
+!.gitkeep
 
 #debugディレクトリ配下は調査用
 debug
@@ -51,6 +52,7 @@ thunderEnvironment.json
 #その他雑多な不要ファイル
 * - コピー.*
 * - Copy.*
+* copy.csv
 *.bak
 
 #ローカルの変更をGitHubにアップしないために
@@ -68,3 +70,4 @@ user_setting.ps1
 .wsb/setup/TVerRec
 .vscode/thunder-tests/collections/tc_col_github.json
 .vscode/thunder-tests/collections/tc_col_test.json
+

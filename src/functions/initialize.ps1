@@ -33,23 +33,23 @@ try {
 		. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
 	} elseif ($IsWindows) {
 		while (!( Test-Path (Join-Path $script:confDir 'user_setting.ps1')) ) {
-			Write-Output 'ユーザ設定ファイルを作成する必要があります'
+			Write-Output ('ユーザ設定ファイルを作成する必要があります')
 			. 'gui/gui_setting.ps1'
 		}
 		if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 			. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
 		}
 	} else {
-		Write-Error '❗ ユーザ設定が完了してません' ; exit 1
+		Write-Error ('❗ ユーザ設定が完了してません') ; exit 1
 	}
-} catch { Write-Error '❗ 設定ファイルの読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error ('❗ 設定ファイルの読み込みに失敗しました') ; exit 1 }
 
 #----------------------------------------------------------------------
 #外部関数ファイルの読み込み
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/common_functions.ps1'))
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/tver_functions.ps1'))
-} catch { Write-Error '❗ 外部関数ファイルの読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error ('❗ 外部関数ファイルの読み込みに失敗しました') ; exit 1 }
 
 #----------------------------------------------------------------------
 #開発環境用に設定上書き
@@ -58,13 +58,13 @@ try {
 	$script:devConfFile = Join-Path $script:devDir 'dev_setting.ps1'
 	if (Test-Path $script:devFunctionFile) {
 		. $script:devFunctionFile
-		Write-Warning '💡 開発ファイル用共通関数ファイルを読み込みました'
+		Write-Warning ('💡 開発ファイル用共通関数ファイルを読み込みました')
 	}
 	if (Test-Path $script:devConfFile) {
 		. $script:devConfFile
-		Write-Warning '💡 開発ファイル用設定ファイルを読み込みました'
+		Write-Warning ('💡 開発ファイル用設定ファイルを読み込みました')
 	}
-} catch { Write-Error '❗ 開発用設定ファイルの読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error ('❗ 開発用設定ファイルの読み込みに失敗しました') ; exit 1 }
 
 #----------------------------------------------------------------------
 #GUI起動を判定
@@ -73,22 +73,23 @@ if ( $script:myInvocation.ScriptName.Contains('gui')) {
 	checkLatestTVerRec
 	if ($? -eq $false) { exit 1 }
 } else {
-	[Console]::ForegroundColor = 'Red'
-	$versionBanner = ' ' * (56 - $script:appVersion.Length) + 'Version. ' + $script:appVersion
-	Write-Output ''
-	Write-Output '==========================================================================='
-	Write-Output '                                                                           '
-	Write-Output '        ████████ ██    ██ ███████ ██████  ██████  ███████  ██████          '
-	Write-Output '           ██    ██    ██ ██      ██   ██ ██   ██ ██      ██               '
-	Write-Output '           ██    ██    ██ █████   ██████  ██████  █████   ██               '
-	Write-Output '           ██     ██  ██  ██      ██   ██ ██   ██ ██      ██               '
-	Write-Output '           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          '
-	Write-Output '                                                                           '
-	Write-Output $versionBanner
-	Write-Output '                                                                           '
-	Write-Output '==========================================================================='
-	Write-Output ''
-	[Console]::ResetColor()
+	if (($null -eq $script:uiMode) -Or ($script:uiMode -eq '')) {
+		[Console]::ForegroundColor = 'Red'
+		Write-Output ('')
+		Write-Output ('===========================================================================')
+		Write-Output ('                                                                           ')
+		Write-Output ('        ████████ ██    ██ ███████ ██████  ██████  ███████  ██████          ')
+		Write-Output ('           ██    ██    ██ ██      ██   ██ ██   ██ ██      ██               ')
+		Write-Output ('           ██    ██    ██ █████   ██████  ██████  █████   ██               ')
+		Write-Output ('           ██     ██  ██  ██      ██   ██ ██   ██ ██      ██               ')
+		Write-Output ('           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          ')
+		Write-Output ('                                                                           ')
+		Write-Output ("{0,$(56 - $script:appVersion.Length)}Version. {1}" -f ' ', $script:appVersion)
+		Write-Output ('                                                                           ')
+		Write-Output ('===========================================================================')
+		Write-Output ('')
+		[Console]::ResetColor()
+	}
 
 	#youtube-dlの最新化チェック
 	checkLatestYtdl

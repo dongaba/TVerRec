@@ -25,6 +25,8 @@
 #
 ###################################################################################
 
+try { $script:uiMode = [String]$args[0] } catch { $script:uiMode = '' }
+
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -35,32 +37,30 @@ try {
 	if ($script:myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
 	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
-} catch { Write-Error '❗ カレントディレクトリの設定に失敗しました' ; exit 1 }
+} catch { Write-Error ('❗ カレントディレクトリの設定に失敗しました') ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
+#----------------------------------------------------------------------
 while ($true) {
-
-	. $script:scriptRoot/download_bulk.ps1
-	. $script:scriptRoot/delete_trash.ps1
-	. $script:scriptRoot/validate_video.ps1
-	. $script:scriptRoot/validate_video.ps1
-	. $script:scriptRoot/move_video.ps1
-	. $script:scriptRoot/delete_trash.ps1
-
+	$script:validationFailed = $true
+	while ($script:validationFailed) {
+		. ('{0}/download_bulk.ps1' -f $script:scriptRoot) $script:uiMode
+		. ('{0}/delete_trash.ps1' -f $script:scriptRoot) $script:uiMode
+		. ('{0}/validate_video.ps1' -f $script:scriptRoot) $script:uiMode
+	}
+	. ('{0}/move_video.ps1' -f $script:scriptRoot) $script:uiMode
 	[System.GC]::Collect()
 	[System.GC]::WaitForPendingFinalizers()
 	[System.GC]::Collect()
-
-	Write-Output ([String]$script:loopCycle + '秒待機します。')
+	Write-Output ('')
+	Write-Output ('{0}秒待機します。' -f $script:loopCycle)
 	Start-Sleep $script:loopCycle
-
 	[System.GC]::Collect()
 	[System.GC]::WaitForPendingFinalizers()
 	[System.GC]::Collect()
-
 }
-
+#----------------------------------------------------------------------
 [System.GC]::Collect()
 [System.GC]::WaitForPendingFinalizers()
 [System.GC]::Collect()

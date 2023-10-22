@@ -25,6 +25,8 @@
 #
 ###################################################################################
 
+try { $script:uiMode = [String]$args[0] } catch { $script:uiMode = '' }
+
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -37,11 +39,11 @@ try {
 	Set-Location $script:scriptRoot
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	$script:devDir = Join-Path $script:scriptRoot '../dev'
-} catch { Write-Error '❗ カレントディレクトリの設定に失敗しました' ; exit 1 }
+} catch { Write-Error ('❗ カレントディレクトリの設定に失敗しました') ; exit 1 }
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 	if ($? -eq $false) { exit 1 }
-} catch { Write-Error '❗ 関数の読み込みに失敗しました' ; exit 1 }
+} catch { Write-Error ('❗ 関数の読み込みに失敗しました') ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -51,10 +53,9 @@ checkRequiredFile
 
 #======================================================================
 #1/3 ダウンロードが中断した際にできたゴミファイルは削除
-Write-Output '----------------------------------------------------------------------'
-Write-Output '処理が中断した際にできたゴミファイルを削除します'
-Write-Output '----------------------------------------------------------------------'
-#進捗表示
+Write-Output ('')
+Write-Output ('----------------------------------------------------------------------')
+Write-Output ('処理が中断した際にできたゴミファイルを削除します')
 showProgressToast `
 	-Text1 '不要ファイル削除中' `
 	-Text2 '　処理1/3 - ダウンロード中断時のゴミファイルを削除' `
@@ -72,24 +73,23 @@ updateProgressToast `
 	-Tag $script:appName `
 	-Group 'Delete'
 
-#処理 - 半日以上前のログファイル・ロックファイルを削除
-$script:ffmpegErrorLogDir = Convert-Path (Split-Path $script:ffpmegErrorLogPath)
+#半日以上前のログファイル・ロックファイルを削除
+$script:ffmpegErrorLogDir = Convert-Path (Split-Path -Parent -Path $script:ffpmegErrorLogPath)
 deleteFiles `
 	-Path $script:ffmpegErrorLogDir `
 	-Conditions 'ffmpeg_error_*.log' `
-	-DatePast -0.5
+	-DaysPassed -0.5
 deleteFiles `
 	-Path $scriptRoot `
 	-Conditions 'brightcovenew_*.lock' `
-	-DatePast -0.5
+	-DaysPassed -0.5
 
-#処理 - 7日以上前の無視リストのバックアップを削除
+#7日以上前の無視リストのバックアップを削除
 deleteFiles `
 	-Path $script:confDir `
 	-Conditions 'ignore.conf.*' `
-	-DatePast -7
+	-DaysPassed -7
 
-#進捗表示
 updateProgressToast `
 	-Title $script:downloadWorkDir `
 	-Rate ( 2 / 4 ) `
@@ -98,13 +98,12 @@ updateProgressToast `
 	-Tag $script:appName `
 	-Group 'Delete'
 
-#処理 - 作業ディレクトリ
+#作業ディレクトリ
 deleteFiles `
 	-Path $script:downloadWorkDir `
-	-Conditions '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.mp4' `
-	-DatePast 0
+	-Conditions '*.ytdl, *.jpg, *.vtt, *.srt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.mp4' `
+	-DaysPassed 0
 
-#進捗表示
 updateProgressToast `
 	-Title $script:downloadBaseDir `
 	-Rate ( 3 / 4 ) `
@@ -113,36 +112,34 @@ updateProgressToast `
 	-Tag $script:appName `
 	-Group 'Delete'
 
-#処理 - ダウンロード先
+#ダウンロード先
 deleteFiles `
 	-Path $script:downloadBaseDir `
-	-Conditions '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*' `
-	-DatePast 0
+	-Conditions '*.ytdl, *.jpg, *.vtt, *.srt, *.temp.mp4, *.part, *.mp4.part-Frag*' `
+	-DaysPassed 0
 
+#移動先
 if ($script:saveBaseDir -ne '') {
 	foreach ($local:saveDir in $script:saveBaseDirArray) {
-		#進捗表示
 		updateProgressToast `
-			-Title $local:saveDir.Trim() `
+			-Title $local:saveDir `
 			-Rate ( 4 / 4 ) `
 			-LeftText '' `
 			-RightText '' `
 			-Tag $script:appName `
 			-Group 'Delete'
-		#処理 - 移動先
 		deleteFiles `
 			-Path $local:saveDir `
-			-Conditions '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*' `
-			-DatePast 0
+			-Conditions '*.ytdl, *.jpg, *.vtt, *.srt, *.temp.mp4, *.part, *.mp4.part-Frag*' `
+			-DaysPassed 0
 	}
 }
 
 #======================================================================
 #2/3 ダウンロード対象外に入っている番組は削除
-Write-Output '----------------------------------------------------------------------'
-Write-Output 'ダウンロード対象外の番組を削除します'
-Write-Output '----------------------------------------------------------------------'
-#進捗表示
+Write-Output ('')
+Write-Output ('----------------------------------------------------------------------')
+Write-Output ('ダウンロード対象外の番組を削除します')
 showProgressToast `
 	-Text1 '不要ファイル削除中' `
 	-Text2 '　処理2/3 - ダウンロード対象外の番組を削除' `
@@ -153,99 +150,75 @@ showProgressToast `
 	-Silent $false
 
 #ダウンロード対象外番組の読み込み
-if (Test-Path $script:ignoreFilePath -PathType Leaf) {
-	try {
-		#ロックファイルをロック
-		while ((fileLock $script:ignoreLockFilePath).fileLocked -ne $true) { Write-Warning 'ファイルのロック解除待ち中です'; Start-Sleep -Seconds 1 }
-		#ファイル操作
-		$local:ignoreTitles = @((Get-Content -Path $script:ignoreFilePath -Encoding UTF8 `
-				| Where-Object { !($_ -match '^\s*$') } `
-				| Where-Object { !($_ -match '^;.*$') }))
-	} catch { Write-Error '❗ ダウンロード対象外の読み込みに失敗しました' ; exit 1 }
-	finally { $null = fileUnlock $script:ignoreLockFilePath }
-} else { $local:ignoreTitles = $null }
+if (Test-Path $script:ignoreFilePath -PathType Leaf) { $script:ignoreTitles = loadIgnoreList }
+else { $local:ignoreTitles = @() }
+
+$local:ignoreDirs = [System.Collections.Generic.List[string]]::new()
+$local:workDirEntities = @(Get-ChildItem -LiteralPath $script:downloadBaseDir).FullName
+foreach ($local:workDirEntity in $local:workDirEntities) {
+	foreach ($local:ignoreTitle in $script:ignoreTitles) {
+		if ($local:ignoreTitle -ne '') {
+			#ダウンロード対象外と合致したものは削除対象
+			if ($local:workDirEntity -like ('*{0}*' -f $local:ignoreTitle) ) {
+				sortIgnoreList $local:ignoreTitle
+				$local:ignoreDirs.Add($local:workDirEntity)
+			}
+		}
+	}
+}
 
 #----------------------------------------------------------------------
-if ($null -ne $local:ignoreTitles ) {
+if ($local:ignoreDirs.Count -ne 0) {
 	if ($script:enableMultithread -eq $true) {
+		Write-Debug ('Multithread Processing Enabled')
 		#並列化が有効の場合は並列化
-
-		$local:ignoreTitles | ForEach-Object -Parallel {
-			$local:ignoreNum = ([Array]::IndexOf($using:local:ignoreTitles, $_)) + 1
-			$local:ignoreTotal = $using:local:ignoreTitles.Count
-			#処理
-			Write-Output ([String]$local:ignoreNum + '/' + [String]$local:ignoreTotal + ' - ' + $_)
-			try {
-				$local:delTargets = Get-ChildItem -LiteralPath $using:script:downloadBaseDir -Name -Filter ('*' + $_ + '*')
-			} catch { Write-Warning '❗ 削除対象を特定できませんでした' }
-			try {
-				if ($null -ne $delTargets) {
-					foreach ($local:delTarget in $local:delTargets) {
-						$local:delPath = Join-Path $using:script:downloadBaseDir $local:delTarget
-						Write-Output ('💡 ' + [String]$local:ignoreNum + '/' + [String]$local:ignoreTotal + ' - ' + $local:delPath + 'を削除します')
-						Remove-Item -Path $local:delPath -Recurse -Force -ErrorAction SilentlyContinue
-					}
-				}
-			} catch { Write-Warning '❗ 削除できないファイルがありました' }
+		$local:ignoreDirs | ForEach-Object -Parallel {
+			$local:ignoreNum = ([Array]::IndexOf($using:local:ignoreDirs, $_)) + 1
+			$local:ignoreTotal = $using:local:ignoreDirs.Count
+			Write-Output ('　{0}/{1} - {2}' -f $local:ignoreNum, $local:ignoreTotal, $_)
+			try { Remove-Item -LiteralPath $_ -Recurse -Force }
+			catch { Write-Warning ('❗ 削除できないファイルがありました') }
 		} -ThrottleLimit $script:multithreadNum
-
 	} else {
 		#並列化が無効の場合は従来型処理
 		#ダウンロード対象外内のエントリ合計数
-		$local:ignoreTotal = $local:ignoreTitles.Count
+		$local:ignoreNum = 0
+		$local:ignoreTotal = $local:ignoreDirs.Count
 		$local:totalStartTime = Get-Date
-
-		foreach ($local:ignoreTitle in $local:ignoreTitles) {
-			$local:ignoreNum = ([Array]::IndexOf($local:ignoreTitles, $local:ignoreTitle)) + 1
-
+		foreach ($local:ignoreDir in $local:ignoreDirs) {
+			$local:ignoreNum += 1
 			#処理時間の推計
 			$local:secElapsed = (Get-Date) - $local:totalStartTime
 			$local:secRemaining = -1
 			if ($local:ignoreNum -ne 1) {
-				$local:secRemaining = ($local:secElapsed.TotalSeconds / $local:ignoreNum) * ($local:ignoreTotal - $local:ignoreNum)
-				$local:minRemaining = [String]([math]::Ceiling($local:secRemaining / 60)) + '分'
-				$local:progressRatio = ([String]$local:ignoreNum + '/' + [String]$local:ignoreTotal)
+				$local:secRemaining = [Int][Math]::Ceiling(($local:secElapsed.TotalSeconds / $local:ignoreNum) * ($local:ignoreTotal - $local:ignoreNum))
+				$local:minRemaining = ('{0}分' -f ([Int][Math]::Ceiling($local:secRemaining / 60)))
+				$local:progressRate = [Float]($local:ignoreNum / $local:ignoreTotal)
 			} else {
-				$local:minRemaining = '計算中...'
-				$local:progressRatio = 0
+				$local:minRemaining = ''
+				$local:progressRate = 0
 			}
-
-			#進捗表示
 			UpdateProgressToast `
-				-Title $local:ignoreTitle `
-				-Rate $local:progressRatio `
-				-LeftText ([String]$local:ignoreNum + '/' + [String]$local:ignoreTotal) `
-				-RightText ('残り時間 ' + $local:minRemaining) `
+				-Title $local:ignoreDir `
+				-Rate $local:progressRate `
+				-LeftText ('{0}/{1}' -f $local:ignoreNum, $local:ignoreTotal) `
+				-RightText ('残り時間 {0}' -f $local:minRemaining) `
 				-Tag $script:appName `
 				-Group 'Delete'
-
-			#処理
-			Write-Output ([String]$local:ignoreNum + '/' + [String]$local:ignoreTotal + ' - ' + $local:ignoreTitle)
-			try { $local:delTargets = Get-ChildItem -LiteralPath $script:downloadBaseDir -Name -Filter ('*' + $local:IgnoreTitle + '*') }
-			catch { Write-Warning '❗ 削除対象を特定できませんでした' }
-			try {
-				if ($null -ne $local:delTargets) {
-					foreach ($local:delTarget in $local:delTargets) {
-						$local:delPath = Join-Path $using:script:downloadBaseDir $local:delTarget
-						Write-Output ('💡 ' + [String]$local:ignoreNum + '/' + [String]$local:ignoreTotal + ' - ' + $local:delPath + 'を削除します')
-						Remove-Item -Path $local:delPath -Recurse -Force -ErrorAction SilentlyContinue
-					}
-				}
-			} catch { Write-Warning '❗ 削除できないファイルがありました' }
+			Write-Output ('　{0}/{1} - {2}' -f $local:ignoreNum, $local:ignoreTotal, $local:ignoreDir)
+			try { Remove-Item -LiteralPath $local:ignoreDir -Recurse -Force }
+			catch { Write-Warning ('❗ 削除できないファイルがありました') }
 		}
-
 	}
-
 }
 
 #----------------------------------------------------------------------
 
 #======================================================================
 #3/3 空ディレクトリと隠しファイルしか入っていないディレクトリを一気に削除
-Write-Output '----------------------------------------------------------------------'
-Write-Output '空ディレクトリを削除します'
-Write-Output '----------------------------------------------------------------------'
-#進捗表示
+Write-Output ('')
+Write-Output ('----------------------------------------------------------------------')
+Write-Output ('空ディレクトリを削除します')
 showProgressToast `
 	-Text1 '不要ファイル削除中' `
 	-Text2 '　処理3/3 - 空ディレクトリを削除' `
@@ -255,75 +228,58 @@ showProgressToast `
 	-Duration 'long' `
 	-Silent $false
 
-#処理
-$local:allSubDirs = @()
-try { $local:allSubDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer }).FullName | Sort-Object -Descending) }
-catch { Write-Warning '❗ ディレクトリを見つけられませんでした' }
+$local:emptyDirs = @()
+$local:emptyDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).where({ $_.PSIsContainer -eq $true })).Where({ ($_.GetFiles().Count -eq 0) -And ($_.GetDirectories().Count -eq 0) })
+if ($local:emptyDirs.Count -ne 0) { $local:emptyDirs = @($local:emptyDirs.Fullname) }
+else { { Write-Warning ('❗ 空ディレクトリを見つけられませんでした') } }
 
-#サブディレクトリの合計数
-$local:subDirTotal = $local:allSubDirs.Count
+$local:emptyDirTotal = $local:emptyDirs.Count
 
 #----------------------------------------------------------------------
-if ($local:subDirTotal -ne 0) {
+if ($local:emptyDirTotal -ne 0) {
 	if ($script:enableMultithread -eq $true) {
+		Write-Debug ('Multithread Processing Enabled')
 		#並列化が有効の場合は並列化
-		$local:allSubDirs | ForEach-Object -Parallel {
-			$local:subDirNum = ([Array]::IndexOf($using:local:allSubDirs, $_)) + 1
-			$local:subDirTotal = $using:local:allSubDirs.Count
-			#処理
-			Write-Output ([String]$local:subDirNum + '/' + [String]$local:subDirTotal + ' - ' + $_)
-			if (@((Get-ChildItem -LiteralPath $_ -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
-				Write-Output ('💡 ' + [String]$local:subDirNum + '/' + [String]$local:subDirTotal + ' - ' + $_ + 'を削除します')
-				try { Remove-Item -LiteralPath $_ -Recurse -Force }
-				catch { Write-Warning ('❗ - 空ディレクトリの削除に失敗しました: ' + $_) }
-			}
+		$local:emptyDirs | ForEach-Object -Parallel {
+			$local:emptyDirNum = ([Array]::IndexOf($using:local:emptyDirs, $_)) + 1
+			$local:emptyDirTotal = $using:local:emptyDirs.Count
+			Write-Output ('　{0}/{1} - {2}' -f $local:emptyDirNum, $local:emptyDirTotal, $_)
+			try { Remove-Item -LiteralPath $_ -Recurse -Force }
+			catch { Write-Warning ('❗ - 空ディレクトリの削除に失敗しました: {0}' -f $_) }
 		} -ThrottleLimit $script:multithreadNum
-
 	} else {
 		#並列化が無効の場合は従来型処理
-		#サブディレクトリの合計数
-		$local:subDirTotal = $local:allSubDirs.Count
+		$local:emptyDirNum = 0
+		$local:emptyDirTotal = $local:emptyDirs.Count
 		$local:totalStartTime = Get-Date
-
-		foreach ($local:subDir in $local:allSubDirs) {
-			$local:subDirNum = ([Array]::IndexOf($local:allSubDirs, $local:subDir)) + 1
-
+		foreach ($local:subDir in $local:emptyDirs) {
+			$local:emptyDirNum += 1
 			#処理時間の推計
 			$local:secElapsed = (Get-Date) - $local:totalStartTime
 			$local:secRemaining = -1
-			if ($local:subDirNum -ne 1) {
-				$local:secRemaining = ($local:secElapsed.TotalSeconds / $local:subDirNum) * ($local:subDirTotal - $local:subDirNum)
-				$local:minRemaining = "$([String]([math]::Ceiling($local:secRemaining / 60)))分"
-				$local:progressRatio = $($local:subDirNum / $local:subDirTotal)
+			if ($local:emptyDirNum -ne 1) {
+				$local:secRemaining = [Int][Math]::Ceiling(($local:secElapsed.TotalSeconds / $local:emptyDirNum) * ($local:emptyDirTotal - $local:emptyDirNum))
+				$local:minRemaining = ('{0}分' -f ([Int][Math]::Ceiling($local:secRemaining / 60)))
+				$local:progressRate = [Float]($local:emptyDirNum / $local:emptyDirTotal)
 			} else {
-				$local:minRemaining = '計算中...'
-				$local:progressRatio = 0
+				$local:minRemaining = ''
+				$local:progressRate = 0
 			}
-			$local:subDirNum = $local:subDirNum + 1
-
-			#進捗表示
 			UpdateProgressToast `
 				-Title $local:subDir `
-				-Rate $local:progressRatio `
-				-LeftText ([String]$local:subDirNum + '/' + [String]$local:subDirTotal) `
-				-RightText ('残り時間 ' + $local:minRemaining) `
+				-Rate $local:progressRate `
+				-LeftText ('{0}/{1}' -f $local:emptyDirNum, $local:emptyDirTotal) `
+				-RightText ('残り時間 {0}' -f $local:minRemaining) `
 				-Tag $script:appName `
-				-Group 'Delete'
-
-			#処理
-			Write-Output ([String]$local:subDirNum + '/' + [String]$local:subDirTotal + ' - ' + $local:subDir)
-			if (@((Get-ChildItem -LiteralPath $local:subDir -Recurse).Where({ ! $_.PSIsContainer })).Count -eq 0) {
-				Write-Output ('💡 ' + [String]$local:subDirNum + '/' + [String]$local:subDirTotal + ' - ' + $local:subDir + 'を削除します')
-				try { Remove-Item -LiteralPath $local:subDir -Recurse -Force -ErrorAction SilentlyContinue
-				} catch { Write-Warning ('❗ - 空ディレクトリの削除に失敗しました:' + $local:subDir) }
-			}
+				-Group 'Move'
+			Write-Output ('　{0}/{1} - {2}' -f $local:emptyDirNum, $local:emptyDirTotal, $local:subDir)
+			try { Remove-Item -LiteralPath $local:subDir -Recurse -Force -ErrorAction SilentlyContinue
+			} catch { Write-Warning ('❗ - 空ディレクトリの削除に失敗しました: {0}' -f $local:subDir) }
 		}
-
 	}
 }
 #----------------------------------------------------------------------
 
-#進捗表示
 updateProgressToast `
 	-Title '不要ファイル削除' `
 	-Rate 1 `
@@ -336,6 +292,7 @@ updateProgressToast `
 [System.GC]::WaitForPendingFinalizers()
 [System.GC]::Collect()
 
-Write-Output '---------------------------------------------------------------------------'
-Write-Output '不要ファイル削除処理を終了しました。                                       '
-Write-Output '---------------------------------------------------------------------------'
+Write-Output ('')
+Write-Output ('---------------------------------------------------------------------------')
+Write-Output ('不要ファイル削除処理を終了しました。                                       ')
+Write-Output ('---------------------------------------------------------------------------')

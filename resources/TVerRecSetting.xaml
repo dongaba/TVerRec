@@ -915,13 +915,32 @@
                         Margin="10,10,10,0"
                         IsExpanded="False"
                         FontFamily="Yu Gothic UI"
+                        Header="ループ処理の間隔(秒)">
+                        <TextBlock
+                            Margin="20,0,20,5"
+                            TextWrapping="Wrap">
+                            ループ処理の実行間隔を指定します。
+                        </TextBlock>
+                    </Expander>
+                    <TextBox
+                        x:Name="loopCycle"
+                        Text="デフォルト値"
+                        Style="{DynamicResource TextBoxStyle}"
+                        Margin="20,0,20,0"
+                        VerticalScrollBarVisibility="Auto"
+                        BorderThickness="0,0,0,1"/>
+
+                    <Expander
+                        Margin="10,10,10,0"
+                        IsExpanded="False"
+                        FontFamily="Yu Gothic UI"
                         Header="並列処理の有効化">
                         <TextBlock
                             Margin="20,0,20,5"
                             TextWrapping="Wrap">
                             並列処理を有効化して処理を高速化するかを設定します。<LineBreak/>
-                            ただし、並列処理を有効化すると履歴ファイルや無視リストの破損リスクが高まります。<LineBreak/>
-                            現在のところ、並列処理を行うのはダウンロードリストの作成処理とダウンロード対象外番組の削除処理、　空フォルダの削除処理です。
+                            ただし、並列処理を有効化すると履歴ファイルや無視リストの破損リスクが高まる可能性が高くなります。<LineBreak/>
+                            現在のところ、並列処理を行うのはダウンロードリストの作成処理とダウンロード対象外番組の削除処理、空ディレクトリの削除処理です。
                         </TextBlock>
                     </Expander>
                     <ComboBox
@@ -1472,6 +1491,26 @@
                     </Expander>
                     <TextBox
                         x:Name="ffmpegDecodeOption"
+                        Text="未設定"
+                        Style="{DynamicResource TextBoxStyle}"
+                        Margin="20,0,20,0"
+                        VerticalScrollBarVisibility="Auto"
+                        BorderThickness="0,0,0,1"/>
+
+                    <Expander
+                        Margin="10,10,10,0"
+                        IsExpanded="False"
+                        FontFamily="Yu Gothic UI"
+                        Header="youtube-dlオプション">
+                        <TextBlock
+                            Margin="20,0,20,5"
+                            TextWrapping="Wrap">
+                            直接youtube-dlのオプションを記載することができます。<LineBreak/>
+                            動画の解像度を指定する場合などに使用します。
+                        </TextBlock>
+                    </Expander>
+                    <TextBox
+                        x:Name="ytdlOption"
                         Text="未設定"
                         Style="{DynamicResource TextBoxStyle}"
                         Margin="20,0,20,0"
