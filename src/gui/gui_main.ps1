@@ -37,7 +37,7 @@ Set-StrictMode -Version Latest
 #初期化
 try {
 	if ($script:myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
-	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition  }
+	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition }
 	$script:scriptRoot = Convert-Path (Join-Path $script:scriptRoot '../')
 	Set-Location $script:scriptRoot
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
@@ -70,8 +70,18 @@ function DoWpfEvents {
 
 #テキストボックスへのログ出力と再描画
 function AddOutput {
-	Param ([String]$script:Message)
-	$script:mainWindow.Dispatcher.Invoke([action] { $script:outText.AddText("{0}`n" -f $script:Message) }, 'Render')
+	Param (
+		[parameter(Mandatory = $true, Position = 0)]
+		[Alias('Message')]
+		[String]$local:Message,
+		[parameter(Mandatory = $true, Position = 1)]
+		[Alias('Color')]
+		[string]$local:color
+	)
+
+	$local:rtfRange = New-Object System.Windows.Documents.TextRange($script:outText.Document.ContentEnd, $script:outText.Document.ContentEnd)
+	$local:rtfRange.Text = ("{0}`n" -f $local:Message)
+	$local:rtfRange.ApplyPropertyValue([System.Windows.Documents.TextElement]::ForegroundProperty, $local:color)
 	$script:outText.ScrollToEnd()
 }
 
@@ -187,7 +197,7 @@ foreach ($script:btn in $script:btns) {
 			$script:btnKillAll.IsEnabled = $true
 
 			#バックグラウンドジョブの起動
-			$null = Start-ThreadJob -Name $this.Name $script:scriptBlocks[$this]
+			$null = Start-ThreadJob -Name $this.Name -ScriptBlock $script:scriptBlocks[$this]
 			#$null = Start-Job -Name $this.Name $script:scriptBlocks[$this]	#こっちにするとWrite-Debugがコンソールに出る
 		})
 }
@@ -210,7 +220,7 @@ $script:btnKeywordOpen.add_Click({ Invoke-Item $script:keywordFilePath })
 $script:btnIgnoreOpen.add_Click({ Invoke-Item $script:ignoreFilePath })
 $script:btnListOpen.add_Click({ Invoke-Item $script:listFilePath })
 $script:btnClearLog.add_Click({
-		$script:outText.Clear()
+		$script:outText.Document.Blocks.Clear()
 		[System.GC]::Collect()
 		[System.GC]::WaitForPendingFinalizers()
 		[System.GC]::Collect()
@@ -259,11 +269,7 @@ while ($script:mainWindow.IsVisible) {
 	#GUIイベント処理
 	DoWpfEvents
 
-	if ($null -eq (Get-Job)) {
-		#ジョブがない場合はメモリ解放
-		[System.GC]::WaitForPendingFinalizers()
-		[System.GC]::Collect()
-	} else {
+	if ($null -ne (Get-Job)) {
 		#ジョブがある場合の処理
 		foreach ($local:job in Get-Job) {
 			# Get the originating button via the job name.
@@ -273,7 +279,12 @@ while ($script:mainWindow.IsVisible) {
 			$local:completed = $local:job.State -in 'Completed', 'Failed', 'Stopped'
 
 			#ジョブからの出力をテキストボックスに出力
-			if ($script:data = Receive-Job $local:job *>&1) { AddOutput ($script:data -join "`n") }
+			if ($local:errorMsg = $local:job.Error) { AddOutput ($local:errorMsg -join "`n") -Color 'Crimson' }		#2
+			if ($local:warningMsg = $local:job.Warning) { AddOutput ($local:warningMsg -join "`n") -Color 'Coral' }		#3
+			if ($local:verboseMsg = $local:job.Verbose) { AddOutput ($local:verboseMsg -join "`n") -Color 'LightSlateGray' }		#4
+			if ($local:debugMsg = $local:job.Debug) { AddOutput ($local:debugMsg -join "`n") -Color 'CornflowerBlue' }		#5
+			if ($local:infoMsg = $local:job.Information) { AddOutput ($local:infoMsg -join "`n") -Color 'DarkGray' }		#6
+			if ($local:outputMsg = Receive-Job $local:job ) { AddOutput ($local:outputMsg -join "`n") -Color 'DarkSlateGray' }		#1
 
 			#終了したジョブのボタンの再有効化
 			if ($local:completed) {

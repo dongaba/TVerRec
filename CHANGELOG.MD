@@ -1,5 +1,15 @@
 ﻿# Change Log
 
+## [2.8.3](https://github.com/dongaba/TVerRec/releases/tag/v2.8.3)
+
+### 2.8.3 Added
+
+### 2.8.3 Changed
+
+### 2.8.3 Fixed
+
+- からディレクトリ削除時のメッセージ出力不正を修正
+
 ## [2.8.2](https://github.com/dongaba/TVerRec/releases/tag/v2.8.2)
 
 ### 2.8.2 Added
@@ -34,7 +44,8 @@
 - 空ディレクトリ削除処理の高速化
 - ダウンロード履歴との照合を高速化
 - ループ処理時に整合性検証で不整合があった場合には再度ダウンロードからやり直すように
-- youtube-dlのオプションを追加で設定できるように
+- youtube-dl のオプションを追加で設定できるように
+- GUI でエラーメッセージ、警告メッセージを色付きで出力するように
 
 ### 2.8.2 Fixed
 

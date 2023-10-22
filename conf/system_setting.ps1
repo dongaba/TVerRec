@@ -275,6 +275,7 @@ $script:logoBase64 = Get-Content '../resources/Logo.b64'
 #デバッグレベル
 $VerbosePreference = 'SilentlyContinue'						#詳細メッセージなし
 $DebugPreference = 'SilentlyContinue'						#デバッグメッセージなし
+$PSStyle.Formatting.Error = $PSStyle.Foreground.BrightRed
 $PSStyle.Formatting.Warning = $PSStyle.Foreground.BrightYellow
 $PSStyle.Formatting.Verbose = $PSStyle.Foreground.BrightBlack
 $PSStyle.Formatting.Debug = $PSStyle.Foreground.BrightBlue
@@ -333,3 +334,6 @@ else { $script:ffmpegPath = Join-Path $script:binDir 'ffmpeg' }
 #ffprobeのパス
 if ($IsWindows) { $script:ffprobePath = Join-Path $script:binDir 'ffprobe.exe' }
 else { $script:ffprobePath = Join-Path $script:binDir 'ffprobe' }
+
+#youtube-dlの引数
+$script:ytdlBaseArgs = '--format bestvideo+bestaudio/best --merge-output-format mp4 --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --embed-thumbnail --embed-chapters --no-cache-dir --verbose'

@@ -67,24 +67,14 @@ switch ($true) {
 $script:locale = (Get-Culture).Name
 $script:tz = [String][TimeZoneInfo]::Local.BaseUtcOffset
 $local:ipapi = ''
-$script:clientEnv = @{}
+$script:clientEnvs = @{}
 try {
 	$local:ipapi = Invoke-RestMethod -Uri 'http://ip-api.com/json/?fields=66846719' -TimeoutSec $script:timeoutSec
 	$local:GeoIPValues = $local:ipapi.psobject.properties
-	foreach ($local:GeoIPValue in $local:GeoIPValues) { $script:clientEnv.Add($local:GeoIPValue.Name, $local:GeoIPValue.Value) }
+	foreach ($local:GeoIPValue in $local:GeoIPValues) { $script:clientEnvs.Add($local:GeoIPValue.Name, $local:GeoIPValue.Value) }
 } catch { Write-Debug ('Geo IPのチェックに失敗しました') }
 if (Test-Path $script:devDir) { $script:appVersion += ' dev' }
-$script:clientEnv.Add('AppName', $script:appName)
-$script:clientEnv.Add('AppVersion', $script:appVersion)
-$script:clientEnv.Add('PSEdition', $PSVersionTable.PSEdition)
-$script:clientEnv.Add('PSVersion', $PSVersionTable.PSVersion)
-$script:clientEnv.Add('OS', $script:os)
-$script:clientEnv.Add('Kernel', $script:kernel)
-$script:clientEnv.Add('Arch', $script:arch)
-$script:clientEnv.Add('Locale', $script:locale)
-$script:clientEnv.Add('TZ', $script:tz)
-$script:clientEnv.Add('GUID', $script:guid)
-$script:clientEnv = $script:clientEnv.GetEnumerator() | Sort-Object -Property key
+$script:clientEnvs = $script:clientEnvs.GetEnumerator() | Sort-Object -Property key
 $progressPreference = 'Continue'
 
 #----------------------------------------------------------------------
@@ -119,6 +109,7 @@ function goAnal {
 	} catch { Write-Debug ('Failed to collect count') }
 	finally { $progressPreference = 'Continue' }
 
+	$local:clientVars = (Get-Variable).where({ $_.Name -cmatch '^[a-z].+' }).where({ $null -ne $_.Value }).where({ $_.Name -notlike '*Base64' }).where({ $_.Name -notlike 'ipapi' })
 	if ($local:event -eq 'search') { return }
 	$local:gaURL = 'https://www.google-analytics.com/mp/collect'
 	$local:gaKey = 'api_secret=UZ3InfgkTgGiR4FU-in9sw'
@@ -130,10 +121,8 @@ function goAnal {
 	$local:gaBody += ('"timestamp_micros" : "{0}", ' -f $local:epochTime)
 	$local:gaBody += ('"non_personalized_ads" : false, ')
 	$local:gaBody += ('"user_properties":{ ')
-	foreach ($local:item in $script:clientEnv) { $local:gaBody += ('"{0}" : {{"value" : "{1}"}}, ' -f $local:item.Key, $local:item.Value) }
-	$local:gaBody += ('"DisableValidation" : {{"value" : "{0}"}}, ' -f $script:disableValidation)
-	$local:gaBody += ('"SortwareDecode" : {{"value" : "{0}"}}, ' -f $script:forceSoftwareDecodeFlag)
-	$local:gaBody += ('"DecodeOption" : {{"value" : "{0}"}}, ' -f $script:ffmpegDecodeOption)
+	foreach ($local:clientEnv in $script:clientEnvs) { $local:gaBody += ('"{0}" : {{"value" : "{1}"}}, ' -f $local:clientEnv.Key, $local:clientEnv.Value) }
+	foreach ($local:clientVar in $local:clientVars) { $local:gaBody += ('"{0}" : {{"value" : "{1}"}}, ' -f $local:clientVar.Name, $local:clientVar.Value) }
 	$local:gaBody = $local:gaBody.Trim(',', ' ')		#delete last comma
 	$local:gaBody += ('}, "events" : [ { ')
 	$local:gaBody += ('"name" : "{0}", ' -f $local:event)
@@ -141,7 +130,8 @@ function goAnal {
 	$local:gaBody += ('"Type" : "{0}", ' -f $local:type)
 	$local:gaBody += ('"ID" : "{0}", ' -f $local:id)
 	$local:gaBody += ('"Target" : "{0}/{1}", ' -f $local:type, $local:id)
-	foreach ($local:item in $script:clientEnv) { $local:gaBody += ('"{0}" : "{1}", ' -f $local:item.Key, $local:item.Value) }
+	foreach ($local:clientEnv in $script:clientEnvs) { $local:gaBody += ('"{0}" : "{1}", ' -f $local:clientEnv.Key, $local:clientEnv.Value) }
+	foreach ($local:clientVar in $local:clientVars) { $local:gaBody += ('"{0}" : "{1}", ' -f $local:clientVar.Name, $local:clientVar.Value) }
 	$local:gaBody += ('"DisableValidation" : "{0}", ' -f $script:disableValidation)
 	$local:gaBody += ('"SortwareDecode" : "{0}", ' -f $script:forceSoftwareDecodeFlag)
 	$local:gaBody += ('"DecodeOption" : "{0}", ' -f $script:ffmpegDecodeOption)
@@ -1739,31 +1729,18 @@ function executeYtdl {
 	$local:chaptDir = ('"chapter:{0}"' -f $script:downloadWorkDir)
 	$local:descDir = ('"description:{0}"' -f $script:downloadWorkDir)
 	$local:saveFile = ('"{0}"' -f $script:videoName)
-	$local:ffmpegPath = ('"{0}"' -f $script:ffmpegPath)
-	$local:ytdlArgs = '--format mp4'
-	$local:ytdlArgs += (' {0}' -f '--console-title')
-	$local:ytdlArgs += (' {0}' -f '--no-mtime')
-	$local:ytdlArgs += (' {0}' -f '--retries 10')
-	$local:ytdlArgs += (' {0}' -f '--fragment-retries 10')
-	$local:ytdlArgs += (' {0}' -f '--abort-on-unavailable-fragment')
-	$local:ytdlArgs += (' {0}' -f '--no-keep-fragments')
-	$local:ytdlArgs += (' {0}' -f '--abort-on-error')
-	$local:ytdlArgs += (' {0}' -f '--no-continue')
-	$local:ytdlArgs += (' {0}' -f '--windows-filenames')
+	$local:ytdlArgs += (' {0}' -f $script:ytdlBaseArgs)
 	$local:ytdlArgs += (' {0} {1}' -f '--concurrent-fragments', $script:parallelDownloadNumPerFile)
 	$local:ytdlArgs += (' {0} {1}M' -f '--limit-rate', [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8))
-	$local:ytdlArgs += (' {0}' -f '--embed-thumbnail')
-	$local:ytdlArgs += (' {0}' -f '--all-subs')
-	if ($script:embedSubtitle -eq $true) { $local:ytdlArgs += (' {0}' -f '--embed-subs') }
+	if ($script:embedSubtitle -eq $true) { $local:ytdlArgs += (' {0}' -f '--sub-langs all --write-subs --embed-subs') }
 	if ($script:embedMetatag -eq $true) { $local:ytdlArgs += (' {0}' -f '--embed-metadata') }
-	$local:ytdlArgs += (' {0}' -f '--embed-chapters')
 	$local:ytdlArgs += (' {0} {1}' -f '--paths', $local:saveDir)
 	$local:ytdlArgs += (' {0} {1}' -f '--paths', $local:tmpDir)
 	$local:ytdlArgs += (' {0} {1}' -f '--paths', $local:subttlDir)
 	$local:ytdlArgs += (' {0} {1}' -f '--paths', $local:thumbDir)
 	$local:ytdlArgs += (' {0} {1}' -f '--paths', $local:chaptDir)
 	$local:ytdlArgs += (' {0} {1}' -f '--paths', $local:descDir)
-	$local:ytdlArgs += (' {0} {1}' -f '--ffmpeg-location', $local:ffmpegPath)
+	$local:ytdlArgs += (' {0} {1}' -f '--ffmpeg-location', $script:ffmpegPath)
 	$local:ytdlArgs += (' {0} {1}' -f '--output', $local:saveFile)
 	$local:ytdlArgs += (' {0}' -f $script:ytdlOption)
 	$local:ytdlArgs += (' {0}' -f $local:videoPageURL)

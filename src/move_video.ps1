@@ -157,14 +157,15 @@ showProgressToast `
 
 $local:emptyDirs = @()
 $local:emptyDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).where({ $_.PSIsContainer -eq $true })).Where({ ($_.GetFiles().Count -eq 0) -And ($_.GetDirectories().Count -eq 0) })
-try { if ($local:emptyDirs.Count -ne 0) { $local:emptyDirs = $local:emptyDirs.FullName } }
-catch { Write-Warning ('❗ 空ディレクトリを見つけられませんでした') }
+if ($local:emptyDirs.Count -ne 0) { $local:emptyDirs = @($local:emptyDirs.Fullname) }
+else { Write-Warning ('❗ 空ディレクトリを見つけられませんでした') }
 
 $local:emptyDirTotal = $local:emptyDirs.Count
 
 #----------------------------------------------------------------------
 if ($local:emptyDirTotal -ne 0) {
 	if ($script:enableMultithread -eq $true) {
+		Write-Debug ('Multithread Processing Enabled')
 		#並列化が有効の場合は並列化
 		$local:emptyDirs | ForEach-Object -Parallel {
 			$local:emptyDirNum = ([Array]::IndexOf($using:local:emptyDirs, $_)) + 1
