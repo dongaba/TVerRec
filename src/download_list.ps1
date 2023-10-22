@@ -162,7 +162,8 @@ foreach ($local:videoLink in $local:videoLinks) {
 	downloadTVerVideo `
 		-Keyword $local:keywordName `
 		-URL ('https://tver.jp/episodes/' + $local:videoLink) `
-		-Link ('/episodes/' + $local:videoLink)
+		-Link ('/episodes/' + $local:videoLink) `
+		-Single $false
 
 }
 #----------------------------------------------------------------------

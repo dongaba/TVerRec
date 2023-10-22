@@ -111,10 +111,11 @@ while ($true) {
 			Write-Output $local:videoPageURL
 
 			#TVer番組ダウンロードのメイン処理
-			downloadTVerVideo_Single `
+			downloadTVerVideo `
 				-Keyword $local:keywordName `
 				-URL $local:videoPageURL `
-				-Link $local:videoLink
+				-Link $local:videoLink `
+				-Single $true
 
 			[System.GC]::Collect()
 			[System.GC]::WaitForPendingFinalizers()
