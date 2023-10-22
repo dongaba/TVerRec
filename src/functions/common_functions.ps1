@@ -315,6 +315,7 @@ function deleteFiles {
 	Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
 
 	if ($script:enableMultithread -eq $true) {
+		Write-Debug ('Multithread Processing Enabled')
 		#並列化が有効の場合は並列化
 		try {
 			$local:delConditions.Split(',').Trim() | ForEach-Object -Parallel {

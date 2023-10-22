@@ -158,6 +158,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#個々の番組の情報の取得ここから
 
 	if ($script:enableMultithread -eq $true) {
+		Write-Debug ('Multithread Processing Enabled')
 		#並列化が有効の場合は並列化
 
 		#関数の定義

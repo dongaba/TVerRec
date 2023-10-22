@@ -165,6 +165,7 @@ $local:emptyDirTotal = $local:emptyDirs.Count
 #----------------------------------------------------------------------
 if ($local:emptyDirTotal -ne 0) {
 	if ($script:enableMultithread -eq $true) {
+		Write-Debug ('Multithread Processing Enabled')
 		#並列化が有効の場合は並列化
 		$local:emptyDirs | ForEach-Object -Parallel {
 			$local:emptyDirNum = ([Array]::IndexOf($using:local:emptyDirs, $_)) + 1

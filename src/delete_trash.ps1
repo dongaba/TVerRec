@@ -101,7 +101,7 @@ updateProgressToast `
 #作業ディレクトリ
 deleteFiles `
 	-Path $script:downloadWorkDir `
-	-Conditions '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.mp4' `
+	-Conditions '*.ytdl, *.jpg, *.vtt, *.srt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.mp4' `
 	-DaysPassed 0
 
 updateProgressToast `
@@ -115,7 +115,7 @@ updateProgressToast `
 #ダウンロード先
 deleteFiles `
 	-Path $script:downloadBaseDir `
-	-Conditions '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*' `
+	-Conditions '*.ytdl, *.jpg, *.vtt, *.srt, *.temp.mp4, *.part, *.mp4.part-Frag*' `
 	-DaysPassed 0
 
 #移動先
@@ -130,7 +130,7 @@ if ($script:saveBaseDir -ne '') {
 			-Group 'Delete'
 		deleteFiles `
 			-Path $local:saveDir `
-			-Conditions '*.ytdl, *.jpg, *.vtt, *.temp.mp4, *.part, *.mp4.part-Frag*' `
+			-Conditions '*.ytdl, *.jpg, *.vtt, *.srt, *.temp.mp4, *.part, *.mp4.part-Frag*' `
 			-DaysPassed 0
 	}
 }
@@ -170,6 +170,7 @@ foreach ($local:workDirEntity in $local:workDirEntities) {
 #----------------------------------------------------------------------
 if ($local:ignoreDirs.Count -ne 0) {
 	if ($script:enableMultithread -eq $true) {
+		Write-Debug ('Multithread Processing Enabled')
 		#並列化が有効の場合は並列化
 		$local:ignoreDirs | ForEach-Object -Parallel {
 			$local:ignoreNum = ([Array]::IndexOf($using:local:ignoreDirs, $_)) + 1
@@ -237,6 +238,7 @@ $local:emptyDirTotal = $local:emptyDirs.Count
 #----------------------------------------------------------------------
 if ($local:emptyDirTotal -ne 0) {
 	if ($script:enableMultithread -eq $true) {
+		Write-Debug ('Multithread Processing Enabled')
 		#並列化が有効の場合は並列化
 		$local:emptyDirs | ForEach-Object -Parallel {
 			$local:emptyDirNum = ([Array]::IndexOf($using:local:emptyDirs, $_)) + 1
