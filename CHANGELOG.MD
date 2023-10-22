@@ -8,7 +8,7 @@
 
 ### 2.8.3 Fixed
 
-- からディレクトリ削除時のメッセージ出力不正を修正
+- 空ディレクトリ削除時のメッセージ出力不正を修正
 
 ## [2.8.2](https://github.com/dongaba/TVerRec/releases/tag/v2.8.2)
 
