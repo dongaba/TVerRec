@@ -237,16 +237,8 @@ function checkLatestTVerRec {
 			Start-Sleep -Second 1
 		}
 
-		try {
-			$null = Start-Process `
-				-FilePath 'pwsh' `
-				-ArgumentList "-Command (Join-Path $script:scriptRoot 'functions/update_tverrec.ps1')" `
-				-PassThru `
-				-Wait
-		} catch { Write-Error ('❗ TVerRecのアップデータを起動できませんでした') ; return }
-
 		#再起動のため強制終了
-		exit 1
+		exit 99
 
 	}
 
@@ -1156,11 +1148,7 @@ function downloadTVerVideo {
 
 		[Parameter(Mandatory = $true, Position = 2)]
 		[Alias('Link')]
-		[String]$script:videoLink,
-
-		[Parameter(Mandatory = $true, Position = 3)]
-		[Alias('Single')]
-		[String]$script:videoSingle
+		[String]$script:videoLink
 	)
 
 	Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
@@ -1338,7 +1326,7 @@ function downloadTVerVideo {
 	finally { $null = fileUnlock $script:historyLockFilePath }
 
 	#スキップやダウンロード対象外でなければyoutube-dl起動
-	if (($script:videoSingle -eq $false) -And (($script:ignore -eq $true) -Or ($script:skipWithValidation -eq $true) -Or ($script:skipWithoutValidation -eq $true))) {
+	if (($script:ignore -eq $true) -Or ($script:skipWithValidation -eq $true) -Or ($script:skipWithoutValidation -eq $true)) {
 		#スキップ対象やダウンロード対象外は飛ばして次のファイルへ
 		continue
 	} else {
