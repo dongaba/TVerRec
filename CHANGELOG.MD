@@ -2,7 +2,8 @@
 
 ## [2.8.9](https://github.com/dongaba/TVerRec/releases/tag/v2.8.9)
 
-自動アップデートテストのための空アップデート
+v2.8.2以降で特定条件下でTVerRecの自動アップデートがされない不具合がありました。
+自動アップデートがされずに毎回自動アップデートの画面が出ている場合は、win/update_tverrec.cmdまたはunix/update_tverrec.shを実行するか、v2.8.9まで手動でバージョンアップをお願いします。
 
 ### 2.8.9 Added
 
