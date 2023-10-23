@@ -1,5 +1,15 @@
 ﻿# Change Log
 
+## [2.9.2](https://github.com/dongaba/TVerRec/releases/tag/v2.9.2)
+
+### 2.9.2 Added
+
+### 2.9.2 Changed
+
+- どうやら自動アップデート機能に不具合あるようなので自動アップデートを無効化
+
+### 2.9.2 Fixed
+
 ## [2.9.1](https://github.com/dongaba/TVerRec/releases/tag/v2.9.1)
 
 ### 2.9.1 Added

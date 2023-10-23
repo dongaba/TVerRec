@@ -230,14 +230,11 @@ function checkLatestTVerRec {
 		if ($IsWindows) { Unblock-File -LiteralPath (Join-Path $script:scriptRoot 'functions//update_tverrec.ps1') }
 
 		#アップデート実行
-		Write-Warning ('10秒後にTVerRecをアップデートします。中止したい場合は Ctrl+C で中断してください')
+		Write-Warning ('TVerRecをアップデートするにはこのウィンドウを閉じ update_tverrec を実行してください。')
 		foreach ($i in (1..10)) {
 			Write-Progress -Activity ('残り{0}秒...' -f (10 - $i)) -PercentComplete ([Int][Math]::Ceiling((100 * $i) / 10))
 			Start-Sleep -Second 1
 		}
-
-		#再起動のため強制終了
-		exit 99
 
 	}
 

@@ -46,8 +46,6 @@ try {
 #----------------------------------------------------------------------
 while ($true) {
 	$script:validationFailed = $true
-	. ('{0}/functions/initialize.ps1' -f $script:scriptRoot) $script:uiMode
-	if ($? -eq $false) { . ('{0}/functions/update_tverrec.ps1' -f $script:scriptRoot) $script:uiMode }
 	while ($script:validationFailed) {
 		. ('{0}/download_bulk.ps1' -f $script:scriptRoot) $script:uiMode
 		. ('{0}/delete_trash.ps1' -f $script:scriptRoot) $script:uiMode
