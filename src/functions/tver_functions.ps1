@@ -237,16 +237,8 @@ function checkLatestTVerRec {
 			Start-Sleep -Second 1
 		}
 
-		try {
-			$null = Start-Process `
-				-FilePath 'pwsh' `
-				-ArgumentList "-Command (Join-Path $script:scriptRoot 'functions/update_tverrec.ps1')" `
-				-PassThru `
-				-Wait
-		} catch { Write-Error ('❗ TVerRecのアップデータを起動できませんでした') ; return }
-
 		#再起動のため強制終了
-		exit 1
+		exit 99
 
 	}
 

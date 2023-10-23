@@ -1,5 +1,17 @@
 ﻿# Change Log
 
+## [2.8.6](https://github.com/dongaba/TVerRec/releases/tag/v2.8.6)
+
+### 2.8.6 Added
+
+### 2.8.6 Changed
+
+- like を match に置き換えることによる性能改善
+
+### 2.8.6 Fixed
+
+- TVerRecの自動アップデートの不具合を修正(できたかな?)
+
 ## [2.8.5](https://github.com/dongaba/TVerRec/releases/tag/v2.8.5)
 
 ### 2.8.5 Added
