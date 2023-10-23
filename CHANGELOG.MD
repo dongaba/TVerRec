@@ -1,14 +1,26 @@
 ﻿# Change Log
 
+## [2.8.5](https://github.com/dongaba/TVerRec/releases/tag/v2.8.5)
+
+### 2.8.5 Added
+
+### 2.8.5 Changed
+
+- like を match に置き換えることによる性能改善
+
+### 2.8.5 Fixed
+
+- 無視リストのフォルダが削除されないことがある不具合を修正
+
 ## [2.8.4](https://github.com/dongaba/TVerRec/releases/tag/v2.8.4)
 
 ### 2.8.4 Added
 
 ### 2.8.4 Changed
 
-- like を match に置き換えることによる性能改善
-
 ### 2.8.4 Fixed
+
+- 無視リストのフォルダが削除されないことがある不具合を修正
 
 ## [2.8.3](https://github.com/dongaba/TVerRec/releases/tag/v2.8.3)
 

@@ -150,23 +150,16 @@ showProgressToast `
 	-Silent $false
 
 #ダウンロード対象外番組の読み込み
-if (Test-Path $script:ignoreFilePath -PathType Leaf) { $script:ignoreTitles = loadIgnoreList }
+if (Test-Path $script:ignoreFilePath -PathType Leaf) { $local:ignoreTitles = loadIgnoreList }
 else { $local:ignoreTitles = @() }
-
-$local:ignoreDirs = [System.Collections.Generic.List[string]]::new()
+$local:regexIgnoreTitles = @()
+foreach ($local:ignoreTitle in $local:ignoreTitles) { $local:regexIgnoreTitles += [Regex]::Escape($local:ignoreTitle) }
+$local:ignoreDirs = [System.Collections.Generic.List[String]]::new()
 $local:workDirEntities = @(Get-ChildItem -LiteralPath $script:downloadBaseDir).Name
-$local:completeMatches = @(Compare-Object -IncludeEqual -ExcludeDifferent $workDirEntities $script:ignoreTitles)
-if ($local:completeMatches.Count -ne 0) { $local:completeMatches = $local:completeMatches.InputObject }
-foreach ($local:completeMatch in $local:completeMatches) { $local:ignoreDirs.Add($local:completeMatch) }
-foreach ($local:workDirEntity in $local:workDirEntities) {
-	foreach ($local:ignoreTitle in $script:ignoreTitles) {
-		if ($local:ignoreTitle -ne '') {
-			#ダウンロード対象外と合致したものは削除対象
-			if ($local:workDirEntity -match [Regex]::Escape($local:ignoreTitle) ) {
-				$local:ignoreDirs.Add($local:workDirEntity)
-			}
-		}
-	}
+$local:regexCondition = '(' + ($local:regexIgnoreTitles -join ')|(' ) + ')'
+$local:delTargets = $local:workDirEntities -cmatch $local:regexCondition
+foreach ($local:delTarget in $local:delTargets) {
+	if ($local:delTarget -ne '') { $local:ignoreDirs.Add($local:delTarget) }
 }
 
 #----------------------------------------------------------------------
@@ -187,9 +180,9 @@ if ($local:ignoreDirs.Count -ne 0) {
 		#ダウンロード対象外内のエントリ合計数
 		$local:ignoreNum = 0
 		$local:ignoreTotal = $local:ignoreDirs.Count
-		$local:delTarget = Join-Path $script:downloadBaseDir $local:ignoreDir
 		$local:totalStartTime = Get-Date
 		foreach ($local:ignoreDir in $local:ignoreDirs) {
+			$local:delTarget = Join-Path $script:downloadBaseDir $local:ignoreDir
 			$local:ignoreNum += 1
 			#処理時間の推計
 			$local:secElapsed = (Get-Date) - $local:totalStartTime

@@ -152,12 +152,12 @@ function writeSetting {
 					#数字はシングルクォーテーション不要
 					$local:newSetting += ('{0} = {1}' -f $local:settingAttribute, $local:settingBox.Text) ; break
 				}
-				($local:settingBox.Text -match '^[a-zA-Z]:') {
+				($local:settingBox.Text -cmatch '^[a-zA-Z]:') {
 					#ドライブ文字列で開始する場合はシングルクォーテーション必要
 					$local:newSetting += ('{0} = ''{1}''' -f $local:settingAttribute, $local:settingBox.Text)
 					break
 				}
-				($local:settingBox.Text -match '^\\\\') {
+				($local:settingBox.Text -cmatch '^\\\\') {
 					#UNCパスの場合はシングルクォーテーション必要
 					$local:newSetting += ('{0} = ''{1}''' -f $local:settingAttribute, $local:settingBox.Text)
 					break

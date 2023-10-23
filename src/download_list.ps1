@@ -53,7 +53,7 @@ checkRequiredFile
 
 #いろいろ初期化
 $local:videoLink = ''
-$local:videoLinks = [System.Collections.Generic.List[string]]::new()
+$local:videoLinks = [System.Collections.Generic.List[String]]::new()
 
 $local:videoNum = 0
 
