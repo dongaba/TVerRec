@@ -362,7 +362,7 @@ function loadKeywordList {
 
 	try {
 		#コメントと空行を除いて抽出
-		$local:keywordNames = [String[]]((Get-Content $script:keywordFilePath -Encoding UTF8).Where({ !($_ -match '^\s*$') }).Where({ !($_ -match '^#.*$') }))
+		$local:keywordNames = [String[]]((Get-Content $script:keywordFilePath -Encoding UTF8).Where({ !($_ -cmatch '^\s*$') }).Where({ !($_ -cmatch '^#.*$') }))
 	} catch { Write-Error ('❗ ダウンロード対象キーワードの読み込みに失敗しました') ; exit 1 }
 
 	return $local:keywordNames
@@ -380,7 +380,7 @@ function loadDownloadList {
 	try {
 		while ((fileLock $script:listLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		#空行とダウンロード対象外を除き、EpisodeIDのみを抽出
-		$local:videoLinks = @((Import-Csv -LiteralPath $script:listFilePath -Encoding UTF8).Where({ !($_ -match '^\s*$') }).Where({ !($_.episodeID -match '^#') }) | Select-Object episodeID)
+		$local:videoLinks = @((Import-Csv -LiteralPath $script:listFilePath -Encoding UTF8).Where({ !($_ -cmatch '^\s*$') }).Where({ !($_.episodeID -cmatch '^#') }) | Select-Object episodeID)
 	} catch { Write-Error ('❗ ダウンロードリストの読み込みに失敗しました') ; exit 1 }
 	finally { $null = fileUnlock $script:listLockFilePath }
 
@@ -400,7 +400,7 @@ function loadIgnoreList {
 		while ((fileLock $script:ignoreLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$local:ignoreTitles = @()
 		#コメントと空行を除いて抽出
-		$local:ignoreTitles = @((Get-Content $script:ignoreFilePath -Encoding UTF8).Where({ !($_ -match '^\s*$') }).Where({ !($_ -match '^;.*$') }))
+		$local:ignoreTitles = @((Get-Content $script:ignoreFilePath -Encoding UTF8).Where({ !($_ -cmatch '^\s*$') }).Where({ !($_ -cmatch '^;.*$') }))
 	} catch { Write-Error ('❗ ダウンロード対象外の読み込みに失敗しました') ; exit 1 }
 	finally { $null = fileUnlock $script:ignoreLockFilePath }
 
@@ -427,7 +427,7 @@ function sortIgnoreList {
 
 	try {
 		while ((fileLock $script:ignoreLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-		$local:ignoreLists = @((Get-Content $script:ignoreFilePath -Encoding UTF8).Where( { !($_ -match '^\s*$') }).Where( { !($_ -match '^;;.*$') }))
+		$local:ignoreLists = @((Get-Content $script:ignoreFilePath -Encoding UTF8).Where( { !($_ -cmatch '^\s*$') }).Where( { !($_ -cmatch '^;;.*$') }))
 	} catch { Write-Error ('❗ ダウンロード対象外リストの読み込みに失敗しました') ; exit 1 }
 	finally { $null = fileUnlock $script:ignoreLockFilePath }
 
@@ -494,8 +494,8 @@ function getVideoLinksFromKeyword {
 		'Origin'               = 'https://tver.jp'
 		'Referer'              = 'https://tver.jp'
 	}
-	$script:episodeLinks = [System.Collections.Generic.List[string]]::new()
-	$script:seriesLinks = [System.Collections.Generic.List[string]]::new()
+	$script:episodeLinks = [System.Collections.Generic.List[String]]::new()
+	$script:seriesLinks = [System.Collections.Generic.List[String]]::new()
 
 	switch ($true) {
 		($local:keywordName.IndexOf('series/') -eq 0) {
@@ -580,7 +580,7 @@ function getLinkFromSeriesID {
 
 	Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
 
-	$local:seasonLinks = [System.Collections.Generic.List[string]]::new()
+	$local:seasonLinks = [System.Collections.Generic.List[String]]::new()
 	$local:callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callSeriesSeasons/'
 
 	#まずはSeries→Seasonに変換
@@ -1024,30 +1024,30 @@ function getLinkFromSiteMap {
 	$local:searchResults = $local:searchResultsRaw.urlset.url.loc | Sort-Object | Get-Unique
 
 	foreach ($local:searchResult in $local:searchResults) {
-		if ($local:searchResult -match '\/episodes\/') { $script:episodeLinks.Add($local:searchResult) }
+		if ($local:searchResult -cmatch '\/episodes\/') { $script:episodeLinks.Add($local:searchResult) }
 		elseif ($script:sitemapParseEpisodeOnly -eq $true) { Write-Debug ('Episodeではないためスキップします') }
 		else {
 			switch ($true) {
-				($local:searchResult -match '\/seasons\/') {
+				($local:searchResult -cmatch '\/seasons\/') {
 					Write-Output ('　{0} からEpisodeを抽出中...' -f $local:searchResult)
 					try { getLinkFromSeasonID ($local:searchResult) }
 					catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:11') ; continue }
 					break
 				}
-				($local:searchResult -match '\/series\/') {
+				($local:searchResult -cmatch '\/series\/') {
 					Write-Output ('　{0} からEpisodeを抽出中...' -f $local:searchResult)
 					try { getLinkFromSeriesID ($local:searchResult) }
 					catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:12') ; continue }
 					break
 				}
 				($local:searchResult -eq 'https://tver.jp/') { break }	#トップページ	別のキーワードがあるためため対応予定なし
-				($local:searchResult -match '\/info\/') { break }	#お知らせ	番組ページではないため対応予定なし
-				($local:searchResult -match '\/live\/') { break }	#追っかけ再生	対応していない
-				($local:searchResult -match '\/mypage\/') { break }	#マイページ	ブラウザのCookieを処理しないといけないと思われるため対応予定なし
-				($local:searchResult -match '\/program') { break }	#番組表	番組ページではないため対応予定なし
-				($local:searchResult -match '\/ranking') { break }	#ランキング	他でカバーできるため対応予定なし
-				($local:searchResult -match '\/specials') { break }	#特集	他でカバーできるため対応予定なし
-				($local:searchResult -match '\/topics') { break }	#トピック	番組ページではないため対応予定なし
+				($local:searchResult -cmatch '\/info\/') { break }	#お知らせ	番組ページではないため対応予定なし
+				($local:searchResult -cmatch '\/live\/') { break }	#追っかけ再生	対応していない
+				($local:searchResult -cmatch '\/mypage\/') { break }	#マイページ	ブラウザのCookieを処理しないといけないと思われるため対応予定なし
+				($local:searchResult -cmatch '\/program') { break }	#番組表	番組ページではないため対応予定なし
+				($local:searchResult -cmatch '\/ranking') { break }	#ランキング	他でカバーできるため対応予定なし
+				($local:searchResult -cmatch '\/specials') { break }	#特集	他でカバーできるため対応予定なし
+				($local:searchResult -cmatch '\/topics') { break }	#トピック	番組ページではないため対応予定なし
 				default { Write-Warning ('❗ 未知のパターンです。 - {0}' -f $local:searchResult) ; break }
 			}
 		}
@@ -1158,7 +1158,7 @@ function downloadTVerVideo {
 		[Alias('Link')]
 		[String]$script:videoLink,
 
-		[Parameter(Mandatory = $true, Position = 4)]
+		[Parameter(Mandatory = $true, Position = 3)]
 		[Alias('Single')]
 		[String]$script:videoSingle
 	)
@@ -1388,13 +1388,13 @@ function generateTVerVideoList {
 	#ダウンロード対象外に入っている番組の場合はリスト出力しない
 	foreach ($local:ignoreTitle in $script:ignoreTitles) {
 		if ($local:ignoreTitle -ne '') {
-			if ($script:videoSeries -match [Regex]::Escape($local:ignoreTitle)) {
+			if ($script:videoSeries -cmatch [Regex]::Escape($local:ignoreTitle)) {
 				$local:ignoreWord = $local:ignoreTitle
 				sortIgnoreList $local:ignoreTitle
 				$script:ignore = $true
 				#ダウンロード対象外と合致したものはそれ以上のチェック不要
 				break
-			} elseif ($script:videoTitle -match [Regex]::Escape($local:ignoreTitle)) {
+			} elseif ($script:videoTitle -cmatch [Regex]::Escape($local:ignoreTitle)) {
 				$local:ignoreWord = $local:ignoreTitle
 				sortIgnoreList $local:ignoreTitle
 				$script:ignore = $true
@@ -1537,20 +1537,20 @@ function getVideoInfo {
 
 	#「《」と「》」で挟まれた文字を除去
 	if ($script:removeSpecialNote -eq $true) {
-		if ($script:videoSeries -match '(.*)(《.*》)(.*)') { $script:videoSeries = ('{0}{1}' -f $Matches[1], $Matches[3]).Replace('  ', ' ').Trim() }
-		if ($script:videoSeason -match '(.*)(《.*》)(.*)') { $script:videoSeason = ('{0}{1}' -f $Matches[1], $Matches[3]).Replace('  ', ' ').Trim() }
-		if ($script:videoTitle -match '(.*)(《.*》)(.*)') { $script:videoTitle = ('{0}{1}' -f $Matches[1], $Matches[3]).Replace('  ', ' ').Trim() }
+		if ($script:videoSeries -cmatch '(.*)(《.*》)(.*)') { $script:videoSeries = ('{0}{1}' -f $Matches[1], $Matches[3]).Replace('  ', ' ').Trim() }
+		if ($script:videoSeason -cmatch '(.*)(《.*》)(.*)') { $script:videoSeason = ('{0}{1}' -f $Matches[1], $Matches[3]).Replace('  ', ' ').Trim() }
+		if ($script:videoTitle -cmatch '(.*)(《.*》)(.*)') { $script:videoTitle = ('{0}{1}' -f $Matches[1], $Matches[3]).Replace('  ', ' ').Trim() }
 	}
 
 	#シーズン名が本編の場合はシーズン名をクリア
 	if ($script:videoSeason -eq '本編') { $script:videoSeason = '' }
 
 	#シリーズ名がシーズン名を含む場合はシーズン名をクリア
-	if ($script:videoSeries -match [Regex]::Escape($script:videoSeason)) { $script:videoSeason = '' }
+	if ($script:videoSeries -cmatch [Regex]::Escape($script:videoSeason)) { $script:videoSeason = '' }
 
 	#放送日を整形
 	$local:broadcastYMD = $null
-	if ($script:broadcastDate -match '([0-9]+)(月)([0-9]+)(日)(.+?)(放送)') {
+	if ($script:broadcastDate -cmatch '([0-9]+)(月)([0-9]+)(日)(.+?)(放送)') {
 		#当年だと仮定して放送日を抽出
 		$local:broadcastYMD = [DateTime]::ParseExact(('{0}{1}{2}' -f (Get-Date -Format 'yyyy'), $Matches[1].padleft(2, '0'), $Matches[3].padleft(2, '0')), 'yyyyMMdd', $null)
 		#実日付の翌日よりも放送日が未来だったら当年ではなく昨年の番組と判断する

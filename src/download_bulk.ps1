@@ -73,7 +73,7 @@ $local:totalStartTime = Get-Date
 foreach ($local:keywordName in $local:keywordNames) {
 	#いろいろ初期化
 	$local:videoLink = ''
-	$local:videoLinks = [System.Collections.Generic.List[string]]::new()
+	$local:videoLinks = [System.Collections.Generic.List[String]]::new()
 	$local:resultLinks = @()
 	$local:processedCount = 0
 	$local:keywordName = trimTabSpace ($local:keywordName)
@@ -161,7 +161,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 		downloadTVerVideo `
 			-Keyword $local:keywordName `
 			-URL $local:videoLink `
-			-Link $local:videoLink.Replace('https://tver.jp', '')`
+			-Link $local:videoLink.Replace('https://tver.jp', '') `
 			-Single $false
 	}
 	#----------------------------------------------------------------------

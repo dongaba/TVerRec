@@ -76,7 +76,7 @@ function AddOutput {
 		[String]$local:Message,
 		[parameter(Mandatory = $true, Position = 1)]
 		[Alias('Color')]
-		[string]$local:color
+		[String]$local:color
 	)
 
 	$local:rtfRange = New-Object System.Windows.Documents.TextRange($script:outText.Document.ContentEnd, $script:outText.Document.ContentEnd)

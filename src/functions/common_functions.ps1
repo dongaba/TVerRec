@@ -81,7 +81,7 @@ function getFileNameWoInvChars {
 	Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
 
 	$local:invalidChars = [IO.Path]::GetInvalidFileNameChars() -Join ''
-	$local:result = '[{0}]' -f [RegEx]::Escape($local:invalidChars)
+	$local:result = '[{0}]' -f [Regex]::Escape($local:invalidChars)
 	$local:Name = $local:Name.Replace($local:result , '')
 
 	#Linux/MacではGetInvalidFileNameChars()が不完全なため、ダメ押しで置換
@@ -545,7 +545,7 @@ function Get-WindowsAppId {
 
 	Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
 
-	$local:appID = (Get-StartApps -Name 'PowerShell').where({ $_.Name -match 'PowerShell*' })[0].AppId
+	$local:appID = (Get-StartApps -Name 'PowerShell').where({ $_.Name -cmatch 'PowerShell*' })[0].AppId
 
 	return $local:appID
 }
