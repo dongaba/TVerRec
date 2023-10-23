@@ -1,5 +1,16 @@
 ﻿# Change Log
 
+## [2.8.7](https://github.com/dongaba/TVerRec/releases/tag/v2.8.7)
+
+自動アップデートテストのための空アップデート
+
+### 2.8.7 Added
+
+### 2.8.7 Changed
+
+### 2.8.7 Fixed
+
+
 ## [2.8.6](https://github.com/dongaba/TVerRec/releases/tag/v2.8.6)
 
 ### 2.8.6 Added
