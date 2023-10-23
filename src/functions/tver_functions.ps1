@@ -73,7 +73,6 @@ try {
 	$local:GeoIPValues = $local:ipapi.psobject.properties
 	foreach ($local:GeoIPValue in $local:GeoIPValues) { $script:clientEnvs.Add($local:GeoIPValue.Name, $local:GeoIPValue.Value) }
 } catch { Write-Debug ('Geo IPのチェックに失敗しました') }
-if (Test-Path $script:devDir) { $script:appVersion += ' dev' }
 $script:clientEnvs = $script:clientEnvs.GetEnumerator() | Sort-Object -Property key
 $progressPreference = 'Continue'
 
