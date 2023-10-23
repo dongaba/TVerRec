@@ -1,5 +1,15 @@
 ﻿# Change Log
 
+## [2.9.1](https://github.com/dongaba/TVerRec/releases/tag/v2.9.1)
+
+### 2.9.1 Added
+
+### 2.9.1 Changed
+
+### 2.9.1 Fixed
+
+- GUI 版も TVerRec の自動アップデートの不具合を修正(できたかな?)
+
 ## [2.9.0](https://github.com/dongaba/TVerRec/releases/tag/v2.9.0)
 
 v2.8.2 以降で特定条件下で TVerRec の自動アップデートがされない不具合がありました。
