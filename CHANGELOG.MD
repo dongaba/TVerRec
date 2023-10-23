@@ -1,5 +1,16 @@
 ﻿# Change Log
 
+## [2.8.8](https://github.com/dongaba/TVerRec/releases/tag/v2.8.8)
+
+### 2.8.8 Added
+
+### 2.8.8 Changed
+
+### 2.8.8 Fixed
+
+- ダウンロードディレクトリがからの場合のエラーハンドリングを追加
+- TVerRec の自動アップデートの不具合を修正(できたかな?)
+
 ## [2.8.7](https://github.com/dongaba/TVerRec/releases/tag/v2.8.7)
 
 自動アップデートテストのための空アップデート
@@ -9,7 +20,6 @@
 ### 2.8.7 Changed
 
 ### 2.8.7 Fixed
-
 
 ## [2.8.6](https://github.com/dongaba/TVerRec/releases/tag/v2.8.6)
 
@@ -21,7 +31,7 @@
 
 ### 2.8.6 Fixed
 
-- TVerRecの自動アップデートの不具合を修正(できたかな?)
+- TVerRec の自動アップデートの不具合を修正(できたかな?)
 
 ## [2.8.5](https://github.com/dongaba/TVerRec/releases/tag/v2.8.5)
 

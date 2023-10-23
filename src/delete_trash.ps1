@@ -153,11 +153,15 @@ showProgressToast `
 if (Test-Path $script:ignoreFilePath -PathType Leaf) { $local:ignoreTitles = loadIgnoreList }
 else { $local:ignoreTitles = @() }
 $local:regexIgnoreTitles = @()
+$local:delTargets = @()
 foreach ($local:ignoreTitle in $local:ignoreTitles) { $local:regexIgnoreTitles += [Regex]::Escape($local:ignoreTitle) }
-$local:ignoreDirs = [System.Collections.Generic.List[String]]::new()
-$local:workDirEntities = @(Get-ChildItem -LiteralPath $script:downloadBaseDir).Name
 $local:regexCondition = '(' + ($local:regexIgnoreTitles -join ')|(' ) + ')'
-$local:delTargets = $local:workDirEntities -cmatch $local:regexCondition
+$local:workDirEntities = @(Get-ChildItem -LiteralPath $script:downloadBaseDir)
+if ($local:workDirEntities.Count -ne 0) {
+	$local:workDirEntities = @($local:workDirEntities).Name
+	$local:delTargets = $local:workDirEntities -cmatch $local:regexCondition
+}
+$local:ignoreDirs = [System.Collections.Generic.List[String]]::new()
 foreach ($local:delTarget in $local:delTargets) {
 	if ($local:delTarget -ne '') { $local:ignoreDirs.Add($local:delTarget) }
 }
