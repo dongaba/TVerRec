@@ -1,8 +1,42 @@
 ﻿# Change Log
 
+## [2.9.2](https://github.com/dongaba/TVerRec/releases/tag/v2.9.2)
+
+### 2.9.2 Added
+
+### 2.9.2 Changed
+
+- どうやら自動アップデート機能に不具合あるようなので自動アップデートを無効化
+
+### 2.9.2 Fixed
+
+## [2.9.1](https://github.com/dongaba/TVerRec/releases/tag/v2.9.1)
+
+### 2.9.1 Added
+
+### 2.9.1 Changed
+
+### 2.9.1 Fixed
+
+- GUI 版も TVerRec の自動アップデートの不具合を修正(できたかな?)
+
+## [2.9.0](https://github.com/dongaba/TVerRec/releases/tag/v2.9.0)
+
+v2.8.2 以降で特定条件下で TVerRec の自動アップデートがされない不具合がありました。
+自動アップデートがされずに毎回自動アップデートの画面が出ている場合は、win/update_tverrec.cmd または unix/update_tverrec.sh を実行するか、v2.9.0 まで手動でバージョンアップをお願いします。
+
+### 2.9.0 Added
+
+### 2.9.0 Changed
+
+### 2.9.0 Fixed
+
+- GUI 版も TVerRec の自動アップデートの不具合を修正(できたかな?)
+
 ## [2.8.9](https://github.com/dongaba/TVerRec/releases/tag/v2.8.9)
 
-自動アップデートテストのための空アップデート
+v2.8.2 以降で特定条件下で TVerRec の自動アップデートがされない不具合がありました。
+自動アップデートがされずに毎回自動アップデートの画面が出ている場合は、win/update_tverrec.cmd または unix/update_tverrec.sh を実行するか、v2.8.9 まで手動でバージョンアップをお願いします。
 
 ### 2.8.9 Added
 
