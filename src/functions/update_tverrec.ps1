@@ -65,10 +65,10 @@ function moveItem() {
 				moveItem -Path $_.FullName -Destination ('{0}/{1}' -f $local:dist, $_.Name)
 			}
 		}
-		# 移動し終わったディレクトリを削除
-		Remove-Item -LiteralPath $local:src -Recurse -Force
+		# # 移動し終わったディレクトリを削除
+		# Remove-Item -LiteralPath $local:src -Recurse -Force
 	} else {
-		# 移動先に対象なし または ファイルの Move-Item に -Forece つけて実行
+		# 移動先に対象なし または ファイルの場合 は Move-Item に -Forece つけて実行
 		Write-Output ('{0} → {1}' -f $local:src, $local:dist)
 
 		Move-Item -LiteralPath $local:src -Destination $local:dist -Force

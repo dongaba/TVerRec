@@ -94,6 +94,8 @@ foreach ($local:keywordName in $local:keywordNames) {
 	finally { $null = fileUnlock $script:historyLockFilePath }
 
 	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
+	if ($script:historyFileData.Count -eq 0) { $local:histVideoPages = @() }
+	else { $local:histVideoPages = @($script:historyFileData.VideoPage) }
 	$local:histVideoPages = @($script:historyFileData.VideoPage)
 	$local:histCompareResult = @(Compare-Object -IncludeEqual $local:resultLinks $local:histVideoPages).where({ $_.SideIndicator -ne '=>' })
 	$local:histMatch = @($local:histCompareResult.where({ $_.SideIndicator -eq '==' }))
