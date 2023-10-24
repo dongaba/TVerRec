@@ -1,5 +1,18 @@
 ﻿# Change Log
 
+## [2.9.3](https://github.com/dongaba/TVerRec/releases/tag/v2.9.3)
+
+### 2.9.3 Added
+
+### 2.9.3 Changed
+
+- ダウンロード履歴がない場合のエラーメッセージを抑制
+
+### 2.9.3 Fixed
+
+- サイトマップからの全件ダウンロード時のパースエラーを修正
+- ダウンロード対象外リストがからの場合の削除処理の不具合を修正
+
 ## [2.9.2](https://github.com/dongaba/TVerRec/releases/tag/v2.9.2)
 
 ### 2.9.2 Added
