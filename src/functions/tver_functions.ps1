@@ -1144,7 +1144,11 @@ function downloadTVerVideo {
 
 		[Parameter(Mandatory = $true, Position = 2)]
 		[Alias('Link')]
-		[String]$script:videoLink
+		[String]$script:videoLink,
+
+		[Parameter(Mandatory = $true, Position = 3)]
+		[Alias('Single')]
+		[String]$script:videoSingle
 	)
 
 	Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
@@ -1322,7 +1326,7 @@ function downloadTVerVideo {
 	finally { $null = fileUnlock $script:historyLockFilePath }
 
 	#スキップやダウンロード対象外でなければyoutube-dl起動
-	if (($script:ignore -eq $true) -Or ($script:skipWithValidation -eq $true) -Or ($script:skipWithoutValidation -eq $true)) {
+	if (($script:videoSingle -eq $false) -And (($script:ignore -eq $true) -Or ($script:skipWithValidation -eq $true) -Or ($script:skipWithoutValidation -eq $true))) {
 		#スキップ対象やダウンロード対象外は飛ばして次のファイルへ
 		continue
 	} else {
