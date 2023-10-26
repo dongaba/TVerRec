@@ -203,6 +203,7 @@ function checkLatestTVerRec {
 	#バージョンアップメッセージ
 	if ($local:versionUp -eq $true ) {
 		[Console]::ForegroundColor = 'Green'
+		Write-Output ('')
 		Write-Output ('❗ TVerRecの更新版があるようです。')
 		Write-Output ('　Local Version {0}' -f $script:appVersion)
 		Write-Output ('　Latest Version {0}' -f $local:latestVersion)
@@ -216,7 +217,7 @@ function checkLatestTVerRec {
 			if ($local:pastVersion -ge $local:appMajorVersion ) {
 				[Console]::ForegroundColor = 'Green'
 				Write-Output ('----------------------------------------------------------------------')
-				Write-Warning ('{0}の更新内容' -f $local:pastVersion)
+				Write-Output ('{0}の更新内容' -f $local:pastVersion)
 				Write-Output ('----------------------------------------------------------------------')
 				Write-Output $local:pastReleaseNote
 				Write-Output ('')
@@ -1144,11 +1145,7 @@ function downloadTVerVideo {
 
 		[Parameter(Mandatory = $true, Position = 2)]
 		[Alias('Link')]
-		[String]$script:videoLink,
-
-		[Parameter(Mandatory = $true, Position = 3)]
-		[Alias('Single')]
-		[String]$script:videoSingle
+		[String]$script:videoLink
 	)
 
 	Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
@@ -1326,7 +1323,7 @@ function downloadTVerVideo {
 	finally { $null = fileUnlock $script:historyLockFilePath }
 
 	#スキップやダウンロード対象外でなければyoutube-dl起動
-	if (($script:videoSingle -eq $false) -And (($script:ignore -eq $true) -Or ($script:skipWithValidation -eq $true) -Or ($script:skipWithoutValidation -eq $true))) {
+	if (($script:ignore -eq $true) -Or ($script:skipWithValidation -eq $true) -Or ($script:skipWithoutValidation -eq $true)) {
 		#スキップ対象やダウンロード対象外は飛ばして次のファイルへ
 		continue
 	} else {
@@ -1712,7 +1709,7 @@ function executeYtdl {
 	$local:chaptDir = ('"chapter:{0}"' -f $script:downloadWorkDir)
 	$local:descDir = ('"description:{0}"' -f $script:downloadWorkDir)
 	$local:saveFile = ('"{0}"' -f $script:videoName)
-	$local:ytdlArgs += (' {0}' -f $script:ytdlBaseArgs)
+	$local:ytdlArgs = (' {0}' -f $script:ytdlBaseArgs)
 	$local:ytdlArgs += (' {0} {1}' -f '--concurrent-fragments', $script:parallelDownloadNumPerFile)
 	$local:ytdlArgs += (' {0} {1}M' -f '--limit-rate', [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8))
 	if ($script:embedSubtitle -eq $true) { $local:ytdlArgs += (' {0}' -f '--sub-langs all --convert-subs srt --embed-subs') }
