@@ -44,6 +44,11 @@ try {
 #----------------------------------------------------------------------
 while ($true) {
 	$script:validationFailed = $true
+	. ('{0}/functions/initialize.ps1' -f $script:scriptRoot) $script:uiMode
+	if ($LastExitCode -eq 99) {
+		try { . ('{0}/functions/update_tverrec.ps1' -f $script:scriptRoot) $script:uiMode }
+		catch { Write-Error ('❗ TVerRecのアップデータを起動できませんでした') ; return }
+	}
 	while ($script:validationFailed) {
 		. ('{0}/download_bulk.ps1' -f $script:scriptRoot) $script:uiMode
 		. ('{0}/delete_trash.ps1' -f $script:scriptRoot) $script:uiMode

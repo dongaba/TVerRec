@@ -76,7 +76,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#いろいろ初期化
 	$local:videoLink = ''
 	$local:processedCount = 0
-	$local:videoLinks = [System.Collections.Generic.List[string]]::new()
+	$local:videoLinks = [System.Collections.Generic.List[String]]::new()
 	$local:keywordName = trimTabSpace ($local:keywordName)
 
 	#ジャンルページチェックタイトルの表示
@@ -104,14 +104,14 @@ foreach ($local:keywordName in $local:keywordNames) {
 	#----------------------------------------------------------------------
 	#EpisodeIDがすでにダウンロードリストに存在する場合は検索結果から除外
 	$local:listEpisodeIDs = @($script:listFileData.episodeID)
-	$local:listVideoPages = [System.Collections.Generic.List[string]]::new()
+	$local:listVideoPages = [System.Collections.Generic.List[String]]::new()
 	foreach ($local:listEpisodeID in $local:listEpisodeIDs) {
 		$local:listVideoPages.Add('https://tver.jp/episodes/{0}' -f $local:listEpisodeID)
 	}
 	$local:listCompareResult = @(Compare-Object -IncludeEqual $local:resultLinks $local:listVideoPages).where({ $_.SideIndicator -ne '=>' })
 	$local:listMatch = @($local:listCompareResult.where({ $_.SideIndicator -eq '==' }))
 	$local:listUnmatch = @($local:listCompareResult.where({ $_.SideIndicator -eq '<=' }))
-	$local:tempLinks = [System.Collections.Generic.List[string]]::new()
+	$local:tempLinks = [System.Collections.Generic.List[String]]::new()
 	if ($local:listUnmatch.Count -ne 0) { $local:tempLinks = @($local:listUnmatch.InputObject) }
 	if ($local:listMatch.Count -ne 0) { $local:processedCount += $local:listMatch.Count }
 
@@ -217,15 +217,15 @@ foreach ($local:keywordName in $local:keywordNames) {
 			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:92') ; continue }
 
 			#ダウンロード対象外に入っている番組の場合はリスト出力しない
-			foreach ($ignoreTitle in $using:script:ignoreTitles) {
-				if ($ignoreTitle -ne '') {
-					if ($script:videoSeries -like ('*{0}*' -f $local:ignoreTitle)) {
+			foreach ($local:ignoreTitle in $using:script:ignoreTitles) {
+				if ($local:ignoreTitle -ne '') {
+					if ($script:videoSeries -cmatch [Regex]::Escape($local:ignoreTitle)) {
 						$ignoreWord = $ignoreTitle
 						sortIgnoreList $ignoreTitle
 						$ignore = $true
 						#ダウンロード対象外と合致したものはそれ以上のチェック不要
 						break
-					} elseif ($script:videoTitle -like ('*{0}*' -f $local:ignoreTitle)) {
+					} elseif ($script:videoTitle -cmatch [Regex]::Escape($local:ignoreTitle)) {
 						$ignoreWord = $ignoreTitle
 						sortIgnoreList $ignoreTitle
 						$ignore = $true

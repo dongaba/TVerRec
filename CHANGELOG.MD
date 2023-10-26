@@ -1,5 +1,50 @@
 ﻿# Change Log
 
+## [2.8.7](https://github.com/dongaba/TVerRec/releases/tag/v2.8.7)
+
+自動アップデートテストのための空アップデート
+
+### 2.8.7 Added
+
+### 2.8.7 Changed
+
+### 2.8.7 Fixed
+
+
+## [2.8.6](https://github.com/dongaba/TVerRec/releases/tag/v2.8.6)
+
+### 2.8.6 Added
+
+### 2.8.6 Changed
+
+- like を match に置き換えることによる性能改善
+
+### 2.8.6 Fixed
+
+- TVerRecの自動アップデートの不具合を修正(できたかな?)
+
+## [2.8.5](https://github.com/dongaba/TVerRec/releases/tag/v2.8.5)
+
+### 2.8.5 Added
+
+### 2.8.5 Changed
+
+- like を match に置き換えることによる性能改善
+
+### 2.8.5 Fixed
+
+- 無視リストのフォルダが削除されないことがある不具合を修正
+
+## [2.8.4](https://github.com/dongaba/TVerRec/releases/tag/v2.8.4)
+
+### 2.8.4 Added
+
+### 2.8.4 Changed
+
+### 2.8.4 Fixed
+
+- 無視リストのフォルダが削除されないことがある不具合を修正
+
 ## [2.8.3](https://github.com/dongaba/TVerRec/releases/tag/v2.8.3)
 
 ### 2.8.3 Added
@@ -8,7 +53,7 @@
 
 ### 2.8.3 Fixed
 
-- からディレクトリ削除時のメッセージ出力不正を修正
+- 空ディレクトリ削除時のメッセージ出力不正を修正
 
 ## [2.8.2](https://github.com/dongaba/TVerRec/releases/tag/v2.8.2)
 

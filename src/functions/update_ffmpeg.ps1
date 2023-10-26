@@ -77,7 +77,7 @@ switch ($true) {
 			if (Test-Path $local:ffmpegPath -PathType Leaf) {
 				# get version of current ffmpeg.exe
 				$local:ffmpegFileVersion = (& $local:ffmpegPath -version)
-				$null = $local:ffmpegFileVersion[0] -match 'ffmpeg version (.*) Copyright'
+				$null = $local:ffmpegFileVersion[0] -cmatch 'ffmpeg version (.*) Copyright'
 				$local:currentVersion = $matches[1]
 			} else { $local:currentVersion = '' }
 		} catch { $local:currentVersion = '' }
@@ -88,12 +88,12 @@ switch ($true) {
 		$local:latestVersion = ''
 		try {
 			$local:latestRelease = Invoke-RestMethod -Uri $local:releases -Method 'GET'
-			$null = $local:latestRelease -match 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)/ffmpeg-(n\d+\.\d+-\d+-[0-9a-z]*)(-win64-gpl-)(.*).zip'
+			$null = $local:latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)/ffmpeg-(n\d+\.\d+-\d+-[0-9a-z]*)(-win64-gpl-)(.*).zip'
 			$local:latestVersion = $matches[6]
 		} catch { Write-Warning ('❗ ffmpegの最新バージョンを特定できませんでした') ; return }
 
 		#ffmpegのダウンロード
-		if ($local:currentVersion -match $local:latestVersion) {
+		if ($local:currentVersion -cmatch $local:latestVersion) {
 			Write-Output ('')
 			Write-Output ('💡 ffmpegは最新です。')
 			Write-Output ('　Local version: {0}' -f $local:currentVersion)
@@ -106,11 +106,11 @@ switch ($true) {
 
 			if ([System.Environment]::IS64bitOperatingSystem -eq $true) {
 				$local:cpu = 'x64'
-				$null = $local:latestRelease -match 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-win64-gpl-)(.*).zip'
+				$null = $local:latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-win64-gpl-)(.*).zip'
 				$local:donwloadURL = $matches[0]
 			} else {
 				$local:cpu = 'x86'
-				$null = $local:latestRelease -match 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-win32-gpl-)(.*).zip'
+				$null = $local:latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-win32-gpl-)(.*).zip'
 				$local:donwloadURL = $matches[0]
 			}
 
@@ -139,7 +139,7 @@ switch ($true) {
 			#バージョンチェック
 			try {
 				$local:ffmpegFileVersion = (& $local:ffmpegPath -version)
-				$null = $local:ffmpegFileVersion[0] -match 'ffmpeg version (.*) Copyright'
+				$null = $local:ffmpegFileVersion[0] -cmatch 'ffmpeg version (.*) Copyright'
 				$local:currentVersion = $local:matches[1]
 				Write-Output ('💡 ffmpegをversion{0}に更新しました。' -f $local:currentVersion)
 			} catch { Write-Error ('❗ 更新後のバージョン取得に失敗しました') ; exit 1 }
@@ -162,7 +162,7 @@ switch ($true) {
 			if (Test-Path $local:ffmpegPath -PathType Leaf) {
 				# get version of current ffmpeg.exe
 				$local:ffmpegFileVersion = (& $local:ffmpegPath -version)
-				$null = $local:ffmpegFileVersion[0] -match 'ffmpeg version (.*) Copyright'
+				$null = $local:ffmpegFileVersion[0] -cmatch 'ffmpeg version (.*) Copyright'
 				$local:currentVersion = $matches[1]
 			} else { $local:currentVersion = '' }
 		} catch { $local:currentVersion = '' }
@@ -173,12 +173,12 @@ switch ($true) {
 		$local:latestVersion = ''
 		try {
 			$local:latestRelease = Invoke-RestMethod -Uri $local:releases -Method 'GET'
-			$null = $local:latestRelease -match 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)/ffmpeg-(n\d+\.\d+-\d+-[0-9a-z]*)(-linux64-gpl-)(.*).tar.xz'
+			$null = $local:latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)/ffmpeg-(n\d+\.\d+-\d+-[0-9a-z]*)(-linux64-gpl-)(.*).tar.xz'
 			$local:latestVersion = $matches[6]
 		} catch { Write-Warning ('❗ ffmpegの最新バージョンを特定できませんでした') ; return }
 
 		#ffmpegのダウンロード
-		if ($local:currentVersion -match $local:latestVersion) {
+		if ($local:currentVersion -cmatch $local:latestVersion) {
 			Write-Output ('')
 			Write-Output ('💡 ffmpegは最新です。')
 			Write-Output ('　Local version: {0}' -f $local:currentVersion)
@@ -192,13 +192,13 @@ switch ($true) {
 			switch ($true) {
 				(($local:arch -eq 'aarch64') -Or ($local:arch -Contains 'armv8')) {
 					$local:cpu = 'arm64'
-					$null = $local:latestRelease -match 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-linuxarm64-gpl-)(.*).tar.xz'
+					$null = $local:latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-linuxarm64-gpl-)(.*).tar.xz'
 					$local:donwloadURL = $matches[0]
 					break
 				}
 				(($local:arch -eq 'x86_64') -Or ($local:arch -eq 'ia64')) {
 					$local:cpu = 'amd64'
-					$null = $local:latestRelease -match 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-linux64-gpl-)(.*).tar.xz'
+					$null = $local:latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-linux64-gpl-)(.*).tar.xz'
 					$local:donwloadURL = $matches[0]
 					break
 				}
@@ -239,7 +239,7 @@ switch ($true) {
 			#バージョンチェック
 			try {
 				$local:ffmpegFileVersion = (& $local:ffmpegPath -version)
-				$null = $local:ffmpegFileVersion[0] -match 'ffmpeg version (.*) Copyright'
+				$null = $local:ffmpegFileVersion[0] -cmatch 'ffmpeg version (.*) Copyright'
 				$local:currentVersion = $local:matches[1]
 				Write-Output ('💡 ffmpegをversion{0}に更新しました。' -f $local:currentVersion)
 			} catch { Write-Error ('❗ 更新後のバージョン取得に失敗しました') ; exit 1 }
@@ -262,7 +262,7 @@ switch ($true) {
 			if (Test-Path $local:ffmpegPath -PathType Leaf) {
 				# get version of current ffmpeg.exe
 				$local:ffmpegFileVersion = (& $local:ffmpegPath -version)
-				$null = $local:ffmpegFileVersion[0] -match 'ffmpeg version (\d+\.\d+(\.\d+)?).*'
+				$null = $local:ffmpegFileVersion[0] -cmatch 'ffmpeg version (\d+\.\d+(\.\d+)?).*'
 				$local:currentVersion = $matches[1]
 			} else { $local:currentVersion = '' }
 		} catch { $local:currentVersion = '' }
@@ -321,7 +321,7 @@ switch ($true) {
 			#バージョンチェック
 			try {
 				$local:ffmpegFileVersion = (& $local:ffmpegPath -version)
-				$null = $local:ffmpegFileVersion[0] -match 'ffmpeg version (\d+\.\d+(\.\d+)?)-.*'
+				$null = $local:ffmpegFileVersion[0] -cmatch 'ffmpeg version (\d+\.\d+(\.\d+)?)-.*'
 				$local:currentVersion = $local:matches[1]
 				Write-Output ('💡 ffmpegをversion{0}に更新しました。' -f $local:currentVersion)
 			} catch { Write-Error ('❗ 更新後のバージョン取得に失敗しました') ; exit 1 }
