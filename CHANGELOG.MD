@@ -1,5 +1,83 @@
 ﻿# Change Log
 
+## [2.9.4](https://github.com/dongaba/TVerRec/releases/tag/v2.9.4)
+
+### 2.9.4 Added
+
+### 2.9.4 Changed
+
+### 2.9.4 Fixed
+
+- 個別ダウンロードが失敗する不具合を修正
+
+## [2.9.3](https://github.com/dongaba/TVerRec/releases/tag/v2.9.3)
+
+### 2.9.3 Added
+
+### 2.9.3 Changed
+
+- ダウンロード履歴がない場合のエラーメッセージを抑制
+
+### 2.9.3 Fixed
+
+- サイトマップからの全件ダウンロード時のパースエラーを修正
+- ダウンロード対象外リストがからの場合の削除処理の不具合を修正
+
+## [2.9.2](https://github.com/dongaba/TVerRec/releases/tag/v2.9.2)
+
+### 2.9.2 Added
+
+### 2.9.2 Changed
+
+- どうやら自動アップデート機能に不具合あるようなので自動アップデートを無効化
+
+### 2.9.2 Fixed
+
+## [2.9.1](https://github.com/dongaba/TVerRec/releases/tag/v2.9.1)
+
+### 2.9.1 Added
+
+### 2.9.1 Changed
+
+### 2.9.1 Fixed
+
+- GUI 版も TVerRec の自動アップデートの不具合を修正(できたかな?)
+
+## [2.9.0](https://github.com/dongaba/TVerRec/releases/tag/v2.9.0)
+
+v2.8.2 以降で特定条件下で TVerRec の自動アップデートがされない不具合がありました。
+自動アップデートがされずに毎回自動アップデートの画面が出ている場合は、win/update_tverrec.cmd または unix/update_tverrec.sh を実行するか、v2.9.0 まで手動でバージョンアップをお願いします。
+
+### 2.9.0 Added
+
+### 2.9.0 Changed
+
+### 2.9.0 Fixed
+
+- GUI 版も TVerRec の自動アップデートの不具合を修正(できたかな?)
+
+## [2.8.9](https://github.com/dongaba/TVerRec/releases/tag/v2.8.9)
+
+v2.8.2 以降で特定条件下で TVerRec の自動アップデートがされない不具合がありました。
+自動アップデートがされずに毎回自動アップデートの画面が出ている場合は、win/update_tverrec.cmd または unix/update_tverrec.sh を実行するか、v2.8.9 まで手動でバージョンアップをお願いします。
+
+### 2.8.9 Added
+
+### 2.8.9 Changed
+
+### 2.8.9 Fixed
+
+## [2.8.8](https://github.com/dongaba/TVerRec/releases/tag/v2.8.8)
+
+### 2.8.8 Added
+
+### 2.8.8 Changed
+
+### 2.8.8 Fixed
+
+- ダウンロードディレクトリがからの場合のエラーハンドリングを追加
+- TVerRec の自動アップデートの不具合を修正(できたかな?)
+
 ## [2.8.7](https://github.com/dongaba/TVerRec/releases/tag/v2.8.7)
 
 自動アップデートテストのための空アップデート
@@ -9,7 +87,6 @@
 ### 2.8.7 Changed
 
 ### 2.8.7 Fixed
-
 
 ## [2.8.6](https://github.com/dongaba/TVerRec/releases/tag/v2.8.6)
 
@@ -21,7 +98,7 @@
 
 ### 2.8.6 Fixed
 
-- TVerRecの自動アップデートの不具合を修正(できたかな?)
+- TVerRec の自動アップデートの不具合を修正(できたかな?)
 
 ## [2.8.5](https://github.com/dongaba/TVerRec/releases/tag/v2.8.5)
 

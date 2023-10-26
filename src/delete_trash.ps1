@@ -101,7 +101,7 @@ updateProgressToast `
 #作業ディレクトリ
 deleteFiles `
 	-Path $script:downloadWorkDir `
-	-Conditions '*.ytdl, *.jpg, *.vtt, *.srt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.mp4' `
+	-Conditions '*.ytdl, *.jpg, *.vtt, *.srt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.m4a, *.mp4' `
 	-DaysPassed 0
 
 updateProgressToast `
@@ -115,7 +115,7 @@ updateProgressToast `
 #ダウンロード先
 deleteFiles `
 	-Path $script:downloadBaseDir `
-	-Conditions '*.ytdl, *.jpg, *.vtt, *.srt, *.temp.mp4, *.part, *.mp4.part-Frag*' `
+	-Conditions '*.ytdl, *.jpg, *.vtt, *.srt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.m4a' `
 	-DaysPassed 0
 
 #移動先
@@ -130,7 +130,7 @@ if ($script:saveBaseDir -ne '') {
 			-Group 'Delete'
 		deleteFiles `
 			-Path $local:saveDir `
-			-Conditions '*.ytdl, *.jpg, *.vtt, *.srt, *.temp.mp4, *.part, *.mp4.part-Frag*' `
+			-Conditions '*.ytdl, *.jpg, *.vtt, *.srt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.m4a' `
 			-DaysPassed 0
 	}
 }
@@ -153,13 +153,20 @@ showProgressToast `
 if (Test-Path $script:ignoreFilePath -PathType Leaf) { $local:ignoreTitles = loadIgnoreList }
 else { $local:ignoreTitles = @() }
 $local:regexIgnoreTitles = @()
-foreach ($local:ignoreTitle in $local:ignoreTitles) { $local:regexIgnoreTitles += [Regex]::Escape($local:ignoreTitle) }
+$local:delTargets = @()
 $local:ignoreDirs = [System.Collections.Generic.List[String]]::new()
-$local:workDirEntities = @(Get-ChildItem -LiteralPath $script:downloadBaseDir).Name
-$local:regexCondition = '(' + ($local:regexIgnoreTitles -join ')|(' ) + ')'
-$local:delTargets = $local:workDirEntities -cmatch $local:regexCondition
-foreach ($local:delTarget in $local:delTargets) {
-	if ($local:delTarget -ne '') { $local:ignoreDirs.Add($local:delTarget) }
+foreach ($local:ignoreTitle in $local:ignoreTitles) { $local:regexIgnoreTitles += [Regex]::Escape($local:ignoreTitle) }
+#ダウンロード対象外番組が登録されていない場合はスキップ
+if ($local:regexIgnoreTitles.Count -ne 0 ) {
+	$local:regexCondition = '(' + ($local:regexIgnoreTitles -join ')|(' ) + ')'
+	$local:workDirEntities = @(Get-ChildItem -LiteralPath $script:downloadBaseDir)
+	if ($local:workDirEntities.Count -ne 0) {
+		$local:workDirEntities = @($local:workDirEntities).Name
+		$local:delTargets = $local:workDirEntities -cmatch $local:regexCondition
+	}
+	foreach ($local:delTarget in $local:delTargets) {
+		if ($local:delTarget -ne '') { $local:ignoreDirs.Add($local:delTarget) }
+	}
 }
 
 #----------------------------------------------------------------------
