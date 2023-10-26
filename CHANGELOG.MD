@@ -1,5 +1,15 @@
 ﻿# Change Log
 
+## [2.9.4](https://github.com/dongaba/TVerRec/releases/tag/v2.9.4)
+
+### 2.9.4 Added
+
+### 2.9.4 Changed
+
+### 2.9.4 Fixed
+
+- 個別ダウンロードが失敗する不具合を修正
+
 ## [2.9.3](https://github.com/dongaba/TVerRec/releases/tag/v2.9.3)
 
 ### 2.9.3 Added
