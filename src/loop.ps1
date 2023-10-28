@@ -50,6 +50,10 @@ while ($true) {
 		. ('{0}/download_bulk.ps1' -f $script:scriptRoot) $script:uiMode
 		. ('{0}/delete_trash.ps1' -f $script:scriptRoot) $script:uiMode
 		. ('{0}/validate_video.ps1' -f $script:scriptRoot) $script:uiMode
+
+		if ($script:disableValidation -eq $true) {
+			break
+		}
 	}
 	. ('{0}/move_video.ps1' -f $script:scriptRoot) $script:uiMode
 	[System.GC]::Collect()
