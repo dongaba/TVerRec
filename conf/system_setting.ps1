@@ -238,6 +238,9 @@ $script:ffmpegDecodeOption = ''
 #　動画の解像度を指定する場合などに使用します。
 $script:ytdlOption = ''
 
+#個別ダウンロードを強制するかの設定
+$script:SingleForceDown = $false
+
 #以下は$script:ffmpegDecodeOptionの設定例
 
 #QSV : for Intel CPUs (Intel内蔵グラフィックを使用)

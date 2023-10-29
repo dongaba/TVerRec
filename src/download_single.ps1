@@ -99,7 +99,7 @@ while ($true) {
 				-Keyword $local:keywordName `
 				-URL $local:videoPageURL `
 				-Link $local:videoLink `
-				-Single $true
+				-Single $script:SingleForceDown
 			[System.GC]::Collect()
 			[System.GC]::WaitForPendingFinalizers()
 			[System.GC]::Collect()
