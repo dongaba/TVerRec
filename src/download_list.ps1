@@ -63,7 +63,21 @@ if ($null -eq $local:listLinks) { Write-Warning ('💡 ダウンロードリス�
 $local:histFileData = @(loadHistFile)
 
 #URLがすでにダウンロード履歴に存在する場合は検索結果から除外
-$local:videoLinks = @((Compare-Object -IncludeEqual $local:listLinks.episodeID $local:histFileData.videoPage.Replace('https://tver.jp/episodes/', '')).Where({ $_.SideIndicator -eq '<=' }).InputObject)
+switch ($true) {
+	(($local:listLinks.Count -ne 0) -and ($local:histFileData.Count -ne 0)) {
+		$local:videoLinks = @((Compare-Object -IncludeEqual $local:listLinks.episodeID $local:histFileData.videoPage.Replace('https://tver.jp/episodes/', '')).Where({ $_.SideIndicator -eq '<=' }))
+		if ($local:videoLinks.Count -ne 0) { $local:videoLinks = $local:videoLinks.InputObject }
+		break
+	}
+	($local:listLinks.Count -ne 0) {
+		$local:videoLinks = @($local:listLinks.episodeID)
+		break
+	}
+	default {
+		$local:videoLinks = @()
+		break
+	}
+}
 $local:videoTotal = $local:videoLinks.Count
 Write-Output ('💡 ダウンロード対象{0}件' -f $local:videoTotal)
 
@@ -110,7 +124,7 @@ foreach ($local:videoLink in $local:videoLinks) {
 		-Keyword $local:keywordName `
 		-URL ('https://tver.jp/episodes/{0}' -f $local:videoLink) `
 		-Link ('/episodes/{0}' -f $local:videoLink)`
-		-ForceDownload $false
+		-Single $false
 }
 #----------------------------------------------------------------------
 

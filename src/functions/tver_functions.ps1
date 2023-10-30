@@ -1875,7 +1875,7 @@ function checkVideo {
 
 	$local:errorCount = 0
 	$local:checkStatus = 0
-	$local:videoFilePath = Convert-Path (Join-Path $script:downloadBaseDir $local:videoFileRelPath)
+	$local:videoFilePath = Join-Path (Convert-Path $script:downloadBaseDir) $local:videoFileRelPath
 	try { $null = New-Item -Path $script:ffpmegErrorLogPath -ItemType File -Force }
 	catch { Write-Warning ('❗ ffmpegエラーファイルを初期化できませんでした') ; return }
 
