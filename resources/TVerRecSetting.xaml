@@ -1451,6 +1451,29 @@
                         Margin="10,10,10,0"
                         IsExpanded="False"
                         FontFamily="Yu Gothic UI"
+                        Header="個別ダウンロードの強制">
+                        <TextBlock
+                            Margin="20,0,20,5"
+                            TextWrapping="Wrap">
+                            個別ダウンロードの強制するかを設定します。
+                        </TextBlock>
+                    </Expander>
+                    <ComboBox
+                        x:Name="SingleForceDown"
+                        SelectedIndex="0"
+                        Style="{DynamicResource ComboBoxStyle}"
+                        Margin="20,0,20,0"
+                        Width="100"
+                        HorizontalAlignment="Left">
+                        <ComboBoxItem>デフォルト値</ComboBoxItem>
+                        <ComboBoxItem>しない</ComboBoxItem>
+                        <ComboBoxItem>する</ComboBoxItem>
+                    </ComboBox>
+
+                    <Expander
+                        Margin="10,10,10,0"
+                        IsExpanded="False"
+                        FontFamily="Yu Gothic UI"
                         Header="youtube-dlとffmpegのウィンドウの表示方法">
                         <TextBlock
                             Margin="20,0,20,5"

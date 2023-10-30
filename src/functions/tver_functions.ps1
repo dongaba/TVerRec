@@ -1170,7 +1170,11 @@ function downloadTVerVideo {
 
 		[Parameter(Mandatory = $true, Position = 2)]
 		[Alias('Link')]
-		[String]$local:videoLink
+		[String]$local:videoLink,
+
+		[Parameter(Mandatory = $true, Position = 3)]
+		[Alias('Single')]
+		[String]$local:videoSingle
 	)
 
 	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
@@ -1325,7 +1329,7 @@ function downloadTVerVideo {
 	finally { $null = fileUnlock $script:histLockFilePath }
 
 	#スキップやダウンロード対象外でなければyoutube-dl起動
-	if ($local:skipDownload -eq $true) {
+	if ($local:videoSingle -eq $false -And $local:skipDownload -eq $true) {
 		#スキップ対象やダウンロード対象外は飛ばして次のファイルへ
 		continue
 	} else {
