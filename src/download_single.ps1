@@ -90,7 +90,8 @@ while ($true) {
 			downloadTVerVideo `
 				-Keyword $local:keywordName `
 				-URL $local:videoPageURL `
-				-Link $local:videoLink
+				-Link $local:videoLink `
+				-Single $script:SingleForceDown
 			[System.GC]::Collect()
 			[System.GC]::WaitForPendingFinalizers()
 			[System.GC]::Collect()
