@@ -42,6 +42,7 @@ try {
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	$script:devDir = Join-Path $script:scriptRoot '../dev'
 } catch { Write-Error ('❗ ディレクトリ設定に失敗しました') ; exit 1 }
+if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 
 #----------------------------------------------------------------------
 #設定ファイル読み込み
@@ -94,7 +95,7 @@ function loadCurrentSetting {
 		[Parameter(Mandatory = $true, Position = 0)]
 		[String]$local:key
 	)
-	try { $local:currentSetting = (Select-String -Pattern ('^{0}' -f $local:key.Replace('$', '\$')) -LiteralPath $script:userSettingFile | ForEach-Object { $_.Line }).split('=')[1].Trim() }
+	try { $local:currentSetting = (Select-String -Pattern ('^{0}' -f $local:key.Replace('$', '\$')) -LiteralPath $script:userSettingFile | ForEach-Object { $_.Line }).split('=', 2)[1].Trim() }
 	catch { $local:currentSetting = '' }
 
 	return $local:currentSetting.Trim("'")
@@ -135,8 +136,8 @@ function writeSetting {
 
 			switch ($true) {
 				(($local:settingBox.Text -eq '') `
-					-Or ($local:settingBox.Text -eq 'デフォルト値') `
-					-Or ($local:settingBox.Text -eq '未設定')) {
+					-or ($local:settingBox.Text -eq 'デフォルト値') `
+					-or ($local:settingBox.Text -eq '未設定')) {
 					#設定していないときは出力しない
 					break
 				}
@@ -163,10 +164,10 @@ function writeSetting {
 					break
 				}
 				($local:settingBox.Text.Contains('$') `
-					-Or $local:settingBox.Text.Contains('{') `
-					-Or $local:settingBox.Text.Contains('(') `
-					-Or $local:settingBox.Text.Contains('}') `
-					-Or $local:settingBox.Text.Contains(')') ) {
+					-or $local:settingBox.Text.Contains('{') `
+					-or $local:settingBox.Text.Contains('(') `
+					-or $local:settingBox.Text.Contains('}') `
+					-or $local:settingBox.Text.Contains(')') ) {
 					#Powershellの変数や関数等を含む場合はシングルクォーテーション不要
 					$local:newSetting += ('{0} = {1}' -f $local:settingAttribute, $local:settingBox.Text)
 					break
@@ -207,7 +208,7 @@ $script:userSettingFile = Join-Path $script:confDir 'user_setting.ps1'
 
 try {
 	[String]$local:mainXaml = Get-Content -LiteralPath (Join-Path $script:wpfDir 'TVerRecSetting.xaml')
-	$local:mainXaml = $local:mainXaml -replace 'mc:Ignorable="d"', '' -replace 'x:N', 'N' -replace 'x:Class=".*?"', ''
+	$local:mainXaml = $local:mainXaml -ireplace 'mc:Ignorable="d"', '' -ireplace 'x:N', 'N' -ireplace 'x:Class=".*?"', ''
 	[xml]$local:mainCleanXaml = $local:mainXaml
 	$script:settingWindow = [System.Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $local:mainCleanXaml))
 } catch { Write-Error ('❗ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。') ; exit 1 }
@@ -230,7 +231,7 @@ $script:settingWindow.TaskbarItemInfo.Overlay = $local:icon
 $script:settingWindow.TaskbarItemInfo.Description = $script:settingWindow.Title
 
 #ウィンドウを読み込み時の処理
-$script:settingWindow.add_Loaded({
+$script:settingWindow.Add_Loaded({
 		$script:settingWindow.Icon = $script:iconPath
 	})
 
@@ -257,13 +258,13 @@ $script:lblVersion.Content = ('Version {0}' -f $script:appVersion)
 
 #----------------------------------------------------------------------
 #region ボタンのアクション
-$script:btnWiki.add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
-$script:btnCancel.add_Click({ $script:settingWindow.close() })
-$script:btnSave.add_Click({
+$script:btnWiki.Add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
+$script:btnCancel.Add_Click({ $script:settingWindow.close() })
+$script:btnSave.Add_Click({
 		writeSetting
 		$script:settingWindow.close()
 	})
-$script:btndownloadBaseDir.add_Click({
+$script:btndownloadBaseDir.Add_Click({
 		$script:fd.Description = 'ダウンロード先ディレクトリを選択してください'
 		$script:fd.RootFolder = [System.Environment+SpecialFolder]::MyComputer
 		$script:fd.SelectedPath = $script:downloadBaseDir.Text
@@ -271,7 +272,7 @@ $script:btndownloadBaseDir.add_Click({
 			$script:downloadBaseDir.Text = $script:fd.SelectedPath
 		}
 	})
-$script:btndownloadWorkDir.add_Click({
+$script:btndownloadWorkDir.Add_Click({
 		$script:fd.Description = '作業ディレクトリを選択してください'
 		$script:fd.RootFolder = [System.Environment+SpecialFolder]::MyComputer
 		$script:fd.SelectedPath = $script:downloadWorkDir.Text
@@ -279,7 +280,7 @@ $script:btndownloadWorkDir.add_Click({
 			$script:downloadWorkDir.Text = $script:fd.SelectedPath
 		}
 	})
-$script:btnsaveBaseDir.add_Click({
+$script:btnsaveBaseDir.Add_Click({
 		$script:fd.Description = '移動先ディレクトリを選択してください'
 		$script:fd.RootFolder = [System.Environment+SpecialFolder]::MyComputer
 		$script:fd.SelectedPath = $script:saveBaseDir.Text
@@ -306,7 +307,7 @@ $script:settingAttributes += '$script:multithreadNum'
 $script:settingAttributes += '$script:disableToastNotification'
 $script:settingAttributes += '$script:rateLimit'
 $script:settingAttributes += '$script:timeoutSec'
-$script:settingAttributes += '$script:historyRetentionPeriod'
+$script:settingAttributes += '$script:histRetentionPeriod'
 $script:settingAttributes += '$script:sortVideoByMedia'
 $script:settingAttributes += '$script:addSeriesName'
 $script:settingAttributes += '$script:addSeasonName'

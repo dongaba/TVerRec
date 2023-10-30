@@ -40,6 +40,7 @@ try {
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	$script:devDir = Join-Path $script:scriptRoot '../dev'
 } catch { Write-Error ('❗ カレントディレクトリの設定に失敗しました') ; exit 1 }
+if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 	if ($? -eq $false) { exit 1 }
@@ -51,50 +52,18 @@ try {
 #設定で指定したファイル・ディレクトリの存在チェック
 checkRequiredFile
 
-#いろいろ初期化
-$local:videoLink = ''
-$local:videoLinks = [System.Collections.Generic.List[String]]::new()
-
-$local:videoNum = 0
-
 $local:keywordName = 'リスト指定'
-#ダウンロード対象外番組の読み込み
-$script:ignoreTitles = loadIgnoreList
-
 getToken
 
-Write-Output ('----------------------------------------------------------------------')
-Write-Output ('ダウンロードリストを読み込みます')
-$local:listLinks = @()
-$local:listLinks = @(loadDownloadList)
+#ダウンロードリストを読み込み
+$local:listLinks = @(loadLinkFromDownloadList)
 if ($null -eq $local:listLinks) { Write-Warning ('💡 ダウンロードリストが0件です') ; exit 0 }
 
-$local:listTotal = 0
-$local:listTotal = $script:listLinks.Count
-if ($local:listTotal -eq 0) { Write-Warning ('💡 ダウンロードリストが0件です') ; exit 0 }
-Write-Output ('　リスト件数{0}件' -f $local:listTotal)
-
-Write-Output ('')
-Write-Output ('----------------------------------------------------------------------')
-Write-Output ('ダウンロード履歴を読み込みます')
 #ダウンロード履歴ファイルのデータを読み込み
-try {
-	while ((fileLock $script:historyLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-	$script:historyFileData = Import-Csv -LiteralPath $script:historyFilePath -Encoding UTF8
-} catch { Write-Warning ('❗ ダウンロード履歴を読み込めなかったのでスキップしました') ; continue }
-finally { $null = fileUnlock $script:historyLockFilePath }
+$local:histFileData = @(loadHistFile)
 
-Write-Output ('')
-Write-Output ('----------------------------------------------------------------------')
-Write-Output ('ダウンロード履歴に含まれる番組を除外します')
 #URLがすでにダウンロード履歴に存在する場合は検索結果から除外
-foreach ($local:listLink in $local:listLinks.episodeID) {
-	if ($null -ne $script:historyFileData) {
-		$local:historyMatch = $script:historyFileData.Where{ $_.videoPage -eq $local:listLink }
-		if ($local:historyMatch.Count -eq 0) { $local:videoLinks.Add($local:listLink) }
-	} else { $local:videoLinks.Add($local:listLink) }
-}
-
+$local:videoLinks = @((Compare-Object -IncludeEqual $local:listLinks.episodeID $local:histFileData.videoPage.Replace('https://tver.jp/episodes/', '')).Where({ $_.SideIndicator -eq '<=' }).InputObject)
 $local:videoTotal = $local:videoLinks.Count
 Write-Output ('💡 ダウンロード対象{0}件' -f $local:videoTotal)
 
@@ -113,9 +82,10 @@ showProgressToast `
 
 #----------------------------------------------------------------------
 #個々の番組ダウンロードここから
+$local:videoNum = 0
 foreach ($local:videoLink in $local:videoLinks) {
 	$local:videoNum += 1
-	#移動先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
+	#ダウンロード先ディレクトリの存在確認先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
 	if (Test-Path $script:downloadBaseDir -PathType Container) {}
 	else { Write-Error ('❗ 番組ダウンロード先ディレクトリにアクセスできません。終了します') ; exit 1 }
 	#進捗率の計算
@@ -139,8 +109,7 @@ foreach ($local:videoLink in $local:videoLinks) {
 	downloadTVerVideo `
 		-Keyword $local:keywordName `
 		-URL ('https://tver.jp/episodes/{0}' -f $local:videoLink) `
-		-Link ('/episodes/{0}' -f $local:videoLink) `
-		-Single $false
+		-Link ('/episodes/{0}' -f $local:videoLink)
 }
 #----------------------------------------------------------------------
 
@@ -164,6 +133,4 @@ Write-Output ('')
 Write-Output ('---------------------------------------------------------------------------')
 Write-Output ('リストダウンロード処理を終了しました。                                     ')
 Write-Output ('---------------------------------------------------------------------------')
-Write-Output ('💡 必要に応じてリストファイルを編集してダウンロード不要な番組を削除してください')
-Write-Output ('　リストファイルパス: {0}' -f $script:listFilePath)
 

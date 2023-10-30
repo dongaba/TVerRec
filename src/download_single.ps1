@@ -40,6 +40,7 @@ try {
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	$script:devDir = Join-Path $script:scriptRoot '../dev'
 } catch { Write-Error ('❗ カレントディレクトリの設定に失敗しました') ; exit 1 }
+if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 	if ($? -eq $false) { exit 1 }
@@ -51,14 +52,12 @@ try {
 #設定で指定したファイル・ディレクトリの存在チェック
 checkRequiredFile
 
+$local:keywordName = '個別指定'
+getToken
+
 #GUI起動を判定
 if ($script:uiMode -ne 'GUI') { $script:uiMode = 'CUI' }
 
-$local:keywordName = '個別指定'
-#ダウンロード対象外番組の読み込み
-$script:ignoreTitles = loadIgnoreList
-
-getToken
 
 #----------------------------------------------------------------------
 #無限ループ
@@ -70,12 +69,6 @@ while ($true) {
 	else { Write-Error ('❗ 番組ダウンロード先ディレクトリにアクセスできません。終了します') ; exit 1 }
 	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 	waitTillYtdlProcessGetFewer $script:parallelDownloadFileNum
-	#ダウンロード履歴ファイルのデータを読み込み
-	try {
-		while ((fileLock $script:historyLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-		$script:historyFileData = Import-Csv -LiteralPath $script:historyFilePath -Encoding UTF8
-	} catch { Write-Warning ('❗ ダウンロード履歴を読み込めなかったのでスキップしました') ; continue }
-	finally { $null = fileUnlock $script:historyLockFilePath }
 	if ($script:uiMode -eq 'CUI') {
 		$local:videoPageURL = (Read-Host '番組URLを入力してください。何も入力しないで Enter を押すと終了します。').Trim()
 	} else {
@@ -83,9 +76,8 @@ while ($true) {
 		$null = [System.Reflection.Assembly]::Load('Microsoft.VisualBasic, Version=8.0.0.0, Culture=Neutral, PublicKeyToken=b03f5f7f11d50a3a')
 		#インプットボックスの表示
 		$local:videoPageURL = [String][Microsoft.VisualBasic.Interaction]::InputBox("番組URLを入力してください。`n何も入力しないで OK を押すと終了します。", 'TVerRec個別ダウンロード').Trim()
-		Write-Output ('{0}' -f $local:videoPageURL)
-
 	}
+
 	#正しいURLが入力されるまでループ
 	if ($videoPageURL -ne '') {
 		if ($local:videoPageURL -notmatch '^https://tver.jp/(/?.*)') {
@@ -98,15 +90,13 @@ while ($true) {
 			downloadTVerVideo `
 				-Keyword $local:keywordName `
 				-URL $local:videoPageURL `
-				-Link $local:videoLink `
-				-Single $script:SingleForceDown
+				-Link $local:videoLink
 			[System.GC]::Collect()
 			[System.GC]::WaitForPendingFinalizers()
 			[System.GC]::Collect()
 		}
 	} else { break }
 }
-#----------------------------------------------------------------------
 
 [System.GC]::Collect()
 [System.GC]::WaitForPendingFinalizers()
