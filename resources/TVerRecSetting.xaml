@@ -1451,15 +1451,16 @@
                         Margin="10,10,10,0"
                         IsExpanded="False"
                         FontFamily="Yu Gothic UI"
-                        Header="個別ダウンロードの強制">
+                        Header="個別ダウンロード時の強制ダウンロード">
                         <TextBlock
                             Margin="20,0,20,5"
                             TextWrapping="Wrap">
-                            個別ダウンロードの強制するかを設定します。
+                            個別ダウンロードの際に過去履歴やダウンロード対象外リストとの照合をせずに強制ダウンロードするかを設定します。<LineBreak/>
+                            この設定を有効にすると、不要ファイル削除処理時にダウンロード対象外リストとマッチするフォルダの削除を行わなくなります。
                         </TextBlock>
                     </Expander>
                     <ComboBox
-                        x:Name="SingleForceDown"
+                        x:Name="forceSingleDownload"
                         SelectedIndex="0"
                         Style="{DynamicResource ComboBoxStyle}"
                         Margin="20,0,20,0"

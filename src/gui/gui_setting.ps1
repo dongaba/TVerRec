@@ -326,7 +326,7 @@ $script:settingAttributes += '$script:embedMetatag'
 $script:settingAttributes += '$script:windowShowStyle'
 $script:settingAttributes += '$script:ffmpegDecodeOption'
 $script:settingAttributes += '$script:ytdlOption'
-$script:settingAttributes += '$script:SingleForceDown'
+$script:settingAttributes += '$script:forceSingleDownload'
 
 $local:defaultSetting = @{}
 $local:currentSetting = @{}
