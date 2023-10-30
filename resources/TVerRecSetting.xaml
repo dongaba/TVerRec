@@ -1451,29 +1451,6 @@
                         Margin="10,10,10,0"
                         IsExpanded="False"
                         FontFamily="Yu Gothic UI"
-                        Header="個別ダウンロードの強制">
-                        <TextBlock
-                            Margin="20,0,20,5"
-                            TextWrapping="Wrap">
-                            個別ダウンロードの強制するかを設定します。
-                        </TextBlock>
-                    </Expander>
-                    <ComboBox
-                        x:Name="SingleForceDown"
-                        SelectedIndex="0"
-                        Style="{DynamicResource ComboBoxStyle}"
-                        Margin="20,0,20,0"
-                        Width="100"
-                        HorizontalAlignment="Left">
-                        <ComboBoxItem>デフォルト値</ComboBoxItem>
-                        <ComboBoxItem>しない</ComboBoxItem>
-                        <ComboBoxItem>する</ComboBoxItem>
-                    </ComboBox>
-
-                    <Expander
-                        Margin="10,10,10,0"
-                        IsExpanded="False"
-                        FontFamily="Yu Gothic UI"
                         Header="youtube-dlとffmpegのウィンドウの表示方法">
                         <TextBlock
                             Margin="20,0,20,5"
@@ -1540,6 +1517,31 @@
                         Margin="20,0,20,0"
                         VerticalScrollBarVisibility="Auto"
                         BorderThickness="0,0,0,1"/>
+
+                                            <Expander
+                        Margin="10,10,10,0"
+                        IsExpanded="False"
+                        FontFamily="Yu Gothic UI"
+                        Header="個別ダウンロード時の強制ダウンロード">
+                        <TextBlock
+                            Margin="20,0,20,5"
+                            TextWrapping="Wrap">
+                            個別ダウンロードの際に過去履歴やダウンロード対象外リストとの照合をせずに強制ダウンロードするかを設定します。<LineBreak/>
+                            この設定を有効にすると、不要ファイル削除処理時にダウンロード対象外リストとマッチするフォルダの削除を行わなくなります。
+                        </TextBlock>
+                    </Expander>
+                    <ComboBox
+                        x:Name="forceSingleDownload"
+                        SelectedIndex="0"
+                        Style="{DynamicResource ComboBoxStyle}"
+                        Margin="20,0,20,0"
+                        Width="100"
+                        HorizontalAlignment="Left">
+                        <ComboBoxItem>デフォルト値</ComboBoxItem>
+                        <ComboBoxItem>しない</ComboBoxItem>
+                        <ComboBoxItem>する</ComboBoxItem>
+                    </ComboBox>
+
                 </StackPanel>
             </ScrollViewer>
         </Border>

@@ -239,8 +239,10 @@ $script:ffmpegDecodeOption = ''
 #　動画の解像度を指定する場合などに使用します。
 $script:ytdlOption = ''
 
-#個別ダウンロードを強制するかの設定
-$script:SingleForceDown = $false
+#個別ダウンロード時の強制ダウンロード
+#　個別ダウンロードの際に過去履歴やダウンロード対象外リストとの照合をせずに強制ダウンロードするかを設定します。
+#　この設定を有効にすると、不要ファイル削除処理時にダウンロード対象外リストとマッチするフォルダの削除を行わなくなります。
+$script:forceSingleDownload = $false
 
 #以下は$script:ffmpegDecodeOptionの設定例
 

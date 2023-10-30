@@ -137,7 +137,7 @@ if ($script:saveBaseDir -ne '') {
 }
 
 #個別ダウンロードが強制モードの場合にはスキップ
-if ($script:SingleForceDown -eq $false){
+if ($script:forceSingleDownload -eq $false) {
 	#======================================================================
 	#2/3 ダウンロード対象外に入っている番組は削除
 	Write-Output ('')
