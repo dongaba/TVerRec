@@ -1007,6 +1007,7 @@
                             Margin="20,0,20,5"
                             TextWrapping="Wrap">
                             ネットワーク帯域を使い切らないようにダウンロード速度制限を設定することができます。<LineBreak/>
+                            0を設定すると帯域制限を行いません。<LineBreak/>
                             設定は 1 ファイルあたりの帯域となっており単位は Mbps です。つまり、10ファイルダウンロードすれば10倍の帯域を使います。<LineBreak/>
                             あくまでも目安となっており、瞬間的には設定値を超えることがあります。
                         </TextBlock>
@@ -1052,7 +1053,7 @@
                         </TextBlock>
                     </Expander>
                     <TextBox
-                        x:Name="historyRetentionPeriod"
+                        x:Name="histRetentionPeriod"
                         Text="デフォルト値"
                         Style="{DynamicResource TextBoxStyle}"
                         Margin="20,0,20,0"

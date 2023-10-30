@@ -107,7 +107,8 @@ $script:disableToastNotification = $false
 #ダウンロード帯域制限
 #　ネットワーク帯域を使い切らないようにダウンロード速度制限を設定することができます。
 #　単位はMbpsです。
-$script:rateLimit = 1000
+#　0を設定すると帯域制限をしません。
+$script:rateLimit = 0
 
 #HTTPアクセスのタイムアウト(sec)
 #　各種 HTTP のアクセス時のタイムアウト値(秒)です。
@@ -118,7 +119,7 @@ $script:timeoutSec = 60
 #　ダウンロード履歴を保持する日数を指定します。
 #　保持期間を長くすると、同じ番組の再配信があった際に重複ダウンロードしなくて済む可能性が高くなりますが、
 #　処理時間が長くなる可能性があります。
-$script:historyRetentionPeriod = 30
+$script:histRetentionPeriod = 30
 
 #放送局毎のディレクトリ配下にダウンロードファイルを保存
 #　放送局(テレビ局)ごとのディレクトリを作って番組をダウンロードするかを設定します。
@@ -311,9 +312,9 @@ $script:ignoreFilePath = Join-Path $script:confDir 'ignore.conf'
 $script:ignoreLockFilePath = Join-Path $script:dbDir 'ignore.lock'
 
 #ダウンロード履歴のパス
-$script:historyFilePath = Join-Path $script:dbDir 'history.csv'
-$script:historyFileSamplePath = Join-Path $script:dbDir 'history.sample.csv'
-$script:historyLockFilePath = Join-Path $script:dbDir 'history.lock'
+$script:histFilePath = Join-Path $script:dbDir 'history.csv'
+$script:histFileSamplePath = Join-Path $script:dbDir 'history.sample.csv'
+$script:histLockFilePath = Join-Path $script:dbDir 'history.lock'
 
 #ダウンロードリストのパス
 $script:listFilePath = Join-Path $script:listDir 'list.csv'

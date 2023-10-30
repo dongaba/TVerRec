@@ -40,6 +40,7 @@ try {
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	$script:devDir = Join-Path $script:scriptRoot '../dev'
 } catch { Write-Error ('❗ カレントディレクトリの設定に失敗しました') ; exit 1 }
+if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 	if ($? -eq $false) { exit 1 }
@@ -73,7 +74,7 @@ Write-Output ('-----------------------------------------------------------------
 Write-Output ('古いダウンロード履歴を削除します')
 showProgressToast `
 	-Text1 'ダウンロードファイルの整合性検証中' `
-	-Text2 ('　処理2/5 - {0}日以上前のダウンロード履歴を削除' -f $script:historyRetentionPeriod) `
+	-Text2 ('　処理2/5 - {0}日以上前のダウンロード履歴を削除' -f $script:histRetentionPeriod) `
 	-WorkDetail '' `
 	-Tag $script:appName `
 	-Group 'Validate' `
@@ -81,7 +82,7 @@ showProgressToast `
 	-Silent $false
 
 #30日以上前に処理したものはダウンロード履歴から削除
-purgeDB -RetentionPeriod $script:historyRetentionPeriod
+purgeDB -RetentionPeriod $script:histRetentionPeriod
 
 Write-Output ('')
 Write-Output ('----------------------------------------------------------------------')
@@ -107,7 +108,7 @@ if ($script:disableValidation -eq $true) {
 #未検証のファイルが0になるまでループ
 $script:validationFailed = $false
 $local:videoNotValidatedNum = 0
-$local:videoNotValidatedNum = @((Import-Csv -LiteralPath $script:historyFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' })).Count
+$local:videoNotValidatedNum = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' })).Count
 
 while ($local:videoNotValidatedNum -ne 0) {
 	#======================================================================
@@ -117,12 +118,12 @@ while ($local:videoNotValidatedNum -ne 0) {
 	Write-Output ('整合性検証が終わっていない番組を検証します')
 
 	try {
-		while ((fileLock $script:historyLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-		$local:videoHists = @((Import-Csv -LiteralPath $script:historyFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' }) | Select-Object 'videoPage', 'videoPath', 'videoValidated')
+		while ((fileLock $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+		$local:videoHists = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' }) | Select-Object 'videoPage', 'videoPath', 'videoValidated')
 	} catch { Write-Warning ('❗ ダウンロード履歴の読み込みに失敗しました') }
-	finally { $null = fileUnlock $script:historyLockFilePath }
+	finally { $null = fileUnlock $script:histLockFilePath }
 
-	if (($null -eq $local:videoHists) -Or ($local:videoHists.Count -eq 0)) {
+	if (($null -eq $local:videoHists) -or ($local:videoHists.Count -eq 0)) {
 		#チェックする番組なし
 		Write-Output ('　すべての番組を検証済です')
 		Write-Output ('')
@@ -202,15 +203,15 @@ while ($local:videoNotValidatedNum -ne 0) {
 		-Duration 'long' `
 		-Silent $false
 	try {
-		while ((fileLock $script:historyLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-		$local:videoHists = @(Import-Csv -Path $script:historyFilePath -Encoding UTF8)
+		while ((fileLock $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+		$local:videoHists = @(Import-Csv -Path $script:histFilePath -Encoding UTF8)
 		foreach ($local:uncheckedVido in ($local:videoHists).Where({ $_.videoValidated -eq 2 })) {
 			$local:uncheckedVido.videoValidated = '0'
 		}
-		$local:videoHists | Export-Csv -LiteralPath $script:historyFilePath -Encoding UTF8
+		$local:videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
 	} catch { Write-Warning ('❗ ダウンロード履歴の更新に失敗しました') }
-	finally { $null = fileUnlock $script:historyLockFilePath }
-	$local:videoNotValidatedNum = @((Import-Csv -LiteralPath $script:historyFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' })).Count
+	finally { $null = fileUnlock $script:histLockFilePath }
+	$local:videoNotValidatedNum = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' })).Count
 }
 
 #======================================================================

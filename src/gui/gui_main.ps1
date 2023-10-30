@@ -43,6 +43,7 @@ try {
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	$script:devDir = Join-Path $script:scriptRoot '../dev'
 } catch { Write-Error ('❗ ディレクトリ設定に失敗しました') ; exit 1 }
+if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 	if ($? -eq $false) { exit 1 }
@@ -97,7 +98,7 @@ function AddOutput {
 
 try {
 	[String]$local:mainXaml = Get-Content -LiteralPath '../resources/TVerRecMain.xaml'
-	$local:mainXaml = $local:mainXaml -replace 'mc:Ignorable="d"', '' -replace 'x:N', 'N' -replace 'x:Class=".*?"', ''
+	$local:mainXaml = $local:mainXaml -ireplace 'mc:Ignorable="d"', '' -ireplace 'x:N', 'N' -ireplace 'x:Class=".*?"', ''
 	[xml]$local:mainCleanXaml = $local:mainXaml
 	$script:mainWindow = [System.Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $local:mainCleanXaml))
 } catch { Write-Error ('❗ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。') ; exit 1 }
@@ -120,7 +121,7 @@ $script:mainWindow.TaskbarItemInfo.Overlay = $local:icon
 $script:mainWindow.TaskbarItemInfo.Description = $script:mainWindow.Title
 
 #ウィンドウを読み込み時の処理
-$script:mainWindow.add_Loaded({
+$script:mainWindow.Add_Loaded({
 		$script:mainWindow.Icon = $script:iconPath
 	})
 
@@ -207,25 +208,25 @@ foreach ($script:btn in $script:btns) {
 #----------------------------------------------------------------------
 #region ジョブ化しないボタンのアクション
 
-$script:btnWorkOpen.add_Click({ Invoke-Item $script:downloadWorkDir })
-$script:btnDownloadOpen.add_Click({ Invoke-Item $script:downloadBaseDir })
-$script:btnSaveOpen.add_Click({
+$script:btnWorkOpen.Add_Click({ Invoke-Item $script:downloadWorkDir })
+$script:btnDownloadOpen.Add_Click({ Invoke-Item $script:downloadBaseDir })
+$script:btnSaveOpen.Add_Click({
 		if ($script:saveBaseDir -ne '') {
 			$script:saveBaseDirArray = @()
 			$script:saveBaseDirArray = $script:saveBaseDir.split(';').Trim()
 			foreach ($saveDir in $script:saveBaseDirArray) { Invoke-Item $saveDir.Trim() }
 		} else { [System.Windows.MessageBox]::Show('保存ディレクトリが設定されていません') }
 	})
-$script:btnKeywordOpen.add_Click({ Invoke-Item $script:keywordFilePath })
-$script:btnIgnoreOpen.add_Click({ Invoke-Item $script:ignoreFilePath })
-$script:btnListOpen.add_Click({ Invoke-Item $script:listFilePath })
-$script:btnClearLog.add_Click({
+$script:btnKeywordOpen.Add_Click({ Invoke-Item $script:keywordFilePath })
+$script:btnIgnoreOpen.Add_Click({ Invoke-Item $script:ignoreFilePath })
+$script:btnListOpen.Add_Click({ Invoke-Item $script:listFilePath })
+$script:btnClearLog.Add_Click({
 		$script:outText.Document.Blocks.Clear()
 		[System.GC]::Collect()
 		[System.GC]::WaitForPendingFinalizers()
 		[System.GC]::Collect()
 	})
-$script:btnKillAll.add_Click({
+$script:btnKillAll.Add_Click({
 		Get-Job | Remove-Job -Force
 		foreach ($btn in $script:btns) { $btn.IsEnabled = $true }
 		$script:btnExit.IsEnabled = $true
@@ -235,8 +236,8 @@ $script:btnKillAll.add_Click({
 		[System.GC]::WaitForPendingFinalizers()
 		[System.GC]::Collect()
 	})
-$script:btnWiki.add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
-$script:btnSetting.add_Click({
+$script:btnWiki.Add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
+$script:btnSetting.Add_Click({
 		. 'gui/gui_setting.ps1'
 		if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 			. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
@@ -245,7 +246,7 @@ $script:btnSetting.add_Click({
 		[System.GC]::WaitForPendingFinalizers()
 		[System.GC]::Collect()
 	})
-$script:btnExit.add_Click({ $script:mainWindow.close() })
+$script:btnExit.Add_Click({ $script:mainWindow.close() })
 
 #endregion ジョブ化しないボタンのアクション
 

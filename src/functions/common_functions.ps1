@@ -26,7 +26,7 @@
 ###################################################################################
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
-Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
+Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
 
 #region タイムスタンプ
 
@@ -37,7 +37,7 @@ function getTimeStamp {
 	[OutputType([System.Void])]
 	Param ()
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
+	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
 
 	$local:timeStamp = Get-Date -UFormat '%Y-%m-%d %H:%M:%S'
 	return $local:timeStamp
@@ -47,7 +47,7 @@ function getTimeStamp {
 #UNIX時間をDateTime型に変換
 #----------------------------------------------------------------------
 function unixTimeToDateTime($unixTime) {
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
+	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
 
 	$origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
 	$origin.AddSeconds($unixTime)
@@ -57,7 +57,7 @@ function unixTimeToDateTime($unixTime) {
 #DateTime型をUNIX時間に変換
 #----------------------------------------------------------------------
 function dateTimeToUnixTime($dateTime) {
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
+	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
 
 	$origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
 	[Int]($dateTime - $origin).TotalSeconds
@@ -78,7 +78,7 @@ function getFileNameWoInvChars {
 		[String]$local:Name
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
+	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
 
 	$local:invalidChars = [IO.Path]::GetInvalidFileNameChars() -Join ''
 	$local:result = '[{0}]' -f [Regex]::Escape($local:invalidChars)
@@ -131,7 +131,7 @@ function getNarrowChars {
 	[OutputType([String])]
 	Param ([String]$local:text)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
+	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
 
 	$local:wideNum = '０１２３４５６７８９'
 	$local:narrowNum = '0123456789'
@@ -243,7 +243,7 @@ function getSpecialCharacterReplaced {
 	[OutputType([String])]
 	Param ([String]$local:text)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
+	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
 
 	$local:text = $local:text.Replace('&amp;', '&')
 	$local:text = $local:text.Replace('*', '＊')
@@ -271,7 +271,7 @@ function trimTabSpace {
 	[OutputType([String])]
 	Param ([String]$local:text)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
+	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
 
 	return $local:text.Replace("`t", ' ').Replace('  ', ' ')
 }
@@ -283,7 +283,7 @@ function trimComment {
 	[OutputType([String])]
 	Param ([String]$local:text)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
+	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
 
 	return $local:text.Split("`t")[0].Split(' ')[0].Split('#')[0]
 }
@@ -312,7 +312,7 @@ function deleteFiles {
 		[int32]$local:delPeriod
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
+	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
 
 	if ($script:enableMultithread -eq $true) {
 		Write-Debug ('Multithread Processing Enabled')
@@ -350,7 +350,7 @@ function unZip {
 		[String]$path
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
+	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
 
 	[System.IO.Compression.ZipFile]::ExtractToDirectory($zipArchive, $path, $true)
 }
@@ -370,10 +370,10 @@ function moveItem() {
 		[String]$local:dist
 	)
 
-	if ((Test-Path $local:dist) -And (Test-Path -PathType Container $local:src)) {
+	if ((Test-Path $local:dist) -and (Test-Path -PathType Container $local:src)) {
 		# ディレクトリ上書き(移動先に存在 かつ ディレクトリ)は再帰的に moveItem 呼び出し
 		Get-ChildItem $local:src | ForEach-Object {
-			if ($_.Name -notLike '*update_tverrec.ps1') {
+			if ($_.Name -inotlike '*update_tverrec.ps1') {
 				moveItem -Path $_.FullName -Destination ('{0}/{1}' -f $local:dist, $_.Name)
 			}
 		}
@@ -403,7 +403,7 @@ function fileLock {
 		[System.IO.FileInfo]$local:Path
 	)
 
-	Write-Debug ('{0} - {1}' -f $myInvocation.MyCommand.name, $local:Path)
+	Write-Debug ('{0} - {1}' -f $myInvocation.MyCommand.Name, $local:Path)
 
 	try {
 		$local:fileLocked = $false
@@ -433,7 +433,7 @@ function fileUnlock {
 		[System.IO.FileInfo]$local:Path
 	)
 
-	Write-Debug ('{0} - {1}' -f $myInvocation.MyCommand.name, $local:Path)
+	Write-Debug ('{0} - {1}' -f $myInvocation.MyCommand.Name, $local:Path)
 
 	try {
 		# close stream if not lock
@@ -463,7 +463,7 @@ function isLocked {
 		[String]$local:isLockedPath
 	)
 
-	Write-Debug ('{0} - {1}' -f $myInvocation.MyCommand.name, $local:Path)
+	Write-Debug ('{0} - {1}' -f $myInvocation.MyCommand.Name, $local:Path)
 
 	try {
 		$local:isFileLocked = $false
@@ -508,7 +508,7 @@ function Out-Msg-Color {
 		[Boolean]$local:noLF
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
+	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
 
 	# Save previous colors
 	$local:prevForegroundColor = $host.UI.RawUI.ForegroundColor
@@ -534,7 +534,7 @@ function Out-Msg-Color {
 #region トースト通知
 
 #Toast用AppID取得に必要
-if (($script:disableToastNotification -ne $true) -And ($IsWindows)) { Import-Module StartLayout -SkipEditionCheck }
+if (($script:disableToastNotification -ne $true) -and ($IsWindows)) { Import-Module StartLayout -SkipEditionCheck }
 
 #----------------------------------------------------------------------
 #Windows Application ID取得
@@ -543,9 +543,9 @@ function Get-WindowsAppId {
 	[OutputType([String])]
 	Param ()
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
+	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
 
-	$local:appID = (Get-StartApps -Name 'PowerShell').where({ $_.Name -cmatch 'PowerShell*' })[0].AppId
+	$local:appID = (Get-StartApps -Name 'PowerShell').Where({ $_.Name -cmatch 'PowerShell*' })[0].AppId
 
 	return $local:appID
 }
@@ -572,7 +572,7 @@ function showToast {
 		[Boolean]$local:toastSilent
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
+	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
 
 	if ($script:disableToastNotification -ne $true) {
 		switch ($true) {
@@ -657,7 +657,7 @@ function showProgressToast {
 		[Boolean]$local:toastSilent
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
+	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
 
 	if ($script:disableToastNotification -ne $true) {
 		switch ($true) {
@@ -695,10 +695,10 @@ function showProgressToast {
 				$local:toast.Tag = $local:toastTag
 				$local:toast.Group = $local:toastGroup
 				$local:toastData = New-Object 'system.collections.generic.dictionary[String,string]'
-				$local:toastData.add('progressTitle', $local:toastWorkDetail)
-				$local:toastData.add('progressValue', '')
-				$local:toastData.add('progressValueString', '')
-				$local:toastData.add('progressStatus', '')
+				$local:toastData.Add('progressTitle', $local:toastWorkDetail)
+				$local:toastData.Add('progressValue', '')
+				$local:toastData.Add('progressValueString', '')
+				$local:toastData.Add('progressStatus', '')
 				$local:toast.Data = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
 				$local:toast.Data.SequenceNumber = 1
 				$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Show($local:toast)
@@ -747,17 +747,17 @@ function updateProgressToast {
 		[String]$local:toastGroup
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
+	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
 
 	if ($script:disableToastNotification -ne $true) {
 		switch ($true) {
 			$IsWindows {
 				$local:appID = Get-WindowsAppId
 				$local:toastData = New-Object 'system.collections.generic.dictionary[String,string]'
-				$local:toastData.add('progressTitle', $script:appName)
-				$local:toastData.add('progressValue', $local:toastRate)
-				$local:toastData.add('progressValueString', $local:toastRightText)
-				$local:toastData.add('progressStatus', $local:toastLeftText)
+				$local:toastData.Add('progressTitle', $script:appName)
+				$local:toastData.Add('progressValue', $local:toastRate)
+				$local:toastData.Add('progressValueString', $local:toastRightText)
+				$local:toastData.Add('progressStatus', $local:toastLeftText)
 				$local:toastProgressData = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
 				$local:toastProgressData.SequenceNumber = 2
 				$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Update($local:toastProgressData, $local:toastTag , $local:toastGroup)
@@ -804,7 +804,7 @@ function showProgressToast2 {
 		[Boolean]$local:toastSilent
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
+	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
 
 	switch ($true) {
 		$IsWindows {
@@ -842,14 +842,14 @@ function showProgressToast2 {
 			$local:toast.Tag = $local:toastTag
 			$local:toast.Group = $local:toastGroup
 			$local:toastData = New-Object 'system.collections.generic.dictionary[String,string]'
-			$local:toastData.add('progressTitle1', $local:toastWorkDetail1)
-			$local:toastData.add('progressValue1', '')
-			$local:toastData.add('progressValueString1', '')
-			$local:toastData.add('progressStatus1', '')
-			$local:toastData.add('progressTitle2', $local:toastWorkDetail2)
-			$local:toastData.add('progressValue2', '')
-			$local:toastData.add('progressValueString2', '')
-			$local:toastData.add('progressStatus2', '')
+			$local:toastData.Add('progressTitle1', $local:toastWorkDetail1)
+			$local:toastData.Add('progressValue1', '')
+			$local:toastData.Add('progressValueString1', '')
+			$local:toastData.Add('progressStatus1', '')
+			$local:toastData.Add('progressTitle2', $local:toastWorkDetail2)
+			$local:toastData.Add('progressValue2', '')
+			$local:toastData.Add('progressValueString2', '')
+			$local:toastData.Add('progressStatus2', '')
 			$local:toast.Data = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
 			$local:toast.Data.SequenceNumber = 1
 			$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Show($local:toast)
@@ -909,21 +909,21 @@ function updateProgressToast2 {
 		[String]$local:toastGroup
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
+	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
 
 	if ($script:disableToastNotification -ne $true) {
 		switch ($true) {
 			$IsWindows {
 				$local:appID = Get-WindowsAppId
 				$local:toastData = New-Object 'system.collections.generic.dictionary[String,string]'
-				$local:toastData.add('progressTitle1', $local:toastTitle1)
-				$local:toastData.add('progressValue1', $local:toastRate1)
-				$local:toastData.add('progressValueString1', $local:toastRightText1)
-				$local:toastData.add('progressStatus1', $local:toastLeftText1)
-				$local:toastData.add('progressTitle2', $local:toastTitle2)
-				$local:toastData.add('progressValue2', $local:toastRate2)
-				$local:toastData.add('progressValueString2', $local:toastRightText2)
-				$local:toastData.add('progressStatus2', $local:toastLeftText2)
+				$local:toastData.Add('progressTitle1', $local:toastTitle1)
+				$local:toastData.Add('progressValue1', $local:toastRate1)
+				$local:toastData.Add('progressValueString1', $local:toastRightText1)
+				$local:toastData.Add('progressStatus1', $local:toastLeftText1)
+				$local:toastData.Add('progressTitle2', $local:toastTitle2)
+				$local:toastData.Add('progressValue2', $local:toastRate2)
+				$local:toastData.Add('progressValueString2', $local:toastRightText2)
+				$local:toastData.Add('progressStatus2', $local:toastLeftText2)
 				$local:toastProgressData = [Windows.UI.Notifications.NotificationData]::new($local:toastData)
 				$local:toastProgressData.SequenceNumber = 2
 				$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($local:appID).Update($local:toastProgressData, $local:toastTag , $local:toastGroup)
@@ -955,19 +955,22 @@ function showProgress2Row {
 		[Parameter(Mandatory = $false, Position = 3)]
 		[Alias('WorkDetail2')]
 		[String]$local:toastWorkDetail2,
-		[Parameter(Mandatory = $false, Position = 4)]
+		[Parameter(Mandatory = $true, Position = 4)]
+		[Alias('Tag')]
+		[String]$local:toastTag,
+		[Parameter(Mandatory = $false, Position = 5)]
 		[ValidateSet('Short', 'Long')]
 		[Alias('Duration')]
 		[String]$local:toastDuration,
-		[Parameter(Mandatory = $false, Position = 5)]
+		[Parameter(Mandatory = $false, Position = 6)]
 		[Alias('Silent')]
 		[Boolean]$local:toastSilent,
-		[Parameter(Mandatory = $true, Position = 6)]
+		[Parameter(Mandatory = $true, Position = 7)]
 		[Alias('Group')]
 		[String]$local:toastGroup
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
+	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
 	if ($script:disableToastNotification -ne $true) {
 		if (!($local:progressText2)) { $local:progressText2 = '' }
 		if (!($local:toastWorkDetail1)) { $local:toastWorkDetail1 = '' }
@@ -977,7 +980,7 @@ function showProgress2Row {
 			-Text2 $local:progressText2 `
 			-WorkDetail1 $local:toastWorkDetail1 `
 			-WorkDetail2 $local:toastWorkDetail2 `
-			-Tag $script:appName `
+			-Tag $local:toastTag `
 			-Group $local:toastGroup `
 			-Duration $local:toastDuration `
 			-Silent $local:toastSilent
@@ -1016,16 +1019,19 @@ function updateProgress2Row {
 		[Alias('SecRemaining2')]
 		[String]$local:secRemaining2,
 		[Parameter(Mandatory = $true, Position = 8)]
+		[Alias('Tag')]
+		[String]$local:toastTag,
+		[Parameter(Mandatory = $true, Position = 9)]
 		[Alias('Group')]
 		[String]$local:toastGroup
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.name)
+	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
 
 	if ($script:disableToastNotification -ne $true) {
-		if ($local:secRemaining1 -eq -1 -Or $local:secRemaining1 -eq '' ) { $local:minRemaining1 = '' }
+		if ($local:secRemaining1 -eq -1 -or $local:secRemaining1 -eq '' ) { $local:minRemaining1 = '' }
 		else { $local:minRemaining1 = ('残り時間 {0}分' -f ([Int][Math]::Ceiling($local:secRemaining1 / 60))) }
-		if ($local:secRemaining2 -eq -1 -Or $local:secRemaining2 -eq '' ) { $local:minRemaining2 = '' }
+		if ($local:secRemaining2 -eq -1 -or $local:secRemaining2 -eq '' ) { $local:minRemaining2 = '' }
 		else { $local:minRemaining2 = ('残り時間 {0}分' -f ([Int][Math]::Ceiling($local:secRemaining2 / 60))) }
 		updateProgressToast2 `
 			-Title1 $local:currentProcessing1 `
@@ -1036,7 +1042,7 @@ function updateProgress2Row {
 			-Rate2 $local:progressRate2 `
 			-LeftText2 $local:progressActivity2 `
 			-RightText2 $local:minRemaining2 `
-			-Tag $script:appName `
+			-Tag $local:toastTag `
 			-Group $local:toastGroup
 	}
 }

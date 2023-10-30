@@ -56,6 +56,7 @@ try {
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	$script:devDir = Join-Path $script:scriptRoot '../dev'
 } catch { Write-Error ('❗ ディレクトリ設定に失敗しました') ; exit 1 }
+if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 
 #設定ファイル読み込み
 try {
@@ -137,7 +138,6 @@ if ($local:latestVersion -eq $local:currentVersion) {
 	#バージョンチェック
 	try {
 		$local:currentVersion = (& $local:ytdlPath --version)
-		if ($? -eq $false) { throw '更新後のバージョン取得に失敗しました' }
 		Write-Output ('💡 youtube-dlをversion{0}に更新しました。' -f $local:currentVersion)
 	} catch { Write-Error ('❗ 更新後のバージョン取得に失敗しました') ; exit 1 }
 

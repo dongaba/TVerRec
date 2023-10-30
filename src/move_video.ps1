@@ -40,6 +40,7 @@ try {
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	$script:devDir = Join-Path $script:scriptRoot '../dev'
 } catch { Write-Error ('❗ カレントディレクトリの設定に失敗しました') ; exit 1 }
+if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 	if ($? -eq $false) { exit 1 }
@@ -102,7 +103,7 @@ showProgressToast `
 
 #----------------------------------------------------------------------
 $local:totalStartTime = Get-Date
-if (($null -ne $local:moveToPaths) -And ($local:moveToPaths.Count -ne 0)) {
+if (($null -ne $local:moveToPaths) -and ($local:moveToPaths.Count -ne 0)) {
 	$local:moveToPathNum = 0
 	$local:moveToPathTotal = $local:moveToPaths.Count
 	foreach ($local:moveToPath in $local:moveToPaths) {
@@ -156,7 +157,7 @@ showProgressToast `
 	-Silent $false
 
 $local:emptyDirs = @()
-$local:emptyDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).where({ $_.PSIsContainer -eq $true })).Where({ ($_.GetFiles().Count -eq 0) -And ($_.GetDirectories().Count -eq 0) })
+$local:emptyDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer -eq $true })).Where({ ($_.GetFiles().Count -eq 0) -and ($_.GetDirectories().Count -eq 0) })
 if ($local:emptyDirs.Count -ne 0) { $local:emptyDirs = @($local:emptyDirs.Fullname) }
 
 $local:emptyDirTotal = $local:emptyDirs.Count

@@ -58,10 +58,10 @@ function moveItem() {
 		[String]$local:dist
 	)
 
-	if ((Test-Path $local:dist) -And (Test-Path -PathType Container $local:src)) {
+	if ((Test-Path $local:dist) -and (Test-Path -PathType Container $local:src)) {
 		# ディレクトリ上書き(移動先に存在 かつ ディレクトリ)は再帰的に moveItem 呼び出し
 		Get-ChildItem $local:src | ForEach-Object {
-			if ($_.Name -notLike '*update_tverrec.ps1') {
+			if ($_.Name -inotlike '*update_tverrec.ps1') {
 				moveItem -Path $_.FullName -Destination ('{0}/{1}' -f $local:dist, $_.Name)
 			}
 		}
@@ -86,6 +86,7 @@ try {
 	} else { $local:scriptRoot = Convert-Path .. }
 	Set-Location $local:scriptRoot
 } catch { Write-Error ('❗ ディレクトリ設定に失敗しました') ; exit 1 }
+if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理

@@ -40,24 +40,29 @@ try {
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	$script:devDir = Join-Path $script:scriptRoot '../dev'
 } catch { Write-Error ('❗ カレントディレクトリの設定に失敗しました') ; exit 1 }
+if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
 #----------------------------------------------------------------------
 while ($true) {
-	$script:validationFailed = $true
-	while ($script:validationFailed) {
-		. ('{0}/download_bulk.ps1' -f $script:scriptRoot) $script:uiMode
-		. ('{0}/delete_trash.ps1' -f $script:scriptRoot) $script:uiMode
-		. ('{0}/validate_video.ps1' -f $script:scriptRoot) $script:uiMode
-	}
+
+	. ('{0}/download_bulk.ps1' -f $script:scriptRoot) $script:uiMode
+	. ('{0}/delete_trash.ps1' -f $script:scriptRoot) $script:uiMode
+	. ('{0}/validate_video.ps1' -f $script:scriptRoot) $script:uiMode
 	. ('{0}/move_video.ps1' -f $script:scriptRoot) $script:uiMode
 	[System.GC]::Collect()
 	[System.GC]::WaitForPendingFinalizers()
 	[System.GC]::Collect()
 	Write-Output ('')
 	Write-Output ('{0}秒待機します。' -f $script:loopCycle)
-	Start-Sleep $script:loopCycle
+	foreach ($local:i in 1..$script:loopCycle) {
+		Write-Progress `
+			-Activity ('残り{0}秒...' -f ($script:loopCycle - $local:i)) `
+			-Status '待機中...'  `
+			-PercentComplete ([Int][Math]::Ceiling((100 * $local:i) / ($script:loopCycle)))
+		Start-Sleep -Second 1
+	}
 	[System.GC]::Collect()
 	[System.GC]::WaitForPendingFinalizers()
 	[System.GC]::Collect()
