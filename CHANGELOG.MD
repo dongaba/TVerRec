@@ -1,6 +1,16 @@
 ﻿# Change Log
 
-## [2.9.5](https://github.com/dongaba/TVerRec/releases/tag/v2.9.4)
+## [2.9.6](https://github.com/dongaba/TVerRec/releases/tag/v2.9.6)
+
+### 2.9.6 Added
+
+### 2.9.6 Changed
+
+### 2.9.6 Fixed
+
+- 1ファイルコミット漏れ
+
+## [2.9.5](https://github.com/dongaba/TVerRec/releases/tag/v2.9.5)
 
 ### 2.9.5 Added
 
