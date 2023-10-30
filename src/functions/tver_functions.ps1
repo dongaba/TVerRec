@@ -1241,7 +1241,6 @@ function downloadTVerVideo {
 	# 		無視リストに存在しない	→ダウンロード
 	#ダウンロード履歴ファイルのデータを読み込み
 	$local:histFileData = @(loadHistFile)
-	finally { $null = fileUnlock $script:histLockFilePath }
 	$local:histMatch = @($local:histFileData.Where({ $_.videoPath -eq $script:videoFileRelPath }))
 	if (($local:histMatch.Count -ne 0)) {
 		#履歴ファイルに存在する	→スキップして次のファイルに
