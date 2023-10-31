@@ -158,7 +158,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 			-Keyword $local:keywordName `
 			-URL $local:videoLink `
 			-Link $local:videoLink.Replace('https://tver.jp', '') `
-			-ForceDownload $script:forceSingleDownload
+			-ForceDownload $false
 	}
 	#----------------------------------------------------------------------
 
