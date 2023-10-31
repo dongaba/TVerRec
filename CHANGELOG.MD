@@ -14,8 +14,6 @@
 
 - 履歴ファイルが0件時にリストダウンロードが失敗する問題を修正
 
-- 1ファイルコミット漏れ
-
 ## [2.9.6](https://github.com/dongaba/TVerRec/releases/tag/v2.9.6)
 
 ### 2.9.6 Added
