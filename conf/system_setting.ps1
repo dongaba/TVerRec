@@ -237,7 +237,7 @@ $script:ffmpegDecodeOption = ''
 #youtube-dlオプション
 #　直接youtube-dlのオプションを記載することができます。
 #　動画の解像度を指定する場合などに使用します。
-#　例：720p  $script:ytdlOption = '-f bestvideo[height<=720]+bestaudio/best[height<=720]'
+#　例：720p「-f bestvideo[height<=720]+bestaudio/best[height<=720]」
 $script:ytdlOption = ''
 
 #個別ダウンロード時の強制ダウンロード
