@@ -55,6 +55,7 @@ try {
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/common_functions.ps1'))
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/tver_functions.ps1'))
+	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/tverrec_functions.ps1'))
 } catch { Write-Error ('❗ 外部関数ファイルの読み込みに失敗しました') ; exit 1 }
 
 #endregion 環境設定

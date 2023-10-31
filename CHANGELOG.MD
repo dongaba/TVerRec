@@ -1,5 +1,21 @@
 ﻿# Change Log
 
+## [2.9.7](https://github.com/dongaba/TVerRec/releases/tag/v2.9.7)
+
+### 2.9.7 Added
+
+- 個別ダウンロード時にダウンロード対象外リストや履歴を無視して強制ダウンロードする機能を追加
+
+### 2.9.7 Changed
+
+- tver_funcitons.ps1を分割
+
+### 2.9.7 Fixed
+
+- 履歴ファイルが0件時にリストダウンロードが失敗する問題を修正
+
+- 1ファイルコミット漏れ
+
 ## [2.9.6](https://github.com/dongaba/TVerRec/releases/tag/v2.9.6)
 
 ### 2.9.6 Added
