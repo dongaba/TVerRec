@@ -102,7 +102,7 @@ updateProgressToast `
 #作業ディレクトリ
 deleteFiles `
 	-Path $script:downloadWorkDir `
-	-Conditions '*.ytdl, *.jpg, *.vtt, *.srt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.m4a, *.mp4' `
+	-Conditions '*.ytdl, *.jpg, *.vtt, *.srt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.m4a, *.m4a.part-Frag*, *.live_chat.json, *.mp4' `
 	-DaysPassed 0
 
 updateProgressToast `
@@ -116,7 +116,7 @@ updateProgressToast `
 #ダウンロード先
 deleteFiles `
 	-Path $script:downloadBaseDir `
-	-Conditions '*.ytdl, *.jpg, *.vtt, *.srt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.m4a' `
+	-Conditions '*.ytdl, *.jpg, *.vtt, *.srt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.m4a, *.m4a.part-Frag*, *.live_chat.json' `
 	-DaysPassed 0
 
 #移動先
@@ -131,7 +131,7 @@ if ($script:saveBaseDir -ne '') {
 			-Group 'Delete'
 		deleteFiles `
 			-Path $local:saveDir `
-			-Conditions '*.ytdl, *.jpg, *.vtt, *.srt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.m4a' `
+			-Conditions '*.ytdl, *.jpg, *.vtt, *.srt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.m4a, *.m4a.part-Frag*, *.live_chat.json' `
 			-DaysPassed 0
 	}
 }
