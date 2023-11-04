@@ -117,7 +117,7 @@ switch ($true) {
 
 			#ダウンロード
 			Write-Output ('ffmpegの最新版{0}用をダウンロードします' -f $local:cpu)
-			try { Invoke-WebRequest -Uri $local:donwloadURL -OutFile (Join-Path $local:binDir 'ffmpeg.zip') }
+			try { Invoke-WebRequest -UseBasicParsing -Uri $local:donwloadURL -OutFile (Join-Path $local:binDir 'ffmpeg.zip') }
 			catch { Write-Error ('❗ ffmpegのダウンロードに失敗しました') ; exit 1 }
 
 			#展開
@@ -213,7 +213,7 @@ switch ($true) {
 
 			#ダウンロード
 			Write-Output ('ffmpegの最新版{0}用をダウンロードします' -f $local:cpu)
-			try { Invoke-WebRequest -Uri $local:donwloadURL -OutFile (Join-Path $local:binDir 'ffmpeg.tar.xz') }
+			try { Invoke-WebRequest -UseBasicParsing -Uri $local:donwloadURL -OutFile (Join-Path $local:binDir 'ffmpeg.tar.xz') }
 			catch { Write-Error ('❗ ffmpegのダウンロードに失敗しました') ; exit 1 }
 
 			#展開
@@ -295,8 +295,8 @@ switch ($true) {
 			#ダウンロード
 			Write-Output ('ffmpegの最新版をダウンロードします')
 			try {
-				Invoke-WebRequest -Uri $local:ffmpegReleaseInfo.download.zip.url -OutFile (Join-Path $local:binDir 'ffmpeg.zip')
-				Invoke-WebRequest -Uri $local:ffprobeReleaseInfo.download.zip.url -OutFile (Join-Path $local:binDir 'ffprobe.zip')
+				Invoke-WebRequest -UseBasicParsing -Uri $local:ffmpegReleaseInfo.download.zip.url -OutFile (Join-Path $local:binDir 'ffmpeg.zip')
+				Invoke-WebRequest -UseBasicParsing -Uri $local:ffprobeReleaseInfo.download.zip.url -OutFile (Join-Path $local:binDir 'ffprobe.zip')
 			} catch { Write-Error ('❗ ffmpegのダウンロードに失敗しました') ; exit 1 }
 
 			#展開

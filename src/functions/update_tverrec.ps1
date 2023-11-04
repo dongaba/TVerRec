@@ -115,7 +115,7 @@ Write-Output ('-----------------------------------------------------------------
 Write-Output ('TVerRecの最新版をダウンロードします')
 try {
 	$local:zipURL = (Invoke-RestMethod -Uri $local:releases -Method 'GET' ).zipball_url
-	Invoke-WebRequest -Uri $local:zipURL -OutFile (Join-Path $updateTemp 'TVerRecLatest.zip')
+	Invoke-WebRequest -UseBasicParsing -Uri $local:zipURL -OutFile (Join-Path $updateTemp 'TVerRecLatest.zip')
 } catch { Write-Error ('❗ ダウンロードに失敗しました') ; exit 1 }
 
 #最新バージョンがダウンロードできていたら展開

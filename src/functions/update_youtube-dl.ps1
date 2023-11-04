@@ -130,7 +130,7 @@ if ($local:latestVersion -eq $local:currentVersion) {
 		$local:tag = (Invoke-RestMethod -Uri $local:releases -Method 'GET')[0].Tag_Name
 		$local:downloadURL = ('https://github.com/{0}/releases/download/{1}/{2}' -f $local:repo, $local:tag, $local:file)
 		$local:ytdlFileLocation = Join-Path $local:binDir $local:fileAfterRename
-		Invoke-WebRequest -Uri $local:downloadURL -Out $local:ytdlFileLocation
+		Invoke-WebRequest -UseBasicParsing -Uri $local:downloadURL -Out $local:ytdlFileLocation
 	} catch { Write-Error ('❗ youtube-dlのダウンロードに失敗しました') ; exit 1 }
 
 	if ($IsWindows -eq $false) { (& chmod a+x $local:ytdlFileLocation) }
