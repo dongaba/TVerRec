@@ -56,13 +56,13 @@ while ($true) {
 	[System.GC]::Collect()
 	Write-Output ('')
 	Write-Output ('{0}秒待機します。' -f $script:loopCycle)
-	foreach ($local:i in 1..$script:loopCycle) {
-		Write-Progress `
-			-Activity ('残り{0}秒...' -f ($script:loopCycle - $local:i)) `
-			-Status '待機中...'  `
-			-PercentComplete ([Int][Math]::Ceiling((100 * $local:i) / ($script:loopCycle)))
-		Start-Sleep -Second 1
-	}
+	$local:remainingWaitTime = $script:loopCycle
+	do {
+		$local:progressRatio = [Int]($local:remainingWaitTime / $script:loopCycle * 100 /2 )
+		Write-Output ($('o' * $(50 - $local:progressRatio)) + $('.' * $local:progressRatio))
+		$local:remainingWaitTime -= 100
+		Start-Sleep -Second 100
+	} while ($local:remainingWaitTime -ge 0)
 	[System.GC]::Collect()
 	[System.GC]::WaitForPendingFinalizers()
 	[System.GC]::Collect()

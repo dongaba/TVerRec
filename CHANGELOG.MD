@@ -1,5 +1,18 @@
 ﻿# Change Log
 
+## [2.9.8](https://github.com/dongaba/TVerRec/releases/tag/v2.9.8)
+
+### 2.9.8 Added
+
+- 個別ダウンロードでTVer以外のURLも許容する機能を追加(ただし整合性検証等の追加機能には未対応)
+
+### 2.9.8 Changed
+
+- CUI 版でループ処理実行時に待機残り時間を表示する機能を改善(GUI版でのメモリ使用量削減)
+- コードリファクタリング
+
+### 2.9.8 Fixed
+
 ## [2.9.7](https://github.com/dongaba/TVerRec/releases/tag/v2.9.7)
 
 ### 2.9.7 Added
