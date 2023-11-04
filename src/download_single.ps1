@@ -81,7 +81,16 @@ while ($true) {
 	#正しいURLが入力されるまでループ
 	if ($videoPageURL -ne '') {
 		if ($local:videoPageURL -notmatch '^https://tver.jp/(/?.*)') {
-			continue
+			# Tver以外には変数セットして youtube-dl起動
+			$script:videoFileDir = ('{0}' -f $script:downloadBaseDir)
+			$script:videoName = ('{0}' -f '"%(title)s.%(ext)s"')
+
+			Write-Output ('{0}{1}' -f 'ダウンロード：', $local:videoPageURL)
+
+			try { executeYtdl $local:videoPageURL }
+			catch { Write-Warning ('❗ youtube-dlの起動に失敗しました') }
+			#5秒待機
+			Start-Sleep -Seconds 5
 		} else {
 			$local:videoLink = $local:videoPageURL.Replace('https://tver.jp', '').Trim()
 			$local:videoPageURL = ('https://tver.jp{0}' -f $local:videoLink)
