@@ -92,14 +92,11 @@ while ($true) {
 			#5秒待機
 			Start-Sleep -Seconds 5
 		} else {
-			$local:videoLink = $local:videoPageURL.Replace('https://tver.jp', '').Trim()
-			$local:videoPageURL = ('https://tver.jp{0}' -f $local:videoLink)
 			Write-Output ('{0}' -f $local:videoPageURL)
 			#TVer番組ダウンロードのメイン処理
 			downloadTVerVideo `
 				-Keyword $local:keyword `
 				-EpisodePage $local:videoPageURL `
-				-Link $local:videoLink `
 				-Force $script:forceSingleDownload
 			invokeGarbageCollection
 		}

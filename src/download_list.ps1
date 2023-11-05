@@ -112,7 +112,6 @@ foreach ($local:videoLink in $local:videoLinks) {
 	downloadTVerVideo `
 		-Keyword $local:keyword `
 		-EpisodePage $local:videoLink `
-		-Link $local:videoLink.Replace('https://tver.jp', '') `
 		-Force $false
 }
 #----------------------------------------------------------------------

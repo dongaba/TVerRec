@@ -140,7 +140,7 @@ foreach ($local:keyword in $local:keywords) {
 		#TVer番組ダウンロードのメイン処理
 		generateTVerVideoList `
 			-Keyword $local:keyword `
-			-Link $local:videoLink
+			-EpisodePage $local:videoLink
 	}
 	#----------------------------------------------------------------------
 

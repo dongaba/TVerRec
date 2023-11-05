@@ -605,10 +605,7 @@ function downloadTVerVideo {
 	Param (
 		[Parameter(Mandatory = $true, Position = 0)][String]$keyword,
 		[Parameter(Mandatory = $true, Position = 1)][String]$episodePage,
-		[Parameter(Mandatory = $true, Position = 2)]
-		[Alias('Link')]
-		[String]$videoLink,
-		[Parameter(Mandatory = $false, Position = 3)][Boolean]$force = $false
+		[Parameter(Mandatory = $false, Position = 2)][Boolean]$force = $false
 	)
 
 	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
@@ -619,9 +616,10 @@ function downloadTVerVideo {
 	$newVideo = $null
 	$skipDownload = $false
 
+	$episodeID = $episodePage.Replace('https://tver.jp/episodes/','')
 	#TVerのAPIを叩いて番組情報取得
-	goAnal -Event 'getinfo' -Type 'link' -ID $videoLink
-	try { getVideoInfo -Link $videoLink }
+	goAnal -Event 'getinfo' -Type 'link' -ID $episodeID
+	try { getVideoInfo $episodeID }
 	catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:90') ; continue }
 
 	#ダウンロードファイル情報をセット
@@ -742,12 +740,8 @@ function downloadTVerVideo {
 function generateTVerVideoList {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true, Position = 0)]
-		[Alias('Keyword')]
-		[String]$keyword,
-		[Parameter(Mandatory = $true, Position = 1)]
-		[Alias('Link')]
-		[String]$videoLink
+		[Parameter(Mandatory = $true, Position = 0)][String]$keyword,
+		[Parameter(Mandatory = $true, Position = 1)][String]$episodePage
 	)
 
 	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
@@ -760,9 +754,11 @@ function generateTVerVideoList {
 	$newVideo = $null
 	$ignore = $false ;
 
+	$episodeID = $episodePage.Replace('https://tver.jp/episodes/', '')
+
 	#TVerのAPIを叩いて番組情報取得
-	goAnal -Event 'getinfo' -Type 'link' -ID $videoLink
-	try { getVideoInfo -Link $videoLink }
+	goAnal -Event 'getinfo' -Type 'link' -ID $episodeID
+	try { getVideoInfo $episodeID }
 	catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:91') ; continue }
 
 	#ダウンロード対象外に入っている番組の場合はリスト出力しない
@@ -795,7 +791,7 @@ function generateTVerVideoList {
 			seasonID      = $script:videoSeasonID
 			episodeNo     = $script:videoEpisode
 			episodeName   = $script:videoTitle
-			episodeID     = ('#{0}' -f $videoLink.Replace('https://tver.jp/episodes/', ''))
+			episodeID     = ('#{0}' -f $episodePage.Replace('https://tver.jp/episodes/', ''))
 			media         = $script:mediaName
 			provider      = $script:providerName
 			broadcastDate = $script:broadcastDate
@@ -812,7 +808,7 @@ function generateTVerVideoList {
 			seasonID      = $script:videoSeasonID
 			episodeNo     = $script:videoEpisode
 			episodeName   = $script:videoTitle
-			episodeID     = ('{0}' -f $videoLink.Replace('https://tver.jp/episodes/', ''))
+			episodeID     = ('{0}' -f $episodePage.Replace('https://tver.jp/episodes/', ''))
 			media         = $script:mediaName
 			provider      = $script:providerName
 			broadcastDate = $script:broadcastDate
@@ -837,14 +833,10 @@ function generateTVerVideoList {
 function getVideoInfo {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true, Position = 0)]
-		[Alias('Link')]
-		[String]$videoLink
+		[Parameter(Mandatory = $true, Position = 0)][String]$episodeID
 	)
 
 	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
-
-	$episodeID = $videoLink.Replace('https://tver.jp', '').Replace('/episodes/', '')
 
 	#----------------------------------------------------------------------
 	#番組説明以外
