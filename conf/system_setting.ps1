@@ -234,16 +234,6 @@ $script:windowShowStyle = 'Minimized'
 #　この設定はソフトウェアデコードの強制を有効に設定されていると無効化されます。
 $script:ffmpegDecodeOption = ''
 
-#youtube-dlオプション
-#　直接youtube-dlのオプションを記載することができます。
-#　動画の解像度を指定する場合などに使用します。
-$script:ytdlOption = ''
-
-#個別ダウンロード時の強制ダウンロード
-#　個別ダウンロードの際に過去履歴やダウンロード対象外リストとの照合をせずに強制ダウンロードするかを設定します。
-#　この設定を有効にすると、不要ファイル削除処理時にダウンロード対象外リストとマッチするフォルダの削除を行わなくなります。
-$script:forceSingleDownload = $false
-
 #以下は$script:ffmpegDecodeOptionの設定例
 
 #QSV : for Intel CPUs (Intel内蔵グラフィックを使用)
@@ -266,6 +256,25 @@ $script:forceSingleDownload = $false
 
 #for Raspberry Pi 3/4 32bit
 #$script:ffmpegDecodeOption = '-c:v h264_omx'
+
+#youtube-dlオプション
+#　直接youtube-dlのオプションを記載することができます。
+#　動画の解像度を指定する場合などに使用します。
+$script:ytdlOption = ''
+
+# 1080p
+#$script:ytdlOption = '-f bestvideo[height<=1080]+bestaudio/best[height<=1080]'
+# 720p
+#$script:ytdlOption = '-f bestvideo[height<=720]+bestaudio/best[height<=720]'
+# 480p
+#$script:ytdlOption = '-f bestvideo[height<=480]+bestaudio/best[height<=480]'
+# 360p
+#$script:ytdlOption = '-f bestvideo[height<=360]+bestaudio/best[height<=360]'
+
+#個別ダウンロード時の強制ダウンロード
+#　個別ダウンロードの際に過去履歴やダウンロード対象外リストとの照合をせずに強制ダウンロードするかを設定します。
+#　この設定を有効にすると、不要ファイル削除処理時にダウンロード対象外リストとマッチするフォルダの削除を行わなくなります。
+$script:forceSingleDownload = $false
 
 #----------------------------------------------------------------------
 #	以下は変更を推奨しない設定。変更の際は自己責任で。
