@@ -51,23 +51,17 @@ while ($true) {
 	. ('{0}/delete_trash.ps1' -f $script:scriptRoot) $script:uiMode
 	. ('{0}/validate_video.ps1' -f $script:scriptRoot) $script:uiMode
 	. ('{0}/move_video.ps1' -f $script:scriptRoot) $script:uiMode
-	[System.GC]::Collect()
-	[System.GC]::WaitForPendingFinalizers()
-	[System.GC]::Collect()
+	invokeGarbageCollection
 	Write-Output ('')
 	Write-Output ('{0}秒待機します。' -f $script:loopCycle)
 	$local:remainingWaitTime = $script:loopCycle
 	do {
-		$local:progressRatio = [Int]($local:remainingWaitTime / $script:loopCycle * 100 /2 )
-		Write-Output ($('o' * $(50 - $local:progressRatio)) + $('.' * $local:progressRatio))
+		$local:progressRatio = [Int]($local:remainingWaitTime / $script:loopCycle * 100 / 2 )
+		Write-Output ('[{0}{1}] 残り{2}秒' -f $('#' * $(50 - $local:progressRatio)), $('.' * $local:progressRatio), $local:remainingWaitTime)
 		$local:remainingWaitTime -= 100
 		Start-Sleep -Second 100
 	} while ($local:remainingWaitTime -ge 0)
-	[System.GC]::Collect()
-	[System.GC]::WaitForPendingFinalizers()
-	[System.GC]::Collect()
+	invokeGarbageCollection
 }
 #----------------------------------------------------------------------
-[System.GC]::Collect()
-[System.GC]::WaitForPendingFinalizers()
-[System.GC]::Collect()
+invokeGarbageCollection

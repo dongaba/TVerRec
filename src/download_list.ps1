@@ -52,34 +52,23 @@ try {
 #設定で指定したファイル・ディレクトリの存在チェック
 checkRequiredFile
 
-$local:keywordName = 'リスト指定'
+$local:keyword = 'リスト指定'
 getToken
 
 #ダウンロードリストを読み込み
 $local:listLinks = @(loadLinkFromDownloadList)
 if ($null -eq $local:listLinks) { Write-Warning ('💡 ダウンロードリストが0件です') ; exit 0 }
 
-#ダウンロード履歴ファイルのデータを読み込み
-$local:histFileData = @(loadHistFile)
-
 #URLがすでにダウンロード履歴に存在する場合は検索結果から除外
-switch ($true) {
-	(($local:listLinks.Count -ne 0) -and ($local:histFileData.Count -ne 0)) {
-		$local:videoLinks = @((Compare-Object -IncludeEqual $local:listLinks.episodeID $local:histFileData.videoPage.Replace('https://tver.jp/episodes/', '')).Where({ $_.SideIndicator -eq '<=' }))
-		if ($local:videoLinks.Count -ne 0) { $local:videoLinks = $local:videoLinks.InputObject }
-		break
-	}
-	($local:listLinks.Count -ne 0) {
-		$local:videoLinks = @($local:listLinks.episodeID)
-		break
-	}
-	default {
-		$local:videoLinks = @()
-		break
-	}
-}
+$local:videoLinks, $local:processedCount = checkHistory $local:listLinks
 $local:videoTotal = $local:videoLinks.Count
-Write-Output ('💡 ダウンロード対象{0}件' -f $local:videoTotal)
+Write-Output ('')
+if ($local:videoTotal -eq 0) {
+	Write-Output ('　処理対象{0}本　処理済{1}本' -f $local:videoTotal, $local:processedCount)
+} else {
+	Write-Output ('　💡 処理対象{0}本　処理済{1}本' -f $local:videoTotal, $local:processedCount)
+}
+
 
 #処理時間の推計
 $local:totalStartTime = Get-Date
@@ -121,10 +110,10 @@ foreach ($local:videoLink in $local:videoLinks) {
 	waitTillYtdlProcessGetFewer $script:parallelDownloadFileNum
 	#TVer番組ダウンロードのメイン処理
 	downloadTVerVideo `
-		-Keyword $local:keywordName `
-		-URL ('https://tver.jp/episodes/{0}' -f $local:videoLink) `
-		-Link ('/episodes/{0}' -f $local:videoLink)`
-		-ForceDownload $false
+		-Keyword $local:keyword `
+		-EpisodePage $local:videoLink `
+		-Link $local:videoLink.Replace('https://tver.jp', '') `
+		-Force $false
 }
 #----------------------------------------------------------------------
 
@@ -137,12 +126,11 @@ updateProgressToast `
 	-Group 'List'
 
 #youtube-dlのプロセスが終わるまで待機
+Write-Output ('')
 Write-Output ('ダウンロードの終了を待機しています')
 waitTillYtdlProcessIsZero
 
-[System.GC]::Collect()
-[System.GC]::WaitForPendingFinalizers()
-[System.GC]::Collect()
+invokeGarbageCollection
 
 Write-Output ('')
 Write-Output ('---------------------------------------------------------------------------')

@@ -52,17 +52,17 @@ try {
 #設定で指定したファイル・ディレクトリの存在チェック
 checkRequiredFile
 
-$local:keywordNames = @(loadKeywordList)
+$local:keywords = @(loadKeywordList)
 getToken
 
 $local:keywordNum = 0
-$local:keywordTotal = $local:keywordNames.Count
+$local:keywordTotal = $local:keywords.Count
 
 showProgress2Row `
-	-ProgressText1 '一括ダウンロード中' `
-	-ProgressText2 'キーワードから番組を抽出しダウンロード' `
-	-WorkDetail1 '読み込み中...' `
-	-WorkDetail2 '読み込み中...' `
+	-Text1 '一括ダウンロード中' `
+	-Text2 'キーワードから番組を抽出しダウンロード' `
+	-Detail1 '読み込み中...' `
+	-Detail2 '読み込み中...' `
 	-Tag $script:appName `
 	-Duration 'long' `
 	-Silent $false `
@@ -71,32 +71,20 @@ showProgress2Row `
 #======================================================================
 #個々のジャンルページチェックここから
 $local:totalStartTime = Get-Date
-foreach ($local:keywordName in $local:keywordNames) {
-	$local:keywordName = trimTabSpace($local:keywordName)
+foreach ($local:keyword in $local:keywords) {
+	$local:keyword = trimTabSpace($local:keyword)
 
 	#ジャンルページチェックタイトルの表示
 	Write-Output ('')
 	Write-Output ('----------------------------------------------------------------------')
-	Write-Output ('{0}' -f $local:keywordName)
+	Write-Output ('{0}' -f $local:keyword)
 
-	$local:resultLinks = @(getVideoLinksFromKeyword($local:keywordName))
-	$local:keywordName = $local:keywordName.Replace('https://tver.jp/', '')
+	$local:resultLinks = @(getVideoLinksFromKeyword($local:keyword))
+	$local:keyword = $local:keyword.Replace('https://tver.jp/', '')
 
-	#ダウンロード履歴ファイルのデータを読み込み
-	$local:histFileData = @(loadHistFile)
-
-	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
-	if ($local:histFileData.Count -eq 0) { $local:histVideoPages = @() }
-	else { $local:histVideoPages = @($local:histFileData.VideoPage) }
-	$local:histCompResult = @(Compare-Object -IncludeEqual $local:resultLinks $local:histVideoPages)
-	$local:histMatch = @($local:histCompResult.Where({ $_.SideIndicator -eq '==' }))
-	$local:histUnmatch = @($local:histCompResult.Where({ $_.SideIndicator -eq '<=' }))
-	if ($local:histMatch.Count -eq 0) { $local:processedCount = 0 }
-	else { $local:processedCount = $local:histMatch.Count }
-	if ($local:histUnmatch.Count -eq 0) { $local:videoLinks = @() }
-	else { $local:videoLinks = @($local:histUnmatch.InputObject) }
+	# #URLがすでにダウンロード履歴に存在する場合は検索結果から除外
+	$local:videoLinks, $local:processedCount = checkHistory $local:resultLinks
 	$local:videoTotal = $local:videoLinks.Count
-
 	if ($local:videoTotal -eq 0) {
 		Write-Output ('　処理対象{0}本　処理済{1}本' -f $local:videoTotal, $local:processedCount)
 	} else {
@@ -116,12 +104,12 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 	#進捗更新
 	updateProgress2Row `
-		-ProgressActivity1 $local:keywordNum/$local:keywordTotal `
-		-CurrentProcessing1 (trimTabSpace ($local:keywordName)) `
+		-Activity1 $local:keywordNum/$local:keywordTotal `
+		-Processing1 (trimTabSpace ($local:keyword)) `
 		-Rate1 $local:progressRate1 `
 		-SecRemaining1 $local:secRemaining1 `
-		-ProgressActivity2 '' `
-		-CurrentProcessing2 '' `
+		-Activity2 '' `
+		-Processing2 '' `
 		-Rate2 $local:progressRate2 `
 		-SecRemaining2 '' `
 		-Tag $script:appName `
@@ -139,12 +127,12 @@ foreach ($local:keywordName in $local:keywordNames) {
 		$local:progressRate2 = [Float]($local:videoNum / $local:videoTotal)
 		#進捗更新
 		updateProgress2Row `
-			-ProgressActivity1 $local:keywordNum/$local:keywordTotal `
-			-CurrentProcessing1 (trimTabSpace ($local:keywordName)) `
+			-Activity1 $local:keywordNum/$local:keywordTotal `
+			-Processing1 (trimTabSpace ($local:keyword)) `
 			-Rate1 $local:progressRate1 `
 			-SecRemaining1 $local:secRemaining1 `
-			-ProgressActivity2 $local:videoNum/$local:videoTotal `
-			-CurrentProcessing2 $local:videoLink `
+			-Activity2 $local:videoNum/$local:videoTotal `
+			-Processing2 $local:videoLink `
 			-Rate2 $local:progressRate2 `
 			-SecRemaining2 '' `
 			-Tag $script:appName `
@@ -155,10 +143,10 @@ foreach ($local:keywordName in $local:keywordNames) {
 		waitTillYtdlProcessGetFewer $script:parallelDownloadFileNum
 		#TVer番組ダウンロードのメイン処理
 		downloadTVerVideo `
-			-Keyword $local:keywordName `
-			-URL $local:videoLink `
+			-Keyword $local:keyword `
+			-EpisodePage $local:videoLink `
 			-Link $local:videoLink.Replace('https://tver.jp', '') `
-			-ForceDownload $false
+			-Force $false
 	}
 	#----------------------------------------------------------------------
 
@@ -182,9 +170,7 @@ Write-Output ('')
 Write-Output ('ダウンロードの終了を待機しています')
 waitTillYtdlProcessIsZero
 
-[System.GC]::Collect()
-[System.GC]::WaitForPendingFinalizers()
-[System.GC]::Collect()
+invokeGarbageCollection
 
 Write-Output ('')
 Write-Output ('---------------------------------------------------------------------------')

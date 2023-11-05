@@ -17,6 +17,13 @@
 		},
 		{
 			"type": "PowerShell",
+			"script": "${workspaceFolder}/src/download_single.ps1",
+			"request": "launch",
+			"name": "Single",
+			"cwd": "${workspaceFolder}/src"
+		},
+		{
+			"type": "PowerShell",
 			"script": "${workspaceFolder}/src/loop.ps1",
 			"request": "launch",
 			"name": "Loop",
@@ -27,48 +34,6 @@
 			"script": "${workspaceFolder}/src/download_bulk.ps1",
 			"request": "launch",
 			"name": "Bulk",
-			"cwd": "${workspaceFolder}/src"
-		},
-		{
-			"type": "PowerShell",
-			"script": "${workspaceFolder}/src/download_single.ps1",
-			"request": "launch",
-			"name": "Single",
-			"cwd": "${workspaceFolder}/src"
-		},
-		{
-			"type": "PowerShell",
-			"script": "${workspaceFolder}/src/generate_list.ps1",
-			"request": "launch",
-			"name": "List-Gen",
-			"cwd": "${workspaceFolder}/src"
-		},
-		{
-			"type": "PowerShell",
-			"script": "${workspaceFolder}/src/download_list.ps1",
-			"request": "launch",
-			"name": "List",
-			"cwd": "${workspaceFolder}/src"
-		},
-		{
-			"type": "PowerShell",
-			"script": "${workspaceFolder}/src/functions/update_ffmpeg.ps1",
-			"request": "launch",
-			"name": "ffmpeg-Up",
-			"cwd": "${workspaceFolder}/src"
-		},
-		{
-			"type": "PowerShell",
-			"script": "${workspaceFolder}/src/functions/update_youtube-dl.ps1",
-			"request": "launch",
-			"name": "youtube-dl-Up",
-			"cwd": "${workspaceFolder}/src"
-		},
-		{
-			"type": "PowerShell",
-			"script": "${workspaceFolder}/src/functions/update_tverrec.ps1",
-			"request": "launch",
-			"name": "Update TVerRec",
 			"cwd": "${workspaceFolder}/src"
 		},
 		{
@@ -90,6 +55,41 @@
 			"script": "${workspaceFolder}/src/move_video.ps1",
 			"request": "launch",
 			"name": "Move",
+			"cwd": "${workspaceFolder}/src"
+		},
+		{
+			"type": "PowerShell",
+			"script": "${workspaceFolder}/src/generate_list.ps1",
+			"request": "launch",
+			"name": "List-Gen",
+			"cwd": "${workspaceFolder}/src"
+		},
+		{
+			"type": "PowerShell",
+			"script": "${workspaceFolder}/src/download_list.ps1",
+			"request": "launch",
+			"name": "List",
+			"cwd": "${workspaceFolder}/src"
+		},
+		{
+			"type": "PowerShell",
+			"script": "${workspaceFolder}/src/functions/update_youtube-dl.ps1",
+			"request": "launch",
+			"name": "youtube-dl-Up",
+			"cwd": "${workspaceFolder}/src"
+		},
+		{
+			"type": "PowerShell",
+			"script": "${workspaceFolder}/src/functions/update_ffmpeg.ps1",
+			"request": "launch",
+			"name": "ffmpeg-Up",
+			"cwd": "${workspaceFolder}/src"
+		},
+		{
+			"type": "PowerShell",
+			"script": "${workspaceFolder}/src/functions/update_tverrec.ps1",
+			"request": "launch",
+			"name": "Update TVerRec",
 			"cwd": "${workspaceFolder}/src"
 		}
 	]

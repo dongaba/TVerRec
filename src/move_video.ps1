@@ -217,9 +217,7 @@ updateProgressToast `
 	-Tag $script:appName `
 	-Group 'Move'
 
-[System.GC]::Collect()
-[System.GC]::WaitForPendingFinalizers()
-[System.GC]::Collect()
+invokeGarbageCollection
 
 Write-Output ('')
 Write-Output ('---------------------------------------------------------------------------')

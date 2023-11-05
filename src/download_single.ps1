@@ -52,7 +52,7 @@ try {
 #設定で指定したファイル・ディレクトリの存在チェック
 checkRequiredFile
 
-$local:keywordName = '個別指定'
+$local:keyword = '個別指定'
 getToken
 
 #GUI起動を判定
@@ -82,8 +82,8 @@ while ($true) {
 	if ($videoPageURL -ne '') {
 		if ($local:videoPageURL -notmatch '^https://tver.jp/(/?.*)') {
 			# Tver以外には変数セットして youtube-dl起動
-			$script:videoFileDir = ('{0}' -f $script:downloadBaseDir)
-			$script:videoName = ('{0}' -f '"%(title)s.%(ext)s"')
+			$script:videoFileDir = $script:downloadBaseDir
+			$script:videoName = $script:nonTVerFileName
 
 			Write-Output ('{0}{1}' -f 'ダウンロード：', $local:videoPageURL)
 
@@ -97,20 +97,16 @@ while ($true) {
 			Write-Output ('{0}' -f $local:videoPageURL)
 			#TVer番組ダウンロードのメイン処理
 			downloadTVerVideo `
-				-Keyword $local:keywordName `
-				-URL $local:videoPageURL `
+				-Keyword $local:keyword `
+				-EpisodePage $local:videoPageURL `
 				-Link $local:videoLink `
-				-ForceDownload $script:forceSingleDownload
-			[System.GC]::Collect()
-			[System.GC]::WaitForPendingFinalizers()
-			[System.GC]::Collect()
+				-Force $script:forceSingleDownload
+			invokeGarbageCollection
 		}
 	} else { break }
 }
 
-[System.GC]::Collect()
-[System.GC]::WaitForPendingFinalizers()
-[System.GC]::Collect()
+invokeGarbageCollection
 
 Write-Output ('')
 Write-Output ('---------------------------------------------------------------------------')

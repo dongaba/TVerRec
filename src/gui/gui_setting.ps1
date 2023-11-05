@@ -78,6 +78,17 @@ function DoWpfEvents {
 	[Dispatcher]::PushFrame($script:frame)
 }
 
+#フォルダ選択ダイアログ
+function SelectFolder($description, $textBox) {
+	$script:fd.Description = $description
+	$script:fd.RootFolder = [System.Environment+SpecialFolder]::MyComputer
+	$script:fd.SelectedPath = $textBox.Text
+
+	if ($script:fd.ShowDialog($script:form) -eq [System.Windows.Forms.DialogResult]::OK) {
+		$textBox.Text = $script:fd.SelectedPath
+	}
+}
+
 #system_setting.ps1から各設定項目を読み込む
 function loadDefaultSetting {
 	Param (
@@ -223,33 +234,20 @@ $local:console = [Console.Window]::GetConsoleWindow()
 $null = [Console.Window]::ShowWindow($local:console, 0)
 
 #タスクバーのアイコンにオーバーレイ表示
-$local:icon = New-Object System.Windows.Media.Imaging.BitmapImage
-$local:icon.BeginInit()
-$local:icon.StreamSource = [System.IO.MemoryStream][System.Convert]::FromBase64String($script:iconBase64)
-$local:icon.EndInit()
-$local:icon.Freeze()
-$script:settingWindow.TaskbarItemInfo.Overlay = $local:icon
+$script:settingWindow.TaskbarItemInfo.Overlay = bitmapImageFromBase64 $script:iconBase64
 $script:settingWindow.TaskbarItemInfo.Description = $script:settingWindow.Title
 
 #ウィンドウを読み込み時の処理
-$script:settingWindow.Add_Loaded({
-		$script:settingWindow.Icon = $script:iconPath
-	})
+$script:settingWindow.Add_Loaded({ $script:settingWindow.Icon = $script:iconPath })
 
 #ウィンドウを閉じる際の処理
-$script:settingWindow.Add_Closing({
-	})
+$script:settingWindow.Add_Closing({})
 
 #Name属性を持つ要素のオブジェクト作成
 $local:mainCleanXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $script:settingWindow.FindName($_.Name) -Scope Script }
 
 #WPFにロゴをロード
-$local:logo = New-Object System.Windows.Media.Imaging.BitmapImage
-$local:logo.BeginInit()
-$local:logo.StreamSource = [System.IO.MemoryStream][System.Convert]::FromBase64String($script:logoBase64)
-$local:logo.EndInit()
-$local:logo.Freeze()
-$script:LogoImage.Source = $local:logo
+$script:LogoImage.Source = bitmapImageFromBase64 $script:logoBase64
 
 #バージョン表記
 $script:lblVersion.Content = ('Version {0}' -f $script:appVersion)
@@ -266,28 +264,15 @@ $script:btnSave.Add_Click({
 		$script:settingWindow.close()
 	})
 $script:btndownloadBaseDir.Add_Click({
-		$script:fd.Description = 'ダウンロード先ディレクトリを選択してください'
-		$script:fd.RootFolder = [System.Environment+SpecialFolder]::MyComputer
-		$script:fd.SelectedPath = $script:downloadBaseDir.Text
-		if ( $script:fd.ShowDialog($script:form) -eq [System.Windows.Forms.DialogResult]::OK) {
-			$script:downloadBaseDir.Text = $script:fd.SelectedPath
-		}
+		SelectFolder 'ダウンロード先ディレクトリを選択してください' $script:downloadBaseDir
 	})
+
 $script:btndownloadWorkDir.Add_Click({
-		$script:fd.Description = '作業ディレクトリを選択してください'
-		$script:fd.RootFolder = [System.Environment+SpecialFolder]::MyComputer
-		$script:fd.SelectedPath = $script:downloadWorkDir.Text
-		if ( $script:fd.ShowDialog($script:form) -eq [System.Windows.Forms.DialogResult]::OK) {
-			$script:downloadWorkDir.Text = $script:fd.SelectedPath
-		}
+		SelectFolder '作業ディレクトリを選択してください' $script:downloadWorkDir
 	})
+
 $script:btnsaveBaseDir.Add_Click({
-		$script:fd.Description = '移動先ディレクトリを選択してください'
-		$script:fd.RootFolder = [System.Environment+SpecialFolder]::MyComputer
-		$script:fd.SelectedPath = $script:saveBaseDir.Text
-		if ( $script:fd.ShowDialog($script:form) -eq [System.Windows.Forms.DialogResult]::OK) {
-			$script:saveBaseDir.Text = $script:fd.SelectedPath
-		}
+		selectFolder '移動先ディレクトリを選択してください' $script:saveBaseDir
 	})
 
 #endregion ボタンのアクション

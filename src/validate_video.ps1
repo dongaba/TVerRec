@@ -224,9 +224,7 @@ updateProgressToast `
 	-Tag $script:appName `
 	-Group 'Validate'
 
-[System.GC]::Collect()
-[System.GC]::WaitForPendingFinalizers()
-[System.GC]::Collect()
+invokeGarbageCollection
 
 Write-Output ('')
 Write-Output ('---------------------------------------------------------------------------')

@@ -79,18 +79,16 @@ $script:ffmpegErrorLogDir = Convert-Path (Split-Path -Parent -Path $script:ffpme
 deleteFiles `
 	-Path $script:ffmpegErrorLogDir `
 	-Conditions 'ffmpeg_error_*.log' `
-	-DaysPassed -0.5
+	-DaysPassed 1
 deleteFiles `
 	-Path $scriptRoot `
 	-Conditions 'brightcovenew_*.lock' `
-	-DaysPassed -0.5
-
+	-DaysPassed 1
 #7日以上前の無視リストのバックアップを削除
 deleteFiles `
 	-Path $script:confDir `
 	-Conditions 'ignore.conf.*' `
-	-DaysPassed -7
-
+	-DaysPassed 7
 updateProgressToast `
 	-Title $script:downloadWorkDir `
 	-Rate ( 2 / 4 ) `
@@ -160,11 +158,16 @@ if ($script:forceSingleDownload -eq $false) {
 		$local:workDirEntities = @(Get-ChildItem -LiteralPath $script:downloadBaseDir)
 		if ($local:workDirEntities.Count -ne 0) {
 			foreach ($local:ignoreTitle in $local:ignoreTitles) {
-				for ($local:i = 0 ; $local:i -lt $local:workDirEntities.count ; $local:i++) {
-					if ($local:workDirEntities[$local:i].Name -like $local:ignoreTitle -or $local:workDirEntities[$local:i].Name -cmatch [Regex]::Escape($local:ignoreTitle)) {
-						$local:ignoreDirs.Add($local:workDirEntities[$local:i])
-						sortIgnoreList $local:ignoreTitle
-					}
+				# for ($local:i = 0 ; $local:i -lt $local:workDirEntities.count ; $local:i++) {
+				# 	if ($local:workDirEntities[$local:i].Name -like $local:ignoreTitle -or $local:workDirEntities[$local:i].Name -cmatch [Regex]::Escape($local:ignoreTitle)) {
+				# 		$local:ignoreDirs.Add($local:workDirEntities[$local:i])
+				# 		sortIgnoreList $local:ignoreTitle
+				# 	}
+				# }
+				$filteredDirs = $local:workDirEntities | Where-Object { $_.Name -like $local:ignoreTitle -or $_.Name -cmatch [Regex]::Escape($local:ignoreTitle) }
+				foreach ($filteredDir in $filteredDirs) {
+					$local:ignoreDirs.Add($filteredDir)
+					sortIgnoreList $local:ignoreTitle
 				}
 			}
 		}
@@ -291,9 +294,7 @@ updateProgressToast `
 	-Tag $script:appName `
 	-Group 'Delete'
 
-[System.GC]::Collect()
-[System.GC]::WaitForPendingFinalizers()
-[System.GC]::Collect()
+invokeGarbageCollection
 
 Write-Output ('')
 Write-Output ('---------------------------------------------------------------------------')

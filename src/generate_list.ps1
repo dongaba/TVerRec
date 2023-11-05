@@ -52,17 +52,17 @@ try {
 #設定で指定したファイル・ディレクトリの存在チェック
 checkRequiredFile
 
-$local:keywordNames = @(loadKeywordList)
+$local:keywords = @(loadKeywordList)
 getToken
 
 $local:keywordNum = 0
-$local:keywordTotal = $local:keywordNames.Count
+$local:keywordTotal = $local:keywords.Count
 
 showProgress2Row `
-	-ProgressText1 'キーワードから番組リスト作成中' `
-	-ProgressText2 'キーワードから番組を抽出しダウンロード' `
-	-WorkDetail1 '読み込み中...' `
-	-WorkDetail2 '読み込み中...' `
+	-Text1 'キーワードから番組リスト作成中' `
+	-Text2 'キーワードから番組を抽出しダウンロード' `
+	-Detail1 '読み込み中...' `
+	-Detail2 '読み込み中...' `
 	-Tag $script:appName `
 	-Duration 'long' `
 	-Silent $false `
@@ -71,40 +71,21 @@ showProgress2Row `
 #======================================================================
 #個々のジャンルページチェックここから
 $local:totalStartTime = Get-Date
-foreach ($local:keywordName in $local:keywordNames) {
-	$local:keywordName = trimTabSpace($local:keywordName)
+foreach ($local:keyword in $local:keywords) {
+	$local:keyword = trimTabSpace($local:keyword)
 
 	#ジャンルページチェックタイトルの表示
 	Write-Output ('')
 	Write-Output ('----------------------------------------------------------------------')
-	Write-Output ('{0}' -f $local:keywordName)
+	Write-Output ('{0}' -f $local:keyword)
 
-	$local:resultLinks = @(getVideoLinksFromKeyword($local:keywordName))
-	$local:keywordName = $local:keywordName.Replace('https://tver.jp/', '')
+	$local:listLinks = @(getVideoLinksFromKeyword($local:keyword))
+	$local:keyword = $local:keyword.Replace('https://tver.jp/', '')
 
-	#ダウンロードリストファイルのデータを読み込み
-	$local:listFileData = @(loadDownloadList)
-	$local:listVideoPages = @()
-	foreach ($local:listFileLine in $local:listFileData) {
-		$local:listVideoPages += ('https://tver.jp/episodes/{0}' -f $local:listFileLine.EpisodeID.Replace('#', ''))
-	}
-
-	#ダウンロード履歴ファイルのデータを読み込み
-	$local:histFileData = @(loadHistFile)
-
-	#URLがすでにダウンロード履歴またはリストファイルに存在する場合は検索結果から除外
-	if ($local:histFileData.Count -eq 0) { $local:histVideoPages = @() }
-	else { $local:histVideoPages = @($local:histFileData.VideoPage) }
-	$local:histVideoPages += $local:listVideoPages
-	$local:histCompResult = @(Compare-Object -IncludeEqual $local:resultLinks $local:histVideoPages)
-	$local:histMatch = @($local:histCompResult.Where({ $_.SideIndicator -eq '==' }))
-	$local:histUnmatch = @($local:histCompResult.Where({ $_.SideIndicator -eq '<=' }))
-	if ($local:histMatch.Count -eq 0) { $local:processedCount = 0 }
-	else { $local:processedCount = $local:histMatch.Count }
-	if ($local:histUnmatch.Count -eq 0) { $local:videoLinks = @() }
-	else { $local:videoLinks = @($local:histUnmatch.InputObject) }
+	#URLがすでにダウンロードリストまたはダウンロード履歴に存在する場合は検索結果から除外
+	$local:videoLinks, $local:processedCount = checkListAndHistory $local:listLinks
 	$local:videoTotal = $local:videoLinks.Count
-
+	Write-Output ('')
 	if ($local:videoTotal -eq 0) {
 		Write-Output ('　処理対象{0}本　処理済{1}本' -f $local:videoTotal, $local:processedCount)
 	} else {
@@ -124,12 +105,12 @@ foreach ($local:keywordName in $local:keywordNames) {
 
 	#進捗更新
 	updateProgress2Row `
-		-ProgressActivity1 $local:keywordNum/$local:keywordTotal `
-		-CurrentProcessing1 (trimTabSpace ($local:keywordName)) `
+		-Activity1 $local:keywordNum/$local:keywordTotal `
+		-Processing1 (trimTabSpace ($local:keyword)) `
 		-Rate1 $local:progressRate1 `
 		-SecRemaining1 $local:secRemaining1 `
-		-ProgressActivity2 '' `
-		-CurrentProcessing2 '' `
+		-Activity2 '' `
+		-Processing2 '' `
 		-Rate2 $local:progressRate2 `
 		-SecRemaining2 '' `
 		-Tag $script:appName `
@@ -144,12 +125,12 @@ foreach ($local:keywordName in $local:keywordNames) {
 		$local:progressRate2 = [Float]($local:videoNum / $local:videoTotal)
 		#進捗更新
 		updateProgress2Row `
-			-ProgressActivity1 $local:keywordNum/$local:keywordTotal `
-			-CurrentProcessing1 (trimTabSpace ($local:keywordName)) `
+			-Activity1 $local:keywordNum/$local:keywordTotal `
+			-Processing1 (trimTabSpace ($local:keyword)) `
 			-Rate1 $local:progressRate1 `
 			-SecRemaining1 $local:secRemaining1 `
-			-ProgressActivity2 $local:videoNum/$local:videoTotal `
-			-CurrentProcessing2 $local:videoLink `
+			-Activity2 $local:videoNum/$local:videoTotal `
+			-Processing2 $local:videoLink `
 			-Rate2 $local:progressRate2 `
 			-SecRemaining2 '' `
 			-Tag $script:appName `
@@ -158,7 +139,7 @@ foreach ($local:keywordName in $local:keywordNames) {
 		Write-Output ('{0}/{1} - {2}' -f $local:videoNum, $local:videoTotal, $local:videoLink)
 		#TVer番組ダウンロードのメイン処理
 		generateTVerVideoList `
-			-Keyword $local:keywordName `
+			-Keyword $local:keyword `
 			-Link $local:videoLink
 	}
 	#----------------------------------------------------------------------
@@ -178,9 +159,7 @@ updateProgressToast2 `
 	-Tag $script:appName `
 	-Group 'ListGen'
 
-[System.GC]::Collect()
-[System.GC]::WaitForPendingFinalizers()
-[System.GC]::Collect()
+invokeGarbageCollection
 
 Write-Output ('')
 Write-Output ('---------------------------------------------------------------------------')

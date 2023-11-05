@@ -112,35 +112,20 @@ $local:console = [Console.Window]::GetConsoleWindow()
 $null = [Console.Window]::ShowWindow($local:console, 0)
 
 #タスクバーのアイコンにオーバーレイ表示
-$local:icon = New-Object System.Windows.Media.Imaging.BitmapImage
-$local:icon.BeginInit()
-$local:icon.StreamSource = [System.IO.MemoryStream][System.Convert]::FromBase64String($script:iconBase64)
-$local:icon.EndInit()
-$local:icon.Freeze()
-$script:mainWindow.TaskbarItemInfo.Overlay = $local:icon
+$script:mainWindow.TaskbarItemInfo.Overlay = bitmapImageFromBase64 $script:iconBase64
 $script:mainWindow.TaskbarItemInfo.Description = $script:mainWindow.Title
 
 #ウィンドウを読み込み時の処理
-$script:mainWindow.Add_Loaded({
-		$script:mainWindow.Icon = $script:iconPath
-	})
+$script:mainWindow.Add_Loaded({$script:mainWindow.Icon = $script:iconPath})
 
 #ウィンドウを閉じる際の処理
-$script:mainWindow.Add_Closing({
-		#Windowが閉じられたら乗っているゴミジョブを削除して終了
-		Get-Job | Receive-Job -Wait -AutoRemoveJob -Force
-	})
+$script:mainWindow.Add_Closing({Get-Job | Receive-Job -Wait -AutoRemoveJob -Force})
 
 #Name属性を持つ要素のオブジェクト作成
 $local:mainCleanXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $script:mainWindow.FindName($_.Name) -Scope Local }
 
 #WPFにロゴをロード
-$local:logo = New-Object System.Windows.Media.Imaging.BitmapImage
-$local:logo.BeginInit()
-$local:logo.StreamSource = [System.IO.MemoryStream][System.Convert]::FromBase64String($script:logoBase64)
-$local:logo.EndInit()
-$local:logo.Freeze()
-$script:LogoImage.Source = $local:logo
+$LogoImage.Source = bitmapImageFromBase64 $script:logoBase64
 
 #バージョン表記
 $script:lblVersion.Content = ('Version {0}' -f $script:appVersion)
@@ -222,9 +207,7 @@ $script:btnIgnoreOpen.Add_Click({ Invoke-Item $script:ignoreFilePath })
 $script:btnListOpen.Add_Click({ Invoke-Item $script:listFilePath })
 $script:btnClearLog.Add_Click({
 		$script:outText.Document.Blocks.Clear()
-		[System.GC]::Collect()
-		[System.GC]::WaitForPendingFinalizers()
-		[System.GC]::Collect()
+		invokeGarbageCollection
 	})
 $script:btnKillAll.Add_Click({
 		Get-Job | Remove-Job -Force
@@ -232,9 +215,7 @@ $script:btnKillAll.Add_Click({
 		$script:btnExit.IsEnabled = $true
 		$script:btnKillAll.IsEnabled = $false
 		$script:lblStatus.Content = '処理を強制停止しました'
-		[System.GC]::Collect()
-		[System.GC]::WaitForPendingFinalizers()
-		[System.GC]::Collect()
+		invokeGarbageCollection
 	})
 $script:btnWiki.Add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
 $script:btnSetting.Add_Click({
@@ -242,9 +223,7 @@ $script:btnSetting.Add_Click({
 		if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 			. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
 		}
-		[System.GC]::Collect()
-		[System.GC]::WaitForPendingFinalizers()
-		[System.GC]::Collect()
+		invokeGarbageCollection
 	})
 $script:btnExit.Add_Click({ $script:mainWindow.close() })
 
@@ -266,6 +245,15 @@ try {
 
 #----------------------------------------------------------------------
 #region ウィンドウ表示後のループ処理
+$local:messageTypeColorMap = @{
+	Output      = 'DarkSlateGray'
+	Error       = 'Crimson'
+	Warning     = 'Coral'
+	Verbose     = 'LightSlateGray'
+	Debug       = 'CornflowerBlue'
+	Information = 'DarkGray'
+}
+
 while ($script:mainWindow.IsVisible) {
 	#GUIイベント処理
 	DoWpfEvents
@@ -276,27 +264,24 @@ while ($script:mainWindow.IsVisible) {
 			# Get the originating button via the job name.
 			$script:btn = $script:mainWindow.FindName($local:job.Name)
 
+			foreach ($local:msgType in $local:messageTypeColorMap.Keys) {
+				if ($local:message = $local:job.$local:msgType) {
+					AddOutput ($local:message -join "`n") -Color $local:messageTypeColorMap[$local:msgType]
+				}
+			}
+			Receive-Job $local:job *> $null
+
 			#ジョブが終了したかどうか判定
 			$local:completed = $local:job.State -in 'Completed', 'Failed', 'Stopped'
-
-			#ジョブからの出力をテキストボックスに出力
-			if ($local:errorMsg = $local:job.Error) { AddOutput ($local:errorMsg -join "`n") -Color 'Crimson' }		#2
-			if ($local:warningMsg = $local:job.Warning) { AddOutput ($local:warningMsg -join "`n") -Color 'Coral' }		#3
-			if ($local:verboseMsg = $local:job.Verbose) { AddOutput ($local:verboseMsg -join "`n") -Color 'LightSlateGray' }		#4
-			if ($local:debugMsg = $local:job.Debug) { AddOutput ($local:debugMsg -join "`n") -Color 'CornflowerBlue' }		#5
-			if ($local:infoMsg = $local:job.Information) { AddOutput ($local:infoMsg -join "`n") -Color 'DarkGray' }		#6
-			if ($local:outputMsg = Receive-Job $local:job ) { AddOutput ($local:outputMsg -join "`n") -Color 'DarkSlateGray' }		#1
 
 			#終了したジョブのボタンの再有効化
 			if ($local:completed) {
 				Remove-Job $local:job
-				foreach ($script:btn in $script:btns) { $script:btn.IsEnabled = $true }
+				$script:btns.ForEach({ $_.IsEnabled = $true })
 				$script:btnExit.IsEnabled = $true
 				$script:btnKillAll.IsEnabled = $false
 				$script:lblStatus.Content = '処理を終了しました'
-				[System.GC]::Collect()
-				[System.GC]::WaitForPendingFinalizers()
-				[System.GC]::Collect()
+				invokeGarbageCollection
 			}
 		}
 	}

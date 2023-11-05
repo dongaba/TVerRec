@@ -57,7 +57,7 @@ function getToken () {
 #----------------------------------------------------------------------
 function getVideoLinksFromKeyword {
 	[OutputType([System.Object[]])]
-	Param ([String]$local:keywordName)
+	Param ([String]$local:keyword)
 
 	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
 
@@ -65,61 +65,61 @@ function getVideoLinksFromKeyword {
 	$script:seriesLinks = [System.Collections.Generic.List[String]]::new()
 
 	switch ($true) {
-		($local:keywordName.IndexOf('series/') -eq 0) {
+		($local:keyword.IndexOf('series/') -eq 0) {
 			#番組IDによる番組検索から番組ページのLinkを取得
-			$local:seriesID = trimComment($local:keywordName).Replace('series/', '').Trim()
+			$local:seriesID = trimComment($local:keyword).Replace('series/', '').Trim()
 			goAnal -Event 'search' -Type 'series' -ID $local:seriesID
 			try { $script:episodeLinks = getLinkFromSeriesID ($local:seriesID) }
 			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:02') ; continue }
 			break
 		}
-		($local:keywordName.IndexOf('talents/') -eq 0) {
+		($local:keyword.IndexOf('talents/') -eq 0) {
 			#タレントIDによるタレント検索から番組ページのLinkを取得
-			$local:talentID = trimComment($local:keywordName).Replace('talents/', '').Trim()
+			$local:talentID = trimComment($local:keyword).Replace('talents/', '').Trim()
 			goAnal -Event 'search' -Type 'talent' -ID $local:talentID
 			try { $script:episodeLinks = getLinkFromTalentID ($local:talentID) }
 			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:03') ; continue }
 			break
 		}
-		($local:keywordName.IndexOf('tag/') -eq 0) {
+		($local:keyword.IndexOf('tag/') -eq 0) {
 			#ジャンルなどのTag情報から番組ページのLinkを取得
-			$local:tagID = trimComment($local:keywordName).Replace('tag/', '').Trim()
+			$local:tagID = trimComment($local:keyword).Replace('tag/', '').Trim()
 			goAnal -Event 'search' -Type 'tag' -ID $local:tagID
 			try { $script:episodeLinks = getLinkFromTag ($local:tagID) }
 			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:04') ; continue }
 			break
 		}
-		($local:keywordName.IndexOf('new/') -eq 0) {
+		($local:keyword.IndexOf('new/') -eq 0) {
 			#新着番組から番組ページのLinkを取得
-			$local:genre = trimComment($local:keywordName).Replace('new/', '').Trim()
+			$local:genre = trimComment($local:keyword).Replace('new/', '').Trim()
 			goAnal -Event 'search' -Type 'new' -ID $local:genre
 			try { $script:episodeLinks = getLinkFromNew ($local:genre) }
 			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:05') ; continue }
 			break
 		}
-		($local:keywordName.IndexOf('ranking/') -eq 0) {
+		($local:keyword.IndexOf('ranking/') -eq 0) {
 			#ランキングによる番組ページのLinkを取得
-			$local:genre = trimComment($local:keywordName).Replace('ranking/', '').Trim()
+			$local:genre = trimComment($local:keyword).Replace('ranking/', '').Trim()
 			goAnal -Event 'search' -Type 'ranking' -ID $local:genre
 			try { $script:episodeLinks = getLinkFromRanking ($local:genre) }
 			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:06') ; continue }
 			break
 		}
-		($local:keywordName.IndexOf('toppage') -eq 0) {
+		($local:keyword.IndexOf('toppage') -eq 0) {
 			#トップページから番組ページのLinkを取得
 			goAnal -Event 'search' -Type 'toppage'
 			try { $script:episodeLinks = getLinkFromTopPage }
 			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:07') ; continue }
 			break
 		}
-		($local:keywordName.IndexOf('title/') -eq 0) {
+		($local:keyword.IndexOf('title/') -eq 0) {
 			#番組名による新着検索から番組ページのLinkを取得
-			$local:titleName = trimComment($local:keywordName).Replace('title/', '').Trim()
+			$local:titleName = trimComment($local:keyword).Replace('title/', '').Trim()
 			goAnal -Event 'search' -Type 'title' -ID $local:titleName
 			Write-Warning ('❗ 番組名検索は廃止されました。スキップします Err:08') ; continue
 			break
 		}
-		($local:keywordName.IndexOf('sitemap') -eq 0) {
+		($local:keyword.IndexOf('sitemap') -eq 0) {
 			#サイトマップから番組ページのLinkを取得
 			goAnal -Event 'search' -Type 'sitemap'
 			try { $script:episodeLinks = getLinkFromSiteMap }
@@ -128,8 +128,8 @@ function getVideoLinksFromKeyword {
 		}
 		default {
 			#タレント名や番組名などURL形式でない場合APIで検索結果から番組ページのLinkを取得
-			goAnal -Event 'search' -Type 'free' -ID $local:keywordName
-			try { $script:episodeLinks = getLinkFromFreeKeyword ($local:keywordName) }
+			goAnal -Event 'search' -Type 'free' -ID $local:keyword
+			try { $script:episodeLinks = getLinkFromFreeKeyword ($local:keyword) }
 			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:10') ; continue }
 			break
 		}
@@ -183,12 +183,12 @@ function getLinkFromSeasonID {
 				break
 			}
 			'season' {
-				Write-Host ('　Season {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
+				Write-Output ('　Season {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
 				getLinkFromSeasonID $local:searchResult.Content.Id
 				break
 			}
 			'series' {
-				Write-Host ('　Series {0} からEpisodeを抽出中...' -f $local:searchResults[$i].Content.Id)
+				Write-Output ('　Series {0} からEpisodeを抽出中...' -f $local:searchResults[$i].Content.Id)
 				getLinkFromSeriesID $local:searchResult.Content.Id
 				break
 			}
@@ -224,12 +224,12 @@ function getLinkFromTalentID {
 				break
 			}
 			'season' {
-				Write-Host ('　Season {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
+				Write-Output ('　Season {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
 				getLinkFromSeasonID $local:searchResult.Content.Id
 				break
 			}
 			'series' {
-				Write-Host ('　Series {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
+				Write-Output ('　Series {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
 				getLinkFromSeriesID $local:searchResult.Content.Id
 				break
 			}
@@ -265,18 +265,18 @@ function getLinkFromSpecialMainID {
 				break
 			}
 			'season' {
-				Write-Host ('　Season {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
+				Write-Output ('　Season {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
 				getLinkFromSeasonID ($local:searchResult.Content.Id)
 				break
 			}
 			'series' {
 				#Seriesは重複が多いので高速化のためにバッファにためて最後に処理
-				Write-Host ('　Series {0} をバッファに保存中...' -f $local:searchResult.Content.Id)
+				Write-Output ('　Series {0} をバッファに保存中...' -f $local:searchResult.Content.Id)
 				$script:seriesLinks.Add($local:searchResult.Content.Id)
 				break
 			}
 			'special' {
-				Write-Host ('　Special Detail {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
+				Write-Output ('　Special Detail {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
 				getLinkFromSpecialDetailID ($local:searchResult.Content.Id)
 				break
 			}
@@ -312,19 +312,19 @@ function getLinkFromSpecialDetailID {
 				break
 			}
 			'season' {
-				Write-Host ('　Season {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
+				Write-Output ('　Season {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
 				getLinkFromSeasonID ($local:searchResult.Content.Id)
 				break
 			}
 			'series' {
 				#Seriesは重複が多いので高速化のためにバッファにためて最後に処理
-				Write-Host ('　Series {0} をバッファに保存中...' -f $local:searchResult.Content.Id)
+				Write-Output ('　Series {0} をバッファに保存中...' -f $local:searchResult.Content.Id)
 				$script:seriesLinks.Add($local:searchResult.Content.Id)
 				break
 			}
 			'special' {
 				#再度Specialが出てきた際は再帰呼び出し
-				Write-Host ('　Special Detail {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
+				Write-Output ('　Special Detail {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
 				getLinkFromSpecialDetailID ($local:searchResult.Content.Id)
 				break
 			}
@@ -360,12 +360,12 @@ function getLinkFromTag {
 				break
 			}
 			'season' {
-				Write-Host ('　Season {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
+				Write-Output ('　Season {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
 				getLinkFromSeasonID ($local:searchResult.Content.Id)
 				break
 			}
 			'series' {
-				Write-Host ('　Series {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
+				Write-Output ('　Series {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
 				getLinkFromSeriesID ($local:searchResult.Content.Id)
 				break
 			}
@@ -401,12 +401,12 @@ function getLinkFromNew {
 				break
 			}
 			'season' {
-				Write-Host ('　Season {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
+				Write-Output ('　Season {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
 				getLinkFromSeasonID ($local:searchResult.Content.Id)
 				break
 			}
 			'series' {
-				Write-Host ('　Series {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
+				Write-Output ('　Series {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
 				getLinkFromSeriesID ($local:searchResult.Content.Id)
 				break
 			}
@@ -446,12 +446,12 @@ function getLinkFromRanking {
 				break
 			}
 			'season' {
-				Write-Host ('　Season {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
+				Write-Output ('　Season {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
 				getLinkFromSeasonID ($local:searchResult.Content.Id)
 				break
 			}
 			'series' {
-				Write-Host ('　Series {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
+				Write-Output ('　Series {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
 				getLinkFromSeriesID ($local:searchResult.Content.Id)
 				break
 			}
@@ -498,28 +498,28 @@ function getLinkFromTopPage {
 						break
 					}
 					'season' {
-						Write-Host ('　Season {0} からEpisodeを抽出中...' -f $local:searchResultContent.Content.Id)
+						Write-Output ('　Season {0} からEpisodeを抽出中...' -f $local:searchResultContent.Content.Id)
 						getLinkFromSeasonID ($local:searchResultContent.Content.Id)
 						break
 					}
 					'series' {
 						#Seriesは重複が多いので高速化のためにバッファにためて最後に処理
-						Write-Host ('　Series {0} をバッファに保存中...' -f $local:searchResultContent.Content.Id)
+						Write-Output ('　Series {0} をバッファに保存中...' -f $local:searchResultContent.Content.Id)
 						$script:seriesLinks.Add($local:searchResultContent.Content.Id)
 						break
 					}
 					'talent' {
-						Write-Host ('　Talent {0} からEpisodeを抽出中...' -f $local:searchResultContent.Content.Id)
+						Write-Output ('　Talent {0} からEpisodeを抽出中...' -f $local:searchResultContent.Content.Id)
 						getLinkFromTalentID ($local:searchResultContent.Content.Id)
 						break
 					}
 					'specialMain' {
-						Write-Host ('　Special Main {0} からEpisodeを抽出中...' -f $local:searchResultContent.Content.Id)
+						Write-Output ('　Special Main {0} からEpisodeを抽出中...' -f $local:searchResultContent.Content.Id)
 						getLinkFromSpecialMainID ($local:searchResultContent.Content.Id)
 						break
 					}
 					'special' {
-						Write-Host ('　Special Detail {0} からEpisodeを抽出中...' -f $local:searchResultContent.Content.Id)
+						Write-Output ('　Special Detail {0} からEpisodeを抽出中...' -f $local:searchResultContent.Content.Id)
 						getLinkFromSpecialDetailID ($local:searchResultContent.Content.Id)
 						break
 					}
@@ -539,18 +539,18 @@ function getLinkFromTopPage {
 						break
 					}
 					'season' {
-						Write-Host ('　Season {0} からEpisodeを抽出中...' -f $local:searchResultContent.Content.Content.Content.Id)
+						Write-Output ('　Season {0} からEpisodeを抽出中...' -f $local:searchResultContent.Content.Content.Content.Id)
 						getLinkFromSeasonID ($local:searchResultContent.Content.Content.Content.Id)
 						break
 					}
 					'series' {
 						#Seriesは重複が多いので高速化のためにバッファにためて最後に処理
-						Write-Host ('　Series {0} をバッファに保存中...' -f $local:searchResultContent.Content.Content.Content.Id)
+						Write-Output ('　Series {0} をバッファに保存中...' -f $local:searchResultContent.Content.Content.Content.Id)
 						$script:seriesLinks.Add(($local:searchResultContent.Content.Content.Content.Id))
 						break
 					}
 					'talent' {
-						Write-Host ('　Talent {0} からEpisodeを抽出中...' -f $local:searchResultContent.Content.Content.Content.Id)
+						Write-Output ('　Talent {0} からEpisodeを抽出中...' -f $local:searchResultContent.Content.Content.Content.Id)
 						getLinkFromTalentID ($local:searchResultContent.Content.Content.Content.Id)
 						break
 					}
@@ -570,7 +570,7 @@ function getLinkFromTopPage {
 	#バッファしておいたSeriesの重複を削除しEpisodeを抽出
 	$script:seriesLinks = $script:seriesLinks | Sort-Object | Get-Unique
 	foreach ($local:seriesID in $script:seriesLinks) {
-		Write-Host ('　Series {0} からEpisodeを抽出中...' -f $local:seriesID)
+		Write-Output ('　Series {0} からEpisodeを抽出中...' -f $local:seriesID)
 		getLinkFromSeriesID ($local:seriesID)
 	}
 
@@ -596,13 +596,13 @@ function getLinkFromSiteMap {
 		else {
 			switch ($true) {
 				($local:searchResult -cmatch '\/seasons\/') {
-					Write-Host ('　{0} からEpisodeを抽出中...' -f $local:searchResult)
+					Write-Output ('　{0} からEpisodeを抽出中...' -f $local:searchResult)
 					try { getLinkFromSeasonID ($local:searchResult) }
 					catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:11') ; continue }
 					break
 				}
 				($local:searchResult -cmatch '\/series\/') {
-					Write-Host ('　{0} からEpisodeを抽出中...' -f $local:searchResult)
+					Write-Output ('　{0} からEpisodeを抽出中...' -f $local:searchResult)
 					try { getLinkFromSeriesID ($local:searchResult) }
 					catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:12') ; continue }
 					break
@@ -628,12 +628,12 @@ function getLinkFromSiteMap {
 #----------------------------------------------------------------------
 function getLinkFromFreeKeyword {
 	[OutputType([System.Object[]])]
-	Param ([String]$local:keywordName)
+	Param ([String]$local:keyword)
 
 	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
 
 	$local:tverSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callKeywordSearch'
-	$local:tverSearchURL = ('{0}?platform_uid={1}&platform_token={2}&keyword={3}' -f $local:tverSearchBaseURL, $script:platformUID, $script:platformToken, $local:keywordName )
+	$local:tverSearchURL = ('{0}?platform_uid={1}&platform_token={2}&keyword={3}' -f $local:tverSearchBaseURL, $script:platformUID, $script:platformToken, $local:keyword )
 	$local:searchResultsRaw = Invoke-RestMethod -Uri $local:tverSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
 	$local:searchResults = $local:searchResultsRaw.Result.Contents
 
@@ -645,12 +645,12 @@ function getLinkFromFreeKeyword {
 				break
 			}
 			'season' {
-				Write-Host ('　Season {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
+				Write-Output ('　Season {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
 				getLinkFromSeasonID ($local:searchResult.Content.Id)
 				break
 			}
 			'series' {
-				Write-Host ('　Series {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
+				Write-Output ('　Series {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
 				getLinkFromSeriesID ($local:searchResult.Content.Id)
 				break
 			}

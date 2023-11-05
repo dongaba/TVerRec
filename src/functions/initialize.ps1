@@ -93,10 +93,10 @@ if ( $script:myInvocation.ScriptName.Contains('gui')) {
 	}
 
 	#youtube-dlの最新化チェック
-	checkLatestYtdl
+	checkLatestVersion -scriptName 'update_youtube-dl.ps1' -targetName 'youtube-dl' -disableUpdate $script:disableUpdateYoutubedl
 
 	#ffmpegの最新化チェック
-	checkLatestFfmpeg
+	checkLatestVersion -scriptName 'update_ffmpeg.ps1' -targetName 'ffmpeg' -disableUpdate $script:disableUpdateFfmpeg
 
 	#TVerRecの最新化チェック
 	if ($script:appName -eq 'TVerRec') {
