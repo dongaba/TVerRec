@@ -31,16 +31,19 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 #----------------------------------------------------------------------
 function unZip {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([void])]
 	param(
-		[Parameter(Mandatory = $true, Position = 0)]
-		[Alias('File')]
-		[String]$zipArchive,
-		[Parameter(Mandatory = $true, Position = 1)]
-		[Alias('OutPath')]
-		[String]$path
+		[Parameter(Mandatory = $true, Position = 0)][string]$path,
+		[Parameter(Mandatory = $true, Position = 1)][string]$destination
 	)
-	[System.IO.Compression.ZipFile]::ExtractToDirectory($zipArchive, $path, $true)
+
+	if (Test-Path -Path $path) {
+		Write-Verbose ('{0}を{1}に展開します' -f $path, $destination)
+		[System.IO.Compression.ZipFile]::ExtractToDirectory($path, $destination, $true)
+		Write-Verbose ('{0}を展開しました' -f $path)
+	} else {
+		Write-Error ('{0}が見つかりません' -f $path)
+	}
 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -122,7 +125,7 @@ switch ($true) {
 
 			#展開
 			Write-Output ('ダウンロードしたffmpegを解凍します')
-			try { unZip -File (Join-Path $local:binDir 'ffmpeg.zip') -OutPath $local:binDir }
+			try { unZip -Path (Join-Path $local:binDir 'ffmpeg.zip') -Destination $local:binDir }
 			catch { Write-Error ('❗ ffmpegの解凍に失敗しました') ; exit 1 }
 
 			#配置
@@ -304,8 +307,8 @@ switch ($true) {
 			try {
 				Remove-Item -LiteralPath (Join-Path $local:binDir 'ffmpeg') -Force -ErrorAction SilentlyContinue
 				Remove-Item -LiteralPath (Join-Path $local:binDir 'ffprobe') -Force -ErrorAction SilentlyContinue
-				unZip -File (Join-Path $local:binDir 'ffmpeg.zip') -OutPath $local:binDir
-				unZip -File (Join-Path $local:binDir 'ffprobe.zip') -OutPath $local:binDir
+				unZip -Path (Join-Path $local:binDir 'ffmpeg.zip') -Destination $local:binDir
+				unZip -Path (Join-Path $local:binDir 'ffprobe.zip') -Destination $local:binDir
 			} catch { Write-Error ('❗ ffmpegの展開に失敗しました') ; exit 1 }
 
 			#ゴミ掃除

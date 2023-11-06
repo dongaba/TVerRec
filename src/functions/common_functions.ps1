@@ -298,17 +298,9 @@ function deleteFiles {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
-		[parameter(Mandatory = $true, Position = 0)]
-		[Alias('Path')]
-		[System.IO.FileInfo]$basePath,
-
-		[Parameter(Mandatory = $true, Position = 0)]
-		[Alias('Conditions')]
-		[Object]$delConditions,
-
-		[Parameter(Mandatory = $true, Position = 0)]
-		[Alias('DaysPassed')]
-		[int32]$delPeriod
+		[parameter(Mandatory = $true, Position = 0)][System.IO.FileInfo]$basePath,
+		[Parameter(Mandatory = $true, Position = 0)][Object]$conditions,
+		[Parameter(Mandatory = $true, Position = 0)][int32]$delPeriod
 	)
 
 	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
@@ -318,7 +310,7 @@ function deleteFiles {
 		Write-Debug ('Multithread Processing Enabled')
 		#並列化が有効の場合は並列化
 		try {
-			$delConditions.Split(',').Trim() | ForEach-Object -Parallel {
+			$conditions.Split(',').Trim() | ForEach-Object -Parallel {
 				Write-Output ('　{0}' -f (Join-Path $using:basePath $_))
 				$null = (Get-ChildItem -LiteralPath $using:basePath -Recurse -File -Filter $_ -ErrorAction SilentlyContinue).Where({ $_.LastWriteTime -lt $using:limiteDateTime }) | Remove-Item -Force -ErrorAction SilentlyContinue
 			} -ThrottleLimit $script:multithreadNum
@@ -326,9 +318,9 @@ function deleteFiles {
 	} else {
 		#並列化が無効の場合は従来型処理
 		try {
-			foreach ($delCondition in $delConditions.Split(',').Trim()) {
-				Write-Output ('　{0}' -f (Join-Path $basePath $delCondition))
-				$null = (Get-ChildItem -LiteralPath $basePath -Recurse -File -Filter $delCondition -ErrorAction SilentlyContinue).Where({ $_.LastWriteTime -lt $limiteDateTime }) | Remove-Item -Force -ErrorAction SilentlyContinue
+			foreach ($condition in $conditions.Split(',').Trim()) {
+				Write-Output ('　{0}' -f (Join-Path $basePath $condition))
+				$null = (Get-ChildItem -LiteralPath $basePath -Recurse -File -Filter $condition -ErrorAction SilentlyContinue).Where({ $_.LastWriteTime -lt $limiteDateTime }) | Remove-Item -Force -ErrorAction SilentlyContinue
 			}
 		} catch { Write-Warning ('❗ 削除できないファイルがありました') }
 	}
@@ -342,20 +334,16 @@ function unZip {
 	[CmdletBinding()]
 	[OutputType([void])]
 	param(
-		[Parameter(Mandatory = $true, Position = 0)]
-		[Alias('zipfile')]
-		[string]$zipFilePath,
-		[Parameter(Mandatory = $true, Position = 1)]
-		[Alias('destination')]
-		[string]$destinationPath
+		[Parameter(Mandatory = $true, Position = 0)][string]$path,
+		[Parameter(Mandatory = $true, Position = 1)][string]$destination
 	)
 
-	if (Test-Path -Path $zipFilePath) {
-		Write-Verbose ('{0}を{1}に展開します' -f $zipFilePath, $destinationPath)
-		[System.IO.Compression.ZipFile]::ExtractToDirectory($zipFilePath, $destinationPath, $true)
-		Write-Verbose ('{0}を展開しました' -f $zipFilePath)
+	if (Test-Path -Path $path) {
+		Write-Verbose ('{0}を{1}に展開します' -f $path, $destination)
+		[System.IO.Compression.ZipFile]::ExtractToDirectory($path, $destination, $true)
+		Write-Verbose ('{0}を展開しました' -f $path)
 	} else {
-		Write-Error ('{0}が見つかりません' -f $zipFilePath)
+		Write-Error ('{0}が見つかりません' -f $path)
 	}
 }
 
@@ -366,27 +354,23 @@ function moveItem() {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	param(
-		[Parameter(Mandatory = $true, Position = 0)]
-		[Alias('Path')]
-		[String]$sourcePath,
-		[Parameter(Mandatory = $true, Position = 1)]
-		[Alias('Destination')]
-		[String]$destinationPath
+		[Parameter(Mandatory = $true, Position = 0)][String]$source,
+		[Parameter(Mandatory = $true, Position = 1)][String]$destination
 	)
 
-	if ((Test-Path $destinationPath) -and (Test-Path -PathType Container $sourcePath)) {
+	if ((Test-Path $destination) -and (Test-Path -PathType Container $source)) {
 		# ディレクトリ上書き(移動先に存在 かつ ディレクトリ)は再帰的に moveItem 呼び出し
-		Get-ChildItem $sourcePath | ForEach-Object {
+		Get-ChildItem $source | ForEach-Object {
 			if ($_.Name -inotlike '*update_tverrec.ps1') {
-				moveItem -Path $_.FullName -Destination ('{0}/{1}' -f $destinationPath, $_.Name)
+				moveItem -Source $_.FullName -Destination ('{0}/{1}' -f $destination, $_.Name)
 			}
 		}
 		# 移動し終わったディレクトリを削除
-		Remove-Item -LiteralPath $sourcePath -Recurse -Force
+		Remove-Item -LiteralPath $source -Recurse -Force
 	} else {
 		# 移動先に対象なし または ファイルの Move-Item に -Forece つけて実行
-		Write-Output ('{0} → {1}' -f $sourcePath, $destinationPath)
-		Move-Item -LiteralPath $sourcePath -Destination $destinationPath -Force
+		Write-Output ('{0} → {1}' -f $source, $destination)
+		Move-Item -LiteralPath $source -Destination $destination -Force
 	}
 }
 
@@ -491,41 +475,30 @@ function Out-Msg-Color {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $false, Position = 0)]
-		[Alias('Text')]
-		[Object]$text,
-
-		[Parameter(Mandatory = $false, Position = 1)]
-		[Alias('Fg')]
-		[ConsoleColor]$foregroundColor,
-
-		[Parameter(Mandatory = $false, Position = 2)]
-		[Alias('Bg')]
-		[ConsoleColor]$backgroundColor,
-
-		[Parameter(Mandatory = $false, Position = 3)]
-		[Alias('NoNL')]
-		[Boolean]$noLF
+		[Parameter(Mandatory = $false, Position = 0)][Object]$text,
+		[Parameter(Mandatory = $false, Position = 1)][ConsoleColor]$fg,
+		[Parameter(Mandatory = $false, Position = 2)][ConsoleColor]$bg,
+		[Parameter(Mandatory = $false, Position = 3)][Boolean]$noNL
 	)
 
 	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
 
-	$prevForegroundColor = $host.UI.RawUI.ForegroundColor
-	$prevBackgroundColor = $host.UI.RawUI.BackgroundColor
+	$prevFg = $host.UI.RawUI.ForegroundColor
+	$prevBg = $host.UI.RawUI.BackgroundColor
 
-	if ($foregroundColor) { $host.UI.RawUI.ForegroundColor = $foregroundColor }
-	if ($backgroundColor) { $host.UI.RawUI.BackgroundColor = $backgroundColor }
+	if ($foregroundColor) { $host.UI.RawUI.ForegroundColor = $fg }
+	if ($backgroundColor) { $host.UI.RawUI.BackgroundColor = $bg }
 
 	if ($null -eq $text) { $text = '' }
 
 	$writeHostParams = @{
 		Object    = $text
-		NoNewline = $noLF
+		NoNewline = $noNL
 	}
 	Write-Host @writeHostParams
 
-	$host.UI.RawUI.ForegroundColor = $prevForegroundColor
-	$host.UI.RawUI.BackgroundColor = $prevBackgroundColor
+	$host.UI.RawUI.ForegroundColor = $prevFg
+	$host.UI.RawUI.BackgroundColor = $prevBg
 }
 
 #endregion コンソール出力

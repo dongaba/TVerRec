@@ -31,16 +31,19 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 #----------------------------------------------------------------------
 function unZip {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([void])]
 	param(
-		[Parameter(Mandatory = $true, Position = 0)]
-		[Alias('File')]
-		[String]$zipArchive,
-		[Parameter(Mandatory = $true, Position = 1)]
-		[Alias('OutPath')]
-		[String]$path
+		[Parameter(Mandatory = $true, Position = 0)][string]$path,
+		[Parameter(Mandatory = $true, Position = 1)][string]$destination
 	)
-	[System.IO.Compression.ZipFile]::ExtractToDirectory($zipArchive, $path, $true)
+
+	if (Test-Path -Path $path) {
+		Write-Verbose ('{0}を{1}に展開します' -f $path, $destination)
+		[System.IO.Compression.ZipFile]::ExtractToDirectory($path, $destination, $true)
+		Write-Verbose ('{0}を展開しました' -f $path)
+	} else {
+		Write-Error ('{0}が見つかりません' -f $path)
+	}
 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

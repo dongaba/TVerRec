@@ -31,16 +31,19 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 #----------------------------------------------------------------------
 function unZip {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([void])]
 	param(
-		[Parameter(Mandatory = $true, Position = 0)]
-		[Alias('File')]
-		[String]$zipArchive,
-		[Parameter(Mandatory = $true, Position = 1)]
-		[Alias('OutPath')]
-		[String]$path
+		[Parameter(Mandatory = $true, Position = 0)][string]$path,
+		[Parameter(Mandatory = $true, Position = 1)][string]$destination
 	)
-	[System.IO.Compression.ZipFile]::ExtractToDirectory($zipArchive, $path, $true)
+
+	if (Test-Path -Path $path) {
+		Write-Verbose ('{0}を{1}に展開します' -f $path, $destination)
+		[System.IO.Compression.ZipFile]::ExtractToDirectory($path, $destination, $true)
+		Write-Verbose ('{0}を展開しました' -f $path)
+	} else {
+		Write-Error ('{0}が見つかりません' -f $path)
+	}
 }
 
 #----------------------------------------------------------------------
@@ -50,28 +53,23 @@ function moveItem() {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	param(
-		[Parameter(Mandatory = $true, Position = 0)]
-		[Alias('Path')]
-		[String]$local:src,
-		[Parameter(Mandatory = $true, Position = 1)]
-		[Alias('Destination')]
-		[String]$local:dist
+		[Parameter(Mandatory = $true, Position = 0)][String]$source,
+		[Parameter(Mandatory = $true, Position = 1)][String]$destination
 	)
 
-	if ((Test-Path $local:dist) -and (Test-Path -PathType Container $local:src)) {
+	if ((Test-Path $destination) -and (Test-Path -PathType Container $source)) {
 		# ディレクトリ上書き(移動先に存在 かつ ディレクトリ)は再帰的に moveItem 呼び出し
-		Get-ChildItem $local:src | ForEach-Object {
+		Get-ChildItem $source | ForEach-Object {
 			if ($_.Name -inotlike '*update_tverrec.ps1') {
-				moveItem -Path $_.FullName -Destination ('{0}/{1}' -f $local:dist, $_.Name)
+				moveItem -Source $_.FullName -Destination ('{0}/{1}' -f $destination, $_.Name)
 			}
 		}
-		# # 移動し終わったディレクトリを削除
-		# Remove-Item -LiteralPath $local:src -Recurse -Force
+		# 移動し終わったディレクトリを削除
+		Remove-Item -LiteralPath $source -Recurse -Force
 	} else {
-		# 移動先に対象なし または ファイルの場合 は Move-Item に -Forece つけて実行
-		Write-Output ('{0} → {1}' -f $local:src, $local:dist)
-
-		Move-Item -LiteralPath $local:src -Destination $local:dist -Force
+		# 移動先に対象なし または ファイルの Move-Item に -Forece つけて実行
+		Write-Output ('{0} → {1}' -f $source, $destination)
+		Move-Item -LiteralPath $source -Destination $destination -Force
 	}
 }
 
@@ -125,7 +123,7 @@ Write-Output ('ダウンロードしたTVerRecを解凍します')
 try {
 	if (Test-Path (Join-Path $updateTemp 'TVerRecLatest.zip') -PathType Leaf) {
 		#配下に作成されるディレクトリ名は不定「dongaba-TVerRec-xxxxxxxx」
-		unZip -File (Join-Path $updateTemp 'TVerRecLatest.zip') -OutPath $updateTemp
+		unZip -Path (Join-Path $updateTemp 'TVerRecLatest.zip') -Destination $updateTemp
 	} else { Write-Error ('❗ ダウンロードしたファイルが見つかりません') ; exit 1 }
 } catch { Write-Error ('❗ ダウンロードしたファイルの解凍に失敗しました') ; exit 1 }
 
@@ -137,7 +135,7 @@ try {
 	$newTVerRecDir = (Get-ChildItem -LiteralPath $updateTemp -Directory ).fullname
 	Get-ChildItem -LiteralPath $newTVerRecDir -Force | ForEach-Object {
 		# Move-Item を行う function として moveItem 作成して呼び出す
-		moveItem -Path $_.FullName -Destination ('{0}{1}' -f (Join-Path $local:scriptRoot '../'), $_.Name )
+		moveItem -Source $_.FullName -Destination ('{0}{1}' -f (Join-Path $local:scriptRoot '../'), $_.Name )
 	}
 } catch { Write-Error ('❗ ダウンロードしたTVerRecの配置に失敗しました') ; exit 1 }
 

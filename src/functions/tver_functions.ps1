@@ -68,7 +68,7 @@ function getVideoLinksFromKeyword {
 		($local:keyword.IndexOf('series/') -eq 0) {
 			#番組IDによる番組検索から番組ページのLinkを取得
 			$local:seriesID = trimComment($local:keyword).Replace('series/', '').Trim()
-			goAnal -Event 'search' -Type 'series' -ID $local:seriesID
+			goAnal -Operation 'search' -TVerType 'series' -TVerID $local:seriesID
 			try { $script:episodeLinks = getLinkFromSeriesID ($local:seriesID) }
 			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:02') ; continue }
 			break
@@ -76,7 +76,7 @@ function getVideoLinksFromKeyword {
 		($local:keyword.IndexOf('talents/') -eq 0) {
 			#タレントIDによるタレント検索から番組ページのLinkを取得
 			$local:talentID = trimComment($local:keyword).Replace('talents/', '').Trim()
-			goAnal -Event 'search' -Type 'talent' -ID $local:talentID
+			goAnal -Operation 'search' -TVerType 'talent' -TVerID $local:talentID
 			try { $script:episodeLinks = getLinkFromTalentID ($local:talentID) }
 			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:03') ; continue }
 			break
@@ -84,7 +84,7 @@ function getVideoLinksFromKeyword {
 		($local:keyword.IndexOf('tag/') -eq 0) {
 			#ジャンルなどのTag情報から番組ページのLinkを取得
 			$local:tagID = trimComment($local:keyword).Replace('tag/', '').Trim()
-			goAnal -Event 'search' -Type 'tag' -ID $local:tagID
+			goAnal -Operation 'search' -TVerType 'tag' -TVerID $local:tagID
 			try { $script:episodeLinks = getLinkFromTag ($local:tagID) }
 			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:04') ; continue }
 			break
@@ -92,7 +92,7 @@ function getVideoLinksFromKeyword {
 		($local:keyword.IndexOf('new/') -eq 0) {
 			#新着番組から番組ページのLinkを取得
 			$local:genre = trimComment($local:keyword).Replace('new/', '').Trim()
-			goAnal -Event 'search' -Type 'new' -ID $local:genre
+			goAnal -Operation 'search' -TVerType 'new' -TVerID $local:genre
 			try { $script:episodeLinks = getLinkFromNew ($local:genre) }
 			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:05') ; continue }
 			break
@@ -100,14 +100,14 @@ function getVideoLinksFromKeyword {
 		($local:keyword.IndexOf('ranking/') -eq 0) {
 			#ランキングによる番組ページのLinkを取得
 			$local:genre = trimComment($local:keyword).Replace('ranking/', '').Trim()
-			goAnal -Event 'search' -Type 'ranking' -ID $local:genre
+			goAnal -Operation 'search' -TVerType 'ranking' -TVerID $local:genre
 			try { $script:episodeLinks = getLinkFromRanking ($local:genre) }
 			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:06') ; continue }
 			break
 		}
 		($local:keyword.IndexOf('toppage') -eq 0) {
 			#トップページから番組ページのLinkを取得
-			goAnal -Event 'search' -Type 'toppage'
+			goAnal -Operation 'search' -TVerType 'toppage'
 			try { $script:episodeLinks = getLinkFromTopPage }
 			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:07') ; continue }
 			break
@@ -115,20 +115,20 @@ function getVideoLinksFromKeyword {
 		($local:keyword.IndexOf('title/') -eq 0) {
 			#番組名による新着検索から番組ページのLinkを取得
 			$local:titleName = trimComment($local:keyword).Replace('title/', '').Trim()
-			goAnal -Event 'search' -Type 'title' -ID $local:titleName
+			goAnal -Operation 'search' -TVerType 'title' -TVerID $local:titleName
 			Write-Warning ('❗ 番組名検索は廃止されました。スキップします Err:08') ; continue
 			break
 		}
 		($local:keyword.IndexOf('sitemap') -eq 0) {
 			#サイトマップから番組ページのLinkを取得
-			goAnal -Event 'search' -Type 'sitemap'
+			goAnal -Operation 'search' -TVerType 'sitemap'
 			try { $script:episodeLinks = getLinkFromSiteMap }
 			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:09') ; continue }
 			break
 		}
 		default {
 			#タレント名や番組名などURL形式でない場合APIで検索結果から番組ページのLinkを取得
-			goAnal -Event 'search' -Type 'free' -ID $local:keyword
+			goAnal -Operation 'search' -TVerType 'free' -TVerID $local:keyword
 			try { $script:episodeLinks = getLinkFromFreeKeyword ($local:keyword) }
 			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:10') ; continue }
 			break

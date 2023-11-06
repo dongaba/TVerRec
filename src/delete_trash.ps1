@@ -77,18 +77,18 @@ updateProgressToast `
 #半日以上前のログファイル・ロックファイルを削除
 $script:ffmpegErrorLogDir = Convert-Path (Split-Path -Parent -Path $script:ffpmegErrorLogPath)
 deleteFiles `
-	-Path $script:ffmpegErrorLogDir `
+	-BasePath $script:ffmpegErrorLogDir `
 	-Conditions 'ffmpeg_error_*.log' `
-	-DaysPassed 1
+	-DelPeriod 1
 deleteFiles `
-	-Path $scriptRoot `
+	-BasePath $scriptRoot `
 	-Conditions 'brightcovenew_*.lock' `
-	-DaysPassed 1
+	-DelPeriod 1
 #7日以上前の無視リストのバックアップを削除
 deleteFiles `
-	-Path $script:confDir `
+	-BasePath $script:confDir `
 	-Conditions 'ignore.conf.*' `
-	-DaysPassed 7
+	-DelPeriod 7
 updateProgressToast `
 	-Title $script:downloadWorkDir `
 	-Rate ( 2 / 4 ) `
@@ -99,9 +99,9 @@ updateProgressToast `
 
 #作業ディレクトリ
 deleteFiles `
-	-Path $script:downloadWorkDir `
+	-BasePath $script:downloadWorkDir `
 	-Conditions '*.ytdl, *.jpg, *.vtt, *.srt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.m4a, *.m4a.part-Frag*, *.live_chat.json, *.mp4' `
-	-DaysPassed 0
+	-DelPeriod 0
 
 updateProgressToast `
 	-Title $script:downloadBaseDir `
@@ -113,9 +113,9 @@ updateProgressToast `
 
 #ダウンロード先
 deleteFiles `
-	-Path $script:downloadBaseDir `
+	-BasePath $script:downloadBaseDir `
 	-Conditions '*.ytdl, *.jpg, *.vtt, *.srt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.m4a, *.m4a.part-Frag*, *.live_chat.json' `
-	-DaysPassed 0
+	-DelPeriod 0
 
 #移動先
 if ($script:saveBaseDir -ne '') {
@@ -128,9 +128,9 @@ if ($script:saveBaseDir -ne '') {
 			-Tag $script:appName `
 			-Group 'Delete'
 		deleteFiles `
-			-Path $local:saveDir `
+			-BasePath $local:saveDir `
 			-Conditions '*.ytdl, *.jpg, *.vtt, *.srt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.m4a, *.m4a.part-Frag*, *.live_chat.json' `
-			-DaysPassed 0
+			-DelPeriod 0
 	}
 }
 

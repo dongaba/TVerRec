@@ -91,15 +91,9 @@ $script:requestHeader = @{
 function goAnal {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true, Position = 0)]
-		[Alias('Event')]
-		[String]$operation,
-		[Parameter(Mandatory = $false, Position = 1)]
-		[Alias('Type')]
-		[String]$tverType = 'none',
-		[Parameter(Mandatory = $false, Position = 2)]
-		[Alias('ID')]
-		[String]$tverID = 'none'
+		[Parameter(Mandatory = $true, Position = 0)][String]$operation,
+		[Parameter(Mandatory = $false, Position = 1)][String]$tverType = 'none',
+		[Parameter(Mandatory = $false, Position = 2)][String]$tverID = 'none'
 	)
 
 	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
@@ -166,7 +160,7 @@ function checkLatestTVerRec {
 	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
 
 	$progressPreference = 'silentlyContinue'
-	goAnal -Event 'launch'
+	goAnal -Operation 'launch'
 	$versionUp = $false
 
 	#TVerRecの最新バージョン取得
@@ -618,7 +612,7 @@ function downloadTVerVideo {
 
 	$episodeID = $episodePage.Replace('https://tver.jp/episodes/','')
 	#TVerのAPIを叩いて番組情報取得
-	goAnal -Event 'getinfo' -Type 'link' -ID $episodeID
+	goAnal -Operation 'getinfo' -TVerType 'link' -TVerID $episodeID
 	try { getVideoInfo $episodeID }
 	catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:90') ; continue }
 
@@ -757,7 +751,7 @@ function generateTVerVideoList {
 	$episodeID = $episodePage.Replace('https://tver.jp/episodes/', '')
 
 	#TVerのAPIを叩いて番組情報取得
-	goAnal -Event 'getinfo' -Type 'link' -ID $episodeID
+	goAnal -Operation 'getinfo' -TVerType 'link' -TVerID $episodeID
 	try { getVideoInfo $episodeID }
 	catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:91') ; continue }
 
@@ -1022,7 +1016,7 @@ function executeYtdl {
 
 	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
 
-	goAnal -Event 'download'
+	goAnal -Operation 'download'
 
 	$tmpDir = ('temp:{0}' -f $script:downloadWorkDir)
 	$saveDir = ('home:{0}' -f $script:videoFileDir)
@@ -1191,14 +1185,14 @@ function checkVideo {
 	[OutputType([System.Void])]
 	Param (
 		[Parameter(Mandatory = $false, Position = 0)][String]$decodeOption,
-		[Parameter(Mandatory = $false, Position = 1)][Alias('Path')][String]$videoFileRelPath
+		[Parameter(Mandatory = $false, Position = 1)][String]$path
 	)
 
 	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
 
 	$errorCount = 0
 	$checkStatus = 0
-	$videoFilePath = Join-Path (Convert-Path $script:downloadBaseDir) $videoFileRelPath
+	$videoFilePath = Join-Path (Convert-Path $script:downloadBaseDir) $path
 	try { $null = New-Item -Path $script:ffpmegErrorLogPath -ItemType File -Force }
 	catch { Write-Warning ('❗ ffmpegエラーファイルを初期化できませんでした') ; return }
 
@@ -1206,22 +1200,22 @@ function checkVideo {
 	try {
 		while ((fileLock $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$videoHists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
-		$checkStatus = ($videoHists.Where({ $_.videoPath -eq $videoFileRelPath })).videoValidated
+		$checkStatus = ($videoHists.Where({ $_.videoPath -eq $path })).videoValidated
 		switch ($checkStatus) {
 			#0:未チェック、1:チェック済、2:チェック中
 			'0' {
-				$videoHists.Where({ $_.videoPath -eq $videoFileRelPath }).Where({ $_.videoValidated = '2' })
+				$videoHists.Where({ $_.videoPath -eq $path }).Where({ $_.videoValidated = '2' })
 				$videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
 				break
 			}
 			'1' { Write-Warning ('💡 他プロセスでチェック済です') ; return ; break }
 			'2' { Write-Warning ('💡 他プロセスでチェック中です') ; return ; break }
-			default { Write-Warning ('❗ 既にダウンロード履歴から削除されたようです: {0}' -f $videoFileRelPath) ; return ; break }
+			default { Write-Warning ('❗ 既にダウンロード履歴から削除されたようです: {0}' -f $path) ; return ; break }
 		}
-	} catch { Write-Warning ('❗ ダウンロード履歴を更新できませんでした: {0}' -f $videoFileRelPath) ; return }
+	} catch { Write-Warning ('❗ ダウンロード履歴を更新できませんでした: {0}' -f $path) ; return }
 	finally { $null = fileUnlock $script:histLockFilePath }
 
-	goAnal -Event 'validate'
+	goAnal -Operation 'validate'
 
 	if ($script:simplifiedValidation -eq $true) {
 		#ffprobeを使った簡易検査
@@ -1295,9 +1289,9 @@ function checkVideo {
 			while ((fileLock $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 			$videoHists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 			#該当の番組のレコードを削除
-			$videoHists = @($videoHists.Where({ $_.videoPath -ne $videoFileRelPath }))
+			$videoHists = @($videoHists.Where({ $_.videoPath -ne $path }))
 			$videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
-		} catch { Write-Warning ('❗ ダウンロード履歴の更新に失敗しました: {0}' -f $videoFileRelPath) }
+		} catch { Write-Warning ('❗ ダウンロード履歴の更新に失敗しました: {0}' -f $path) }
 		finally { $null = fileUnlock $script:histLockFilePath }
 
 		#破損しているダウンロードファイルを削除
@@ -1312,9 +1306,9 @@ function checkVideo {
 			while ((fileLock $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 			$videoHists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 			#該当の番組のチェックステータスを1に
-			$videoHists.Where({ $_.videoPath -eq $videoFileRelPath }).Where({ $_.videoValidated = '1' })
+			$videoHists.Where({ $_.videoPath -eq $path }).Where({ $_.videoValidated = '1' })
 			$videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
-		} catch { Write-Warning ('❗ ダウンロード履歴を更新できませんでした: {0}' -f $videoFileRelPath) }
+		} catch { Write-Warning ('❗ ダウンロード履歴を更新できませんでした: {0}' -f $path) }
 		finally { $null = fileUnlock $script:histLockFilePath }
 
 	}

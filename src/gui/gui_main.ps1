@@ -72,12 +72,8 @@ function DoWpfEvents {
 #テキストボックスへのログ出力と再描画
 function AddOutput {
 	Param (
-		[parameter(Mandatory = $true, Position = 0)]
-		[Alias('Message')]
-		[String]$local:Message,
-		[parameter(Mandatory = $true, Position = 1)]
-		[Alias('Color')]
-		[String]$local:color
+		[parameter(Mandatory = $true, Position = 0)][String]$local:Message,
+		[parameter(Mandatory = $true, Position = 1)][String]$local:color
 	)
 
 	$local:rtfRange = New-Object System.Windows.Documents.TextRange($script:outText.Document.ContentEnd, $script:outText.Document.ContentEnd)
@@ -116,10 +112,10 @@ $script:mainWindow.TaskbarItemInfo.Overlay = bitmapImageFromBase64 $script:iconB
 $script:mainWindow.TaskbarItemInfo.Description = $script:mainWindow.Title
 
 #ウィンドウを読み込み時の処理
-$script:mainWindow.Add_Loaded({$script:mainWindow.Icon = $script:iconPath})
+$script:mainWindow.Add_Loaded({ $script:mainWindow.Icon = $script:iconPath })
 
 #ウィンドウを閉じる際の処理
-$script:mainWindow.Add_Closing({Get-Job | Receive-Job -Wait -AutoRemoveJob -Force})
+$script:mainWindow.Add_Closing({ Get-Job | Receive-Job -Wait -AutoRemoveJob -Force })
 
 #Name属性を持つ要素のオブジェクト作成
 $local:mainCleanXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $script:mainWindow.FindName($_.Name) -Scope Local }
@@ -266,7 +262,7 @@ while ($script:mainWindow.IsVisible) {
 
 			foreach ($local:msgType in $local:messageTypeColorMap.Keys) {
 				if ($local:message = $local:job.$local:msgType) {
-					AddOutput ($local:message -join "`n") -Color $local:messageTypeColorMap[$local:msgType]
+					AddOutput ($local:message -join "`n") $local:messageTypeColorMap[$local:msgType]
 				}
 			}
 			Receive-Job $local:job *> $null
