@@ -24,16 +24,16 @@
 #	THE SOFTWARE.
 #
 ###################################################################################
-Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 #----------------------------------------------------------------------
 #TVerのAPI Tokenを取得
 #----------------------------------------------------------------------
-function getToken () {
+function Get-Token () {
 	[OutputType([System.Void])]
 	Param ()
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$local:tverTokenURL = 'https://platform-api.tver.jp/v2/api/platform_users/browser/create'
 	$local:requestHeader = @{
@@ -55,11 +55,11 @@ function getToken () {
 #----------------------------------------------------------------------
 #キーワードから番組のリンクへの変換
 #----------------------------------------------------------------------
-function getVideoLinksFromKeyword {
+function Get-VideoLinksFromKeyword {
 	[OutputType([System.Object[]])]
 	Param ([String]$local:keyword)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$script:episodeLinks = [System.Collections.Generic.List[String]]::new()
 	$script:seriesLinks = [System.Collections.Generic.List[String]]::new()
@@ -67,69 +67,69 @@ function getVideoLinksFromKeyword {
 	switch ($true) {
 		($local:keyword.IndexOf('series/') -eq 0) {
 			#番組IDによる番組検索から番組ページのLinkを取得
-			$local:seriesID = trimComment($local:keyword).Replace('series/', '').Trim()
-			goAnal -Operation 'search' -TVerType 'series' -TVerID $local:seriesID
-			try { $script:episodeLinks = getLinkFromSeriesID ($local:seriesID) }
+			$local:seriesID = Remove-Comment($local:keyword).Replace('series/', '').Trim()
+			Invoke-StatisticsCheck -Operation 'search' -TVerType 'series' -TVerID $local:seriesID
+			try { $script:episodeLinks = Get-LinkFromSeriesID ($local:seriesID) }
 			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:02') ; continue }
 			break
 		}
 		($local:keyword.IndexOf('talents/') -eq 0) {
 			#タレントIDによるタレント検索から番組ページのLinkを取得
-			$local:talentID = trimComment($local:keyword).Replace('talents/', '').Trim()
-			goAnal -Operation 'search' -TVerType 'talent' -TVerID $local:talentID
-			try { $script:episodeLinks = getLinkFromTalentID ($local:talentID) }
+			$local:talentID = Remove-Comment($local:keyword).Replace('talents/', '').Trim()
+			Invoke-StatisticsCheck -Operation 'search' -TVerType 'talent' -TVerID $local:talentID
+			try { $script:episodeLinks = Get-LinkFromTalentID ($local:talentID) }
 			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:03') ; continue }
 			break
 		}
 		($local:keyword.IndexOf('tag/') -eq 0) {
 			#ジャンルなどのTag情報から番組ページのLinkを取得
-			$local:tagID = trimComment($local:keyword).Replace('tag/', '').Trim()
-			goAnal -Operation 'search' -TVerType 'tag' -TVerID $local:tagID
-			try { $script:episodeLinks = getLinkFromTag ($local:tagID) }
+			$local:tagID = Remove-Comment($local:keyword).Replace('tag/', '').Trim()
+			Invoke-StatisticsCheck -Operation 'search' -TVerType 'tag' -TVerID $local:tagID
+			try { $script:episodeLinks = Get-LinkFromTag ($local:tagID) }
 			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:04') ; continue }
 			break
 		}
 		($local:keyword.IndexOf('new/') -eq 0) {
 			#新着番組から番組ページのLinkを取得
-			$local:genre = trimComment($local:keyword).Replace('new/', '').Trim()
-			goAnal -Operation 'search' -TVerType 'new' -TVerID $local:genre
-			try { $script:episodeLinks = getLinkFromNew ($local:genre) }
+			$local:genre = Remove-Comment($local:keyword).Replace('new/', '').Trim()
+			Invoke-StatisticsCheck -Operation 'search' -TVerType 'new' -TVerID $local:genre
+			try { $script:episodeLinks = Get-LinkFromNew ($local:genre) }
 			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:05') ; continue }
 			break
 		}
 		($local:keyword.IndexOf('ranking/') -eq 0) {
 			#ランキングによる番組ページのLinkを取得
-			$local:genre = trimComment($local:keyword).Replace('ranking/', '').Trim()
-			goAnal -Operation 'search' -TVerType 'ranking' -TVerID $local:genre
-			try { $script:episodeLinks = getLinkFromRanking ($local:genre) }
+			$local:genre = Remove-Comment($local:keyword).Replace('ranking/', '').Trim()
+			Invoke-StatisticsCheck -Operation 'search' -TVerType 'ranking' -TVerID $local:genre
+			try { $script:episodeLinks = Get-LinkFromRanking ($local:genre) }
 			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:06') ; continue }
 			break
 		}
 		($local:keyword.IndexOf('toppage') -eq 0) {
 			#トップページから番組ページのLinkを取得
-			goAnal -Operation 'search' -TVerType 'toppage'
-			try { $script:episodeLinks = getLinkFromTopPage }
+			Invoke-StatisticsCheck -Operation 'search' -TVerType 'toppage'
+			try { $script:episodeLinks = Get-LinkFromTopPage }
 			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:07') ; continue }
 			break
 		}
 		($local:keyword.IndexOf('title/') -eq 0) {
 			#番組名による新着検索から番組ページのLinkを取得
-			$local:titleName = trimComment($local:keyword).Replace('title/', '').Trim()
-			goAnal -Operation 'search' -TVerType 'title' -TVerID $local:titleName
+			$local:titleName = Remove-Comment($local:keyword).Replace('title/', '').Trim()
+			Invoke-StatisticsCheck -Operation 'search' -TVerType 'title' -TVerID $local:titleName
 			Write-Warning ('❗ 番組名検索は廃止されました。スキップします Err:08') ; continue
 			break
 		}
 		($local:keyword.IndexOf('sitemap') -eq 0) {
 			#サイトマップから番組ページのLinkを取得
-			goAnal -Operation 'search' -TVerType 'sitemap'
-			try { $script:episodeLinks = getLinkFromSiteMap }
+			Invoke-StatisticsCheck -Operation 'search' -TVerType 'sitemap'
+			try { $script:episodeLinks = Get-LinkFromSiteMap }
 			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:09') ; continue }
 			break
 		}
 		default {
 			#タレント名や番組名などURL形式でない場合APIで検索結果から番組ページのLinkを取得
-			goAnal -Operation 'search' -TVerType 'free' -TVerID $local:keyword
-			try { $script:episodeLinks = getLinkFromFreeKeyword ($local:keyword) }
+			Invoke-StatisticsCheck -Operation 'search' -TVerType 'free' -TVerID $local:keyword
+			try { $script:episodeLinks = Get-LinkFromFreeKeyword ($local:keyword) }
 			catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:10') ; continue }
 			break
 		}
@@ -141,11 +141,11 @@ function getVideoLinksFromKeyword {
 #----------------------------------------------------------------------
 #SeriesIDによる番組検索から番組ページのLinkを取得
 #----------------------------------------------------------------------
-function getLinkFromSeriesID {
+function Get-LinkFromSeriesID {
 	[OutputType([System.Object[]])]
 	Param ([String]$local:seriesID)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$local:seasonLinks = [System.Collections.Generic.List[String]]::new()
 	$local:callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callSeriesSeasons/'
@@ -157,7 +157,7 @@ function getLinkFromSeriesID {
 	foreach ($local:searchResult in $local:searchResults) { $local:seasonLinks.Add($local:searchResult.Content.Id) }
 
 	#次にSeason→Episodeに変換
-	foreach ( $local:seasonLink in $local:seasonLinks) { getLinkFromSeasonID ($local:seasonLink) }
+	foreach ( $local:seasonLink in $local:seasonLinks) { Get-LinkFromSeasonID ($local:seasonLink) }
 
 	return $script:episodeLinks | Sort-Object | Get-Unique
 }
@@ -165,11 +165,11 @@ function getLinkFromSeriesID {
 #----------------------------------------------------------------------
 #SeasonIDによる番組検索から番組ページのLinkを取得
 #----------------------------------------------------------------------
-function getLinkFromSeasonID {
+function Get-LinkFromSeasonID {
 	[OutputType([System.Object[]])]
 	Param ([String]$local:SeasonID)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$local:callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callSeasonEpisodes/'
 	$local:callSearchURL = ('{0}{1}?platform_uid={2}&platform_token={3}' -f $local:callSearchBaseURL, $local:SeasonID.Replace('season/', '').Replace('https://tver.jp/', ''), $script:platformUID, $script:platformToken)
@@ -184,12 +184,12 @@ function getLinkFromSeasonID {
 			}
 			'season' {
 				Write-Output ('　Season {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
-				getLinkFromSeasonID $local:searchResult.Content.Id
+				Get-LinkFromSeasonID $local:searchResult.Content.Id
 				break
 			}
 			'series' {
 				Write-Output ('　Series {0} からEpisodeを抽出中...' -f $local:searchResults[$i].Content.Id)
-				getLinkFromSeriesID $local:searchResult.Content.Id
+				Get-LinkFromSeriesID $local:searchResult.Content.Id
 				break
 			}
 			default {
@@ -206,11 +206,11 @@ function getLinkFromSeasonID {
 #----------------------------------------------------------------------
 #TalentIDによるタレント検索から番組ページのLinkを取得
 #----------------------------------------------------------------------
-function getLinkFromTalentID {
+function Get-LinkFromTalentID {
 	[OutputType([System.Object[]])]
 	Param ([String]$local:talentID)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$local:callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callTalentEpisode/'
 	$local:callSearchURL = ('{0}{1}?platform_uid={2}&platform_token={3}' -f $local:callSearchBaseURL, $local:talentID.Replace('talents/', '').Replace('https://tver.jp/', ''), $script:platformUID, $script:platformToken)
@@ -225,12 +225,12 @@ function getLinkFromTalentID {
 			}
 			'season' {
 				Write-Output ('　Season {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
-				getLinkFromSeasonID $local:searchResult.Content.Id
+				Get-LinkFromSeasonID $local:searchResult.Content.Id
 				break
 			}
 			'series' {
 				Write-Output ('　Series {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
-				getLinkFromSeriesID $local:searchResult.Content.Id
+				Get-LinkFromSeriesID $local:searchResult.Content.Id
 				break
 			}
 			default {
@@ -247,11 +247,11 @@ function getLinkFromTalentID {
 #----------------------------------------------------------------------
 #SpecialIDによる特集ページのLinkを取得
 #----------------------------------------------------------------------
-function getLinkFromSpecialMainID {
+function Get-LinkFromSpecialMainID {
 	[OutputType([System.Object[]])]
 	Param ([String]$local:specialMainID)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$local:callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callSpecialContents/'
 	$local:callSearchURL = ('{0}{1}?platform_uid={2}&platform_token={3}' -f $local:callSearchBaseURL, $local:specialMainID, $script:platformUID, $script:platformToken)
@@ -266,7 +266,7 @@ function getLinkFromSpecialMainID {
 			}
 			'season' {
 				Write-Output ('　Season {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
-				getLinkFromSeasonID ($local:searchResult.Content.Id)
+				Get-LinkFromSeasonID ($local:searchResult.Content.Id)
 				break
 			}
 			'series' {
@@ -277,7 +277,7 @@ function getLinkFromSpecialMainID {
 			}
 			'special' {
 				Write-Output ('　Special Detail {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
-				getLinkFromSpecialDetailID ($local:searchResult.Content.Id)
+				Get-LinkFromSpecialDetailID ($local:searchResult.Content.Id)
 				break
 			}
 			default {
@@ -294,11 +294,11 @@ function getLinkFromSpecialMainID {
 #----------------------------------------------------------------------
 #SpecialDetailIDによる特集ページのLinkを取得
 #----------------------------------------------------------------------
-function getLinkFromSpecialDetailID {
+function Get-LinkFromSpecialDetailID {
 	[OutputType([System.Object[]])]
 	Param ([String]$local:specialDetailID)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$local:callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callSpecialContentsDetail/'
 	$local:callSearchURL = ('{0}{1}?platform_uid={2}&platform_token={3}' -f $local:callSearchBaseURL, $local:specialDetailID, $script:platformUID, $script:platformToken)
@@ -313,7 +313,7 @@ function getLinkFromSpecialDetailID {
 			}
 			'season' {
 				Write-Output ('　Season {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
-				getLinkFromSeasonID ($local:searchResult.Content.Id)
+				Get-LinkFromSeasonID ($local:searchResult.Content.Id)
 				break
 			}
 			'series' {
@@ -325,7 +325,7 @@ function getLinkFromSpecialDetailID {
 			'special' {
 				#再度Specialが出てきた際は再帰呼び出し
 				Write-Output ('　Special Detail {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
-				getLinkFromSpecialDetailID ($local:searchResult.Content.Id)
+				Get-LinkFromSpecialDetailID ($local:searchResult.Content.Id)
 				break
 			}
 			default {
@@ -342,11 +342,11 @@ function getLinkFromSpecialDetailID {
 #----------------------------------------------------------------------
 #タグから番組ページのLinkを取得
 #----------------------------------------------------------------------
-function getLinkFromTag {
+function Get-LinkFromTag {
 	[OutputType([System.Object[]])]
 	Param ([String]$local:tagID)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$local:callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callTagSearch'
 	$local:callSearchURL = ('{0}/{1}?platform_uid={2}&platform_token={3}' -f $local:callSearchBaseURL, $local:tagID.Replace('tag/', ''), $script:platformUID, $script:platformToken)
@@ -361,12 +361,12 @@ function getLinkFromTag {
 			}
 			'season' {
 				Write-Output ('　Season {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
-				getLinkFromSeasonID ($local:searchResult.Content.Id)
+				Get-LinkFromSeasonID ($local:searchResult.Content.Id)
 				break
 			}
 			'series' {
 				Write-Output ('　Series {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
-				getLinkFromSeriesID ($local:searchResult.Content.Id)
+				Get-LinkFromSeriesID ($local:searchResult.Content.Id)
 				break
 			}
 			default {
@@ -383,11 +383,11 @@ function getLinkFromTag {
 #----------------------------------------------------------------------
 #新着から番組ページのLinkを取得
 #----------------------------------------------------------------------
-function getLinkFromNew {
+function Get-LinkFromNew {
 	[OutputType([System.Object[]])]
 	Param ([String]$local:genre)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$local:callSearchBaseURL = 'https://service-api.tver.jp/api/v1/callNewerDetail'
 	$local:callSearchURL = ('{0}/{1}?platform_uid={2}&platform_token={3}' -f $local:callSearchBaseURL, $local:genre.Replace('new/', ''), $script:platformUID, $script:platformToken)
@@ -402,12 +402,12 @@ function getLinkFromNew {
 			}
 			'season' {
 				Write-Output ('　Season {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
-				getLinkFromSeasonID ($local:searchResult.Content.Id)
+				Get-LinkFromSeasonID ($local:searchResult.Content.Id)
 				break
 			}
 			'series' {
 				Write-Output ('　Series {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
-				getLinkFromSeriesID ($local:searchResult.Content.Id)
+				Get-LinkFromSeriesID ($local:searchResult.Content.Id)
 				break
 			}
 			default {
@@ -424,11 +424,11 @@ function getLinkFromNew {
 #----------------------------------------------------------------------
 #ランキングから番組ページのLinkを取得
 #----------------------------------------------------------------------
-function getLinkFromRanking {
+function Get-LinkFromRanking {
 	[OutputType([System.Object[]])]
 	Param ([String]$local:genre)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$local:callSearchBaseURL = 'https://service-api.tver.jp/api/v1/callEpisodeRanking'
 	if ($local:genre -eq 'all') {
@@ -447,12 +447,12 @@ function getLinkFromRanking {
 			}
 			'season' {
 				Write-Output ('　Season {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
-				getLinkFromSeasonID ($local:searchResult.Content.Id)
+				Get-LinkFromSeasonID ($local:searchResult.Content.Id)
 				break
 			}
 			'series' {
 				Write-Output ('　Series {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
-				getLinkFromSeriesID ($local:searchResult.Content.Id)
+				Get-LinkFromSeriesID ($local:searchResult.Content.Id)
 				break
 			}
 			default {
@@ -469,11 +469,11 @@ function getLinkFromRanking {
 #----------------------------------------------------------------------
 #トップページから番組ページのLinkを取得
 #----------------------------------------------------------------------
-function getLinkFromTopPage {
+function Get-LinkFromTopPage {
 	[OutputType([System.Object[]])]
 	Param ()
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$local:callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callHome'
 	$local:callSearchURL = ('{0}?platform_uid={1}&platform_token={2}' -f $local:callSearchBaseURL, $script:platformUID, $script:platformToken)
@@ -499,7 +499,7 @@ function getLinkFromTopPage {
 					}
 					'season' {
 						Write-Output ('　Season {0} からEpisodeを抽出中...' -f $local:searchResultContent.Content.Id)
-						getLinkFromSeasonID ($local:searchResultContent.Content.Id)
+						Get-LinkFromSeasonID ($local:searchResultContent.Content.Id)
 						break
 					}
 					'series' {
@@ -510,17 +510,17 @@ function getLinkFromTopPage {
 					}
 					'talent' {
 						Write-Output ('　Talent {0} からEpisodeを抽出中...' -f $local:searchResultContent.Content.Id)
-						getLinkFromTalentID ($local:searchResultContent.Content.Id)
+						Get-LinkFromTalentID ($local:searchResultContent.Content.Id)
 						break
 					}
 					'specialMain' {
 						Write-Output ('　Special Main {0} からEpisodeを抽出中...' -f $local:searchResultContent.Content.Id)
-						getLinkFromSpecialMainID ($local:searchResultContent.Content.Id)
+						Get-LinkFromSpecialMainID ($local:searchResultContent.Content.Id)
 						break
 					}
 					'special' {
 						Write-Output ('　Special Detail {0} からEpisodeを抽出中...' -f $local:searchResultContent.Content.Id)
-						getLinkFromSpecialDetailID ($local:searchResultContent.Content.Id)
+						Get-LinkFromSpecialDetailID ($local:searchResultContent.Content.Id)
 						break
 					}
 					default {
@@ -540,7 +540,7 @@ function getLinkFromTopPage {
 					}
 					'season' {
 						Write-Output ('　Season {0} からEpisodeを抽出中...' -f $local:searchResultContent.Content.Content.Content.Id)
-						getLinkFromSeasonID ($local:searchResultContent.Content.Content.Content.Id)
+						Get-LinkFromSeasonID ($local:searchResultContent.Content.Content.Content.Id)
 						break
 					}
 					'series' {
@@ -551,7 +551,7 @@ function getLinkFromTopPage {
 					}
 					'talent' {
 						Write-Output ('　Talent {0} からEpisodeを抽出中...' -f $local:searchResultContent.Content.Content.Content.Id)
-						getLinkFromTalentID ($local:searchResultContent.Content.Content.Content.Id)
+						Get-LinkFromTalentID ($local:searchResultContent.Content.Content.Content.Id)
 						break
 					}
 					default {
@@ -571,7 +571,7 @@ function getLinkFromTopPage {
 	$script:seriesLinks = $script:seriesLinks | Sort-Object | Get-Unique
 	foreach ($local:seriesID in $script:seriesLinks) {
 		Write-Output ('　Series {0} からEpisodeを抽出中...' -f $local:seriesID)
-		getLinkFromSeriesID ($local:seriesID)
+		Get-LinkFromSeriesID ($local:seriesID)
 	}
 
 	return $script:episodeLinks | Sort-Object | Get-Unique
@@ -580,11 +580,11 @@ function getLinkFromTopPage {
 #----------------------------------------------------------------------
 #サイトマップから番組ページのLinkを取得
 #----------------------------------------------------------------------
-function getLinkFromSiteMap {
+function Get-LinkFromSiteMap {
 	[OutputType([System.Object[]])]
 	Param ()
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$local:callSearchURL = 'https://tver.jp/sitemap.xml'
 	$local:searchResultsRaw = Invoke-RestMethod -Uri $local:callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
@@ -592,18 +592,18 @@ function getLinkFromSiteMap {
 
 	foreach ($local:searchResult in $local:searchResults) {
 		if ($local:searchResult -cmatch '\/episodes\/') { $script:episodeLinks.Add($local:searchResult) }
-		elseif ($script:sitemapParseEpisodeOnly -eq $true) { Write-Debug ('Episodeではないためスキップします') }
+		elseif ($script:sitemapParseEpisodeOnly) { Write-Debug ('Episodeではないためスキップします') }
 		else {
 			switch ($true) {
 				($local:searchResult -cmatch '\/seasons\/') {
 					Write-Output ('　{0} からEpisodeを抽出中...' -f $local:searchResult)
-					try { getLinkFromSeasonID ($local:searchResult) }
+					try { Get-LinkFromSeasonID ($local:searchResult) }
 					catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:11') ; continue }
 					break
 				}
 				($local:searchResult -cmatch '\/series\/') {
 					Write-Output ('　{0} からEpisodeを抽出中...' -f $local:searchResult)
-					try { getLinkFromSeriesID ($local:searchResult) }
+					try { Get-LinkFromSeriesID ($local:searchResult) }
 					catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:12') ; continue }
 					break
 				}
@@ -626,11 +626,11 @@ function getLinkFromSiteMap {
 #----------------------------------------------------------------------
 #TVerのAPIを叩いてフリーワード検索
 #----------------------------------------------------------------------
-function getLinkFromFreeKeyword {
+function Get-LinkFromFreeKeyword {
 	[OutputType([System.Object[]])]
 	Param ([String]$local:keyword)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$local:tverSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callKeywordSearch'
 	$local:tverSearchURL = ('{0}?platform_uid={1}&platform_token={2}&keyword={3}' -f $local:tverSearchBaseURL, $script:platformUID, $script:platformToken, $local:keyword )
@@ -646,12 +646,12 @@ function getLinkFromFreeKeyword {
 			}
 			'season' {
 				Write-Output ('　Season {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
-				getLinkFromSeasonID ($local:searchResult.Content.Id)
+				Get-LinkFromSeasonID ($local:searchResult.Content.Id)
 				break
 			}
 			'series' {
 				Write-Output ('　Series {0} からEpisodeを抽出中...' -f $local:searchResult.Content.Id)
-				getLinkFromSeriesID ($local:searchResult.Content.Id)
+				Get-LinkFromSeriesID ($local:searchResult.Content.Id)
 				break
 			}
 			default {

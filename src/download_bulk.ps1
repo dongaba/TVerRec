@@ -43,22 +43,22 @@ try {
 if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
-	if ($? -eq $false) { exit 1 }
+	if (!$?) { exit 1 }
 } catch { Write-Error ('❗ 関数の読み込みに失敗しました') ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
 
 #設定で指定したファイル・ディレクトリの存在チェック
-checkRequiredFile
+Invoke-RequiredFileCheck
 
-$local:keywords = @(loadKeywordList)
-getToken
+$local:keywords = @(Get-KeywordList)
+Get-Token
 
 $local:keywordNum = 0
 $local:keywordTotal = $local:keywords.Count
 
-showProgress2Row `
+Show-Progress2Row `
 	-Text1 '一括ダウンロード中' `
 	-Text2 'キーワードから番組を抽出しダウンロード' `
 	-Detail1 '読み込み中...' `
@@ -72,18 +72,18 @@ showProgress2Row `
 #個々のジャンルページチェックここから
 $local:totalStartTime = Get-Date
 foreach ($local:keyword in $local:keywords) {
-	$local:keyword = trimTabSpace($local:keyword)
+	$local:keyword = Remove-TabSpace($local:keyword)
 
 	#ジャンルページチェックタイトルの表示
 	Write-Output ('')
 	Write-Output ('----------------------------------------------------------------------')
 	Write-Output ('{0}' -f $local:keyword)
 
-	$local:resultLinks = @(getVideoLinksFromKeyword($local:keyword))
+	$local:resultLinks = @(Get-VideoLinksFromKeyword($local:keyword))
 	$local:keyword = $local:keyword.Replace('https://tver.jp/', '')
 
 	# #URLがすでにダウンロード履歴に存在する場合は検索結果から除外
-	$local:videoLinks, $local:processedCount = checkHistory $local:resultLinks
+	$local:videoLinks, $local:processedCount = Invoke-HistoryMatchCheck $local:resultLinks
 	$local:videoTotal = $local:videoLinks.Count
 	if ($local:videoTotal -eq 0) {
 		Write-Output ('　処理対象{0}本　処理済{1}本' -f $local:videoTotal, $local:processedCount)
@@ -103,9 +103,9 @@ foreach ($local:keyword in $local:keywords) {
 	$local:keywordNum += 1
 
 	#進捗更新
-	updateProgress2Row `
+	Update-Progress2Row `
 		-Activity1 $local:keywordNum/$local:keywordTotal `
-		-Processing1 (trimTabSpace ($local:keyword)) `
+		-Processing1 (Remove-TabSpace ($local:keyword)) `
 		-Rate1 $local:progressRate1 `
 		-SecRemaining1 $local:secRemaining1 `
 		-Activity2 '' `
@@ -126,9 +126,9 @@ foreach ($local:keyword in $local:keywords) {
 		#進捗率の計算
 		$local:progressRate2 = [Float]($local:videoNum / $local:videoTotal)
 		#進捗更新
-		updateProgress2Row `
+		Update-Progress2Row `
 			-Activity1 $local:keywordNum/$local:keywordTotal `
-			-Processing1 (trimTabSpace ($local:keyword)) `
+			-Processing1 (Remove-TabSpace ($local:keyword)) `
 			-Rate1 $local:progressRate1 `
 			-SecRemaining1 $local:secRemaining1 `
 			-Activity2 $local:videoNum/$local:videoTotal `
@@ -140,9 +140,9 @@ foreach ($local:keyword in $local:keywords) {
 		Write-Output ('--------------------------------------------------')
 		Write-Output ('{0}/{1} - {2}' -f $local:videoNum, $local:videoTotal, $local:videoLink)
 		#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
-		waitTillYtdlProcessGetFewer $script:parallelDownloadFileNum
+		Wait-YtdlProcess $script:parallelDownloadFileNum
 		#TVer番組ダウンロードのメイン処理
-		downloadTVerVideo `
+		Invoke-VideoDownload `
 			-Keyword $local:keyword `
 			-EpisodePage $local:videoLink `
 			-Force $false
@@ -152,7 +152,7 @@ foreach ($local:keyword in $local:keywords) {
 }
 #======================================================================
 
-updateProgressToast2 `
+Update-ProgressToast2 `
 	-Title1 'キーワードから番組の抽出' `
 	-Rate1 '1' `
 	-LeftText1 '' `
@@ -167,9 +167,9 @@ updateProgressToast2 `
 #youtube-dlのプロセスが終わるまで待機
 Write-Output ('')
 Write-Output ('ダウンロードの終了を待機しています')
-waitTillYtdlProcessIsZero
+Wait-DownloadCompletion
 
-invokeGarbageCollection
+Invoke-GarbageCollection
 
 Write-Output ('')
 Write-Output ('---------------------------------------------------------------------------')

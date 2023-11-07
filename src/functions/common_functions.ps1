@@ -26,42 +26,53 @@
 ###################################################################################
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
-Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
-
-#region タイムスタンプ
+Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 #----------------------------------------------------------------------
 #GC
 #----------------------------------------------------------------------
-function invokeGarbageCollection() {
+function Invoke-GarbageCollection() {
+	[CmdletBinding()]
+	[OutputType([System.Void])]
+	Param ()
+
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+
+	Write-Verbose -Message 'Starting garbage collection...'
 	[System.GC]::Collect()
+	Write-Verbose -Message 'Waiting for pending finalizers...'
 	[System.GC]::WaitForPendingFinalizers()
+	Write-Verbose -Message 'Performing a final pass of garbage collection...'
 	[System.GC]::Collect()
+	Write-Verbose -Message 'Garbage collection completed.'
 }
+
+#region タイムスタンプ
 
 #----------------------------------------------------------------------
 #タイムスタンプ更新
 #----------------------------------------------------------------------
-function getTimeStamp {
+function Get-TimeStamp {
+	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param ()
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
-	return Get-Date -UFormat '%Y-%m-%d %H:%M:%S'
+	return (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
 }
 
 #----------------------------------------------------------------------
 #UNIX時間をDateTime型に変換
 #----------------------------------------------------------------------
-function unixTimeToDateTime {
+function ConvertFrom-UnixTime {
 	[CmdletBinding()]
+	[OutputType([System.Void])]
 	param (
-		[Parameter(Mandatory = $true, Position = 0)]
-		[int64]$UnixTime
+		[Parameter(Mandatory = $true, Position = 0)][int64]$UnixTime
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$EpochDate = Get-Date -Year 1970 -Month 1 -Day 1 -Hour 0 -Minute 0 -Second 0
 
@@ -71,13 +82,12 @@ function unixTimeToDateTime {
 #----------------------------------------------------------------------
 #DateTime型をUNIX時間に変換
 #----------------------------------------------------------------------
-function dateTimeToUnixTime {
+function ConvertTo-UnixTime {
 	[CmdletBinding()]
-	param(
-		[Parameter(Mandatory = $true, Position = 0)]
-		[DateTime]$InputDate
+	Param(
+		[Parameter(Mandatory = $true, Position = 0)][DateTime]$InputDate
 	)
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$EpochDate = Get-Date -Year 1970 -Month 1 -Day 1 -Hour 0 -Minute 0 -Second 0
 
@@ -91,7 +101,7 @@ function dateTimeToUnixTime {
 #----------------------------------------------------------------------
 #ファイル名・ディレクトリ名に禁止文字の削除
 #----------------------------------------------------------------------
-function getFileNameWoInvChars {
+function Get-FileNameWithoutInvalidChars {
 	[CmdletBinding()]
 	[OutputType([String])]
 	Param (
@@ -99,11 +109,11 @@ function getFileNameWoInvChars {
 		[String]$Name
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$invalidChars = [IO.Path]::GetInvalidFileNameChars() -Join ''
-	$result = '[{0}]' -f [Regex]::Escape($invalidChars)
-	$Name = $Name.Replace($result , '')
+	$resultPattern = '[{0}]' -f [Regex]::Escape($invalidChars)
+	$Name = $Name.Replace($resultPattern , '')
 
 	#Linux/MacではGetInvalidFileNameChars()が不完全なため、ダメ押しで置換
 	$additionalReplaces = '[*\?<>|]'
@@ -119,12 +129,14 @@ function getFileNameWoInvChars {
 #----------------------------------------------------------------------
 #英数のみ全角→半角(カタカナは全角)
 #----------------------------------------------------------------------
-function getNarrowChars {
+function Get-NarrowChars {
 	[CmdletBinding()]
 	[OutputType([String])]
-	Param ([String]$text)
+	Param (
+		[String]$text
+	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$replaceChars = @{
 		'０１２３４５６７８９'                                           = '0123456789'
@@ -137,7 +149,7 @@ function getNarrowChars {
 		}
 	}
 
-	$replaceChars = @{
+	$replacements = @{
 		'ｱ'  = 'ア'
 		'ｲ'  = 'イ'
 		'ｳ'  = 'ウ'
@@ -221,8 +233,8 @@ function getNarrowChars {
 		'ﾍﾟ' = 'ペ'
 		'ﾎﾟ' = 'ポ'
 	}
-	foreach ($entry in $replaceChars.GetEnumerator()) {
-		$text = $text.Replace($entry.Name, $entry.Value)
+	foreach ($replacement in $replacements.GetEnumerator()) {
+		$text = $text.Replace($replacement.Name, $replacement.Value)
 	}
 
 	return $text
@@ -231,32 +243,32 @@ function getNarrowChars {
 #----------------------------------------------------------------------
 #いくつかの特殊文字を置換
 #----------------------------------------------------------------------
-function getSpecialCharacterReplaced {
+function Remove-SpecialCharacter {
 	[CmdletBinding()]
 	[OutputType([String])]
 	Param ([String]$text)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$replacements = @{
 		'&amp;' = '&'
-		'\*'    = '＊'
-		'\|'    = '｜'
+		'*'     = '＊'
+		'|'     = '｜'
 		':'     = '：'
 		';'     = '；'
 		'"'     = '' #削除
 		'“'     = '' #削除
 		'”'     = '' #削除
 		','     = '' #削除
-		'\?'    = '？'
+		'?'     = '？'
 		'!'     = '！'
 		'/'     = '-' #代替文字
-		'\\'    = '-' #代替文字
+		'\'     = '-' #代替文字
 		'<'     = '＜'
 		'>'     = '＞'
 	}
-	foreach ($entry in $replacements.GetEnumerator()) {
-		$text = $text -replace $entry.Key, $entry.Value
+	foreach ($replacement in $replacements.GetEnumerator()) {
+		$text = $text.Replace($replacement.Name, $replacement.Value)
 	}
 
 	return $text
@@ -265,12 +277,12 @@ function getSpecialCharacterReplaced {
 #----------------------------------------------------------------------
 #タブとスペースを詰めて半角スペース1文字に
 #----------------------------------------------------------------------
-function trimTabSpace {
+function Remove-TabSpace {
 	[CmdletBinding()]
 	[OutputType([String])]
 	Param ([String]$text)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	return $text.Replace("`t", ' ').Replace('  ', ' ')
 }
@@ -278,11 +290,11 @@ function trimTabSpace {
 #----------------------------------------------------------------------
 #設定ファイルの行末コメントを削除
 #----------------------------------------------------------------------
-function trimComment {
+function Remove-Comment {
 	[OutputType([String])]
 	Param ([String]$text)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	return $text.Split("`t")[0].Split(' ')[0].Split('#')[0]
 }
@@ -294,7 +306,7 @@ function trimComment {
 #----------------------------------------------------------------------
 #指定したPath配下の指定した条件でファイルを削除
 #----------------------------------------------------------------------
-function deleteFiles {
+function Remove-Files {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
@@ -303,10 +315,10 @@ function deleteFiles {
 		[Parameter(Mandatory = $true, Position = 0)][int32]$delPeriod
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$limiteDateTime = (Get-Date).AddDays(-1 * $delPeriod)
-	if ($script:enableMultithread -eq $true) {
+	if ($script:enableMultithread) {
 		Write-Debug ('Multithread Processing Enabled')
 		#並列化が有効の場合は並列化
 		try {
@@ -330,10 +342,10 @@ function deleteFiles {
 #----------------------------------------------------------------------
 #Zipファイルを解凍
 #----------------------------------------------------------------------
-function unZip {
+function Invoke-Unzip {
 	[CmdletBinding()]
 	[OutputType([void])]
-	param(
+	Param(
 		[Parameter(Mandatory = $true, Position = 0)][string]$path,
 		[Parameter(Mandatory = $true, Position = 1)][string]$destination
 	)
@@ -350,19 +362,19 @@ function unZip {
 #----------------------------------------------------------------------
 #ディレクトリの上書き
 #----------------------------------------------------------------------
-function moveItem() {
+function Move-Files() {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
-	param(
+	Param(
 		[Parameter(Mandatory = $true, Position = 0)][String]$source,
 		[Parameter(Mandatory = $true, Position = 1)][String]$destination
 	)
 
 	if ((Test-Path $destination) -and (Test-Path -PathType Container $source)) {
-		# ディレクトリ上書き(移動先に存在 かつ ディレクトリ)は再帰的に moveItem 呼び出し
+		# ディレクトリ上書き(移動先に存在 かつ ディレクトリ)は再帰的に Move-Files 呼び出し
 		Get-ChildItem $source | ForEach-Object {
 			if ($_.Name -inotlike '*update_tverrec.ps1') {
-				moveItem -Source $_.FullName -Destination ('{0}/{1}' -f $destination, $_.Name)
+				Move-Files -Source $_.FullName -Destination ('{0}/{1}' -f $destination, $_.Name)
 			}
 		}
 		# 移動し終わったディレクトリを削除
@@ -381,14 +393,14 @@ function moveItem() {
 #----------------------------------------------------------------------
 #ファイルのロック
 #----------------------------------------------------------------------
-function fileLock {
+function Lock-File {
 	[CmdletBinding()]
 	[OutputType([PSCustomObject])]
 	Param (
 		[parameter(Mandatory = $true, Position = 0)][System.IO.FileInfo]$path
 	)
 
-	Write-Debug ('{0} - {1}' -f $myInvocation.MyCommand.Name, $path)
+	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $path)
 
 	$fileLocked = $false
 	try {
@@ -409,14 +421,14 @@ function fileLock {
 #----------------------------------------------------------------------
 #ファイルのアンロック
 #----------------------------------------------------------------------
-function fileUnlock {
+function Unlock-File {
 	[CmdletBinding()]
 	[OutputType([PSCustomObject])]
 	Param (
 		[parameter(Mandatory = $true, Position = 0)][System.IO.FileInfo]$path
 	)
 
-	Write-Debug ('{0} - {1}' -f $myInvocation.MyCommand.Name, $path)
+	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $path)
 
 	$fileLocked = $true
 	try {
@@ -437,29 +449,29 @@ function fileUnlock {
 #----------------------------------------------------------------------
 #ファイルのロック確認
 #----------------------------------------------------------------------
-function isLocked {
+function Get-FileLockStatus {
 	[CmdletBinding()]
 	[OutputType([PSCustomObject])]
 	Param (
 		[parameter(Mandatory = $true, Position = 0)][System.IO.FileInfo]$path
 	)
 
-	Write-Debug ('{0} - {1}' -f $myInvocation.MyCommand.Name, $path)
+	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $path)
 
-	$isFileLocked = $true
+	$fileLocked = $true
 	try {
 		# attempt to open file and detect file lock
-		$isLockedFileInfo = New-Object System.IO.FileInfo $path
-		$isLockedfileStream = $isLockedFileInfo.Open([System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+		$fileInfo = New-Object System.IO.FileInfo $path
+		$fileStream = $fileInfo.Open([System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
 		# close stream if not lock
-		if ($isLockedfileStream) { $isLockedfileStream.Close() }
-		$isFileLocked = $false
-	} catch { $isFileLocked = $true
+		if ($fileStream) { $fileStream.Close() }
+		$fileLocked = $false
+	} catch { $fileLocked = $true
 	} finally {
 		# return result
 		[PSCustomObject]@{
 			path       = $path
-			fileLocked = $isFileLocked
+			fileLocked = $fileLocked
 		}
 	}
 }
@@ -481,7 +493,7 @@ function Out-Msg-Color {
 		[Parameter(Mandatory = $false, Position = 3)][Boolean]$noNL
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$prevFg = $host.UI.RawUI.ForegroundColor
 	$prevBg = $host.UI.RawUI.BackgroundColor
@@ -515,7 +527,7 @@ function Get-WindowsAppId {
 	[OutputType([String])]
 	Param ()
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$appId = (Get-StartApps | Where-Object { $_.Name -cmatch 'PowerShell*' })[0].AppId
 
@@ -526,7 +538,7 @@ function Get-WindowsAppId {
 #----------------------------------------------------------------------
 #トースト表示
 #----------------------------------------------------------------------
-function showToast {
+function Show-Toast {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
@@ -536,7 +548,7 @@ function showToast {
 		[Parameter(Mandatory = $false, Position = 4)][Boolean]$silent
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	if (!$script:disableToastNotification) {
 		switch ($true) {
@@ -591,7 +603,7 @@ function showToast {
 #----------------------------------------------------------------------
 #進捗バー付きトースト表示
 #----------------------------------------------------------------------
-function showProgressToast {
+function Show-ProgressToast {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
@@ -604,7 +616,7 @@ function showProgressToast {
 		[Parameter(Mandatory = $false, Position = 6)][Boolean]$silent
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	if ($script:disableToastNotification -ne $true) {
 		switch ($true) {
@@ -669,7 +681,7 @@ function showProgressToast {
 #----------------------------------------------------------------------
 #進捗バー付きトースト更新
 #----------------------------------------------------------------------
-function updateProgressToast {
+function Update-ProgressToast {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
@@ -681,7 +693,7 @@ function updateProgressToast {
 		[Parameter(Mandatory = $true, Position = 5)][String]$group
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	if ($script:disableToastNotification -ne $true) {
 		switch ($true) {
@@ -708,7 +720,7 @@ function updateProgressToast {
 #----------------------------------------------------------------------
 #進捗バー付きトースト表示
 #----------------------------------------------------------------------
-function showProgressToast2 {
+function Show-ProgressToast2 {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
@@ -722,7 +734,7 @@ function showProgressToast2 {
 		[Parameter(Mandatory = $false, Position = 7)][Boolean]$silent
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	switch ($true) {
 		$IsWindows {
@@ -790,7 +802,7 @@ function showProgressToast2 {
 #----------------------------------------------------------------------
 #進捗バー付きトースト更新
 #----------------------------------------------------------------------
-function updateProgressToast2 {
+function Update-ProgressToast2 {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
@@ -806,7 +818,7 @@ function updateProgressToast2 {
 		[Parameter(Mandatory = $true, Position = 9)][String]$group
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	if ($script:disableToastNotification -ne $true) {
 		switch ($true) {
@@ -837,7 +849,7 @@ function updateProgressToast2 {
 #----------------------------------------------------------------------
 #進捗表示
 #----------------------------------------------------------------------
-function showProgress2Row {
+function Show-Progress2Row {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
@@ -851,13 +863,13 @@ function showProgress2Row {
 		[Parameter(Mandatory = $true, Position = 7)][String]$group
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if ($script:disableToastNotification -ne $true) {
 		$text2 = $text2 ?? ''
 		$detail1 = $detail1 ?? ''
 		$detail2 = $detail2 ?? ''
 
-		showProgressToast2 `
+		Show-ProgressToast2 `
 			-Text1 $text1 `
 			-Text2 $text2 `
 			-Detail1 $detail1 `
@@ -873,7 +885,7 @@ function showProgress2Row {
 #----------------------------------------------------------------------
 #進捗更新
 #----------------------------------------------------------------------
-function updateProgress2Row {
+function Update-Progress2Row {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
@@ -889,13 +901,13 @@ function updateProgress2Row {
 		[Parameter(Mandatory = $true, Position = 9)][String]$group
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	if ($script:disableToastNotification -ne $true) {
 		$minRemaining1 = ($secRemaining1 -eq -1 -or $secRemaining1 -eq '' ) ? '' : ('残り時間 {0}分' -f ([Int][Math]::Ceiling($secRemaining1 / 60)))
 		$minRemaining2 = ($secRemaining2 -eq -1 -or $secRemaining2 -eq '' ) ? '' : ('残り時間 {0}分' -f ([Int][Math]::Ceiling($secRemaining2 / 60)))
 
-		updateProgressToast2 `
+		Update-ProgressToast2 `
 			-Title1 $processing1 `
 			-Rate1 $rate1 `
 			-LeftText1 $activity1 `

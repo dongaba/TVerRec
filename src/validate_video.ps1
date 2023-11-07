@@ -43,21 +43,21 @@ try {
 if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
-	if ($? -eq $false) { exit 1 }
+	if (!$?) { exit 1 }
 } catch { Write-Error ('❗ 関数の読み込みに失敗しました') ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
 
 #設定で指定したファイル・ディレクトリの存在チェック
-checkRequiredFile
+Invoke-RequiredFileCheck
 
 #======================================================================
 #ダウンロード履歴ファイルのクリーンアップ
 Write-Output ('')
 Write-Output ('----------------------------------------------------------------------')
 Write-Output ('ダウンロード履歴の不整合レコードを削除します')
-showProgressToast `
+Show-ProgressToast `
 	-Text1 'ダウンロードファイルの整合性検証中' `
 	-Text2 '　処理1/5 - 破損レコードを削除' `
 	-WorkDetail '' `
@@ -67,12 +67,12 @@ showProgressToast `
 	-Silent $false
 
 #ダウンロード履歴の破損レコード削除
-cleanDB
+Optimize-HistoryFile
 
 Write-Output ('')
 Write-Output ('----------------------------------------------------------------------')
 Write-Output ('古いダウンロード履歴を削除します')
-showProgressToast `
+Show-ProgressToast `
 	-Text1 'ダウンロードファイルの整合性検証中' `
 	-Text2 ('　処理2/5 - {0}日以上前のダウンロード履歴を削除' -f $script:histRetentionPeriod) `
 	-WorkDetail '' `
@@ -82,12 +82,12 @@ showProgressToast `
 	-Silent $false
 
 #30日以上前に処理したものはダウンロード履歴から削除
-purgeDB -RetentionPeriod $script:histRetentionPeriod
+Limit-HistoryFile -RetentionPeriod $script:histRetentionPeriod
 
 Write-Output ('')
 Write-Output ('----------------------------------------------------------------------')
 Write-Output ('ダウンロード履歴の重複レコードを削除します')
-showProgressToast `
+Show-ProgressToast `
 	-Text1 'ダウンロードファイルの整合性検証中' `
 	-Text2 '　処理3/5 - ダウンロード履歴の重複レコードを削除' `
 	-WorkDetail '' `
@@ -97,9 +97,9 @@ showProgressToast `
 	-Silent $false
 
 #ダウンロード履歴の重複削除
-uniqueDB
+Repair-HistoryFile
 
-if ($script:disableValidation -eq $true) {
+if ($script:disableValidation) {
 	Write-Warning ('💡 ダウンロードファイルの整合性検証が無効化されているので、検証せずに終了します')
 	exit
 }
@@ -118,10 +118,10 @@ while ($local:videoNotValidatedNum -ne 0) {
 	Write-Output ('整合性検証が終わっていない番組を検証します')
 
 	try {
-		while ((fileLock $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+		while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$local:videoHists = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' }) | Select-Object 'videoPage', 'videoPath', 'videoValidated')
 	} catch { Write-Warning ('❗ ダウンロード履歴の読み込みに失敗しました') }
-	finally { $null = fileUnlock $script:histLockFilePath }
+	finally { $null = Unlock-File $script:histLockFilePath }
 
 	if (($null -eq $local:videoHists) -or ($local:videoHists.Count -eq 0)) {
 		#チェックする番組なし
@@ -132,7 +132,7 @@ while ($local:videoNotValidatedNum -ne 0) {
 		$local:validateTotal = 0
 		$local:validateTotal = $local:videoHists.Count
 		#ffmpegのデコードオプションの設定
-		if ($script:forceSoftwareDecodeFlag -eq $true ) { $local:decodeOption = '' }
+		if ($script:forceSoftwareDecodeFlag) { $local:decodeOption = '' }
 		else {
 			if ($script:ffmpegDecodeOption -ne '') {
 				Write-Output ('---------------------------------------------------------------------------')
@@ -145,7 +145,7 @@ while ($local:videoNotValidatedNum -ne 0) {
 			}
 			$local:decodeOption = $script:ffmpegDecodeOption
 		}
-		showProgressToast `
+		Show-ProgressToast `
 			-Text1 'ダウンロードファイルの整合性検証中' `
 			-Text2 '　処理4/5 - ファイルを検証' `
 			-WorkDetail '残り時間計算中' `
@@ -170,7 +170,7 @@ while ($local:videoNotValidatedNum -ne 0) {
 				$local:progressRate = 0
 			}
 			$local:validateNum += 1
-			updateProgressToast `
+			Update-ProgressToast `
 				-Title $local:videoFileRelPath `
 				-Rate $local:progressRate `
 				-LeftText $local:validateNum/$local:validateTotal `
@@ -181,7 +181,7 @@ while ($local:videoNotValidatedNum -ne 0) {
 			else { Write-Error ('❗ 番組ダウンロード先ディレクトリにアクセスできません。終了します。') ; exit 1 }
 			#番組の整合性チェック
 			Write-Output ('{0}/{1} - {2}' -f $local:validateNum, $local:validateTotal, $local:videoFileRelPath)
-			checkVideo `
+			Invoke-ValidityCheck `
 				-DecodeOption $local:decodeOption `
 				-Path $local:videoFileRelPath
 			Start-Sleep -Seconds 1
@@ -194,7 +194,7 @@ while ($local:videoNotValidatedNum -ne 0) {
 	Write-Output ('')
 	Write-Output ('----------------------------------------------------------------------')
 	Write-Output ('ダウンロード履歴から検証が終わっていない番組のステータスを変更します')
-	showProgressToast `
+	Show-ProgressToast `
 		-Text1 'ダウンロードファイルの整合性検証中' `
 		-Text2 '　処理5/5 - 未検証のファイルのステータスを変更' `
 		-WorkDetail '' `
@@ -203,20 +203,20 @@ while ($local:videoNotValidatedNum -ne 0) {
 		-Duration 'long' `
 		-Silent $false
 	try {
-		while ((fileLock $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+		while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$local:videoHists = @(Import-Csv -Path $script:histFilePath -Encoding UTF8)
 		foreach ($local:uncheckedVido in ($local:videoHists).Where({ $_.videoValidated -eq 2 })) {
 			$local:uncheckedVido.videoValidated = '0'
 		}
 		$local:videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
 	} catch { Write-Warning ('❗ ダウンロード履歴の更新に失敗しました') }
-	finally { $null = fileUnlock $script:histLockFilePath }
+	finally { $null = Unlock-File $script:histLockFilePath }
 	$local:videoNotValidatedNum = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' })).Count
 }
 
 #======================================================================
 #完了処理
-updateProgressToast `
+Update-ProgressToast `
 	-Title 'ダウンロードファイルの整合性検証' `
 	-Rate '1' `
 	-LeftText '' `
@@ -224,7 +224,7 @@ updateProgressToast `
 	-Tag $script:appName `
 	-Group 'Validate'
 
-invokeGarbageCollection
+Invoke-GarbageCollection
 
 Write-Output ('')
 Write-Output ('---------------------------------------------------------------------------')

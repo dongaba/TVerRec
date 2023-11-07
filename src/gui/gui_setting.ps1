@@ -26,7 +26,7 @@
 ###################################################################################
 using namespace System.Windows.Threading
 
-if ($IsWindows -eq $false) { Write-Error ('❗ Windows以外では動作しません') ; Start-Sleep 10 ; exit 1 }
+if (!$IsWindows) { Write-Error ('❗ Windows以外では動作しません') ; Start-Sleep 10 ; exit 1 }
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName PresentationFramework
 
@@ -70,7 +70,7 @@ function DoWpfEvents {
 	$null = [Dispatcher]::CurrentDispatcher.BeginInvoke(
 		'Background',
 		[DispatcherOperationCallback] {
-			param([object] $script:f)
+			Param([object] $script:f)
 			($script:f -as [DispatcherFrame]).Continue = $false
 			return $null
 		},
@@ -299,7 +299,7 @@ $script:settingAttributes += '$script:addSeriesName'
 $script:settingAttributes += '$script:addSeasonName'
 $script:settingAttributes += '$script:addBrodcastDate'
 $script:settingAttributes += '$script:addEpisodeNumber'
-$script:settingAttributes += '$script:removeSpecialNote'
+$script:settingAttributes += '$script:Remove-SpecialNote'
 $script:settingAttributes += '$script:preferredYoutubedl'
 $script:settingAttributes += '$script:disableUpdateYoutubedl'
 $script:settingAttributes += '$script:disableUpdateFfmpeg'

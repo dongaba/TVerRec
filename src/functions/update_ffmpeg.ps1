@@ -29,10 +29,10 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 #----------------------------------------------------------------------
 #Zipファイルを解凍
 #----------------------------------------------------------------------
-function unZip {
+function Invoke-Unzip {
 	[CmdletBinding()]
 	[OutputType([void])]
-	param(
+	Param(
 		[Parameter(Mandatory = $true, Position = 0)][string]$path,
 		[Parameter(Mandatory = $true, Position = 1)][string]$destination
 	)
@@ -108,7 +108,7 @@ switch ($true) {
 			Write-Output ('　Local version: {0}' -f $local:currentVersion)
 			Write-Output ('　Latest version: {0}' -f $local:latestVersion)
 
-			if ([System.Environment]::IS64bitOperatingSystem -eq $true) {
+			if ([System.Environment]::IS64bitOperatingSystem) {
 				$local:cpu = 'x64'
 				$null = $local:latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-win64-gpl-)(.*).zip'
 				$local:donwloadURL = $matches[0]
@@ -125,7 +125,7 @@ switch ($true) {
 
 			#展開
 			Write-Output ('ダウンロードしたffmpegを解凍します')
-			try { unZip -Path (Join-Path $local:binDir 'ffmpeg.zip') -Destination $local:binDir }
+			try { Invoke-Unzip -Path (Join-Path $local:binDir 'ffmpeg.zip') -Destination $local:binDir }
 			catch { Write-Error ('❗ ffmpegの解凍に失敗しました') ; exit 1 }
 
 			#配置
@@ -307,8 +307,8 @@ switch ($true) {
 			try {
 				Remove-Item -LiteralPath (Join-Path $local:binDir 'ffmpeg') -Force -ErrorAction SilentlyContinue
 				Remove-Item -LiteralPath (Join-Path $local:binDir 'ffprobe') -Force -ErrorAction SilentlyContinue
-				unZip -Path (Join-Path $local:binDir 'ffmpeg.zip') -Destination $local:binDir
-				unZip -Path (Join-Path $local:binDir 'ffprobe.zip') -Destination $local:binDir
+				Invoke-Unzip -Path (Join-Path $local:binDir 'ffmpeg.zip') -Destination $local:binDir
+				Invoke-Unzip -Path (Join-Path $local:binDir 'ffprobe.zip') -Destination $local:binDir
 			} catch { Write-Error ('❗ ffmpegの展開に失敗しました') ; exit 1 }
 
 			#ゴミ掃除

@@ -43,21 +43,21 @@ try {
 if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
-	if ($? -eq $false) { exit 1 }
+	if (!$?) { exit 1 }
 } catch { Write-Error ('❗ 関数の読み込みに失敗しました') ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
 
 #設定で指定したファイル・ディレクトリの存在チェック
-checkRequiredFile
+Invoke-RequiredFileCheck
 
 #======================================================================
 #1/3 移動先ディレクトリを起点として、配下のディレクトリを取得
 Write-Output ('')
 Write-Output ('----------------------------------------------------------------------')
 Write-Output ('移動先ディレクトリの一覧を作成しています')
-showProgressToast `
+Show-ProgressToast `
 	-Text1 '番組の移動中' `
 	-Text2 '　処理1/3 - ディレクトリ一覧を作成' `
 	-WorkDetail '' `
@@ -92,7 +92,7 @@ Write-Output ('')
 Write-Output ('----------------------------------------------------------------------')
 Write-Output ('ダウンロードファイルを移動しています')
 
-showProgressToast `
+Show-ProgressToast `
 	-Text1 '番組の移動中' `
 	-Text2 '　処理2/3 - ダウンロードファイルを移動' `
 	-WorkDetail '' `
@@ -119,7 +119,7 @@ if (($null -ne $local:moveToPaths) -and ($local:moveToPaths.Count -ne 0)) {
 			$local:progressRate = 0
 		}
 		$local:moveToPathNum += 1
-		UpdateProgressToast `
+		Update-ProgressToast `
 			-Title $local:moveToPath.InputObject `
 			-Rate $local:progressRate `
 			-LeftText ('{0}/{1}' -f $local:moveToPathNum, $local:moveToPathTotal) `
@@ -147,7 +147,7 @@ if (($null -ne $local:moveToPaths) -and ($local:moveToPaths.Count -ne 0)) {
 Write-Output ('')
 Write-Output ('----------------------------------------------------------------------')
 Write-Output ('空ディレクトリを削除します')
-showProgressToast `
+Show-ProgressToast `
 	-Text1 '番組の移動中' `
 	-Text2 '　処理3/3 - 空ディレクトリを削除' `
 	-WorkDetail '' `
@@ -157,14 +157,14 @@ showProgressToast `
 	-Silent $false
 
 $local:emptyDirs = @()
-$local:emptyDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer -eq $true })).Where({ ($_.GetFiles().Count -eq 0) -and ($_.GetDirectories().Count -eq 0) })
+$local:emptyDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer })).Where({ ($_.GetFiles().Count -eq 0) -and ($_.GetDirectories().Count -eq 0) })
 if ($local:emptyDirs.Count -ne 0) { $local:emptyDirs = @($local:emptyDirs.Fullname) }
 
 $local:emptyDirTotal = $local:emptyDirs.Count
 
 #----------------------------------------------------------------------
 if ($local:emptyDirTotal -ne 0) {
-	if ($script:enableMultithread -eq $true) {
+	if ($script:enableMultithread) {
 		Write-Debug ('Multithread Processing Enabled')
 		#並列化が有効の場合は並列化
 		$local:emptyDirs | ForEach-Object -Parallel {
@@ -192,7 +192,7 @@ if ($local:emptyDirTotal -ne 0) {
 				$local:minRemaining = ''
 				$local:progressRate = 0
 			}
-			UpdateProgressToast `
+			Update-ProgressToast `
 				-Title $local:subDir `
 				-Rate $local:progressRate `
 				-LeftText ('{0}/{1}' -f $local:emptyDirNum, $local:emptyDirTotal) `
@@ -209,7 +209,7 @@ if ($local:emptyDirTotal -ne 0) {
 
 try { $script:uiMode = [String]$args[0] } catch { $script:uiMode = '' }
 
-updateProgressToast `
+Update-ProgressToast `
 	-Title '番組の移動' `
 	-Rate '1' `
 	-LeftText '' `
@@ -217,7 +217,7 @@ updateProgressToast `
 	-Tag $script:appName `
 	-Group 'Move'
 
-invokeGarbageCollection
+Invoke-GarbageCollection
 
 Write-Output ('')
 Write-Output ('---------------------------------------------------------------------------')

@@ -29,10 +29,10 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 #----------------------------------------------------------------------
 #Zipファイルを解凍
 #----------------------------------------------------------------------
-function unZip {
+function Invoke-Unzip {
 	[CmdletBinding()]
 	[OutputType([void])]
-	param(
+	Param(
 		[Parameter(Mandatory = $true, Position = 0)][string]$path,
 		[Parameter(Mandatory = $true, Position = 1)][string]$destination
 	)
@@ -117,7 +117,7 @@ if ($local:latestVersion -eq $local:currentVersion) {
 	Write-Output ('❗ youtube-dlが古いため更新します。')
 	Write-Output ('　Local version: {0}' -f $local:currentVersion)
 	Write-Output ('　Latest version: {0}' -f $local:latestVersion)
-	if ($IsWindows -eq $false) {
+	if (!$IsWindows) {
 		#githubの設定
 		$local:file = $script:preferredYoutubedl
 		$local:fileAfterRename = 'youtube-dl'
@@ -136,7 +136,7 @@ if ($local:latestVersion -eq $local:currentVersion) {
 		Invoke-WebRequest -UseBasicParsing -Uri $local:downloadURL -Out $local:ytdlFileLocation
 	} catch { Write-Error ('❗ youtube-dlのダウンロードに失敗しました') ; exit 1 }
 
-	if ($IsWindows -eq $false) { (& chmod a+x $local:ytdlFileLocation) }
+	if (!$IsWindows) { (& chmod a+x $local:ytdlFileLocation) }
 
 	#バージョンチェック
 	try {

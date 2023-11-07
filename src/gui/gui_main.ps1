@@ -26,7 +26,7 @@
 ###################################################################################
 using namespace System.Windows.Threading
 
-if ($IsWindows -eq $false) { Write-Error ('❗ Windows以外では動作しません') ; Start-Sleep 10 ; exit 1 }
+if (!$IsWindows) { Write-Error ('❗ Windows以外では動作しません') ; Start-Sleep 10 ; exit 1 }
 Add-Type -AssemblyName PresentationFramework
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -46,7 +46,7 @@ try {
 if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
-	if ($? -eq $false) { exit 1 }
+	if (!$?) { exit 1 }
 } catch { Write-Error ('❗ 関数の読み込みに失敗しました') ; exit 1 }
 
 #endregion 環境設定
@@ -61,7 +61,7 @@ function DoWpfEvents {
 	$null = [Dispatcher]::CurrentDispatcher.BeginInvoke(
 		'Background',
 		[DispatcherOperationCallback] {
-			param([object] $script:f)
+			Param([object] $script:f)
 			($script:f -as [DispatcherFrame]).Continue = $false
 			return $null
 		},
@@ -203,7 +203,7 @@ $script:btnIgnoreOpen.Add_Click({ Invoke-Item $script:ignoreFilePath })
 $script:btnListOpen.Add_Click({ Invoke-Item $script:listFilePath })
 $script:btnClearLog.Add_Click({
 		$script:outText.Document.Blocks.Clear()
-		invokeGarbageCollection
+		Invoke-GarbageCollection
 	})
 $script:btnKillAll.Add_Click({
 		Get-Job | Remove-Job -Force
@@ -211,7 +211,7 @@ $script:btnKillAll.Add_Click({
 		$script:btnExit.IsEnabled = $true
 		$script:btnKillAll.IsEnabled = $false
 		$script:lblStatus.Content = '処理を強制停止しました'
-		invokeGarbageCollection
+		Invoke-GarbageCollection
 	})
 $script:btnWiki.Add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
 $script:btnSetting.Add_Click({
@@ -219,7 +219,7 @@ $script:btnSetting.Add_Click({
 		if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 			. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
 		}
-		invokeGarbageCollection
+		Invoke-GarbageCollection
 	})
 $script:btnExit.Add_Click({ $script:mainWindow.close() })
 
@@ -277,7 +277,7 @@ while ($script:mainWindow.IsVisible) {
 				$script:btnExit.IsEnabled = $true
 				$script:btnKillAll.IsEnabled = $false
 				$script:lblStatus.Content = '処理を終了しました'
-				invokeGarbageCollection
+				Invoke-GarbageCollection
 			}
 		}
 	}

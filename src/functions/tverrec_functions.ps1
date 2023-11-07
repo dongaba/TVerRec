@@ -24,7 +24,7 @@
 #	THE SOFTWARE.
 #
 ###################################################################################
-Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 #region 環境
 
@@ -86,9 +86,29 @@ $script:requestHeader = @{
 }
 
 #----------------------------------------------------------------------
+#設定取得
+#----------------------------------------------------------------------
+function Get-Setting {
+	$filePathList = @((Convert-Path (Join-Path $script:confDir 'system_setting.ps1')), (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')))
+	$configList = @{}
+	foreach ($filePath in $filePathList) {
+		$configs = (Select-String $filePath -Pattern '^(\$.+)=(.+)(\s*)$' | ForEach-Object { $_.line })
+		foreach ($config in $configs) {
+			$configParts = $config -split '='
+			$key = $configParts[0].replace('script:', '').trim()
+			$value = $configParts[1].split('#')[0].trim()
+			if (($key -notlike '*Dir') -and ($key -notlike '*Path') -and ($key -notlike '*PSStyle*') -and ($key -notlike '*Base64')) {
+				$configList[$key] = $value
+			}
+		}
+	}
+	return $configList.GetEnumerator() | Sort-Object -Property key
+}
+
+#----------------------------------------------------------------------
 #統計取得
 #----------------------------------------------------------------------
-function goAnal {
+function Invoke-StatisticsCheck {
 	[OutputType([System.Void])]
 	Param (
 		[Parameter(Mandatory = $true, Position = 0)][String]$operation,
@@ -96,9 +116,7 @@ function goAnal {
 		[Parameter(Mandatory = $false, Position = 2)][String]$tverID = 'none'
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
-
-	$epochTime = [decimal]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() * 1000)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$progressPreference = 'silentlyContinue'
 	$statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
@@ -109,25 +127,25 @@ function goAnal {
 			-TimeoutSec $script:timeoutSec
 	} catch { Write-Debug ('Failed to collect count') }
 	finally { $progressPreference = 'Continue' }
-
-	$clientVars = (Get-Variable).Where({ $_.Name -cmatch '^[a-z].+' }).Where({ $null -ne $_.Value }).Where({ $_.Name -inotlike '*Base64' }).Where({ $_.Name -inotlike 'ipapi' })
 	if ($operation -eq 'search') { return }
-	$gaBody = ('{{ "client_id" : "{0}", ' -f $script:guid)
-	$gaBody += ('"timestamp_micros" : "{0}", ' -f $epochTime)
-	$gaBody += ('"non_personalized_ads" : false, ')
-	$gaBody += ('"user_properties":{ ')
-	foreach ($clientEnv in $script:clientEnvs) { $gaBody += ('"{0}" : {{"value" : "{1}"}}, ' -f $clientEnv.Key, $clientEnv.Value) }
-	foreach ($clientVar in $clientVars) { $gaBody += ('"{0}" : {{"value" : "{1}"}}, ' -f $clientVar.Name, $clientVar.Value) }
-	$gaBody = $gaBody.Trim(',', ' ')		#delete last comma
-	$gaBody += ('}, "events" : [ { ')
-	$gaBody += ('"name" : "{0}", ' -f $operation)
-	$gaBody += ('"params" : {')
-	$gaBody += ('"Target" : "{0}/{1}", ' -f $tverType, $tverID)
-	foreach ($clientEnv in $script:clientEnvs) { $gaBody += ('"{0}" : "{1}", ' -f $clientEnv.Key, $clientEnv.Value) }
-	foreach ($clientVar in $clientVars) { $gaBody += ('"{0}" : "{1}", ' -f $clientVar.Name, $clientVar.Value) }
-	$gaBody = $gaBody.Trim(',', ' ')		#delete last comma
-	$gaBody += ('} } ] }')
 
+	$clientVars = (Get-Setting)
+	$epochTime = [decimal]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() * 1000)
+	$gaBody = [PSCustomObject]@{
+		client_id            = "$script:guid"
+		timestamp_micros     = "$epochTime"
+		non_personalized_ads = $false
+		user_properties      = @{}
+		events               = @(
+			@{
+				name   = "$operation"
+				params = @{ Target = "$tverType/$tverID" }
+			}
+		)
+	}
+	foreach ($clientEnv in $script:clientEnvs) { $gaBody.user_properties[$clientEnv.Key] = @{value = $clientEnv.Value } }
+	foreach ($clientVar in $clientVars) { $gaBody.user_properties[$clientVar.Name] = @{value = $clientVar.Value } }
+	$gaBodyJson = $gaBody | ConvertTo-Json -Depth 3
 	$gaURL = 'https://www.google-analytics.com/mp/collect'
 	$gaKey = 'api_secret=UZ3InfgkTgGiR4FU-in9sw'
 	$gaID = 'measurement_id=G-NMSF9L531G'
@@ -135,14 +153,12 @@ function goAnal {
 		'HOST'         = 'www.google-analytics.com'
 		'Content-Type' = 'application/json'
 	}
-
 	$progressPreference = 'silentlyContinue'
-	try {
-		$null = Invoke-RestMethod `
+	try { $null = Invoke-RestMethod `
 			-Uri ('{0}?{1}&{2}' -f $gaURL, $gaKey, $gaID) `
 			-Method 'POST' `
 			-Headers $gaHeaders `
-			-Body $gaBody `
+			-Body $gaBodyJson `
 			-TimeoutSec $script:timeoutSec
 	} catch { Write-Debug ('Failed to collect statistics') }
 	finally { $progressPreference = 'Continue' }
@@ -153,14 +169,14 @@ function goAnal {
 #----------------------------------------------------------------------
 #TVerRec最新化確認
 #----------------------------------------------------------------------
-function checkLatestTVerRec {
+function Invoke-TVerRecUpdateCheck {
 	[OutputType([System.Void])]
 	Param ()
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$progressPreference = 'silentlyContinue'
-	goAnal -Operation 'launch'
+	Invoke-StatisticsCheck -Operation 'launch'
 	$versionUp = $false
 
 	#TVerRecの最新バージョン取得
@@ -185,7 +201,6 @@ function checkLatestTVerRec {
 		{ ($latestMajorVersion -eq $appMajorVersion) -and ($appMajorVersion -ne $script:appVersion) } { $true; break }
 		default { $false }
 	}
-
 
 	$progressPreference = 'Continue'
 
@@ -227,36 +242,28 @@ function checkLatestTVerRec {
 #----------------------------------------------------------------------
 #ytdl/ffmpegの最新化確認
 #----------------------------------------------------------------------
-function checkLatestVersion {
+function Invoke-ToolUpdateCheck {
+	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true)]
-		[string]$scriptName,
-
-		[Parameter(Mandatory = $true)]
-		[string]$targetName,
-
-		[Parameter(Mandatory = $true)]
-		[bool]$disableUpdate
+		[Parameter(Mandatory = $true)][string]$scriptName,
+		[Parameter(Mandatory = $true)][string]$targetName
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
+	$originalPreference = $progressPreference
 	$progressPreference = 'silentlyContinue'
-
-	if ($disableUpdate -eq $false) {
-		. (Convert-Path (Join-Path $scriptRoot "functions/$scriptName"))
-		if ($? -eq $false) { Write-Error ("❗ $targetName の更新に失敗しました") ; exit 1 }
-	}
-
-	$progressPreference = 'Continue'
+	& (Join-Path $scriptRoot ('functions/{0}' -f $scriptName) )
+	if (!$?) { Write-Error ("❗ $targetName の更新に失敗しました") ; exit 1 }
+	$progressPreference = $originalPreference
 }
 
 #----------------------------------------------------------------------
 #ファイル・ディレクトリの存在チェック、なければサンプルファイルコピー
 #----------------------------------------------------------------------
-function checkPathExists {
-	param(
+function Invoke-PathExistenceCheck {
+	Param(
 		[Parameter(Mandatory = $true)]
 		[string]$path,
 		[Parameter(Mandatory = $true)]
@@ -279,45 +286,45 @@ function checkPathExists {
 #----------------------------------------------------------------------
 #設定で指定したファイル・ディレクトリの存在チェック
 #----------------------------------------------------------------------
-function checkRequiredFile {
+function Invoke-RequiredFileCheck {
 	[OutputType([System.Void])]
 	Param ()
 
-	Write-Debug ($myInvocation.MyCommand.Name)
+	Write-Debug ($MyInvocation.MyCommand.Name)
 
-	checkPathExists -path $script:downloadBaseDir -errorMessage '番組ダウンロード先ディレクトリが存在しません。'
-	checkPathExists -path $script:downloadWorkDir -errorMessage 'ダウンロード作業ディレクトリが存在しません。'
+	Invoke-PathExistenceCheck -path $script:downloadBaseDir -errorMessage '番組ダウンロード先ディレクトリが存在しません。'
+	Invoke-PathExistenceCheck -path $script:downloadWorkDir -errorMessage 'ダウンロード作業ディレクトリが存在しません。'
 
 	if ($script:saveBaseDir -ne '') {
 		$script:saveBaseDirArray = $script:saveBaseDir.split(';').Trim()
 		foreach ($saveDir in $script:saveBaseDirArray) {
-			checkPathExists -path $saveDir.Trim() -errorMessage '番組移動先ディレクトリが存在しません。'
+			Invoke-PathExistenceCheck -path $saveDir.Trim() -errorMessage '番組移動先ディレクトリが存在しません。'
 		}
 	}
 
-	checkPathExists -path $script:ytdlPath -isFile -errorMessage 'youtube-dlが存在しません。'
-	checkPathExists -path $script:ffmpegPath -isFile -errorMessage 'ffmpegが存在しません。'
+	Invoke-PathExistenceCheck -path $script:ytdlPath -isFile -errorMessage 'youtube-dlが存在しません。'
+	Invoke-PathExistenceCheck -path $script:ffmpegPath -isFile -errorMessage 'ffmpegが存在しません。'
 
-	if ($script:simplifiedValidation -eq $true) {
-		checkPathExists -path $script:ffprobePath -isFile -errorMessage 'ffprobeが存在しません。'
+	if ($script:simplifiedValidation) {
+		Invoke-PathExistenceCheck -path $script:ffprobePath -isFile -errorMessage 'ffprobeが存在しません。'
 	}
 
 	#ファイルが存在しない場合はサンプルファイルをコピー
-	checkPathExists -path $script:keywordFilePath -isFile -errorMessage 'ダウンロード対象キーワードファイルが存在しません。' -sampleFilePath $script:keywordFileSamplePath
-	checkPathExists -path $script:ignoreFilePath -isFile -errorMessage 'ダウンロード対象外番組ファイルが存在しません。' -sampleFilePath $script:ignoreFileSamplePath
-	checkPathExists -path $script:histFilePath -isFile -errorMessage 'ダウンロード履歴ファイルが存在しません。' -sampleFilePath $script:histFileSamplePath
-	checkPathExists -path $script:listFilePath -isFile -errorMessage 'ダウンロードリストファイルが存在しません。' -sampleFilePath $script:listFileSamplePath
+	Invoke-PathExistenceCheck -path $script:keywordFilePath -isFile -errorMessage 'ダウンロード対象キーワードファイルが存在しません。' -sampleFilePath $script:keywordFileSamplePath
+	Invoke-PathExistenceCheck -path $script:ignoreFilePath -isFile -errorMessage 'ダウンロード対象外番組ファイルが存在しません。' -sampleFilePath $script:ignoreFileSamplePath
+	Invoke-PathExistenceCheck -path $script:histFilePath -isFile -errorMessage 'ダウンロード履歴ファイルが存在しません。' -sampleFilePath $script:histFileSamplePath
+	Invoke-PathExistenceCheck -path $script:listFilePath -isFile -errorMessage 'ダウンロードリストファイルが存在しません。' -sampleFilePath $script:listFileSamplePath
 }
 
 
 #----------------------------------------------------------------------
 #ダウンロード対象キーワードの読み込み
 #----------------------------------------------------------------------
-function loadKeywordList {
+function Get-KeywordList {
 	[OutputType([String[]])]
 	Param ()
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$keywords = @()
 	if (Test-Path $script:keywordFilePath -PathType Leaf) {
@@ -335,18 +342,18 @@ function loadKeywordList {
 #----------------------------------------------------------------------
 #ダウンロード履歴の読み込み
 #----------------------------------------------------------------------
-function loadHistFile {
+function Get-HistoryFile {
 	[OutputType([String[]])]
 	Param ()
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	if (Test-Path $script:histFilePath -PathType Leaf) {
 		try {
-			while ((fileLock $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+			while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 			$histFileData = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 		} catch { Write-Warning ('❗ ダウンロード履歴の読み込みに失敗しました') ; exit 1 }
-		finally { $null = fileUnlock $script:histLockFilePath }
+		finally { $null = Unlock-File $script:histLockFilePath }
 	} else { $histFileData = @() }
 
 	return @($histFileData)
@@ -355,18 +362,18 @@ function loadHistFile {
 #----------------------------------------------------------------------
 #ダウンロードリストの読み込み
 #----------------------------------------------------------------------
-function loadDownloadList {
+function Get-DownloadList {
 	[OutputType([String[]])]
 	Param ()
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	if (Test-Path $script:listFilePath -PathType Leaf) {
 		try {
-			while ((fileLock $script:listLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+			while ((Lock-File $script:listLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 			$listFileData = @(Import-Csv -LiteralPath $script:listFilePath -Encoding UTF8)
 		} catch { Write-Warning ('❗ ダウンロードリストの読み込みに失敗しました') ; exit 1 }
-		finally { $null = fileUnlock $script:listLockFilePath }
+		finally { $null = Unlock-File $script:listLockFilePath }
 	} else { $listFileData = @() }
 
 	return @($listFileData)
@@ -375,24 +382,21 @@ function loadDownloadList {
 #----------------------------------------------------------------------
 #ダウンロードリストからダウンロードリンクの読み込み
 #----------------------------------------------------------------------
-function loadLinkFromDownloadList {
+function Get-LinkFromDownloadList {
 	[OutputType([String[]])]
 	Param ()
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	if (Test-Path $script:listFilePath -PathType Leaf) {
 		try {
-			while ((fileLock $script:listLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+			while ((Lock-File $script:listLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 			#空行とダウンロード対象外を除き、EpisodeIDのみを抽出
 			$videoLinks = @((Import-Csv -LiteralPath $script:listFilePath -Encoding UTF8).Where({ !($_ -cmatch '^\s*$') }).Where({ !($_.EpisodeID -cmatch '^#') }) | Select-Object episodeID)
 		} catch { Write-Error ('❗ ダウンロードリストの読み込みに失敗しました') ; exit 1 }
-		finally { $null = fileUnlock $script:listLockFilePath }
+		finally { $null = Unlock-File $script:listLockFilePath }
 	} else { $videoLinks = @() }
 
-	# for ( $i = 0; $i -lt $videoLinks.Count; $i++ ) {
-	# 	$videoLinks[$i] = 'https://tver.jp/episodes/{0}' -f $videoLinks[$i].episodeID
-	# }
 	$videoLinks = $videoLinks.episodeID -replace '^(.+)', 'https://tver.jp/episodes/$1'
 
 	return @($videoLinks)
@@ -401,19 +405,19 @@ function loadLinkFromDownloadList {
 #----------------------------------------------------------------------
 #ダウンロード対象外番組の読み込
 #----------------------------------------------------------------------
-function loadIgnoreList {
+function Get-IgnoreList {
 	[OutputType([String[]])]
 	Param ()
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	if (Test-Path $script:ignoreFilePath -PathType Leaf) {
 		try {
-			while ((fileLock $script:ignoreLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+			while ((Lock-File $script:ignoreLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 			#コメントと空行を除いて抽出
 			$ignoreTitles = @((Get-Content $script:ignoreFilePath -Encoding UTF8).Where({ !($_ -cmatch '^\s*$') }).Where({ !($_ -cmatch '^;.*$') }))
 		} catch { Write-Error ('❗ ダウンロード対象外の読み込みに失敗しました') ; exit 1 }
-		finally { $null = fileUnlock $script:ignoreLockFilePath }
+		finally { $null = Unlock-File $script:ignoreLockFilePath }
 	} else { $ignoreTitles = @() }
 
 	return @($ignoreTitles)
@@ -422,20 +426,20 @@ function loadIgnoreList {
 #----------------------------------------------------------------------
 #ダウンロード対象外番組のソート(使用したものを上に移動)
 #----------------------------------------------------------------------
-function sortIgnoreList {
+function Update-IgnoreList {
 	[OutputType([System.Void])]
 	Param (
 		[Parameter(Mandatory = $true, Position = 0)][String]$ignoreTitle
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$ignoreListNew = @()
 	$ignoreComment = @()
 	$ignoreTarget = @()
 	$ignoreElse = @()
 	try {
-		while ((fileLock $script:ignoreLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+		while ((Lock-File $script:ignoreLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$ignoreLists = @((Get-Content $script:ignoreFilePath -Encoding UTF8).Where( { !($_ -cmatch '^\s*$') }).Where( { !($_ -cmatch '^;;.*$') }))
 		$ignoreComment = @(Get-Content $script:ignoreFileSamplePath -Encoding UTF8)
 		$ignoreTarget = @($ignoreLists.Where({ $_ -eq $ignoreTitle }) | Sort-Object | Get-Unique)
@@ -448,14 +452,14 @@ function sortIgnoreList {
 		Write-Debug ('ダウンロード対象外リストのソート更新完了')
 	} catch { Write-Error ('❗ ダウンロード対象外リストのソートに失敗しました') ; exit 1 }
 	finally {
-		$null = fileUnlock $script:ignoreLockFilePath
+		$null = Unlock-File $script:ignoreLockFilePath
 	}
 }
 
 #----------------------------------------------------------------------
 #URLが既にダウンロード履歴に存在するかチェックし、ダウンロード対象番組だけ返す
 #----------------------------------------------------------------------
-function checkHistory {
+function Invoke-HistoryMatchCheck {
 	[OutputType([String[]])]
 	Param (
 		[Parameter(Mandatory = $false, Position = 0)]
@@ -463,10 +467,10 @@ function checkHistory {
 		[String[]]$resultLinks
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	#ダウンロード履歴ファイルのデータを読み込み
-	$histFileData = @(loadHistFile)
+	$histFileData = @(Get-HistoryFile)
 	if ($histFileData.Count -eq 0) { $histVideoPages = @() } else { $histVideoPages = @($histFileData.VideoPage) }
 
 	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
@@ -480,7 +484,7 @@ function checkHistory {
 #----------------------------------------------------------------------
 #URLが既にダウンロードリストまたはダウンロード履歴に存在するかチェックし、ダウンロード対象番組だけ返す
 #----------------------------------------------------------------------
-function checkListAndHistory {
+function Invoke-HistoryAndListfileMatchCheck {
 	[OutputType([String[]])]
 	Param (
 		[Parameter(Mandatory = $false, Position = 0)]
@@ -488,17 +492,17 @@ function checkListAndHistory {
 		[String[]]$resultLinks
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	#ダウンロードリストファイルのデータを読み込み
-	$local:listFileData = @(loadDownloadList)
+	$local:listFileData = @(Get-DownloadList)
 	$local:listVideoPages = @()
 	foreach ($local:listFileLine in $local:listFileData) {
 		$local:listVideoPages += ('https://tver.jp/episodes/{0}' -f $local:listFileLine.EpisodeID.Replace('#', ''))
 	}
 
 	#ダウンロード履歴ファイルのデータを読み込み
-	$histFileData = @(loadHistFile)
+	$histFileData = @(Get-HistoryFile)
 	if ($histFileData.Count -eq 0) { $histVideoPages = @() } else { $histVideoPages = @($histFileData.VideoPage) }
 
 	#ダウンロードリストとダウンロード履歴をマージ
@@ -516,11 +520,11 @@ function checkListAndHistory {
 #----------------------------------------------------------------------
 #youtube-dlプロセスの確認と待機
 #----------------------------------------------------------------------
-function waitTillYtdlProcessGetFewer {
+function Wait-YtdlProcess {
 	[OutputType([System.Void])]
 	Param ([Int32]$parallelDownloadFileNum)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$psCmd = 'ps'
 
@@ -545,8 +549,7 @@ function waitTillYtdlProcessGetFewer {
 
 		if ([Int]$ytdlCount -lt [Int]$parallelDownloadFileNum ) { break }
 
-
-		Write-Host ('ダウンロードが{0}多重に達したので一時待機します。 ({1})' -f $local:parallelDownloadFileNum, (getTimeStamp))
+		Write-Host ('ダウンロードが{0}多重に達したので一時待機します。 ({1})' -f $local:parallelDownloadFileNum, (Get-TimeStamp))
 		Write-Verbose ('現在のダウンロードプロセス一覧 ({0}個)' -f $local:ytdlCount)
 		Start-Sleep -Seconds 60
 	}
@@ -556,10 +559,10 @@ function waitTillYtdlProcessGetFewer {
 #----------------------------------------------------------------------
 #ダウンロード履歴データの作成
 #----------------------------------------------------------------------
-function generateHistoryRecord {
-	param($keyword, $videoPageURL, $videoSeriesPageURL, $videoname, $videopath, $validated)
+function Format-HistoryRecord {
+	Param($keyword, $videoPageURL, $videoSeriesPageURL, $videoname, $videopath, $validated)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	return [pscustomobject]@{
 		videoPage       = $videoPageURL
@@ -570,7 +573,7 @@ function generateHistoryRecord {
 		title           = $script:videoTitle
 		media           = $script:mediaName
 		broadcastDate   = $script:broadcastDate
-		downloadDate    = getTimeStamp
+		downloadDate    = Get-TimeStamp
 		videoDir        = $script:videoFileDir
 		videoName       = $videoname
 		videoPath       = $videopath
@@ -581,7 +584,7 @@ function generateHistoryRecord {
 #----------------------------------------------------------------------
 #「《」と「》」で挟まれた文字を除去
 #----------------------------------------------------------------------
-Function removeSpecialNote {
+Function Remove-SpecialNote {
 	Param($text)
 
 	if ($text -cmatch '(.*)(《.*》)(.*)') {
@@ -594,7 +597,7 @@ Function removeSpecialNote {
 #----------------------------------------------------------------------
 #TVer番組ダウンロードのメイン処理
 #----------------------------------------------------------------------
-function downloadTVerVideo {
+function Invoke-VideoDownload {
 	[OutputType([System.Void])]
 	Param (
 		[Parameter(Mandatory = $true, Position = 0)][String]$keyword,
@@ -602,7 +605,7 @@ function downloadTVerVideo {
 		[Parameter(Mandatory = $false, Position = 2)][Boolean]$force = $false
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$script:videoName = '' ; $script:videoFilePath = '' ; $videoSeriesPageURL = ''
 	$script:broadcastDate = '' ; $script:videoSeries = '' ; $script:videoSeason = ''
@@ -610,23 +613,23 @@ function downloadTVerVideo {
 	$newVideo = $null
 	$skipDownload = $false
 
-	$episodeID = $episodePage.Replace('https://tver.jp/episodes/','')
+	$episodeID = $episodePage.Replace('https://tver.jp/episodes/', '')
 	#TVerのAPIを叩いて番組情報取得
-	goAnal -Operation 'getinfo' -TVerType 'link' -TVerID $episodeID
-	try { getVideoInfo $episodeID }
+	Invoke-StatisticsCheck -Operation 'getinfo' -TVerType 'link' -TVerID $episodeID
+	try { Get-VideoInfo $episodeID }
 	catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:90') ; continue }
 
 	#ダウンロードファイル情報をセット
-	$script:videoName = getVideoFileName `
+	$script:videoName = Set-VideoFileName `
 		-Series $script:videoSeries `
 		-Season $script:videoSeason `
 		-Episode $script:videoEpisode `
 		-Title $script:videoTitle `
 		-Date $script:broadcastDate
 
-	$script:videoFileDir = getFileNameWoInvChars (getSpecialCharacterReplaced ('{0} {1}' -f $script:videoSeries, $script:videoSeason ).Trim(' ', '.'))
-	if ($script:sortVideoByMedia -eq $true) {
-		$script:mediaName = getFileNameWoInvChars $script:mediaName
+	$script:videoFileDir = Get-FileNameWithoutInvalidChars (Remove-SpecialCharacter ('{0} {1}' -f $script:videoSeries, $script:videoSeason ).Trim(' ', '.'))
+	if ($script:sortVideoByMedia) {
+		$script:mediaName = Get-FileNameWithoutInvalidChars $script:mediaName
 		$script:videoFileDir = (Join-Path $script:downloadBaseDir $script:mediaName | Join-Path -ChildPath $script:videoFileDir)
 	} else {
 		$script:videoFileDir = (Join-Path $script:downloadBaseDir $script:videoFileDir)
@@ -636,13 +639,13 @@ function downloadTVerVideo {
 	$script:videoFileRelPath = $script:videoFileRelPath.Substring(1, ($script:videoFileRelPath.Length - 1))
 
 	#番組情報のコンソール出力
-	showVideoInfo `
+	Show-VideoInfo `
 		-Name $script:videoName `
 		-Date $script:broadcastDate `
 		-Media $script:mediaName `
 		-EndTime $script:endTime
 	if ($DebugPreference -ne 'SilentlyContinue') {
-		showVideoDebugInfo `
+		Show-VideoDebugInfo `
 			-EpisodePage $episodePage `
 			-SeriesPage $videoSeriesPageURL `
 			-Keyword $keyword `
@@ -651,7 +654,7 @@ function downloadTVerVideo {
 			-Episode $script:videoEpisode `
 			-Title $script:videoTitle `
 			-Path $script:videoFilePath `
-			-Time (getTimeStamp) `
+			-Time (Get-TimeStamp) `
 			-Description $descriptionText
 	}
 
@@ -670,50 +673,50 @@ function downloadTVerVideo {
 	# 		無視リストに存在する	→無視
 	# 		無視リストに存在しない	→ダウンロード
 	#ダウンロード履歴ファイルのデータを読み込み
-	$histFileData = @(loadHistFile)
+	$histFileData = @(Get-HistoryFile)
 	$histMatch = @($histFileData.Where({ $_.videoPath -eq $script:videoFileRelPath }))
 	if (($histMatch.Count -ne 0)) {
 		#履歴ファイルに存在する	→スキップして次のファイルに
 		Write-Warning ('❗ 同名のファイルがすでに履歴ファイルに存在します。番組IDが変更になった可能性があります。スキップします')
-		$newVideo = generateHistoryRecord $keyword $episodePage $videoSeriesPageURL '-- SKIPPED --' $videoFileRelPath '1'
+		$newVideo = Format-HistoryRecord $keyword $episodePage $videoSeriesPageURL '-- SKIPPED --' $videoFileRelPath '1'
 		$skipDownload = $true
 	} elseif ( Test-Path $script:videoFilePath) {
 		#履歴ファイルに存在しないが、実ファイルが存在する	→検証だけする
 		Write-Warning ('❗ 履歴ファイルに存在しませんが番組ファイルが存在します。整合性検証の対象とします')
-		$newVideo = generateHistoryRecord $keyword $episodePage $videoSeriesPageURL '-- SKIPPED --' $videoFileRelPath '0'
+		$newVideo = Format-HistoryRecord $keyword $episodePage $videoSeriesPageURL '-- SKIPPED --' $videoFileRelPath '0'
 		$skipDownload = $true
 	} else {
 		#履歴ファイルに存在せず、実ファイルも存在せず、無視リストと合致	→無視する
-		$ignoreTitles = @(loadIgnoreList)
+		$ignoreTitles = @(Get-IgnoreList)
 		foreach ($ignoreTitle in $ignoreTitles) {
 			if (($script:videoName -like $local:ignoreTitle) `
 					-or ($script:videoSeries -like $local:ignoreTitle) `
 					-or ($script:videoName -cmatch [Regex]::Escape($local:ignoreTitle)) `
 					-or ($script:videoSeries -cmatch [Regex]::Escape($local:ignoreTitle))) {
-				sortIgnoreList $ignoreTitle
+				Update-IgnoreList $ignoreTitle
 				Write-Output ('❗ ダウンロード対象外としたファイルをダウンロード履歴に追加します')
-				$newVideo = generateHistoryRecord $keyword $episodePage $videoSeriesPageURL '-- IGNORED --' '-- IGNORED --' '0'
+				$newVideo = Format-HistoryRecord $keyword $episodePage $videoSeriesPageURL '-- IGNORED --' '-- IGNORED --' '0'
 				$skipDownload = $true
 				break
 			}
 		}
 		#履歴ファイルに存在せず、実ファイルも存在せず、無視リストとも合致しない	→ダウンロードする
-		if ($skipDownload -eq $false) {
+		if (!$skipDownload) {
 			Write-Output ('💡 ダウンロードするファイルをダウンロード履歴に追加します')
-			$newVideo = generateHistoryRecord $keyword $episodePage $videoSeriesPageURL $script:videoName $script:videoFileRelPath '0'
+			$newVideo = Format-HistoryRecord $keyword $episodePage $videoSeriesPageURL $script:videoName $script:videoFileRelPath '0'
 		}
 	}
 
 	#ダウンロード履歴CSV書き出し
 	try {
-		while ((fileLock $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+		while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$newVideo | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append
 		Write-Debug ('ダウンロード履歴を書き込みました')
 	} catch { Write-Warning ('❗ ダウンロード履歴を更新できませんでした。スキップします') ; continue }
-	finally { $null = fileUnlock $script:histLockFilePath }
+	finally { $null = Unlock-File $script:histLockFilePath }
 
 	#スキップ対象やダウンロード対象外は飛ばして次のファイルへ
-	if (($force -eq $false) -and ($skipDownload -eq $true)) { continue }
+	if (!$force -and $skipDownload) { continue }
 
 	#移動先ディレクトリがなければ作成
 	if (-Not (Test-Path $script:videoFileDir -PathType Container)) {
@@ -721,7 +724,7 @@ function downloadTVerVideo {
 		catch { Write-Warning ('❗ 移動先ディレクトリを作成できませんでした') ; continue }
 	}
 	#youtube-dl起動
-	try { executeYtdl $episodePage }
+	try { Invoke-Ytdl $episodePage }
 	catch { Write-Warning ('❗ youtube-dlの起動に失敗しました') }
 	#5秒待機
 	Start-Sleep -Seconds 5
@@ -731,14 +734,14 @@ function downloadTVerVideo {
 #----------------------------------------------------------------------
 #TVer番組ダウンロードリスト作成のメイン処理
 #----------------------------------------------------------------------
-function generateTVerVideoList {
+function Update-VideoList {
 	[OutputType([System.Void])]
 	Param (
 		[Parameter(Mandatory = $true, Position = 0)][String]$keyword,
 		[Parameter(Mandatory = $true, Position = 1)][String]$episodePage
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$script:videoName = '' ; $script:videoFilePath = ''
 	$script:broadcastDate = '' ; $script:videoSeries = '' ; $script:videoSeason = ''
@@ -751,23 +754,23 @@ function generateTVerVideoList {
 	$episodeID = $episodePage.Replace('https://tver.jp/episodes/', '')
 
 	#TVerのAPIを叩いて番組情報取得
-	goAnal -Operation 'getinfo' -TVerType 'link' -TVerID $episodeID
-	try { getVideoInfo $episodeID }
+	Invoke-StatisticsCheck -Operation 'getinfo' -TVerType 'link' -TVerID $episodeID
+	try { Get-VideoInfo $episodeID }
 	catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:91') ; continue }
 
 	#ダウンロード対象外に入っている番組の場合はリスト出力しない
-	$ignoreTitles = @(loadIgnoreList)
+	$ignoreTitles = @(Get-IgnoreList)
 	foreach ($ignoreTitle in $ignoreTitles) {
 		if ($ignoreTitle -ne '') {
 			if ($script:videoSeries -cmatch [Regex]::Escape($ignoreTitle)) {
 				$ignoreWord = $ignoreTitle
-				sortIgnoreList $ignoreTitle
+				Update-IgnoreList $ignoreTitle
 				$ignore = $true
 				#ダウンロード対象外と合致したものはそれ以上のチェック不要
 				break
 			} elseif ($script:videoTitle -cmatch [Regex]::Escape($ignoreTitle)) {
 				$ignoreWord = $ignoreTitle
-				sortIgnoreList $ignoreTitle
+				Update-IgnoreList $ignoreTitle
 				$ignore = $true
 				#ダウンロード対象外と合致したものはそれ以上のチェック不要
 				break
@@ -776,7 +779,7 @@ function generateTVerVideoList {
 	}
 
 	#スキップフラグが立っているかチェック
-	if ($ignore -eq $true) {
+	if ($ignore) {
 		Write-Output ('❗ 番組をコメントアウトした状態でリストファイルに追加します')
 		$newVideo = [pscustomobject]@{
 			seriesName    = $script:videoSeries
@@ -814,23 +817,23 @@ function generateTVerVideoList {
 
 	#ダウンロードリストCSV書き出し
 	try {
-		while ((fileLock $script:listLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+		while ((Lock-File $script:listLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$newVideo | Export-Csv -LiteralPath $script:listFilePath -Encoding UTF8 -Append
 		Write-Debug ('ダウンロードリストを書き込みました')
 	} catch { Write-Warning ('❗ ダウンロードリストを更新できませんでした。スキップします') ; continue }
-	finally { $null = fileUnlock $script:listLockFilePath }
+	finally { $null = Unlock-File $script:listLockFilePath }
 }
 
 #----------------------------------------------------------------------
 #TVerのAPIを叩いて番組情報取得
 #----------------------------------------------------------------------
-function getVideoInfo {
+function Get-VideoInfo {
 	[OutputType([System.Void])]
 	Param (
 		[Parameter(Mandatory = $true, Position = 0)][String]$episodeID
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	#----------------------------------------------------------------------
 	#番組説明以外
@@ -845,9 +848,9 @@ function getVideoInfo {
 	#		Episode.Content.SeriesTitleだとSeries名+Season名が設定される番組もある
 	#	なのでSeries.Content.TitleとEpisode.Content.SeriesTitleの短い方を採用する
 	if ($response.Result.Episode.Content.SeriesTitle.Length -le $response.Result.Series.Content.Title.Length ) {
-		$script:videoSeries = (getSpecialCharacterReplaced (getNarrowChars ($response.Result.Episode.Content.SeriesTitle))).Trim()
+		$script:videoSeries = (Remove-SpecialCharacter (Get-NarrowChars ($response.Result.Episode.Content.SeriesTitle))).Trim()
 	} else {
-		$script:videoSeries = (getSpecialCharacterReplaced (getNarrowChars ($response.Result.Series.Content.Title))).Trim()
+		$script:videoSeries = (Remove-SpecialCharacter (Get-NarrowChars ($response.Result.Series.Content.Title))).Trim()
 	}
 	$script:videoSeriesID = $response.Result.Series.Content.Id
 	#$videoSeriesPageURL = ('https://tver.jp/series/{0}' -f $response.Result.Series.Content.Id)
@@ -855,19 +858,19 @@ function getVideoInfo {
 	#シーズン
 	#Season Name
 	#	$response.Result.Season.Content.Title
-	$script:videoSeason = (getSpecialCharacterReplaced (getNarrowChars ($response.Result.Season.Content.Title))).Trim()
+	$script:videoSeason = (Remove-SpecialCharacter (Get-NarrowChars ($response.Result.Season.Content.Title))).Trim()
 	$script:videoSeasonID = $response.Result.Season.Content.Id
 
 	#エピソード
 	#	$response.Result.Episode.Content.Title
-	$script:videoTitle = (getSpecialCharacterReplaced (getNarrowChars ($response.Result.Episode.Content.Title))).Trim()
+	$script:videoTitle = (Remove-SpecialCharacter (Get-NarrowChars ($response.Result.Episode.Content.Title))).Trim()
 	$script:videoEpisodeID = $response.Result.Episode.Content.Id
 
 	#放送局
 	#	$response.Result.Episode.Content.BroadcasterName
 	#	$response.Result.Episode.Content.ProductionProviderName
-	$script:mediaName = (getNarrowChars ($response.Result.Episode.Content.BroadcasterName)).Trim()
-	$script:providerName = (getNarrowChars ($response.Result.Episode.Content.ProductionProviderName)).Trim()
+	$script:mediaName = (Get-NarrowChars ($response.Result.Episode.Content.BroadcasterName)).Trim()
+	$script:providerName = (Get-NarrowChars ($response.Result.Episode.Content.ProductionProviderName)).Trim()
 
 	#放送日
 	#	$response.Result.Episode.Content.BroadcastDateLabel
@@ -875,7 +878,7 @@ function getVideoInfo {
 
 	#配信終了日時
 	#	$response.Result.Episode.Content.EndAt
-	$script:endTime = (unixTimeToDateTime ($response.Result.Episode.Content.EndAt)).AddHours(9)
+	$script:endTime = (ConvertFrom-UnixTime ($response.Result.Episode.Content.EndAt)).AddHours(9)
 
 	#----------------------------------------------------------------------
 	#番組説明
@@ -883,17 +886,17 @@ function getVideoInfo {
 	$tverVideoInfoBaseURL = 'https://statics.tver.jp/content/episode/'
 	$tverVideoInfoURL = ('{0}{1}.json?v={2}' -f $tverVideoInfoBaseURL, $episodeID, $versionNum)
 	$videoInfo = Invoke-RestMethod -Uri $tverVideoInfoURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
-	$script:descriptionText = (getNarrowChars ($videoInfo.Description).Replace('&amp;', '&')).Trim()
-	$script:videoEpisode = (getNarrowChars ($videoInfo.No)).Trim()
+	$script:descriptionText = (Get-NarrowChars ($videoInfo.Description).Replace('&amp;', '&')).Trim()
+	$script:videoEpisode = (Get-NarrowChars ($videoInfo.No)).Trim()
 
 	#----------------------------------------------------------------------
 	#各種整形
 
 	#「《」と「》」で挟まれた文字を除去
-	if ($script:removeSpecialNote -eq $true) {
-		$script:videoSeries = removeSpecialNote $script:videoSeries
-		$script:videoSeason = removeSpecialNote $script:videoSeason
-		$script:videoTitle = removeSpecialNote $script:videoTitle
+	if ($script:removeSpecialNote) {
+		$script:videoSeries = Remove-SpecialNote $script:videoSeries
+		$script:videoSeason = Remove-SpecialNote $script:videoSeason
+		$script:videoTitle = Remove-SpecialNote $script:videoTitle
 	}
 
 	#シーズン名が本編の場合はシーズン名をクリア
@@ -917,7 +920,7 @@ function getVideoInfo {
 #----------------------------------------------------------------------
 #保存ファイル名を設定
 #----------------------------------------------------------------------
-function getVideoFileName {
+function Set-VideoFileName {
 	[OutputType([String])]
 	Param (
 		[Parameter(Mandatory = $false, Position = 0)][String]$series,
@@ -927,7 +930,7 @@ function getVideoFileName {
 		[Parameter(Mandatory = $false, Position = 4)][String]$date
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	#ファイル名を生成
 	if ($script:addSeriesName) { $videoName = ('{0}{1} ' -f $videoName, $series) }
@@ -937,7 +940,7 @@ function getVideoFileName {
 	$videoName = ('{0}{1}' -f $videoName, $title)
 
 	#ファイル名にできない文字列を除去
-	$videoName = (getFileNameWoInvChars $videoName).Replace('  ', ' ').Trim()
+	$videoName = (Get-FileNameWithoutInvalidChars $videoName).Replace('  ', ' ').Trim()
 
 	#SMBで255バイトまでしかファイル名を持てないらしいので、超えないようにファイル名をトリミング
 	#youtube-dlの中間ファイル等を考慮して安全目の上限値
@@ -949,7 +952,7 @@ function getVideoFileName {
 		}
 		$videoName = ('{0}……' -f $videoName)
 	}
-	$videoName = getFileNameWoInvChars ('{0}.mp4' -f $videoName)
+	$videoName = Get-FileNameWithoutInvalidChars ('{0}.mp4' -f $videoName)
 
 	return $videoName
 }
@@ -957,7 +960,7 @@ function getVideoFileName {
 #----------------------------------------------------------------------
 #番組情報表示
 #----------------------------------------------------------------------
-function showVideoInfo {
+function Show-VideoInfo {
 	[OutputType([System.Void])]
 	Param (
 		[Parameter(Mandatory = $false, Position = 0)][String]$name,
@@ -966,7 +969,7 @@ function showVideoInfo {
 		[Parameter(Mandatory = $false, Position = 3)][String]$endTime
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	Write-Output ('　番組名:　 {0}' -f $name.Replace('.mp4', ''))
 	Write-Output ('　放送日:　 {0}' -f $date)
@@ -976,7 +979,7 @@ function showVideoInfo {
 #----------------------------------------------------------------------
 #番組情報デバッグ表示
 #----------------------------------------------------------------------
-function showVideoDebugInfo {
+function Show-VideoDebugInfo {
 	[OutputType([System.Void])]
 	Param (
 		[Parameter(Mandatory = $false, Position = 0)][String]$episodePage,
@@ -991,7 +994,7 @@ function showVideoDebugInfo {
 		[Parameter(Mandatory = $false, Position = 9)][String]$description
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	Write-Debug ('番組エピソードページ: {0}' -f $episodePage)
 	Write-Debug ('番組シリーズページ: {0}' -f $seriesPage)
@@ -1008,15 +1011,15 @@ function showVideoDebugInfo {
 #----------------------------------------------------------------------
 #youtube-dlプロセスの起動
 #----------------------------------------------------------------------
-function executeYtdl {
+function Invoke-Ytdl {
 	[OutputType([System.Void])]
 	Param (
 		[Parameter(Mandatory = $false, Position = 0)][String]$url
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
-	goAnal -Operation 'download'
+	Invoke-StatisticsCheck -Operation 'download'
 
 	$tmpDir = ('temp:{0}' -f $script:downloadWorkDir)
 	$saveDir = ('home:{0}' -f $script:videoFileDir)
@@ -1030,8 +1033,8 @@ function executeYtdl {
 	if (($script:rateLimit -ne 0) -or ($script:rateLimit -ne '')) {
 		$ytdlArgs += (' {0} {1}M' -f '--limit-rate', [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8))
 	}
-	if ($script:embedSubtitle -eq $true) { $ytdlArgs += (' {0}' -f '--sub-langs all --convert-subs srt --embed-subs') }
-	if ($script:embedMetatag -eq $true) { $ytdlArgs += (' {0}' -f '--embed-metadata') }
+	if ($script:embedSubtitle) { $ytdlArgs += (' {0}' -f '--sub-langs all --convert-subs srt --embed-subs') }
+	if ($script:embedMetatag) { $ytdlArgs += (' {0}' -f '--embed-metadata') }
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $saveDir)
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $tmpDir)
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $subttlDir)
@@ -1040,7 +1043,7 @@ function executeYtdl {
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $descDir)
 	$ytdlArgs += (' {0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
 	$ytdlArgs += (' {0} "{1}"' -f '--output', $saveFile)
-	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:acceptLang)
+	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlAcceptLang)
 	$ytdlArgs += (' {0}' -f $script:ytdlOption)
 	$ytdlArgs += (' {0}' -f $url)
 
@@ -1069,11 +1072,11 @@ function executeYtdl {
 #----------------------------------------------------------------------
 #youtube-dlのプロセスが終わるまで待機
 #----------------------------------------------------------------------
-function waitTillYtdlProcessIsZero () {
+function Wait-DownloadCompletion () {
 	[OutputType([System.Void])]
 	Param ()
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$psCmd = 'ps'
 
@@ -1108,11 +1111,11 @@ function waitTillYtdlProcessIsZero () {
 #----------------------------------------------------------------------
 #ダウンロード履歴の不整合を解消
 #----------------------------------------------------------------------
-function cleanDB {
+function Optimize-HistoryFile {
 	[OutputType([System.Void])]
 	Param ()
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$histData0 = @()
 	$histData1 = @()
@@ -1120,7 +1123,7 @@ function cleanDB {
 	$mergedHistData = @()
 
 	try {
-		while ((fileLock $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+		while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 
 		#videoValidatedが空白でないもの
 		$histData = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $null -ne $_.videoValidated }))
@@ -1134,61 +1137,61 @@ function cleanDB {
 		$mergedHistData | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
 
 	} catch { Write-Warning ('❗ ダウンロード履歴の更新に失敗しました') }
-	finally { $null = fileUnlock $script:histLockFilePath }
+	finally { $null = Unlock-File $script:histLockFilePath }
 }
 
 #----------------------------------------------------------------------
 #30日以上前に処理したものはダウンロード履歴から削除
 #----------------------------------------------------------------------
-function purgeDB {
+function Limit-HistoryFile {
 	[OutputType([System.Void])]
 	Param (
 		[Parameter(Mandatory = $true, Position = 0)][Int32]$retentionPeriod
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	try {
-		while ((fileLock $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+		while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$purgedHist = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ [DateTime]::ParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null) -gt (Get-Date).AddDays(-1 * [Int32]$retentionPeriod) }))
 		$purgedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
 	} catch { Write-Warning ('❗ ダウンロード履歴のクリーンアップに失敗しました') }
-	finally { $null = fileUnlock $script:histLockFilePath }
+	finally { $null = Unlock-File $script:histLockFilePath }
 }
 
 #----------------------------------------------------------------------
 #ダウンロード履歴の重複削除
 #----------------------------------------------------------------------
-function uniqueDB {
+function Repair-HistoryFile {
 	[OutputType([System.Void])]
 	Param ()
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$uniquedHist = @()
 
 	try {
-		while ((fileLock $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+		while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 
 		#videoPageで1つしかないもの残し、ダウンロード日時でソート
 		$uniquedHist = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8 | Group-Object -Property 'videoPage' | Where-Object count -EQ 1 | Select-Object -ExpandProperty group | Sort-Object -Property downloadDate)
 		$uniquedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
 
 	} catch { Write-Warning ('❗ ダウンロード履歴の更新に失敗しました') }
-	finally { $null = fileUnlock $script:histLockFilePath }
+	finally { $null = Unlock-File $script:histLockFilePath }
 }
 
 #----------------------------------------------------------------------
 #番組の整合性チェック
 #----------------------------------------------------------------------
-function checkVideo {
+function Invoke-ValidityCheck {
 	[OutputType([System.Void])]
 	Param (
 		[Parameter(Mandatory = $false, Position = 0)][String]$decodeOption,
 		[Parameter(Mandatory = $false, Position = 1)][String]$path
 	)
 
-	Write-Debug ('{0}' -f $myInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$errorCount = 0
 	$checkStatus = 0
@@ -1198,7 +1201,7 @@ function checkVideo {
 
 	#これからチェックする番組のステータスをチェック
 	try {
-		while ((fileLock $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+		while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$videoHists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 		$checkStatus = ($videoHists.Where({ $_.videoPath -eq $path })).videoValidated
 		switch ($checkStatus) {
@@ -1213,11 +1216,11 @@ function checkVideo {
 			default { Write-Warning ('❗ 既にダウンロード履歴から削除されたようです: {0}' -f $path) ; return ; break }
 		}
 	} catch { Write-Warning ('❗ ダウンロード履歴を更新できませんでした: {0}' -f $path) ; return }
-	finally { $null = fileUnlock $script:histLockFilePath }
+	finally { $null = Unlock-File $script:histLockFilePath }
 
-	goAnal -Operation 'validate'
+	Invoke-StatisticsCheck -Operation 'validate'
 
-	if ($script:simplifiedValidation -eq $true) {
+	if ($script:simplifiedValidation) {
 		#ffprobeを使った簡易検査
 		$ffprobeArgs = (' -hide_banner -v error -err_detect explode -i "{0}"' -f $videoFilePath)
 		Write-Debug ('ffprobe起動コマンド: {0}{1}' -f $script:ffprobePath, $ffprobeArgs)
@@ -1286,13 +1289,13 @@ function checkVideo {
 
 		#破損しているダウンロードファイルをダウンロード履歴から削除
 		try {
-			while ((fileLock $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+			while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 			$videoHists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 			#該当の番組のレコードを削除
 			$videoHists = @($videoHists.Where({ $_.videoPath -ne $path }))
 			$videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
 		} catch { Write-Warning ('❗ ダウンロード履歴の更新に失敗しました: {0}' -f $path) }
-		finally { $null = fileUnlock $script:histLockFilePath }
+		finally { $null = Unlock-File $script:histLockFilePath }
 
 		#破損しているダウンロードファイルを削除
 		try { Remove-Item -LiteralPath $videoFilePath -Force -ErrorAction SilentlyContinue }
@@ -1303,13 +1306,13 @@ function checkVideo {
 		#終了コードが0のときはダウンロード履歴にチェック済フラグを立てる
 		Write-Output ('　✔️')
 		try {
-			while ((fileLock $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+			while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 			$videoHists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 			#該当の番組のチェックステータスを1に
 			$videoHists.Where({ $_.videoPath -eq $path }).Where({ $_.videoValidated = '1' })
 			$videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
 		} catch { Write-Warning ('❗ ダウンロード履歴を更新できませんでした: {0}' -f $path) }
-		finally { $null = fileUnlock $script:histLockFilePath }
+		finally { $null = Unlock-File $script:histLockFilePath }
 
 	}
 

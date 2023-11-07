@@ -43,24 +43,24 @@ try {
 if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
-	if ($? -eq $false) { exit 1 }
+	if (!$?) { exit 1 }
 } catch { Write-Error ('❗ 関数の読み込みに失敗しました') ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
 
 #設定で指定したファイル・ディレクトリの存在チェック
-checkRequiredFile
+Invoke-RequiredFileCheck
 
 $local:keyword = 'リスト指定'
-getToken
+Get-Token
 
 #ダウンロードリストを読み込み
-$local:listLinks = @(loadLinkFromDownloadList)
+$local:listLinks = @(Get-LinkFromDownloadList)
 if ($null -eq $local:listLinks) { Write-Warning ('💡 ダウンロードリストが0件です') ; exit 0 }
 
 #URLがすでにダウンロード履歴に存在する場合は検索結果から除外
-$local:videoLinks, $local:processedCount = checkHistory $local:listLinks
+$local:videoLinks, $local:processedCount = Invoke-HistoryMatchCheck $local:listLinks
 $local:videoTotal = $local:videoLinks.Count
 Write-Output ('')
 if ($local:videoTotal -eq 0) {
@@ -74,7 +74,7 @@ if ($local:videoTotal -eq 0) {
 $local:totalStartTime = Get-Date
 $local:secRemaining = -1
 
-showProgressToast `
+Show-ProgressToast `
 	-Text1 'リストからの番組のダウンロード' `
 	-Text2 'リストファイルから番組をダウンロード' `
 	-WorkDetail '読み込み中...' `
@@ -97,7 +97,7 @@ foreach ($local:videoLink in $local:videoLinks) {
 	$local:secRemaining = [Int][Math]::Ceiling(($local:secElapsed.TotalSeconds / $local:videoNum) * ($local:videoTotal - $local:videoNum))
 	$local:minRemaining = ('{0}分' -f ([Int][Math]::Ceiling($local:secRemaining / 60)))
 	#進捗更新
-	updateProgressToast `
+	Update-ProgressToast `
 		-Title 'リストからの番組のダウンロード' `
 		-Rate $local:progressRate `
 		-LeftText $local:videoNum/$local:videoTotal `
@@ -107,16 +107,16 @@ foreach ($local:videoLink in $local:videoLinks) {
 	Write-Output ('--------------------------------------------------')
 	Write-Output ('{0}/{1} - {2}' -f $local:videoNum, $local:videoTotal, $local:videoLink)
 	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
-	waitTillYtdlProcessGetFewer $script:parallelDownloadFileNum
+	Wait-YtdlProcess $script:parallelDownloadFileNum
 	#TVer番組ダウンロードのメイン処理
-	downloadTVerVideo `
+	Invoke-VideoDownload `
 		-Keyword $local:keyword `
 		-EpisodePage $local:videoLink `
 		-Force $false
 }
 #----------------------------------------------------------------------
 
-updateProgressToast `
+Update-ProgressToast `
 	-Title 'リストからの番組のダウンロード' `
 	-Rate '1' `
 	-LeftText '' `
@@ -127,9 +127,9 @@ updateProgressToast `
 #youtube-dlのプロセスが終わるまで待機
 Write-Output ('')
 Write-Output ('ダウンロードの終了を待機しています')
-waitTillYtdlProcessIsZero
+Wait-DownloadCompletion
 
-invokeGarbageCollection
+Invoke-GarbageCollection
 
 Write-Output ('')
 Write-Output ('---------------------------------------------------------------------------')

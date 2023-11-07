@@ -71,8 +71,8 @@ try {
 #GUI起動を判定
 if ( $script:myInvocation.ScriptName.Contains('gui')) {
 	#TVerRecの最新化チェック
-	checkLatestTVerRec
-	if ($? -eq $false) { exit 1 }
+	Invoke-TVerRecUpdateCheck
+	if (!$?) { exit 1 }
 } else {
 	if (($null -eq $script:uiMode) -or ($script:uiMode -eq '')) {
 		[Console]::ForegroundColor = 'Red'
@@ -92,16 +92,14 @@ if ( $script:myInvocation.ScriptName.Contains('gui')) {
 		[Console]::ResetColor()
 	}
 
-	#youtube-dlの最新化チェック
-	checkLatestVersion -scriptName 'update_youtube-dl.ps1' -targetName 'youtube-dl' -disableUpdate $script:disableUpdateYoutubedl
-
-	#ffmpegの最新化チェック
-	checkLatestVersion -scriptName 'update_ffmpeg.ps1' -targetName 'ffmpeg' -disableUpdate $script:disableUpdateFfmpeg
+	#youtube-dl/ffmpegの最新化チェック
+	if (!$script:disableUpdateYoutubedl) { Invoke-ToolUpdateCheck -scriptName 'update_youtube-dl.ps1' -targetName 'youtube-dl' }
+	if (!$script:disableUpdateFfmpeg) { Invoke-ToolUpdateCheck -scriptName 'update_ffmpeg.ps1' -targetName 'ffmpeg' }
 
 	#TVerRecの最新化チェック
 	if ($script:appName -eq 'TVerRec') {
-		checkLatestTVerRec
-		if ($? -eq $false) { exit 1 }
+		Invoke-TVerRecUpdateCheck
+		if (!$?) { exit 1 }
 	}
 
 }

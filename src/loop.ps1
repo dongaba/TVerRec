@@ -51,7 +51,7 @@ while ($true) {
 	. ('{0}/delete_trash.ps1' -f $script:scriptRoot) $script:uiMode
 	. ('{0}/validate_video.ps1' -f $script:scriptRoot) $script:uiMode
 	. ('{0}/move_video.ps1' -f $script:scriptRoot) $script:uiMode
-	invokeGarbageCollection
+	Invoke-GarbageCollection
 	Write-Output ('')
 	Write-Output ('{0}秒待機します。' -f $script:loopCycle)
 	$local:remainingWaitTime = $script:loopCycle
@@ -61,7 +61,7 @@ while ($true) {
 		$local:remainingWaitTime -= 100
 		Start-Sleep -Second 100
 	} while ($local:remainingWaitTime -ge 0)
-	invokeGarbageCollection
+	Invoke-GarbageCollection
 }
 #----------------------------------------------------------------------
-invokeGarbageCollection
+Invoke-GarbageCollection
