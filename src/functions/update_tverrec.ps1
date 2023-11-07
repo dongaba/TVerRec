@@ -79,10 +79,10 @@ function Move-Files() {
 Set-StrictMode -Version Latest
 try {
 	if ($script:myInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$local:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition
-		$local:scriptRoot = Split-Path -Parent -Path $local:scriptRoot
-	} else { $local:scriptRoot = Convert-Path .. }
-	Set-Location $local:scriptRoot
+		$scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition
+		$scriptRoot = Split-Path -Parent -Path $scriptRoot
+	} else { $scriptRoot = Convert-Path .. }
+	Set-Location $scriptRoot
 } catch { Write-Error ('❗ ディレクトリ設定に失敗しました') ; exit 1 }
 if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 
@@ -95,14 +95,14 @@ Write-Output ('                          TVerRecアップデート処理        
 Write-Output ('---------------------------------------------------------------------------')
 Write-Output ('===========================================================================')
 
-$local:repo = 'dongaba/TVerRec'
-$local:releases = ('https://api.github.com/repos/{0}/releases/latest' -f $local:repo)
+$repo = 'dongaba/TVerRec'
+$releases = ('https://api.github.com/repos/{0}/releases/latest' -f $repo)
 
 #念のため過去のバージョンがあれば削除し、作業ディレクトリを作成
 Write-Output ('')
 Write-Output ('-----------------------------------------------------------------')
 Write-Output ('作業ディレクトリを作成します')
-$updateTemp = Join-Path $local:scriptRoot '../tverrec-update-temp'
+$updateTemp = Join-Path $scriptRoot '../tverrec-update-temp'
 if (Test-Path $updateTemp ) { Remove-Item -LiteralPath $updateTemp -Force -Recurse -ErrorAction SilentlyContinue }
 try { $null = New-Item -ItemType Directory -Path $updateTemp }
 catch { Write-Error ('❗ 作業ディレクトリの作成に失敗しました') ; exit 1 }
@@ -112,8 +112,8 @@ Write-Output ('')
 Write-Output ('-----------------------------------------------------------------')
 Write-Output ('TVerRecの最新版をダウンロードします')
 try {
-	$local:zipURL = (Invoke-RestMethod -Uri $local:releases -Method 'GET' ).zipball_url
-	Invoke-WebRequest -UseBasicParsing -Uri $local:zipURL -OutFile (Join-Path $updateTemp 'TVerRecLatest.zip')
+	$zipURL = (Invoke-RestMethod -Uri $releases -Method 'GET' ).zipball_url
+	Invoke-WebRequest -UseBasicParsing -Uri $zipURL -OutFile (Join-Path $updateTemp 'TVerRecLatest.zip')
 } catch { Write-Error ('❗ ダウンロードに失敗しました') ; exit 1 }
 
 #最新バージョンがダウンロードできていたら展開
@@ -135,7 +135,7 @@ try {
 	$newTVerRecDir = (Get-ChildItem -LiteralPath $updateTemp -Directory ).fullname
 	Get-ChildItem -LiteralPath $newTVerRecDir -Force | ForEach-Object {
 		# Move-Item を行う function として Move-Files 作成して呼び出す
-		Move-Files -Source $_.FullName -Destination ('{0}{1}' -f (Join-Path $local:scriptRoot '../'), $_.Name )
+		Move-Files -Source $_.FullName -Destination ('{0}{1}' -f (Join-Path $scriptRoot '../'), $_.Name )
 	}
 } catch { Write-Error ('❗ ダウンロードしたTVerRecの配置に失敗しました') ; exit 1 }
 

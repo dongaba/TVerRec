@@ -54,13 +54,13 @@ while ($true) {
 	Invoke-GarbageCollection
 	Write-Output ('')
 	Write-Output ('{0}秒待機します。' -f $script:loopCycle)
-	$local:remainingWaitTime = $script:loopCycle
+	$remainingWaitTime = $script:loopCycle
 	do {
 		Start-Sleep -Second 100
-		$local:remainingWaitTime -= 100
-		$local:progressRatio = [Int]($local:remainingWaitTime / $script:loopCycle * 100 / 2 )
-		Write-Output ('[{0}{1}] 残り{2}秒' -f $('#' * $(50 - $local:progressRatio)), $('.' * $local:progressRatio), $local:remainingWaitTime)
-	} while ($local:remainingWaitTime -ge 0)
+		$remainingWaitTime -= 100
+		$progressRatio = [Int]($remainingWaitTime / $script:loopCycle * 100 / 2 )
+		Write-Output ('[{0}{1}] 残り{2}秒' -f $('#' * $(50 - $progressRatio)), $('.' * $progressRatio), $remainingWaitTime)
+	} while ($remainingWaitTime -ge 0)
 	Invoke-GarbageCollection
 }
 #----------------------------------------------------------------------

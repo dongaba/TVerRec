@@ -93,115 +93,115 @@ function SelectFolder($description, $textBox) {
 function loadDefaultSetting {
 	Param (
 		[Parameter(Mandatory = $true, Position = 0)]
-		[String]$local:key
+		[String]$key
 	)
-	try { $local:defaultSetting = (Select-String -Pattern ('^{0}' -f $local:key.Replace('$', '\$')) -LiteralPath $script:systemSettingFile | ForEach-Object { $_.Line }).split('=')[1].Trim() }
-	catch { $local:defaultSetting = '' }
+	try { $defaultSetting = (Select-String -Pattern ('^{0}' -f $key.Replace('$', '\$')) -LiteralPath $script:systemSettingFile | ForEach-Object { $_.Line }).split('=')[1].Trim() }
+	catch { $defaultSetting = '' }
 
-	return $local:defaultSetting.Trim("'")
+	return $defaultSetting.Trim("'")
 }
 
 #user_setting.ps1から各設定項目を読み込む
 function loadCurrentSetting {
 	Param (
 		[Parameter(Mandatory = $true, Position = 0)]
-		[String]$local:key
+		[String]$key
 	)
-	try { $local:currentSetting = (Select-String -Pattern ('^{0}' -f $local:key.Replace('$', '\$')) -LiteralPath $script:userSettingFile | ForEach-Object { $_.Line }).split('=', 2)[1].Trim() }
-	catch { $local:currentSetting = '' }
+	try { $currentSetting = (Select-String -Pattern ('^{0}' -f $key.Replace('$', '\$')) -LiteralPath $script:userSettingFile | ForEach-Object { $_.Line }).split('=', 2)[1].Trim() }
+	catch { $currentSetting = '' }
 
-	return $local:currentSetting.Trim("'")
+	return $currentSetting.Trim("'")
 }
 
 #user_setting.ps1に各設定項目を書き込む
 function writeSetting {
 
-	$local:newSetting = @()
-	$local:startSegment = '##Start Setting Generated from GUI'
-	$local:endSegment = '##End Setting Generated from GUI'
+	$newSetting = @()
+	$startSegment = '##Start Setting Generated from GUI'
+	$endSegment = '##End Setting Generated from GUI'
 
 	#自動生成部分の行数を取得
 	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 		try {
-			$local:totalLineNum = (Get-Content -LiteralPath $script:userSettingFile).Count
-		} catch { $local:totalLineNum = 0 }
+			$totalLineNum = (Get-Content -LiteralPath $script:userSettingFile).Count
+		} catch { $totalLineNum = 0 }
 		try {
-			$local:headLineNum = (Select-String $local:startSegment $script:userSettingFile | ForEach-Object { $_.LineNumber }) - 1
-		} catch { $local:headLineNum = 0 }
+			$headLineNum = (Select-String $startSegment $script:userSettingFile | ForEach-Object { $_.LineNumber }) - 1
+		} catch { $headLineNum = 0 }
 		try {
-			$local:tailLineNum = $local:totalLineNum - (Select-String $local:endSegment $script:userSettingFile | ForEach-Object { $_.LineNumber })
-		} catch { $local:tailLineNum = 0 }
-	} else { $local:totalLineNum = 0 ; $local:headLineNum = 0 ; $local:tailLineNum = 0 }
+			$tailLineNum = $totalLineNum - (Select-String $endSegment $script:userSettingFile | ForEach-Object { $_.LineNumber })
+		} catch { $tailLineNum = 0 }
+	} else { $totalLineNum = 0 ; $headLineNum = 0 ; $tailLineNum = 0 }
 
 	#自動生成より前の部分
-	if ( $local:totalLineNum -ne 0 ) {
-		try { $local:newSetting += Get-Content $userSettingFile -Head $local:headLineNum }
+	if ( $totalLineNum -ne 0 ) {
+		try { $newSetting += Get-Content $userSettingFile -Head $headLineNum }
 		catch { Write-Warning ('❗ 自動生成の開始部分を特定できませんでした') }
 	}
 
 	#自動生成の部分
-	$local:newSetting += $local:startSegment
+	$newSetting += $startSegment
 	if ($null -ne $script:settingAttributes) {
-		foreach ($local:settingAttribute in $script:settingAttributes) {
-			$local:settingBoxName = $local:settingAttribute.Replace('$script:', '')
-			$local:settingBox = $script:settingWindow.FindName($local:settingBoxName)
+		foreach ($settingAttribute in $script:settingAttributes) {
+			$settingBoxName = $settingAttribute.Replace('$script:', '')
+			$settingBox = $script:settingWindow.FindName($settingBoxName)
 
 			switch ($true) {
-				(($local:settingBox.Text -eq '') `
-					-or ($local:settingBox.Text -eq 'デフォルト値') `
-					-or ($local:settingBox.Text -eq '未設定')) {
+				(($settingBox.Text -eq '') `
+					-or ($settingBox.Text -eq 'デフォルト値') `
+					-or ($settingBox.Text -eq '未設定')) {
 					#設定していないときは出力しない
 					break
 				}
-				($local:settingBox.Text -eq 'する') {
+				($settingBox.Text -eq 'する') {
 					#するを$trueに置換
-					$local:newSetting += ('{0} = {1}' -f $local:settingAttribute, '$true') ; break
+					$newSetting += ('{0} = {1}' -f $settingAttribute, '$true') ; break
 				}
-				($local:settingBox.Text -eq 'しない') {
+				($settingBox.Text -eq 'しない') {
 					#しないを$falseに置換
-					$local:newSetting += ('{0} = {1}' -f $local:settingAttribute, '$false') ; break
+					$newSetting += ('{0} = {1}' -f $settingAttribute, '$false') ; break
 				}
-				( [Int]::TryParse($local:settingBox.Text, [ref]$null) ) {
+				( [Int]::TryParse($settingBox.Text, [ref]$null) ) {
 					#数字はシングルクォーテーション不要
-					$local:newSetting += ('{0} = {1}' -f $local:settingAttribute, $local:settingBox.Text) ; break
+					$newSetting += ('{0} = {1}' -f $settingAttribute, $settingBox.Text) ; break
 				}
-				($local:settingBox.Text -cmatch '^[a-zA-Z]:') {
+				($settingBox.Text -cmatch '^[a-zA-Z]:') {
 					#ドライブ文字列で開始する場合はシングルクォーテーション必要
-					$local:newSetting += ('{0} = ''{1}''' -f $local:settingAttribute, $local:settingBox.Text)
+					$newSetting += ('{0} = ''{1}''' -f $settingAttribute, $settingBox.Text)
 					break
 				}
-				($local:settingBox.Text -cmatch '^\\\\') {
+				($settingBox.Text -cmatch '^\\\\') {
 					#UNCパスの場合はシングルクォーテーション必要
-					$local:newSetting += ('{0} = ''{1}''' -f $local:settingAttribute, $local:settingBox.Text)
+					$newSetting += ('{0} = ''{1}''' -f $settingAttribute, $settingBox.Text)
 					break
 				}
-				($local:settingBox.Text.Contains('$') `
-					-or $local:settingBox.Text.Contains('{') `
-					-or $local:settingBox.Text.Contains('(') `
-					-or $local:settingBox.Text.Contains('}') `
-					-or $local:settingBox.Text.Contains(')') ) {
+				($settingBox.Text.Contains('$') `
+					-or $settingBox.Text.Contains('{') `
+					-or $settingBox.Text.Contains('(') `
+					-or $settingBox.Text.Contains('}') `
+					-or $settingBox.Text.Contains(')') ) {
 					#Powershellの変数や関数等を含む場合はシングルクォーテーション不要
-					$local:newSetting += ('{0} = {1}' -f $local:settingAttribute, $local:settingBox.Text)
+					$newSetting += ('{0} = {1}' -f $settingAttribute, $settingBox.Text)
 					break
 				}
 				default {
 					#それ以外はシングルクォーテーション必要
-					$local:newSetting += ('{0} = ''{1}''' -f $local:settingAttribute, $local:settingBox.Text)
+					$newSetting += ('{0} = ''{1}''' -f $settingAttribute, $settingBox.Text)
 					break
 				}
 			}
 		}
 	}
-	$local:newSetting += $local:endSegment
+	$newSetting += $endSegment
 
 	#自動生成より後の部分
-	if ( $local:totalLineNum -ne 0 ) {
-		try { $local:newSetting += Get-Content $script:userSettingFile -Tail $local:tailLineNum }
+	if ( $totalLineNum -ne 0 ) {
+		try { $newSetting += Get-Content $script:userSettingFile -Tail $tailLineNum }
 		catch { Write-Warning ('❗ 自動生成の終了部分を特定できませんでした') }
 	}
 
 	#改行コードをLFで出力
-	$local:newSetting | ForEach-Object { ("{0}`n" -f $_) } | Out-File -LiteralPath $script:userSettingFile -Encoding UTF8 -NoNewline
+	$newSetting | ForEach-Object { ("{0}`n" -f $_) } | Out-File -LiteralPath $script:userSettingFile -Encoding UTF8 -NoNewline
 
 }
 
@@ -219,10 +219,10 @@ $script:userSettingFile = Join-Path $script:confDir 'user_setting.ps1'
 #region WPFのWindow設定
 
 try {
-	[String]$local:mainXaml = Get-Content -LiteralPath (Join-Path $script:wpfDir 'TVerRecSetting.xaml')
-	$local:mainXaml = $local:mainXaml -ireplace 'mc:Ignorable="d"', '' -ireplace 'x:N', 'N' -ireplace 'x:Class=".*?"', ''
-	[xml]$local:mainCleanXaml = $local:mainXaml
-	$script:settingWindow = [System.Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $local:mainCleanXaml))
+	[String]$mainXaml = Get-Content -LiteralPath (Join-Path $script:wpfDir 'TVerRecSetting.xaml')
+	$mainXaml = $mainXaml -ireplace 'mc:Ignorable="d"', '' -ireplace 'x:N', 'N' -ireplace 'x:Class=".*?"', ''
+	[xml]$mainCleanXaml = $mainXaml
+	$script:settingWindow = [System.Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $mainCleanXaml))
 } catch { Write-Error ('❗ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。') ; exit 1 }
 
 #PowerShellのウィンドウを非表示に
@@ -230,8 +230,8 @@ Add-Type -Name Window -Namespace Console -MemberDefinition '
 [DllImport("Kernel32.dll")]public static extern IntPtr GetConsoleWindow() ;
 [DllImport("user32.dll")]public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow) ;
 '
-$local:console = [Console.Window]::GetConsoleWindow()
-$null = [Console.Window]::ShowWindow($local:console, 0)
+$console = [Console.Window]::GetConsoleWindow()
+$null = [Console.Window]::ShowWindow($console, 0)
 
 #タスクバーのアイコンにオーバーレイ表示
 $script:settingWindow.TaskbarItemInfo.Overlay = bitmapImageFromBase64 $script:iconBase64
@@ -244,7 +244,7 @@ $script:settingWindow.Add_Loaded({ $script:settingWindow.Icon = $script:iconPath
 $script:settingWindow.Add_Closing({})
 
 #Name属性を持つ要素のオブジェクト作成
-$local:mainCleanXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $script:settingWindow.FindName($_.Name) -Scope Script }
+$mainCleanXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $script:settingWindow.FindName($_.Name) -Scope Script }
 
 #WPFにロゴをロード
 $script:LogoImage.Source = bitmapImageFromBase64 $script:logoBase64
@@ -299,7 +299,7 @@ $script:settingAttributes += '$script:addSeriesName'
 $script:settingAttributes += '$script:addSeasonName'
 $script:settingAttributes += '$script:addBrodcastDate'
 $script:settingAttributes += '$script:addEpisodeNumber'
-$script:settingAttributes += '$script:Remove-SpecialNote'
+$script:settingAttributes += '$script:removeSpecialNote'
 $script:settingAttributes += '$script:preferredYoutubedl'
 $script:settingAttributes += '$script:disableUpdateYoutubedl'
 $script:settingAttributes += '$script:disableUpdateFfmpeg'
@@ -314,18 +314,18 @@ $script:settingAttributes += '$script:ffmpegDecodeOption'
 $script:settingAttributes += '$script:ytdlOption'
 $script:settingAttributes += '$script:forceSingleDownload'
 
-$local:defaultSetting = @{}
-$local:currentSetting = @{}
+$defaultSetting = @{}
+$currentSetting = @{}
 
-foreach ($local:settingAttribute in $script:settingAttributes) {
-	$local:defaultSetting[$local:settingAttribute] = loadDefaultSetting $local:settingAttribute
-	$local:currentSetting[$local:settingAttribute] = loadCurrentSetting $local:settingAttribute
-	$local:settingBoxName = $local:settingAttribute.Replace('$script:', '')
-	$local:settingBox = $script:settingWindow.FindName($local:settingBoxName)
-	if ( (loadCurrentSetting $local:settingAttribute) -ne '') {
-		$local:settingBox.Text = loadCurrentSetting $local:settingAttribute
-		if ($local:settingBox.Text -eq '$true') { $local:settingBox.Text = 'する' }
-		if ($local:settingBox.Text -eq '$false') { $local:settingBox.Text = 'しない' }
+foreach ($settingAttribute in $script:settingAttributes) {
+	$defaultSetting[$settingAttribute] = loadDefaultSetting $settingAttribute
+	$currentSetting[$settingAttribute] = loadCurrentSetting $settingAttribute
+	$settingBoxName = $settingAttribute.Replace('$script:', '')
+	$settingBox = $script:settingWindow.FindName($settingBoxName)
+	if ( (loadCurrentSetting $settingAttribute) -ne '') {
+		$settingBox.Text = loadCurrentSetting $settingAttribute
+		if ($settingBox.Text -eq '$true') { $settingBox.Text = 'する' }
+		if ($settingBox.Text -eq '$false') { $settingBox.Text = 'しない' }
 	}
 }
 
@@ -338,7 +338,7 @@ foreach ($local:settingAttribute in $script:settingAttributes) {
 try {
 	$null = $script:settingWindow.Show()
 	$null = $script:settingWindow.Activate()
-	$null = [Console.Window]::ShowWindow($local:console, 0)
+	$null = [Console.Window]::ShowWindow($console, 0)
 } catch { Write-Error ('❗ ウィンドウを描画できませんでした。TVerRecが破損しています。') ; exit 1 }
 
 # メインウィンドウ取得

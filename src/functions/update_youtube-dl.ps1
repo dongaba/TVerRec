@@ -52,9 +52,9 @@ function Invoke-Unzip {
 Set-StrictMode -Version Latest
 try {
 	if ($script:myInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$local:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition
-		$local:scriptRoot = Split-Path -Parent -Path $local:scriptRoot
-	} else { $local:scriptRoot = Convert-Path .. }
+		$scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition
+		$scriptRoot = Split-Path -Parent -Path $scriptRoot
+	} else { $scriptRoot = Convert-Path .. }
 	Set-Location $script:scriptRoot
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	$script:devDir = Join-Path $script:scriptRoot '../dev'
@@ -87,61 +87,61 @@ $lookupTable = @{
 	'yt-dlp'       = 'yt-dlp/yt-dlp'
 	'ytdl-patched' = 'ytdl-patched/ytdl-patched'
 }
-if ($lookupTable.ContainsKey($script:preferredYoutubedl)) { $local:repo = $lookupTable[$script:preferredYoutubedl] }
+if ($lookupTable.ContainsKey($script:preferredYoutubedl)) { $repo = $lookupTable[$script:preferredYoutubedl] }
 else { Write-Error '❗ youtube-dlの取得元の指定が無効です'; exit 1 }
-$local:releases = ('https://api.github.com/repos/{0}/releases' -f $local:repo)
+$releases = ('https://api.github.com/repos/{0}/releases' -f $repo)
 
 #youtube-dl移動先相対Path
-$local:binDir = Convert-Path (Join-Path $local:scriptRoot '../bin')
-if ($IsWindows) { $local:ytdlPath = Join-Path $local:binDir 'youtube-dl.exe' }
-else { $local:ytdlPath = Join-Path $local:binDir 'youtube-dl' }
+$binDir = Convert-Path (Join-Path $scriptRoot '../bin')
+if ($IsWindows) { $ytdlPath = Join-Path $binDir 'youtube-dl.exe' }
+else { $ytdlPath = Join-Path $binDir 'youtube-dl' }
 
 #youtube-dlのバージョン取得
 try {
-	if (Test-Path $local:ytdlPath -PathType Leaf) { $local:currentVersion = (& $local:ytdlPath --version) }
-	else { $local:currentVersion = '' }
-} catch { $local:currentVersion = '' }
+	if (Test-Path $ytdlPath -PathType Leaf) { $currentVersion = (& $ytdlPath --version) }
+	else { $currentVersion = '' }
+} catch { $currentVersion = '' }
 
 #youtube-dlの最新バージョン取得
-try {$local:latestVersion = (Invoke-RestMethod -Uri $local:releases -Method 'GET')[0].Tag_Name}
+try {$latestVersion = (Invoke-RestMethod -Uri $releases -Method 'GET')[0].Tag_Name}
 catch { Write-Warning ('❗ youtube-dlの最新バージョンを特定できませんでした') ; return }
 
 #youtube-dlのダウンロード
-if ($local:latestVersion -eq $local:currentVersion) {
+if ($latestVersion -eq $currentVersion) {
 	Write-Output ('')
 	Write-Output ('💡 youtube-dlは最新です。')
-	Write-Output ('　Local version: {0}' -f $local:currentVersion)
-	Write-Output ('　Latest version: {0}' -f $local:latestVersion)
+	Write-Output ('　Local version: {0}' -f $currentVersion)
+	Write-Output ('　Latest version: {0}' -f $latestVersion)
 } else {
 	Write-Output ('')
 	Write-Output ('❗ youtube-dlが古いため更新します。')
-	Write-Output ('　Local version: {0}' -f $local:currentVersion)
-	Write-Output ('　Latest version: {0}' -f $local:latestVersion)
+	Write-Output ('　Local version: {0}' -f $currentVersion)
+	Write-Output ('　Latest version: {0}' -f $latestVersion)
 	if (!$IsWindows) {
 		#githubの設定
-		$local:file = $script:preferredYoutubedl
-		$local:fileAfterRename = 'youtube-dl'
+		$file = $script:preferredYoutubedl
+		$fileAfterRename = 'youtube-dl'
 	} else {
 		#githubの設定
-		$local:file = ('{0}.exe' -f $script:preferredYoutubedl)
-		$local:fileAfterRename = 'youtube-dl.exe'
+		$file = ('{0}.exe' -f $script:preferredYoutubedl)
+		$fileAfterRename = 'youtube-dl.exe'
 	}
 
 	Write-Output ('youtube-dlの最新版をダウンロードします')
 	try {
 		#ダウンロード
-		$local:tag = (Invoke-RestMethod -Uri $local:releases -Method 'GET')[0].Tag_Name
-		$local:downloadURL = ('https://github.com/{0}/releases/download/{1}/{2}' -f $local:repo, $local:tag, $local:file)
-		$local:ytdlFileLocation = Join-Path $local:binDir $local:fileAfterRename
-		Invoke-WebRequest -UseBasicParsing -Uri $local:downloadURL -Out $local:ytdlFileLocation
+		$tag = (Invoke-RestMethod -Uri $releases -Method 'GET')[0].Tag_Name
+		$downloadURL = ('https://github.com/{0}/releases/download/{1}/{2}' -f $repo, $tag, $file)
+		$ytdlFileLocation = Join-Path $binDir $fileAfterRename
+		Invoke-WebRequest -UseBasicParsing -Uri $downloadURL -Out $ytdlFileLocation
 	} catch { Write-Error ('❗ youtube-dlのダウンロードに失敗しました') ; exit 1 }
 
-	if (!$IsWindows) { (& chmod a+x $local:ytdlFileLocation) }
+	if (!$IsWindows) { (& chmod a+x $ytdlFileLocation) }
 
 	#バージョンチェック
 	try {
-		$local:currentVersion = (& $local:ytdlPath --version)
-		Write-Output ('💡 youtube-dlをversion{0}に更新しました。' -f $local:currentVersion)
+		$currentVersion = (& $ytdlPath --version)
+		Write-Output ('💡 youtube-dlをversion{0}に更新しました。' -f $currentVersion)
 	} catch { Write-Error ('❗ 更新後のバージョン取得に失敗しました') ; exit 1 }
 
 

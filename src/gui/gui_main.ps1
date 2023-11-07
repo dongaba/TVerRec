@@ -72,13 +72,13 @@ function DoWpfEvents {
 #テキストボックスへのログ出力と再描画
 function AddOutput {
 	Param (
-		[parameter(Mandatory = $true, Position = 0)][String]$local:Message,
-		[parameter(Mandatory = $true, Position = 1)][String]$local:color
+		[parameter(Mandatory = $true, Position = 0)][String]$Message,
+		[parameter(Mandatory = $true, Position = 1)][String]$color
 	)
 
-	$local:rtfRange = New-Object System.Windows.Documents.TextRange($script:outText.Document.ContentEnd, $script:outText.Document.ContentEnd)
-	$local:rtfRange.Text = ("{0}`n" -f $local:Message)
-	$local:rtfRange.ApplyPropertyValue([System.Windows.Documents.TextElement]::ForegroundProperty, $local:color)
+	$rtfRange = New-Object System.Windows.Documents.TextRange($script:outText.Document.ContentEnd, $script:outText.Document.ContentEnd)
+	$rtfRange.Text = ("{0}`n" -f $Message)
+	$rtfRange.ApplyPropertyValue([System.Windows.Documents.TextElement]::ForegroundProperty, $color)
 	$script:outText.ScrollToEnd()
 }
 
@@ -93,10 +93,10 @@ function AddOutput {
 #region WPFのWindow設定
 
 try {
-	[String]$local:mainXaml = Get-Content -LiteralPath '../resources/TVerRecMain.xaml'
-	$local:mainXaml = $local:mainXaml -ireplace 'mc:Ignorable="d"', '' -ireplace 'x:N', 'N' -ireplace 'x:Class=".*?"', ''
-	[xml]$local:mainCleanXaml = $local:mainXaml
-	$script:mainWindow = [System.Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $local:mainCleanXaml))
+	[String]$mainXaml = Get-Content -LiteralPath '../resources/TVerRecMain.xaml'
+	$mainXaml = $mainXaml -ireplace 'mc:Ignorable="d"', '' -ireplace 'x:N', 'N' -ireplace 'x:Class=".*?"', ''
+	[xml]$mainCleanXaml = $mainXaml
+	$script:mainWindow = [System.Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $mainCleanXaml))
 } catch { Write-Error ('❗ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。') ; exit 1 }
 
 #PowerShellのウィンドウを非表示に
@@ -104,8 +104,8 @@ Add-Type -Name Window -Namespace Console -MemberDefinition '
 [DllImport("Kernel32.dll")]public static extern IntPtr GetConsoleWindow() ;
 [DllImport("user32.dll")]public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow) ;
 '
-$local:console = [Console.Window]::GetConsoleWindow()
-$null = [Console.Window]::ShowWindow($local:console, 0)
+$console = [Console.Window]::GetConsoleWindow()
+$null = [Console.Window]::ShowWindow($console, 0)
 
 #タスクバーのアイコンにオーバーレイ表示
 $script:mainWindow.TaskbarItemInfo.Overlay = bitmapImageFromBase64 $script:iconBase64
@@ -118,7 +118,7 @@ $script:mainWindow.Add_Loaded({ $script:mainWindow.Icon = $script:iconPath })
 $script:mainWindow.Add_Closing({ Get-Job | Receive-Job -Wait -AutoRemoveJob -Force })
 
 #Name属性を持つ要素のオブジェクト作成
-$local:mainCleanXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $script:mainWindow.FindName($_.Name) -Scope Local }
+$mainCleanXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $script:mainWindow.FindName($_.Name) -Scope Local }
 
 #WPFにロゴをロード
 $LogoImage.Source = bitmapImageFromBase64 $script:logoBase64
@@ -234,14 +234,14 @@ $btnKillAll.IsEnabled = $false
 try {
 	$null = $script:mainWindow.Show()
 	$null = $script:mainWindow.Activate()
-	$null = [Console.Window]::ShowWindow($local:console, 0)
+	$null = [Console.Window]::ShowWindow($console, 0)
 } catch { Write-Error ('❗ ウィンドウを描画できませんでした。TVerRecが破損しています。') ; exit 1 }
 
 #endregion ウィンドウ表示
 
 #----------------------------------------------------------------------
 #region ウィンドウ表示後のループ処理
-$local:messageTypeColorMap = @{
+$messageTypeColorMap = @{
 	Output      = 'DarkSlateGray'
 	Error       = 'Crimson'
 	Warning     = 'Coral'
@@ -256,23 +256,23 @@ while ($script:mainWindow.IsVisible) {
 
 	if ($null -ne (Get-Job)) {
 		#ジョブがある場合の処理
-		foreach ($local:job in Get-Job) {
+		foreach ($job in Get-Job) {
 			# Get the originating button via the job name.
-			$script:btn = $script:mainWindow.FindName($local:job.Name)
+			$script:btn = $script:mainWindow.FindName($job.Name)
 
-			foreach ($local:msgType in $local:messageTypeColorMap.Keys) {
-				if ($local:message = $local:job.$local:msgType) {
-					AddOutput ($local:message -join "`n") $local:messageTypeColorMap[$local:msgType]
+			foreach ($msgType in $messageTypeColorMap.Keys) {
+				if ($message = $job.$msgType) {
+					AddOutput ($message -join "`n") $messageTypeColorMap[$msgType]
 				}
 			}
-			Receive-Job $local:job *> $null
+			Receive-Job $job *> $null
 
 			#ジョブが終了したかどうか判定
-			$local:completed = $local:job.State -in 'Completed', 'Failed', 'Stopped'
+			$completed = $job.State -in 'Completed', 'Failed', 'Stopped'
 
 			#終了したジョブのボタンの再有効化
-			if ($local:completed) {
-				Remove-Job $local:job
+			if ($completed) {
+				Remove-Job $job
 				$script:btns.ForEach({ $_.IsEnabled = $true })
 				$script:btnExit.IsEnabled = $true
 				$script:btnKillAll.IsEnabled = $false

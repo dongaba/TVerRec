@@ -107,10 +107,10 @@ if ($script:disableValidation) {
 #======================================================================
 #未検証のファイルが0になるまでループ
 $script:validationFailed = $false
-$local:videoNotValidatedNum = 0
-$local:videoNotValidatedNum = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' })).Count
+$videoNotValidatedNum = 0
+$videoNotValidatedNum = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' })).Count
 
-while ($local:videoNotValidatedNum -ne 0) {
+while ($videoNotValidatedNum -ne 0) {
 	#======================================================================
 	#ダウンロード履歴から番組チェックが終わっていないものを読み込み
 	Write-Output ('')
@@ -119,31 +119,31 @@ while ($local:videoNotValidatedNum -ne 0) {
 
 	try {
 		while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-		$local:videoHists = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' }) | Select-Object 'videoPage', 'videoPath', 'videoValidated')
+		$videoHists = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' }) | Select-Object 'videoPage', 'videoPath', 'videoValidated')
 	} catch { Write-Warning ('❗ ダウンロード履歴の読み込みに失敗しました') }
 	finally { $null = Unlock-File $script:histLockFilePath }
 
-	if (($null -eq $local:videoHists) -or ($local:videoHists.Count -eq 0)) {
+	if (($null -eq $videoHists) -or ($videoHists.Count -eq 0)) {
 		#チェックする番組なし
 		Write-Output ('　すべての番組を検証済です')
 		Write-Output ('')
 	} else {
 		#ダウンロードファイルをチェック
-		$local:validateTotal = 0
-		$local:validateTotal = $local:videoHists.Count
+		$validateTotal = 0
+		$validateTotal = $videoHists.Count
 		#ffmpegのデコードオプションの設定
-		if ($script:forceSoftwareDecodeFlag) { $local:decodeOption = '' }
+		if ($script:forceSoftwareDecodeFlag) { $decodeOption = '' }
 		else {
 			if ($script:ffmpegDecodeOption -ne '') {
 				Write-Output ('---------------------------------------------------------------------------')
 				Write-Output ('💡 ffmpegのデコードオプションが設定されてます')
-				Write-Output ('　　　{0}' -f $local:ffmpegDecodeOption)
+				Write-Output ('　　　{0}' -f $ffmpegDecodeOption)
 				Write-Output ('💡 もし整合性検証がうまく進まない場合は、以下のどちらかをお試しください')
 				Write-Output ('　・user_setting.ps1 でデコードオプションを変更する')
 				Write-Output ('　・user_setting.ps1 で $script:forceSoftwareDecodeFlag = $true と設定する')
 				Write-Output ('---------------------------------------------------------------------------')
 			}
-			$local:decodeOption = $script:ffmpegDecodeOption
+			$decodeOption = $script:ffmpegDecodeOption
 		}
 		Show-ProgressToast `
 			-Text1 'ダウンロードファイルの整合性検証中' `
@@ -154,36 +154,36 @@ while ($local:videoNotValidatedNum -ne 0) {
 			-Duration 'long' `
 			-Silent $false
 		#----------------------------------------------------------------------
-		$local:totalStartTime = Get-Date
-		$local:validateNum = 0
-		foreach ($local:videoHist in $local:videoHists.videoPath) {
-			$local:videoFileRelPath = $local:videoHist
+		$totalStartTime = Get-Date
+		$validateNum = 0
+		foreach ($videoHist in $videoHists.videoPath) {
+			$videoFileRelPath = $videoHist
 			#処理時間の推計
-			$local:secElapsed = (Get-Date) - $local:totalStartTime
-			$local:secRemaining = -1
-			if ($local:validateNum -ne 0) {
-				$local:secRemaining = [Int][Math]::Ceiling(($local:secElapsed.TotalSeconds / $local:validateNum) * ($local:validateTotal - $local:validateNum))
-				$local:minRemaining = ('{0}分' -f ([Int][Math]::Ceiling($local:secRemaining / 60)))
-				$local:progressRate = [Float]($local:validateNum / $local:validateTotal)
+			$secElapsed = (Get-Date) - $totalStartTime
+			$secRemaining = -1
+			if ($validateNum -ne 0) {
+				$secRemaining = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $validateNum) * ($validateTotal - $validateNum))
+				$minRemaining = ('{0}分' -f ([Int][Math]::Ceiling($secRemaining / 60)))
+				$progressRate = [Float]($validateNum / $validateTotal)
 			} else {
-				$local:minRemaining = ''
-				$local:progressRate = 0
+				$minRemaining = ''
+				$progressRate = 0
 			}
-			$local:validateNum += 1
+			$validateNum += 1
 			Update-ProgressToast `
-				-Title $local:videoFileRelPath `
-				-Rate $local:progressRate `
-				-LeftText $local:validateNum/$local:validateTotal `
-				-RightText ('残り時間 {0}' -f $local:minRemaining) `
+				-Title $videoFileRelPath `
+				-Rate $progressRate `
+				-LeftText $validateNum/$validateTotal `
+				-RightText ('残り時間 {0}' -f $minRemaining) `
 				-Tag $script:appName `
 				-Group 'Validate'
 			if (Test-Path $script:downloadBaseDir -PathType Container) {}
 			else { Write-Error ('❗ 番組ダウンロード先ディレクトリにアクセスできません。終了します。') ; exit 1 }
 			#番組の整合性チェック
-			Write-Output ('{0}/{1} - {2}' -f $local:validateNum, $local:validateTotal, $local:videoFileRelPath)
+			Write-Output ('{0}/{1} - {2}' -f $validateNum, $validateTotal, $videoFileRelPath)
 			Invoke-ValidityCheck `
-				-DecodeOption $local:decodeOption `
-				-Path $local:videoFileRelPath
+				-DecodeOption $decodeOption `
+				-Path $videoFileRelPath
 			Start-Sleep -Seconds 1
 		}
 		#----------------------------------------------------------------------
@@ -204,14 +204,14 @@ while ($local:videoNotValidatedNum -ne 0) {
 		-Silent $false
 	try {
 		while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-		$local:videoHists = @(Import-Csv -Path $script:histFilePath -Encoding UTF8)
-		foreach ($local:uncheckedVido in ($local:videoHists).Where({ $_.videoValidated -eq 2 })) {
-			$local:uncheckedVido.videoValidated = '0'
+		$videoHists = @(Import-Csv -Path $script:histFilePath -Encoding UTF8)
+		foreach ($uncheckedVido in ($videoHists).Where({ $_.videoValidated -eq 2 })) {
+			$uncheckedVido.videoValidated = '0'
 		}
-		$local:videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
+		$videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
 	} catch { Write-Warning ('❗ ダウンロード履歴の更新に失敗しました') }
 	finally { $null = Unlock-File $script:histLockFilePath }
-	$local:videoNotValidatedNum = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' })).Count
+	$videoNotValidatedNum = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' })).Count
 }
 
 #======================================================================

@@ -495,10 +495,10 @@ function Invoke-HistoryAndListfileMatchCheck {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	#ダウンロードリストファイルのデータを読み込み
-	$local:listFileData = @(Get-DownloadList)
-	$local:listVideoPages = @()
-	foreach ($local:listFileLine in $local:listFileData) {
-		$local:listVideoPages += ('https://tver.jp/episodes/{0}' -f $local:listFileLine.EpisodeID.Replace('#', ''))
+	$listFileData = @(Get-DownloadList)
+	$listVideoPages = @()
+	foreach ($listFileLine in $listFileData) {
+		$listVideoPages += ('https://tver.jp/episodes/{0}' -f $listFileLine.EpisodeID.Replace('#', ''))
 	}
 
 	#ダウンロード履歴ファイルのデータを読み込み
@@ -506,7 +506,7 @@ function Invoke-HistoryAndListfileMatchCheck {
 	if ($histFileData.Count -eq 0) { $histVideoPages = @() } else { $histVideoPages = @($histFileData.VideoPage) }
 
 	#ダウンロードリストとダウンロード履歴をマージ
-	$local:histVideoPages += $local:listVideoPages
+	$histVideoPages += $listVideoPages
 
 	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 	$histCompResult = @(Compare-Object -IncludeEqual $resultLinks $histVideoPages)
@@ -549,8 +549,8 @@ function Wait-YtdlProcess {
 
 		if ([Int]$ytdlCount -lt [Int]$parallelDownloadFileNum ) { break }
 
-		Write-Host ('ダウンロードが{0}多重に達したので一時待機します。 ({1})' -f $local:parallelDownloadFileNum, (Get-TimeStamp))
-		Write-Verbose ('現在のダウンロードプロセス一覧 ({0}個)' -f $local:ytdlCount)
+		Write-Host ('ダウンロードが{0}多重に達したので一時待機します。 ({1})' -f $parallelDownloadFileNum, (Get-TimeStamp))
+		Write-Verbose ('現在のダウンロードプロセス一覧 ({0}個)' -f $ytdlCount)
 		Start-Sleep -Seconds 60
 	}
 }
@@ -689,10 +689,10 @@ function Invoke-VideoDownload {
 		#履歴ファイルに存在せず、実ファイルも存在せず、無視リストと合致	→無視する
 		$ignoreTitles = @(Get-IgnoreList)
 		foreach ($ignoreTitle in $ignoreTitles) {
-			if (($script:videoName -like $local:ignoreTitle) `
-					-or ($script:videoSeries -like $local:ignoreTitle) `
-					-or ($script:videoName -cmatch [Regex]::Escape($local:ignoreTitle)) `
-					-or ($script:videoSeries -cmatch [Regex]::Escape($local:ignoreTitle))) {
+			if (($script:videoName -like $ignoreTitle) `
+					-or ($script:videoSeries -like $ignoreTitle) `
+					-or ($script:videoName -cmatch [Regex]::Escape($ignoreTitle)) `
+					-or ($script:videoSeries -cmatch [Regex]::Escape($ignoreTitle))) {
 				Update-IgnoreList $ignoreTitle
 				Write-Output ('❗ ダウンロード対象外としたファイルをダウンロード履歴に追加します')
 				$newVideo = Format-HistoryRecord $keyword $episodePage $videoSeriesPageURL '-- IGNORED --' '-- IGNORED --' '0'
