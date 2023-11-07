@@ -158,13 +158,8 @@ if (!$script:forceSingleDownload) {
 		$local:workDirEntities = @(Get-ChildItem -LiteralPath $script:downloadBaseDir)
 		if ($local:workDirEntities.Count -ne 0) {
 			foreach ($local:ignoreTitle in $local:ignoreTitles) {
-				# for ($local:i = 0 ; $local:i -lt $local:workDirEntities.count ; $local:i++) {
-				# 	if ($local:workDirEntities[$local:i].Name -like $local:ignoreTitle -or $local:workDirEntities[$local:i].Name -cmatch [Regex]::Escape($local:ignoreTitle)) {
-				# 		$local:ignoreDirs.Add($local:workDirEntities[$local:i])
-				# 		Update-IgnoreList $local:ignoreTitle
-				# 	}
-				# }
-				$filteredDirs = $local:workDirEntities | Where-Object { $_.Name -like $local:ignoreTitle -or $_.Name -cmatch [Regex]::Escape($local:ignoreTitle) }
+				#$local:ignoreTitle = ('*{0}*' -f $local:ignoreTitle)
+				$filteredDirs = $local:workDirEntities.Where({ $_.Name -like $local:ignoreTitle })
 				foreach ($filteredDir in $filteredDirs) {
 					$local:ignoreDirs.Add($filteredDir)
 					Update-IgnoreList $local:ignoreTitle
