@@ -57,9 +57,9 @@ while ($true) {
 	$local:remainingWaitTime = $script:loopCycle
 	do {
 		$local:progressRatio = [Int]($local:remainingWaitTime / $script:loopCycle * 100 / 2 )
-		Write-Output ('[{0}{1}] 残り{2}秒' -f $('#' * $(50 - $local:progressRatio)), $('.' * $local:progressRatio), $local:remainingWaitTime)
-		$local:remainingWaitTime -= 100
 		Start-Sleep -Second 100
+		$local:remainingWaitTime -= 100
+		Write-Output ('[{0}{1}] 残り{2}秒' -f $('#' * $(50 - $local:progressRatio)), $('.' * $local:progressRatio), $local:remainingWaitTime)
 	} while ($local:remainingWaitTime -ge 0)
 	Invoke-GarbageCollection
 }
