@@ -83,11 +83,12 @@ try {
 #メイン処理
 
 #githubの設定
-switch ($script:preferredYoutubedl) {
-	'yt-dlp' { $local:repo = 'yt-dlp/yt-dlp' ; break }
-	'ytdl-patched' { $local:repo = 'ytdl-patched/ytdl-patched' ; break }
-	default { Write-Error ('❗ youtube-dlの取得元の指定が無効です') ; exit 1 ; break }
+$lookupTable = @{
+	'yt-dlp'       = 'yt-dlp/yt-dlp'
+	'ytdl-patched' = 'ytdl-patched/ytdl-patched'
 }
+if ($lookupTable.ContainsKey($script:preferredYoutubedl)) { $local:repo = $lookupTable[$script:preferredYoutubedl] }
+else { Write-Error '❗ youtube-dlの取得元の指定が無効です'; exit 1 }
 $local:releases = ('https://api.github.com/repos/{0}/releases' -f $local:repo)
 
 #youtube-dl移動先相対Path
@@ -102,9 +103,8 @@ try {
 } catch { $local:currentVersion = '' }
 
 #youtube-dlの最新バージョン取得
-try {
-	$local:latestVersion = (Invoke-RestMethod -Uri $local:releases -Method 'GET')[0].Tag_Name
-} catch { Write-Warning ('❗ youtube-dlの最新バージョンを特定できませんでした') ; return }
+try {$local:latestVersion = (Invoke-RestMethod -Uri $local:releases -Method 'GET')[0].Tag_Name}
+catch { Write-Warning ('❗ youtube-dlの最新バージョンを特定できませんでした') ; return }
 
 #youtube-dlのダウンロード
 if ($local:latestVersion -eq $local:currentVersion) {

@@ -81,7 +81,7 @@ switch ($true) {
 			if (Test-Path $local:ffmpegPath -PathType Leaf) {
 				# get version of current ffmpeg.exe
 				$local:ffmpegFileVersion = (& $local:ffmpegPath -version)
-				$null = $local:ffmpegFileVersion[0] -cmatch 'ffmpeg version (.*) Copyright'
+				$null = $local:ffmpegFileVersion[0] -cmatch 'ffmpeg version (n\d+\.\d+-\d+-[0-9a-z]*)(-[0-9a-z]*) Copyright'
 				$local:currentVersion = $matches[1]
 			} else { $local:currentVersion = '' }
 		} catch { $local:currentVersion = '' }
@@ -97,7 +97,7 @@ switch ($true) {
 		} catch { Write-Warning ('❗ ffmpegの最新バージョンを特定できませんでした') ; return }
 
 		#ffmpegのダウンロード
-		if ($local:currentVersion -cmatch $local:latestVersion) {
+		if ($local:currentVersion -eq $local:latestVersion) {
 			Write-Output ('')
 			Write-Output ('💡 ffmpegは最新です。')
 			Write-Output ('　Local version: {0}' -f $local:currentVersion)
@@ -166,7 +166,7 @@ switch ($true) {
 			if (Test-Path $local:ffmpegPath -PathType Leaf) {
 				# get version of current ffmpeg.exe
 				$local:ffmpegFileVersion = (& $local:ffmpegPath -version)
-				$null = $local:ffmpegFileVersion[0] -cmatch 'ffmpeg version (.*) Copyright'
+				$null = $local:ffmpegFileVersion[0] -cmatch 'ffmpeg version (n\d+\.\d+-\d+-[0-9a-z]*)(-[0-9a-z]*) Copyright'
 				$local:currentVersion = $matches[1]
 			} else { $local:currentVersion = '' }
 		} catch { $local:currentVersion = '' }
@@ -182,7 +182,7 @@ switch ($true) {
 		} catch { Write-Warning ('❗ ffmpegの最新バージョンを特定できませんでした') ; return }
 
 		#ffmpegのダウンロード
-		if ($local:currentVersion -cmatch $local:latestVersion) {
+		if ($local:currentVersion -eq $local:latestVersion) {
 			Write-Output ('')
 			Write-Output ('💡 ffmpegは最新です。')
 			Write-Output ('　Local version: {0}' -f $local:currentVersion)
