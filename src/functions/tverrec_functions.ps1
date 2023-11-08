@@ -134,7 +134,7 @@ function Invoke-StatisticsCheck {
 	finally { $progressPreference = 'Continue' }
 	if ($operation -eq 'search') { return }
 	$epochTime = [decimal]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() * 1000)
-	$params = @{}	#max 10 of event params
+	$params = @{}	#max 25 of event params
 	$params['PSVersion'] = $PSVersionTable.PSVersion.tostring()
 	$params['AppVersion'] = $script:appVersion
 	$params['OS'] = $script:os
@@ -922,7 +922,7 @@ function Get-VideoInfo {
 		$parsedBroadcastDate = [DateTime]::ParseExact(('{0}{1}{2}' -f $currentYear, $matches[1].padleft(2, '0'), $matches[3].padleft(2, '0')), 'yyyyMMdd', $null)
 		#実日付の翌日よりも放送日が未来だったら当年ではなく昨年の番組と判断する
 		#(年末の番組を年初にダウンロードするケース)
-		$broadcastYear = $parsedBroadcastDate -lt (Get-Date).AddDays(+1) ? $currentYear - 1 : $currentYear
+		$broadcastYear = $parsedBroadcastDate -gt (Get-Date).AddDays(+1) ? $currentYear - 1 : $currentYear
 		$script:broadcastDate = ('{0}年{1}{2}{3}{4}{5}' -f $broadcastYear, $matches[1].padleft(2, '0'), $matches[2], $matches[3].padleft(2, '0'), $matches[4], $matches[6])
 	}
 
