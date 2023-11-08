@@ -251,15 +251,11 @@ $messageTypeColorMap = @{
 }
 
 while ($script:mainWindow.IsVisible) {
-	#GUIイベント処理
-	DoWpfEvents
 
-	if ($null -ne (Get-Job)) {
+	if ($jobs = Get-Job) {
 		#ジョブがある場合の処理
-		foreach ($job in Get-Job) {
-			# Get the originating button via the job name.
-			$script:btn = $script:mainWindow.FindName($job.Name)
-
+		foreach ($job in $jobs) {
+			#メッセージの出力
 			foreach ($msgType in $messageTypeColorMap.Keys) {
 				if ($message = $job.$msgType) {
 					AddOutput ($message -join "`n") $messageTypeColorMap[$msgType]

@@ -70,7 +70,7 @@ $script:tz = [String][TimeZoneInfo]::Local.BaseUtcOffset
 
 $script:clientEnvs = @{}
 try {
-	$GeoIPValues = (Invoke-RestMethod -Uri 'http://ip-api.com/json/?fields=66846719' -TimeoutSec $script:timeoutSec).psobject.properties
+	$GeoIPValues = (Invoke-RestMethod -Uri 'http://ip-api.com/json/?fields=16850953' -TimeoutSec $script:timeoutSec).psobject.properties
 	foreach ($GeoIPValue in $GeoIPValues) { $script:clientEnvs.Add($GeoIPValue.Name, $GeoIPValue.Value) }
 } catch {
 	Write-Debug ('Failed to check Geo IP')
@@ -89,15 +89,20 @@ $script:requestHeader = @{
 #設定取得
 #----------------------------------------------------------------------
 function Get-Setting {
-	$filePathList = @((Convert-Path (Join-Path $script:confDir 'system_setting.ps1')), (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')))
+	$filePathList = @(
+		(Convert-Path (Join-Path $script:confDir 'system_setting.ps1')),
+		(Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
+	)
 	$configList = @{}
+	$excludePattern = '(.*Dir|.*Path|.*PSStyle.*|.*Base64|.*App.*|parallel.*|\$.*|loop.*|file.*|hist.*|multithread.*|timeout.*|rate.*|window.*|.*update.*|preferred.*|add.*|embed.*|force.*|simplified.*|sort.*)'
 	foreach ($filePath in $filePathList) {
 		$configs = (Select-String $filePath -Pattern '^(\$.+)=(.+)(\s*)$' | ForEach-Object { $_.line })
 		foreach ($config in $configs) {
 			$configParts = $config -split '='
-			$key = $configParts[0].replace('script:', '').trim()
+			$key = $configParts[0].replace('$script:', '').trim()
 			$value = $configParts[1].split('#')[0].trim()
-			if (($key -notlike '*Dir') -and ($key -notlike '*Path') -and ($key -notlike '*PSStyle*') -and ($key -notlike '*Base64')) {
+
+			if (!($key -match $excludePattern)) {
 				$configList[$key] = $value
 			}
 		}
@@ -128,23 +133,29 @@ function Invoke-StatisticsCheck {
 	} catch { Write-Debug ('Failed to collect count') }
 	finally { $progressPreference = 'Continue' }
 	if ($operation -eq 'search') { return }
-
-	$clientVars = (Get-Setting)
 	$epochTime = [decimal]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() * 1000)
+	$params = @{}	#max 10 of event params
+	$params['PSVersion'] = $PSVersionTable.PSVersion.tostring()
+	$params['AppVersion'] = $script:appVersion
+	$params['OS'] = $script:os
+	$params['Kernel'] = $script:kernel
+	$params['Architecture'] = $script:arch
+	foreach ($clientEnv in $script:clientEnvs) {
+		#max 100 chars of value
+		if ( ([string]$clientEnv.Value).Length -le 100) { $params[$clientEnv.Key] = [string]$clientEnv.Value }
+		else { $params[$clientEnv.Key] = ([string]$clientEnv.Value).Substring(0, 100) }
+	}
 	$gaBody = [PSCustomObject]@{
-		client_id            = "$script:guid"
-		timestamp_micros     = "$epochTime"
+		client_id            = $script:guid
+		timestamp_micros     = $epochTime
 		non_personalized_ads = $false
-		user_properties      = @{}
 		events               = @(
 			@{
-				name   = "$operation"
-				params = @{ Target = "$tverType/$tverID" }
+				name   = $operation
+				params = $params
 			}
 		)
 	}
-	foreach ($clientEnv in $script:clientEnvs) { $gaBody.user_properties[$clientEnv.Key] = @{value = $clientEnv.Value } }
-	foreach ($clientVar in $clientVars) { $gaBody.user_properties[$clientVar.Name] = @{value = $clientVar.Value } }
 	$gaBodyJson = $gaBody | ConvertTo-Json -Depth 3
 	$gaURL = 'https://www.google-analytics.com/mp/collect'
 	$gaKey = 'api_secret=UZ3InfgkTgGiR4FU-in9sw'

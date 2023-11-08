@@ -60,7 +60,7 @@ while ($true) {
 		$remainingWaitTime -= 100
 		$progressRatio = [Int]($remainingWaitTime / $script:loopCycle * 100 / 2 )
 		Write-Output ('[{0}{1}] 残り{2}秒' -f $('#' * $(50 - $progressRatio)), $('.' * $progressRatio), $remainingWaitTime)
-	} while ($remainingWaitTime -ge 0)
+	} while ($remainingWaitTime -ge 100)
 	Invoke-GarbageCollection
 }
 #----------------------------------------------------------------------
