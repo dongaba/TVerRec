@@ -29,10 +29,10 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 #----------------------------------------------------------------------
 #Zipファイルを解凍
 #----------------------------------------------------------------------
-function unZip {
+function Expand-Zip {
 	[CmdletBinding()]
 	[OutputType([void])]
-	param(
+	Param(
 		[Parameter(Mandatory = $true, Position = 0)][string]$path,
 		[Parameter(Mandatory = $true, Position = 1)][string]$destination
 	)
@@ -49,19 +49,19 @@ function unZip {
 #----------------------------------------------------------------------
 #ディレクトリの上書き
 #----------------------------------------------------------------------
-function moveItem() {
+function Move-Files() {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
-	param(
+	Param(
 		[Parameter(Mandatory = $true, Position = 0)][String]$source,
 		[Parameter(Mandatory = $true, Position = 1)][String]$destination
 	)
 
 	if ((Test-Path $destination) -and (Test-Path -PathType Container $source)) {
-		# ディレクトリ上書き(移動先に存在 かつ ディレクトリ)は再帰的に moveItem 呼び出し
+		# ディレクトリ上書き(移動先に存在 かつ ディレクトリ)は再帰的に Move-Files 呼び出し
 		Get-ChildItem $source | ForEach-Object {
 			if ($_.Name -inotlike '*update_tverrec.ps1') {
-				moveItem -Source $_.FullName -Destination ('{0}/{1}' -f $destination, $_.Name)
+				Move-Files -Source $_.FullName -Destination ('{0}/{1}' -f $destination, $_.Name)
 			}
 		}
 		# 移動し終わったディレクトリを削除
@@ -79,10 +79,10 @@ function moveItem() {
 Set-StrictMode -Version Latest
 try {
 	if ($script:myInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$local:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition
-		$local:scriptRoot = Split-Path -Parent -Path $local:scriptRoot
-	} else { $local:scriptRoot = Convert-Path .. }
-	Set-Location $local:scriptRoot
+		$scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition
+		$scriptRoot = Split-Path -Parent -Path $scriptRoot
+	} else { $scriptRoot = Convert-Path .. }
+	Set-Location $scriptRoot
 } catch { Write-Error ('❗ ディレクトリ設定に失敗しました') ; exit 1 }
 if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 
@@ -95,14 +95,14 @@ Write-Output ('                          TVerRecアップデート処理        
 Write-Output ('---------------------------------------------------------------------------')
 Write-Output ('===========================================================================')
 
-$local:repo = 'dongaba/TVerRec'
-$local:releases = ('https://api.github.com/repos/{0}/releases/latest' -f $local:repo)
+$repo = 'dongaba/TVerRec'
+$releases = ('https://api.github.com/repos/{0}/releases/latest' -f $repo)
 
 #念のため過去のバージョンがあれば削除し、作業ディレクトリを作成
 Write-Output ('')
 Write-Output ('-----------------------------------------------------------------')
 Write-Output ('作業ディレクトリを作成します')
-$updateTemp = Join-Path $local:scriptRoot '../tverrec-update-temp'
+$updateTemp = Join-Path $scriptRoot '../tverrec-update-temp'
 if (Test-Path $updateTemp ) { Remove-Item -LiteralPath $updateTemp -Force -Recurse -ErrorAction SilentlyContinue }
 try { $null = New-Item -ItemType Directory -Path $updateTemp }
 catch { Write-Error ('❗ 作業ディレクトリの作成に失敗しました') ; exit 1 }
@@ -112,8 +112,8 @@ Write-Output ('')
 Write-Output ('-----------------------------------------------------------------')
 Write-Output ('TVerRecの最新版をダウンロードします')
 try {
-	$local:zipURL = (Invoke-RestMethod -Uri $local:releases -Method 'GET' ).zipball_url
-	Invoke-WebRequest -UseBasicParsing -Uri $local:zipURL -OutFile (Join-Path $updateTemp 'TVerRecLatest.zip')
+	$zipURL = (Invoke-RestMethod -Uri $releases -Method 'GET' ).zipball_url
+	Invoke-WebRequest -UseBasicParsing -Uri $zipURL -OutFile (Join-Path $updateTemp 'TVerRecLatest.zip')
 } catch { Write-Error ('❗ ダウンロードに失敗しました') ; exit 1 }
 
 #最新バージョンがダウンロードできていたら展開
@@ -123,7 +123,7 @@ Write-Output ('ダウンロードしたTVerRecを解凍します')
 try {
 	if (Test-Path (Join-Path $updateTemp 'TVerRecLatest.zip') -PathType Leaf) {
 		#配下に作成されるディレクトリ名は不定「dongaba-TVerRec-xxxxxxxx」
-		unZip -Path (Join-Path $updateTemp 'TVerRecLatest.zip') -Destination $updateTemp
+		Expand-Zip -Path (Join-Path $updateTemp 'TVerRecLatest.zip') -Destination $updateTemp
 	} else { Write-Error ('❗ ダウンロードしたファイルが見つかりません') ; exit 1 }
 } catch { Write-Error ('❗ ダウンロードしたファイルの解凍に失敗しました') ; exit 1 }
 
@@ -134,8 +134,8 @@ Write-Output ('ダウンロードしたTVerRecを配置します')
 try {
 	$newTVerRecDir = (Get-ChildItem -LiteralPath $updateTemp -Directory ).fullname
 	Get-ChildItem -LiteralPath $newTVerRecDir -Force | ForEach-Object {
-		# Move-Item を行う function として moveItem 作成して呼び出す
-		moveItem -Source $_.FullName -Destination ('{0}{1}' -f (Join-Path $local:scriptRoot '../'), $_.Name )
+		# Move-Item を行う function として Move-Files 作成して呼び出す
+		Move-Files -Source $_.FullName -Destination ('{0}{1}' -f (Join-Path $scriptRoot '../'), $_.Name )
 	}
 } catch { Write-Error ('❗ ダウンロードしたTVerRecの配置に失敗しました') ; exit 1 }
 
@@ -218,7 +218,7 @@ if (Test-Path (Join-Path $script:scriptRoot 'functions/update_ytdl-patched.ps1')
 }
 
 #実行権限の付与
-if ($IsWindows -eq $false) {
+if (!$IsWindows) {
 	Write-Output ('')
 	Write-Output ('-----------------------------------------------------------------')
 	Write-Output ('実行権限の付与します')

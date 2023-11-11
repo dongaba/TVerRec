@@ -46,12 +46,12 @@ CM は入っていないため気に入った番組を配信終了後も残し�
 
 ## Windows GUI 版の動作イメージ
 
-<img src="https://github.com/dongaba/TVerRec/assets/83079591/a170ace1-7ec0-40df-bb33-d7fa92a2e780" height="600">
-<img src="https://github.com/dongaba/TVerRec/assets/83079591/0b787ffc-05e7-409b-a958-cb42501210d6" height="600">
+![GUIMain](https://github.com/dongaba/TVerRec/assets/83079591/a170ace1-7ec0-40df-bb33-d7fa92a2e780)
+![GUISetting](https://github.com/dongaba/TVerRec/assets/83079591/0b787ffc-05e7-409b-a958-cb42501210d6)
 
 ## Windows CUI 版の動作イメージ
 
-<img src="https://github.com/dongaba/TVerRec/assets/83079591/e9f5b227-4b59-45f8-875b-3d60b24e46a9">
+![CUI](https://github.com/dongaba/TVerRec/assets/83079591/e9f5b227-4b59-45f8-875b-3d60b24e46a9)
 
 ## 主な機能
 
@@ -86,9 +86,7 @@ CM は入っていないため気に入った番組を配信終了後も残し�
 
 ## ディレクトリ構成
 
-<details>
-
-<summary>ディレクトリ構成は以下のようになっています。</summary>
+ディレクトリ構成は以下のようになっています。
 
     TVerRec/
     ├─ .wsb/ ............................. Windows SandBox用サンプル
@@ -140,22 +138,26 @@ CM は入っていないため気に入った番組を配信終了後も残し�
     │  └─ list.sample.csv .................. 空のダウンロードリスト
     │
     ├─ resources/ ........................ GUI設定
+    │  ├─ Icon.b64 ........................ GUI用のアプリアイコン
+    │  ├─ Logo.b64 ........................ GUI用のロゴイメージ
     │  ├─ TVerRecMain.xaml ................ TVerRecのメイン画面のXAML
     │  └─ TVerRecSetting.xaml ............. TVerRecの設定用のXAML
     │
     ├─ src/ .............................. 各種ソース
     │  ├─ functions/ ....................... 各種共通関数
     │  │  ├─ common_functions.ps1 ............ 共通関数定義
-    │  │  ├─ tver_functions.ps1 .............. TVer用共通関数定義
+    │  │  ├─ initialize.ps1 .................. 各ツールの初期処理定義
+    │  │  ├─ tver_functions.ps1 .............. TVer共通関数定義
+    │  │  ├─ tverrec_functions.ps1 ........... TVerRec共通関数定義
     │  │  ├─ update_ffmpeg.ps1 ............... ffmpeg自動更新ツール
     │  │  ├─ update_tverrec.ps1 .............. TVerRec自身の自動更新ツール
-    │  │  ├─ update_yt-dlp.ps1 ............... yt-dlp自動更新ツール
-    │  │  └─ update_ytdl-patched.ps1 ......... ytdl-patched自動更新ツール
+    │  │  └─ update_youtube-dl.ps1 ........... youtube-dl自動更新ツール
     │  ├─ gui/ ............................. GUI設定
     │  │  ├─ gui_main.ps1 .................... GUI版のTVerRecを起動するツール
     │  │  └─ gui_setting.ps1 ................. TVerRecの設定用画面を起動するツール
     │  ├─ delete_trash.ps1 ................. ダウンロード対象外番組削除ツール
     │  ├─ generate_list.ps1 ................ ダウンロードリスト作成ツール
+    │  ├─ loop.ps1 ......................... ループ処理ツール
     │  ├─ move_vide.ps1 .................... 番組を移動先に移動するツール
     │  ├─ download_bulk.ps1 ................ 一括ダウンロードツール
     │  ├─ download_list.ps1 ................ リストダウンロードツール
@@ -193,8 +195,6 @@ CM は入っていないため気に入った番組を配信終了後も残し�
     ├─ README.md ............................ このファイル
     ├─ TODO.md .............................. 今後の改善予定
     └─ VERSION .............................. バージョン表記用ファイル
-
-</details>
 
 ## 注意事項
 

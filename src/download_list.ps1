@@ -43,38 +43,38 @@ try {
 if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
-	if ($? -eq $false) { exit 1 }
+	if (!$?) { exit 1 }
 } catch { Write-Error ('❗ 関数の読み込みに失敗しました') ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
 
 #設定で指定したファイル・ディレクトリの存在チェック
-checkRequiredFile
+Invoke-RequiredFileCheck
 
-$local:keyword = 'リスト指定'
-getToken
+$keyword = 'リスト指定'
+Get-Token
 
 #ダウンロードリストを読み込み
-$local:listLinks = @(loadLinkFromDownloadList)
-if ($null -eq $local:listLinks) { Write-Warning ('💡 ダウンロードリストが0件です') ; exit 0 }
+$listLinks = @(Get-LinkFromDownloadList)
+if ($null -eq $listLinks) { Write-Warning ('💡 ダウンロードリストが0件です') ; exit 0 }
 
 #URLがすでにダウンロード履歴に存在する場合は検索結果から除外
-$local:videoLinks, $local:processedCount = checkHistory $local:listLinks
-$local:videoTotal = $local:videoLinks.Count
+$videoLinks, $processedCount = Invoke-HistoryMatchCheck $listLinks
+$videoTotal = $videoLinks.Count
 Write-Output ('')
-if ($local:videoTotal -eq 0) {
-	Write-Output ('　処理対象{0}本　処理済{1}本' -f $local:videoTotal, $local:processedCount)
+if ($videoTotal -eq 0) {
+	Write-Output ('　処理対象{0}本　処理済{1}本' -f $videoTotal, $processedCount)
 } else {
-	Write-Output ('　💡 処理対象{0}本　処理済{1}本' -f $local:videoTotal, $local:processedCount)
+	Write-Output ('　💡 処理対象{0}本　処理済{1}本' -f $videoTotal, $processedCount)
 }
 
 
 #処理時間の推計
-$local:totalStartTime = Get-Date
-$local:secRemaining = -1
+$totalStartTime = Get-Date
+$secRemaining = -1
 
-showProgressToast `
+Show-ProgressToast `
 	-Text1 'リストからの番組のダウンロード' `
 	-Text2 'リストファイルから番組をダウンロード' `
 	-WorkDetail '読み込み中...' `
@@ -85,38 +85,38 @@ showProgressToast `
 
 #----------------------------------------------------------------------
 #個々の番組ダウンロードここから
-$local:videoNum = 0
-foreach ($local:videoLink in $local:videoLinks) {
-	$local:videoNum += 1
+$videoNum = 0
+foreach ($videoLink in $videoLinks) {
+	$videoNum += 1
 	#ダウンロード先ディレクトリの存在確認先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
 	if (Test-Path $script:downloadBaseDir -PathType Container) {}
 	else { Write-Error ('❗ 番組ダウンロード先ディレクトリにアクセスできません。終了します') ; exit 1 }
 	#進捗率の計算
-	$local:progressRate = [Float]($local:videoNum / $local:videoTotal)
-	$local:secElapsed = (Get-Date) - $local:totalStartTime
-	$local:secRemaining = [Int][Math]::Ceiling(($local:secElapsed.TotalSeconds / $local:videoNum) * ($local:videoTotal - $local:videoNum))
-	$local:minRemaining = ('{0}分' -f ([Int][Math]::Ceiling($local:secRemaining / 60)))
+	$progressRate = [Float]($videoNum / $videoTotal)
+	$secElapsed = (Get-Date) - $totalStartTime
+	$secRemaining = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $videoNum) * ($videoTotal - $videoNum))
+	$minRemaining = ('{0}分' -f ([Int][Math]::Ceiling($secRemaining / 60)))
 	#進捗更新
-	updateProgressToast `
+	Update-ProgressToast `
 		-Title 'リストからの番組のダウンロード' `
-		-Rate $local:progressRate `
-		-LeftText $local:videoNum/$local:videoTotal `
-		-RightText $local:minRemaining `
+		-Rate $progressRate `
+		-LeftText $videoNum/$videoTotal `
+		-RightText $minRemaining `
 		-Tag $script:appName `
 		-Group 'List'
 	Write-Output ('--------------------------------------------------')
-	Write-Output ('{0}/{1} - {2}' -f $local:videoNum, $local:videoTotal, $local:videoLink)
+	Write-Output ('{0}/{1} - {2}' -f $videoNum, $videoTotal, $videoLink)
 	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
-	waitTillYtdlProcessGetFewer $script:parallelDownloadFileNum
+	Wait-YtdlProcess $script:parallelDownloadFileNum
 	#TVer番組ダウンロードのメイン処理
-	downloadTVerVideo `
-		-Keyword $local:keyword `
-		-EpisodePage $local:videoLink `
+	Invoke-VideoDownload `
+		-Keyword $keyword `
+		-EpisodePage $videoLink `
 		-Force $false
 }
 #----------------------------------------------------------------------
 
-updateProgressToast `
+Update-ProgressToast `
 	-Title 'リストからの番組のダウンロード' `
 	-Rate '1' `
 	-LeftText '' `
@@ -127,9 +127,9 @@ updateProgressToast `
 #youtube-dlのプロセスが終わるまで待機
 Write-Output ('')
 Write-Output ('ダウンロードの終了を待機しています')
-waitTillYtdlProcessIsZero
+Wait-DownloadCompletion
 
-invokeGarbageCollection
+Invoke-GarbageCollection
 
 Write-Output ('')
 Write-Output ('---------------------------------------------------------------------------')

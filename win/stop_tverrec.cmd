@@ -28,7 +28,7 @@ rem #
 rem ###################################################################################
 
 rem 文字コードをUTF8に
-chcp 65001
+chcp 65001 > nul
 
 setlocal enabledelayedexpansion
 cd /d %~dp0

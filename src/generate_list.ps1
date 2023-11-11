@@ -43,22 +43,22 @@ try {
 if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
-	if ($? -eq $false) { exit 1 }
+	if (!$?) { exit 1 }
 } catch { Write-Error ('❗ 関数の読み込みに失敗しました') ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
 
 #設定で指定したファイル・ディレクトリの存在チェック
-checkRequiredFile
+Invoke-RequiredFileCheck
 
-$local:keywords = @(loadKeywordList)
-getToken
+$keywords = @(Read-KeywordList)
+Get-Token
 
-$local:keywordNum = 0
-$local:keywordTotal = $local:keywords.Count
+$keywordNum = 0
+$keywordTotal = $keywords.Count
 
-showProgress2Row `
+Show-Progress2Row `
 	-Text1 'キーワードから番組リスト作成中' `
 	-Text2 'キーワードから番組を抽出しダウンロード' `
 	-Detail1 '読み込み中...' `
@@ -69,85 +69,83 @@ showProgress2Row `
 	-Group 'ListGen'
 
 #======================================================================
-#個々のジャンルページチェックここから
-$local:totalStartTime = Get-Date
-foreach ($local:keyword in $local:keywords) {
-	$local:keyword = trimTabSpace($local:keyword)
+#個々のキーワードチェックここから
+$totalStartTime = Get-Date
+foreach ($keyword in $keywords) {
+	$keyword = Remove-TabSpace($keyword)
 
-	#ジャンルページチェックタイトルの表示
 	Write-Output ('')
 	Write-Output ('----------------------------------------------------------------------')
-	Write-Output ('{0}' -f $local:keyword)
+	Write-Output ('{0}' -f $keyword)
 
-	$local:listLinks = @(getVideoLinksFromKeyword($local:keyword))
-	$local:keyword = $local:keyword.Replace('https://tver.jp/', '')
+	$listLinks = @(Get-VideoLinksFromKeyword($keyword))
+	$keyword = $keyword.Replace('https://tver.jp/', '')
 
 	#URLがすでにダウンロードリストまたはダウンロード履歴に存在する場合は検索結果から除外
-	$local:videoLinks, $local:processedCount = checkListAndHistory $local:listLinks
-	$local:videoTotal = $local:videoLinks.Count
-	Write-Output ('')
-	if ($local:videoTotal -eq 0) {
-		Write-Output ('　処理対象{0}本　処理済{1}本' -f $local:videoTotal, $local:processedCount)
+	$videoLinks, $processedCount = Invoke-HistoryAndListfileMatchCheck $listLinks
+	$videoTotal = $videoLinks.Count
+	if ($videoTotal -eq 0) {
+		Write-Output ('　処理対象{0}本　処理済{1}本' -f $videoTotal, $processedCount)
 	} else {
-		Write-Output ('　💡 処理対象{0}本　処理済{1}本' -f $local:videoTotal, $local:processedCount)
+		Write-Output ('　💡 処理対象{0}本　処理済{1}本' -f $videoTotal, $processedCount)
 	}
 
 	#処理時間の推計
-	$local:secElapsed = (Get-Date) - $local:totalStartTime
-	if ($local:keywordNum -ne 0) {
-		$local:secRemaining1 = [Int][Math]::Ceiling(($local:secElapsed.TotalSeconds / $local:keywordNum) * ($local:keywordTotal - $local:keywordNum))
-	} else { $local:secRemaining1 = -1 }
-	$local:progressRate1 = [Float]($local:keywordNum / $local:keywordTotal)
-	$local:progressRate2 = 0
+	$secElapsed = (Get-Date) - $totalStartTime
+	if ($keywordNum -ne 0) {
+		$secRemaining1 = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $keywordNum) * ($keywordTotal - $keywordNum))
+	} else { $secRemaining1 = -1 }
+	$progressRate1 = [Float]($keywordNum / $keywordTotal)
+	$progressRate2 = 0
 
 	#キーワード数のインクリメント
-	$local:keywordNum += 1
+	$keywordNum += 1
 
 	#進捗更新
-	updateProgress2Row `
-		-Activity1 $local:keywordNum/$local:keywordTotal `
-		-Processing1 (trimTabSpace ($local:keyword)) `
-		-Rate1 $local:progressRate1 `
-		-SecRemaining1 $local:secRemaining1 `
+	Update-Progress2Row `
+		-Activity1 $keywordNum/$keywordTotal `
+		-Processing1 (Remove-TabSpace ($keyword)) `
+		-Rate1 $progressRate1 `
+		-SecRemaining1 $secRemaining1 `
 		-Activity2 '' `
 		-Processing2 '' `
-		-Rate2 $local:progressRate2 `
+		-Rate2 $progressRate2 `
 		-SecRemaining2 '' `
 		-Tag $script:appName `
 		-Group 'ListGen'
 
 	#----------------------------------------------------------------------
 	#個々の番組の情報の取得ここから
-	$local:videoNum = 0
-	foreach ($local:videoLink in $local:videoLinks) {
-		$local:videoNum += 1
+	$videoNum = 0
+	foreach ($videoLink in $videoLinks) {
+		$videoNum += 1
 		#進捗率の計算
-		$local:progressRate2 = [Float]($local:videoNum / $local:videoTotal)
+		$progressRate2 = [Float]($videoNum / $videoTotal)
 		#進捗更新
-		updateProgress2Row `
-			-Activity1 $local:keywordNum/$local:keywordTotal `
-			-Processing1 (trimTabSpace ($local:keyword)) `
-			-Rate1 $local:progressRate1 `
-			-SecRemaining1 $local:secRemaining1 `
-			-Activity2 $local:videoNum/$local:videoTotal `
-			-Processing2 $local:videoLink `
-			-Rate2 $local:progressRate2 `
+		Update-Progress2Row `
+			-Activity1 $keywordNum/$keywordTotal `
+			-Processing1 (Remove-TabSpace ($keyword)) `
+			-Rate1 $progressRate1 `
+			-SecRemaining1 $secRemaining1 `
+			-Activity2 $videoNum/$videoTotal `
+			-Processing2 $videoLink `
+			-Rate2 $progressRate2 `
 			-SecRemaining2 '' `
 			-Tag $script:appName `
 			-Group 'ListGen'
 		Write-Output ('--------------------------------------------------')
-		Write-Output ('{0}/{1} - {2}' -f $local:videoNum, $local:videoTotal, $local:videoLink)
+		Write-Output ('{0}/{1} - {2}' -f $videoNum, $videoTotal, $videoLink)
 		#TVer番組ダウンロードのメイン処理
-		generateTVerVideoList `
-			-Keyword $local:keyword `
-			-EpisodePage $local:videoLink
+		Update-VideoList `
+			-Keyword $keyword `
+			-EpisodePage $videoLink
 	}
 	#----------------------------------------------------------------------
 
 }
 #======================================================================
 
-updateProgressToast2 `
+Update-ProgressToast2 `
 	-Title1 'キーワードから番組リスト作成' `
 	-Rate1 '1' `
 	-LeftText1 '' `
@@ -159,7 +157,7 @@ updateProgressToast2 `
 	-Tag $script:appName `
 	-Group 'ListGen'
 
-invokeGarbageCollection
+Invoke-GarbageCollection
 
 Write-Output ('')
 Write-Output ('---------------------------------------------------------------------------')

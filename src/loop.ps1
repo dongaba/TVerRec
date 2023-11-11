@@ -51,17 +51,17 @@ while ($true) {
 	. ('{0}/delete_trash.ps1' -f $script:scriptRoot) $script:uiMode
 	. ('{0}/validate_video.ps1' -f $script:scriptRoot) $script:uiMode
 	. ('{0}/move_video.ps1' -f $script:scriptRoot) $script:uiMode
-	invokeGarbageCollection
+	Invoke-GarbageCollection
 	Write-Output ('')
 	Write-Output ('{0}秒待機します。' -f $script:loopCycle)
-	$local:remainingWaitTime = $script:loopCycle
+	$remainingWaitTime = $script:loopCycle
 	do {
-		$local:progressRatio = [Int]($local:remainingWaitTime / $script:loopCycle * 100 / 2 )
-		Write-Output ('[{0}{1}] 残り{2}秒' -f $('#' * $(50 - $local:progressRatio)), $('.' * $local:progressRatio), $local:remainingWaitTime)
-		$local:remainingWaitTime -= 100
 		Start-Sleep -Second 100
-	} while ($local:remainingWaitTime -ge 0)
-	invokeGarbageCollection
+		$remainingWaitTime -= 100
+		$progressRatio = [Int]($remainingWaitTime / $script:loopCycle * 100 / 2 )
+		Write-Output ('[{0}{1}] 残り{2}秒' -f $('#' * $(50 - $progressRatio)), $('.' * $progressRatio), $remainingWaitTime)
+	} while ($remainingWaitTime -ge 100)
+	Invoke-GarbageCollection
 }
 #----------------------------------------------------------------------
-invokeGarbageCollection
+Invoke-GarbageCollection

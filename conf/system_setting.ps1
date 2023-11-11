@@ -235,41 +235,35 @@ $script:windowShowStyle = 'Minimized'
 $script:ffmpegDecodeOption = ''
 
 #以下は$script:ffmpegDecodeOptionの設定例
-
-#QSV : for Intel CPUs (Intel内蔵グラフィックを使用)
-#$script:ffmpegDecodeOption = '-hwaccel qsv -c:v h264_qsv'
-
-#Direct3D 11 : for Windows (GPUを使用)
-#$script:ffmpegDecodeOption = '-hwaccel d3d11va -hwaccel_output_format d3d11'
-
-#Direct3D 9 : for Windows (GPUを使用)
-#$script:ffmpegDecodeOption = '-hwaccel dxva2 -hwaccel_output_format dxva2_vld'
-
-#CUDA : for NVIDIA Graphic Cards
-#$script:ffmpegDecodeOption = '-hwaccel cuda -hwaccel_output_format cuda'
-
-#VideoToolBox : for Macs
-#$script:ffmpegDecodeOption = '-hwaccel videotoolbox'
-
-#for Raspberry Pi 4 64bit
-#$script:ffmpegDecodeOption = '-c:v h264_v4l2m2m -num_output_buffers 32 -num_capture_buffers 32'
-
-#for Raspberry Pi 3/4 32bit
-#$script:ffmpegDecodeOption = '-c:v h264_omx'
+#	QSV : for Intel CPUs (Intel内蔵グラフィックを使用)
+#	$script:ffmpegDecodeOption = '-hwaccel qsv -c:v h264_qsv'
+#	Direct3D 11 : for Windows (GPUを使用)
+#	$script:ffmpegDecodeOption = '-hwaccel d3d11va -hwaccel_output_format d3d11'
+#	Direct3D 9 : for Windows (GPUを使用)
+#	$script:ffmpegDecodeOption = '-hwaccel dxva2 -hwaccel_output_format dxva2_vld'
+#	CUDA : for NVIDIA Graphic Cards
+#	$script:ffmpegDecodeOption = '-hwaccel cuda -hwaccel_output_format cuda'
+#	VideoToolBox : for Macs
+#	$script:ffmpegDecodeOption = '-hwaccel videotoolbox'
+#	for Raspberry Pi 4 64bit
+#	$script:ffmpegDecodeOption = '-c:v h264_v4l2m2m -num_output_buffers 32 -num_capture_buffers 32'
+#	for Raspberry Pi 3/4 32bit
+#	$script:ffmpegDecodeOption = '-c:v h264_omx'
 
 #youtube-dlオプション
 #　直接youtube-dlのオプションを記載することができます。
 #　動画の解像度を指定する場合などに使用します。
 $script:ytdlOption = ''
 
-# 1080p
-#$script:ytdlOption = '-f bestvideo[height<=1080]+bestaudio/best[height<=1080]'
-# 720p
-#$script:ytdlOption = '-f bestvideo[height<=720]+bestaudio/best[height<=720]'
-# 480p
-#$script:ytdlOption = '-f bestvideo[height<=480]+bestaudio/best[height<=480]'
-# 360p
-#$script:ytdlOption = '-f bestvideo[height<=360]+bestaudio/best[height<=360]'
+#以下は$script:ytdlOptionの設定例
+#	1080p
+#	$script:ytdlOption = '-f bestvideo[height<=1080]+bestaudio/best[height<=1080]'
+#	720p
+#	$script:ytdlOption = '-f bestvideo[height<=720]+bestaudio/best[height<=720]'
+#	480p
+#	$script:ytdlOption = '-f bestvideo[height<=480]+bestaudio/best[height<=480]'
+#	360p
+#	$script:ytdlOption = '-f bestvideo[height<=360]+bestaudio/best[height<=360]'
 
 #Tverサイト以外のベースファイル名
 $script:ytdlNonTVerFileName = '%(webpage_url_domain)s - %(upload_date)s - %(title)s - [%(id)s].%(ext)s'

@@ -4,14 +4,18 @@
 
 ### 2.9.8 Added
 
-- 個別ダウンロードでTVer以外のURLも許容する機能を追加(ただし整合性検証等の追加機能には未対応)
+- 個別ダウンロードで TVer 以外の URL も許容する機能を追加(ただし整合性検証等の追加機能には未対応)
 
 ### 2.9.8 Changed
 
 - CUI 版でループ処理実行時に待機残り時間を表示する機能を改善
 - コードリファクタリング
+- Windows 環境で winget がない場合に winget の入手先へのリンクを表示する機能を追加
+- 番組の情報を引き回すためにカスタムオブジェクトを作成
 
 ### 2.9.8 Fixed
+
+- Windows/Linux 環境で ffmpeg 6.0.1 に対応
 
 ## [2.9.7](https://github.com/dongaba/TVerRec/releases/tag/v2.9.7)
 
@@ -21,11 +25,11 @@
 
 ### 2.9.7 Changed
 
-- tver_funcitons.ps1を分割
+- tver_funcitons.ps1 を分割
 
 ### 2.9.7 Fixed
 
-- 履歴ファイルが0件時にリストダウンロードが失敗する問題を修正
+- 履歴ファイルが 0 件時にリストダウンロードが失敗する問題を修正
 
 ## [2.9.6](https://github.com/dongaba/TVerRec/releases/tag/v2.9.6)
 
@@ -35,7 +39,7 @@
 
 ### 2.9.6 Fixed
 
-- 1ファイルコミット漏れ
+- 1 ファイルコミット漏れ
 
 ## [2.9.5](https://github.com/dongaba/TVerRec/releases/tag/v2.9.5)
 
