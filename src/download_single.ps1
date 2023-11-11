@@ -83,7 +83,7 @@ while ($true) {
 		if ($local:videoPageURL -notmatch '^https://tver.jp/(/?.*)') {
 			# Tver以外には変数セットして youtube-dl起動
 			$script:videoFileDir = $script:downloadBaseDir
-			$script:videoName = $script:nonTVerFileName
+			$script:videoName = $script:ytdlNonTVerFileName
 
 			Write-Output ('{0}{1}' -f 'ダウンロード：', $local:videoPageURL)
 
