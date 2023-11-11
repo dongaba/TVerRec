@@ -15,6 +15,8 @@
 
 ### 2.9.8 Fixed
 
+- Windows/Linux 環境で ffmpeg 6.0.1 に対応
+
 ## [2.9.7](https://github.com/dongaba/TVerRec/releases/tag/v2.9.7)
 
 ### 2.9.7 Added
