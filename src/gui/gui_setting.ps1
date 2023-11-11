@@ -175,6 +175,11 @@ function writeSetting {
 					$local:newSetting += ('{0} = ''{1}''' -f $local:settingAttribute, $local:settingBox.Text)
 					break
 				}
+				($local:settingBox.Text -cmatch '^%') {
+					#先頭が%の場合はシングルクォーテーション必要
+					$local:newSetting += ('{0} = ''{1}''' -f $local:settingAttribute, $local:settingBox.Text)
+					break
+				}
 				($local:settingBox.Text.Contains('$') `
 					-or $local:settingBox.Text.Contains('{') `
 					-or $local:settingBox.Text.Contains('(') `
@@ -312,6 +317,7 @@ $script:settingAttributes += '$script:embedMetatag'
 $script:settingAttributes += '$script:windowShowStyle'
 $script:settingAttributes += '$script:ffmpegDecodeOption'
 $script:settingAttributes += '$script:ytdlOption'
+$script:settingAttributes += '$script:nonTVerFileName'
 $script:settingAttributes += '$script:forceSingleDownload'
 
 $local:defaultSetting = @{}

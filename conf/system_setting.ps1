@@ -271,6 +271,9 @@ $script:ytdlOption = ''
 # 360p
 #$script:ytdlOption = '-f bestvideo[height<=360]+bestaudio/best[height<=360]'
 
+#Tverサイト以外のベースファイル名
+$script:nonTVerFileName = '%(webpage_url_domain)s - %(upload_date)s - %(title)s - [%(id)s].%(ext)s'
+
 #個別ダウンロード時の強制ダウンロード
 #　個別ダウンロードの際に過去履歴やダウンロード対象外リストとの照合をせずに強制ダウンロードするかを設定します。
 #　この設定を有効にすると、不要ファイル削除処理時にダウンロード対象外リストとマッチするフォルダの削除を行わなくなります。
@@ -352,5 +355,4 @@ else { $script:ffprobePath = Join-Path $script:binDir 'ffprobe' }
 
 #youtube-dlの引数
 $script:acceptLang = 'Accept-Language:ja-JP'
-$script:nonTVerFileName = '%(webpage_url_domain)s - %(upload_date)s - %(title)s - [%(id)s].%(ext)s'
 $script:ytdlBaseArgs = '--format bestvideo+bestaudio/best --merge-output-format mp4 --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --embed-thumbnail --embed-chapters --no-cache-dir --verbose'
