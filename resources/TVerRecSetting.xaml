@@ -1518,7 +1518,26 @@
                         VerticalScrollBarVisibility="Auto"
                         BorderThickness="0,0,0,1"/>
 
-                                            <Expander
+                    <Expander
+                        Margin="10,10,10,0"
+                        IsExpanded="False"
+                        FontFamily="Yu Gothic UI"
+                        Header="Tverサイト以外のベース名設定">
+                        <TextBlock
+                            Margin="20,0,20,5"
+                            TextWrapping="Wrap">
+                            Tverサイト以外のベースファイル名を指定します。
+                        </TextBlock>
+                    </Expander>
+                    <TextBox
+                        x:Name="ytdlNonTVerFileName"
+                        Text="未設定"
+                        Style="{DynamicResource TextBoxStyle}"
+                        Margin="20,0,20,0"
+                        VerticalScrollBarVisibility="Auto"
+                        BorderThickness="0,0,0,1"/>
+
+                    <Expander
                         Margin="10,10,10,0"
                         IsExpanded="False"
                         FontFamily="Yu Gothic UI"

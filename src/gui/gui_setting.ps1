@@ -173,11 +173,17 @@ function Save-UserSetting {
 					$newSetting += ('{0} = ''{1}''' -f $settingAttribute, $settingBox.Text)
 					break
 				}
-				($settingBox.Text.Contains('$') `
-					-or $settingBox.Text.Contains('{') `
-					-or $settingBox.Text.Contains('(') `
-					-or $settingBox.Text.Contains('}') `
-					-or $settingBox.Text.Contains(')') ) {
+				($local:settingBox.Text -cmatch '^%') {
+					#先頭が%の場合はシングルクォーテーション必要
+					$local:newSetting += ('{0} = ''{1}''' -f $local:settingAttribute, $local:settingBox.Text)
+					break
+				}
+				($local:settingBox.Text.Contains('$') `
+					-or $local:settingBox.Text.Contains('{') `
+					-or $local:settingBox.Text.Contains('(') `
+					-or $local:settingBox.Text.Contains('}') `
+					-or $local:settingBox.Text.Contains(')') ) {
+
 					#Powershellの変数や関数等を含む場合はシングルクォーテーション不要
 					$newSetting += ('{0} = {1}' -f $settingAttribute, $settingBox.Text)
 					break
@@ -310,6 +316,7 @@ $script:settingAttributes += '$script:embedMetatag'
 $script:settingAttributes += '$script:windowShowStyle'
 $script:settingAttributes += '$script:ffmpegDecodeOption'
 $script:settingAttributes += '$script:ytdlOption'
+$script:settingAttributes += '$script:ytdlNonTVerFileName'
 $script:settingAttributes += '$script:forceSingleDownload'
 
 $defaultSetting = @{}
