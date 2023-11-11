@@ -56,7 +56,7 @@ try {
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 #GUIイベントの処理
-function DoWpfEvents {
+function Sync-WpfEvents {
 	[DispatcherFrame] $script:frame = [DispatcherFrame]::new($true)
 	$null = [Dispatcher]::CurrentDispatcher.BeginInvoke(
 		'Background',
@@ -70,7 +70,7 @@ function DoWpfEvents {
 }
 
 #テキストボックスへのログ出力と再描画
-function AddOutput {
+function Out-ExecutionLog {
 	Param (
 		[parameter(Mandatory = $true, Position = 0)][String]$Message,
 		[parameter(Mandatory = $true, Position = 1)][String]$color
@@ -108,7 +108,7 @@ $console = [Console.Window]::GetConsoleWindow()
 $null = [Console.Window]::ShowWindow($console, 0)
 
 #タスクバーのアイコンにオーバーレイ表示
-$script:mainWindow.TaskbarItemInfo.Overlay = bitmapImageFromBase64 $script:iconBase64
+$script:mainWindow.TaskbarItemInfo.Overlay = ConvertFrom-Base64 $script:iconBase64
 $script:mainWindow.TaskbarItemInfo.Description = $script:mainWindow.Title
 
 #ウィンドウを読み込み時の処理
@@ -121,7 +121,7 @@ $script:mainWindow.Add_Closing({ Get-Job | Receive-Job -Wait -AutoRemoveJob -For
 $mainCleanXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $script:mainWindow.FindName($_.Name) -Scope Local }
 
 #WPFにロゴをロード
-$LogoImage.Source = bitmapImageFromBase64 $script:logoBase64
+$LogoImage.Source = ConvertFrom-Base64 $script:logoBase64
 
 #バージョン表記
 $script:lblVersion.Content = ('Version {0}' -f $script:appVersion)
@@ -258,7 +258,7 @@ while ($script:mainWindow.IsVisible) {
 			#メッセージの出力
 			foreach ($msgType in $messageTypeColorMap.Keys) {
 				if ($message = $job.$msgType) {
-					AddOutput ($message -join "`n") $messageTypeColorMap[$msgType]
+					Out-ExecutionLog ($message -join "`n") $messageTypeColorMap[$msgType]
 				}
 			}
 			Receive-Job $job *> $null
@@ -279,7 +279,7 @@ while ($script:mainWindow.IsVisible) {
 	}
 
 	#GUIイベント処理
-	DoWpfEvents
+	Sync-WpfEvents
 
 	Start-Sleep -Milliseconds 100
 }

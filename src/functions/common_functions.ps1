@@ -342,7 +342,7 @@ function Remove-Files {
 #----------------------------------------------------------------------
 #Zipファイルを解凍
 #----------------------------------------------------------------------
-function Invoke-Unzip {
+function Expand-Zip {
 	[CmdletBinding()]
 	[OutputType([void])]
 	Param(
@@ -922,7 +922,7 @@ function Update-Progress2Row {
 }
 #endregion トースト通知
 
-function bitmapImageFromBase64 {
+function ConvertFrom-Base64 {
 	param ($base64)
 	$img = New-Object System.Windows.Media.Imaging.BitmapImage
 	$img.BeginInit()

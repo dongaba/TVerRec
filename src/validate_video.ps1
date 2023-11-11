@@ -81,7 +81,7 @@ Show-ProgressToast `
 	-Duration 'long' `
 	-Silent $false
 
-#30日以上前に処理したものはダウンロード履歴から削除
+#指定日以上前に処理したものはダウンロード履歴から削除
 Limit-HistoryFile -RetentionPeriod $script:histRetentionPeriod
 
 Write-Output ('')

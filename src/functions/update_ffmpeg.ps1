@@ -29,7 +29,7 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 #----------------------------------------------------------------------
 #Zipファイルを解凍
 #----------------------------------------------------------------------
-function Invoke-Unzip {
+function Expand-Zip {
 	[CmdletBinding()]
 	[OutputType([void])]
 	Param(
@@ -81,7 +81,7 @@ switch ($true) {
 			if (Test-Path $ffmpegPath -PathType Leaf) {
 				# get version of current ffmpeg.exe
 				$ffmpegFileVersion = (& $ffmpegPath -version)
-				$null = $ffmpegFileVersion[0] -cmatch 'ffmpeg version (n\d+\.\d+-\d+-[0-9a-z]*)(-[0-9a-z]*) Copyright'
+				$null = $ffmpegFileVersion[0] -cmatch 'ffmpeg version (n\d+\.\d+\.\d*)(-[0-9a-z]*) Copyright'
 				$currentVersion = $matches[1]
 			} else { $currentVersion = '' }
 		} catch { $currentVersion = '' }
@@ -92,7 +92,7 @@ switch ($true) {
 		$latestVersion = ''
 		try {
 			$latestRelease = Invoke-RestMethod -Uri $releases -Method 'GET'
-			$null = $latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)/ffmpeg-(n\d+\.\d+-\d+-[0-9a-z]*)(-win64-gpl-)(.*).zip'
+			$null = $latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)/ffmpeg-(n\d+\.\d+\.\d*)(.*)(-win64-gpl-)(.*).zip'
 			$latestVersion = $matches[6]
 		} catch { Write-Warning ('❗ ffmpegの最新バージョンを特定できませんでした') ; return }
 
@@ -125,7 +125,7 @@ switch ($true) {
 
 			#展開
 			Write-Output ('ダウンロードしたffmpegを解凍します')
-			try { Invoke-Unzip -Path (Join-Path $binDir 'ffmpeg.zip') -Destination $binDir }
+			try { Expand-Zip -Path (Join-Path $binDir 'ffmpeg.zip') -Destination $binDir }
 			catch { Write-Error ('❗ ffmpegの解凍に失敗しました') ; exit 1 }
 
 			#配置
@@ -166,7 +166,7 @@ switch ($true) {
 			if (Test-Path $ffmpegPath -PathType Leaf) {
 				# get version of current ffmpeg.exe
 				$ffmpegFileVersion = (& $ffmpegPath -version)
-				$null = $ffmpegFileVersion[0] -cmatch 'ffmpeg version (n\d+\.\d+-\d+-[0-9a-z]*)(-[0-9a-z]*) Copyright'
+				$null = $ffmpegFileVersion[0] -cmatch 'ffmpeg version (n\d+\.\d+\.\d*)(-[0-9a-z]*) Copyright'
 				$currentVersion = $matches[1]
 			} else { $currentVersion = '' }
 		} catch { $currentVersion = '' }
@@ -177,7 +177,7 @@ switch ($true) {
 		$latestVersion = ''
 		try {
 			$latestRelease = Invoke-RestMethod -Uri $releases -Method 'GET'
-			$null = $latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)/ffmpeg-(n\d+\.\d+-\d+-[0-9a-z]*)(-linux64-gpl-)(.*).tar.xz'
+			$null = $latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)/ffmpeg-(n\d+\.\d+\.\d*)(.*)(-linux64-gpl-)(.*).tar.xz'
 			$latestVersion = $matches[6]
 		} catch { Write-Warning ('❗ ffmpegの最新バージョンを特定できませんでした') ; return }
 
@@ -307,8 +307,8 @@ switch ($true) {
 			try {
 				Remove-Item -LiteralPath (Join-Path $binDir 'ffmpeg') -Force -ErrorAction SilentlyContinue
 				Remove-Item -LiteralPath (Join-Path $binDir 'ffprobe') -Force -ErrorAction SilentlyContinue
-				Invoke-Unzip -Path (Join-Path $binDir 'ffmpeg.zip') -Destination $binDir
-				Invoke-Unzip -Path (Join-Path $binDir 'ffprobe.zip') -Destination $binDir
+				Expand-Zip -Path (Join-Path $binDir 'ffmpeg.zip') -Destination $binDir
+				Expand-Zip -Path (Join-Path $binDir 'ffprobe.zip') -Destination $binDir
 			} catch { Write-Error ('❗ ffmpegの展開に失敗しました') ; exit 1 }
 
 			#ゴミ掃除

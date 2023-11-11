@@ -52,7 +52,7 @@ try {
 #設定で指定したファイル・ディレクトリの存在チェック
 Invoke-RequiredFileCheck
 
-$keywords = @(Get-KeywordList)
+$keywords = @(Read-KeywordList)
 Get-Token
 
 $keywordNum = 0
@@ -69,12 +69,11 @@ Show-Progress2Row `
 	-Group 'ListGen'
 
 #======================================================================
-#個々のジャンルページチェックここから
+#個々のキーワードチェックここから
 $totalStartTime = Get-Date
 foreach ($keyword in $keywords) {
 	$keyword = Remove-TabSpace($keyword)
 
-	#ジャンルページチェックタイトルの表示
 	Write-Output ('')
 	Write-Output ('----------------------------------------------------------------------')
 	Write-Output ('{0}' -f $keyword)

@@ -134,24 +134,26 @@ if ($script:saveBaseDir -ne '') {
 	}
 }
 
-#個別ダウンロードが強制モードの場合にはスキップ
-if (!$script:forceSingleDownload) {
-	#======================================================================
-	#2/3 ダウンロード対象外に入っている番組は削除
-	Write-Output ('')
-	Write-Output ('----------------------------------------------------------------------')
-	Write-Output ('ダウンロード対象外の番組を削除します')
-	Show-ProgressToast `
-		-Text1 '不要ファイル削除中' `
-		-Text2 '　処理2/3 - ダウンロード対象外の番組を削除' `
-		-WorkDetail '' `
-		-Tag $script:appName `
-		-Group 'Delete' `
-		-Duration 'long' `
-		-Silent $false
+#======================================================================
+#2/3 ダウンロード対象外に入っている番組は削除
+Write-Output ('')
+Write-Output ('----------------------------------------------------------------------')
+Write-Output ('ダウンロード対象外の番組を削除します')
+Show-ProgressToast `
+	-Text1 '不要ファイル削除中' `
+	-Text2 '　処理2/3 - ダウンロード対象外の番組を削除' `
+	-WorkDetail '' `
+	-Tag $script:appName `
+	-Group 'Delete' `
+	-Duration 'long' `
+	-Silent $false
 
+#個別ダウンロードが強制モードの場合にはスキップ
+if ($script:forceSingleDownload) {
+	Write-Warning ('❗ - 強制ダウンロードフラグが設定されているためダウンロード対象外の番組の削除処理をスキップします')
+} else {
 	#ダウンロード対象外番組の読み込み
-	$ignoreTitles = @(Get-IgnoreList)
+	$ignoreTitles = @(Read-IgnoreList)
 	$ignoreDirs = [System.Collections.Generic.List[object]]::new()
 	#ダウンロード対象外番組が登録されていない場合はスキップ
 	if ($ignoreTitles.Count -ne 0 ) {

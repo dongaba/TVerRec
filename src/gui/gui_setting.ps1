@@ -65,7 +65,7 @@ try {
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 #GUIイベントの処理
-function DoWpfEvents {
+function Sync-WpfEvents {
 	[DispatcherFrame] $script:frame = [DispatcherFrame]::new($true)
 	$null = [Dispatcher]::CurrentDispatcher.BeginInvoke(
 		'Background',
@@ -79,7 +79,7 @@ function DoWpfEvents {
 }
 
 #フォルダ選択ダイアログ
-function SelectFolder($description, $textBox) {
+function Select-Folder($description, $textBox) {
 	$script:fd.Description = $description
 	$script:fd.RootFolder = [System.Environment+SpecialFolder]::MyComputer
 	$script:fd.SelectedPath = $textBox.Text
@@ -90,7 +90,7 @@ function SelectFolder($description, $textBox) {
 }
 
 #system_setting.ps1から各設定項目を読み込む
-function loadDefaultSetting {
+function Read-SystemSetting {
 	Param (
 		[Parameter(Mandatory = $true, Position = 0)]
 		[String]$key
@@ -102,7 +102,7 @@ function loadDefaultSetting {
 }
 
 #user_setting.ps1から各設定項目を読み込む
-function loadCurrentSetting {
+function Read-UserSetting {
 	Param (
 		[Parameter(Mandatory = $true, Position = 0)]
 		[String]$key
@@ -114,7 +114,7 @@ function loadCurrentSetting {
 }
 
 #user_setting.ps1に各設定項目を書き込む
-function writeSetting {
+function Save-UserSetting {
 
 	$newSetting = @()
 	$startSegment = '##Start Setting Generated from GUI'
@@ -234,7 +234,7 @@ $console = [Console.Window]::GetConsoleWindow()
 $null = [Console.Window]::ShowWindow($console, 0)
 
 #タスクバーのアイコンにオーバーレイ表示
-$script:settingWindow.TaskbarItemInfo.Overlay = bitmapImageFromBase64 $script:iconBase64
+$script:settingWindow.TaskbarItemInfo.Overlay = ConvertFrom-Base64 $script:iconBase64
 $script:settingWindow.TaskbarItemInfo.Description = $script:settingWindow.Title
 
 #ウィンドウを読み込み時の処理
@@ -247,7 +247,7 @@ $script:settingWindow.Add_Closing({})
 $mainCleanXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $script:settingWindow.FindName($_.Name) -Scope Script }
 
 #WPFにロゴをロード
-$script:LogoImage.Source = bitmapImageFromBase64 $script:logoBase64
+$script:LogoImage.Source = ConvertFrom-Base64 $script:logoBase64
 
 #バージョン表記
 $script:lblVersion.Content = ('Version {0}' -f $script:appVersion)
@@ -260,19 +260,19 @@ $script:lblVersion.Content = ('Version {0}' -f $script:appVersion)
 $script:btnWiki.Add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
 $script:btnCancel.Add_Click({ $script:settingWindow.close() })
 $script:btnSave.Add_Click({
-		writeSetting
+		Save-UserSetting
 		$script:settingWindow.close()
 	})
 $script:btndownloadBaseDir.Add_Click({
-		SelectFolder 'ダウンロード先ディレクトリを選択してください' $script:downloadBaseDir
+		Select-Folder 'ダウンロード先ディレクトリを選択してください' $script:downloadBaseDir
 	})
 
 $script:btndownloadWorkDir.Add_Click({
-		SelectFolder '作業ディレクトリを選択してください' $script:downloadWorkDir
+		Select-Folder '作業ディレクトリを選択してください' $script:downloadWorkDir
 	})
 
 $script:btnsaveBaseDir.Add_Click({
-		selectFolder '移動先ディレクトリを選択してください' $script:saveBaseDir
+		Select-Folder '移動先ディレクトリを選択してください' $script:saveBaseDir
 	})
 
 #endregion ボタンのアクション
@@ -318,12 +318,12 @@ $defaultSetting = @{}
 $currentSetting = @{}
 
 foreach ($settingAttribute in $script:settingAttributes) {
-	$defaultSetting[$settingAttribute] = loadDefaultSetting $settingAttribute
-	$currentSetting[$settingAttribute] = loadCurrentSetting $settingAttribute
+	$defaultSetting[$settingAttribute] = Read-SystemSetting $settingAttribute
+	$currentSetting[$settingAttribute] = Read-UserSetting $settingAttribute
 	$settingBoxName = $settingAttribute.Replace('$script:', '')
 	$settingBox = $script:settingWindow.FindName($settingBoxName)
-	if ( (loadCurrentSetting $settingAttribute) -ne '') {
-		$settingBox.Text = loadCurrentSetting $settingAttribute
+	if ( (Read-UserSetting $settingAttribute) -ne '') {
+		$settingBox.Text = Read-UserSetting $settingAttribute
 		if ($settingBox.Text -eq '$true') { $settingBox.Text = 'する' }
 		if ($settingBox.Text -eq '$false') { $settingBox.Text = 'しない' }
 	}
@@ -355,7 +355,7 @@ $script:fd = New-Object System.Windows.Forms.FolderBrowserDialog
 #region ウィンドウ表示後のループ処理
 while ($script:settingWindow.IsVisible) {
 	#GUIイベント処理
-	DoWpfEvents
+	Sync-WpfEvents
 
 	Start-Sleep -Milliseconds 10
 }

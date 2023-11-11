@@ -29,7 +29,7 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 #----------------------------------------------------------------------
 #Zipファイルを解凍
 #----------------------------------------------------------------------
-function Invoke-Unzip {
+function Expand-Zip {
 	[CmdletBinding()]
 	[OutputType([void])]
 	Param(
@@ -69,7 +69,7 @@ try {
 	} elseif ($IsWindows) {
 		while (!( Test-Path (Join-Path $script:confDir 'user_setting.ps1')) ) {
 			Write-Output ('ユーザ設定ファイルを作成する必要があります')
-			. 'gui/gui_setting.ps1'
+			& 'gui/gui_setting.ps1'
 		}
 		if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 			. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
@@ -103,7 +103,7 @@ try {
 } catch { $currentVersion = '' }
 
 #youtube-dlの最新バージョン取得
-try {$latestVersion = (Invoke-RestMethod -Uri $releases -Method 'GET')[0].Tag_Name}
+try { $latestVersion = (Invoke-RestMethod -Uri $releases -Method 'GET')[0].Tag_Name }
 catch { Write-Warning ('❗ youtube-dlの最新バージョンを特定できませんでした') ; return }
 
 #youtube-dlのダウンロード

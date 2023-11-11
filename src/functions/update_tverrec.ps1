@@ -29,7 +29,7 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 #----------------------------------------------------------------------
 #Zipファイルを解凍
 #----------------------------------------------------------------------
-function Invoke-Unzip {
+function Expand-Zip {
 	[CmdletBinding()]
 	[OutputType([void])]
 	Param(
@@ -123,7 +123,7 @@ Write-Output ('ダウンロードしたTVerRecを解凍します')
 try {
 	if (Test-Path (Join-Path $updateTemp 'TVerRecLatest.zip') -PathType Leaf) {
 		#配下に作成されるディレクトリ名は不定「dongaba-TVerRec-xxxxxxxx」
-		Invoke-Unzip -Path (Join-Path $updateTemp 'TVerRecLatest.zip') -Destination $updateTemp
+		Expand-Zip -Path (Join-Path $updateTemp 'TVerRecLatest.zip') -Destination $updateTemp
 	} else { Write-Error ('❗ ダウンロードしたファイルが見つかりません') ; exit 1 }
 } catch { Write-Error ('❗ ダウンロードしたファイルの解凍に失敗しました') ; exit 1 }
 
