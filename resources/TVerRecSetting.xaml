@@ -1530,7 +1530,7 @@
                         </TextBlock>
                     </Expander>
                     <TextBox
-                        x:Name="nonTVerFileName"
+                        x:Name="ytdlNonTVerFileName"
                         Text="未設定"
                         Style="{DynamicResource TextBoxStyle}"
                         Margin="20,0,20,0"
