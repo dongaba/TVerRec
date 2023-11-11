@@ -92,8 +92,7 @@ function Select-Folder($description, $textBox) {
 #system_setting.ps1から各設定項目を読み込む
 function Read-SystemSetting {
 	Param (
-		[Parameter(Mandatory = $true, Position = 0)]
-		[String]$key
+		[Parameter(Mandatory = $true, Position = 0)][String]$key
 	)
 	try { $defaultSetting = (Select-String -Pattern ('^{0}' -f $key.Replace('$', '\$')) -LiteralPath $script:systemSettingFile | ForEach-Object { $_.Line }).split('=')[1].Trim() }
 	catch { $defaultSetting = '' }
@@ -104,8 +103,7 @@ function Read-SystemSetting {
 #user_setting.ps1から各設定項目を読み込む
 function Read-UserSetting {
 	Param (
-		[Parameter(Mandatory = $true, Position = 0)]
-		[String]$key
+		[Parameter(Mandatory = $true, Position = 0)][String]$key
 	)
 	try { $currentSetting = (Select-String -Pattern ('^{0}' -f $key.Replace('$', '\$')) -LiteralPath $script:userSettingFile | ForEach-Object { $_.Line }).split('=', 2)[1].Trim() }
 	catch { $currentSetting = '' }

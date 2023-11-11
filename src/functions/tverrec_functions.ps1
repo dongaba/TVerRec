@@ -257,8 +257,8 @@ function Invoke-ToolUpdateCheck {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true)][string]$scriptName,
-		[Parameter(Mandatory = $true)][string]$targetName
+		[Parameter(Mandatory = $true, Position = 0)][string]$scriptName,
+		[Parameter(Mandatory = $true, Position = 1)][string]$targetName
 	)
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -275,13 +275,13 @@ function Invoke-ToolUpdateCheck {
 #----------------------------------------------------------------------
 function Invoke-PathExistenceCheck {
 	Param(
-		[Parameter(Mandatory = $true)]
-		[string]$path,
-		[Parameter(Mandatory = $true)]
-		[string]$errorMessage,
-		[switch]$isFile,
-		[string]$sampleFilePath
+		[Parameter(Mandatory = $true, Position = 0)][string]$path,
+		[Parameter(Mandatory = $true, Position = 1)][string]$errorMessage,
+		[Parameter(Mandatory = $false, Position = 2)][switch]$isFile,
+		[Parameter(Mandatory = $false, Position = 3)][string]$sampleFilePath
 	)
+
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$pathType = if ($isFile) { 'Leaf' } else { 'Container' }
 

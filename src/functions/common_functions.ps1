@@ -105,8 +105,7 @@ function Get-FileNameWithoutInvalidChars {
 	[CmdletBinding()]
 	[OutputType([String])]
 	Param (
-		[Parameter(Mandatory = $true, Position = 0)]
-		[String]$Name
+		[Parameter(Mandatory = $true, Position = 0)][String]$Name
 	)
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
