@@ -1040,7 +1040,7 @@ function executeYtdl {
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $descDir)
 	$ytdlArgs += (' {0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
 	$ytdlArgs += (' {0} "{1}"' -f '--output', $saveFile)
-	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:acceptLang)
+	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlAcceptLang)
 	$ytdlArgs += (' {0}' -f $script:ytdlOption)
 	$ytdlArgs += (' {0}' -f $url)
 
