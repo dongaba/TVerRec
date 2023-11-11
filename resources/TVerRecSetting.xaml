@@ -1522,7 +1522,7 @@
                         Margin="10,10,10,0"
                         IsExpanded="False"
                         FontFamily="Yu Gothic UI"
-                        Header="youtube-dlオプション">
+                        Header="Tverサイト以外のベース名設定">
                         <TextBlock
                             Margin="20,0,20,5"
                             TextWrapping="Wrap">
