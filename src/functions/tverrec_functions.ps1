@@ -26,157 +26,6 @@
 ###################################################################################
 Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
-#region 環境
-
-#----------------------------------------------------------------------
-#GUID取得
-#----------------------------------------------------------------------
-$progressPreference = 'SilentlyContinue'
-
-switch ($true) {
-	$IsWindows {
-		$osDetails = Get-CimInstance -Class Win32_OperatingSystem
-		$script:os = $osDetails.Caption
-		$script:kernel = $osDetails.Version
-		$script:arch = $Env:PROCESSOR_ARCHITECTURE.ToLower()
-		$script:guid = (Get-CimInstance -Class Win32_ComputerSystemProduct).UUID
-		break
-	}
-	$IsLinux {
-		$script:os = if (Test-Path '/etc/os-release') { (& grep 'PRETTY_NAME' /etc/os-release).Replace('PRETTY_NAME=', '').Replace('"', '') } else { (& uname -n) }
-		$script:kernel = [String][System.Environment]::OSVersion.Version
-		$script:arch = (& uname -m | tr '[:upper:]' '[:lower:]')
-		$script:guid = if (Test-Path '/etc/machine-id') { (Get-Content /etc/machine-id) } else { [guid]::NewGuid() }
-		break
-	}
-	$IsMacOS {
-		$script:os = (& sw_vers -productName)
-		$script:kernel = [String][System.Environment]::OSVersion.Version
-		$script:arch = (& uname -m | tr '[:upper:]' '[:lower:]')
-		$script:guid = if (Test-Path '/etc/machine-id') { (Get-Content /etc/machine-id) } else { [guid]::NewGuid() }
-		break
-	}
-	default {
-		$script:os = [String][System.Environment]::OSVersion
-		$script:kernel = ''
-		$script:arch = ''
-		$script:guid = ''
-		break
-	}
-}
-
-$script:locale = (Get-Culture).Name
-$script:tz = [String][TimeZoneInfo]::Local.BaseUtcOffset
-
-$script:clientEnvs = @{}
-try {
-	$GeoIPValues = (Invoke-RestMethod -Uri 'http://ip-api.com/json/?fields=16850953' -TimeoutSec $script:timeoutSec).psobject.properties
-	foreach ($GeoIPValue in $GeoIPValues) { $script:clientEnvs.Add($GeoIPValue.Name, $GeoIPValue.Value) }
-} catch {
-	Write-Debug ('Failed to check Geo IP')
-}
-$script:clientEnvs = $script:clientEnvs.GetEnumerator() | Sort-Object -Property key
-
-$progressPreference = 'Continue'
-
-$script:requestHeader = @{
-	'x-tver-platform-type' = 'web'
-	'Origin'               = 'https://tver.jp'
-	'Referer'              = 'https://tver.jp'
-}
-
-#----------------------------------------------------------------------
-#設定取得
-#----------------------------------------------------------------------
-function Get-Setting {
-	$filePathList = @(
-		(Convert-Path (Join-Path $script:confDir 'system_setting.ps1')),
-		(Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
-	)
-	$configList = @{}
-	$excludePattern = '(.*Dir|.*Path|.*PSStyle.*|.*Base64|.*App.*|parallel.*|\$.*|loop.*|file.*|hist.*|multithread.*|timeout.*|rate.*|window.*|.*update.*|preferred.*|add.*|embed.*|force.*|simplified.*|sort.*)'
-	foreach ($filePath in $filePathList) {
-		$configs = (Select-String $filePath -Pattern '^(\$.+)=(.+)(\s*)$' | ForEach-Object { $_.line })
-		foreach ($config in $configs) {
-			$configParts = $config -split '='
-			$key = $configParts[0].replace('$script:', '').trim()
-			$value = $configParts[1].split('#')[0].trim()
-
-			if (!($key -match $excludePattern)) {
-				$configList[$key] = $value
-			}
-		}
-	}
-	return $configList.GetEnumerator() | Sort-Object -Property key
-}
-
-#----------------------------------------------------------------------
-#統計取得
-#----------------------------------------------------------------------
-function Invoke-StatisticsCheck {
-	[OutputType([System.Void])]
-	Param (
-		[Parameter(Mandatory = $true, Position = 0)][String]$operation,
-		[Parameter(Mandatory = $false, Position = 1)][String]$tverType = 'none',
-		[Parameter(Mandatory = $false, Position = 2)][String]$tverID = 'none'
-	)
-
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-
-	$progressPreference = 'silentlyContinue'
-	$statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
-	try { $null = Invoke-WebRequest `
-			-UseBasicParsing `
-			-Uri ('{0}{1}.svg' -f $statisticsBase, $operation) `
-			-Method 'GET' `
-			-TimeoutSec $script:timeoutSec
-	} catch { Write-Debug ('Failed to collect count') }
-	finally { $progressPreference = 'Continue' }
-	if ($operation -eq 'search') { return }
-	$epochTime = [decimal]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() * 1000)
-	$params = @{}	#max 25 of event params
-	$params['PSVersion'] = $PSVersionTable.PSVersion.tostring()
-	$params['AppVersion'] = $script:appVersion
-	$params['OS'] = $script:os
-	$params['Kernel'] = $script:kernel
-	$params['Architecture'] = $script:arch
-	foreach ($clientEnv in $script:clientEnvs) {
-		#max 100 chars of value
-		if ( ([string]$clientEnv.Value).Length -le 100) { $params[$clientEnv.Key] = [string]$clientEnv.Value }
-		else { $params[$clientEnv.Key] = ([string]$clientEnv.Value).Substring(0, 100) }
-	}
-	$gaBody = [PSCustomObject]@{
-		client_id            = $script:guid
-		timestamp_micros     = $epochTime
-		non_personalized_ads = $false
-		events               = @(
-			@{
-				name   = $operation
-				params = $params
-			}
-		)
-	}
-	$gaBodyJson = $gaBody | ConvertTo-Json -Depth 3
-	$gaURL = 'https://www.google-analytics.com/mp/collect'
-	$gaKey = 'api_secret=UZ3InfgkTgGiR4FU-in9sw'
-	$gaID = 'measurement_id=G-NMSF9L531G'
-	$gaHeaders = @{
-		'HOST'         = 'www.google-analytics.com'
-		'Content-Type' = 'application/json'
-	}
-	$progressPreference = 'silentlyContinue'
-	try { $null = Invoke-RestMethod `
-			-Uri ('{0}?{1}&{2}' -f $gaURL, $gaKey, $gaID) `
-			-Method 'POST' `
-			-Headers $gaHeaders `
-			-Body $gaBodyJson `
-			-TimeoutSec $script:timeoutSec
-	} catch { Write-Debug ('Failed to collect statistics') }
-	finally { $progressPreference = 'Continue' }
-}
-
-#endregion 環境
-
 #----------------------------------------------------------------------
 #TVerRec最新化確認
 #----------------------------------------------------------------------
@@ -451,7 +300,7 @@ function Update-IgnoreList {
 	$ignoreElse = @()
 	try {
 		while ((Lock-File $script:ignoreLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-		$ignoreLists = @((Get-Content $script:ignoreFilePath -Encoding UTF8).Where( { !($_ -cmatch '^\s*$') }).Where( { !($_ -cmatch '^;;.*$') }))
+		$ignoreLists = @((Get-Content $script:ignoreFilePath -Encoding UTF8).Where( { $_ -notmatch '^\s*$|^(;;.*)$' }))
 		$ignoreComment = @(Get-Content $script:ignoreFileSamplePath -Encoding UTF8)
 		$ignoreTarget = @($ignoreLists.Where({ $_ -eq $ignoreTitle }) | Sort-Object | Get-Unique)
 		$ignoreElse = @($ignoreLists.Where({ $_ -notin $ignoreTitle }))
@@ -459,12 +308,10 @@ function Update-IgnoreList {
 		$ignoreListNew += $ignoreTarget
 		$ignoreListNew += $ignoreElse
 		#改行コードLFを強制
-		$ignoreListNew | ForEach-Object { ("{0}`n" -f $_) } | Out-File -LiteralPath $script:ignoreFilePath -Encoding UTF8 -NoNewline
+		$ignoreListNew.ForEach({ "{0}`n" -f $_ }) | Out-File -LiteralPath $script:ignoreFilePath -Encoding UTF8 -NoNewline
 		Write-Debug ('ダウンロード対象外リストのソート更新完了')
 	} catch { Write-Error ('❗ ダウンロード対象外リストのソートに失敗しました') ; exit 1 }
-	finally {
-		$null = Unlock-File $script:ignoreLockFilePath
-	}
+	finally { $null = Unlock-File $script:ignoreLockFilePath }
 }
 
 #----------------------------------------------------------------------
@@ -1250,7 +1097,7 @@ function Invoke-ValidityCheck {
 	try {
 		if (Test-Path $script:ffpmegErrorLogPath) {
 			$errorCount = (Get-Content -LiteralPath $script:ffpmegErrorLogPath | Measure-Object -Line).Lines
-			Get-Content -LiteralPath $script:ffpmegErrorLogPath -Encoding UTF8 | ForEach-Object { Write-Debug $_ }
+			Get-Content -LiteralPath $script:ffpmegErrorLogPath -Encoding UTF8 | Write-Debug
 		}
 	} catch { Write-Warning ('❗ ffmpegエラーの数をカウントできませんでした') ; $errorCount = 9999999 }
 
@@ -1294,4 +1141,163 @@ function Invoke-ValidityCheck {
 
 	}
 
+}
+
+#region 環境
+
+#----------------------------------------------------------------------
+#設定取得
+#----------------------------------------------------------------------
+function Get-Setting {
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+
+	$filePathList = @(
+		(Convert-Path (Join-Path $script:confDir 'system_setting.ps1')),
+		(Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
+	)
+	$configList = @{}
+	foreach ($filePath in $filePathList) {
+		$configs = (Select-String $filePath -Pattern '^(\$.+)=(.+)(\s*)$').ForEach({ $_.line })
+		$excludePattern = '(.*PSStyle.*|.*Base64)'
+		foreach ($config in $configs) {
+			$configParts = $config -split '='
+			$key = $configParts[0].replace('script:', '').replace('$', '').trim()
+			if (!($key -match $excludePattern)) {
+				$configList[$key] = (Get-Variable -Name $key).Value
+			}
+		}
+	}
+	return $configList.GetEnumerator() | Sort-Object -Property key
+}
+
+#----------------------------------------------------------------------
+#統計取得
+#----------------------------------------------------------------------
+function Invoke-StatisticsCheck {
+	[OutputType([System.Void])]
+	Param (
+		[Parameter(Mandatory = $true, Position = 0)][String]$operation,
+		[Parameter(Mandatory = $false, Position = 1)][String]$tverType = 'none',
+		[Parameter(Mandatory = $false, Position = 2)][String]$tverID = 'none'
+	)
+
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+
+	$progressPreference = 'silentlyContinue'
+	$statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
+	try { $null = Invoke-WebRequest `
+			-UseBasicParsing `
+			-Uri ('{0}{1}.svg' -f $statisticsBase, $operation) `
+			-Method 'GET' `
+			-TimeoutSec $script:timeoutSec
+	} catch { Write-Debug ('Failed to collect count') }
+	finally { $progressPreference = 'Continue' }
+	#	if ($operation -eq 'search') { return }
+	$epochTime = [Int64]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() * 1000)
+	$userProperties = @{	#max 25 properties, max 24 chars of property name, 36 chars of property value
+		PSVersion    = @{ 'value' = $PSVersionTable.PSVersion.tostring() }
+		AppVersion   = @{ 'value' = $script:appVersion }
+		OS           = @{ 'value' = $script:os }
+		Kernel       = @{ 'value' = $script:kernel }
+		Architecture = @{ 'value' = $script:arch }
+	}
+	foreach ($clientEnv in $script:clientEnvs) {
+		$value = [string]$clientEnv.Value
+		$userProperties[$clientEnv.Key] = @{ 'value' = $value.Substring(0, [Math]::Min($value.Length, 36)) }
+	}
+	$eventParams = @{}	#max 25 parameters, max 40 chars of property name, 100 chars of property value
+	foreach ($clientSetting in $script:clientSettings) {
+		if (!($clientSetting.Name -match '(.*Dir|.*Path|app.*|timeout.*|.*Preference|.*Max|.*Period|parallel.*|.*BaseArgs|.*FileName)')) {
+			$paramValue = [String]((Get-Variable -Name $clientSetting.Name).Value)
+			$eventParams[$clientSetting.Key] = $paramValue.Substring(0, [Math]::Min($paramValue.Length, 99))
+		}
+	}
+	$gaBody = [PSCustomObject]@{
+		client_id            = $script:guid
+		timestamp_micros     = $epochTime
+		non_personalized_ads = $true
+		user_properties      = $userProperties
+		events               = @(	#max 25 events, 40 chars of event name
+			@{
+				name   = $operation
+				params = $eventParams
+			}
+		)
+	} | ConvertTo-Json -Depth 3
+	$gaURL = 'https://www.google-analytics.com/mp/collect'
+	$gaKey = 'api_secret=3URTslDhRVu4Qpb66nDyAA'
+	$gaID = 'measurement_id=G-V9TJN18D5Z'
+	$gaHeaders = @{
+		'HOST'         = 'www.google-analytics.com'
+		'Content-Type' = 'application/json'
+	}
+	$progressPreference = 'silentlyContinue'
+	try { $null = Invoke-RestMethod `
+			-Uri ('{0}?{1}&{2}' -f $gaURL, $gaKey, $gaID) `
+			-Method 'POST' `
+			-Headers $gaHeaders `
+			-Body $gaBody `
+			-TimeoutSec $script:timeoutSec
+	} catch { Write-Debug ('Failed to collect statistics') }
+	finally { $progressPreference = 'Continue' }
+}
+
+#endregion 環境
+
+#----------------------------------------------------------------------
+#GUID取得
+#----------------------------------------------------------------------
+$progressPreference = 'SilentlyContinue'
+
+switch ($true) {
+	$IsWindows {
+		$osDetails = Get-CimInstance -Class Win32_OperatingSystem
+		$script:os = $osDetails.Caption
+		$script:kernel = $osDetails.Version
+		$script:arch = $Env:PROCESSOR_ARCHITECTURE.ToLower()
+		$script:guid = (Get-CimInstance -Class Win32_ComputerSystemProduct).UUID
+		break
+	}
+	$IsLinux {
+		$script:os = if (Test-Path '/etc/os-release') { (& grep 'PRETTY_NAME' /etc/os-release).Replace('PRETTY_NAME=', '').Replace('"', '') } else { (& uname -n) }
+		$script:kernel = [String][System.Environment]::OSVersion.Version
+		$script:arch = (& uname -m | tr '[:upper:]' '[:lower:]')
+		$script:guid = if (Test-Path '/etc/machine-id') { (Get-Content /etc/machine-id) } else { ([guid]::NewGuid()).tostring().replace('-', '') }
+		break
+	}
+	$IsMacOS {
+		$script:os = (& sw_vers -productName)
+		$script:kernel = [String][System.Environment]::OSVersion.Version
+		$script:arch = (& uname -m | tr '[:upper:]' '[:lower:]')
+		$script:guid = if (Test-Path '/etc/machine-id') { (Get-Content /etc/machine-id) } else { ([guid]::NewGuid()).tostring().replace('-', '') }
+		break
+	}
+	default {
+		$script:os = [String][System.Environment]::OSVersion
+		$script:kernel = ''
+		$script:arch = ''
+		$script:guid = ''
+		break
+	}
+}
+
+$script:locale = (Get-Culture).Name
+$script:tz = [String][TimeZoneInfo]::Local.BaseUtcOffset
+
+$script:clientEnvs = @{}
+try {
+	$GeoIPValues = (Invoke-RestMethod -Uri 'http://ip-api.com/json/?fields=18030841' -TimeoutSec $script:timeoutSec).psobject.properties
+	foreach ($GeoIPValue in $GeoIPValues) { $script:clientEnvs.Add($GeoIPValue.Name, $GeoIPValue.Value) }
+} catch {
+	Write-Debug ('Failed to check Geo IP')
+}
+$script:clientEnvs = $script:clientEnvs.GetEnumerator() | Sort-Object -Property key
+$script:clientSettings = Get-Setting
+
+$progressPreference = 'Continue'
+
+$script:requestHeader = @{
+	'x-tver-platform-type' = 'web'
+	'Origin'               = 'https://tver.jp'
+	'Referer'              = 'https://tver.jp'
 }

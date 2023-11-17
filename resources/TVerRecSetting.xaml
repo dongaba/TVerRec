@@ -1531,7 +1531,7 @@
                     </Expander>
                     <TextBox
                         x:Name="ytdlNonTVerFileName"
-                        Text="未設定"
+                        Text="デフォルト値"
                         Style="{DynamicResource TextBoxStyle}"
                         Margin="20,0,20,0"
                         VerticalScrollBarVisibility="Auto"

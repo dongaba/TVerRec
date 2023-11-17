@@ -120,22 +120,14 @@ function Save-UserSetting {
 
 	#自動生成部分の行数を取得
 	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
-		try {
-			$totalLineNum = (Get-Content -LiteralPath $script:userSettingFile).Count
-		} catch { $totalLineNum = 0 }
-		try {
-			$headLineNum = (Select-String $startSegment $script:userSettingFile | ForEach-Object { $_.LineNumber }) - 1
-		} catch { $headLineNum = 0 }
-		try {
-			$tailLineNum = $totalLineNum - (Select-String $endSegment $script:userSettingFile | ForEach-Object { $_.LineNumber })
-		} catch { $tailLineNum = 0 }
+		$content = Get-Content -LiteralPath $script:userSettingFile
+		try { $totalLineNum = $content.Count + 1 } catch { $totalLineNum = 0 }
+		try { $headLineNum = ($content | Select-String $startSegment | ForEach-Object { $_.LineNumber }) - 2 } catch { $headLineNum = 0 }
+		try { $tailLineNum = $totalLineNum - ($content | Select-String $endSegment  | ForEach-Object { $_.LineNumber }) - 1 } catch { $tailLineNum = 0 }
 	} else { $totalLineNum = 0 ; $headLineNum = 0 ; $tailLineNum = 0 }
 
 	#自動生成より前の部分
-	if ( $totalLineNum -ne 0 ) {
-		try { $newSetting += Get-Content $userSettingFile -Head $headLineNum }
-		catch { Write-Warning ('❗ 自動生成の開始部分を特定できませんでした') }
-	}
+	$newSetting += $content[0..$headLineNum]
 
 	#自動生成の部分
 	$newSetting += $startSegment
@@ -145,54 +137,21 @@ function Save-UserSetting {
 			$settingBox = $script:settingWindow.FindName($settingBoxName)
 
 			switch ($true) {
-				(($settingBox.Text -eq '') `
-					-or ($settingBox.Text -eq 'デフォルト値') `
-					-or ($settingBox.Text -eq '未設定')) {
-					#設定していないときは出力しない
-					break
-				}
-				($settingBox.Text -eq 'する') {
-					#するを$trueに置換
-					$newSetting += ('{0} = {1}' -f $settingAttribute, '$true') ; break
-				}
-				($settingBox.Text -eq 'しない') {
-					#しないを$falseに置換
-					$newSetting += ('{0} = {1}' -f $settingAttribute, '$false') ; break
-				}
-				( [Int]::TryParse($settingBox.Text, [ref]$null) ) {
-					#数字はシングルクォーテーション不要
-					$newSetting += ('{0} = {1}' -f $settingAttribute, $settingBox.Text) ; break
-				}
-				($settingBox.Text -cmatch '^[a-zA-Z]:') {
-					#ドライブ文字列で開始する場合はシングルクォーテーション必要
-					$newSetting += ('{0} = ''{1}''' -f $settingAttribute, $settingBox.Text)
-					break
-				}
-				($settingBox.Text -cmatch '^\\\\') {
-					#UNCパスの場合はシングルクォーテーション必要
-					$newSetting += ('{0} = ''{1}''' -f $settingAttribute, $settingBox.Text)
-					break
-				}
-				($local:settingBox.Text -cmatch '^%') {
-					#先頭が%の場合はシングルクォーテーション必要
-					$local:newSetting += ('{0} = ''{1}''' -f $local:settingAttribute, $local:settingBox.Text)
-					break
-				}
+				#出力しない
+				(($settingBox.Text -eq '') -or ($settingBox.Text -eq 'デフォルト値') -or ($settingBox.Text -eq '未設定')) { break }
+				#True/False
+				($settingBox.Text -eq 'する') { $newSetting += ('{0} = {1}' -f $settingAttribute, '$true') ; break }
+				($settingBox.Text -eq 'しない') { $newSetting += ('{0} = {1}' -f $settingAttribute, '$false') ; break }
+				#数値
+				( [Int]::TryParse($settingBox.Text, [ref]$null) ) { $newSetting += ('{0} = {1}' -f $settingAttribute, $settingBox.Text) ; break }
+				#Powershellの変数や関数等を含む場合はシングルクォーテーション不要
 				($local:settingBox.Text.Contains('$') `
 					-or $local:settingBox.Text.Contains('{') `
 					-or $local:settingBox.Text.Contains('(') `
 					-or $local:settingBox.Text.Contains('}') `
-					-or $local:settingBox.Text.Contains(')') ) {
-
-					#Powershellの変数や関数等を含む場合はシングルクォーテーション不要
-					$newSetting += ('{0} = {1}' -f $settingAttribute, $settingBox.Text)
-					break
-				}
-				default {
-					#それ以外はシングルクォーテーション必要
-					$newSetting += ('{0} = ''{1}''' -f $settingAttribute, $settingBox.Text)
-					break
-				}
+					-or $local:settingBox.Text.Contains(')') ) { $newSetting += ('{0} = {1}' -f $settingAttribute, $settingBox.Text) ; break }
+				#デフォルトはシングルクォーテーション必要
+				default { $newSetting += ('{0} = ''{1}''' -f $settingAttribute, $settingBox.Text) ; break }
 			}
 		}
 	}
@@ -205,8 +164,7 @@ function Save-UserSetting {
 	}
 
 	#改行コードをLFで出力
-	$newSetting | ForEach-Object { ("{0}`n" -f $_) } | Out-File -LiteralPath $script:userSettingFile -Encoding UTF8 -NoNewline
-
+	$newSetting.ForEach({ "{0}`n" -f $_ }) | Out-File -LiteralPath $script:userSettingFile -Encoding UTF8 -NoNewline
 }
 
 #endregion 関数定義

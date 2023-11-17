@@ -59,11 +59,8 @@ function Move-Files() {
 
 	if ((Test-Path $destination) -and (Test-Path -PathType Container $source)) {
 		# ディレクトリ上書き(移動先に存在 かつ ディレクトリ)は再帰的に Move-Files 呼び出し
-		Get-ChildItem $source | ForEach-Object {
-			if ($_.Name -inotlike '*update_tverrec.ps1') {
-				Move-Files -Source $_.FullName -Destination ('{0}/{1}' -f $destination, $_.Name)
-			}
-		}
+		$items = (Get-ChildItem $source).Where({ $_.Name -inotlike '*update_tverrec.ps1' })
+		foreach ($item in $items) { Move-Files -Source $item.FullName -Destination (Join-Path $destination $item.Name) }
 		# 移動し終わったディレクトリを削除
 		Remove-Item -LiteralPath $source -Recurse -Force
 	} else {
