@@ -52,10 +52,10 @@ RUN sed -i -e "s|\$script:confDir 'user_setting.ps1'|\$script:containerDir 'user
 RUN sed -i -e "s|Enterを押して|コンテナを再起動して|g" ./unix/start_tverrec.sh
 RUN sed -i -e "s|read -r -t|sleep|g" ./unix/start_tverrec.sh
 RUN mkdir container-data
-RUN cp ./conf/keyword.sample.conf ./container-data/keyword.conf
-RUN cp ./conf/ignore.sample.conf ./container-data/ignore.conf
-RUN cp ./db/history.sample.csv ./container-data/history.csv
-RUN cp ./list/list.sample.csv ./container-data/list.csv
+RUN cp ./resources/sample/keyword.sample.conf ./container-data/keyword.conf
+RUN cp ./resources/sample/ignore.sample.conf ./container-data/ignore.conf
+RUN cp ./resources/sample/history.sample.csv ./container-data/history.csv
+RUN cp ./resources/sample/list.sample.csv ./container-data/list.csv
 RUN echo '$script:downloadBaseDir = '\''/mnt/Work'\''' >> ./container-data/user_setting.ps1
 RUN echo '$script:downloadWorkDir = '\''/mnt/Temp'\''' >> ./container-data/user_setting.ps1
 RUN echo '$script:saveBaseDir = '\''/mnt/Save'\''' >> ./container-data/user_setting.ps1
