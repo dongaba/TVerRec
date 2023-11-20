@@ -280,10 +280,6 @@ $script:forceSingleDownload = $false
 $script:appName = 'TVerRec'
 $script:appVersion = Get-Content '../VERSION'
 
-#アイコンを設定
-$script:iconBase64 = Get-Content '../resources/Icon.b64'
-$script:logoBase64 = Get-Content '../resources/Logo.b64'
-
 #デバッグレベル
 $VerbosePreference = 'SilentlyContinue'						#詳細メッセージなし
 $DebugPreference = 'SilentlyContinue'						#デバッグメッセージなし
@@ -299,53 +295,26 @@ $script:fileNameLengthMax = 255
 $script:tverrecDir = Convert-Path (Join-Path $scriptRoot '..')
 $script:binDir = Convert-Path (Join-Path $scriptRoot '../bin')
 $script:dbDir = Convert-Path (Join-Path $scriptRoot '../db')
-$script:libDir = Convert-Path (Join-Path $scriptRoot '../lib')
-$script:imgDir = Convert-Path (Join-Path $scriptRoot '../img')
-$script:listDir = Convert-Path (Join-Path $scriptRoot '../list')
+$script:listDir = Convert-Path (Join-Path $scriptRoot '../db')
 $script:unixDir = Convert-Path (Join-Path $scriptRoot '../unix')
 $script:winDir = Convert-Path (Join-Path $scriptRoot '../win')
-$script:wpfDir = Convert-Path (Join-Path $scriptRoot '../resources')
+$script:b64Dir = Convert-Path (Join-Path $scriptRoot '../resources/b64')
+$script:imgDir = Convert-Path (Join-Path $scriptRoot '../resources/img')
+$script:libDir = Convert-Path (Join-Path $scriptRoot '../resources/lib')
+$script:lockDir = Convert-Path (Join-Path $scriptRoot '../resources/lock')
+$script:sampleDir = Convert-Path (Join-Path $scriptRoot '../resources/sample')
+$script:xamlDir = Convert-Path (Join-Path $scriptRoot '../resources/xaml')
 $script:containerDir = Join-Path $scriptRoot '../container-data'
 
+#アイコンを設定
+$script:iconBase64 = Get-Content (Join-Path $b64Dir 'Icon.b64')
+$script:logoBase64 = Get-Content (Join-Path $b64Dir 'Logo.b64')
+
 #トースト通知用画像のパス
-$script:toastAppLogo = Join-Path $script:imgDir 'TVerRec-Toast.png'
+$script:toastAppLogo = Convert-Path (Join-Path $script:imgDir 'TVerRec-Toast.png')
 
 #ウィンドウアイコン用画像のパス
-$script:iconPath = Join-Path $script:imgDir 'TVerRec-Icon.png'
-
-#ダウンロード対象キーワードのパス
-$script:keywordFileSamplePath = Join-Path $script:confDir 'keyword.sample.conf'
-$script:keywordFilePath = Join-Path $script:confDir 'keyword.conf'
-
-#ダウンロード対象外番組のパス
-$script:ignoreFileSamplePath = Join-Path $script:confDir 'ignore.sample.conf'
-$script:ignoreFilePath = Join-Path $script:confDir 'ignore.conf'
-$script:ignoreLockFilePath = Join-Path $script:dbDir 'ignore.lock'
-
-#ダウンロード履歴のパス
-$script:histFilePath = Join-Path $script:dbDir 'history.csv'
-$script:histFileSamplePath = Join-Path $script:dbDir 'history.sample.csv'
-$script:histLockFilePath = Join-Path $script:dbDir 'history.lock'
-
-#ダウンロードリストのパス
-$script:listFilePath = Join-Path $script:listDir 'list.csv'
-$script:listFileSamplePath = Join-Path $script:listDir 'list.sample.csv'
-$script:listLockFilePath = Join-Path $script:dbDir 'list.lock'
-
-#ffpmegで番組検証時のエラーファイルのパス
-$script:ffpmegErrorLogPath = Join-Path $script:dbDir ('ffmpeg_error_{0}.log' -f $PID)
-
-#youtube-dlのパス
-if ($IsWindows) { $script:ytdlPath = Join-Path $script:binDir 'youtube-dl.exe' }
-else { $script:ytdlPath = Join-Path $script:binDir 'youtube-dl' }
-
-#ffmpegのパス
-if ($IsWindows) { $script:ffmpegPath = Join-Path $script:binDir 'ffmpeg.exe' }
-else { $script:ffmpegPath = Join-Path $script:binDir 'ffmpeg' }
-
-#ffprobeのパス
-if ($IsWindows) { $script:ffprobePath = Join-Path $script:binDir 'ffprobe.exe' }
-else { $script:ffprobePath = Join-Path $script:binDir 'ffprobe' }
+$script:iconPath = Convert-Path (Join-Path $script:imgDir 'TVerRec-Icon.png')
 
 #youtube-dlの引数
 $script:ytdlAcceptLang = 'Accept-Language:ja-JP'

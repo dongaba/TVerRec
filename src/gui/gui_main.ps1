@@ -93,7 +93,7 @@ function Out-ExecutionLog {
 #region WPFのWindow設定
 
 try {
-	[String]$mainXaml = Get-Content -LiteralPath '../resources/TVerRecMain.xaml'
+	[String]$mainXaml = Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecMain.xaml')
 	$mainXaml = $mainXaml -ireplace 'mc:Ignorable="d"', '' -ireplace 'x:N', 'N' -ireplace 'x:Class=".*?"', ''
 	[xml]$mainCleanXaml = $mainXaml
 	$script:mainWindow = [System.Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $mainCleanXaml))
@@ -134,7 +134,8 @@ $script:outText = $script:mainWindow.FindName('tbOutText')
 #----------------------------------------------------------------------
 #region バックグラウンドジョブ化する処理を持つボタン
 
-$script:btns = $script:mainWindow.FindName('btnSingle'), #0
+$script:btns = `
+$script:mainWindow.FindName('btnSingle'), #0
 $script:mainWindow.FindName('btnBulk'), #1
 $script:mainWindow.FindName('btnListGen'), #2
 $script:mainWindow.FindName('btnList'), #3

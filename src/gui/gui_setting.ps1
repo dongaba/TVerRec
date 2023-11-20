@@ -181,7 +181,7 @@ $script:userSettingFile = Join-Path $script:confDir 'user_setting.ps1'
 #region WPFのWindow設定
 
 try {
-	[String]$mainXaml = Get-Content -LiteralPath (Join-Path $script:wpfDir 'TVerRecSetting.xaml')
+	[String]$mainXaml = Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecSetting.xaml')
 	$mainXaml = $mainXaml -ireplace 'mc:Ignorable="d"', '' -ireplace 'x:N', 'N' -ireplace 'x:Class=".*?"', ''
 	[xml]$mainCleanXaml = $mainXaml
 	$script:settingWindow = [System.Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $mainCleanXaml))

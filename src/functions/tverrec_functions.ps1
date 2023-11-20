@@ -1192,7 +1192,7 @@ function Invoke-StatisticsCheck {
 			-TimeoutSec $script:timeoutSec
 	} catch { Write-Debug ('Failed to collect count') }
 	finally { $progressPreference = 'Continue' }
-	#	if ($operation -eq 'search') { return }
+	if ($operation -eq 'search') { return }
 	$epochTime = [Int64]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() * 1000)
 	$userProperties = @{	#max 25 properties, max 24 chars of property name, 36 chars of property value
 		PSVersion    = @{ 'value' = $PSVersionTable.PSVersion.tostring() }

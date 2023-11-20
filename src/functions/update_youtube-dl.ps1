@@ -92,9 +92,8 @@ else { Write-Error '❗ youtube-dlの取得元の指定が無効です'; exit 1 
 $releases = ('https://api.github.com/repos/{0}/releases' -f $repo)
 
 #youtube-dl移動先相対Path
-$binDir = Convert-Path (Join-Path $scriptRoot '../bin')
-if ($IsWindows) { $ytdlPath = Join-Path $binDir 'youtube-dl.exe' }
-else { $ytdlPath = Join-Path $binDir 'youtube-dl' }
+if ($IsWindows) { $ytdlPath = Join-Path $script:binDir 'youtube-dl.exe' }
+else { $ytdlPath = Join-Path $script:binDir 'youtube-dl' }
 
 #youtube-dlのバージョン取得
 try {
@@ -132,7 +131,7 @@ if ($latestVersion -eq $currentVersion) {
 		#ダウンロード
 		$tag = (Invoke-RestMethod -Uri $releases -Method 'GET')[0].Tag_Name
 		$downloadURL = ('https://github.com/{0}/releases/download/{1}/{2}' -f $repo, $tag, $file)
-		$ytdlFileLocation = Join-Path $binDir $fileAfterRename
+		$ytdlFileLocation = Join-Path $script:binDir $fileAfterRename
 		Invoke-WebRequest -UseBasicParsing -Uri $downloadURL -Out $ytdlFileLocation
 	} catch { Write-Error ('❗ youtube-dlのダウンロードに失敗しました') ; exit 1 }
 

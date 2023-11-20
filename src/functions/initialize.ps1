@@ -97,6 +97,40 @@ if ( $script:myInvocation.ScriptName.Contains('gui')) {
 	if (!$script:disableUpdateYoutubedl) { Invoke-ToolUpdateCheck -scriptName 'update_youtube-dl.ps1' -targetName 'youtube-dl' }
 	if (!$script:disableUpdateFfmpeg) { Invoke-ToolUpdateCheck -scriptName 'update_ffmpeg.ps1' -targetName 'ffmpeg' }
 
+	#ダウンロード対象キーワードのパス
+	$script:keywordFileSamplePath = Join-Path $script:sampleDir 'keyword.sample.conf'
+	$script:keywordFilePath = Join-Path $script:confDir 'keyword.conf'
+
+	#ダウンロード対象外番組のパス
+	$script:ignoreFileSamplePath = Join-Path $script:sampleDir 'ignore.sample.conf'
+	$script:ignoreFilePath = Join-Path $script:confDir 'ignore.conf'
+	$script:ignoreLockFilePath = Join-Path $script:lockDir 'ignore.lock'
+
+	#ダウンロード履歴のパス
+	$script:histFilePath = Join-Path $script:dbDir 'history.csv'
+	$script:histFileSamplePath = Join-Path $script:sampleDir 'history.sample.csv'
+	$script:histLockFilePath = Join-Path $script:lockDir 'history.lock'
+
+	#ダウンロードリストのパス
+	$script:listFilePath = Join-Path $script:listDir 'list.csv'
+	$script:listFileSamplePath = Join-Path $script:sampleDir 'list.sample.csv'
+	$script:listLockFilePath = Join-Path $script:lockDir 'list.lock'
+
+	#ffpmegで番組検証時のエラーファイルのパス
+	$script:ffpmegErrorLogPath = Join-Path $script:dbDir ('ffmpeg_error_{0}.log' -f $PID)
+
+	#youtube-dlのパス
+	if ($IsWindows) { $script:ytdlPath = Join-Path $script:binDir 'youtube-dl.exe' }
+	else { $script:ytdlPath = Join-Path $script:binDir 'youtube-dl' }
+
+	#ffmpegのパス
+	if ($IsWindows) { $script:ffmpegPath = Join-Path $script:binDir 'ffmpeg.exe' }
+	else { $script:ffmpegPath = Join-Path $script:binDir 'ffmpeg' }
+
+	#ffprobeのパス
+	if ($IsWindows) { $script:ffprobePath = Join-Path $script:binDir 'ffprobe.exe' }
+	else { $script:ffprobePath = Join-Path $script:binDir 'ffprobe' }
+
 	#TVerRecの最新化チェック
 	if ($script:appName -eq 'TVerRec') {
 		Invoke-TVerRecUpdateCheck
