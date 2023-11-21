@@ -232,23 +232,23 @@ if (Test-Path (Join-Path $script:scriptRoot '../img')) {
 if (Test-Path (Join-Path $script:scriptRoot '../lib')) {
 	Remove-Item -LiteralPath (Join-Path $script:scriptRoot '../lib') -Recurse -Force
 }
-if (Test-Path (Join-Path $script:scriptRoot 'conf/ignore.sample.conf') -PathType Leaf) {
-	Remove-Item -LiteralPath (Join-Path $script:scriptRoot 'conf/ignore.sample.conf') -Force
+if (Test-Path (Join-Path $script:scriptRoot '../conf/ignore.sample.conf') -PathType Leaf) {
+	Remove-Item -LiteralPath (Join-Path $script:scriptRoot '../conf/ignore.sample.conf') -Force
 }
-if (Test-Path (Join-Path $script:scriptRoot 'conf/keyword.sample.conf') -PathType Leaf) {
-	Remove-Item -LiteralPath (Join-Path $script:scriptRoot 'conf/keyword.sample.conf') -Force
+if (Test-Path (Join-Path $script:scriptRoot '../conf/keyword.sample.conf') -PathType Leaf) {
+	Remove-Item -LiteralPath (Join-Path $script:scriptRoot '../conf/keyword.sample.conf') -Force
 }
-if (Test-Path (Join-Path $script:scriptRoot 'db/history.sample.csv') -PathType Leaf) {
-	Remove-Item -LiteralPath (Join-Path $script:scriptRoot 'db/history.sample.csv') -Force
+if (Test-Path (Join-Path $script:scriptRoot '../db/history.sample.csv') -PathType Leaf) {
+	Remove-Item -LiteralPath (Join-Path $script:scriptRoot '../db/history.sample.csv') -Force
 }
-if (Test-Path (Join-Path $script:scriptRoot 'db/history.lock') -PathType Leaf) {
-	Remove-Item -LiteralPath (Join-Path $script:scriptRoot 'db/history.lock') -Force
+if (Test-Path (Join-Path $script:scriptRoot '../db/history.lock') -PathType Leaf) {
+	Remove-Item -LiteralPath (Join-Path $script:scriptRoot '../db/history.lock') -Force
 }
-if (Test-Path (Join-Path $script:scriptRoot 'db/ignore.lock') -PathType Leaf) {
-	Remove-Item -LiteralPath (Join-Path $script:scriptRoot 'db/ignore.lock') -Force
+if (Test-Path (Join-Path $script:scriptRoot '../db/ignore.lock') -PathType Leaf) {
+	Remove-Item -LiteralPath (Join-Path $script:scriptRoot '../db/ignore.lock') -Force
 }
-if (Test-Path (Join-Path $script:scriptRoot 'db/list.lock') -PathType Leaf) {
-	Remove-Item -LiteralPath (Join-Path $script:scriptRoot 'db/list.lock') -Force
+if (Test-Path (Join-Path $script:scriptRoot '../db/list.lock') -PathType Leaf) {
+	Remove-Item -LiteralPath (Join-Path $script:scriptRoot '../db/list.lock') -Force
 }
 
 
