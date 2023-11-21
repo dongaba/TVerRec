@@ -220,6 +220,9 @@ if (Test-Path (Join-Path $script:scriptRoot '../.wsb')) {
 if (Test-Path (Join-Path $script:scriptRoot '../colab')) {
 	Remove-Item -LiteralPath (Join-Path $script:scriptRoot '../colab') -Recurse -Force
 }
+if (Test-Path (Join-Path $script:scriptRoot '../docker')) {
+	Remove-Item -LiteralPath (Join-Path $script:scriptRoot '../docker') -Recurse -Force
+}
 if (Test-Path (Join-Path $script:scriptRoot '../list')) {
 	Remove-Item -LiteralPath (Join-Path $script:scriptRoot '../list') -Recurse -Force
 }
