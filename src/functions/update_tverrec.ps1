@@ -109,7 +109,7 @@ Write-Output ('')
 Write-Output ('-----------------------------------------------------------------')
 Write-Output ('TVerRecの最新版をダウンロードします')
 try {
-	$zipURL = (Invoke-RestMethod -Uri $releases -Method 'GET' ).zipball_url
+	$zipURL = (Invoke-RestMethod -Uri $releases -Method 'GET').zipball_url
 	Invoke-WebRequest -UseBasicParsing -Uri $zipURL -OutFile (Join-Path $updateTemp 'TVerRecLatest.zip')
 } catch { Write-Error ('❗ ダウンロードに失敗しました') ; exit 1 }
 
@@ -213,6 +213,23 @@ if (Test-Path (Join-Path $script:scriptRoot 'functions/update_yt-dlp.ps1') -Path
 if (Test-Path (Join-Path $script:scriptRoot 'functions/update_ytdl-patched.ps1') -PathType Leaf) {
 	Remove-Item -LiteralPath (Join-Path $script:scriptRoot 'functions/update_ytdl-patched.ps1') -Force
 }
+#フォルダ体系変更(v2.9.7→v2.9.8)
+if (Test-Path (Join-Path $script:scriptRoot '../.wsb')) {
+	Remove-Item -LiteralPath (Join-Path $script:scriptRoot '../.wsb') -Recurse -Force
+}
+if (Test-Path (Join-Path $script:scriptRoot '../colab')) {
+	Remove-Item -LiteralPath (Join-Path $script:scriptRoot '../colab') -Recurse -Force
+}
+if (Test-Path (Join-Path $script:scriptRoot '../list')) {
+	Remove-Item -LiteralPath (Join-Path $script:scriptRoot '../list') -Recurse -Force
+}
+if (Test-Path (Join-Path $script:scriptRoot '../img')) {
+	Remove-Item -LiteralPath (Join-Path $script:scriptRoot '../img') -Recurse -Force
+}
+if (Test-Path (Join-Path $script:scriptRoot '../lib')) {
+	Remove-Item -LiteralPath (Join-Path $script:scriptRoot '../lib') -Recurse -Force
+}
+
 
 #実行権限の付与
 if (!$IsWindows) {
