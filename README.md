@@ -1,6 +1,6 @@
 # **🎞 TVerRec 📺** TVer 一括ダウンロード・保存
 
-![Logo](https://raw.githubusercontent.com/dongaba/TVerRec/master/img/TVerRec-Logo.png)
+![Logo](https://raw.githubusercontent.com/dongaba/TVerRec/master/resources/img/TVerRec-Logo.png)
 [![GitHub release](https://img.shields.io/github/v/release/dongaba/TVerRec?color=blue)](https://github.com/dongaba/TVerRec/releases)
 [![License](https://img.shields.io/github/license/dongaba/TVerRec?color=blue)](https://opensource.org/licenses/MIT)
 [![CodeFactor](https://www.codefactor.io/repository/github/dongaba/tverrec/badge)](https://www.codefactor.io/repository/github/dongaba/tverrec)
@@ -89,59 +89,39 @@ CM は入っていないため気に入った番組を配信終了後も残し�
 ディレクトリ構成は以下のようになっています。
 
     TVerRec/
-    ├─ .wsb/ ............................. Windows SandBox用サンプル
-    │  ├─ setup ............................ SandBoxに各種ソフトをインストールためのスクリプト(配下のファイルは省略)
-    │  └─ TVerRec.wsb ...................... SandBox構成ファイル
-    │
     ├─ bin/ ............................. 実行ファイル格納用ディレクトリ(初期状態は空)
-    │
-    ├─ colab/ ............................ Gooble Colab用サンプル
-    │  └─ TVerRec.ipynb .................... Google Colab Notebookファイル
     │
     ├─ conf/ ............................. 設定
     │  ├─ ignore.conf ...................... ダウンロード対象外設定ファイル(存在しない場合は起動時にサンプルがコピーされます)
-    │  ├─ ignore.sample.conf ............... サンプルダウンロード対象外設定ファイル
     │  ├─ keyword.conf ..................... ダウンロード対象キーワードファイル(存在しない場合は起動時にサンプルがコピーされます)
-    │  ├─ keyword.sample.conf .............. サンプルダウンロード対象キーワードファイル
     │  ├─ system_setting.ps1 ............... デフォルトシステム設定ファイル
     │  └─ user_setting.ps1 ................. ユーザ設定ファイル(必要に応じて自分で作成してください)
     │
     ├─ db/ ............................... データベース
     │  ├─ ffmpeg_error.log ................. ffmpegのエラーログ(処理中に作成され、一定時間経過後に自動削除されます)
-    │  ├─ history.csv ...................... ダウンロード履歴(存在しない場合は起動時に作成されます)
-    │  ├─ history.lock ..................... 複数インスタンス起動時のダウンロード履歴ファイルの排他制御用ファイル
-    │  ├─ history.sample.csv ............... 空のダウンロード履歴
-    │  ├─ ignore.lock ...................... 複数インスタンス起動時のダウンロード対象外キーワードファイルの排他制御用ファイル
-    │  └─ list.lock ........................ 複数インスタンス起動時のダウンロードリストファイルの排他制御用ファイル
-    │
-    ├─ docker/ ........................... Docker用サンプル
-    │  ├─ docker-compose.yaml .............. docker-composeファイル
-    │  ├─ Dockerfile ....................... Dockerファイル
-    │  ├─ Dockerfile.alpine ................ Alpine LinuxをベースにしたDockerイメージ用Dockerfileのサンプル
-    │  └─ Dockerfile.ubuntu ................ Ubuntu LinuxをベースにしたDockerイメージ用Dockerfileのサンプル
-    │
-    ├─ img/ .............................. 画像
-    │  ├─ TVerRec-Logo-Social.png .......... アプリロゴ(GitHub Social Preview用)
-    │  ├─ TVerRec-Icon.png ................. アイコン用アプリロゴ
-    │  ├─ TVerRec-Logo.png ................. アプリロゴ
-    │  ├─ TVerRec-Logo-Small.png ........... アプリロゴ(小さいやつ)
-    │  ├─ TVerRec-Toast.png ................ トースト通知用アプリロゴ
-    │  └─ TVerRec-Toast-Large.png .......... トースト通知用アプリロゴ(デカいやつ)
-    │
-    ├─ lib/ .............................. ライブラリ
-    │  └─ win .............................. Windows用ライブラリ
-    │      ├─ common ......................... 共通ライブラリ用
-    │      └─ core ........................... PowerShell Core用ディレクトリ(配下のファイルは省略)
+    │  └─ history.csv ...................... ダウンロード履歴(存在しない場合は起動時に作成されます)
     │
     ├─ list/ ............................. リスト
-    │  ├─ list.csv ......................... ダウンロードリスト(存在しない場合は起動時に作成されます)
-    │  └─ list.sample.csv .................. 空のダウンロードリスト
+    │  └─ list.csv ......................... ダウンロードリスト(存在しない場合は起動時に作成されます)
     │
-    ├─ resources/ ........................ GUI設定
-    │  ├─ Icon.b64 ........................ GUI用のアプリアイコン
-    │  ├─ Logo.b64 ........................ GUI用のロゴイメージ
-    │  ├─ TVerRecMain.xaml ................ TVerRecのメイン画面のXAML
-    │  └─ TVerRecSetting.xaml ............. TVerRecの設定用のXAML
+    ├─ resources/ ........................ 各種リソース
+    │  ├─ .wsb/ ............................. Windows SandBox用サンプル(配下のファイルは省略)
+    │  ├─ b64/ ........................... GUI用画像(配下のファイルは省略)
+    │  ├─ colab/ ......................... Gooble Colab用サンプル(配下のファイルは省略)
+    │  ├─ docker/ ........................ Docker用サンプル
+    │  │  ├─ docker-compose.yaml ........... docker-composeファイル
+    │  │  ├─ Dockerfile .................... Dockerファイル
+    │  │  ├─ Dockerfile.alpine ............. Alpine LinuxをベースにしたDockerイメージ用Dockerfileのサンプル
+    │  │  └─ Dockerfile.ubuntu ............. Ubuntu LinuxをベースにしたDockerイメージ用Dockerfileのサンプル
+    │  ├─ img/ ........................... 画像(配下のファイルは省略)
+    │  ├─ lib/ ........................... ライブラリ(配下のファイルは省略)
+    │  ├─ lock/ .......................... ライブラリ(配下のファイルは省略)
+    │  ├─ sample/ ........................ サンプルファイル
+    │  │  ├─ history.sample.csv ............ 空のダウンロード履歴
+    │  │  ├─ ignore.sample.conf ............ サンプルダウンロード対象外設定ファイル
+    │  │  ├─ keyword.sample.conf ........... サンプルダウンロード対象キーワードファイル
+    │  │  └─ list.sample.csv ............... 空のダウンロードリスト
+    │  └─ xaml/ .......................... GUI版のXAML定義(配下のファイルは省略)
     │
     ├─ src/ .............................. 各種ソース
     │  ├─ functions/ ....................... 各種共通関数
@@ -156,12 +136,12 @@ CM は入っていないため気に入った番組を配信終了後も残し�
     │  │  ├─ gui_main.ps1 .................... GUI版のTVerRecを起動するツール
     │  │  └─ gui_setting.ps1 ................. TVerRecの設定用画面を起動するツール
     │  ├─ delete_trash.ps1 ................. ダウンロード対象外番組削除ツール
-    │  ├─ generate_list.ps1 ................ ダウンロードリスト作成ツール
-    │  ├─ loop.ps1 ......................... ループ処理ツール
-    │  ├─ move_vide.ps1 .................... 番組を移動先に移動するツール
     │  ├─ download_bulk.ps1 ................ 一括ダウンロードツール
     │  ├─ download_list.ps1 ................ リストダウンロードツール
     │  ├─ download_single.ps1 .............. 単体ダウンロードツール
+    │  ├─ generate_list.ps1 ................ ダウンロードリスト作成ツール
+    │  ├─ loop.ps1 ......................... ループ処理ツール
+    │  ├─ move_vide.ps1 .................... 番組を移動先に移動するツール
     │  └─ validate_video.ps1 ............... ダウンロード済番組の整合性チェックツール
     │
     ├─ unix/ ............................. Linux/Mac用シェルスクリプト
