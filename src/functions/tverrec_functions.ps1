@@ -1079,16 +1079,17 @@ function Invoke-ValidityCheck {
 					-ArgumentList ($ffmpegArgs) `
 					-PassThru `
 					-WindowStyle $script:windowShowStyle `
-					-RedirectStandardError $script:ffpmegErrorLogPath `
-					-Wait
+					-RedirectStandardError $script:ffpmegErrorLogPath
+				$null = $proc.Handle # cache proc.Handle. This is required for 7.4.0 bug that does not capture the exit code
+				$proc.WaitForExit();
 			} else {
 				$proc = Start-Process `
 					-FilePath $script:ffmpegPath `
 					-ArgumentList ($ffmpegArgs) `
 					-PassThru `
 					-RedirectStandardOutput /dev/null `
-					-RedirectStandardError $script:ffpmegErrorLogPath `
-					-Wait
+					-RedirectStandardError $script:ffpmegErrorLogPath
+				$proc.WaitForExit();
 			}
 		} catch { Write-Error ('❗ ffmpegを起動できませんでした') ; return }
 	}

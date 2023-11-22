@@ -12,10 +12,12 @@
 - コードリファクタリング
 - Windows 環境で winget がない場合に winget の入手先へのリンクを表示する機能を追加
 - 番組の情報を引き回すためにカスタムオブジェクトを作成
+- ディレクトリ体系を整理
 
 ### 2.9.8 Fixed
 
 - Windows/Linux 環境で ffmpeg 6.0.1 に対応
+- Windows 環境で PowerShell 7.4.0 のバグにより整合性検証が必ず失敗する問題に対処
 
 ## [2.9.7](https://github.com/dongaba/TVerRec/releases/tag/v2.9.7)
 
