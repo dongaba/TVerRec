@@ -100,7 +100,7 @@ switch ($true) {
 			if (Test-Path $ffmpegPath -PathType Leaf) {
 				# get version of current ffmpeg.exe
 				$ffmpegFileVersion = (& $ffmpegPath -version)
-				$null = $ffmpegFileVersion[0] -cmatch 'ffmpeg version (n\d+\.\d+\.\d*)(-[0-9a-z]*) Copyright'
+				$null = $ffmpegFileVersion[0] -cmatch 'ffmpeg version (n\d+\.*\d*\.*\d*)'
 				$currentVersion = $matches[1]
 			} else { $currentVersion = '' }
 		} catch { $currentVersion = '' }
@@ -111,7 +111,7 @@ switch ($true) {
 		$latestVersion = ''
 		try {
 			$latestRelease = Invoke-RestMethod -Uri $releases -Method 'GET'
-			$null = $latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)/ffmpeg-(n\d+\.\d+\.\d*)(.*)(-win64-gpl-)(.*).zip'
+			$null = $latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)/ffmpeg-(n\d+\.*\d*\.*\d*)(.*)(-win64-gpl-)(.*).zip'
 			$latestVersion = $matches[6]
 		} catch { Write-Warning ('❗ ffmpegの最新バージョンを特定できませんでした') ; return }
 
@@ -162,9 +162,9 @@ switch ($true) {
 			#バージョンチェック
 			try {
 				$ffmpegFileVersion = (& $ffmpegPath -version)
-				$null = $ffmpegFileVersion[0] -cmatch 'ffmpeg version (.*) Copyright'
+				$null = $ffmpegFileVersion[0] -cmatch 'ffmpeg version (n\d+\.*\d*\.*\d*)'
 				$currentVersion = $matches[1]
-				Write-Output ('💡 ffmpegをversion{0}に更新しました。' -f $currentVersion)
+				Write-Output ('💡 ffmpegをversion {0}に更新しました。' -f $currentVersion)
 			} catch { Write-Error ('❗ 更新後のバージョン取得に失敗しました') ; exit 1 }
 
 		}
@@ -185,7 +185,7 @@ switch ($true) {
 			if (Test-Path $ffmpegPath -PathType Leaf) {
 				# get version of current ffmpeg.exe
 				$ffmpegFileVersion = (& $ffmpegPath -version)
-				$null = $ffmpegFileVersion[0] -cmatch 'ffmpeg version (n\d+\.\d+\.\d*)(-[0-9a-z]*) Copyright'
+				$null = $ffmpegFileVersion[0] -cmatch 'ffmpeg version (n\d+\.*\d*\.*\d*)'
 				$currentVersion = $matches[1]
 			} else { $currentVersion = '' }
 		} catch { $currentVersion = '' }
@@ -196,7 +196,7 @@ switch ($true) {
 		$latestVersion = ''
 		try {
 			$latestRelease = Invoke-RestMethod -Uri $releases -Method 'GET'
-			$null = $latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)/ffmpeg-(n\d+\.\d+\.\d*)(.*)(-linux64-gpl-)(.*).tar.xz'
+			$null = $latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)/ffmpeg-(n\d+\.*\d*\.*\d*)(.*)(-linux64-gpl-)(.*).tar.xz'
 			$latestVersion = $matches[6]
 		} catch { Write-Warning ('❗ ffmpegの最新バージョンを特定できませんでした') ; return }
 
@@ -256,15 +256,15 @@ switch ($true) {
 			catch { Write-Error ('❗ 中間ファイルの削除に失敗しました') ; exit 1 }
 
 			#実行権限の付与
-		(& chmod a+x $ffmpegPath)
-		(& chmod a+x ($ffmpegPath).Replace('ffmpeg', 'ffprobe'))
+			(& chmod a+x $ffmpegPath)
+			(& chmod a+x ($ffmpegPath).Replace('ffmpeg', 'ffprobe'))
 
 			#バージョンチェック
 			try {
 				$ffmpegFileVersion = (& $ffmpegPath -version)
-				$null = $ffmpegFileVersion[0] -cmatch 'ffmpeg version (.*) Copyright'
+				$null = $ffmpegFileVersion[0] -cmatch 'ffmpeg version (n\d+\.*\d*\.*\d*)'
 				$currentVersion = $matches[1]
-				Write-Output ('💡 ffmpegをversion{0}に更新しました。' -f $currentVersion)
+				Write-Output ('💡 ffmpegをversion {0}に更新しました。' -f $currentVersion)
 			} catch { Write-Error ('❗ 更新後のバージョン取得に失敗しました') ; exit 1 }
 
 		}
@@ -285,7 +285,7 @@ switch ($true) {
 			if (Test-Path $ffmpegPath -PathType Leaf) {
 				# get version of current ffmpeg.exe
 				$ffmpegFileVersion = (& $ffmpegPath -version)
-				$null = $ffmpegFileVersion[0] -cmatch 'ffmpeg version (\d+\.\d+(\.\d+)?).*'
+				$null = $ffmpegFileVersion[0] -cmatch 'ffmpeg version (\d+\.*\d*\.*\d*)'
 				$currentVersion = $matches[1]
 			} else { $currentVersion = '' }
 		} catch { $currentVersion = '' }
@@ -338,15 +338,15 @@ switch ($true) {
 			} catch { Write-Error ('❗ 中間ファイルの削除に失敗しました') ; exit 1 }
 
 			#実行権限の付与
-		(& chmod a+x $ffmpegPath)
-		(& chmod a+x ($ffmpegPath).Replace('ffmpeg', 'ffprobe'))
+			(& chmod a+x $ffmpegPath)
+			(& chmod a+x ($ffmpegPath).Replace('ffmpeg', 'ffprobe'))
 
 			#バージョンチェック
 			try {
 				$ffmpegFileVersion = (& $ffmpegPath -version)
-				$null = $ffmpegFileVersion[0] -cmatch 'ffmpeg version (\d+\.\d+(\.\d+)?)-.*'
+				$null = $ffmpegFileVersion[0] -cmatch 'ffmpeg version (\d+\.*\d*\.*\d*)'
 				$currentVersion = $matches[1]
-				Write-Output ('💡 ffmpegをversion{0}に更新しました。' -f $currentVersion)
+				Write-Output ('💡 ffmpegをversion {0}に更新しました。' -f $currentVersion)
 			} catch { Write-Error ('❗ 更新後のバージョン取得に失敗しました') ; exit 1 }
 
 		}

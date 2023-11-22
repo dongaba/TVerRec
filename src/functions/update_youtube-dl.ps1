@@ -140,7 +140,7 @@ if ($latestVersion -eq $currentVersion) {
 	#バージョンチェック
 	try {
 		$currentVersion = (& $ytdlPath --version)
-		Write-Output ('💡 youtube-dlをversion{0}に更新しました。' -f $currentVersion)
+		Write-Output ('💡 youtube-dlをversion {0}に更新しました。' -f $currentVersion)
 	} catch { Write-Error ('❗ 更新後のバージョン取得に失敗しました') ; exit 1 }
 
 
