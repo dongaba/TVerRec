@@ -66,29 +66,21 @@ Show-ProgressToast `
 	-Duration 'long' `
 	-Silent $false
 
+#半日以上前のログファイル・ロックファイルを削除
+$ffmpegErrorLogDir = Convert-Path (Split-Path -Parent -Path $script:ffpmegErrorLogPath)
 Update-ProgressToast `
-	-Title $script:downloadWorkDir `
+	-Title $ffmpegErrorLogDir `
 	-Rate ( 1 / 4 ) `
 	-LeftText '' `
 	-RightText '' `
 	-Tag $script:appName `
 	-Group 'Delete'
-
-#半日以上前のログファイル・ロックファイルを削除
-$script:ffmpegErrorLogDir = Convert-Path (Split-Path -Parent -Path $script:ffpmegErrorLogPath)
 Remove-Files `
-	-BasePath $script:ffmpegErrorLogDir `
+	-BasePath $ffmpegErrorLogDir `
 	-Conditions 'ffmpeg_error_*.log' `
 	-DelPeriod 1
-Remove-Files `
-	-BasePath $scriptRoot `
-	-Conditions 'brightcovenew_*.lock' `
-	-DelPeriod 1
-#7日以上前の無視リストのバックアップを削除
-Remove-Files `
-	-BasePath $script:confDir `
-	-Conditions 'ignore.conf.*' `
-	-DelPeriod 7
+
+#作業ディレクトリ
 Update-ProgressToast `
 	-Title $script:downloadWorkDir `
 	-Rate ( 2 / 4 ) `
@@ -96,13 +88,12 @@ Update-ProgressToast `
 	-RightText '' `
 	-Tag $script:appName `
 	-Group 'Delete'
-
-#作業ディレクトリ
 Remove-Files `
 	-BasePath $script:downloadWorkDir `
 	-Conditions '*.ytdl, *.jpg, *.vtt, *.srt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.m4a, *.m4a.part-Frag*, *.live_chat.json, *.mp4' `
 	-DelPeriod 0
 
+#ダウンロード先
 Update-ProgressToast `
 	-Title $script:downloadBaseDir `
 	-Rate ( 3 / 4 ) `
@@ -110,8 +101,6 @@ Update-ProgressToast `
 	-RightText '' `
 	-Tag $script:appName `
 	-Group 'Delete'
-
-#ダウンロード先
 Remove-Files `
 	-BasePath $script:downloadBaseDir `
 	-Conditions '*.ytdl, *.jpg, *.vtt, *.srt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.m4a, *.m4a.part-Frag*, *.live_chat.json' `
@@ -152,7 +141,7 @@ Show-ProgressToast `
 if ($script:forceSingleDownload) {
 	Write-Warning ('❗ - 強制ダウンロードフラグが設定されているためダウンロード対象外の番組の削除処理をスキップします')
 } else {
-	Add-Type -AssemblyName "System.Globalization"
+	Add-Type -AssemblyName 'System.Globalization'
 	#ダウンロード対象外番組の読み込み
 	$ignoreTitles = @(Read-IgnoreList)
 	$ignoreDirs = [System.Collections.Generic.List[object]]::new()
