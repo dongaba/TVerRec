@@ -16,7 +16,7 @@
 
 ### 2.9.8 Fixed
 
-- Windows/Linux 環境で ffmpeg 6.0.1 に対応
+- ffmpeg 6.1 に対応
 - Windows 環境で PowerShell 7.4.0 のバグにより整合性検証が必ず失敗する問題に対処
 
 ## [2.9.7](https://github.com/dongaba/TVerRec/releases/tag/v2.9.7)
