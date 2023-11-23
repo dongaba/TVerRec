@@ -214,6 +214,9 @@ if (Test-Path (Join-Path $script:scriptRoot 'functions/update_ytdl-patched.ps1')
 	Remove-Item -LiteralPath (Join-Path $script:scriptRoot 'functions/update_ytdl-patched.ps1') -Force
 }
 #フォルダ体系変更(v2.9.7→v2.9.8)
+if (Test-Path (Join-Path $script:scriptRoot '../list/list.csv') -PathType Leaf) {
+	Move-Item -LiteralPath (Join-Path $script:scriptRoot '../list/list.csv') -Destination (Join-Path $script:scriptRoot '../db/list.csv') -Force
+}
 if (Test-Path (Join-Path $script:scriptRoot '../.wsb')) {
 	Remove-Item -LiteralPath (Join-Path $script:scriptRoot '../.wsb') -Recurse -Force
 }
