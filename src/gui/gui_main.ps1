@@ -40,8 +40,6 @@ try {
 	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition }
 	$script:scriptRoot = Convert-Path (Join-Path $script:scriptRoot '../')
 	Set-Location $script:scriptRoot
-	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
-	$script:devDir = Join-Path $script:scriptRoot '../dev'
 } catch { Write-Error ('❗ ディレクトリ設定に失敗しました') ; exit 1 }
 if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 try {

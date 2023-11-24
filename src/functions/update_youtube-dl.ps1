@@ -56,13 +56,12 @@ try {
 		$scriptRoot = Split-Path -Parent -Path $scriptRoot
 	} else { $scriptRoot = Convert-Path .. }
 	Set-Location $script:scriptRoot
-	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
-	$script:devDir = Join-Path $script:scriptRoot '../dev'
 } catch { Write-Error ('❗ ディレクトリ設定に失敗しました') ; exit 1 }
 if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 
 #設定ファイル読み込み
 try {
+	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	. (Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
 	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 		. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))

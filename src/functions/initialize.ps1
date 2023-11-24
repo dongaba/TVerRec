@@ -28,6 +28,8 @@ Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 #----------------------------------------------------------------------
 #設定ファイル読み込み
+$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
+$script:devDir = Join-Path $script:scriptRoot '../dev'
 try {
 	. (Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
 	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
