@@ -1,5 +1,15 @@
 ﻿# Change Log
 
+## [2.9.9](https://github.com/dongaba/TVerRec/releases/tag/v2.9.9)
+
+### 2.9.9 Added
+
+### 2.9.9 Changed
+
+### 2.9.9 Fixed
+
+- GUI 版で「キーワードファイル」「除外リスト」「リストファイル」のクイックリンクが動作しない不具合の修正
+
 ## [2.9.8](https://github.com/dongaba/TVerRec/releases/tag/v2.9.8)
 
 ### 2.9.8 Added
