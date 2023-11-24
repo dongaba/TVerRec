@@ -895,27 +895,25 @@ function Invoke-Ytdl {
 }
 
 #----------------------------------------------------------------------
-#youtube-dlプロセスの起動 (TVer以外のサイトの暫定対応)
+#youtube-dlプロセスの起動 (TVer以外のサイトへの対応)
 #----------------------------------------------------------------------
 function Invoke-NonTverYtdl {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $false, Position = 0)]
-		[Alias('URL')]
-		[String]$local:videoPageURL
+		[Parameter(Mandatory = $true, Position = 0)][Alias('URL')]	[String]$videoPageURL
 	)
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
-	Invoke-StatisticsCheck -Operation 'download'
+	Invoke-StatisticsCheck -Operation 'nontver'
 
 	$tmpDir = ('temp:{0}' -f $script:downloadWorkDir)
-	$saveDir = ('home:{0}' -f $script:videoFileDir)
+	$saveDir = ('home:{0}' -f $script:downloadBaseDir)
 	$subttlDir = ('subtitle:{0}' -f $script:downloadWorkDir)
 	$thumbDir = ('thumbnail:{0}' -f $script:downloadWorkDir)
 	$chaptDir = ('chapter:{0}' -f $script:downloadWorkDir)
 	$descDir = ('description:{0}' -f $script:downloadWorkDir)
-	$saveFile = ('{0}' -f $script:videoName)
+	$saveFile = ('{0}' -f $script:ytdlNonTVerFileName)
 	$ytdlArgs = (' {0}' -f $script:ytdlBaseArgs)
 	$ytdlArgs += (' {0} {1}' -f '--concurrent-fragments', $script:parallelDownloadNumPerFile)
 	if (($script:rateLimit -ne 0) -or ($script:rateLimit -ne '')) {
@@ -933,7 +931,7 @@ function Invoke-NonTverYtdl {
 	$ytdlArgs += (' {0} "{1}"' -f '--output', $saveFile)
 	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlAcceptLang)
 	$ytdlArgs += (' {0}' -f $script:ytdlOption)
-	$ytdlArgs += (' {0}' -f $local:videoPageURL)
+	$ytdlArgs += (' {0}' -f $videoPageURL)
 
 	if ($IsWindows) {
 		try {

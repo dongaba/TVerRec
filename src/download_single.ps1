@@ -79,13 +79,8 @@ while ($true) {
 	#正しいURLが入力されるまでループ
 	if ($videoPageURL -ne '') {
 		if ($videoPageURL -notmatch '^https://tver.jp/(/?.*)') {
-			# Tver以外には変数セットして youtube-dl起動
-			$script:videoFileDir = $script:downloadBaseDir
-			$script:videoName = $script:ytdlNonTVerFileName
-
+			#TVer以外のサイトへの対応
 			Write-Output ('{0}{1}' -f 'ダウンロード：', $videoPageURL)
-
-			#TVer以外のサイトの暫定対応
 			try { Invoke-NonTverYtdl $videoPageURL }
 			catch { Write-Warning ('❗ youtube-dlの起動に失敗しました') }
 			#5秒待機
