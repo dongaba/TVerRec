@@ -85,7 +85,8 @@ while ($true) {
 
 			Write-Output ('{0}{1}' -f 'ダウンロード：', $videoPageURL)
 
-			try { Invoke-Ytdl $videoPageURL }
+			#TVer以外のサイトの暫定対応
+			try { Invoke-NonTverYtdl $videoPageURL }
 			catch { Write-Warning ('❗ youtube-dlの起動に失敗しました') }
 			#5秒待機
 			Start-Sleep -Seconds 5
