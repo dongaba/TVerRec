@@ -82,6 +82,11 @@ try {
 	Set-Location $scriptRoot
 } catch { Write-Error ('❗ ディレクトリ設定に失敗しました') ; exit 1 }
 if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
+try {
+	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
+	. (Convert-Path (Join-Path $script:scriptRoot '../conf/system_setting.ps1'))
+	if ( Test-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1') ) { . (Convert-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1')) }
+} catch {}
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -109,7 +114,8 @@ Write-Output ('')
 Write-Output ('-----------------------------------------------------------------')
 Write-Output ('TVerRecの最新版をダウンロードします')
 try {
-	$zipURL = (Invoke-RestMethod -Uri $releases -Method 'GET').zipball_url
+	if ($script:updatedFromHead ) { $zipURL = 'https://github.com/dongaba/TVerRec/archive/refs/heads/master.zip' }
+	else { $zipURL = (Invoke-RestMethod -Uri $releases -Method 'GET').zipball_url }
 	Invoke-WebRequest -UseBasicParsing -Uri $zipURL -OutFile (Join-Path $updateTemp 'TVerRecLatest.zip')
 } catch { Write-Error ('❗ ダウンロードに失敗しました') ; exit 1 }
 
@@ -140,11 +146,8 @@ try {
 Write-Output ('')
 Write-Output ('-----------------------------------------------------------------')
 Write-Output ('アップデートの作業ディレクトリを削除します')
-try {
-	if (Test-Path $updateTemp ) {
-		Remove-Item -LiteralPath $updateTemp -Force -Recurse
-	}
-} catch { Write-Error ('❗ 作業ディレクトリの削除に失敗しました') ; exit 1 }
+try { if (Test-Path $updateTemp ) { Remove-Item -LiteralPath $updateTemp -Force -Recurse } }
+catch { Write-Error ('❗ 作業ディレクトリの削除に失敗しました') ; exit 1 }
 
 #過去のバージョンで使用していたファイルを削除、または移行
 Write-Output ('')
@@ -231,6 +234,15 @@ if (Test-Path (Join-Path $script:scriptRoot '../db/ignore.lock') -PathType Leaf)
 { Remove-Item -LiteralPath (Join-Path $script:scriptRoot '../db/ignore.lock') -Force }
 if (Test-Path (Join-Path $script:scriptRoot '../db/list.lock') -PathType Leaf)
 { Remove-Item -LiteralPath (Join-Path $script:scriptRoot '../db/list.lock') -Force }
+if (Test-Path (Join-Path $script:scriptRoot '../resources/Icon.b64') -PathType Leaf)
+{ Remove-Item -LiteralPath (Join-Path $script:scriptRoot '../resources/Icon.b64') -Force }
+if (Test-Path (Join-Path $script:scriptRoot '../resources/Logo.b64') -PathType Leaf)
+{ Remove-Item -LiteralPath (Join-Path $script:scriptRoot '../resources/Logo.b64') -Force }
+if (Test-Path (Join-Path $script:scriptRoot '../resources/TVerRecMain.xaml') -PathType Leaf)
+{ Remove-Item -LiteralPath (Join-Path $script:scriptRoot '../resources/TVerRecMain.xaml') -Force }
+if (Test-Path (Join-Path $script:scriptRoot '../resources/TVerRecSetting.xaml') -PathType Leaf)
+{ Remove-Item -LiteralPath (Join-Path $script:scriptRoot '../resources/TVerRecSetting.xaml') -Force }
+
 
 #実行権限の付与
 if (!$IsWindows) {
