@@ -59,7 +59,7 @@ function Move-Files() {
 
 	if ((Test-Path $destination) -and (Test-Path -PathType Container $source)) {
 		# ディレクトリ上書き(移動先に存在 かつ ディレクトリ)は再帰的に Move-Files 呼び出し
-		$items = (Get-ChildItem $source).Where({ $_.Name -inotlike '*update_tverrec.ps1' })
+		$items = (Get-ChildItem $source).Where({ $_.Name -inotlike '*update_tverrec.*' })
 		foreach ($item in $items) { Move-Files -Source $item.FullName -Destination (Join-Path $destination $item.Name) }
 		# 移動し終わったディレクトリを削除
 		Remove-Item -LiteralPath $source -Recurse -Force

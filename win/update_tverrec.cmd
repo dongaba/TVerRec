@@ -39,6 +39,8 @@ where /Q pwsh
 if %ERRORLEVEL% neq 0 (goto :INSTALL)
 
 pwsh -NoProfile -ExecutionPolicy Unrestricted -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/dongaba/TVerRec/master/src/functions/update_tverrec.ps1' -OutFile '..\src\functions\update_tverrec.ps1'"
+pwsh -NoProfile -ExecutionPolicy Unrestricted -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/dongaba/TVerRec/master/unix/update_tverrec.sh' -OutFile '..\unix\update_tverrec.sh'"
+pwsh -NoProfile -ExecutionPolicy Unrestricted -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/dongaba/TVerRec/master/win/update_tverrec.cmd' -OutFile '..\win\update_tverrec.cmd'"
 
 rem Zone Identifierの削除
 pwsh -NoProfile -ExecutionPolicy Unrestricted -Command "Get-ChildItem ..\ -Recurse | Unblock-File"
