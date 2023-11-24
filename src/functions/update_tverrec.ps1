@@ -86,7 +86,7 @@ try {
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	. (Convert-Path (Join-Path $script:scriptRoot '../conf/system_setting.ps1'))
 	if ( Test-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1') ) { . (Convert-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1')) }
-} catch {}
+} catch { Write-Warning ('❗ 設定ファイルの読み込みをせずに実行します') }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
