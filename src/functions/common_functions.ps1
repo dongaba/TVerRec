@@ -353,36 +353,7 @@ function Expand-Zip {
 		Write-Verbose ('{0}を{1}に展開します' -f $path, $destination)
 		[System.IO.Compression.ZipFile]::ExtractToDirectory($path, $destination, $true)
 		Write-Verbose ('{0}を展開しました' -f $path)
-	} else {
-		Write-Error ('{0}が見つかりません' -f $path)
-	}
-}
-
-#----------------------------------------------------------------------
-#ディレクトリの上書き
-#----------------------------------------------------------------------
-function Move-Files() {
-	[CmdletBinding()]
-	[OutputType([System.Void])]
-	Param(
-		[Parameter(Mandatory = $true, Position = 0)][String]$source,
-		[Parameter(Mandatory = $true, Position = 1)][String]$destination
-	)
-
-	if ((Test-Path $destination) -and (Test-Path -PathType Container $source)) {
-		# ディレクトリ上書き(移動先に存在 かつ ディレクトリ)は再帰的に Move-Files 呼び出し
-		Get-ChildItem $source | ForEach-Object {
-			if ($_.Name -inotlike '*update_tverrec.ps1') {
-				Move-Files -Source $_.FullName -Destination ('{0}/{1}' -f $destination, $_.Name)
-			}
-		}
-		# 移動し終わったディレクトリを削除
-		Remove-Item -LiteralPath $source -Recurse -Force
-	} else {
-		# 移動先に対象なし または ファイルの Move-Item に -Forece つけて実行
-		Write-Output ('{0} → {1}' -f $source, $destination)
-		Move-Item -LiteralPath $source -Destination $destination -Force
-	}
+	} else { Write-Error ('{0}が見つかりません' -f $path) }
 }
 
 #endregion ファイル操作

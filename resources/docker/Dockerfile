@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/powershell:alpine-3.14
+FROM mcr.microsoft.com/powershell:ubuntu-22.04
 
 ENV POWERSHELL_TELEMETRY_OPTOUT=1
 
@@ -9,19 +9,22 @@ LABEL org.opencontainers.image.title="TVerRec" \
 	org.opencontainers.image.description="TVerRecは、TVerの番組をダウンロード保存するためのダウンロードツールです。番組のジャンルや出演タレント、番組名などを指定して一括ダウンロードします。CMは入っていないため気に入った番組を配信終了後も残しておくことができます。1回起動すれば新しい番組が配信される度にダウンロードされます。"
 
 #必要ソフトのインストール
-RUN apk --update --no-cache add \
+RUN	apt-get update \
+	&& apt-get install --no-install-recommends -y \
 	curl \
 	git \
 	bash \
 	python3 \
 	xz-utils \
-	&& rm -rf /var/cache/apk/*
+	&& apt-get autoremove -y \
+	&& apt-get clean -y \
+	&& rm -rf /var/lib/apt/lists/*
 
 #User追加
 ARG UID=1000 \
 	GID=1000
-RUN addgroup -g "$GID" tverrec \
-	&& adduser -D -u "$UID" tverrec -G tverrec
+RUN groupadd -g "$GID" tverrec \
+	&& useradd -l -m -s /bin/bash -u "$UID" -g "$GID" tverrec
 
 #ディレクトリ準備
 RUN mkdir -p -m 777 \
@@ -49,10 +52,10 @@ RUN sed -i -e "s|'TVerRec'|'TVerRecContainer'|g" ./conf/system_setting.ps1 \
 	&& sed -i -e "s|Enterを押して|コンテナを再起動して|g" ./unix/start_tverrec.sh \
 	&& sed -i -e "s|read -r -t|sleep|g" ./unix/start_tverrec.sh \
 	&& mkdir container-data \
-	&& cp ./conf/keyword.sample.conf ./container-data/keyword.conf \
-	&& cp ./conf/ignore.sample.conf ./container-data/ignore.conf \
-	&& cp ./db/history.sample.csv ./container-data/history.csv \
-	&& cp ./list/list.sample.csv ./container-data/list.csv \
+	&& cp ./resources/sample/keyword.sample.conf ./container-data/keyword.conf \
+	&& cp ./resources/sample/ignore.sample.conf ./container-data/ignore.conf \
+	&& cp ./resources/sample/history.sample.csv ./container-data/history.csv \
+	&& cp ./resources/sample/list.sample.csv ./container-data/list.csv \
 	&& echo '$script:downloadBaseDir = '\''/mnt/Work'\''' >> ./container-data/user_setting.ps1 \
 	&& echo '$script:downloadWorkDir = '\''/mnt/Temp'\''' >> ./container-data/user_setting.ps1 \
 	&& echo '$script:saveBaseDir = '\''/mnt/Save'\''' >> ./container-data/user_setting.ps1

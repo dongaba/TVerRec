@@ -56,13 +56,12 @@ try {
 		$scriptRoot = Split-Path -Parent -Path $scriptRoot
 	} else { $scriptRoot = Convert-Path .. }
 	Set-Location $script:scriptRoot
-	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
-	$script:devDir = Join-Path $script:scriptRoot '../dev'
 } catch { Write-Error ('❗ ディレクトリ設定に失敗しました') ; exit 1 }
 if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 
 #設定ファイル読み込み
 try {
+	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	. (Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
 	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 		. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
@@ -92,9 +91,8 @@ else { Write-Error '❗ youtube-dlの取得元の指定が無効です'; exit 1 
 $releases = ('https://api.github.com/repos/{0}/releases' -f $repo)
 
 #youtube-dl移動先相対Path
-$binDir = Convert-Path (Join-Path $scriptRoot '../bin')
-if ($IsWindows) { $ytdlPath = Join-Path $binDir 'youtube-dl.exe' }
-else { $ytdlPath = Join-Path $binDir 'youtube-dl' }
+if ($IsWindows) { $ytdlPath = Join-Path $script:binDir 'youtube-dl.exe' }
+else { $ytdlPath = Join-Path $script:binDir 'youtube-dl' }
 
 #youtube-dlのバージョン取得
 try {
@@ -132,7 +130,7 @@ if ($latestVersion -eq $currentVersion) {
 		#ダウンロード
 		$tag = (Invoke-RestMethod -Uri $releases -Method 'GET')[0].Tag_Name
 		$downloadURL = ('https://github.com/{0}/releases/download/{1}/{2}' -f $repo, $tag, $file)
-		$ytdlFileLocation = Join-Path $binDir $fileAfterRename
+		$ytdlFileLocation = Join-Path $script:binDir $fileAfterRename
 		Invoke-WebRequest -UseBasicParsing -Uri $downloadURL -Out $ytdlFileLocation
 	} catch { Write-Error ('❗ youtube-dlのダウンロードに失敗しました') ; exit 1 }
 
@@ -141,7 +139,7 @@ if ($latestVersion -eq $currentVersion) {
 	#バージョンチェック
 	try {
 		$currentVersion = (& $ytdlPath --version)
-		Write-Output ('💡 youtube-dlをversion{0}に更新しました。' -f $currentVersion)
+		Write-Output ('💡 youtube-dlをversion {0}に更新しました。' -f $currentVersion)
 	} catch { Write-Error ('❗ 更新後のバージョン取得に失敗しました') ; exit 1 }
 
 

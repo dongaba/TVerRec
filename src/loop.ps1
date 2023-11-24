@@ -37,8 +37,6 @@ try {
 	if ($script:myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
 	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
-	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
-	$script:devDir = Join-Path $script:scriptRoot '../dev'
 } catch { Write-Error ('❗ カレントディレクトリの設定に失敗しました') ; exit 1 }
 if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 
@@ -59,7 +57,7 @@ while ($true) {
 		Start-Sleep -Second 100
 		$remainingWaitTime -= 100
 		$progressRatio = [Int]($remainingWaitTime / $script:loopCycle * 100 / 2 )
-		Write-Output ('[{0}{1}] 残り{2}秒' -f $('#' * $(50 - $progressRatio)), $('.' * $progressRatio), $remainingWaitTime)
+		Write-Output ('[{0}{1}{2}] 残り{3}秒' -f $('=' * $(50 - $progressRatio)), '>', $('-' * $progressRatio), $remainingWaitTime)
 	} while ($remainingWaitTime -ge 100)
 	Invoke-GarbageCollection
 }
