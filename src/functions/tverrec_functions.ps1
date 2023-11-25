@@ -705,7 +705,7 @@ function Get-VideoInfo {
 	$tverVideoInfoURL = ('{0}{1}.json?v={2}' -f $tverVideoInfoBaseURL, $episodeID, $versionNum)
 	$videoInfo = Invoke-RestMethod -Uri $tverVideoInfoURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
 	$descriptionText = (Get-NarrowChars ($videoInfo.Description).Replace('&amp;', '&')).Trim()
-	$videoEpisode = (Get-NarrowChars ($videoInfo.No)).Trim()
+	$videoEpisodeNum = (Get-NarrowChars ($videoInfo.No)).Trim()
 
 	#----------------------------------------------------------------------
 	#各種整形
@@ -723,6 +723,11 @@ function Get-VideoInfo {
 	#シリーズ名がシーズン名を含む場合はシーズン名をクリア
 	if ($videoSeries -cmatch [Regex]::Escape($videoSeason)) { $videoSeason = '' }
 
+	#エピソード番号を極力修正
+	if ($videoEpisodeNum -eq 1 -and $episodeName -imatch '([#|第|Episode|Episode\.|ep|ep\.|Take|Take.\|Vol|Vol\.|Part|Part\.|Case|Case\.|Stage|Stage\.|Mystery|Mystery\.|Ope|Ope\.|Story|Story\.|Trap|Trap\.|Letter|Letter\.|Act|Act\.]+)(\d+)(.*)') {
+		$videoEpisodeNum = $Matches[2]
+	}
+
 	#放送日を整形
 	if ($broadcastDate -cmatch '([0-9]+)(月)([0-9]+)(日)(.+?)(放送)') {
 		$currentYear = (Get-Date).Year
@@ -738,7 +743,7 @@ function Get-VideoInfo {
 		seriesPageURL   = $videoSeriesPageURL
 		seasonName      = $videoSeason
 		seasonID        = $videoSeasonID
-		episodeNum      = $videoEpisode
+		episodeNum      = $videoEpisodeNum
 		episodeID       = $videoEpisodeID
 		episodePageURL  = $videoEpisodePageURL
 		episodeName     = $episodeName
