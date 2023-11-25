@@ -874,8 +874,8 @@ function Update-Progress2Row {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	if ($script:disableToastNotification -ne $true) {
-		$minRemaining1 = ($secRemaining1 -eq -1 -or $secRemaining1 -eq '' ) ? '' : ('残り時間 {0}分' -f ([Int][Math]::Ceiling($secRemaining1 / 60)))
-		$minRemaining2 = ($secRemaining2 -eq -1 -or $secRemaining2 -eq '' ) ? '' : ('残り時間 {0}分' -f ([Int][Math]::Ceiling($secRemaining2 / 60)))
+		$minRemaining1 = if ($secRemaining1 -eq -1 -or $secRemaining1 -eq '' ) { '' } else { ('残り時間 {0}分' -f ([Int][Math]::Ceiling($secRemaining1 / 60))) }
+		$minRemaining2 = if ($secRemaining2 -eq -1 -or $secRemaining2 -eq '' ) { '' } else { ('残り時間 {0}分' -f ([Int][Math]::Ceiling($secRemaining2 / 60))) }
 
 		Update-ProgressToast2 `
 			-Title1 $processing1 `
