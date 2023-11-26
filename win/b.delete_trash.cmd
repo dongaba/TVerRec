@@ -43,6 +43,7 @@ pwsh -Command "Get-ChildItem ..\ -Recurse | Unblock-File"
 
 pwsh -NoProfile -ExecutionPolicy Unrestricted "..\src\delete_trash.ps1"
 
+pause
 exit
 
 :INSTALL
