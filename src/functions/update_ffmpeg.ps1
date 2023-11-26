@@ -169,7 +169,7 @@ switch ($true) {
 
 		}
 
-		break
+		continue
 
 	}
 	$IsLinux {
@@ -218,20 +218,20 @@ switch ($true) {
 					if ($latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-linuxarm64-gpl-)(.*).tar.xz') {
 						$donwloadURL = $matches[0]
 					}
-					break
+					continue
 				}
-				(($arch -eq 'x86_64') -or ($arch -eq 'ia64')) {
+				($arch -in @('x86_64', 'ia64')) {
 					$cpu = 'amd64'
 					if ($latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-linux64-gpl-)(.*).tar.xz') {
 						$donwloadURL = $matches[0]
 					}
-					break
+					continue
 				}
 				default {
 					Write-Warning ('❗ お使いのCPUに適合するffmpegを特定できませんでした。')
 					Write-Warning ('❗ {0}に適合するffmpegをご自身で配置してください。' -f $arch)
 					return
-					break
+					continue
 				}
 			}
 
@@ -270,7 +270,7 @@ switch ($true) {
 
 		}
 
-		break
+		continue
 
 	}
 	$IsMacOS {
@@ -350,7 +350,7 @@ switch ($true) {
 
 		}
 
-		break
+		continue
 
 	}
 	default {
@@ -358,6 +358,6 @@ switch ($true) {
 		Write-Warning ('❗ お使いのOSに適合するffmpegを特定できませんでした。')
 		Write-Warning ('❗ {0}に適合するffmpegをご自身で配置してください。' -f $os)
 		return
-		break
+		continue
 	}
 }

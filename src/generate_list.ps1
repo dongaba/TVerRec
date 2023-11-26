@@ -80,13 +80,11 @@ foreach ($keyword in $keywords) {
 	$keyword = $keyword.Replace('https://tver.jp/', '')
 
 	#URLがすでにダウンロードリストまたはダウンロード履歴に存在する場合は検索結果から除外
-	$videoLinks, $processedCount = Invoke-HistoryAndListfileMatchCheck $listLinks
+	if ($listLinks.Count -ne 0) { $videoLinks, $processedCount = Invoke-HistoryMatchCheck $listLinks }
+	else { $videoLinks = @(); $processedCount = 0 }
 	$videoTotal = $videoLinks.Count
-	if ($videoTotal -eq 0) {
-		Write-Output ('　処理対象{0}本　処理済{1}本' -f $videoTotal, $processedCount)
-	} else {
-		Write-Output ('　💡 処理対象{0}本　処理済{1}本' -f $videoTotal, $processedCount)
-	}
+	if ($videoTotal -eq 0) { Write-Output ('　処理対象{0}本　処理済{1}本' -f $videoTotal, $processedCount) }
+	else { Write-Output ('　💡 処理対象{0}本　処理済{1}本' -f $videoTotal, $processedCount) }
 
 	#処理時間の推計
 	$secElapsed = (Get-Date) - $totalStartTime

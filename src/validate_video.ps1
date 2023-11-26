@@ -180,8 +180,8 @@ while ($videoNotValidatedNum -ne 0) {
 			#番組の整合性チェック
 			Write-Output ('{0}/{1} - {2}' -f $validateNum, $validateTotal, $videoFileRelPath)
 			Invoke-ValidityCheck `
-				-DecodeOption $decodeOption `
-				-Path $videoFileRelPath
+				-Path $videoFileRelPath `
+				-DecodeOption $decodeOption
 			Start-Sleep -Seconds 1
 		}
 		#----------------------------------------------------------------------

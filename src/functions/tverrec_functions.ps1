@@ -42,8 +42,10 @@ function Invoke-TVerRecUpdateCheck {
 	#TVerRecの最新バージョン取得
 	$repo = 'dongaba/TVerRec'
 	$releases = ('https://api.github.com/repos/{0}/releases' -f $repo)
-	try { $appReleases = (Invoke-RestMethod -Uri $releases -Method 'GET' ) }
-	catch { return }
+	try {
+		$appReleases = (Invoke-RestMethod -Uri $releases -Method 'GET' )
+		if (!$appReleases) { Write-Warning '最新版の情報を取得できませんでした' ; return }
+	} catch { return }
 
 	#GitHub側最新バージョンの整形
 	# v1.2.3 → 1.2.3
@@ -57,8 +59,8 @@ function Invoke-TVerRecUpdateCheck {
 
 	#バージョン判定
 	$versionUp = switch ($true) {
-		{ $latestMajorVersion -gt $appMajorVersion } { $true; break }
-		{ ($latestMajorVersion -eq $appMajorVersion) -and ($appMajorVersion -ne $script:appVersion) } { $true; break }
+		{ $latestMajorVersion -gt $appMajorVersion } { $true; continue }
+		{ ($latestMajorVersion -eq $appMajorVersion) -and ($appMajorVersion -ne $script:appVersion) } { $true; continue }
 		default { $false }
 	}
 
@@ -302,7 +304,7 @@ function Update-IgnoreList {
 		while ((Lock-File $script:ignoreLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$ignoreLists = @((Get-Content $script:ignoreFilePath -Encoding UTF8).Where( { $_ -notmatch '^\s*$|^(;;.*)$' }))
 		$ignoreComment = @(Get-Content $script:ignoreFileSamplePath -Encoding UTF8)
-		$ignoreTarget = @($ignoreLists.Where({ $_ -eq $ignoreTitle }) | Sort-Object | Get-Unique)
+		$ignoreTarget = @($ignoreLists.Where({ $_ -eq $ignoreTitle }) | Sort-Object -Unique)
 		$ignoreElse = @($ignoreLists.Where({ $_ -notin $ignoreTitle }))
 		$ignoreListNew += $ignoreComment
 		$ignoreListNew += $ignoreTarget
@@ -320,7 +322,7 @@ function Update-IgnoreList {
 function Invoke-HistoryMatchCheck {
 	[OutputType([String[]])]
 	Param (
-		[Parameter(Mandatory = $false, Position = 0)][Alias('links')][String[]]$resultLinks
+		[Parameter(Mandatory = $true, Position = 0)][Alias('links')][String[]]$resultLinks
 	)
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -343,7 +345,7 @@ function Invoke-HistoryMatchCheck {
 function Invoke-HistoryAndListfileMatchCheck {
 	[OutputType([String[]])]
 	Param (
-		[Parameter(Mandatory = $false, Position = 0)][Alias('links')][String[]]$resultLinks
+		[Parameter(Mandatory = $true, Position = 0)][Alias('links')][String[]]$resultLinks
 	)
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -383,17 +385,17 @@ function Wait-YtdlProcess {
 	$psCmd = 'ps'
 
 	$processName = switch ($script:preferredYoutubedl) {
-		'yt-dlp' { 'yt-dlp' ; break }
-		'ytdl-patched' { 'youtube-dl' ; break }
+		'yt-dlp' { 'yt-dlp' ; continue }
+		'ytdl-patched' { 'youtube-dl' ; continue }
 	}
 
 	#youtube-dlのプロセスが設定値を超えたら一時待機
 	while ($true) {
 		try {
 			$ytdlCount = switch ($true) {
-				$IsWindows { [Math]::Round((Get-Process -ErrorAction Ignore -Name 'youtube-dl').Count / 2, [MidpointRounding]::AwayFromZero) ; break }
-				$IsLinux { @(Get-Process -ErrorAction Ignore -Name $processName).Count ; break }
-				$IsMacOS { (& $psCmd | grep 'youtube-dl' | grep -v grep | grep -c ^).Trim() ; break }
+				$IsWindows { [Math]::Round((Get-Process -ErrorAction Ignore -Name 'youtube-dl').Count / 2, [MidpointRounding]::AwayFromZero) ; continue }
+				$IsLinux { @(Get-Process -ErrorAction Ignore -Name $processName).Count ; continue }
+				$IsMacOS { (& $psCmd | grep 'youtube-dl' | grep -v grep | grep -c ^).Trim() ; continue }
 				default { 0 }
 			}
 		} catch {
@@ -860,7 +862,7 @@ function Invoke-Ytdl {
 	$saveFile = ('{0}' -f $videoInfo.fileName)
 	$ytdlArgs = (' {0}' -f $script:ytdlBaseArgs)
 	$ytdlArgs += (' {0} {1}' -f '--concurrent-fragments', $script:parallelDownloadNumPerFile)
-	if (($script:rateLimit -ne 0) -or ($script:rateLimit -ne '')) {
+	if ($script:rateLimit -notin @(0, '')) {
 		$ytdlArgs += (' {0} {1}M' -f '--limit-rate', [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8))
 	}
 	if ($script:embedSubtitle) { $ytdlArgs += (' {0}' -f '--sub-langs all --convert-subs srt --embed-subs') }
@@ -921,7 +923,7 @@ function Invoke-NonTverYtdl {
 	$saveFile = ('{0}' -f $script:ytdlNonTVerFileName)
 	$ytdlArgs = (' {0}' -f $script:ytdlBaseArgs)
 	$ytdlArgs += (' {0} {1}' -f '--concurrent-fragments', $script:parallelDownloadNumPerFile)
-	if (($script:rateLimit -ne 0) -or ($script:rateLimit -ne '')) {
+	if ($script:rateLimit -notin @(0, '')) {
 		$ytdlArgs += (' {0} {1}M' -f '--limit-rate', [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8))
 	}
 	if ($script:embedSubtitle) { $ytdlArgs += (' {0}' -f '--sub-langs all --convert-subs srt --embed-subs') }
@@ -971,17 +973,17 @@ function Wait-DownloadCompletion () {
 
 	$psCmd = 'ps'
 
-	switch ($script:preferredYoutubedl) {
-		'yt-dlp' { $processName = 'yt-dlp' ; break }
-		'ytdl-patched' { $processName = 'youtube-dl' ; break }
+	$processName = switch ($script:preferredYoutubedl) {
+		'yt-dlp' { 'yt-dlp' }
+		'ytdl-patched' { 'youtube-dl' }
 	}
 
 	try {
 		switch ($true) {
-			$IsWindows { $ytdlCount = [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) ; break }
-			$IsLinux { $ytdlCount = @(Get-Process -ErrorAction Ignore -Name $processName).Count ; break }
-			$IsMacOS { $ytdlCount = (& $psCmd | grep youtube-dl | grep -v grep | grep -c ^).Trim() ; break }
-			default { $ytdlCount = 0 ; break }
+			$IsWindows { $ytdlCount = [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) ; continue }
+			$IsLinux { $ytdlCount = @(Get-Process -ErrorAction Ignore -Name $processName).Count ; continue }
+			$IsMacOS { $ytdlCount = (& $psCmd | grep youtube-dl | grep -v grep | grep -c ^).Trim() ; continue }
+			default { $ytdlCount = 0 ; continue }
 		}
 	} catch { $ytdlCount = 0 }
 
@@ -990,10 +992,10 @@ function Wait-DownloadCompletion () {
 			Write-Verbose ('現在のダウンロードプロセス一覧 ({0}個)' -f $ytdlCount)
 			Start-Sleep -Seconds 60
 			switch ($true) {
-				$IsWindows { $ytdlCount = [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) ; break }
-				$IsLinux { $ytdlCount = @(Get-Process -ErrorAction Ignore -Name $processName).Count ; break }
-				$IsMacOS { $ytdlCount = (& $psCmd | grep youtube-dl | grep -v grep | grep -c ^).Trim() ; break }
-				default { $ytdlCount = 0 ; break }
+				$IsWindows { $ytdlCount = [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) ; continue }
+				$IsLinux { $ytdlCount = @(Get-Process -ErrorAction Ignore -Name $processName).Count ; continue }
+				$IsMacOS { $ytdlCount = (& $psCmd | grep youtube-dl | grep -v grep | grep -c ^).Trim() ; continue }
+				default { $ytdlCount = 0 ; continue }
 			}
 		} catch { $ytdlCount = 0 }
 	}
@@ -1078,8 +1080,8 @@ function Repair-HistoryFile {
 function Invoke-ValidityCheck {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $false, Position = 0)][String]$decodeOption,
-		[Parameter(Mandatory = $false, Position = 1)][String]$path
+		[Parameter(Mandatory = $true, Position = 0)][String]$path,
+		[Parameter(Mandatory = $false, Position = 1)][String]$decodeOption = ''
 	)
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -1100,11 +1102,11 @@ function Invoke-ValidityCheck {
 			'0' {
 				$videoHists.Where({ $_.videoPath -eq $path }).Where({ $_.videoValidated = '2' })
 				$videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
-				break
+				continue
 			}
-			'1' { Write-Warning ('💡 他プロセスでチェック済です') ; return ; break }
-			'2' { Write-Warning ('💡 他プロセスでチェック中です') ; return ; break }
-			default { Write-Warning ('❗ 既にダウンロード履歴から削除されたようです: {0}' -f $path) ; return ; break }
+			'1' { Write-Warning ('💡 他プロセスでチェック済です') ; return ; continue }
+			'2' { Write-Warning ('💡 他プロセスでチェック中です') ; return ; continue }
+			default { Write-Warning ('❗ 既にダウンロード履歴から削除されたようです: {0}' -f $path) ; return ; continue }
 		}
 	} catch { Write-Warning ('❗ ダウンロード履歴を更新できませんでした: {0}' -f $path) ; return }
 	finally { $null = Unlock-File $script:histLockFilePath }
@@ -1323,28 +1325,29 @@ switch ($true) {
 		$script:kernel = $osDetails.Version
 		$script:arch = $Env:PROCESSOR_ARCHITECTURE.ToLower()
 		$script:guid = (Get-CimInstance -Class Win32_ComputerSystemProduct).UUID
-		break
+		$script:appId = (Get-StartApps | Where-Object { $_.Name -cmatch 'PowerShell*' })[0].AppId
+		continue
 	}
 	$IsLinux {
 		$script:os = if (Test-Path '/etc/os-release') { (& grep 'PRETTY_NAME' /etc/os-release).Replace('PRETTY_NAME=', '').Replace('"', '') } else { (& uname -n) }
 		$script:kernel = [String][System.Environment]::OSVersion.Version
 		$script:arch = (& uname -m | tr '[:upper:]' '[:lower:]')
 		$script:guid = if (Test-Path '/etc/machine-id') { (Get-Content /etc/machine-id) } else { ([guid]::NewGuid()).tostring().replace('-', '') }
-		break
+		continue
 	}
 	$IsMacOS {
-		$script:os = (& sw_vers -productName)
-		$script:kernel = [String][System.Environment]::OSVersion.Version
+		$script:os = ('{0} {1}' -f (& sw_vers -productName), (& sw_vers -productVersion))
+		$script:kernel = (&  uname -r)
 		$script:arch = (& uname -m | tr '[:upper:]' '[:lower:]')
 		$script:guid = if (Test-Path '/etc/machine-id') { (Get-Content /etc/machine-id) } else { ([guid]::NewGuid()).tostring().replace('-', '') }
-		break
+		continue
 	}
 	default {
 		$script:os = [String][System.Environment]::OSVersion
 		$script:kernel = ''
 		$script:arch = ''
 		$script:guid = ''
-		break
+		continue
 	}
 }
 
