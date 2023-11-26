@@ -724,8 +724,8 @@ function Get-VideoInfo {
 	if ($videoSeries -cmatch [Regex]::Escape($videoSeason)) { $videoSeason = '' }
 
 	#エピソード番号を極力修正
-	if ($videoEpisodeNum -eq 1 -and $episodeName -imatch '([#|第|Episode|Episode\.|ep|ep\.|Take|Take.\|Vol|Vol\.|Part|Part\.|Case|Case\.|Stage|Stage\.|Mystery|Mystery\.|Ope|Ope\.|Story|Story\.|Trap|Trap\.|Letter|Letter\.|Act|Act\.]+)(\d+)(.*)') {
-		$videoEpisodeNum = $Matches[2]
+	if (($videoEpisodeNum -eq 1) -and ($episodeName -imatch '([#|第|Episode|ep|Take|Vol|Part|Case|Stage|Mystery|Ope|Story|Trap|Letter|Act]+\.?)(\d+)(.*)')) {
+		$videoEpisodeNum = $matches[2]
 	}
 
 	#放送日を整形
