@@ -77,7 +77,7 @@ Function Remove-IfExist {
 	param (
 		[Parameter(Mandatory = $true, Position = 0)][string]$path
 	)
-	if (Test-Path $path -PathType Leaf) { Remove-Item -LiteralPath $path -Force -Recurse }
+	if (Test-Path $path) { Remove-Item -LiteralPath $path -Force -Recurse }
 }
 
 #----------------------------------------------------------------------
