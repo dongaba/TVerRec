@@ -109,8 +109,7 @@ Function Move-IfExist {
 Set-StrictMode -Version Latest
 try {
 	if ($script:myInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition
-		$scriptRoot = Split-Path -Parent -Path $scriptRoot
+		$scriptRoot = Split-Path -Parent -Path (Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition)
 	} else { $scriptRoot = Convert-Path .. }
 	Set-Location $scriptRoot
 } catch { Write-Error ('❗ ディレクトリ設定に失敗しました') ; exit 1 }
@@ -147,10 +146,11 @@ Write-Output ('')
 Write-Output ('-----------------------------------------------------------------')
 Write-Output ('TVerRecの最新版をダウンロードします')
 try {
-	if ($script:updatedFromHead ) { $zipURL = 'https://github.com/dongaba/TVerRec/archive/refs/heads/master.zip' }
-	else { $zipURL = (Invoke-RestMethod -Uri $releases -Method 'GET').zipball_url }
+	if ((Get-Variable -Name 'updatedFromHead' -ErrorAction SilentlyContinue) -and ($script:updatedFromHead)) {
+		$zipURL = 'https://github.com/dongaba/TVerRec/archive/refs/heads/master.zip'
+	} else { $zipURL = (Invoke-RestMethod -Uri $releases -Method 'GET').zipball_url }
 	Invoke-WebRequest -UseBasicParsing -Uri $zipURL -OutFile (Join-Path $updateTemp 'TVerRecLatest.zip')
-} catch { Write-Error ('❗ ダウンロードに失敗しました') ; exit 1 }
+} catch { Write-Error ('❗ ダウンロードに失敗しました');	exit 1 }
 
 #最新バージョンがダウンロードできていたら展開
 Write-Output ('')
