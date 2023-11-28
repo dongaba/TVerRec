@@ -77,12 +77,18 @@ for ($i = 0 ; $i -lt $moveToPathsArray.Count ; $i++) {
 }
 
 #作業ディレクトリ配下のディレクトリ一覧
-$moveFromPaths = @(Get-ChildItem -LiteralPath $script:downloadBaseDir -Name)
+$moveFromPathsHash = @{}
+if ($script:saveBaseDir -ne '') {
+    $moveFromPathsArray = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer -and ((Get-ChildItem -LiteralPath $_).Where({ !$_.PSIsContainer })).Count -ne 0 }) | Select-Object Name, FullName)
+}
+for ($i = 0 ; $i -lt $moveFromPathsArray.Count ; $i++) {
+	$moveFromPathsHash[$moveFromPathsArray[$i].Name] = $moveFromPathsArray[$i].FullName
+}
 
 #移動先ディレクトリと作業ディレクトリの一致を抽出
 if ($moveToPathsArray.Count -ne 0) {
-	$moveToPaths = @(Compare-Object -IncludeEqual -ExcludeDifferent $moveToPathsArray.Name $moveFromPaths)
-} else { $moveToPaths = $null }
+	$moveDirs = @(Compare-Object -IncludeEqual -ExcludeDifferent $moveToPathsArray.Name $moveFromPathsArray.Name)
+} else { $moveDirs = $null }
 
 #======================================================================
 #2/3 移動先ディレクトリと同名のディレクトリ配下の番組を移動
@@ -101,39 +107,36 @@ Show-ProgressToast `
 
 #----------------------------------------------------------------------
 $totalStartTime = Get-Date
-if (($null -ne $moveToPaths) -and ($moveToPaths.Count -ne 0)) {
-	$moveToPathNum = 0
-	$moveToPathTotal = $moveToPaths.Count
-	foreach ($moveToPath in $moveToPaths) {
+if (($null -ne $moveDirs) -and ($moveDirs.Count -ne 0)) {
+	$moveDirNum = 0
+	$moveDirsTotal = $moveDirs.Count
+	foreach ($moveDir in $moveDirs) {
 		#処理時間の推計
 		$secElapsed = (Get-Date) - $totalStartTime
 		$secRemaining = -1
-		if ($moveToPathNum -ne 0) {
-			$secRemaining = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $moveToPathNum) * ($moveToPathTotal - $moveToPathNum))
+		if ($moveDirNum -ne 0) {
+			$secRemaining = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $moveDirNum) * ($moveDirsTotal - $moveDirNum))
 			$minRemaining = ('{0}分' -f ([Int][Math]::Ceiling($secRemaining / 60)))
-			$progressRate = [Float]($moveToPathNum / $moveToPathTotal)
+			$progressRate = [Float]($moveDirNum / $moveDirsTotal)
 		} else {
 			$minRemaining = ''
 			$progressRate = 0
 		}
-		$moveToPathNum += 1
+		$moveDirNum += 1
 		Update-ProgressToast `
-			-Title $moveToPath.InputObject `
+			-Title $moveDir.InputObject `
 			-Rate $progressRate `
-			-LeftText ('{0}/{1}' -f $moveToPathNum, $moveToPathTotal) `
+			-LeftText ('{0}/{1}' -f $moveDirNum, $moveDirsTotal) `
 			-RightText ('残り時間 {0}' -f $minRemaining) `
 			-Tag $script:appName `
 			-Group 'Move'
-		$targetFolderName = $moveToPath.InputObject
-		if ($script:sortVideoByMedia) {
-			$mediaName = Split-Path -Leaf -Path (Split-Path -Parent -Path $moveToPathsHash[$moveToPath.InputObject])
-			$targetFolderName = Join-Path $mediaName $targetFolderName
-		}
+		$targetFolderName = $moveDir.InputObject
 		#同名ディレクトリが存在する場合は配下のファイルを移動
-		$moveFromPath = Join-Path $script:downloadBaseDir $targetFolderName
+		$moveFromPath = $moveFromPathsHash[$targetFolderName]
+		$moveToPath = $moveToPathsHash[$targetFolderName]
 		if (Test-Path $moveFromPath) {
 			Write-Output ('　{0}\*.mp4' -f $moveFromPath)
-			try { Move-Item ('{0}\*.mp4' -f $moveFromPath) -Destination $moveToPathsHash[$moveToPath.InputObject] -Force }
+			try { Move-Item ('{0}\*.mp4' -f $moveFromPath) -Destination $moveToPath -Force }
 			catch { Write-Warning ('❗ 移動できないファイルがありました') }
 		}
 	}
