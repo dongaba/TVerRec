@@ -25,7 +25,7 @@
 #
 ###################################################################################
 
-try { $script:uiMode = [String]$args[0] } catch { $script:uiMode = '' }
+try { $script:guiMode = [String]$args[0] } catch { $script:guiMode = '' }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定

@@ -144,14 +144,14 @@ $script:mainWindow.FindName('btnLoop')
 
 #バックグラウンドジョブ化するボタンの処理内容
 $script:scriptBlocks = @{
-	$script:btns[0] = { . './download_single.ps1' 'GUI' }
-	$script:btns[1] = { . './download_bulk.ps1' 'GUI' }
-	$script:btns[2] = { . './generate_list.ps1' 'GUI' }
-	$script:btns[3] = { . './download_list.ps1' 'GUI' }
-	$script:btns[4] = { . './delete_trash.ps1' 'GUI' }
-	$script:btns[5] = { . './validate_video.ps1' 'GUI' }
-	$script:btns[6] = { . './move_video.ps1' 'GUI' }
-	$script:btns[7] = { . './loop.ps1' 'GUI' }
+	$script:btns[0] = { . './download_single.ps1' $true }
+	$script:btns[1] = { . './download_bulk.ps1' $true }
+	$script:btns[2] = { . './generate_list.ps1' $true }
+	$script:btns[3] = { . './download_list.ps1' $true }
+	$script:btns[4] = { . './delete_trash.ps1' $true }
+	$script:btns[5] = { . './validate_video.ps1' $true }
+	$script:btns[6] = { . './move_video.ps1' $true }
+	$script:btns[7] = { . './loop.ps1' $true }
 }
 
 #バックグラウンドジョブ化する処理の名前
@@ -263,7 +263,7 @@ while ($script:mainWindow.IsVisible) {
 			Receive-Job $job *> $null
 
 			#ジョブが終了したかどうか判定
-			$completed = $job.State -in 'Completed', 'Failed', 'Stopped'
+			$completed = $job.State -in @('Completed', 'Failed', 'Stopped')
 
 			#終了したジョブのボタンの再有効化
 			if ($completed) {

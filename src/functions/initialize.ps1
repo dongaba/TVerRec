@@ -111,7 +111,7 @@ if ( $script:myInvocation.ScriptName.Contains('gui')) {
 	Invoke-TVerRecUpdateCheck
 	if (!$?) { exit 1 }
 } else {
-	if (($script:uiMode -in @($null, ''))) {
+	if (!$script:guiMode) {
 		[Console]::ForegroundColor = 'Red'
 		Write-Output ('')
 		Write-Output ('===========================================================================')

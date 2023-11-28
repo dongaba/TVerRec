@@ -25,7 +25,7 @@
 #
 ###################################################################################
 
-try { $script:uiMode = [String]$args[0] } catch { $script:uiMode = '' }
+try { $script:guiMode = [String]$args[0] } catch { $script:guiMode = '' }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定
@@ -54,7 +54,7 @@ $keyword = '個別指定'
 Get-Token
 
 #GUI起動を判定
-if ($script:uiMode -ne 'GUI') { $script:uiMode = 'CUI' }
+if (!$script:guiMode) { $script:guiMode = $falese }
 
 
 #----------------------------------------------------------------------
@@ -67,7 +67,7 @@ while ($true) {
 	else { Write-Error ('❗ 番組ダウンロード先ディレクトリにアクセスできません。終了します') ; exit 1 }
 	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 	Wait-YtdlProcess $script:parallelDownloadFileNum
-	if ($script:uiMode -eq 'CUI') {
+	if (!$script:guiMode) {
 		$videoPageURL = (Read-Host '番組URLを入力してください。何も入力しないで Enter を押すと終了します。').Trim()
 	} else {
 		#アセンブリの読み込み

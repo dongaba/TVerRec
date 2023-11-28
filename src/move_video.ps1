@@ -25,7 +25,7 @@
 #
 ###################################################################################
 
-try { $script:uiMode = [String]$args[0] } catch { $script:uiMode = '' }
+try { $script:guiMode = [String]$args[0] } catch { $script:guiMode = '' }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定
@@ -208,7 +208,7 @@ if ($emptyDirTotal -ne 0) {
 }
 #----------------------------------------------------------------------
 
-try { $script:uiMode = [String]$args[0] } catch { $script:uiMode = '' }
+try { $script:guiMode = [String]$args[0] } catch { $script:guiMode = '' }
 
 Update-ProgressToast `
 	-Title '番組の移動' `

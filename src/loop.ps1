@@ -25,7 +25,7 @@
 #
 ###################################################################################
 
-try { $script:uiMode = [String]$args[0] } catch { $script:uiMode = '' }
+try { $script:guiMode = [String]$args[0] } catch { $script:guiMode = '' }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定
@@ -45,10 +45,10 @@ if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペース
 #----------------------------------------------------------------------
 while ($true) {
 
-	. ('{0}/download_bulk.ps1' -f $script:scriptRoot) $script:uiMode
-	. ('{0}/delete_trash.ps1' -f $script:scriptRoot) $script:uiMode
-	. ('{0}/validate_video.ps1' -f $script:scriptRoot) $script:uiMode
-	. ('{0}/move_video.ps1' -f $script:scriptRoot) $script:uiMode
+	. ('{0}/download_bulk.ps1' -f $script:scriptRoot) $script:guiMode
+	. ('{0}/delete_trash.ps1' -f $script:scriptRoot) $script:guiMode
+	. ('{0}/validate_video.ps1' -f $script:scriptRoot) $script:guiMode
+	. ('{0}/move_video.ps1' -f $script:scriptRoot) $script:guiMode
 	Invoke-GarbageCollection
 	Write-Output ('')
 	Write-Output ('{0}秒待機します。' -f $script:loopCycle)
