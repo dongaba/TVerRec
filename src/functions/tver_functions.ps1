@@ -105,7 +105,7 @@ function ProcessSearchResults {
 		switch ($searchResult.Type) {
 			'live' { continue }
 			'episode' {
-				$script:episodeLinks +=('https://tver.jp/episodes/{0}' -f $searchResult.Content.Id)
+				$script:episodeLinks =('https://tver.jp/episodes/{0}' -f $searchResult.Content.Id)
 				continue
 			}
 			'season' {
@@ -131,23 +131,12 @@ function ProcessSearchResults {
 function Get-LinkFromSeriesID {
 	[OutputType([System.Object[]])]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$seriesID)
-
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-
-	$seasonLinks = [System.Collections.Generic.List[String]]::new()
 	$callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callSeriesSeasons/'
-
-	#まずはSeries→Seasonに変換
 	$callSearchURL = ('{0}{1}?platform_uid={2}&platform_token={3}' -f $callSearchBaseURL, $seriesID.Replace('series/', '').Replace('https://tver.jp/', ''), $script:platformUID, $script:platformToken)
 	$searchResultsRaw = Invoke-RestMethod -Uri $callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
 	$searchResults = $searchResultsRaw.Result.Contents
-	foreach ($searchResult in $searchResults) {
-		$seasonLinks.Add($searchResult.Content.Id)
-	}
-
-	#次にSeason→Episodeに変換
 	$searchResults.ForEach({ Get-LinkFromSeasonID $_.Content.Id })
-
 	return $script:episodeLinks | Sort-Object -Unique
 }
 

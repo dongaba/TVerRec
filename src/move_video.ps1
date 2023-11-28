@@ -67,7 +67,7 @@ Show-ProgressToast `
 #移動先ディレクトリ配下のディレクトリ一覧
 if ($script:saveBaseDir) {
 	$script:saveBaseDirArray = @($script:saveBaseDir.split(';').Trim())
-	$moveToPathsArray += @((Get-ChildItem -LiteralPath $script:saveBaseDirArray -Recurse).Where({ $_.PSIsContainer }) | Select-Object Name, FullName)
+	$moveToPathsArray = @((Get-ChildItem -LiteralPath $script:saveBaseDirArray -Recurse).Where({ $_.PSIsContainer }) | Select-Object Name, FullName)
 } else { $moveToPathsArray = @() }
 
 #作業ディレクトリ配下のディレクトリ一覧
