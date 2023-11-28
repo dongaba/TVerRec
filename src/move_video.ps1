@@ -79,7 +79,7 @@ for ($i = 0 ; $i -lt $moveToPathsArray.Count ; $i++) {
 #作業ディレクトリ配下のディレクトリ一覧
 $moveFromPathsHash = @{}
 if ($script:saveBaseDir -ne '') {
-    $moveFromPathsArray = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer -and ((Get-ChildItem -LiteralPath $_).Where({ !$_.PSIsContainer })).Count -ne 0 }) | Select-Object Name, FullName)
+	$moveFromPathsArray = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer -and ((Get-ChildItem -LiteralPath $_).Where({ !$_.PSIsContainer })).Count -ne 0 }) | Select-Object Name, FullName)
 }
 for ($i = 0 ; $i -lt $moveFromPathsArray.Count ; $i++) {
 	$moveFromPathsHash[$moveFromPathsArray[$i].Name] = $moveFromPathsArray[$i].FullName
