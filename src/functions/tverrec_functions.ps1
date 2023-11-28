@@ -26,6 +26,12 @@
 ###################################################################################
 Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
+$script:requestHeader = @{
+	'x-tver-platform-type' = 'web'
+	'Origin'               = 'https://tver.jp'
+	'Referer'              = 'https://tver.jp'
+}
+
 #----------------------------------------------------------------------
 #TVerRec最新化確認
 #----------------------------------------------------------------------
@@ -1269,6 +1275,8 @@ function Invoke-StatisticsCheck {
 		OS           = @{ 'value' = $script:os }
 		Kernel       = @{ 'value' = $script:kernel }
 		Architecture = @{ 'value' = $script:arch }
+		Locale       = @{ 'value' = $script:locale }
+		TimeZone     = @{ 'value' = $script:tz }
 	}
 	foreach ($clientEnv in $script:clientEnvs) {
 		$value = [string]$clientEnv.Value
@@ -1316,13 +1324,10 @@ function Invoke-StatisticsCheck {
 #----------------------------------------------------------------------
 #GUID取得
 #----------------------------------------------------------------------
-$progressPreference = 'SilentlyContinue'
-
 switch ($true) {
 	$IsWindows {
-		$osDetails = Get-CimInstance -Class Win32_OperatingSystem
-		$script:os = $osDetails.Caption
-		$script:kernel = $osDetails.Version
+		$script:os = (Get-CimInstance -Class Win32_OperatingSystem).Caption
+		$script:kernel = (Get-CimInstance -Class Win32_OperatingSystem).Version
 		$script:arch = $Env:PROCESSOR_ARCHITECTURE.ToLower()
 		$script:guid = (Get-CimInstance -Class Win32_ComputerSystemProduct).UUID
 		$script:appId = (Get-StartApps | Where-Object { $_.Name -cmatch 'PowerShell*' })[0].AppId
@@ -1354,6 +1359,7 @@ switch ($true) {
 $script:locale = (Get-Culture).Name
 $script:tz = [String][TimeZoneInfo]::Local.BaseUtcOffset
 
+$progressPreference = 'SilentlyContinue'
 $script:clientEnvs = @{}
 try {
 	$GeoIPValues = (Invoke-RestMethod -Uri 'http://ip-api.com/json/?fields=18030841' -TimeoutSec $script:timeoutSec).psobject.properties
@@ -1361,13 +1367,6 @@ try {
 } catch {
 	Write-Debug ('Failed to check Geo IP')
 }
+$progressPreference = 'Continue'
 $script:clientEnvs = $script:clientEnvs.GetEnumerator() | Sort-Object -Property key
 $script:clientSettings = Get-Setting
-
-$progressPreference = 'Continue'
-
-$script:requestHeader = @{
-	'x-tver-platform-type' = 'web'
-	'Origin'               = 'https://tver.jp'
-	'Referer'              = 'https://tver.jp'
-}

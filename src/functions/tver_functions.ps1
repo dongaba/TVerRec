@@ -105,7 +105,7 @@ function ProcessSearchResults {
 		switch ($searchResult.Type) {
 			'live' { continue }
 			'episode' {
-				$script:episodeLinks.Add('https://tver.jp/episodes/{0}' -f $searchResult.Content.Id)
+				$script:episodeLinks +=('https://tver.jp/episodes/{0}' -f $searchResult.Content.Id)
 				continue
 			}
 			'season' {
@@ -118,7 +118,7 @@ function ProcessSearchResults {
 				Get-LinkFromSeriesID $searchResult.Content.Id
 				continue
 			}
-			default { $script:episodeLinks.Add('https://tver.jp/{0}/{1}' -f $searchResult.Type, $searchResult.Content.Id) }
+			default { $script:episodeLinks +=('https://tver.jp/{0}/{1}' -f $searchResult.Type, $searchResult.Content.Id) }
 		}
 	}
 
@@ -250,7 +250,7 @@ function Get-LinkFromFreeKeyword {
 		switch ($searchResult.Type) {
 			'live' { continue }
 			'episode' {
-				$script:episodeLinks.Add('https://tver.jp/episodes/{0}' -f $searchResult.Content.Id)
+				$script:episodeLinks +=('https://tver.jp/episodes/{0}' -f $searchResult.Content.Id)
 				continue
 			}
 			'season' {
@@ -263,7 +263,7 @@ function Get-LinkFromFreeKeyword {
 				Get-LinkFromSeriesID ($searchResult.Content.Id)
 				continue
 			}
-			default { $script:episodeLinks.Add('https://tver.jp/{0}/{1}' -f $searchResult.Type, $searchResult.Content.Id ) }
+			default { $script:episodeLinks +=('https://tver.jp/{0}/{1}' -f $searchResult.Type, $searchResult.Content.Id ) }
 		}
 	}
 
@@ -290,7 +290,7 @@ function Get-LinkFromTopPage {
 				switch ($searchResultContent.Type) {
 					'live' { continue }
 					'episode' {
-						$script:episodeLinks.Add('https://tver.jp/episodes/{0}' -f $searchResultContent.Content.Id)
+						$script:episodeLinks +=('https://tver.jp/episodes/{0}' -f $searchResultContent.Content.Id)
 						continue
 					}
 					'season' {
@@ -319,7 +319,7 @@ function Get-LinkFromTopPage {
 						Get-LinkFromSpecialDetailID ($searchResultContent.Content.Id)
 						continue
 					}
-					default { $script:episodeLinks.Add('https://tver.jp/{0}/{1}' -f $searchResultContent.Type, $searchResultContent.Content.Id) }
+					default { $script:episodeLinks +=('https://tver.jp/{0}/{1}' -f $searchResultContent.Type, $searchResultContent.Content.Id) }
 				}
 			}
 		} elseif ($searchResult.Type -eq 'topics') {
@@ -327,7 +327,7 @@ function Get-LinkFromTopPage {
 				switch ($searchResultContent.Content.Content.Type) {
 					'live' { continue }
 					'episode' {
-						$script:episodeLinks.Add('https://tver.jp/episodes/{0}' -f $searchResultContent.Content.Content.Content.Id)
+						$script:episodeLinks +=('https://tver.jp/episodes/{0}' -f $searchResultContent.Content.Content.Content.Id)
 						continue
 					}
 					'season' {
@@ -346,7 +346,7 @@ function Get-LinkFromTopPage {
 						Get-LinkFromTalentID ($searchResultContent.Content.Content.Content.Id)
 						continue
 					}
-					default { $script:episodeLinks.Add('https://tver.jp/{0}/{1}' -f $searchResultContent.Content.Content.Type, $searchResultContent.Content.Content.Content.Id) }
+					default { $script:episodeLinks +=('https://tver.jp/{0}/{1}' -f $searchResultContent.Content.Content.Type, $searchResultContent.Content.Content.Content.Id) }
 				}
 			}
 		} elseif ($searchResult.Type -eq 'banner') { #広告	URLは $searchResult.Contents.Content.targetURL
@@ -379,7 +379,7 @@ function Get-LinkFromSiteMap {
 	$searchResults = $searchResultsRaw.urlset.url.loc | Sort-Object -Unique
 
 	foreach ($searchResult in $searchResults) {
-		if ($searchResult -cmatch '\/episodes\/') { $script:episodeLinks.Add($searchResult) }
+		if ($searchResult -cmatch '\/episodes\/') { $script:episodeLinks +=($searchResult) }
 		elseif ($script:sitemapParseEpisodeOnly) { Write-Debug ('Episodeではないためスキップします') }
 		else {
 			switch ($true) {
