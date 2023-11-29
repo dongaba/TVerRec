@@ -64,7 +64,7 @@ function Get-VideoLinksFromKeyword {
 	$script:episodeLinks = @()
 	$script:seriesLinks = [System.Collections.Generic.List[String]]::new()
 
-	$key = $keyword.Split('/')[0]
+	$key = $keyword.split(' ')[0].split("`t")[0].Split('/')[0]
 	$tverID = Remove-Comment(($keyword.Replace("$key/", '')).Trim())
 	Invoke-StatisticsCheck -Operation 'search' -TVerType $key -TVerID $tverID
 	try {
@@ -90,14 +90,22 @@ function ProcessSearchResults {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)][String]$baseURL,
-		[Parameter(Mandatory = $false)][String]$type
+		[Parameter(Mandatory = $false)][String]$type,
+		[Parameter(Mandatory = $false)][String]$keyword
 	)
 
-	$callSearchURL = ('{0}?platform_uid={1}&platform_token={2}' -f $baseURL, $script:platformUID, $script:platformToken)
+	#URLの整形
+	if ($type -eq 'keyword') { $callSearchURL = ('{0}?platform_uid={1}&platform_token={2}&keyword={3}' -f $baseURL, $script:platformUID, $script:platformToken, $keyword) }
+	else { $callSearchURL = ('{0}?platform_uid={1}&platform_token={2}' -f $baseURL, $script:platformUID, $script:platformToken) }
+
+	#取得した値をタイプごとに調整
 	$searchResultsRaw = Invoke-RestMethod -Uri $callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
 	if ($type -in @('new', 'ranking')) { $searchResults = $searchResultsRaw.Result.Contents.Contents }
+	elseif ($type -eq 'specialmain') { $searchResults = $searchResultsRaw.Result.specialContents }
+	elseif ($type -eq 'specialdetail') { $searchResults = $searchResultsRaw.Result.Contents.Content.Contents }
 	else { $searchResults = $searchResultsRaw.Result.Contents }
 
+	#タイプ別に再帰呼び出し
 	foreach ($searchResult in $searchResults) {
 		switch ($searchResult.Type) {
 			'live' { continue }
@@ -113,6 +121,11 @@ function ProcessSearchResults {
 			'series' {
 				Write-Verbose ('　Series {0} からEpisodeを抽出中...' -f $searchResult.Content.Id)
 				Get-LinkFromSeriesID $searchResult.Content.Id
+				continue
+			}
+			'special' {
+				Write-Verbose ('　Special Detail {0} からEpisodeを抽出中...' -f $searchResult.Content.Id)
+				Get-LinkFromSpecialDetailID $searchResult.Content.Id
 				continue
 			}
 			default { $script:episodeLinks += ('https://tver.jp/{0}/{1}' -f $searchResult.Type, $searchResult.Content.Id) }
@@ -162,7 +175,7 @@ function Get-LinkFromSpecialMainID {
 	[OutputType([System.Object[]])]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$specialMainID)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	$script:episodeLinks += @(ProcessSearchResults -baseURL ('https://platform-api.tver.jp/service/api/v1/callSpecialContents/{0}' -f $specialMainID))
+	$script:episodeLinks += @(ProcessSearchResults -baseURL ('https://platform-api.tver.jp/service/api/v1/callSpecialContents/{0}' -f $specialMainID) -Type 'specialmain')
 	return $script:episodeLinks | Sort-Object -Unique
 }
 
@@ -173,7 +186,7 @@ function Get-LinkFromSpecialDetailID {
 	[OutputType([System.Object[]])]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$specialDetailID)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	$script:episodeLinks += @(ProcessSearchResults -baseURL ('https://platform-api.tver.jp/service/api/v1/callSpecialContentsDetail/{0}' -f $specialDetailID))
+	$script:episodeLinks += @(ProcessSearchResults -baseURL ('https://platform-api.tver.jp/service/api/v1/callSpecialContentsDetail/{0}' -f $specialDetailID) -Type 'specialdetail')
 	return $script:episodeLinks | Sort-Object -Unique
 }
 
@@ -217,35 +230,8 @@ function Get-LinkFromRanking {
 function Get-LinkFromFreeKeyword {
 	[OutputType([System.Object[]])]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$keyword)
-
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-
-	$tverSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callKeywordSearch'
-	$tverSearchURL = ('{0}?platform_uid={1}&platform_token={2}&keyword={3}' -f $tverSearchBaseURL, $script:platformUID, $script:platformToken, $keyword )
-	$searchResultsRaw = Invoke-RestMethod -Uri $tverSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
-	$searchResults = $searchResultsRaw.Result.Contents
-
-	foreach ($searchResult in $searchResults) {
-		switch ($searchResult.Type) {
-			'live' { continue }
-			'episode' {
-				$script:episodeLinks += ('https://tver.jp/episodes/{0}' -f $searchResult.Content.Id)
-				continue
-			}
-			'season' {
-				Write-Verbose ('　Season {0} からEpisodeを抽出中...' -f $searchResult.Content.Id)
-				Get-LinkFromSeasonID ($searchResult.Content.Id)
-				continue
-			}
-			'series' {
-				Write-Verbose ('　Series {0} からEpisodeを抽出中...' -f $searchResult.Content.Id)
-				Get-LinkFromSeriesID ($searchResult.Content.Id)
-				continue
-			}
-			default { $script:episodeLinks += ('https://tver.jp/{0}/{1}' -f $searchResult.Type, $searchResult.Content.Id ) }
-		}
-	}
-
+	$script:episodeLinks += @(ProcessSearchResults -baseURL 'https://platform-api.tver.jp/service/api/v1/callKeywordSearch' -Type 'keyword' -Keyword $keyword)
 	return $script:episodeLinks | Sort-Object -Unique
 }
 
@@ -362,16 +348,10 @@ function Get-LinkFromSiteMap {
 		elseif ($script:sitemapParseEpisodeOnly) { Write-Debug ('Episodeではないためスキップします') }
 		else {
 			switch ($true) {
-				($searchResult -cmatch '\/seasons\/') {
-					Write-Output ('　{0} からEpisodeを抽出中...' -f $searchResult)
-					try { Get-LinkFromSeasonID ($searchResult) }
-					catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:11') ; continue }
-					continue
-				}
 				($searchResult -cmatch '\/series\/') {
-					Write-Output ('　{0} からEpisodeを抽出中...' -f $searchResult)
-					try { Get-LinkFromSeriesID ($searchResult) }
-					catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:12') ; continue }
+					Write-Verbose ('　{0} からEpisodeを抽出中...' -f $searchResult)
+					try { Get-LinkFromSeriesID $searchResult.Replace('https://tver.jp/series/', '') }
+					catch { Write-Warning ('❗ 情報取得エラー。スキップします Err:12') }
 					continue
 				}
 				($searchResult -eq 'https://tver.jp/') { continue }	#トップページ	別のキーワードがあるためため対応予定なし
