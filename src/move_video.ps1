@@ -65,15 +65,23 @@ Show-ProgressToast `
 	-Silent $false
 
 #移動先ディレクトリ配下のディレクトリ一覧
+$moveToPathsHash = @{}
 if ($script:saveBaseDir) {
 	$script:saveBaseDirArray = @($script:saveBaseDir.split(';').Trim())
 	$moveToPathsArray = @((Get-ChildItem -LiteralPath $script:saveBaseDirArray -Recurse).Where({ $_.PSIsContainer }) | Select-Object Name, FullName)
 } else { $moveToPathsArray = @() }
+for ($i = 0 ; $i -lt $moveToPathsArray.Count ; $i++) {
+	$moveToPathsHash[$moveToPathsArray[$i].Name] = $moveToPathsArray[$i].FullName
+}
 
 #作業ディレクトリ配下のディレクトリ一覧
+$moveFromPathsHash = @{}
 if ($script:saveBaseDir) {
 	$moveFromPathsArray = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Filter *.mp4 -Recurse).Directory | Sort-Object -Unique | Select-Object Name, FullName)
 } else { $moveFromPathsArray = @() }
+for ($i = 0 ; $i -lt $moveFromPathsArray.Count ; $i++) {
+	$moveFromPathsHash[$moveFromPathsArray[$i].Name] = $moveFromPathsArray[$i].FullName
+}
 
 #移動先ディレクトリと作業ディレクトリの一致を抽出
 if ($moveToPathsArray.Count -ne 0) {
