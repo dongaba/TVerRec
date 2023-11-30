@@ -30,22 +30,22 @@ Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 #設定ファイル読み込み
 $script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 $script:devDir = Join-Path $script:scriptRoot '../dev'
-try {
-	. (Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
+
+try { . (Convert-Path (Join-Path $script:confDir 'system_setting.ps1')) }
+catch { Write-Error ('❗ システム設定ファイルの読み込みに失敗しました') ; exit 1 }
+
+if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
+	try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
+	catch { Write-Error ('❗ ユーザ設定ファイルの読み込みに失敗しました') ; exit 1 }
+} elseif ($IsWindows) {
+	Write-Output ('ユーザ設定ファイルを作成する必要があります')
+	try { . 'gui/gui_setting.ps1' }
+	catch { Write-Error ('❗ 設定画面の起動に失敗しました') ; exit 1 }
 	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
-		. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
-	} elseif ($IsWindows) {
-		while (!( Test-Path (Join-Path $script:confDir 'user_setting.ps1')) ) {
-			Write-Output ('ユーザ設定ファイルを作成する必要があります')
-			. 'gui/gui_setting.ps1'
-		}
-		if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
-			. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
-		}
-	} else {
-		Write-Error ('❗ ユーザ設定が完了してません') ; exit 1
+		try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
+		catch { Write-Error ('❗ ユーザ設定ファイルの読み込みに失敗しました') ; exit 1 }
 	}
-} catch { Write-Error ('❗ 設定ファイルの読み込みに失敗しました') ; exit 1 }
+} else { Write-Error ('❗ ユーザ設定が完了してません') ; exit 1 }
 
 #----------------------------------------------------------------------
 #外部関数ファイルの読み込み
