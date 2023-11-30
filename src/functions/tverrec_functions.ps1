@@ -1227,18 +1227,18 @@ function Get-Setting {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	$filePathList = @(
-		(Convert-Path (Join-Path $script:confDir 'system_setting.ps1')),
-		(Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
+		(Join-Path $script:confDir 'system_setting.ps1'),
+		(Join-Path $script:confDir 'user_setting.ps1')
 	)
 	$configList = @{}
 	foreach ($filePath in $filePathList) {
-		$configs = (Select-String $filePath -Pattern '^(\$.+)=(.+)(\s*)$').ForEach({ $_.line })
-		$excludePattern = '(.*PSStyle.*|.*Base64)'
-		foreach ($config in $configs) {
-			$configParts = $config -split '='
-			$key = $configParts[0].replace('script:', '').replace('$', '').trim()
-			if (!($key -match $excludePattern)) {
-				$configList[$key] = (Get-Variable -Name $key).Value
+		if (Test-Path $filePath) {
+			$configs = (Select-String $filePath -Pattern '^(\$.+)=(.+)(\s*)$').ForEach({ $_.line })
+			$excludePattern = '(.*PSStyle.*|.*Base64)'
+			foreach ($config in $configs) {
+				$configParts = $config -split '='
+				$key = $configParts[0].replace('script:', '').replace('$', '').trim()
+				if (!($key -match $excludePattern)) {$configList[$key] = (Get-Variable -Name $key).Value}
 			}
 		}
 	}

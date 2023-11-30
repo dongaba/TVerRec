@@ -113,14 +113,14 @@ function ProcessSearchResults {
 				$script:episodeLinks += ('https://tver.jp/episodes/{0}' -f $searchResult.Content.Id)
 				continue
 			}
-			'season' {
-				Write-Verbose ('　Season {0} からEpisodeを抽出中...' -f $searchResult.Content.Id)
-				Get-LinkFromSeasonID $searchResult.Content.Id
-				continue
-			}
 			'series' {
 				Write-Verbose ('　Series {0} からEpisodeを抽出中...' -f $searchResult.Content.Id)
 				Get-LinkFromSeriesID $searchResult.Content.Id
+				continue
+			}
+			'season' {
+				Write-Verbose ('　Season {0} からEpisodeを抽出中...' -f $searchResult.Content.Id)
+				Get-LinkFromSeasonID $searchResult.Content.Id
 				continue
 			}
 			'special' {
@@ -249,7 +249,7 @@ function Get-LinkFromTopPage {
 	$searchResultsRaw = Invoke-RestMethod -Uri $callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
 	$searchResults = $searchResultsRaw.Result.Components
 	foreach ($searchResult in $searchResults) {
-		if ($searchResult.Type -in @('horizontal', 'ranking', 'talents', 'billboard', 'episodeRanking', 'newer', 'ender', 'talent', 'special') ) {
+		if ($searchResult.Type -in @('horizontal', 'ranking', 'talents', 'billboard', 'episodeRanking', 'newer', 'ender', 'talent', 'special', 'specialContent') ) {
 			#横スクロール型 or 総合ランキング or 注目タレント or 特集
 			foreach ($searchResultContent in $searchResult.Contents) {
 				switch ($searchResultContent.Type) {
@@ -258,15 +258,15 @@ function Get-LinkFromTopPage {
 						$script:episodeLinks += ('https://tver.jp/episodes/{0}' -f $searchResultContent.Content.Id)
 						continue
 					}
-					'season' {
-						Write-Verbose ('　Season {0} からEpisodeを抽出中...' -f $searchResultContent.Content.Id)
-						Get-LinkFromSeasonID ($searchResultContent.Content.Id)
-						continue
-					}
 					'series' {
 						#Seriesは重複が多いので高速化のためにバッファにためて最後に処理
 						Write-Verbose ('　Series {0} をバッファに保存中...' -f $searchResultContent.Content.Id)
 						$script:seriesLinks.Add($searchResultContent.Content.Id)
+						continue
+					}
+					'season' {
+						Write-Verbose ('　Season {0} からEpisodeを抽出中...' -f $searchResultContent.Content.Id)
+						Get-LinkFromSeasonID ($searchResultContent.Content.Id)
 						continue
 					}
 					'talent' {
@@ -295,15 +295,15 @@ function Get-LinkFromTopPage {
 						$script:episodeLinks += ('https://tver.jp/episodes/{0}' -f $searchResultContent.Content.Content.Content.Id)
 						continue
 					}
-					'season' {
-						Write-Verbose ('　Season {0} からEpisodeを抽出中...' -f $searchResultContent.Content.Content.Content.Id)
-						Get-LinkFromSeasonID ($searchResultContent.Content.Content.Content.Id)
-						continue
-					}
 					'series' {
 						#Seriesは重複が多いので高速化のためにバッファにためて最後に処理
 						Write-Verbose ('　Series {0} をバッファに保存中...' -f $searchResultContent.Content.Content.Content.Id)
 						$script:seriesLinks.Add(($searchResultContent.Content.Content.Content.Id))
+						continue
+					}
+					'season' {
+						Write-Verbose ('　Season {0} からEpisodeを抽出中...' -f $searchResultContent.Content.Content.Content.Id)
+						Get-LinkFromSeasonID ($searchResultContent.Content.Content.Content.Id)
 						continue
 					}
 					'talent' {
@@ -316,7 +316,8 @@ function Get-LinkFromTopPage {
 			}
 		} elseif ($searchResult.Type -eq 'banner') { #広告	URLは $searchResult.Contents.Content.targetURL
 		} elseif ($searchResult.Type -eq 'resume') { #続きを見る	ブラウザのCookieを処理しないといけないと思われるため対応予定なし
-		} else {}
+		} elseif ($searchResult.Type -eq 'favorite') { #お気に入り	ブラウザのCookieを処理しないといけないと思われるため対応予定なし
+		} else { Write-Warning ('❗ 未知のパターンです。 - {0}' -f $searchResult.Type) }
 
 	}
 
