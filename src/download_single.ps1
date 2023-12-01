@@ -54,7 +54,7 @@ $keyword = '個別指定'
 Get-Token
 
 #GUI起動を判定
-if (!$script:guiMode) { $script:guiMode = $falese }
+if (!$script:guiMode) { $script:guiMode = $false }
 
 
 #----------------------------------------------------------------------

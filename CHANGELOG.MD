@@ -1,5 +1,18 @@
 ﻿# Change Log
 
+## [3.0.0](https://github.com/dongaba/TVerRec/releases/tag/v3.0.0)
+
+### 3.0.0 Added
+
+- TVerの提供するエピソード番号が｢1｣のときに、適切なエピソード番号を類推して置換する機能を追加
+
+### 3.0.0 Changed
+
+- コード最適化によるメモリ使用量の削減
+- 動画移動時に子ディレクトリだけでなく配下のディレクトリ全てを移動の対象にするように変更
+
+### 3.0.0 Fixed
+
 ## [2.9.9](https://github.com/dongaba/TVerRec/releases/tag/v2.9.9)
 
 ### 2.9.9 Added
