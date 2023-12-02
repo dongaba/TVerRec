@@ -1344,7 +1344,7 @@ switch ($true) {
 		$script:os = ('{0} {1}' -f (& sw_vers -productName), (& sw_vers -productVersion))
 		$script:kernel = (&  uname -r)
 		$script:arch = (& uname -m | tr '[:upper:]' '[:lower:]')
-		$script:guid = if (Test-Path '/etc/machine-id') { (Get-Content /etc/machine-id) } else { ([guid]::NewGuid()).tostring().replace('-', '') }
+		$script:guid = (& system_profiler SPHardwareDataType | awk '/UUID/ { print $3; }').replace('-', '')
 		continue
 	}
 	default {
