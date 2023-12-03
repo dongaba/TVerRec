@@ -65,16 +65,15 @@ Show-ProgressToast `
 	-Silent $false
 
 #半日以上前のログファイル・ロックファイルを削除
-$ffmpegErrorLogDir = Convert-Path (Split-Path -Parent -Path $script:ffpmegErrorLogPath)
 Update-ProgressToast `
-	-Title $ffmpegErrorLogDir `
+	-Title $script:logDir  `
 	-Rate ( 1 / 4 ) `
 	-LeftText '' `
 	-RightText '' `
 	-Tag $script:appName `
 	-Group 'Delete'
 Remove-Files `
-	-BasePath $ffmpegErrorLogDir `
+	-BasePath $script:logDir `
 	-Conditions 'ffmpeg_error_*.log' `
 	-DelPeriod 1
 

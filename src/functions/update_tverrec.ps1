@@ -222,7 +222,7 @@ Remove-IfExist (Join-Path $script:scriptRoot '../.devcontainer')
 Remove-IfExist (Join-Path $script:scriptRoot 'functions/update_yt-dlp.ps1')
 Remove-IfExist (Join-Path $script:scriptRoot 'functions/update_ytdl-patched.ps1')
 
-#フォルダ体系変更(v2.9.7→v2.9.8)
+#ディレクトリ体系変更(v2.9.7→v2.9.8)
 Move-IfExist (Join-Path $script:scriptRoot '../list/list.csv') -Destination (Join-Path $script:scriptRoot '../db/list.csv')
 Remove-IfExist (Join-Path $script:scriptRoot '../.wsb')
 Remove-IfExist (Join-Path $script:scriptRoot '../colab')

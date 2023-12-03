@@ -91,7 +91,7 @@ $script:listFileSamplePath = Join-Path $script:sampleDir 'list.sample.csv'
 $script:listLockFilePath = Join-Path $script:lockDir 'list.lock'
 
 #ffpmegで番組検証時のエラーファイルのパス
-$script:ffpmegErrorLogPath = Join-Path $script:dbDir ('ffmpeg_error_{0}.log' -f $PID)
+$script:ffpmegErrorLogPath = Join-Path $script:logDir ('ffmpeg_error_{0}.log' -f $PID)
 
 #youtube-dlのパス
 if ($IsWindows) { $script:ytdlPath = Join-Path $script:binDir 'youtube-dl.exe' }

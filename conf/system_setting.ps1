@@ -270,7 +270,7 @@ $script:ytdlNonTVerFileName = '%(webpage_url_domain)s - %(upload_date)s - %(titl
 
 #個別ダウンロード時の強制ダウンロード
 #　個別ダウンロードの際に過去履歴やダウンロード対象外リストとの照合をせずに強制ダウンロードするかを設定します。
-#　この設定を有効にすると、不要ファイル削除処理時にダウンロード対象外リストとマッチするフォルダの削除を行わなくなります。
+#　この設定を有効にすると、不要ファイル削除処理時にダウンロード対象外リストとマッチするディレクトリの削除を行わなくなります。
 $script:forceSingleDownload = $false
 
 #----------------------------------------------------------------------
@@ -296,6 +296,7 @@ $script:tverrecDir = Convert-Path (Join-Path $scriptRoot '..')
 $script:binDir = Convert-Path (Join-Path $scriptRoot '../bin')
 $script:dbDir = Convert-Path (Join-Path $scriptRoot '../db')
 $script:listDir = Convert-Path (Join-Path $scriptRoot '../db')
+$script:logDir = Convert-Path (Join-Path $scriptRoot '../log')
 $script:unixDir = Convert-Path (Join-Path $scriptRoot '../unix')
 $script:winDir = Convert-Path (Join-Path $scriptRoot '../win')
 $script:b64Dir = Convert-Path (Join-Path $scriptRoot '../resources/b64')
@@ -318,4 +319,4 @@ $script:iconPath = Convert-Path (Join-Path $script:imgDir 'TVerRec-Icon.png')
 
 #youtube-dlの引数
 $script:ytdlAcceptLang = 'Accept-Language:ja-JP'
-$script:ytdlBaseArgs = '--format bestvideo+bestaudio/best --merge-output-format mp4 --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --embed-thumbnail --embed-chapters --no-cache-dir --verbose'
+$script:ytdlBaseArgs = '--format "(bv*+ba/b)[protocol!*=dash] / (bv*+ba/b)" --merge-output-format mp4 --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --embed-thumbnail --embed-chapters --no-cache-dir --verbose'

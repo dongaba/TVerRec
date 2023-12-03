@@ -26,12 +26,6 @@
 ###################################################################################
 Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
-$script:requestHeader = @{
-	'x-tver-platform-type' = 'web'
-	'Origin'               = 'https://tver.jp'
-	'Referer'              = 'https://tver.jp'
-}
-
 #----------------------------------------------------------------------
 #TVerRec最新化確認
 #----------------------------------------------------------------------
@@ -888,21 +882,23 @@ function Invoke-Ytdl {
 	if ($IsWindows) {
 		try {
 			Write-Debug ('youtube-dl起動コマンド: {0}{1}' -f $script:ytdlPath, $ytdlArgs)
-			$null = Start-Process `
+			$proc = Start-Process `
 				-FilePath $script:ytdlPath `
 				-ArgumentList $ytdlArgs `
 				-PassThru `
 				-WindowStyle $script:windowShowStyle
+			$null = $proc.Handle
 		} catch { Write-Error ('❗ youtube-dlの起動に失敗しました') ; return }
 	} else {
-		Write-Debug ('youtube-dl起動コマンド: nohup {0}{1}' -f $script:ytdlPath, $ytdlArgs)
+		Write-Debug ('youtube-dl起動コマンド: {0}{1}' -f $script:ytdlPath, $ytdlArgs)
 		try {
-			$null = Start-Process `
-				-FilePath nohup `
-				-ArgumentList ($script:ytdlPath, $ytdlArgs) `
+			$proc = Start-Process `
+				-FilePath $script:ytdlPath `
+				-ArgumentList $ytdlArgs `
 				-PassThru `
 				-RedirectStandardOutput /dev/null `
 				-RedirectStandardError /dev/zero
+			$null = $proc.Handle
 		} catch { Write-Error ('❗ youtube-dlの起動に失敗しました') ; return }
 	}
 }
@@ -949,21 +945,23 @@ function Invoke-NonTverYtdl {
 	if ($IsWindows) {
 		try {
 			Write-Debug ('youtube-dl起動コマンド: {0}{1}' -f $script:ytdlPath, $ytdlArgs)
-			$null = Start-Process `
+			$proc = Start-Process `
 				-FilePath $script:ytdlPath `
 				-ArgumentList $ytdlArgs `
 				-PassThru `
 				-WindowStyle $script:windowShowStyle
+			$null = $proc.Handle
 		} catch { Write-Error ('❗ youtube-dlの起動に失敗しました') ; return }
 	} else {
-		Write-Debug ('youtube-dl起動コマンド: nohup {0}{1}' -f $script:ytdlPath, $ytdlArgs)
+		Write-Debug ('youtube-dl起動コマンド: {0}{1}' -f $script:ytdlPath, $ytdlArgs)
 		try {
-			$null = Start-Process `
-				-FilePath nohup `
-				-ArgumentList ($script:ytdlPath, $ytdlArgs) `
+			$proc = Start-Process `
+				-FilePath $script:ytdlPath `
+				-ArgumentList $ytdlArgs `
 				-PassThru `
 				-RedirectStandardOutput /dev/null `
 				-RedirectStandardError /dev/zero
+			$null = $proc.Handle
 		} catch { Write-Error ('❗ youtube-dlの起動に失敗しました') ; return }
 	}
 }
@@ -1127,19 +1125,22 @@ function Invoke-ValidityCheck {
 			if ($IsWindows) {
 				$proc = Start-Process `
 					-FilePath $script:ffprobePath `
-					-ArgumentList ($ffprobeArgs) `
+					-ArgumentList $ffprobeArgs `
 					-PassThru `
 					-WindowStyle $script:windowShowStyle `
 					-RedirectStandardError $script:ffpmegErrorLogPath `
 					-Wait
+				$null = $proc.Handle # cache proc.Handle. This is required for 7.4.0 bug that does not capture the exit code
+				$proc.WaitForExit();
 			} else {
 				$proc = Start-Process `
 					-FilePath $script:ffprobePath `
-					-ArgumentList ($ffprobeArgs) `
+					-ArgumentList $ffprobeArgs `
 					-PassThru `
 					-RedirectStandardOutput /dev/null `
 					-RedirectStandardError $script:ffpmegErrorLogPath `
 					-Wait
+				$proc.WaitForExit();
 			}
 		} catch { Write-Error ('❗ ffprobeを起動できませんでした') ; return }
 	} else {
@@ -1150,7 +1151,7 @@ function Invoke-ValidityCheck {
 			if ($IsWindows) {
 				$proc = Start-Process `
 					-FilePath $script:ffmpegPath `
-					-ArgumentList ($ffmpegArgs) `
+					-ArgumentList $ffmpegArgs `
 					-PassThru `
 					-WindowStyle $script:windowShowStyle `
 					-RedirectStandardError $script:ffpmegErrorLogPath
@@ -1159,7 +1160,7 @@ function Invoke-ValidityCheck {
 			} else {
 				$proc = Start-Process `
 					-FilePath $script:ffmpegPath `
-					-ArgumentList ($ffmpegArgs) `
+					-ArgumentList $ffmpegArgs `
 					-PassThru `
 					-RedirectStandardOutput /dev/null `
 					-RedirectStandardError $script:ffpmegErrorLogPath
@@ -1238,7 +1239,7 @@ function Get-Setting {
 			foreach ($config in $configs) {
 				$configParts = $config -split '='
 				$key = $configParts[0].replace('script:', '').replace('$', '').trim()
-				if (!($key -match $excludePattern)) {$configList[$key] = (Get-Variable -Name $key).Value}
+				if (!($key -match $excludePattern)) { $configList[$key] = (Get-Variable -Name $key).Value }
 			}
 		}
 	}

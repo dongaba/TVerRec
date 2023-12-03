@@ -77,7 +77,7 @@ function Sync-WpfEvents {
 	[Dispatcher]::PushFrame($script:frame)
 }
 
-#フォルダ選択ダイアログ
+#ディレクトリ選択ダイアログ
 function Select-Folder($description, $textBox) {
 	$script:fd.Description = $description
 	$script:fd.RootFolder = [System.Environment+SpecialFolder]::MyComputer
