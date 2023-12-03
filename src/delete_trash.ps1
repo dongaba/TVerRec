@@ -138,7 +138,7 @@ Show-ProgressToast `
 if ($script:forceSingleDownload) {
 	Write-Warning ('❗ - 強制ダウンロードフラグが設定されているためダウンロード対象外の番組の削除処理をスキップします')
 } else {
-	Add-Type -AssemblyName 'System.Globalization'
+	#Add-Type -AssemblyName 'System.Globalization'
 	#ダウンロード対象外番組の読み込み
 	$ignoreTitles = @(Read-IgnoreList)
 	$ignoreDirs = [System.Collections.Generic.List[object]]::new()
@@ -147,8 +147,7 @@ if ($script:forceSingleDownload) {
 		$workDirEntities = @(Get-ChildItem -LiteralPath $script:downloadBaseDir)
 		if ($workDirEntities.Count -ne 0) {
 			foreach ($ignoreTitle in $ignoreTitles) {
-				#$ignoreTitle = ('*{0}*' -f $ignoreTitle)
-				$filteredDirs = $workDirEntities.Where({ $_.Name -like $ignoreTitle })
+				$filteredDirs = $workDirEntities.Where({ $_.Name.Normalize([Text.NormalizationForm]::FormC) -like ('*{0}*' -f $ignoreTitle).Normalize([Text.NormalizationForm]::FormC) })
 				foreach ($filteredDir in $filteredDirs) {
 					$ignoreDirs.Add($filteredDir)
 					Update-IgnoreList $ignoreTitle

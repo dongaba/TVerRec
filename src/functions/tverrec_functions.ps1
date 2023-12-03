@@ -306,11 +306,11 @@ function Update-IgnoreList {
 		$ignoreComment = @(Get-Content $script:ignoreFileSamplePath -Encoding UTF8)
 		$ignoreTarget = @($ignoreLists.Where({ $_ -eq $ignoreTitle }) | Sort-Object -Unique)
 		$ignoreElse = @($ignoreLists.Where({ $_ -notin $ignoreTitle }))
-		$ignoreListNew += $ignoreComment
-		$ignoreListNew += $ignoreTarget
-		$ignoreListNew += $ignoreElse
-		#改行コードLFを強制
-		$ignoreListNew.ForEach({ "{0}`n" -f $_ }) | Out-File -LiteralPath $script:ignoreFilePath -Encoding UTF8 -NoNewline
+		if ($ignoreComment) { $ignoreListNew += $ignoreComment }
+		if ($ignoreTarget) { $ignoreListNew += $ignoreTarget }
+		if ($ignoreElse) { $ignoreListNew += $ignoreElse }
+		#改行コードLFを強制 + NFCで出力
+		$ignoreListNew.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC)  | Out-File -LiteralPath $script:ignoreFilePath -Encoding UTF8 -NoNewline
 		Write-Debug ('ダウンロード対象外リストのソート更新完了')
 	} catch { Write-Error ('❗ ダウンロード対象外リストのソートに失敗しました') ; exit 1 }
 	finally { $null = Unlock-File $script:ignoreLockFilePath }
@@ -521,8 +521,8 @@ function Invoke-VideoDownload {
 		# 履歴ファイルに存在しない
 		# 	ファイルが存在する	→検証だけする
 		# 	ファイルが存在しない
-		# 		無視リストに存在する	→無視
-		# 		無視リストに存在しない	→ダウンロード
+		# 		ダウンロード対象外リストに存在する	→無視
+		# 		ダウンロード対象外リストに存在しない	→ダウンロード
 		#ダウンロード履歴ファイルのデータを読み込み
 		$histFileData = @(Read-HistoryFile)
 		$histMatch = @($histFileData.Where({ $_.videoPath -eq $videoInfo.fileRelPath }))
@@ -541,7 +541,7 @@ function Invoke-VideoDownload {
 			$newVideo = Format-HistoryRecord $videoInfo
 			$skipDownload = $true
 		} else {
-			#履歴ファイルに存在せず、実ファイルも存在せず、無視リストと合致	→無視する
+			#履歴ファイルに存在せず、実ファイルも存在せず、ダウンロード対象外リストと合致	→無視する
 			$ignoreTitles = @(Read-IgnoreList)
 			foreach ($ignoreTitle in $ignoreTitles) {
 				if (($videoInfo.fileName -like $ignoreTitle) `
@@ -558,7 +558,7 @@ function Invoke-VideoDownload {
 					break
 				}
 			}
-			#履歴ファイルに存在せず、実ファイルも存在せず、無視リストとも合致しない	→ダウンロードする
+			#履歴ファイルに存在せず、実ファイルも存在せず、ダウンロード対象外リストとも合致しない	→ダウンロードする
 			if (!$skipDownload) {
 				Write-Output ('💡 ダウンロードするファイルをダウンロード履歴に追加します')
 				$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'

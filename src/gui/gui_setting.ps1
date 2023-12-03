@@ -164,8 +164,8 @@ function Save-UserSetting {
 		catch { Write-Warning ('❗ 自動生成の終了部分を特定できませんでした') }
 	}
 
-	#改行コードをLFで出力
-	$newSetting.ForEach({ "{0}`n" -f $_ }) | Out-File -LiteralPath $script:userSettingFile -Encoding UTF8 -NoNewline
+	#改行コードLFを強制 + NFCで出力
+	$newSetting.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC)  | Out-File -LiteralPath $script:userSettingFile -Encoding UTF8 -NoNewline
 }
 
 #endregion 関数定義
