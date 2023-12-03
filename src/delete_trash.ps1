@@ -138,7 +138,6 @@ Show-ProgressToast `
 if ($script:forceSingleDownload) {
 	Write-Warning ('❗ - 強制ダウンロードフラグが設定されているためダウンロード対象外の番組の削除処理をスキップします')
 } else {
-	#Add-Type -AssemblyName 'System.Globalization'
 	#ダウンロード対象外番組の読み込み
 	$ignoreTitles = @(Read-IgnoreList)
 	$ignoreDirs = [System.Collections.Generic.List[object]]::new()
