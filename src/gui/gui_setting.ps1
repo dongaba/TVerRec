@@ -277,6 +277,7 @@ $script:settingAttributes += '$script:ffmpegDecodeOption'
 $script:settingAttributes += '$script:ytdlOption'
 $script:settingAttributes += '$script:ytdlNonTVerFileName'
 $script:settingAttributes += '$script:forceSingleDownload'
+$script:settingAttributes += '$script:extractDescTextToList'
 
 $defaultSetting = @{}
 $currentSetting = @{}

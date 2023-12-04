@@ -450,22 +450,46 @@ function Format-ListRecord {
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
-	return [pscustomobject]@{
-		seriesName    = $videoInfo.seriesName
-		seriesID      = $videoInfo.seriesID
-		seasonName    = $videoInfo.seasonName
-		seasonID      = $videoInfo.seasonID
-		episodeNo     = $videoInfo.episodeNum
-		episodeName   = $videoInfo.episodeName
-		episodeID     = $videoInfo.episodeID
-		media         = $videoInfo.mediaName
-		provider      = $videoInfo.providerName
-		broadcastDate = $videoInfo.broadcastDate
-		endTime       = $videoInfo.endTime
-		keyword       = $videoInfo.keyword
-		ignoreWord    = $videoInfo.ignoreWord
+	if ($script:extractDescTextToList) {
+		return [pscustomobject]@{
+			seriesName      = $videoInfo.seriesName
+			seriesID        = $videoInfo.seriesID
+			seriesPageURL   = $videoInfo.seriesPageURL
+			seasonName      = $videoInfo.seasonName
+			seasonID        = $videoInfo.seasonID
+			episodeNo       = $videoInfo.episodeNum
+			episodeName     = $videoInfo.episodeName
+			episodeID       = $videoInfo.episodeID
+			episodePageURL  = $videoInfo.episodePageURL
+			media           = $videoInfo.mediaName
+			provider        = $videoInfo.providerName
+			broadcastDate   = $videoInfo.broadcastDate
+			endTime         = $videoInfo.endTime
+			keyword         = $videoInfo.keyword
+			ignoreWord      = $videoInfo.ignoreWord
+			descriptionText = $videoInfo.descriptionText
+		}
+	} else {
+		return [pscustomobject]@{
+			seriesName     = $videoInfo.seriesName
+			seriesID       = $videoInfo.seriesID
+			seriesPageURL  = $videoInfo.seriesPageURL
+			seasonName     = $videoInfo.seasonName
+			seasonID       = $videoInfo.seasonID
+			episodeNo      = $videoInfo.episodeNum
+			episodeName    = $videoInfo.episodeName
+			episodeID      = $videoInfo.episodeID
+			episodePageURL = $videoInfo.episodePageURL
+			media          = $videoInfo.mediaName
+			provider       = $videoInfo.providerName
+			broadcastDate  = $videoInfo.broadcastDate
+			endTime        = $videoInfo.endTime
+			keyword        = $videoInfo.keyword
+			ignoreWord     = $videoInfo.ignoreWord
+		}
 	}
 }
+
 #----------------------------------------------------------------------
 #「《」と「》」で挟まれた文字を除去
 #----------------------------------------------------------------------
@@ -529,7 +553,7 @@ function Invoke-VideoDownload {
 		$histMatch = @($histFileData.Where({ $_.videoPath -eq $videoInfo.fileRelPath }))
 		if (($histMatch.Count -ne 0)) {
 			#履歴ファイルに存在する	→スキップして次のファイルに
-			Write-Warning ('❗ 同名のファイルがすでに履歴ファイルに存在します。番組IDが変更になった可能性があります。スキップします')
+			Write-Warning ('❗ 同名のファイルがすでに履歴ファイルに存在します。番組IDが変更になった可能性があります。ダウンロードをスキップします')
 			$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '1'
 			$videoInfo.fileName = '-- SKIPPED --'
 			$newVideo = Format-HistoryRecord $videoInfo
@@ -573,7 +597,7 @@ function Invoke-VideoDownload {
 		while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$newVideo | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append
 		Write-Debug ('ダウンロード履歴を書き込みました')
-	} catch { Write-Warning ('❗ ダウンロード履歴を更新できませんでした。スキップします') ; continue }
+	} catch { Write-Warning ('❗ ダウンロード履歴を更新できませんでした。処理をスキップします') ; continue }
 	finally { $null = Unlock-File $script:histLockFilePath }
 
 	#スキップ対象やダウンロード対象外は飛ばして次のファイルへ
@@ -606,7 +630,7 @@ function Update-VideoList {
 
 	$ignoreWord = ''
 	$newVideo = $null
-	$ignore = $false ;
+	$ignore = $false
 
 	$episodeID = $episodePage.Replace('https://tver.jp/episodes/', '')
 
@@ -755,8 +779,8 @@ function Get-VideoInfo {
 		broadcastDate   = $broadcastDate
 		endTime         = $endTime
 		versionNum      = $versionNum
-		descriptionText = $descriptionText
 		videoInfoURL    = $tverVideoInfoURL
+		descriptionText = $descriptionText
 	}
 }
 

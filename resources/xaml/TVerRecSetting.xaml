@@ -1561,6 +1561,29 @@
                         <ComboBoxItem>する</ComboBoxItem>
                     </ComboBox>
 
+                    <Expander
+                        Margin="10,10,10,0"
+                        IsExpanded="False"
+                        FontFamily="Yu Gothic UI"
+                        Header="ダウンロードリストファイルへの番組説明の出力">
+                        <TextBlock
+                            Margin="20,0,20,5"
+                            TextWrapping="Wrap">
+                            ダウンロードリストファイルに番組説明情報を出力するかを設定します。
+                        </TextBlock>
+                    </Expander>
+                    <ComboBox
+                        x:Name="extractDescTextToList"
+                        SelectedIndex="0"
+                        Style="{DynamicResource ComboBoxStyle}"
+                        Margin="20,0,20,0"
+                        Width="100"
+                        HorizontalAlignment="Left">
+                        <ComboBoxItem>デフォルト値</ComboBoxItem>
+                        <ComboBoxItem>しない</ComboBoxItem>
+                        <ComboBoxItem>する</ComboBoxItem>
+                    </ComboBox>
+
                 </StackPanel>
             </ScrollViewer>
         </Border>
