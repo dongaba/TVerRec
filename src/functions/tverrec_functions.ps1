@@ -569,10 +569,8 @@ function Invoke-VideoDownload {
 			#履歴ファイルに存在せず、実ファイルも存在せず、ダウンロード対象外リストと合致	→無視する
 			$ignoreTitles = @(Read-IgnoreList)
 			foreach ($ignoreTitle in $ignoreTitles) {
-				if (($videoInfo.fileName -like $ignoreTitle) `
-						-or ($videoInfo.seriesName -like $ignoreTitle) `
-						-or ($videoInfo.fileName -cmatch [Regex]::Escape($ignoreTitle)) `
-						-or ($videoInfo.seriesName -cmatch [Regex]::Escape($ignoreTitle))) {
+				if (($videoInfo.fileName -like ('*{0}*' -f $ignoreTitle)) `
+						-or ($videoInfo.seriesName -like ('*{0}*' -f $ignoreTitle))) {
 					Update-IgnoreList $ignoreTitle
 					Write-Output ('❗ ダウンロード対象外としたファイルをダウンロード履歴に追加します')
 					$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
