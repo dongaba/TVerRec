@@ -71,6 +71,22 @@ try {
 } catch { Write-Error ('❗ 開発用設定ファイルの読み込みに失敗しました') ; exit 1 }
 
 #----------------------------------------------------------------------
+#アップデータのアップデート
+if (Test-Path (Join-Path $script:scriptRoot '../log/updater_update.txt')) {
+	try {
+		Invoke-WebRequest `
+			-Uri 'https://raw.githubusercontent.com/dongaba/TVerRec/master/unix/update_tverrec.sh' `
+			-OutFile (Join-Path $script:scriptRoot '../unix/update_tverrec.sh')
+		Invoke-WebRequest `
+			-Uri 'https://raw.githubusercontent.com/dongaba/TVerRec/master/win/update_tverrec.cmd' `
+			-OutFile (Join-Path $script:scriptRoot '../win/update_tverrec.cmd')
+		Remove-Item (Join-Path $script:scriptRoot '../log/updater_update.txt') -Force
+	} catch {
+		Write-Warning ('💡 アップデータのアップデートに失敗しました。ご自身でアップデートを完了させる必要があります')
+	}
+}
+
+#----------------------------------------------------------------------
 #ダウンロード対象キーワードのパス
 $script:keywordFileSamplePath = Join-Path $script:sampleDir 'keyword.sample.conf'
 $script:keywordFilePath = Join-Path $script:confDir 'keyword.conf'
