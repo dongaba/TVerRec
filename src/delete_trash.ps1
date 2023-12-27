@@ -2,27 +2,6 @@
 #
 #		不要ファイル削除処理スクリプト
 #
-#	Copyright (c) 2022 dongaba
-#
-#	Licensed under the MIT License;
-#	Permission is hereby granted, free of charge, to any person obtaining a copy
-#	of this software and associated documentation files (the "Software"), to deal
-#	in the Software without restriction, including without limitation the rights
-#	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-#	copies of the Software, and to permit persons to whom the Software is
-#	furnished to do so, subject to the following conditions:
-#
-#	The above copyright notice and this permission notice shall be included in
-#	all copies or substantial portions of the Software.
-#
-#	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-#	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-#	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-#	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-#	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-#	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-#	THE SOFTWARE.
-#
 ###################################################################################
 
 try { $script:guiMode = [String]$args[0] } catch { $script:guiMode = '' }
@@ -87,7 +66,7 @@ Update-ProgressToast `
 	-Group 'Delete'
 Remove-Files `
 	-BasePath $script:downloadWorkDir `
-	-Conditions '*.ytdl, *.jpg, *.vtt, *.srt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.m4a, *.m4a.part-Frag*, *.live_chat.json, *.mp4' `
+	-Conditions '*.ytdl, *.jpg, *.webp, *.vtt, *.srt, *.part, *.m4a.part-Frag*, *.m4a, *.live_chat.json, *.mp4.part-Frag*, *.temp.mp4, *.mp4' `
 	-DelPeriod 0
 
 #ダウンロード先
@@ -100,7 +79,7 @@ Update-ProgressToast `
 	-Group 'Delete'
 Remove-Files `
 	-BasePath $script:downloadBaseDir `
-	-Conditions '*.ytdl, *.jpg, *.vtt, *.srt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.m4a, *.m4a.part-Frag*, *.live_chat.json' `
+	-Conditions '*.ytdl, *.jpg, *.webp, *.vtt, *.srt, *.part, *.m4a.part-Frag*, *.m4a, *.live_chat.json, *.mp4.part-Frag*, *.temp.mp4' `
 	-DelPeriod 0
 
 #移動先

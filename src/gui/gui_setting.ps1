@@ -2,27 +2,6 @@
 #
 #		GUI設定スクリプト
 #
-#	Copyright (c) 2022 dongaba
-#
-#	Licensed under the MIT License;
-#	Permission is hereby granted, free of charge, to any person obtaining a copy
-#	of this software and associated documentation files (the "Software"), to deal
-#	in the Software without restriction, including without limitation the rights
-#	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-#	copies of the Software, and to permit persons to whom the Software is
-#	furnished to do so, subject to the following conditions:
-#
-#	The above copyright notice and this permission notice shall be included in
-#	all copies or substantial portions of the Software.
-#
-#	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-#	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-#	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-#	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-#	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-#	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-#	THE SOFTWARE.
-#
 ###################################################################################
 using namespace System.Windows.Threading
 
@@ -91,7 +70,7 @@ function Select-Folder($description, $textBox) {
 #system_setting.ps1から各設定項目を読み込む
 function Read-SystemSetting {
 	Param (
-		[Parameter(Mandatory = $true, Position = 0)][String]$key
+		[Parameter(Mandatory = $true)][String]$key
 	)
 	try { $defaultSetting = (Select-String -Pattern ('^{0}' -f $key.Replace('$', '\$')) -LiteralPath $script:systemSettingFile | ForEach-Object { $_.Line }).split('=')[1].Trim() }
 	catch { $defaultSetting = '' }
@@ -102,7 +81,7 @@ function Read-SystemSetting {
 #user_setting.ps1から各設定項目を読み込む
 function Read-UserSetting {
 	Param (
-		[Parameter(Mandatory = $true, Position = 0)][String]$key
+		[Parameter(Mandatory = $true)][String]$key
 	)
 	try { $currentSetting = (Select-String -Pattern ('^{0}' -f $key.Replace('$', '\$')) -LiteralPath $script:userSettingFile | ForEach-Object { $_.Line }).split('=', 2)[1].Trim() }
 	catch { $currentSetting = '' }
@@ -306,7 +285,7 @@ try {
 	$null = [Console.Window]::ShowWindow($console, 0)
 } catch { Write-Error ('❗ ウィンドウを描画できませんでした。TVerRecが破損しています。') ; exit 1 }
 
-# メインウィンドウ取得
+#メインウィンドウ取得
 $script:process = [Diagnostics.Process]::GetCurrentProcess()
 $script:form = New-Object Windows.Forms.NativeWindow
 $script:form.AssignHandle($script:process.MainWindowHandle)

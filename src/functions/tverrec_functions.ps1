@@ -2,27 +2,6 @@
 #
 #		TVerRec固有関数スクリプト
 #
-#	Copyright (c) 2022 dongaba
-#
-#	Licensed under the MIT License;
-#	Permission is hereby granted, free of charge, to any person obtaining a copy
-#	of this software and associated documentation files (the "Software"), to deal
-#	in the Software without restriction, including without limitation the rights
-#	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-#	copies of the Software, and to permit persons to whom the Software is
-#	furnished to do so, subject to the following conditions:
-#
-#	The above copyright notice and this permission notice shall be included in
-#	all copies or substantial portions of the Software.
-#
-#	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-#	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-#	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-#	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-#	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-#	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-#	THE SOFTWARE.
-#
 ###################################################################################
 Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 Add-Type -AssemblyName 'System.Globalization'
@@ -49,13 +28,13 @@ function Invoke-TVerRecUpdateCheck {
 	} catch { return }
 
 	#GitHub側最新バージョンの整形
-	# v1.2.3 → 1.2.3
+	#	v1.2.3 → 1.2.3
 	$latestVersion = $appReleases[0].Tag_Name.Trim('v', ' ')
-	# v1.2.3 beta 4 → 1.2.3
+	#	v1.2.3 beta 4 → 1.2.3
 	$latestMajorVersion = $latestVersion.split(' ')[0]
 
 	#ローカル側バージョンの整形
-	# v1.2.3 beta 4 → 1.2.3
+	#	v1.2.3 beta 4 → 1.2.3
 	$appMajorVersion = $script:appVersion.split(' ')[0]
 
 	#バージョン判定
@@ -109,8 +88,8 @@ function Invoke-ToolUpdateCheck {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true, Position = 0)][string]$scriptName,
-		[Parameter(Mandatory = $true, Position = 1)][string]$targetName
+		[Parameter(Mandatory = $true)][string]$scriptName,
+		[Parameter(Mandatory = $true)][string]$targetName
 	)
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -127,10 +106,10 @@ function Invoke-ToolUpdateCheck {
 #----------------------------------------------------------------------
 function Invoke-PathExistenceCheck {
 	Param(
-		[Parameter(Mandatory = $true, Position = 0)][string]$path,
-		[Parameter(Mandatory = $true, Position = 1)][string]$errorMessage,
-		[Parameter(Mandatory = $false, Position = 2)][switch]$isFile,
-		[Parameter(Mandatory = $false, Position = 3)][string]$sampleFilePath
+		[Parameter(Mandatory = $true )][string]$path,
+		[Parameter(Mandatory = $true )][string]$errorMessage,
+		[Parameter(Mandatory = $false)][switch]$isFile,
+		[Parameter(Mandatory = $false)][string]$sampleFilePath
 	)
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -292,7 +271,7 @@ function Read-IgnoreList {
 function Update-IgnoreList {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true, Position = 0)][String]$ignoreTitle
+		[Parameter(Mandatory = $true)][String]$ignoreTitle
 	)
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -323,7 +302,7 @@ function Update-IgnoreList {
 function Invoke-HistoryMatchCheck {
 	[OutputType([String[]])]
 	Param (
-		[Parameter(Mandatory = $true, Position = 0)][Alias('links')][String[]]$resultLinks
+		[Parameter(Mandatory = $true)][Alias('links')][String[]]$resultLinks
 	)
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -346,7 +325,7 @@ function Invoke-HistoryMatchCheck {
 function Invoke-HistoryAndListfileMatchCheck {
 	[OutputType([String[]])]
 	Param (
-		[Parameter(Mandatory = $true, Position = 0)][Alias('links')][String[]]$resultLinks
+		[Parameter(Mandatory = $true)][Alias('links')][String[]]$resultLinks
 	)
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -418,7 +397,7 @@ function Wait-YtdlProcess {
 #----------------------------------------------------------------------
 function Format-HistoryRecord {
 	Param(
-		[Parameter(Mandatory = $true, Position = 0)][pscustomobject]$videoInfo
+		[Parameter(Mandatory = $true)][pscustomobject]$videoInfo
 	)
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -445,7 +424,7 @@ function Format-HistoryRecord {
 #----------------------------------------------------------------------
 function Format-ListRecord {
 	Param(
-		[Parameter(Mandatory = $true, Position = 0)][pscustomobject]$videoInfo
+		[Parameter(Mandatory = $true)][pscustomobject]$videoInfo
 	)
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -507,9 +486,9 @@ Function Remove-SpecialNote {
 function Invoke-VideoDownload {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true, Position = 0)][String]$keyword,
-		[Parameter(Mandatory = $true, Position = 1)][String]$episodePage,
-		[Parameter(Mandatory = $false, Position = 2)][Boolean]$force = $false
+		[Parameter(Mandatory = $true )][String]$keyword,
+		[Parameter(Mandatory = $true )][String]$episodePage,
+		[Parameter(Mandatory = $false)][Boolean]$force = $false
 	)
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -539,15 +518,15 @@ function Invoke-VideoDownload {
 	} else {
 		#ここまで来ているということはEpisodeIDでは履歴とマッチしなかったということ
 		#考えられる原因は履歴ファイルがクリアされてしまっていること、または、EpisodeIDが変更になったこと
-		# 履歴ファイルに存在する	→番組IDが変更になったあるいは、番組名の重複
-		# 	検証済	→元々の番組IDとしては問題ないのでSKIP
-		# 	検証中	→元々の番組IDとしてはそのうち検証されるのでSKIP
-		# 	未検証	→元々の番組IDとしては次回検証されるのでSKIP
-		# 履歴ファイルに存在しない
-		# 	ファイルが存在する	→検証だけする
-		# 	ファイルが存在しない
-		# 		ダウンロード対象外リストに存在する	→無視
-		# 		ダウンロード対象外リストに存在しない	→ダウンロード
+		#	履歴ファイルに存在する	→番組IDが変更になったあるいは、番組名の重複
+		#		検証済	→元々の番組IDとしては問題ないのでSKIP
+		#		検証中	→元々の番組IDとしてはそのうち検証されるのでSKIP
+		#		未検証	→元々の番組IDとしては次回検証されるのでSKIP
+		#	履歴ファイルに存在しない
+		#		ファイルが存在する	→検証だけする
+		#		ファイルが存在しない
+		#			ダウンロード対象外リストに存在する	→無視
+		#			ダウンロード対象外リストに存在しない	→ダウンロード
 		#ダウンロード履歴ファイルのデータを読み込み
 		$histFileData = @(Read-HistoryFile)
 		$histMatch = @($histFileData.Where({ $_.videoPath -eq $videoInfo.fileRelPath }))
@@ -620,8 +599,8 @@ function Invoke-VideoDownload {
 function Update-VideoList {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true, Position = 0)][String]$keyword,
-		[Parameter(Mandatory = $true, Position = 1)][String]$episodePage
+		[Parameter(Mandatory = $true)][String]$keyword,
+		[Parameter(Mandatory = $true)][String]$episodePage
 	)
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -681,7 +660,7 @@ function Update-VideoList {
 function Get-VideoInfo {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true, Position = 0)][String]$episodeID
+		[Parameter(Mandatory = $true)][String]$episodeID
 	)
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -749,7 +728,7 @@ function Get-VideoInfo {
 	if ($videoSeries -cmatch [Regex]::Escape($videoSeason)) { $videoSeason = '' }
 
 	#エピソード番号を極力修正
-	if (($videoEpisodeNum -eq 1) -and ($episodeName -imatch '([#|第|Episode|ep|Take|Vol|Part|Case|Stage|Mystery|Ope|Story|Trap|Letter|Act]+\.?)(\d+)(.*)')) {
+	if (($videoEpisodeNum -eq 1) -and ($episodeName -imatch '([#|第|Episode|ep|Take|Vol|Part|Chapter|Case|Stage|Mystery|Ope|Story|Trap|Letter|Act]+\.?\s?)(\d+)(.*)')) {
 		$videoEpisodeNum = $matches[2]
 	}
 
@@ -788,7 +767,7 @@ function Get-VideoInfo {
 function Format-VideoFileInfo {
 	[OutputType([pscustomobject])]
 	Param (
-		[Parameter(Mandatory = $true, Position = 0)][pscustomobject]$videoInfo
+		[Parameter(Mandatory = $true)][pscustomobject]$videoInfo
 	)
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -838,7 +817,7 @@ function Format-VideoFileInfo {
 function Show-VideoInfo {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true, Position = 0)][pscustomobject]$videoInfo
+		[Parameter(Mandatory = $true)][pscustomobject]$videoInfo
 	)
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -855,7 +834,7 @@ function Show-VideoInfo {
 function Show-VideoDebugInfo {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true, Position = 0)][pscustomobject]$videoInfo
+		[Parameter(Mandatory = $true)][pscustomobject]$videoInfo
 	)
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -869,7 +848,7 @@ function Show-VideoDebugInfo {
 function Invoke-Ytdl {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true, Position = 0)][pscustomobject]$videoInfo
+		[Parameter(Mandatory = $true)][pscustomobject]$videoInfo
 	)
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -932,7 +911,7 @@ function Invoke-Ytdl {
 function Invoke-NonTverYtdl {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true, Position = 0)][Alias('URL')]	[String]$videoPageURL
+		[Parameter(Mandatory = $true)][Alias('URL')]	[String]$videoPageURL
 	)
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -1066,7 +1045,7 @@ function Optimize-HistoryFile {
 function Limit-HistoryFile {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true, Position = 0)][Int32]$retentionPeriod
+		[Parameter(Mandatory = $true)][Int32]$retentionPeriod
 	)
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -1107,8 +1086,8 @@ function Repair-HistoryFile {
 function Invoke-ValidityCheck {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true, Position = 0)][String]$path,
-		[Parameter(Mandatory = $false, Position = 1)][String]$decodeOption = ''
+		[Parameter(Mandatory = $true)][String]$path,
+		[Parameter(Mandatory = $false)][String]$decodeOption = ''
 	)
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -1153,7 +1132,7 @@ function Invoke-ValidityCheck {
 					-WindowStyle $script:windowShowStyle `
 					-RedirectStandardError $script:ffpmegErrorLogPath `
 					-Wait
-				$null = $proc.Handle # cache proc.Handle. This is required for 7.4.0 bug that does not capture the exit code
+				$null = $proc.Handle #proc.Handleをキャッシュ。PS7.4.0の終了コードを捕捉しないバグのために必要
 				$proc.WaitForExit();
 			} else {
 				$proc = Start-Process `
@@ -1178,7 +1157,7 @@ function Invoke-ValidityCheck {
 					-PassThru `
 					-WindowStyle $script:windowShowStyle `
 					-RedirectStandardError $script:ffpmegErrorLogPath
-				$null = $proc.Handle # cache proc.Handle. This is required for 7.4.0 bug that does not capture the exit code
+				$null = $proc.Handle #proc.Handleをキャッシュ。PS7.4.0の終了コードを捕捉しないバグのために必要
 				$proc.WaitForExit();
 			} else {
 				$proc = Start-Process `
@@ -1275,9 +1254,9 @@ function Get-Setting {
 function Invoke-StatisticsCheck {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true, Position = 0)][String]$operation,
-		[Parameter(Mandatory = $false, Position = 1)][String]$tverType = 'none',
-		[Parameter(Mandatory = $false, Position = 2)][String]$tverID = 'none'
+		[Parameter(Mandatory = $true )][String]$operation,
+		[Parameter(Mandatory = $false)][String]$tverType = 'none',
+		[Parameter(Mandatory = $false)][String]$tverID = 'none'
 	)
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)

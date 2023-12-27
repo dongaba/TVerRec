@@ -2,27 +2,6 @@
 #
 #		リストダウンロード処理スクリプト
 #
-#	Copyright (c) 2022 dongaba
-#
-#	Licensed under the MIT License;
-#	Permission is hereby granted, free of charge, to any person obtaining a copy
-#	of this software and associated documentation files (the "Software"), to deal
-#	in the Software without restriction, including without limitation the rights
-#	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-#	copies of the Software, and to permit persons to whom the Software is
-#	furnished to do so, subject to the following conditions:
-#
-#	The above copyright notice and this permission notice shall be included in
-#	all copies or substantial portions of the Software.
-#
-#	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-#	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-#	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-#	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-#	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-#	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-#	THE SOFTWARE.
-#
 ###################################################################################
 
 try { $script:guiMode = [String]$args[0] } catch { $script:guiMode = '' }
@@ -49,13 +28,12 @@ try {
 
 #設定で指定したファイル・ディレクトリの存在チェック
 Invoke-RequiredFileCheck
-
-$keyword = 'リスト指定'
 Get-Token
-
 #ダウンロードリストを読み込み
 $listLinks = @(Get-LinkFromDownloadList)
 if ($null -eq $listLinks) { Write-Warning ('💡 ダウンロードリストが0件です') ; exit 0 }
+$keyword = 'リスト指定'
+
 
 #URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 if ($listLinks.Count -ne 0) { $videoLinks, $processedCount = Invoke-HistoryMatchCheck $listLinks }
@@ -70,14 +48,15 @@ else { Write-Output ('　💡 処理対象{0}本　処理済{1}本' -f $videoTot
 $totalStartTime = Get-Date
 $secRemaining = -1
 
-Show-ProgressToast `
-	-Text1 'リストからの番組のダウンロード' `
-	-Text2 'リストファイルから番組をダウンロード' `
-	-WorkDetail '読み込み中...' `
-	-Duration 'long' `
-	-Silent $false `
-	-Tag $script:appName `
-	-Group 'List'
+$toastParams = @{
+	Text1      = 'リストからの番組のダウンロード'
+	Text2      = 'リストファイルから番組をダウンロード'
+	WorkDetail = '読み込み中...'
+	Tag        = $script:appName
+	Silent     = $false
+	Group      = 'Bulk'
+}
+Show-ProgressToast @toastParams
 
 #----------------------------------------------------------------------
 #個々の番組ダウンロードここから
@@ -85,21 +64,28 @@ $videoNum = 0
 foreach ($videoLink in $videoLinks) {
 	$videoNum += 1
 	#ダウンロード先ディレクトリの存在確認先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
-	if (Test-Path $script:downloadBaseDir -PathType Container) {}
-	else { Write-Error ('❗ 番組ダウンロード先ディレクトリにアクセスできません。終了します') ; exit 1 }
+	if (!(Test-Path $script:downloadBaseDir -PathType Container)) {
+		Write-Error ('❗ 番組ダウンロード先ディレクトリにアクセスできません。終了します') ; exit 1
+	}
+
 	#進捗率の計算
-	$progressRate = [Float]($videoNum / $videoTotal)
 	$secElapsed = (Get-Date) - $totalStartTime
-	$secRemaining = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $videoNum) * ($videoTotal - $videoNum))
-	$minRemaining = ('{0}分' -f ([Int][Math]::Ceiling($secRemaining / 60)))
-	#進捗更新
-	Update-ProgressToast `
-		-Title 'リストからの番組のダウンロード' `
-		-Rate $progressRate `
-		-LeftText $videoNum/$videoTotal `
-		-RightText $minRemaining `
-		-Tag $script:appName `
-		-Group 'List'
+	if ($videoNum -ne 0) {
+		$secRemaining = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $videoNum) * ($videoTotal - $videoNum))
+		$minRemaining = ('{0}分' -f ([Int][Math]::Ceiling($secRemaining / 60)))
+	}
+
+	#進捗情報の更新
+	$toastParams = @{
+		Title     = 'リストからの番組のダウンロード'
+		Rate      = [Float]($videoNum / $videoTotal)
+		LeftText  = $videoNum / $videoTotal
+		RightText = $minRemaining
+		Tag       = $script:appName
+		Group     = 'List'
+	}
+	Update-ProgressToast @toastParams
+
 	Write-Output ('--------------------------------------------------')
 	Write-Output ('{0}/{1} - {2}' -f $videoNum, $videoTotal, $videoLink)
 	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
@@ -112,13 +98,10 @@ foreach ($videoLink in $videoLinks) {
 }
 #----------------------------------------------------------------------
 
-Update-ProgressToast `
-	-Title 'リストからの番組のダウンロード' `
-	-Rate '1' `
-	-LeftText '' `
-	-RightText '完了' `
-	-Tag $script:appName `
-	-Group 'List'
+$toastParams.Rate = '1'
+$toastParams.LeftText = ''
+$toastParams.RightText = '完了'
+Update-ProgressToast @toastParams
 
 #youtube-dlのプロセスが終わるまで待機
 Write-Output ('')

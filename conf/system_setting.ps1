@@ -2,27 +2,6 @@
 #
 #		システム設定
 #
-#	Copyright (c) 2022 dongaba
-#
-#	Licensed under the MIT License;
-#	Permission is hereby granted, free of charge, to any person obtaining a copy
-#	of this software and associated documentation files (the "Software"), to deal
-#	in the Software without restriction, including without limitation the rights
-#	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-#	copies of the Software, and to permit persons to whom the Software is
-#	furnished to do so, subject to the following conditions:
-#
-#	The above copyright notice and this permission notice shall be included in
-#	all copies or substantial portions of the Software.
-#
-#	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-#	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-#	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-#	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-#	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-#	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-#	THE SOFTWARE.
-#
 ###################################################################################
 #----------------------------------------------------------------------
 #	「#」or「;」でコメントアウト
@@ -32,7 +11,7 @@ Set-StrictMode -Off
 Set-StrictMode -Version Latest
 
 #----------------------------------------------------------------------
-# 基本的な設定
+#	基本的な設定
 #----------------------------------------------------------------------
 
 #ダウンロード先のフルパス(絶対パス指定)
@@ -66,7 +45,7 @@ $script:downloadWorkDir = ''
 $script:saveBaseDir = ''
 
 #----------------------------------------------------------------------
-# 高度な設定
+#	高度な設定
 #----------------------------------------------------------------------
 
 #同時ダウンロードファイル数
@@ -323,4 +302,4 @@ $script:iconPath = Convert-Path (Join-Path $script:imgDir 'TVerRec-Icon.png')
 
 #youtube-dlの引数
 $script:ytdlAcceptLang = 'Accept-Language:ja-JP'
-$script:ytdlBaseArgs = '--format "(bv*+ba/b)[protocol!*=dash] / (bv*+ba/b)" --format-sort proto --merge-output-format mp4 --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --embed-thumbnail --embed-chapters --no-cache-dir --verbose'
+$script:ytdlBaseArgs = '--format "(bv*+ba/b)[protocol!*=dash] / (bv*+ba/b)" --format-sort proto --merge-output-format mp4 --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --embed-thumbnail --embed-chapters --no-cache-dir --verbose --ignore-config --no-check-certificates --print-traffic --buffer-size 16K --no-hls-use-mpegts'
