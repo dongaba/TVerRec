@@ -230,6 +230,10 @@ if (Test-Path (Join-Path $script:scriptRoot '../db/list.csv')) {
 	$currentListFile | Export-Csv -LiteralPath (Join-Path $script:scriptRoot '../db/list.csv') -Encoding UTF8 -Append
 }
 
+#リストファイルのレイアウト変更(v2.9.9→v3.0.0)
+Remove-IfExist -Path (Join-Path $script:scriptRoot '../.vscode/thunder-tests')
+
+
 #実行権限の付与
 if (!$IsWindows) {
 	Write-Output ('')
