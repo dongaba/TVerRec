@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/powershell:ubuntu-22.04
+FROM mcr.microsoft.com/powershell:latest
 
 ENV POWERSHELL_TELEMETRY_OPTOUT=1
 
