@@ -235,12 +235,6 @@ while ($script:mainWindow.IsVisible) {
 	if ($jobs = Get-Job) {
 		#ジョブがある場合の処理
 		foreach ($job in $jobs) {
-			#メッセージの出力
-			# foreach ($msgType in $messageTypeColorMap.Keys) {
-			# 	if ($job.$msgType) { Out-ExecutionLog ($job.$msgType -join "`n") $messageTypeColorMap[$msgType] }
-			# }
-			# Receive-Job $job *> $null
-
 			#各メッセージタイプごとに内容を取得(ただしReceive-Jobは次Stepで実行するので取りこぼす可能性あり)
 			foreach ($msgType in $messageTypeColorMap.Keys) {
 				$variableName = 'msg' + $msgType
@@ -248,10 +242,8 @@ while ($script:mainWindow.IsVisible) {
 				Set-Variable -Name $variableName -Value $variableValue
 			}
 
-			#Jobからメッセージを取得しクリア
+			#Jobからメッセージを取得し事前に取得したメッセージタイプと照合し色付け
 			$jobMsgs = (Receive-Job $job *>&1)
-
-			#取得したメッセージを事前に取得したメッセージタイプと照合し色付け
 			foreach ($jobMsg in $jobMsgs) {
 				switch ($true) {
 					($msgError -contains $jobMsg) {
@@ -278,8 +270,6 @@ while ($script:mainWindow.IsVisible) {
 				}
 
 			}
-			#メッセージを出力
-			#if ($jobMsgs) { Out-ExecutionLog ($jobMsgs -join "`n") }
 
 			#終了したジョブのボタンの再有効化
 			if ($job.State -in $jobTerminationStates) {
