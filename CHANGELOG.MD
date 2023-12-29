@@ -20,6 +20,8 @@
 
 ### 3.0.0 Fixed
 
+- GUI 版の実行ログを取りこぼすことがある不具合を修正
+
 ## [2.9.9](https://github.com/dongaba/TVerRec/releases/tag/v2.9.9)
 
 ### 2.9.9 Added

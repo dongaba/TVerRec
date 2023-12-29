@@ -25,8 +25,6 @@ try {
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
-
-#設定で指定したファイル・ディレクトリの存在チェック
 Invoke-RequiredFileCheck
 Get-Token
 #ダウンロードリストを読み込み
@@ -48,7 +46,7 @@ else { Write-Output ('　💡 処理対象{0}本　処理済{1}本' -f $videoTot
 $totalStartTime = Get-Date
 $secRemaining = -1
 
-$toastParams = @{
+$toastShowParams = @{
 	Text1      = 'リストからの番組のダウンロード'
 	Text2      = 'リストファイルから番組をダウンロード'
 	WorkDetail = '読み込み中...'
@@ -56,7 +54,7 @@ $toastParams = @{
 	Silent     = $false
 	Group      = 'Bulk'
 }
-Show-ProgressToast @toastParams
+Show-ProgressToast @toastShowParams
 
 #----------------------------------------------------------------------
 #個々の番組ダウンロードここから
@@ -76,15 +74,15 @@ foreach ($videoLink in $videoLinks) {
 	}
 
 	#進捗情報の更新
-	$toastParams = @{
+	$toastUpdateParams = @{
 		Title     = 'リストからの番組のダウンロード'
 		Rate      = [Float]($videoNum / $videoTotal)
-		LeftText  = $videoNum / $videoTotal
+		LeftText  = ('{0}/{1}' -f $videoNum, $videoTotal)
 		RightText = $minRemaining
 		Tag       = $script:appName
 		Group     = 'List'
 	}
-	Update-ProgressToast @toastParams
+	Update-ProgressToast @toastUpdateParams
 
 	Write-Output ('--------------------------------------------------')
 	Write-Output ('{0}/{1} - {2}' -f $videoNum, $videoTotal, $videoLink)
@@ -98,10 +96,10 @@ foreach ($videoLink in $videoLinks) {
 }
 #----------------------------------------------------------------------
 
-$toastParams.Rate = '1'
-$toastParams.LeftText = ''
-$toastParams.RightText = '完了'
-Update-ProgressToast @toastParams
+$toastUpdateParams.Rate = '1'
+$toastUpdateParams.LeftText = ''
+$toastUpdateParams.RightText = '完了'
+Update-ProgressToast @toastUpdateParams
 
 #youtube-dlのプロセスが終わるまで待機
 Write-Output ('')

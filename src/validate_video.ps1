@@ -25,8 +25,6 @@ try {
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
-
-#設定で指定したファイル・ディレクトリの存在チェック
 Invoke-RequiredFileCheck
 
 #======================================================================
@@ -34,14 +32,16 @@ Invoke-RequiredFileCheck
 Write-Output ('')
 Write-Output ('----------------------------------------------------------------------')
 Write-Output ('ダウンロード履歴の不整合レコードを削除します')
-Show-ProgressToast `
-	-Text1 'ダウンロードファイルの整合性検証中' `
-	-Text2 '　処理1/5 - 破損レコードを削除' `
-	-WorkDetail '' `
-	-Tag $script:appName `
-	-Group 'Validate' `
-	-Duration 'long' `
-	-Silent $false
+
+$toastShowParams = @{
+	Text1      = 'ダウンロードファイルの整合性検証中'
+	Text2      = '　処理1/5 - 破損レコードを削除'
+	WorkDetail = ''
+	Tag        = $script:appName
+	Silent     = $false
+	Group      = 'Validate'
+}
+Show-ProgressToast @toastShowParams
 
 #ダウンロード履歴の破損レコード削除
 Optimize-HistoryFile
@@ -49,14 +49,9 @@ Optimize-HistoryFile
 Write-Output ('')
 Write-Output ('----------------------------------------------------------------------')
 Write-Output ('古いダウンロード履歴を削除します')
-Show-ProgressToast `
-	-Text1 'ダウンロードファイルの整合性検証中' `
-	-Text2 ('　処理2/5 - {0}日以上前のダウンロード履歴を削除' -f $script:histRetentionPeriod) `
-	-WorkDetail '' `
-	-Tag $script:appName `
-	-Group 'Validate' `
-	-Duration 'long' `
-	-Silent $false
+
+$toastShowParams.Text2 = ('　処理2/5 - {0}日以上前のダウンロード履歴を削除' -f $script:histRetentionPeriod)
+Show-ProgressToast @toastShowParams
 
 #指定日以上前に処理したものはダウンロード履歴から削除
 Limit-HistoryFile -RetentionPeriod $script:histRetentionPeriod
@@ -64,14 +59,9 @@ Limit-HistoryFile -RetentionPeriod $script:histRetentionPeriod
 Write-Output ('')
 Write-Output ('----------------------------------------------------------------------')
 Write-Output ('ダウンロード履歴の重複レコードを削除します')
-Show-ProgressToast `
-	-Text1 'ダウンロードファイルの整合性検証中' `
-	-Text2 '　処理3/5 - ダウンロード履歴の重複レコードを削除' `
-	-WorkDetail '' `
-	-Tag $script:appName `
-	-Group 'Validate' `
-	-Duration 'long' `
-	-Silent $false
+
+$toastShowParams.Text2 = '　処理3/5 - ダウンロード履歴の重複レコードを削除'
+Show-ProgressToast @toastShowParams
 
 #ダウンロード履歴の重複削除
 Repair-HistoryFile
@@ -122,14 +112,11 @@ while ($videoNotValidatedNum -ne 0) {
 			}
 			$decodeOption = $script:ffmpegDecodeOption
 		}
-		Show-ProgressToast `
-			-Text1 'ダウンロードファイルの整合性検証中' `
-			-Text2 '　処理4/5 - ファイルを検証' `
-			-WorkDetail '残り時間計算中' `
-			-Tag $script:appName `
-			-Group 'Validate' `
-			-Duration 'long' `
-			-Silent $false
+
+		$toastShowParams.Text2 = '　処理4/5 - ファイルを検証'
+		$toastShowParams.WorkDetail = '残り時間計算中'
+		Show-ProgressToast @toastShowParams
+
 		#----------------------------------------------------------------------
 		$totalStartTime = Get-Date
 		$validateNum = 0
@@ -140,20 +127,24 @@ while ($videoNotValidatedNum -ne 0) {
 			$secRemaining = -1
 			if ($validateNum -ne 0) {
 				$secRemaining = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $validateNum) * ($validateTotal - $validateNum))
-				$minRemaining = ('{0}分' -f ([Int][Math]::Ceiling($secRemaining / 60)))
+				$minRemaining = ('残り時間 {0}分' -f ([Int][Math]::Ceiling($secRemaining / 60)))
 				$progressRate = [Float]($validateNum / $validateTotal)
 			} else {
 				$minRemaining = ''
 				$progressRate = 0
 			}
 			$validateNum += 1
-			Update-ProgressToast `
-				-Title $videoFileRelPath `
-				-Rate $progressRate `
-				-LeftText $validateNum/$validateTotal `
-				-RightText ('残り時間 {0}' -f $minRemaining) `
-				-Tag $script:appName `
-				-Group 'Validate'
+
+			$toastUpdateParams = @{
+				Title     = $videoFileRelPath
+				Rate      = $progressRate
+				LeftText  = ('{0}/{1}' -f $validateNum, $validateTotal)
+				RightText = $minRemaining
+				Tag       = $script:appName
+				Group     = 'Validate'
+			}
+			Update-ProgressToast @toastUpdateParams
+
 			if (!(Test-Path $script:downloadBaseDir -PathType Container)) {
 				Write-Error ('❗ 番組ダウンロード先ディレクトリにアクセスできません。終了します。') ; exit 1
 			}
@@ -172,14 +163,11 @@ while ($videoNotValidatedNum -ne 0) {
 	Write-Output ('')
 	Write-Output ('----------------------------------------------------------------------')
 	Write-Output ('ダウンロード履歴から検証が終わっていない番組のステータスを変更します')
-	Show-ProgressToast `
-		-Text1 'ダウンロードファイルの整合性検証中' `
-		-Text2 '　処理5/5 - 未検証のファイルのステータスを変更' `
-		-WorkDetail '' `
-		-Tag $script:appName `
-		-Group 'Validate' `
-		-Duration 'long' `
-		-Silent $false
+
+	$toastShowParams.Text2 = '　処理5/5 - 未検証のファイルのステータスを変更'
+	$toastShowParams.WorkDetail = ''
+	Show-ProgressToast @toastShowParams
+
 	try {
 		while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$videoHists = @(Import-Csv -Path $script:histFilePath -Encoding UTF8)
@@ -194,13 +182,10 @@ while ($videoNotValidatedNum -ne 0) {
 
 #======================================================================
 #完了処理
-Update-ProgressToast `
-	-Title 'ダウンロードファイルの整合性検証' `
-	-Rate '1' `
-	-LeftText '' `
-	-RightText '完了' `
-	-Tag $script:appName `
-	-Group 'Validate'
+$toastUpdateParams.Rate = '1'
+$toastUpdateParams.LeftText = ''
+$toastUpdateParams.RightText = '完了'
+Update-ProgressToast @toastUpdateParams
 
 Invoke-GarbageCollection
 

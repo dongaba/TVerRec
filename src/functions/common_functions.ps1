@@ -464,6 +464,13 @@ function Out-Msg-Color {
 #Toast用AppID取得に必要
 if (($script:disableToastNotification -ne $true) -and ($IsWindows)) { Import-Module StartLayout -SkipEditionCheck }
 
+#モジュールのインポート
+if (!$script:disableToastNotification -and $IsWindows -and (!('Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder' -as [Type]))) {
+	Add-Type -LiteralPath (Join-Path $script:libDir 'win/core/Microsoft.Windows.SDK.NET.dll')
+	Add-Type -LiteralPath (Join-Path $script:libDir 'win/core/WinRT.Runtime.dll')
+	Add-Type -LiteralPath (Join-Path $script:libDir 'win/core/Microsoft.Toolkit.Uwp.Notifications.dll')
+}
+
 #----------------------------------------------------------------------
 #トースト表示
 #----------------------------------------------------------------------
@@ -484,12 +491,6 @@ function Show-GeneralToast {
 			$IsWindows {
 				$toastSoundElement = if ($silent) { '<audio silent="true" />' }
 				else { '<audio src="ms-winsoundevent:Notification.Default" loop="false"/>' }
-
-				if (-not ('Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder' -as [Type])) {
-					Add-Type -LiteralPath (Join-Path $script:libDir 'win/core/Microsoft.Windows.SDK.NET.dll')
-					Add-Type -LiteralPath (Join-Path $script:libDir 'win/core/WinRT.Runtime.dll')
-					Add-Type -LiteralPath (Join-Path $script:libDir 'win/core/Microsoft.Toolkit.Uwp.Notifications.dll')
-				}
 				$toastProgressContent = @"
 <?xml version="1.0" encoding="utf-8"?>
 <toast duration="$duration">
@@ -549,12 +550,6 @@ function Show-ProgressToast {
 			$IsWindows {
 				$toastSoundElement = if ($silent) { '<audio silent="true" />' }
 				else { '<audio src="ms-winsoundevent:Notification.Default" loop="false"/>' }
-
-				if (-not ('Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder' -as [Type])) {
-					Add-Type -LiteralPath (Join-Path $script:libDir 'win/core/Microsoft.Windows.SDK.NET.dll')
-					Add-Type -LiteralPath (Join-Path $script:libDir 'win/core/WinRT.Runtime.dll')
-					Add-Type -LiteralPath (Join-Path $script:libDir 'win/core/Microsoft.Toolkit.Uwp.Notifications.dll')
-				}
 				$toastContent = @"
 <?xml version="1.0" encoding="utf-8"?>
 <toast duration="$duration">
@@ -640,132 +635,6 @@ function Update-ProgressToast {
 }
 
 #----------------------------------------------------------------------
-#進捗バー付きトースト表示(2行進捗バー)
-#----------------------------------------------------------------------
-function Show-ProgressToast2 {
-	[CmdletBinding()]
-	[OutputType([System.Void])]
-	Param (
-		[Parameter(Mandatory = $true )][String]$text1,
-		[Parameter(Mandatory = $false)][String]$text2 = '',
-		[Parameter(Mandatory = $false)][String]$detail1 = '',
-		[Parameter(Mandatory = $false)][String]$detail2 = '',
-		[Parameter(Mandatory = $true )][String]$tag,
-		[Parameter(Mandatory = $true )][String]$group,
-		[Parameter(Mandatory = $false)][ValidateSet('Short', 'Long')][String]$duration = 'Short',
-		[Parameter(Mandatory = $false)][Boolean]$silent = $false
-	)
-
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-
-	switch ($true) {
-		$IsWindows {
-			$toastSoundElement = if ($silent) { '<audio silent="true" />' } else { '<audio src="ms-winsoundevent:Notification.Default" loop="false"/>' }
-			$duration = if (!$duration) { 'short' } else { $duration }
-			$toastAttribution = ''
-			if (-not ('Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder' -as [Type])) {
-				#For PowerShell Core v6.x & PowerShell v7+
-				Add-Type -LiteralPath (Join-Path $script:libDir 'win/core/Microsoft.Windows.SDK.NET.dll')
-				Add-Type -LiteralPath (Join-Path $script:libDir 'win/core/WinRT.Runtime.dll')
-				Add-Type -LiteralPath (Join-Path $script:libDir 'win/core/Microsoft.Toolkit.Uwp.Notifications.dll')
-			}
-			$toastContent = @"
-<?xml version="1.0" encoding="utf-8"?>
-<toast duration="$duration">
-	<visual>
-		<binding template="ToastGeneric">
-			<text>$script:appName</text>
-			<text>$text1</text>
-			<text>$text2</text>
-			<image placement="appLogoOverride" src="$script:toastAppLogo"/>
-			<progress value="{progressValue1}" title="{progressTitle1}" valueStringOverride="{progressValueString1}" status="{progressStatus1}" />
-			<progress value="{progressValue2}" title="{progressTitle2}" valueStringOverride="{progressValueString2}" status="{progressStatus2}" />
-			<text placement="attribution">$toastAttribution</text>
-		</binding>
-	</visual>
-	$toastSoundElement
-</toast>
-"@
-			$toastXML = New-Object Windows.Data.Xml.Dom.XmlDocument
-			$toastXML.LoadXml($toastContent)
-			$toast = New-Object Windows.UI.Notifications.ToastNotification $toastXML
-			$toast.Tag = $tag
-			$toast.Group = $group
-			$toastData = New-Object 'system.collections.generic.dictionary[String,string]'
-			$toastData.Add('progressTitle1', $detail1)
-			$toastData.Add('progressValue1', '')
-			$toastData.Add('progressValueString1', '')
-			$toastData.Add('progressStatus1', '')
-			$toastData.Add('progressTitle2', $detail2)
-			$toastData.Add('progressValue2', '')
-			$toastData.Add('progressValueString2', '')
-			$toastData.Add('progressStatus2', '')
-			$toast.Data = [Windows.UI.Notifications.NotificationData]::new($toastData)
-			$toast.Data.SequenceNumber = 1
-			$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Show($toast)
-			continue
-		}
-		$IsLinux {
-			if (Get-Command notify-send -ea SilentlyContinue) { & notify-send -a $script:appName -t 5000 -i $script:toastAppLogo $text1 $text2 }
-			continue
-		}
-		$IsMacOS {
-			if (Get-Command osascript -ea SilentlyContinue) {
-				$toastParams = ('display notification "{0}" with title "{1}" subtitle "{2}" sound name "Blow"' -f $text2, $script:appName, $text1)
-				$toastParams | & osascript
-			}
-			continue
-		}
-		default { continue }
-	}
-}
-
-#----------------------------------------------------------------------
-#進捗バー付きトースト更新(2行進捗バー)
-#----------------------------------------------------------------------
-function Update-ProgressToast2 {
-	[CmdletBinding()]
-	[OutputType([System.Void])]
-	Param (
-		[Parameter(Mandatory = $false)][String]$title1 = '',
-		[Parameter(Mandatory = $true )][String]$rate1,
-		[Parameter(Mandatory = $false)][String]$leftText1 = '',
-		[Parameter(Mandatory = $false)][String]$rightText1 = '',
-		[Parameter(Mandatory = $false)][String]$title2 = '',
-		[Parameter(Mandatory = $true )][String]$rate2,
-		[Parameter(Mandatory = $false)][String]$leftText2 = '',
-		[Parameter(Mandatory = $false)][String]$rightText2 = '',
-		[Parameter(Mandatory = $true )][String]$tag,
-		[Parameter(Mandatory = $true )][String]$group
-	)
-
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-
-	if ($script:disableToastNotification -ne $true) {
-		switch ($true) {
-			$IsWindows {
-				$toastData = New-Object 'system.collections.generic.dictionary[String,string]'
-				$toastData.Add('progressTitle1', $title1)
-				$toastData.Add('progressValue1', $rate1)
-				$toastData.Add('progressValueString1', $rightText1)
-				$toastData.Add('progressStatus1', $leftText1)
-				$toastData.Add('progressTitle2', $title2)
-				$toastData.Add('progressValue2', $rate2)
-				$toastData.Add('progressValueString2', $rightText2)
-				$toastData.Add('progressStatus2', $leftText2)
-				$toastProgressData = [Windows.UI.Notifications.NotificationData]::new($toastData)
-				$toastProgressData.SequenceNumber = 2
-				$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Update($toastProgressData, $tag , $group)
-				continue
-			}
-			$IsLinux { continue }
-			$IsMacOS { continue }
-			default { continue }
-		}
-	}
-}
-
-#----------------------------------------------------------------------
 #進捗表示(2行進捗バー)
 #----------------------------------------------------------------------
 function Show-ProgressToast2Row {
@@ -788,18 +657,63 @@ function Show-ProgressToast2Row {
 		$detail1 = $detail1 ?? ''
 		$detail2 = $detail2 ?? ''
 
-		Show-ProgressToast2 `
-			-Text1 $text1 `
-			-Text2 $text2 `
-			-Detail1 $detail1 `
-			-Detail2 $detail2 `
-			-Tag $tag `
-			-Group $group `
-			-Duration $duration `
-			-Silent $silent
+		switch ($true) {
+			$IsWindows {
+				$toastSoundElement = if ($silent) { '<audio silent="true" />' } else { '<audio src="ms-winsoundevent:Notification.Default" loop="false"/>' }
+				$duration = if (!$duration) { 'short' } else { $duration }
+				$toastAttribution = ''
+				$toastContent = @"
+<?xml version="1.0" encoding="utf-8"?>
+<toast duration="$duration">
+	<visual>
+		<binding template="ToastGeneric">
+			<text>$script:appName</text>
+			<text>$text1</text>
+			<text>$text2</text>
+			<image placement="appLogoOverride" src="$script:toastAppLogo"/>
+			<progress value="{progressValue1}" title="{progressTitle1}" valueStringOverride="{progressValueString1}" status="{progressStatus1}" />
+			<progress value="{progressValue2}" title="{progressTitle2}" valueStringOverride="{progressValueString2}" status="{progressStatus2}" />
+			<text placement="attribution">$toastAttribution</text>
+		</binding>
+	</visual>
+	$toastSoundElement
+</toast>
+"@
+				$toastXML = New-Object Windows.Data.Xml.Dom.XmlDocument
+				$toastXML.LoadXml($toastContent)
+				$toast = New-Object Windows.UI.Notifications.ToastNotification $toastXML
+				$toast.Tag = $tag
+				$toast.Group = $group
+				$toastData = New-Object 'system.collections.generic.dictionary[String,string]'
+				$toastData.Add('progressTitle1', $detail1)
+				$toastData.Add('progressValue1', '')
+				$toastData.Add('progressValueString1', '')
+				$toastData.Add('progressStatus1', '')
+				$toastData.Add('progressTitle2', $detail2)
+				$toastData.Add('progressValue2', '')
+				$toastData.Add('progressValueString2', '')
+				$toastData.Add('progressStatus2', '')
+				$toast.Data = [Windows.UI.Notifications.NotificationData]::new($toastData)
+				$toast.Data.SequenceNumber = 1
+				$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Show($toast)
+				continue
+			}
+			$IsLinux {
+				if (Get-Command notify-send -ea SilentlyContinue) { & notify-send -a $script:appName -t 5000 -i $script:toastAppLogo $text1 $text2 }
+				continue
+			}
+			$IsMacOS {
+				if (Get-Command osascript -ea SilentlyContinue) {
+					$toastParams = ('display notification "{0}" with title "{1}" subtitle "{2}" sound name "Blow"' -f $text2, $script:appName, $text1)
+					$toastParams | & osascript
+				}
+				continue
+			}
+			default { continue }
+		}
+
 	}
 }
-
 
 #----------------------------------------------------------------------
 #進捗更新(2行進捗バー)
@@ -808,14 +722,14 @@ function Update-ProgressToast2Row {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $false)][String]$activity1 = '',
-		[Parameter(Mandatory = $false)][String]$processing1 = '',
+		[Parameter(Mandatory = $false)][String]$title1 = '',
 		[Parameter(Mandatory = $true )][String]$rate1,
-		[Parameter(Mandatory = $false)][String]$secRemaining1 = '',
-		[Parameter(Mandatory = $false)][String]$activity2 = '',
-		[Parameter(Mandatory = $false)][String]$processing2 = '',
+		[Parameter(Mandatory = $false)][String]$leftText1 = '',
+		[Parameter(Mandatory = $false)][String]$rightText1 = '',
+		[Parameter(Mandatory = $false)][String]$title2 = '',
 		[Parameter(Mandatory = $true )][String]$rate2,
-		[Parameter(Mandatory = $false)][String]$secRemaining2 = '',
+		[Parameter(Mandatory = $false)][String]$leftText2 = '',
+		[Parameter(Mandatory = $false)][String]$rightText2 = '',
 		[Parameter(Mandatory = $true )][String]$tag,
 		[Parameter(Mandatory = $true )][String]$group
 	)
@@ -823,28 +737,40 @@ function Update-ProgressToast2Row {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	if (!($script:disableToastNotification)) {
-		$minRemaining1 = switch ($secRemaining1 ) {
+		$rightText1 = switch ($rightText1 ) {
 			'' { '' }
 			'0' { '完了' }
-			default { ('残り時間 {0}分' -f ([Int][Math]::Ceiling($secRemaining1 / 60))) }
+			default { ('残り時間 {0}分' -f ([Int][Math]::Ceiling($rightText1 / 60))) }
 		}
-		$minRemaining2 = switch ($secRemaining2 ) {
+		$rightText2 = switch ($rightText2 ) {
 			'' { '' }
 			'0' { '完了' }
-			default { ('残り時間 {0}分' -f ([Int][Math]::Ceiling($secRemaining2 / 60))) }
+			default { ('残り時間 {0}分' -f ([Int][Math]::Ceiling($rightText2 / 60))) }
 		}
 
-		Update-ProgressToast2 `
-			-Title1 $processing1 `
-			-Rate1 $rate1 `
-			-LeftText1 $activity1 `
-			-RightText1 $minRemaining1 `
-			-Title2 $processing2 `
-			-Rate2 $rate2 `
-			-LeftText2 $activity2 `
-			-RightText2 $minRemaining2 `
-			-Tag $tag `
-			-Group $group
+		if ($script:disableToastNotification -ne $true) {
+			switch ($true) {
+				$IsWindows {
+					$toastData = New-Object 'system.collections.generic.dictionary[String,string]'
+					$toastData.Add('progressTitle1', $title1)
+					$toastData.Add('progressValue1', $rate1)
+					$toastData.Add('progressValueString1', $rightText1)
+					$toastData.Add('progressStatus1', $leftText1)
+					$toastData.Add('progressTitle2', $title2)
+					$toastData.Add('progressValue2', $rate2)
+					$toastData.Add('progressValueString2', $rightText2)
+					$toastData.Add('progressStatus2', $leftText2)
+					$toastProgressData = [Windows.UI.Notifications.NotificationData]::new($toastData)
+					$toastProgressData.SequenceNumber = 2
+					$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Update($toastProgressData, $tag , $group)
+					continue
+				}
+				$IsLinux { continue }
+				$IsMacOS { continue }
+				default { continue }
+			}
+		}
+
 	}
 }
 #endregion トースト通知

@@ -25,8 +25,6 @@ try {
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
-
-#設定で指定したファイル・ディレクトリの存在チェック
 Invoke-RequiredFileCheck
 
 #======================================================================
@@ -34,14 +32,16 @@ Invoke-RequiredFileCheck
 Write-Output ('')
 Write-Output ('----------------------------------------------------------------------')
 Write-Output ('移動先ディレクトリの一覧を作成しています')
-Show-ProgressToast `
-	-Text1 '番組の移動中' `
-	-Text2 '　処理1/3 - ディレクトリ一覧を作成' `
-	-WorkDetail '' `
-	-Tag $script:appName `
-	-Group 'Move' `
-	-Duration 'long' `
-	-Silent $false
+
+$toastShowParams = @{
+	Text1      = '番組の移動中'
+	Text2      = '　処理1/3 - ディレクトリ一覧を作成'
+	WorkDetail = ''
+	Tag        = $script:appName
+	Silent     = $false
+	Group      = 'Move'
+}
+Show-ProgressToast @toastShowParams
 
 #移動先ディレクトリ配下のディレクトリ一覧
 $moveToPathsHash = @{}
@@ -73,14 +73,8 @@ Write-Output ('')
 Write-Output ('----------------------------------------------------------------------')
 Write-Output ('ダウンロードファイルを移動しています')
 
-Show-ProgressToast `
-	-Text1 '番組の移動中' `
-	-Text2 '　処理2/3 - ダウンロードファイルを移動' `
-	-WorkDetail '' `
-	-Tag $script:appName `
-	-Group 'Move' `
-	-Duration 'long' `
-	-Silent $false
+$toastShowParams.Text2 = '　処理2/3 - ダウンロードファイルを移動'
+Show-ProgressToast @toastShowParams
 
 #----------------------------------------------------------------------
 $totalStartTime = Get-Date
@@ -93,20 +87,24 @@ if (($null -ne $moveDirs) -and ($moveDirs.Count -ne 0)) {
 		$secRemaining = -1
 		if ($moveDirNum -ne 0) {
 			$secRemaining = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $moveDirNum) * ($moveDirsTotal - $moveDirNum))
-			$minRemaining = ('{0}分' -f ([Int][Math]::Ceiling($secRemaining / 60)))
+			$minRemaining = ('残り時間 {0}分' -f ([Int][Math]::Ceiling($secRemaining / 60)))
 			$progressRate = [Float]($moveDirNum / $moveDirsTotal)
 		} else {
 			$minRemaining = ''
 			$progressRate = 0
 		}
 		$moveDirNum += 1
-		Update-ProgressToast `
-			-Title $moveDir.InputObject `
-			-Rate $progressRate `
-			-LeftText ('{0}/{1}' -f $moveDirNum, $moveDirsTotal) `
-			-RightText ('残り時間 {0}' -f $minRemaining) `
-			-Tag $script:appName `
-			-Group 'Move'
+
+		$toastUpdateParams = @{
+			Title     = $moveDir.InputObject
+			Rate      = $progressRate
+			LeftText  = ('{0}/{1}' -f $moveDirNum, $moveDirsTotal)
+			RightText = $minRemaining
+			Tag       = $script:appName
+			Group     = 'Delete'
+		}
+		Update-ProgressToast @toastUpdateParams
+
 		$targetFolderName = $moveDir.InputObject
 		#同名ディレクトリが存在する場合は配下のファイルを移動
 		$moveFromPath = $moveFromPathsHash[$targetFolderName]
@@ -125,14 +123,8 @@ if (($null -ne $moveDirs) -and ($moveDirs.Count -ne 0)) {
 Write-Output ('')
 Write-Output ('----------------------------------------------------------------------')
 Write-Output ('空ディレクトリを削除します')
-Show-ProgressToast `
-	-Text1 '番組の移動中' `
-	-Text2 '　処理3/3 - 空ディレクトリを削除' `
-	-WorkDetail '' `
-	-Tag $script:appName `
-	-Group 'Move' `
-	-Duration 'long' `
-	-Silent $false
+$toastShowParams.Text2 = '　処理3/3 - 空ディレクトリを削除'
+Show-ProgressToast @toastShowParams
 
 $emptyDirs = @()
 $emptyDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer })).Where({ ($_.GetFiles().Count -eq 0) -and ($_.GetDirectories().Count -eq 0) })
@@ -164,19 +156,19 @@ if ($emptyDirTotal -ne 0) {
 			$secRemaining = -1
 			if ($emptyDirNum -ne 1) {
 				$secRemaining = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $emptyDirNum) * ($emptyDirTotal - $emptyDirNum))
-				$minRemaining = ('{0}分' -f ([Int][Math]::Ceiling($secRemaining / 60)))
+				$minRemaining = ('残り時間 {0}分' -f ([Int][Math]::Ceiling($secRemaining / 60)))
 				$progressRate = [Float]($emptyDirNum / $emptyDirTotal)
 			} else {
 				$minRemaining = ''
 				$progressRate = 0
 			}
-			Update-ProgressToast `
-				-Title $subDir `
-				-Rate $progressRate `
-				-LeftText ('{0}/{1}' -f $emptyDirNum, $emptyDirTotal) `
-				-RightText ('残り時間 {0}' -f $minRemaining) `
-				-Tag $script:appName `
-				-Group 'Move'
+
+			$toastUpdateParams.Title = $subDir
+			$toastUpdateParams.Rate = $progressRate
+			$toastUpdateParams.LeftText = ('{0}/{1}' -f $emptyDirNum, $emptyDirTotal)
+			$toastUpdateParams.RightText = $minRemaining
+			Update-ProgressToast @toastUpdateParams
+
 			Write-Output ('　{0}/{1} - {2}' -f $emptyDirNum, $emptyDirTotal, $subDir)
 			try { Remove-Item -LiteralPath $subDir -Recurse -Force -ErrorAction SilentlyContinue
 			} catch { Write-Warning ('❗ - 空ディレクトリの削除に失敗しました: {0}' -f $subDir) }
@@ -187,13 +179,11 @@ if ($emptyDirTotal -ne 0) {
 
 try { $script:guiMode = [String]$args[0] } catch { $script:guiMode = '' }
 
-Update-ProgressToast `
-	-Title '番組の移動' `
-	-Rate '1' `
-	-LeftText '' `
-	-RightText '完了' `
-	-Tag $script:appName `
-	-Group 'Move'
+$toastUpdateParams.Title = '番組の移動'
+$toastUpdateParams.Rate = 1
+$toastUpdateParams.LeftText = ''
+$toastUpdateParams.RightText = '完了'
+Update-ProgressToast @toastUpdateParams
 
 Invoke-GarbageCollection
 

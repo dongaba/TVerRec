@@ -25,17 +25,13 @@ try {
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
-
-#設定で指定したファイル・ディレクトリの存在チェック
 Invoke-RequiredFileCheck
-
 $keywords = @(Read-KeywordList)
 Get-Token
-
 $keywordNum = 0
 $keywordTotal = $keywords.Count
 
-$toastParams = @{
+$toastShowParams = @{
 	Text1   = 'キーワードから番組リスト作成中'
 	Text2   = 'キーワードから番組を抽出しダウンロード'
 	Detail1 = '読み込み中...'
@@ -44,7 +40,7 @@ $toastParams = @{
 	Silent  = $false
 	Group   = 'ListGen'
 }
-Show-ProgressToast2Row @toastParams
+Show-ProgressToast2Row @toastShowParams
 
 #======================================================================
 #個々のキーワードチェックここから
@@ -76,19 +72,19 @@ foreach ($keyword in $keywords) {
 	$keywordNum += 1
 
 	#進捗情報の更新
-	$toastParams = @{
-		Activity1     = "$keywordNum/$keywordTotal"
-		Processing1   = (Remove-TabSpace ($keyword))
-		Rate1         = [Float]($keywordNum / $keywordTotal)
-		SecRemaining1 = $secRemaining1
-		Activity2     = ''
-		Processing2   = ''
-		Rate2         = 0
-		SecRemaining2 = ''
-		Tag           = $script:appName
-		Group         = 'ListGen'
+	$toastUpdateParams = @{
+		Title1     = (Remove-TabSpace ($keyword))
+		Rate1      = [Float]($keywordNum / $keywordTotal)
+		LeftText1  = ('{0}/{1}' -f $keywordNum, $keywordTotal)
+		RightText1 = $secRemaining1
+		Title2     = ''
+		Rate2      = 0
+		LeftText2  = ''
+		RightText2 = ''
+		Tag        = $script:appName
+		Group      = 'ListGen'
 	}
-	Update-ProgressToast2Row @toastParams
+	Update-ProgressToast2Row @toastUpdateParams
 
 	#----------------------------------------------------------------------
 	#個々の番組の情報の取得ここから
@@ -97,10 +93,10 @@ foreach ($keyword in $keywords) {
 		$videoNum += 1
 
 		#進捗情報の更新
-		$toastParams.Activity2 = "$videoNum/$videoTotal"
-		$toastParams.Processing2 = $videoLink
-		$toastParams.Rate2 = [Float]($videoNum / $videoTotal)
-		Update-ProgressToast2Row @toastParams
+		$toastUpdateParams.Title2 = $videoLink
+		$toastUpdateParams.Rate2 = [Float]($videoNum / $videoTotal)
+		$toastUpdateParams.LeftText2 = ('{0}/{1}' -f $videoNum, $videoTotal)
+		Update-ProgressToast2Row @toastUpdateParams
 
 		Write-Output ('--------------------------------------------------')
 		Write-Output ('{0}/{1} - {2}' -f $videoNum, $videoTotal, $videoLink)
@@ -114,19 +110,15 @@ foreach ($keyword in $keywords) {
 }
 #======================================================================
 
-$toastParams = @{
-	Activity1     = ''
-	Processing1   = 'キーワードから番組の抽出'
-	Rate1         = '1'
-	SecRemaining1 = '0'
-	Activity2     = ''
-	Processing2   = '番組リストの作成'
-	Rate2         = '1'
-	SecRemaining2 = '0'
-	Tag           = $script:appName
-	Group         = 'ListGen'
-}
-Update-ProgressToast2Row @toastParams
+$toastUpdateParams.Title1 = 'キーワードから番組の抽出'
+$toastUpdateParams.Rate1 = 1
+$toastUpdateParams.LeftText1 = ''
+$toastUpdateParams.RightText1 = '0'
+$toastUpdateParams.Title2 = '番組リストの作成'
+$toastUpdateParams.Rate2 = 1
+$toastUpdateParams.LeftText2 = ''
+$toastUpdateParams.RightText2 = '0'
+Update-ProgressToast2Row @toastUpdateParams
 
 Invoke-GarbageCollection
 

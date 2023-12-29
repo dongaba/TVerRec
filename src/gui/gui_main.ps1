@@ -49,14 +49,15 @@ function Sync-WpfEvents {
 #テキストボックスへのログ出力と再描画
 function Out-ExecutionLog {
 	Param (
-		[parameter(Mandatory = $true)][String]$Message,
-		[parameter(Mandatory = $true)][String]$color
+		[parameter(Mandatory = $false)][String]$message = '',
+		[parameter(Mandatory = $false)][String]$color = 'DarkSlateGray'
 	)
 
 	$rtfRange = New-Object System.Windows.Documents.TextRange($script:outText.Document.ContentEnd, $script:outText.Document.ContentEnd)
 	$rtfRange.Text = ("{0}`n" -f $Message)
 	$rtfRange.ApplyPropertyValue([System.Windows.Documents.TextElement]::ForegroundProperty, $color)
 	$script:outText.ScrollToEnd()
+
 }
 
 #endregion 関数定義
@@ -112,7 +113,7 @@ $script:outText = $script:mainWindow.FindName('tbOutText')
 #region バックグラウンドジョブ化する処理を持つボタン
 
 $script:btns = `
-$script:mainWindow.FindName('btnSingle'), #0
+	$script:mainWindow.FindName('btnSingle'), #0
 $script:mainWindow.FindName('btnBulk'), #1
 $script:mainWindow.FindName('btnListGen'), #2
 $script:mainWindow.FindName('btnList'), #3
@@ -227,6 +228,7 @@ $messageTypeColorMap = @{
 	Debug       = 'CornflowerBlue'
 	Information = 'DarkGray'
 }
+$jobTerminationStates = @('Completed', 'Failed', 'Stopped')
 
 while ($script:mainWindow.IsVisible) {
 
@@ -234,18 +236,53 @@ while ($script:mainWindow.IsVisible) {
 		#ジョブがある場合の処理
 		foreach ($job in $jobs) {
 			#メッセージの出力
-			foreach ($msgType in $messageTypeColorMap.Keys) {
-				if ($message = $job.$msgType) {
-					Out-ExecutionLog ($message -join "`n") $messageTypeColorMap[$msgType]
-				}
-			}
-			Receive-Job $job *> $null
+			# foreach ($msgType in $messageTypeColorMap.Keys) {
+			# 	if ($job.$msgType) { Out-ExecutionLog ($job.$msgType -join "`n") $messageTypeColorMap[$msgType] }
+			# }
+			# Receive-Job $job *> $null
 
-			#ジョブが終了したかどうか判定
-			$completed = $job.State -in @('Completed', 'Failed', 'Stopped')
+			#各メッセージタイプごとに内容を取得(ただしReceive-Jobは次Stepで実行するので取りこぼす可能性あり)
+			foreach ($msgType in $messageTypeColorMap.Keys) {
+				$variableName = 'msg' + $msgType
+				$variableValue = if ($job.$msgType) { $job.$msgType } else { $null }
+				Set-Variable -Name $variableName -Value $variableValue
+			}
+
+			#Jobからメッセージを取得しクリア
+			$jobMsgs = (Receive-Job $job *>&1)
+
+			#取得したメッセージを事前に取得したメッセージタイプと照合し色付け
+			foreach ($jobMsg in $jobMsgs) {
+				switch ($true) {
+					($msgError -contains $jobMsg) {
+						if ($msgError) { Out-ExecutionLog -Message ($jobMsg -join "`n") -Color $messageTypeColorMap['Error'] }
+						continue
+					}
+					($msgWarning -contains $jobMsg) {
+						if ($msgWarning) { Out-ExecutionLog -Message ($jobMsg -join "`n") -Color $messageTypeColorMap['Warning'] }
+						continue
+					}
+					($msgVerbose -contains $jobMsg) {
+						if ($msgVerbose) { Out-ExecutionLog -Message ($jobMsg -join "`n") -Color $messageTypeColorMap['Verbose'] }
+						continue
+					}
+					($msgDebug -contains $jobMsg) {
+						if ($msgDebug) { Out-ExecutionLog -Message ($jobMsg -join "`n") -Color $messageTypeColorMap['Debug'] }
+						continue
+					}
+					($msgInformation -contains $jobMsg) {
+						if ($msgInformation) { Out-ExecutionLog -Message ($jobMsg -join "`n") -Color $messageTypeColorMap['Information'] }
+						continue
+					}
+					default { Out-ExecutionLog -Message ($jobMsg -join "`n") }
+				}
+
+			}
+			#メッセージを出力
+			#if ($jobMsgs) { Out-ExecutionLog ($jobMsgs -join "`n") }
 
 			#終了したジョブのボタンの再有効化
-			if ($completed) {
+			if ($job.State -in $jobTerminationStates) {
 				Remove-Job $job
 				$script:btns.ForEach({ $_.IsEnabled = $true })
 				$script:btnExit.IsEnabled = $true
@@ -259,7 +296,7 @@ while ($script:mainWindow.IsVisible) {
 	#GUIイベント処理
 	Sync-WpfEvents
 
-	Start-Sleep -Milliseconds 100
+	Start-Sleep -Milliseconds 10
 }
 
 #endregion ウィンドウ表示後のループ処理
