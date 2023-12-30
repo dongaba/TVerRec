@@ -10,8 +10,10 @@ Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 $script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 $script:devDir = Join-Path $script:scriptRoot '../dev'
 
-try { . (Convert-Path (Join-Path $script:confDir 'system_setting.ps1')) }
-catch { Write-Error ('❗ システム設定ファイルの読み込みに失敗しました') ; exit 1 }
+if ( Test-Path (Join-Path $script:confDir 'system_setting.ps1') ) {
+	try { . (Convert-Path (Join-Path $script:confDir 'system_setting.ps1')) }
+	catch { Write-Error ('❗ システム設定ファイルの読み込みに失敗しました') ; exit 1 }
+} else { Write-Error ('❗ システム設定ファイルが見つかりません') ; exit 1 }
 
 if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
@@ -23,34 +25,35 @@ if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 		try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
 		catch { Write-Error ('❗ ユーザ設定ファイルの読み込みに失敗しました') ; exit 1 }
-	}
+	} else { Write-Error ('❗ ユーザ設定が完了してません') ; exit 1 }
 } else { Write-Error ('❗ ユーザ設定が完了してません') ; exit 1 }
 
 #----------------------------------------------------------------------
 #外部関数ファイルの読み込み
-try {
-	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/common_functions.ps1'))
-	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/tver_functions.ps1'))
-	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/tverrec_functions.ps1'))
-} catch { Write-Error ('❗ 外部関数ファイルの読み込みに失敗しました') ; exit 1 }
+try { . (Convert-Path (Join-Path $script:scriptRoot 'functions/common_functions.ps1')) }
+catch { Write-Error ('❗ 外部関数ファイル(common_functions.ps1)の読み込みに失敗しました') ; exit 1 }
+try { . (Convert-Path (Join-Path $script:scriptRoot 'functions/tver_functions.ps1')) }
+catch { Write-Error ('❗ 外部関数ファイル(tver_functions.ps1)の読み込みに失敗しました') ; exit 1 }
+try { . (Convert-Path (Join-Path $script:scriptRoot 'functions/tverrec_functions.ps1')) }
+catch { Write-Error ('❗ 外部関数ファイル(tverrec_functions.ps1)の読み込みに失敗しました') ; exit 1 }
 
 #----------------------------------------------------------------------
 #開発環境用に設定上書き
 try {
-	$script:devFunctionFile = Join-Path $script:devDir 'dev_funcitons.ps1'
-	$script:devConfFile = Join-Path $script:devDir 'dev_setting.ps1'
-	if (Test-Path $script:devFunctionFile) {
-		. $script:devFunctionFile
-		Write-Warning ('💡 開発ファイル用共通関数ファイルを読み込みました')
-	}
-	if (Test-Path $script:devConfFile) {
-		. $script:devConfFile
+	$devFunctionFile = Join-Path $script:devDir 'dev_funcitons.ps1'
+	$devConfFile = Join-Path $script:devDir 'dev_setting.ps1'
+	if (Test-Path $devConfFile) {
+		. $devConfFile
 		Write-Warning ('💡 開発ファイル用設定ファイルを読み込みました')
+	}
+	if (Test-Path $devFunctionFile) {
+		. $devFunctionFile
+		Write-Warning ('💡 開発ファイル用共通関数ファイルを読み込みました')
 	}
 } catch { Write-Error ('❗ 開発用設定ファイルの読み込みに失敗しました') ; exit 1 }
 
 #----------------------------------------------------------------------
-#アップデータのアップデート
+#アップデータのアップデート(アップデート後の実行時にアップデータを更新)
 if (Test-Path (Join-Path $script:scriptRoot '../log/updater_update.txt')) {
 	try {
 		Invoke-WebRequest `
@@ -101,7 +104,7 @@ if ($IsWindows) { $script:ffprobePath = Join-Path $script:binDir 'ffprobe.exe' }
 else { $script:ffprobePath = Join-Path $script:binDir 'ffprobe' }
 
 #GUI起動を判定
-if ( $script:myInvocation.ScriptName.Contains('gui')) {
+if ( $myInvocation.ScriptName.Contains('gui')) {
 	#TVerRecの最新化チェック
 	Invoke-TVerRecUpdateCheck
 	if (!$?) { exit 1 }

@@ -15,8 +15,8 @@ Set-StrictMode -Version Latest
 #----------------------------------------------------------------------
 #初期化
 try {
-	if ($script:myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
-	else { $script:scriptRoot = Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition }
+	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
+	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	$script:scriptRoot = Convert-Path (Join-Path $script:scriptRoot '../')
 	Set-Location $script:scriptRoot
 } catch { Write-Error ('❗ ディレクトリ設定に失敗しました') ; exit 1 }
@@ -26,24 +26,35 @@ try {
 	if (!$?) { exit 1 }
 } catch { Write-Error ('❗ 関数の読み込みに失敗しました') ; exit 1 }
 
+#パラメータ設定
+$msgTypes = @('Output', 'Error', 'Warning', 'Verbose', 'Debug', 'Information')
+$jobTerminationStates = @('Completed', 'Failed', 'Stopped')
+$msgTypesColorMap = @{
+	Output      = 'DarkSlateGray'
+	Error       = 'Crimson'
+	Warning     = 'Coral'
+	Verbose     = 'LightSlateGray'
+	Debug       = 'CornflowerBlue'
+	Information = 'DarkGray'
+}
+
 #endregion 環境設定
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #region 関数定義
-#━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 #GUIイベントの処理
 function Sync-WpfEvents {
-	[DispatcherFrame] $script:frame = [DispatcherFrame]::new($true)
+	[DispatcherFrame] $frame = [DispatcherFrame]::new($true)
 	$null = [Dispatcher]::CurrentDispatcher.BeginInvoke(
 		'Background',
 		[DispatcherOperationCallback] {
-			Param([object] $script:f)
-			($script:f -as [DispatcherFrame]).Continue = $false
+			Param([object] $f)
+			($f -as [DispatcherFrame]).Continue = $false
 			return $null
 		},
-		$script:frame)
-	[Dispatcher]::PushFrame($script:frame)
+		$frame)
+	[Dispatcher]::PushFrame($frame)
 }
 
 #テキストボックスへのログ出力と再描画
@@ -52,21 +63,10 @@ function Out-ExecutionLog {
 		[parameter(Mandatory = $false)][String]$message = '',
 		[parameter(Mandatory = $false)][String]$type = 'Output'
 	)
-
-	$msgTypesColorMap = @{
-		Output      = 'DarkSlateGray'
-		Error       = 'Crimson'
-		Warning     = 'Coral'
-		Verbose     = 'LightSlateGray'
-		Debug       = 'CornflowerBlue'
-		Information = 'DarkGray'
-	}
-
-	$rtfRange = New-Object System.Windows.Documents.TextRange($script:outText.Document.ContentEnd, $script:outText.Document.ContentEnd)
+	$rtfRange = New-Object System.Windows.Documents.TextRange($outText.Document.ContentEnd, $outText.Document.ContentEnd)
 	$rtfRange.Text = ("{0}`n" -f $Message)
 	$rtfRange.ApplyPropertyValue([System.Windows.Documents.TextElement]::ForegroundProperty, $msgTypesColorMap[$type] )
-	$script:outText.ScrollToEnd()
-
+	$outText.ScrollToEnd()
 }
 
 #endregion 関数定義
@@ -74,7 +74,6 @@ function Out-ExecutionLog {
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
-#━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 #----------------------------------------------------------------------
 #region WPFのWindow設定
@@ -83,7 +82,7 @@ try {
 	[String]$mainXaml = Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecMain.xaml')
 	$mainXaml = $mainXaml -ireplace 'mc:Ignorable="d"', '' -ireplace 'x:N', 'N' -ireplace 'x:Class=".*?"', ''
 	[xml]$mainCleanXaml = $mainXaml
-	$script:mainWindow = [System.Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $mainCleanXaml))
+	$mainWindow = [System.Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $mainCleanXaml))
 } catch { Write-Error ('❗ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。') ; exit 1 }
 
 #PowerShellのウィンドウを非表示に
@@ -95,81 +94,81 @@ $console = [Console.Window]::GetConsoleWindow()
 $null = [Console.Window]::ShowWindow($console, 0)
 
 #タスクバーのアイコンにオーバーレイ表示
-$script:mainWindow.TaskbarItemInfo.Overlay = ConvertFrom-Base64 $script:iconBase64
-$script:mainWindow.TaskbarItemInfo.Description = $script:mainWindow.Title
+$mainWindow.TaskbarItemInfo.Overlay = ConvertFrom-Base64 $script:iconBase64
+$mainWindow.TaskbarItemInfo.Description = $mainWindow.Title
 
 #ウィンドウを読み込み時の処理
-$script:mainWindow.Add_Loaded({ $script:mainWindow.Icon = $script:iconPath })
+$mainWindow.Add_Loaded({ $mainWindow.Icon = $script:iconPath })
 
 #ウィンドウを閉じる際の処理
-$script:mainWindow.Add_Closing({ Get-Job | Receive-Job -Wait -AutoRemoveJob -Force })
+$mainWindow.Add_Closing({ Get-Job | Receive-Job -Wait -AutoRemoveJob -Force })
 
 #Name属性を持つ要素のオブジェクト作成
-$mainCleanXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $script:mainWindow.FindName($_.Name) -Scope Local }
+$mainCleanXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $mainWindow.FindName($_.Name) -Scope Local }
 
 #WPFにロゴをロード
 $LogoImage.Source = ConvertFrom-Base64 $script:logoBase64
 
 #バージョン表記
-$script:lblVersion.Content = ('Version {0}' -f $script:appVersion)
+$lblVersion.Content = ('Version {0}' -f $script:appVersion)
 
 #ログ出力するためのテキストボックス
-$script:outText = $script:mainWindow.FindName('tbOutText')
+$outText = $mainWindow.FindName('tbOutText')
 
 #endregion WPFのWindow設定
 
 #----------------------------------------------------------------------
 #region バックグラウンドジョブ化する処理を持つボタン
 
-$script:btns = @(
-	$script:mainWindow.FindName('btnSingle'), #0
-	$script:mainWindow.FindName('btnBulk'), #1
-	$script:mainWindow.FindName('btnListGen'), #2
-	$script:mainWindow.FindName('btnList'), #3
-	$script:mainWindow.FindName('btnDelete'), #4
-	$script:mainWindow.FindName('btnValidate'), #5
-	$script:mainWindow.FindName('btnMove'), #6
-	$script:mainWindow.FindName('btnLoop')
+$btns = @(
+	$mainWindow.FindName('btnSingle'), #0
+	$mainWindow.FindName('btnBulk'), #1
+	$mainWindow.FindName('btnListGen'), #2
+	$mainWindow.FindName('btnList'), #3
+	$mainWindow.FindName('btnDelete'), #4
+	$mainWindow.FindName('btnValidate'), #5
+	$mainWindow.FindName('btnMove'), #6
+	$mainWindow.FindName('btnLoop')
 )
 
 #バックグラウンドジョブ化するボタンの処理内容
-$script:scriptBlocks = @{
-	$script:btns[0] = { . './download_single.ps1' $true }
-	$script:btns[1] = { . './download_bulk.ps1' $true }
-	$script:btns[2] = { . './generate_list.ps1' $true }
-	$script:btns[3] = { . './download_list.ps1' $true }
-	$script:btns[4] = { . './delete_trash.ps1' $true }
-	$script:btns[5] = { . './validate_video.ps1' $true }
-	$script:btns[6] = { . './move_video.ps1' $true }
-	$script:btns[7] = { . './loop.ps1' $true }
+$scriptBlocks = @{
+	$btns[0] = { . './download_single.ps1' $true }
+	$btns[1] = { . './download_bulk.ps1' $true }
+	$btns[2] = { . './generate_list.ps1' $true }
+	$btns[3] = { . './download_list.ps1' $true }
+	$btns[4] = { . './delete_trash.ps1' $true }
+	$btns[5] = { . './validate_video.ps1' $true }
+	$btns[6] = { . './move_video.ps1' $true }
+	$btns[7] = { . './loop.ps1' $true }
 }
 
 #バックグラウンドジョブ化する処理の名前
-$script:threadNames = @{
-	$script:btns[0] = { 個別ダウンロード処理を実行中 }
-	$script:btns[1] = { 一括ダウンロード処理を実行中 }
-	$script:btns[2] = { リスト作成処理を実行中 }
-	$script:btns[3] = { リストダウンロード処理を実行中 }
-	$script:btns[4] = { 不要ファイル削除処理を実行中 }
-	$script:btns[5] = { 番組整合性検証処理を実行中 }
-	$script:btns[6] = { 番組移動処理を実行中 }
-	$script:btns[7] = { ループ処理を実行中 }
+$threadNames = @{
+	$btns[0] = { 個別ダウンロード処理を実行中 }
+	$btns[1] = { 一括ダウンロード処理を実行中 }
+	$btns[2] = { リスト作成処理を実行中 }
+	$btns[3] = { リストダウンロード処理を実行中 }
+	$btns[4] = { 不要ファイル削除処理を実行中 }
+	$btns[5] = { 番組整合性検証処理を実行中 }
+	$btns[6] = { 番組移動処理を実行中 }
+	$btns[7] = { ループ処理を実行中 }
 }
 
 #バックグラウンドジョブ化するボタンのアクション
-foreach ($script:btn in $script:btns) {
-	$script:btn.Add_Click({
+foreach ($btn in $btns) {
+	$btn.Add_Click({
 			#ジョブの稼働中はボタンを無効化
-			foreach ($script:btn in $script:btns) { $script:btn.IsEnabled = $false }
-			$script:btnExit.IsEnabled = $false
-			$script:lblStatus.Content = ([String]$script:threadNames[$this]).Trim()
+			foreach ($btn in $btns) { $btn.IsEnabled = $false }
+			$btnExit.IsEnabled = $false
+			$lblStatus.Content = ([String]$threadNames[$this]).Trim()
 
 			#処理停止ボタンの有効化
-			$script:btnKillAll.IsEnabled = $true
+			$btnKillAll.IsEnabled = $true
 
 			#バックグラウンドジョブの起動
-			$null = Start-ThreadJob -Name $this.Name -ScriptBlock $script:scriptBlocks[$this]
-			#$null = Start-Job -Name $this.Name $script:scriptBlocks[$this]	#こっちにするとWrite-Debugがコンソールに出る
+			$null = Start-ThreadJob -Name $this.Name -ScriptBlock $scriptBlocks[$this]
+			#$null = Start-Job -Name $this.Name $scriptBlocks[$this]	#こっちにするとWrite-Debugがコンソールに出る
 		})
 }
 
@@ -178,39 +177,36 @@ foreach ($script:btn in $script:btns) {
 #----------------------------------------------------------------------
 #region ジョブ化しないボタンのアクション
 
-$script:btnWorkOpen.Add_Click({ Invoke-Item $script:downloadWorkDir })
-$script:btnDownloadOpen.Add_Click({ Invoke-Item $script:downloadBaseDir })
-$script:btnSaveOpen.Add_Click({
-		if ($script:saveBaseDir -ne '') {
-			$script:saveBaseDirArray = @()
-			$script:saveBaseDirArray = $script:saveBaseDir.split(';').Trim()
-			foreach ($saveDir in $script:saveBaseDirArray) { Invoke-Item $saveDir.Trim() }
-		} else { [System.Windows.MessageBox]::Show('保存ディレクトリが設定されていません') }
+$btnWorkOpen.Add_Click({ Invoke-Item $script:downloadWorkDir })
+$btnDownloadOpen.Add_Click({ Invoke-Item $script:downloadBaseDir })
+$btnsaveOpen.Add_Click({
+		if ($script:saveBaseDir -ne '') { $script:saveBaseDir.Split(';').Trim() | ForEach-Object { Invoke-Item $_ } }
+		else { [System.Windows.MessageBox]::Show('保存ディレクトリが設定されていません') }
 	})
-$script:btnKeywordOpen.Add_Click({ Invoke-Item $script:keywordFilePath })
-$script:btnIgnoreOpen.Add_Click({ Invoke-Item $script:ignoreFilePath })
-$script:btnListOpen.Add_Click({ Invoke-Item $script:listFilePath })
-$script:btnClearLog.Add_Click({
-		$script:outText.Document.Blocks.Clear()
+$btnKeywordOpen.Add_Click({ Invoke-Item $script:keywordFilePath })
+$btnIgnoreOpen.Add_Click({ Invoke-Item $script:ignoreFilePath })
+$btnListOpen.Add_Click({ Invoke-Item $script:listFilePath })
+$btnClearLog.Add_Click({
+		$outText.Document.Blocks.Clear()
 		Invoke-GarbageCollection
 	})
-$script:btnKillAll.Add_Click({
+$btnKillAll.Add_Click({
 		Get-Job | Remove-Job -Force
-		foreach ($btn in $script:btns) { $btn.IsEnabled = $true }
-		$script:btnExit.IsEnabled = $true
-		$script:btnKillAll.IsEnabled = $false
-		$script:lblStatus.Content = '処理を強制停止しました'
+		foreach ($btn in $btns) { $btn.IsEnabled = $true }
+		$btnExit.IsEnabled = $true
+		$btnKillAll.IsEnabled = $false
+		$lblStatus.Content = '処理を強制停止しました'
 		Invoke-GarbageCollection
 	})
-$script:btnWiki.Add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
-$script:btnSetting.Add_Click({
+$btnWiki.Add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
+$btnsetting.Add_Click({
 		. 'gui/gui_setting.ps1'
 		if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 			. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
 		}
 		Invoke-GarbageCollection
 	})
-$script:btnExit.Add_Click({ $script:mainWindow.close() })
+$btnExit.Add_Click({ $mainWindow.close() })
 
 #endregion ジョブ化しないボタンのアクション
 
@@ -221,8 +217,8 @@ $script:btnExit.Add_Click({ $script:mainWindow.close() })
 $btnKillAll.IsEnabled = $false
 
 try {
-	$null = $script:mainWindow.Show()
-	$null = $script:mainWindow.Activate()
+	$null = $mainWindow.Show()
+	$null = $mainWindow.Activate()
 	$null = [Console.Window]::ShowWindow($console, 0)
 } catch { Write-Error ('❗ ウィンドウを描画できませんでした。TVerRecが破損しています。') ; exit 1 }
 
@@ -230,19 +226,15 @@ try {
 
 #----------------------------------------------------------------------
 #region ウィンドウ表示後のループ処理
-$msgTypes = @('Output', 'Error', 'Warning', 'Verbose', 'Debug', 'Information')
-$jobTerminationStates = @('Completed', 'Failed', 'Stopped')
-
-while ($script:mainWindow.IsVisible) {
+while ($mainWindow.IsVisible) {
 
 	if ($jobs = Get-Job) {
 		#ジョブがある場合の処理
 		foreach ($job in $jobs) {
 			#各メッセージタイプごとに内容を取得(ただしReceive-Jobは次Stepで実行するので取りこぼす可能性あり)
 			foreach ($msgType in $msgTypes) {
-				$variableName = 'msg' + $msgType
 				$variableValue = if ($job.$msgType) { $job.$msgType } else { $null }
-				Set-Variable -Name $variableName -Value $variableValue
+				Set-Variable -Name ('msg' + $msgType) -Value $variableValue
 			}
 
 			#Jobからメッセージを取得し事前に取得したメッセージタイプと照合し色付け
@@ -256,16 +248,15 @@ while ($script:mainWindow.IsVisible) {
 					($msgInformation -contains $jobMsg) { if ($msgInformation) { Out-ExecutionLog -Message ($jobMsg -join "`n") -Type 'Information' }; continue }
 					default { Out-ExecutionLog -Message ($jobMsg -join "`n") -Type 'Output' }
 				}
-
 			}
 
 			#終了したジョブのボタンの再有効化
 			if ($job.State -in $jobTerminationStates) {
 				Remove-Job $job
-				$script:btns.ForEach({ $_.IsEnabled = $true })
-				$script:btnExit.IsEnabled = $true
-				$script:btnKillAll.IsEnabled = $false
-				$script:lblStatus.Content = '処理を終了しました'
+				$btns.ForEach({ $_.IsEnabled = $true })
+				$btnExit.IsEnabled = $true
+				$btnKillAll.IsEnabled = $false
+				$lblStatus.Content = '処理を終了しました'
 				Invoke-GarbageCollection
 			}
 		}

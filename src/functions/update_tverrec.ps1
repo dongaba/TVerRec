@@ -87,8 +87,8 @@ Function Move-IfExist {
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Set-StrictMode -Version Latest
 try {
-	if ($script:myInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$scriptRoot = Split-Path -Parent -Path (Split-Path -Parent -Path $script:myInvocation.MyCommand.Definition)
+	if ($myInvocation.MyCommand.CommandType -eq 'ExternalScript') {
+		$scriptRoot = Split-Path -Parent -Path (Split-Path -Parent -Path $myInvocation.MyCommand.Definition)
 	} else { $scriptRoot = Convert-Path .. }
 	Set-Location $scriptRoot
 } catch { Write-Error ('❗ ディレクトリ設定に失敗しました') ; exit 1 }
