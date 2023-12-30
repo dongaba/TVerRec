@@ -50,12 +50,21 @@ function Sync-WpfEvents {
 function Out-ExecutionLog {
 	Param (
 		[parameter(Mandatory = $false)][String]$message = '',
-		[parameter(Mandatory = $false)][String]$color = 'DarkSlateGray'
+		[parameter(Mandatory = $false)][String]$type = 'Output'
 	)
+
+	$msgTypesColorMap = @{
+		Output      = 'DarkSlateGray'
+		Error       = 'Crimson'
+		Warning     = 'Coral'
+		Verbose     = 'LightSlateGray'
+		Debug       = 'CornflowerBlue'
+		Information = 'DarkGray'
+	}
 
 	$rtfRange = New-Object System.Windows.Documents.TextRange($script:outText.Document.ContentEnd, $script:outText.Document.ContentEnd)
 	$rtfRange.Text = ("{0}`n" -f $Message)
-	$rtfRange.ApplyPropertyValue([System.Windows.Documents.TextElement]::ForegroundProperty, $color)
+	$rtfRange.ApplyPropertyValue([System.Windows.Documents.TextElement]::ForegroundProperty, $msgTypesColorMap[$type] )
 	$script:outText.ScrollToEnd()
 
 }
@@ -112,15 +121,16 @@ $script:outText = $script:mainWindow.FindName('tbOutText')
 #----------------------------------------------------------------------
 #region バックグラウンドジョブ化する処理を持つボタン
 
-$script:btns = `
+$script:btns = @(
 	$script:mainWindow.FindName('btnSingle'), #0
-$script:mainWindow.FindName('btnBulk'), #1
-$script:mainWindow.FindName('btnListGen'), #2
-$script:mainWindow.FindName('btnList'), #3
-$script:mainWindow.FindName('btnDelete'), #4
-$script:mainWindow.FindName('btnValidate'), #5
-$script:mainWindow.FindName('btnMove'), #6
-$script:mainWindow.FindName('btnLoop')
+	$script:mainWindow.FindName('btnBulk'), #1
+	$script:mainWindow.FindName('btnListGen'), #2
+	$script:mainWindow.FindName('btnList'), #3
+	$script:mainWindow.FindName('btnDelete'), #4
+	$script:mainWindow.FindName('btnValidate'), #5
+	$script:mainWindow.FindName('btnMove'), #6
+	$script:mainWindow.FindName('btnLoop')
+)
 
 #バックグラウンドジョブ化するボタンの処理内容
 $script:scriptBlocks = @{
@@ -220,14 +230,7 @@ try {
 
 #----------------------------------------------------------------------
 #region ウィンドウ表示後のループ処理
-$messageTypeColorMap = @{
-	Output      = 'DarkSlateGray'
-	Error       = 'Crimson'
-	Warning     = 'Coral'
-	Verbose     = 'LightSlateGray'
-	Debug       = 'CornflowerBlue'
-	Information = 'DarkGray'
-}
+$msgTypes = @('Output', 'Error', 'Warning', 'Verbose', 'Debug', 'Information')
 $jobTerminationStates = @('Completed', 'Failed', 'Stopped')
 
 while ($script:mainWindow.IsVisible) {
@@ -236,7 +239,7 @@ while ($script:mainWindow.IsVisible) {
 		#ジョブがある場合の処理
 		foreach ($job in $jobs) {
 			#各メッセージタイプごとに内容を取得(ただしReceive-Jobは次Stepで実行するので取りこぼす可能性あり)
-			foreach ($msgType in $messageTypeColorMap.Keys) {
+			foreach ($msgType in $msgTypes) {
 				$variableName = 'msg' + $msgType
 				$variableValue = if ($job.$msgType) { $job.$msgType } else { $null }
 				Set-Variable -Name $variableName -Value $variableValue
@@ -246,27 +249,12 @@ while ($script:mainWindow.IsVisible) {
 			$jobMsgs = (Receive-Job $job *>&1)
 			foreach ($jobMsg in $jobMsgs) {
 				switch ($true) {
-					($msgError -contains $jobMsg) {
-						if ($msgError) { Out-ExecutionLog -Message ($jobMsg -join "`n") -Color $messageTypeColorMap['Error'] }
-						continue
-					}
-					($msgWarning -contains $jobMsg) {
-						if ($msgWarning) { Out-ExecutionLog -Message ($jobMsg -join "`n") -Color $messageTypeColorMap['Warning'] }
-						continue
-					}
-					($msgVerbose -contains $jobMsg) {
-						if ($msgVerbose) { Out-ExecutionLog -Message ($jobMsg -join "`n") -Color $messageTypeColorMap['Verbose'] }
-						continue
-					}
-					($msgDebug -contains $jobMsg) {
-						if ($msgDebug) { Out-ExecutionLog -Message ($jobMsg -join "`n") -Color $messageTypeColorMap['Debug'] }
-						continue
-					}
-					($msgInformation -contains $jobMsg) {
-						if ($msgInformation) { Out-ExecutionLog -Message ($jobMsg -join "`n") -Color $messageTypeColorMap['Information'] }
-						continue
-					}
-					default { Out-ExecutionLog -Message ($jobMsg -join "`n") }
+					($msgError -contains $jobMsg) { if ($msgError) { Out-ExecutionLog -Message ($jobMsg -join "`n") -Type 'Error' }; continue }
+					($msgWarning -contains $jobMsg) { if ($msgWarning) { Out-ExecutionLog -Message ($jobMsg -join "`n") -Type 'Warning' }; continue }
+					($msgVerbose -contains $jobMsg) { if ($msgVerbose) { Out-ExecutionLog -Message ($jobMsg -join "`n") -Type 'Verbose' }; continue }
+					($msgDebug -contains $jobMsg) { if ($msgDebug) { Out-ExecutionLog -Message ($jobMsg -join "`n") -Type 'Debug' }; continue }
+					($msgInformation -contains $jobMsg) { if ($msgInformation) { Out-ExecutionLog -Message ($jobMsg -join "`n") -Type 'Information' }; continue }
+					default { Out-ExecutionLog -Message ($jobMsg -join "`n") -Type 'Output' }
 				}
 
 			}
