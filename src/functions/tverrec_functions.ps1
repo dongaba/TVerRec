@@ -104,7 +104,7 @@ function Invoke-ToolUpdateCheck {
 #----------------------------------------------------------------------
 #ファイル・ディレクトリの存在チェック、なければサンプルファイルコピー
 #----------------------------------------------------------------------
-function Invoke-PathExistenceCheck {
+function Invoke-TverrecPathCheck {
 	Param(
 		[Parameter(Mandatory = $true )][string]$path,
 		[Parameter(Mandatory = $true )][string]$errorMessage,
@@ -118,8 +118,7 @@ function Invoke-PathExistenceCheck {
 
 	if (!(Test-Path $path -PathType $pathType)) {
 		if (!($sampleFilePath -and (Test-Path $sampleFilePath -PathType 'Leaf'))) {
-			Write-Error ("❗ $errorMessage 終了します。")
-			exit 1
+			Write-Error ('❗ {0}が存在しません。終了します。' -f $errorMessage) ; exit 1
 		}
 		Copy-Item -LiteralPath $sampleFilePath -Destination $path -Force
 	}
@@ -134,28 +133,27 @@ function Invoke-RequiredFileCheck {
 
 	Write-Debug ($MyInvocation.MyCommand.Name)
 
-	Invoke-PathExistenceCheck -path $script:downloadBaseDir -errorMessage '番組ダウンロード先ディレクトリが存在しません。'
-	Invoke-PathExistenceCheck -path $script:downloadWorkDir -errorMessage 'ダウンロード作業ディレクトリが存在しません。'
-
+	if ($script:downloadBaseDir -eq '') { Write-Error ('❗ 番組ダウンロード先ディレクトリが設定されていません。終了します。') ; exit 1 }
+	else { Invoke-TverrecPathCheck -Path $script:downloadBaseDir -errorMessage '番組ダウンロード先ディレクトリ' }
+	if ($script:downloadWorkDir -eq '') { Write-Error ('❗ ダウンロード作業ディレクトリが設定されていません。終了します。') ; exit 1 }
+	else { Invoke-TverrecPathCheck -Path $script:downloadWorkDir -errorMessage 'ダウンロード作業ディレクトリ' }
 	if ($script:saveBaseDir -ne '') {
 		$script:saveBaseDirArray = $script:saveBaseDir.split(';').Trim()
 		foreach ($saveDir in $script:saveBaseDirArray) {
-			Invoke-PathExistenceCheck -path $saveDir.Trim() -errorMessage '番組移動先ディレクトリが存在しません。'
+			Invoke-TverrecPathCheck -Path $saveDir.Trim() -errorMessage '番組移動先ディレクトリ'
 		}
 	}
 
-	Invoke-PathExistenceCheck -path $script:ytdlPath -isFile -errorMessage 'youtube-dlが存在しません。'
-	Invoke-PathExistenceCheck -path $script:ffmpegPath -isFile -errorMessage 'ffmpegが存在しません。'
-
+	Invoke-TverrecPathCheck -Path $script:ytdlPath -errorMessage 'youtube-dl' -isFile
+	Invoke-TverrecPathCheck -Path $script:ffmpegPath -errorMessage 'ffmpeg' -isFile
 	if ($script:simplifiedValidation) {
-		Invoke-PathExistenceCheck -path $script:ffprobePath -isFile -errorMessage 'ffprobeが存在しません。'
+		Invoke-TverrecPathCheck -Path $script:ffprobePath -errorMessage 'ffprobe' -isFile
 	}
 
-	#ファイルが存在しない場合はサンプルファイルをコピー
-	Invoke-PathExistenceCheck -path $script:keywordFilePath -isFile -errorMessage 'ダウンロード対象キーワードファイルが存在しません。' -sampleFilePath $script:keywordFileSamplePath
-	Invoke-PathExistenceCheck -path $script:ignoreFilePath -isFile -errorMessage 'ダウンロード対象外番組ファイルが存在しません。' -sampleFilePath $script:ignoreFileSamplePath
-	Invoke-PathExistenceCheck -path $script:histFilePath -isFile -errorMessage 'ダウンロード履歴ファイルが存在しません。' -sampleFilePath $script:histFileSamplePath
-	Invoke-PathExistenceCheck -path $script:listFilePath -isFile -errorMessage 'ダウンロードリストファイルが存在しません。' -sampleFilePath $script:listFileSamplePath
+	Invoke-TverrecPathCheck -Path $script:keywordFilePath -errorMessage 'ダウンロード対象キーワードファイル' -isFile -sampleFilePath $script:keywordFileSamplePath
+	Invoke-TverrecPathCheck -Path $script:ignoreFilePath -errorMessage 'ダウンロード対象外番組ファイル' -isFile -sampleFilePath $script:ignoreFileSamplePath
+	Invoke-TverrecPathCheck -Path $script:histFilePath -errorMessage 'ダウンロード履歴ファイル' -isFile -sampleFilePath $script:histFileSamplePath
+	Invoke-TverrecPathCheck -Path $script:listFilePath -errorMessage 'ダウンロードリストファイル' -isFile -sampleFilePath $script:listFileSamplePath
 }
 
 
