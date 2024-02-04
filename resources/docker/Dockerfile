@@ -20,8 +20,10 @@ RUN	apt-get install --no-install-recommends -y \
 	software-properties-common \
 	jq \
 	libssl-dev \
-	libunwind8
-
+	libunwind8 \
+	&& apt-get autoremove -y \
+	&& apt-get clean -y  \
+	&& rm -rf /var/lib/apt/lists/*
 #Powershellのダウンロードと配置
 RUN /bin/bash -c ' \
 	arch=$(arch | sed s/aarch64/arm64/ | sed s/x86_64/x64/ | sed s/amd64/x64/) ; \
@@ -33,10 +35,6 @@ RUN /bin/bash -c ' \
 	ln -s /opt/microsoft/powershell/pwsh /usr/bin/pwsh ; \
 	rm -rf "./${package##*/}" \
 	'
-
-#aptのクリーンアップ
-RUN apt-get autoremove -y \
-	&& apt-get clean -y
 
 #ディレクトリ準備
 RUN mkdir -p -m 777 \
