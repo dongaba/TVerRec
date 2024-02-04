@@ -83,6 +83,9 @@ $script:histFilePath = Join-Path $script:dbDir 'history.csv'
 $script:histFileSamplePath = Join-Path $script:sampleDir 'history.sample.csv'
 $script:histLockFilePath = Join-Path $script:lockDir 'history.lock'
 
+#サイトマップ処理時の中間ファイルのパス
+$script:sitemaptFilePath = Join-Path $script:dbDir 'sitemap.txt'
+
 #ダウンロードリストのパス
 $script:listFilePath = Join-Path $script:listDir 'list.csv'
 $script:listFileSamplePath = Join-Path $script:sampleDir 'list.sample.csv'
