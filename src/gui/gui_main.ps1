@@ -249,6 +249,11 @@ while ($mainWindow.IsVisible) {
 				}
 			}
 
+			#各メッセージタイプごとの内容を保存する変数を開放
+			foreach ($msgType in $msgTypes) {
+				Remove-Variable -Name ('msg' + $msgType)
+			}
+
 			#終了したジョブのボタンの再有効化
 			if ($job.State -in $jobTerminationStates) {
 				Remove-Job $job
