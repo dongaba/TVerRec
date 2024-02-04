@@ -8,8 +8,8 @@ LABEL org.opencontainers.image.title="TVerRec" \
 	org.opencontainers.image.licenses=MIT
 
 #必要ソフトのインストール
-RUN	apt-get update
-RUN	apt-get install --no-install-recommends -y \
+RUN	apt-get update \
+	&& apt-get install --no-install-recommends -y \
 	curl \
 	git \
 	bash \
