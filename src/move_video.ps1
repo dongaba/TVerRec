@@ -56,7 +56,9 @@ for ($i = 0 ; $i -lt $moveToPathsArray.Count ; $i++) {
 #作業ディレクトリ配下のディレクトリ一覧
 $moveFromPathsHash = @{}
 if ($script:saveBaseDir) {
-	$moveFromPathsArray = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Filter *.mp4 -Recurse).Directory | Sort-Object -Unique | Select-Object Name, FullName)
+	if ((Get-ChildItem -LiteralPath $script:downloadBaseDir -Filter *.mp4 -Recurse)) {
+		$moveFromPathsArray = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Filter *.mp4 -Recurse).Directory | Sort-Object -Unique | Select-Object Name, FullName)
+	}
 } else { $moveFromPathsArray = @() }
 for ($i = 0 ; $i -lt $moveFromPathsArray.Count ; $i++) {
 	$moveFromPathsHash[$moveFromPathsArray[$i].Name] = $moveFromPathsArray[$i].FullName

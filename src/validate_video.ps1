@@ -183,7 +183,7 @@ while ($videoNotValidatedNum -ne 0) {
 #======================================================================
 #完了処理
 $toastUpdateParams = @{
-	Title     = $videoFileRelPath
+	Title     = 'ダウンロードファイルの整合性検証中'
 	Rate      = '1'
 	LeftText  = ''
 	RightText = '完了'
