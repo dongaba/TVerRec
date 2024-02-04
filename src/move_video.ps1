@@ -179,10 +179,14 @@ if ($emptyDirTotal -ne 0) {
 
 try { $script:guiMode = [String]$args[0] } catch { $script:guiMode = '' }
 
-$toastUpdateParams.Title = '番組の移動'
-$toastUpdateParams.Rate = 1
-$toastUpdateParams.LeftText = ''
-$toastUpdateParams.RightText = '完了'
+$toastUpdateParams = @{
+	Title     = '番組の移動'
+	Rate      = 1
+	LeftText  = ''
+	RightText = '完了'
+	Tag       = $script:appName
+	Group     = 'Delete'
+}
 Update-ProgressToast @toastUpdateParams
 
 Invoke-GarbageCollection

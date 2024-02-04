@@ -182,9 +182,14 @@ while ($videoNotValidatedNum -ne 0) {
 
 #======================================================================
 #完了処理
-$toastUpdateParams.Rate = '1'
-$toastUpdateParams.LeftText = ''
-$toastUpdateParams.RightText = '完了'
+$toastUpdateParams = @{
+	Title     = $videoFileRelPath
+	Rate      = '1'
+	LeftText  = ''
+	RightText = '完了'
+	Tag       = $script:appName
+	Group     = 'Validate'
+}
 Update-ProgressToast @toastUpdateParams
 
 Invoke-GarbageCollection

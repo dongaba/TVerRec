@@ -96,9 +96,14 @@ foreach ($videoLink in $videoLinks) {
 }
 #----------------------------------------------------------------------
 
-$toastUpdateParams.Rate = '1'
-$toastUpdateParams.LeftText = ''
-$toastUpdateParams.RightText = '完了'
+$toastUpdateParams = @{
+	Title     = 'リストからの番組のダウンロード'
+	Rate      = '1'
+	LeftText  = ''
+	RightText = '完了'
+	Tag       = $script:appName
+	Group     = 'List'
+}
 Update-ProgressToast @toastUpdateParams
 
 #youtube-dlのプロセスが終わるまで待機

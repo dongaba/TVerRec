@@ -116,14 +116,18 @@ foreach ($keyword in $keywords) {
 }
 #======================================================================
 
-$toastUpdateParams.Title1 = 'キーワードから番組の抽出'
-$toastUpdateParams.Rate1 = 1
-$toastUpdateParams.LeftText1 = ''
-$toastUpdateParams.RightText1 = '0'
-$toastUpdateParams.Title2 = '番組のダウンロード'
-$toastUpdateParams.Rate2 = 1
-$toastUpdateParams.LeftText2 = ''
-$toastUpdateParams.RightText2 = '0'
+$toastUpdateParams = @{
+	Title1     = 'キーワードから番組の抽出'
+	Rate1      = 1
+	LeftText1  = ''
+	RightText1 = 0
+	Title2     = '番組のダウンロード'
+	Rate2      = 1
+	LeftText2  = ''
+	RightText2 = '0'
+	Tag        = $script:appName
+	Group      = 'Bulk'
+}
 Update-ProgressToast2Row @toastUpdateParams
 
 #youtube-dlのプロセスが終わるまで待機
