@@ -852,7 +852,10 @@ function Invoke-Ytdl {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	Invoke-StatisticsCheck -Operation 'download'
-
+	if ($IsWindows) {
+		if ($script:downloadWorkDir.Substring($script:downloadWorkDir.Length - 1, 1) -eq ':') { $script:downloadWorkDir += '\\' }
+		if ($script:downloadBaseDir.Substring($script:downloadBaseDir.Length - 1, 1) -eq ':') { $script:downloadBaseDir += '\\' }
+	}
 	$tmpDir = ('temp:{0}' -f $script:downloadWorkDir)
 	$saveDir = ('home:{0}' -f $videoInfo.fileDir)
 	$subttlDir = ('subtitle:{0}' -f $script:downloadWorkDir)
@@ -915,9 +918,12 @@ function Invoke-NonTverYtdl {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	Invoke-StatisticsCheck -Operation 'nontver'
-
+	if ($IsWindows) {
+		if ($script:downloadWorkDir.Substring($script:downloadWorkDir.Length - 1, 1) -eq ':') { $script:downloadWorkDir += '\\' }
+		if ($script:downloadBaseDir.Substring($script:downloadBaseDir.Length - 1, 1) -eq ':') { $script:downloadBaseDir += '\\' }
+	}
 	$tmpDir = ('temp:{0}' -f $script:downloadWorkDir)
-	$saveDir = ('home:{0}' -f $script:downloadBaseDir)
+	$baseDir = ('home:{0}' -f $script:downloadBaseDir)
 	$subttlDir = ('subtitle:{0}' -f $script:downloadWorkDir)
 	$thumbDir = ('thumbnail:{0}' -f $script:downloadWorkDir)
 	$chaptDir = ('chapter:{0}' -f $script:downloadWorkDir)
@@ -930,7 +936,7 @@ function Invoke-NonTverYtdl {
 	}
 	if ($script:embedSubtitle) { $ytdlArgs += (' {0}' -f '--sub-langs all --convert-subs srt --embed-subs') }
 	if ($script:embedMetatag) { $ytdlArgs += (' {0}' -f '--embed-metadata') }
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $saveDir)
+	$ytdlArgs += (' {0} "{1}"' -f '--paths', $baseDir)
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $tmpDir)
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $subttlDir)
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $thumbDir)
