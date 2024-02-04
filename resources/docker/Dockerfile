@@ -21,6 +21,8 @@ RUN	apt-get install --no-install-recommends -y \
 	jq \
 	libssl-dev \
 	libunwind8
+
+#Powershellのダウンロードと配置
 RUN /bin/bash -c ' \
 	arch=$(arch | sed s/aarch64/arm64/ | sed s/x86_64/x64/ | sed s/amd64/x64/) ; \
 	release=$(curl -sL https://api.github.com/repos/PowerShell/PowerShell/releases/latest) ; \
