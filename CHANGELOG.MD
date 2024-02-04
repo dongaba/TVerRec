@@ -1,5 +1,15 @@
 ﻿# Change Log
 
+## [3.0.1](https://github.com/dongaba/TVerRec/releases/tag/v3.0.1)
+
+### 3.0.1 Added
+
+### 3.0.1 Changed
+
+### 3.0.1 Fixed
+
+- サイトマップダウンロード時に内部ファイル名が表示される不具合を修正
+
 ## [3.0.0](https://github.com/dongaba/TVerRec/releases/tag/v3.0.0)
 
 ### 3.0.0 Added

@@ -478,8 +478,8 @@ function Get-LinkFromSiteMap {
 		if ($script:enableMultithread) {
 			Write-Debug ('Multithread Processing Enabled')
 			#並列化が有効の場合は並列化
-			if (Test-Path $script:sitemaptFilePath) { Clear-Content $script:sitemaptFilePath }
-			else { New-Item $script:sitemaptFilePath }
+			if (Test-Path $script:sitemaptFilePath) { $null = Clear-Content $script:sitemaptFilePath }
+			else { $null = New-Item $script:sitemaptFilePath }
 			$searchResults | ForEach-Object -Parallel {
 				if ($_ -cmatch '\/series\/') {
 					$links = @()
@@ -506,7 +506,7 @@ function Get-LinkFromSiteMap {
 				}
 			} -ThrottleLimit $script:multithreadNum
 			$epLinks += @(Get-Content -Path $script:sitemaptFilePath -Encoding UTF8)
-			Remove-Item $script:sitemaptFilePath
+			$null = Remove-Item $script:sitemaptFilePath
 		} else {
 			#並列化が無効の場合は従来型処理
 			foreach ($searchResult in $searchResults) {
