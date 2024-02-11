@@ -106,20 +106,22 @@ Show-ProgressToast @toastShowParams
 if ($script:forceSingleDownload) {
 	Write-Warning ('❗ - 強制ダウンロードフラグが設定されているためダウンロード対象外の番組の削除処理をスキップします')
 } else {
-	#ダウンロード対象外番組の読み込み
+	#ダウンロード先にディレクトリがない場合はスキップ
+	$workDirEntities = @(Get-ChildItem -LiteralPath $script:downloadBaseDir)
+	if ($workDirEntities.Count -eq 0) { return }
+
+	#ダウンロード対象外番組が登録されていない場合はスキップ
 	$ignoreTitles = @(Read-IgnoreList)
 	$ignoreDirs = [System.Collections.Generic.List[object]]::new()
-	#ダウンロード対象外番組が登録されていない場合はスキップ
-	if ($ignoreTitles.Count -ne 0 ) {
-		$workDirEntities = @(Get-ChildItem -LiteralPath $script:downloadBaseDir)
-		if ($workDirEntities.Count -ne 0) {
-			foreach ($ignoreTitle in $ignoreTitles) {
-				$filteredDirs = $workDirEntities.Where({ $_.Name.Normalize([Text.NormalizationForm]::FormC) -like ('*{0}*' -f $ignoreTitle).Normalize([Text.NormalizationForm]::FormC) })
-				foreach ($filteredDir in $filteredDirs) {
-					$ignoreDirs.Add($filteredDir)
-					Update-IgnoreList $ignoreTitle
-				}
-			}
+	if ($ignoreTitles.Count -eq 0) { return }
+
+	#削除対象の特定
+	$ignoreTitles | ForEach-Object {
+		$ignoreTitle = $_.Normalize([Text.NormalizationForm]::FormC)
+		$filteredDirs = $workDirEntities.Where({ $_.Name.Normalize([Text.NormalizationForm]::FormC) -like "*${ignoreTitle}*" })
+		$filteredDirs | ForEach-Object {
+			$ignoreDirs.Add($_)
+			Update-IgnoreList $ignoreTitle
 		}
 	}
 

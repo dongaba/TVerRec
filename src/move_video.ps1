@@ -107,8 +107,11 @@ if (($null -ne $moveDirs) -and ($moveDirs.Count -ne 0)) {
 
 		$targetFolderName = $moveDir.InputObject
 		#同名ディレクトリが存在する場合は配下のファイルを移動
-		$moveFromPath = $moveFromPathsHash[$targetFolderName]
-		$moveToPath = $moveToPathsHash[$targetFolderName]
+		$moveFromPath = $moveFromPathsHash[$targetFolderName] ?? $moveFromPathsHash[$targetFolderName.Normalize([Text.NormalizationForm]::FormC)]
+
+		#.Normalize([Text.NormalizationForm]::FormC)
+		$moveToPath = $moveToPathsHash[$targetFolderName] ?? $moveToPathsHash[$targetFolderName.Normalize([Text.NormalizationForm]::FormC)]
+
 		if (Test-Path $moveFromPath) {
 			Write-Output ('　{0}\*.mp4' -f $moveFromPath)
 			try { Move-Item ('{0}\*.mp4' -f $moveFromPath) -Destination $moveToPath -Force }

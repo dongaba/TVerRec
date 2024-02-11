@@ -1,5 +1,17 @@
 ﻿# Change Log
 
+## [3.0.2](https://github.com/dongaba/TVerRec/releases/tag/v3.0.2)
+
+### 3.0.2 Added
+
+### 3.0.2 Changed
+
+- 不要ファイル削除処理の可読性とパフォーマンスを向上
+
+### 3.0.2 Fixed
+
+- Mac と Windows/Linux 混在環境で移動処理が濁点や半濁点を含むディレクトリを取りこぼす問題を修正
+
 ## [3.0.1](https://github.com/dongaba/TVerRec/releases/tag/v3.0.1)
 
 ### 3.0.1 Added
