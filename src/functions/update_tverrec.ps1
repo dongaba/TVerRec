@@ -223,11 +223,15 @@ Remove-IfExist -Path (Join-Path $script:scriptRoot '../resources/TVerRecSetting.
 #リストファイルのレイアウト変更(v2.9.9→v3.0.0)
 if (Test-Path (Join-Path $script:scriptRoot '../db/list.csv')) {
 	$currentListFile = [pscustomobject](Import-Csv (Join-Path $script:scriptRoot '../db/list.csv'))
-	$currentListFile | Add-Member -MemberType NoteProperty -Name 'episodePageURL' -Value ''
-	$currentListFile | Add-Member -MemberType NoteProperty -Name 'seriesPageURL' -Value ''
-	$currentListFile | Add-Member -MemberType NoteProperty -Name 'descriptionText' -Value ''
-	Set-Content -LiteralPath (Join-Path $script:scriptRoot '../db/list.csv') -Value 'episodeID,episodePageURL,episodeNo,episodeName,seriesID,seriesPageURL,seriesName,seasonID,seasonName,media,provider,broadcastDate,endTime,keyword,ignoreWord,descriptionText'
-	$currentListFile | Export-Csv -LiteralPath (Join-Path $script:scriptRoot '../db/list.csv') -Encoding UTF8 -Append
+	$propertyNames = @('episodePageURL', 'seriesPageURL', 'descriptionText')
+	$currentProperties = @($currentListFile | Get-Member -MemberType NoteProperty).Name
+	if ($propertyNames | Where-Object { $currentProperties -notContains $_ }) {
+		foreach ($propertyName in $propertyNames) {
+			if ($currentProperties -notContains $propertyName) { $currentListFile | Add-Member -MemberType NoteProperty -Name $propertyName -Value '' }
+		}
+		Set-Content -LiteralPath (Join-Path $script:scriptRoot '../db/list.csv') -Value 'episodeID,episodePageURL,episodeNo,episodeName,seriesID,seriesPageURL,seriesName,seasonID,seasonName,media,provider,broadcastDate,endTime,keyword,ignoreWord,descriptionText'
+		$currentListFile | Export-Csv -LiteralPath (Join-Path $script:scriptRoot '../db/list.csv') -Encoding UTF8 -Append
+	}
 }
 
 #リストファイルのレイアウト変更(v2.9.9→v3.0.0)
