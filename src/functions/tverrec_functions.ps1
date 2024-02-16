@@ -75,7 +75,9 @@ function Invoke-TVerRecUpdateCheck {
 		#アップデート実行
 		Write-Warning ('TVerRecをアップデートするにはこのウィンドウを閉じ update_tverrec を実行してください。')
 		foreach ($i in (1..10)) {
-			Write-Progress -Activity ('残り{0}秒...' -f (10 - $i)) -PercentComplete ([Int][Math]::Ceiling((100 * $i) / 10))
+			$complete = ('#' * $i) * 5
+			$remaining = ('.' * (10 - $i)) * 5
+			Write-Warning ('残り{0}秒... [{1}{2}]' -f (10 - $i), $complete, $remaining)
 			Start-Sleep -Second 1
 		}
 	}
