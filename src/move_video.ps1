@@ -114,7 +114,7 @@ if (($null -ne $moveDirs) -and ($moveDirs.Count -ne 0)) {
 
 		if (Test-Path $moveFromPath) {
 			Write-Output ('　{0}\*.mp4' -f $moveFromPath)
-			try { Move-Item ('{0}\*.mp4' -f $moveFromPath) -Destination $moveToPath -Force }
+			try { Move-Item -Path ('{0}\*.mp4' -f $moveFromPath) -Destination $moveToPath -Force }
 			catch { Write-Warning ('❗ 移動できないファイルがありました - {0}' -f $_) }
 		}
 	}
