@@ -2,8 +2,7 @@ name: Build and Push image to Docker Hub
 
 on:
   push:
-    branches:
-      - master
+    branches: [master]
     tags:
       - "v*.*.*"
 
@@ -28,7 +27,6 @@ jobs:
             TAG="latest"
           fi
           echo "tag=${IMAGE_NAME}:${TAG}" >> $GITHUB_OUTPUT
-
 
       #Check out
       - name: Check out the repo
