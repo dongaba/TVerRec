@@ -239,6 +239,27 @@ $toastUpdateParams.LeftText = ''
 $toastUpdateParams.RightText = '完了'
 Update-ProgressToast @toastUpdateParams
 
+if (Test-Path Variable:toastShowParams) { Remove-Variable toastShowParams }
+if (Test-Path Variable:toastUpdateParams) { Remove-Variable toastUpdateParams }
+if (Test-Path Variable:saveDir) { Remove-Variable saveDir }
+if (Test-Path Variable:workDirEntities) { Remove-Variable workDirEntities }
+if (Test-Path Variable:ignoreTitles) { Remove-Variable ignoreTitles }
+if (Test-Path Variable:ignoreDirs) { Remove-Variable ignoreDirs }
+if (Test-Path Variable:ignoreTitle) { Remove-Variable ignoreTitle }
+if (Test-Path Variable:filteredDirs) { Remove-Variable filteredDirs }
+if (Test-Path Variable:filteredDir) { Remove-Variable filteredDir }
+if (Test-Path Variable:ignoreNum) { Remove-Variable ignoreNum }
+if (Test-Path Variable:ignoreTotal) { Remove-Variable ignoreTotal }
+if (Test-Path Variable:totalStartTime) { Remove-Variable totalStartTime }
+if (Test-Path Variable:secElapsed) { Remove-Variable secElapsed }
+if (Test-Path Variable:secRemaining) { Remove-Variable secRemaining }
+if (Test-Path Variable:minRemaining) { Remove-Variable minRemaining }
+if (Test-Path Variable:progressRate) { Remove-Variable progressRate }
+if (Test-Path Variable:emptyDirs) { Remove-Variable emptyDirs }
+if (Test-Path Variable:subDir) { Remove-Variable subDir }
+if (Test-Path Variable:emptyDirTotal) { Remove-Variable emptyDirTotal }
+if (Test-Path Variable:emptyDirNum) { Remove-Variable emptyDirNum }
+
 Invoke-GarbageCollection
 
 Write-Output ('')

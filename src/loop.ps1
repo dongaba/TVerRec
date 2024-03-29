@@ -28,9 +28,12 @@ while ($true) {
 	. ('{0}/delete_trash.ps1' -f $script:scriptRoot) $script:guiMode
 	. ('{0}/validate_video.ps1' -f $script:scriptRoot) $script:guiMode
 	. ('{0}/move_video.ps1' -f $script:scriptRoot) $script:guiMode
+
 	Invoke-GarbageCollection
+
 	Write-Output ('')
 	Write-Output ('{0}秒待機します。' -f $script:loopCycle)
+
 	$remainingWaitTime = $script:loopCycle
 	do {
 		Start-Sleep -Second 100
@@ -39,6 +42,11 @@ while ($true) {
 		Write-Output ('[{0}{1}{2}] 残り{3}秒' -f $('=' * $(50 - $progressRatio)), '>', $('-' * $progressRatio), $remainingWaitTime)
 		Invoke-GarbageCollection
 	} while ($remainingWaitTime -ge 100)
+
+	if (Test-Path Variable:remainingWaitTime) { Remove-Variable remainingWaitTime }
+	if (Test-Path Variable:progressRatio) { Remove-Variable progressRatio }
+
 }
 #----------------------------------------------------------------------
+
 Invoke-GarbageCollection

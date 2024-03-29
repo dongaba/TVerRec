@@ -73,6 +73,9 @@ while ($true) {
 	} else { break }
 }
 
+if (Test-Path Variable:keyword) { Remove-Variable keyword }
+if (Test-Path Variable:videoPageURL) { Remove-Variable videoPageURL }
+
 Invoke-GarbageCollection
 
 Write-Output ('')

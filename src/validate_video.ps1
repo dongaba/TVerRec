@@ -192,6 +192,21 @@ $toastUpdateParams = @{
 }
 Update-ProgressToast @toastUpdateParams
 
+if (Test-Path Variable:toastShowParams) { Remove-Variable toastShowParams }
+if (Test-Path Variable:videoNotValidatedNum) { Remove-Variable videoNotValidatedNum }
+if (Test-Path Variable:videoHists) { Remove-Variable videoHists }
+if (Test-Path Variable:videoHist) { Remove-Variable videoHist }
+if (Test-Path Variable:uncheckedVido) { Remove-Variable uncheckedVido }
+if (Test-Path Variable:validateTotal) { Remove-Variable validateTotal }
+if (Test-Path Variable:decodeOption) { Remove-Variable decodeOption }
+if (Test-Path Variable:totalStartTime) { Remove-Variable totalStartTime }
+if (Test-Path Variable:validateNum) { Remove-Variable validateNum }
+if (Test-Path Variable:secElapsed) { Remove-Variable secElapsed }
+if (Test-Path Variable:secRemaining) { Remove-Variable secRemaining }
+if (Test-Path Variable:minRemaining) { Remove-Variable minRemaining }
+if (Test-Path Variable:progressRate) { Remove-Variable progressRate }
+if (Test-Path Variable:toastUpdateParams) { Remove-Variable toastUpdateParams }
+
 Invoke-GarbageCollection
 
 Write-Output ('')

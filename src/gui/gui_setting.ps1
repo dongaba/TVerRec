@@ -53,6 +53,8 @@ function Sync-WpfEvents {
 		},
 		$frame)
 	[Dispatcher]::PushFrame($frame)
+	if (Test-Path Variable:frame) { Remove-Variable frame }
+
 }
 
 #ディレクトリ選択ダイアログ
@@ -60,7 +62,6 @@ function Select-Folder($description, $textBox) {
 	$fd.Description = $description
 	$fd.RootFolder = [System.Environment+SpecialFolder]::MyComputer
 	$fd.SelectedPath = $textBox.Text
-
 	if ($fd.ShowDialog($form) -eq [System.Windows.Forms.DialogResult]::OK) {
 		$textBox.Text = $fd.SelectedPath
 	}
@@ -75,6 +76,7 @@ function Read-SystemSetting {
 	catch { $defaultSetting = '' }
 
 	return $defaultSetting.Trim("'")
+	if (Test-Path Variable:defaultSetting) { Remove-Variable defaultSetting }
 }
 
 #user_setting.ps1から各設定項目を読み込む
@@ -86,6 +88,7 @@ function Read-UserSetting {
 	catch { $currentSetting = '' }
 
 	return $currentSetting.Trim("'")
+	if (Test-Path Variable:currentSetting) { Remove-Variable currentSetting }
 }
 
 #user_setting.ps1に各設定項目を書き込む
@@ -144,6 +147,17 @@ function Save-UserSetting {
 
 	#改行コードLFを強制 + NFCで出力
 	$newSetting.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC)  | Out-File -LiteralPath $userSettingFile -Encoding UTF8 -NoNewline
+
+	if (Test-Path Variable:newSetting) { Remove-Variable newSetting }
+	if (Test-Path Variable:startSegment) { Remove-Variable startSegment }
+	if (Test-Path Variable:endSegment) { Remove-Variable endSegment }
+	if (Test-Path Variable:content) { Remove-Variable content }
+	if (Test-Path Variable:totalLineNum) { Remove-Variable totalLineNum }
+	if (Test-Path Variable:headLineNum) { Remove-Variable headLineNum }
+	if (Test-Path Variable:tailLineNum) { Remove-Variable tailLineNum }
+	if (Test-Path Variable:settingBoxName) { Remove-Variable settingBoxName }
+	if (Test-Path Variable:settingBox) { Remove-Variable settingBox }
+
 }
 
 #endregion 関数定義
@@ -308,3 +322,26 @@ while ($settingWindow.IsVisible) {
 #終了処理
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+if (Test-Path Variable:systemSettingFile) { Remove-Variable systemSettingFile }
+if (Test-Path Variable:userSettingFile) { Remove-Variable userSettingFile }
+if (Test-Path Variable:mainXaml) { Remove-Variable mainXaml }
+if (Test-Path Variable:mainCleanXaml) { Remove-Variable mainCleanXaml }
+if (Test-Path Variable:settingWindow) { Remove-Variable settingWindow }
+if (Test-Path Variable:console) { Remove-Variable console }
+if (Test-Path Variable:LogoImage) { Remove-Variable LogoImage }
+if (Test-Path Variable:lblVersion) { Remove-Variable lblVersion }
+if (Test-Path Variable:btnWiki) { Remove-Variable btnWiki }
+if (Test-Path Variable:btnCancel) { Remove-Variable btnCancel }
+if (Test-Path Variable:btnSave) { Remove-Variable btnSave }
+if (Test-Path Variable:btndownloadBaseDir) { Remove-Variable btndownloadBaseDir }
+if (Test-Path Variable:btndownloadWorkDir) { Remove-Variable btndownloadWorkDir }
+if (Test-Path Variable:btnsaveBaseDir) { Remove-Variable btnsaveBaseDir }
+if (Test-Path Variable:settingAttributes) { Remove-Variable settingAttributes }
+if (Test-Path Variable:defaultSetting) { Remove-Variable defaultSetting }
+if (Test-Path Variable:currentSetting) { Remove-Variable currentSetting }
+if (Test-Path Variable:settingAttribute) { Remove-Variable settingAttribute }
+if (Test-Path Variable:settingBoxName) { Remove-Variable settingBoxName }
+if (Test-Path Variable:settingBox) { Remove-Variable settingBox }
+if (Test-Path Variable:process) { Remove-Variable process }
+if (Test-Path Variable:form) { Remove-Variable form }
+if (Test-Path Variable:fd) { Remove-Variable fd }

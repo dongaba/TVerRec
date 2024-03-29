@@ -196,6 +196,8 @@ if (Test-Path Variable:toastShowParams) { Remove-Variable toastShowParams }
 if (Test-Path Variable:moveToPathsHash) { Remove-Variable moveToPathsHash }
 if (Test-Path Variable:moveToPathsArray) { Remove-Variable moveToPathsArray }
 if (Test-Path Variable:moveFromPathsHash) { Remove-Variable moveFromPathsHash }
+if (Test-Path Variable:moveDirs) { Remove-Variable moveDirs }
+if (Test-Path Variable:moveDir) { Remove-Variable moveDir }
 if (Test-Path Variable:totalStartTime) { Remove-Variable totalStartTime }
 if (Test-Path Variable:moveDirNum) { Remove-Variable moveDirNum }
 if (Test-Path Variable:moveDirsTotal) { Remove-Variable moveDirsTotal }
