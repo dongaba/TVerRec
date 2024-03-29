@@ -192,24 +192,24 @@ $toastUpdateParams = @{
 }
 Update-ProgressToast @toastUpdateParams
 
-Remove-Variable toastShowParams
-Remove-Variable moveToPathsHash
-Remove-Variable moveToPathsArray
-Remove-Variable moveFromPathsHash
-Remove-Variable totalStartTime
-Remove-Variable moveDirNum
-Remove-Variable moveDirsTotal
-Remove-Variable secElapsed
-Remove-Variable secRemaining
-Remove-Variable minRemaining
-Remove-Variable progressRate
-Remove-Variable toastUpdateParams
-Remove-Variable targetFolderName
-Remove-Variable moveFromPath
-Remove-Variable moveToPath
-Remove-Variable emptyDirs
-Remove-Variable emptyDirTotal
-Remove-Variable emptyDirNum
+if (Test-Path Variable:toastShowParams) { Remove-Variable toastShowParams }
+if (Test-Path Variable:moveToPathsHash) { Remove-Variable moveToPathsHash }
+if (Test-Path Variable:moveToPathsArray) { Remove-Variable moveToPathsArray }
+if (Test-Path Variable:moveFromPathsHash) { Remove-Variable moveFromPathsHash }
+if (Test-Path Variable:totalStartTime) { Remove-Variable totalStartTime }
+if (Test-Path Variable:moveDirNum) { Remove-Variable moveDirNum }
+if (Test-Path Variable:moveDirsTotal) { Remove-Variable moveDirsTotal }
+if (Test-Path Variable:secElapsed) { Remove-Variable secElapsed }
+if (Test-Path Variable:secRemaining) { Remove-Variable secRemaining }
+if (Test-Path Variable:minRemaining) { Remove-Variable minRemaining }
+if (Test-Path Variable:progressRate) { Remove-Variable progressRate }
+if (Test-Path Variable:toastUpdateParams) { Remove-Variable toastUpdateParams }
+if (Test-Path Variable:targetFolderName) { Remove-Variable targetFolderName }
+if (Test-Path Variable:moveFromPath) { Remove-Variable moveFromPath }
+if (Test-Path Variable:moveToPath) { Remove-Variable moveToPath }
+if (Test-Path Variable:emptyDirs) { Remove-Variable emptyDirs }
+if (Test-Path Variable:emptyDirTotal) { Remove-Variable emptyDirTotal }
+if (Test-Path Variable:emptyDirNum) { Remove-Variable emptyDirNum }
 
 Invoke-GarbageCollection
 
