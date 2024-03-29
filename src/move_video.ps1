@@ -192,6 +192,25 @@ $toastUpdateParams = @{
 }
 Update-ProgressToast @toastUpdateParams
 
+Remove-Variable toastShowParams
+Remove-Variable moveToPathsHash
+Remove-Variable moveToPathsArray
+Remove-Variable moveFromPathsHash
+Remove-Variable totalStartTime
+Remove-Variable moveDirNum
+Remove-Variable moveDirsTotal
+Remove-Variable secElapsed
+Remove-Variable secRemaining
+Remove-Variable minRemaining
+Remove-Variable progressRate
+Remove-Variable toastUpdateParams
+Remove-Variable targetFolderName
+Remove-Variable moveFromPath
+Remove-Variable moveToPath
+Remove-Variable emptyDirs
+Remove-Variable emptyDirTotal
+Remove-Variable emptyDirNum
+
 Invoke-GarbageCollection
 
 Write-Output ('')
