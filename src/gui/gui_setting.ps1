@@ -335,14 +335,6 @@ if (Test-Path Variable:mainXaml) { Remove-Variable -Name mainXaml }
 if (Test-Path Variable:mainCleanXaml) { Remove-Variable -Name mainCleanXaml }
 if (Test-Path Variable:settingWindow) { Remove-Variable -Name settingWindow }
 if (Test-Path Variable:console) { Remove-Variable -Name console }
-if (Test-Path Variable:LogoImage) { Remove-Variable -Name LogoImage }
-if (Test-Path Variable:lblVersion) { Remove-Variable -Name lblVersion }
-if (Test-Path Variable:btnWiki) { Remove-Variable -Name btnWiki }
-if (Test-Path Variable:btnCancel) { Remove-Variable -Name btnCancel }
-if (Test-Path Variable:btnSave) { Remove-Variable -Name btnSave }
-if (Test-Path Variable:btndownloadBaseDir) { Remove-Variable -Name btndownloadBaseDir }
-if (Test-Path Variable:btndownloadWorkDir) { Remove-Variable -Name btndownloadWorkDir }
-if (Test-Path Variable:btnsaveBaseDir) { Remove-Variable -Name btnsaveBaseDir }
 if (Test-Path Variable:settingAttributes) { Remove-Variable -Name settingAttributes }
 if (Test-Path Variable:defaultSetting) { Remove-Variable -Name defaultSetting }
 if (Test-Path Variable:currentSetting) { Remove-Variable -Name currentSetting }
