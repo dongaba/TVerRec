@@ -35,6 +35,11 @@ function Get-Token () {
 		$script:platformUID = $tokenResponse.Result.platform_uid
 		$script:platformToken = $tokenResponse.Result.platform_token
 	} catch { Write-Warning ('❗ トークン取得エラー、終了します') ; exit 1 }
+
+	if (Test-Path Variable:tverTokenURL) { Remove-Variable -Name tverTokenURL }
+	if (Test-Path Variable:requestHeader) { Remove-Variable -Name requestHeader }
+	if (Test-Path Variable:requestBody) { Remove-Variable -Name requestBody }
+	if (Test-Path Variable:tokenResponse) { Remove-Variable -Name tokenResponse }
 }
 
 #----------------------------------------------------------------------
@@ -62,6 +67,12 @@ function Get-VideoLinksFromKeyword {
 	}
 
 	return $episodeLinks | Sort-Object -Unique
+
+	if (Test-Path Variable:keyword) { Remove-Variable -Name keyword }
+	if (Test-Path Variable:episodeLinks) { Remove-Variable -Name episodeLinks }
+	if (Test-Path Variable:key) { Remove-Variable -Name key }
+	if (Test-Path Variable:tverID) { Remove-Variable -Name tverID }
+	if (Test-Path Variable:episodeLinks) { Remove-Variable -Name episodeLinks }
 }
 
 #----------------------------------------------------------------------
@@ -118,6 +129,15 @@ function ProcessSearchResults {
 	}
 
 	return $epLinks | Sort-Object -Unique
+
+	if (Test-Path Variable:baseURL) { Remove-Variable -Name baseURL }
+	if (Test-Path Variable:type) { Remove-Variable -Name type }
+	if (Test-Path Variable:keyword) { Remove-Variable -Name keyword }
+	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
+	if (Test-Path Variable:callSearchURL) { Remove-Variable -Name callSearchURL }
+	if (Test-Path Variable:searchResultsRaw) { Remove-Variable -Name searchResultsRaw }
+	if (Test-Path Variable:searchResults) { Remove-Variable -Name searchResults }
+	if (Test-Path Variable:searchResult) { Remove-Variable -Name searchResult }
 }
 
 #----------------------------------------------------------------------
@@ -176,6 +196,17 @@ function ProcessSearchResultsForTopPage {
 	} catch { Write-Error ('❗ エラーが発生しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) }
 
 	return $epLinks | Sort-Object -Unique
+
+	if (Test-Path Variable:baseURL) { Remove-Variable -Name baseURL }
+	if (Test-Path Variable:type) { Remove-Variable -Name type }
+	if (Test-Path Variable:keyword) { Remove-Variable -Name keyword }
+	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
+	if (Test-Path Variable:callSearchURL) { Remove-Variable -Name callSearchURL }
+	if (Test-Path Variable:searchResultsRaw) { Remove-Variable -Name searchResultsRaw }
+	if (Test-Path Variable:searchResults) { Remove-Variable -Name searchResults }
+	if (Test-Path Variable:searchResult) { Remove-Variable -Name searchResult }
+	if (Test-Path Variable:seriesLinks) { Remove-Variable -Name seriesLinks }
+	if (Test-Path Variable:seasonLinks) { Remove-Variable -Name seasonLinks }
 }
 
 #----------------------------------------------------------------------
@@ -184,9 +215,14 @@ function ProcessSearchResultsForTopPage {
 function Get-LinkFromSeriesID {
 	[OutputType([System.Object[]])]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$seriesID)
+
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$epLinks = @(ProcessSearchResults -baseURL ('https://platform-api.tver.jp/service/api/v1/callSeriesSeasons/{0}' -f $seriesID))
+
 	return $epLinks | Sort-Object -Unique
+
+	if (Test-Path Variable:seriesID) { Remove-Variable -Name seriesID }
+	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
 }
 
 #----------------------------------------------------------------------
@@ -195,9 +231,14 @@ function Get-LinkFromSeriesID {
 function Get-LinkFromSeasonID {
 	[OutputType([System.Object[]])]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$seasonID)
+
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$epLinks = @(ProcessSearchResults -baseURL ('https://platform-api.tver.jp/service/api/v1/callSeasonEpisodes/{0}' -f $seasonID))
+
 	return $epLinks | Sort-Object -Unique
+
+	if (Test-Path Variable:seasonID) { Remove-Variable -Name seasonID }
+	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
 }
 
 #----------------------------------------------------------------------
@@ -206,9 +247,14 @@ function Get-LinkFromSeasonID {
 function Get-LinkFromSeasonIDForTopPage {
 	[OutputType([System.Object[]])]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$seasonID)
+
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$epLinks = @(ProcessSearchResultsForTopPage -baseURL ('https://platform-api.tver.jp/service/api/v1/callSeasonEpisodes/{0}' -f $seasonID))
+
 	return $epLinks | Sort-Object -Unique
+
+	if (Test-Path Variable:seasonID) { Remove-Variable -Name seasonID }
+	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
 }
 
 #----------------------------------------------------------------------
@@ -217,9 +263,14 @@ function Get-LinkFromSeasonIDForTopPage {
 function Get-LinkFromTalentID {
 	[OutputType([System.Object[]])]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$talentID)
+
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$epLinks = @(ProcessSearchResults -baseURL ('https://platform-api.tver.jp/service/api/v1/callTalentEpisode/{0}' -f $talentID))
+
 	return $epLinks | Sort-Object -Unique
+
+	if (Test-Path Variable:talentID) { Remove-Variable -Name talentID }
+	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
 }
 
 #----------------------------------------------------------------------
@@ -228,9 +279,14 @@ function Get-LinkFromTalentID {
 function Get-LinkFromTalentIDForTopPage {
 	[OutputType([System.Object[]])]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$talentID)
+
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$epLinks = @(ProcessSearchResultsForTopPage -baseURL ('https://platform-api.tver.jp/service/api/v1/callTalentEpisode/{0}' -f $talentID))
+
 	return $epLinks | Sort-Object -Unique
+
+	if (Test-Path Variable:talentID) { Remove-Variable -Name talentID }
+	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
 }
 
 #----------------------------------------------------------------------
@@ -239,9 +295,14 @@ function Get-LinkFromTalentIDForTopPage {
 function Get-LinkFromSpecialMainID {
 	[OutputType([System.Object[]])]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$specialMainID)
+
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$epLinks = @(ProcessSearchResults -baseURL ('https://platform-api.tver.jp/service/api/v1/callSpecialContents/{0}' -f $specialMainID) -Type 'specialmain')
+
 	return $epLinks | Sort-Object -Unique
+
+	if (Test-Path Variable:specialMainID) { Remove-Variable -Name specialMainID }
+	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
 }
 
 #----------------------------------------------------------------------
@@ -250,9 +311,14 @@ function Get-LinkFromSpecialMainID {
 function Get-LinkFromSpecialMainIDForTopPage {
 	[OutputType([System.Object[]])]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$specialMainID)
+
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$epLinks = @(ProcessSearchResultsForTopPage -baseURL ('https://platform-api.tver.jp/service/api/v1/callSpecialContents/{0}' -f $specialMainID) -Type 'specialmain')
+
 	return $epLinks | Sort-Object -Unique
+
+	if (Test-Path Variable:specialMainID) { Remove-Variable -Name specialMainID }
+	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
 }
 
 
@@ -262,9 +328,14 @@ function Get-LinkFromSpecialMainIDForTopPage {
 function Get-LinkFromSpecialDetailID {
 	[OutputType([System.Object[]])]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$specialDetailID)
+
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$epLinks = @(ProcessSearchResults -baseURL ('https://platform-api.tver.jp/service/api/v1/callSpecialContentsDetail/{0}' -f $specialDetailID) -Type 'specialdetail')
+
 	return $epLinks | Sort-Object -Unique
+
+	if (Test-Path Variable:specialDetailID) { Remove-Variable -Name specialDetailID }
+	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
 }
 
 #----------------------------------------------------------------------
@@ -273,9 +344,14 @@ function Get-LinkFromSpecialDetailID {
 function Get-LinkFromSpecialDetailIDForTopPage {
 	[OutputType([System.Object[]])]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$specialDetailID)
+
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$epLinks = @(ProcessSearchResultsForTopPage -baseURL ('https://platform-api.tver.jp/service/api/v1/callSpecialContentsDetail/{0}' -f $specialDetailID) -Type 'specialdetail')
+
 	return $epLinks | Sort-Object -Unique
+
+	if (Test-Path Variable:specialDetailID) { Remove-Variable -Name specialDetailID }
+	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
 }
 
 #----------------------------------------------------------------------
@@ -284,9 +360,14 @@ function Get-LinkFromSpecialDetailIDForTopPage {
 function Get-LinkFromTag {
 	[OutputType([System.Object[]])]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$tagID)
+
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$epLinks = @(ProcessSearchResults -baseURL ('https://platform-api.tver.jp/service/api/v1/callTagSearch/{0}' -f $tagID))
+
 	return $epLinks | Sort-Object -Unique
+
+	if (Test-Path Variable:tagID) { Remove-Variable -Name tagID }
+	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
 }
 
 #----------------------------------------------------------------------
@@ -295,9 +376,14 @@ function Get-LinkFromTag {
 function Get-LinkFromNew {
 	[OutputType([System.Object[]])]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$genre)
+
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$epLinks = @(ProcessSearchResults -baseURL ('https://platform-api.tver.jp/service/api/v1/callNewerDetail/{0}' -f $genre) -Type 'new')
+
 	return $epLinks | Sort-Object -Unique
+
+	if (Test-Path Variable:genre) { Remove-Variable -Name genre }
+	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
 }
 
 #----------------------------------------------------------------------
@@ -306,10 +392,15 @@ function Get-LinkFromNew {
 function Get-LinkFromRanking {
 	[OutputType([System.Object[]])]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$genre)
+
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if ($genre -eq 'all') { $epLinks = @(ProcessSearchResults -baseURL 'https://platform-api.tver.jp/service/api/v1/callEpisodeRanking' -Type 'ranking') }
 	else { $epLinks = @(ProcessSearchResults -baseURL ('https://platform-api.tver.jp/service/api/v1/callEpisodeRankingDetail/{0}' -f $genre) -Type 'ranking') }
+
 	return $epLinks | Sort-Object -Unique
+
+	if (Test-Path Variable:genre) { Remove-Variable -Name genre }
+	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
 }
 
 #----------------------------------------------------------------------
@@ -318,9 +409,14 @@ function Get-LinkFromRanking {
 function Get-LinkFromFreeKeyword {
 	[OutputType([System.Object[]])]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$keyword)
+
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$epLinks = @(ProcessSearchResults -baseURL 'https://platform-api.tver.jp/service/api/v1/callKeywordSearch' -Type 'keyword' -Keyword $keyword)
+
 	return $epLinks | Sort-Object -Unique
+
+	if (Test-Path Variable:keyword) { Remove-Variable -Name keyword }
+	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
 }
 
 #----------------------------------------------------------------------
@@ -453,6 +549,18 @@ function Get-LinkFromTopPage {
 	}
 
 	return $epLinks | Sort-Object -Unique
+
+	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
+	if (Test-Path Variable:seriesLinks) { Remove-Variable -Name seriesLinks }
+	if (Test-Path Variable:seasonLinks) { Remove-Variable -Name seasonLinks }
+	if (Test-Path Variable:talentLinks) { Remove-Variable -Name talentLinks }
+	if (Test-Path Variable:specialMainLinks) { Remove-Variable -Name specialMainLinks }
+	if (Test-Path Variable:specialDetailLinks) { Remove-Variable -Name specialDetailLinks }
+	if (Test-Path Variable:callSearchBaseURL) { Remove-Variable -Name callSearchBaseURL }
+	if (Test-Path Variable:callSearchURL) { Remove-Variable -Name callSearchURL }
+	if (Test-Path Variable:searchResultsRaw) { Remove-Variable -Name searchResultsRaw }
+	if (Test-Path Variable:searchResults) { Remove-Variable -Name searchResults }
+	if (Test-Path Variable:searchResult) { Remove-Variable -Name searchResult }
 }
 
 #----------------------------------------------------------------------
@@ -520,4 +628,16 @@ function Get-LinkFromSiteMap {
 	}
 
 	return $epLinks | Sort-Object -Unique
+
+	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
+	if (Test-Path Variable:callSearchURL) { Remove-Variable -Name callSearchURL }
+	if (Test-Path Variable:searchResultsRaw) { Remove-Variable -Name searchResultsRaw }
+	if (Test-Path Variable:searchResults) { Remove-Variable -Name searchResults }
+	if (Test-Path Variable:searchResult) { Remove-Variable -Name searchResult }
+	if (Test-Path Variable:seriesID) { Remove-Variable -Name seriesID }
+	if (Test-Path Variable:seasonID) { Remove-Variable -Name seasonID }
+	if (Test-Path Variable:resultsRaw) { Remove-Variable -Name resultsRaw }
+	if (Test-Path Variable:results) { Remove-Variable -Name results }
+	if (Test-Path Variable:result) { Remove-Variable -Name result }
+	if (Test-Path Variable:links) { Remove-Variable -Name links }
 }

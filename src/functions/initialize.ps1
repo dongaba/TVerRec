@@ -42,6 +42,7 @@ catch { Write-Error ('❗ 外部関数ファイル(tverrec_functions.ps1)の読�
 try {
 	$devFunctionFile = Join-Path $script:devDir 'dev_funcitons.ps1'
 	$devConfFile = Join-Path $script:devDir 'dev_setting.ps1'
+
 	if (Test-Path $devConfFile) {
 		. $devConfFile
 		Write-Warning ('💡 開発ファイル用設定ファイルを読み込みました')
@@ -50,6 +51,10 @@ try {
 		. $devFunctionFile
 		Write-Warning ('💡 開発ファイル用共通関数ファイルを読み込みました')
 	}
+
+	if (Test-Path Variable:devFunctionFile) { Remove-Variable -Name devFunctionFile }
+	if (Test-Path Variable:devConfFile) { Remove-Variable -Name devConfFile }
+
 } catch { Write-Error ('❗ 開発用設定ファイルの読み込みに失敗しました') ; exit 1 }
 
 #----------------------------------------------------------------------

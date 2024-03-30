@@ -192,26 +192,26 @@ $toastUpdateParams = @{
 }
 Update-ProgressToast @toastUpdateParams
 
-if (Test-Path Variable:toastShowParams) { Remove-Variable toastShowParams }
-if (Test-Path Variable:moveToPathsHash) { Remove-Variable moveToPathsHash }
-if (Test-Path Variable:moveToPathsArray) { Remove-Variable moveToPathsArray }
-if (Test-Path Variable:moveFromPathsHash) { Remove-Variable moveFromPathsHash }
-if (Test-Path Variable:moveDirs) { Remove-Variable moveDirs }
-if (Test-Path Variable:moveDir) { Remove-Variable moveDir }
-if (Test-Path Variable:totalStartTime) { Remove-Variable totalStartTime }
-if (Test-Path Variable:moveDirNum) { Remove-Variable moveDirNum }
-if (Test-Path Variable:moveDirsTotal) { Remove-Variable moveDirsTotal }
-if (Test-Path Variable:secElapsed) { Remove-Variable secElapsed }
-if (Test-Path Variable:secRemaining) { Remove-Variable secRemaining }
-if (Test-Path Variable:minRemaining) { Remove-Variable minRemaining }
-if (Test-Path Variable:progressRate) { Remove-Variable progressRate }
-if (Test-Path Variable:toastUpdateParams) { Remove-Variable toastUpdateParams }
-if (Test-Path Variable:targetFolderName) { Remove-Variable targetFolderName }
-if (Test-Path Variable:moveFromPath) { Remove-Variable moveFromPath }
-if (Test-Path Variable:moveToPath) { Remove-Variable moveToPath }
-if (Test-Path Variable:emptyDirs) { Remove-Variable emptyDirs }
-if (Test-Path Variable:emptyDirTotal) { Remove-Variable emptyDirTotal }
-if (Test-Path Variable:emptyDirNum) { Remove-Variable emptyDirNum }
+if (Test-Path Variable:toastShowParams) { Remove-Variable -Name toastShowParams }
+if (Test-Path Variable:moveToPathsHash) { Remove-Variable -Name moveToPathsHash }
+if (Test-Path Variable:moveToPathsArray) { Remove-Variable -Name moveToPathsArray }
+if (Test-Path Variable:moveFromPathsHash) { Remove-Variable -Name moveFromPathsHash }
+if (Test-Path Variable:moveDirs) { Remove-Variable -Name moveDirs }
+if (Test-Path Variable:moveDir) { Remove-Variable -Name moveDir }
+if (Test-Path Variable:totalStartTime) { Remove-Variable -Name totalStartTime }
+if (Test-Path Variable:moveDirNum) { Remove-Variable -Name moveDirNum }
+if (Test-Path Variable:moveDirsTotal) { Remove-Variable -Name moveDirsTotal }
+if (Test-Path Variable:secElapsed) { Remove-Variable -Name secElapsed }
+if (Test-Path Variable:secRemaining) { Remove-Variable -Name secRemaining }
+if (Test-Path Variable:minRemaining) { Remove-Variable -Name minRemaining }
+if (Test-Path Variable:progressRate) { Remove-Variable -Name progressRate }
+if (Test-Path Variable:toastUpdateParams) { Remove-Variable -Name toastUpdateParams }
+if (Test-Path Variable:targetFolderName) { Remove-Variable -Name targetFolderName }
+if (Test-Path Variable:moveFromPath) { Remove-Variable -Name moveFromPath }
+if (Test-Path Variable:moveToPath) { Remove-Variable -Name moveToPath }
+if (Test-Path Variable:emptyDirs) { Remove-Variable -Name emptyDirs }
+if (Test-Path Variable:emptyDirTotal) { Remove-Variable -Name emptyDirTotal }
+if (Test-Path Variable:emptyDirNum) { Remove-Variable -Name emptyDirNum }
 
 Invoke-GarbageCollection
 

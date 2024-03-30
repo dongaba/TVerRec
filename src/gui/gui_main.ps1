@@ -55,7 +55,7 @@ function Sync-WpfEvents {
 		},
 		$frame)
 	[Dispatcher]::PushFrame($frame)
-	if (Test-Path Variable:frame) { Remove-Variable frame }
+	if (Test-Path Variable:frame) { Remove-Variable -Name frame }
 }
 
 #テキストボックスへのログ出力と再描画
@@ -68,7 +68,10 @@ function Out-ExecutionLog {
 	$rtfRange.Text = ("{0}`n" -f $Message)
 	$rtfRange.ApplyPropertyValue([System.Windows.Documents.TextElement]::ForegroundProperty, $msgTypesColorMap[$type] )
 	$outText.ScrollToEnd()
-	if (Test-Path Variable:rtfRange) { Remove-Variable rtfRange }
+
+	if (Test-Path Variable:message) { Remove-Variable -Name message }
+	if (Test-Path Variable:type) { Remove-Variable -Name type }
+	if (Test-Path Variable:rtfRange) { Remove-Variable -Name rtfRange }
 }
 
 #endregion 関数定義
@@ -282,39 +285,39 @@ while ($mainWindow.IsVisible) {
 #Windowが閉じられたら乗っているゴミジョブを削除して終了
 Get-Job | Receive-Job -Wait -AutoRemoveJob -Force
 
-if (Test-Path Variable:msgTypes) { Remove-Variable msgTypes }
-if (Test-Path Variable:jobTerminationStates) { Remove-Variable jobTerminationStates }
-if (Test-Path Variable:msgTypesColorMap) { Remove-Variable msgTypesColorMap }
-if (Test-Path Variable:mainXaml) { Remove-Variable mainXaml }
-if (Test-Path Variable:mainCleanXaml) { Remove-Variable mainCleanXaml }
-if (Test-Path Variable:mainWindow) { Remove-Variable mainWindow }
-if (Test-Path Variable:console) { Remove-Variable console }
-if (Test-Path Variable:LogoImage) { Remove-Variable LogoImage }
-if (Test-Path Variable:lblVersion) { Remove-Variable lblVersion }
-if (Test-Path Variable:outText) { Remove-Variable outText }
-if (Test-Path Variable:btns) { Remove-Variable btns }
-if (Test-Path Variable:scriptBlocks) { Remove-Variable scriptBlocks }
-if (Test-Path Variable:threadNames) { Remove-Variable threadNames }
-if (Test-Path Variable:btn) { Remove-Variable btn }
-if (Test-Path Variable:btnExit) { Remove-Variable btnExit }
-if (Test-Path Variable:lblStatus) { Remove-Variable lblStatus }
-if (Test-Path Variable:btnKillAll) { Remove-Variable btnKillAll }
-if (Test-Path Variable:btnWorkOpen) { Remove-Variable btnWorkOpen }
-if (Test-Path Variable:btnDownloadOpen) { Remove-Variable btnDownloadOpen }
-if (Test-Path Variable:btnsaveOpen) { Remove-Variable btnsaveOpen }
-if (Test-Path Variable:btnKeywordOpen) { Remove-Variable btnKeywordOpen }
-if (Test-Path Variable:btnIgnoreOpen) { Remove-Variable btnIgnoreOpen }
-if (Test-Path Variable:btnListOpen) { Remove-Variable btnListOpen }
-if (Test-Path Variable:btnClearLog) { Remove-Variable btnClearLog }
-if (Test-Path Variable:btnWiki) { Remove-Variable btnWiki }
-if (Test-Path Variable:btnsetting) { Remove-Variable btnsetting }
-if (Test-Path Variable:btnExit) { Remove-Variable btnExit }
-if (Test-Path Variable:jobs) { Remove-Variable jobs }
-if (Test-Path Variable:msgType) { Remove-Variable msgType }
-if (Test-Path Variable:jobMsg) { Remove-Variable jobMsg }
-if (Test-Path Variable:variableValue) { Remove-Variable variableValue }
-if (Test-Path Variable:jobMsgs) { Remove-Variable jobMsgs }
-if (Test-Path Variable:job) { Remove-Variable job }
+if (Test-Path Variable:msgTypes) { Remove-Variable -Name msgTypes }
+if (Test-Path Variable:jobTerminationStates) { Remove-Variable -Name jobTerminationStates }
+if (Test-Path Variable:msgTypesColorMap) { Remove-Variable -Name msgTypesColorMap }
+if (Test-Path Variable:mainXaml) { Remove-Variable -Name mainXaml }
+if (Test-Path Variable:mainCleanXaml) { Remove-Variable -Name mainCleanXaml }
+if (Test-Path Variable:mainWindow) { Remove-Variable -Name mainWindow }
+if (Test-Path Variable:console) { Remove-Variable -Name console }
+if (Test-Path Variable:LogoImage) { Remove-Variable -Name LogoImage }
+if (Test-Path Variable:lblVersion) { Remove-Variable -Name lblVersion }
+if (Test-Path Variable:outText) { Remove-Variable -Name outText }
+if (Test-Path Variable:btns) { Remove-Variable -Name btns }
+if (Test-Path Variable:scriptBlocks) { Remove-Variable -Name scriptBlocks }
+if (Test-Path Variable:threadNames) { Remove-Variable -Name threadNames }
+if (Test-Path Variable:btn) { Remove-Variable -Name btn }
+if (Test-Path Variable:btnExit) { Remove-Variable -Name btnExit }
+if (Test-Path Variable:lblStatus) { Remove-Variable -Name lblStatus }
+if (Test-Path Variable:btnKillAll) { Remove-Variable -Name btnKillAll }
+if (Test-Path Variable:btnWorkOpen) { Remove-Variable -Name btnWorkOpen }
+if (Test-Path Variable:btnDownloadOpen) { Remove-Variable -Name btnDownloadOpen }
+if (Test-Path Variable:btnsaveOpen) { Remove-Variable -Name btnsaveOpen }
+if (Test-Path Variable:btnKeywordOpen) { Remove-Variable -Name btnKeywordOpen }
+if (Test-Path Variable:btnIgnoreOpen) { Remove-Variable -Name btnIgnoreOpen }
+if (Test-Path Variable:btnListOpen) { Remove-Variable -Name btnListOpen }
+if (Test-Path Variable:btnClearLog) { Remove-Variable -Name btnClearLog }
+if (Test-Path Variable:btnWiki) { Remove-Variable -Name btnWiki }
+if (Test-Path Variable:btnsetting) { Remove-Variable -Name btnsetting }
+if (Test-Path Variable:btnExit) { Remove-Variable -Name btnExit }
+if (Test-Path Variable:jobs) { Remove-Variable -Name jobs }
+if (Test-Path Variable:msgType) { Remove-Variable -Name msgType }
+if (Test-Path Variable:jobMsg) { Remove-Variable -Name jobMsg }
+if (Test-Path Variable:variableValue) { Remove-Variable -Name variableValue }
+if (Test-Path Variable:jobMsgs) { Remove-Variable -Name jobMsgs }
+if (Test-Path Variable:job) { Remove-Variable -Name job }
 
 #endregion 終了処理
 

@@ -56,6 +56,9 @@ function ConvertFrom-UnixTime {
 	$EpochDate = Get-Date -Year 1970 -Month 1 -Day 1 -Hour 0 -Minute 0 -Second 0
 
 	return ($EpochDate.AddSeconds($UnixTime).ToLocalTime())
+
+	if (Test-Path Variable:UnixTime) { Remove-Variable -Name UnixTime }
+	if (Test-Path Variable:EpochDate) { Remove-Variable -Name EpochDate }
 }
 
 #----------------------------------------------------------------------
@@ -71,6 +74,9 @@ function ConvertTo-UnixTime {
 	$EpochDate = Get-Date -Year 1970 -Month 1 -Day 1 -Hour 0 -Minute 0 -Second 0
 
 	return ([Math]::Floor(($InputDate.ToUniversalTime() - $EpochDate).TotalSeconds))
+
+	if (Test-Path Variable:InputDate) { Remove-Variable -Name InputDate }
+	if (Test-Path Variable:EpochDate) { Remove-Variable -Name EpochDate }
 }
 
 #endregion タイムスタンプ
@@ -102,6 +108,12 @@ function Get-FileNameWithoutInvalidChars {
 	$Name = $Name -replace $additionalReplaces, $additionalValidChar
 
 	return $Name
+
+	if (Test-Path Variable:invalidChars) { Remove-Variable -Name invalidChars }
+	if (Test-Path Variable:resultPattern) { Remove-Variable -Name resultPattern }
+	if (Test-Path Variable:Name) { Remove-Variable -Name Name }
+	if (Test-Path Variable:additionalReplaces) { Remove-Variable -Name additionalReplaces }
+	if (Test-Path Variable:additionalValidChar) { Remove-Variable -Name additionalValidChar }
 }
 
 #----------------------------------------------------------------------
@@ -216,6 +228,12 @@ function Get-NarrowChars {
 	}
 
 	return $text
+
+	if (Test-Path Variable:replaceChars) { Remove-Variable -Name replaceChars }
+	if (Test-Path Variable:entry) { Remove-Variable -Name entry }
+	if (Test-Path Variable:replacements) { Remove-Variable -Name replacements }
+	if (Test-Path Variable:replacement) { Remove-Variable -Name replacement }
+	if (Test-Path Variable:text) { Remove-Variable -Name text }
 }
 
 #----------------------------------------------------------------------
@@ -250,6 +268,10 @@ function Remove-SpecialCharacter {
 	}
 
 	return $text
+
+	if (Test-Path Variable:replacements) { Remove-Variable -Name replacements }
+	if (Test-Path Variable:replacement) { Remove-Variable -Name replacement }
+	if (Test-Path Variable:text) { Remove-Variable -Name text }
 }
 
 #----------------------------------------------------------------------
@@ -263,6 +285,8 @@ function Remove-TabSpace {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	return $text.Replace("`t", ' ').Replace('  ', ' ')
+
+	if (Test-Path Variable:text) { Remove-Variable -Name text }
 }
 
 #----------------------------------------------------------------------
@@ -275,6 +299,8 @@ function Remove-Comment {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	return $text.Split("`t")[0].Split(' ')[0].Split('#')[0]
+
+	if (Test-Path Variable:text) { Remove-Variable -Name text }
 }
 
 #endregion 文字列操作
@@ -315,6 +341,9 @@ function Remove-Files {
 		} catch { Write-Warning ('❗ 削除できないファイルがありました') }
 	}
 
+	if (Test-Path Variable:basePath) { Remove-Variable -Name basePath }
+	if (Test-Path Variable:conditions) { Remove-Variable -Name conditions }
+	if (Test-Path Variable:delPeriod) { Remove-Variable -Name delPeriod }
 }
 
 #----------------------------------------------------------------------
@@ -333,6 +362,9 @@ function Expand-Zip {
 		[System.IO.Compression.ZipFile]::ExtractToDirectory($path, $destination, $true)
 		Write-Verbose ('{0}を展開しました' -f $path)
 	} else { Write-Error ('{0}が見つかりません' -f $path) }
+
+	if (Test-Path Variable:path) { Remove-Variable -Name path }
+	if (Test-Path Variable:destination) { Remove-Variable -Name destination }
 }
 
 #endregion ファイル操作
@@ -364,6 +396,9 @@ function Lock-File {
 		path       = $path
 		fileLocked = $fileLocked
 	}
+
+	if (Test-Path Variable:path) { Remove-Variable -Name path }
+	if (Test-Path Variable:fileLocked) { Remove-Variable -Name fileLocked }
 }
 
 #----------------------------------------------------------------------
@@ -391,6 +426,9 @@ function Unlock-File {
 		path       = $path
 		fileLocked = $fileLocked
 	}
+
+	if (Test-Path Variable:path) { Remove-Variable -Name path }
+	if (Test-Path Variable:fileLocked) { Remove-Variable -Name fileLocked }
 }
 
 #----------------------------------------------------------------------
@@ -420,6 +458,11 @@ function Get-FileLockStatus {
 		path       = $path
 		fileLocked = $fileLocked
 	}
+
+	if (Test-Path Variable:fileInfo) { Remove-Variable -Name fileInfo }
+	if (Test-Path Variable:fileStream) { Remove-Variable -Name fileStream }
+	if (Test-Path Variable:path) { Remove-Variable -Name path }
+	if (Test-Path Variable:fileLocked) { Remove-Variable -Name fileLocked }
 }
 
 #endregion ファイルロック
@@ -455,6 +498,14 @@ function Out-Msg-Color {
 
 	$host.UI.RawUI.ForegroundColor = $prevFg
 	$host.UI.RawUI.BackgroundColor = $prevBg
+
+	if (Test-Path Variable:text) { Remove-Variable -Name text }
+	if (Test-Path Variable:fg) { Remove-Variable -Name fg }
+	if (Test-Path Variable:bg) { Remove-Variable -Name bg }
+	if (Test-Path Variable:noNL) { Remove-Variable -Name noNL }
+	if (Test-Path Variable:prevFg) { Remove-Variable -Name prevFg }
+	if (Test-Path Variable:prevBg) { Remove-Variable -Name prevBg }
+	if (Test-Path Variable:writeHostParams) { Remove-Variable -Name writeHostParams }
 }
 
 #endregion コンソール出力
@@ -525,6 +576,16 @@ function Show-GeneralToast {
 			default { continue }
 		}
 	}
+
+	if (Test-Path Variable:text1) { Remove-Variable -Name text1 }
+	if (Test-Path Variable:text2) { Remove-Variable -Name text2 }
+	if (Test-Path Variable:duration) { Remove-Variable -Name duration }
+	if (Test-Path Variable:silent) { Remove-Variable -Name silent }
+	if (Test-Path Variable:toastSoundElement) { Remove-Variable -Name toastSoundElement }
+	if (Test-Path Variable:toastProgressContent) { Remove-Variable -Name toastProgressContent }
+	if (Test-Path Variable:toastXML) { Remove-Variable -Name toastXML }
+	if (Test-Path Variable:toastNotification) { Remove-Variable -Name toastNotification }
+	if (Test-Path Variable:toastParams) { Remove-Variable -Name toastParams }
 }
 
 #----------------------------------------------------------------------
@@ -595,6 +656,20 @@ function Show-ProgressToast {
 			default { continue }
 		}
 	}
+
+	if (Test-Path Variable:text1) { Remove-Variable -Name text1 }
+	if (Test-Path Variable:text2) { Remove-Variable -Name text2 }
+	if (Test-Path Variable:workDetail) { Remove-Variable -Name workDetail }
+	if (Test-Path Variable:tag) { Remove-Variable -Name tag }
+	if (Test-Path Variable:group) { Remove-Variable -Name group }
+	if (Test-Path Variable:duration) { Remove-Variable -Name duration }
+	if (Test-Path Variable:silent) { Remove-Variable -Name silent }
+	if (Test-Path Variable:toastSoundElement) { Remove-Variable -Name toastSoundElement }
+	if (Test-Path Variable:toastContent) { Remove-Variable -Name toastContent }
+	if (Test-Path Variable:toastXML) { Remove-Variable -Name toastXML }
+	if (Test-Path Variable:toast) { Remove-Variable -Name toast }
+	if (Test-Path Variable:toastData) { Remove-Variable -Name toastData }
+	if (Test-Path Variable:toastParams) { Remove-Variable -Name toastParams }
 }
 
 #----------------------------------------------------------------------
@@ -632,6 +707,15 @@ function Update-ProgressToast {
 			default { continue }
 		}
 	}
+
+	if (Test-Path Variable:title) { Remove-Variable -Name title }
+	if (Test-Path Variable:rate) { Remove-Variable -Name rate }
+	if (Test-Path Variable:leftText) { Remove-Variable -Name leftText }
+	if (Test-Path Variable:rightText) { Remove-Variable -Name rightText }
+	if (Test-Path Variable:tag) { Remove-Variable -Name tag }
+	if (Test-Path Variable:group) { Remove-Variable -Name group }
+	if (Test-Path Variable:toastData) { Remove-Variable -Name toastData }
+	if (Test-Path Variable:toastProgressData) { Remove-Variable -Name toastProgressData }
 }
 
 #----------------------------------------------------------------------
@@ -713,6 +797,22 @@ function Show-ProgressToast2Row {
 		}
 
 	}
+
+	if (Test-Path Variable:text1) { Remove-Variable -Name text1 }
+	if (Test-Path Variable:text2) { Remove-Variable -Name text2 }
+	if (Test-Path Variable:detail1) { Remove-Variable -Name detail1 }
+	if (Test-Path Variable:detail2) { Remove-Variable -Name detail2 }
+	if (Test-Path Variable:tag) { Remove-Variable -Name tag }
+	if (Test-Path Variable:duration) { Remove-Variable -Name duration }
+	if (Test-Path Variable:silent) { Remove-Variable -Name silent }
+	if (Test-Path Variable:group) { Remove-Variable -Name group }
+	if (Test-Path Variable:toastSoundElement) { Remove-Variable -Name toastSoundElement }
+	if (Test-Path Variable:toastAttribution) { Remove-Variable -Name toastAttribution }
+	if (Test-Path Variable:toastContent) { Remove-Variable -Name toastContent }
+	if (Test-Path Variable:toastXML) { Remove-Variable -Name toastXML }
+	if (Test-Path Variable:toast) { Remove-Variable -Name toast }
+	if (Test-Path Variable:toastData) { Remove-Variable -Name toastData }
+	if (Test-Path Variable:toastParams) { Remove-Variable -Name toastParams }
 }
 
 #----------------------------------------------------------------------
@@ -772,6 +872,20 @@ function Update-ProgressToast2Row {
 		}
 
 	}
+
+	if (Test-Path Variable:title1) { Remove-Variable -Name title1 }
+	if (Test-Path Variable:rate1) { Remove-Variable -Name rate1 }
+	if (Test-Path Variable:leftText1) { Remove-Variable -Name leftText1 }
+	if (Test-Path Variable:rightText1) { Remove-Variable -Name rightText1 }
+	if (Test-Path Variable:title2) { Remove-Variable -Name title2 }
+	if (Test-Path Variable:rate2) { Remove-Variable -Name rate2 }
+	if (Test-Path Variable:leftText2) { Remove-Variable -Name leftText2 }
+	if (Test-Path Variable:rightText2) { Remove-Variable -Name rightText2 }
+	if (Test-Path Variable:tag) { Remove-Variable -Name tag }
+	if (Test-Path Variable:group) { Remove-Variable -Name group }
+	if (Test-Path Variable:toastData) { Remove-Variable -Name toastData }
+	if (Test-Path Variable:toastProgressData) { Remove-Variable -Name toastProgressData }
+
 }
 #endregion トースト通知
 
@@ -780,10 +894,15 @@ function Update-ProgressToast2Row {
 #----------------------------------------------------------------------
 function ConvertFrom-Base64 {
 	param ($base64)
+
 	$img = New-Object System.Windows.Media.Imaging.BitmapImage
 	$img.BeginInit()
 	$img.StreamSource = [System.IO.MemoryStream][System.Convert]::FromBase64String($base64)
 	$img.EndInit()
 	$img.Freeze()
+
 	return $img
+
+	if (Test-Path Variable:base64) { Remove-Variable -Name base64 }
+	if (Test-Path Variable:img) { Remove-Variable -Name img }
 }

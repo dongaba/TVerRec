@@ -124,20 +124,20 @@ $toastUpdateParams = @{
 }
 Update-ProgressToast2Row @toastUpdateParams
 
-if (Test-Path Variable:keywords) { Remove-Variable keywords }
-if (Test-Path Variable:keywordNum) { Remove-Variable keywordNum }
-if (Test-Path Variable:keywordTotal) { Remove-Variable keywordTotal }
-if (Test-Path Variable:toastShowParams) { Remove-Variable toastShowParams }
-if (Test-Path Variable:totalStartTime) { Remove-Variable totalStartTime }
-if (Test-Path Variable:keyword) { Remove-Variable keyword }
-if (Test-Path Variable:listLinks) { Remove-Variable listLinks }
-if (Test-Path Variable:videoLinks) { Remove-Variable videoLinks }
-if (Test-Path Variable:videoTotal) { Remove-Variable videoTotal }
-if (Test-Path Variable:secElapsed) { Remove-Variable secElapsed }
-if (Test-Path Variable:secRemaining1) { Remove-Variable secRemaining1 }
-if (Test-Path Variable:toastUpdateParams) { Remove-Variable toastUpdateParams }
-if (Test-Path Variable:videoNum) { Remove-Variable videoNum }
-if (Test-Path Variable:videoLink) { Remove-Variable videoLink }
+if (Test-Path Variable:keywords) { Remove-Variable -Name keywords }
+if (Test-Path Variable:keywordNum) { Remove-Variable -Name keywordNum }
+if (Test-Path Variable:keywordTotal) { Remove-Variable -Name keywordTotal }
+if (Test-Path Variable:toastShowParams) { Remove-Variable -Name toastShowParams }
+if (Test-Path Variable:totalStartTime) { Remove-Variable -Name totalStartTime }
+if (Test-Path Variable:keyword) { Remove-Variable -Name keyword }
+if (Test-Path Variable:listLinks) { Remove-Variable -Name listLinks }
+if (Test-Path Variable:videoLinks) { Remove-Variable -Name videoLinks }
+if (Test-Path Variable:videoTotal) { Remove-Variable -Name videoTotal }
+if (Test-Path Variable:secElapsed) { Remove-Variable -Name secElapsed }
+if (Test-Path Variable:secRemaining1) { Remove-Variable -Name secRemaining1 }
+if (Test-Path Variable:toastUpdateParams) { Remove-Variable -Name toastUpdateParams }
+if (Test-Path Variable:videoNum) { Remove-Variable -Name videoNum }
+if (Test-Path Variable:videoLink) { Remove-Variable -Name videoLink }
 
 Invoke-GarbageCollection
 

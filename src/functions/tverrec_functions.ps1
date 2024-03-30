@@ -81,6 +81,17 @@ function Invoke-TVerRecUpdateCheck {
 			Start-Sleep -Second 1
 		}
 	}
+
+	if (Test-Path Variable:versionUp) { Remove-Variable -Name versionUp }
+	if (Test-Path Variable:repo) { Remove-Variable -Name repo }
+	if (Test-Path Variable:releases) { Remove-Variable -Name releases }
+	if (Test-Path Variable:appReleases) { Remove-Variable -Name appReleases }
+	if (Test-Path Variable:latestVersion) { Remove-Variable -Name latestVersion }
+	if (Test-Path Variable:latestMajorVersion) { Remove-Variable -Name latestMajorVersion }
+	if (Test-Path Variable:appMajorVersion) { Remove-Variable -Name appMajorVersion }
+	if (Test-Path Variable:latestUpdater) { Remove-Variable -Name latestUpdater }
+	if (Test-Path Variable:complete) { Remove-Variable -Name complete }
+	if (Test-Path Variable:remaining) { Remove-Variable -Name remaining }
 }
 
 #----------------------------------------------------------------------
@@ -101,6 +112,10 @@ function Invoke-ToolUpdateCheck {
 	& (Join-Path $scriptRoot ('functions/{0}' -f $scriptName) )
 	if (!$?) { Write-Error ("❗ $targetName の更新に失敗しました") ; exit 1 }
 	$progressPreference = $originalPreference
+
+	if (Test-Path Variable:scriptName) { Remove-Variable -Name scriptName }
+	if (Test-Path Variable:targetName) { Remove-Variable -Name targetName }
+	if (Test-Path Variable:originalPreference) { Remove-Variable -Name originalPreference }
 }
 
 #----------------------------------------------------------------------
@@ -124,6 +139,12 @@ function Invoke-TverrecPathCheck {
 		}
 		Copy-Item -LiteralPath $sampleFilePath -Destination $path -Force
 	}
+
+	if (Test-Path Variable:path) { Remove-Variable -Name path }
+	if (Test-Path Variable:errorMessage) { Remove-Variable -Name errorMessage }
+	if (Test-Path Variable:isFile) { Remove-Variable -Name isFile }
+	if (Test-Path Variable:sampleFilePath) { Remove-Variable -Name sampleFilePath }
+	if (Test-Path Variable:pathType) { Remove-Variable -Name pathType }
 }
 
 #----------------------------------------------------------------------
@@ -156,6 +177,8 @@ function Invoke-RequiredFileCheck {
 	Invoke-TverrecPathCheck -Path $script:ignoreFilePath -errorMessage 'ダウンロード対象外番組ファイル' -isFile -sampleFilePath $script:ignoreFileSamplePath
 	Invoke-TverrecPathCheck -Path $script:histFilePath -errorMessage 'ダウンロード履歴ファイル' -isFile -sampleFilePath $script:histFileSamplePath
 	Invoke-TverrecPathCheck -Path $script:listFilePath -errorMessage 'ダウンロードリストファイル' -isFile -sampleFilePath $script:listFileSamplePath
+
+	if (Test-Path Variable:saveDir) { Remove-Variable -Name saveDir }
 }
 
 
@@ -178,6 +201,8 @@ function Read-KeywordList {
 		}
 	}
 	return @($keywords)
+
+	if (Test-Path Variable:keywords) { Remove-Variable -Name keywords }
 }
 
 
@@ -199,6 +224,8 @@ function Read-HistoryFile {
 	} else { $histFileData = @() }
 
 	return @($histFileData)
+
+	if (Test-Path Variable:histFileData) { Remove-Variable -Name histFileData }
 }
 
 #----------------------------------------------------------------------
@@ -219,6 +246,8 @@ function Read-DownloadList {
 	} else { $listFileData = @() }
 
 	return @($listFileData)
+
+	if (Test-Path Variable:listFileData) { Remove-Variable -Name listFileData }
 }
 
 #----------------------------------------------------------------------
@@ -242,6 +271,8 @@ function Get-LinkFromDownloadList {
 	$videoLinks = $videoLinks.episodeID -replace '^(.+)', 'https://tver.jp/episodes/$1'
 
 	return @($videoLinks)
+
+	if (Test-Path Variable:videoLinks) { Remove-Variable -Name videoLinks }
 }
 
 #----------------------------------------------------------------------
@@ -263,6 +294,8 @@ function Read-IgnoreList {
 	} else { $ignoreTitles = @() }
 
 	return @($ignoreTitles)
+
+	if (Test-Path Variable:ignoreTitles) { Remove-Variable -Name ignoreTitles }
 }
 
 #----------------------------------------------------------------------
@@ -294,6 +327,13 @@ function Update-IgnoreList {
 		Write-Debug ('ダウンロード対象外リストのソート更新完了')
 	} catch { Write-Error ('❗ ダウンロード対象外リストのソートに失敗しました') ; exit 1 }
 	finally { $null = Unlock-File $script:ignoreLockFilePath }
+
+	if (Test-Path Variable:ignoreTitle) { Remove-Variable -Name ignoreTitle }
+	if (Test-Path Variable:ignoreListNew) { Remove-Variable -Name ignoreListNew }
+	if (Test-Path Variable:ignoreComment) { Remove-Variable -Name ignoreComment }
+	if (Test-Path Variable:ignoreTarget) { Remove-Variable -Name ignoreTarget }
+	if (Test-Path Variable:ignoreElse) { Remove-Variable -Name ignoreElse }
+	if (Test-Path Variable:ignoreListNew) { Remove-Variable -Name ignoreListNew }
 }
 
 #----------------------------------------------------------------------
@@ -317,6 +357,13 @@ function Invoke-HistoryMatchCheck {
 	try { $videoLinks = @(($histCompResult | Where-Object { $_.SideIndicator -eq '<=' }).InputObject) } catch { $videoLinks = @() }
 
 	return @($videoLinks, $processedCount)
+
+	if (Test-Path Variable:resultLinks) { Remove-Variable -Name resultLinks }
+	if (Test-Path Variable:histFileData) { Remove-Variable -Name histFileData }
+	if (Test-Path Variable:histVideoPages) { Remove-Variable -Name histVideoPages }
+	if (Test-Path Variable:histCompResult) { Remove-Variable -Name histCompResult }
+	if (Test-Path Variable:processedCount) { Remove-Variable -Name processedCount }
+	if (Test-Path Variable:videoLinks) { Remove-Variable -Name videoLinks }
 }
 
 #----------------------------------------------------------------------
@@ -350,6 +397,16 @@ function Invoke-HistoryAndListfileMatchCheck {
 	try { $videoLinks = @(($histCompResult | Where-Object { $_.SideIndicator -eq '<=' }).InputObject) } catch { $videoLinks = @() }
 
 	return @($videoLinks, $processedCount)
+
+	if (Test-Path Variable:resultLinks) { Remove-Variable -Name resultLinks }
+	if (Test-Path Variable:listFileData) { Remove-Variable -Name listFileData }
+	if (Test-Path Variable:listVideoPages) { Remove-Variable -Name listVideoPages }
+	if (Test-Path Variable:listFileLine) { Remove-Variable -Name listFileLine }
+	if (Test-Path Variable:histFileData) { Remove-Variable -Name histFileData }
+	if (Test-Path Variable:histVideoPages) { Remove-Variable -Name histVideoPages }
+	if (Test-Path Variable:histCompResult) { Remove-Variable -Name histCompResult }
+	if (Test-Path Variable:processedCount) { Remove-Variable -Name processedCount }
+	if (Test-Path Variable:videoLinks) { Remove-Variable -Name videoLinks }
 }
 
 
@@ -389,6 +446,11 @@ function Wait-YtdlProcess {
 		Write-Verbose ('現在のダウンロードプロセス一覧 ({0}個)' -f $ytdlCount)
 		Start-Sleep -Seconds 60
 	}
+
+	if (Test-Path Variable:parallelDownloadFileNum) { Remove-Variable -Name parallelDownloadFileNum }
+	if (Test-Path Variable:psCmd) { Remove-Variable -Name psCmd }
+	if (Test-Path Variable:processName) { Remove-Variable -Name processName }
+	if (Test-Path Variable:ytdlCount) { Remove-Variable -Name ytdlCount }
 }
 
 
@@ -417,6 +479,8 @@ function Format-HistoryRecord {
 		videoPath       = $videoInfo.fileRelPath
 		videoValidated  = $videoInfo.validated
 	}
+
+	if (Test-Path Variable:videoInfo) { Remove-Variable -Name videoInfo }
 }
 
 #----------------------------------------------------------------------
@@ -467,6 +531,8 @@ function Format-ListRecord {
 			ignoreWord     = $videoInfo.ignoreWord
 		}
 	}
+
+	if (Test-Path Variable:videoInfo) { Remove-Variable -Name videoInfo }
 }
 
 #----------------------------------------------------------------------
@@ -478,6 +544,8 @@ Function Remove-SpecialNote {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	return ($text -replace '《.*?》', '').Replace('  ', ' ').Trim()
+
+	if (Test-Path Variable:text) { Remove-Variable -Name text }
 }
 
 #----------------------------------------------------------------------
@@ -591,6 +659,17 @@ function Invoke-VideoDownload {
 	#5秒待機
 	Start-Sleep -Seconds 5
 
+	if (Test-Path Variable:keyword) { Remove-Variable -Name keyword }
+	if (Test-Path Variable:episodePage) { Remove-Variable -Name episodePage }
+	if (Test-Path Variable:force) { Remove-Variable -Name force }
+	if (Test-Path Variable:newVideo) { Remove-Variable -Name newVideo }
+	if (Test-Path Variable:skipDownload) { Remove-Variable -Name skipDownload }
+	if (Test-Path Variable:episodeID) { Remove-Variable -Name episodeID }
+	if (Test-Path Variable:videoInfo) { Remove-Variable -Name videoInfo }
+	if (Test-Path Variable:histFileData) { Remove-Variable -Name histFileData }
+	if (Test-Path Variable:histMatch) { Remove-Variable -Name histMatch }
+	if (Test-Path Variable:ignoreTitles) { Remove-Variable -Name ignoreTitles }
+	if (Test-Path Variable:ignoreTitle) { Remove-Variable -Name ignoreTitle }
 }
 
 #----------------------------------------------------------------------
@@ -652,6 +731,17 @@ function Update-VideoList {
 		Write-Debug ('ダウンロードリストを書き込みました')
 	} catch { Write-Warning ('❗ ダウンロードリストを更新できませんでした。スキップします') ; continue }
 	finally { $null = Unlock-File $script:listLockFilePath }
+
+	if (Test-Path Variable:keyword) { Remove-Variable -Name keyword }
+	if (Test-Path Variable:episodePage) { Remove-Variable -Name episodePage }
+	if (Test-Path Variable:ignoreWord) { Remove-Variable -Name ignoreWord }
+	if (Test-Path Variable:newVideo) { Remove-Variable -Name newVideo }
+	if (Test-Path Variable:ignore) { Remove-Variable -Name ignore }
+	if (Test-Path Variable:episodeID) { Remove-Variable -Name episodeID }
+	if (Test-Path Variable:videoInfo) { Remove-Variable -Name videoInfo }
+	if (Test-Path Variable:ignoreTitles) { Remove-Variable -Name ignoreTitles }
+	if (Test-Path Variable:ignoreTitle) { Remove-Variable -Name ignoreTitle }
+	if (Test-Path Variable:ignoreWord) { Remove-Variable -Name ignoreWord }
 }
 
 #----------------------------------------------------------------------
@@ -759,6 +849,31 @@ function Get-VideoInfo {
 		videoInfoURL    = $tverVideoInfoURL
 		descriptionText = $descriptionText
 	}
+
+	if (Test-Path Variable:episodeID) { Remove-Variable -Name episodeID }
+	if (Test-Path Variable:tverVideoInfoBaseURL) { Remove-Variable -Name tverVideoInfoBaseURL }
+	if (Test-Path Variable:tverVideoInfoURL) { Remove-Variable -Name tverVideoInfoURL }
+	if (Test-Path Variable:response) { Remove-Variable -Name response }
+	if (Test-Path Variable:videoSeries) { Remove-Variable -Name videoSeries }
+	if (Test-Path Variable:videoSeriesID) { Remove-Variable -Name videoSeriesID }
+	if (Test-Path Variable:videoSeriesPageURL) { Remove-Variable -Name videoSeriesPageURL }
+	if (Test-Path Variable:videoSeason) { Remove-Variable -Name videoSeason }
+	if (Test-Path Variable:videoSeasonID) { Remove-Variable -Name videoSeasonID }
+	if (Test-Path Variable:episodeName) { Remove-Variable -Name episodeName }
+	if (Test-Path Variable:videoEpisodeID) { Remove-Variable -Name videoEpisodeID }
+	if (Test-Path Variable:videoEpisodePageURL) { Remove-Variable -Name videoEpisodePageURL }
+	if (Test-Path Variable:mediaName) { Remove-Variable -Name mediaName }
+	if (Test-Path Variable:providerName) { Remove-Variable -Name providerName }
+	if (Test-Path Variable:broadcastDate) { Remove-Variable -Name broadcastDate }
+	if (Test-Path Variable:endTime) { Remove-Variable -Name endTime }
+	if (Test-Path Variable:versionNum) { Remove-Variable -Name versionNum }
+	if (Test-Path Variable:videoInfo) { Remove-Variable -Name videoInfo }
+	if (Test-Path Variable:descriptionText) { Remove-Variable -Name descriptionText }
+	if (Test-Path Variable:videoEpisodeNum) { Remove-Variable -Name videoEpisodeNum }
+	if (Test-Path Variable:currentYear) { Remove-Variable -Name currentYear }
+	if (Test-Path Variable:parsedBroadcastDate) { Remove-Variable -Name parsedBroadcastDate }
+	if (Test-Path Variable:broadcastYear) { Remove-Variable -Name broadcastYear }
+	if (Test-Path Variable:broadcastDate) { Remove-Variable -Name broadcastDate }
 }
 
 #----------------------------------------------------------------------
@@ -809,6 +924,13 @@ function Format-VideoFileInfo {
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'fileRelPath' -Value $videoFileRelPath
 
 	return $videoInfo
+
+	if (Test-Path Variable:videoInfo) { Remove-Variable -Name videoInfo }
+	if (Test-Path Variable:videoName) { Remove-Variable -Name videoName }
+	if (Test-Path Variable:fileNameLimit) { Remove-Variable -Name fileNameLimit }
+	if (Test-Path Variable:videoFileDir) { Remove-Variable -Name videoFileDir }
+	if (Test-Path Variable:videoFilePath) { Remove-Variable -Name videoFilePath }
+	if (Test-Path Variable:videoFileRelPath) { Remove-Variable -Name videoFileRelPath }
 }
 
 #----------------------------------------------------------------------
@@ -827,6 +949,8 @@ function Show-VideoInfo {
 	Write-Output ('　テレビ局: {0}' -f $videoInfo.mediaName)
 	Write-Output ('　配信終了: {0}' -f $videoInfo.endTime)
 	Write-Output ('　番組説明: {0}' -f $videoInfo.descriptionText)
+
+	if (Test-Path Variable:videoInfo) { Remove-Variable -Name videoInfo }
 }
 #----------------------------------------------------------------------
 #番組情報デバッグ表示
@@ -840,6 +964,8 @@ function Show-VideoDebugInfo {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	Write-Debug $videoInfo.episodePageURL
+
+	if (Test-Path Variable:videoInfo) { Remove-Variable -Name videoInfo }
 }
 
 #----------------------------------------------------------------------
@@ -906,6 +1032,17 @@ function Invoke-Ytdl {
 			$null = $proc.Handle
 		} catch { Write-Error ('❗ youtube-dlの起動に失敗しました') ; return }
 	}
+
+	if (Test-Path Variable:videoInfo) { Remove-Variable -Name videoInfo }
+	if (Test-Path Variable:tmpDir) { Remove-Variable -Name tmpDir }
+	if (Test-Path Variable:saveDir) { Remove-Variable -Name saveDir }
+	if (Test-Path Variable:subttlDir) { Remove-Variable -Name subttlDir }
+	if (Test-Path Variable:thumbDir) { Remove-Variable -Name thumbDir }
+	if (Test-Path Variable:chaptDir) { Remove-Variable -Name chaptDir }
+	if (Test-Path Variable:descDir) { Remove-Variable -Name descDir }
+	if (Test-Path Variable:saveFile) { Remove-Variable -Name saveFile }
+	if (Test-Path Variable:ytdlArgs) { Remove-Variable -Name ytdlArgs }
+	if (Test-Path Variable:proc) { Remove-Variable -Name proc }
 }
 
 #----------------------------------------------------------------------
@@ -972,6 +1109,17 @@ function Invoke-NonTverYtdl {
 			$null = $proc.Handle
 		} catch { Write-Error ('❗ youtube-dlの起動に失敗しました') ; return }
 	}
+
+	if (Test-Path Variable:videoPageURL) { Remove-Variable -Name videoPageURL }
+	if (Test-Path Variable:tmpDir) { Remove-Variable -Name tmpDir }
+	if (Test-Path Variable:saveDir) { Remove-Variable -Name saveDir }
+	if (Test-Path Variable:subttlDir) { Remove-Variable -Name subttlDir }
+	if (Test-Path Variable:thumbDir) { Remove-Variable -Name thumbDir }
+	if (Test-Path Variable:chaptDir) { Remove-Variable -Name chaptDir }
+	if (Test-Path Variable:descDir) { Remove-Variable -Name descDir }
+	if (Test-Path Variable:saveFile) { Remove-Variable -Name saveFile }
+	if (Test-Path Variable:ytdlArgs) { Remove-Variable -Name ytdlArgs }
+	if (Test-Path Variable:proc) { Remove-Variable -Name proc }
 }
 
 #----------------------------------------------------------------------
@@ -1011,6 +1159,10 @@ function Wait-DownloadCompletion () {
 			}
 		} catch { $ytdlCount = 0 }
 	}
+
+	if (Test-Path Variable:psCmd) { Remove-Variable -Name psCmd }
+	if (Test-Path Variable:processName) { Remove-Variable -Name processName }
+	if (Test-Path Variable:ytdlCount) { Remove-Variable -Name ytdlCount }
 }
 
 #----------------------------------------------------------------------
@@ -1043,6 +1195,12 @@ function Optimize-HistoryFile {
 
 	} catch { Write-Warning ('❗ ダウンロード履歴の更新に失敗しました') }
 	finally { $null = Unlock-File $script:histLockFilePath }
+
+	if (Test-Path Variable:histData0) { Remove-Variable -Name histData0 }
+	if (Test-Path Variable:histData1) { Remove-Variable -Name histData1 }
+	if (Test-Path Variable:histData2) { Remove-Variable -Name histData2 }
+	if (Test-Path Variable:mergedHistData) { Remove-Variable -Name mergedHistData }
+	if (Test-Path Variable:histData) { Remove-Variable -Name histData }
 }
 
 #----------------------------------------------------------------------
@@ -1062,7 +1220,11 @@ function Limit-HistoryFile {
 		$purgedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
 	} catch { Write-Warning ('❗ ダウンロード履歴のクリーンアップに失敗しました') }
 	finally { $null = Unlock-File $script:histLockFilePath }
+
+	if (Test-Path Variable:retentionPeriod) { Remove-Variable -Name retentionPeriod }
+	if (Test-Path Variable:purgedHist) { Remove-Variable -Name purgedHist }
 }
+
 
 #----------------------------------------------------------------------
 #ダウンロード履歴の重複削除
@@ -1084,6 +1246,8 @@ function Repair-HistoryFile {
 
 	} catch { Write-Warning ('❗ ダウンロード履歴の更新に失敗しました') }
 	finally { $null = Unlock-File $script:histLockFilePath }
+
+	if (Test-Path Variable:uniquedHist) { Remove-Variable -Name uniquedHist }
 }
 
 #----------------------------------------------------------------------
@@ -1225,6 +1389,16 @@ function Invoke-ValidityCheck {
 
 	}
 
+	if (Test-Path Variable:path) { Remove-Variable -Name path }
+	if (Test-Path Variable:decodeOption) { Remove-Variable -Name decodeOption }
+	if (Test-Path Variable:errorCount) { Remove-Variable -Name errorCount }
+	if (Test-Path Variable:checkStatus) { Remove-Variable -Name checkStatus }
+	if (Test-Path Variable:videoFilePath) { Remove-Variable -Name videoFilePath }
+	if (Test-Path Variable:videoHists) { Remove-Variable -Name videoHists }
+	if (Test-Path Variable:checkStatus) { Remove-Variable -Name checkStatus }
+	if (Test-Path Variable:ffprobeArgs) { Remove-Variable -Name ffprobeArgs }
+	if (Test-Path Variable:proc) { Remove-Variable -Name proc }
+	if (Test-Path Variable:ffmpegArgs) { Remove-Variable -Name ffmpegArgs }
 }
 
 #region 環境
@@ -1252,6 +1426,15 @@ function Get-Setting {
 		}
 	}
 	return $configList.GetEnumerator() | Sort-Object -Property key
+
+	if (Test-Path Variable:filePathList) { Remove-Variable -Name filePathList }
+	if (Test-Path Variable:configList) { Remove-Variable -Name configList }
+	if (Test-Path Variable:filePath) { Remove-Variable -Name filePath }
+	if (Test-Path Variable:configs) { Remove-Variable -Name configs }
+	if (Test-Path Variable:excludePattern) { Remove-Variable -Name excludePattern }
+	if (Test-Path Variable:config) { Remove-Variable -Name config }
+	if (Test-Path Variable:configParts) { Remove-Variable -Name configParts }
+	if (Test-Path Variable:key) { Remove-Variable -Name key }
 }
 
 #----------------------------------------------------------------------
@@ -1326,6 +1509,23 @@ function Invoke-StatisticsCheck {
 			-TimeoutSec $script:timeoutSec
 	} catch { Write-Debug ('Failed to collect statistics') }
 	finally { $progressPreference = 'Continue' }
+
+	if (Test-Path Variable:operation) { Remove-Variable -Name operation }
+	if (Test-Path Variable:tverType) { Remove-Variable -Name tverType }
+	if (Test-Path Variable:tverID) { Remove-Variable -Name tverID }
+	if (Test-Path Variable:statisticsBase) { Remove-Variable -Name statisticsBase }
+	if (Test-Path Variable:epochTime) { Remove-Variable -Name epochTime }
+	if (Test-Path Variable:userProperties) { Remove-Variable -Name userProperties }
+	if (Test-Path Variable:clientEnv) { Remove-Variable -Name clientEnv }
+	if (Test-Path Variable:value) { Remove-Variable -Name value }
+	if (Test-Path Variable:eventParams) { Remove-Variable -Name eventParams }
+	if (Test-Path Variable:clientSetting) { Remove-Variable -Name clientSetting }
+	if (Test-Path Variable:paramValue) { Remove-Variable -Name paramValue }
+	if (Test-Path Variable:gaBody) { Remove-Variable -Name gaBody }
+	if (Test-Path Variable:gaURL) { Remove-Variable -Name gaURL }
+	if (Test-Path Variable:gaKey) { Remove-Variable -Name gaKey }
+	if (Test-Path Variable:gaID) { Remove-Variable -Name gaID }
+	if (Test-Path Variable:gaHeaders) { Remove-Variable -Name gaHeaders }
 }
 
 #endregion 環境

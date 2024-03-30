@@ -73,8 +73,8 @@ while ($true) {
 	} else { break }
 }
 
-if (Test-Path Variable:keyword) { Remove-Variable keyword }
-if (Test-Path Variable:videoPageURL) { Remove-Variable videoPageURL }
+if (Test-Path Variable:keyword) { Remove-Variable -Name keyword }
+if (Test-Path Variable:videoPageURL) { Remove-Variable -Name videoPageURL }
 
 Invoke-GarbageCollection
 
