@@ -44,10 +44,9 @@ linux-*
 mac-*
 win-*
 *.xlsx
-thunderclient.env
-thunderActivity.json
-thunderEnvironment.json
-.thunderCollection.json.tmp
+
+#コードカウンタ
+.VSCodeCounter
 
 #その他雑多な不要ファイル
 * - コピー.*
@@ -64,11 +63,4 @@ keyword.conf
 user_setting.ps1
 sitemap.txt
 #git update-index --assume-unchanged conf/dev_setting.ps1
-
-
-.wsb/setup/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle
-.wsb/setup/Microsoft.VCLibs.x64.14.00.Desktop.appx
-.wsb/setup/TVerRec
-.vscode/thunder-tests/collections/tc_col_github.json
-.vscode/thunder-tests/collections/tc_col_test.json
 
