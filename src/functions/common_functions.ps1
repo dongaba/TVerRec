@@ -57,8 +57,7 @@ function ConvertFrom-UnixTime {
 
 	return ($EpochDate.AddSeconds($UnixTime).ToLocalTime())
 
-	if (Test-Path Variable:UnixTime) { Remove-Variable -Name UnixTime }
-	if (Test-Path Variable:EpochDate) { Remove-Variable -Name EpochDate }
+	Remove-Variable -Name UnixTime, EpochDate -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -75,8 +74,7 @@ function ConvertTo-UnixTime {
 
 	return ([Math]::Floor(($InputDate.ToUniversalTime() - $EpochDate).TotalSeconds))
 
-	if (Test-Path Variable:InputDate) { Remove-Variable -Name InputDate }
-	if (Test-Path Variable:EpochDate) { Remove-Variable -Name EpochDate }
+	Remove-Variable -Name InputDate, EpochDate -ErrorAction SilentlyContinue
 }
 
 #endregion タイムスタンプ
@@ -109,11 +107,7 @@ function Get-FileNameWithoutInvalidChars {
 
 	return $Name
 
-	if (Test-Path Variable:invalidChars) { Remove-Variable -Name invalidChars }
-	if (Test-Path Variable:resultPattern) { Remove-Variable -Name resultPattern }
-	if (Test-Path Variable:Name) { Remove-Variable -Name Name }
-	if (Test-Path Variable:additionalReplaces) { Remove-Variable -Name additionalReplaces }
-	if (Test-Path Variable:additionalValidChar) { Remove-Variable -Name additionalValidChar }
+	Remove-Variable -Name invalidChars, resultPattern, Name, additionalReplaces, additionalValidChar -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -229,11 +223,7 @@ function Get-NarrowChars {
 
 	return $text
 
-	if (Test-Path Variable:replaceChars) { Remove-Variable -Name replaceChars }
-	if (Test-Path Variable:entry) { Remove-Variable -Name entry }
-	if (Test-Path Variable:replacements) { Remove-Variable -Name replacements }
-	if (Test-Path Variable:replacement) { Remove-Variable -Name replacement }
-	if (Test-Path Variable:text) { Remove-Variable -Name text }
+	Remove-Variable -Name replaceChars, entry, replacements, replacement, text -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -269,9 +259,7 @@ function Remove-SpecialCharacter {
 
 	return $text
 
-	if (Test-Path Variable:replacements) { Remove-Variable -Name replacements }
-	if (Test-Path Variable:replacement) { Remove-Variable -Name replacement }
-	if (Test-Path Variable:text) { Remove-Variable -Name text }
+	Remove-Variable -Name replacements, replacement, text -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -286,7 +274,7 @@ function Remove-TabSpace {
 
 	return $text.Replace("`t", ' ').Replace('  ', ' ')
 
-	if (Test-Path Variable:text) { Remove-Variable -Name text }
+	Remove-Variable -Name text -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -300,7 +288,7 @@ function Remove-Comment {
 
 	return $text.Split("`t")[0].Split(' ')[0].Split('#')[0]
 
-	if (Test-Path Variable:text) { Remove-Variable -Name text }
+	Remove-Variable -Name text -ErrorAction SilentlyContinue
 }
 
 #endregion 文字列操作
@@ -341,9 +329,7 @@ function Remove-Files {
 		} catch { Write-Warning ('❗ 削除できないファイルがありました') }
 	}
 
-	if (Test-Path Variable:basePath) { Remove-Variable -Name basePath }
-	if (Test-Path Variable:conditions) { Remove-Variable -Name conditions }
-	if (Test-Path Variable:delPeriod) { Remove-Variable -Name delPeriod }
+	Remove-Variable -Name basePath, conditions, delPeriod -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -363,8 +349,7 @@ function Expand-Zip {
 		Write-Verbose ('{0}を展開しました' -f $path)
 	} else { Write-Error ('{0}が見つかりません' -f $path) }
 
-	if (Test-Path Variable:path) { Remove-Variable -Name path }
-	if (Test-Path Variable:destination) { Remove-Variable -Name destination }
+	Remove-Variable -Name path, destination -ErrorAction SilentlyContinue
 }
 
 #endregion ファイル操作
@@ -397,8 +382,7 @@ function Lock-File {
 		fileLocked = $fileLocked
 	}
 
-	if (Test-Path Variable:path) { Remove-Variable -Name path }
-	if (Test-Path Variable:fileLocked) { Remove-Variable -Name fileLocked }
+	Remove-Variable -Name path, fileLocked -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -427,8 +411,7 @@ function Unlock-File {
 		fileLocked = $fileLocked
 	}
 
-	if (Test-Path Variable:path) { Remove-Variable -Name path }
-	if (Test-Path Variable:fileLocked) { Remove-Variable -Name fileLocked }
+	Remove-Variable -Name path, fileLocked -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -459,10 +442,7 @@ function Get-FileLockStatus {
 		fileLocked = $fileLocked
 	}
 
-	if (Test-Path Variable:fileInfo) { Remove-Variable -Name fileInfo }
-	if (Test-Path Variable:fileStream) { Remove-Variable -Name fileStream }
-	if (Test-Path Variable:path) { Remove-Variable -Name path }
-	if (Test-Path Variable:fileLocked) { Remove-Variable -Name fileLocked }
+	Remove-Variable -Name fileInfo, fileStream, path, fileLocked -ErrorAction SilentlyContinue
 }
 
 #endregion ファイルロック
@@ -499,13 +479,7 @@ function Out-Msg-Color {
 	$host.UI.RawUI.ForegroundColor = $prevFg
 	$host.UI.RawUI.BackgroundColor = $prevBg
 
-	if (Test-Path Variable:text) { Remove-Variable -Name text }
-	if (Test-Path Variable:fg) { Remove-Variable -Name fg }
-	if (Test-Path Variable:bg) { Remove-Variable -Name bg }
-	if (Test-Path Variable:noNL) { Remove-Variable -Name noNL }
-	if (Test-Path Variable:prevFg) { Remove-Variable -Name prevFg }
-	if (Test-Path Variable:prevBg) { Remove-Variable -Name prevBg }
-	if (Test-Path Variable:writeHostParams) { Remove-Variable -Name writeHostParams }
+	Remove-Variable -Name text, fg, bg, noNL, prevFg, prevBg, writeHostParams -ErrorAction SilentlyContinue
 }
 
 #endregion コンソール出力
@@ -577,15 +551,7 @@ function Show-GeneralToast {
 		}
 	}
 
-	if (Test-Path Variable:text1) { Remove-Variable -Name text1 }
-	if (Test-Path Variable:text2) { Remove-Variable -Name text2 }
-	if (Test-Path Variable:duration) { Remove-Variable -Name duration }
-	if (Test-Path Variable:silent) { Remove-Variable -Name silent }
-	if (Test-Path Variable:toastSoundElement) { Remove-Variable -Name toastSoundElement }
-	if (Test-Path Variable:toastProgressContent) { Remove-Variable -Name toastProgressContent }
-	if (Test-Path Variable:toastXML) { Remove-Variable -Name toastXML }
-	if (Test-Path Variable:toastNotification) { Remove-Variable -Name toastNotification }
-	if (Test-Path Variable:toastParams) { Remove-Variable -Name toastParams }
+	Remove-Variable -Name text1, text2, duration, silent, toastSoundElement, toastProgressContent, toastXML, toastNotification, toastParams -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -633,10 +599,10 @@ function Show-ProgressToast {
 				$toast.Tag = $tag
 				$toast.Group = $group
 				$toastData = New-Object 'system.collections.generic.dictionary[String,string]'
-				$toastData.Add('progressTitle', $workDetail)
-				$toastData.Add('progressValue', '')
-				$toastData.Add('progressValueString', '')
-				$toastData.Add('progressStatus', '')
+				$null = $toastData.Add('progressTitle', $workDetail)
+				$null = $toastData.Add('progressValue', '')
+				$null = $toastData.Add('progressValueString', '')
+				$null = $toastData.Add('progressStatus', '')
 				$toast.Data = [Windows.UI.Notifications.NotificationData]::new($toastData)
 				$toast.Data.SequenceNumber = 1
 				$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Show($toast)
@@ -657,19 +623,7 @@ function Show-ProgressToast {
 		}
 	}
 
-	if (Test-Path Variable:text1) { Remove-Variable -Name text1 }
-	if (Test-Path Variable:text2) { Remove-Variable -Name text2 }
-	if (Test-Path Variable:workDetail) { Remove-Variable -Name workDetail }
-	if (Test-Path Variable:tag) { Remove-Variable -Name tag }
-	if (Test-Path Variable:group) { Remove-Variable -Name group }
-	if (Test-Path Variable:duration) { Remove-Variable -Name duration }
-	if (Test-Path Variable:silent) { Remove-Variable -Name silent }
-	if (Test-Path Variable:toastSoundElement) { Remove-Variable -Name toastSoundElement }
-	if (Test-Path Variable:toastContent) { Remove-Variable -Name toastContent }
-	if (Test-Path Variable:toastXML) { Remove-Variable -Name toastXML }
-	if (Test-Path Variable:toast) { Remove-Variable -Name toast }
-	if (Test-Path Variable:toastData) { Remove-Variable -Name toastData }
-	if (Test-Path Variable:toastParams) { Remove-Variable -Name toastParams }
+	Remove-Variable -Name text1, text2, workDetail, tag, group, duration, silent, toastSoundElement, toastContent, toastXML, toast, toastData, toastParams -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -693,10 +647,10 @@ function Update-ProgressToast {
 		switch ($true) {
 			$IsWindows {
 				$toastData = New-Object 'system.collections.generic.dictionary[String,string]'
-				$toastData.Add('progressTitle', $script:appName)
-				$toastData.Add('progressValue', $rate)
-				$toastData.Add('progressValueString', $rightText)
-				$toastData.Add('progressStatus', $leftText)
+				$null = $toastData.Add('progressTitle', $script:appName)
+				$null = $toastData.Add('progressValue', $rate)
+				$null = $toastData.Add('progressValueString', $rightText)
+				$null = $toastData.Add('progressStatus', $leftText)
 				$toastProgressData = [Windows.UI.Notifications.NotificationData]::new($toastData)
 				$toastProgressData.SequenceNumber = 2
 				$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Update($toastProgressData, $tag , $group)
@@ -708,14 +662,7 @@ function Update-ProgressToast {
 		}
 	}
 
-	if (Test-Path Variable:title) { Remove-Variable -Name title }
-	if (Test-Path Variable:rate) { Remove-Variable -Name rate }
-	if (Test-Path Variable:leftText) { Remove-Variable -Name leftText }
-	if (Test-Path Variable:rightText) { Remove-Variable -Name rightText }
-	if (Test-Path Variable:tag) { Remove-Variable -Name tag }
-	if (Test-Path Variable:group) { Remove-Variable -Name group }
-	if (Test-Path Variable:toastData) { Remove-Variable -Name toastData }
-	if (Test-Path Variable:toastProgressData) { Remove-Variable -Name toastProgressData }
+	Remove-Variable -Name title, rate, leftText, rightText, tag, group, toastData, toastProgressData -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -769,14 +716,14 @@ function Show-ProgressToast2Row {
 				$toast.Tag = $tag
 				$toast.Group = $group
 				$toastData = New-Object 'system.collections.generic.dictionary[String,string]'
-				$toastData.Add('progressTitle1', $detail1)
-				$toastData.Add('progressValue1', '')
-				$toastData.Add('progressValueString1', '')
-				$toastData.Add('progressStatus1', '')
-				$toastData.Add('progressTitle2', $detail2)
-				$toastData.Add('progressValue2', '')
-				$toastData.Add('progressValueString2', '')
-				$toastData.Add('progressStatus2', '')
+				$null = $toastData.Add('progressTitle1', $detail1)
+				$null = $toastData.Add('progressValue1', '')
+				$null = $toastData.Add('progressValueString1', '')
+				$null = $toastData.Add('progressStatus1', '')
+				$null = $toastData.Add('progressTitle2', $detail2)
+				$null = $toastData.Add('progressValue2', '')
+				$null = $toastData.Add('progressValueString2', '')
+				$null = $toastData.Add('progressStatus2', '')
 				$toast.Data = [Windows.UI.Notifications.NotificationData]::new($toastData)
 				$toast.Data.SequenceNumber = 1
 				$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Show($toast)
@@ -798,21 +745,7 @@ function Show-ProgressToast2Row {
 
 	}
 
-	if (Test-Path Variable:text1) { Remove-Variable -Name text1 }
-	if (Test-Path Variable:text2) { Remove-Variable -Name text2 }
-	if (Test-Path Variable:detail1) { Remove-Variable -Name detail1 }
-	if (Test-Path Variable:detail2) { Remove-Variable -Name detail2 }
-	if (Test-Path Variable:tag) { Remove-Variable -Name tag }
-	if (Test-Path Variable:duration) { Remove-Variable -Name duration }
-	if (Test-Path Variable:silent) { Remove-Variable -Name silent }
-	if (Test-Path Variable:group) { Remove-Variable -Name group }
-	if (Test-Path Variable:toastSoundElement) { Remove-Variable -Name toastSoundElement }
-	if (Test-Path Variable:toastAttribution) { Remove-Variable -Name toastAttribution }
-	if (Test-Path Variable:toastContent) { Remove-Variable -Name toastContent }
-	if (Test-Path Variable:toastXML) { Remove-Variable -Name toastXML }
-	if (Test-Path Variable:toast) { Remove-Variable -Name toast }
-	if (Test-Path Variable:toastData) { Remove-Variable -Name toastData }
-	if (Test-Path Variable:toastParams) { Remove-Variable -Name toastParams }
+	Remove-Variable -Name text1, text2, detail1, detail2, tag, duration, silent, group, toastSoundElement, toastAttribution, toastContent, toastXML, toast, toastData, toastParams -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -852,14 +785,14 @@ function Update-ProgressToast2Row {
 			switch ($true) {
 				$IsWindows {
 					$toastData = New-Object 'system.collections.generic.dictionary[String,string]'
-					$toastData.Add('progressTitle1', $title1)
-					$toastData.Add('progressValue1', $rate1)
-					$toastData.Add('progressValueString1', $rightText1)
-					$toastData.Add('progressStatus1', $leftText1)
-					$toastData.Add('progressTitle2', $title2)
-					$toastData.Add('progressValue2', $rate2)
-					$toastData.Add('progressValueString2', $rightText2)
-					$toastData.Add('progressStatus2', $leftText2)
+					$null = $toastData.Add('progressTitle1', $title1)
+					$null = $toastData.Add('progressValue1', $rate1)
+					$null = $toastData.Add('progressValueString1', $rightText1)
+					$null = $toastData.Add('progressStatus1', $leftText1)
+					$null = $toastData.Add('progressTitle2', $title2)
+					$null = $toastData.Add('progressValue2', $rate2)
+					$null = $toastData.Add('progressValueString2', $rightText2)
+					$null = $toastData.Add('progressStatus2', $leftText2)
 					$toastProgressData = [Windows.UI.Notifications.NotificationData]::new($toastData)
 					$toastProgressData.SequenceNumber = 2
 					$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Update($toastProgressData, $tag , $group)
@@ -873,18 +806,7 @@ function Update-ProgressToast2Row {
 
 	}
 
-	if (Test-Path Variable:title1) { Remove-Variable -Name title1 }
-	if (Test-Path Variable:rate1) { Remove-Variable -Name rate1 }
-	if (Test-Path Variable:leftText1) { Remove-Variable -Name leftText1 }
-	if (Test-Path Variable:rightText1) { Remove-Variable -Name rightText1 }
-	if (Test-Path Variable:title2) { Remove-Variable -Name title2 }
-	if (Test-Path Variable:rate2) { Remove-Variable -Name rate2 }
-	if (Test-Path Variable:leftText2) { Remove-Variable -Name leftText2 }
-	if (Test-Path Variable:rightText2) { Remove-Variable -Name rightText2 }
-	if (Test-Path Variable:tag) { Remove-Variable -Name tag }
-	if (Test-Path Variable:group) { Remove-Variable -Name group }
-	if (Test-Path Variable:toastData) { Remove-Variable -Name toastData }
-	if (Test-Path Variable:toastProgressData) { Remove-Variable -Name toastProgressData }
+	Remove-Variable -Name title1, rate1, leftText1, rightText1, title2, rate2, leftText2, rightText2, tag, group, toastData, toastProgressData -ErrorAction SilentlyContinue
 
 }
 #endregion トースト通知
@@ -903,6 +825,5 @@ function ConvertFrom-Base64 {
 
 	return $img
 
-	if (Test-Path Variable:base64) { Remove-Variable -Name base64 }
-	if (Test-Path Variable:img) { Remove-Variable -Name img }
+	Remove-Variable -Name base64, img -ErrorAction SilentlyContinue
 }

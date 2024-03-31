@@ -23,6 +23,8 @@ function Expand-Zip {
 	} else {
 		Write-Error ('{0}が見つかりません' -f $path)
 	}
+
+	Remove-Variable -Name path, destination -ErrorAction SilentlyContinue
 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -336,3 +338,6 @@ switch ($true) {
 		continue
 	}
 }
+
+Remove-Variable -Name ffmpegPath, os, arch, ffmpegFileVersion, currentVersion, releases, latestRelease, latestVersion, cpu, donwloadURL, ffmpegFileVersion, ffmpegReleases, ffprobeReleases, ffmpegReleaseInfo, ffprobeReleaseInfo -ErrorAction SilentlyContinue
+

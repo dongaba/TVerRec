@@ -120,7 +120,7 @@ if ($script:forceSingleDownload) {
 		$ignoreTitle = $_.Normalize([Text.NormalizationForm]::FormC)
 		$filteredDirs = $workDirEntities.Where({ $_.Name.Normalize([Text.NormalizationForm]::FormC) -like "*${ignoreTitle}*" })
 		$filteredDirs | ForEach-Object {
-			$ignoreDirs.Add($_)
+			$null= $ignoreDirs.Add($_)
 			Update-IgnoreList $ignoreTitle
 		}
 	}
@@ -239,26 +239,7 @@ $toastUpdateParams.LeftText = ''
 $toastUpdateParams.RightText = '完了'
 Update-ProgressToast @toastUpdateParams
 
-if (Test-Path Variable:toastShowParams) { Remove-Variable -Name toastShowParams }
-if (Test-Path Variable:toastUpdateParams) { Remove-Variable -Name toastUpdateParams }
-if (Test-Path Variable:saveDir) { Remove-Variable -Name saveDir }
-if (Test-Path Variable:workDirEntities) { Remove-Variable -Name workDirEntities }
-if (Test-Path Variable:ignoreTitles) { Remove-Variable -Name ignoreTitles }
-if (Test-Path Variable:ignoreDirs) { Remove-Variable -Name ignoreDirs }
-if (Test-Path Variable:ignoreTitle) { Remove-Variable -Name ignoreTitle }
-if (Test-Path Variable:filteredDirs) { Remove-Variable -Name filteredDirs }
-if (Test-Path Variable:filteredDir) { Remove-Variable -Name filteredDir }
-if (Test-Path Variable:ignoreNum) { Remove-Variable -Name ignoreNum }
-if (Test-Path Variable:ignoreTotal) { Remove-Variable -Name ignoreTotal }
-if (Test-Path Variable:totalStartTime) { Remove-Variable -Name totalStartTime }
-if (Test-Path Variable:secElapsed) { Remove-Variable -Name secElapsed }
-if (Test-Path Variable:secRemaining) { Remove-Variable -Name secRemaining }
-if (Test-Path Variable:minRemaining) { Remove-Variable -Name minRemaining }
-if (Test-Path Variable:progressRate) { Remove-Variable -Name progressRate }
-if (Test-Path Variable:emptyDirs) { Remove-Variable -Name emptyDirs }
-if (Test-Path Variable:subDir) { Remove-Variable -Name subDir }
-if (Test-Path Variable:emptyDirTotal) { Remove-Variable -Name emptyDirTotal }
-if (Test-Path Variable:emptyDirNum) { Remove-Variable -Name emptyDirNum }
+Remove-Variable -Name toastShowParams, toastUpdateParams, saveDir, workDirEntities, ignoreTitles, ignoreDirs, ignoreTitle, filteredDirs, filteredDir, ignoreNum, ignoreTotal, totalStartTime, secElapsed, secRemaining, minRemaining, progressRate, emptyDirs, subDir, emptyDirTotal, emptyDirNum -ErrorAction SilentlyContinue
 
 Invoke-GarbageCollection
 

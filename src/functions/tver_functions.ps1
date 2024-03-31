@@ -36,10 +36,7 @@ function Get-Token () {
 		$script:platformToken = $tokenResponse.Result.platform_token
 	} catch { Write-Warning ('❗ トークン取得エラー、終了します') ; exit 1 }
 
-	if (Test-Path Variable:tverTokenURL) { Remove-Variable -Name tverTokenURL }
-	if (Test-Path Variable:requestHeader) { Remove-Variable -Name requestHeader }
-	if (Test-Path Variable:requestBody) { Remove-Variable -Name requestBody }
-	if (Test-Path Variable:tokenResponse) { Remove-Variable -Name tokenResponse }
+	Remove-Variable -Name tverTokenURL, requestHeader, requestBody, tokenResponse -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -68,11 +65,7 @@ function Get-VideoLinksFromKeyword {
 
 	return $episodeLinks | Sort-Object -Unique
 
-	if (Test-Path Variable:keyword) { Remove-Variable -Name keyword }
-	if (Test-Path Variable:episodeLinks) { Remove-Variable -Name episodeLinks }
-	if (Test-Path Variable:key) { Remove-Variable -Name key }
-	if (Test-Path Variable:tverID) { Remove-Variable -Name tverID }
-	if (Test-Path Variable:episodeLinks) { Remove-Variable -Name episodeLinks }
+	Remove-Variable -Name keyword, episodeLinks, key, tverID -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -130,14 +123,8 @@ function ProcessSearchResults {
 
 	return $epLinks | Sort-Object -Unique
 
-	if (Test-Path Variable:baseURL) { Remove-Variable -Name baseURL }
-	if (Test-Path Variable:type) { Remove-Variable -Name type }
-	if (Test-Path Variable:keyword) { Remove-Variable -Name keyword }
-	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
-	if (Test-Path Variable:callSearchURL) { Remove-Variable -Name callSearchURL }
-	if (Test-Path Variable:searchResultsRaw) { Remove-Variable -Name searchResultsRaw }
-	if (Test-Path Variable:searchResults) { Remove-Variable -Name searchResults }
-	if (Test-Path Variable:searchResult) { Remove-Variable -Name searchResult }
+	Remove-Variable -Name baseURL, type, keyword, epLinks, callSearchURL, searchResultsRaw, searchResults, searchResult -ErrorAction SilentlyContinue
+
 }
 
 #----------------------------------------------------------------------
@@ -197,16 +184,7 @@ function ProcessSearchResultsForTopPage {
 
 	return $epLinks | Sort-Object -Unique
 
-	if (Test-Path Variable:baseURL) { Remove-Variable -Name baseURL }
-	if (Test-Path Variable:type) { Remove-Variable -Name type }
-	if (Test-Path Variable:keyword) { Remove-Variable -Name keyword }
-	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
-	if (Test-Path Variable:callSearchURL) { Remove-Variable -Name callSearchURL }
-	if (Test-Path Variable:searchResultsRaw) { Remove-Variable -Name searchResultsRaw }
-	if (Test-Path Variable:searchResults) { Remove-Variable -Name searchResults }
-	if (Test-Path Variable:searchResult) { Remove-Variable -Name searchResult }
-	if (Test-Path Variable:seriesLinks) { Remove-Variable -Name seriesLinks }
-	if (Test-Path Variable:seasonLinks) { Remove-Variable -Name seasonLinks }
+	Remove-Variable -Name baseURL, type, keyword, epLinks, callSearchURL, searchResultsRaw, searchResults, searchResult, seriesLinks, seasonLinks -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -221,8 +199,7 @@ function Get-LinkFromSeriesID {
 
 	return $epLinks | Sort-Object -Unique
 
-	if (Test-Path Variable:seriesID) { Remove-Variable -Name seriesID }
-	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
+	Remove-Variable -Name seriesID, epLinks -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -237,8 +214,7 @@ function Get-LinkFromSeasonID {
 
 	return $epLinks | Sort-Object -Unique
 
-	if (Test-Path Variable:seasonID) { Remove-Variable -Name seasonID }
-	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
+	Remove-Variable -Name seasonID, epLinks -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -253,8 +229,7 @@ function Get-LinkFromSeasonIDForTopPage {
 
 	return $epLinks | Sort-Object -Unique
 
-	if (Test-Path Variable:seasonID) { Remove-Variable -Name seasonID }
-	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
+	Remove-Variable -Name seasonID, epLinks -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -269,8 +244,7 @@ function Get-LinkFromTalentID {
 
 	return $epLinks | Sort-Object -Unique
 
-	if (Test-Path Variable:talentID) { Remove-Variable -Name talentID }
-	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
+	Remove-Variable -Name talentID, epLinks -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -285,8 +259,7 @@ function Get-LinkFromTalentIDForTopPage {
 
 	return $epLinks | Sort-Object -Unique
 
-	if (Test-Path Variable:talentID) { Remove-Variable -Name talentID }
-	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
+	Remove-Variable -Name talentID, epLinks -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -301,8 +274,7 @@ function Get-LinkFromSpecialMainID {
 
 	return $epLinks | Sort-Object -Unique
 
-	if (Test-Path Variable:specialMainID) { Remove-Variable -Name specialMainID }
-	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
+	Remove-Variable -Name specialMainID, epLinks -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -317,8 +289,7 @@ function Get-LinkFromSpecialMainIDForTopPage {
 
 	return $epLinks | Sort-Object -Unique
 
-	if (Test-Path Variable:specialMainID) { Remove-Variable -Name specialMainID }
-	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
+	Remove-Variable -Name specialMainID, epLinks -ErrorAction SilentlyContinue
 }
 
 
@@ -334,8 +305,7 @@ function Get-LinkFromSpecialDetailID {
 
 	return $epLinks | Sort-Object -Unique
 
-	if (Test-Path Variable:specialDetailID) { Remove-Variable -Name specialDetailID }
-	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
+	Remove-Variable -Name specialDetailID, epLinks -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -350,8 +320,7 @@ function Get-LinkFromSpecialDetailIDForTopPage {
 
 	return $epLinks | Sort-Object -Unique
 
-	if (Test-Path Variable:specialDetailID) { Remove-Variable -Name specialDetailID }
-	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
+	Remove-Variable -Name specialDetailID, epLinks -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -366,8 +335,7 @@ function Get-LinkFromTag {
 
 	return $epLinks | Sort-Object -Unique
 
-	if (Test-Path Variable:tagID) { Remove-Variable -Name tagID }
-	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
+	Remove-Variable -Name tagID, epLinks -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -382,8 +350,7 @@ function Get-LinkFromNew {
 
 	return $epLinks | Sort-Object -Unique
 
-	if (Test-Path Variable:genre) { Remove-Variable -Name genre }
-	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
+	Remove-Variable -Name genre, epLinks -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -399,8 +366,7 @@ function Get-LinkFromRanking {
 
 	return $epLinks | Sort-Object -Unique
 
-	if (Test-Path Variable:genre) { Remove-Variable -Name genre }
-	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
+	Remove-Variable -Name genre, epLinks -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -415,8 +381,7 @@ function Get-LinkFromFreeKeyword {
 
 	return $epLinks | Sort-Object -Unique
 
-	if (Test-Path Variable:keyword) { Remove-Variable -Name keyword }
-	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
+	Remove-Variable -Name keyword, epLinks -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -550,17 +515,7 @@ function Get-LinkFromTopPage {
 
 	return $epLinks | Sort-Object -Unique
 
-	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
-	if (Test-Path Variable:seriesLinks) { Remove-Variable -Name seriesLinks }
-	if (Test-Path Variable:seasonLinks) { Remove-Variable -Name seasonLinks }
-	if (Test-Path Variable:talentLinks) { Remove-Variable -Name talentLinks }
-	if (Test-Path Variable:specialMainLinks) { Remove-Variable -Name specialMainLinks }
-	if (Test-Path Variable:specialDetailLinks) { Remove-Variable -Name specialDetailLinks }
-	if (Test-Path Variable:callSearchBaseURL) { Remove-Variable -Name callSearchBaseURL }
-	if (Test-Path Variable:callSearchURL) { Remove-Variable -Name callSearchURL }
-	if (Test-Path Variable:searchResultsRaw) { Remove-Variable -Name searchResultsRaw }
-	if (Test-Path Variable:searchResults) { Remove-Variable -Name searchResults }
-	if (Test-Path Variable:searchResult) { Remove-Variable -Name searchResult }
+	Remove-Variable -Name epLinks, seriesLinks, seasonLinks, talentLinks, specialMainLinks, specialDetailLinks, callSearchBaseURL, callSearchURL, searchResultsRaw, searchResults, searchResult -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -629,15 +584,5 @@ function Get-LinkFromSiteMap {
 
 	return $epLinks | Sort-Object -Unique
 
-	if (Test-Path Variable:epLinks) { Remove-Variable -Name epLinks }
-	if (Test-Path Variable:callSearchURL) { Remove-Variable -Name callSearchURL }
-	if (Test-Path Variable:searchResultsRaw) { Remove-Variable -Name searchResultsRaw }
-	if (Test-Path Variable:searchResults) { Remove-Variable -Name searchResults }
-	if (Test-Path Variable:searchResult) { Remove-Variable -Name searchResult }
-	if (Test-Path Variable:seriesID) { Remove-Variable -Name seriesID }
-	if (Test-Path Variable:seasonID) { Remove-Variable -Name seasonID }
-	if (Test-Path Variable:resultsRaw) { Remove-Variable -Name resultsRaw }
-	if (Test-Path Variable:results) { Remove-Variable -Name results }
-	if (Test-Path Variable:result) { Remove-Variable -Name result }
-	if (Test-Path Variable:links) { Remove-Variable -Name links }
+	Remove-Variable -Name epLinks, callSearchURL, searchResultsRaw, searchResults, searchResult, seriesID, seasonID, resultsRaw, results, result, links -ErrorAction SilentlyContinue
 }

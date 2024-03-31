@@ -54,7 +54,7 @@ function Sync-WpfEvents {
 		$frame)
 	[Dispatcher]::PushFrame($frame)
 
-	if (Test-Path Variable:frame) { Remove-Variable -Name frame }
+	Remove-Variable -Name frame -ErrorAction SilentlyContinue
 }
 
 #ディレクトリ選択ダイアログ
@@ -66,8 +66,7 @@ function Select-Folder($description, $textBox) {
 		$textBox.Text = $fd.SelectedPath
 	}
 
-	if (Test-Path Variable:description) { Remove-Variable -Name description }
-	if (Test-Path Variable:textBox) { Remove-Variable -Name textBox }
+	Remove-Variable -Name description, textBox -ErrorAction SilentlyContinue
 }
 
 #system_setting.ps1から各設定項目を読み込む
@@ -80,8 +79,7 @@ function Read-SystemSetting {
 
 	return $defaultSetting.Trim("'")
 
-	if (Test-Path Variable:key) { Remove-Variable -Name key }
-	if (Test-Path Variable:defaultSetting) { Remove-Variable -Name defaultSetting }
+	Remove-Variable -Name key, defaultSetting -ErrorAction SilentlyContinue
 }
 
 #user_setting.ps1から各設定項目を読み込む
@@ -94,8 +92,7 @@ function Read-UserSetting {
 
 	return $currentSetting.Trim("'")
 
-	if (Test-Path Variable:key) { Remove-Variable -Name key }
-	if (Test-Path Variable:currentSetting) { Remove-Variable -Name currentSetting }
+	Remove-Variable -Name key, currentSetting -ErrorAction SilentlyContinue
 }
 
 #user_setting.ps1に各設定項目を書き込む
@@ -155,16 +152,7 @@ function Save-UserSetting {
 	#改行コードLFを強制 + NFCで出力
 	$newSetting.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC)  | Out-File -LiteralPath $userSettingFile -Encoding UTF8 -NoNewline
 
-	if (Test-Path Variable:newSetting) { Remove-Variable -Name newSetting }
-	if (Test-Path Variable:startSegment) { Remove-Variable -Name startSegment }
-	if (Test-Path Variable:endSegment) { Remove-Variable -Name endSegment }
-	if (Test-Path Variable:content) { Remove-Variable -Name content }
-	if (Test-Path Variable:totalLineNum) { Remove-Variable -Name totalLineNum }
-	if (Test-Path Variable:headLineNum) { Remove-Variable -Name headLineNum }
-	if (Test-Path Variable:tailLineNum) { Remove-Variable -Name tailLineNum }
-	if (Test-Path Variable:settingBoxName) { Remove-Variable -Name settingBoxName }
-	if (Test-Path Variable:settingBox) { Remove-Variable -Name settingBox }
-
+	Remove-Variable -Name newSetting, startSegment, endSegment, content, totalLineNum, headLineNum, tailLineNum, settingBoxName, settingBox -ErrorAction SilentlyContinue
 }
 
 #endregion 関数定義
@@ -304,9 +292,9 @@ try {
 } catch { Write-Error ('❗ ウィンドウを描画できませんでした。TVerRecが破損しています。') ; exit 1 }
 
 #メインウィンドウ取得
-$process = [Diagnostics.Process]::GetCurrentProcess()
+$currentProcess = [Diagnostics.Process]::GetCurrentProcess()
 $form = New-Object Windows.Forms.NativeWindow
-$form.AssignHandle($process.MainWindowHandle)
+$form.AssignHandle($currentProcess.MainWindowHandle)
 $fd = New-Object System.Windows.Forms.FolderBrowserDialog
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -329,18 +317,5 @@ while ($settingWindow.IsVisible) {
 #終了処理
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-if (Test-Path Variable:systemSettingFile) { Remove-Variable -Name systemSettingFile }
-if (Test-Path Variable:userSettingFile) { Remove-Variable -Name userSettingFile }
-if (Test-Path Variable:mainXaml) { Remove-Variable -Name mainXaml }
-if (Test-Path Variable:mainCleanXaml) { Remove-Variable -Name mainCleanXaml }
-if (Test-Path Variable:settingWindow) { Remove-Variable -Name settingWindow }
-if (Test-Path Variable:console) { Remove-Variable -Name console }
-if (Test-Path Variable:settingAttributes) { Remove-Variable -Name settingAttributes }
-if (Test-Path Variable:defaultSetting) { Remove-Variable -Name defaultSetting }
-if (Test-Path Variable:currentSetting) { Remove-Variable -Name currentSetting }
-if (Test-Path Variable:settingAttribute) { Remove-Variable -Name settingAttribute }
-if (Test-Path Variable:settingBoxName) { Remove-Variable -Name settingBoxName }
-if (Test-Path Variable:settingBox) { Remove-Variable -Name settingBox }
-if (Test-Path Variable:process) { Remove-Variable -Name process }
-if (Test-Path Variable:form) { Remove-Variable -Name form }
-if (Test-Path Variable:fd) { Remove-Variable -Name fd }
+
+Remove-Variable -Name systemSettingFile, userSettingFile, mainXaml, mainCleanXaml, settingWindow, console, settingAttributes, defaultSetting, currentSetting, settingAttribute, settingBoxName, settingBox, currentProcess, form, fd -ErrorAction SilentlyContinue

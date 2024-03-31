@@ -21,6 +21,8 @@ function Expand-Zip {
 		[System.IO.Compression.ZipFile]::ExtractToDirectory($path, $destination, $true)
 		Write-Verbose ('{0}を展開しました' -f $path)
 	} else { Write-Error ('{0}が見つかりません' -f $path) }
+
+	Remove-Variable -Name path, destination -ErrorAction SilentlyContinue
 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -93,11 +95,11 @@ if ($latestVersion -eq $currentVersion) {
 	Write-Output ('　Latest version: {0}' -f $latestVersion)
 	if (!$IsWindows) {
 		#githubの設定
-		$file = $script:preferredYoutubedl
+		$fileBeforeRrename = $script:preferredYoutubedl
 		$fileAfterRename = 'youtube-dl'
 	} else {
 		#githubの設定
-		$file = ('{0}.exe' -f $script:preferredYoutubedl)
+		$fileBeforeRrename = ('{0}.exe' -f $script:preferredYoutubedl)
 		$fileAfterRename = 'youtube-dl.exe'
 	}
 
@@ -105,7 +107,7 @@ if ($latestVersion -eq $currentVersion) {
 	try {
 		#ダウンロード
 		$tag = (Invoke-RestMethod -Uri $releases -Method 'GET')[0].Tag_Name
-		$downloadURL = ('https://github.com/{0}/releases/download/{1}/{2}' -f $repo, $tag, $file)
+		$downloadURL = ('https://github.com/{0}/releases/download/{1}/{2}' -f $repo, $tag, $fileBeforeRrename)
 		$ytdlFileLocation = Join-Path $script:binDir $fileAfterRename
 		Invoke-WebRequest -UseBasicParsing -Uri $downloadURL -Out $ytdlFileLocation
 	} catch { Write-Error ('❗ youtube-dlのダウンロードに失敗しました') ; exit 1 }
@@ -121,3 +123,4 @@ if ($latestVersion -eq $currentVersion) {
 
 }
 
+Remove-Variable -Name lookupTable, releases, ytdlPath, currentVersion, latestVersion, file, fileAfterRename, tag, downloadURL, ytdlFileLocation -ErrorAction SilentlyContinue

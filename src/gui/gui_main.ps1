@@ -27,7 +27,6 @@ try {
 } catch { Write-Error ('❗ 関数の読み込みに失敗しました') ; exit 1 }
 
 #パラメータ設定
-$msgTypes = @('Output', 'Error', 'Warning', 'Verbose', 'Debug', 'Information')
 $jobTerminationStates = @('Completed', 'Failed', 'Stopped')
 $msgTypesColorMap = @{
 	Output      = 'DarkSlateGray'
@@ -37,6 +36,14 @@ $msgTypesColorMap = @{
 	Debug       = 'CornflowerBlue'
 	Information = 'DarkGray'
 }
+
+#ログ出力用変数
+$script:jobMsgs = @()
+$script:msgError = New-Object System.Collections.ArrayList
+$script:msgWarning = New-Object System.Collections.ArrayList
+$script:msgVerbose = New-Object System.Collections.ArrayList
+$script:msgDebug = New-Object System.Collections.ArrayList
+$script:msgInformation = New-Object System.Collections.ArrayList
 
 #endregion 環境設定
 
@@ -55,7 +62,8 @@ function Sync-WpfEvents {
 		},
 		$frame)
 	[Dispatcher]::PushFrame($frame)
-	if (Test-Path Variable:frame) { Remove-Variable -Name frame }
+
+	Remove-Variable -Name frame -ErrorAction SilentlyContinue
 }
 
 #テキストボックスへのログ出力と再描画
@@ -69,9 +77,7 @@ function Out-ExecutionLog {
 	$rtfRange.ApplyPropertyValue([System.Windows.Documents.TextElement]::ForegroundProperty, $msgTypesColorMap[$type] )
 	$outText.ScrollToEnd()
 
-	if (Test-Path Variable:message) { Remove-Variable -Name message }
-	if (Test-Path Variable:type) { Remove-Variable -Name type }
-	if (Test-Path Variable:rtfRange) { Remove-Variable -Name rtfRange }
+	Remove-Variable -Name message, type, rtfRange -ErrorAction SilentlyContinue
 }
 
 #endregion 関数定義
@@ -191,6 +197,12 @@ $btnKeywordOpen.Add_Click({ Invoke-Item $script:keywordFilePath })
 $btnIgnoreOpen.Add_Click({ Invoke-Item $script:ignoreFilePath })
 $btnListOpen.Add_Click({ Invoke-Item $script:listFilePath })
 $btnClearLog.Add_Click({
+		$script:jobMsgs = @()
+		$script:msgError = New-Object System.Collections.ArrayList
+		$script:msgWarning = New-Object System.Collections.ArrayList
+		$script:msgVerbose = New-Object System.Collections.ArrayList
+		$script:msgDebug = New-Object System.Collections.ArrayList
+		$script:msgInformation = New-Object System.Collections.ArrayList
 		$outText.Document.Blocks.Clear()
 		Invoke-GarbageCollection
 	})
@@ -236,27 +248,31 @@ while ($mainWindow.IsVisible) {
 		#ジョブがある場合の処理
 		foreach ($job in $jobs) {
 			#各メッセージタイプごとに内容を取得(ただしReceive-Jobは次Stepで実行するので取りこぼす可能性あり)
-			foreach ($msgType in $msgTypes) {
-				$variableValue = if ($job.$msgType) { $job.$msgType } else { $null }
-				Set-Variable -Name ('msg' + $msgType) -Value $variableValue
+			if ($job.Error) { $null = $script:msgError.Add([String]$job.Error) }
+			if ($job.Warning) { $null = $script:msgWarning.Add([String]$job.Warning) }
+			if ($job.Verbose) { $null= $script:msgVerbose.Add([String]$job.Verbose) }
+			if ($job.Debug) { $null = $script:msgDebug.Add([String]$job.Debug) }
+			if ($job.Information) { $null = $script:msgInformation.Add([String]$job.Information) }
+
+			#RichTextBoxのメモリ使用量を削減するため、最大行数を設定して最新のみを表示対象とする
+			#毎回RichTextBoxの内容をクリアして、最大行数分を再描画しているため、パフォーマンスは悪いかも
+			$outText.Document.Blocks.Clear()
+			$script:jobMsgs += @(Receive-Job $job *>&1)
+			if ($null -ne $script:jobMsgs) {
+				if ($script:jobMsgs.Count -gt $script:guiMaxExecLogLines) { $script:jobMsgs = $script:jobMsgs[$script:extractionStartPos..-1] }
 			}
 
 			#Jobからメッセージを取得し事前に取得したメッセージタイプと照合し色付け
-			$jobMsgs = (Receive-Job $job *>&1)
-			foreach ($jobMsg in $jobMsgs) {
-				switch ($true) {
-					($msgError -contains $jobMsg) { if ($msgError) { Out-ExecutionLog -Message ($jobMsg -join "`n") -Type 'Error' }; continue }
-					($msgWarning -contains $jobMsg) { if ($msgWarning) { Out-ExecutionLog -Message ($jobMsg -join "`n") -Type 'Warning' }; continue }
-					($msgVerbose -contains $jobMsg) { if ($msgVerbose) { Out-ExecutionLog -Message ($jobMsg -join "`n") -Type 'Verbose' }; continue }
-					($msgDebug -contains $jobMsg) { if ($msgDebug) { Out-ExecutionLog -Message ($jobMsg -join "`n") -Type 'Debug' }; continue }
-					($msgInformation -contains $jobMsg) { if ($msgInformation) { Out-ExecutionLog -Message ($jobMsg -join "`n") -Type 'Information' }; continue }
-					default { Out-ExecutionLog -Message ($jobMsg -join "`n") -Type 'Output' }
+			foreach ($jobMsg in $script:jobMsgs) {
+				$logType = switch ($jobMsg) {
+					{ $script:msgError -contains $_ } { 'Error' }
+					{ $script:msgWarning -contains $_ } { 'Warning' }
+					{ $script:msgVerbose -contains $_ } { 'Verbose' }
+					{ $script:msgDebug -contains $_ } { 'Debug' }
+					{ $script:msgInformation -contains $_ } { 'Information' }
+					Default { 'Output' }
 				}
-			}
-
-			#各メッセージタイプごとの内容を保存する変数を開放
-			foreach ($msgType in $msgTypes) {
-				Remove-Variable -Name ('msg' + $msgType)
+				Out-ExecutionLog -Message ($jobMsg -join "`n") -Type $logType
 			}
 
 			#終了したジョブのボタンの再有効化
@@ -285,26 +301,7 @@ while ($mainWindow.IsVisible) {
 #Windowが閉じられたら乗っているゴミジョブを削除して終了
 Get-Job | Receive-Job -Wait -AutoRemoveJob -Force
 
-if (Test-Path Variable:msgTypes) { Remove-Variable -Name msgTypes }
-if (Test-Path Variable:jobTerminationStates) { Remove-Variable -Name jobTerminationStates }
-if (Test-Path Variable:msgTypesColorMap) { Remove-Variable -Name msgTypesColorMap }
-if (Test-Path Variable:mainXaml) { Remove-Variable -Name mainXaml }
-if (Test-Path Variable:mainCleanXaml) { Remove-Variable -Name mainCleanXaml }
-if (Test-Path Variable:mainWindow) { Remove-Variable -Name mainWindow }
-if (Test-Path Variable:console) { Remove-Variable -Name console }
-if (Test-Path Variable:LogoImage) { Remove-Variable -Name LogoImage }
-if (Test-Path Variable:lblVersion) { Remove-Variable -Name lblVersion }
-if (Test-Path Variable:outText) { Remove-Variable -Name outText }
-if (Test-Path Variable:btns) { Remove-Variable -Name btns }
-if (Test-Path Variable:scriptBlocks) { Remove-Variable -Name scriptBlocks }
-if (Test-Path Variable:threadNames) { Remove-Variable -Name threadNames }
-if (Test-Path Variable:btn) { Remove-Variable -Name btn }
-if (Test-Path Variable:jobs) { Remove-Variable -Name jobs }
-if (Test-Path Variable:msgType) { Remove-Variable -Name msgType }
-if (Test-Path Variable:jobMsg) { Remove-Variable -Name jobMsg }
-if (Test-Path Variable:variableValue) { Remove-Variable -Name variableValue }
-if (Test-Path Variable:jobMsgs) { Remove-Variable -Name jobMsgs }
-if (Test-Path Variable:job) { Remove-Variable -Name job }
+Remove-Variable -Name jobTerminationStates, msgTypesColorMap, mainXaml, mainCleanXaml, mainWindow, console, LogoImage, lblVersion, outText, btns, scriptBlocks, threadNames, btn, extractionStartPos, jobs, jobMsg, msgError, msgWarning, msgVerbose, msgDebug, msgInformation, logType, jobMsgs, job -ErrorAction SilentlyContinue
 
 #endregion 終了処理
 

@@ -23,6 +23,8 @@ function Expand-Zip {
 	} else {
 		Write-Error ('{0}が見つかりません' -f $path)
 	}
+
+	Remove-Variable -Name path, destination -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -47,6 +49,8 @@ function Move-Files() {
 		Write-Output ('{0} → {1}' -f $source, $destination)
 		Move-Item -LiteralPath $source -Destination $destination -Force
 	}
+
+	Remove-Variable -Name source, destination, items, item -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -57,6 +61,8 @@ Function Remove-IfExist {
 		[Parameter(Mandatory = $true)][string]$path
 	)
 	if (Test-Path $path) { Remove-Item -LiteralPath $path -Force -Recurse }
+
+	Remove-Variable -Name path -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -68,6 +74,8 @@ Function Rename-IfExist {
 		[Parameter(Mandatory = $true)][string]$newname
 	)
 	if (Test-Path $path -PathType Leaf) { Rename-Item -LiteralPath $path -NewName $newname -Force }
+
+	Remove-Variable -Name path, newname -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -80,6 +88,7 @@ Function Move-IfExist {
 	)
 	if (Test-Path $path -PathType Leaf) { Move-Item -LiteralPath $path -Destination $destination -Force }
 
+	Remove-Variable -Name path, destination -ErrorAction SilentlyContinue
 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -258,5 +267,7 @@ Write-Output ('')
 Write-Output ('💡 TVerRecを再起動してください。')
 Write-Output ('')
 Write-Output ('===========================================================================')
+
+Remove-Variable -Name repo, releases, updateTemp, zipURL, newTVerRecDir, currentListFile, propertyNames, currentProperties, propertyName -ErrorAction SilentlyContinue
 
 exit 0

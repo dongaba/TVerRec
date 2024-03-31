@@ -43,8 +43,7 @@ while ($true) {
 		Invoke-GarbageCollection
 	} while ($remainingWaitTime -ge 100)
 
-	if (Test-Path Variable:remainingWaitTime) { Remove-Variable -Name remainingWaitTime }
-	if (Test-Path Variable:progressRatio) { Remove-Variable -Name progressRatio }
+	Remove-Variable -Name remainingWaitTime, progressRatio -ErrorAction SilentlyContinue
 
 }
 #----------------------------------------------------------------------

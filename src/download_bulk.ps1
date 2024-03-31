@@ -135,21 +135,7 @@ Write-Output ('')
 Write-Output ('ダウンロードの終了を待機しています')
 Wait-DownloadCompletion
 
-if (Test-Path Variable:keywords) { Remove-Variable -Name keywords }
-if (Test-Path Variable:keywordNum) { Remove-Variable -Name keywordNum }
-if (Test-Path Variable:keywordTotal) { Remove-Variable -Name keywordTotal }
-if (Test-Path Variable:toastShowParams) { Remove-Variable -Name toastShowParams }
-if (Test-Path Variable:totalStartTime) { Remove-Variable -Name totalStartTime }
-if (Test-Path Variable:keyword) { Remove-Variable -Name keyword }
-if (Test-Path Variable:resultLinks) { Remove-Variable -Name resultLinks }
-if (Test-Path Variable:processedCount) { Remove-Variable -Name processedCount }
-if (Test-Path Variable:videoLinks) { Remove-Variable -Name videoLinks }
-if (Test-Path Variable:videoTotal) { Remove-Variable -Name videoTotal }
-if (Test-Path Variable:secElapsed) { Remove-Variable -Name secElapsed }
-if (Test-Path Variable:secRemaining1) { Remove-Variable -Name secRemaining1 }
-if (Test-Path Variable:videoLink) { Remove-Variable -Name videoLink }
-if (Test-Path Variable:toastUpdateParams) { Remove-Variable -Name toastUpdateParams }
-if (Test-Path Variable:videoNum) { Remove-Variable -Name videoNum }
+Remove-Variable -Name keywords, keywordNum, keywordTotal, toastShowParams, totalStartTime, keyword, resultLinks, processedCount, videoLinks, videoTotal, secElapsed, secRemaining1, videoLink, toastUpdateParams, videoNum -ErrorAction SilentlyContinue
 
 Invoke-GarbageCollection
 

@@ -52,8 +52,7 @@ try {
 		Write-Warning ('💡 開発ファイル用共通関数ファイルを読み込みました')
 	}
 
-	if (Test-Path Variable:devFunctionFile) { Remove-Variable -Name devFunctionFile }
-	if (Test-Path Variable:devConfFile) { Remove-Variable -Name devConfFile }
+	Remove-Variable -Name devFunctionFile, devConfFile -ErrorAction SilentlyContinue
 
 } catch { Write-Error ('❗ 開発用設定ファイルの読み込みに失敗しました') ; exit 1 }
 
@@ -113,6 +112,9 @@ else { $script:ffprobePath = Join-Path $script:binDir 'ffprobe' }
 
 #GUI起動を判定
 if ( $myInvocation.ScriptName.Contains('gui')) {
+	#GUI版の最大ログ行数の設定
+	$script:extractionStartPos = $script:guiMaxExecLogLines * -1
+
 	#TVerRecの最新化チェック
 	Invoke-TVerRecUpdateCheck
 	if (!$?) { exit 1 }
