@@ -1414,7 +1414,7 @@ function Show-Logo {
 	Param ()
 
 	Write-Host ('  ')
-	Out-Logo('WWWWWWWWWWWWWWWWWW  '); Write-Host (" {0,$(70 - $script:appVersion.Length)}Version. {1}  " -f ' ', $script:appVersion) -NoNewline -BackgroundColor Black
+	Out-Logo('WWWWWWWWWWWWWWWWWW  '); Write-Host (" {0,$(70 - $script:appVersion.Length)}Version. {1}  " -f ' ', $script:appVersion) -BackgroundColor Black
 	Out-Logo('WW    RRRRRRRWWWWW  WWWWWWWWWWWW WW        WW                       WWWWWWWWWWW                       '); Write-Host ''
 	Out-Logo('WW  RRRRRRRRRRRWWW       WW      WW        WW                       WW        WW                      '); Write-Host ''
 	Out-Logo('WW RRRRRRRRRRRRRWW       WW       WW      WW   WWWWWWWW  WW  WWWWW  WW        WW  WWWWWWWW   WWWWWWWW '); Write-Host ''
@@ -1426,7 +1426,6 @@ function Show-Logo {
 	Write-Host ('  ')
 
 }
-
 
 #----------------------------------------------------------------------
 #GUID取得
