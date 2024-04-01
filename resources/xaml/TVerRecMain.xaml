@@ -596,7 +596,7 @@
                 Margin="10,0,10,10"
                 IsReadOnly="True"
                 VerticalScrollBarVisibility="Auto"
-                FontFamily="HackGen Console NFJ, MS Gothic"
+                FontFamily="HackGen Console NF, MS Gothic"
                 Foreground="#FF393939"
                 BorderThickness="0,1,0,1"/>
         </Border>

@@ -201,7 +201,7 @@ function Read-HistoryFile {
 
 	if (Test-Path $script:histFilePath -PathType Leaf) {
 		try {
-			while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+			while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Information ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 			$histFileData = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 		} catch { Write-Error ('❌️ ダウンロード履歴の読み込みに失敗しました') ; exit 1 }
 		finally { $null = Unlock-File $script:histLockFilePath }
@@ -223,7 +223,7 @@ function Read-DownloadList {
 
 	if (Test-Path $script:listFilePath -PathType Leaf) {
 		try {
-			while ((Lock-File $script:listLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+			while ((Lock-File $script:listLockFilePath).fileLocked -ne $true) { Write-Information ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 			$listFileData = @(Import-Csv -LiteralPath $script:listFilePath -Encoding UTF8)
 		} catch { Write-Error ('❌️ ダウンロードリストの読み込みに失敗しました') ; exit 1 }
 		finally { $null = Unlock-File $script:listLockFilePath }
@@ -245,7 +245,7 @@ function Get-LinkFromDownloadList {
 
 	if (Test-Path $script:listFilePath -PathType Leaf) {
 		try {
-			while ((Lock-File $script:listLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+			while ((Lock-File $script:listLockFilePath).fileLocked -ne $true) { Write-Information ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 			#空行とダウンロード対象外を除き、EpisodeIDのみを抽出
 			$videoLinks = @((Import-Csv -LiteralPath $script:listFilePath -Encoding UTF8).Where({ !($_ -cmatch '^\s*$') }).Where({ !($_.EpisodeID -cmatch '^#') }) | Select-Object episodeID)
 		} catch { Write-Error ('❌️ ダウンロードリストの読み込みに失敗しました') ; exit 1 }
@@ -270,7 +270,7 @@ function Read-IgnoreList {
 
 	if (Test-Path $script:ignoreFilePath -PathType Leaf) {
 		try {
-			while ((Lock-File $script:ignoreLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+			while ((Lock-File $script:ignoreLockFilePath).fileLocked -ne $true) { Write-Information ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 			#コメントと空行を除いて抽出
 			$ignoreTitles = @((Get-Content $script:ignoreFilePath -Encoding UTF8).Where({ !($_ -cmatch '^\s*$') }).Where({ !($_ -cmatch '^;.*$') }))
 		} catch { Write-Error ('❌️ ダウンロード対象外の読み込みに失敗しました') ; exit 1 }
@@ -298,7 +298,7 @@ function Update-IgnoreList {
 	$ignoreTarget = @()
 	$ignoreElse = @()
 	try {
-		while ((Lock-File $script:ignoreLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+		while ((Lock-File $script:ignoreLockFilePath).fileLocked -ne $true) { Write-Information ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$ignoreLists = @((Get-Content $script:ignoreFilePath -Encoding UTF8).Where( { $_ -notmatch '^\s*$|^(;;.*)$' }))
 		$ignoreComment = @(Get-Content $script:ignoreFileSamplePath -Encoding UTF8)
 		$ignoreTarget = @($ignoreLists.Where({ $_ -eq $ignoreTitle }) | Sort-Object -Unique)
@@ -602,7 +602,7 @@ function Invoke-VideoDownload {
 
 	#ダウンロード履歴CSV書き出し
 	try {
-		while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+		while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Information ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$newVideo | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append
 		Write-Debug ('ダウンロード履歴を書き込みました')
 	} catch { Write-Warning ('⚠️ ダウンロード履歴を更新できませんでした。処理をスキップします') ; continue }
@@ -679,7 +679,7 @@ function Update-VideoList {
 
 	#ダウンロードリストCSV書き出し
 	try {
-		while ((Lock-File $script:listLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+		while ((Lock-File $script:listLockFilePath).fileLocked -ne $true) { Write-Information ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$newVideo | Export-Csv -LiteralPath $script:listFilePath -Encoding UTF8 -Append
 		Write-Debug ('ダウンロードリストを書き込みました')
 	} catch { Write-Warning ('⚠️ ダウンロードリストを更新できませんでした。スキップします') ; continue }
@@ -1076,7 +1076,7 @@ function Optimize-HistoryFile {
 	$mergedHistData = @()
 
 	try {
-		while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+		while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Information ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 
 		#videoValidatedが空白でないもの
 		$histData = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $null -ne $_.videoValidated }))
@@ -1107,7 +1107,7 @@ function Limit-HistoryFile {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	try {
-		while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+		while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Information ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$purgedHist = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ [DateTime]::ParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null) -gt (Get-Date).AddDays(-1 * [Int32]$retentionPeriod) }))
 		$purgedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
 	} catch { Write-Warning ('⚠️ ダウンロード履歴のクリーンアップに失敗しました') }
@@ -1129,7 +1129,7 @@ function Repair-HistoryFile {
 	$uniquedHist = @()
 
 	try {
-		while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+		while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Information ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 
 		#videoPageで1つしかないもの残し、ダウンロード日時でソート
 		$uniquedHist = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8 | Group-Object -Property 'videoPage' | Where-Object count -EQ 1 | Select-Object -ExpandProperty group | Sort-Object -Property downloadDate)
@@ -1161,7 +1161,7 @@ function Invoke-ValidityCheck {
 
 	#これからチェックする番組のステータスをチェック
 	try {
-		while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+		while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Information ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$videoHists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 		$checkStatus = ($videoHists.Where({ $_.videoPath -eq $path })).videoValidated
 		switch ($checkStatus) {
@@ -1253,7 +1253,7 @@ function Invoke-ValidityCheck {
 
 		#破損しているダウンロードファイルをダウンロード履歴から削除
 		try {
-			while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+			while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Information ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 			$videoHists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 			#該当の番組のレコードを削除
 			$videoHists = @($videoHists.Where({ $_.videoPath -ne $path }))
@@ -1270,7 +1270,7 @@ function Invoke-ValidityCheck {
 		#終了コードが0のときはダウンロード履歴にチェック済フラグを立てる
 		Write-Output ('　✔️ 整合性チェック成功')
 		try {
-			while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+			while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Information ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 			$videoHists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 			#該当の番組のチェックステータスを1に
 			$videoHists.Where({ $_.videoPath -eq $path }).Where({ $_.videoValidated = '1' })
@@ -1393,176 +1393,36 @@ function Invoke-StatisticsCheck {
 #----------------------------------------------------------------------
 #TVerRec Logo表示
 #----------------------------------------------------------------------
+function Out-Logo {
+	[OutputType([System.Void])]
+	Param (
+		[Parameter(Mandatory = $true )][String]$lineData
+	)
+	$lineDataAray = $lineData.ToCharArray()
+
+	foreach ($str in $lineDataAray) {
+		if ($str -eq ' ') { Write-Host ' ' -NoNewline -BackgroundColor Black }
+		elseif ($str -eq 'W') { Write-Host ' ' -NoNewline -BackgroundColor White }
+		elseif ($str -eq 'R') { Write-Host ' ' -NoNewline -BackgroundColor Red }
+	}
+	Write-Host '  ' -NoNewline -BackgroundColor Black
+
+}
+
 function Show-Logo {
 	[OutputType([System.Void])]
 	Param ()
 
-	#1
-	Write-Host ('                ') -NoNewline -BackgroundColor White
-
-	Write-Host ('                                                                  ') -NoNewline -BackgroundColor Black
 	Write-Host ('  ')
-	#2
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('          ') -NoNewline -BackgroundColor Black
-	Write-Host ('    ') -NoNewline -BackgroundColor White
-
-	Write-Host ('                                                                  ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ')
-	#3
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('   ') -NoNewline -BackgroundColor Black
-	Write-Host ('      ') -NoNewline -BackgroundColor Red
-	Write-Host ('  ') -NoNewline -BackgroundColor Black
-	Write-Host ('   ') -NoNewline -BackgroundColor White
-
-	Write-Host ('  ') -NoNewline -BackgroundColor Black
-	Write-Host ('        ') -NoNewline -BackgroundColor White
-	Write-Host (' ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('    ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host (' ') -NoNewline -BackgroundColor Black
-	Write-Host ('        ') -NoNewline -BackgroundColor White
-	Write-Host (' ') -NoNewline -BackgroundColor Black
-	Write-Host ('      ') -NoNewline -BackgroundColor White
-	Write-Host ('   ') -NoNewline -BackgroundColor Black
-	Write-Host ('      ') -NoNewline -BackgroundColor White
-	Write-Host ('   ') -NoNewline -BackgroundColor Black
-	Write-Host ('        ') -NoNewline -BackgroundColor White
-	Write-Host ('   ') -NoNewline -BackgroundColor Black
-	Write-Host ('      ') -NoNewline -BackgroundColor White
-	Write-Host ('  ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ')
-	#4
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('  ') -NoNewline -BackgroundColor Black
-	Write-Host ('        ') -NoNewline -BackgroundColor Red
-	Write-Host ('  ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-
-	Write-Host ('  ') -NoNewline -BackgroundColor Black
-	Write-Host ('   ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('    ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('    ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host (' ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('       ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('    ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host (' ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('    ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host (' ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('       ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('        ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ')
-	#5
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('  ') -NoNewline -BackgroundColor Black
-	Write-Host ('        ') -NoNewline -BackgroundColor Red
-	Write-Host ('  ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-
-	Write-Host ('  ') -NoNewline -BackgroundColor Black
-	Write-Host ('   ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('     ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('  ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('  ') -NoNewline -BackgroundColor Black
-	Write-Host ('      ') -NoNewline -BackgroundColor White
-	Write-Host ('   ') -NoNewline -BackgroundColor Black
-	Write-Host ('      ') -NoNewline -BackgroundColor White
-	Write-Host ('   ') -NoNewline -BackgroundColor Black
-	Write-Host ('      ') -NoNewline -BackgroundColor White
-	Write-Host ('   ') -NoNewline -BackgroundColor Black
-	Write-Host ('      ') -NoNewline -BackgroundColor White
-	Write-Host ('   ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('        ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ')
-	#6
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('  ') -NoNewline -BackgroundColor Black
-	Write-Host ('        ') -NoNewline -BackgroundColor Red
-	Write-Host ('  ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-
-	Write-Host ('  ') -NoNewline -BackgroundColor Black
-	Write-Host ('   ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('     ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('  ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('  ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('       ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('  ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('   ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('  ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('   ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('       ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('        ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ')
-	#7
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('   ') -NoNewline -BackgroundColor Black
-	Write-Host ('      ') -NoNewline -BackgroundColor Red
-	Write-Host ('  ') -NoNewline -BackgroundColor Black
-	Write-Host ('   ') -NoNewline -BackgroundColor White
-
-	Write-Host ('     ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('       ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('    ') -NoNewline -BackgroundColor Black
-	Write-Host ('        ') -NoNewline -BackgroundColor White
-	Write-Host (' ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('   ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('  ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('   ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('  ') -NoNewline -BackgroundColor Black
-	Write-Host ('        ') -NoNewline -BackgroundColor White
-	Write-Host ('   ') -NoNewline -BackgroundColor Black
-	Write-Host ('      ') -NoNewline -BackgroundColor White
-	Write-Host ('  ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ')
-	#8
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('          ') -NoNewline -BackgroundColor Black
-	Write-Host ('    ') -NoNewline -BackgroundColor White
-
-	Write-Host ('                                                                  ') -NoNewline -BackgroundColor Black
-	Write-Host ('  ')
-	#9
-	Write-Host ('  ') -NoNewline -BackgroundColor White
-	Write-Host ('      ') -NoNewline -BackgroundColor Black
-	Write-Host ('   ') -NoNewline -BackgroundColor White
-	Write-Host ('  ') -NoNewline -BackgroundColor Black
-	Write-Host ('   ') -NoNewline -BackgroundColor White
-
-	Write-Host ('  ') -NoNewline -BackgroundColor Black
-	Write-Host (" {0,$(50 - $script:appVersion.Length)}Version. {1}    " -f ' ', $script:appVersion) -NoNewline -BackgroundColor Black
+	Out-Logo('WWWWWWWWWWWWWWWWWW  '); Write-Host (" {0,$(70 - $script:appVersion.Length)}Version. {1}  " -f ' ', $script:appVersion) -NoNewline -BackgroundColor Black
+	Out-Logo('WW    RRRRRRRWWWWW  WWWWWWWWWWWW WW        WW                       WWWWWWWWWWW                       '); Write-Host ''
+	Out-Logo('WW  RRRRRRRRRRRWWW       WW      WW        WW                       WW        WW                      '); Write-Host ''
+	Out-Logo('WW RRRRRRRRRRRRRWW       WW       WW      WW   WWWWWWWW  WW  WWWWW  WW        WW  WWWWWWWW   WWWWWWWW '); Write-Host ''
+	Out-Logo('WW RRRRRRRRRRRRRWW       WW       WW      WW  WW      WW WWWWW      WWWWWWWWWWW  WW      WW WW      WW'); Write-Host ''
+	Out-Logo('WW  RRRRRRRRRRRWWW       WW        WW    WW   WWWWWWWWWW WW         WW      WW   WWWWWWWWWW WW        '); Write-Host ''
+	Out-Logo('WW    RRRRRRRWWWWW       WW        WW    WW   WW         WW         WW       WW  WW         WW      WW'); Write-Host ''
+	Out-Logo('WW       W   WWWWW       WW          WWWW      WWWWWWW   WW         WW        WW  WWWWWWW    WWWWWWWW '); Write-Host ''
+	Out-Logo('WW       WWWW   WW                                                                                    '); Write-Host ''
 	Write-Host ('  ')
 
 }

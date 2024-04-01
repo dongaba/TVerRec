@@ -85,7 +85,7 @@ Write-Output ('━━━━━━━━━━━━━━━━━━━━━�
 	Write-Output ('整合性検証が終わっていない番組を検証します')
 
 	try {
-		while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+		while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Information ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$videoHists = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' }) | Select-Object 'videoPage', 'videoPath', 'videoValidated')
 	} catch { Write-Warning ('⚠️ ダウンロード履歴の読み込みに失敗しました') }
 	finally { $null = Unlock-File $script:histLockFilePath }
@@ -169,7 +169,7 @@ Write-Output ('━━━━━━━━━━━━━━━━━━━━━�
 	Show-ProgressToast @toastShowParams
 
 	try {
-		while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+		while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Information ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$videoHists = @(Import-Csv -Path $script:histFilePath -Encoding UTF8)
 		foreach ($uncheckedVido in ($videoHists).Where({ $_.videoValidated -eq 2 })) {
 			$uncheckedVido.videoValidated = '0'
