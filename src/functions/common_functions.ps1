@@ -318,7 +318,7 @@ function Remove-Files {
 				Write-Output ('　{0}' -f (Join-Path $using:basePath $_))
 				$null = (Get-ChildItem -LiteralPath $using:basePath -Recurse -File -Filter $_ -ErrorAction SilentlyContinue).Where({ $_.LastWriteTime -lt $using:limiteDateTime }) | Remove-Item -Force -ErrorAction SilentlyContinue
 			} -ThrottleLimit $script:multithreadNum
-		} catch { Write-Warning ('❗ 削除できないファイルがありました') }
+		} catch { Write-Warning ('⚠️ 削除できないファイルがありました') }
 	} else {
 		#並列化が無効の場合は従来型処理
 		try {
@@ -326,7 +326,7 @@ function Remove-Files {
 				Write-Output ('　{0}' -f (Join-Path $basePath $condition))
 				$null = (Get-ChildItem -LiteralPath $basePath -Recurse -File -Filter $condition -ErrorAction SilentlyContinue).Where({ $_.LastWriteTime -lt $limiteDateTime }) | Remove-Item -Force -ErrorAction SilentlyContinue
 			}
-		} catch { Write-Warning ('❗ 削除できないファイルがありました') }
+		} catch { Write-Warning ('⚠️ 削除できないファイルがありました') }
 	}
 
 	Remove-Variable -Name basePath, conditions, delPeriod -ErrorAction SilentlyContinue
@@ -347,7 +347,7 @@ function Expand-Zip {
 		Write-Verbose ('{0}を{1}に展開します' -f $path, $destination)
 		[System.IO.Compression.ZipFile]::ExtractToDirectory($path, $destination, $true)
 		Write-Verbose ('{0}を展開しました' -f $path)
-	} else { Write-Error ('{0}が見つかりません' -f $path) }
+	} else { Write-Error ('❌️ {0}が見つかりません' -f $path) }
 
 	Remove-Variable -Name path, destination -ErrorAction SilentlyContinue
 }

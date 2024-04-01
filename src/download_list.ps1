@@ -16,12 +16,12 @@ try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
-} catch { Write-Error ('❗ カレントディレクトリの設定に失敗しました') ; exit 1 }
-if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
+} catch { Write-Error ('❌️ カレントディレクトリの設定に失敗しました') ; exit 1 }
+if ($script:scriptRoot.Contains(' ')) { Write-Error ('❌️ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
-	if (!$?) { exit 1 }
-} catch { Write-Error ('❗ 関数の読み込みに失敗しました') ; exit 1 }
+	if (!$?) { Write-Error ('❌️ TVerRecの初期化処理に失敗しました') ; exit 1 }
+} catch { Write-Error ('❌️ 関数の読み込みに失敗しました') ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -29,7 +29,7 @@ Invoke-RequiredFileCheck
 Get-Token
 #ダウンロードリストを読み込み
 $listLinks = @(Get-LinkFromDownloadList)
-if ($null -eq $listLinks) { Write-Warning ('💡 ダウンロードリストが0件です') ; exit 0 }
+if ($null -eq $listLinks) { Write-Warning ('⚠️ ダウンロードリストが0件です') ; exit 0 }
 $keyword = 'リスト指定'
 
 
@@ -63,7 +63,7 @@ foreach ($videoLink in $videoLinks) {
 	$videoNum += 1
 	#ダウンロード先ディレクトリの存在確認先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
 	if (!(Test-Path $script:downloadBaseDir -PathType Container)) {
-		Write-Error ('❗ 番組ダウンロード先ディレクトリにアクセスできません。終了します') ; exit 1
+		Write-Error ('❌️ 番組ダウンロード先ディレクトリにアクセスできません。終了します') ; exit 1
 	}
 
 	#進捗率の計算
@@ -84,7 +84,7 @@ foreach ($videoLink in $videoLinks) {
 	}
 	Update-ProgressToast @toastUpdateParams
 
-	Write-Output ('--------------------------------------------------')
+	Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━')
 	Write-Output ('{0}/{1} - {2}' -f $videoNum, $videoTotal, $videoLink)
 	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 	Wait-YtdlProcess $script:parallelDownloadFileNum
@@ -116,7 +116,7 @@ Remove-Variable -Name listLinks, keyword, videoLinks, videoTotal, totalStartTime
 Invoke-GarbageCollection
 
 Write-Output ('')
-Write-Output ('---------------------------------------------------------------------------')
-Write-Output ('リストダウンロード処理を終了しました。                                     ')
-Write-Output ('---------------------------------------------------------------------------')
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+Write-Output ('リストダウンロード処理を終了しました。')
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 

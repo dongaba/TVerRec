@@ -16,12 +16,12 @@ try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
-} catch { Write-Error ('❗ カレントディレクトリの設定に失敗しました') ; exit 1 }
-if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
+} catch { Write-Error ('❌️ カレントディレクトリの設定に失敗しました') ; exit 1 }
+if ($script:scriptRoot.Contains(' ')) { Write-Error ('❌️ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
-	if (!$?) { exit 1 }
-} catch { Write-Error ('❗ 関数の読み込みに失敗しました') ; exit 1 }
+	if (!$?) { Write-Error ('❌️ TVerRecの初期化処理に失敗しました') ; exit 1 }
+} catch { Write-Error ('❌️ 関数の読み込みに失敗しました') ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -49,7 +49,7 @@ foreach ($keyword in $keywords) {
 	$keyword = Remove-TabSpace($keyword)
 
 	Write-Output ('')
-	Write-Output ('----------------------------------------------------------------------')
+	Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 	Write-Output ('{0}' -f $keyword)
 
 	$listLinks = @(Get-VideoLinksFromKeyword($keyword))
@@ -98,7 +98,7 @@ foreach ($keyword in $keywords) {
 		$toastUpdateParams.LeftText2 = ('{0}/{1}' -f $videoNum, $videoTotal)
 		Update-ProgressToast2Row @toastUpdateParams
 
-		Write-Output ('--------------------------------------------------')
+		Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━')
 		Write-Output ('{0}/{1} - {2}' -f $videoNum, $videoTotal, $videoLink)
 		#TVer番組ダウンロードのメイン処理
 		Update-VideoList `
@@ -129,8 +129,8 @@ iRemove-Variable -Name keywords, keywordNum, keywordTotal, toastShowParams, tota
 Invoke-GarbageCollection
 
 Write-Output ('')
-Write-Output ('---------------------------------------------------------------------------')
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('番組リストファイル出力処理を終了しました。')
 Write-Output ('💡 必要に応じてリストファイルを編集してダウンロード不要な番組を削除してください')
 Write-Output ('　リストファイルパス: {0}' -f $script:listFilePath)
-Write-Output ('---------------------------------------------------------------------------')
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')

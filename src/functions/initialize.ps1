@@ -12,30 +12,30 @@ $script:devDir = Join-Path $script:scriptRoot '../dev'
 
 if ( Test-Path (Join-Path $script:confDir 'system_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'system_setting.ps1')) }
-	catch { Write-Error ('❗ システム設定ファイルの読み込みに失敗しました') ; exit 1 }
-} else { Write-Error ('❗ システム設定ファイルが見つかりません') ; exit 1 }
+	catch { Write-Error ('❌️ システム設定ファイルの読み込みに失敗しました') ; exit 1 }
+} else { Write-Error ('❌️ システム設定ファイルが見つかりません') ; exit 1 }
 
 if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
-	catch { Write-Error ('❗ ユーザ設定ファイルの読み込みに失敗しました') ; exit 1 }
+	catch { Write-Error ('❌️ ユーザ設定ファイルの読み込みに失敗しました') ; exit 1 }
 } elseif ($IsWindows) {
 	Write-Output ('ユーザ設定ファイルを作成する必要があります')
 	try { . 'gui/gui_setting.ps1' }
-	catch { Write-Error ('❗ 設定画面の起動に失敗しました') ; exit 1 }
+	catch { Write-Error ('❌️ 設定画面の起動に失敗しました') ; exit 1 }
 	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 		try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
-		catch { Write-Error ('❗ ユーザ設定ファイルの読み込みに失敗しました') ; exit 1 }
-	} else { Write-Error ('❗ ユーザ設定が完了してません') ; exit 1 }
-} else { Write-Error ('❗ ユーザ設定が完了してません') ; exit 1 }
+		catch { Write-Error ('❌️ ユーザ設定ファイルの読み込みに失敗しました') ; exit 1 }
+	} else { Write-Error ('❌️ ユーザ設定が完了してません') ; exit 1 }
+} else { Write-Error ('❌️ ユーザ設定が完了してません') ; exit 1 }
 
 #----------------------------------------------------------------------
 #外部関数ファイルの読み込み
 try { . (Convert-Path (Join-Path $script:scriptRoot 'functions/common_functions.ps1')) }
-catch { Write-Error ('❗ 外部関数ファイル(common_functions.ps1)の読み込みに失敗しました') ; exit 1 }
+catch { Write-Error ('❌️ 外部関数ファイル(common_functions.ps1)の読み込みに失敗しました') ; exit 1 }
 try { . (Convert-Path (Join-Path $script:scriptRoot 'functions/tver_functions.ps1')) }
-catch { Write-Error ('❗ 外部関数ファイル(tver_functions.ps1)の読み込みに失敗しました') ; exit 1 }
+catch { Write-Error ('❌️ 外部関数ファイル(tver_functions.ps1)の読み込みに失敗しました') ; exit 1 }
 try { . (Convert-Path (Join-Path $script:scriptRoot 'functions/tverrec_functions.ps1')) }
-catch { Write-Error ('❗ 外部関数ファイル(tverrec_functions.ps1)の読み込みに失敗しました') ; exit 1 }
+catch { Write-Error ('❌️ 外部関数ファイル(tverrec_functions.ps1)の読み込みに失敗しました') ; exit 1 }
 
 #----------------------------------------------------------------------
 #開発環境用に設定上書き
@@ -54,7 +54,7 @@ try {
 
 	Remove-Variable -Name devFunctionFile, devConfFile -ErrorAction SilentlyContinue
 
-} catch { Write-Error ('❗ 開発用設定ファイルの読み込みに失敗しました') ; exit 1 }
+} catch { Write-Error ('❌️ 開発用設定ファイルの読み込みに失敗しました') ; exit 1 }
 
 #----------------------------------------------------------------------
 #アップデータのアップデート(アップデート後の実行時にアップデータを更新)
@@ -117,25 +117,10 @@ if ( $myInvocation.ScriptName.Contains('gui')) {
 
 	#TVerRecの最新化チェック
 	Invoke-TVerRecUpdateCheck
-	if (!$?) { exit 1 }
+	if (!$?) { Write-Error ('❌️ TVerRecのバージョンチェックに失敗しました') ; exit 1 }
 } else {
-	if (!$script:guiMode) {
-		[Console]::ForegroundColor = 'Red'
-		Write-Output ('')
-		Write-Output ('===========================================================================')
-		Write-Output ('                                                                           ')
-		Write-Output ('        ████████ ██    ██ ███████ ██████  ██████  ███████  ██████          ')
-		Write-Output ('           ██    ██    ██ ██      ██   ██ ██   ██ ██      ██               ')
-		Write-Output ('           ██    ██    ██ █████   ██████  ██████  █████   ██               ')
-		Write-Output ('           ██     ██  ██  ██      ██   ██ ██   ██ ██      ██               ')
-		Write-Output ('           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          ')
-		Write-Output ('                                                                           ')
-		Write-Output ("{0,$(56 - $script:appVersion.Length)}Version. {1}" -f ' ', $script:appVersion)
-		Write-Output ('                                                                           ')
-		Write-Output ('===========================================================================')
-		Write-Output ('')
-		[Console]::ResetColor()
-	}
+	#Logo表示
+	if (!$script:guiMode) { Show-Logo }
 
 	#youtube-dl/ffmpegの最新化チェック
 	if (!$script:disableUpdateYoutubedl) { Invoke-ToolUpdateCheck -scriptName 'update_youtube-dl.ps1' -targetName 'youtube-dl' }
@@ -144,7 +129,7 @@ if ( $myInvocation.ScriptName.Contains('gui')) {
 	#TVerRecの最新化チェック
 	if ($script:appName -eq 'TVerRec') {
 		Invoke-TVerRecUpdateCheck
-		if (!$?) { exit 1 }
+		if (!$?) { Write-Error ('❌️ TVerRecのバージョンチェックに失敗しました') ; exit 1 }
 	}
 
 }

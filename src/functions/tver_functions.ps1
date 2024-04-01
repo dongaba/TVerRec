@@ -34,7 +34,7 @@ function Get-Token () {
 			-TimeoutSec $script:timeoutSec
 		$script:platformUID = $tokenResponse.Result.platform_uid
 		$script:platformToken = $tokenResponse.Result.platform_token
-	} catch { Write-Warning ('❗ トークン取得エラー、終了します') ; exit 1 }
+	} catch { Write-Error ('❌️ トークン取得エラー、終了します') ; exit 1 }
 
 	Remove-Variable -Name tverTokenURL, requestHeader, requestBody, tokenResponse -ErrorAction SilentlyContinue
 }
@@ -180,7 +180,7 @@ function ProcessSearchResultsForTopPage {
 				default { $epLinks += ('https://tver.jp/{0}/{1}' -f $searchResult.Type, $searchResult.Content.Id) }
 			}
 		}
-	} catch { Write-Error ('❗ エラーが発生しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) }
+	} catch { Write-Error ('❌️ エラーが発生しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) }
 
 	return $epLinks | Sort-Object -Unique
 
@@ -475,7 +475,7 @@ function Get-LinkFromTopPage {
 		} elseif ($searchResult.Type -eq 'banner') { #広告	URLは $searchResult.Contents.Content.targetURL
 		} elseif ($searchResult.Type -eq 'resume') { #続きを見る	ブラウザのCookieを処理しないといけないと思われるため対応予定なし
 		} elseif ($searchResult.Type -eq 'favorite') { #お気に入り	ブラウザのCookieを処理しないといけないと思われるため対応予定なし
-		} else { Write-Warning ('❗ 未知のパターンです。 - {0}' -f $searchResult.Type) }
+		} else { Write-Warning ('⚠️ 未知のパターンです。 - {0}' -f $searchResult.Type) }
 	}
 
 	#バッファしておいたSpecialMainの重複を削除しEpisodeを抽出
@@ -564,7 +564,7 @@ function Get-LinkFromSiteMap {
 								}
 							}
 						}
-					} catch { Write-Warning ('❗ エラーが発生しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) }
+					} catch { Write-Warning ('⚠️ エラーが発生しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) }
 					$links | Out-File -Encoding UTF8 -Append -FilePath $using:script:sitemaptFilePath
 				}
 			} -ThrottleLimit $script:multithreadNum
@@ -576,7 +576,7 @@ function Get-LinkFromSiteMap {
 				if ($searchResult -cmatch '\/series\/') {
 					Write-Verbose ('　{0} からEpisodeを抽出中...' -f $searchResult)
 					try { $epLinks += @(Get-LinkFromSeriesID $searchResult.Replace('https://tver.jp/series/', '')) }
-					catch { Write-Warning ('❗ エラーが発生しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) }
+					catch { Write-Warning ('⚠️ エラーが発生しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) }
 				}
 			}
 		}

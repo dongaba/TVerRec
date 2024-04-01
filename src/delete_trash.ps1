@@ -16,12 +16,12 @@ try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
-} catch { Write-Error ('❗ カレントディレクトリの設定に失敗しました') ; exit 1 }
-if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
+} catch { Write-Error ('❌️ カレントディレクトリの設定に失敗しました') ; exit 1 }
+if ($script:scriptRoot.Contains(' ')) { Write-Error ('❌️ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
-	if (!$?) { exit 1 }
-} catch { Write-Error ('❗ 関数の読み込みに失敗しました') ; exit 1 }
+	if (!$?) { Write-Error ('❌️ TVerRecの初期化処理に失敗しました') ; exit 1 }
+} catch { Write-Error ('❌️ 関数の読み込みに失敗しました') ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -30,7 +30,7 @@ Invoke-RequiredFileCheck
 #======================================================================
 #1/3 ダウンロードが中断した際にできたゴミファイルは削除
 Write-Output ('')
-Write-Output ('----------------------------------------------------------------------')
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('処理が中断した際にできたゴミファイルを削除します')
 
 $toastShowParams = @{
@@ -96,7 +96,7 @@ if ($script:saveBaseDir -ne '') {
 #======================================================================
 #2/3 ダウンロード対象外に入っている番組は削除
 Write-Output ('')
-Write-Output ('----------------------------------------------------------------------')
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('ダウンロード対象外の番組を削除します')
 
 $toastShowParams.Text2 = '　処理2/3 - ダウンロード対象外の番組を削除'
@@ -104,7 +104,7 @@ Show-ProgressToast @toastShowParams
 
 #個別ダウンロードが強制モードの場合にはスキップ
 if ($script:forceSingleDownload) {
-	Write-Warning ('❗ - 強制ダウンロードフラグが設定されているためダウンロード対象外の番組の削除処理をスキップします')
+	Write-Warning ('⚠️ - 強制ダウンロードフラグが設定されているためダウンロード対象外の番組の削除処理をスキップします')
 } else {
 	#ダウンロード先にディレクトリがない場合はスキップ
 	$workDirEntities = @(Get-ChildItem -LiteralPath $script:downloadBaseDir)
@@ -135,7 +135,7 @@ if ($script:forceSingleDownload) {
 				$ignoreTotal = $using:ignoreDirs.Count
 				Write-Output ('　{0}/{1} - {2}' -f $ignoreNum, $ignoreTotal, $_.Name)
 				try { Remove-Item -LiteralPath $_ -Recurse -Force }
-				catch { Write-Warning ('❗ 削除できないファイルがありました') }
+				catch { Write-Warning ('⚠️ 削除できないファイルがありました') }
 			} -ThrottleLimit $script:multithreadNum
 		} else {
 			#並列化が無効の場合は従来型処理
@@ -165,7 +165,7 @@ if ($script:forceSingleDownload) {
 
 				Write-Output ('　{0}/{1} - {2}' -f $ignoreNum, $ignoreTotal, $ignoreDir.Name)
 				try { Remove-Item -LiteralPath $ignoreDir -Recurse -Force }
-				catch { Write-Warning ('❗ 削除できないファイルがありました') }
+				catch { Write-Warning ('⚠️ 削除できないファイルがありました') }
 			}
 		}
 	}
@@ -176,7 +176,7 @@ if ($script:forceSingleDownload) {
 #======================================================================
 #3/3 空ディレクトリと隠しファイルしか入っていないディレクトリを一気に削除
 Write-Output ('')
-Write-Output ('----------------------------------------------------------------------')
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('空ディレクトリを削除します')
 
 $toastShowParams.Text2 = '　処理3/3 - 空ディレクトリを削除'
@@ -198,7 +198,7 @@ if ($emptyDirTotal -ne 0) {
 			$emptyDirTotal = $using:emptyDirs.Count
 			Write-Output ('　{0}/{1} - {2}' -f $emptyDirNum, $emptyDirTotal, $_)
 			try { Remove-Item -LiteralPath $_ -Recurse -Force }
-			catch { Write-Warning ('❗ - 空ディレクトリの削除に失敗しました: {0}' -f $_) }
+			catch { Write-Warning ('⚠️ - 空ディレクトリの削除に失敗しました: {0}' -f $_) }
 		} -ThrottleLimit $script:multithreadNum
 	} else {
 		#並列化が無効の場合は従来型処理
@@ -227,7 +227,7 @@ if ($emptyDirTotal -ne 0) {
 
 			Write-Output ('　{0}/{1} - {2}' -f $emptyDirNum, $emptyDirTotal, $subDir)
 			try { Remove-Item -LiteralPath $subDir -Recurse -Force -ErrorAction SilentlyContinue
-			} catch { Write-Warning ('❗ - 空ディレクトリの削除に失敗しました: {0}' -f $subDir) }
+			} catch { Write-Warning ('⚠️ - 空ディレクトリの削除に失敗しました: {0}' -f $subDir) }
 		}
 	}
 }
@@ -244,6 +244,6 @@ Remove-Variable -Name toastShowParams, toastUpdateParams, saveDir, workDirEntiti
 Invoke-GarbageCollection
 
 Write-Output ('')
-Write-Output ('---------------------------------------------------------------------------')
-Write-Output ('不要ファイル削除処理を終了しました。                                       ')
-Write-Output ('---------------------------------------------------------------------------')
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+Write-Output ('不要ファイル削除処理を終了しました。')
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')

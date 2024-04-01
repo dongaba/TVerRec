@@ -5,7 +5,7 @@
 ###################################################################################
 using namespace System.Windows.Threading
 
-if (!$IsWindows) { Write-Error ('❗ Windows以外では動作しません') ; Start-Sleep 10 ; exit 1 }
+if (!$IsWindows) { Write-Error ('❌️ Windows以外では動作しません') ; Start-Sleep 10 ; exit 1 }
 Add-Type -AssemblyName PresentationFramework
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -19,12 +19,12 @@ try {
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	$script:scriptRoot = Convert-Path (Join-Path $script:scriptRoot '../')
 	Set-Location $script:scriptRoot
-} catch { Write-Error ('❗ ディレクトリ設定に失敗しました') ; exit 1 }
-if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
+} catch { Write-Error ('❌️ ディレクトリ設定に失敗しました') ; exit 1 }
+if ($script:scriptRoot.Contains(' ')) { Write-Error ('❌️ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
-	if (!$?) { exit 1 }
-} catch { Write-Error ('❗ 関数の読み込みに失敗しました') ; exit 1 }
+	if (!$?) { Write-Error ('❌️ TVerRecの初期化処理に失敗しました') ; exit 1 }
+} catch { Write-Error ('❌️ 関数の読み込みに失敗しました') ; exit 1 }
 
 #パラメータ設定
 $jobTerminationStates = @('Completed', 'Failed', 'Stopped')
@@ -93,7 +93,7 @@ try {
 	$mainXaml = $mainXaml -ireplace 'mc:Ignorable="d"', '' -ireplace 'x:N', 'N' -ireplace 'x:Class=".*?"', ''
 	[xml]$mainCleanXaml = $mainXaml
 	$mainWindow = [System.Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $mainCleanXaml))
-} catch { Write-Error ('❗ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。') ; exit 1 }
+} catch { Write-Error ('❌️ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。') ; exit 1 }
 
 #PowerShellのウィンドウを非表示に
 Add-Type -Name Window -Namespace Console -MemberDefinition '
@@ -236,7 +236,7 @@ try {
 	$null = $mainWindow.Show()
 	$null = $mainWindow.Activate()
 	$null = [Console.Window]::ShowWindow($console, 0)
-} catch { Write-Error ('❗ ウィンドウを描画できませんでした。TVerRecが破損しています。') ; exit 1 }
+} catch { Write-Error ('❌️ ウィンドウを描画できませんでした。TVerRecが破損しています。') ; exit 1 }
 
 #endregion ウィンドウ表示
 

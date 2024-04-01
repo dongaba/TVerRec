@@ -5,7 +5,7 @@
 ###################################################################################
 using namespace System.Windows.Threading
 
-if (!$IsWindows) { Write-Error ('❗ Windows以外では動作しません') ; Start-Sleep 10 ; exit 1 }
+if (!$IsWindows) { Write-Error ('❌️ Windows以外では動作しません') ; Start-Sleep 10 ; exit 1 }
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName PresentationFramework
 
@@ -18,15 +18,15 @@ try {
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	$script:scriptRoot = Convert-Path (Join-Path $script:scriptRoot '../')
 	Set-Location $script:scriptRoot
-} catch { Write-Error ('❗ ディレクトリ設定に失敗しました') ; exit 1 }
-if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
+} catch { Write-Error ('❌️ ディレクトリ設定に失敗しました') ; exit 1 }
+if ($script:scriptRoot.Contains(' ')) { Write-Error ('❌️ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 
 #----------------------------------------------------------------------
 #設定ファイル読み込み
 try {
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	. (Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
-} catch { Write-Error ('❗ システム設定ファイルの読み込みに失敗しました') ; exit 1 }
+} catch { Write-Error ('❌️ システム設定ファイルの読み込みに失敗しました') ; exit 1 }
 
 #----------------------------------------------------------------------
 #外部関数ファイルの読み込み
@@ -34,7 +34,7 @@ try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/common_functions.ps1'))
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/tver_functions.ps1'))
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/tverrec_functions.ps1'))
-} catch { Write-Error ('❗ 外部関数ファイルの読み込みに失敗しました') ; exit 1 }
+} catch { Write-Error ('❌️ 外部関数ファイルの読み込みに失敗しました') ; exit 1 }
 
 #endregion 環境設定
 
@@ -146,7 +146,7 @@ function Save-UserSetting {
 	#自動生成より後の部分
 	if ( $totalLineNum -ne 0 ) {
 		try { $newSetting += Get-Content $userSettingFile -Tail $tailLineNum }
-		catch { Write-Warning ('❗ 自動生成の終了部分を特定できませんでした') }
+		catch { Write-Warning ('⚠️ 自動生成の終了部分を特定できませんでした') }
 	}
 
 	#改行コードLFを強制 + NFCで出力
@@ -171,7 +171,7 @@ try {
 	$mainXaml = $mainXaml -ireplace 'mc:Ignorable="d"', '' -ireplace 'x:N', 'N' -ireplace 'x:Class=".*?"', ''
 	[xml]$mainCleanXaml = $mainXaml
 	$settingWindow = [System.Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $mainCleanXaml))
-} catch { Write-Error ('❗ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。') ; exit 1 }
+} catch { Write-Error ('❌️ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。') ; exit 1 }
 
 #PowerShellのウィンドウを非表示に
 Add-Type -Name Window -Namespace Console -MemberDefinition '
@@ -289,7 +289,7 @@ try {
 	$null = $settingWindow.Show()
 	$null = $settingWindow.Activate()
 	$null = [Console.Window]::ShowWindow($console, 0)
-} catch { Write-Error ('❗ ウィンドウを描画できませんでした。TVerRecが破損しています。') ; exit 1 }
+} catch { Write-Error ('❌️ ウィンドウを描画できませんでした。TVerRecが破損しています。') ; exit 1 }
 
 #メインウィンドウ取得
 $currentProcess = [Diagnostics.Process]::GetCurrentProcess()
