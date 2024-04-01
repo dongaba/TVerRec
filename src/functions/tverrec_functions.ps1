@@ -1401,9 +1401,11 @@ function Out-Logo {
 	$lineDataAray = $lineData.ToCharArray()
 
 	foreach ($str in $lineDataAray) {
-		if ($str -eq ' ') { Write-Host ' ' -NoNewline -BackgroundColor Black }
-		elseif ($str -eq 'W') { Write-Host ' ' -NoNewline -BackgroundColor White }
-		elseif ($str -eq 'R') { Write-Host ' ' -NoNewline -BackgroundColor Red }
+		switch ($str) {
+			' ' { Write-Host ' ' -NoNewline -BackgroundColor Black }
+			'w' { Write-Host ' ' -NoNewline -BackgroundColor White }
+			'r' { Write-Host ' ' -NoNewline -BackgroundColor Red }
+		}
 	}
 	Write-Host '  ' -NoNewline -BackgroundColor Black
 
@@ -1414,15 +1416,15 @@ function Show-Logo {
 	Param ()
 
 	Write-Host ('  ')
-	Out-Logo('WWWWWWWWWWWWWWWWWW  '); Write-Host (" {0,$(70 - $script:appVersion.Length)}Version. {1}  " -f ' ', $script:appVersion) -BackgroundColor Black
-	Out-Logo('WW    RRRRRRRWWWWW  WWWWWWWWWWWW WW        WW                       WWWWWWWWWWW                       '); Write-Host ''
-	Out-Logo('WW  RRRRRRRRRRRWWW       WW      WW        WW                       WW        WW                      '); Write-Host ''
-	Out-Logo('WW RRRRRRRRRRRRRWW       WW       WW      WW   WWWWWWWW  WW  WWWWW  WW        WW  WWWWWWWW   WWWWWWWW '); Write-Host ''
-	Out-Logo('WW RRRRRRRRRRRRRWW       WW       WW      WW  WW      WW WWWWW      WWWWWWWWWWW  WW      WW WW      WW'); Write-Host ''
-	Out-Logo('WW  RRRRRRRRRRRWWW       WW        WW    WW   WWWWWWWWWW WW         WW      WW   WWWWWWWWWW WW        '); Write-Host ''
-	Out-Logo('WW    RRRRRRRWWWWW       WW        WW    WW   WW         WW         WW       WW  WW         WW      WW'); Write-Host ''
-	Out-Logo('WW       W   WWWWW       WW          WWWW      WWWWWWW   WW         WW        WW  WWWWWWW    WWWWWWWW '); Write-Host ''
-	Out-Logo('WW       WWWW   WW                                                                                    '); Write-Host ''
+	Out-Logo('wwwwwwwwwwwwwwwwww  '); Write-Host (" {0,$(70 - $script:appVersion.Length)}Version. {1}  " -f ' ', $script:appVersion) -BackgroundColor Black
+	Out-Logo('ww    rrrrrrrwwwww  wwwwwwwwwwww ww        ww                       wwwwwwwwwww                       '); Write-Host ('')
+	Out-Logo('ww  rrrrrrrrrrrwww       ww      ww        ww                       ww        ww                      '); Write-Host ('')
+	Out-Logo('ww rrrrrrrrrrrrrww       ww       ww      ww   wwwwwwww  ww  wwwww  ww        ww  wwwwwwww   wwwwwwww '); Write-Host ('')
+	Out-Logo('ww rrrrrrrrrrrrrww       ww       ww      ww  ww      ww wwwww      wwwwwwwwwww  ww      ww ww      ww'); Write-Host ('')
+	Out-Logo('ww  rrrrrrrrrrrwww       ww        ww    ww   wwwwwwwwww ww         ww      ww   wwwwwwwwww ww        '); Write-Host ('')
+	Out-Logo('ww    rrrrrrrwwwww       ww        ww    ww   ww         ww         ww       ww  ww         ww      ww'); Write-Host ('')
+	Out-Logo('ww       w   wwwww       ww          wwww      wwwwwww   ww         ww        ww  wwwwwww    wwwwwwww '); Write-Host ('')
+	Out-Logo('ww       wwww   ww                                                                                    '); Write-Host ('')
 	Write-Host ('  ')
 
 }
