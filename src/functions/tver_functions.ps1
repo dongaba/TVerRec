@@ -34,7 +34,7 @@ function Get-Token () {
 			-TimeoutSec $script:timeoutSec
 		$script:platformUID = $tokenResponse.Result.platform_uid
 		$script:platformToken = $tokenResponse.Result.platform_token
-	} catch { Write-Error ('❌️ トークン取得エラー、終了します') ; exit 1 }
+	} catch { Write-Error ('　❌️ トークン取得エラー、終了します') ; exit 1 }
 
 	Remove-Variable -Name tverTokenURL, requestHeader, requestBody, tokenResponse -ErrorAction SilentlyContinue
 }
@@ -88,38 +88,40 @@ function ProcessSearchResults {
 	else { $callSearchURL = ('{0}?platform_uid={1}&platform_token={2}' -f $baseURL, $script:platformUID, $script:platformToken) }
 
 	#取得した値をタイプごとに調整
-	$searchResultsRaw = Invoke-RestMethod -Uri $callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
-	if ($type -in @('new', 'ranking')) { $searchResults = $searchResultsRaw.Result.Contents.Contents }
-	elseif ($type -eq 'specialmain') { $searchResults = $searchResultsRaw.Result.specialContents }
-	elseif ($type -eq 'specialdetail') { $searchResults = $searchResultsRaw.Result.Contents.Content.Contents }
-	else { $searchResults = $searchResultsRaw.Result.Contents }
+	try {
+		$searchResultsRaw = Invoke-RestMethod -Uri $callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
+		if ($type -in @('new', 'ranking')) { $searchResults = $searchResultsRaw.Result.Contents.Contents }
+		elseif ($type -eq 'specialmain') { $searchResults = $searchResultsRaw.Result.specialContents }
+		elseif ($type -eq 'specialdetail') { $searchResults = $searchResultsRaw.Result.Contents.Content.Contents }
+		else { $searchResults = $searchResultsRaw.Result.Contents }
 
-	#タイプ別に再帰呼び出し
-	foreach ($searchResult in $searchResults) {
-		switch ($searchResult.Type) {
-			'live' { continue }
-			'episode' {
-				$epLinks += ('https://tver.jp/episodes/{0}' -f $searchResult.Content.Id)
-				continue
+		#タイプ別に再帰呼び出し
+		foreach ($searchResult in $searchResults) {
+			switch ($searchResult.Type) {
+				'live' { continue }
+				'episode' {
+					$epLinks += ('https://tver.jp/episodes/{0}' -f $searchResult.Content.Id)
+					continue
+				}
+				'series' {
+					Write-Verbose ('　Series {0} からEpisodeを抽出中...' -f $searchResult.Content.Id)
+					$epLinks += Get-LinkFromSeriesID $searchResult.Content.Id
+					continue
+				}
+				'season' {
+					Write-Verbose ('　Season {0} からEpisodeを抽出中...' -f $searchResult.Content.Id)
+					$epLinks += Get-LinkFromSeasonID $searchResult.Content.Id
+					continue
+				}
+				'special' {
+					Write-Verbose ('　Special Detail {0} からEpisodeを抽出中...' -f $searchResult.Content.Id)
+					$epLinks += Get-LinkFromSpecialDetailID $searchResult.Content.Id
+					continue
+				}
+				default { $epLinks += ('https://tver.jp/{0}/{1}' -f $searchResult.Type, $searchResult.Content.Id) }
 			}
-			'series' {
-				Write-Verbose ('　Series {0} からEpisodeを抽出中...' -f $searchResult.Content.Id)
-				$epLinks += Get-LinkFromSeriesID $searchResult.Content.Id
-				continue
-			}
-			'season' {
-				Write-Verbose ('　Season {0} からEpisodeを抽出中...' -f $searchResult.Content.Id)
-				$epLinks += Get-LinkFromSeasonID $searchResult.Content.Id
-				continue
-			}
-			'special' {
-				Write-Verbose ('　Special Detail {0} からEpisodeを抽出中...' -f $searchResult.Content.Id)
-				$epLinks += Get-LinkFromSpecialDetailID $searchResult.Content.Id
-				continue
-			}
-			default { $epLinks += ('https://tver.jp/{0}/{1}' -f $searchResult.Type, $searchResult.Content.Id) }
 		}
-	}
+	} catch { Write-Error ('❌️ エラーが発生しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) }
 
 	return $epLinks | Sort-Object -Unique
 
@@ -402,116 +404,119 @@ function Get-LinkFromTopPage {
 
 	$callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callHome'
 	$callSearchURL = ('{0}?platform_uid={1}&platform_token={2}' -f $callSearchBaseURL, $script:platformUID, $script:platformToken)
-	$searchResultsRaw = Invoke-RestMethod -Uri $callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
-	$searchResults = $searchResultsRaw.Result.Components
 
-	foreach ($searchResult in $searchResults) {
-		if ($searchResult.Type -in @('horizontal', 'ranking', 'talents', 'billboard', 'episodeRanking', 'newer', 'ender', 'talent', 'special', 'specialContent') ) {
-			#横スクロール型 or 総合ランキング or 注目タレント or 特集
-			foreach ($searchResultContent in $searchResult.Contents) {
-				switch ($searchResultContent.Type) {
-					'live' { continue }
-					'episode' {
-						$epLinks += ('https://tver.jp/episodes/{0}' -f $searchResultContent.Content.Id)
-						continue
+	try {
+		$searchResultsRaw = Invoke-RestMethod -Uri $callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
+		$searchResults = $searchResultsRaw.Result.Components
+
+		foreach ($searchResult in $searchResults) {
+			if ($searchResult.Type -in @('horizontal', 'ranking', 'talents', 'billboard', 'episodeRanking', 'newer', 'ender', 'talent', 'special', 'specialContent') ) {
+				#横スクロール型 or 総合ランキング or 注目タレント or 特集
+				foreach ($searchResultContent in $searchResult.Contents) {
+					switch ($searchResultContent.Type) {
+						'live' { continue }
+						'episode' {
+							$epLinks += ('https://tver.jp/episodes/{0}' -f $searchResultContent.Content.Id)
+							continue
+						}
+						'series' {
+							#Seriesは重複が多いので高速化のためにバッファにためて最後に処理
+							Write-Verbose ('　Series {0} をバッファに保存中...' -f $searchResultContent.Content.Id)
+							$seriesLinks += ($searchResultContent.Content.Id)
+							continue
+						}
+						'season' {
+							Write-Verbose ('　Season をバッファに保存中...' -f $searchResultContent.Content.Id)
+							$seasonLinks += ($searchResultContent.Content.Id)
+							continue
+						}
+						'talent' {
+							Write-Verbose ('　Talent をバッファに保存中...' -f $searchResultContent.Content.Id)
+							$talentLinks += ($searchResultContent.Content.Id)
+							continue
+						}
+						'specialMain' {
+							Write-Verbose ('　Special Main {0} をバッファに保存中...' -f $searchResultContent.Content.Id)
+							$specialMainLinks += ($searchResultContent.Content.Id)
+							continue
+						}
+						'special' {
+							Write-Verbose ('　Special Detail {0} をバッファに保存中...' -f $searchResultContent.Content.Id)
+							$specialDetailLinks += ($searchResultContent.Content.Id)
+							continue
+						}
+						default { $epLinks += ('https://tver.jp/{0}/{1}' -f $searchResultContent.Type, $searchResultContent.Content.Id) }
 					}
-					'series' {
-						#Seriesは重複が多いので高速化のためにバッファにためて最後に処理
-						Write-Verbose ('　Series {0} をバッファに保存中...' -f $searchResultContent.Content.Id)
-						$seriesLinks += ($searchResultContent.Content.Id)
-						continue
-					}
-					'season' {
-						Write-Verbose ('　Season をバッファに保存中...' -f $searchResultContent.Content.Id)
-						$seasonLinks += ($searchResultContent.Content.Id)
-						continue
-					}
-					'talent' {
-						Write-Verbose ('　Talent をバッファに保存中...' -f $searchResultContent.Content.Id)
-						$talentLinks += ($searchResultContent.Content.Id)
-						continue
-					}
-					'specialMain' {
-						Write-Verbose ('　Special Main {0} をバッファに保存中...' -f $searchResultContent.Content.Id)
-						$specialMainLinks += ($searchResultContent.Content.Id)
-						continue
-					}
-					'special' {
-						Write-Verbose ('　Special Detail {0} をバッファに保存中...' -f $searchResultContent.Content.Id)
-						$specialDetailLinks += ($searchResultContent.Content.Id)
-						continue
-					}
-					default { $epLinks += ('https://tver.jp/{0}/{1}' -f $searchResultContent.Type, $searchResultContent.Content.Id) }
 				}
-			}
 
-		} elseif ($searchResult.Type -eq 'topics') {
-			foreach ($searchResultContent in $searchResult.Contents) {
-				switch ($searchResultContent.Content.Content.Type) {
-					'live' { continue }
-					'episode' {
-						$epLinks += ('https://tver.jp/episodes/{0}' -f $searchResultContent.Content.Content.Content.Id)
-						continue
+			} elseif ($searchResult.Type -eq 'topics') {
+				foreach ($searchResultContent in $searchResult.Contents) {
+					switch ($searchResultContent.Content.Content.Type) {
+						'live' { continue }
+						'episode' {
+							$epLinks += ('https://tver.jp/episodes/{0}' -f $searchResultContent.Content.Content.Content.Id)
+							continue
+						}
+						'series' {
+							#Seriesは重複が多いので高速化のためにバッファにためて最後に処理
+							Write-Verbose ('　Series {0} をバッファに保存中...' -f $searchResultContent.Content.Content.Content.Id)
+							$seriesLinks += ($searchResultContent.Content.Content.Content.Id)
+							continue
+						}
+						'season' {
+							Write-Verbose ('　Season {0} をバッファに保存中...' -f $searchResultContent.Content.Content.Content.Id)
+							$seasonLinks += ($searchResultContent.Content.Content.Content.Id)
+							continue
+						}
+						'talent' {
+							Write-Verbose ('　Talent {0} をバッファに保存中...' -f $searchResultContent.Content.Content.Content.Id)
+							$talentLinks += ($searchResultContent.Content.Content.Content.Id)
+							continue
+						}
+						default { $epLinks += ('https://tver.jp/{0}/{1}' -f $searchResultContent.Content.Content.Type, $searchResultContent.Content.Content.Content.Id) }
 					}
-					'series' {
-						#Seriesは重複が多いので高速化のためにバッファにためて最後に処理
-						Write-Verbose ('　Series {0} をバッファに保存中...' -f $searchResultContent.Content.Content.Content.Id)
-						$seriesLinks += ($searchResultContent.Content.Content.Content.Id)
-						continue
-					}
-					'season' {
-						Write-Verbose ('　Season {0} をバッファに保存中...' -f $searchResultContent.Content.Content.Content.Id)
-						$seasonLinks += ($searchResultContent.Content.Content.Content.Id)
-						continue
-					}
-					'talent' {
-						Write-Verbose ('　Talent {0} をバッファに保存中...' -f $searchResultContent.Content.Content.Content.Id)
-						$talentLinks += ($searchResultContent.Content.Content.Content.Id)
-						continue
-					}
-					default { $epLinks += ('https://tver.jp/{0}/{1}' -f $searchResultContent.Content.Content.Type, $searchResultContent.Content.Content.Content.Id) }
 				}
-			}
-		} elseif ($searchResult.Type -eq 'banner') { #広告	URLは $searchResult.Contents.Content.targetURL
-		} elseif ($searchResult.Type -eq 'resume') { #続きを見る	ブラウザのCookieを処理しないといけないと思われるため対応予定なし
-		} elseif ($searchResult.Type -eq 'favorite') { #お気に入り	ブラウザのCookieを処理しないといけないと思われるため対応予定なし
-		} else { Write-Warning ('⚠️ 未知のパターンです。 - {0}' -f $searchResult.Type) }
-	}
+			} elseif ($searchResult.Type -eq 'banner') { #広告	URLは $searchResult.Contents.Content.targetURL
+			} elseif ($searchResult.Type -eq 'resume') { #続きを見る	ブラウザのCookieを処理しないといけないと思われるため対応予定なし
+			} elseif ($searchResult.Type -eq 'favorite') { #お気に入り	ブラウザのCookieを処理しないといけないと思われるため対応予定なし
+			} else { Write-Warning ('⚠️ 未知のパターンです。 - {0}' -f $searchResult.Type) }
+		}
 
-	#バッファしておいたSpecialMainの重複を削除しEpisodeを抽出
-	$specialMainLinks = $specialMainLinks | Sort-Object -Unique
-	foreach ($specialMainID in $specialMainLinks) {
-		Write-Verbose ('Special Main {0} からEpisodeを抽出中...' -f $specialMainID)
-		$epLinks += Get-LinkFromSpecialMainIDForTopPage ($specialMainID)
-	}
+		#バッファしておいたSpecialMainの重複を削除しEpisodeを抽出
+		$specialMainLinks = $specialMainLinks | Sort-Object -Unique
+		foreach ($specialMainID in $specialMainLinks) {
+			Write-Verbose ('Special Main {0} からEpisodeを抽出中...' -f $specialMainID)
+			$epLinks += Get-LinkFromSpecialMainIDForTopPage ($specialMainID)
+		}
 
-	#バッファしておいたSpecialDetailの重複を削除しEpisodeを抽出
-	$specialDetailLinks = $specialDetailLinks | Sort-Object -Unique
-	foreach ($specialDetailID in $specialDetailLinks) {
-		Write-Verbose ('Special Detail {0} からEpisodeを抽出中...' -f $specialDetailID)
-		$epLinks += Get-LinkFromSpecialDetailIDForTopPage ($specialDetailID)
-	}
+		#バッファしておいたSpecialDetailの重複を削除しEpisodeを抽出
+		$specialDetailLinks = $specialDetailLinks | Sort-Object -Unique
+		foreach ($specialDetailID in $specialDetailLinks) {
+			Write-Verbose ('Special Detail {0} からEpisodeを抽出中...' -f $specialDetailID)
+			$epLinks += Get-LinkFromSpecialDetailIDForTopPage ($specialDetailID)
+		}
 
-	#バッファしておいたTalentの重複を削除しEpisodeを抽出
-	$talentLinks = $talentLinks | Sort-Object -Unique
-	foreach ($talentID in $talentLinks) {
-		Write-Verbose ('Talent {0} からEpisodeを抽出中...' -f $talentID)
-		$epLinks += Get-LinkFromTalentIDForTopPage ($talentID)
-	}
+		#バッファしておいたTalentの重複を削除しEpisodeを抽出
+		$talentLinks = $talentLinks | Sort-Object -Unique
+		foreach ($talentID in $talentLinks) {
+			Write-Verbose ('Talent {0} からEpisodeを抽出中...' -f $talentID)
+			$epLinks += Get-LinkFromTalentIDForTopPage ($talentID)
+		}
 
-	#バッファしておいたSeasonの重複を削除しEpisodeを抽出
-	$seasonLinks = $seasonLinks | Sort-Object -Unique
-	foreach ($seasonID in $seasonLinks) {
-		Write-Verbose ('Season {0} からEpisodeを抽出中...' -f $seasonID)
-		$epLinks += Get-LinkFromSpecialDetailIDForTopPage ($seasonID)
-	}
+		#バッファしておいたSeasonの重複を削除しEpisodeを抽出
+		$seasonLinks = $seasonLinks | Sort-Object -Unique
+		foreach ($seasonID in $seasonLinks) {
+			Write-Verbose ('Season {0} からEpisodeを抽出中...' -f $seasonID)
+			$epLinks += Get-LinkFromSpecialDetailIDForTopPage ($seasonID)
+		}
 
-	#バッファしておいたSeriesの重複を削除しEpisodeを抽出
-	$seriesLinks = $seriesLinks | Sort-Object -Unique
-	foreach ($seriesID in $seriesLinks) {
-		Write-Verbose ('　Series {0} からEpisodeを抽出中...' -f $seriesID)
-		$epLinks += Get-LinkFromSeriesID ($seriesID)
-	}
+		#バッファしておいたSeriesの重複を削除しEpisodeを抽出
+		$seriesLinks = $seriesLinks | Sort-Object -Unique
+		foreach ($seriesID in $seriesLinks) {
+			Write-Verbose ('　Series {0} からEpisodeを抽出中...' -f $seriesID)
+			$epLinks += Get-LinkFromSeriesID ($seriesID)
+		}
+	} catch { Write-Error ('❌️ エラーが発生しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) }
 
 	return $epLinks | Sort-Object -Unique
 
@@ -530,57 +535,60 @@ function Get-LinkFromSiteMap {
 	$epLinks = @()
 
 	$callSearchURL = 'https://tver.jp/sitemap.xml'
-	$searchResultsRaw = Invoke-RestMethod -Uri $callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
-	$searchResults = $searchResultsRaw.urlset.url.loc | Sort-Object -Unique
 
-	foreach ($searchResult in $searchResults) {
-		if ($searchResult -cmatch '\/episodes\/') { $epLinks += ($searchResult) }
-	}
+	try {
+		$searchResultsRaw = Invoke-RestMethod -Uri $callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
+		$searchResults = $searchResultsRaw.urlset.url.loc | Sort-Object -Unique
 
-	if (!$script:sitemapParseEpisodeOnly) {
-		if ($script:enableMultithread) {
-			Write-Debug ('Multithread Processing Enabled')
-			#並列化が有効の場合は並列化
-			if (Test-Path $script:sitemaptFilePath) { $null = Clear-Content $script:sitemaptFilePath }
-			else { $null = New-Item $script:sitemaptFilePath }
-			$searchResults | ForEach-Object -Parallel {
-				if ($_ -cmatch '\/series\/') {
-					$links = @()
-					try {
-						$seriesID = $_.Replace('https://tver.jp/series/', '')
-						Write-Verbose ('　Series {0} からEpisodeを抽出中...' -f $seriesID)
-						$callSearchURL = ('https://platform-api.tver.jp/service/api/v1/callSeriesSeasons/{0}?platform_uid={1}&platform_token={2}' -f $seriesID, $using:script:platformUID, $using:script:platformToken)
-						$searchResultsRaw = Invoke-RestMethod -Uri $callSearchURL -Method 'GET' -Headers $using:script:requestHeader -TimeoutSec $using:script:timeoutSec
-						$searchResults = $searchResultsRaw.Result.Contents
-						if ($searchResults) {
-							foreach ($searchResult in $searchResults) {
-								$seasonID = $searchResult.Content.Id
-								Write-Verbose ('　Season {0} からEpisodeを抽出中...' -f $seasonID)
-								$searchURL = ('https://platform-api.tver.jp/service/api/v1/callSeasonEpisodes/{0}?platform_uid={1}&platform_token={2}' -f $seasonID, $using:script:platformUID, $using:script:platformToken)
-								$resultsRaw = Invoke-RestMethod -Uri $searchURL -Method 'GET' -Headers $using:script:requestHeader -TimeoutSec $using:script:timeoutSec
-								$results = $resultsRaw.Result.Contents.Content.Id
-								foreach ($result in $results) {
-									if ($result -cmatch '^ep') { $links += ('https://tver.jp/episodes/{0}' -f $result) }
+		foreach ($searchResult in $searchResults) {
+			if ($searchResult -cmatch '\/episodes\/') { $epLinks += ($searchResult) }
+		}
+
+		if (!$script:sitemapParseEpisodeOnly) {
+			if ($script:enableMultithread) {
+				Write-Debug ('Multithread Processing Enabled')
+				#並列化が有効の場合は並列化
+				if (Test-Path $script:sitemaptFilePath) { $null = Clear-Content $script:sitemaptFilePath }
+				else { $null = New-Item $script:sitemaptFilePath }
+				$searchResults | ForEach-Object -Parallel {
+					if ($_ -cmatch '\/series\/') {
+						$links = @()
+						try {
+							$seriesID = $_.Replace('https://tver.jp/series/', '')
+							Write-Verbose ('　Series {0} からEpisodeを抽出中...' -f $seriesID)
+							$callSearchURL = ('https://platform-api.tver.jp/service/api/v1/callSeriesSeasons/{0}?platform_uid={1}&platform_token={2}' -f $seriesID, $using:script:platformUID, $using:script:platformToken)
+							$searchResultsRaw = Invoke-RestMethod -Uri $callSearchURL -Method 'GET' -Headers $using:script:requestHeader -TimeoutSec $using:script:timeoutSec
+							$searchResults = $searchResultsRaw.Result.Contents
+							if ($searchResults) {
+								foreach ($searchResult in $searchResults) {
+									$seasonID = $searchResult.Content.Id
+									Write-Verbose ('　Season {0} からEpisodeを抽出中...' -f $seasonID)
+									$searchURL = ('https://platform-api.tver.jp/service/api/v1/callSeasonEpisodes/{0}?platform_uid={1}&platform_token={2}' -f $seasonID, $using:script:platformUID, $using:script:platformToken)
+									$resultsRaw = Invoke-RestMethod -Uri $searchURL -Method 'GET' -Headers $using:script:requestHeader -TimeoutSec $using:script:timeoutSec
+									$results = $resultsRaw.Result.Contents.Content.Id
+									foreach ($result in $results) {
+										if ($result -cmatch '^ep') { $links += ('https://tver.jp/episodes/{0}' -f $result) }
+									}
 								}
 							}
-						}
-					} catch { Write-Warning ('⚠️ エラーが発生しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) }
-					$links | Out-File -Encoding UTF8 -Append -FilePath $using:script:sitemaptFilePath
-				}
-			} -ThrottleLimit $script:multithreadNum
-			$epLinks += @(Get-Content -Path $script:sitemaptFilePath -Encoding UTF8)
-			$null = Remove-Item $script:sitemaptFilePath
-		} else {
-			#並列化が無効の場合は従来型処理
-			foreach ($searchResult in $searchResults) {
-				if ($searchResult -cmatch '\/series\/') {
-					Write-Verbose ('　{0} からEpisodeを抽出中...' -f $searchResult)
-					try { $epLinks += @(Get-LinkFromSeriesID $searchResult.Replace('https://tver.jp/series/', '')) }
-					catch { Write-Warning ('⚠️ エラーが発生しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) }
+						} catch { Write-Warning ('⚠️ エラーが発生しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) }
+						$links | Out-File -Encoding UTF8 -Append -FilePath $using:script:sitemaptFilePath
+					}
+				} -ThrottleLimit $script:multithreadNum
+				$epLinks += @(Get-Content -Path $script:sitemaptFilePath -Encoding UTF8)
+				$null = Remove-Item $script:sitemaptFilePath
+			} else {
+				#並列化が無効の場合は従来型処理
+				foreach ($searchResult in $searchResults) {
+					if ($searchResult -cmatch '\/series\/') {
+						Write-Verbose ('　{0} からEpisodeを抽出中...' -f $searchResult)
+						try { $epLinks += @(Get-LinkFromSeriesID $searchResult.Replace('https://tver.jp/series/', '')) }
+						catch { Write-Warning ('⚠️ エラーが発生しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) }
+					}
 				}
 			}
 		}
-	}
+	} catch { Write-Error ('❌️ エラーが発生しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) }
 
 	return $epLinks | Sort-Object -Unique
 
