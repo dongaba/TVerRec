@@ -5,7 +5,7 @@
 ###################################################################################
 using namespace System.Windows.Threading
 
-if (!$IsWindows) { Write-Error ('❗ Windows以外では動作しません') ; Start-Sleep 10 ; exit 1 }
+if (!$IsWindows) { Write-Error ('❌️ Windows以外では動作しません') ; Start-Sleep 10 ; exit 1 }
 Add-Type -AssemblyName PresentationFramework
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -19,15 +19,14 @@ try {
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	$script:scriptRoot = Convert-Path (Join-Path $script:scriptRoot '../')
 	Set-Location $script:scriptRoot
-} catch { Write-Error ('❗ ディレクトリ設定に失敗しました') ; exit 1 }
-if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
+} catch { Write-Error ('❌️ ディレクトリ設定に失敗しました') ; exit 1 }
+if ($script:scriptRoot.Contains(' ')) { Write-Error ('❌️ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
-	if (!$?) { exit 1 }
-} catch { Write-Error ('❗ 関数の読み込みに失敗しました') ; exit 1 }
+	if (!$?) { Write-Error ('❌️ TVerRecの初期化処理に失敗しました') ; exit 1 }
+} catch { Write-Error ('❌️ 関数の読み込みに失敗しました') ; exit 1 }
 
 #パラメータ設定
-$msgTypes = @('Output', 'Error', 'Warning', 'Verbose', 'Debug', 'Information')
 $jobTerminationStates = @('Completed', 'Failed', 'Stopped')
 $msgTypesColorMap = @{
 	Output      = 'DarkSlateGray'
@@ -37,6 +36,14 @@ $msgTypesColorMap = @{
 	Debug       = 'CornflowerBlue'
 	Information = 'DarkGray'
 }
+
+#ログ出力用変数
+$script:jobMsgs = @()
+$script:msgError = New-Object System.Collections.ArrayList
+$script:msgWarning = New-Object System.Collections.ArrayList
+$script:msgVerbose = New-Object System.Collections.ArrayList
+$script:msgDebug = New-Object System.Collections.ArrayList
+$script:msgInformation = New-Object System.Collections.ArrayList
 
 #endregion 環境設定
 
@@ -55,6 +62,8 @@ function Sync-WpfEvents {
 		},
 		$frame)
 	[Dispatcher]::PushFrame($frame)
+
+	Remove-Variable -Name frame -ErrorAction SilentlyContinue
 }
 
 #テキストボックスへのログ出力と再描画
@@ -67,6 +76,8 @@ function Out-ExecutionLog {
 	$rtfRange.Text = ("{0}`n" -f $Message)
 	$rtfRange.ApplyPropertyValue([System.Windows.Documents.TextElement]::ForegroundProperty, $msgTypesColorMap[$type] )
 	$outText.ScrollToEnd()
+
+	Remove-Variable -Name message, type, rtfRange -ErrorAction SilentlyContinue
 }
 
 #endregion 関数定義
@@ -82,15 +93,14 @@ try {
 	$mainXaml = $mainXaml -ireplace 'mc:Ignorable="d"', '' -ireplace 'x:N', 'N' -ireplace 'x:Class=".*?"', ''
 	[xml]$mainCleanXaml = $mainXaml
 	$mainWindow = [System.Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $mainCleanXaml))
-} catch { Write-Error ('❗ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。') ; exit 1 }
+} catch { Write-Error ('❌️ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。') ; exit 1 }
 
 #PowerShellのウィンドウを非表示に
 Add-Type -Name Window -Namespace Console -MemberDefinition '
 [DllImport("Kernel32.dll")]public static extern IntPtr GetConsoleWindow() ;
 [DllImport("user32.dll")]public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow) ;
 '
-$console = [Console.Window]::GetConsoleWindow()
-$null = [Console.Window]::ShowWindow($console, 0)
+$null = [Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0)
 
 #タスクバーのアイコンにオーバーレイ表示
 $mainWindow.TaskbarItemInfo.Overlay = ConvertFrom-Base64 $script:iconBase64
@@ -132,14 +142,14 @@ $btns = @(
 
 #バックグラウンドジョブ化するボタンの処理内容
 $scriptBlocks = @{
-	$btns[0] = { . './download_single.ps1' $true }
-	$btns[1] = { . './download_bulk.ps1' $true }
-	$btns[2] = { . './generate_list.ps1' $true }
-	$btns[3] = { . './download_list.ps1' $true }
-	$btns[4] = { . './delete_trash.ps1' $true }
-	$btns[5] = { . './validate_video.ps1' $true }
-	$btns[6] = { . './move_video.ps1' $true }
-	$btns[7] = { . './loop.ps1' $true }
+	$btns[0] = { & './download_single.ps1' $true }
+	$btns[1] = { & './download_bulk.ps1' $true }
+	$btns[2] = { & './generate_list.ps1' $true }
+	$btns[3] = { & './download_list.ps1' $true }
+	$btns[4] = { & './delete_trash.ps1' $true }
+	$btns[5] = { & './validate_video.ps1' $true }
+	$btns[6] = { & './move_video.ps1' $true }
+	$btns[7] = { & './loop.ps1' $true }
 }
 
 #バックグラウンドジョブ化する処理の名前
@@ -186,6 +196,12 @@ $btnKeywordOpen.Add_Click({ Invoke-Item $script:keywordFilePath })
 $btnIgnoreOpen.Add_Click({ Invoke-Item $script:ignoreFilePath })
 $btnListOpen.Add_Click({ Invoke-Item $script:listFilePath })
 $btnClearLog.Add_Click({
+		$script:jobMsgs = @()
+		$script:msgError = New-Object System.Collections.ArrayList
+		$script:msgWarning = New-Object System.Collections.ArrayList
+		$script:msgVerbose = New-Object System.Collections.ArrayList
+		$script:msgDebug = New-Object System.Collections.ArrayList
+		$script:msgInformation = New-Object System.Collections.ArrayList
 		$outText.Document.Blocks.Clear()
 		Invoke-GarbageCollection
 	})
@@ -199,7 +215,7 @@ $btnKillAll.Add_Click({
 	})
 $btnWiki.Add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
 $btnsetting.Add_Click({
-		. 'gui/gui_setting.ps1'
+		& 'gui/gui_setting.ps1'
 		if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 			. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
 		}
@@ -218,8 +234,8 @@ $btnKillAll.IsEnabled = $false
 try {
 	$null = $mainWindow.Show()
 	$null = $mainWindow.Activate()
-	$null = [Console.Window]::ShowWindow($console, 0)
-} catch { Write-Error ('❗ ウィンドウを描画できませんでした。TVerRecが破損しています。') ; exit 1 }
+	$null = [Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0)
+} catch { Write-Error ('❌️ ウィンドウを描画できませんでした。TVerRecが破損しています。') ; exit 1 }
 
 #endregion ウィンドウ表示
 
@@ -231,27 +247,29 @@ while ($mainWindow.IsVisible) {
 		#ジョブがある場合の処理
 		foreach ($job in $jobs) {
 			#各メッセージタイプごとに内容を取得(ただしReceive-Jobは次Stepで実行するので取りこぼす可能性あり)
-			foreach ($msgType in $msgTypes) {
-				$variableValue = if ($job.$msgType) { $job.$msgType } else { $null }
-				Set-Variable -Name ('msg' + $msgType) -Value $variableValue
-			}
+			if ($job.Error) { $null = $script:msgError.Add([String]$job.Error) }
+			if ($job.Warning) { $null = $script:msgWarning.Add([String]$job.Warning) }
+			if ($job.Verbose) { $null = $script:msgVerbose.Add([String]$job.Verbose) }
+			if ($job.Debug) { $null = $script:msgDebug.Add([String]$job.Debug) }
+			if ($job.Information) { $null = $script:msgInformation.Add([String]$job.Information) }
+
+			#RichTextBoxのメモリ使用量を削減するため、最大行数を設定して最新のみを表示対象とする
+			#毎回RichTextBoxの内容をクリアして、最大行数分を再描画しているため、パフォーマンスは悪いかも
+			$outText.Document.Blocks.Clear()
+			$script:jobMsgs += @(Receive-Job $job *>&1)
+			if ($script:jobMsgs) { if ($script:jobMsgs.Count -gt $script:guiMaxExecLogLines) { $script:jobMsgs = $script:jobMsgs[$script:extractionStartPos..-1] } }
 
 			#Jobからメッセージを取得し事前に取得したメッセージタイプと照合し色付け
-			$jobMsgs = (Receive-Job $job *>&1)
-			foreach ($jobMsg in $jobMsgs) {
-				switch ($true) {
-					($msgError -contains $jobMsg) { if ($msgError) { Out-ExecutionLog -Message ($jobMsg -join "`n") -Type 'Error' }; continue }
-					($msgWarning -contains $jobMsg) { if ($msgWarning) { Out-ExecutionLog -Message ($jobMsg -join "`n") -Type 'Warning' }; continue }
-					($msgVerbose -contains $jobMsg) { if ($msgVerbose) { Out-ExecutionLog -Message ($jobMsg -join "`n") -Type 'Verbose' }; continue }
-					($msgDebug -contains $jobMsg) { if ($msgDebug) { Out-ExecutionLog -Message ($jobMsg -join "`n") -Type 'Debug' }; continue }
-					($msgInformation -contains $jobMsg) { if ($msgInformation) { Out-ExecutionLog -Message ($jobMsg -join "`n") -Type 'Information' }; continue }
-					default { Out-ExecutionLog -Message ($jobMsg -join "`n") -Type 'Output' }
+			foreach ($jobMsg in $script:jobMsgs) {
+				$logType = switch ($jobMsg) {
+					{ $script:msgError -contains $_ } { 'Error' }
+					{ $script:msgWarning -contains $_ } { 'Warning' }
+					{ $script:msgVerbose -contains $_ } { 'Verbose' }
+					{ $script:msgDebug -contains $_ } { 'Debug' }
+					{ $script:msgInformation -contains $_ } { 'Information' }
+					Default { 'Output' }
 				}
-			}
-
-			#各メッセージタイプごとの内容を保存する変数を開放
-			foreach ($msgType in $msgTypes) {
-				Remove-Variable -Name ('msg' + $msgType)
+				Out-ExecutionLog -Message ($jobMsg -join "`n") -Type $logType
 			}
 
 			#終了したジョブのボタンの再有効化
@@ -279,6 +297,16 @@ while ($mainWindow.IsVisible) {
 
 #Windowが閉じられたら乗っているゴミジョブを削除して終了
 Get-Job | Receive-Job -Wait -AutoRemoveJob -Force
+
+Remove-Variable -Name jobTerminationStates, msgTypesColorMap -ErrorAction SilentlyContinue
+Remove-Variable -Name jobMsgs, msgError, msgWarning, msgVerbose, msgDebug, msgInformation -ErrorAction SilentlyContinue
+Remove-Variable -Name mainXaml, mainCleanXaml, mainWindow -ErrorAction SilentlyContinue
+Remove-Variable -Name LogoImage, lblVersion, outText -ErrorAction SilentlyContinue
+Remove-Variable -Name btnBulk, btnDelete, btnList, btnListGen, btnLoop, btnMove, btnSingle, btnValidate -ErrorAction SilentlyContinue
+Remove-Variable -Name btns, scriptBlocks, threadNames, btn, lblStatus -ErrorAction SilentlyContinue
+Remove-Variable -Name btnWorkOpen, btnDownloadOpen, btnsaveOpen, btnKeywordOpen, btnIgnoreOpen, btnListOpen -ErrorAction SilentlyContinue
+Remove-Variable -Name btnClearLog, btnKillAll, btnWiki, btnsetting, btnExit -ErrorAction SilentlyContinue
+Remove-Variable -Name jobs, job, jobMsg, logType -ErrorAction SilentlyContinue
 
 #endregion 終了処理
 

@@ -3,7 +3,10 @@
 #		関数読み込みスクリプト
 #
 ###################################################################################
+
 Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+
+try { $launchMode = [String]$args[0] } catch { $launchMode = '' }
 
 #----------------------------------------------------------------------
 #設定ファイル読み込み
@@ -12,36 +15,37 @@ $script:devDir = Join-Path $script:scriptRoot '../dev'
 
 if ( Test-Path (Join-Path $script:confDir 'system_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'system_setting.ps1')) }
-	catch { Write-Error ('❗ システム設定ファイルの読み込みに失敗しました') ; exit 1 }
-} else { Write-Error ('❗ システム設定ファイルが見つかりません') ; exit 1 }
+	catch { Write-Error ('❌️ システム設定ファイルの読み込みに失敗しました') ; exit 1 }
+} else { Write-Error ('❌️ システム設定ファイルが見つかりません') ; exit 1 }
 
 if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
-	catch { Write-Error ('❗ ユーザ設定ファイルの読み込みに失敗しました') ; exit 1 }
+	catch { Write-Error ('❌️ ユーザ設定ファイルの読み込みに失敗しました') ; exit 1 }
 } elseif ($IsWindows) {
 	Write-Output ('ユーザ設定ファイルを作成する必要があります')
-	try { . 'gui/gui_setting.ps1' }
-	catch { Write-Error ('❗ 設定画面の起動に失敗しました') ; exit 1 }
+	try { & 'gui/gui_setting.ps1' }
+	catch { Write-Error ('❌️ 設定画面の起動に失敗しました') ; exit 1 }
 	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 		try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
-		catch { Write-Error ('❗ ユーザ設定ファイルの読み込みに失敗しました') ; exit 1 }
-	} else { Write-Error ('❗ ユーザ設定が完了してません') ; exit 1 }
-} else { Write-Error ('❗ ユーザ設定が完了してません') ; exit 1 }
+		catch { Write-Error ('❌️ ユーザ設定ファイルの読み込みに失敗しました') ; exit 1 }
+	} else { Write-Error ('❌️ ユーザ設定が完了してません') ; exit 1 }
+} else { Write-Error ('❌️ ユーザ設定が完了してません') ; exit 1 }
 
 #----------------------------------------------------------------------
 #外部関数ファイルの読み込み
 try { . (Convert-Path (Join-Path $script:scriptRoot 'functions/common_functions.ps1')) }
-catch { Write-Error ('❗ 外部関数ファイル(common_functions.ps1)の読み込みに失敗しました') ; exit 1 }
+catch { Write-Error ('❌️ 外部関数ファイル(common_functions.ps1)の読み込みに失敗しました') ; exit 1 }
 try { . (Convert-Path (Join-Path $script:scriptRoot 'functions/tver_functions.ps1')) }
-catch { Write-Error ('❗ 外部関数ファイル(tver_functions.ps1)の読み込みに失敗しました') ; exit 1 }
+catch { Write-Error ('❌️ 外部関数ファイル(tver_functions.ps1)の読み込みに失敗しました') ; exit 1 }
 try { . (Convert-Path (Join-Path $script:scriptRoot 'functions/tverrec_functions.ps1')) }
-catch { Write-Error ('❗ 外部関数ファイル(tverrec_functions.ps1)の読み込みに失敗しました') ; exit 1 }
+catch { Write-Error ('❌️ 外部関数ファイル(tverrec_functions.ps1)の読み込みに失敗しました') ; exit 1 }
 
 #----------------------------------------------------------------------
 #開発環境用に設定上書き
 try {
 	$devFunctionFile = Join-Path $script:devDir 'dev_funcitons.ps1'
 	$devConfFile = Join-Path $script:devDir 'dev_setting.ps1'
+
 	if (Test-Path $devConfFile) {
 		. $devConfFile
 		Write-Warning ('💡 開発ファイル用設定ファイルを読み込みました')
@@ -50,7 +54,15 @@ try {
 		. $devFunctionFile
 		Write-Warning ('💡 開発ファイル用共通関数ファイルを読み込みました')
 	}
-} catch { Write-Error ('❗ 開発用設定ファイルの読み込みに失敗しました') ; exit 1 }
+
+	Remove-Variable -Name devFunctionFile, devConfFile -ErrorAction SilentlyContinue
+
+} catch { Write-Error ('❌️ 開発用設定ファイルの読み込みに失敗しました') ; exit 1 }
+
+#----------------------------------------------------------------------
+#連続実行時は以降の処理は不要なのでexit
+#不要な理由はloop.ps1は「.」ではなく「&」で各処理を呼び出ししているので各種変数が不要なため
+if ($launchMode -eq 'loop') { exit 0 }
 
 #----------------------------------------------------------------------
 #アップデータのアップデート(アップデート後の実行時にアップデータを更新)
@@ -67,6 +79,10 @@ if (Test-Path (Join-Path $script:scriptRoot '../log/updater_update.txt')) {
 		Write-Warning ('💡 アップデータのアップデートに失敗しました。ご自身でアップデートを完了させる必要があります')
 	}
 }
+
+#TVerRecの最新化チェック
+Invoke-TVerRecUpdateCheck
+if (!$?) { Write-Error ('❌️ TVerRecのバージョンチェックに失敗しました') ; exit 1 }
 
 #----------------------------------------------------------------------
 #ダウンロード対象キーワードのパス
@@ -108,36 +124,12 @@ else { $script:ffprobePath = Join-Path $script:binDir 'ffprobe' }
 
 #GUI起動を判定
 if ( $myInvocation.ScriptName.Contains('gui')) {
-	#TVerRecの最新化チェック
-	Invoke-TVerRecUpdateCheck
-	if (!$?) { exit 1 }
+	#GUI版の最大ログ行数の設定
+	$script:extractionStartPos = $script:guiMaxExecLogLines * -1
 } else {
-	if (!$script:guiMode) {
-		[Console]::ForegroundColor = 'Red'
-		Write-Output ('')
-		Write-Output ('===========================================================================')
-		Write-Output ('                                                                           ')
-		Write-Output ('        ████████ ██    ██ ███████ ██████  ██████  ███████  ██████          ')
-		Write-Output ('           ██    ██    ██ ██      ██   ██ ██   ██ ██      ██               ')
-		Write-Output ('           ██    ██    ██ █████   ██████  ██████  █████   ██               ')
-		Write-Output ('           ██     ██  ██  ██      ██   ██ ██   ██ ██      ██               ')
-		Write-Output ('           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          ')
-		Write-Output ('                                                                           ')
-		Write-Output ("{0,$(56 - $script:appVersion.Length)}Version. {1}" -f ' ', $script:appVersion)
-		Write-Output ('                                                                           ')
-		Write-Output ('===========================================================================')
-		Write-Output ('')
-		[Console]::ResetColor()
-	}
-
+	#Logo表示
+	if (!$script:guiMode) { Show-Logo }
 	#youtube-dl/ffmpegの最新化チェック
 	if (!$script:disableUpdateYoutubedl) { Invoke-ToolUpdateCheck -scriptName 'update_youtube-dl.ps1' -targetName 'youtube-dl' }
 	if (!$script:disableUpdateFfmpeg) { Invoke-ToolUpdateCheck -scriptName 'update_ffmpeg.ps1' -targetName 'ffmpeg' }
-
-	#TVerRecの最新化チェック
-	if ($script:appName -eq 'TVerRec') {
-		Invoke-TVerRecUpdateCheck
-		if (!$?) { exit 1 }
-	}
-
 }

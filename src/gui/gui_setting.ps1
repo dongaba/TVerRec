@@ -5,7 +5,7 @@
 ###################################################################################
 using namespace System.Windows.Threading
 
-if (!$IsWindows) { Write-Error ('❗ Windows以外では動作しません') ; Start-Sleep 10 ; exit 1 }
+if (!$IsWindows) { Write-Error ('❌️ Windows以外では動作しません') ; Start-Sleep 10 ; exit 1 }
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName PresentationFramework
 
@@ -18,15 +18,15 @@ try {
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	$script:scriptRoot = Convert-Path (Join-Path $script:scriptRoot '../')
 	Set-Location $script:scriptRoot
-} catch { Write-Error ('❗ ディレクトリ設定に失敗しました') ; exit 1 }
-if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
+} catch { Write-Error ('❌️ ディレクトリ設定に失敗しました') ; exit 1 }
+if ($script:scriptRoot.Contains(' ')) { Write-Error ('❌️ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 
 #----------------------------------------------------------------------
 #設定ファイル読み込み
 try {
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	. (Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
-} catch { Write-Error ('❗ システム設定ファイルの読み込みに失敗しました') ; exit 1 }
+} catch { Write-Error ('❌️ システム設定ファイルの読み込みに失敗しました') ; exit 1 }
 
 #----------------------------------------------------------------------
 #外部関数ファイルの読み込み
@@ -34,7 +34,7 @@ try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/common_functions.ps1'))
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/tver_functions.ps1'))
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/tverrec_functions.ps1'))
-} catch { Write-Error ('❗ 外部関数ファイルの読み込みに失敗しました') ; exit 1 }
+} catch { Write-Error ('❌️ 外部関数ファイルの読み込みに失敗しました') ; exit 1 }
 
 #endregion 環境設定
 
@@ -53,6 +53,7 @@ function Sync-WpfEvents {
 		},
 		$frame)
 	[Dispatcher]::PushFrame($frame)
+	Remove-Variable -Name frame -ErrorAction SilentlyContinue
 }
 
 #ディレクトリ選択ダイアログ
@@ -60,10 +61,10 @@ function Select-Folder($description, $textBox) {
 	$fd.Description = $description
 	$fd.RootFolder = [System.Environment+SpecialFolder]::MyComputer
 	$fd.SelectedPath = $textBox.Text
-
 	if ($fd.ShowDialog($form) -eq [System.Windows.Forms.DialogResult]::OK) {
 		$textBox.Text = $fd.SelectedPath
 	}
+	Remove-Variable -Name description, textBox -ErrorAction SilentlyContinue
 }
 
 #system_setting.ps1から各設定項目を読み込む
@@ -71,10 +72,11 @@ function Read-SystemSetting {
 	Param (
 		[Parameter(Mandatory = $true)][String]$key
 	)
-	try { $defaultSetting = (Select-String -Pattern ('^{0}' -f $key.Replace('$', '\$')) -LiteralPath $systemSettingFile | ForEach-Object { $_.Line }).split('=')[1].Trim() }
-	catch { $defaultSetting = '' }
-
+	$defaultSetting = try {
+		(Select-String -Pattern ('^{0}' -f $key.Replace('$', '\$')) -LiteralPath $systemSettingFile | ForEach-Object { $_.Line }).split('=')[1].Trim()
+	} catch { '' }
 	return $defaultSetting.Trim("'")
+	Remove-Variable -Name key, defaultSetting -ErrorAction SilentlyContinue
 }
 
 #user_setting.ps1から各設定項目を読み込む
@@ -82,10 +84,13 @@ function Read-UserSetting {
 	Param (
 		[Parameter(Mandatory = $true)][String]$key
 	)
-	try { $currentSetting = (Select-String -Pattern ('^{0}' -f $key.Replace('$', '\$')) -LiteralPath $userSettingFile | ForEach-Object { $_.Line }).split('=', 2)[1].Trim() }
-	catch { $currentSetting = '' }
-
+	$currentSetting = ''
+	if (Test-Path (Join-Path $script:confDir 'user_setting.ps1')) {
+		try { $currentSetting = (Select-String -Pattern ('^{0}' -f [regex]::Escape($key.Replace('$', '\$'))) -LiteralPath $userSettingFile | ForEach-Object { $_.Line }).split('=')[1].Trim() }
+		catch { return }
+	}
 	return $currentSetting.Trim("'")
+	Remove-Variable -Name key, currentSetting -ErrorAction SilentlyContinue
 }
 
 #user_setting.ps1に各設定項目を書き込む
@@ -95,42 +100,40 @@ function Save-UserSetting {
 	$startSegment = '##Start Setting Generated from GUI'
 	$endSegment = '##End Setting Generated from GUI'
 
-	#自動生成部分の行数を取得
-	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
+	#ファイルが無ければ作ればいい
+	if (!(Test-Path $userSettingFile)) {
+		$null = New-Item -Path $userSettingFile -ItemType File
 		$content = Get-Content -LiteralPath $userSettingFile
-		try { $totalLineNum = $content.Count + 1 } catch { $totalLineNum = 0 }
-		try { $headLineNum = ($content | Select-String $startSegment | ForEach-Object { $_.LineNumber }) - 2 } catch { $headLineNum = 0 }
-		try { $tailLineNum = $totalLineNum - ($content | Select-String $endSegment  | ForEach-Object { $_.LineNumber }) - 1 } catch { $tailLineNum = 0 }
-	} else { $totalLineNum = 0 ; $headLineNum = 0 ; $tailLineNum = 0 }
+		$totalLineNum = 0
+	} else {
+		$content = Get-Content -LiteralPath $userSettingFile
+		#自動生成部分の行数を取得
+		$totalLineNum = try { $content.Count + 1 } catch { 0 }
+		$headLineNum = try { ($content | Select-String $startSegment).LineNumber - 2 } catch { 0 }
+		$tailLineNum = try { $totalLineNum - ($content | Select-String $endSegment).LineNumber - 1 } catch { 0 }
+	}
 
 	#自動生成より前の部分
-	$newSetting += $content[0..$headLineNum]
+	#自動生成の開始位置が2行目以降の場合にだけ自動生成寄りの前の部分がある
+	if (Test-Path variable:headLineNum) { if ($headLineNum -ge 0 ) { $newSetting += $content[0..$headLineNum] } }
 
 	#自動生成の部分
 	$newSetting += $startSegment
-	if ($null -ne $settingAttributes) {
+	if ($settingAttributes) {
 		foreach ($settingAttribute in $settingAttributes) {
 			$settingBoxName = $settingAttribute.Replace('$script:', '')
 			$settingBox = $settingWindow.FindName($settingBoxName)
-
-			switch ($true) {
-				#出力しない
-				($settingBox.Text -in @('', 'デフォルト値', '未設定')) { continue }
-				#True/False
-				($settingBox.Text -eq 'する') { $newSetting += ('{0} = {1}' -f $settingAttribute, '$true') ; continue }
-				($settingBox.Text -eq 'しない') { $newSetting += ('{0} = {1}' -f $settingAttribute, '$false') ; continue }
-				#数値
-				( [Int]::TryParse($settingBox.Text, [ref]$null) ) { $newSetting += ('{0} = {1}' -f $settingAttribute, $settingBox.Text) ; continue }
-				#Powershellの変数や関数等を含む場合はシングルクォーテーション不要
-				($local:settingBox.Text.Contains('$') `
-					-or $local:settingBox.Text.Contains('{') `
-					-or $local:settingBox.Text.Contains('(') `
-					-or $local:settingBox.Text.Contains('}') `
-					-or $local:settingBox.Text.Contains(')') ) {
-					$newSetting += ('{0} = {1}' -f $settingAttribute, $settingBox.Text) ; continue
+			switch -wildcard ($settingBox.Text) {
+				{ $_ -in '', 'デフォルト値', '未設定' } { continue }
+				{ $_ -eq 'する' } { $newSetting += ('{0} = $true' -f $settingAttribute); continue }
+				{ $_ -eq 'しない' } { $newSetting += ('{0} = $false' -f $settingAttribute); continue }
+				default {
+					if ([Int]::TryParse($settingBox.Text, [ref]$null) -or $settingBox.Text -match '[$({})]') {
+						$newSetting += ('{0} = {1}' -f $settingAttribute, $settingBox.Text)
+					} else {
+						$newSetting += ('{0} = ''{1}''' -f $settingAttribute, $settingBox.Text)
+					}
 				}
-				#デフォルトはシングルクォーテーション必要
-				default { $newSetting += ('{0} = ''{1}''' -f $settingAttribute, $settingBox.Text) ; continue }
 			}
 		}
 	}
@@ -139,11 +142,12 @@ function Save-UserSetting {
 	#自動生成より後の部分
 	if ( $totalLineNum -ne 0 ) {
 		try { $newSetting += Get-Content $userSettingFile -Tail $tailLineNum }
-		catch { Write-Warning ('❗ 自動生成の終了部分を特定できませんでした') }
+		catch { Write-Warning ('⚠️ 自動生成の終了部分を特定できませんでした') }
 	}
 
 	#改行コードLFを強制 + NFCで出力
 	$newSetting.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC)  | Out-File -LiteralPath $userSettingFile -Encoding UTF8 -NoNewline
+	Remove-Variable -Name newSetting, startSegment, endSegment, content, totalLineNum, headLineNum, tailLineNum, settingBoxName, settingBox -ErrorAction SilentlyContinue
 }
 
 #endregion 関数定義
@@ -162,15 +166,14 @@ try {
 	$mainXaml = $mainXaml -ireplace 'mc:Ignorable="d"', '' -ireplace 'x:N', 'N' -ireplace 'x:Class=".*?"', ''
 	[xml]$mainCleanXaml = $mainXaml
 	$settingWindow = [System.Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $mainCleanXaml))
-} catch { Write-Error ('❗ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。') ; exit 1 }
+} catch { Write-Error ('❌️ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。') ; exit 1 }
 
 #PowerShellのウィンドウを非表示に
 Add-Type -Name Window -Namespace Console -MemberDefinition '
 [DllImport("Kernel32.dll")]public static extern IntPtr GetConsoleWindow() ;
 [DllImport("user32.dll")]public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow) ;
 '
-$console = [Console.Window]::GetConsoleWindow()
-$null = [Console.Window]::ShowWindow($console, 0)
+$null = [Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0)
 
 #タスクバーのアイコンにオーバーレイ表示
 $settingWindow.TaskbarItemInfo.Overlay = ConvertFrom-Base64 $script:iconBase64
@@ -220,40 +223,41 @@ $btnsaveBaseDir.Add_Click({
 #----------------------------------------------------------------------
 #region 設定ファイルの読み込み
 
-$settingAttributes = @()
-$settingAttributes += '$script:downloadBaseDir'
-$settingAttributes += '$script:downloadWorkDir'
-$settingAttributes += '$script:saveBaseDir'
-$settingAttributes += '$script:parallelDownloadFileNum'
-$settingAttributes += '$script:parallelDownloadNumPerFile'
-$settingAttributes += '$script:loopCycle'
-$settingAttributes += '$script:enableMultithread'
-$settingAttributes += '$script:multithreadNum'
-$settingAttributes += '$script:disableToastNotification'
-$settingAttributes += '$script:rateLimit'
-$settingAttributes += '$script:timeoutSec'
-$settingAttributes += '$script:histRetentionPeriod'
-$settingAttributes += '$script:sortVideoByMedia'
-$settingAttributes += '$script:addSeriesName'
-$settingAttributes += '$script:addSeasonName'
-$settingAttributes += '$script:addBrodcastDate'
-$settingAttributes += '$script:addEpisodeNumber'
-$settingAttributes += '$script:removeSpecialNote'
-$settingAttributes += '$script:preferredYoutubedl'
-$settingAttributes += '$script:disableUpdateYoutubedl'
-$settingAttributes += '$script:disableUpdateFfmpeg'
-$settingAttributes += '$script:forceSoftwareDecodeFlag'
-$settingAttributes += '$script:simplifiedValidation'
-$settingAttributes += '$script:disableValidation'
-$settingAttributes += '$script:sitemapParseEpisodeOnly'
-$settingAttributes += '$script:embedSubtitle'
-$settingAttributes += '$script:embedMetatag'
-$settingAttributes += '$script:windowShowStyle'
-$settingAttributes += '$script:ffmpegDecodeOption'
-$settingAttributes += '$script:ytdlOption'
-$settingAttributes += '$script:ytdlNonTVerFileName'
-$settingAttributes += '$script:forceSingleDownload'
-$settingAttributes += '$script:extractDescTextToList'
+$settingAttributes = @(
+	'$script:downloadBaseDir',
+	'$script:downloadWorkDir',
+	'$script:saveBaseDir',
+	'$script:parallelDownloadFileNum',
+	'$script:parallelDownloadNumPerFile',
+	'$script:loopCycle',
+	'$script:enableMultithread',
+	'$script:multithreadNum',
+	'$script:disableToastNotification',
+	'$script:rateLimit',
+	'$script:timeoutSec',
+	'$script:histRetentionPeriod',
+	'$script:sortVideoByMedia',
+	'$script:addSeriesName',
+	'$script:addSeasonName',
+	'$script:addBrodcastDate',
+	'$script:addEpisodeNumber',
+	'$script:removeSpecialNote',
+	'$script:preferredYoutubedl',
+	'$script:disableUpdateYoutubedl',
+	'$script:disableUpdateFfmpeg',
+	'$script:forceSoftwareDecodeFlag',
+	'$script:simplifiedValidation',
+	'$script:disableValidation',
+	'$script:sitemapParseEpisodeOnly',
+	'$script:embedSubtitle',
+	'$script:embedMetatag',
+	'$script:windowShowStyle',
+	'$script:ffmpegDecodeOption',
+	'$script:ytdlOption',
+	'$script:ytdlNonTVerFileName',
+	'$script:forceSingleDownload',
+	'$script:extractDescTextToList'
+)
 
 $defaultSetting = @{}
 $currentSetting = @{}
@@ -261,8 +265,14 @@ $currentSetting = @{}
 foreach ($settingAttribute in $settingAttributes) {
 	$defaultSetting[$settingAttribute] = Read-SystemSetting $settingAttribute
 	$currentSetting[$settingAttribute] = Read-UserSetting $settingAttribute
+
+	#変数名から「$script:」を取った名前がBox名
 	$settingBoxName = $settingAttribute.Replace('$script:', '')
+
+	#まずはシステム設定の値をGUIに反映
 	$settingBox = $settingWindow.FindName($settingBoxName)
+
+	#次にユーザー設定の値をGUIに反映
 	if ( (Read-UserSetting $settingAttribute) -ne '') {
 		$settingBox.Text = Read-UserSetting $settingAttribute
 		if ($settingBox.Text -eq '$true') { $settingBox.Text = 'する' }
@@ -279,13 +289,13 @@ foreach ($settingAttribute in $settingAttributes) {
 try {
 	$null = $settingWindow.Show()
 	$null = $settingWindow.Activate()
-	$null = [Console.Window]::ShowWindow($console, 0)
-} catch { Write-Error ('❗ ウィンドウを描画できませんでした。TVerRecが破損しています。') ; exit 1 }
+	$null = [Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0)
+} catch { Write-Error ('❌️ ウィンドウを描画できませんでした。TVerRecが破損しています。') ; exit 1 }
 
 #メインウィンドウ取得
-$process = [Diagnostics.Process]::GetCurrentProcess()
+$currentProcess = [Diagnostics.Process]::GetCurrentProcess()
 $form = New-Object Windows.Forms.NativeWindow
-$form.AssignHandle($process.MainWindowHandle)
+$form.AssignHandle($currentProcess.MainWindowHandle)
 $fd = New-Object System.Windows.Forms.FolderBrowserDialog
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -298,7 +308,7 @@ while ($settingWindow.IsVisible) {
 	#GUIイベント処理
 	Sync-WpfEvents
 
-	Start-Sleep -Milliseconds 10
+	Start-Sleep -Milliseconds 100
 }
 
 #endregion ウィンドウ表示後のループ処理
@@ -308,3 +318,5 @@ while ($settingWindow.IsVisible) {
 #終了処理
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+
+Remove-Variable -Name systemSettingFile, userSettingFile, mainXaml, mainCleanXaml, settingWindow, settingAttributes, defaultSetting, currentSetting, settingAttribute, settingBoxName, settingBox, currentProcess, form, fd -ErrorAction SilentlyContinue

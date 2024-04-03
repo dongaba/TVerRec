@@ -4,7 +4,7 @@
 #
 ###################################################################################
 
-try { $script:guiMode = [String]$args[0] } catch { $script:guiMode = '' }
+$script:guiMode = if ($args) { [String]$args[0] } else { '' }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定
@@ -16,12 +16,12 @@ try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path .// }
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
-} catch { Write-Error ('❗ カレントディレクトリの設定に失敗しました') ; exit 1 }
-if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
+} catch { Write-Error ('❌️ カレントディレクトリの設定に失敗しました') ; exit 1 }
+if ($script:scriptRoot.Contains(' ')) { Write-Error ('❌️ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
-	if (!$?) { exit 1 }
-} catch { Write-Error ('❗ 関数の読み込みに失敗しました') ; exit 1 }
+	if (!$?) { Write-Error ('❌️ TVerRecの初期化処理に失敗しました') ; exit 1 }
+} catch { Write-Error ('❌️ 関数の読み込みに失敗しました') ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -39,7 +39,7 @@ while ($true) {
 	$videoPageURL = ''
 	#移動先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
 	if (!(Test-Path $script:downloadBaseDir -PathType Container)) {
-		Write-Error ('❗ 番組ダウンロード先ディレクトリにアクセスできません。終了します') ; exit 1
+		Write-Error ('❌️ 番組ダウンロード先ディレクトリにアクセスできません。終了します') ; exit 1
 	}
 	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 	Wait-YtdlProcess $script:parallelDownloadFileNum
@@ -58,7 +58,7 @@ while ($true) {
 			#TVer以外のサイトへの対応
 			Write-Output ('{0}{1}' -f 'ダウンロード：', $videoPageURL)
 			try { Invoke-NonTverYtdl $videoPageURL }
-			catch { Write-Warning ('❗ youtube-dlの起動に失敗しました') }
+			catch { Write-Warning ('⚠️ youtube-dlの起動に失敗しました') }
 			#5秒待機
 			Start-Sleep -Seconds 5
 		} else {
@@ -73,9 +73,11 @@ while ($true) {
 	} else { break }
 }
 
+Remove-Variable -Name keyword, videoPageURL -ErrorAction SilentlyContinue
+
 Invoke-GarbageCollection
 
 Write-Output ('')
-Write-Output ('---------------------------------------------------------------------------')
-Write-Output ('ダウンロード処理を終了しました。                                           ')
-Write-Output ('---------------------------------------------------------------------------')
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+Write-Output ('ダウンロード処理を終了しました。')
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
