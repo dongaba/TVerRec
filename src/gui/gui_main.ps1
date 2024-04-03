@@ -100,8 +100,7 @@ Add-Type -Name Window -Namespace Console -MemberDefinition '
 [DllImport("Kernel32.dll")]public static extern IntPtr GetConsoleWindow() ;
 [DllImport("user32.dll")]public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow) ;
 '
-$console = [Console.Window]::GetConsoleWindow()
-$null = [Console.Window]::ShowWindow($console, 0)
+$null = [Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0)
 
 #タスクバーのアイコンにオーバーレイ表示
 $mainWindow.TaskbarItemInfo.Overlay = ConvertFrom-Base64 $script:iconBase64
@@ -143,14 +142,14 @@ $btns = @(
 
 #バックグラウンドジョブ化するボタンの処理内容
 $scriptBlocks = @{
-	$btns[0] = { . './download_single.ps1' $true }
-	$btns[1] = { . './download_bulk.ps1' $true }
-	$btns[2] = { . './generate_list.ps1' $true }
-	$btns[3] = { . './download_list.ps1' $true }
-	$btns[4] = { . './delete_trash.ps1' $true }
-	$btns[5] = { . './validate_video.ps1' $true }
-	$btns[6] = { . './move_video.ps1' $true }
-	$btns[7] = { . './loop.ps1' $true }
+	$btns[0] = { & './download_single.ps1' $true }
+	$btns[1] = { & './download_bulk.ps1' $true }
+	$btns[2] = { & './generate_list.ps1' $true }
+	$btns[3] = { & './download_list.ps1' $true }
+	$btns[4] = { & './delete_trash.ps1' $true }
+	$btns[5] = { & './validate_video.ps1' $true }
+	$btns[6] = { & './move_video.ps1' $true }
+	$btns[7] = { & './loop.ps1' $true }
 }
 
 #バックグラウンドジョブ化する処理の名前
@@ -216,7 +215,7 @@ $btnKillAll.Add_Click({
 	})
 $btnWiki.Add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
 $btnsetting.Add_Click({
-		. 'gui/gui_setting.ps1'
+		& 'gui/gui_setting.ps1'
 		if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 			. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
 		}
@@ -235,7 +234,7 @@ $btnKillAll.IsEnabled = $false
 try {
 	$null = $mainWindow.Show()
 	$null = $mainWindow.Activate()
-	$null = [Console.Window]::ShowWindow($console, 0)
+	$null = [Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0)
 } catch { Write-Error ('❌️ ウィンドウを描画できませんでした。TVerRecが破損しています。') ; exit 1 }
 
 #endregion ウィンドウ表示
@@ -250,7 +249,7 @@ while ($mainWindow.IsVisible) {
 			#各メッセージタイプごとに内容を取得(ただしReceive-Jobは次Stepで実行するので取りこぼす可能性あり)
 			if ($job.Error) { $null = $script:msgError.Add([String]$job.Error) }
 			if ($job.Warning) { $null = $script:msgWarning.Add([String]$job.Warning) }
-			if ($job.Verbose) { $null= $script:msgVerbose.Add([String]$job.Verbose) }
+			if ($job.Verbose) { $null = $script:msgVerbose.Add([String]$job.Verbose) }
 			if ($job.Debug) { $null = $script:msgDebug.Add([String]$job.Debug) }
 			if ($job.Information) { $null = $script:msgInformation.Add([String]$job.Information) }
 
@@ -258,9 +257,7 @@ while ($mainWindow.IsVisible) {
 			#毎回RichTextBoxの内容をクリアして、最大行数分を再描画しているため、パフォーマンスは悪いかも
 			$outText.Document.Blocks.Clear()
 			$script:jobMsgs += @(Receive-Job $job *>&1)
-			if ($null -ne $script:jobMsgs) {
-				if ($script:jobMsgs.Count -gt $script:guiMaxExecLogLines) { $script:jobMsgs = $script:jobMsgs[$script:extractionStartPos..-1] }
-			}
+			if ($script:jobMsgs) { if ($script:jobMsgs.Count -gt $script:guiMaxExecLogLines) { $script:jobMsgs = $script:jobMsgs[$script:extractionStartPos..-1] } }
 
 			#Jobからメッセージを取得し事前に取得したメッセージタイプと照合し色付け
 			foreach ($jobMsg in $script:jobMsgs) {
@@ -301,7 +298,15 @@ while ($mainWindow.IsVisible) {
 #Windowが閉じられたら乗っているゴミジョブを削除して終了
 Get-Job | Receive-Job -Wait -AutoRemoveJob -Force
 
-Remove-Variable -Name jobTerminationStates, msgTypesColorMap, mainXaml, mainCleanXaml, mainWindow, console, LogoImage, lblVersion, outText, btns, scriptBlocks, threadNames, btn, extractionStartPos, jobs, jobMsg, msgError, msgWarning, msgVerbose, msgDebug, msgInformation, logType, jobMsgs, job -ErrorAction SilentlyContinue
+Remove-Variable -Name jobTerminationStates, msgTypesColorMap -ErrorAction SilentlyContinue
+Remove-Variable -Name jobMsgs, msgError, msgWarning, msgVerbose, msgDebug, msgInformation -ErrorAction SilentlyContinue
+Remove-Variable -Name mainXaml, mainCleanXaml, mainWindow -ErrorAction SilentlyContinue
+Remove-Variable -Name LogoImage, lblVersion, outText -ErrorAction SilentlyContinue
+Remove-Variable -Name btnBulk, btnDelete, btnList, btnListGen, btnLoop, btnMove, btnSingle, btnValidate -ErrorAction SilentlyContinue
+Remove-Variable -Name btns, scriptBlocks, threadNames, btn, lblStatus -ErrorAction SilentlyContinue
+Remove-Variable -Name btnWorkOpen, btnDownloadOpen, btnsaveOpen, btnKeywordOpen, btnIgnoreOpen, btnListOpen -ErrorAction SilentlyContinue
+Remove-Variable -Name btnClearLog, btnKillAll, btnWiki, btnsetting, btnExit -ErrorAction SilentlyContinue
+Remove-Variable -Name jobs, job, jobMsg, logType -ErrorAction SilentlyContinue
 
 #endregion 終了処理
 
