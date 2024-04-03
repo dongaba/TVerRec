@@ -4,7 +4,7 @@
 #
 ###################################################################################
 
-try { $script:guiMode = [String]$args[0] } catch { $script:guiMode = '' }
+$script:guiMode = if ($args) { [String]$args[0] } else { '' }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定
@@ -120,7 +120,7 @@ if ($script:forceSingleDownload) {
 		$ignoreTitle = $_.Normalize([Text.NormalizationForm]::FormC)
 		$filteredDirs = $workDirEntities.Where({ $_.Name.Normalize([Text.NormalizationForm]::FormC) -like "*${ignoreTitle}*" })
 		$filteredDirs | ForEach-Object {
-			$null= $ignoreDirs.Add($_)
+			$null = $ignoreDirs.Add($_)
 			Update-IgnoreList $ignoreTitle
 		}
 	}

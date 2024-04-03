@@ -4,7 +4,7 @@
 #
 ###################################################################################
 
-try { $script:guiMode = [String]$args[0] } catch { $script:guiMode = '' }
+$script:guiMode = if ($args) { [String]$args[0] } else { '' }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定

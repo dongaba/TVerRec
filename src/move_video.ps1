@@ -4,7 +4,7 @@
 #
 ###################################################################################
 
-try { $script:guiMode = [String]$args[0] } catch { $script:guiMode = '' }
+$script:guiMode = if ($args) { [String]$args[0] } else { '' }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定
@@ -78,7 +78,7 @@ Show-ProgressToast @toastShowParams
 
 #----------------------------------------------------------------------
 $totalStartTime = Get-Date
-if (($null -ne $moveDirs) -and ($moveDirs.Count -ne 0)) {
+if (($moveDirs) -and ($moveDirs.Count -ne 0)) {
 	$moveDirNum = 0
 	$moveDirsTotal = $moveDirs.Count
 	foreach ($moveDir in $moveDirs) {
@@ -180,7 +180,7 @@ if ($emptyDirTotal -ne 0) {
 }
 #----------------------------------------------------------------------
 
-try { $script:guiMode = [String]$args[0] } catch { $script:guiMode = '' }
+$script:guiMode = if ($args) { [String]$args[0] } else { '' }
 
 $toastUpdateParams = @{
 	Title     = '番組の移動'
