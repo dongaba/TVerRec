@@ -4,7 +4,7 @@
 #
 ###################################################################################
 
-try { $script:guiMode = [String]$args[0] } catch { $script:guiMode = '' }
+$script:guiMode = if ($args) { [String]$args[0] } else { '' }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定
@@ -18,16 +18,20 @@ try {
 	Set-Location $script:scriptRoot
 } catch { Write-Error ('❌️ カレントディレクトリの設定に失敗しました') ; exit 1 }
 if ($script:scriptRoot.Contains(' ')) { Write-Error ('❌️ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
+try {
+	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1')) 'loop'
+	if (!$?) { Write-Error ('❌️ TVerRecの初期化処理に失敗しました') ; exit 1 }
+} catch { Write-Error ('❌️ 関数の読み込みに失敗しました') ; exit 1 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
 #----------------------------------------------------------------------
 while ($true) {
 
-	. ('{0}/download_bulk.ps1' -f $script:scriptRoot) $script:guiMode
-	. ('{0}/delete_trash.ps1' -f $script:scriptRoot) $script:guiMode
-	. ('{0}/validate_video.ps1' -f $script:scriptRoot) $script:guiMode
-	. ('{0}/move_video.ps1' -f $script:scriptRoot) $script:guiMode
+	& ('{0}/download_bulk.ps1' -f $script:scriptRoot) $script:guiMode
+	& ('{0}/delete_trash.ps1' -f $script:scriptRoot) $script:guiMode
+	& ('{0}/validate_video.ps1' -f $script:scriptRoot) $script:guiMode
+	& ('{0}/move_video.ps1' -f $script:scriptRoot) $script:guiMode
 
 	Invoke-GarbageCollection
 

@@ -3,7 +3,10 @@
 #		関数読み込みスクリプト
 #
 ###################################################################################
+
 Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+
+try { $launchMode = [String]$args[0] } catch { $launchMode = '' }
 
 #----------------------------------------------------------------------
 #設定ファイル読み込み
@@ -20,7 +23,7 @@ if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 	catch { Write-Error ('❌️ ユーザ設定ファイルの読み込みに失敗しました') ; exit 1 }
 } elseif ($IsWindows) {
 	Write-Output ('ユーザ設定ファイルを作成する必要があります')
-	try { . 'gui/gui_setting.ps1' }
+	try { & 'gui/gui_setting.ps1' }
 	catch { Write-Error ('❌️ 設定画面の起動に失敗しました') ; exit 1 }
 	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 		try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
@@ -57,6 +60,11 @@ try {
 } catch { Write-Error ('❌️ 開発用設定ファイルの読み込みに失敗しました') ; exit 1 }
 
 #----------------------------------------------------------------------
+#連続実行時は以降の処理は不要なのでexit
+#不要な理由はloop.ps1は「.」ではなく「&」で各処理を呼び出ししているので各種変数が不要なため
+if ($launchMode -eq 'loop') { exit 0 }
+
+#----------------------------------------------------------------------
 #アップデータのアップデート(アップデート後の実行時にアップデータを更新)
 if (Test-Path (Join-Path $script:scriptRoot '../log/updater_update.txt')) {
 	try {
@@ -71,6 +79,10 @@ if (Test-Path (Join-Path $script:scriptRoot '../log/updater_update.txt')) {
 		Write-Warning ('💡 アップデータのアップデートに失敗しました。ご自身でアップデートを完了させる必要があります')
 	}
 }
+
+#TVerRecの最新化チェック
+Invoke-TVerRecUpdateCheck
+if (!$?) { Write-Error ('❌️ TVerRecのバージョンチェックに失敗しました') ; exit 1 }
 
 #----------------------------------------------------------------------
 #ダウンロード対象キーワードのパス
@@ -114,22 +126,10 @@ else { $script:ffprobePath = Join-Path $script:binDir 'ffprobe' }
 if ( $myInvocation.ScriptName.Contains('gui')) {
 	#GUI版の最大ログ行数の設定
 	$script:extractionStartPos = $script:guiMaxExecLogLines * -1
-
-	#TVerRecの最新化チェック
-	Invoke-TVerRecUpdateCheck
-	if (!$?) { Write-Error ('❌️ TVerRecのバージョンチェックに失敗しました') ; exit 1 }
 } else {
 	#Logo表示
 	if (!$script:guiMode) { Show-Logo }
-
 	#youtube-dl/ffmpegの最新化チェック
 	if (!$script:disableUpdateYoutubedl) { Invoke-ToolUpdateCheck -scriptName 'update_youtube-dl.ps1' -targetName 'youtube-dl' }
 	if (!$script:disableUpdateFfmpeg) { Invoke-ToolUpdateCheck -scriptName 'update_ffmpeg.ps1' -targetName 'ffmpeg' }
-
-	#TVerRecの最新化チェック
-	if ($script:appName -eq 'TVerRec') {
-		Invoke-TVerRecUpdateCheck
-		if (!$?) { Write-Error ('❌️ TVerRecのバージョンチェックに失敗しました') ; exit 1 }
-	}
-
 }
