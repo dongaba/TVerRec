@@ -63,3 +63,8 @@ keyword.conf
 user_setting.ps1
 sitemap.txt
 #git update-index --assume-unchanged conf/dev_setting.ps1
+
+#WSB temporary files
+resources/wsb/setup/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle
+resources/wsb/setup/Microsoft.VCLibs.x64.14.00.Desktop.appx
+resources/wsb/setup/TVerRec
