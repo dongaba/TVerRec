@@ -37,7 +37,7 @@ function Invoke-GarbageCollection() {
 #----------------------------------------------------------------------
 function Get-TimeStamp {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([String])]
 	Param ()
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -57,7 +57,7 @@ function ConvertFrom-UnixTime {
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
-	$EpochDate = Get-Date -Year 1970 -Month 1 -Day 1 -Hour 0 -Minute 0 -Second 0
+	$EpochDate = Get-Date -Year 1970 -Month 1 -Day 1 -Hour 0 -Minute 0 -Second 0 -AsUTC
 
 	return ($EpochDate.AddSeconds($UnixTime).ToLocalTime())
 	Remove-Variable -Name UnixTime, EpochDate -ErrorAction SilentlyContinue
@@ -68,15 +68,16 @@ function ConvertFrom-UnixTime {
 #----------------------------------------------------------------------
 function ConvertTo-UnixTime {
 	[CmdletBinding()]
+	[OutputType([int64])]
 	Param(
 		[Parameter(Mandatory = $true)][DateTime]$InputDate
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
-	$EpochDate = Get-Date -Year 1970 -Month 1 -Day 1 -Hour 0 -Minute 0 -Second 0
+	$unixTime = New-TimeSpan -Start '1970-01-01' -End $InputDate.ToUniversalTime()
 
-	return ([Math]::Floor(($InputDate.ToUniversalTime() - $EpochDate).TotalSeconds))
-	Remove-Variable -Name InputDate, EpochDate -ErrorAction SilentlyContinue
+	return [int64][math]::Round($unixTime.TotalSeconds)
+	Remove-Variable -Name InputDate, unixTime -ErrorAction SilentlyContinue
 }
 
 #endregion タイムスタンプ
@@ -90,25 +91,21 @@ function Get-FileNameWithoutInvalidChars {
 	[CmdletBinding()]
 	[OutputType([String])]
 	Param (
-		[Parameter(Mandatory = $true)][String]$Name
+		[String]$Name = ''
 	)
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
-	$invalidChars = [IO.Path]::GetInvalidFileNameChars() -Join ''
-	$resultPattern = '[{0}]' -f [Regex]::Escape($invalidChars)
-	$Name = $Name.Replace($resultPattern , '')
+	$invalidCharsPattern = '[{0}]' -f [Regex]::Escape( [IO.Path]::GetInvalidFileNameChars() -Join '')
+	$Name = $Name.Replace($invalidCharsPattern , '')
 
 	#Linux/MacではGetInvalidFileNameChars()が不完全なため、ダメ押しで置換
 	$additionalReplaces = '[*\?<>|]'
-	$additionalValidChar = '-'
-	$Name = $Name -replace $additionalReplaces, $additionalValidChar
-	$additionalReplaces = '[]'
-	$additionalValidChar = ''
-	$Name = $Name -replace $additionalReplaces, $additionalValidChar
+	$Name = $Name -replace $additionalReplaces, '-'
+	$nonPrintableChars = '[]'
 
-	return $Name
-	Remove-Variable -Name invalidChars, resultPattern, Name, additionalReplaces, additionalValidChar -ErrorAction SilentlyContinue
+	return $Name -replace $nonPrintableChars, ''
+	Remove-Variable -Name resultPattern, Name, additionalReplaces, nonPrintableChars -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -118,7 +115,7 @@ function Get-NarrowChars {
 	[CmdletBinding()]
 	[OutputType([String])]
 	Param (
-		[String]$text
+		[String]$text = ''
 	)
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -238,20 +235,20 @@ function Remove-SpecialCharacter {
 
 	$text = $text.Replace('&amp;', '&')
 	$replacements = @{
-		'*'     = '＊'
-		'|'     = '｜'
-		':'     = '：'
-		';'     = '；'
-		'"'     = '' #削除
-		'“'     = '' #削除
-		'”'     = '' #削除
-		','     = '' #削除
-		'?'     = '？'
-		'!'     = '！'
-		'/'     = '-' #代替文字
-		'\'     = '-' #代替文字
-		'<'     = '＜'
-		'>'     = '＞'
+		'*' = '＊'
+		'|' = '｜'
+		':' = '：'
+		';' = '；'
+		'"' = '' #削除
+		'“' = '' #削除
+		'”' = '' #削除
+		',' = '' #削除
+		'?' = '？'
+		'!' = '！'
+		'/' = '-' #代替文字
+		'\' = '-' #代替文字
+		'<' = '＜'
+		'>' = '＞'
 	}
 	foreach ($replacement in $replacements.GetEnumerator()) {
 		$text = $text.Replace($replacement.Name, $replacement.Value)
