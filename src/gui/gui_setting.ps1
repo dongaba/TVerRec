@@ -147,7 +147,9 @@ function Save-UserSetting {
 
 	#改行コードLFを強制 + NFCで出力
 	$newSetting.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC)  | Out-File -LiteralPath $userSettingFile -Encoding UTF8 -NoNewline
-	Remove-Variable -Name newSetting, startSegment, endSegment, content, totalLineNum, headLineNum, tailLineNum, settingBoxName, settingBox -ErrorAction SilentlyContinue
+	Remove-Variable -Name newSetting, startSegment, endSegment, content -ErrorAction SilentlyContinue
+	Remove-Variable -Name totalLineNum, headLineNum, tailLineNum -ErrorAction SilentlyContinue
+	Remove-Variable -Name settingAttribute, settingBoxName, settingBox -ErrorAction SilentlyContinue
 }
 
 #endregion 関数定義
@@ -318,5 +320,11 @@ while ($settingWindow.IsVisible) {
 #終了処理
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-
-Remove-Variable -Name systemSettingFile, userSettingFile, mainXaml, mainCleanXaml, settingWindow, settingAttributes, defaultSetting, currentSetting, settingAttribute, settingBoxName, settingBox, currentProcess, form, fd -ErrorAction SilentlyContinue
+Remove-Variable -Name systemSettingFile, userSettingFile -ErrorAction SilentlyContinue
+Remove-Variable -Name mainXaml, mainCleanXaml, settingWindow -ErrorAction SilentlyContinue
+Remove-Variable -Name LogoImage, lblVersion -ErrorAction SilentlyContinue
+Remove-Variable -Name btnWiki, btnCancel, btnSave -ErrorAction SilentlyContinue
+Remove-Variable -Name btndownloadBaseDir, btndownloadWorkDir, btnsaveBaseDir -ErrorAction SilentlyContinue
+Remove-Variable -Name settingAttributes, defaultSetting, currentSetting -ErrorAction SilentlyContinue
+Remove-Variable -Name settingAttribute, settingBoxName, settingBox -ErrorAction SilentlyContinue
+Remove-Variable -Name currentProcess, form, fd -ErrorAction SilentlyContinue

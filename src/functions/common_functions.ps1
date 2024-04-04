@@ -7,8 +7,10 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 
 Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
+#region ガーベッジコレクション
+
 #----------------------------------------------------------------------
-#GC
+#ガーベッジコレクション
 #----------------------------------------------------------------------
 function Invoke-GarbageCollection() {
 	[CmdletBinding()]
@@ -25,6 +27,8 @@ function Invoke-GarbageCollection() {
 	[System.GC]::Collect()
 	Write-Verbose -Message 'Garbage collection completed.'
 }
+
+#endregion ガーベッジコレクション
 
 #region タイムスタンプ
 
@@ -56,7 +60,6 @@ function ConvertFrom-UnixTime {
 	$EpochDate = Get-Date -Year 1970 -Month 1 -Day 1 -Hour 0 -Minute 0 -Second 0
 
 	return ($EpochDate.AddSeconds($UnixTime).ToLocalTime())
-
 	Remove-Variable -Name UnixTime, EpochDate -ErrorAction SilentlyContinue
 }
 
@@ -73,7 +76,6 @@ function ConvertTo-UnixTime {
 	$EpochDate = Get-Date -Year 1970 -Month 1 -Day 1 -Hour 0 -Minute 0 -Second 0
 
 	return ([Math]::Floor(($InputDate.ToUniversalTime() - $EpochDate).TotalSeconds))
-
 	Remove-Variable -Name InputDate, EpochDate -ErrorAction SilentlyContinue
 }
 
@@ -106,7 +108,6 @@ function Get-FileNameWithoutInvalidChars {
 	$Name = $Name -replace $additionalReplaces, $additionalValidChar
 
 	return $Name
-
 	Remove-Variable -Name invalidChars, resultPattern, Name, additionalReplaces, additionalValidChar -ErrorAction SilentlyContinue
 }
 
@@ -222,8 +223,7 @@ function Get-NarrowChars {
 	}
 
 	return $text
-
-	Remove-Variable -Name replaceChars, entry, replacements, replacement, text -ErrorAction SilentlyContinue
+	Remove-Variable -Name replaceChars, entry, i, replacements, replacement, text -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -236,8 +236,8 @@ function Remove-SpecialCharacter {
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
+	$text = $text.Replace('&amp;', '&')
 	$replacements = @{
-		'&amp;' = '&'
 		'*'     = '＊'
 		'|'     = '｜'
 		':'     = '：'
@@ -258,7 +258,6 @@ function Remove-SpecialCharacter {
 	}
 
 	return $text
-
 	Remove-Variable -Name replacements, replacement, text -ErrorAction SilentlyContinue
 }
 
@@ -329,7 +328,7 @@ function Remove-Files {
 		} catch { Write-Warning ('⚠️ 削除できないファイルがありました') }
 	}
 
-	Remove-Variable -Name basePath, conditions, delPeriod -ErrorAction SilentlyContinue
+	Remove-Variable -Name basePath, conditions, delPeriod, condition -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------

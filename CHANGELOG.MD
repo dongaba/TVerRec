@@ -12,6 +12,7 @@
 
 - Windows 環境で GUI 版の実行ログ表示について Warining と Error の色付けの精度を向上
 - 連続稼働時のメモリ使用量の削減
+- `&amp;`が正しく置換されない不具合を修正
 
 ## [3.0.2](https://github.com/dongaba/TVerRec/releases/tag/v3.0.2)
 
