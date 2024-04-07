@@ -92,12 +92,12 @@ $script:keywordFilePath = Join-Path $script:confDir 'keyword.conf'
 #ダウンロード対象外番組のパス
 $script:ignoreFileSamplePath = Join-Path $script:sampleDir 'ignore.sample.conf'
 $script:ignoreFilePath = Join-Path $script:confDir 'ignore.conf'
-$script:ignoreLockFilePath = Join-Path $script:lockDir 'ignore.lock'
+$script:ignoreLockFilePath = Join-Path $script:confDir 'ignore.lock'
 
 #ダウンロード履歴のパス
 $script:histFilePath = Join-Path $script:dbDir 'history.csv'
 $script:histFileSamplePath = Join-Path $script:sampleDir 'history.sample.csv'
-$script:histLockFilePath = Join-Path $script:lockDir 'history.lock'
+$script:histLockFilePath = Join-Path $script:dbDir 'history.lock'
 
 #サイトマップ処理時の中間ファイルのパス
 $script:sitemaptFilePath = Join-Path $script:dbDir 'sitemap.txt'
@@ -105,7 +105,7 @@ $script:sitemaptFilePath = Join-Path $script:dbDir 'sitemap.txt'
 #ダウンロードリストのパス
 $script:listFilePath = Join-Path $script:listDir 'list.csv'
 $script:listFileSamplePath = Join-Path $script:sampleDir 'list.sample.csv'
-$script:listLockFilePath = Join-Path $script:lockDir 'list.lock'
+$script:listLockFilePath = Join-Path $script:listDir 'list.lock'
 
 #ffpmegで番組検証時のエラーファイルのパス
 $script:ffpmegErrorLogPath = Join-Path $script:logDir ('ffmpeg_error_{0}.log' -f $PID)

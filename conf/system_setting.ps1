@@ -291,7 +291,6 @@ $script:winDir = Convert-Path (Join-Path $scriptRoot '../win')
 $script:b64Dir = Convert-Path (Join-Path $scriptRoot '../resources/b64')
 $script:imgDir = Convert-Path (Join-Path $scriptRoot '../resources/img')
 $script:libDir = Convert-Path (Join-Path $scriptRoot '../resources/lib')
-$script:lockDir = Convert-Path (Join-Path $scriptRoot '../resources/lock')
 $script:sampleDir = Convert-Path (Join-Path $scriptRoot '../resources/sample')
 $script:xamlDir = Convert-Path (Join-Path $scriptRoot '../resources/xaml')
 $script:containerDir = Join-Path $scriptRoot '../container-data'

@@ -102,6 +102,7 @@ function Get-FileNameWithoutInvalidChars {
 	#Linux/MacではGetInvalidFileNameChars()が不完全なため、ダメ押しで置換
 	$additionalReplaces = '[*\?<>|]'
 	$Name = $Name -replace $additionalReplaces, '-'
+	$Name = $Name -replace '--', '-'
 	$nonPrintableChars = '[]'
 
 	return $Name -replace $nonPrintableChars, ''
@@ -343,7 +344,7 @@ function Expand-Zip {
 		Write-Verbose ('{0}を{1}に展開します' -f $path, $destination)
 		[System.IO.Compression.ZipFile]::ExtractToDirectory($path, $destination, $true)
 		Write-Verbose ('{0}を展開しました' -f $path)
-	} else { Write-Error ('❌️ {0}が見つかりません' -f $path) }
+	} else { Throw ('❌️ {0}が見つかりません' -f $path) }
 
 	Remove-Variable -Name path, destination -ErrorAction SilentlyContinue
 }
@@ -351,7 +352,6 @@ function Expand-Zip {
 #endregion ファイル操作
 
 #region ファイルロック
-
 #----------------------------------------------------------------------
 #ファイルのロック
 #----------------------------------------------------------------------
@@ -411,34 +411,71 @@ function Unlock-File {
 }
 
 #----------------------------------------------------------------------
-#ファイルのロック確認
+#ファイルのロック
 #----------------------------------------------------------------------
-function Get-FileLockStatus {
-	[CmdletBinding()]
+function Lock-File {
 	[OutputType([PSCustomObject])]
-	Param (
-		[parameter(Mandatory = $true)][System.IO.FileInfo]$path
+	param(
+		[Parameter(Mandatory = $true)]
+		[string]$lockFilePath
 	)
 
-	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $path)
+	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $lockFilePath)
 
-	$fileLocked = $true
-	try {
-		#ファイルを開こうとしファイルロックを検出
-		$fileInfo = New-Object System.IO.FileInfo $path
-		$fileStream = $fileInfo.Open([System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
-		#ロックされていなければストリームを閉じる
-		if ($fileStream) { $fileStream.Close() }
-		$fileLocked = $false
-	} catch { $fileLocked = $true }
-
-	#結果の返却
-	return [PSCustomObject]@{
-		path       = $path
-		fileLocked = $fileLocked
+	if (!(Test-Path $lockFilePath)) {
+		#ロックファイルが存在しない場合
+		$PID | Out-File -Path $lockFilePath
 	}
 
-	Remove-Variable -Name fileInfo, fileStream, path, fileLocked -ErrorAction SilentlyContinue
+	if (Test-Path $lockFilePath) {
+		if ((Get-Content $lockFilePath) -eq $PID) {
+			return [PSCustomObject]@{
+				fileLocked = $true
+				result     = $true
+			}
+		} else {
+			Write-Error "Lock file does not match current process: $lockFilePath"
+			return [PSCustomObject]@{
+				fileLocked = $true
+				result     = $false
+			}
+		}
+	} else {
+		Write-Error "Lock file does not exist: $lockFilePath"
+		return [PSCustomObject]@{
+			fileLocked = $false
+			result     = $false
+		}
+	}
+
+	Remove-Variable -Name lockFilePath -ErrorAction SilentlyContinue
+}
+
+#----------------------------------------------------------------------
+#ファイルのロック解除
+#----------------------------------------------------------------------
+function Unlock-File {
+	[CmdletBinding()]
+	param(
+		[Parameter(Mandatory = $true)]
+		[string]$lockFilePath
+	)
+
+	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $lockFilePath)
+
+	if (Test-Path $lockFilePath) {
+		if ((Get-Content $lockFilePath) -eq $PID) {
+			Remove-Item $lockFilePath -Force
+			return $true
+		} else {
+			Write-Error "Lock file does not match current process: $lockFilePath"
+			return $false
+		}
+	} else {
+		Throw "Lock file does not exist: $lockFilePath"
+	}
+
+	Remove-Variable -Name lockFilePath -ErrorAction SilentlyContinue
 }
 
 #endregion ファイルロック
