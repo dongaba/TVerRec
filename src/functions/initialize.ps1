@@ -133,3 +133,7 @@ if ( $myInvocation.ScriptName.Contains('gui')) {
 	if (!$script:disableUpdateYoutubedl) { Invoke-ToolUpdateCheck -scriptName 'update_youtube-dl.ps1' -targetName 'youtube-dl' }
 	if (!$script:disableUpdateFfmpeg) { Invoke-ToolUpdateCheck -scriptName 'update_ffmpeg.ps1' -targetName 'ffmpeg' }
 }
+
+#ロックファイル用
+$script:fileInfo = @{}
+$script:fileStream = @{}

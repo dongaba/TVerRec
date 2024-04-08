@@ -360,25 +360,24 @@ function Lock-File {
 	[CmdletBinding()]
 	[OutputType([PSCustomObject])]
 	Param (
-		[parameter(Mandatory = $true)][System.IO.FileInfo]$path
+		[parameter(Mandatory = $true)][String]$path
 	)
 
 	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $path)
 
-	$fileLocked = $false
 	try {
 		#ファイルを開こうとしファイルロックを検出
-		${script:fileInfo_$path} = New-Object System.IO.FileInfo $path
-		${script:fileStream_$path} = ${script:fileInfo_$path}.Open([System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
-		$fileLocked = $true
-	} catch { $fileLocked = $false }
+		$script:fileInfo[$path] = New-Object System.IO.FileInfo $path
+		$script:fileStream[$path] = $script:fileInfo[$path].Open([System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+		$result = $true
+	} catch { $result = $false }
 
 	#結果の返却
 	return [PSCustomObject]@{
 		path   = $path
-		result = $fileLocked
+		result = $result
 	}
-	Remove-Variable -Name path, fileLocked -ErrorAction SilentlyContinue
+	Remove-Variable -Name path, fileLocked #-ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -388,28 +387,28 @@ function Unlock-File {
 	[CmdletBinding()]
 	[OutputType([PSCustomObject])]
 	Param (
-		[parameter(Mandatory = $true)][System.IO.FileInfo]$path
+		[parameter(Mandatory = $true)][String]$path
 	)
 
 	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $path)
 
-	$fileLocked = $true
-	try {
-		if (${script:fileStream_$path}) {
-			#ロックされていなければストリームを閉じる
-			${script:fileStream_$path}.Close()
-			${script:fileStream_$path}.Dispose()
-		}
-		$fileLocked = $false
-	} catch { $fileLocked = $true }
+	if (Test-Path $path) {
+#		try {
+			if ($script:fileStream[$path]) {
+				#ロックされていなければストリームを閉じる
+				$script:fileStream[$path].Close()
+				$script:fileStream[$path].Dispose()
+			}
+			$result = $true
+#		} catch { $result = $false }
+	} else { $result = $false }
 
 	#結果の返却
 	return [PSCustomObject]@{
 		path   = $path
-		result = $fileLocked
+		result = $result
 	}
-	Remove-Variable -Name path, fileLocked -ErrorAction SilentlyContinue
-	Remove-Variable -Name ('fileStream_' + $path) -Scope script -ErrorAction SilentlyContinue
+	Remove-Variable -Name path, fileLocked #-ErrorAction SilentlyContinue
 }
 
 #endregion ファイルロック
