@@ -318,20 +318,22 @@ function Update-IgnoreList {
 	$ignoreComment = @()
 	$ignoreTarget = @()
 	$ignoreElse = @()
-	try {
-		while ((Lock-File $script:ignoreLockFilePath).result -ne $true) { Write-Information ('　ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-		$ignoreLists = @((Get-Content $script:ignoreFilePath -Encoding UTF8).Where( { $_ -notmatch '^\s*$|^(;;.*)$' }))
-		$ignoreComment = @(Get-Content $script:ignoreFileSamplePath -Encoding UTF8)
-		$ignoreTarget = @($ignoreLists.Where({ $_ -eq $ignoreTitle }) | Sort-Object -Unique)
-		$ignoreElse = @($ignoreLists.Where({ $_ -notin $ignoreTitle }))
-		if ($ignoreComment) { $ignoreListNew += $ignoreComment }
-		if ($ignoreTarget) { $ignoreListNew += $ignoreTarget }
-		if ($ignoreElse) { $ignoreListNew += $ignoreElse }
-		#改行コードLFを強制 + NFCで出力
-		$ignoreListNew.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC)  | Out-File -LiteralPath $script:ignoreFilePath -Encoding UTF8 -NoNewline
-		Write-Debug ('　ダウンロード対象外リストのソート更新完了')
-	} catch { Write-Error ('　❌️ ダウンロード対象外リストのソートに失敗しました') ; exit 1 }
-	finally { $null = Unlock-File $script:ignoreLockFilePath }
+	if (Test-Path $script:ignoreFilePath -PathType Leaf) {
+		try {
+			while ((Lock-File $script:ignoreLockFilePath).result -ne $true) { Write-Information ('　ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+			$ignoreLists = @((Get-Content $script:ignoreFilePath -Encoding UTF8).Where( { $_ -notmatch '^\s*$|^(;;.*)$' }))
+			$ignoreComment = @(Get-Content $script:ignoreFileSamplePath -Encoding UTF8)
+			$ignoreTarget = @($ignoreLists.Where({ $_ -eq $ignoreTitle }) | Sort-Object -Unique)
+			$ignoreElse = @($ignoreLists.Where({ $_ -notin $ignoreTitle }))
+			if ($ignoreComment) { $ignoreListNew += $ignoreComment }
+			if ($ignoreTarget) { $ignoreListNew += $ignoreTarget }
+			if ($ignoreElse) { $ignoreListNew += $ignoreElse }
+			#改行コードLFを強制 + NFCで出力
+			$ignoreListNew.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC)  | Out-File -LiteralPath $script:ignoreFilePath -Encoding UTF8 -NoNewline
+			Write-Debug ('　ダウンロード対象外リストのソート更新完了')
+		} catch { Write-Error ('　❌️ ダウンロード対象外リストのソートに失敗しました') ; exit 1 }
+		finally { $null = Unlock-File $script:ignoreLockFilePath }
+	}
 
 	Remove-Variable -Name ignoreTitle, ignoreListNew, ignoreComment, ignoreTarget, ignoreElse -ErrorAction SilentlyContinue
 }
@@ -1218,7 +1220,7 @@ function Invoke-ValidityCheck {
 					-RedirectStandardError $script:ffpmegErrorLogPath `
 					-Wait
 				$null = $ffmpegProcess.Handle #ffmpegProcess.Handleをキャッシュ。PS7.4.0の終了コードを捕捉しないバグのために必要
-				$ffmpegProcess.WaitForExit();
+				$ffmpegProcess.WaitForExit()
 			} else {
 				$ffmpegProcess = Start-Process `
 					-FilePath $script:ffprobePath `
@@ -1227,7 +1229,7 @@ function Invoke-ValidityCheck {
 					-RedirectStandardOutput /dev/null `
 					-RedirectStandardError $script:ffpmegErrorLogPath `
 					-Wait
-				$ffmpegProcess.WaitForExit();
+				$ffmpegProcess.WaitForExit()
 			}
 		} catch { Write-Error ('　❌️ ffprobeを起動できませんでした') ; return }
 	} else {
@@ -1243,7 +1245,7 @@ function Invoke-ValidityCheck {
 					-WindowStyle $script:windowShowStyle `
 					-RedirectStandardError $script:ffpmegErrorLogPath
 				$null = $ffmpegProcess.Handle #ffmpegProcess.Handleをキャッシュ。PS7.4.0の終了コードを捕捉しないバグのために必要
-				$ffmpegProcess.WaitForExit();
+				$ffmpegProcess.WaitForExit()
 			} else {
 				$ffmpegProcess = Start-Process `
 					-FilePath $script:ffmpegPath `
@@ -1251,7 +1253,7 @@ function Invoke-ValidityCheck {
 					-PassThru `
 					-RedirectStandardOutput /dev/null `
 					-RedirectStandardError $script:ffpmegErrorLogPath
-				$ffmpegProcess.WaitForExit();
+				$ffmpegProcess.WaitForExit()
 			}
 		} catch { Write-Error ('　❌️ ffmpegを起動できませんでした') ; return }
 	}

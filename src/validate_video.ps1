@@ -75,7 +75,13 @@ if ($script:disableValidation) {
 #未検証のファイルが0になるまでループ
 $script:validationFailed = $false
 $videoNotValidatedNum = 0
-$videoNotValidatedNum = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' })).Count
+if (Test-Path $script:histFilePath -PathType Leaf) {
+	try {
+		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+		$videoNotValidatedNum = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' })).Count
+	} catch { Throw ('❌️ ダウンロード履歴の読み込みに失敗しました') }
+	finally { $null = Unlock-File $script:histLockFilePath }
+} else { $videoNotValidatedNum = 0 }
 
 while ($videoNotValidatedNum -ne 0) {
 	#======================================================================
@@ -168,16 +174,16 @@ while ($videoNotValidatedNum -ne 0) {
 	$toastShowParams.WorkDetail = ''
 	Show-ProgressToast @toastShowParams
 
-	try {
-		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-		$videoHists = @(Import-Csv -Path $script:histFilePath -Encoding UTF8)
-		foreach ($uncheckedVido in ($videoHists).Where({ $_.videoValidated -eq 2 })) {
-			$uncheckedVido.videoValidated = '0'
-		}
-		$videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
-	} catch { Write-Warning ('⚠️ ダウンロード履歴の更新に失敗しました') }
-	finally { $null = Unlock-File $script:histLockFilePath }
-	$videoNotValidatedNum = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' })).Count
+	if (Test-Path $script:histFilePath -PathType Leaf) {
+		try {
+			while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+			$videoHists = @(Import-Csv -Path $script:histFilePath -Encoding UTF8)
+			foreach ($uncheckedVido in ($videoHists).Where({ $_.videoValidated -eq 2 })) { $uncheckedVido.videoValidated = '0' }
+			$videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
+			$videoNotValidatedNum = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' })).Count
+		} catch { Throw ('❌️ ダウンロード履歴の更新に失敗しました') }
+		finally { $null = Unlock-File $script:histLockFilePath }
+	} else { $videoNotValidatedNum = 0 }
 }
 
 #======================================================================

@@ -434,14 +434,14 @@ function Lock-File {
 				result     = $true
 			}
 		} else {
-			Write-Error "Lock file does not match current process: $lockFilePath"
+			Write-Verbose "Lock file does not match current process: $lockFilePath"
 			return [PSCustomObject]@{
 				fileLocked = $true
 				result     = $false
 			}
 		}
 	} else {
-		Write-Error "Lock file does not exist: $lockFilePath"
+		Write-Verbose "Lock file does not exist: $lockFilePath"
 		return [PSCustomObject]@{
 			fileLocked = $false
 			result     = $false
@@ -468,7 +468,7 @@ function Unlock-File {
 			Remove-Item $lockFilePath -Force
 			return $true
 		} else {
-			Write-Error "Lock file does not match current process: $lockFilePath"
+			Write-Verbose "Lock file does not match current process: $lockFilePath"
 			return $false
 		}
 	} else {
