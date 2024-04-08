@@ -244,10 +244,6 @@ if (Test-Path (Join-Path $script:scriptRoot '../db/list.csv')) {
 #リストファイルのレイアウト変更(v2.9.9→v3.0.0)
 Remove-IfExist -Path (Join-Path $script:scriptRoot '../.vscode/thunder-tests')
 
-#ロックファイルの方式変更(v3.0.2→v3.0.3)
-Remove-IfExist -Path (Join-Path $script:scriptRoot '../resources/lock')
-
-
 #実行権限の付与
 if (!$IsWindows) {
 	Write-Output ('')

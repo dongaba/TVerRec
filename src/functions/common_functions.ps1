@@ -352,6 +352,7 @@ function Expand-Zip {
 #endregion ファイル操作
 
 #region ファイルロック
+
 #----------------------------------------------------------------------
 #ファイルのロック
 #----------------------------------------------------------------------
@@ -375,10 +376,8 @@ function Lock-File {
 	#結果の返却
 	return [PSCustomObject]@{
 		path       = $path
-		fileLocked = $fileLocked
+		result = $fileLocked
 	}
-
-	Remove-Variable -Name path, fileLocked -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -403,79 +402,9 @@ function Unlock-File {
 
 	#結果の返却
 	return [PSCustomObject]@{
-		path       = $path
-		fileLocked = $fileLocked
+		path   = $path
+		result = $fileLocked
 	}
-
-	Remove-Variable -Name path, fileLocked -ErrorAction SilentlyContinue
-}
-
-#----------------------------------------------------------------------
-#ファイルのロック
-#----------------------------------------------------------------------
-function Lock-File {
-	[OutputType([PSCustomObject])]
-	param(
-		[Parameter(Mandatory = $true)]
-		[string]$lockFilePath
-	)
-
-	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $lockFilePath)
-
-	if (!(Test-Path $lockFilePath)) {
-		#ロックファイルが存在しない場合
-		$PID | Out-File -Path $lockFilePath
-	}
-
-	if (Test-Path $lockFilePath) {
-		if ((Get-Content $lockFilePath) -eq $PID) {
-			return [PSCustomObject]@{
-				fileLocked = $true
-				result     = $true
-			}
-		} else {
-			Write-Verbose "Lock file does not match current process: $lockFilePath"
-			return [PSCustomObject]@{
-				fileLocked = $true
-				result     = $false
-			}
-		}
-	} else {
-		Write-Verbose "Lock file does not exist: $lockFilePath"
-		return [PSCustomObject]@{
-			fileLocked = $false
-			result     = $false
-		}
-	}
-
-	Remove-Variable -Name lockFilePath -ErrorAction SilentlyContinue
-}
-
-#----------------------------------------------------------------------
-#ファイルのロック解除
-#----------------------------------------------------------------------
-function Unlock-File {
-	[CmdletBinding()]
-	param(
-		[Parameter(Mandatory = $true)]
-		[string]$lockFilePath
-	)
-
-	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $lockFilePath)
-
-	if (Test-Path $lockFilePath) {
-		if ((Get-Content $lockFilePath) -eq $PID) {
-			Remove-Item $lockFilePath -Force
-			return $true
-		} else {
-			Write-Verbose "Lock file does not match current process: $lockFilePath"
-			return $false
-		}
-	} else {
-		Throw "Lock file does not exist: $lockFilePath"
-	}
-
-	Remove-Variable -Name lockFilePath -ErrorAction SilentlyContinue
 }
 
 #endregion ファイルロック
