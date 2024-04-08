@@ -1,7 +1,6 @@
 {
 	"recommendations": [
 		"usernamehw.errorlens",
-		"dbaeumer.vscode-eslint",
 		"grapecity.gc-excelviewer",
 		"mhutchie.git-graph",
 		"donjayamanne.githistory",
@@ -11,7 +10,6 @@
 		"github.vscode-github-actions",
 		"github.codespaces",
 		"github.vscode-pull-request-github",
-		"ms-vscode.azure-repos",
 		"aaron-bond.better-comments",
 		"genieai.chatgpt-vscode",
 		"ms-vscode-remote.remote-containers",
@@ -26,13 +24,10 @@
 		"mohd-akram.vscode-html-format",
 		"oderwat.indent-rainbow",
 		"tylerleonhardt.vscode-inline-values-powershell",
-		"visualstudioexptteam.vscodeintellicode",
-		"visualstudioexptteam.intellicode-api-usage-examples",
 		"ms-ceintl.vscode-language-pack-ja",
 		"davidbwaters.macos-modern-theme",
 		"yzhang.markdown-all-in-one",
 		"davidanson.vscode-markdownlint",
-		"fabiospampinato.vscode-open-in-github",
 		"alefragnani.project-manager",
 		"mechatroner.rainbow-csv",
 		"louiswt.regexp-preview",
@@ -43,7 +38,6 @@
 		"1password.op-vscode",
 		"eamodio.gitlens",
 		"pspester.pester-test",
-		"ms-vscode.powershell",
 		"esbenp.prettier-vscode",
 		"tobysmith568.run-in-powershell",
 		"humao.rest-client",
@@ -53,12 +47,18 @@
 		"uctakeoff.vscode-counter",
 		"dunstontc.vscode-docker-syntax",
 		"vscode-icons-team.vscode-icons",
-		"ms-vscode-remote.remote-wsl",
 		"rogalmic.vscode-xml-complete",
 		"dotjoshjohnson.xml",
 		"redhat.vscode-yaml",
 		"zhang-renyang.chat-gpt",
 		"janisdd.vscode-edit-csv",
-		"bierner.markdown-preview-github-styles"
+		"bierner.markdown-preview-github-styles",
+		"ms-dotnettools.vscode-dotnet-runtime",
+		"ms-dotnettools.csharp",
+		"kisstkondoros.vscode-gutter-preview",
+		"nickdemayo.vscode-json-editor",
+		"wakahh.japanese-bracket-highlight",
+		"ms-vscode.remote-repositories",
+		"ms-vscode.powershell"
 	]
 }

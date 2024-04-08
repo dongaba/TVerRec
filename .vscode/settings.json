@@ -25,7 +25,7 @@
 	"diffEditor.ignoreTrimWhitespace": false,
 	"editor.autoIndent": "advanced",
 	"editor.bracketPairColorization.enabled": true,
-	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	"editor.defaultFormatter": "ms-vscode.powershell",
 	"editor.detectIndentation": true,
 	"editor.foldingImportsByDefault": true,
 	"editor.formatOnPaste": true,
@@ -38,9 +38,11 @@
 	"files.autoGuessEncoding": true,
 	"files.autoSave": "afterDelay",
 	"files.trimTrailingWhitespace": true,
+	"gitlens.graph.dimMergeCommits": true,
 	"powershell.buttons.showPanelMovementButtons": true,
 	"powershell.codeFormatting.addWhitespaceAroundPipe": true,
 	"powershell.codeFormatting.autoCorrectAliases": true,
+	"powershell.codeFormatting.avoidSemicolonsAsLineTerminators": true,
 	"powershell.codeFormatting.newLineAfterCloseBrace": false,
 	"powershell.codeFormatting.newLineAfterOpenBrace": false,
 	"powershell.codeFormatting.pipelineIndentationStyle": "IncreaseIndentationForFirstPipeline",
@@ -60,9 +62,9 @@
 	"thunder-client.sidebar.defaultTab": "Collections",
 	"thunder-client.sidebar.showActivityFromCollection": true,
 	"thunder-client.workspaceRelativePath": "./.vscode/",
+	"workbench.colorTheme": "Default Dark+",
 	"workbench.iconTheme": "vscode-icons",
 	"workbench.preferredLightColorTheme": "Default Dark+",
 	"workbench.startupEditor": "newUntitledFile",
-	"gitlens.graph.dimMergeCommits": true,
-	"workbench.colorTheme": "MacOS Modern Dark - Ventura Xcode Default"
+	"powershell.pester.debugOutputVerbosity": "Detailed"
 }
