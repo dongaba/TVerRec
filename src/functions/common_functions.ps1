@@ -398,6 +398,8 @@ function Unlock-File {
 				#ロックされていなければストリームを閉じる
 				$script:fileStream[$path].Close()
 				$script:fileStream[$path].Dispose()
+				$script:fileStream[$path] = $null
+				$script:fileStream.Remove($path)
 			}
 			$result = $true
 #		} catch { $result = $false }
