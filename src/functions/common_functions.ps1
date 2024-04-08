@@ -368,16 +368,17 @@ function Lock-File {
 	$fileLocked = $false
 	try {
 		#ファイルを開こうとしファイルロックを検出
-		$script:fileInfo = New-Object System.IO.FileInfo $path
-		$script:fileStream = $script:fileInfo.Open([System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+		${script:fileInfo_$path} = New-Object System.IO.FileInfo $path
+		${script:fileStream_$path} = ${script:fileInfo_$path}.Open([System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
 		$fileLocked = $true
 	} catch { $fileLocked = $false }
 
 	#結果の返却
 	return [PSCustomObject]@{
-		path       = $path
+		path   = $path
 		result = $fileLocked
 	}
+	Remove-Variable -Name path, fileLocked -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -394,9 +395,11 @@ function Unlock-File {
 
 	$fileLocked = $true
 	try {
-		#ロックされていなければストリームを閉じる
-		if ($script:fileStream) { $script:fileStream.Close() }
-		$script:fileStream.Dispose()
+		if (${script:fileStream_$path}) {
+			#ロックされていなければストリームを閉じる
+			${script:fileStream_$path}.Close()
+			${script:fileStream_$path}.Dispose()
+		}
 		$fileLocked = $false
 	} catch { $fileLocked = $true }
 
@@ -405,6 +408,8 @@ function Unlock-File {
 		path   = $path
 		result = $fileLocked
 	}
+	Remove-Variable -Name path, fileLocked -ErrorAction SilentlyContinue
+	Remove-Variable -Name ('fileStream_' + $path) -Scope script -ErrorAction SilentlyContinue
 }
 
 #endregion ファイルロック
