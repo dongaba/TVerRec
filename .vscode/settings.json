@@ -31,7 +31,6 @@
 	"editor.formatOnPaste": true,
 	"editor.formatOnSave": true,
 	"editor.formatOnType": true,
-	"editor.hover.sticky": false,
 	"editor.insertSpaces": false,
 	"editor.renderControlCharacters": true,
 	"editor.renderWhitespace": "all",
@@ -66,5 +65,6 @@
 	"workbench.iconTheme": "vscode-icons",
 	"workbench.preferredLightColorTheme": "Default Dark+",
 	"workbench.startupEditor": "newUntitledFile",
-	"powershell.pester.debugOutputVerbosity": "Detailed"
+	"powershell.pester.debugOutputVerbosity": "Detailed",
+	"workbench.editor.enablePreview": false
 }
