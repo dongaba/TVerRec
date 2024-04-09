@@ -82,7 +82,7 @@ if (Test-Path (Join-Path $script:scriptRoot '../log/updater_update.txt')) {
 
 #TVerRecの最新化チェック
 Invoke-TVerRecUpdateCheck
-if (!$?) { Write-Error ('❌️ TVerRecのバージョンチェックに失敗しました') ; exit 1 }
+if (!$?) { Write-Error ('❌️ TVerRecのバージョンチェックに失敗しました') }
 
 #----------------------------------------------------------------------
 #ダウンロード対象キーワードのパス
@@ -124,8 +124,6 @@ else { $script:ffprobePath = Join-Path $script:binDir 'ffprobe' }
 
 #GUI起動を判定
 if ( $myInvocation.ScriptName.Contains('gui')) {
-	#GUI版の最大ログ行数の設定
-	$script:extractionStartPos = $script:guiMaxExecLogLines * -1
 } else {
 	#Logo表示
 	if (!$script:guiMode) { Show-Logo }

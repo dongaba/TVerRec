@@ -38,12 +38,13 @@ $msgTypesColorMap = @{
 }
 
 #ログ出力用変数
-$script:jobMsgs = @()
-$script:msgError = New-Object System.Collections.ArrayList
-$script:msgWarning = New-Object System.Collections.ArrayList
-$script:msgVerbose = New-Object System.Collections.ArrayList
-$script:msgDebug = New-Object System.Collections.ArrayList
-$script:msgInformation = New-Object System.Collections.ArrayList
+$jobMsgs = @()
+$msgTypes = @('Output', 'Error', 'Warning', 'Verbose', 'Debug', 'Information')
+$msgError = New-Object System.Collections.ArrayList
+$msgWarning = New-Object System.Collections.ArrayList
+$msgVerbose = New-Object System.Collections.ArrayList
+$msgDebug = New-Object System.Collections.ArrayList
+$msgInformation = New-Object System.Collections.ArrayList
 
 #endregion 環境設定
 
@@ -66,17 +67,28 @@ function Sync-WpfEvents {
 	Remove-Variable -Name frame -ErrorAction SilentlyContinue
 }
 
+#最大行数以上の実行ログをクリア
+function LimitRichTextBoxLines($richTextBox, $limit) {
+	if ($richTextBox.Document.Blocks.Count -gt $limit) {
+		$linesToRemove = $richTextBox.Document.Blocks.Count - $limit
+		for ($i = 0; $i -lt $linesToRemove; $i++) {
+			$richTextBox.Document.Blocks.Remove($richTextBox.Document.Blocks.FirstBlock)
+		}
+	}
+	Remove-Variable -Name richTextBox, limit, linesToRemove, i -ErrorAction SilentlyContinue
+}
+
 #テキストボックスへのログ出力と再描画
 function Out-ExecutionLog {
 	Param (
 		[parameter(Mandatory = $false)][String]$message = '',
 		[parameter(Mandatory = $false)][String]$type = 'Output'
 	)
+	if ($script:guiMaxExecLogLines -gt 0) { LimitRichTextBoxLines $outText $script:guiMaxExecLogLines }
 	$rtfRange = New-Object System.Windows.Documents.TextRange($outText.Document.ContentEnd, $outText.Document.ContentEnd)
 	$rtfRange.Text = ("{0}`n" -f $Message)
 	$rtfRange.ApplyPropertyValue([System.Windows.Documents.TextElement]::ForegroundProperty, $msgTypesColorMap[$type] )
 	$outText.ScrollToEnd()
-
 	Remove-Variable -Name message, type, rtfRange -ErrorAction SilentlyContinue
 }
 
@@ -197,11 +209,7 @@ $btnIgnoreOpen.Add_Click({ Invoke-Item $script:ignoreFilePath })
 $btnListOpen.Add_Click({ Invoke-Item $script:listFilePath })
 $btnClearLog.Add_Click({
 		$script:jobMsgs = @()
-		$script:msgError = New-Object System.Collections.ArrayList
-		$script:msgWarning = New-Object System.Collections.ArrayList
-		$script:msgVerbose = New-Object System.Collections.ArrayList
-		$script:msgDebug = New-Object System.Collections.ArrayList
-		$script:msgInformation = New-Object System.Collections.ArrayList
+		foreach ($msgType in $msgTypes) { Clear-Variable -Name ('msg' + $msgType) }
 		$outText.Document.Blocks.Clear()
 		Invoke-GarbageCollection
 	})
@@ -247,30 +255,26 @@ while ($mainWindow.IsVisible) {
 		#ジョブがある場合の処理
 		foreach ($job in $jobs) {
 			#各メッセージタイプごとに内容を取得(ただしReceive-Jobは次Stepで実行するので取りこぼす可能性あり)
-			if ($job.Error) { $null = $script:msgError.Add([String]$job.Error) }
-			if ($job.Warning) { $null = $script:msgWarning.Add([String]$job.Warning) }
-			if ($job.Verbose) { $null = $script:msgVerbose.Add([String]$job.Verbose) }
-			if ($job.Debug) { $null = $script:msgDebug.Add([String]$job.Debug) }
-			if ($job.Information) { $null = $script:msgInformation.Add([String]$job.Information) }
-
-			#RichTextBoxのメモリ使用量を削減するため、最大行数を設定して最新のみを表示対象とする
-			#毎回RichTextBoxの内容をクリアして、最大行数分を再描画しているため、パフォーマンスは悪いかも
-			$outText.Document.Blocks.Clear()
-			$script:jobMsgs += @(Receive-Job $job *>&1)
-			if ($script:jobMsgs) { if ($script:jobMsgs.Count -gt $script:guiMaxExecLogLines) { $script:jobMsgs = $script:jobMsgs[$script:extractionStartPos..-1] } }
+			foreach ($msgType in $msgTypes) {
+				Set-Variable -Name ('msg' + $msgType) -Value $(if ($job.$msgType) { $job.$msgType } else { $null })
+			}
+			$jobMsgs = @(Receive-Job $job *>&1)
 
 			#Jobからメッセージを取得し事前に取得したメッセージタイプと照合し色付け
-			foreach ($jobMsg in $script:jobMsgs) {
+			foreach ($jobMsg in $jobMsgs) {
 				$logType = switch ($jobMsg) {
-					{ $script:msgError -contains $_ } { 'Error' }
-					{ $script:msgWarning -contains $_ } { 'Warning' }
-					{ $script:msgVerbose -contains $_ } { 'Verbose' }
-					{ $script:msgDebug -contains $_ } { 'Debug' }
-					{ $script:msgInformation -contains $_ } { 'Information' }
+					{ $msgError -contains $_ } { 'Error' }
+					{ $msgWarning -contains $_ } { 'Warning' }
+					{ $msgVerbose -contains $_ } { 'Verbose' }
+					{ $msgDebug -contains $_ } { 'Debug' }
+					{ $msgInformation -contains $_ } { 'Information' }
 					Default { 'Output' }
 				}
 				Out-ExecutionLog -Message ($jobMsg -join "`n") -Type $logType
 			}
+
+			#各メッセージタイプごとの内容を保存する変数をクリア
+			foreach ($msgType in $msgTypes) { Clear-Variable -Name ('msg' + $msgType) }
 
 			#終了したジョブのボタンの再有効化
 			if ($job.State -in $jobTerminationStates) {
