@@ -33,7 +33,7 @@ jobs:
     - name: Build the Docker image
       # Tag image to be built
       # Change ${{ github.repository }} variable by another image name if you want but don't forget changing also image-tag below
-      run: docker build . --file Dockerfile --tag ${{ github.repository }}:latest
+      run: docker build . --file Dockerfile --tag ${{ github.repository }}.toLowerCase():latest
 
     - name: Sysdig Secure Inline Scan
       id: scan
@@ -41,7 +41,7 @@ jobs:
       with:
         # Tag of the image to analyse.
         # Change ${{ github.repository }} variable by another image name if you want but don't forget changing also image-tag above
-        image-tag: ${{ github.repository }}:latest
+        image-tag: ${{ github.repository }}.toLowerCase():latest
         # API token for Sysdig Scanning auth
         sysdig-secure-token: ${{ secrets.SYSDIG_SECURE_TOKEN}}
         # Sysdig secure endpoint. Please read: https://docs.sysdig.com/en/docs/administration/saas-regions-and-ip-ranges/
