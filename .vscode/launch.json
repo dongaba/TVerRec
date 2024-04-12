@@ -1,96 +1,120 @@
 {
-	"version": "0.2.0",
 	"configurations": [
 		{
-			"type": "PowerShell",
-			"script": "${workspaceFolder}/src/gui/gui_main.ps1",
+			"attachDotnetDebugger": true,
+			"createTemporaryIntegratedConsole": true,
+			"name": "Test",
 			"request": "launch",
+			"script": "${workspaceFolder}/test/test_all.ps1",
+			"type": "PowerShell"
+		},
+		{
+			"attachDotnetDebugger": true,
+			"createTemporaryIntegratedConsole": true,
+			"name": "Test - Target Only",
+			"request": "launch",
+			"script": "${workspaceFolder}/test/test_target.ps1",
+			"type": "PowerShell"
+		},
+		{
+			"attachDotnetDebugger": true,
+			"createTemporaryIntegratedConsole": true,
+			"name": "Test - TVer Only",
+			"request": "launch",
+			"script": "${workspaceFolder}/test/test_tver.ps1",
+			"type": "PowerShell"
+		},
+		{
+			"cwd": "${workspaceFolder}/src",
 			"name": "GUI-Main",
-			"cwd": "${workspaceFolder}/src"
+			"request": "launch",
+			"script": "${workspaceFolder}/src/gui/gui_main.ps1",
+			"type": "PowerShell"
 		},
 		{
-			"type": "PowerShell",
-			"script": "${workspaceFolder}/src/gui/gui_setting.ps1",
-			"request": "launch",
+			"cwd": "${workspaceFolder}/src",
 			"name": "GUI-Setting",
-			"cwd": "${workspaceFolder}/src"
+			"request": "launch",
+			"script": "${workspaceFolder}/src/gui/gui_setting.ps1",
+			"type": "PowerShell"
 		},
 		{
-			"type": "PowerShell",
-			"script": "${workspaceFolder}/src/download_single.ps1",
-			"request": "launch",
+			"cwd": "${workspaceFolder}/src",
 			"name": "Single",
-			"cwd": "${workspaceFolder}/src"
+			"request": "launch",
+			"script": "${workspaceFolder}/src/download_single.ps1",
+			"type": "PowerShell"
 		},
 		{
-			"type": "PowerShell",
-			"script": "${workspaceFolder}/src/loop.ps1",
-			"request": "launch",
+			"cwd": "${workspaceFolder}/src",
 			"name": "Loop",
-			"cwd": "${workspaceFolder}/src"
+			"request": "launch",
+			"script": "${workspaceFolder}/src/loop.ps1",
+			"type": "PowerShell"
 		},
 		{
-			"type": "PowerShell",
-			"script": "${workspaceFolder}/src/download_bulk.ps1",
-			"request": "launch",
+			"cwd": "${workspaceFolder}/src",
 			"name": "Bulk",
-			"cwd": "${workspaceFolder}/src"
+			"request": "launch",
+			"script": "${workspaceFolder}/src/download_bulk.ps1",
+			"type": "PowerShell"
 		},
 		{
-			"type": "PowerShell",
-			"script": "${workspaceFolder}/src/delete_trash.ps1",
-			"request": "launch",
+			"cwd": "${workspaceFolder}/src",
 			"name": "Delete",
-			"cwd": "${workspaceFolder}/src"
+			"request": "launch",
+			"script": "${workspaceFolder}/src/delete_trash.ps1",
+			"type": "PowerShell"
 		},
 		{
-			"type": "PowerShell",
-			"script": "${workspaceFolder}/src/validate_video.ps1",
-			"request": "launch",
+			"cwd": "${workspaceFolder}/src",
 			"name": "Validate",
-			"cwd": "${workspaceFolder}/src"
+			"request": "launch",
+			"script": "${workspaceFolder}/src/validate_video.ps1",
+			"type": "PowerShell"
 		},
 		{
-			"type": "PowerShell",
-			"script": "${workspaceFolder}/src/move_video.ps1",
-			"request": "launch",
+			"cwd": "${workspaceFolder}/src",
 			"name": "Move",
-			"cwd": "${workspaceFolder}/src"
+			"request": "launch",
+			"script": "${workspaceFolder}/src/move_video.ps1",
+			"type": "PowerShell"
 		},
 		{
-			"type": "PowerShell",
-			"script": "${workspaceFolder}/src/generate_list.ps1",
-			"request": "launch",
+			"cwd": "${workspaceFolder}/src",
 			"name": "List-Gen",
-			"cwd": "${workspaceFolder}/src"
+			"request": "launch",
+			"script": "${workspaceFolder}/src/generate_list.ps1",
+			"type": "PowerShell"
 		},
 		{
-			"type": "PowerShell",
-			"script": "${workspaceFolder}/src/download_list.ps1",
-			"request": "launch",
+			"cwd": "${workspaceFolder}/src",
 			"name": "List",
-			"cwd": "${workspaceFolder}/src"
+			"request": "launch",
+			"script": "${workspaceFolder}/src/download_list.ps1",
+			"type": "PowerShell"
 		},
 		{
-			"type": "PowerShell",
-			"script": "${workspaceFolder}/src/functions/update_youtube-dl.ps1",
-			"request": "launch",
+			"cwd": "${workspaceFolder}/src",
 			"name": "youtube-dl-Up",
-			"cwd": "${workspaceFolder}/src"
+			"request": "launch",
+			"script": "${workspaceFolder}/src/functions/update_youtube-dl.ps1",
+			"type": "PowerShell"
 		},
 		{
-			"type": "PowerShell",
-			"script": "${workspaceFolder}/src/functions/update_ffmpeg.ps1",
-			"request": "launch",
+			"cwd": "${workspaceFolder}/src",
 			"name": "ffmpeg-Up",
-			"cwd": "${workspaceFolder}/src"
+			"request": "launch",
+			"script": "${workspaceFolder}/src/functions/update_ffmpeg.ps1",
+			"type": "PowerShell"
 		},
 		{
-			"type": "PowerShell",
-			"script": "${workspaceFolder}/src/functions/update_tverrec.ps1",
-			"request": "launch",
+			"cwd": "${workspaceFolder}/src",
 			"name": "Update TVerRec",
-			"cwd": "${workspaceFolder}/src"
+			"request": "launch",
+			"script": "${workspaceFolder}/src/functions/update_tverrec.ps1",
+			"type": "PowerShell"
 		}
-	]
+	],
+	"version": "0.2.0"
 }

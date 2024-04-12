@@ -54,6 +54,12 @@ win-*
 * copy.csv
 *.bak
 
+#テスト用のファイルなど
+TestPath
+TestPath/*
+TestDrive
+TestDrive/*
+
 #ローカルの変更をGitHubにアップしないために
 tver.csv
 history.csv
