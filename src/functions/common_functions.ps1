@@ -367,7 +367,7 @@ function Lock-File {
 
 	try {
 		#ファイルを開こうとしファイルロックを検出
-		$script:fileInfo[$path] = New-Object System.IO.FileInfo $path
+		$script:fileInfo[$path] = [System.IO.FileInfo]::new($path)
 		$script:fileStream[$path] = $script:fileInfo[$path].Open([System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
 		$result = $true
 	} catch { $result = $false }
@@ -498,9 +498,9 @@ function Show-GeneralToast {
     $toastSoundElement
 </toast>
 "@
-				$toastXML = New-Object Windows.Data.Xml.Dom.XmlDocument
+				$toastXML = [Windows.Data.Xml.Dom.XmlDocument]::new()
 				$toastXML.LoadXml($toastProgressContent)
-				$toastNotification = New-Object Windows.UI.Notifications.ToastNotification $toastXML
+				$toastNotification = [Windows.UI.Notifications.ToastNotification]::new($toastXML)
 				$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Show($toastNotification)
 				continue
 			}
@@ -561,12 +561,12 @@ function Show-ProgressToast {
     $toastSoundElement
 </toast>
 "@
-				$toastXML = New-Object Windows.Data.Xml.Dom.XmlDocument
+				$toastXML = [Windows.Data.Xml.Dom.XmlDocument]::new()
 				$toastXML.LoadXml($toastContent)
-				$toast = New-Object Windows.UI.Notifications.ToastNotification $toastXML
+				$toast = [Windows.UI.Notifications.ToastNotification]::new($toastXML)
 				$toast.Tag = $tag
 				$toast.Group = $group
-				$toastData = New-Object 'system.collections.generic.dictionary[String,string]'
+				$toastData = [System.Collections.Generic.Dictionary[String,String]]::new()
 				$null = $toastData.Add('progressTitle', $workDetail)
 				$null = $toastData.Add('progressValue', '')
 				$null = $toastData.Add('progressValueString', '')
@@ -614,7 +614,7 @@ function Update-ProgressToast {
 	if ($script:disableToastNotification -ne $true) {
 		switch ($true) {
 			$IsWindows {
-				$toastData = New-Object 'system.collections.generic.dictionary[String,string]'
+				$toastData = [System.Collections.Generic.Dictionary[String,String]]::new()
 				$null = $toastData.Add('progressTitle', $script:appName)
 				$null = $toastData.Add('progressValue', $rate)
 				$null = $toastData.Add('progressValueString', $rightText)
@@ -678,12 +678,12 @@ function Show-ProgressToast2Row {
 	$toastSoundElement
 </toast>
 "@
-				$toastXML = New-Object Windows.Data.Xml.Dom.XmlDocument
+				$toastXML = [Windows.Data.Xml.Dom.XmlDocument]::new()
 				$toastXML.LoadXml($toastContent)
-				$toast = New-Object Windows.UI.Notifications.ToastNotification $toastXML
+				$toast = [Windows.UI.Notifications.ToastNotification]::new($toastXML)
 				$toast.Tag = $tag
 				$toast.Group = $group
-				$toastData = New-Object 'system.collections.generic.dictionary[String,string]'
+				$toastData = [System.Collections.Generic.Dictionary[String,String]]::new()
 				$null = $toastData.Add('progressTitle1', $detail1)
 				$null = $toastData.Add('progressValue1', '')
 				$null = $toastData.Add('progressValueString1', '')
@@ -752,7 +752,7 @@ function Update-ProgressToast2Row {
 		if ($script:disableToastNotification -ne $true) {
 			switch ($true) {
 				$IsWindows {
-					$toastData = New-Object 'system.collections.generic.dictionary[String,string]'
+					$toastData = [System.Collections.Generic.Dictionary[String, String]]::new()
 					$null = $toastData.Add('progressTitle1', $title1)
 					$null = $toastData.Add('progressValue1', $rate1)
 					$null = $toastData.Add('progressValueString1', $rightText1)
@@ -785,7 +785,7 @@ function Update-ProgressToast2Row {
 function ConvertFrom-Base64 {
 	param ($base64)
 
-	$img = New-Object System.Windows.Media.Imaging.BitmapImage
+	$img = [System.Windows.Media.Imaging.BitmapImage]::new()
 	$img.BeginInit()
 	$img.StreamSource = [System.IO.MemoryStream][System.Convert]::FromBase64String($base64)
 	$img.EndInit()
