@@ -65,6 +65,9 @@
 	"workbench.iconTheme": "vscode-icons",
 	"workbench.preferredLightColorTheme": "Default Dark+",
 	"workbench.startupEditor": "newUntitledFile",
-	"powershell.pester.debugOutputVerbosity": "Detailed",
-	"workbench.editor.enablePreview": false
+	"workbench.editor.enablePreview": false,
+	"pester.suppressCodeLensNotice": true,
+	"powershell.pester.useLegacyCodeLens": false,
+	"pester.runTestsInNewProcess": true,
+	"editor.wordWrap": "on"
 }
