@@ -408,35 +408,16 @@ function Wait-YtdlProcess {
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
-	$psCmd = 'ps'
-
-	$processName = switch ($script:preferredYoutubedl) {
-		'yt-dlp' { 'yt-dlp' ; continue }
-		'ytdl-patched' { 'youtube-dl' ; continue }
-	}
-
 	#youtube-dlのプロセスが設定値を超えたら一時待機
 	while ($true) {
-		try {
-			$ytdlCount = switch ($true) {
-				$IsWindows { [Math]::Round((Get-Process -ErrorAction Ignore -Name 'youtube-dl').Count / 2, [MidpointRounding]::AwayFromZero) ; continue }
-				$IsLinux { @(Get-Process -ErrorAction Ignore -Name $processName).Count ; continue }
-				$IsMacOS { (& $psCmd | grep 'youtube-dl' | grep -v grep | grep -c ^).Trim() ; continue }
-				default { 0 }
-			}
-		} catch {
-			Write-Debug ('ダウンロードプロセスの数を取得できませんでした')
-			$ytdlCount = 0
-		}
-
+		$ytdlCount = Get-YtdlProcessCount
 		if ([Int]$ytdlCount -lt [Int]$parallelDownloadFileNum ) { break }
-
 		Write-Information ('ダウンロードが{0}多重に達したので一時待機します。)' -f $parallelDownloadFileNum)
 		Write-Verbose ('現在のダウンロードプロセス一覧 ({0}個)' -f $ytdlCount)
 		Start-Sleep -Seconds 60
 	}
 
-	Remove-Variable -Name parallelDownloadFileNum, psCmd, processName, ytdlCount -ErrorAction SilentlyContinue
+	Remove-Variable -Name parallelDownloadFileNum, ytdlCount -ErrorAction SilentlyContinue
 }
 
 
@@ -479,46 +460,31 @@ function Format-ListRecord {
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
-	if ($script:extractDescTextToList) {
-		return [pscustomobject]@{
-			seriesName      = $videoInfo.seriesName
-			seriesID        = $videoInfo.seriesID
-			seriesPageURL   = $videoInfo.seriesPageURL
-			seasonName      = $videoInfo.seasonName
-			seasonID        = $videoInfo.seasonID
-			episodeNo       = $videoInfo.episodeNum
-			episodeName     = $videoInfo.episodeName
-			episodeID       = $videoInfo.episodeID
-			episodePageURL  = $videoInfo.episodePageURL
-			media           = $videoInfo.mediaName
-			provider        = $videoInfo.providerName
-			broadcastDate   = $videoInfo.broadcastDate
-			endTime         = $videoInfo.endTime
-			keyword         = $videoInfo.keyword
-			ignoreWord      = $videoInfo.ignoreWord
-			descriptionText = $videoInfo.descriptionText
-		}
-	} else {
-		return [pscustomobject]@{
-			seriesName     = $videoInfo.seriesName
-			seriesID       = $videoInfo.seriesID
-			seriesPageURL  = $videoInfo.seriesPageURL
-			seasonName     = $videoInfo.seasonName
-			seasonID       = $videoInfo.seasonID
-			episodeNo      = $videoInfo.episodeNum
-			episodeName    = $videoInfo.episodeName
-			episodeID      = $videoInfo.episodeID
-			episodePageURL = $videoInfo.episodePageURL
-			media          = $videoInfo.mediaName
-			provider       = $videoInfo.providerName
-			broadcastDate  = $videoInfo.broadcastDate
-			endTime        = $videoInfo.endTime
-			keyword        = $videoInfo.keyword
-			ignoreWord     = $videoInfo.ignoreWord
-		}
+	$customObject = [pscustomobject]@{
+		seriesName     = $videoInfo.seriesName
+		seriesID       = $videoInfo.seriesID
+		seriesPageURL  = $videoInfo.seriesPageURL
+		seasonName     = $videoInfo.seasonName
+		seasonID       = $videoInfo.seasonID
+		episodeNo      = $videoInfo.episodeNum
+		episodeName    = $videoInfo.episodeName
+		episodeID      = $videoInfo.episodeID
+		episodePageURL = $videoInfo.episodePageURL
+		media          = $videoInfo.mediaName
+		provider       = $videoInfo.providerName
+		broadcastDate  = $videoInfo.broadcastDate
+		endTime        = $videoInfo.endTime
+		keyword        = $videoInfo.keyword
+		ignoreWord     = $videoInfo.ignoreWord
 	}
 
-	Remove-Variable -Name videoInfo -ErrorAction SilentlyContinue
+	if ($script:extractDescTextToList) {
+		$customObject | Add-Member -NotePropertyName descriptionText -NotePropertyValue $videoInfo.descriptionText
+	}
+
+	return $customObject
+
+	Remove-Variable -Name videoInfo, customObject -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -936,7 +902,8 @@ function Invoke-Ytdl {
 	$ytdlArgs = (' {0}' -f $script:ytdlBaseArgs)
 	$ytdlArgs += (' {0} {1}' -f '--concurrent-fragments', $script:parallelDownloadNumPerFile)
 	if ($script:rateLimit -notin @(0, '')) {
-		$ytdlArgs += (' {0} {1}M' -f '--limit-rate', [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8))
+		$rateLimit = [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8)
+		$ytdlArgs += (' {0} {1}M' -f '--limit-rate', $rateLimit)
 	}
 	if ($script:embedSubtitle) { $ytdlArgs += (' {0}' -f '--sub-langs all --convert-subs srt --embed-subs') }
 	if ($script:embedMetatag) { $ytdlArgs += (' {0}' -f '--embed-metadata') }
@@ -952,28 +919,22 @@ function Invoke-Ytdl {
 	$ytdlArgs += (' {0}' -f $script:ytdlOption)
 	$ytdlArgs += (' {0}' -f $videoInfo.episodePageURL)
 
-	if ($IsWindows) {
-		try {
-			Write-Debug ('youtube-dl起動コマンド: {0}{1}' -f $script:ytdlPath, $ytdlArgs)
-			$ytdlProcess = Start-Process `
-				-FilePath $script:ytdlPath `
-				-ArgumentList $ytdlArgs `
-				-PassThru `
-				-WindowStyle $script:windowShowStyle
-			$null = $ytdlProcess.Handle
-		} catch { Write-Error ('　❌️ youtube-dlの起動に失敗しました') ; return }
-	} else {
-		Write-Debug ('youtube-dl起動コマンド: {0}{1}' -f $script:ytdlPath, $ytdlArgs)
-		try {
-			$ytdlProcess = Start-Process `
-				-FilePath $script:ytdlPath `
-				-ArgumentList $ytdlArgs `
-				-PassThru `
-				-RedirectStandardOutput /dev/null `
-				-RedirectStandardError /dev/zero
-			$null = $ytdlProcess.Handle
-		} catch { Write-Error ('　❌️ youtube-dlの起動に失敗しました') ; return }
-	}
+	Write-Debug ('youtube-dl起動コマンド: {0}{1}' -f $script:ytdlPath, $ytdlArgs)
+	try {
+		$startProcessParams = @{
+			FilePath     = $script:ytdlPath
+			ArgumentList = $ytdlArgs
+			PassThru     = $true
+		}
+		if ($IsWindows) {
+			$startProcessParams.Add('WindowStyle', $script:windowShowStyle)
+		} else {
+			$startProcessParams.Add('RedirectStandardOutput', '/dev/null')
+			$startProcessParams.Add('RedirectStandardError', '/dev/zero')
+		}
+		$ytdlProcess = Start-Process @startProcessParams
+		$null = $ytdlProcess.Handle
+	} catch { Write-Error '　❌️ youtube-dlの起動に失敗しました' ; return }
 
 	Remove-Variable -Name videoInfo, tmpDir, saveDir, subttlDir, thumbDir, chaptDir, descDir, saveFile, ytdlArgs, ytdlProcess -ErrorAction SilentlyContinue
 }
@@ -1004,7 +965,8 @@ function Invoke-NonTverYtdl {
 	$ytdlArgs = (' {0}' -f $script:ytdlBaseArgs)
 	$ytdlArgs += (' {0} {1}' -f '--concurrent-fragments', $script:parallelDownloadNumPerFile)
 	if ($script:rateLimit -notin @(0, '')) {
-		$ytdlArgs += (' {0} {1}M' -f '--limit-rate', [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8))
+		$rateLimit = [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8)
+		$ytdlArgs += (' {0} {1}M' -f '--limit-rate', $rateLimit)
 	}
 	if ($script:embedSubtitle) { $ytdlArgs += (' {0}' -f '--sub-langs all --convert-subs srt --embed-subs') }
 	if ($script:embedMetatag) { $ytdlArgs += (' {0}' -f '--embed-metadata') }
@@ -1020,31 +982,62 @@ function Invoke-NonTverYtdl {
 	$ytdlArgs += (' {0}' -f $script:ytdlOption)
 	$ytdlArgs += (' {0}' -f $videoPageURL)
 
-	if ($IsWindows) {
-		try {
-			Write-Debug ('youtube-dl起動コマンド: {0}{1}' -f $script:ytdlPath, $ytdlArgs)
-			$ytdlProcess = Start-Process `
-				-FilePath $script:ytdlPath `
-				-ArgumentList $ytdlArgs `
-				-PassThru `
-				-WindowStyle $script:windowShowStyle
-			$null = $ytdlProcess.Handle
-		} catch { Write-Error ('　❌️ youtube-dlの起動に失敗しました') ; return }
-	} else {
-		Write-Debug ('youtube-dl起動コマンド: {0}{1}' -f $script:ytdlPath, $ytdlArgs)
-		try {
-			$ytdlProcess = Start-Process `
-				-FilePath $script:ytdlPath `
-				-ArgumentList $ytdlArgs `
-				-PassThru `
-				-RedirectStandardOutput /dev/null `
-				-RedirectStandardError /dev/zero
-			$null = $ytdlProcess.Handle
-		} catch { Write-Error ('　❌️ youtube-dlの起動に失敗しました') ; return }
-	}
+	Write-Debug ('youtube-dl起動コマンド: {0}{1}' -f $script:ytdlPath, $ytdlArgs)
+	try {
+		$startProcessParams = @{
+			FilePath     = $script:ytdlPath
+			ArgumentList = $ytdlArgs
+			PassThru     = $true
+		}
+		if ($IsWindows) {
+			$startProcessParams.Add('WindowStyle', $script:windowShowStyle)
+		} else {
+			$startProcessParams.Add('RedirectStandardOutput', '/dev/null')
+			$startProcessParams.Add('RedirectStandardError', '/dev/zero')
+		}
+		$ytdlProcess = Start-Process @startProcessParams
+		$null = $ytdlProcess.Handle
+	} catch { Write-Error '　❌️ youtube-dlの起動に失敗しました' ; return }
 
 	Remove-Variable -Name videoPageURL, tmpDir, saveDir, subttlDir, thumbDir, chaptDir, descDir, saveFile, ytdlArgs, ytdlProcess -ErrorAction SilentlyContinue
 }
+
+#----------------------------------------------------------------------
+# youtube-dlのプロセスカウントを取得
+#----------------------------------------------------------------------
+function Get-YtdlProcessCount {
+	param ()
+
+	$processName = switch ($script:preferredYoutubedl) {
+		'yt-dlp' { 'yt-dlp' }
+		'ytdl-patched' { 'youtube-dl' }
+	}
+
+	try {
+		switch ($true) {
+			$IsWindows {
+				return [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero )
+				continue
+			}
+			$IsLinux {
+				return @(Get-Process -ErrorAction Ignore -Name $processName).Count
+				continue
+			}
+			$IsMacOS {
+				$psCmd = 'ps'
+				return (& $psCmd | grep youtube-dl | grep -v grep | grep -c ^).Trim()
+				continue
+			}
+			default {
+				Write-Debug ('ダウンロードプロセスの数を取得できませんでした')
+				return 0
+			}
+		}
+	} catch { return 0 }
+
+	Remove-Variable -Name processName, psCmd -ErrorAction SilentlyContinue
+}
+
 
 #----------------------------------------------------------------------
 #youtube-dlのプロセスが終わるまで待機
@@ -1055,36 +1048,14 @@ function Wait-DownloadCompletion () {
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
-	$psCmd = 'ps'
-
-	$processName = switch ($script:preferredYoutubedl) {
-		'yt-dlp' { 'yt-dlp' }
-		'ytdl-patched' { 'youtube-dl' }
-	}
-
-	try {
-		switch ($true) {
-			$IsWindows { $ytdlCount = [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) ; continue }
-			$IsLinux { $ytdlCount = @(Get-Process -ErrorAction Ignore -Name $processName).Count ; continue }
-			$IsMacOS { $ytdlCount = (& $psCmd | grep youtube-dl | grep -v grep | grep -c ^).Trim() ; continue }
-			default { $ytdlCount = 0 ; continue }
-		}
-	} catch { $ytdlCount = 0 }
-
+	$ytdlCount = Get-YtdlProcessCount
 	while ($ytdlCount -ne 0) {
-		try {
-			Write-Verbose ('現在のダウンロードプロセス一覧 ({0}個)' -f $ytdlCount)
-			Start-Sleep -Seconds 60
-			switch ($true) {
-				$IsWindows { $ytdlCount = [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ) ; continue }
-				$IsLinux { $ytdlCount = @(Get-Process -ErrorAction Ignore -Name $processName).Count ; continue }
-				$IsMacOS { $ytdlCount = (& $psCmd | grep youtube-dl | grep -v grep | grep -c ^).Trim() ; continue }
-				default { $ytdlCount = 0 ; continue }
-			}
-		} catch { $ytdlCount = 0 }
+		Write-Verbose ('現在のダウンロードプロセス一覧 ({0}個)' -f $ytdlCount)
+		Start-Sleep -Seconds 60
+		$ytdlCount = Get-YtdlProcessCount
 	}
 
-	Remove-Variable -Name psCmd, processName, ytdlCount -ErrorAction SilentlyContinue
+	Remove-Variable -Name ytdlCount -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -1351,71 +1322,75 @@ function Invoke-StatisticsCheck {
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
-	$progressPreference = 'silentlyContinue'
-	$statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
-	try { $null = Invoke-WebRequest `
-			-UseBasicParsing `
-			-Uri ('{0}{1}.svg' -f $statisticsBase, $operation) `
-			-Method 'GET' `
-			-TimeoutSec $script:timeoutSec
-	} catch { Write-Debug ('Failed to collect count') }
-	finally { $progressPreference = 'Continue' }
-	if ($operation -eq 'search') { return }
-	$epochTime = [Int64]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() * 1000)
-	$userProperties = @{	#max 25 properties, max 24 chars of property name, 36 chars of property value
-		PSVersion    = @{ 'value' = $PSVersionTable.PSVersion.tostring() }
-		AppVersion   = @{ 'value' = $script:appVersion }
-		OS           = @{ 'value' = $script:os }
-		Kernel       = @{ 'value' = $script:kernel }
-		Architecture = @{ 'value' = $script:arch }
-		Locale       = @{ 'value' = $script:locale }
-		TimeZone     = @{ 'value' = $script:tz }
-	}
-	foreach ($clientEnv in $script:clientEnvs) {
-		$value = [string]$clientEnv.Value
-		$userProperties[$clientEnv.Key] = @{ 'value' = $value.Substring(0, [Math]::Min($value.Length, 36)) }
-	}
-	$eventParams = @{}	#max 25 parameters, max 40 chars of property name, 100 chars of property value
-	foreach ($clientSetting in $script:clientSettings) {
-		if (!($clientSetting.Name -match '(.*Dir|.*Path|app.*|timeout.*|.*Preference|.*Max|.*Period|parallel.*|.*BaseArgs|.*FileName)')) {
-			$paramValue = [String]((Get-Variable -Name $clientSetting.Name).Value)
-			$eventParams[$clientSetting.Key] = $paramValue.Substring(0, [Math]::Min($paramValue.Length, 99))
+	if (!$env:PESTER) {
+		$progressPreference = 'silentlyContinue'
+		$statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
+		try { $null = Invoke-WebRequest `
+				-UseBasicParsing `
+				-Uri ('{0}{1}.svg' -f $statisticsBase, $operation) `
+				-Method 'GET' `
+				-TimeoutSec $script:timeoutSec
+		} catch { Write-Debug ('Failed to collect count') }
+		finally { $progressPreference = 'Continue' }
+		if ($operation -eq 'search') { return }
+		$epochTime = [Int64]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() * 1000)
+		$userProperties = @{	#max 25 properties, max 24 chars of property name, 36 chars of property value
+			PSVersion    = @{ 'value' = $PSVersionTable.PSVersion.tostring() }
+			AppVersion   = @{ 'value' = $script:appVersion }
+			OS           = @{ 'value' = $script:os }
+			Kernel       = @{ 'value' = $script:kernel }
+			Architecture = @{ 'value' = $script:arch }
+			Locale       = @{ 'value' = $script:locale }
+			TimeZone     = @{ 'value' = $script:tz }
 		}
-	}
-	$gaBody = [PSCustomObject]@{
-		client_id            = $script:guid
-		timestamp_micros     = $epochTime
-		non_personalized_ads = $true
-		user_properties      = $userProperties
-		events               = @(	#max 25 events, 40 chars of event name
-			@{
-				name   = $operation
-				params = $eventParams
+		foreach ($clientEnv in $script:clientEnvs) {
+			$value = [string]$clientEnv.Value
+			$userProperties[$clientEnv.Key] = @{ 'value' = $value.Substring(0, [Math]::Min($value.Length, 36)) }
+		}
+		$eventParams = @{}	#max 25 parameters, max 40 chars of property name, 100 chars of property value
+		foreach ($clientSetting in $script:clientSettings) {
+			if (!($clientSetting.Name -match '(.*Dir|.*Path|app.*|timeout.*|.*Preference|.*Max|.*Period|parallel.*|.*BaseArgs|.*FileName)')) {
+				$paramValue = [String]((Get-Variable -Name $clientSetting.Name).Value)
+				$eventParams[$clientSetting.Key] = $paramValue.Substring(0, [Math]::Min($paramValue.Length, 99))
 			}
-		)
-	} | ConvertTo-Json -Depth 3
-	$gaURL = 'https://www.google-analytics.com/mp/collect'
-	$gaKey = 'api_secret=3URTslDhRVu4Qpb66nDyAA'
-	$gaID = 'measurement_id=G-V9TJN18D5Z'
-	$gaHeaders = @{
-		'HOST'         = 'www.google-analytics.com'
-		'Content-Type' = 'application/json'
+		}
+		$gaBody = [PSCustomObject]@{
+			client_id            = $script:guid
+			timestamp_micros     = $epochTime
+			non_personalized_ads = $true
+			user_properties      = $userProperties
+			events               = @(	#max 25 events, 40 chars of event name
+				@{
+					name   = $operation
+					params = $eventParams
+				}
+			)
+		} | ConvertTo-Json -Depth 3
+		$gaURL = 'https://www.google-analytics.com/mp/collect'
+		$gaKey = 'api_secret=3URTslDhRVu4Qpb66nDyAA'
+		$gaID = 'measurement_id=G-V9TJN18D5Z'
+		$gaHeaders = @{
+			'HOST'         = 'www.google-analytics.com'
+			'Content-Type' = 'application/json'
+		}
+		$progressPreference = 'silentlyContinue'
+		try { $null = Invoke-RestMethod `
+				-Uri ('{0}?{1}&{2}' -f $gaURL, $gaKey, $gaID) `
+				-Method 'POST' `
+				-Headers $gaHeaders `
+				-Body $gaBody `
+				-TimeoutSec $script:timeoutSec
+		} catch { Write-Debug ('Failed to collect statistics') }
+		finally { $progressPreference = 'Continue' }
 	}
-	$progressPreference = 'silentlyContinue'
-	try { $null = Invoke-RestMethod `
-			-Uri ('{0}?{1}&{2}' -f $gaURL, $gaKey, $gaID) `
-			-Method 'POST' `
-			-Headers $gaHeaders `
-			-Body $gaBody `
-			-TimeoutSec $script:timeoutSec
-	} catch { Write-Debug ('Failed to collect statistics') }
-	finally { $progressPreference = 'Continue' }
-
 	Remove-Variable -Name operation, tverType, tverID, statisticsBase, epochTime, userProperties, clientEnv, value, eventParams, clientSetting, paramValue, gaBody, gaURL, gaKey, gaID, gaHeaders -ErrorAction SilentlyContinue
 }
 
 #endregion 環境
 
+#----------------------------------------------------------------------
+#GUID等取得
+#----------------------------------------------------------------------
 $script:locale = (Get-Culture).Name
 $script:tz = [String][TimeZoneInfo]::Local.BaseUtcOffset
 
@@ -1429,9 +1404,6 @@ $progressPreference = 'Continue'
 $script:clientEnvs = $script:clientEnvs.GetEnumerator() | Sort-Object -Property key
 $script:clientSettings = Get-Setting
 
-#----------------------------------------------------------------------
-#GUID取得
-#----------------------------------------------------------------------
 switch ($true) {
 	$IsWindows {
 		$script:os = (Get-CimInstance -Class Win32_OperatingSystem).Caption
@@ -1463,3 +1435,4 @@ switch ($true) {
 		continue
 	}
 }
+
