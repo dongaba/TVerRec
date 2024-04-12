@@ -167,7 +167,7 @@ try {
 	[String]$mainXaml = Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecSetting.xaml')
 	$mainXaml = $mainXaml -ireplace 'mc:Ignorable="d"', '' -ireplace 'x:N', 'N' -ireplace 'x:Class=".*?"', ''
 	[xml]$mainCleanXaml = $mainXaml
-	$settingWindow = [System.Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $mainCleanXaml))
+	$settingWindow = [System.Windows.Markup.XamlReader]::Load(([System.Xml.XmlNodeReader]::new($mainCleanXaml)))
 } catch { Write-Error ('❌️ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。') ; exit 1 }
 
 #PowerShellのウィンドウを非表示に
@@ -296,9 +296,9 @@ try {
 
 #メインウィンドウ取得
 $currentProcess = [Diagnostics.Process]::GetCurrentProcess()
-$form = New-Object Windows.Forms.NativeWindow
+$form = [Windows.Forms.NativeWindow]::new()
 $form.AssignHandle($currentProcess.MainWindowHandle)
-$fd = New-Object System.Windows.Forms.FolderBrowserDialog
+$fd = [System.Windows.Forms.FolderBrowserDialog]::new()
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #ウィンドウ表示後のループ処理

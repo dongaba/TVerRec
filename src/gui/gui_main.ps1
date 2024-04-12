@@ -40,11 +40,11 @@ $msgTypesColorMap = @{
 #ログ出力用変数
 $jobMsgs = @()
 $msgTypes = @('Output', 'Error', 'Warning', 'Verbose', 'Debug', 'Information')
-$msgError = New-Object System.Collections.ArrayList
-$msgWarning = New-Object System.Collections.ArrayList
-$msgVerbose = New-Object System.Collections.ArrayList
-$msgDebug = New-Object System.Collections.ArrayList
-$msgInformation = New-Object System.Collections.ArrayList
+$msgError = [System.Collections.ArrayList]::new()
+$msgWarning = [System.Collections.ArrayList]::new()
+$msgVerbose = [System.Collections.ArrayList]::new()
+$msgDebug = [System.Collections.ArrayList]::new()
+$msgInformation = [System.Collections.ArrayList]::new()
 
 #endregion 環境設定
 
@@ -85,7 +85,7 @@ function Out-ExecutionLog {
 		[parameter(Mandatory = $false)][String]$type = 'Output'
 	)
 	if ($script:guiMaxExecLogLines -gt 0) { LimitRichTextBoxLines $outText $script:guiMaxExecLogLines }
-	$rtfRange = New-Object System.Windows.Documents.TextRange($outText.Document.ContentEnd, $outText.Document.ContentEnd)
+	$rtfRange = [System.Windows.Documents.TextRange]::new($outText.Document.ContentEnd, $outText.Document.ContentEnd)
 	$rtfRange.Text = ("{0}`n" -f $Message)
 	$rtfRange.ApplyPropertyValue([System.Windows.Documents.TextElement]::ForegroundProperty, $msgTypesColorMap[$type] )
 	$outText.ScrollToEnd()
@@ -104,7 +104,7 @@ try {
 	[String]$mainXaml = Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecMain.xaml')
 	$mainXaml = $mainXaml -ireplace 'mc:Ignorable="d"', '' -ireplace 'x:N', 'N' -ireplace 'x:Class=".*?"', ''
 	[xml]$mainCleanXaml = $mainXaml
-	$mainWindow = [System.Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $mainCleanXaml))
+	$mainWindow = [System.Windows.Markup.XamlReader]::Load(([System.Xml.XmlNodeReader]::new($mainCleanXaml)))
 } catch { Write-Error ('❌️ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。') ; exit 1 }
 
 #PowerShellのウィンドウを非表示に
