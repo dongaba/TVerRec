@@ -59,6 +59,7 @@
 		"nickdemayo.vscode-json-editor",
 		"wakahh.japanese-bracket-highlight",
 		"ms-vscode.remote-repositories",
-		"ms-vscode.powershell"
+		"ms-vscode.powershell",
+		"dbaeumer.vscode-eslint"
 	]
 }

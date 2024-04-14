@@ -69,5 +69,14 @@
 	"pester.suppressCodeLensNotice": true,
 	"powershell.pester.useLegacyCodeLens": false,
 	"pester.runTestsInNewProcess": true,
-	"editor.wordWrap": "on"
+	"editor.wordWrap": "on",
+	"files.insertFinalNewline": true,
+	"files.trimFinalNewlines": true,
+	"notebook.insertFinalNewline": true,
+	"[javascript]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[html]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	}
 }
