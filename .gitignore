@@ -37,13 +37,23 @@ ffmpeg_error*
 ignore.conf.*
 
 #開発関連ファイル
-dev*
-dev*/*
+dev
+dev/*
 memo.txt
 linux-*
 mac-*
 win-*
 *.xlsx
+
+#Chrome拡張機能
+_*
+_metadata
+_metadata/*
+generated_indexed_rulesets
+generated_indexed_rulesets/*
+_ruleset*
+*.pem
+*.crx
 
 #コードカウンタ
 .VSCodeCounter
