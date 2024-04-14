@@ -1592,7 +1592,7 @@
         <Button
             x:Name="btnWiki"
             Style="{DynamicResource ButtonStyle}"
-            Content="TVerRec Wiki"
+            Content="📒 TVerRec Wiki"
             HorizontalAlignment="Left"
             Grid.Column="1"
             Grid.Row="7"
@@ -1602,7 +1602,7 @@
         <Button
             x:Name="btnCancel"
             Style="{DynamicResource ButtonStyle}"
-            Content="キャンセル"
+            Content="❌ キャンセル"
             HorizontalAlignment="Left"
             Grid.Column="2"
             Grid.Row="7"
@@ -1612,7 +1612,7 @@
         <Button
             x:Name="btnSave"
             Style="{DynamicResource ButtonStyle}"
-            Content="保存"
+            Content="💾 保存"
             HorizontalAlignment="Right"
             Grid.Column="2"
             Grid.Row="7"

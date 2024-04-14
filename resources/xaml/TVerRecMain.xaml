@@ -363,7 +363,7 @@
                 <Button
                     x:Name="btnLoop"
                     Style="{DynamicResource ButtonStyle}"
-                    Content="🔃ループ実行"
+                    Content="🔃 ループ実行"
                     Margin="10,0,10,0"
                     Width="200"/>
             </StackPanel>
@@ -382,25 +382,25 @@
                 <Button
                     x:Name="btnSingle"
                     Style="{DynamicResource ButtonStyle}"
-                    Content="🔽個別ダウンロード"
+                    Content="🔽 個別ダウンロード"
                     Margin="10,0,10,0"
                     Width="110"/>
                 <Button
                     x:Name="btnBulk"
                     Style="{DynamicResource ButtonStyle}"
-                    Content="⏬️一括ダウンロード"
+                    Content="⏬️ 一括ダウンロード"
                     Margin="10,0,10,0"
                     Width="110"/>
                 <Button
                     x:Name="btnListGen"
                     Style="{DynamicResource ButtonStyle}"
-                    Content="🔖リスト作成"
+                    Content="📝 リスト作成"
                     Margin="10,0,10,0"
                     Width="110"/>
                 <Button
                     x:Name="btnList"
                     Style="{DynamicResource ButtonStyle}"
-                    Content="🔂リストダウンロード"
+                    Content="🎯 リストダウンロード"
                     Margin="10,0,10,0"
                     Width="110"/>
             </StackPanel>
@@ -419,21 +419,21 @@
                 <Button
                     x:Name="btnDelete"
                     Style="{DynamicResource ButtonStyle}"
-                    Content="🚮不要ファイル削除"
+                    Content="🚮 不要ファイル削除"
                     Margin="10,0,10,0"
-                    Width="100"/>
+                    Width="120"/>
                 <Button
                     x:Name="btnValidate"
                     Style="{DynamicResource ButtonStyle}"
-                    Content="✅番組整合性検証"
+                    Content="✅ 番組整合性検証"
                     Margin="10,0,10,0"
-                    Width="100"/>
+                    Width="120"/>
                 <Button
                     x:Name="btnMove"
                     Style="{DynamicResource ButtonStyle}"
-                    Content="🔀番組移動"
+                    Content="🔀 番組移動"
                     Margin="10,0,10,0"
-                    Width="100"/>
+                    Width="120"/>
             </StackPanel>
         </Border>
 
@@ -455,7 +455,7 @@
                 <Button
                     x:Name="btnKillAll"
                     Style="{DynamicResource ButtonStyle}"
-                    Content="❌処理停止"
+                    Content="❌ 処理停止"
                     Margin="5,0,5,10"
                     Grid.Column="1"
                     Width="100"/>
@@ -501,19 +501,19 @@
                 <Button
                     x:Name="btnWorkOpen"
                     Style="{DynamicResource ButtonStyle}"
-                    Content="♻️作業ディレクトリ"
+                    Content="♻️ 作業ディレクトリ"
                     Margin="10,0,10,0"
                     Width="140"/>
                 <Button
                     x:Name="btnDownloadOpen"
                     Style="{DynamicResource ButtonStyle}"
-                    Content="📚ダウンロードディレクトリ"
+                    Content="📚 ダウンロードディレクトリ"
                     Margin="10,0,10,0"
                     Width="140"/>
                 <Button
                     x:Name="btnSaveOpen"
                     Style="{DynamicResource ButtonStyle}"
-                    Content="💾保存ディレクトリ"
+                    Content="💾 保存ディレクトリ"
                     Margin="10,0,10,0"
                     Width="140"/>
             </StackPanel>
@@ -532,19 +532,19 @@
                 <Button
                     x:Name="btnKeywordOpen"
                     Style="{DynamicResource ButtonStyle}"
-                    Content="🔎キーワードファイル"
+                    Content="🔎 キーワードファイル"
                     Margin="10,0,10,0"
                     Width="140"/>
                 <Button
                     x:Name="btnIgnoreOpen"
                     Style="{DynamicResource ButtonStyle}"
-                    Content="🚫除外リスト"
+                    Content="🚫 除外リスト"
                     Margin="10,0,10,0"
                     Width="140"/>
                 <Button
                     x:Name="btnListOpen"
                     Style="{DynamicResource ButtonStyle}"
-                    Content="📝リストファイル"
+                    Content="📝 リストファイル"
                     Margin="10,0,10,0"
                     Width="140"/>
             </StackPanel>
@@ -577,7 +577,7 @@
             <Button
                 x:Name="btnClearLog"
                 Style="{DynamicResource ButtonStyle}"
-                Content="🗑️実行ログクリア"
+                Content="🗑️ 実行ログクリア"
                 Margin="10,5,10,0"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Center"
@@ -605,7 +605,7 @@
         <Button
             x:Name="btnWiki"
             Style="{DynamicResource ButtonStyle}"
-            Content="📒TVerRec Wiki"
+            Content="📒 TVerRec Wiki"
             Grid.Column="1"
             Grid.Row="13"
             HorizontalAlignment="Left"
@@ -614,7 +614,7 @@
         <Button
             x:Name="btnSetting"
             Style="{DynamicResource ButtonStyle}"
-            Content="🛠️設定"
+            Content="🛠️ 設定"
             Grid.Column="1"
             Grid.Row="13"
             HorizontalAlignment="Right"
@@ -623,7 +623,7 @@
         <Button
             x:Name="btnExit"
             Style="{DynamicResource ButtonStyle}"
-            Content="💤終了"
+            Content="終了"
             Grid.Column="2"
             Grid.Row="13"
             HorizontalAlignment="Right"
