@@ -519,8 +519,7 @@ function Invoke-VideoDownload {
 
 	#TVerのAPIを叩いて番組情報取得
 	Invoke-StatisticsCheck -Operation 'getinfo' -TVerType 'link' -TVerID $episodeID
-	try { $videoInfo = Get-VideoInfo $episodeID }
-	catch { Write-Error ('　❌️ 情報取得エラー。スキップします Err:90') ; continue }
+	$videoInfo = Get-VideoInfo $episodeID
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'keyword' -Value $keyword
 
 	#ダウンロードファイル名を生成
@@ -634,8 +633,7 @@ function Update-VideoList {
 
 	#TVerのAPIを叩いて番組情報取得
 	Invoke-StatisticsCheck -Operation 'getinfo' -TVerType 'link' -TVerID $episodeID
-	try { $videoInfo = Get-VideoInfo $episodeID }
-	catch { Write-Error ('　❌️ 情報取得エラー。スキップします Err:91') ; continue }
+	$videoInfo = Get-VideoInfo $episodeID
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'keyword' -Value $keyword
 
 	#ダウンロード対象外に入っている番組の場合はリスト出力しない
