@@ -139,6 +139,7 @@ function Get-VideoLinksFromKeyword {
 function ProcessSearchResults {
 	[CmdletBinding()]
 	[OutputType([PSCustomObject])]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly', '')]
 	Param (
 		[Parameter(Mandatory = $true)][String]$baseURL,
 		[Parameter(Mandatory = $false)][String]$type,
@@ -201,12 +202,12 @@ function ProcessSearchResults {
 	}
 
 	return [PSCustomObject]@{
-		episodeLinks = $episodeLinks | Sort-Object -Unique
-		talentLinks  = $talentLinks | Sort-Object -Unique
-		seasonLinks  = $seasonLinks | Sort-Object -Unique
-		seriesLinks  = $seriesLinks | Sort-Object -Unique
+		episodeLinks     = $episodeLinks | Sort-Object -Unique
+		talentLinks      = $talentLinks | Sort-Object -Unique
+		seasonLinks      = $seasonLinks | Sort-Object -Unique
+		seriesLinks      = $seriesLinks | Sort-Object -Unique
 		specialMainLinks = $specialMainLinks | Sort-Object -Unique
-		specialLinks = $specialLinks | Sort-Object -Unique
+		specialLinks     = $specialLinks | Sort-Object -Unique
 	}
 	Remove-Variable -Name baseURL, type, keyword, episodeLinks, seasonLinks, seriesLinks, specialLinks -ErrorAction SilentlyContinue
 	Remove-Variable -Name callSearchURL, searchResultsRaw, searchResults, searchResult -ErrorAction SilentlyContinue
@@ -231,6 +232,7 @@ function Get-LinkFromSeriesID {
 function Get-LinkFromSeasonID {
 	[CmdletBinding()]
 	[OutputType([PSCustomObject])]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly', '')]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$seasonID)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$tverIDs = ProcessSearchResults -baseURL ('https://platform-api.tver.jp/service/api/v1/callSeasonEpisodes/{0}' -f $seasonID)
@@ -244,6 +246,7 @@ function Get-LinkFromSeasonID {
 function Get-LinkFromTalentID {
 	[CmdletBinding()]
 	[OutputType([PSCustomObject])]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly', '')]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$talentID)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$tverIDs = ProcessSearchResults -baseURL ('https://platform-api.tver.jp/service/api/v1/callTalentEpisode/{0}' -f $talentID)
@@ -257,6 +260,7 @@ function Get-LinkFromTalentID {
 function Get-LinkFromSpecialMainID {
 	[CmdletBinding()]
 	[OutputType([PSCustomObject])]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly', '')]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$specialMainID)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$tverIDs = ProcessSearchResults -baseURL ('https://platform-api.tver.jp/service/api/v1/callSpecialContents/{0}' -f $specialMainID) -Type 'specialmain'
@@ -270,6 +274,7 @@ function Get-LinkFromSpecialMainID {
 function Get-LinkFromSpecialDetailID {
 	[CmdletBinding()]
 	[OutputType([PSCustomObject])]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly', '')]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$specialDetailID)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$tverIDs = ProcessSearchResults -baseURL ('https://platform-api.tver.jp/service/api/v1/callSpecialContentsDetail/{0}' -f $specialDetailID) -Type 'specialdetail'
@@ -283,6 +288,7 @@ function Get-LinkFromSpecialDetailID {
 function Get-LinkFromTag {
 	[CmdletBinding()]
 	[OutputType([PSCustomObject])]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly', '')]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$tagID)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$tverIDs = @(ProcessSearchResults -baseURL ('https://platform-api.tver.jp/service/api/v1/callTagSearch/{0}' -f $tagID))
@@ -296,6 +302,7 @@ function Get-LinkFromTag {
 function Get-LinkFromNew {
 	[CmdletBinding()]
 	[OutputType([PSCustomObject])]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly', '')]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$genre)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$tverIDs = @(ProcessSearchResults -baseURL ('https://platform-api.tver.jp/service/api/v1/callNewerDetail/{0}' -f $genre) -Type 'new')
@@ -309,6 +316,7 @@ function Get-LinkFromNew {
 function Get-LinkFromMyPage {
 	[CmdletBinding()]
 	[OutputType([PSCustomObject])]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly', '')]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$page)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	switch ($page) {
@@ -347,6 +355,7 @@ function Get-LinkFromMyPage {
 function Get-LinkFromRanking {
 	[CmdletBinding()]
 	[OutputType([PSCustomObject])]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly', '')]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$genre)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if ($genre -eq 'all') { $tverIDs = ProcessSearchResults -baseURL 'https://platform-api.tver.jp/service/api/v1/callEpisodeRanking' -Type 'ranking' }
@@ -361,6 +370,7 @@ function Get-LinkFromRanking {
 function Get-LinkFromFreeKeyword {
 	[CmdletBinding()]
 	[OutputType([PSCustomObject])]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly', '')]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$keyword)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$tverIDs = ProcessSearchResults -baseURL 'https://platform-api.tver.jp/service/api/v1/callKeywordSearch' -Type 'keyword' -Keyword $keyword
@@ -519,6 +529,7 @@ function Update-LinkCollection {
 function Convert-Buffer {
 	[CmdletBinding()]
 	[OutputType([PSCustomObject])]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly', '')]
 	param(
 		[Parameter(Mandatory = $false)][Object[]]$tverIDs,
 		[Parameter(Mandatory = $true)][ValidateSet('Special Main', 'Special Detail', 'Talent', 'Season', 'Series')][string]$tverIDType,
