@@ -24,9 +24,7 @@ chrome.runtime.onMessage.addListener((message, sender) => {
 // ルールの無効化
 function disableRule() {
 	chrome.declarativeNetRequest.updateEnabledRulesets(
-		{
-			disableRulesetIds: ["ruleset"],
-		},
+		{ disableRulesetIds: ["ruleset"] },
 		() => {}
 	);
 	console.log("TVerRec Assistant: Rule Disabled");
@@ -35,45 +33,38 @@ function disableRule() {
 // ルールの有効化
 function enableRule() {
 	chrome.declarativeNetRequest.updateEnabledRulesets(
-		{
-			enableRulesetIds: ["ruleset"],
-		},
+		{ enableRulesetIds: ["ruleset"] },
 		() => {}
 	);
 	console.log("TVerRec Assistant: Rule Enabled");
-
 	disableRule();
 }
 
 // 保存処理
 function saveStorage(platform_uid, platform_token) {
-	chrome.storage.local.set({ key_uid: platform_uid });
-	chrome.storage.local.set({ key_token: platform_token });
+	chrome.storage.local.set({
+		key_uid: platform_uid,
+		key_token: platform_token,
+	});
 	chrome.storage.local.get(console.log);
 }
 
 //クエリパラメータの処理
 function getSearchParams(search) {
-	var params = {};
-	var search = search.substr(1);
-	if (search === "") {
-		return params;
+	const params = new URLSearchParams(search);
+	let result = {};
+	for (const [key, value] of params) {
+		result[key] = value;
 	}
-	search.split("&").forEach((str) => {
-		var arr = str.split("=");
-		if (arr[0] !== "") {
-			params[arr[0]] = arr[1] !== undefined ? decodeURIComponent(arr[1]) : "";
-		}
-	});
-	return params;
+	return result;
 }
 
+// ネットワークリクエストに関するイベントを監視
 chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((e) => {
 	console.log("TVerRec Assistant: Connection Blocked by TVerRec");
 	console.log(e.request.url);
 
-	const requrl = e.request.url;
-	var url = new URL(requrl);
+	const url = new URL(e.request.url);
 
 	if (url.host.includes("tver.jp") && !url.host.includes("statics.tver.jp")) {
 		const excludedExtensions = [
@@ -90,29 +81,21 @@ chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((e) => {
 		);
 
 		if (!hasExcludedExtension) {
-			console.log("	URL:", requrl);
-			var searchParams = getSearchParams(url.search);
+			console.log("	URL:", e.request.url);
+			const searchParams = getSearchParams(url.search);
 			console.log("	Param Array:", searchParams);
-			console.log("		platform_uid:", searchParams.platform_uid);
-			console.log("		platform_token:", searchParams.platform_token);
-		}
-
-		if (
-			searchParams !== undefined &&
-			searchParams.platform_uid !== undefined &&
-			searchParams.platform_token !== undefined
-		) {
-			console.log("TVerRec Assistant: Add below to user_settings.ps1");
-			console.log(
-				"	$script:my_platform_uid = '" + searchParams.platform_uid + "'"
-			);
-			console.log(
-				"	$script:my_platform_token = '" + searchParams.platform_token + "'"
-			);
-			saveStorage(searchParams.platform_uid, searchParams.platform_token);
+			if (
+				searchParams.platform_uid !== undefined &&
+				searchParams.platform_token !== undefined
+			) {
+				console.log("TVerRec Assistant: Add below to user_settings.ps1");
+				console.log(`	$script:my_platform_uid = '${searchParams.platform_uid}'`);
+				console.log(
+					`	$script:my_platform_token = '${searchParams.platform_token}'`
+				);
+				saveStorage(searchParams.platform_uid, searchParams.platform_token);
+				disableRule(); // UID と TOKEN を取得したらルールを解除
+			}
 		}
 	}
-
-	//UIDとTOKENを取得したらルール解除
-	disableRule();
 });

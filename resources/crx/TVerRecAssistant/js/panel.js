@@ -1,36 +1,28 @@
 // 保存処理
 function saveStorage(platform_uid, platform_token) {
-	chrome.storage.local.set({ key_uid: platform_uid });
-	chrome.storage.local.set({ key_token: platform_token });
-	chrome.storage.local.get(console.log);
+	chrome.storage.local.set({ key_uid: platform_uid, key_token: platform_token }, () => {
+		chrome.storage.local.get(null, (items) => {
+			console.log(items);
+		});
+	});
 }
 
-//クリア
+// テーブルのクリア処理
 function clearTable() {
-	const table = document.getElementById("dataTable");
-	var row_num = table.rows.length;
-	for (let i = row_num; i > 1; i--) {
-		row_num = table.rows.length;
-		table.deleteRow(row_num - 1);
-	}
-	chrome.storage.local.clear();
-	console.clear();
+    const table = document.getElementById("dataTable");
+    while (table.rows.length > 1) { table.deleteRow(1); }
+    chrome.storage.local.clear();
+    console.clear();
 }
 
 //クエリパラメータの処理
 function getSearchParams(search) {
-	var params = {};
-	var search = search.substr(1);
-	if (search === "") {
-		return params;
+	const params = new URLSearchParams(search);
+	let result = {};
+	for (const [key, value] of params) {
+		result[key] = decodeURIComponent(value);
 	}
-	search.split("&").forEach((str) => {
-		var arr = str.split("=");
-		if (arr[0] !== "") {
-			params[arr[0]] = arr[1] !== undefined ? decodeURIComponent(arr[1]) : "";
-		}
-	});
-	return params;
+	return result;
 }
 
 //リクエスト終了時
@@ -48,52 +40,40 @@ chrome.devtools.network.onRequestFinished.addListener((req) => {
 			".json",
 			".html",
 		];
-		const hasExcludedExtension = excludedExtensions.some((ext) =>
-			url.pathname.endsWith(ext)
-		);
-
-		if (!hasExcludedExtension) {
-			console.log("URL:", requrl);
-			var searchParams = getSearchParams(url.search);
+		if (!excludedExtensions.some((ext) => url.pathname.endsWith(ext))) {
+			console.log("URL:", req.request.url);
+			const searchParams = getSearchParams(url.search);
 			console.log("	Origin:", url.origin);
 			console.log("	Path:", url.pathname);
 			console.log("	Param Text:", url.search);
 			console.log("	Param Array:", searchParams);
-			console.log("		platform_uid:", searchParams.platform_uid);
-			console.log("		platform_token:", searchParams.platform_token);
-		}
 
-		if (
-			searchParams !== undefined &&
-			searchParams.platform_uid !== undefined &&
-			searchParams.platform_token !== undefined
-		) {
-			const table = document.getElementById("dataTable");
-			const row1 = table.insertRow();
-			const col1_1 = row1.insertCell();
-			const col1_2 = row1.insertCell();
-			const col1_3 = row1.insertCell();
-			col1_1.innerHTML = "platform_uid";
-			col1_2.innerHTML = searchParams.platform_uid;
-			col1_3.innerHTML =
-				"$script:my_platform_uid = '" + searchParams.platform_uid + "'";
-			const row2 = table.insertRow();
-			const col2_1 = row2.insertCell();
-			const col2_2 = row2.insertCell();
-			const col2_3 = row2.insertCell();
-			col2_1.innerHTML = "platform_token";
-			col2_2.innerHTML = searchParams.platform_token;
-			col2_3.innerHTML =
-				"$script:my_platform_token = '" + searchParams.platform_token + "'";
-			saveStorage(searchParams.platform_uid, searchParams.platform_token);
-		}
+			if (searchParams.platform_uid && searchParams.platform_token) {
+				updateTable(searchParams);
+				saveStorage(searchParams.platform_uid, searchParams.platform_token);
+			}
 
-		// background.jsにメッセージを送信
-		chrome.runtime.sendMessage({
-			message: "panel.jsからbackground.jsに送るメッセージ",
-		});
+			chrome.runtime.sendMessage({
+				message: "panel.jsからbackground.jsに送るメッセージ",
+			});
+		}
 	}
 });
+
+// テーブル更新処理
+function updateTable(searchParams) {
+    const table = document.getElementById("dataTable");
+    insertRow(table, "platform_uid", searchParams.platform_uid);
+    insertRow(table, "platform_token", searchParams.platform_token);
+}
+
+// テーブルに行を挿入するヘルパー関数
+function insertRow(table, key, value) {
+    const row = table.insertRow();
+    row.insertCell().textContent = key;
+    row.insertCell().textContent = value;
+    row.insertCell().textContent = `$script:my_${key} = '${value}'`;
+}
 
 // メッセージが受信された時に実行する処理
 chrome.runtime.onMessage.addListener((message) => {
