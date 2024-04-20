@@ -34,9 +34,9 @@ html {
 	position: absolute;
 	top: 10px;
 	left: 68px;
-	text-align: center;
 	display: flex;
 	align-items: center;
+	justify-content: center;
 	color: #fff;
 	background-color: #333333;
 	border-radius: 0px 10px 10px 0px;
@@ -47,12 +47,19 @@ html {
 	flex: 1;
 }
 
+.h-center {
+	margin: 0 auto;
+}
+
 .button {
 	position: absolute;
 	top: 78px;
 	left: 10px;
 	width: 430px;
 	vertical-align: middle;
+	display: flex;
+	justify-content: center;
+	align-items: center;
 }
 
 .refresh-button {
