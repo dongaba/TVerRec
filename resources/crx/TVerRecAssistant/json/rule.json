@@ -8,7 +8,6 @@
 		"condition": {
 			"urlFilter": "*platform-api.tver.jp*platform_token*",
 			"resourceTypes": [
-
 				"xmlhttprequest"
 			]
 		}

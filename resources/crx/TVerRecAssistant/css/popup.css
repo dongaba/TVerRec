@@ -1,0 +1,79 @@
+*,
+*:before,
+*:after {
+	-webkit-box-sizing: inherit;
+	box-sizing: inherit;
+}
+
+html {
+	-webkit-box-sizing: border-box;
+	box-sizing: border-box;
+	font-size: 100%;
+	width: 450px;
+	height: 108px;
+	border-radius: 10px 10px 10px 10px;
+	background-color: #eeeeee;
+}
+
+.logo {
+	width: 58px;
+	height: 58px;
+	position: absolute;
+	top: 10px;
+	left: 10px;
+	vertical-align: middle;
+	background: #d8453e;
+	display: flex;
+	align-items: center;
+	border-radius: 10px 0px 0px 10px;
+}
+
+.message {
+	width: 372px;
+	height: 58px;
+	position: absolute;
+	top: 10px;
+	left: 68px;
+	text-align: center;
+	display: flex;
+	align-items: center;
+	color: #fff;
+	background-color: #333333;
+	border-radius: 0px 10px 10px 0px;
+}
+
+.v-center {
+	margin: 5px;
+	flex: 1;
+}
+
+.button {
+	position: absolute;
+	top: 78px;
+	left: 10px;
+	width: 430px;
+	vertical-align: middle;
+}
+
+.refresh-button {
+	font-family: arial;
+	font-size: 14px;
+	width: 150px;
+	height: 20px;
+	text-align: center;
+	color: #fff;
+	background-color: #333333;
+	border: none;
+	border-radius: 10px 10px 10px 10px;
+	margin: 0 auto;
+}
+.refresh-button:hover {
+	font-family: arial;
+	font-size: 14px;
+	width: 150px;
+	height: 20px;
+	text-align: center;
+	color: #fff;
+	background: #d8453e;
+	border-radius: 10px 10px 10px 10px;
+}

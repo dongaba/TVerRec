@@ -1,35 +1,3 @@
-chrome.storage.onChanged.addListener((changes, namespace) => {
-	for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
-		console.log(
-			`Storage key "${key}" in namespace "${namespace}" changed.`,
-			`Old value was "${oldValue}", new value is "${newValue}".`
-		);
-	}
-});
-
-// メッセージが受信された時に実行する処理
-chrome.runtime.onMessage.addListener((message, sender) => {
-	console.log(message.message);
-
-	// const tabId = sender.tab.id;
-
-	// if (tabId) {
-	// 	// panel.jsにメッセージを送信
-	// 	chrome.tabs.sendMessage(tabId, {
-	// 		message: "panel.jsに送るメッセージ",
-	// 	});
-	// }
-});
-
-// ルールの無効化
-function disableRule() {
-	chrome.declarativeNetRequest.updateEnabledRulesets(
-		{ disableRulesetIds: ["ruleset"] },
-		() => {}
-	);
-	console.log("TVerRec Assistant: Rule Disabled");
-}
-
 // ルールの有効化
 function enableRule() {
 	chrome.declarativeNetRequest.updateEnabledRulesets(
@@ -37,7 +5,14 @@ function enableRule() {
 		() => {}
 	);
 	console.log("TVerRec Assistant: Rule Enabled");
-	disableRule();
+}
+// ルールの無効化
+function disableRule() {
+	chrome.declarativeNetRequest.updateEnabledRulesets(
+		{ disableRulesetIds: ["ruleset"] },
+		() => {}
+	);
+	console.log("TVerRec Assistant: Rule Disabled");
 }
 
 // 保存処理
@@ -59,7 +34,42 @@ function getSearchParams(search) {
 	return result;
 }
 
-// ネットワークリクエストに関するイベントを監視
+//ローカルストレージの変更時にコンソールメッセージ
+chrome.storage.onChanged.addListener((changes, namespace) => {
+	for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
+		console.log(
+			`TVerRec Assistant: Storage key "${key}" in namespace "${namespace}" changed.`,
+			`TVerRec Assistant: Old value was "${oldValue}", new value is "${newValue}".`
+		);
+	}
+});
+
+//アクティブなタブを切り替えたとき
+chrome.tabs.onActivated.addListener(function (activeInfo) {
+	chrome.tabs.get(activeInfo.tabId, function (tab) {
+		setAction(tab.url);
+	});
+});
+
+//タブの情報に変更があったとき
+chrome.tabs.onUpdated.addListener((tabId, change, tab) => {
+	if (tab.active && change.url) {
+		setAction(change.url);
+	}
+});
+
+//アクティブタブによってポップアップを変える
+function setAction(url) {
+	console.log(`TVerRec Assistant: active page = "${url}"`);
+	const pattern = /^https:\/\/tver.jp\//;
+	if (pattern.test(url)) {
+		chrome.action.setPopup({ popup: "html/popup.html" });
+	} else {
+		chrome.action.setPopup({ popup: "html/error.html" });
+	}
+}
+
+//ネットワークリクエストに関するイベントを監視
 chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((e) => {
 	console.log("TVerRec Assistant: Connection Blocked by TVerRec");
 	console.log(e.request.url);
@@ -81,9 +91,9 @@ chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((e) => {
 		);
 
 		if (!hasExcludedExtension) {
-			console.log("	URL:", e.request.url);
+			console.log("TVerRec Assistant: URL:", e.request.url);
 			const searchParams = getSearchParams(url.search);
-			console.log("	Param Array:", searchParams);
+			console.log("TVerRec Assistant: Param Array:", searchParams);
 			if (
 				searchParams.platform_uid !== undefined &&
 				searchParams.platform_token !== undefined
@@ -97,5 +107,13 @@ chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((e) => {
 				disableRule(); // UID と TOKEN を取得したらルールを解除
 			}
 		}
+	}
+});
+
+//メッセージが受信された時にルール有効化
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+	if (message.action === "enableRule") {
+		enableRule();
+		sendResponse({ status: true, data: "ルールを有効化しました" });
 	}
 });

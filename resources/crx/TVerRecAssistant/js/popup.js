@@ -1,16 +1,26 @@
-function clearStorage() {
-	chrome.storage.local.clear();
+//リロード
+function reload() {
+	//	location.reload();
+	location.href = ("https://tver.jp");
 }
 
-// ストレージからデータを読み込む関数
-function readStorage() {
-    chrome.storage.local.get(null, (data) => {
-        console.log(`platform_uid = ${data.key_uid}`);
-        console.log(`platform_token = ${data.key_token}`);
-        document.getElementById("uid").innerText = `platform_uid = ${data.key_uid}`;
-        document.getElementById("token").innerText = `platform_token = ${data.key_token}`;
-    });
-}
+// ボタンクリック時に実行する処理を定義
+document.getElementById("refresh").addEventListener("click", async () => {
+	clearStorage();
+	console.log("TVerRec Assistant: platform_uid and platform_token cleared");
+	chrome.runtime.sendMessage(
+		{ action: "enableRule", data: "" },
+		function (response) {
+			window.close();
+		}
+	);
+	let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+	chrome.scripting.executeScript({
+		target: { tabId: tab.id },
+		function: reload,
+	});
+	readStorage();
+});
 
 // ストレージからデータを読み込む
 readStorage();
