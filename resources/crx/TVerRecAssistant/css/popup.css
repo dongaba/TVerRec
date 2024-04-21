@@ -1,18 +1,10 @@
-*,
-*:before,
-*:after {
-	-webkit-box-sizing: inherit;
-	box-sizing: inherit;
-}
-
 html {
-	-webkit-box-sizing: border-box;
-	box-sizing: border-box;
-	font-size: 100%;
-	width: 450px;
+	font-family: Helvetica, Arial, Verdana, Tahoma, sans-serif;
+	font-size: 14px;
+	width: 470px;
 	height: 108px;
 	border-radius: 10px;
-	background-color: #eeeeee;
+	background-color: #eee;
 }
 
 .logo {
@@ -25,12 +17,13 @@ html {
 	background: #d8453e;
 	display: flex;
 	align-items: center;
-	border-radius: 10px 0px 0px 10px;
+	border-radius: 10px 0 0 10px;
 }
 
 .message {
-	width: 372px;
+	width: 392px;
 	height: 58px;
+	font-size: 12px;
 	position: absolute;
 	top: 10px;
 	left: 68px;
@@ -38,8 +31,8 @@ html {
 	align-items: center;
 	justify-content: center;
 	color: #fff;
-	background-color: #333333;
-	border-radius: 0px 10px 10px 0px;
+	background-color: #333;
+	border-radius: 0 10px 10px 0;
 }
 
 .v-center {
@@ -55,7 +48,7 @@ html {
 	position: absolute;
 	top: 78px;
 	left: 10px;
-	width: 430px;
+	width: 450px;
 	vertical-align: middle;
 	display: flex;
 	justify-content: center;
@@ -63,7 +56,6 @@ html {
 }
 
 .refresh-button {
-	font-family: arial;
 	font-size: 14px;
 	width: 150px;
 	height: 20px;
@@ -74,8 +66,8 @@ html {
 	border-radius: 10px;
 	margin: 0 auto;
 }
+
 .refresh-button:hover {
-	font-family: arial;
 	font-size: 14px;
 	width: 150px;
 	height: 20px;
