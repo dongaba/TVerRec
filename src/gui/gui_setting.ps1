@@ -86,7 +86,7 @@ function Read-UserSetting {
 	)
 	$currentSetting = ''
 	if (Test-Path (Join-Path $script:confDir 'user_setting.ps1')) {
-		try { $currentSetting = (Select-String -Pattern ('^{0}' -f [regex]::Escape($key.Replace('$', '\$'))) -LiteralPath $userSettingFile | ForEach-Object { $_.Line }).split('=')[1].Trim() }
+		try { $currentSetting = (Select-String -Pattern ('^{0}' -f [regex]::Escape($key)) -LiteralPath $userSettingFile | ForEach-Object { $_.Line }).split('=')[1].Trim() }
 		catch { return }
 	}
 	return $currentSetting.Trim("'")
@@ -232,6 +232,8 @@ $settingAttributes = @(
 	'$script:parallelDownloadFileNum',
 	'$script:parallelDownloadNumPerFile',
 	'$script:loopCycle',
+	'$script:myPlatformUID',
+	'$script:myPlatformToken',
 	'$script:enableMultithread',
 	'$script:multithreadNum',
 	'$script:disableToastNotification',
