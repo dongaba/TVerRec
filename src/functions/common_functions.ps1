@@ -3,6 +3,8 @@
 #		共通関数スクリプト
 #
 ###################################################################################
+Set-StrictMode -Version Latest
+
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
 Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)

@@ -3,6 +3,8 @@
 #		TVer固有関数スクリプト
 #
 ###################################################################################
+Set-StrictMode -Version Latest
+
 Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 $script:requestHeader = @{
@@ -157,8 +159,13 @@ function ProcessSearchResults {
 	$specialLinks = [System.Collections.Generic.List[string]]::new()
 
 	#URLの整形
-	$uid = $requireData ? $script:myPlatformUID : $script:platformUID
-	$token = $requireData ? $script:myPlatformToken : $script:platformToken
+	if ($requireData -and $script:myPlatformUID -ne '' -and $script:myPlatformToken -ne '') {
+		$uid = $script:myPlatformUID
+		$token = $script:myPlatformToken
+	} else {
+		$uid = $script:platformUID
+		$token = $script:platformToken
+	}
 	$callSearchURL = ('{0}?platform_uid={1}&platform_token={2}' -f $baseURL, $uid, $token )
 	if ($type -eq 'keyword' -and $keyword) { $callSearchURL += "&keyword=$keyword" }
 	if ($type -eq 'mypage' -and $requireData) { $callSearchURL += "&require_data=$requireData" }

@@ -3,6 +3,8 @@
 #		TVerRec固有関数スクリプト
 #
 ###################################################################################
+Set-StrictMode -Version Latest
+
 Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 Add-Type -AssemblyName 'System.Globalization'
 
