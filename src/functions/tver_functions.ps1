@@ -108,23 +108,23 @@ function Get-VideoLinksFromKeyword {
 			-or ($linkCollection.seriesLinks.Count -ne 0) `
 			-or ($linkCollection.seasonLinks.Count -ne 0)) {
 		if ($linkCollection.specialMainLinks) {
-			$linkCollection = Convert-Buffer $linkCollection.specialMainLinks 'Special Main' $linkCollection
+			$linkCollection = Convert-Buffer -TverIDs $linkCollection.specialMainLinks -TverIDType 'Special Main' -LinkCollection $linkCollection
 			$linkCollection.specialMainLinks = [System.Collections.Generic.List[string]]::new()
 		}
 		if ($linkCollection.specialLinks) {
-			$linkCollection = Convert-Buffer $linkCollection.specialLinks 'Special Detail' $linkCollection
+			$linkCollection = Convert-Buffer -TverIDs $linkCollection.specialLinks -TverIDType 'Special Detail' -LinkCollection $linkCollection
 			$linkCollection.specialLinks = [System.Collections.Generic.List[string]]::new()
 		}
 		if ($linkCollection.talentLinks) {
-			$linkCollection = Convert-Buffer $linkCollection.talentLinks 'Talent' $linkCollection
+			$linkCollection = Convert-Buffer -TverIDs $linkCollection.talentLinks -TverIDType 'Talent' -LinkCollection $linkCollection
 			$linkCollection.talentLinks = [System.Collections.Generic.List[string]]::new()
 		}
 		if ($linkCollection.seriesLinks) {
-			$linkCollection = Convert-Buffer $linkCollection.seriesLinks 'Series' $linkCollection
+			$linkCollection = Convert-Buffer -TverIDs $linkCollection.seriesLinks -TverIDType 'Series' -LinkCollection $linkCollection
 			$linkCollection.seriesLinks = [System.Collections.Generic.List[string]]::new()
 		}
 		if ($linkCollection.seasonLinks) {
-			$linkCollection = Convert-Buffer $linkCollection.seasonLinks 'Season' $linkCollection
+			$linkCollection = Convert-Buffer -TverIDs $linkCollection.seasonLinks -TverIDType 'Season' -LinkCollection $linkCollection
 			$linkCollection.seasonLinks = [System.Collections.Generic.List[string]]::new()
 		}
 	}
