@@ -17,6 +17,11 @@ function readStorage() {
 	});
 }
 
+// ストレージのクリア
+function clearStorage() {
+	chrome.storage.local.clear();
+}
+
 // ボタンクリック時に実行する処理を定義
 document.getElementById("refresh").addEventListener("click", async () => {
 	clearStorage();
