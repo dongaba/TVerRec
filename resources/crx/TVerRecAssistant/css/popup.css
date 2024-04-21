@@ -11,7 +11,7 @@ html {
 	font-size: 100%;
 	width: 450px;
 	height: 108px;
-	border-radius: 10px 10px 10px 10px;
+	border-radius: 10px;
 	background-color: #eeeeee;
 }
 
@@ -71,7 +71,7 @@ html {
 	color: #fff;
 	background-color: #333333;
 	border: none;
-	border-radius: 10px 10px 10px 10px;
+	border-radius: 10px;
 	margin: 0 auto;
 }
 .refresh-button:hover {
@@ -82,5 +82,5 @@ html {
 	text-align: center;
 	color: #fff;
 	background: #d8453e;
-	border-radius: 10px 10px 10px 10px;
+	border-radius: 10px;
 }
