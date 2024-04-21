@@ -72,7 +72,6 @@ function setAction(url) {
 //ネットワークリクエストに関するイベントを監視
 chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((e) => {
 	console.log("TVerRec Assistant: Connection Blocked by TVerRec");
-	console.log(e.request.url);
 
 	const url = new URL(e.request.url);
 
