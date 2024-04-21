@@ -8,12 +8,10 @@ const button = document.querySelector(".button_button__GOl5m.error-modal_button_
 const callback = function (mutationsList, observer) {
 	for (const mutation of mutationsList) {
 		if (mutation.type === "childList") {
-
 			if (button) {
 				button.click();
 				//必要がなくなったら監視を停止
 				//observer.disconnect();
-
 				break;
 			}
 		}
