@@ -30,7 +30,7 @@ document.getElementById("refresh").addEventListener("click", async () => {
 	//ルールを有効化
 	chrome.runtime.sendMessage(
 		{ action: "enableRule", data: "" },
-		function (response) {
+		function () {
 			window.close();
 		}
 	);

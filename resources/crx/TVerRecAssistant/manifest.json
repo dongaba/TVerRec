@@ -2,7 +2,7 @@
 	"manifest_version": 3,
 	"name": "TVerRec Assistant",
 	"description": "Capture \"platform_uid\" and \"platform_token\" to download your TVer favorites in TVerRec",
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"author": "dongaba",
 	"homepage_url": "https://github.com/dongaba/TVerRec",
 	"incognito": "split",

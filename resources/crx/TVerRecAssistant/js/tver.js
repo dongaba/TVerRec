@@ -5,13 +5,11 @@ const config = { attributes: false, childList: true, subtree: true };
 const button = document.querySelector(".button_button__GOl5m.error-modal_button__fgiuz");
 
 // ミューテーションオブザーバーのコールバック関数
-const callback = function (mutationsList, observer) {
+const callback = function (mutationsList) {
 	for (const mutation of mutationsList) {
 		if (mutation.type === "childList") {
 			if (button) {
 				button.click();
-				//必要がなくなったら監視を停止
-				//observer.disconnect();
 				break;
 			}
 		}
