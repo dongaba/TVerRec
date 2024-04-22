@@ -238,6 +238,7 @@ $settingAttributes = @(
 	'$script:disableToastNotification',
 	'$script:rateLimit',
 	'$script:timeoutSec',
+	'$script:guiMaxExecLogLines',
 	'$script:histRetentionPeriod',
 	'$script:sortVideoByMedia',
 	'$script:addSeriesName',
