@@ -4,9 +4,7 @@
 #
 ###################################################################################
 Set-StrictMode -Version Latest
-
 Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-
 try { $launchMode = [String]$args[0] } catch { $launchMode = '' }
 
 #----------------------------------------------------------------------

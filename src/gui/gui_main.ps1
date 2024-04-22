@@ -4,16 +4,13 @@
 #
 ###################################################################################
 using namespace System.Windows.Threading
-
+Set-StrictMode -Version Latest
 if (!$IsWindows) { Write-Error ('❌️ Windows以外では動作しません') ; Start-Sleep 10 ; exit 1 }
 Add-Type -AssemblyName PresentationFramework
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #region 環境設定
 
-Set-StrictMode -Version Latest
-#----------------------------------------------------------------------
-#初期化
 try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
@@ -189,7 +186,6 @@ foreach ($btn in $btns) {
 
 			#バックグラウンドジョブの起動
 			$null = Start-ThreadJob -Name $this.Name -ScriptBlock $scriptBlocks[$this]
-			#$null = Start-Job -Name $this.Name $scriptBlocks[$this]	#こっちにするとWrite-Debugがコンソールに出る
 		})
 }
 
@@ -313,4 +309,3 @@ Remove-Variable -Name btnClearLog, btnKillAll, btnWiki, btnsetting, btnExit -Err
 Remove-Variable -Name jobs, job, jobMsg, logType -ErrorAction SilentlyContinue
 
 #endregion 終了処理
-

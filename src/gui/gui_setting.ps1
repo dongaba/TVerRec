@@ -4,7 +4,7 @@
 #
 ###################################################################################
 using namespace System.Windows.Threading
-
+Set-StrictMode -Version Latest
 if (!$IsWindows) { Write-Error ('❌️ Windows以外では動作しません') ; Start-Sleep 10 ; exit 1 }
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName PresentationFramework
@@ -12,7 +12,6 @@ Add-Type -AssemblyName PresentationFramework
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #region 環境設定
 
-Set-StrictMode -Version Latest
 try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }

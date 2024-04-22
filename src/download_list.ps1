@@ -3,15 +3,12 @@
 #		リストダウンロード処理スクリプト
 #
 ###################################################################################
-
+Set-StrictMode -Version Latest
 $script:guiMode = if ($args) { [String]$args[0] } else { '' }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Set-StrictMode -Version Latest
-#----------------------------------------------------------------------
-#初期化
 try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
@@ -32,7 +29,6 @@ $listLinks = @(Get-LinkFromDownloadList)
 if ($null -eq $listLinks) { Write-Warning ('⚠️ ダウンロードリストが0件です') ; exit 0 }
 $keyword = 'リスト指定'
 
-
 #URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 if ($listLinks.Count -ne 0) { $videoLinks, $processedCount = Invoke-HistoryMatchCheck $listLinks }
 else { $videoLinks = @(); $processedCount = 0 }
@@ -40,7 +36,6 @@ $videoTotal = $videoLinks.Count
 Write-Output ('')
 if ($videoTotal -eq 0) { Write-Output ('　処理対象{0}本　処理済{1}本' -f $videoTotal, $processedCount) }
 else { Write-Output ('　💡 処理対象{0}本　処理済{1}本' -f $videoTotal, $processedCount) }
-
 
 #処理時間の推計
 $totalStartTime = Get-Date
@@ -119,4 +114,3 @@ Write-Output ('')
 Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('リストダウンロード処理を終了しました。')
 Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-

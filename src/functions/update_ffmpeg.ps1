@@ -3,6 +3,7 @@
 #		Windows用ffmpeg最新化処理スクリプト
 #
 ###################################################################################
+Set-StrictMode -Version Latest
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
 #----------------------------------------------------------------------
@@ -30,7 +31,6 @@ function Expand-Zip {
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Set-StrictMode -Version Latest
 try {
 	if ($myInvocation.MyCommand.CommandType -eq 'ExternalScript') {
 		$scriptRoot = Split-Path -Parent -Path (Split-Path -Parent -Path $myInvocation.MyCommand.Definition)

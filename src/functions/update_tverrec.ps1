@@ -3,6 +3,7 @@
 #		TVerRec自動アップデート処理スクリプト
 #
 ###################################################################################
+Set-StrictMode -Version Latest
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
 #----------------------------------------------------------------------
@@ -94,7 +95,6 @@ Function Move-IfExist {
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Set-StrictMode -Version Latest
 try {
 	if ($myInvocation.MyCommand.CommandType -eq 'ExternalScript') {
 		$scriptRoot = Split-Path -Parent -Path (Split-Path -Parent -Path $myInvocation.MyCommand.Definition)
