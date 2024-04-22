@@ -1,1 +1,1 @@
-seriesName,seriesID,seasonName,seasonID,episodeNo,episodeName,episodeID,media,provider,broadcastDate,endTime,keyword,ignoreWord
+episodeID,episodePageURL,episodeNo,episodeName,seriesID,seriesPageURL,seriesName,seasonID,seasonName,media,provider,broadcastDate,endTime,keyword,ignoreWord,descriptionText
