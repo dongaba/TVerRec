@@ -1,8 +1,4 @@
 {
-	"[XAML]": {
-		"editor.autoIndent": "advanced",
-		"editor.defaultFormatter": "rogalmic.vscode-xml-complete"
-	},
 	"[css]": {
 		"editor.autoIndent": "advanced",
 		"editor.defaultFormatter": "esbenp.prettier-vscode"
@@ -29,10 +25,6 @@
 	"[powershell]": {
 		"editor.autoIndent": "advanced",
 		"editor.defaultFormatter": "ms-vscode.powershell"
-	},
-	"[xml]": {
-		"editor.autoIndent": "advanced",
-		"editor.defaultFormatter": "rogalmic.vscode-xml-complete"
 	},
 	"[yaml]": {
 		"editor.autoIndent": "advanced"
