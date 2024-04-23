@@ -53,7 +53,7 @@ Update-ProgressToast @toastUpdateParams
 
 Remove-Files `
 	-BasePath $script:logDir `
-	-Conditions 'ffmpeg_error_*.log' `
+	-Conditions @('ffmpeg_error_*.log') `
 	-DelPeriod 1
 
 #作業ディレクトリ
@@ -63,7 +63,7 @@ Update-ProgressToast @toastUpdateParams
 
 Remove-Files `
 	-BasePath $script:downloadWorkDir `
-	-Conditions '*.ytdl, *.jpg, *.webp, *.vtt, *.srt, *.part, *.m4a.part-Frag*, *.m4a, *.live_chat.json, *.mp4.part-Frag*, *.temp.mp4, *.mp4' `
+	-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.vtt', '*.srt', '*.part', '*.part-Frag*', '*.m4a', '*.live_chat.json', '*.mp4') `
 	-DelPeriod 0
 
 #ダウンロード先
@@ -73,7 +73,7 @@ Update-ProgressToast @toastUpdateParams
 
 Remove-Files `
 	-BasePath $script:downloadBaseDir `
-	-Conditions '*.ytdl, *.jpg, *.webp, *.vtt, *.srt, *.part, *.m4a.part-Frag*, *.m4a, *.live_chat.json, *.mp4.part-Frag*, *.temp.mp4' `
+	-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.vtt', '*.srt', '*.part', '*.part-Frag*', '*.m4a', '*.live_chat.json', '*.temp.mp4') `
 	-DelPeriod 0
 
 #移動先
@@ -85,7 +85,7 @@ if ($script:saveBaseDir -ne '') {
 
 		Remove-Files `
 			-BasePath $saveDir `
-			-Conditions '*.ytdl, *.jpg, *.vtt, *.srt, *.temp.mp4, *.part, *.mp4.part-Frag*, *.m4a, *.m4a.part-Frag*, *.live_chat.json' `
+			-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.vtt', '*.srt', '*.part', '*.part-Frag*', '*.m4a', '*.live_chat.json', '*.temp.mp4') `
 			-DelPeriod 0
 	}
 }
@@ -132,7 +132,7 @@ if ($script:forceSingleDownload) {
 				$ignoreTotal = $using:ignoreDirs.Count
 				Write-Output ('　{0}/{1} - {2}' -f $ignoreNum, $ignoreTotal, $_.Name)
 				try { Remove-Item -LiteralPath $_ -Recurse -Force }
-				catch { Write-Warning ('⚠️ 削除できないファイルがありました') }
+				catch { Write-Warning ('⚠️ 削除できないファイルがありました: {0}' -f $_) }
 			} -ThrottleLimit $script:multithreadNum
 		} else {
 			#並列化が無効の場合は従来型処理
@@ -162,7 +162,7 @@ if ($script:forceSingleDownload) {
 
 				Write-Output ('　{0}/{1} - {2}' -f $ignoreNum, $ignoreTotal, $ignoreDir.Name)
 				try { Remove-Item -LiteralPath $ignoreDir -Recurse -Force }
-				catch { Write-Warning ('⚠️ 削除できないファイルがありました') }
+				catch { Write-Warning ('⚠️ 削除できないファイルがありました: {0}' -f $ignoreDir) }
 			}
 		}
 	}
@@ -179,10 +179,8 @@ Write-Output ('空ディレクトリを削除します')
 $toastShowParams.Text2 = '　処理3/3 - 空ディレクトリを削除'
 Show-ProgressToast @toastShowParams
 
-$emptyDirs = @()
-$emptyDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer })).Where({ ($_.GetFiles().Count -eq 0) -and ($_.GetDirectories().Count -eq 0) })
+$emptyDirs = @(Get-ChildItem -Path $script:downloadBaseDir -Directory -Recurse | Where-Object { @($_.GetFileSystemInfos().Where({ -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) })).Count -eq 0 })
 if ($emptyDirs.Count -ne 0) { $emptyDirs = @($emptyDirs.Fullname) }
-
 $emptyDirTotal = $emptyDirs.Count
 
 #----------------------------------------------------------------------
@@ -202,7 +200,7 @@ if ($emptyDirTotal -ne 0) {
 		$emptyDirNum = 0
 		$emptyDirTotal = $emptyDirs.Count
 		$totalStartTime = Get-Date
-		foreach ($subDir in $emptyDirs) {
+		foreach ($dir in $emptyDirs) {
 			$emptyDirNum += 1
 			#処理時間の推計
 			$secElapsed = (Get-Date) - $totalStartTime
@@ -216,15 +214,15 @@ if ($emptyDirTotal -ne 0) {
 				$progressRate = 0
 			}
 
-			$toastUpdateParams.Title = $subDir
+			$toastUpdateParams.Title = $dir
 			$toastUpdateParams.Rate = $progressRate
 			$toastUpdateParams.LeftText = ('{0}/{1}' -f $emptyDirNum, $emptyDirTotal)
 			$toastUpdateParams.RightText = $minRemaining
 			Update-ProgressToast @toastUpdateParams
 
-			Write-Output ('　{0}/{1} - {2}' -f $emptyDirNum, $emptyDirTotal, $subDir)
-			try { Remove-Item -LiteralPath $subDir -Recurse -Force -ErrorAction SilentlyContinue
-			} catch { Write-Warning ('⚠️ - 空ディレクトリの削除に失敗しました: {0}' -f $subDir) }
+			Write-Output ('　{0}/{1} - {2}' -f $emptyDirNum, $emptyDirTotal, $dir)
+			try { Remove-Item -LiteralPath $dir -Recurse -Force -ErrorAction SilentlyContinue
+			} catch { Write-Warning ('⚠️ - 空ディレクトリの削除に失敗しました: {0}' -f $dir) }
 		}
 	}
 }
