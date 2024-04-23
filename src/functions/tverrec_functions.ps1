@@ -340,7 +340,7 @@ function Update-IgnoreList {
 }
 
 #----------------------------------------------------------------------
-#URLが既にダウンロード履歴に存在するかチェックし、ダウンロード対象番組だけ返す
+#URLが既にダウンロード履歴に存在するかチェックし、存在しない番組だけ返す
 #----------------------------------------------------------------------
 function Invoke-HistoryMatchCheck {
 	[OutputType([String[]])]
@@ -365,9 +365,37 @@ function Invoke-HistoryMatchCheck {
 }
 
 #----------------------------------------------------------------------
-#URLが既にダウンロードリストまたはダウンロード履歴に存在するかチェックし、ダウンロード対象番組だけ返す
+#URLが既にダウンロードリストに存在するかチェックし、存在しない番組だけ返す
 #----------------------------------------------------------------------
-function Invoke-HistoryAndListfileMatchCheck {
+function Invoke-ListMatchCheck {
+	[OutputType([String[]])]
+	Param (
+		[Parameter(Mandatory = $true)][Alias('links')][String[]]$resultLinks
+	)
+
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+
+	#ダウンロードリストファイルのデータを読み込み
+	$listFileData = @(Read-DownloadList)
+	$listVideoPages = @()
+	foreach ($listFileLine in $listFileData) {
+		$listVideoPages += ('https://tver.jp/episodes/{0}' -f $listFileLine.EpisodeID.Replace('#', ''))
+	}
+
+	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
+	$histCompResult = @(Compare-Object -IncludeEqual $resultLinks $listVideoPages)
+	try { $processedCount = ($histCompResult | Where-Object { $_.SideIndicator -eq '==' }).Count } catch { $processedCount = 0 }
+	try { $videoLinks = @(($histCompResult | Where-Object { $_.SideIndicator -eq '<=' }).InputObject) } catch { $videoLinks = @() }
+
+	return @($videoLinks, $processedCount)
+
+	Remove-Variable -Name resultLinks, listFileData, listVideoPages, listFileLine, histFileData, histVideoPages, histCompResult, processedCount, videoLinks -ErrorAction SilentlyContinue
+}
+
+#----------------------------------------------------------------------
+#URLが既にダウンロードリストまたはダウンロード履歴に存在するかチェックし、存在しない番組だけ返す
+#----------------------------------------------------------------------
+function Invoke-HistoryAndListMatchCheck {
 	[OutputType([String[]])]
 	Param (
 		[Parameter(Mandatory = $true)][Alias('links')][String[]]$resultLinks
@@ -387,10 +415,10 @@ function Invoke-HistoryAndListfileMatchCheck {
 	if ($histFileData.Count -eq 0) { $histVideoPages = @() } else { $histVideoPages = @($histFileData.VideoPage) }
 
 	#ダウンロードリストとダウンロード履歴をマージ
-	$histVideoPages += $listVideoPages
+	$listVideoPages += $histVideoPages
 
 	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
-	$histCompResult = @(Compare-Object -IncludeEqual $resultLinks $histVideoPages)
+	$histCompResult = @(Compare-Object -IncludeEqual $resultLinks $listVideoPages)
 	try { $processedCount = ($histCompResult | Where-Object { $_.SideIndicator -eq '==' }).Count } catch { $processedCount = 0 }
 	try { $videoLinks = @(($histCompResult | Where-Object { $_.SideIndicator -eq '<=' }).InputObject) } catch { $videoLinks = @() }
 
@@ -398,7 +426,6 @@ function Invoke-HistoryAndListfileMatchCheck {
 
 	Remove-Variable -Name resultLinks, listFileData, listVideoPages, listFileLine, histFileData, histVideoPages, histCompResult, processedCount, videoLinks -ErrorAction SilentlyContinue
 }
-
 
 #----------------------------------------------------------------------
 #youtube-dlプロセスの確認と待機
@@ -479,9 +506,8 @@ function Format-ListRecord {
 		ignoreWord     = $videoInfo.ignoreWord
 	}
 
-	if ($script:extractDescTextToList) {
-		$customObject | Add-Member -NotePropertyName descriptionText -NotePropertyValue $videoInfo.descriptionText
-	}
+	if ($script:extractDescTextToList) { $customObject | Add-Member -NotePropertyName descriptionText -NotePropertyValue $videoInfo.descriptionText }
+	else { $customObject | Add-Member -NotePropertyName descriptionText -NotePropertyValue '' }
 
 	return $customObject
 
@@ -1299,7 +1325,7 @@ function Get-Setting {
 			foreach ($config in $configs) {
 				$configParts = $config -split '='
 				$key = $configParts[0].replace('script:', '').replace('$', '').trim()
-				if (!($key -match $excludePattern)) { $configList[$key] = (Get-Variable -Name $key).Value }
+				if (!($key -match $excludePattern) -and (Get-Variable -Name $key)) { $configList[$key] = (Get-Variable -Name $key).Value }
 			}
 		}
 	}
