@@ -300,28 +300,28 @@ function Remove-Files {
 	[OutputType([System.Void])]
 	Param (
 		[parameter(Mandatory = $true)][System.IO.FileInfo]$basePath,
-		[Parameter(Mandatory = $true)][Object]$conditions,
+		[Parameter(Mandatory = $true)][string[]]$conditions,
 		[Parameter(Mandatory = $true)][int32]$delPeriod
 	)
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
-	$limiteDateTime = (Get-Date).AddDays(-1 * $delPeriod)
+	$limitDateTime = (Get-Date).AddDays(-1 * $delPeriod)
 	if ($script:enableMultithread) {
 		Write-Debug ('Multithread Processing Enabled')
 		#並列化が有効の場合は並列化
 		try {
-			$conditions.Split(',').Trim() | ForEach-Object -Parallel {
+			$conditions | ForEach-Object -Parallel {
 				Write-Output ('　{0}' -f (Join-Path $using:basePath $_))
-				$null = (Get-ChildItem -LiteralPath $using:basePath -Recurse -File -Filter $_ -ErrorAction SilentlyContinue).Where({ $_.LastWriteTime -lt $using:limiteDateTime }) | Remove-Item -Force -ErrorAction SilentlyContinue
+				$null = (Get-ChildItem -LiteralPath $using:basePath -Recurse -File -Filter $_ -ErrorAction SilentlyContinue).Where({ $_.LastWriteTime -lt $using:limitDateTime }) | Remove-Item -Force -ErrorAction SilentlyContinue
 			} -ThrottleLimit $script:multithreadNum
 		} catch { Write-Warning ('⚠️ 削除できないファイルがありました') }
 	} else {
 		#並列化が無効の場合は従来型処理
 		try {
-			foreach ($condition in $conditions.Split(',').Trim()) {
+			foreach ($condition in $conditions) {
 				Write-Output ('　{0}' -f (Join-Path $basePath $condition))
-				$null = (Get-ChildItem -LiteralPath $basePath -Recurse -File -Filter $condition -ErrorAction SilentlyContinue).Where({ $_.LastWriteTime -lt $limiteDateTime }) | Remove-Item -Force -ErrorAction SilentlyContinue
+				$null = (Get-ChildItem -LiteralPath $basePath -Recurse -File -Filter $condition -ErrorAction SilentlyContinue).Where({ $_.LastWriteTime -lt $limitDateTime }) | Remove-Item -Force -ErrorAction SilentlyContinue
 			}
 		} catch { Write-Warning ('⚠️ 削除できないファイルがありました') }
 	}
@@ -393,16 +393,16 @@ function Unlock-File {
 	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $path)
 
 	if (Test-Path $path) {
-#		try {
-			if ($script:fileStream[$path]) {
-				#ロックされていなければストリームを閉じる
-				$script:fileStream[$path].Close()
-				$script:fileStream[$path].Dispose()
-				$script:fileStream[$path] = $null
-				$script:fileStream.Remove($path)
-			}
-			$result = $true
-#		} catch { $result = $false }
+		#		try {
+		if ($script:fileStream[$path]) {
+			#ロックされていなければストリームを閉じる
+			$script:fileStream[$path].Close()
+			$script:fileStream[$path].Dispose()
+			$script:fileStream[$path] = $null
+			$script:fileStream.Remove($path)
+		}
+		$result = $true
+		#		} catch { $result = $false }
 	} else { $result = $false }
 
 	#結果の返却
@@ -566,7 +566,7 @@ function Show-ProgressToast {
 				$toast = [Windows.UI.Notifications.ToastNotification]::new($toastXML)
 				$toast.Tag = $tag
 				$toast.Group = $group
-				$toastData = [System.Collections.Generic.Dictionary[String,String]]::new()
+				$toastData = [System.Collections.Generic.Dictionary[String, String]]::new()
 				$null = $toastData.Add('progressTitle', $workDetail)
 				$null = $toastData.Add('progressValue', '')
 				$null = $toastData.Add('progressValueString', '')
@@ -614,7 +614,7 @@ function Update-ProgressToast {
 	if ($script:disableToastNotification -ne $true) {
 		switch ($true) {
 			$IsWindows {
-				$toastData = [System.Collections.Generic.Dictionary[String,String]]::new()
+				$toastData = [System.Collections.Generic.Dictionary[String, String]]::new()
 				$null = $toastData.Add('progressTitle', $script:appName)
 				$null = $toastData.Add('progressValue', $rate)
 				$null = $toastData.Add('progressValueString', $rightText)
@@ -683,7 +683,7 @@ function Show-ProgressToast2Row {
 				$toast = [Windows.UI.Notifications.ToastNotification]::new($toastXML)
 				$toast.Tag = $tag
 				$toast.Group = $group
-				$toastData = [System.Collections.Generic.Dictionary[String,String]]::new()
+				$toastData = [System.Collections.Generic.Dictionary[String, String]]::new()
 				$null = $toastData.Add('progressTitle1', $detail1)
 				$null = $toastData.Add('progressValue1', '')
 				$null = $toastData.Add('progressValueString1', '')
