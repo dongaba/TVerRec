@@ -105,34 +105,25 @@ foreach ($keyword in $keywords) {
 			}
 
 			$paraJobSBs = @{}
-			#$paraJobDefs = @{}
+			$paraJobDefs = @{}
 			$paraJobs = @{}
-			Write-Output ('　並列処理をするため進捗状況は最後にまとめて順不同で表示されます')
-			# for ($i = 0; $i -lt $partitions.Count; $i++) {
-			# 	$links = [string]$partitions[$i]
-			# 	$paraJobSBs[$i] = ("& ./generate_list_child.ps1 $keyword $links")
-			# 	$paraJobDefs[$i] = [scriptblock]::Create($paraJobSBs[$i])
-			# 	$paraJobs[$i] = Start-ThreadJob -ScriptBlock $paraJobDefs[$i]
-			# }
-
+			Write-Output ('　並列処理をするため進捗状況は順不同で表示されます')
 			for ($i = 0; $i -lt $partitions.Count; $i++) {
 				$links = [string]$partitions[$i]
-				$paraJobSBs[$i] = {
-					param($keyword, $links)
-					& ./generate_list_child.ps1 $keyword $links
-				}
-				$paraJobs[$i] = Start-ThreadJob -ScriptBlock $paraJobSBs[$i] -ArgumentList $keyword, $links
+				$paraJobSBs[$i] = ("& ./generate_list_child.ps1 $keyword $links")
+				$paraJobDefs[$i] = [scriptblock]::Create($paraJobSBs[$i])
+				$paraJobs[$i] = Start-ThreadJob -ScriptBlock $paraJobDefs[$i]
 			}
-			while ($paraJobs.Count -gt 0) {
-				$completedJobs = Get-Job | Where-Object { $_.State -eq 'Completed' }
+			do {
+				$completedJobs = Get-Job -State Completed
 				foreach ($job in $completedJobs) {
 					Write-Output (Receive-Job -Job $job)
-					$paraJobs.Remove($job)
 					Remove-Job -Job $job
 				}
+				Remove-Job -State Failed, Stopped, Suspended, Disconnected
+				$remainingJobs = Get-Job
 				Start-Sleep -Milliseconds 500
-			}
-
+			} while ($remainingJobs)
 			# $null = Get-Job | Wait-Job
 			# Write-Output (Get-Job | Receive-Job)
 			# Get-Job | Remove-Job
