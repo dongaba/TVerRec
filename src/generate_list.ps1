@@ -162,7 +162,7 @@ $toastUpdateParams = @{
 }
 Update-ProgressToast2Row @toastUpdateParams
 
-Remove-Variable -Name keywords, keywordNum, keywordTotal, toastShowParams, totalStartTime, keyword, listLinks, videoLinks, videoTotal, secElapsed, secRemaining1, toastUpdateParams, videoNum, videoLink -ErrorAction SilentlyContinue
+Remove-Variable -Name guiMode, args, scriptRoot, keywords, keywordNum, keywordTotal, toastShowParams, totalStartTime, keyword, listLinks, videoLinks, processedCount, videoTotal, secElapsed, secRemaining1, toastUpdateParams, partitions, totalCount, partitionSize, i, startIndex, endIndex, videoNum, paraJobSBs, paraJobDefs, links, completedJobs, job, remainingJobs, videoLink -ErrorAction SilentlyContinue
 
 Invoke-GarbageCollection
 
