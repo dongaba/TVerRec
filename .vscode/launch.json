@@ -89,6 +89,13 @@
 		},
 		{
 			"cwd": "${workspaceFolder}/src",
+			"name": "List-Gen-Child",
+			"request": "launch",
+			"script": "${workspaceFolder}/src/generate_list_child.ps1 mypage/fav https://tver.jp/episodes/ep24gq28ft https://tver.jp/episodes/ep293lfdib https://tver.jp/episodes/ep2q8caayu https://tver.jp/episodes/ep31almkcp https://tver.jp/episodes/ep31j5sdfw",
+			"type": "PowerShell"
+		},
+		{
+			"cwd": "${workspaceFolder}/src",
 			"name": "List",
 			"request": "launch",
 			"script": "${workspaceFolder}/src/download_list.ps1",

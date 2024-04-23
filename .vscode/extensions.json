@@ -62,6 +62,8 @@
 			"postman.postman-for-vscode",
 			"keijiro.codewhisker",
 			"andersonoliveira.zoiodelula",
-			"ms-dotnettools.dotnet-maui"
+			"ms-dotnettools.dotnet-maui",
+			"rogalmic.vscode-xml-complete",
+			"dotjoshjohnson.xml"
 		]
 }
