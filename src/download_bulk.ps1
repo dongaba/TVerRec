@@ -13,10 +13,10 @@ try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
-} catch { Write-Error ('❌️ カレントディレクトリの設定に失敗しました') ; exit 1 }
-if ($script:scriptRoot.Contains(' ')) { Write-Error ('❌️ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
+} catch { Throw ('❌️ カレントディレクトリの設定に失敗しました') }
+if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
 . (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
-if (!$?) { Write-Error ('❌️ TVerRecの初期化処理に失敗しました') ; exit 1 }
+if (!$?) { Throw ('❌️ TVerRecの初期化処理に失敗しました') }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -86,9 +86,7 @@ foreach ($keyword in $keywords) {
 	foreach ($videoLink in $videoLinks) {
 		$videoNum += 1
 		#ダウンロード先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
-		if (!(Test-Path $script:downloadBaseDir -PathType Container)) {
-			Write-Error ('❌️ 番組ダウンロード先ディレクトリにアクセスできません。終了します') ; exit 1
-		}
+		if (!(Test-Path $script:downloadBaseDir -PathType Container)) {Throw ('❌️ 番組ダウンロード先ディレクトリにアクセスできません。終了します') }
 
 		#進捗情報の更新
 		$toastUpdateParams.Title2 = $videoLink

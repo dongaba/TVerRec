@@ -5,7 +5,7 @@
 ###################################################################################
 using namespace System.Windows.Threading
 Set-StrictMode -Version Latest
-if (!$IsWindows) { Write-Error ('❌️ Windows以外では動作しません') ; Start-Sleep 10 ; exit 1 }
+if (!$IsWindows) { Throw ('❌️ Windows以外では動作しません') ; Start-Sleep 10 }
 Add-Type -AssemblyName PresentationFramework
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -16,12 +16,12 @@ try {
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	$script:scriptRoot = Convert-Path (Join-Path $script:scriptRoot '../')
 	Set-Location $script:scriptRoot
-} catch { Write-Error ('❌️ ディレクトリ設定に失敗しました') ; exit 1 }
-if ($script:scriptRoot.Contains(' ')) { Write-Error ('❌️ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
+} catch { Throw ('❌️ ディレクトリ設定に失敗しました') }
+if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
-	if (!$?) { Write-Error ('❌️ TVerRecの初期化処理に失敗しました') ; exit 1 }
-} catch { Write-Error ('❌️ 関数の読み込みに失敗しました') ; exit 1 }
+	if (!$?) { Throw ('❌️ TVerRecの初期化処理に失敗しました') }
+} catch { Throw ('❌️ 関数の読み込みに失敗しました') }
 
 #パラメータ設定
 $jobTerminationStates = @('Completed', 'Failed', 'Stopped')
@@ -102,7 +102,7 @@ try {
 	$mainXaml = $mainXaml -ireplace 'mc:Ignorable="d"', '' -ireplace 'x:N', 'N' -ireplace 'x:Class=".*?"', ''
 	[xml]$mainCleanXaml = $mainXaml
 	$mainWindow = [System.Windows.Markup.XamlReader]::Load(([System.Xml.XmlNodeReader]::new($mainCleanXaml)))
-} catch { Write-Error ('❌️ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。') ; exit 1 }
+} catch { Throw ('❌️ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。') }
 
 #PowerShellのウィンドウを非表示に
 Add-Type -Name Window -Namespace Console -MemberDefinition '
@@ -239,7 +239,7 @@ try {
 	$null = $mainWindow.Show()
 	$null = $mainWindow.Activate()
 	$null = [Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0)
-} catch { Write-Error ('❌️ ウィンドウを描画できませんでした。TVerRecが破損しています。') ; exit 1 }
+} catch { Throw ('❌️ ウィンドウを描画できませんでした。TVerRecが破損しています。') }
 
 #endregion ウィンドウ表示
 

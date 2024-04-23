@@ -13,12 +13,12 @@ try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path .// }
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
-} catch { Write-Error ('❌️ カレントディレクトリの設定に失敗しました') ; exit 1 }
-if ($script:scriptRoot.Contains(' ')) { Write-Error ('❌️ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
+} catch { Throw ('❌️ カレントディレクトリの設定に失敗しました') }
+if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
-	if (!$?) { Write-Error ('❌️ TVerRecの初期化処理に失敗しました') ; exit 1 }
-} catch { Write-Error ('❌️ 関数の読み込みに失敗しました') ; exit 1 }
+	if (!$?) { Throw ('❌️ TVerRecの初期化処理に失敗しました') }
+} catch { Throw ('❌️ 関数の読み込みに失敗しました') }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -35,9 +35,7 @@ while ($true) {
 	#いろいろ初期化
 	$videoPageURL = ''
 	#移動先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
-	if (!(Test-Path $script:downloadBaseDir -PathType Container)) {
-		Write-Error ('❌️ 番組ダウンロード先ディレクトリにアクセスできません。終了します') ; exit 1
-	}
+	if (!(Test-Path $script:downloadBaseDir -PathType Container)) { Throw ('❌️ 番組ダウンロード先ディレクトリにアクセスできません。終了します') }
 	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 	Wait-YtdlProcess $script:parallelDownloadFileNum
 	if (!$script:guiMode) {
@@ -55,7 +53,7 @@ while ($true) {
 			#TVer以外のサイトへの対応
 			Write-Output ('{0}{1}' -f 'ダウンロード：', $videoPageURL)
 			try { Invoke-NonTverYtdl $videoPageURL }
-			catch { Write-Error ('　❌️ youtube-dlの起動に失敗しました') }
+			catch { Throw ('　❌️ youtube-dlの起動に失敗しました') }
 			#5秒待機
 			Start-Sleep -Seconds 5
 		} else {

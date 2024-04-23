@@ -21,9 +21,7 @@ function Expand-Zip {
 		Write-Verbose ('{0}を{1}に展開します' -f $path, $destination)
 		[System.IO.Compression.ZipFile]::ExtractToDirectory($path, $destination, $true)
 		Write-Verbose ('{0}を展開しました' -f $path)
-	} else {
-		Write-Error ('❌️ {0}が見つかりません' -f $path)
-	}
+	} else {Throw ('❌️ {0}が見つかりません' -f $path)}
 
 	Remove-Variable -Name path, destination -ErrorAction SilentlyContinue
 }
@@ -100,8 +98,8 @@ try {
 		$scriptRoot = Split-Path -Parent -Path (Split-Path -Parent -Path $myInvocation.MyCommand.Definition)
 	} else { $scriptRoot = Convert-Path .. }
 	Set-Location $scriptRoot
-} catch { Write-Error ('❌️ ディレクトリ設定に失敗しました') ; exit 1 }
-if ($script:scriptRoot.Contains(' ')) { Write-Error ('❌️ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
+} catch { Throw ('❌️ ディレクトリ設定に失敗しました') }
+if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
 try {
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	. (Convert-Path (Join-Path $script:scriptRoot '../conf/system_setting.ps1'))
@@ -125,7 +123,7 @@ Write-Output ('作業ディレクトリを作成します')
 $updateTemp = Join-Path $scriptRoot '../tverrec-update-temp'
 if (Test-Path $updateTemp ) { Remove-Item -LiteralPath $updateTemp -Force -Recurse -ErrorAction SilentlyContinue }
 try { $null = New-Item -ItemType Directory -Path $updateTemp }
-catch { Write-Error ('❌️ 作業ディレクトリの作成に失敗しました') ; exit 1 }
+catch { Throw ('❌️ 作業ディレクトリの作成に失敗しました') }
 
 #TVerRecの最新バージョン取得
 Write-Output ('')
@@ -136,7 +134,7 @@ try {
 		$zipURL = 'https://github.com/dongaba/TVerRec/archive/refs/heads/master.zip'
 	} else { $zipURL = (Invoke-RestMethod -Uri $releases -Method 'GET').zipball_url }
 	Invoke-WebRequest -UseBasicParsing -Uri $zipURL -OutFile (Join-Path $updateTemp 'TVerRecLatest.zip')
-} catch { Write-Error ('❌️ ダウンロードに失敗しました');	exit 1 }
+} catch { Throw ('❌️ ダウンロードに失敗しました');	exit 1 }
 
 #最新バージョンがダウンロードできていたら展開
 Write-Output ('')
@@ -146,8 +144,8 @@ try {
 	if (Test-Path (Join-Path $updateTemp 'TVerRecLatest.zip') -PathType Leaf) {
 		#配下に作成されるディレクトリ名は不定「dongaba-TVerRec-xxxxxxxx」
 		Expand-Zip -Path (Join-Path $updateTemp 'TVerRecLatest.zip') -Destination $updateTemp
-	} else { Write-Error ('❌️ ダウンロードしたファイルが見つかりません') ; exit 1 }
-} catch { Write-Error ('❌️ ダウンロードしたファイルの解凍に失敗しました') ; exit 1 }
+	} else { Throw ('❌️ ダウンロードしたファイルが見つかりません') }
+} catch { Throw ('❌️ ダウンロードしたファイルの解凍に失敗しました') }
 
 #ディレクトリは上書きできないので独自関数で以下のディレクトリをループ
 Write-Output ('')
@@ -159,14 +157,14 @@ try {
 		#Move-Item を行う function として Move-Files 作成して呼び出す
 		Move-Files -Source $_.FullName -Destination ('{0}{1}' -f (Join-Path $scriptRoot '../'), $_.Name )
 	}
-} catch { Write-Error ('❌️ ダウンロードしたTVerRecの配置に失敗しました') ; exit 1 }
+} catch { Throw ('❌️ ダウンロードしたTVerRecの配置に失敗しました') }
 
 #作業ディレクトリを削除
 Write-Output ('')
 Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('アップデートの作業ディレクトリを削除します')
 try { if (Test-Path $updateTemp ) { Remove-Item -LiteralPath $updateTemp -Force -Recurse } }
-catch { Write-Error ('❌️ 作業ディレクトリの削除に失敗しました') ; exit 1 }
+catch { Throw ('❌️ 作業ディレクトリの削除に失敗しました') }
 
 #過去のバージョンで使用していたファイルを削除、または移行
 Write-Output ('')

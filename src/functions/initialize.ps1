@@ -14,49 +14,46 @@ $script:devDir = Join-Path $script:scriptRoot '../dev'
 
 if ( Test-Path (Join-Path $script:confDir 'system_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'system_setting.ps1')) }
-	catch { Write-Error ('❌️ システム設定ファイルの読み込みに失敗しました') ; exit 1 }
-} else { Write-Error ('❌️ システム設定ファイルが見つかりません') ; exit 1 }
+	catch { Throw ('❌️ システム設定ファイルの読み込みに失敗しました') }
+} else { Throw ('❌️ システム設定ファイルが見つかりません') }
 
 if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
-	catch { Write-Error ('❌️ ユーザ設定ファイルの読み込みに失敗しました') ; exit 1 }
+	catch { Throw ('❌️ ユーザ設定ファイルの読み込みに失敗しました') }
 } elseif ($IsWindows) {
 	Write-Output ('ユーザ設定ファイルを作成する必要があります')
 	try { & 'gui/gui_setting.ps1' }
-	catch { Write-Error ('❌️ 設定画面の起動に失敗しました') ; exit 1 }
+	catch { Throw ('❌️ 設定画面の起動に失敗しました') }
 	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 		try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
-		catch { Write-Error ('❌️ ユーザ設定ファイルの読み込みに失敗しました') ; exit 1 }
-	} else { Write-Error ('❌️ ユーザ設定が完了してません') ; exit 1 }
-} else { Write-Error ('❌️ ユーザ設定が完了してません') ; exit 1 }
+		catch { Throw ('❌️ ユーザ設定ファイルの読み込みに失敗しました') }
+	} else { Throw ('❌️ ユーザ設定が完了してません') }
+} else { Throw ('❌️ ユーザ設定が完了してません') }
 
 #----------------------------------------------------------------------
 #外部関数ファイルの読み込み
 try { . (Convert-Path (Join-Path $script:scriptRoot 'functions/common_functions.ps1')) }
-catch { Write-Error ('❌️ 外部関数ファイル(common_functions.ps1)の読み込みに失敗しました') ; exit 1 }
+catch { Throw ('❌️ 外部関数ファイル(common_functions.ps1)の読み込みに失敗しました') }
 try { . (Convert-Path (Join-Path $script:scriptRoot 'functions/tver_functions.ps1')) }
-catch { Write-Error ('❌️ 外部関数ファイル(tver_functions.ps1)の読み込みに失敗しました') ; exit 1 }
+catch { Throw ('❌️ 外部関数ファイル(tver_functions.ps1)の読み込みに失敗しました') }
 try { . (Convert-Path (Join-Path $script:scriptRoot 'functions/tverrec_functions.ps1')) }
-catch { Write-Error ('❌️ 外部関数ファイル(tverrec_functions.ps1)の読み込みに失敗しました') ; exit 1 }
+catch { Throw ('❌️ 外部関数ファイル(tverrec_functions.ps1)の読み込みに失敗しました') }
 
 #----------------------------------------------------------------------
 #開発環境用に設定上書き
 try {
 	$devFunctionFile = Join-Path $script:devDir 'dev_funcitons.ps1'
 	$devConfFile = Join-Path $script:devDir 'dev_setting.ps1'
-
 	if (Test-Path $devConfFile) {
 		. $devConfFile
-		Write-Warning ('💡 開発ファイル用設定ファイルを読み込みました')
+		Write-Information ('💡 開発ファイル用設定ファイルを読み込みました')
 	}
 	if (Test-Path $devFunctionFile) {
 		. $devFunctionFile
-		Write-Warning ('💡 開発ファイル用共通関数ファイルを読み込みました')
+		Write-Information ('💡 開発ファイル用共通関数ファイルを読み込みました')
 	}
-
 	Remove-Variable -Name devFunctionFile, devConfFile -ErrorAction SilentlyContinue
-
-} catch { Write-Error ('❌️ 開発用設定ファイルの読み込みに失敗しました') ; exit 1 }
+} catch { Throw ('❌️ 開発用設定ファイルの読み込みに失敗しました') }
 
 #----------------------------------------------------------------------
 #連続実行時は以降の処理は不要なのでexit

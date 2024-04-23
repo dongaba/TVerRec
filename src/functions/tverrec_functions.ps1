@@ -124,7 +124,7 @@ function Invoke-ToolUpdateCheck {
 
 	$progressPreference = 'silentlyContinue'
 	& (Join-Path $scriptRoot ('functions/{0}' -f $scriptName) )
-	if (!$?) { Write-Error ('　❌️ {0}の更新に失敗しました' -f $targetName) ; exit 1 }
+	if (!$?) { Throw ('　❌️ {0}の更新に失敗しました' -f $targetName) }
 	$progressPreference = 'Continue'
 
 	Remove-Variable -Name scriptName, targetName -ErrorAction SilentlyContinue
@@ -147,7 +147,7 @@ function Invoke-TverrecPathCheck {
 
 	if (!(Test-Path $path -PathType $pathType)) {
 		if (!($sampleFilePath -and (Test-Path $sampleFilePath -PathType 'Leaf'))) {
-			Write-Error ('　❌️ {0}が存在しません。終了します。' -f $errorMessage) ; exit 1
+			Throw ('　❌️ {0}が存在しません。終了します。' -f $errorMessage) ; exit 1
 		}
 		Copy-Item -LiteralPath $sampleFilePath -Destination $path -Force
 	}
@@ -164,9 +164,9 @@ function Invoke-RequiredFileCheck {
 
 	Write-Debug ($MyInvocation.MyCommand.Name)
 
-	if ($script:downloadBaseDir -eq '') { Write-Error ('　❌️ 番組ダウンロード先ディレクトリが設定されていません。終了します。') ; exit 1 }
+	if ($script:downloadBaseDir -eq '') { Throw ('　❌️ 番組ダウンロード先ディレクトリが設定されていません。終了します。') }
 	else { Invoke-TverrecPathCheck -Path $script:downloadBaseDir -errorMessage '番組ダウンロード先ディレクトリ' }
-	if ($script:downloadWorkDir -eq '') { Write-Error ('　❌️ ダウンロード作業ディレクトリが設定されていません。終了します。') ; exit 1 }
+	if ($script:downloadWorkDir -eq '') { Throw ('　❌️ ダウンロード作業ディレクトリが設定されていません。終了します。') }
 	else { Invoke-TverrecPathCheck -Path $script:downloadWorkDir -errorMessage 'ダウンロード作業ディレクトリ' }
 	if ($script:saveBaseDir -ne '') {
 		$script:saveBaseDirArray = $script:saveBaseDir.split(';').Trim()
@@ -204,7 +204,7 @@ function Read-KeywordList {
 		try {
 			#コメントと空行を除いて抽出
 			$keywords = [String[]]((Get-Content $script:keywordFilePath -Encoding UTF8).Where({ $_ -notmatch '^\s*$|^#.*$' }))
-		} catch { Write-Error ('　❌️ ダウンロード対象キーワードの読み込みに失敗しました') ; exit 1 }
+		} catch { Throw ('　❌️ ダウンロード対象キーワードの読み込みに失敗しました') }
 	}
 	return @($keywords)
 
@@ -225,7 +225,7 @@ function Read-HistoryFile {
 		try {
 			while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ('　ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 			$histFileData = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
-		} catch { Write-Error ('　❌️ ダウンロード履歴の読み込みに失敗しました') ; exit 1 }
+		} catch { Throw ('　❌️ ダウンロード履歴の読み込みに失敗しました') }
 		finally { $null = Unlock-File $script:histLockFilePath }
 	} else { $histFileData = @() }
 
@@ -247,7 +247,7 @@ function Read-DownloadList {
 		try {
 			while ((Lock-File $script:listLockFilePath).result -ne $true) { Write-Information ('　ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 			$listFileData = @(Import-Csv -LiteralPath $script:listFilePath -Encoding UTF8)
-		} catch { Write-Error ('　❌️ ダウンロードリストの読み込みに失敗しました') ; exit 1 }
+		} catch { Throw ('　❌️ ダウンロードリストの読み込みに失敗しました') }
 		finally { $null = Unlock-File $script:listLockFilePath }
 	} else { $listFileData = @() }
 
@@ -270,7 +270,7 @@ function Get-LinkFromDownloadList {
 			while ((Lock-File $script:listLockFilePath).result -ne $true) { Write-Information ('　ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 			#空行とダウンロード対象外を除き、EpisodeIDのみを抽出
 			$videoLinks = @((Import-Csv -LiteralPath $script:listFilePath -Encoding UTF8).Where({ !($_ -cmatch '^\s*$') }).Where({ !($_.EpisodeID -cmatch '^#') }) | Select-Object episodeID)
-		} catch { Write-Error ('　❌️ ダウンロードリストの読み込みに失敗しました') ; exit 1 }
+		} catch { Throw ('　❌️ ダウンロードリストの読み込みに失敗しました') }
 		finally { $null = Unlock-File $script:listLockFilePath }
 	} else { $videoLinks = @() }
 
@@ -295,7 +295,7 @@ function Read-IgnoreList {
 			while ((Lock-File $script:ignoreLockFilePath).result -ne $true) { Write-Information ('　ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 			#コメントと空行を除いて抽出
 			$ignoreTitles = @((Get-Content $script:ignoreFilePath -Encoding UTF8).Where({ !($_ -cmatch '^\s*$') }).Where({ !($_ -cmatch '^;.*$') }))
-		} catch { Write-Error ('　❌️ ダウンロード対象外の読み込みに失敗しました') ; exit 1 }
+		} catch { Throw ('　❌️ ダウンロード対象外の読み込みに失敗しました') }
 		finally { $null = Unlock-File $script:ignoreLockFilePath }
 	} else { $ignoreTitles = @() }
 
@@ -332,7 +332,7 @@ function Update-IgnoreList {
 			#改行コードLFを強制 + NFCで出力
 			$ignoreListNew.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC)  | Out-File -LiteralPath $script:ignoreFilePath -Encoding UTF8 -NoNewline
 			Write-Debug ('　ダウンロード対象外リストのソート更新完了')
-		} catch { Write-Warning ('　⚠️ ダウンロード対象外リストのソートに失敗しました') ; exit 1 }
+		} catch { Write-Warning ('　⚠️ ダウンロード対象外リストのソートに失敗しました') }
 		finally { $null = Unlock-File $script:ignoreLockFilePath }
 	}
 
@@ -552,7 +552,7 @@ function Invoke-VideoDownload {
 	#ダウンロードファイル名を生成
 	$videoInfo = Format-VideoFileInfo $videoInfo
 	#番組タイトルが取得できなかった場合はスキップ次の番組へ
-	if ($videoInfo.fileName -eq '.mp4') { Write-Error ('　❌️ 番組タイトルを特定できませんでした。スキップします') ; continue }
+	if ($videoInfo.fileName -eq '.mp4') { Write-Warning ('　⚠️ 番組タイトルを特定できませんでした。スキップします') ; continue }
 
 	#番組情報のコンソール出力
 	Show-VideoInfo $videoInfo
@@ -620,7 +620,7 @@ function Invoke-VideoDownload {
 		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$newVideo | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append
 		Write-Debug ('ダウンロード履歴を書き込みました')
-	} catch { Write-Error ('　❌️ ダウンロード履歴を更新できませんでした。処理をスキップします') ; continue }
+	} catch { Write-Warning ('　⚠️ ダウンロード履歴を更新できませんでした。処理をスキップします') ; continue }
 	finally { $null = Unlock-File $script:histLockFilePath }
 
 	#スキップ対象やダウンロード対象外は飛ばして次のファイルへ
@@ -629,11 +629,11 @@ function Invoke-VideoDownload {
 	#移動先ディレクトリがなければ作成
 	if (-Not (Test-Path $videoInfo.fileDir -PathType Container)) {
 		try { $null = New-Item -ItemType Directory -Path $videoInfo.fileDir -Force }
-		catch { Write-Error ('　❌️ 移動先ディレクトリを作成できませんでした') ; continue }
+		catch { Write-Warning ('　⚠️ 移動先ディレクトリを作成できませんでした') ; continue }
 	}
 	#youtube-dl起動
 	try { Invoke-Ytdl $videoInfo }
-	catch { Write-Error ('　❌️ youtube-dlの起動に失敗しました') }
+	catch { Write-Warning ('　⚠️ youtube-dlの起動に失敗しました') }
 	#5秒待機
 	Start-Sleep -Seconds 5
 

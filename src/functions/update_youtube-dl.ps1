@@ -21,7 +21,7 @@ function Expand-Zip {
 		Write-Verbose ('{0}を{1}に展開します' -f $path, $destination)
 		[System.IO.Compression.ZipFile]::ExtractToDirectory($path, $destination, $true)
 		Write-Verbose ('{0}を展開しました' -f $path)
-	} else { Write-Error (❌️ '{0}が見つかりません' -f $path) }
+	} else { Throw (❌️ '{0}が見つかりません' -f $path) }
 
 	Remove-Variable -Name path, destination -ErrorAction SilentlyContinue
 }
@@ -34,8 +34,8 @@ try {
 		$scriptRoot = Split-Path -Parent -Path (Split-Path -Parent -Path $myInvocation.MyCommand.Definition)
 	} else { $scriptRoot = Convert-Path .. }
 	Set-Location $script:scriptRoot
-} catch { Write-Error ('❌️ ディレクトリ設定に失敗しました') ; exit 1 }
-if ($script:scriptRoot.Contains(' ')) { Write-Error ('❌️ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
+} catch { Throw ('❌️ ディレクトリ設定に失敗しました') }
+if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
 
 #設定ファイル読み込み
 try {
@@ -51,10 +51,8 @@ try {
 		if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 			. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
 		}
-	} else {
-		Write-Error ('❌️ ユーザ設定が完了してません') ; exit 1
-	}
-} catch { Write-Error ('❌️ 設定ファイルの読み込みに失敗しました') ; exit 1 }
+	} else { Throw ('❌️ ユーザ設定が完了してません') }
+} catch { Throw ('❌️ 設定ファイルの読み込みに失敗しました') }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -65,7 +63,7 @@ $lookupTable = @{
 	'ytdl-patched' = 'ytdl-patched/ytdl-patched'
 }
 if ($lookupTable.ContainsKey($script:preferredYoutubedl)) { $repo = $lookupTable[$script:preferredYoutubedl] }
-else { Write-Error '❌️ youtube-dlの取得元の指定が無効です'; exit 1 }
+else { Throw '❌️ youtube-dlの取得元の指定が無効です'}
 $releases = ('https://api.github.com/repos/{0}/releases' -f $repo)
 
 #youtube-dl移動先相対Path
@@ -110,7 +108,7 @@ if ($latestVersion -eq $currentVersion) {
 		$downloadURL = ('https://github.com/{0}/releases/download/{1}/{2}' -f $repo, $tag, $fileBeforeRrename)
 		$ytdlFileLocation = Join-Path $script:binDir $fileAfterRename
 		Invoke-WebRequest -UseBasicParsing -Uri $downloadURL -Out $ytdlFileLocation
-	} catch { Write-Error ('❌️ youtube-dlのダウンロードに失敗しました') ; exit 1 }
+	} catch { Throw ('❌️ youtube-dlのダウンロードに失敗しました') }
 
 	if (!$IsWindows) { (& chmod a+x $ytdlFileLocation) }
 
@@ -118,7 +116,7 @@ if ($latestVersion -eq $currentVersion) {
 	try {
 		$currentVersion = (& $ytdlPath --version)
 		Write-Output ('💡 youtube-dlをversion {0}に更新しました。' -f $currentVersion)
-	} catch { Write-Error ('❌️ 更新後のバージョン取得に失敗しました') ; exit 1 }
+	} catch { Throw ('❌️ 更新後のバージョン取得に失敗しました') }
 
 
 }
