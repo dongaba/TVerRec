@@ -3,15 +3,12 @@
 #		番組リストファイル出力処理スクリプト
 #
 ###################################################################################
-
+Set-StrictMode -Version Latest
 $script:guiMode = if ($args) { [String]$args[0] } else { '' }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Set-StrictMode -Version Latest
-#----------------------------------------------------------------------
-#初期化
 try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
@@ -26,6 +23,9 @@ try {
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
 Invoke-RequiredFileCheck
+
+#━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#初回呼び出し時
 $keywords = @(Read-KeywordList)
 Get-Token
 $keywordNum = 0
@@ -52,12 +52,14 @@ foreach ($keyword in $keywords) {
 	Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 	Write-Output ('{0}' -f $keyword)
 
+	$keyword = (Remove-Comment($keyword.Replace('https://tver.jp/', '').Trim()))
 	$listLinks = @(Get-VideoLinksFromKeyword($keyword))
-	$keyword = $keyword.Replace('https://tver.jp/', '')
 
-	#URLがすでにダウンロードリストまたはダウンロード履歴に存在する場合は検索結果から除外
-	if ($listLinks.Count -ne 0) { $videoLinks, $processedCount = Invoke-HistoryMatchCheck $listLinks }
-	else { $videoLinks = @(); $processedCount = 0 }
+	#URLがすでにダウンロードリストやダウンロード履歴に存在する場合は検索結果から除外
+	if ($listLinks.Count -ne 0) {
+		if ($script:listGenHistoryCheck) { $videoLinks, $processedCount = Invoke-HistoryAndListMatchCheck $listLinks }
+		else { $videoLinks, $processedCount = Invoke-ListMatchCheck $listLinks }
+	} else { $videoLinks = @(); $processedCount = 0 }
 	$videoTotal = $videoLinks.Count
 	if ($videoTotal -eq 0) { Write-Output ('　処理対象{0}本　処理済{1}本' -f $videoTotal, $processedCount) }
 	else { Write-Output ('　💡 処理対象{0}本　処理済{1}本' -f $videoTotal, $processedCount) }
@@ -88,22 +90,67 @@ foreach ($keyword in $keywords) {
 
 	#----------------------------------------------------------------------
 	#個々の番組の情報の取得ここから
-	$videoNum = 0
-	foreach ($videoLink in $videoLinks) {
-		$videoNum += 1
+	if ($script:enableMultithread) {
+		Write-Debug ('Multithread Processing Enabled')
+		#並列化が有効の場合は並列化
+		if ($videoLinks -ne 0) {
+			# 配列を分割
+			$partitions = @{}
+			$totalCount = $videoLinks.Count
+			$partitionSize = [math]::Ceiling($totalCount / $script:multithreadNum)
+			for ($i = 0; $i -lt $script:multithreadNum; $i++) {
+				$startIndex = $i * $partitionSize
+				$endIndex = [math]::Min(($i + 1) * $partitionSize, $totalCount)
+				if ($startIndex -lt $totalCount) { $partitions[$i] = $videoLinks[$startIndex..($endIndex - 1)] }
+			}
 
-		#進捗情報の更新
-		$toastUpdateParams.Title2 = $videoLink
-		$toastUpdateParams.Rate2 = [Float]($videoNum / $videoTotal)
-		$toastUpdateParams.LeftText2 = ('{0}/{1}' -f $videoNum, $videoTotal)
-		Update-ProgressToast2Row @toastUpdateParams
+			$paraJobSBs = @{}
+			#$paraJobDefs = @{}
+			$paraJobs = @{}
+			Write-Output ('　並列処理をするため進捗状況は最後にまとめて順不同で表示されます')
+			# for ($i = 0; $i -lt $partitions.Count; $i++) {
+			# 	$links = [string]$partitions[$i]
+			# 	$paraJobSBs[$i] = ("& ./generate_list_child.ps1 $keyword $links")
+			# 	$paraJobDefs[$i] = [scriptblock]::Create($paraJobSBs[$i])
+			# 	$paraJobs[$i] = Start-ThreadJob -ScriptBlock $paraJobDefs[$i]
+			# }
 
-		Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━')
-		Write-Output ('{0}/{1} - {2}' -f $videoNum, $videoTotal, $videoLink)
-		#TVer番組ダウンロードのメイン処理
-		Update-VideoList `
-			-Keyword $keyword `
-			-EpisodePage $videoLink
+			for ($i = 0; $i -lt $partitions.Count; $i++) {
+				$links = [string]$partitions[$i]
+				$paraJobSBs[$i] = {
+					param($keyword, $links)
+					& ./generate_list_child.ps1 $keyword $links
+				}
+				$paraJobs[$i] = Start-ThreadJob -ScriptBlock $paraJobSBs[$i] -ArgumentList $keyword, $links
+			}
+			while ($paraJobs.Count -gt 0) {
+				$completedJobs = Get-Job | Where-Object { $_.State -eq 'Completed' }
+				foreach ($job in $completedJobs) {
+					Write-Output (Receive-Job -Job $job)
+					$paraJobs.Remove($job)
+					Remove-Job -Job $job
+				}
+				Start-Sleep -Milliseconds 500
+			}
+
+			# $null = Get-Job | Wait-Job
+			# Write-Output (Get-Job | Receive-Job)
+			# Get-Job | Remove-Job
+		}
+	} else {
+		#並列化が無効の場合は従来型処理
+		$videoNum = 0
+		foreach ($videoLink in $videoLinks) {
+			$videoNum += 1
+			#進捗情報の更新
+			$toastUpdateParams.Title2 = $videoLink
+			$toastUpdateParams.Rate2 = [Float]($videoNum / $videoTotal)
+			$toastUpdateParams.LeftText2 = ('{0}/{1}' -f $videoNum, $videoTotal)
+			Update-ProgressToast2Row @toastUpdateParams
+			Write-Output ('{0}/{1} - {2}' -f $videoNum, $videoTotal, $videoLink)
+			#TVer番組ダウンロードのメイン処理
+			Update-VideoList -Keyword $keyword -EpisodePage $videoLink
+		}
 	}
 	#----------------------------------------------------------------------
 
@@ -124,7 +171,7 @@ $toastUpdateParams = @{
 }
 Update-ProgressToast2Row @toastUpdateParams
 
-iRemove-Variable -Name keywords, keywordNum, keywordTotal, toastShowParams, totalStartTime, keyword, listLinks, videoLinks, videoTotal, secElapsed, secRemaining1, toastUpdateParams, videoNum, videoLink -ErrorAction SilentlyContinue
+Remove-Variable -Name keywords, keywordNum, keywordTotal, toastShowParams, totalStartTime, keyword, listLinks, videoLinks, videoTotal, secElapsed, secRemaining1, toastUpdateParams, videoNum, videoLink -ErrorAction SilentlyContinue
 
 Invoke-GarbageCollection
 
