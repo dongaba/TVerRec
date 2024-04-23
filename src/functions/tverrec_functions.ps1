@@ -684,10 +684,10 @@ function Update-VideoList {
 
 	#スキップフラグが立っているかチェック
 	if ($ignore) {
-		Write-Warning ('　⚠️ 番組をコメントアウトした状態でリストファイルに追加します')
+		Write-Warning ('　　⚠️ 番組をコメントアウトした状態でリストファイルに追加します')
 		$newVideo = Format-ListRecord $videoInfo
 	} else {
-		Write-Output ('　💡 番組をリストファイルに追加します')
+		Write-Output ('　　💡 番組をリストファイルに追加します')
 		$newVideo = Format-ListRecord $videoInfo
 	}
 
@@ -696,7 +696,7 @@ function Update-VideoList {
 		while ((Lock-File $script:listLockFilePath).result -ne $true) { Write-Information ('　ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$newVideo | Export-Csv -LiteralPath $script:listFilePath -Encoding UTF8 -Append
 		Write-Debug ('ダウンロードリストを書き込みました')
-	} catch { Write-Error ('　❌️ ダウンロードリストを更新できませんでした。スキップします') ; continue }
+	} catch { Write-Error ('　　❌️ ダウンロードリストを更新できませんでした。スキップします') ; continue }
 	finally { $null = Unlock-File $script:listLockFilePath }
 
 	Remove-Variable -Name keyword, episodePage, ignoreWord, newVideo, ignore, episodeID, videoInfo, ignoreTitles, ignoreTitle -ErrorAction SilentlyContinue

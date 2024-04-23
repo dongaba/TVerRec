@@ -138,7 +138,7 @@ foreach ($keyword in $keywords) {
 			$toastUpdateParams.Rate2 = [Float]($videoNum / $videoTotal)
 			$toastUpdateParams.LeftText2 = ('{0}/{1}' -f $videoNum, $videoTotal)
 			Update-ProgressToast2Row @toastUpdateParams
-			Write-Output ('{0}/{1} - {2}' -f $videoNum, $videoTotal, $videoLink)
+			Write-Output ('　{0}/{1} - {2}' -f $videoNum, $videoTotal, $videoLink)
 			#TVer番組ダウンロードのメイン処理
 			Update-VideoList -Keyword $keyword -EpisodePage $videoLink
 		}

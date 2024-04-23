@@ -46,8 +46,8 @@ foreach ($keyword in $keywords) {
 	Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 	Write-Output ('{0}' -f $keyword)
 
+	$keyword = (Remove-Comment($keyword.Replace('https://tver.jp/', '').Trim()))
 	$resultLinks = @(Get-VideoLinksFromKeyword($keyword))
-	$keyword = $keyword.Replace('https://tver.jp/', '')
 
 	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 	if ($resultLinks.Count -ne 0) { $videoLinks, $processedCount = Invoke-HistoryMatchCheck $resultLinks }

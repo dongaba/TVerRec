@@ -29,7 +29,7 @@ try {
 #メイン処理
 Get-Token
 foreach ($videoLink in $videoLinks) {
-	Write-Output ("$videoLink")
+	Write-Output ('　{0}' -f $videoLink)
 	Update-VideoList -Keyword $keyword -EpisodePage $videoLink
 }
 
