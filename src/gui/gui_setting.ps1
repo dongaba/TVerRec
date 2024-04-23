@@ -260,7 +260,8 @@ $settingAttributes = @(
 	'$script:ytdlOption',
 	'$script:ytdlNonTVerFileName',
 	'$script:forceSingleDownload',
-	'$script:extractDescTextToList'
+	'$script:extractDescTextToList',
+	'$script:listGenHistoryCheck'
 )
 
 $defaultSetting = @{}
