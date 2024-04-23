@@ -75,13 +75,13 @@ if (Test-Path (Join-Path $script:scriptRoot '../log/updater_update.txt')) {
 			-OutFile (Join-Path $script:scriptRoot '../win/update_tverrec.cmd')
 		Remove-Item (Join-Path $script:scriptRoot '../log/updater_update.txt') -Force
 	} catch {
-		Write-Warning ('💡 アップデータのアップデートに失敗しました。ご自身でアップデートを完了させる必要があります')
+		Write-Warning ('⚠️ アップデータのアップデートに失敗しました。ご自身でアップデートを完了させる必要があります')
 	}
 }
 
 #TVerRecの最新化チェック
 Invoke-TVerRecUpdateCheck
-if (!$?) { Write-Error ('❌️ TVerRecのバージョンチェックに失敗しました') }
+if (!$?) { Write-Warning ('⚠️ TVerRecのバージョンチェックに失敗しました') }
 
 #----------------------------------------------------------------------
 #ダウンロード対象キーワードのパス

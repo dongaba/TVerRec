@@ -95,7 +95,7 @@ while ($videoNotValidatedNum -ne 0) {
 
 	if (($null -eq $videoHists) -or ($videoHists.Count -eq 0)) {
 		#チェックする番組なし
-		Write-Output ('✅️　すべての番組を検証済です')
+		Write-Output ('✅️ すべての番組を検証済です')
 		Write-Output ('')
 	} else {
 		#ダウンロードファイルをチェック

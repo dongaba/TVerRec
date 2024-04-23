@@ -332,7 +332,7 @@ function Update-IgnoreList {
 			#改行コードLFを強制 + NFCで出力
 			$ignoreListNew.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC)  | Out-File -LiteralPath $script:ignoreFilePath -Encoding UTF8 -NoNewline
 			Write-Debug ('　ダウンロード対象外リストのソート更新完了')
-		} catch { Write-Error ('　❌️ ダウンロード対象外リストのソートに失敗しました') ; exit 1 }
+		} catch { Write-Warning ('　⚠️ ダウンロード対象外リストのソートに失敗しました') ; exit 1 }
 		finally { $null = Unlock-File $script:ignoreLockFilePath }
 	}
 
@@ -696,7 +696,7 @@ function Update-VideoList {
 		while ((Lock-File $script:listLockFilePath).result -ne $true) { Write-Information ('　ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$newVideo | Export-Csv -LiteralPath $script:listFilePath -Encoding UTF8 -Append
 		Write-Debug ('ダウンロードリストを書き込みました')
-	} catch { Write-Error ('　　❌️ ダウンロードリストを更新できませんでした。スキップします') ; continue }
+	} catch { Write-Warning ('　　⚠️ ダウンロードリストを更新できませんでした。スキップします') ; continue }
 	finally { $null = Unlock-File $script:listLockFilePath }
 
 	Remove-Variable -Name keyword, episodePage, ignoreWord, newVideo, ignore, episodeID, videoInfo, ignoreTitles, ignoreTitle -ErrorAction SilentlyContinue
@@ -718,7 +718,7 @@ function Get-VideoInfo {
 	$tverVideoInfoBaseURL = 'https://platform-api.tver.jp/service/api/v1/callEpisode/'
 	$tverVideoInfoURL = ('{0}{1}?platform_uid={2}&platform_token={3}' -f $tverVideoInfoBaseURL, $episodeID, $script:platformUID, $script:platformToken)
 	try { $response = Invoke-RestMethod -Uri $tverVideoInfoURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec }
-	catch { Write-Error ('❌️ エラーが発生しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message); return }
+	catch { Write-Warning ('⚠️ エラーが発生しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message); return }
 
 	#シリーズ
 	#	Series.Content.Titleだと複数シーズンがある際に現在メインで配信中のシリーズ名が返ってくることがある
@@ -760,7 +760,7 @@ function Get-VideoInfo {
 		$videoInfo = Invoke-RestMethod -Uri $tverVideoInfoURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
 		$descriptionText = (Get-NarrowChars ($videoInfo.Description).Replace('&amp;', '&')).Trim()
 		$videoEpisodeNum = (Get-NarrowChars ($videoInfo.No)).Trim()
-	} catch { Write-Error ('❌️ エラーが発生しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message); return }
+	} catch { Write-Warning ('⚠️ エラーが発生しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message); return }
 
 	#----------------------------------------------------------------------
 	#各種整形
@@ -959,7 +959,7 @@ function Invoke-Ytdl {
 		}
 		$ytdlProcess = Start-Process @startProcessParams
 		$null = $ytdlProcess.Handle
-	} catch { Write-Error '　❌️ youtube-dlの起動に失敗しました' ; return }
+	} catch { Write-Warning '　⚠️ youtube-dlの起動に失敗しました' ; return }
 
 	Remove-Variable -Name videoInfo, tmpDir, saveDir, subttlDir, thumbDir, chaptDir, descDir, saveFile, ytdlArgs, ytdlProcess -ErrorAction SilentlyContinue
 }
@@ -1022,7 +1022,7 @@ function Invoke-NonTverYtdl {
 		}
 		$ytdlProcess = Start-Process @startProcessParams
 		$null = $ytdlProcess.Handle
-	} catch { Write-Error '　❌️ youtube-dlの起動に失敗しました' ; return }
+	} catch { Write-Warning '　⚠️ youtube-dlの起動に失敗しました' ; return }
 
 	Remove-Variable -Name videoPageURL, tmpDir, saveDir, subttlDir, thumbDir, chaptDir, descDir, saveFile, ytdlArgs, ytdlProcess -ErrorAction SilentlyContinue
 }
@@ -1111,7 +1111,7 @@ function Optimize-HistoryFile {
 		$mergedHistData += $histData2
 		$mergedHistData | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
 
-	} catch { Write-Error ('　❌️ ダウンロード履歴の更新に失敗しました') }
+	} catch { Write-Warning ('　⚠️ ダウンロード履歴の更新に失敗しました') }
 	finally { $null = Unlock-File $script:histLockFilePath }
 
 	Remove-Variable -Name histData0, histData1, histData2, mergedHistData, histData -ErrorAction SilentlyContinue
@@ -1132,7 +1132,7 @@ function Limit-HistoryFile {
 		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ('　ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$purgedHist = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ [DateTime]::ParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null) -gt (Get-Date).AddDays(-1 * [Int32]$retentionPeriod) }))
 		$purgedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
-	} catch { Write-Error ('　❌️ ダウンロード履歴のクリーンアップに失敗しました') }
+	} catch { Write-Warning ('　⚠️ ダウンロード履歴のクリーンアップに失敗しました') }
 	finally { $null = Unlock-File $script:histLockFilePath }
 
 	Remove-Variable -Name retentionPeriod, purgedHist -ErrorAction SilentlyContinue
@@ -1157,7 +1157,7 @@ function Repair-HistoryFile {
 		$uniquedHist = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8 | Group-Object -Property 'videoPage' | Where-Object count -EQ 1 | Select-Object -ExpandProperty group | Sort-Object -Property downloadDate)
 		$uniquedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
 
-	} catch { Write-Error ('　❌️ ダウンロード履歴の更新に失敗しました') }
+	} catch { Write-Warning ('　⚠️ ダウンロード履歴の更新に失敗しました') }
 	finally { $null = Unlock-File $script:histLockFilePath }
 
 	Remove-Variable -Name uniquedHist -ErrorAction SilentlyContinue
@@ -1179,7 +1179,7 @@ function Invoke-ValidityCheck {
 	$checkStatus = 0
 	$videoFilePath = Join-Path (Convert-Path $script:downloadBaseDir) $path
 	try { $null = New-Item -Path $script:ffpmegErrorLogPath -ItemType File -Force }
-	catch { Write-Error ('　❌️ ffmpegエラーファイルを初期化できませんでした') ; return }
+	catch { Write-Warning ('　⚠️ ffmpegエラーファイルを初期化できませんでした') ; return }
 
 	#これからチェックする番組のステータスをチェック
 	try {
@@ -1227,7 +1227,7 @@ function Invoke-ValidityCheck {
 					-Wait
 				$ffmpegProcess.WaitForExit()
 			}
-		} catch { Write-Error ('　❌️ ffprobeを起動できませんでした') ; return }
+		} catch { Write-Warning ('　⚠️ ffprobeを起動できませんでした') ; return }
 	} else {
 		#ffmpegeを使った完全検査
 		$ffmpegArgs = (' -hide_banner -v error -xerror {0} -i "{1}" -f null - ' -f $decodeOption, $videoFilePath)
@@ -1251,7 +1251,7 @@ function Invoke-ValidityCheck {
 					-RedirectStandardError $script:ffpmegErrorLogPath
 				$ffmpegProcess.WaitForExit()
 			}
-		} catch { Write-Error ('　❌️ ffmpegを起動できませんでした') ; return }
+		} catch { Write-Warning ('　⚠️ ffmpegを起動できませんでした') ; return }
 	}
 
 	#ffmpegが正常終了しても、大量エラーが出ることがあるのでエラーをカウント
@@ -1260,11 +1260,11 @@ function Invoke-ValidityCheck {
 			$errorCount = (Get-Content -LiteralPath $script:ffpmegErrorLogPath | Measure-Object -Line).Lines
 			Get-Content -LiteralPath $script:ffpmegErrorLogPath -Encoding UTF8 | Write-Debug
 		}
-	} catch { Write-Error ('　❌️ ffmpegエラーの数をカウントできませんでした') ; $errorCount = 9999999 }
+	} catch { Write-Warning ('　⚠️ ffmpegエラーの数をカウントできませんでした') ; $errorCount = 9999999 }
 
 	#エラーをカウントしたらファイルを削除
 	try { if (Test-Path $script:ffpmegErrorLogPath) { Remove-Item -LiteralPath $script:ffpmegErrorLogPath -Force -ErrorAction SilentlyContinue } }
-	catch { Write-Error ('　❌️ ffmpegエラーファイルを削除できませんでした') }
+	catch { Write-Warning ('　⚠️ ffmpegエラーファイルを削除できませんでした') }
 
 	if ($ffmpegProcess.ExitCode -ne 0 -or $errorCount -gt 30) {
 
@@ -1280,24 +1280,24 @@ function Invoke-ValidityCheck {
 			#該当の番組のレコードを削除
 			$videoHists = @($videoHists.Where({ $_.videoPath -ne $path }))
 			$videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
-		} catch { Write-Error ('　❌️ ダウンロード履歴の更新に失敗しました: {0}' -f $path) }
+		} catch { Write-Warning ('　⚠️ ダウンロード履歴の更新に失敗しました: {0}' -f $path) }
 		finally { $null = Unlock-File $script:histLockFilePath }
 
 		#破損しているダウンロードファイルを削除
 		try { Remove-Item -LiteralPath $videoFilePath -Force -ErrorAction SilentlyContinue }
-		catch { Write-Error ('　❌️ ファイル削除できませんでした: {0}' -f $videoFilePath) }
+		catch { Write-Warning ('　⚠️ ファイル削除できませんでした: {0}' -f $videoFilePath) }
 
 	} else {
 
 		#終了コードが0のときはダウンロード履歴にチェック済フラグを立てる
-		Write-Output ('　✔️ 整合性チェック成功')
+		Write-Output ('　✅ 整合性チェック成功')
 		try {
 			while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ('　ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 			$videoHists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 			#該当の番組のチェックステータスを1に
 			$videoHists.Where({ $_.videoPath -eq $path }).Where({ $_.videoValidated = '1' })
 			$videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
-		} catch { Write-Error ('　❌️ ダウンロード履歴を更新できませんでした: {0}' -f $path) }
+		} catch { Write-Warning ('　⚠️ ダウンロード履歴を更新できませんでした: {0}' -f $path) }
 		finally { $null = Unlock-File $script:histLockFilePath }
 
 	}
