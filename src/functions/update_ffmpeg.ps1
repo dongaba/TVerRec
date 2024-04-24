@@ -67,8 +67,8 @@ switch ($true) {
 		$arch = $Env:PROCESSOR_ARCHITECTURE.ToLower()
 
 		#残っているかもしれない中間ファイルを削除
-		Remove-Item -Path ('{0}/ffmpeg-*-gpl-*' -f $script:binDir) -Force -Recurse -ErrorAction SilentlyContinue
-		Remove-Item -LiteralPath (Join-Path $script:binDir 'ffmpeg.zip') -Force -ErrorAction SilentlyContinue
+		$null = Remove-Item -Path ('{0}/ffmpeg-*-gpl-*' -f $script:binDir) -Force -Recurse -ErrorAction SilentlyContinue
+		$null = Remove-Item -LiteralPath (Join-Path $script:binDir 'ffmpeg.zip') -Force -ErrorAction SilentlyContinue
 
 		#ffmpegのバージョン取得
 		try {
@@ -125,14 +125,14 @@ switch ($true) {
 
 			#配置
 			Write-Output ('解凍したffmpegを配置します')
-			try { Move-Item -Path ('{0}/ffmpeg-*-gpl-*/bin/ff*.exe' -f $script:binDir) -Destination $script:binDir -Force }
+			try { $null = Move-Item -Path ('{0}/ffmpeg-*-gpl-*/bin/ff*.exe' -f $script:binDir) -Destination $script:binDir -Force }
 			catch { Throw ('❌️ ffmpegの配置に失敗しました') }
 
 			#ゴミ掃除
 			Write-Output ('中間ディレクトリと中間ファイルを削除します')
-			try { Remove-Item -Path ('{0}/ffmpeg-*-gpl-*' -f $script:binDir) -Force -Recurse -ErrorAction SilentlyContinue }
+			try { $null = Remove-Item -Path ('{0}/ffmpeg-*-gpl-*' -f $script:binDir) -Force -Recurse -ErrorAction SilentlyContinue }
 			catch { Throw ('❌️ 中間ディレクトリの削除に失敗しました') }
-			try { Remove-Item -LiteralPath (Join-Path $script:binDir 'ffmpeg.zip') -Force -ErrorAction SilentlyContinue }
+			try { $null = Remove-Item -LiteralPath (Join-Path $script:binDir 'ffmpeg.zip') -Force -ErrorAction SilentlyContinue }
 			catch { Throw ('❌️ 中間ファイルの削除に失敗しました') }
 
 			#バージョンチェック
@@ -152,8 +152,8 @@ switch ($true) {
 		$arch = (& uname -m | tr '[:upper:]' '[:lower:]')
 
 		#残っているかもしれない中間ファイルを削除
-		Remove-Item -Path ('{0}/ffmpeg-*-gpl-*' -f $script:binDir) -Force -Recurse -ErrorAction SilentlyContinue
-		Remove-Item -LiteralPath (Join-Path $script:binDir 'ffmpeg.tar.xz') -Force -ErrorAction SilentlyContinue
+		$null = Remove-Item -Path ('{0}/ffmpeg-*-gpl-*' -f $script:binDir) -Force -Recurse -ErrorAction SilentlyContinue
+		$null = Remove-Item -LiteralPath (Join-Path $script:binDir 'ffmpeg.tar.xz') -Force -ErrorAction SilentlyContinue
 
 		#ffmpegのバージョン取得
 		try {
@@ -221,14 +221,14 @@ switch ($true) {
 
 			#配置
 			Write-Output ('解凍したffmpegを配置します')
-			try { Move-Item -Path ('{0}/ffmpeg-*-gpl-*/bin/ff*' -f $script:binDir) -Destination $script:binDir -Force }
+			try { $null = Move-Item -Path ('{0}/ffmpeg-*-gpl-*/bin/ff*' -f $script:binDir) -Destination $script:binDir -Force }
 			catch { Throw ('❌️ ffmpegの配置に失敗しました') }
 
 			#ゴミ掃除
 			Write-Output ('中間ディレクトリと中間ファイルを削除します')
-			try { Remove-Item -Path ('{0}/ffmpeg-*-gpl-*' -f $script:binDir) -Force -Recurse -ErrorAction SilentlyContinue }
+			try { $null = Remove-Item -Path ('{0}/ffmpeg-*-gpl-*' -f $script:binDir) -Force -Recurse -ErrorAction SilentlyContinue }
 			catch { Throw ('❌️ 中間ディレクトリの削除に失敗しました') }
-			try { Remove-Item -LiteralPath (Join-Path $script:binDir 'ffmpeg.tar.xz') -Force -ErrorAction SilentlyContinue }
+			try { $null = Remove-Item -LiteralPath (Join-Path $script:binDir 'ffmpeg.tar.xz') -Force -ErrorAction SilentlyContinue }
 			catch { Throw ('❌️ 中間ファイルの削除に失敗しました') }
 
 			#実行権限の付与
@@ -252,8 +252,8 @@ switch ($true) {
 		$arch = (& uname -m | tr '[:upper:]' '[:lower:]')
 
 		#残っているかもしれない中間ファイルを削除
-		Remove-Item -LiteralPath (Join-Path $script:binDir 'ffmpeg.zip') -Force -ErrorAction SilentlyContinue
-		Remove-Item -LiteralPath (Join-Path $script:binDir 'ffprobe.zip') -Force -ErrorAction SilentlyContinue
+		$null = Remove-Item -LiteralPath (Join-Path $script:binDir 'ffmpeg.zip') -Force -ErrorAction SilentlyContinue
+		$null = Remove-Item -LiteralPath (Join-Path $script:binDir 'ffprobe.zip') -Force -ErrorAction SilentlyContinue
 
 		#ffmpegのバージョン取得
 		try {
@@ -297,8 +297,8 @@ switch ($true) {
 			#展開
 			Write-Output ('ダウンロードしたffmpegを解凍します')
 			try {
-				Remove-Item -LiteralPath (Join-Path $script:binDir 'ffmpeg') -Force -ErrorAction SilentlyContinue
-				Remove-Item -LiteralPath (Join-Path $script:binDir 'ffprobe') -Force -ErrorAction SilentlyContinue
+				$null = Remove-Item -LiteralPath (Join-Path $script:binDir 'ffmpeg') -Force -ErrorAction SilentlyContinue
+				$null = Remove-Item -LiteralPath (Join-Path $script:binDir 'ffprobe') -Force -ErrorAction SilentlyContinue
 				Expand-Zip -Path (Join-Path $script:binDir 'ffmpeg.zip') -Destination $script:binDir
 				Expand-Zip -Path (Join-Path $script:binDir 'ffprobe.zip') -Destination $script:binDir
 			} catch { Throw ('❌️ ffmpegの展開に失敗しました') }
@@ -306,8 +306,8 @@ switch ($true) {
 			#ゴミ掃除
 			Write-Output ('中間ファイルを削除します')
 			try {
-				Remove-Item -LiteralPath (Join-Path $script:binDir 'ffmpeg.zip') -Force -ErrorAction SilentlyContinue
-				Remove-Item -LiteralPath (Join-Path $script:binDir 'ffprobe.zip') -Force -ErrorAction SilentlyContinue
+				$null = Remove-Item -LiteralPath (Join-Path $script:binDir 'ffmpeg.zip') -Force -ErrorAction SilentlyContinue
+				$null = Remove-Item -LiteralPath (Join-Path $script:binDir 'ffprobe.zip') -Force -ErrorAction SilentlyContinue
 			} catch { Throw ('❌️ 中間ファイルの削除に失敗しました') }
 
 			#実行権限の付与

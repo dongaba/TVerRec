@@ -149,7 +149,7 @@ function Invoke-TverrecPathCheck {
 		if (!($sampleFilePath -and (Test-Path $sampleFilePath -PathType 'Leaf'))) {
 			Throw ('　❌️ {0}が存在しません。終了します。' -f $errorMessage) ; exit 1
 		}
-		Copy-Item -LiteralPath $sampleFilePath -Destination $path -Force
+		$null = Copy-Item -LiteralPath $sampleFilePath -Destination $path -Force
 	}
 
 	Remove-Variable -Name path, errorMessage, isFile, sampleFilePath, pathType -ErrorAction SilentlyContinue
@@ -1263,7 +1263,7 @@ function Invoke-ValidityCheck {
 	} catch { Write-Warning ('　⚠️ ffmpegエラーの数をカウントできませんでした') ; $errorCount = 9999999 }
 
 	#エラーをカウントしたらファイルを削除
-	try { if (Test-Path $script:ffpmegErrorLogPath) { Remove-Item -LiteralPath $script:ffpmegErrorLogPath -Force -ErrorAction SilentlyContinue } }
+	try { if (Test-Path $script:ffpmegErrorLogPath) { $null = Remove-Item -LiteralPath $script:ffpmegErrorLogPath -Force -ErrorAction SilentlyContinue } }
 	catch { Write-Warning ('　⚠️ ffmpegエラーファイルを削除できませんでした') }
 
 	if ($ffmpegProcess.ExitCode -ne 0 -or $errorCount -gt 30) {
@@ -1284,7 +1284,7 @@ function Invoke-ValidityCheck {
 		finally { $null = Unlock-File $script:histLockFilePath }
 
 		#破損しているダウンロードファイルを削除
-		try { Remove-Item -LiteralPath $videoFilePath -Force -ErrorAction SilentlyContinue }
+		try { $null = Remove-Item -LiteralPath $videoFilePath -Force -ErrorAction SilentlyContinue }
 		catch { Write-Warning ('　⚠️ ファイル削除できませんでした: {0}' -f $videoFilePath) }
 
 	} else {

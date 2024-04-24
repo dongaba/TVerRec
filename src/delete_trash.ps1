@@ -131,7 +131,7 @@ if ($script:forceSingleDownload) {
 				$ignoreNum = ([Array]::IndexOf($using:ignoreDirs, $_)) + 1
 				$ignoreTotal = $using:ignoreDirs.Count
 				Write-Output ('　{0}/{1} - {2}' -f $ignoreNum, $ignoreTotal, $_.Name)
-				try { Remove-Item -LiteralPath $_ -Recurse -Force }
+				try { $null = Remove-Item -LiteralPath $_ -Recurse -Force }
 				catch { Write-Warning ('⚠️ 削除できないファイルがありました: {0}' -f $_) }
 			} -ThrottleLimit $script:multithreadNum
 		} else {
@@ -161,7 +161,7 @@ if ($script:forceSingleDownload) {
 				Update-ProgressToast @toastUpdateParams
 
 				Write-Output ('　{0}/{1} - {2}' -f $ignoreNum, $ignoreTotal, $ignoreDir.Name)
-				try { Remove-Item -LiteralPath $ignoreDir -Recurse -Force }
+				try { $null = Remove-Item -LiteralPath $ignoreDir -Recurse -Force }
 				catch { Write-Warning ('⚠️ 削除できないファイルがありました: {0}' -f $ignoreDir) }
 			}
 		}
@@ -192,7 +192,7 @@ if ($emptyDirTotal -ne 0) {
 			$emptyDirNum = ([Array]::IndexOf($using:emptyDirs, $_)) + 1
 			$emptyDirTotal = $using:emptyDirs.Count
 			Write-Output ('　{0}/{1} - {2}' -f $emptyDirNum, $emptyDirTotal, $_)
-			try { Remove-Item -LiteralPath $_ -Recurse -Force }
+			try { $null = Remove-Item -LiteralPath $_ -Recurse -Force }
 			catch { Write-Warning ('⚠️ - 空ディレクトリの削除に失敗しました: {0}' -f $_) }
 		} -ThrottleLimit $script:multithreadNum
 	} else {
@@ -221,7 +221,7 @@ if ($emptyDirTotal -ne 0) {
 			Update-ProgressToast @toastUpdateParams
 
 			Write-Output ('　{0}/{1} - {2}' -f $emptyDirNum, $emptyDirTotal, $dir)
-			try { Remove-Item -LiteralPath $dir -Recurse -Force -ErrorAction SilentlyContinue
+			try { $null = Remove-Item -LiteralPath $dir -Recurse -Force -ErrorAction SilentlyContinue
 			} catch { Write-Warning ('⚠️ - 空ディレクトリの削除に失敗しました: {0}' -f $dir) }
 		}
 	}

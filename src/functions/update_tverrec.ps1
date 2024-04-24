@@ -42,11 +42,11 @@ function Move-Files() {
 		$items = (Get-ChildItem $source).Where({ $_.Name -inotlike '*update_tverrec.*' })
 		foreach ($item in $items) { Move-Files -Source $item.FullName -Destination (Join-Path $destination $item.Name) }
 		#移動し終わったディレクトリを削除
-		Remove-Item -LiteralPath $source -Recurse -Force
+		$null = Remove-Item -LiteralPath $source -Recurse -Force
 	} else {
 		#移動先に対象なし または ファイルの Move-Item に -Forece つけて実行
 		Write-Output ('{0} → {1}' -f $source, $destination)
-		Move-Item -LiteralPath $source -Destination $destination -Force
+		$null = Move-Item -LiteralPath $source -Destination $destination -Force
 	}
 
 	Remove-Variable -Name source, destination, items, item -ErrorAction SilentlyContinue
@@ -59,7 +59,7 @@ Function Remove-IfExist {
 	param (
 		[Parameter(Mandatory = $true)][string]$path
 	)
-	if (Test-Path $path) { Remove-Item -LiteralPath $path -Force -Recurse }
+	if (Test-Path $path) { $null = Remove-Item -LiteralPath $path -Force -Recurse }
 
 	Remove-Variable -Name path -ErrorAction SilentlyContinue
 }
@@ -85,7 +85,7 @@ Function Move-IfExist {
 		[Parameter(Mandatory = $true)][string]$path,
 		[Parameter(Mandatory = $true)][string]$destination
 	)
-	if (Test-Path $path -PathType Leaf) { Move-Item -LiteralPath $path -Destination $destination -Force }
+	if (Test-Path $path -PathType Leaf) { $null = Move-Item -LiteralPath $path -Destination $destination -Force }
 
 	Remove-Variable -Name path, destination -ErrorAction SilentlyContinue
 }

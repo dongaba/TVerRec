@@ -70,7 +70,7 @@ if (Test-Path (Join-Path $script:scriptRoot '../log/updater_update.txt')) {
 		Invoke-WebRequest `
 			-Uri 'https://raw.githubusercontent.com/dongaba/TVerRec/master/win/update_tverrec.cmd' `
 			-OutFile (Join-Path $script:scriptRoot '../win/update_tverrec.cmd')
-		Remove-Item (Join-Path $script:scriptRoot '../log/updater_update.txt') -Force
+		$null = Remove-Item (Join-Path $script:scriptRoot '../log/updater_update.txt') -Force
 	} catch {
 		Write-Warning ('⚠️ アップデータのアップデートに失敗しました。ご自身でアップデートを完了させる必要があります')
 	}
