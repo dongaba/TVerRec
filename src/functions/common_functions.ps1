@@ -455,7 +455,7 @@ function Out-Msg-Color {
 #region トースト通知
 
 #Toast用AppID取得に必要
-if (($script:disableToastNotification -ne $true) -and ($IsWindows)) { Import-Module StartLayout -SkipEditionCheck }
+if ($IsWindows -and ($script:disableToastNotification -ne $true)) { Import-Module StartLayout -SkipEditionCheck }
 
 #モジュールのインポート
 if (!$script:disableToastNotification -and $IsWindows -and (!('Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder' -as [Type]))) {

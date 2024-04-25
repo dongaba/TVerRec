@@ -317,45 +317,6 @@ function Get-LinkFromNew {
 }
 
 #----------------------------------------------------------------------
-#マイページから番組ページのLinkを取得
-#----------------------------------------------------------------------
-function Get-LinkFromMyPage {
-	[CmdletBinding()]
-	[OutputType([PSCustomObject])]
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly', '')]
-	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$page)
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	switch ($page) {
-		'fav' {
-			$baseURL = ('https://platform-api.tver.jp/service/api/v2/callMylistDetail/{0}' -f (ConvertTo-UnixTime (Get-Date)))
-			$requireData = 'mylist'
-			continue
-		}
-		'favorite' {
-			$baseURL = 'https://platform-api.tver.jp/service/api/v2/callMyFavorite'
-			$requireData = 'mylist'
-			continue
-		}
-		'later' {
-			$baseURL = 'https://platform-api.tver.jp/service/api/v2/callMyLater'
-			$requireData = 'later'
-			continue
-		}
-		'resume' {
-			$baseURL = 'https://platform-api.tver.jp/service/api/v2/callMyResume'
-			$requireData = 'resume'
-			continue
-		}
-		default { Write-Warning "⚠️ 未知のパターンです。 - mypage/$page" }
-	}
-	$tverIDs = ProcessSearchResults -baseURL $baseURL -Type 'mypage' -RequireData $requireData
-	return $tverIDs
-	Remove-Variable -Name genre, tverIDs -ErrorAction SilentlyContinue
-}
-
-
-
-#----------------------------------------------------------------------
 #ランキングから番組ページのLinkを取得
 #----------------------------------------------------------------------
 function Get-LinkFromRanking {
@@ -498,6 +459,43 @@ function Get-LinkFromSiteMap {
 
 	return $linkCollection
 	Remove-Variable -Name linkCollection, callSearchURL, searchResultsRaw, searchResults, url, tveeID, -ErrorAction SilentlyContinue
+}
+
+#----------------------------------------------------------------------
+#マイページから番組ページのLinkを取得
+#----------------------------------------------------------------------
+function Get-LinkFromMyPage {
+	[CmdletBinding()]
+	[OutputType([PSCustomObject])]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly', '')]
+	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$page)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	switch ($page) {
+		'fav' {
+			$baseURL = ('https://platform-api.tver.jp/service/api/v2/callMylistDetail/{0}' -f (ConvertTo-UnixTime (Get-Date)))
+			$requireData = 'mylist'
+			continue
+		}
+		'favorite' {
+			$baseURL = 'https://platform-api.tver.jp/service/api/v2/callMyFavorite'
+			$requireData = 'mylist'
+			continue
+		}
+		'later' {
+			$baseURL = 'https://platform-api.tver.jp/service/api/v2/callMyLater'
+			$requireData = 'later'
+			continue
+		}
+		'resume' {
+			$baseURL = 'https://platform-api.tver.jp/service/api/v2/callMyResume'
+			$requireData = 'resume'
+			continue
+		}
+		default { Write-Warning "⚠️ 未知のパターンです。 - mypage/$page" }
+	}
+	$tverIDs = ProcessSearchResults -baseURL $baseURL -Type 'mypage' -RequireData $requireData
+	return $tverIDs
+	Remove-Variable -Name genre, tverIDs -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
