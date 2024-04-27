@@ -2,7 +2,7 @@ name: Build and Push image to Docker Hub
 
 on:
   push:
-    branches: [master]
+    branches: [master,dev]
     tags:
       - "v*.*.*"
 
@@ -23,6 +23,8 @@ jobs:
         run: |
           if [[ $GITHUB_REF == refs/tags/* ]]; then
             TAG=${GITHUB_REF#refs/tags/}
+          elif [ ${{ github.ref }} == 'refs/heads/dev' ]; then
+            TAG="dev"
           else
             TAG="latest"
           fi
@@ -43,7 +45,6 @@ jobs:
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
-            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
 
       #Build Preperation
       - name: Set up QEMU
