@@ -27,11 +27,11 @@ jobs:
           images: ${{ env.IMAGE_NAME }}
           flavor: |
             latest=${{ github.ref == 'refs/heads/master' }}
-            dev=${{ github.ref == 'refs/heads/dev' }}
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
             type=sha
+            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
 
       # Set up QEMU
       - name: Set up QEMU
