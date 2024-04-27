@@ -25,12 +25,10 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.IMAGE_NAME }}
-          flavor: |
-            latest=${{ github.ref == 'refs/heads/master' }}
+          flavor: latest=true
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
-            type=sha
             type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
 
       # Set up QEMU
@@ -40,6 +38,10 @@ jobs:
       # Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      #Confirm available platforms
+      - name: Available platforms
+        run: echo ${{ steps.buildx.outputs.platforms }}
 
       # Login to Docker Hub
       - name: Log in to Docker Hub
