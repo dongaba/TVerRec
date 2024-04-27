@@ -16,13 +16,12 @@ function Expand-Zip {
 		[Parameter(Mandatory = $true)][string]$path,
 		[Parameter(Mandatory = $true)][string]$destination
 	)
-
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if (Test-Path -Path $path) {
 		Write-Verbose ('{0}を{1}に展開します' -f $path, $destination)
 		[System.IO.Compression.ZipFile]::ExtractToDirectory($path, $destination, $true)
 		Write-Verbose ('{0}を展開しました' -f $path)
-	} else {Throw ('❌️ {0}が見つかりません' -f $path)}
-
+	} else { Throw ('❌️ {0}が見つかりません' -f $path) }
 	Remove-Variable -Name path, destination -ErrorAction SilentlyContinue
 }
 
@@ -36,7 +35,7 @@ function Move-Files() {
 		[Parameter(Mandatory = $true)][String]$source,
 		[Parameter(Mandatory = $true)][String]$destination
 	)
-
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if ((Test-Path $destination) -and (Test-Path -PathType Container $source)) {
 		#ディレクトリ上書き(移動先に存在 かつ ディレクトリ)は再帰的に Move-Files 呼び出し
 		$items = (Get-ChildItem $source).Where({ $_.Name -inotlike '*update_tverrec.*' })
@@ -48,7 +47,6 @@ function Move-Files() {
 		Write-Output ('{0} → {1}' -f $source, $destination)
 		$null = Move-Item -LiteralPath $source -Destination $destination -Force
 	}
-
 	Remove-Variable -Name source, destination, items, item -ErrorAction SilentlyContinue
 }
 
@@ -56,11 +54,9 @@ function Move-Files() {
 #存在したら削除
 #----------------------------------------------------------------------
 Function Remove-IfExist {
-	param (
-		[Parameter(Mandatory = $true)][string]$path
-	)
+	param ([Parameter(Mandatory = $true)][string]$path)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if (Test-Path $path) { $null = Remove-Item -LiteralPath $path -Force -Recurse }
-
 	Remove-Variable -Name path -ErrorAction SilentlyContinue
 }
 
@@ -72,8 +68,8 @@ Function Rename-IfExist {
 		[Parameter(Mandatory = $true)][string]$path,
 		[Parameter(Mandatory = $true)][string]$newname
 	)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if (Test-Path $path -PathType Leaf) { Rename-Item -LiteralPath $path -NewName $newname -Force }
-
 	Remove-Variable -Name path, newname -ErrorAction SilentlyContinue
 }
 
@@ -85,8 +81,8 @@ Function Move-IfExist {
 		[Parameter(Mandatory = $true)][string]$path,
 		[Parameter(Mandatory = $true)][string]$destination
 	)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if (Test-Path $path -PathType Leaf) { $null = Move-Item -LiteralPath $path -Destination $destination -Force }
-
 	Remove-Variable -Name path, destination -ErrorAction SilentlyContinue
 }
 
@@ -94,9 +90,8 @@ Function Move-IfExist {
 #環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 try {
-	if ($myInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$scriptRoot = Split-Path -Parent -Path (Split-Path -Parent -Path $myInvocation.MyCommand.Definition)
-	} else { $scriptRoot = Convert-Path .. }
+	if ($myInvocation.MyCommand.CommandType -eq 'ExternalScript') { $scriptRoot = Split-Path -Parent -Path (Split-Path -Parent -Path $myInvocation.MyCommand.Definition) }
+	else { $scriptRoot = Convert-Path .. }
 	Set-Location $scriptRoot
 } catch { Throw ('❌️ ディレクトリ設定に失敗しました') }
 if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
@@ -130,9 +125,9 @@ Write-Output ('')
 Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('TVerRecの最新版をダウンロードします')
 try {
-	if ((Get-Variable -Name 'updatedFromHead' -ErrorAction SilentlyContinue) -and ($script:updatedFromHead)) {
-		$zipURL = 'https://github.com/dongaba/TVerRec/archive/refs/heads/master.zip'
-	} else { $zipURL = (Invoke-RestMethod -Uri $releases -Method 'GET').zipball_url }
+	if ((Get-Variable -Name 'updatedFromHead' -ErrorAction SilentlyContinue) -and ($script:updatedFromHead)) { $zipURL = 'https://github.com/dongaba/TVerRec/archive/refs/heads/master.zip' }
+	elseif ((Get-Variable -Name 'updatedFromDev' -ErrorAction SilentlyContinue) -and ($script:updatedFromDev)) { $zipURL = 'https://github.com/dongaba/TVerRec/archive/refs/heads/dev.zip' }
+	else { $zipURL = (Invoke-RestMethod -Uri $releases -Method 'GET').zipball_url }
 	Invoke-WebRequest -UseBasicParsing -Uri $zipURL -OutFile (Join-Path $updateTemp 'TVerRecLatest.zip')
 } catch { Throw ('❌️ ダウンロードに失敗しました');	exit 1 }
 
@@ -141,10 +136,8 @@ Write-Output ('')
 Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('ダウンロードしたTVerRecを解凍します')
 try {
-	if (Test-Path (Join-Path $updateTemp 'TVerRecLatest.zip') -PathType Leaf) {
-		#配下に作成されるディレクトリ名は不定「dongaba-TVerRec-xxxxxxxx」
-		Expand-Zip -Path (Join-Path $updateTemp 'TVerRecLatest.zip') -Destination $updateTemp
-	} else { Throw ('❌️ ダウンロードしたファイルが見つかりません') }
+	if (Test-Path (Join-Path $updateTemp 'TVerRecLatest.zip') -PathType Leaf) { Expand-Zip -Path (Join-Path $updateTemp 'TVerRecLatest.zip') -Destination $updateTemp }
+	else { Throw ('❌️ ダウンロードしたファイルが見つかりません') }
 } catch { Throw ('❌️ ダウンロードしたファイルの解凍に失敗しました') }
 
 #ディレクトリは上書きできないので独自関数で以下のディレクトリをループ
@@ -153,10 +146,7 @@ Write-Output ('━━━━━━━━━━━━━━━━━━━━━�
 Write-Output ('ダウンロードしたTVerRecを配置します')
 try {
 	$newTVerRecDir = (Get-ChildItem -LiteralPath $updateTemp -Directory ).fullname
-	Get-ChildItem -LiteralPath $newTVerRecDir -Force | ForEach-Object {
-		#Move-Item を行う function として Move-Files 作成して呼び出す
-		Move-Files -Source $_.FullName -Destination ('{0}{1}' -f (Join-Path $scriptRoot '../'), $_.Name )
-	}
+	Get-ChildItem -LiteralPath $newTVerRecDir -Force | ForEach-Object { Move-Files -Source $_.FullName -Destination ('{0}{1}' -f (Join-Path $scriptRoot '../'), $_.Name ) }
 } catch { Throw ('❌️ ダウンロードしたTVerRecの配置に失敗しました') }
 
 #作業ディレクトリを削除

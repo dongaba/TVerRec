@@ -16,13 +16,12 @@ function Expand-Zip {
 		[Parameter(Mandatory = $true)][string]$path,
 		[Parameter(Mandatory = $true)][string]$destination
 	)
-
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if (Test-Path -Path $path) {
 		Write-Verbose ('{0}を{1}に展開します' -f $path, $destination)
 		[System.IO.Compression.ZipFile]::ExtractToDirectory($path, $destination, $true)
 		Write-Verbose ('{0}を展開しました' -f $path)
 	} else { Throw (❌️ '{0}が見つかりません' -f $path) }
-
 	Remove-Variable -Name path, destination -ErrorAction SilentlyContinue
 }
 
@@ -30,9 +29,8 @@ function Expand-Zip {
 #環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 try {
-	if ($myInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$scriptRoot = Split-Path -Parent -Path (Split-Path -Parent -Path $myInvocation.MyCommand.Definition)
-	} else { $scriptRoot = Convert-Path .. }
+	if ($myInvocation.MyCommand.CommandType -eq 'ExternalScript') { $scriptRoot = Split-Path -Parent -Path (Split-Path -Parent -Path $myInvocation.MyCommand.Definition) }
+	else { $scriptRoot = Convert-Path .. }
 	Set-Location $script:scriptRoot
 } catch { Throw ('❌️ ディレクトリ設定に失敗しました') }
 if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
@@ -48,9 +46,7 @@ try {
 			Write-Output ('ユーザ設定ファイルを作成する必要があります')
 			& 'gui/gui_setting.ps1'
 		}
-		if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
-			. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
-		}
+		if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
 	} else { Throw ('❌️ ユーザ設定が完了してません') }
 } catch { Throw ('❌️ 設定ファイルの読み込みに失敗しました') }
 
@@ -63,7 +59,7 @@ $lookupTable = @{
 	'ytdl-patched' = 'ytdl-patched/ytdl-patched'
 }
 if ($lookupTable.ContainsKey($script:preferredYoutubedl)) { $repo = $lookupTable[$script:preferredYoutubedl] }
-else { Throw '❌️ youtube-dlの取得元の指定が無効です'}
+else { Throw '❌️ youtube-dlの取得元の指定が無効です' }
 $releases = ('https://api.github.com/repos/{0}/releases' -f $repo)
 
 #youtube-dl移動先相対Path
@@ -87,19 +83,12 @@ if ($latestVersion -eq $currentVersion) {
 	Write-Output ('　Local version: {0}' -f $currentVersion)
 	Write-Output ('　Latest version: {0}' -f $latestVersion)
 } else {
-	Write-Warning ('')
+	Write-Output ('')
 	Write-Warning ('⚠️ youtube-dlが古いため更新します。')
 	Write-Warning ('　Local version: {0}' -f $currentVersion)
 	Write-Warning ('　Latest version: {0}' -f $latestVersion)
-	if (!$IsWindows) {
-		#githubの設定
-		$fileBeforeRrename = $script:preferredYoutubedl
-		$fileAfterRename = 'youtube-dl'
-	} else {
-		#githubの設定
-		$fileBeforeRrename = ('{0}.exe' -f $script:preferredYoutubedl)
-		$fileAfterRename = 'youtube-dl.exe'
-	}
+	if (!$IsWindows) { $fileBeforeRrename = $script:preferredYoutubedl; $fileAfterRename = 'youtube-dl' }
+	else { $fileBeforeRrename = ('{0}.exe' -f $script:preferredYoutubedl); $fileAfterRename = 'youtube-dl.exe' }
 
 	Write-Output ('youtube-dlの最新版をダウンロードします')
 	try {
@@ -117,7 +106,6 @@ if ($latestVersion -eq $currentVersion) {
 		$currentVersion = (& $ytdlPath --version)
 		Write-Output ('💡 youtube-dlをversion {0}に更新しました。' -f $currentVersion)
 	} catch { Throw ('❌️ 更新後のバージョン取得に失敗しました') }
-
 
 }
 

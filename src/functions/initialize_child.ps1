@@ -84,6 +84,13 @@ else { $script:ffmpegPath = Join-Path $script:binDir 'ffmpeg' }
 if ($IsWindows) { $script:ffprobePath = Join-Path $script:binDir 'ffprobe.exe' }
 else { $script:ffprobePath = Join-Path $script:binDir 'ffprobe' }
 
+#共通HTTPヘッダ
+$script:requestHeader = @{
+	'x-tver-platform-type' = 'web'
+	'Origin'               = 'https://tver.jp'
+	'Referer'              = 'https://tver.jp'
+}
+
 #ロックファイル用
 $script:fileInfo = @{}
 $script:fileStream = @{}

@@ -16,13 +16,12 @@ function Expand-Zip {
 		[Parameter(Mandatory = $true)][string]$path,
 		[Parameter(Mandatory = $true)][string]$destination
 	)
-
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if (Test-Path -Path $path) {
 		Write-Verbose ('{0}を{1}に展開します' -f $path, $destination)
 		[System.IO.Compression.ZipFile]::ExtractToDirectory($path, $destination, $true)
 		Write-Verbose ('{0}を展開しました' -f $path)
 	} else { Throw ('❌️ {0}が見つかりません' -f $path) }
-
 	Remove-Variable -Name path, destination -ErrorAction SilentlyContinue
 }
 
@@ -30,9 +29,8 @@ function Expand-Zip {
 #環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 try {
-	if ($myInvocation.MyCommand.CommandType -eq 'ExternalScript') {
-		$scriptRoot = Split-Path -Parent -Path (Split-Path -Parent -Path $myInvocation.MyCommand.Definition)
-	} else { $scriptRoot = Convert-Path .. }
+	if ($myInvocation.MyCommand.CommandType -eq 'ExternalScript') { $scriptRoot = Split-Path -Parent -Path (Split-Path -Parent -Path $myInvocation.MyCommand.Definition) }
+	else { $scriptRoot = Convert-Path .. }
 	Set-Location $script:scriptRoot
 } catch { Throw ('❌️ ディレクトリ設定に失敗しました') }
 if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
@@ -48,9 +46,7 @@ try {
 			Write-Output ('ユーザ設定ファイルを作成する必要があります')
 			& 'gui/gui_setting.ps1'
 		}
-		if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
-			. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
-		}
+		if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
 	} else { Throw ('❌️ ユーザ設定が完了してません') }
 } catch { Throw ('❌️ 設定ファイルの読み込みに失敗しました') }
 
@@ -84,9 +80,7 @@ switch ($true) {
 		$latestVersion = ''
 		try {
 			$latestRelease = Invoke-RestMethod -Uri $releases -Method 'GET'
-			if ($latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)/ffmpeg-(\w*)(\d+\.*\d*\.*\d*)(.*)(-win64-gpl-)(.*).zip') {
-				$latestVersion = $matches[7]
-			}
+			if ($latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)/ffmpeg-(\w*)(\d+\.*\d*\.*\d*)(.*)(-win64-gpl-)(.*).zip') { $latestVersion = $matches[7] }
 		} catch { Write-Warning ('⚠️ ffmpegの最新バージョンを特定できませんでした') ; return }
 
 		#ffmpegのダウンロード
@@ -96,21 +90,17 @@ switch ($true) {
 			Write-Output ('　Local version: {0}' -f $currentVersion)
 			Write-Output ('　Latest version: {0}' -f $latestVersion)
 		} else {
-			Write-Warning ('')
+			Write-Output ('')
 			Write-Warning ('⚠️ ffmpegが古いため更新します。')
 			Write-Warning ('　Local version: {0}' -f $currentVersion)
 			Write-Warning ('　Latest version: {0}' -f $latestVersion)
 
 			if ([System.Environment]::IS64bitOperatingSystem) {
 				$cpu = 'x64'
-				if ($latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-win64-gpl-)(.*).zip') {
-					$donwloadURL = $matches[0]
-				}
+				if ($latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-win64-gpl-)(.*).zip') { $donwloadURL = $matches[0] }
 			} else {
 				$cpu = 'x86'
-				if ($latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-win32-gpl-)(.*).zip') {
-					$donwloadURL = $matches[0]
-				}
+				if ($latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-win32-gpl-)(.*).zip') { $donwloadURL = $matches[0] }
 			}
 
 			#ダウンロード
@@ -169,9 +159,7 @@ switch ($true) {
 		$latestVersion = ''
 		try {
 			$latestRelease = Invoke-RestMethod -Uri $releases -Method 'GET'
-			if ($latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)/ffmpeg-(\w*)(\d+\.*\d*\.*\d*)(.*)(-linux64-gpl-)(.*).tar.xz') {
-				$latestVersion = $matches[7]
-			}
+			if ($latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)/ffmpeg-(\w*)(\d+\.*\d*\.*\d*)(.*)(-linux64-gpl-)(.*).tar.xz') { $latestVersion = $matches[7] }
 		} catch { Write-Warning ('⚠️ ffmpegの最新バージョンを特定できませんでした') ; return }
 
 		#ffmpegのダウンロード
@@ -181,7 +169,7 @@ switch ($true) {
 			Write-Output ('　Local version: {0}' -f $currentVersion)
 			Write-Output ('　Latest version: {0}' -f $latestVersion)
 		} else {
-			Write-Warning ('')
+			Write-Output ('')
 			Write-Warning ('⚠️ ffmpegが古いため更新します。')
 			Write-Warning ('　Local version: {0}' -f $currentVersion)
 			Write-Warning ('　Latest version: {0}' -f $latestVersion)
@@ -189,23 +177,18 @@ switch ($true) {
 			switch ($true) {
 				(($arch -eq 'aarch64') -or ($arch -icontains 'armv8')) {
 					$cpu = 'arm64'
-					if ($latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-linuxarm64-gpl-)(.*).tar.xz') {
-						$donwloadURL = $matches[0]
-					}
+					if ($latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-linuxarm64-gpl-)(.*).tar.xz') { $donwloadURL = $matches[0] }
 					continue
 				}
 				($arch -in @('x86_64', 'ia64')) {
 					$cpu = 'amd64'
-					if ($latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-linux64-gpl-)(.*).tar.xz') {
-						$donwloadURL = $matches[0]
-					}
+					if ($latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-linux64-gpl-)(.*).tar.xz') { $donwloadURL = $matches[0] }
 					continue
 				}
 				default {
 					Write-Warning ('⚠️ お使いのCPUに適合するffmpegを特定できませんでした。')
 					Write-Warning ('⚠️ {0}に適合するffmpegをご自身で配置してください。' -f $arch)
 					return
-					continue
 				}
 			}
 
@@ -282,7 +265,7 @@ switch ($true) {
 			Write-Output ('　Local version: {0}' -f $currentVersion)
 			Write-Output ('　Latest version: {0}' -f $latestVersion)
 		} else {
-			Write-Warning ('')
+			Write-Output ('')
 			Write-Warning ('⚠️ ffmpegが古いため更新します。')
 			Write-Warning ('　Local version: {0}' -f $currentVersion)
 			Write-Warning ('　Latest version: {0}' -f $latestVersion)

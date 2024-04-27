@@ -58,7 +58,7 @@ try {
 #----------------------------------------------------------------------
 #連続実行時は以降の処理は不要なのでexit
 #不要な理由はloop.ps1は「.」ではなく「&」で各処理を呼び出ししているので各種変数が不要なため
-if ($launchMode -eq 'loop') { exit 0 }
+if ($launchMode -eq 'loop') {Remove-Variable -Name launchMode -ErrorAction SilentlyContinue; exit 0 }
 
 #----------------------------------------------------------------------
 #アップデータのアップデート(アップデート後の実行時にアップデータを更新)
@@ -71,9 +71,7 @@ if (Test-Path (Join-Path $script:scriptRoot '../log/updater_update.txt')) {
 			-Uri 'https://raw.githubusercontent.com/dongaba/TVerRec/master/win/update_tverrec.cmd' `
 			-OutFile (Join-Path $script:scriptRoot '../win/update_tverrec.cmd')
 		$null = Remove-Item (Join-Path $script:scriptRoot '../log/updater_update.txt') -Force
-	} catch {
-		Write-Warning ('⚠️ アップデータのアップデートに失敗しました。ご自身でアップデートを完了させる必要があります')
-	}
+	} catch { Write-Warning ('⚠️ アップデータのアップデートに失敗しました。ご自身でアップデートを完了させる必要があります') }
 }
 
 #TVerRecの最新化チェック
@@ -128,6 +126,15 @@ if ( $myInvocation.ScriptName.Contains('gui')) {
 	if (!$script:disableUpdateFfmpeg) { Invoke-ToolUpdateCheck -scriptName 'update_ffmpeg.ps1' -targetName 'ffmpeg' }
 }
 
+#共通HTTPヘッダ
+$script:requestHeader = @{
+	'x-tver-platform-type' = 'web'
+	'Origin'               = 'https://tver.jp'
+	'Referer'              = 'https://tver.jp'
+}
+
 #ロックファイル用
 $script:fileInfo = @{}
 $script:fileStream = @{}
+
+Remove-Variable -Name launchMode -ErrorAction SilentlyContinue
