@@ -3,17 +3,22 @@
 ![Logo](https://raw.githubusercontent.com/dongaba/TVerRec/master/resources/img/TVerRec-Logo.png)
 [![GitHub release](https://img.shields.io/github/v/release/dongaba/TVerRec?color=blue)](https://github.com/dongaba/TVerRec/releases)
 [![License](https://img.shields.io/github/license/dongaba/TVerRec?color=blue)](https://opensource.org/licenses/MIT)
-[![CodeFactor](https://www.codefactor.io/repository/github/dongaba/tverrec/badge)](https://www.codefactor.io/repository/github/dongaba/tverrec)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/1b42499be57b48818db8c3c90d73adb3)](https://app.codacy.com/gh/dongaba/TVerRec/dashboard)
-<br>
-[![DevSkim](https://github.com/dongaba/TVerRec/actions/workflows/devskim.yml/badge.svg)](https://github.com/dongaba/TVerRec/actions/workflows/devskim.yml)
-[![PSScriptAnalyzer](https://github.com/dongaba/TVerRec/actions/workflows/powershell.yml/badge.svg)](https://github.com/dongaba/TVerRec/actions/workflows/powershell.yml)
-[![Push to Docker Hub](https://github.com/dongaba/TVerRec/actions/workflows/push-to-dh.yml/badge.svg)](https://github.com/dongaba/TVerRec/actions/workflows/push-to-dh.yml)
-<br>
-[![TVerRec Launch](https://hits.sh/github.com/dongaba/TVerRec/launch.svg?view=total&color=d8453e&labelColor=333333&label=TVerRec%20Launched)](https://hits.sh/github.com/dongaba/TVerRec/launch)
-[![Video Search](https://hits.sh/github.com/dongaba/TVerRec/search.svg?view=total&color=d8453e&labelColor=333333&label=Video%20Searched)](https://hits.sh/github.com/dongaba/TVerRec/search)
-[![Video Download](https://hits.sh/github.com/dongaba/TVerRec/download.svg?view=total&color=d8453e&labelColor=333333&label=Video%20Downloaded)](https://hits.sh/github.com/dongaba/TVerRec/download)
-[![Video Validate](https://hits.sh/github.com/dongaba/TVerRec/validate.svg?view=total&color=d8453e&labelColor=333333&label=Video%20Validated)](https://hits.sh/github.com/dongaba/TVerRec/validate)
+[![Docker Pulls](https://img.shields.io/docker/pulls/dongaba/tverrec)](https://hub.docker.com/repository/docker/dongaba/tverrec/general)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/y/dongaba/tverrec)
+![GitHub last commit](https://img.shields.io/github/last-commit/dongaba/tverrec?color=blue)
+![GitHub Repo stars](https://img.shields.io/github/stars/dongaba/tverrec?style=social)
+[![GitHub Sponsors](https://img.shields.io/github/sponsors/dongaba?style=social&logo=githubsponsors)](https://github.com/sponsors/dongaba)  
+[![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/dongaba/tverrec?logo=codefactor&logoColor=white&label=CodeFactor)](https://www.codefactor.io/repository/github/dongaba/tverrec)
+[![Codacy grade](https://img.shields.io/codacy/grade/1b42499be57b48818db8c3c90d73adb3?style=flat&logo=codacy&logoColor=white&label=Codacy)](https://app.codacy.com/gh/dongaba/TVerRec/dashboard)
+[![DevSkim](https://github.com/dongaba/TVerRec/actions/workflows/devskim.yml/badge.svg?logo=githubactions)](https://github.com/dongaba/TVerRec/actions/workflows/devskim.yml)
+[![PSScriptAnalyzer](https://github.com/dongaba/TVerRec/actions/workflows/powershell.yml/badge.svg?logo=githubactions)](https://github.com/dongaba/TVerRec/actions/workflows/powershell.yml)
+[![Push to Docker Hub](https://github.com/dongaba/TVerRec/actions/workflows/push-to-dh.yml/badge.svg?logo=githubactions)](https://github.com/dongaba/TVerRec/actions/workflows/push-to-dh.yml)  
+[![TVerRec Launched](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fhits.sh%2Fapi%2Furns%2Fgithub.com%2Fdongaba%2FTVerRec%2Flaunch&query=total&style=social&logo=githubsponsors&label=TVerRec%20Launced&link=https%3A%2F%2Fhits.sh%2Fgithub.com%2Fdongaba%2FTVerRec%2Flaunch)](https://hits.sh/github.com/dongaba/TVerRec/launch)
+[![Video Searched](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fhits.sh%2Fapi%2Furns%2Fgithub.com%2Fdongaba%2FTVerRec%2Fsearch&query=total&style=social&logo=githubsponsors&label=Video%20Searched&link=https%3A%2F%2Fhits.sh%2Fgithub.com%2Fdongaba%2FTVerRec%2search)](https://hits.sh/github.com/dongaba/TVerRec/search)
+[![Video Download](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fhits.sh%2Fapi%2Furns%2Fgithub.com%2Fdongaba%2FTVerRec%2Fdownload&query=total&style=social&logo=githubsponsors&label=Video%20Downloaded&link=https%3A%2F%2Fhits.sh%2Fgithub.com%2Fdongaba%2FTVerRec%2Fdownload)](https://hits.sh/github.com/dongaba/TVerRec/download)
+[![Video Validate](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fhits.sh%2Fapi%2Furns%2Fgithub.com%2Fdongaba%2FTVerRec%2Fvalidate&query=total&style=social&logo=githubsponsors&label=Video%20Validated&link=https%3A%2F%2Fhits.sh%2Fgithub.com%2Fdongaba%2FTVerRec%2Fvalidate)](https://hits.sh/github.com/dongaba/TVerRec/validate)
+
+
 
 TVerRec は、テレビ番組配信サイト TVer(ティーバー<https://tver.jp>)の番組をダウンロード保存するためのダウンローダー、ダウンロード支援ツールです。
 番組のジャンルや出演タレント、番組名などを指定して一括ダウンロードする支援をします。

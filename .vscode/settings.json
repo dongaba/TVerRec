@@ -50,7 +50,6 @@
 	"files.autoSave": "afterDelay",
 	"files.insertFinalNewline": true,
 	"files.trimFinalNewlines": true,
-	"files.trimTrailingWhitespace": true,
 	"gitlens.graph.dimMergeCommits": true,
 	"notebook.insertFinalNewline": true,
 	"pester.runTestsInNewProcess": true,
