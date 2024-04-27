@@ -26,7 +26,8 @@ jobs:
           else
             TAG="latest"
           fi
-          echo "tag=${IMAGE_NAME}:${TAG}" >> $GITHUB_ENV
+          echo "IMAGE_NAME=${IMAGE_NAME}" >> $GITHUB_ENV
+          echo "TAG=${TAG}" >> $GITHUB_ENV
 
       # リポジトリのチェックアウト
       - name: Check out the repo
