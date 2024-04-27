@@ -2,14 +2,12 @@ name: Build and Push image to Docker Hub
 
 on:
   push:
-    branches: [master]
+    branches: [master, dev]
     tags:
       - "v*.*.*"
 
 env:
-  # Use docker.io for Docker Hub if empty
   REGISTRY: docker.io
-  # github.repository as <account>/<repo>
   IMAGE_NAME: dongaba/tverrec
 
 jobs:
@@ -17,64 +15,53 @@ jobs:
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
     steps:
-      #Set Tag Name
-      - name: Set Tag Name as Preparation
-        id: prep
-        run: |
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
-            TAG=${GITHUB_REF#refs/tags/}
-          else
-            TAG="latest"
-          fi
-          echo "tag=${IMAGE_NAME}:${TAG}" >> $GITHUB_OUTPUT
-
-      #Check out
+      # Check out the repo
       - name: Check out the repo
         uses: actions/checkout@v4
 
-      #Collect metadata
+      # Collect metadata
       - name: Extract metadata for Docker
         id: meta
         uses: docker/metadata-action@v5
         with:
-          #images: dongaba/tverrec
           images: ${{ env.IMAGE_NAME }}
-          flavor: latest=true
+          flavor: |
+            latest=${{ github.ref == 'refs/heads/master' }}
+            dev=${{ github.ref == 'refs/heads/dev' }}
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
+            type=sha
 
-      #Build Preperation
+      # Set up QEMU
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
+
+      # Set up Docker Buildx
       - name: Set up Docker Buildx
-        id: buildx
         uses: docker/setup-buildx-action@v3
 
-      #Confirm available platforms
-      - name: Available platforms
-        run: echo ${{ steps.buildx.outputs.platforms }}
-
-      #Login to Docker Hub
+      # Login to Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      #Build & Push
+      # Build & Push
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: ./resources/docker
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.prep.outputs.tag }}
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-      #Push README.md to Docker Hub
+      # Push README.md to Docker Hub
       - name: Docker Hub Description
         uses: peter-evans/dockerhub-description@v4
+        if: startsWith(github.ref, 'refs/tags/')
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}

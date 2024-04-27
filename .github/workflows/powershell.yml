@@ -8,9 +8,6 @@ on:
   schedule:
     - cron: "32 20 * * 4"
 
-permissions:
-  contents: read
-
 jobs:
   psscriptanalyzer-security-scan:
     permissions:
@@ -27,21 +24,12 @@ jobs:
         uses: microsoft/psscriptanalyzer-action@v1.1
         with:
           path: ./src
-          #customRulePath: '"./customRule.ps1", "customRule2.ps1"'
-          #recurseCustomRulePath: false
-          #excludeRule: '"PSUseBOMForUnicodeEncodedFile"'
           includeDefaultRules: true
-          #includeRule: '"PSAvoidUsingPlainTextForPassword", "PSAvoidUsingConvertToSecureStringWithPlainText"'
           severity: '"Error", "Warning"'
           recurse: true
-          #suppressedOnly: false
-          #fix: false
-          #enableExit: true
           settings: ./.vscode/PSScriptAnalyzerSettings.psd1
           output: pssanalyzer.sarif
-          #ignorePattern: 'tests'
 
-      # Upload the SARIF file generated in the previous step
       - name: Upload SARIF results file
         uses: github/codeql-action/upload-sarif@v3
         with:
