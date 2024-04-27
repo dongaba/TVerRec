@@ -10,6 +10,7 @@ BeforeAll {
 	$targetfile = $PSCommandPath.replace('test', 'src').replace('.Test.ps1', '.ps1')
 	Write-Host ('　テスト対象: {0}' -f $targetfile)
 	$script:libDir = Split-Path(Split-Path $targetfile.replace('src', 'resources/lib') -Parent) -Parent
+	$script:disableToastNotification = $false
 	. $targetfile
 	Write-Host ('　テスト対象の読み込みを行いました')
 }
@@ -328,23 +329,23 @@ Describe 'Remove-Files Tests' {
 			Mock Get-TestDrive { return 'TestPath' }
 
 			$testFolderPath = Join-Path (Get-TestDrive) 'TestFolder'
-			Remove-Item -Path (Get-TestDrive) -Recurse -Force -ErrorAction SilentlyContinue
-			New-Item -ItemType Directory -Path $testFolderPath > $null
+			$null = Remove-Item -Path (Get-TestDrive) -Recurse -Force -ErrorAction SilentlyContinue
+			$null = New-Item -ItemType Directory -Path $testFolderPath
 			$script:enableMultithread = $false
 
 			1..2 | ForEach-Object {
 				$filePath = Join-Path $testFolderPath "$_.txt"
-				New-Item -ItemType File -Path $filePath > $null
+				$null = New-Item -ItemType File -Path $filePath
 				(Get-Item $filePath).LastWriteTime = (Get-Date).AddDays(-2)
 			}
 			3..4 | ForEach-Object {
 				$filePath = Join-Path $testFolderPath "$_.txt"
-				New-Item -ItemType File -Path $filePath > $null
+				$null = New-Item -ItemType File -Path $filePath
 				(Get-Item $filePath).LastWriteTime = (Get-Date).AddDays(0)
 			}
 			5..6 | ForEach-Object {
 				$filePath = Join-Path $testFolderPath "$_.csv"
-				New-Item -ItemType File -Path $filePath > $null
+				$null = New-Item -ItemType File -Path $filePath
 				(Get-Item $filePath).LastWriteTime = (Get-Date).AddDays(-2)
 			}
 		}
@@ -361,7 +362,7 @@ Describe 'Remove-Files Tests' {
 		}
 
 		AfterAll {
-			Remove-Item -Path (Get-TestDrive) -Recurse -Force -ErrorAction SilentlyContinue
+			$null = Remove-Item -Path (Get-TestDrive) -Recurse -Force -ErrorAction SilentlyContinue
 			Remove-Variable -Name enableMultithread, condition, delPeriod -ErrorAction SilentlyContinue
 		}
 	}
@@ -372,24 +373,24 @@ Describe 'Remove-Files Tests' {
 			Mock Get-TestDrive { return 'TestPath' }
 
 			$testFolderPath = Join-Path (Get-TestDrive) 'TestFolder'
-			Remove-Item -Path (Get-TestDrive) -Recurse -Force -ErrorAction SilentlyContinue
-			New-Item -ItemType Directory -Path $testFolderPath > $null
+			$null = Remove-Item -Path (Get-TestDrive) -Recurse -Force -ErrorAction SilentlyContinue
+			$null = New-Item -ItemType Directory -Path $testFolderPath
 			$script:enableMultithread = $true
 			$script:multithreadNum = 10
 
 			1..19 | ForEach-Object {
 				$filePath = Join-Path $testFolderPath "$_.txt"
-				New-Item -ItemType File -Path $filePath > $null
+				$null = New-Item -ItemType File -Path $filePath
 				(Get-Item $filePath).LastWriteTime = (Get-Date).AddDays(-2)
 			}
 			20..39 | ForEach-Object {
 				$filePath = Join-Path $testFolderPath "$_.txt"
-				New-Item -ItemType File -Path $filePath > $null
+				$null = New-Item -ItemType File -Path $filePath
 				(Get-Item $filePath).LastWriteTime = (Get-Date).AddDays(0)
 			}
 			40..59 | ForEach-Object {
 				$filePath = Join-Path $testFolderPath "$_.csv"
-				New-Item -ItemType File -Path $filePath > $null
+				$null = New-Item -ItemType File -Path $filePath
 				(Get-Item $filePath).LastWriteTime = (Get-Date).AddDays(-2)
 			}
 		}
@@ -406,7 +407,7 @@ Describe 'Remove-Files Tests' {
 		}
 
 		AfterAll {
-			Remove-Item -Path (Get-TestDrive) -Recurse -Force -ErrorAction SilentlyContinue
+			$null = Remove-Item -Path (Get-TestDrive) -Recurse -Force -ErrorAction SilentlyContinue
 		}
 	}
 }
@@ -422,8 +423,8 @@ Describe 'Expand-Zip Tests' {
 
 		$testPath = Join-Path (Get-TestDrive) 'sample.zip'
 		$destinationPath = Join-Path (Get-TestDrive) 'Extracted'
-		Remove-Item -Path $destinationPath -Recurse -Force -ErrorAction SilentlyContinue
-		New-Item -ItemType Directory -Path (Get-TestDrive) -Force > $null
+		$null = Remove-Item -Path $destinationPath -Recurse -Force -ErrorAction SilentlyContinue
+		$null = New-Item -ItemType Directory -Path (Get-TestDrive) -Force
 
 		# Create a dummy zip file using ZipArchive class
 		$zipFileStream = [System.IO.FileStream]::new($testPath, [System.IO.FileMode]::Create)
@@ -462,7 +463,7 @@ Describe 'Expand-Zip Tests' {
 	}
 
 	AfterAll {
-		Remove-Item -Path (Get-TestDrive) -Recurse -Force -ErrorAction SilentlyContinue
+		$null = Remove-Item -Path (Get-TestDrive) -Recurse -Force -ErrorAction SilentlyContinue
 	}
 }
 
@@ -478,12 +479,12 @@ Describe 'ファイルのロック' {
 		$script:fileInfo = @{}
 		$script:fileStream = @{}
 		$testPath = 'test.lock'
-		New-Item -Path $testPath -ItemType File -Force | Out-Null
+		$null = New-Item -Path $testPath -ItemType File -Force
 	}
 
 	AfterEach {
 		if (Test-Path $testPath) {
-			Remove-Item -Path $testPath -Force -ErrorAction SilentlyContinue
+			$null = Remove-Item -Path $testPath -Force -ErrorAction SilentlyContinue
 		}
 	}
 
@@ -528,8 +529,8 @@ Describe 'ファイルのロック' {
 	}
 
 	AfterAll {
-		Remove-Item -Path $testPath -Force -ErrorAction SilentlyContinue
-		Remove-Item -Path 'multiple.lock' -Force -ErrorAction SilentlyContinue
+		$null = Remove-Item -Path $testPath -Force -ErrorAction SilentlyContinue
+		$null = Remove-Item -Path 'multiple.lock' -Force -ErrorAction SilentlyContinue
 	}
 }
 
@@ -545,13 +546,13 @@ Describe 'ファイルのアンロック' {
 	BeforeEach {
 		$testPath = 'test.lock'
 		if (!(Test-Path $testPath)) {
-			New-Item -Path $testPath -ItemType File -Force | Out-Null
+			$null = New-Item -Path $testPath -ItemType File -Force
 		}
 	}
 
 	AfterEach {
 		if (Test-Path $testPath) {
-			Remove-Item -Path $testPath -Force -ErrorAction SilentlyContinue
+			$null = Remove-Item -Path $testPath -Force -ErrorAction SilentlyContinue
 		}
 	}
 
@@ -582,7 +583,7 @@ Describe 'ファイルのアンロック' {
 	}
 
 	AfterAll {
-		Remove-Item -Path 'multiple.lock' -Force -ErrorAction SilentlyContinue
+		$null = Remove-Item -Path 'multiple.lock' -Force -ErrorAction SilentlyContinue
 	}
 }
 
@@ -652,4 +653,3 @@ Describe 'Base64画像の展開' {
 		{ ConvertFrom-Base64 -base64 $emptyBase64 } | Should -Throw
 	}
 }
-
