@@ -2,12 +2,13 @@
   <Networking>Default</Networking>
   <MappedFolders>
     <MappedFolder>
-      <HostFolder>.\setup</HostFolder>
-      <SandboxFolder>C:\users\WDAGUtilityAccount\setup</SandboxFolder>
+      <HostFolder>..\..\..\TVerRec</HostFolder>
+      <SandboxFolder>C:\Users\WDAGUtilityAccount\Desktop\TVerRec</SandboxFolder>
     </MappedFolder>
   </MappedFolders>
   <LogonCommand>
-    <Command>C:\users\WDAGUtilityAccount\setup\setup.cmd</Command>
+    <Command>C:\Users\WDAGUtilityAccount\Desktop\TVerRec\resources\wsb\setup\setup.cmd</Command>
   </LogonCommand>
-  <MemoryInMB>4096</MemoryInMB>
+  <MemoryInMB>2048</MemoryInMB>
+  <vGPU>Enable</vGPU>
 </Configuration>
