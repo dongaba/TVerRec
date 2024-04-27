@@ -10,7 +10,7 @@ env:
   # Use docker.io for Docker Hub if empty
   REGISTRY: docker.io
   # github.repository as <account>/<repo>
-  IMAGE_NAME: dongaba/tverrec
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   push_to_dockerhub:
