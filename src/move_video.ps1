@@ -103,7 +103,7 @@ if (($moveDirs) -and ($moveDirs.Count -ne 0)) {
 		#同名ディレクトリが存在する場合は配下のファイルを移動
 		if (Test-Path $moveFromPath) {
 			Write-Output ('　{0}\*.mp4' -f $moveFromPath)
-			try { $null = Move-Item -LiteralPath $moveFromPath -Filter '*.mp4' -Destination $moveToPath -Force }
+			try { $null = Move-Item -Path ('{0}\*.mp4' -f $moveFromPath) -Destination $moveToPath -Force }
 			catch { Write-Warning ('⚠️ 移動できないファイルがありました - {0}' -f $moveFromPath) }
 		}
 	}
