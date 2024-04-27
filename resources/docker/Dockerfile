@@ -1,4 +1,4 @@
-FROM ubuntu:jammy
+FROM ubuntu:24.04
 
 ENV POWERSHELL_TELEMETRY_OPTOUT=1
 
