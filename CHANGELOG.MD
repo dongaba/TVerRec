@@ -1,5 +1,52 @@
 ﻿# Change Log
 
+## [3.1.0](https://github.com/dongaba/TVerRec/releases/tag/v3.1.0)
+
+### 3.1.0 Added
+
+- マイページからの番組取得に対応
+  - 設定ファイルに`$script:myPlatformUID`を追加
+  - 設定ファイルに`$script:myPlatformToken`を追加
+- 新規キーワードの追加
+  - `mypage/fav` = マイページ > お気に入り (TVerが管理する情報を取得)
+  - `mypage/favorite` = マイページ > お気に入り (TVerRecがお気に入り番組、出演者、特集から各エピソードに変換)
+  - `mypage/later` = マイページ > あとでみる
+  - `mypage/resume` = マイページ > 続きから再生
+  - `tag/independence` = 独立局
+  - `tag/texttrackon` = 字幕あり
+  - `tag/short` = 短尺(10分以内)
+  - `tag/trailer` = 予告
+- Chrome拡張機能のTVerRec Assistantを同梱
+  - [使い方はWikiのこちらのページ参照](https://github.com/dongaba/TVerRec/wiki/platform_uid%E3%81%A8platform_token%E3%81%AE%E5%8F%96%E5%BE%97#chrome%E6%8B%A1%E5%BC%B5%E6%A9%9F%E8%83%BD%E3%81%AEtverrec-assistant%E3%82%92%E4%BD%BF%E3%81%86)
+- トップページで急上昇バラエティを処理可能に
+- ダウンロードリスト作成処理でリストファイルにあるリンクを除外するオプションを追加
+  - 設定ファイルに`$script:listGenHistoryCheck`を追加
+- Windows 環境で GUI 版の実行ログ表示について最大行数を設定可能に
+  - 設定ファイルに`$script:guiMaxExecLogLines`を追加
+- ダウンロードリスト作成処理でマルチスレッド処理を可能に(数倍の高速化)
+- WSBの日本語化用スクリプトの追加
+  - [使い方はWikiのこちらのページ参照](https://github.com/dongaba/TVerRec/wiki/Windows%E3%82%B5%E3%83%B3%E3%83%89%E3%83%9C%E3%83%83%E3%82%AF%E3%82%B9) 
+
+### 3.1.0 Changed
+
+- メッセージ出力フォーマットの変更
+- ファイルロックの精度を改善(ファイルロックのメカニズムを変更)
+- エラーハンドリングを改善
+- TVerからの情報取得処理を正規化・高速化
+- トップページのパース精度向上
+- マルチスレッド処理のデフォルトスレッド数を10に変更(ダウンロードリスト作成処理のマルチスレッド対応に伴うAPIアクセス集中の抑制)
+- 連続稼働時のメモリ使用量の削減
+- リストファイル出力時にキーワードファイルのコメントを削除
+- DockerコンテナのBaseImageをUbuntu:24.04に変更
+
+### 3.1.0 Fixed
+
+- `&amp;`が正しく置換されない不具合を修正
+- Unix 時間への変換にタイムゾーンが考慮されていなかった不具合を修正
+- トップページの処理でシリーズやシーズンを取得できていなかった不具合を修正
+- リストファイルのサンプルファイルのレイアウトが間違っていた問題を修正
+- WSB用のスクリプトが壊れていた問題を修正
+
 ## [3.0.2](https://github.com/dongaba/TVerRec/releases/tag/v3.0.2)
 
 ### 3.0.2 Added

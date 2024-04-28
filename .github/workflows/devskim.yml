@@ -1,22 +1,17 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
 name: DevSkim
 
 on:
   push:
-    branches: [master, dev]
+    branches: [master, beta, dev]
   pull_request:
-    branches: [master]
+    branches: [master, beta, dev]
   schedule:
     - cron: "36 22 * * 4"
 
 jobs:
   lint:
     name: DevSkim
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     permissions:
       actions: read
       contents: read

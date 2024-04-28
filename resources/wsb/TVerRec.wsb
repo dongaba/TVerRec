@@ -1,13 +1,15 @@
 <Configuration Name="TVerRec">
+  <MemoryInMB>2048</MemoryInMB>
+  <vGPU>Enable</vGPU>
   <Networking>Default</Networking>
+  <ClipboardRedirection>Default</ClipboardRedirection>
   <MappedFolders>
     <MappedFolder>
-      <HostFolder>.\setup</HostFolder>
-      <SandboxFolder>C:\users\WDAGUtilityAccount\setup</SandboxFolder>
+      <HostFolder>..\..\</HostFolder>
+      <SandboxFolder>C:\Users\WDAGUtilityAccount\Desktop\TVerRec</SandboxFolder>
     </MappedFolder>
   </MappedFolders>
   <LogonCommand>
-    <Command>C:\users\WDAGUtilityAccount\setup\setup.cmd</Command>
+    <Command>C:\Users\WDAGUtilityAccount\Desktop\TVerRec\resources\wsb\setup\setup.cmd</Command>
   </LogonCommand>
-  <MemoryInMB>4096</MemoryInMB>
 </Configuration>

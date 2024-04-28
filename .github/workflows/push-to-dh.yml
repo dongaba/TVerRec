@@ -1,4 +1,4 @@
-name: Build and Push image to Docker Hub
+name: Push to Docker Hub
 
 on:
   push:
@@ -69,6 +69,7 @@ jobs:
           context: ./resources/docker
           platforms: linux/amd64,linux/arm64
           push: true
+          provenance: mode=max
           tags: ${{ steps.prep.outputs.tag }}
           labels: ${{ steps.meta.outputs.labels }}
 

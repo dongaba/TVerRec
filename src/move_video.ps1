@@ -3,25 +3,22 @@
 #		番組移動処理スクリプト
 #
 ###################################################################################
-
-try { $script:guiMode = [String]$args[0] } catch { $script:guiMode = '' }
+Set-StrictMode -Version Latest
+$script:guiMode = if ($args) { [String]$args[0] } else { '' }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Set-StrictMode -Version Latest
-#----------------------------------------------------------------------
-#初期化
 try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
-} catch { Write-Error ('❗ カレントディレクトリの設定に失敗しました') ; exit 1 }
-if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
+} catch { Throw ('❌️ カレントディレクトリの設定に失敗しました') }
+if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
-	if (!$?) { exit 1 }
-} catch { Write-Error ('❗ 関数の読み込みに失敗しました') ; exit 1 }
+	if (!$?) { Throw ('❌️ TVerRecの初期化処理に失敗しました') }
+} catch { Throw ('❌️ 関数の読み込みに失敗しました') }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -30,7 +27,7 @@ Invoke-RequiredFileCheck
 #======================================================================
 #1/3 移動先ディレクトリを起点として、配下のディレクトリを取得
 Write-Output ('')
-Write-Output ('----------------------------------------------------------------------')
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('移動先ディレクトリの一覧を作成しています')
 
 $toastShowParams = @{
@@ -46,31 +43,25 @@ Show-ProgressToast @toastShowParams
 #移動先ディレクトリ配下のディレクトリ一覧
 $moveToPathsHash = @{}
 if ($script:saveBaseDir) {
-	$script:saveBaseDirArray = @($script:saveBaseDir.split(';').Trim())
-	$moveToPathsArray = @((Get-ChildItem -LiteralPath $script:saveBaseDirArray -Recurse).Where({ $_.PSIsContainer }) | Select-Object Name, FullName)
-} else { $moveToPathsArray = @() }
-for ($i = 0 ; $i -lt $moveToPathsArray.Count ; $i++) {
-	$moveToPathsHash[$moveToPathsArray[$i].Name] = $moveToPathsArray[$i].FullName
+	$script:saveBaseDirArray = $script:saveBaseDir.Split(';').Trim()
+	Get-ChildItem -LiteralPath $script:saveBaseDirArray -Directory -Recurse | ForEach-Object { $moveToPathsHash[$_.Name] = $_.FullName }
 }
 
 #作業ディレクトリ配下のディレクトリ一覧
 $moveFromPathsHash = @{}
-if ($script:saveBaseDir -and (Get-ChildItem -LiteralPath $script:downloadBaseDir -Filter *.mp4 -Recurse)) {
-	$moveFromPathsArray = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Filter *.mp4 -Recurse).Directory | Sort-Object -Unique | Select-Object Name, FullName)
-} else { $moveFromPathsArray = @() }
-for ($i = 0 ; $i -lt $moveFromPathsArray.Count ; $i++) {
-	$moveFromPathsHash[$moveFromPathsArray[$i].Name] = $moveFromPathsArray[$i].FullName
+if ($script:saveBaseDir -and (Get-ChildItem -LiteralPath $script:downloadBaseDir -Filter '*.mp4' -Recurse)) {
+	Get-ChildItem -LiteralPath $script:downloadBaseDir -Filter '*.mp4' -Recurse -File | Select-Object Directory -Unique | ForEach-Object { $moveFromPathsHash[$_.Directory.Name] = $_.Directory.FullName }
 }
 
 #移動先ディレクトリと作業ディレクトリの一致を抽出
-if ($moveToPathsArray.Count -ne 0) {
-	$moveDirs = @(Compare-Object -IncludeEqual -ExcludeDifferent $moveToPathsArray.Name $moveFromPathsArray.Name)
+if ($moveToPathsHash.Count -gt 0) {
+	$moveDirs = @(Compare-Object -ReferenceObject @($moveToPathsHash.Keys) -DifferenceObject @($moveFromPathsHash.Keys) -IncludeEqual -ExcludeDifferent | ForEach-Object { $_.InputObject })
 } else { $moveDirs = $null }
 
 #======================================================================
 #2/3 移動先ディレクトリと同名のディレクトリ配下の番組を移動
 Write-Output ('')
-Write-Output ('----------------------------------------------------------------------')
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('ダウンロードファイルを移動しています')
 
 $toastShowParams.Text2 = '　処理2/3 - ダウンロードファイルを移動'
@@ -78,44 +69,42 @@ Show-ProgressToast @toastShowParams
 
 #----------------------------------------------------------------------
 $totalStartTime = Get-Date
-if (($null -ne $moveDirs) -and ($moveDirs.Count -ne 0)) {
-	$moveDirNum = 0
-	$moveDirsTotal = $moveDirs.Count
-	foreach ($moveDir in $moveDirs) {
+if ($moveDirs) {
+	$dirNum = 0
+	$dirTotal = $moveDirs.Count
+	foreach ($dir in $moveDirs) {
 		#処理時間の推計
 		$secElapsed = (Get-Date) - $totalStartTime
 		$secRemaining = -1
-		if ($moveDirNum -ne 0) {
-			$secRemaining = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $moveDirNum) * ($moveDirsTotal - $moveDirNum))
+		if ($dirNum -ne 0) {
+			$secRemaining = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $dirNum) * ($dirTotal - $dirNum))
 			$minRemaining = ('残り時間 {0}分' -f ([Int][Math]::Ceiling($secRemaining / 60)))
-			$progressRate = [Float]($moveDirNum / $moveDirsTotal)
+			$progressRate = [Float]($dirNum / $dirTotal)
 		} else {
 			$minRemaining = ''
 			$progressRate = 0
 		}
-		$moveDirNum += 1
+		$dirNum += 1
 
 		$toastUpdateParams = @{
-			Title     = $moveDir.InputObject
+			Title     = $dir
 			Rate      = $progressRate
-			LeftText  = ('{0}/{1}' -f $moveDirNum, $moveDirsTotal)
+			LeftText  = ('{0}/{1}' -f $dirNum, $dirTotal)
 			RightText = $minRemaining
 			Tag       = $script:appName
 			Group     = 'Delete'
 		}
 		Update-ProgressToast @toastUpdateParams
 
-		$targetFolderName = $moveDir.InputObject
-		#同名ディレクトリが存在する場合は配下のファイルを移動
-		$moveFromPath = $moveFromPathsHash[$targetFolderName] ?? $moveFromPathsHash[$targetFolderName.Normalize([Text.NormalizationForm]::FormC)]
-
 		#.Normalize([Text.NormalizationForm]::FormC)
-		$moveToPath = $moveToPathsHash[$targetFolderName] ?? $moveToPathsHash[$targetFolderName.Normalize([Text.NormalizationForm]::FormC)]
+		$moveFromPath = $moveFromPathsHash[$dir] ?? $moveFromPathsHash[$dir.Normalize([Text.NormalizationForm]::FormC)]
+		$moveToPath = $moveToPathsHash[$dir] ?? $moveToPathsHash[$dir.Normalize([Text.NormalizationForm]::FormC)]
 
+		#同名ディレクトリが存在する場合は配下のファイルを移動
 		if (Test-Path $moveFromPath) {
 			Write-Output ('　{0}\*.mp4' -f $moveFromPath)
-			try { Move-Item -Path ('{0}\*.mp4' -f $moveFromPath) -Destination $moveToPath -Force }
-			catch { Write-Warning ('❗ 移動できないファイルがありました - {0}' -f $_) }
+			try { $null = Move-Item -Path ('{0}\*.mp4' -f $moveFromPath) -Destination $moveToPath -Force }
+			catch { Write-Warning ('⚠️ 移動できないファイルがありました - {0}' -f $moveFromPath) }
 		}
 	}
 }
@@ -124,15 +113,13 @@ if (($null -ne $moveDirs) -and ($moveDirs.Count -ne 0)) {
 #======================================================================
 #3/3 空ディレクトリと隠しファイルしか入っていないディレクトリを一気に削除
 Write-Output ('')
-Write-Output ('----------------------------------------------------------------------')
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('空ディレクトリを削除します')
 $toastShowParams.Text2 = '　処理3/3 - 空ディレクトリを削除'
 Show-ProgressToast @toastShowParams
 
-$emptyDirs = @()
-$emptyDirs = @((Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse).Where({ $_.PSIsContainer })).Where({ ($_.GetFiles().Count -eq 0) -and ($_.GetDirectories().Count -eq 0) })
+$emptyDirs = @(Get-ChildItem -Path $script:downloadBaseDir -Directory -Recurse | Where-Object { @($_.GetFileSystemInfos().Where({ -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) })).Count -eq 0 })
 if ($emptyDirs.Count -ne 0) { $emptyDirs = @($emptyDirs.Fullname) }
-
 $emptyDirTotal = $emptyDirs.Count
 
 #----------------------------------------------------------------------
@@ -144,15 +131,15 @@ if ($emptyDirTotal -ne 0) {
 			$emptyDirNum = ([Array]::IndexOf($using:emptyDirs, $_)) + 1
 			$emptyDirTotal = $using:emptyDirs.Count
 			Write-Output ('　{0}/{1} - {2}' -f $emptyDirNum, $emptyDirTotal, $_)
-			try { Remove-Item -LiteralPath $_ -Recurse -Force }
-			catch { Write-Warning ('❗ - 空ディレクトリの削除に失敗しました: {0}' -f $_) }
+			try { $null = Remove-Item -LiteralPath $_ -Recurse -Force }
+			catch { Write-Warning ('⚠️ - 空ディレクトリの削除に失敗しました: {0}' -f $_) }
 		} -ThrottleLimit $script:multithreadNum
 	} else {
 		#並列化が無効の場合は従来型処理
 		$emptyDirNum = 0
 		$emptyDirTotal = $emptyDirs.Count
 		$totalStartTime = Get-Date
-		foreach ($subDir in $emptyDirs) {
+		foreach ($dir in $emptyDirs) {
 			$emptyDirNum += 1
 			#処理時間の推計
 			$secElapsed = (Get-Date) - $totalStartTime
@@ -166,21 +153,21 @@ if ($emptyDirTotal -ne 0) {
 				$progressRate = 0
 			}
 
-			$toastUpdateParams.Title = $subDir
+			$toastUpdateParams.Title = $dir
 			$toastUpdateParams.Rate = $progressRate
 			$toastUpdateParams.LeftText = ('{0}/{1}' -f $emptyDirNum, $emptyDirTotal)
 			$toastUpdateParams.RightText = $minRemaining
 			Update-ProgressToast @toastUpdateParams
 
-			Write-Output ('　{0}/{1} - {2}' -f $emptyDirNum, $emptyDirTotal, $subDir)
-			try { Remove-Item -LiteralPath $subDir -Recurse -Force -ErrorAction SilentlyContinue
-			} catch { Write-Warning ('❗ - 空ディレクトリの削除に失敗しました: {0}' -f $subDir) }
+			Write-Output ('　{0}/{1} - {2}' -f $emptyDirNum, $emptyDirTotal, $dir)
+			try { $null = Remove-Item -LiteralPath $dir -Recurse -Force -ErrorAction SilentlyContinue
+			} catch { Write-Warning ('⚠️ - 空ディレクトリの削除に失敗しました: {0}' -f $dir) }
 		}
 	}
 }
 #----------------------------------------------------------------------
 
-try { $script:guiMode = [String]$args[0] } catch { $script:guiMode = '' }
+$script:guiMode = if ($args) { [String]$args[0] } else { '' }
 
 $toastUpdateParams = @{
 	Title     = '番組の移動'
@@ -192,9 +179,11 @@ $toastUpdateParams = @{
 }
 Update-ProgressToast @toastUpdateParams
 
+Remove-Variable -Name args, toastShowParams, moveToPathsHash, moveFromPathsHash, moveDirs, moveDir, totalStartTime, dirNum, dirTotal, dir, secElapsed, secRemaining, minRemaining, progressRate, toastUpdateParams, targetFolderName, moveFromPath, moveToPath, emptyDirs, emptyDirTotal, emptyDirNum -ErrorAction SilentlyContinue
+
 Invoke-GarbageCollection
 
 Write-Output ('')
-Write-Output ('---------------------------------------------------------------------------')
-Write-Output ('番組移動処理を終了しました。                                               ')
-Write-Output ('---------------------------------------------------------------------------')
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+Write-Output ('番組移動処理を終了しました。')
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')

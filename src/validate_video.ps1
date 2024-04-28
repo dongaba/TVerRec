@@ -3,25 +3,22 @@
 #		番組整合性チェック処理スクリプト
 #
 ###################################################################################
-
-try { $script:guiMode = [String]$args[0] } catch { $script:guiMode = '' }
+Set-StrictMode -Version Latest
+$script:guiMode = if ($args) { [String]$args[0] } else { '' }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Set-StrictMode -Version Latest
-#----------------------------------------------------------------------
-#初期化
 try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
-} catch { Write-Error ('❗ カレントディレクトリの設定に失敗しました') ; exit 1 }
-if ($script:scriptRoot.Contains(' ')) { Write-Error ('❗ TVerRecはスペースを含むディレクトリに配置できません') ; exit 1 }
+} catch { Throw ('❌️ カレントディレクトリの設定に失敗しました') }
+if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
-	if (!$?) { exit 1 }
-} catch { Write-Error ('❗ 関数の読み込みに失敗しました') ; exit 1 }
+	if (!$?) { Throw ('❌️ TVerRecの初期化処理に失敗しました') }
+} catch { Throw ('❌️ 関数の読み込みに失敗しました') }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
@@ -30,7 +27,7 @@ Invoke-RequiredFileCheck
 #======================================================================
 #ダウンロード履歴ファイルのクリーンアップ
 Write-Output ('')
-Write-Output ('----------------------------------------------------------------------')
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('ダウンロード履歴の不整合レコードを削除します')
 
 $toastShowParams = @{
@@ -47,7 +44,7 @@ Show-ProgressToast @toastShowParams
 Optimize-HistoryFile
 
 Write-Output ('')
-Write-Output ('----------------------------------------------------------------------')
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('古いダウンロード履歴を削除します')
 
 $toastShowParams.Text2 = ('　処理2/5 - {0}日以上前のダウンロード履歴を削除' -f $script:histRetentionPeriod)
@@ -57,7 +54,7 @@ Show-ProgressToast @toastShowParams
 Limit-HistoryFile -RetentionPeriod $script:histRetentionPeriod
 
 Write-Output ('')
-Write-Output ('----------------------------------------------------------------------')
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('ダウンロード履歴の重複レコードを削除します')
 
 $toastShowParams.Text2 = '　処理3/5 - ダウンロード履歴の重複レコードを削除'
@@ -67,32 +64,38 @@ Show-ProgressToast @toastShowParams
 Repair-HistoryFile
 
 if ($script:disableValidation) {
-	Write-Warning ('💡 ダウンロードファイルの整合性検証が無効化されているので、検証せずに終了します')
-	exit
+	Write-Warning ('⚠️ ダウンロードファイルの整合性検証が無効化されているので、検証せずに終了します')
+	exit 0
 }
 
 #======================================================================
 #未検証のファイルが0になるまでループ
 $script:validationFailed = $false
 $videoNotValidatedNum = 0
-$videoNotValidatedNum = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' })).Count
+if (Test-Path $script:histFilePath -PathType Leaf) {
+	try {
+		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+		$videoNotValidatedNum = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' })).Count
+	} catch { Throw ('❌️ ダウンロード履歴の読み込みに失敗しました') }
+	finally { $null = Unlock-File $script:histLockFilePath }
+} else { $videoNotValidatedNum = 0 }
 
 while ($videoNotValidatedNum -ne 0) {
 	#======================================================================
 	#ダウンロード履歴から番組チェックが終わっていないものを読み込み
 	Write-Output ('')
-	Write-Output ('----------------------------------------------------------------------')
+	Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 	Write-Output ('整合性検証が終わっていない番組を検証します')
 
 	try {
-		while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$videoHists = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' }) | Select-Object 'videoPage', 'videoPath', 'videoValidated')
-	} catch { Write-Warning ('❗ ダウンロード履歴の読み込みに失敗しました') }
+	} catch { Write-Warning ('⚠️ ダウンロード履歴の読み込みに失敗しました') }
 	finally { $null = Unlock-File $script:histLockFilePath }
 
 	if (($null -eq $videoHists) -or ($videoHists.Count -eq 0)) {
 		#チェックする番組なし
-		Write-Output ('　すべての番組を検証済です')
+		Write-Output ('✅️ すべての番組を検証済です')
 		Write-Output ('')
 	} else {
 		#ダウンロードファイルをチェック
@@ -102,13 +105,13 @@ while ($videoNotValidatedNum -ne 0) {
 		if ($script:forceSoftwareDecodeFlag) { $decodeOption = '' }
 		else {
 			if ($script:ffmpegDecodeOption -ne '') {
-				Write-Output ('---------------------------------------------------------------------------')
+				Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 				Write-Output ('💡 ffmpegのデコードオプションが設定されてます')
 				Write-Output ('　　　{0}' -f $ffmpegDecodeOption)
 				Write-Output ('💡 もし整合性検証がうまく進まない場合は、以下のどちらかをお試しください')
 				Write-Output ('　・user_setting.ps1 でデコードオプションを変更する')
 				Write-Output ('　・user_setting.ps1 で $script:forceSoftwareDecodeFlag = $true と設定する')
-				Write-Output ('---------------------------------------------------------------------------')
+				Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 			}
 			$decodeOption = $script:ffmpegDecodeOption
 		}
@@ -145,9 +148,7 @@ while ($videoNotValidatedNum -ne 0) {
 			}
 			Update-ProgressToast @toastUpdateParams
 
-			if (!(Test-Path $script:downloadBaseDir -PathType Container)) {
-				Write-Error ('❗ 番組ダウンロード先ディレクトリにアクセスできません。終了します。') ; exit 1
-			}
+			if (!(Test-Path $script:downloadBaseDir -PathType Container)) { Throw ('❌️ 番組ダウンロード先ディレクトリにアクセスできません。終了します。') }
 			#番組の整合性チェック
 			Write-Output ('{0}/{1} - {2}' -f $validateNum, $validateTotal, $videoFileRelPath)
 			Invoke-ValidityCheck `
@@ -161,23 +162,23 @@ while ($videoNotValidatedNum -ne 0) {
 	#======================================================================
 	#ダウンロード履歴から整合性検証が終わっていないもののステータスを初期化
 	Write-Output ('')
-	Write-Output ('----------------------------------------------------------------------')
+	Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 	Write-Output ('ダウンロード履歴から検証が終わっていない番組のステータスを変更します')
 
 	$toastShowParams.Text2 = '　処理5/5 - 未検証のファイルのステータスを変更'
 	$toastShowParams.WorkDetail = ''
 	Show-ProgressToast @toastShowParams
 
-	try {
-		while ((Lock-File $script:histLockFilePath).fileLocked -ne $true) { Write-Warning ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-		$videoHists = @(Import-Csv -Path $script:histFilePath -Encoding UTF8)
-		foreach ($uncheckedVido in ($videoHists).Where({ $_.videoValidated -eq 2 })) {
-			$uncheckedVido.videoValidated = '0'
-		}
-		$videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
-	} catch { Write-Warning ('❗ ダウンロード履歴の更新に失敗しました') }
-	finally { $null = Unlock-File $script:histLockFilePath }
-	$videoNotValidatedNum = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' })).Count
+	if (Test-Path $script:histFilePath -PathType Leaf) {
+		try {
+			while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
+			$videoHists = @(Import-Csv -Path $script:histFilePath -Encoding UTF8)
+			foreach ($uncheckedVido in ($videoHists).Where({ $_.videoValidated -eq 2 })) { $uncheckedVido.videoValidated = '0' }
+			$videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
+			$videoNotValidatedNum = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' })).Count
+		} catch { Throw ('❌️ ダウンロード履歴の更新に失敗しました') }
+		finally { $null = Unlock-File $script:histLockFilePath }
+	} else { $videoNotValidatedNum = 0 }
 }
 
 #======================================================================
@@ -192,9 +193,11 @@ $toastUpdateParams = @{
 }
 Update-ProgressToast @toastUpdateParams
 
+Remove-Variable -Name args, toastShowParams, videoNotValidatedNum, videoHists, videoHist, uncheckedVido, validateTotal, decodeOption, totalStartTime, validateNum, videoFileRelPath, secElapsed, secRemaining, minRemaining, progressRate, toastUpdateParams -ErrorAction SilentlyContinue
+
 Invoke-GarbageCollection
 
 Write-Output ('')
-Write-Output ('---------------------------------------------------------------------------')
-Write-Output ('番組整合性チェック処理を終了しました。                                           ')
-Write-Output ('---------------------------------------------------------------------------')
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+Write-Output ('番組整合性チェック処理を終了しました。')
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')

@@ -3,18 +3,19 @@
 #		共通関数スクリプト
 #
 ###################################################################################
+Set-StrictMode -Version Latest
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-
 Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
+#region ガーベッジコレクション
+
 #----------------------------------------------------------------------
-#GC
+#ガーベッジコレクション
 #----------------------------------------------------------------------
 function Invoke-GarbageCollection() {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param ()
-
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 	Write-Verbose -Message 'Starting garbage collection...'
@@ -26,6 +27,8 @@ function Invoke-GarbageCollection() {
 	Write-Verbose -Message 'Garbage collection completed.'
 }
 
+#endregion ガーベッジコレクション
+
 #region タイムスタンプ
 
 #----------------------------------------------------------------------
@@ -33,11 +36,9 @@ function Invoke-GarbageCollection() {
 #----------------------------------------------------------------------
 function Get-TimeStamp {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([String])]
 	Param ()
-
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-
 	return (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
 }
 
@@ -50,12 +51,11 @@ function ConvertFrom-UnixTime {
 	param (
 		[Parameter(Mandatory = $true)][int64]$UnixTime
 	)
-
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
-	$EpochDate = Get-Date -Year 1970 -Month 1 -Day 1 -Hour 0 -Minute 0 -Second 0
-
+	$EpochDate = Get-Date -Year 1970 -Month 1 -Day 1 -Hour 0 -Minute 0 -Second 0 -AsUTC
 	return ($EpochDate.AddSeconds($UnixTime).ToLocalTime())
+	Remove-Variable -Name UnixTime, EpochDate -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -63,14 +63,15 @@ function ConvertFrom-UnixTime {
 #----------------------------------------------------------------------
 function ConvertTo-UnixTime {
 	[CmdletBinding()]
+	[OutputType([int64])]
 	Param(
 		[Parameter(Mandatory = $true)][DateTime]$InputDate
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
-	$EpochDate = Get-Date -Year 1970 -Month 1 -Day 1 -Hour 0 -Minute 0 -Second 0
-
-	return ([Math]::Floor(($InputDate.ToUniversalTime() - $EpochDate).TotalSeconds))
+	$unixTime = New-TimeSpan -Start '1970-01-01' -End $InputDate.ToUniversalTime()
+	return [int64][math]::Round($unixTime.TotalSeconds)
+	Remove-Variable -Name InputDate, unixTime -ErrorAction SilentlyContinue
 }
 
 #endregion タイムスタンプ
@@ -84,24 +85,19 @@ function Get-FileNameWithoutInvalidChars {
 	[CmdletBinding()]
 	[OutputType([String])]
 	Param (
-		[Parameter(Mandatory = $true)][String]$Name
+		[String]$Name = ''
 	)
-
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
-	$invalidChars = [IO.Path]::GetInvalidFileNameChars() -Join ''
-	$resultPattern = '[{0}]' -f [Regex]::Escape($invalidChars)
-	$Name = $Name.Replace($resultPattern , '')
-
+	$invalidCharsPattern = '[{0}]' -f [Regex]::Escape( [IO.Path]::GetInvalidFileNameChars() -Join '')
+	$Name = $Name.Replace($invalidCharsPattern , '')
 	#Linux/MacではGetInvalidFileNameChars()が不完全なため、ダメ押しで置換
 	$additionalReplaces = '[*\?<>|]'
-	$additionalValidChar = '-'
-	$Name = $Name -replace $additionalReplaces, $additionalValidChar
-	$additionalReplaces = '[]'
-	$additionalValidChar = ''
-	$Name = $Name -replace $additionalReplaces, $additionalValidChar
-
-	return $Name
+	$Name = $Name -replace $additionalReplaces, '-'
+	$Name = $Name -replace '--', '-'
+	$nonPrintableChars = '[]'
+	return $Name -replace $nonPrintableChars, ''
+	Remove-Variable -Name invalidCharsPattern, Name, additionalReplaces, nonPrintableChars -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -111,11 +107,9 @@ function Get-NarrowChars {
 	[CmdletBinding()]
 	[OutputType([String])]
 	Param (
-		[String]$text
+		[String]$text = ''
 	)
-
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-
 	$replaceChars = @{
 		'０１２３４５６７８９'                                           = '0123456789'
 		'ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ' = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -126,7 +120,6 @@ function Get-NarrowChars {
 			$text = $text.Replace($entry.Name[$i], $entry.Value[$i])
 		}
 	}
-
 	$replacements = @{
 		'ｱ'  = 'ア'
 		'ｲ'  = 'イ'
@@ -214,8 +207,8 @@ function Get-NarrowChars {
 	foreach ($replacement in $replacements.GetEnumerator()) {
 		$text = $text.Replace($replacement.Name, $replacement.Value)
 	}
-
 	return $text
+	Remove-Variable -Name text, replaceChars, entry, i, replacements, replacement -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -228,28 +221,29 @@ function Remove-SpecialCharacter {
 
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
+	$text = $text.Replace('&amp;', '&')
 	$replacements = @{
-		'&amp;' = '&'
-		'*'     = '＊'
-		'|'     = '｜'
-		':'     = '：'
-		';'     = '；'
-		'"'     = '' #削除
-		'“'     = '' #削除
-		'”'     = '' #削除
-		','     = '' #削除
-		'?'     = '？'
-		'!'     = '！'
-		'/'     = '-' #代替文字
-		'\'     = '-' #代替文字
-		'<'     = '＜'
-		'>'     = '＞'
+		'*' = '＊'
+		'|' = '｜'
+		':' = '：'
+		';' = '；'
+		'"' = '' #削除
+		'“' = '' #削除
+		'”' = '' #削除
+		',' = '' #削除
+		'?' = '？'
+		'!' = '！'
+		'/' = '-' #代替文字
+		'\' = '-' #代替文字
+		'<' = '＜'
+		'>' = '＞'
 	}
 	foreach ($replacement in $replacements.GetEnumerator()) {
 		$text = $text.Replace($replacement.Name, $replacement.Value)
 	}
 
 	return $text
+	Remove-Variable -Name text, replacements, replacement -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -259,10 +253,9 @@ function Remove-TabSpace {
 	[CmdletBinding()]
 	[OutputType([String])]
 	Param ([String]$text)
-
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-
 	return $text.Replace("`t", ' ').Replace('  ', ' ')
+	Remove-Variable -Name text -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -271,10 +264,9 @@ function Remove-TabSpace {
 function Remove-Comment {
 	[OutputType([String])]
 	Param ([String]$text)
-
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-
 	return $text.Split("`t")[0].Split(' ')[0].Split('#')[0]
+	Remove-Variable -Name text -ErrorAction SilentlyContinue
 }
 
 #endregion 文字列操作
@@ -289,32 +281,30 @@ function Remove-Files {
 	[OutputType([System.Void])]
 	Param (
 		[parameter(Mandatory = $true)][System.IO.FileInfo]$basePath,
-		[Parameter(Mandatory = $true)][Object]$conditions,
+		[Parameter(Mandatory = $true)][string[]]$conditions,
 		[Parameter(Mandatory = $true)][int32]$delPeriod
 	)
-
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-
-	$limiteDateTime = (Get-Date).AddDays(-1 * $delPeriod)
+	$limitDateTime = (Get-Date).AddDays(-1 * $delPeriod)
 	if ($script:enableMultithread) {
 		Write-Debug ('Multithread Processing Enabled')
 		#並列化が有効の場合は並列化
 		try {
-			$conditions.Split(',').Trim() | ForEach-Object -Parallel {
+			$conditions | ForEach-Object -Parallel {
 				Write-Output ('　{0}' -f (Join-Path $using:basePath $_))
-				$null = (Get-ChildItem -LiteralPath $using:basePath -Recurse -File -Filter $_ -ErrorAction SilentlyContinue).Where({ $_.LastWriteTime -lt $using:limiteDateTime }) | Remove-Item -Force -ErrorAction SilentlyContinue
+				$null = (Get-ChildItem -LiteralPath $using:basePath -Recurse -File -Filter $_ -ErrorAction SilentlyContinue).Where({ $_.LastWriteTime -lt $using:limitDateTime }) | Remove-Item -Force -ErrorAction SilentlyContinue
 			} -ThrottleLimit $script:multithreadNum
-		} catch { Write-Warning ('❗ 削除できないファイルがありました') }
+		} catch { Write-Warning ('⚠️ 削除できないファイルがありました') }
 	} else {
 		#並列化が無効の場合は従来型処理
 		try {
-			foreach ($condition in $conditions.Split(',').Trim()) {
+			foreach ($condition in $conditions) {
 				Write-Output ('　{0}' -f (Join-Path $basePath $condition))
-				$null = (Get-ChildItem -LiteralPath $basePath -Recurse -File -Filter $condition -ErrorAction SilentlyContinue).Where({ $_.LastWriteTime -lt $limiteDateTime }) | Remove-Item -Force -ErrorAction SilentlyContinue
+				$null = (Get-ChildItem -LiteralPath $basePath -Recurse -File -Filter $condition -ErrorAction SilentlyContinue).Where({ $_.LastWriteTime -lt $limitDateTime }) | Remove-Item -Force -ErrorAction SilentlyContinue
 			}
-		} catch { Write-Warning ('❗ 削除できないファイルがありました') }
+		} catch { Write-Warning ('⚠️ 削除できないファイルがありました') }
 	}
-
+	Remove-Variable -Name basePath, conditions, delPeriod, limitDateTime, condition -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -327,12 +317,13 @@ function Expand-Zip {
 		[Parameter(Mandatory = $true)][string]$path,
 		[Parameter(Mandatory = $true)][string]$destination
 	)
-
+	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $path)
 	if (Test-Path -Path $path) {
 		Write-Verbose ('{0}を{1}に展開します' -f $path, $destination)
 		[System.IO.Compression.ZipFile]::ExtractToDirectory($path, $destination, $true)
 		Write-Verbose ('{0}を展開しました' -f $path)
-	} else { Write-Error ('{0}が見つかりません' -f $path) }
+	} else { Throw ('❌️ {0}が見つかりません' -f $path) }
+	Remove-Variable -Name path, destination -ErrorAction SilentlyContinue
 }
 
 #endregion ファイル操作
@@ -346,24 +337,21 @@ function Lock-File {
 	[CmdletBinding()]
 	[OutputType([PSCustomObject])]
 	Param (
-		[parameter(Mandatory = $true)][System.IO.FileInfo]$path
+		[parameter(Mandatory = $true)][String]$path
 	)
-
 	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $path)
-
-	$fileLocked = $false
 	try {
 		#ファイルを開こうとしファイルロックを検出
-		$script:fileInfo = New-Object System.IO.FileInfo $path
-		$script:fileStream = $script:fileInfo.Open([System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
-		$fileLocked = $true
-	} catch { $fileLocked = $false }
-
+		$script:fileInfo[$path] = [System.IO.FileInfo]::new($path)
+		$script:fileStream[$path] = $script:fileInfo[$path].Open([System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+		$result = $true
+	} catch { $result = $false }
 	#結果の返却
 	return [PSCustomObject]@{
-		path       = $path
-		fileLocked = $fileLocked
+		path   = $path
+		result = $result
 	}
+	Remove-Variable -Name path, fileLocked, result -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -373,53 +361,25 @@ function Unlock-File {
 	[CmdletBinding()]
 	[OutputType([PSCustomObject])]
 	Param (
-		[parameter(Mandatory = $true)][System.IO.FileInfo]$path
+		[parameter(Mandatory = $true)][String]$path
 	)
-
 	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $path)
-
-	$fileLocked = $true
-	try {
-		#ロックされていなければストリームを閉じる
-		if ($script:fileStream) { $script:fileStream.Close() }
-		$script:fileStream.Dispose()
-		$fileLocked = $false
-	} catch { $fileLocked = $true }
-
+	if (Test-Path $path) {
+		if ($script:fileStream[$path]) {
+			#ロックされていなければストリームを閉じる
+			$script:fileStream[$path].Close()
+			$script:fileStream[$path].Dispose()
+			$script:fileStream[$path] = $null
+			$script:fileStream.Remove($path)
+		}
+		$result = $true
+	} else { $result = $false }
 	#結果の返却
 	return [PSCustomObject]@{
-		path       = $path
-		fileLocked = $fileLocked
+		path   = $path
+		result = $result
 	}
-}
-
-#----------------------------------------------------------------------
-#ファイルのロック確認
-#----------------------------------------------------------------------
-function Get-FileLockStatus {
-	[CmdletBinding()]
-	[OutputType([PSCustomObject])]
-	Param (
-		[parameter(Mandatory = $true)][System.IO.FileInfo]$path
-	)
-
-	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $path)
-
-	$fileLocked = $true
-	try {
-		#ファイルを開こうとしファイルロックを検出
-		$fileInfo = New-Object System.IO.FileInfo $path
-		$fileStream = $fileInfo.Open([System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
-		#ロックされていなければストリームを閉じる
-		if ($fileStream) { $fileStream.Close() }
-		$fileLocked = $false
-	} catch { $fileLocked = $true }
-
-	#結果の返却
-	return [PSCustomObject]@{
-		path       = $path
-		fileLocked = $fileLocked
-	}
+	Remove-Variable -Name path, fileLocked, result -ErrorAction SilentlyContinue
 }
 
 #endregion ファイルロック
@@ -438,23 +398,19 @@ function Out-Msg-Color {
 		[Parameter(Mandatory = $false)][ConsoleColor]$bg,
 		[Parameter(Mandatory = $false)][Boolean]$noNL
 	)
-
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-
 	$prevFg = $host.UI.RawUI.ForegroundColor
 	$prevBg = $host.UI.RawUI.BackgroundColor
-
 	if ($fg) { $host.UI.RawUI.ForegroundColor = $fg }
 	if ($bg) { $host.UI.RawUI.BackgroundColor = $bg }
-
 	$writeHostParams = @{
 		Object    = $text
 		NoNewline = $noNL
 	}
 	Write-Host @writeHostParams
-
 	$host.UI.RawUI.ForegroundColor = $prevFg
 	$host.UI.RawUI.BackgroundColor = $prevBg
+	Remove-Variable -Name text, fg, bg, noNL, prevFg, prevBg, writeHostParams -ErrorAction SilentlyContinue
 }
 
 #endregion コンソール出力
@@ -462,10 +418,10 @@ function Out-Msg-Color {
 #region トースト通知
 
 #Toast用AppID取得に必要
-if (($script:disableToastNotification -ne $true) -and ($IsWindows)) { Import-Module StartLayout -SkipEditionCheck }
+if ($IsWindows -and ($script:disableToastNotification -ne $true)) { Import-Module StartLayout -SkipEditionCheck }
 
 #モジュールのインポート
-if (!$script:disableToastNotification -and $IsWindows -and (!('Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder' -as [Type]))) {
+if ($IsWindows -and !$script:disableToastNotification -and (!('Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder' -as [Type]))) {
 	Add-Type -LiteralPath (Join-Path $script:libDir 'win/core/Microsoft.Windows.SDK.NET.dll')
 	Add-Type -LiteralPath (Join-Path $script:libDir 'win/core/WinRT.Runtime.dll')
 	Add-Type -LiteralPath (Join-Path $script:libDir 'win/core/Microsoft.Toolkit.Uwp.Notifications.dll')
@@ -483,9 +439,7 @@ function Show-GeneralToast {
 		[Parameter(Mandatory = $false)][ValidateSet('Short', 'Long')][String]$duration = 'Short',
 		[Parameter(Mandatory = $false)][Boolean]$silent = $false
 	)
-
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-
 	if (!$script:disableToastNotification) {
 		switch ($true) {
 			$IsWindows {
@@ -505,9 +459,9 @@ function Show-GeneralToast {
     $toastSoundElement
 </toast>
 "@
-				$toastXML = New-Object Windows.Data.Xml.Dom.XmlDocument
+				$toastXML = [Windows.Data.Xml.Dom.XmlDocument]::new()
 				$toastXML.LoadXml($toastProgressContent)
-				$toastNotification = New-Object Windows.UI.Notifications.ToastNotification $toastXML
+				$toastNotification = [Windows.UI.Notifications.ToastNotification]::new($toastXML)
 				$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Show($toastNotification)
 				continue
 			}
@@ -525,6 +479,7 @@ function Show-GeneralToast {
 			default { continue }
 		}
 	}
+	Remove-Variable -Name text1, text2, duration, silent, toastSoundElement, toastProgressContent, toastXML, toastNotification, toastParams -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -542,9 +497,7 @@ function Show-ProgressToast {
 		[Parameter(Mandatory = $false)][ValidateSet('Short', 'Long')][String]$duration = 'Short',
 		[Parameter(Mandatory = $false)][Boolean]$silent = $false
 	)
-
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-
 	if ($script:disableToastNotification -ne $true) {
 		switch ($true) {
 			$IsWindows {
@@ -566,16 +519,16 @@ function Show-ProgressToast {
     $toastSoundElement
 </toast>
 "@
-				$toastXML = New-Object Windows.Data.Xml.Dom.XmlDocument
+				$toastXML = [Windows.Data.Xml.Dom.XmlDocument]::new()
 				$toastXML.LoadXml($toastContent)
-				$toast = New-Object Windows.UI.Notifications.ToastNotification $toastXML
+				$toast = [Windows.UI.Notifications.ToastNotification]::new($toastXML)
 				$toast.Tag = $tag
 				$toast.Group = $group
-				$toastData = New-Object 'system.collections.generic.dictionary[String,string]'
-				$toastData.Add('progressTitle', $workDetail)
-				$toastData.Add('progressValue', '')
-				$toastData.Add('progressValueString', '')
-				$toastData.Add('progressStatus', '')
+				$toastData = [System.Collections.Generic.Dictionary[String, String]]::new()
+				$null = $toastData.Add('progressTitle', $workDetail)
+				$null = $toastData.Add('progressValue', '')
+				$null = $toastData.Add('progressValueString', '')
+				$null = $toastData.Add('progressStatus', '')
 				$toast.Data = [Windows.UI.Notifications.NotificationData]::new($toastData)
 				$toast.Data.SequenceNumber = 1
 				$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Show($toast)
@@ -595,6 +548,7 @@ function Show-ProgressToast {
 			default { continue }
 		}
 	}
+	Remove-Variable -Name text1, text2, workDetail, tag, group, duration, silent, toastSoundElement, toastContent, toastXML, toast, toastData, toastParams -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -611,17 +565,15 @@ function Update-ProgressToast {
 		[Parameter(Mandatory = $true )][String]$tag,
 		[Parameter(Mandatory = $true )][String]$group
 	)
-
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-
 	if ($script:disableToastNotification -ne $true) {
 		switch ($true) {
 			$IsWindows {
-				$toastData = New-Object 'system.collections.generic.dictionary[String,string]'
-				$toastData.Add('progressTitle', $script:appName)
-				$toastData.Add('progressValue', $rate)
-				$toastData.Add('progressValueString', $rightText)
-				$toastData.Add('progressStatus', $leftText)
+				$toastData = [System.Collections.Generic.Dictionary[String, String]]::new()
+				$null = $toastData.Add('progressTitle', $script:appName)
+				$null = $toastData.Add('progressValue', $rate)
+				$null = $toastData.Add('progressValueString', $rightText)
+				$null = $toastData.Add('progressStatus', $leftText)
 				$toastProgressData = [Windows.UI.Notifications.NotificationData]::new($toastData)
 				$toastProgressData.SequenceNumber = 2
 				$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Update($toastProgressData, $tag , $group)
@@ -632,6 +584,7 @@ function Update-ProgressToast {
 			default { continue }
 		}
 	}
+	Remove-Variable -Name title, rate, leftText, rightText, tag, group, toastData, toastProgressData -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -650,13 +603,11 @@ function Show-ProgressToast2Row {
 		[Parameter(Mandatory = $false)][Boolean]$silent = $false,
 		[Parameter(Mandatory = $true )][String]$group
 	)
-
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if ($script:disableToastNotification -ne $true) {
 		$text2 = $text2 ?? ''
 		$detail1 = $detail1 ?? ''
 		$detail2 = $detail2 ?? ''
-
 		switch ($true) {
 			$IsWindows {
 				$toastSoundElement = if ($silent) { '<audio silent="true" />' } else { '<audio src="ms-winsoundevent:Notification.Default" loop="false"/>' }
@@ -679,20 +630,20 @@ function Show-ProgressToast2Row {
 	$toastSoundElement
 </toast>
 "@
-				$toastXML = New-Object Windows.Data.Xml.Dom.XmlDocument
+				$toastXML = [Windows.Data.Xml.Dom.XmlDocument]::new()
 				$toastXML.LoadXml($toastContent)
-				$toast = New-Object Windows.UI.Notifications.ToastNotification $toastXML
+				$toast = [Windows.UI.Notifications.ToastNotification]::new($toastXML)
 				$toast.Tag = $tag
 				$toast.Group = $group
-				$toastData = New-Object 'system.collections.generic.dictionary[String,string]'
-				$toastData.Add('progressTitle1', $detail1)
-				$toastData.Add('progressValue1', '')
-				$toastData.Add('progressValueString1', '')
-				$toastData.Add('progressStatus1', '')
-				$toastData.Add('progressTitle2', $detail2)
-				$toastData.Add('progressValue2', '')
-				$toastData.Add('progressValueString2', '')
-				$toastData.Add('progressStatus2', '')
+				$toastData = [System.Collections.Generic.Dictionary[String, String]]::new()
+				$null = $toastData.Add('progressTitle1', $detail1)
+				$null = $toastData.Add('progressValue1', '')
+				$null = $toastData.Add('progressValueString1', '')
+				$null = $toastData.Add('progressStatus1', '')
+				$null = $toastData.Add('progressTitle2', $detail2)
+				$null = $toastData.Add('progressValue2', '')
+				$null = $toastData.Add('progressValueString2', '')
+				$null = $toastData.Add('progressStatus2', '')
 				$toast.Data = [Windows.UI.Notifications.NotificationData]::new($toastData)
 				$toast.Data.SequenceNumber = 1
 				$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Show($toast)
@@ -711,8 +662,8 @@ function Show-ProgressToast2Row {
 			}
 			default { continue }
 		}
-
 	}
+	Remove-Variable -Name text1, text2, detail1, detail2, tag, duration, silent, group, toastSoundElement, toastAttribution, toastContent, toastXML, toast, toastData, toastParams -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -733,9 +684,7 @@ function Update-ProgressToast2Row {
 		[Parameter(Mandatory = $true )][String]$tag,
 		[Parameter(Mandatory = $true )][String]$group
 	)
-
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-
 	if (!($script:disableToastNotification)) {
 		$rightText1 = switch ($rightText1 ) {
 			'' { '' }
@@ -747,19 +696,18 @@ function Update-ProgressToast2Row {
 			'0' { '完了' }
 			default { ('残り時間 {0}分' -f ([Int][Math]::Ceiling($rightText2 / 60))) }
 		}
-
 		if ($script:disableToastNotification -ne $true) {
 			switch ($true) {
 				$IsWindows {
-					$toastData = New-Object 'system.collections.generic.dictionary[String,string]'
-					$toastData.Add('progressTitle1', $title1)
-					$toastData.Add('progressValue1', $rate1)
-					$toastData.Add('progressValueString1', $rightText1)
-					$toastData.Add('progressStatus1', $leftText1)
-					$toastData.Add('progressTitle2', $title2)
-					$toastData.Add('progressValue2', $rate2)
-					$toastData.Add('progressValueString2', $rightText2)
-					$toastData.Add('progressStatus2', $leftText2)
+					$toastData = [System.Collections.Generic.Dictionary[String, String]]::new()
+					$null = $toastData.Add('progressTitle1', $title1)
+					$null = $toastData.Add('progressValue1', $rate1)
+					$null = $toastData.Add('progressValueString1', $rightText1)
+					$null = $toastData.Add('progressStatus1', $leftText1)
+					$null = $toastData.Add('progressTitle2', $title2)
+					$null = $toastData.Add('progressValue2', $rate2)
+					$null = $toastData.Add('progressValueString2', $rightText2)
+					$null = $toastData.Add('progressStatus2', $leftText2)
 					$toastProgressData = [Windows.UI.Notifications.NotificationData]::new($toastData)
 					$toastProgressData.SequenceNumber = 2
 					$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Update($toastProgressData, $tag , $group)
@@ -770,8 +718,8 @@ function Update-ProgressToast2Row {
 				default { continue }
 			}
 		}
-
 	}
+	Remove-Variable -Name title1, rate1, leftText1, rightText1, title2, rate2, leftText2, rightText2, tag, group, toastData, toastProgressData -ErrorAction SilentlyContinue
 }
 #endregion トースト通知
 
@@ -780,10 +728,12 @@ function Update-ProgressToast2Row {
 #----------------------------------------------------------------------
 function ConvertFrom-Base64 {
 	param ($base64)
-	$img = New-Object System.Windows.Media.Imaging.BitmapImage
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$img = [System.Windows.Media.Imaging.BitmapImage]::new()
 	$img.BeginInit()
 	$img.StreamSource = [System.IO.MemoryStream][System.Convert]::FromBase64String($base64)
 	$img.EndInit()
 	$img.Freeze()
 	return $img
+	Remove-Variable -Name base64, img -ErrorAction SilentlyContinue
 }

@@ -43,6 +43,9 @@ RUN mkdir -p -m 777 \
 	/mnt/Work \
 	/mnt/Save
 
+#ユーザ切り替え
+USER tverrec
+
 #TVerRecのインストール
 WORKDIR /app
 RUN git clone https://github.com/dongaba/TVerRec.git
