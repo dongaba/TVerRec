@@ -68,7 +68,7 @@ while ($true) {
 	} else { break }
 }
 
-Remove-Variable -Name keyword, videoPageURL -ErrorAction SilentlyContinue
+Remove-Variable -Name args, keyword, videoPageURL -ErrorAction SilentlyContinue
 
 Invoke-GarbageCollection
 
