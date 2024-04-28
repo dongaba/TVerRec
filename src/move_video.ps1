@@ -54,9 +54,9 @@ if ($script:saveBaseDir -and (Get-ChildItem -LiteralPath $script:downloadBaseDir
 }
 
 #移動先ディレクトリと作業ディレクトリの一致を抽出
-$moveDirs = if ($moveToPathsHash.Count -gt 0) {
-	@(Compare-Object -ReferenceObject @($moveToPathsHash.Keys) -DifferenceObject @($moveFromPathsHash.Keys) -IncludeEqual -ExcludeDifferent | ForEach-Object { $_.InputObject })
-} else { $null }
+if ($moveToPathsHash.Count -gt 0) {
+	$moveDirs = @(Compare-Object -ReferenceObject @($moveToPathsHash.Keys) -DifferenceObject @($moveFromPathsHash.Keys) -IncludeEqual -ExcludeDifferent | ForEach-Object { $_.InputObject })
+} else { $moveDirs = $null }
 
 #======================================================================
 #2/3 移動先ディレクトリと同名のディレクトリ配下の番組を移動
@@ -69,7 +69,7 @@ Show-ProgressToast @toastShowParams
 
 #----------------------------------------------------------------------
 $totalStartTime = Get-Date
-if (($moveDirs) -and ($moveDirs.Count -ne 0)) {
+if ($moveDirs) {
 	$dirNum = 0
 	$dirTotal = $moveDirs.Count
 	foreach ($dir in $moveDirs) {
@@ -179,7 +179,7 @@ $toastUpdateParams = @{
 }
 Update-ProgressToast @toastUpdateParams
 
-Remove-Variable -Name toastShowParams, moveToPathsHash, moveToPathsArray, moveFromPathsHash, moveDirs, moveDir, totalStartTime, dirNum, dirTotal, secElapsed, secRemaining, minRemaining, progressRate, toastUpdateParams, targetFolderName, moveFromPath, moveToPath, emptyDirs, emptyDirTotal, emptyDirNum -ErrorAction SilentlyContinue
+Remove-Variable -Name args, toastShowParams, moveToPathsHash, moveFromPathsHash, moveDirs, moveDir, totalStartTime, dirNum, dirTotal, dir, secElapsed, secRemaining, minRemaining, progressRate, toastUpdateParams, targetFolderName, moveFromPath, moveToPath, emptyDirs, emptyDirTotal, emptyDirNum -ErrorAction SilentlyContinue
 
 Invoke-GarbageCollection
 

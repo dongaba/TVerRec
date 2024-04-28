@@ -82,7 +82,6 @@ if ($script:saveBaseDir -ne '') {
 		$toastUpdateParams.Title = $saveDir
 		$toastUpdateParams.Rate = [Float]( 4 / 4 )
 		Update-ProgressToast @toastUpdateParams
-
 		Remove-Files `
 			-BasePath $saveDir `
 			-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.vtt', '*.srt', '*.part', '*.part-Frag*', '*.m4a', '*.live_chat.json', '*.temp.mp4') `
@@ -234,7 +233,7 @@ $toastUpdateParams.LeftText = ''
 $toastUpdateParams.RightText = '完了'
 Update-ProgressToast @toastUpdateParams
 
-Remove-Variable -Name toastShowParams, toastUpdateParams, saveDir, workDirEntities, ignoreTitles, ignoreDirs, ignoreTitle, filteredDirs, filteredDir, ignoreNum, ignoreTotal, totalStartTime, secElapsed, secRemaining, minRemaining, progressRate, emptyDirs, subDir, emptyDirTotal, emptyDirNum -ErrorAction SilentlyContinue
+Remove-Variable -Name args, toastShowParams, toastUpdateParams, saveDir, workDirEntities, ignoreTitles, ignoreDirs, ignoreTitle, filteredDirs, filteredDir, ignoreNum, ignoreTotal, totalStartTime, ignoreDir, secElapsed, secRemaining, minRemaining, progressRate, emptyDirs, emptyDirTotal, emptyDirNum, dir -ErrorAction SilentlyContinue
 
 Invoke-GarbageCollection
 
