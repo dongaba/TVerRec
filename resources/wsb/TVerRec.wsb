@@ -5,7 +5,7 @@
   <ClipboardRedirection>Default</ClipboardRedirection>
   <MappedFolders>
     <MappedFolder>
-      <HostFolder>..\..\..\TVerRec</HostFolder>
+      <HostFolder>..\..\</HostFolder>
       <SandboxFolder>C:\Users\WDAGUtilityAccount\Desktop\TVerRec</SandboxFolder>
     </MappedFolder>
   </MappedFolders>
