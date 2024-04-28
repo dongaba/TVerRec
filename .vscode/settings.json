@@ -83,5 +83,6 @@
 	"workbench.startupEditor": "newUntitledFile",
 	"[github-actions-workflow]": {
 		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	}
+	},
+	"svg.preview.background": "transparent"
 }
