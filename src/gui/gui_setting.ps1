@@ -52,37 +52,31 @@ function Sync-WpfEvents {
 		},
 		$frame)
 	[Dispatcher]::PushFrame($frame)
-	Remove-Variable -Name frame -ErrorAction SilentlyContinue
+	Remove-Variable -Name frame, f -ErrorAction SilentlyContinue
 }
 
 #ディレクトリ選択ダイアログ
 function Select-Folder($description, $textBox) {
+	$fd = [System.Windows.Forms.FolderBrowserDialog]::new()
 	$fd.Description = $description
 	$fd.RootFolder = [System.Environment+SpecialFolder]::MyComputer
 	$fd.SelectedPath = $textBox.Text
-	if ($fd.ShowDialog($form) -eq [System.Windows.Forms.DialogResult]::OK) {
-		$textBox.Text = $fd.SelectedPath
-	}
-	Remove-Variable -Name description, textBox -ErrorAction SilentlyContinue
+	if ($fd.ShowDialog($form) -eq [System.Windows.Forms.DialogResult]::OK) { $textBox.Text = $fd.SelectedPath }
+	Remove-Variable -Name description, textBox, fd -ErrorAction SilentlyContinue
 }
 
 #system_setting.ps1から各設定項目を読み込む
 function Read-SystemSetting {
-	Param (
-		[Parameter(Mandatory = $true)][String]$key
-	)
-	$defaultSetting = try {
-		(Select-String -Pattern ('^{0}' -f $key.Replace('$', '\$')) -LiteralPath $systemSettingFile | ForEach-Object { $_.Line }).split('=')[1].Trim()
-	} catch { '' }
+	Param ([Parameter(Mandatory = $true)][String]$key)
+	$defaultSetting = try {(Select-String -Pattern ('^{0}' -f $key.Replace('$', '\$')) -LiteralPath $systemSettingFile | ForEach-Object { $_.Line }).split('=')[1].Trim()}
+	catch { '' }
 	return $defaultSetting.Trim("'")
 	Remove-Variable -Name key, defaultSetting -ErrorAction SilentlyContinue
 }
 
 #user_setting.ps1から各設定項目を読み込む
 function Read-UserSetting {
-	Param (
-		[Parameter(Mandatory = $true)][String]$key
-	)
+	Param ([Parameter(Mandatory = $true)][String]$key)
 	$currentSetting = ''
 	if (Test-Path (Join-Path $script:confDir 'user_setting.ps1')) {
 		try { $currentSetting = (Select-String -Pattern ('^{0}' -f [regex]::Escape($key)) -LiteralPath $userSettingFile | ForEach-Object { $_.Line }).split('=')[1].Trim() }
@@ -94,11 +88,9 @@ function Read-UserSetting {
 
 #user_setting.ps1に各設定項目を書き込む
 function Save-UserSetting {
-
 	$newSetting = @()
 	$startSegment = '##Start Setting Generated from GUI'
 	$endSegment = '##End Setting Generated from GUI'
-
 	#ファイルが無ければ作ればいい
 	if (!(Test-Path $userSettingFile)) {
 		$null = New-Item -Path $userSettingFile -ItemType File
@@ -111,11 +103,9 @@ function Save-UserSetting {
 		$headLineNum = try { ($content | Select-String $startSegment).LineNumber - 2 } catch { 0 }
 		$tailLineNum = try { $totalLineNum - ($content | Select-String $endSegment).LineNumber - 1 } catch { 0 }
 	}
-
 	#自動生成より前の部分
 	#自動生成の開始位置が2行目以降の場合にだけ自動生成寄りの前の部分がある
 	if (Test-Path variable:headLineNum) { if ($headLineNum -ge 0 ) { $newSetting += $content[0..$headLineNum] } }
-
 	#自動生成の部分
 	$newSetting += $startSegment
 	if ($settingAttributes) {
@@ -127,23 +117,18 @@ function Save-UserSetting {
 				{ $_ -eq 'する' } { $newSetting += ('{0} = $true' -f $settingAttribute); continue }
 				{ $_ -eq 'しない' } { $newSetting += ('{0} = $false' -f $settingAttribute); continue }
 				default {
-					if ([Int]::TryParse($settingBox.Text, [ref]$null) -or $settingBox.Text -match '[$({})]') {
-						$newSetting += ('{0} = {1}' -f $settingAttribute, $settingBox.Text)
-					} else {
-						$newSetting += ('{0} = ''{1}''' -f $settingAttribute, $settingBox.Text)
-					}
+					if ([Int]::TryParse($settingBox.Text, [ref]$null) -or $settingBox.Text -match '[$({})]') {$newSetting += ('{0} = {1}' -f $settingAttribute, $settingBox.Text)}
+					else {$newSetting += ('{0} = ''{1}''' -f $settingAttribute, $settingBox.Text)}
 				}
 			}
 		}
 	}
 	$newSetting += $endSegment
-
 	#自動生成より後の部分
 	if ( $totalLineNum -ne 0 ) {
 		try { $newSetting += Get-Content $userSettingFile -Tail $tailLineNum }
 		catch { Write-Warning ('⚠️ 自動生成の終了部分を特定できませんでした') }
 	}
-
 	#改行コードLFを強制 + NFCで出力
 	$newSetting.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC)  | Out-File -LiteralPath $userSettingFile -Encoding UTF8 -NoNewline
 	Remove-Variable -Name newSetting, startSegment, endSegment, content -ErrorAction SilentlyContinue
@@ -168,30 +153,23 @@ try {
 	[xml]$mainCleanXaml = $mainXaml
 	$settingWindow = [System.Windows.Markup.XamlReader]::Load(([System.Xml.XmlNodeReader]::new($mainCleanXaml)))
 } catch { Throw ('❌️ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。') }
-
 #PowerShellのウィンドウを非表示に
 Add-Type -Name Window -Namespace Console -MemberDefinition '
 [DllImport("Kernel32.dll")]public static extern IntPtr GetConsoleWindow() ;
 [DllImport("user32.dll")]public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow) ;
 '
 $null = [Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0)
-
 #タスクバーのアイコンにオーバーレイ表示
 $settingWindow.TaskbarItemInfo.Overlay = ConvertFrom-Base64 $script:iconBase64
 $settingWindow.TaskbarItemInfo.Description = $settingWindow.Title
-
 #ウィンドウを読み込み時の処理
 $settingWindow.Add_Loaded({ $settingWindow.Icon = $script:iconPath })
-
 #ウィンドウを閉じる際の処理
 $settingWindow.Add_Closing({})
-
 #Name属性を持つ要素のオブジェクト作成
 $mainCleanXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $settingWindow.FindName($_.Name) -Scope Script }
-
 #WPFにロゴをロード
 $LogoImage.Source = ConvertFrom-Base64 $script:logoBase64
-
 #バージョン表記
 $lblVersion.Content = ('Version {0}' -f $script:appVersion)
 
@@ -202,21 +180,10 @@ $lblVersion.Content = ('Version {0}' -f $script:appVersion)
 #region ボタンのアクション
 $btnWiki.Add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
 $btnCancel.Add_Click({ $settingWindow.close() })
-$btnSave.Add_Click({
-		Save-UserSetting
-		$settingWindow.close()
-	})
-$btndownloadBaseDir.Add_Click({
-		Select-Folder 'ダウンロード先ディレクトリを選択してください' $script:downloadBaseDir
-	})
-
-$btndownloadWorkDir.Add_Click({
-		Select-Folder '作業ディレクトリを選択してください' $script:downloadWorkDir
-	})
-
-$btnsaveBaseDir.Add_Click({
-		Select-Folder '移動先ディレクトリを選択してください' $script:saveBaseDir
-	})
+$btnSave.Add_Click({ Save-UserSetting; $settingWindow.close()})
+$btndownloadBaseDir.Add_Click({Select-Folder 'ダウンロード先ディレクトリを選択してください' $script:downloadBaseDir})
+$btndownloadWorkDir.Add_Click({Select-Folder '作業ディレクトリを選択してください' $script:downloadWorkDir})
+$btnsaveBaseDir.Add_Click({Select-Folder '移動先ディレクトリを選択してください' $script:saveBaseDir})
 
 #endregion ボタンのアクション
 #----------------------------------------------------------------------
@@ -263,20 +230,15 @@ $settingAttributes = @(
 	'$script:extractDescTextToList',
 	'$script:listGenHistoryCheck'
 )
-
 $defaultSetting = @{}
 $currentSetting = @{}
-
 foreach ($settingAttribute in $settingAttributes) {
 	$defaultSetting[$settingAttribute] = Read-SystemSetting $settingAttribute
 	$currentSetting[$settingAttribute] = Read-UserSetting $settingAttribute
-
 	#変数名から「$script:」を取った名前がBox名
 	$settingBoxName = $settingAttribute.Replace('$script:', '')
-
 	#まずはシステム設定の値をGUIに反映
 	$settingBox = $settingWindow.FindName($settingBoxName)
-
 	#次にユーザー設定の値をGUIに反映
 	if ( (Read-UserSetting $settingAttribute) -ne '') {
 		$settingBox.Text = Read-UserSetting $settingAttribute
@@ -301,7 +263,6 @@ try {
 $currentProcess = [Diagnostics.Process]::GetCurrentProcess()
 $form = [Windows.Forms.NativeWindow]::new()
 $form.AssignHandle($currentProcess.MainWindowHandle)
-$fd = [System.Windows.Forms.FolderBrowserDialog]::new()
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #ウィンドウ表示後のループ処理
@@ -312,7 +273,6 @@ $fd = [System.Windows.Forms.FolderBrowserDialog]::new()
 while ($settingWindow.IsVisible) {
 	#GUIイベント処理
 	Sync-WpfEvents
-
 	Start-Sleep -Milliseconds 100
 }
 
@@ -330,4 +290,4 @@ Remove-Variable -Name btnWiki, btnCancel, btnSave -ErrorAction SilentlyContinue
 Remove-Variable -Name btndownloadBaseDir, btndownloadWorkDir, btnsaveBaseDir -ErrorAction SilentlyContinue
 Remove-Variable -Name settingAttributes, defaultSetting, currentSetting -ErrorAction SilentlyContinue
 Remove-Variable -Name settingAttribute, settingBoxName, settingBox -ErrorAction SilentlyContinue
-Remove-Variable -Name currentProcess, form, fd -ErrorAction SilentlyContinue
+Remove-Variable -Name currentProcess, form -ErrorAction SilentlyContinue

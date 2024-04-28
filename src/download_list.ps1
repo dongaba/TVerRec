@@ -104,7 +104,7 @@ Write-Output ('')
 Write-Output ('ダウンロードの終了を待機しています')
 Wait-DownloadCompletion
 
-Remove-Variable -Name listLinks, keyword, videoLinks, videoTotal, totalStartTime, secRemaining, toastShowParams, videoNum, videoLink, secElapsed, minRemaining, toastUpdateParams -ErrorAction SilentlyContinue
+Remove-Variable -Name args, listLinks, keyword, videoLinks, processedCount, videoTotal, totalStartTime, secRemaining, toastShowParams, videoNum, videoLink, secElapsed, minRemaining, toastUpdateParams -ErrorAction SilentlyContinue
 
 Invoke-GarbageCollection
 

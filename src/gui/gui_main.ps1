@@ -60,8 +60,7 @@ function Sync-WpfEvents {
 		},
 		$frame)
 	[Dispatcher]::PushFrame($frame)
-
-	Remove-Variable -Name frame -ErrorAction SilentlyContinue
+	Remove-Variable -Name frame, f -ErrorAction SilentlyContinue
 }
 
 #最大行数以上の実行ログをクリア
@@ -103,33 +102,25 @@ try {
 	[xml]$mainCleanXaml = $mainXaml
 	$mainWindow = [System.Windows.Markup.XamlReader]::Load(([System.Xml.XmlNodeReader]::new($mainCleanXaml)))
 } catch { Throw ('❌️ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。') }
-
 #PowerShellのウィンドウを非表示に
 Add-Type -Name Window -Namespace Console -MemberDefinition '
 [DllImport("Kernel32.dll")]public static extern IntPtr GetConsoleWindow() ;
 [DllImport("user32.dll")]public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow) ;
 '
 $null = [Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0)
-
 #タスクバーのアイコンにオーバーレイ表示
 $mainWindow.TaskbarItemInfo.Overlay = ConvertFrom-Base64 $script:iconBase64
 $mainWindow.TaskbarItemInfo.Description = $mainWindow.Title
-
 #ウィンドウを読み込み時の処理
 $mainWindow.Add_Loaded({ $mainWindow.Icon = $script:iconPath })
-
 #ウィンドウを閉じる際の処理
 $mainWindow.Add_Closing({ Get-Job | Receive-Job -Wait -AutoRemoveJob -Force })
-
 #Name属性を持つ要素のオブジェクト作成
 $mainCleanXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $mainWindow.FindName($_.Name) -Scope Local }
-
 #WPFにロゴをロード
 $LogoImage.Source = ConvertFrom-Base64 $script:logoBase64
-
 #バージョン表記
 $lblVersion.Content = ('Version {0}' -f $script:appVersion)
-
 #ログ出力するためのテキストボックス
 $outText = $mainWindow.FindName('tbOutText')
 
@@ -180,10 +171,8 @@ foreach ($btn in $btns) {
 			foreach ($btn in $btns) { $btn.IsEnabled = $false }
 			$btnExit.IsEnabled = $false
 			$lblStatus.Content = ([String]$threadNames[$this]).Trim()
-
 			#処理停止ボタンの有効化
 			$btnKillAll.IsEnabled = $true
-
 			#バックグラウンドジョブの起動
 			$null = Start-ThreadJob -Name $this.Name -ScriptBlock $scriptBlocks[$this]
 		})
@@ -212,17 +201,14 @@ $btnClearLog.Add_Click({
 $btnKillAll.Add_Click({
 		Get-Job | Remove-Job -Force
 		foreach ($btn in $btns) { $btn.IsEnabled = $true }
-		$btnExit.IsEnabled = $true
-		$btnKillAll.IsEnabled = $false
+		$btnExit.IsEnabled = $true;$btnKillAll.IsEnabled = $false
 		$lblStatus.Content = '処理を強制停止しました'
 		Invoke-GarbageCollection
 	})
 $btnWiki.Add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
 $btnsetting.Add_Click({
 		& 'gui/gui_setting.ps1'
-		if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
-			. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))
-		}
+		if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))}
 		Invoke-GarbageCollection
 	})
 $btnExit.Add_Click({ $mainWindow.close() })
@@ -234,7 +220,6 @@ $btnExit.Add_Click({ $mainWindow.close() })
 
 #処理停止ボタンの初期値は無効
 $btnKillAll.IsEnabled = $false
-
 try {
 	$null = $mainWindow.Show()
 	$null = $mainWindow.Activate()
@@ -246,16 +231,12 @@ try {
 #----------------------------------------------------------------------
 #region ウィンドウ表示後のループ処理
 while ($mainWindow.IsVisible) {
-
 	if ($jobs = Get-Job) {
 		#ジョブがある場合の処理
 		foreach ($job in $jobs) {
 			#各メッセージタイプごとに内容を取得(ただしReceive-Jobは次Stepで実行するので取りこぼす可能性あり)
-			foreach ($msgType in $msgTypes) {
-				Set-Variable -Name ('msg' + $msgType) -Value $(if ($job.$msgType) { $job.$msgType } else { $null })
-			}
+			foreach ($msgType in $msgTypes) {Set-Variable -Name ('msg' + $msgType) -Value $(if ($job.$msgType) { $job.$msgType } else { $null })}
 			$jobMsgs = @(Receive-Job $job *>&1)
-
 			#Jobからメッセージを取得し事前に取得したメッセージタイプと照合し色付け
 			foreach ($jobMsg in $jobMsgs) {
 				$logType = switch ($jobMsg) {
@@ -268,25 +249,19 @@ while ($mainWindow.IsVisible) {
 				}
 				Out-ExecutionLog -Message ($jobMsg -join "`n") -Type $logType
 			}
-
 			#各メッセージタイプごとの内容を保存する変数をクリア
 			foreach ($msgType in $msgTypes) { Clear-Variable -Name ('msg' + $msgType) }
-
 			#終了したジョブのボタンの再有効化
 			if ($job.State -in $jobTerminationStates) {
 				Remove-Job $job
-				$btns.ForEach({ $_.IsEnabled = $true })
-				$btnExit.IsEnabled = $true
-				$btnKillAll.IsEnabled = $false
+				$btns.ForEach({ $_.IsEnabled = $true });$btnExit.IsEnabled = $true;$btnKillAll.IsEnabled = $false
 				$lblStatus.Content = '処理を終了しました'
 				Invoke-GarbageCollection
 			}
 		}
 	}
-
 	#GUIイベント処理
 	Sync-WpfEvents
-
 	Start-Sleep -Milliseconds 10
 }
 
@@ -299,13 +274,13 @@ while ($mainWindow.IsVisible) {
 Get-Job | Receive-Job -Wait -AutoRemoveJob -Force
 
 Remove-Variable -Name jobTerminationStates, msgTypesColorMap -ErrorAction SilentlyContinue
-Remove-Variable -Name jobMsgs, msgError, msgWarning, msgVerbose, msgDebug, msgInformation -ErrorAction SilentlyContinue
+Remove-Variable -Name jobMsgs, msgTypes, msgError, msgWarning, msgVerbose, msgDebug, msgInformation -ErrorAction SilentlyContinue
 Remove-Variable -Name mainXaml, mainCleanXaml, mainWindow -ErrorAction SilentlyContinue
 Remove-Variable -Name LogoImage, lblVersion, outText -ErrorAction SilentlyContinue
-Remove-Variable -Name btnBulk, btnDelete, btnList, btnListGen, btnLoop, btnMove, btnSingle, btnValidate -ErrorAction SilentlyContinue
+Remove-Variable -Name btnBulk, btnDelete, btnList, btnListGen, btnLoop, btnMove, btnSingle, btnValidate, btnExit, btnKillAll -ErrorAction SilentlyContinue
 Remove-Variable -Name btns, scriptBlocks, threadNames, btn, lblStatus -ErrorAction SilentlyContinue
 Remove-Variable -Name btnWorkOpen, btnDownloadOpen, btnsaveOpen, btnKeywordOpen, btnIgnoreOpen, btnListOpen -ErrorAction SilentlyContinue
 Remove-Variable -Name btnClearLog, btnKillAll, btnWiki, btnsetting, btnExit -ErrorAction SilentlyContinue
-Remove-Variable -Name jobs, job, jobMsg, logType -ErrorAction SilentlyContinue
+Remove-Variable -Name jobs, job, msgType, jobMsg, logType -ErrorAction SilentlyContinue
 
 #endregion 終了処理

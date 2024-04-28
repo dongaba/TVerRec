@@ -193,7 +193,7 @@ $toastUpdateParams = @{
 }
 Update-ProgressToast @toastUpdateParams
 
-Remove-Variable -Name toastShowParams, videoNotValidatedNum, videoHists, videoHist, uncheckedVido, validateTotal, decodeOption, totalStartTime, validateNum, secElapsed, secRemaining, minRemaining, progressRate, toastUpdateParams -ErrorAction SilentlyContinue
+Remove-Variable -Name args, toastShowParams, videoNotValidatedNum, videoHists, videoHist, uncheckedVido, validateTotal, decodeOption, totalStartTime, validateNum, videoFileRelPath, secElapsed, secRemaining, minRemaining, progressRate, toastUpdateParams -ErrorAction SilentlyContinue
 
 Invoke-GarbageCollection
 
