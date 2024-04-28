@@ -1,5 +1,8 @@
 <Configuration Name="TVerRec">
+  <MemoryInMB>2048</MemoryInMB>
+  <vGPU>Enable</vGPU>
   <Networking>Default</Networking>
+  <ClipboardRedirection>Default</ClipboardRedirection>
   <MappedFolders>
     <MappedFolder>
       <HostFolder>..\..\..\TVerRec</HostFolder>
@@ -9,6 +12,4 @@
   <LogonCommand>
     <Command>C:\Users\WDAGUtilityAccount\Desktop\TVerRec\resources\wsb\setup\setup.cmd</Command>
   </LogonCommand>
-  <MemoryInMB>2048</MemoryInMB>
-  <vGPU>Enable</vGPU>
 </Configuration>

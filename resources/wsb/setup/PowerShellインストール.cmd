@@ -1,6 +1,15 @@
 @echo off
 
-powershell Write-Output 'まずはWinGetをインストールするために必要なソフトウェアをインストールします...'
+echo.
+echo.
+echo.
+echo.
+echo.
+echo.
+echo.
+echo.
+echo.
+echo WinGetをインストールするために必要なソフトウェアをインストールします...
 if "%PROCESSOR_ARCHITECTURE%" EQU "AMD64" (
 	powershell Invoke-WebRequest -Uri https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx -OutFile %TEMP%\Microsoft.VCLibs.x64.14.00.Desktop.appx
 	powershell Add-AppxPackage %TEMP%\Microsoft.VCLibs.x64.14.00.Desktop.appx
@@ -29,15 +38,18 @@ if "%PROCESSOR_ARCHITECTURE%" EQU "ARM64" (
 	del /q %TEMP%\Microsoft.UI.Xaml.2.8.arm64.appx
 )
 
-powershell Write-Output '次にWinGetをインストールします...'
+echo.
+echo WinGetをインストールします...
 powershell Invoke-WebRequest -Uri https://aka.ms/getwinget -OutFile %TEMP%\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle
 powershell Add-AppxPackage %TEMP%\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle
 del /q %TEMP%\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle
 
 
-powershell Write-Output '最後にPowerShellをインストールします...'
+echo.
+echo 最後にPowerShellをインストールします...
 winget install Microsoft.PowerShell --accept-source-agreements --accept-package-agreements
 
+echo.
 mshta vbscript:execute("MsgBox(""PowerShellのインストールが完了しました。""):close")
 
 explorer.exe "C:\Users\WDAGUtilityAccount\Desktop\TVerRec\win"
