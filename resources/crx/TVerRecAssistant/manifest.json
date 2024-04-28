@@ -1,0 +1,53 @@
+﻿{
+	"manifest_version": 3,
+	"name": "TVerRec Assistant",
+	"description": "Capture \"platform_uid\" and \"platform_token\" to download your TVer favorites in TVerRec",
+	"version": "0.0.6",
+	"author": "dongaba",
+	"homepage_url": "https://github.com/dongaba/TVerRec",
+	"incognito": "split",
+	"icons": {
+		"16": "icon/TVerRec-Icon-16.png",
+		"32": "icon/TVerRec-Icon-32.png",
+		"48": "icon/TVerRec-Icon-48.png",
+		"128": "icon/TVerRec-Icon-128.png"
+	},
+	"permissions": [
+		"activeTab",
+		"tabs",
+		"scripting",
+		"storage",
+		"declarativeNetRequest",
+		"declarativeNetRequestFeedback"
+	],
+	"host_permissions": [
+		"*://tver.jp/*",
+		"*://*.tver.jp/*"
+	],
+	"declarative_net_request": {
+		"rule_resources": [
+			{
+				"id": "ruleset",
+				"enabled": true,
+				"path": "json/rule.json"
+			}
+		]
+	},
+	"background": {
+		"service_worker": "js/background.js"
+	},
+	"content_scripts": [
+		{
+			"matches": [
+				"*://tver.jp/*",
+				"*://*.tver.jp/*"
+			],
+			"js": [
+				"js/tver.js"
+			]
+		}
+	],
+	"action": {
+		"default_popup": "html/popup.html"
+	}
+}

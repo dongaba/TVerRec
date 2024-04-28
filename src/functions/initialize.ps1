@@ -3,7 +3,9 @@
 #		関数読み込みスクリプト
 #
 ###################################################################################
+Set-StrictMode -Version Latest
 Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+try { $launchMode = [String]$args[0] } catch { $launchMode = '' }
 
 #----------------------------------------------------------------------
 #設定ファイル読み込み
@@ -12,30 +14,30 @@ $script:devDir = Join-Path $script:scriptRoot '../dev'
 
 if ( Test-Path (Join-Path $script:confDir 'system_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'system_setting.ps1')) }
-	catch { Write-Error ('❗ システム設定ファイルの読み込みに失敗しました') ; exit 1 }
-} else { Write-Error ('❗ システム設定ファイルが見つかりません') ; exit 1 }
+	catch { Throw ('❌️ システム設定ファイルの読み込みに失敗しました') }
+} else { Throw ('❌️ システム設定ファイルが見つかりません') }
 
 if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
-	catch { Write-Error ('❗ ユーザ設定ファイルの読み込みに失敗しました') ; exit 1 }
+	catch { Throw ('❌️ ユーザ設定ファイルの読み込みに失敗しました') }
 } elseif ($IsWindows) {
 	Write-Output ('ユーザ設定ファイルを作成する必要があります')
-	try { . 'gui/gui_setting.ps1' }
-	catch { Write-Error ('❗ 設定画面の起動に失敗しました') ; exit 1 }
+	try { & 'gui/gui_setting.ps1' }
+	catch { Throw ('❌️ 設定画面の起動に失敗しました') }
 	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 		try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
-		catch { Write-Error ('❗ ユーザ設定ファイルの読み込みに失敗しました') ; exit 1 }
-	} else { Write-Error ('❗ ユーザ設定が完了してません') ; exit 1 }
-} else { Write-Error ('❗ ユーザ設定が完了してません') ; exit 1 }
+		catch { Throw ('❌️ ユーザ設定ファイルの読み込みに失敗しました') }
+	} else { Throw ('❌️ ユーザ設定が完了してません') }
+} else { Throw ('❌️ ユーザ設定が完了してません') }
 
 #----------------------------------------------------------------------
 #外部関数ファイルの読み込み
 try { . (Convert-Path (Join-Path $script:scriptRoot 'functions/common_functions.ps1')) }
-catch { Write-Error ('❗ 外部関数ファイル(common_functions.ps1)の読み込みに失敗しました') ; exit 1 }
+catch { Throw ('❌️ 外部関数ファイル(common_functions.ps1)の読み込みに失敗しました') }
 try { . (Convert-Path (Join-Path $script:scriptRoot 'functions/tver_functions.ps1')) }
-catch { Write-Error ('❗ 外部関数ファイル(tver_functions.ps1)の読み込みに失敗しました') ; exit 1 }
+catch { Throw ('❌️ 外部関数ファイル(tver_functions.ps1)の読み込みに失敗しました') }
 try { . (Convert-Path (Join-Path $script:scriptRoot 'functions/tverrec_functions.ps1')) }
-catch { Write-Error ('❗ 外部関数ファイル(tverrec_functions.ps1)の読み込みに失敗しました') ; exit 1 }
+catch { Throw ('❌️ 外部関数ファイル(tverrec_functions.ps1)の読み込みに失敗しました') }
 
 #----------------------------------------------------------------------
 #開発環境用に設定上書き
@@ -44,13 +46,19 @@ try {
 	$devConfFile = Join-Path $script:devDir 'dev_setting.ps1'
 	if (Test-Path $devConfFile) {
 		. $devConfFile
-		Write-Warning ('💡 開発ファイル用設定ファイルを読み込みました')
+		Write-Information ('💡 開発ファイル用設定ファイルを読み込みました')
 	}
 	if (Test-Path $devFunctionFile) {
 		. $devFunctionFile
-		Write-Warning ('💡 開発ファイル用共通関数ファイルを読み込みました')
+		Write-Information ('💡 開発ファイル用共通関数ファイルを読み込みました')
 	}
-} catch { Write-Error ('❗ 開発用設定ファイルの読み込みに失敗しました') ; exit 1 }
+	Remove-Variable -Name devFunctionFile, devConfFile -ErrorAction SilentlyContinue
+} catch { Throw ('❌️ 開発用設定ファイルの読み込みに失敗しました') }
+
+#----------------------------------------------------------------------
+#連続実行時は以降の処理は不要なのでexit
+#不要な理由はloop.ps1は「.」ではなく「&」で各処理を呼び出ししているので各種変数が不要なため
+if ($launchMode -eq 'loop') {Remove-Variable -Name launchMode -ErrorAction SilentlyContinue; exit 0 }
 
 #----------------------------------------------------------------------
 #アップデータのアップデート(アップデート後の実行時にアップデータを更新)
@@ -62,11 +70,13 @@ if (Test-Path (Join-Path $script:scriptRoot '../log/updater_update.txt')) {
 		Invoke-WebRequest `
 			-Uri 'https://raw.githubusercontent.com/dongaba/TVerRec/master/win/update_tverrec.cmd' `
 			-OutFile (Join-Path $script:scriptRoot '../win/update_tverrec.cmd')
-		Remove-Item (Join-Path $script:scriptRoot '../log/updater_update.txt') -Force
-	} catch {
-		Write-Warning ('💡 アップデータのアップデートに失敗しました。ご自身でアップデートを完了させる必要があります')
-	}
+		$null = Remove-Item (Join-Path $script:scriptRoot '../log/updater_update.txt') -Force
+	} catch { Write-Warning ('⚠️ アップデータのアップデートに失敗しました。ご自身でアップデートを完了させる必要があります') }
 }
+
+#TVerRecの最新化チェック
+Invoke-TVerRecUpdateCheck
+if (!$?) { Write-Warning ('⚠️ TVerRecのバージョンチェックに失敗しました') }
 
 #----------------------------------------------------------------------
 #ダウンロード対象キーワードのパス
@@ -108,36 +118,23 @@ else { $script:ffprobePath = Join-Path $script:binDir 'ffprobe' }
 
 #GUI起動を判定
 if ( $myInvocation.ScriptName.Contains('gui')) {
-	#TVerRecの最新化チェック
-	Invoke-TVerRecUpdateCheck
-	if (!$?) { exit 1 }
 } else {
-	if (!$script:guiMode) {
-		[Console]::ForegroundColor = 'Red'
-		Write-Output ('')
-		Write-Output ('===========================================================================')
-		Write-Output ('                                                                           ')
-		Write-Output ('        ████████ ██    ██ ███████ ██████  ██████  ███████  ██████          ')
-		Write-Output ('           ██    ██    ██ ██      ██   ██ ██   ██ ██      ██               ')
-		Write-Output ('           ██    ██    ██ █████   ██████  ██████  █████   ██               ')
-		Write-Output ('           ██     ██  ██  ██      ██   ██ ██   ██ ██      ██               ')
-		Write-Output ('           ██      ████   ███████ ██   ██ ██   ██ ███████  ██████          ')
-		Write-Output ('                                                                           ')
-		Write-Output ("{0,$(56 - $script:appVersion.Length)}Version. {1}" -f ' ', $script:appVersion)
-		Write-Output ('                                                                           ')
-		Write-Output ('===========================================================================')
-		Write-Output ('')
-		[Console]::ResetColor()
-	}
-
+	#Logo表示
+	if (!$script:guiMode) { Show-Logo }
 	#youtube-dl/ffmpegの最新化チェック
 	if (!$script:disableUpdateYoutubedl) { Invoke-ToolUpdateCheck -scriptName 'update_youtube-dl.ps1' -targetName 'youtube-dl' }
 	if (!$script:disableUpdateFfmpeg) { Invoke-ToolUpdateCheck -scriptName 'update_ffmpeg.ps1' -targetName 'ffmpeg' }
-
-	#TVerRecの最新化チェック
-	if ($script:appName -eq 'TVerRec') {
-		Invoke-TVerRecUpdateCheck
-		if (!$?) { exit 1 }
-	}
-
 }
+
+#共通HTTPヘッダ
+$script:requestHeader = @{
+	'x-tver-platform-type' = 'web'
+	'Origin'               = 'https://tver.jp'
+	'Referer'              = 'https://tver.jp'
+}
+
+#ロックファイル用
+$script:fileInfo = @{}
+$script:fileStream = @{}
+
+Remove-Variable -Name launchMode -ErrorAction SilentlyContinue

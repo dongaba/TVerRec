@@ -3,16 +3,22 @@
 ![Logo](https://raw.githubusercontent.com/dongaba/TVerRec/master/resources/img/TVerRec-Logo.png)
 [![GitHub release](https://img.shields.io/github/v/release/dongaba/TVerRec?color=blue)](https://github.com/dongaba/TVerRec/releases)
 [![License](https://img.shields.io/github/license/dongaba/TVerRec?color=blue)](https://opensource.org/licenses/MIT)
-[![CodeFactor](https://www.codefactor.io/repository/github/dongaba/tverrec/badge)](https://www.codefactor.io/repository/github/dongaba/tverrec)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/1b42499be57b48818db8c3c90d73adb3)](https://app.codacy.com/gh/dongaba/TVerRec/dashboard)
-[![DevSkim](https://github.com/dongaba/TVerRec/actions/workflows/devskim.yml/badge.svg)](https://github.com/dongaba/TVerRec/actions/workflows/devskim.yml)
-[![PSScriptAnalyzer](https://github.com/dongaba/TVerRec/actions/workflows/powershell.yml/badge.svg)](https://github.com/dongaba/TVerRec/actions/workflows/powershell.yml)
-[![Push to Docker Hub](https://github.com/dongaba/TVerRec/actions/workflows/push-to-dh.yml/badge.svg)](https://github.com/dongaba/TVerRec/actions/workflows/push-to-dh.yml)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/y/dongaba/tverrec)
+![GitHub last commit](https://img.shields.io/github/last-commit/dongaba/tverrec?color=blue)  
+[![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/dongaba/tverrec?logo=codefactor&logoColor=white&label=CodeFactor)](https://www.codefactor.io/repository/github/dongaba/tverrec)
+[![Codacy grade](https://img.shields.io/codacy/grade/1b42499be57b48818db8c3c90d73adb3?style=flat&logo=codacy&logoColor=white&label=Codacy)](https://app.codacy.com/gh/dongaba/TVerRec/dashboard)
+[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/dongaba/tverrec/devskim.yml?style=flat&logo=githubactions&logoColor=white&label=DevSkim)](https://github.com/dongaba/TVerRec/actions/workflows/devskim.yml)
+[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/dongaba/tverrec/powershell.yml?style=flat&logo=githubactions&logoColor=white&label=PSScriptAnalyzer)](https://github.com/dongaba/TVerRec/actions/workflows/powershell.yml)
+[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/dongaba/tverrec/push-to-dh.yml?style=flat&logo=githubactions&logoColor=white&label=Push%20to%20DockerHub)](https://github.com/dongaba/TVerRec/actions/workflows/push-to-dh.yml)  
+[![GitHub Repo stars](https://img.shields.io/github/stars/dongaba/tverrec?style=social)](https://github.com/dongaba/TVerRec/stargazers)
+[![GitHub Sponsors](https://img.shields.io/github/sponsors/dongaba?style=social&logo=githubsponsors)](https://github.com/sponsors/dongaba)
+[![Docker Pulls](https://img.shields.io/docker/pulls/dongaba/tverrec?style=social&logo=docker)](https://hub.docker.com/repository/docker/dongaba/tverrec/general)  
+[![TVerRec Launched](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fhits.sh%2Fapi%2Furns%2Fgithub.com%2Fdongaba%2FTVerRec%2Flaunch&query=total&style=social&logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiBzdHlsZT0ic2hhcGUtcmVuZGVyaW5nOmdlb21ldHJpY1ByZWNpc2lvbjt0ZXh0LXJlbmRlcmluZzpnZW9tZXRyaWNQcmVjaXNpb247aW1hZ2UtcmVuZGVyaW5nOm9wdGltaXplUXVhbGl0eTtmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZCI+PHBhdGggc3R5bGU9Im9wYWNpdHk6Ljk5NSIgZmlsbD0iIzNiM2EzYSIgZD0iTTE2LjUtLjVoOTRjOCAzLjMzMyAxMy42NjcgOSAxNyAxN3Y5NGMtMy4zMzMgOC05IDEzLjY2Ny0xNyAxN2gtOTRjLTgtMy4zMzMtMTMuNjY3LTktMTctMTd2LTk0YzMuMzMzLTggOS0xMy42NjcgMTctMTd6Ii8+PHBhdGggc3R5bGU9Im9wYWNpdHk6MSIgZmlsbD0iI2ZjZmNmYyIgZD0iTTE4LjUgNy41YzI5LjY2OS0uMTY3IDU5LjMzNSAwIDg5IC41IDUuNDEgMS43NDMgOS4yNDQgNS4yNDIgMTEuNSAxMC41YTE5NzkuNTEgMTk3OS41MSAwIDAgMSAwIDg5Yy0xLjk0MSA1Ljc3NS01Ljc3NCA5Ljc3NS0xMS41IDEyYTIwOC41NTQgMjA4LjU1NCAwIDAgMS0yMi0xN2MxOC4xODItMTIuNzE4IDI1LjAxNS0zMC4wNSAyMC41LTUyLTUuMzY2LTE1LjM2OC0xNS44NjYtMjUuMjAxLTMxLjUtMjkuNWE1NDAuODcgNTQwLjg3IDAgMCAwLTU1LTEuNXY5OWMtNS45MS0xLjQwOC05Ljc0My01LjA3NC0xMS41LTExYTE5ODAuNDkgMTk4MC40OSAwIDAgMSAwLTg5YzIuMzU3LTQuODU0IDUuODU3LTguNTIxIDEwLjUtMTF6Ii8+PHBhdGggc3R5bGU9Im9wYWNpdHk6MSIgZmlsbD0iI2Q2NDQzZCIgZD0iTTU0LjUgMjUuNWMyMy4xNzgtMi4zNCAzOC42NzggNy4zMjYgNDYuNSAyOSAxLjgzMyAzMi44MzMtMTMuNjY3IDQ4LjMzMy00Ni41IDQ2LjVDMzIuNjczIDkzLjE5NyAyMy4xNzMgNzcuNjk3IDI2IDU0LjVjNC4zNS0xNC44NDkgMTMuODUtMjQuNTE1IDI4LjUtMjl6Ii8+PHBhdGggc3R5bGU9Im9wYWNpdHk6MSIgZmlsbD0iI2ZjZmNmYyIgZD0iTTYzLjUgMTA3LjVjMy4xNS0uMjg5IDYuMTUuMjExIDkgMS41YTE0OC42NzggMTQ4LjY3OCAwIDAgMCAxMyAxMGMtNy4zMjYuNS0xNC42Ni42NjYtMjIgLjV2LTEyeiIvPjwvc3ZnPg==&label=TVerRec%20Launched&link=https%3A%2F%2Fhits.sh%2Fgithub.com%2Fdongaba%2FTVerRec%2Flaunch)](https://hits.sh/github.com/dongaba/TVerRec/launch)
+[![Video Searched](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fhits.sh%2Fapi%2Furns%2Fgithub.com%2Fdongaba%2FTVerRec%2Fsearch&query=total&style=social&logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiBzdHlsZT0ic2hhcGUtcmVuZGVyaW5nOmdlb21ldHJpY1ByZWNpc2lvbjt0ZXh0LXJlbmRlcmluZzpnZW9tZXRyaWNQcmVjaXNpb247aW1hZ2UtcmVuZGVyaW5nOm9wdGltaXplUXVhbGl0eTtmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZCI+PHBhdGggc3R5bGU9Im9wYWNpdHk6Ljk5NSIgZmlsbD0iIzNiM2EzYSIgZD0iTTE2LjUtLjVoOTRjOCAzLjMzMyAxMy42NjcgOSAxNyAxN3Y5NGMtMy4zMzMgOC05IDEzLjY2Ny0xNyAxN2gtOTRjLTgtMy4zMzMtMTMuNjY3LTktMTctMTd2LTk0YzMuMzMzLTggOS0xMy42NjcgMTctMTd6Ii8+PHBhdGggc3R5bGU9Im9wYWNpdHk6MSIgZmlsbD0iI2ZjZmNmYyIgZD0iTTE4LjUgNy41YzI5LjY2OS0uMTY3IDU5LjMzNSAwIDg5IC41IDUuNDEgMS43NDMgOS4yNDQgNS4yNDIgMTEuNSAxMC41YTE5NzkuNTEgMTk3OS41MSAwIDAgMSAwIDg5Yy0xLjk0MSA1Ljc3NS01Ljc3NCA5Ljc3NS0xMS41IDEyYTIwOC41NTQgMjA4LjU1NCAwIDAgMS0yMi0xN2MxOC4xODItMTIuNzE4IDI1LjAxNS0zMC4wNSAyMC41LTUyLTUuMzY2LTE1LjM2OC0xNS44NjYtMjUuMjAxLTMxLjUtMjkuNWE1NDAuODcgNTQwLjg3IDAgMCAwLTU1LTEuNXY5OWMtNS45MS0xLjQwOC05Ljc0My01LjA3NC0xMS41LTExYTE5ODAuNDkgMTk4MC40OSAwIDAgMSAwLTg5YzIuMzU3LTQuODU0IDUuODU3LTguNTIxIDEwLjUtMTF6Ii8+PHBhdGggc3R5bGU9Im9wYWNpdHk6MSIgZmlsbD0iI2Q2NDQzZCIgZD0iTTU0LjUgMjUuNWMyMy4xNzgtMi4zNCAzOC42NzggNy4zMjYgNDYuNSAyOSAxLjgzMyAzMi44MzMtMTMuNjY3IDQ4LjMzMy00Ni41IDQ2LjVDMzIuNjczIDkzLjE5NyAyMy4xNzMgNzcuNjk3IDI2IDU0LjVjNC4zNS0xNC44NDkgMTMuODUtMjQuNTE1IDI4LjUtMjl6Ii8+PHBhdGggc3R5bGU9Im9wYWNpdHk6MSIgZmlsbD0iI2ZjZmNmYyIgZD0iTTYzLjUgMTA3LjVjMy4xNS0uMjg5IDYuMTUuMjExIDkgMS41YTE0OC42NzggMTQ4LjY3OCAwIDAgMCAxMyAxMGMtNy4zMjYuNS0xNC42Ni42NjYtMjIgLjV2LTEyeiIvPjwvc3ZnPg==&label=Video%20Searched&link=https%3A%2F%2Fhits.sh%2Fgithub.com%2Fdongaba%2FTVerRec%2search)](https://hits.sh/github.com/dongaba/TVerRec/search)
+[![Video Download](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fhits.sh%2Fapi%2Furns%2Fgithub.com%2Fdongaba%2FTVerRec%2Fdownload&query=total&style=social&logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiBzdHlsZT0ic2hhcGUtcmVuZGVyaW5nOmdlb21ldHJpY1ByZWNpc2lvbjt0ZXh0LXJlbmRlcmluZzpnZW9tZXRyaWNQcmVjaXNpb247aW1hZ2UtcmVuZGVyaW5nOm9wdGltaXplUXVhbGl0eTtmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZCI+PHBhdGggc3R5bGU9Im9wYWNpdHk6Ljk5NSIgZmlsbD0iIzNiM2EzYSIgZD0iTTE2LjUtLjVoOTRjOCAzLjMzMyAxMy42NjcgOSAxNyAxN3Y5NGMtMy4zMzMgOC05IDEzLjY2Ny0xNyAxN2gtOTRjLTgtMy4zMzMtMTMuNjY3LTktMTctMTd2LTk0YzMuMzMzLTggOS0xMy42NjcgMTctMTd6Ii8+PHBhdGggc3R5bGU9Im9wYWNpdHk6MSIgZmlsbD0iI2ZjZmNmYyIgZD0iTTE4LjUgNy41YzI5LjY2OS0uMTY3IDU5LjMzNSAwIDg5IC41IDUuNDEgMS43NDMgOS4yNDQgNS4yNDIgMTEuNSAxMC41YTE5NzkuNTEgMTk3OS41MSAwIDAgMSAwIDg5Yy0xLjk0MSA1Ljc3NS01Ljc3NCA5Ljc3NS0xMS41IDEyYTIwOC41NTQgMjA4LjU1NCAwIDAgMS0yMi0xN2MxOC4xODItMTIuNzE4IDI1LjAxNS0zMC4wNSAyMC41LTUyLTUuMzY2LTE1LjM2OC0xNS44NjYtMjUuMjAxLTMxLjUtMjkuNWE1NDAuODcgNTQwLjg3IDAgMCAwLTU1LTEuNXY5OWMtNS45MS0xLjQwOC05Ljc0My01LjA3NC0xMS41LTExYTE5ODAuNDkgMTk4MC40OSAwIDAgMSAwLTg5YzIuMzU3LTQuODU0IDUuODU3LTguNTIxIDEwLjUtMTF6Ii8+PHBhdGggc3R5bGU9Im9wYWNpdHk6MSIgZmlsbD0iI2Q2NDQzZCIgZD0iTTU0LjUgMjUuNWMyMy4xNzgtMi4zNCAzOC42NzggNy4zMjYgNDYuNSAyOSAxLjgzMyAzMi44MzMtMTMuNjY3IDQ4LjMzMy00Ni41IDQ2LjVDMzIuNjczIDkzLjE5NyAyMy4xNzMgNzcuNjk3IDI2IDU0LjVjNC4zNS0xNC44NDkgMTMuODUtMjQuNTE1IDI4LjUtMjl6Ii8+PHBhdGggc3R5bGU9Im9wYWNpdHk6MSIgZmlsbD0iI2ZjZmNmYyIgZD0iTTYzLjUgMTA3LjVjMy4xNS0uMjg5IDYuMTUuMjExIDkgMS41YTE0OC42NzggMTQ4LjY3OCAwIDAgMCAxMyAxMGMtNy4zMjYuNS0xNC42Ni42NjYtMjIgLjV2LTEyeiIvPjwvc3ZnPg==&label=Video%20Downloaded&link=https%3A%2F%2Fhits.sh%2Fgithub.com%2Fdongaba%2FTVerRec%2Fdownload)](https://hits.sh/github.com/dongaba/TVerRec/download)
+[![Video Validate](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fhits.sh%2Fapi%2Furns%2Fgithub.com%2Fdongaba%2FTVerRec%2Fvalidate&query=total&style=social&logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiBzdHlsZT0ic2hhcGUtcmVuZGVyaW5nOmdlb21ldHJpY1ByZWNpc2lvbjt0ZXh0LXJlbmRlcmluZzpnZW9tZXRyaWNQcmVjaXNpb247aW1hZ2UtcmVuZGVyaW5nOm9wdGltaXplUXVhbGl0eTtmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZCI+PHBhdGggc3R5bGU9Im9wYWNpdHk6Ljk5NSIgZmlsbD0iIzNiM2EzYSIgZD0iTTE2LjUtLjVoOTRjOCAzLjMzMyAxMy42NjcgOSAxNyAxN3Y5NGMtMy4zMzMgOC05IDEzLjY2Ny0xNyAxN2gtOTRjLTgtMy4zMzMtMTMuNjY3LTktMTctMTd2LTk0YzMuMzMzLTggOS0xMy42NjcgMTctMTd6Ii8+PHBhdGggc3R5bGU9Im9wYWNpdHk6MSIgZmlsbD0iI2ZjZmNmYyIgZD0iTTE4LjUgNy41YzI5LjY2OS0uMTY3IDU5LjMzNSAwIDg5IC41IDUuNDEgMS43NDMgOS4yNDQgNS4yNDIgMTEuNSAxMC41YTE5NzkuNTEgMTk3OS41MSAwIDAgMSAwIDg5Yy0xLjk0MSA1Ljc3NS01Ljc3NCA5Ljc3NS0xMS41IDEyYTIwOC41NTQgMjA4LjU1NCAwIDAgMS0yMi0xN2MxOC4xODItMTIuNzE4IDI1LjAxNS0zMC4wNSAyMC41LTUyLTUuMzY2LTE1LjM2OC0xNS44NjYtMjUuMjAxLTMxLjUtMjkuNWE1NDAuODcgNTQwLjg3IDAgMCAwLTU1LTEuNXY5OWMtNS45MS0xLjQwOC05Ljc0My01LjA3NC0xMS41LTExYTE5ODAuNDkgMTk4MC40OSAwIDAgMSAwLTg5YzIuMzU3LTQuODU0IDUuODU3LTguNTIxIDEwLjUtMTF6Ii8+PHBhdGggc3R5bGU9Im9wYWNpdHk6MSIgZmlsbD0iI2Q2NDQzZCIgZD0iTTU0LjUgMjUuNWMyMy4xNzgtMi4zNCAzOC42NzggNy4zMjYgNDYuNSAyOSAxLjgzMyAzMi44MzMtMTMuNjY3IDQ4LjMzMy00Ni41IDQ2LjVDMzIuNjczIDkzLjE5NyAyMy4xNzMgNzcuNjk3IDI2IDU0LjVjNC4zNS0xNC44NDkgMTMuODUtMjQuNTE1IDI4LjUtMjl6Ii8+PHBhdGggc3R5bGU9Im9wYWNpdHk6MSIgZmlsbD0iI2ZjZmNmYyIgZD0iTTYzLjUgMTA3LjVjMy4xNS0uMjg5IDYuMTUuMjExIDkgMS41YTE0OC42NzggMTQ4LjY3OCAwIDAgMCAxMyAxMGMtNy4zMjYuNS0xNC42Ni42NjYtMjIgLjV2LTEyeiIvPjwvc3ZnPg==&label=Video%20Validated&link=https%3A%2F%2Fhits.sh%2Fgithub.com%2Fdongaba%2FTVerRec%2Fvalidate)](https://hits.sh/github.com/dongaba/TVerRec/validate)
 
-[![TVerRec Launch](https://hits.sh/github.com/dongaba/TVerRec/launch.svg?view=total&color=d8453e&labelColor=333333&label=TVerRec%20Launched)](https://hits.sh/github.com/dongaba/TVerRec/launch)
-[![Video Search](https://hits.sh/github.com/dongaba/TVerRec/search.svg?view=total&color=d8453e&labelColor=333333&label=Video%20Searched)](https://hits.sh/github.com/dongaba/TVerRec/search)
-[![Video Download](https://hits.sh/github.com/dongaba/TVerRec/download.svg?view=total&color=d8453e&labelColor=333333&label=Video%20Downloaded)](https://hits.sh/github.com/dongaba/TVerRec/download)
-[![Video Validate](https://hits.sh/github.com/dongaba/TVerRec/validate.svg?view=total&color=d8453e&labelColor=333333&label=Video%20Validated)](https://hits.sh/github.com/dongaba/TVerRec/validate)
+
 
 TVerRec は、テレビ番組配信サイト TVer(ティーバー<https://tver.jp>)の番組をダウンロード保存するためのダウンローダー、ダウンロード支援ツールです。
 番組のジャンルや出演タレント、番組名などを指定して一括ダウンロードする支援をします。
@@ -89,6 +95,12 @@ CM は入っていないため気に入った番組を配信終了後も残し�
 ディレクトリ構成は以下のようになっています。
 
     TVerRec/
+    ├─ CHANGELOG.md ...................... 変更履歴
+    ├─ LICENSE ........................... ライセンス
+    ├─ README.md ......................... このファイル
+    ├─ TODO.md ........................... 今後の改善予定
+    ├─ VERSION ........................... バージョンファイル
+    │
     ├─ bin/ .............................. 実行ファイル格納用ディレクトリ(初期状態は空)
     │
     ├─ conf/ ............................. 設定
@@ -107,11 +119,11 @@ CM は入っていないため気に入った番組を配信終了後も残し�
     ├─ resources/ ........................ 各種リソース
     │  ├─ b64/ ........................... GUI用画像(配下のファイルは省略)
     │  ├─ colab/ ......................... Gooble Colab用サンプル(配下のファイルは省略)
+    │  ├─ crx/ ........................... Gooble Chrome拡張機能
+    │  │  └─ TVerRecAssistant/ ............. TVerRec Assistant(配下のファイルは省略)
     │  ├─ docker/ ........................ Docker用サンプル
     │  │  ├─ docker-compose.yaml ........... docker-composeファイル
-    │  │  ├─ Dockerfile .................... Dockerファイル
-    │  │  ├─ Dockerfile.alpine ............. Dockerイメージ用Dockerfileのサンプル(Alpine Linux)
-    │  │  └─ Dockerfile.ubuntu ............. Dockerイメージ用Dockerfileのサンプル(Ubuntu Linux)
+    │  │  └─ Dockerfile .................... Dockerファイル
     │  ├─ img/ ........................... 画像(配下のファイルは省略)
     │  ├─ lib/ ........................... ライブラリ(配下のファイルは省略)
     │  ├─ lock/ .......................... ライブラリ(配下のファイルは省略)
@@ -124,25 +136,29 @@ CM は入っていないため気に入った番組を配信終了後も残し�
     │  └─ xaml/ .......................... GUI版のXAML定義(配下のファイルは省略)
     │
     ├─ src/ .............................. 各種ソース
-    │  ├─ functions/ ....................... 各種共通関数
-    │  │  ├─ common_functions.ps1 ............ 共通関数定義
-    │  │  ├─ initialize.ps1 .................. 各ツールの初期処理定義
-    │  │  ├─ tver_functions.ps1 .............. TVer共通関数定義
-    │  │  ├─ tverrec_functions.ps1 ........... TVerRec共通関数定義
-    │  │  ├─ update_ffmpeg.ps1 ............... ffmpeg自動更新ツール
-    │  │  ├─ update_tverrec.ps1 .............. TVerRec自身の自動更新ツール
-    │  │  └─ update_youtube-dl.ps1 ........... youtube-dl自動更新ツール
-    │  ├─ gui/ ............................. GUI設定
-    │  │  ├─ gui_main.ps1 .................... GUI版のTVerRecを起動するツール
-    │  │  └─ gui_setting.ps1 ................. TVerRecの設定用画面を起動するツール
     │  ├─ delete_trash.ps1 ................. ダウンロード対象外番組削除ツール
     │  ├─ download_bulk.ps1 ................ 一括ダウンロードツール
     │  ├─ download_list.ps1 ................ リストダウンロードツール
     │  ├─ download_single.ps1 .............. 単体ダウンロードツール
     │  ├─ generate_list.ps1 ................ ダウンロードリスト作成ツール
+    │  ├─ generate_list_child.ps1 .......... ダウンロードリスト作成ツール再帰呼び出し用
     │  ├─ loop.ps1 ......................... ループ処理ツール
     │  ├─ move_vide.ps1 .................... 番組を移動先に移動するツール
-    │  └─ validate_video.ps1 ............... ダウンロード済番組の整合性チェックツール
+    │  ├─ validate_video.ps1 ............... ダウンロード済番組の整合性チェックツール
+    │  ├─ functions/ ....................... 各種共通関数
+    │  │  ├─ common_functions.ps1 ............ 共通関数定義
+    │  │  ├─ initialize.ps1 .................. 各ツールの初期処理定義
+    │  │  ├─ initialize_child.ps1 ............ 各ツールの初期処理定義再帰呼び出し用
+    │  │  ├─ tver_functions.ps1 .............. TVer共通関数定義
+    │  │  ├─ tverrec_functions.ps1 ........... TVerRec共通関数定義
+    │  │  ├─ update_ffmpeg.ps1 ............... ffmpeg自動更新ツール
+    │  │  ├─ update_tverrec.ps1 .............. TVerRec自身の自動更新ツール
+    │  │  └─ update_youtube-dl.ps1 ........... youtube-dl自動更新ツール
+    │  └─ gui/ ............................. GUI設定
+    │     ├─ gui_main.ps1 .................... GUI版のTVerRecを起動するツール
+    │     └─ gui_setting.ps1 ................. TVerRecの設定用画面を起動するツール
+    │
+    ├─ test/ ............................... 自動テスト用スクリプト(配下のファイルは省略)
     │
     ├─ unix/ ............................. Linux/Mac用シェルスクリプト
     │  ├─ a.download_bulk.sh ............... キーワードを元一括ダウンロードするシェルスクリプト
@@ -156,25 +172,19 @@ CM は入っていないため気に入った番組を配信終了後も残し�
     │  ├─ y.download_list.sh ............... ダウンロードリストを元にダンロードするシェルスクリプト
     │  └─ z.download_single.sh ............. 番組を1本ずつダウンロードするシェルスクリプト
     │
-    ├─ win/ .............................. Windows用CMDファイル
-    │  ├─ a.download_bulk.cmd .............. キーワードを元一括ダウンロードするCMD
-    │  ├─ b.delete_trash.cmd ............... ダウンロード対象外番組・中間ファイル削除CMD
-    │  ├─ c.validate_video.cmd ............. ダウンロード済番組の整合性チェックCMD
-    │  ├─ d.move_video.cmd ................. 番組を移動先に移動するCMD(もし必要であれば)
-    │  ├─ Setting.cmd ...................... TVerRecの設定用画面を起動するCMD
-    │  ├─ start_tverrec.cmd ................ キーワードを元に無限一括ダウンロード起動CMD
-    │  ├─ stop_tverrec.cmd ................. 無限一括ダウンロード終了CMD
-    │  ├─ TVerRec.cmd ...................... GUI版のTVerRecを起動するCMD
-    │  ├─ update_tverrec.cmd ............... TVerRecのアップデートをするCMD
-    │  ├─ x.generate_list.cmd .............. ダウンロードリストを生成するCMD
-    │  ├─ y.download_list.cmd .............. ダウンロードリストを元にダンロードするCMD
-    │  └─ z.download_single.cmd ............ 番組を1本ずつダウンロードするCMD
-    │
-    ├─ CHANGELOG.md ...................... 変更履歴
-    ├─ LICENSE ........................... ライセンス
-    ├─ README.md ......................... このファイル
-    ├─ TODO.md ........................... 今後の改善予定
-    └─ VERSION ........................... バージョンファイル
+    └─ win/ .............................. Windows用CMDファイル
+       ├─ a.download_bulk.cmd .............. キーワードを元一括ダウンロードするCMD
+       ├─ b.delete_trash.cmd ............... ダウンロード対象外番組・中間ファイル削除CMD
+       ├─ c.validate_video.cmd ............. ダウンロード済番組の整合性チェックCMD
+       ├─ d.move_video.cmd ................. 番組を移動先に移動するCMD(もし必要であれば)
+       ├─ Setting.cmd ...................... TVerRecの設定用画面を起動するCMD
+       ├─ start_tverrec.cmd ................ キーワードを元に無限一括ダウンロード起動CMD
+       ├─ stop_tverrec.cmd ................. 無限一括ダウンロード終了CMD
+       ├─ TVerRec.cmd ...................... GUI版のTVerRecを起動するCMD
+       ├─ update_tverrec.cmd ............... TVerRecのアップデートをするCMD
+       ├─ x.generate_list.cmd .............. ダウンロードリストを生成するCMD
+       ├─ y.download_list.cmd .............. ダウンロードリストを元にダンロードするCMD
+       └─ z.download_single.cmd ............ 番組を1本ずつダウンロードするCMD
 
 ## 注意事項
 
