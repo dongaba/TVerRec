@@ -117,7 +117,7 @@ function Save-UserSetting {
 				{ $_ -eq 'する' } { $newSetting += ('{0} = $true' -f $settingAttribute); continue }
 				{ $_ -eq 'しない' } { $newSetting += ('{0} = $false' -f $settingAttribute); continue }
 				default {
-					if ([Int]::TryParse($settingBox.Text, [ref]$null) -or $settingBox.Text -match '[$({})]') {$newSetting += ('{0} = {1}' -f $settingAttribute, $settingBox.Text)}
+					if ([Int]::TryParse($settingBox.Text, [ref]$null) -or $settingBox.Text -match '[${}]') {$newSetting += ('{0} = {1}' -f $settingAttribute, $settingBox.Text)}
 					else {$newSetting += ('{0} = ''{1}''' -f $settingAttribute, $settingBox.Text)}
 				}
 			}
