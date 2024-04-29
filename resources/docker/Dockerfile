@@ -50,14 +50,12 @@ RUN git clone https://github.com/dongaba/TVerRec.git
 #コンテナ用修正
 WORKDIR /app/TVerRec
 RUN sed -i -e "s|'TVerRec'|'TVerRecContainer'|g" ./conf/system_setting.ps1 \
-	&& sed -i -e "s|\$script:confDir 'keyword.conf'|\$script:containerDir 'keyword.conf'|g" ./conf/system_setting.ps1 \
-	&& sed -i -e "s|\$script:confDir 'ignore.conf'|\$script:containerDir 'ignore.conf'|g" ./conf/system_setting.ps1 \
-	&& sed -i -e "s|\$script:dbDir 'history.csv'|\$script:containerDir 'history.csv'|g" ./conf/system_setting.ps1 \
-	&& sed -i -e "s|\$script:listDir 'list.csv'|\$script:containerDir 'list.csv'|g" ./conf/system_setting.ps1 \
+	&& sed -i -e "s|\$script:confDir 'keyword.conf'|\$script:containerDir 'keyword.conf'|g" ./src/functions/*.ps1 \
+	&& sed -i -e "s|\$script:confDir 'ignore.conf'|\$script:containerDir 'ignore.conf'|g" ./src/functions/*.ps1 \
+	&& sed -i -e "s|\$script:dbDir 'history.csv'|\$script:containerDir 'history.csv'|g" ./src/functions/*.ps1 \
+	&& sed -i -e "s|\$script:listDir 'list.csv'|\$script:containerDir 'list.csv'|g" ./src/functions/*.ps1 \
 	&& sed -i -e "s|\$script:confDir 'user_setting.ps1'|\$script:containerDir 'user_setting.ps1'|g" ./src/*.ps1 \
 	&& sed -i -e "s|\$script:confDir 'user_setting.ps1'|\$script:containerDir 'user_setting.ps1'|g" ./src/*/*.ps1 \
-	&& sed -i -e "s|Enterを押して|コンテナを再起動して|g" ./unix/start_tverrec.sh \
-	&& sed -i -e "s|read -r -t|sleep|g" ./unix/start_tverrec.sh \
 	&& mkdir container-data \
 	&& cp ./resources/sample/keyword.sample.conf ./container-data/keyword.conf \
 	&& cp ./resources/sample/ignore.sample.conf ./container-data/ignore.conf \
