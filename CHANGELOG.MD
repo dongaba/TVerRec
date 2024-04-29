@@ -46,6 +46,7 @@
 - トップページの処理でシリーズやシーズンを取得できていなかった不具合を修正
 - リストファイルのサンプルファイルのレイアウトが間違っていた問題を修正
 - WSB用のスクリプトが壊れていた問題を修正
+- GUIからの設定の際に`$script:ytdlNonTVerFileName`の保存が正しくできなかった問題を修正
 
 ## [3.0.2](https://github.com/dongaba/TVerRec/releases/tag/v3.0.2)
 
