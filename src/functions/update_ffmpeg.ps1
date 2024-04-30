@@ -105,7 +105,7 @@ switch ($true) {
 
 			#ダウンロード
 			Write-Output ('ffmpegの最新版{0}用をダウンロードします' -f $cpu)
-			try { Invoke-WebRequest -UseBasicParsing -Uri $donwloadURL -OutFile (Join-Path $script:binDir 'ffmpeg.zip') }
+			try { Invoke-WebRequest -Uri $donwloadURL -OutFile (Join-Path $script:binDir 'ffmpeg.zip') }
 			catch { Throw ('❌️ ffmpegのダウンロードに失敗しました') }
 
 			#展開
@@ -194,7 +194,7 @@ switch ($true) {
 
 			#ダウンロード
 			Write-Output ('ffmpegの最新版{0}用をダウンロードします' -f $cpu)
-			try { Invoke-WebRequest -UseBasicParsing -Uri $donwloadURL -OutFile (Join-Path $script:binDir 'ffmpeg.tar.xz') }
+			try { Invoke-WebRequest -Uri $donwloadURL -OutFile (Join-Path $script:binDir 'ffmpeg.tar.xz') }
 			catch { Throw ('❌️ ffmpegのダウンロードに失敗しました') }
 
 			#展開
@@ -232,7 +232,7 @@ switch ($true) {
 	}
 	$IsMacOS {
 		$os = ('macOS {0}' -f [System.Environment]::OSVersion.Version)
-		$arch = (& uname -m | tr '[:upper:]' '[:lower:]')
+		$arch = (& uname -m | tr '[:upper:]' '[:lower:]').replace('x86_64', 'amd64')
 
 		#残っているかもしれない中間ファイルを削除
 		$null = Remove-Item -LiteralPath (Join-Path $script:binDir 'ffmpeg.zip') -Force -ErrorAction SilentlyContinue
@@ -242,20 +242,19 @@ switch ($true) {
 		try {
 			if (Test-Path $ffmpegPath -PathType Leaf) {
 				$ffmpegFileVersion = (& $ffmpegPath -version)
-				if ($ffmpegFileVersion[0] -cmatch 'ffmpeg version (\w*)(\d+\.*\d*\.*\d*)') { $currentVersion = $matches[2] }
+				if ($ffmpegFileVersion[0] -cmatch 'ffmpeg version (\d+\.*\d*\.*\d*)') { $currentVersion = $matches[1] }
+				else { $currentVersion = '' }
 			} else { $currentVersion = '' }
 		} catch { $currentVersion = '' }
 
 		#ffmpegの最新バージョン取得
-		$ffmpegReleases = 'https://evermeet.cx/ffmpeg/info/ffmpeg/release'
-		$ffprobeReleases = 'https://evermeet.cx/ffmpeg/info/ffprobe/release'
+		$ffmpegReleases = ('https://ffmpeg.martin-riedl.de/info/history/macos/{0}/release' -f $arch)
 		$ffmpegReleaseInfo = ''
-		$ffprobeReleaseInfo = ''
 		$latestVersion = ''
+		$latestBuild = ''
 		try {
-			$ffmpegReleaseInfo = Invoke-RestMethod -Uri $ffmpegReleases -Method 'GET'
-			$latestVersion = $ffmpegReleaseInfo.version
-			$ffprobeReleaseInfo = Invoke-RestMethod -Uri $ffprobeReleases -Method 'GET'
+			$ffmpegReleaseInfo = (Invoke-WebRequest -Uri $ffmpegReleases).links.href[0]
+			if ($ffmpegReleaseInfo -cmatch ('{0}/(\d+)_(.+)' -f $arch)) { $latestBuild = $matches[1] ; $latestVersion = $matches[2] }
 		} catch { Write-Warning ('⚠️ ffmpegの最新バージョンを特定できませんでした') ; return }
 
 		#ffmpegのダウンロード
@@ -273,8 +272,10 @@ switch ($true) {
 			#ダウンロード
 			Write-Output ('ffmpegの最新版をダウンロードします')
 			try {
-				Invoke-WebRequest -UseBasicParsing -Uri $ffmpegReleaseInfo.download.zip.url -OutFile (Join-Path $script:binDir 'ffmpeg.zip')
-				Invoke-WebRequest -UseBasicParsing -Uri $ffprobeReleaseInfo.download.zip.url -OutFile (Join-Path $script:binDir 'ffprobe.zip')
+				$uriBase = 'https://ffmpeg.martin-riedl.de/'
+				$uriBasePage = Invoke-WebRequest -Uri $uriBase
+				Invoke-WebRequest -Uri ('{0}{1}' -f $uriBase, ($uriBasePage.links | Where-Object { $_.href -match $arch } | Where-Object { $_.href -match $latestBuild } | Where-Object { $_.outerHTML -match 'ffmpeg.zip"' }).href) -OutFile (Join-Path $script:binDir 'ffmpeg.zip')
+				Invoke-WebRequest -Uri ('{0}{1}' -f $uriBase, ($uriBasePage.links | Where-Object { $_.href -match $arch } | Where-Object { $_.href -match $latestBuild } | Where-Object { $_.outerHTML -match 'ffprobe.zip"' }).href) -OutFile (Join-Path $script:binDir 'ffprobe.zip')
 			} catch { Throw ('❌️ ffmpegのダウンロードに失敗しました') }
 
 			#展開
@@ -300,7 +301,7 @@ switch ($true) {
 			#バージョンチェック
 			try {
 				$ffmpegFileVersion = (& $ffmpegPath -version)
-				if ($ffmpegFileVersion[0] -cmatch 'ffmpeg version (\w*)(\d+\.*\d*\.*\d*)') { $currentVersion = $matches[2] }
+				if ($ffmpegFileVersion[0] -cmatch 'ffmpeg version (\d+\.*\d*\.*\d*)') { $currentVersion = $matches[1] }
 				Write-Output ('💡 ffmpegをversion {0}に更新しました。' -f $currentVersion)
 			} catch { Throw ('❌️ 更新後のバージョン取得に失敗しました') }
 

@@ -40,6 +40,9 @@
 - DockerコンテナのBaseImageをUbuntu:24.04に変更
 - キーワードサンプルファイルで`tag/short`のみを有効化(キーワードファイル未設定でも動作イメージがわかりやすいように)
 - Dockerfileを最新のコードに合わせて修正
+- GUIから設定をする際の高度な設定を複数タブに分割
+- Mac用のffmpegをVersion7に対応
+- Mac用のffmpegでApple Silicon対応
 
 ### 3.1.0 Fixed
 
@@ -49,6 +52,7 @@
 - リストファイルのサンプルファイルのレイアウトが間違っていた問題を修正
 - WSB用のスクリプトが壊れていた問題を修正
 - GUIからの設定の際に`$script:ytdlNonTVerFileName`の保存が正しくできなかった問題を修正
+- GUIから設定の際に設定値に`=`を含む場合に正しく読み込まれたなかった問題を修正
 
 ## [3.0.2](https://github.com/dongaba/TVerRec/releases/tag/v3.0.2)
 
