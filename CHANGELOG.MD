@@ -41,6 +41,8 @@
 - キーワードサンプルファイルで`tag/short`のみを有効化(キーワードファイル未設定でも動作イメージがわかりやすいように)
 - Dockerfileを最新のコードに合わせて修正
 - GUIから設定をする際の高度な設定を複数タブに分割
+- Mac用のffmpegをVersion7に対応
+- Mac用のffmpegでApple Silicon対応
 
 ### 3.1.0 Fixed
 

@@ -128,7 +128,7 @@ try {
 	if ((Get-Variable -Name 'updatedFromHead' -ErrorAction SilentlyContinue) -and ($script:updatedFromHead)) { $zipURL = 'https://github.com/dongaba/TVerRec/archive/refs/heads/master.zip' }
 	elseif ((Get-Variable -Name 'updatedFromDev' -ErrorAction SilentlyContinue) -and ($script:updatedFromDev)) { $zipURL = 'https://github.com/dongaba/TVerRec/archive/refs/heads/dev.zip' }
 	else { $zipURL = (Invoke-RestMethod -Uri $releases -Method 'GET').zipball_url }
-	Invoke-WebRequest -UseBasicParsing -Uri $zipURL -OutFile (Join-Path $updateTemp 'TVerRecLatest.zip')
+	Invoke-WebRequest -Uri $zipURL -OutFile (Join-Path $updateTemp 'TVerRecLatest.zip')
 } catch { Throw ('❌️ ダウンロードに失敗しました');	exit 1 }
 
 #最新バージョンがダウンロードできていたら展開
