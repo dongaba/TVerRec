@@ -175,6 +175,26 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- タブ -->
+        <Style x:Key="TabItem" TargetType="{x:Type TabItem}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type TabItem}">
+                        <Border x:Name="border" BorderThickness="1,1,1,0" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"  CornerRadius="10,10,0,0">
+                            <ContentPresenter x:Name="ContentSite" VerticalAlignment="Center" HorizontalAlignment="Center" ContentSource="Header" Margin="10,5,10,5"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="border" Property="Margin" Value="0,0,0,0" />
+                                <Setter TargetName="border" Property="Background" Value="#FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- ボタン -->
         <SolidColorBrush x:Key="Button.Static.Background" Color="#BBBBBB"/>
         <SolidColorBrush x:Key="Button.Static.Border" Color="#BBBBBB"/>
@@ -323,448 +343,508 @@
             </StackPanel>
         </Border>
         <Border Background="#FFFFFF" Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel Margin="0,10,0,10">
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="同時ダウンロードファイル数">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            同時に並行でダウンロードする番組の数を設定します。
-                            <LineBreak/>
-                            ここの数字を増やすことで同時ダウンロード数を増やすことはできますが、PCへの負荷が高まり逆にダウンロード効率が下がるのでご注意ください。
-                        </TextBlock>
-                    </Expander>
-                    <TextBox x:Name="parallelDownloadFileNum" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="番組あたりの同時ダウンロード数">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            それぞれの番組をダウンロードする際の並行ダウンロード数を設定します。
-                            <LineBreak/>
-                            ここの数字を増やすことで同時ダウンロード数を増やすことはできますが、PCへの負荷が高まり逆にダウンロード効率が下がるのでご注意ください。
-                        </TextBlock>
-                    </Expander>
-                    <TextBox x:Name="parallelDownloadNumPerFile" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ループ処理の間隔(秒)">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            ループ処理の実行間隔を指定します。
-                        </TextBlock>
-                    </Expander>
-                    <TextBox x:Name="loopCycle" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="マイページ処理用のUID">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            マイページに登録したお気に入りやあとでみる、続きから再生などをTVerRecでダウンロードするためのplatfprm_uidを指定します。
-                            <LineBreak/>
-                            これを指定しないとマイページ配下の番組はダウンロードできません。
-                            <LineBreak/>
-                            platform_uidはブラウザの開発者ツール、またはChrome拡張機能TVerRec Assistantを使って確認できます。
-                            <LineBreak/>
-                            詳細はWikiを参照してください。
-                        </TextBlock>
-                    </Expander>
-                    <TextBox x:Name="myPlatformUID" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="マイページ処理用のToken">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            マイページに登録したお気に入りやあとでみる、続きから再生などをTVerRecでダウンロードするためのplatform_tokenを指定します。
-                            <LineBreak/>
-                            これを指定しないとマイページ配下の番組はダウンロードできません。
-                            <LineBreak/>
-                            platform_tokenはブラウザの開発者ツール、またはChrome拡張機能TVerRec Assistantを使って確認できます。
-                            <LineBreak/>
-                            詳細はWikiを参照してください。
-                        </TextBlock>
-                    </Expander>
-                    <TextBox x:Name="myPlatformToken" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="並列処理の有効化">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            並列処理を有効化して処理を高速化するかを設定します。
-                            <LineBreak/>
-                            ただし、並列処理を有効化すると履歴ファイルやダウンロード対象外リストの破損リスクが高まる可能性が高くなります。
-                            <LineBreak/>
-                            現在のところ、並列処理を行うのはダウンロードリストの作成処理とダウンロード対象外番組の削除処理、空ディレクトリの削除処理です。
-                        </TextBlock>
-                    </Expander>
-                    <ComboBox x:Name="enableMultithread" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
-                        <ComboBoxItem>デフォルト値</ComboBoxItem>
-                        <ComboBoxItem>しない</ComboBoxItem>
-                        <ComboBoxItem>する</ComboBoxItem>
-                    </ComboBox>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="並列処理の同時スレッド数">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            並列処理の際に同時に起動するスレッド数を指定します。
-                            <LineBreak/>
-                            最近の PC であれば50くらいの値を設定しても十分に動作すると思いますが、あまり大きな数を指定すると逆に処理時間が長くなる可能性があります。
-                        </TextBlock>
-                    </Expander>
-                    <TextBox x:Name="multithreadNum" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="トースト通知の無効化">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            トースト通知を無効化することが可能です。。
-                        </TextBlock>
-                    </Expander>
-                    <ComboBox x:Name="disableToastNotification" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
-                        <ComboBoxItem>デフォルト値</ComboBoxItem>
-                        <ComboBoxItem>しない</ComboBoxItem>
-                        <ComboBoxItem>する</ComboBoxItem>
-                    </ComboBox>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ダウンロード帯域制限(Mbps)">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            ネットワーク帯域を使い切らないようにダウンロード速度制限を設定することができます。
-                            <LineBreak/>
-                            0を設定すると帯域制限を行いません。
-                            <LineBreak/>
-                            設定は 1 ファイルあたりの帯域となっており単位は Mbps です。つまり、10ファイルダウンロードすれば10倍の帯域を使います。
-                            <LineBreak/>
-                            あくまでも目安となっており、瞬間的には設定値を超えることがあります。
-                        </TextBlock>
-                    </Expander>
-                    <TextBox x:Name="rateLimit" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
-
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="HTTPアクセスのタイムアウト(秒)">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            各種 HTTP のアクセス時のタイムアウト値(秒)です。
-                            <LineBreak/>
-                            設定した時間以内に HTTP の応答がなければエラーとして判断されます。
-                        </TextBlock>
-                    </Expander>
-                    <TextBox x:Name="timeoutSec" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
-
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="GUI版の最大ログ行数">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            GUI版で実行ログの最大行数を制限することができます。
-                            <LineBreak/>
-                            実行ログの行数が増えてくるとメモリ使用量の増大やレスポンスが低下する可能性が高いです。
-                            <LineBreak/>
-                            規定の設定では1000行に設定されています。0に設定することで無制限とすることができます。
-                        </TextBlock>
-                    </Expander>
-                    <TextBox x:Name="guiMaxExecLogLines" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
 
 
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ダウンロード履歴保持日数">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            ダウンロード履歴を保持する日数を指定します。
-                            <LineBreak/>
-                            保持期間を長くすると、同じ番組の再配信があった際に重複ダウンロードしなくて住む可能性が高くなりますが、処理時間が長くなる可能性があります。
-                        </TextBlock>
-                    </Expander>
-                    <TextBox x:Name="histRetentionPeriod" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="放送局毎のディレクトリ配下にダウンロードファイルを保存">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            放送局(テレビ局)ごとのディレクトリを作って番組をダウンロードするかを設定します。
-                            <LineBreak/>
-                            「しない」の際の移動先は以下
-                            <LineBreak/>
-                            　ダウンロード先/
-                            <LineBreak/>
-                            　　└番組シリーズ名 番組シーズン名/
-                            <LineBreak/>
-                            　　　└番組シリーズ名 番組シーズン名 放送日 番組タイトル名.mp4
-                            <LineBreak/>
-                            「する」の際の移動先は以下
-                            <LineBreak/>
-                            　ダウンロード先/
-                            <LineBreak/>
-                            　　└放送局/
-                            <LineBreak/>
-                            　　　└番組シリーズ名 番組シーズン名/
-                            <LineBreak/>
-                            　　　　└番組シリーズ名 番組シーズン名 放送日 番組タイトル名.mp4
-                            <LineBreak/>
-                            ※厳密にはファイル名は他のオプションによって決定されます
-                        </TextBlock>
-                    </Expander>
-                    <ComboBox x:Name="sortVideoByMedia" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
-                        <ComboBoxItem>デフォルト値</ComboBoxItem>
-                        <ComboBoxItem>しない</ComboBoxItem>
-                        <ComboBoxItem>する</ComboBoxItem>
-                    </ComboBox>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ダウンロードファイル名に番組シリーズ名を付加">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            ダウンロードファイル名に番組シリーズ名を付加するかを設定します。
-                            <LineBreak/>
-                            「しない」の場合のファイル名は以下
-                            <LineBreak/>
-                            　番組シーズン名 放送日 Epエピソード番号 番組タイトル名.mp4
-                            <LineBreak/>
-                            「する」の際のファイル名は以下
-                            <LineBreak/>
-                            　番組シリーズ名 番組シーズン名 放送日 Epエピソード番号 番組タイトル名.mp4
-                            <LineBreak/>
-                            ※厳密にはファイル名は他のオプションによって決定されます
-                        </TextBlock>
-                    </Expander>
-                    <ComboBox x:Name="addSeriesName" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
-                        <ComboBoxItem>デフォルト値</ComboBoxItem>
-                        <ComboBoxItem>しない</ComboBoxItem>
-                        <ComboBoxItem>する</ComboBoxItem>
-                    </ComboBox>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ダウンロードファイル名に番組シーズン名を付加">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            ダウンロードファイル名に番組シーズン名を付加するかを設定します。
-                            <LineBreak/>
-                            「しない」の場合のファイル名は以下
-                            <LineBreak/>
-                            　番組シリーズ名 放送日 Epエピソード番号 番組タイトル名.mp4
-                            <LineBreak/>
-                            「する」の際のファイル名は以下
-                            <LineBreak/>
-                            　番組シリーズ名 番組シーズン名 放送日 Epエピソード番号 番組タイトル名.mp4
-                            <LineBreak/>
-                            ※厳密にはファイル名は他のオプションによって決定されます
-                        </TextBlock>
-                    </Expander>
-                    <ComboBox x:Name="addSeasonName" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
-                        <ComboBoxItem>デフォルト値</ComboBoxItem>
-                        <ComboBoxItem>しない</ComboBoxItem>
-                        <ComboBoxItem>する</ComboBoxItem>
-                    </ComboBox>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ダウンロードファイル名に番組放送日を付加">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            ダウンロードファイル名に番組放送日を付加するかを設定します。
-                            <LineBreak/>
-                            「しない」の場合のファイル名は以下
-                            <LineBreak/>
-                            　番組シリーズ名 番組シーズン名 Epエピソード番号 番組タイトル名.mp4
-                            <LineBreak/>
-                            「する」の際のファイル名は以下
-                            <LineBreak/>
-                            　番組シリーズ名 番組シーズン名 放送日 Epエピソード番号 番組タイトル名.mp4
-                            <LineBreak/>
-                            ※厳密にはファイル名は他のオプションによって決定されます
-                        </TextBlock>
-                    </Expander>
-                    <ComboBox x:Name="addBrodcastDate" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
-                        <ComboBoxItem>デフォルト値</ComboBoxItem>
-                        <ComboBoxItem>しない</ComboBoxItem>
-                        <ComboBoxItem>する</ComboBoxItem>
-                    </ComboBox>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ダウンロードファイル名にエピソード番号を付加">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            ダウンロードファイル名にエピソード番号を付加するかを設定します。
-                            <LineBreak/>
-                            ただし、番組によってはエピソード番号が固定になっている番組やエピソード番号が取得できない番組もありますのでご注意ください。
-                            <LineBreak/>
-                            「しない」の場合のファイル名は以下
-                            <LineBreak/>
-                            　番組シリーズ名 番組シーズン名 放送日 番組タイトル名.mp4
-                            <LineBreak/>
-                            「する」の際のファイル名は以下
-                            <LineBreak/>
-                            　番組シリーズ名 番組シーズン名 放送日 Epエピソード番号 番組タイトル名.mp4
-                            <LineBreak/>
-                            ※厳密にはファイル名は他のオプションによって決定されます
-                        </TextBlock>
-                    </Expander>
-                    <ComboBox x:Name="addEpisodeNumber" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
-                        <ComboBoxItem>デフォルト値</ComboBoxItem>
-                        <ComboBoxItem>しない</ComboBoxItem>
-                        <ComboBoxItem>する</ComboBoxItem>
-                    </ComboBox>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="番組名に付くことがある不要なコメントを削除">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            番組名に付く《ドラマ特区》、《新シリーズ放送記念》、《ドラマ Paravi》、《〇〇出演 「〇〇」スタート記念》などの不要なコメント(補足情報?)を削除するかを設定します。
-                            <LineBreak/>
-                            「しない」の場合はTVerで配信されているとおりに番組名を設定
-                            <LineBreak/>
-                            「する」の場合は「《」と「》」で挟まれた部分を削除
-                        </TextBlock>
-                    </Expander>
-                    <ComboBox x:Name="removeSpecialNote" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
-                        <ComboBoxItem>デフォルト値</ComboBoxItem>
-                        <ComboBoxItem>しない</ComboBoxItem>
-                        <ComboBoxItem>する</ComboBoxItem>
-                    </ComboBox>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="youtube-dlの取得元">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            youtube-dlに起因する問題(例えばダウンロードできないなど)が起きた際には2種類のyoutube-dlを使い分けることが可能です。
-                            <LineBreak/>
-                            yt-dlpを設定するとyt-dlp(https://github.com/yt-dlp/yt-dlp)から取得します。
-                            <LineBreak/>
-                            ytdl-patchedを設定するとytdl-patched(https://github.com/ytdl-patched/ytdl-patched)から取得します。
-                        </TextBlock>
-                    </Expander>
-                    <ComboBox x:Name="preferredYoutubedl" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
-                        <ComboBoxItem>デフォルト値</ComboBoxItem>
-                        <ComboBoxItem>yt-dlp</ComboBoxItem>
-                        <ComboBoxItem>ytdl-patched</ComboBoxItem>
-                    </ComboBox>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="youtube-dlの自動アップデートを無効化">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            youtube-dlの配布元の不具合等により自動アップデートがうまく動作しない場合には無効化することが可能です。
-                        </TextBlock>
-                    </Expander>
-                    <ComboBox x:Name="disableUpdateYoutubedl" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
-                        <ComboBoxItem>デフォルト値</ComboBoxItem>
-                        <ComboBoxItem>しない</ComboBoxItem>
-                        <ComboBoxItem>する</ComboBoxItem>
-                    </ComboBox>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ffmpegの自動アップデートを無効化">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            ffmpegの配布元の不具合等により自動アップデートがうまく動作しない場合には無効化することが可能です。
-                        </TextBlock>
-                    </Expander>
-                    <ComboBox x:Name="disableUpdateFfmpeg" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
-                        <ComboBoxItem>デフォルト値</ComboBoxItem>
-                        <ComboBoxItem>しない</ComboBoxItem>
-                        <ComboBoxItem>する</ComboBoxItem>
-                    </ComboBox>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ソフトウェアデコードの強制">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            ダウンロードファイルの整合性検証時にハードウェアアクセラレーションを使わなくすることができます。
-                            <LineBreak/>
-                            高速なCPUが搭載されている場合はハードウェアアクセラレーションよりもCPUで処理したほうが処理が早いことがあります。
-                            <LineBreak/>
-                            概ね10世代以降のIntel Core CPUであれば、GPUを搭載していてもソフトウェアデコードの方が高速です。
-                            <LineBreak/>
-                            Apple Silicon搭載のMacでもソフトウェアデコードのほうが高速です。
-                        </TextBlock>
-                    </Expander>
-                    <ComboBox x:Name="forceSoftwareDecodeFlag" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
-                        <ComboBoxItem>デフォルト値</ComboBoxItem>
-                        <ComboBoxItem>しない</ComboBoxItem>
-                        <ComboBoxItem>する</ComboBoxItem>
-                    </ComboBox>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="番組の整合性検証の高速化">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            番組検証を簡素化するかどうかを設定します。
-                            <LineBreak/>
-                            簡素化した場合、ffmpegによる番組の完全検証ではなく、ffprobeによる簡易検証に切り替えます。
-                            <LineBreak/>
-                            番組1本あたり数秒で検証が完了しますが、検証精度は低いです。(おそらくメタデータの検査だけの模様)
-                        </TextBlock>
-                    </Expander>
-                    <ComboBox x:Name="simplifiedValidation" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
-                        <ComboBoxItem>デフォルト値</ComboBoxItem>
-                        <ComboBoxItem>しない</ComboBoxItem>
-                        <ComboBoxItem>する</ComboBoxItem>
-                    </ComboBox>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="番組の整合性検証の無効化">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            番組検証を行わなくするかどうかを設定します。
-                        </TextBlock>
-                    </Expander>
-                    <ComboBox x:Name="disableValidation" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
-                        <ComboBoxItem>デフォルト値</ComboBoxItem>
-                        <ComboBoxItem>しない</ComboBoxItem>
-                        <ComboBoxItem>する</ComboBoxItem>
-                    </ComboBox>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="サイトマップ処理時にエピソードのみ処理">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            キーワードファイルでサイトマップ指定をした際にエピソードのみを処理するかどうかを設定します。
-                            <LineBreak/>
-                            現在のところ、エピソードだけの処理でもすべての番組動画が含まれているようなので、エピソードだけの処理でも全番組のダウンロードが可能なようです。
-                            <LineBreak/>
-                            処理時間が長くなりますが、エピソード以外も処理することでダウンロード対象番組が増える可能性があります。
-                        </TextBlock>
-                    </Expander>
-                    <ComboBox x:Name="sitemapParseEpisodeOnly" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
-                        <ComboBoxItem>デフォルト値</ComboBoxItem>
-                        <ComboBoxItem>しない</ComboBoxItem>
-                        <ComboBoxItem>する</ComboBoxItem>
-                    </ComboBox>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="番組ファイルへの字幕データの埋め込み">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            ダウンロードしたファイルに字幕データを埋め込むかを設定します。
-                            <LineBreak/>
-                            字幕データが提供されていない番組も多くありますのでご注意ください。
-                        </TextBlock>
-                    </Expander>
-                    <ComboBox x:Name="embedSubtitle" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
-                        <ComboBoxItem>デフォルト値</ComboBoxItem>
-                        <ComboBoxItem>しない</ComboBoxItem>
-                        <ComboBoxItem>する</ComboBoxItem>
-                    </ComboBox>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="番組ファイルへのメタタグの埋め込み">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            ダウンロードしたファイルにメタタグを埋め込むかを設定します。
-                        </TextBlock>
-                    </Expander>
-                    <ComboBox x:Name="embedMetatag" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
-                        <ComboBoxItem>デフォルト値</ComboBoxItem>
-                        <ComboBoxItem>しない</ComboBoxItem>
-                        <ComboBoxItem>する</ComboBoxItem>
-                    </ComboBox>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="youtube-dlとffmpegのウィンドウの表示方法">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            youtube-dl と ffmpeg のウィンドウをどのように表示するかを設定します。
-                            <LineBreak/>
-                            Minimizedに設定することで最小化状態でウィンドウが作成されるようになり必要なときにだけ進捗確認をすることができます。
-                            <LineBreak/>
-                            Hiddenに設定すると非表示となります。
-                            <LineBreak/>
-                            Normalに設定すると多数のウィンドウが表示され鬱陶しいのでおすすめしません。
-                            <LineBreak/>
-                            Maximizedに設定すると最大化した状態でウィンドウが表示されますが、通常利用では利用することはないと思います。
-                        </TextBlock>
-                    </Expander>
-                    <ComboBox x:Name="windowShowStyle" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
-                        <ComboBoxItem>デフォルト値</ComboBoxItem>
-                        <ComboBoxItem>Minimized</ComboBoxItem>
-                        <ComboBoxItem>Hidden</ComboBoxItem>
-                        <ComboBoxItem>Normal</ComboBoxItem>
-                        <ComboBoxItem>Maximized</ComboBoxItem>
-                    </ComboBox>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ffmpegのデコードオプション">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            直接ffmpegのオプションを記載することができます。
-                            <LineBreak/>
-                            ダウンロードファイルの整合性検証時にハードウェアアクセラレーションを有効化する際などに使用します。
-                            <LineBreak/>
-                            例えばIntel CPUを搭載した一般的なPCであれば、-hwaccel qsv -c:v h264_qsvを設定することで、CPU内蔵のアクセラレータを使ってCPU負荷を下げつつ高速に処理することが可能です。
-                            <LineBreak/>
-                            この設定はソフトウェアデコードの強制を有効に設定されていると無効化されます。
-                        </TextBlock>
-                    </Expander>
-                    <TextBox x:Name="ffmpegDecodeOption" Text="未設定" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="youtube-dlオプション">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            直接youtube-dlのオプションを記載することができます。
-                            <LineBreak/>
-                            動画の解像度を指定する場合などに使用します。
-                        </TextBlock>
-                    </Expander>
-                    <TextBox x:Name="ytdlOption" Text="未設定" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="Tverサイト以外のベース名設定">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            Tverサイト以外のベースファイル名を指定します。
-                        </TextBlock>
-                    </Expander>
-                    <TextBox x:Name="ytdlNonTVerFileName" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="個別ダウンロード時の強制ダウンロード">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            個別ダウンロードの際に過去履歴やダウンロード対象外リストとの照合をせずに強制ダウンロードするかを設定します。
-                            <LineBreak/>
-                            この設定を有効にすると、不要ファイル削除処理時にダウンロード対象外リストとマッチするディレクトリの削除を行わなくなります。
-                        </TextBlock>
-                    </Expander>
-                    <ComboBox x:Name="forceSingleDownload" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
-                        <ComboBoxItem>デフォルト値</ComboBoxItem>
-                        <ComboBoxItem>しない</ComboBoxItem>
-                        <ComboBoxItem>する</ComboBoxItem>
-                    </ComboBox>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ダウンロードリストファイルへの番組説明の出力">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            ダウンロードリストファイルに番組説明情報を出力するかを設定します。
-                        </TextBlock>
-                    </Expander>
-                    <ComboBox x:Name="extractDescTextToList" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
-                        <ComboBoxItem>デフォルト値</ComboBoxItem>
-                        <ComboBoxItem>しない</ComboBoxItem>
-                        <ComboBoxItem>する</ComboBoxItem>
-                    </ComboBox>
-                    <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ダウンロードリスト作成時のダウンロード履歴との突合">
-                        <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-                            ダウンロードリストファイル作成時にダウンロード履歴に含まれる番組を除外するかを設定します。
-                            <LineBreak/>
-                            「する」の場合ははダウンロード履歴に番組履歴がある際はリストファイルに出力しません。
-                            <LineBreak/>
-                            「しない」の場合はダウンロード履歴に番組履歴があってもリストファイルに出力します。
-                        </TextBlock>
-                    </Expander>
-                    <ComboBox x:Name="listGenHistoryCheck" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
-                        <ComboBoxItem>デフォルト値</ComboBoxItem>
-                        <ComboBoxItem>しない</ComboBoxItem>
-                        <ComboBoxItem>する</ComboBoxItem>
-                    </ComboBox>
-                </StackPanel>
-            </ScrollViewer>
+            <TabControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Name="TabControl1" Background="#FFFFFF" TabStripPlacement="Top" BorderThickness="0,0,0,0" Margin="10,5,0,10">
+                <TabItem Header="ダウンロード設定" Name="TabItem1" Style="{StaticResource TabItem}" IsSelected="True">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Background="#FFFFFF">
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="同時ダウンロードファイル数">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                同時に並行でダウンロードする番組の数を設定します。
+                                <LineBreak/>
+                                ここの数字を増やすことで同時ダウンロード数を増やすことはできますが、PCへの負荷が高まり逆にダウンロード効率が下がるのでご注意ください。
+                            </TextBlock>
+                        </Expander>
+                        <TextBox x:Name="parallelDownloadFileNum" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="番組あたりの同時ダウンロード数">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                それぞれの番組をダウンロードする際の並行ダウンロード数を設定します。
+                                <LineBreak/>
+                                ここの数字を増やすことで同時ダウンロード数を増やすことはできますが、PCへの負荷が高まり逆にダウンロード効率が下がるのでご注意ください。
+                            </TextBlock>
+                        </Expander>
+                        <TextBox x:Name="parallelDownloadNumPerFile" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ループ処理の間隔(秒)">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                ループ処理の実行間隔を指定します。
+                            </TextBlock>
+                        </Expander>
+                        <TextBox x:Name="loopCycle" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="マイページ処理用のUID">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                マイページに登録したお気に入りやあとでみる、続きから再生などをTVerRecでダウンロードするためのplatfprm_uidを指定します。
+                                <LineBreak/>
+                                これを指定しないとマイページ配下の番組はダウンロードできません。
+                                platform_uidはブラウザの開発者ツール、またはChrome拡張機能TVerRec Assistantを使って確認できます。
+                                詳細はWikiを参照してください。
+                            </TextBlock>
+                        </Expander>
+                        <TextBox x:Name="myPlatformUID" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="マイページ処理用のToken">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                マイページに登録したお気に入りやあとでみる、続きから再生などをTVerRecでダウンロードするためのplatform_tokenを指定します。
+                                <LineBreak/>
+                                これを指定しないとマイページ配下の番組はダウンロードできません。
+                                platform_tokenはブラウザの開発者ツール、またはChrome拡張機能TVerRec Assistantを使って確認できます。
+                                詳細はWikiを参照してください。
+                            </TextBlock>
+                        </Expander>
+                        <TextBox x:Name="myPlatformToken" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ダウンロード帯域制限(Mbps)">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                ネットワーク帯域を使い切らないようにダウンロード速度制限を設定することができます。
+                                <LineBreak/>
+                                0を設定すると帯域制限を行いません。
+                                設定は 1 ファイルあたりの帯域となっており単位は Mbps です。つまり、10ファイルダウンロードすれば10倍の帯域を使います。
+                                あくまでも目安となっており、瞬間的には設定値を超えることがあります。
+                            </TextBlock>
+                        </Expander>
+                        <TextBox x:Name="rateLimit" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="HTTPアクセスのタイムアウト(秒)">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                各種 HTTP のアクセス時のタイムアウト値(秒)です。
+                                <LineBreak/>
+                                設定した時間以内に HTTP の応答がなければエラーとして判断されます。
+                            </TextBlock>
+                        </Expander>
+                        <TextBox x:Name="timeoutSec" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="番組ファイルへの字幕データの埋め込み">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                ダウンロードしたファイルに字幕データを埋め込むかを設定します。
+                                <LineBreak/>
+                                字幕データが提供されていない番組も多くありますのでご注意ください。
+                            </TextBlock>
+                        </Expander>
+                        <ComboBox x:Name="embedSubtitle" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+                            <ComboBoxItem>デフォルト値</ComboBoxItem>
+                            <ComboBoxItem>しない</ComboBoxItem>
+                            <ComboBoxItem>する</ComboBoxItem>
+                        </ComboBox>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="番組ファイルへのメタタグの埋め込み">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                ダウンロードしたファイルにメタタグを埋め込むかを設定します。
+                            </TextBlock>
+                        </Expander>
+                        <ComboBox x:Name="embedMetatag" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+                            <ComboBoxItem>デフォルト値</ComboBoxItem>
+                            <ComboBoxItem>しない</ComboBoxItem>
+                            <ComboBoxItem>する</ComboBoxItem>
+                        </ComboBox>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="放送局毎のディレクトリ配下にダウンロードファイルを保存">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                放送局(テレビ局)ごとのディレクトリを作って番組をダウンロードするかを設定します。
+                                <LineBreak/>
+                                「しない」の際の移動先は以下
+                                <LineBreak/>
+                                　ダウンロード先/
+                                <LineBreak/>
+                                　　└番組シリーズ名 番組シーズン名/
+                                <LineBreak/>
+                                　　　└番組シリーズ名 番組シーズン名 放送日 番組タイトル名.mp4
+                                <LineBreak/>
+                                「する」の際の移動先は以下
+                                <LineBreak/>
+                                　ダウンロード先/
+                                <LineBreak/>
+                                　　└放送局/
+                                <LineBreak/>
+                                　　　└番組シリーズ名 番組シーズン名/
+                                <LineBreak/>
+                                　　　　└番組シリーズ名 番組シーズン名 放送日 番組タイトル名.mp4
+                                <LineBreak/>
+                                ※厳密にはファイル名は他のオプションによって決定されます
+                            </TextBlock>
+                        </Expander>
+                        <ComboBox x:Name="sortVideoByMedia" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+                            <ComboBoxItem>デフォルト値</ComboBoxItem>
+                            <ComboBoxItem>しない</ComboBoxItem>
+                            <ComboBoxItem>する</ComboBoxItem>
+                        </ComboBox>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="個別ダウンロード時の強制ダウンロード">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                個別ダウンロードの際に過去履歴やダウンロード対象外リストとの照合をせずに強制ダウンロードするかを設定します。
+                                <LineBreak/>
+                                この設定を有効にすると、不要ファイル削除処理時にダウンロード対象外リストとマッチするディレクトリの削除を行わなくなります。
+                            </TextBlock>
+                        </Expander>
+                        <ComboBox x:Name="forceSingleDownload" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+                            <ComboBoxItem>デフォルト値</ComboBoxItem>
+                            <ComboBoxItem>しない</ComboBoxItem>
+                            <ComboBoxItem>する</ComboBoxItem>
+                        </ComboBox>
+
+                    </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+
+                <TabItem Header="動画ファイル名設定" Name="TabItem2" Style="{StaticResource TabItem}">
+                    <ScrollViewer>
+                    <StackPanel>
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ダウンロードファイル名に番組シリーズ名を付加">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                ダウンロードファイル名に番組シリーズ名を付加するかを設定します。
+                                <LineBreak/>
+                                「しない」の場合のファイル名は以下
+                                <LineBreak/>
+                                　番組シーズン名 放送日 Epエピソード番号 番組タイトル名.mp4
+                                <LineBreak/>
+                                「する」の際のファイル名は以下
+                                <LineBreak/>
+                                　番組シリーズ名 番組シーズン名 放送日 Epエピソード番号 番組タイトル名.mp4
+                                <LineBreak/>
+                                ※厳密にはファイル名は他のオプションによって決定されます
+                            </TextBlock>
+                        </Expander>
+                        <ComboBox x:Name="addSeriesName" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+                            <ComboBoxItem>デフォルト値</ComboBoxItem>
+                            <ComboBoxItem>しない</ComboBoxItem>
+                            <ComboBoxItem>する</ComboBoxItem>
+                        </ComboBox>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ダウンロードファイル名に番組シーズン名を付加">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                ダウンロードファイル名に番組シーズン名を付加するかを設定します。
+                                <LineBreak/>
+                                「しない」の場合のファイル名は以下
+                                <LineBreak/>
+                                　番組シリーズ名 放送日 Epエピソード番号 番組タイトル名.mp4
+                                <LineBreak/>
+                                「する」の際のファイル名は以下
+                                <LineBreak/>
+                                　番組シリーズ名 番組シーズン名 放送日 Epエピソード番号 番組タイトル名.mp4
+                                <LineBreak/>
+                                ※厳密にはファイル名は他のオプションによって決定されます
+                            </TextBlock>
+                        </Expander>
+                        <ComboBox x:Name="addSeasonName" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+                            <ComboBoxItem>デフォルト値</ComboBoxItem>
+                            <ComboBoxItem>しない</ComboBoxItem>
+                            <ComboBoxItem>する</ComboBoxItem>
+                        </ComboBox>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ダウンロードファイル名に番組放送日を付加">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                ダウンロードファイル名に番組放送日を付加するかを設定します。
+                                <LineBreak/>
+                                「しない」の場合のファイル名は以下
+                                <LineBreak/>
+                                　番組シリーズ名 番組シーズン名 Epエピソード番号 番組タイトル名.mp4
+                                <LineBreak/>
+                                「する」の際のファイル名は以下
+                                <LineBreak/>
+                                　番組シリーズ名 番組シーズン名 放送日 Epエピソード番号 番組タイトル名.mp4
+                                <LineBreak/>
+                                ※厳密にはファイル名は他のオプションによって決定されます
+                            </TextBlock>
+                        </Expander>
+                        <ComboBox x:Name="addBrodcastDate" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+                            <ComboBoxItem>デフォルト値</ComboBoxItem>
+                            <ComboBoxItem>しない</ComboBoxItem>
+                            <ComboBoxItem>する</ComboBoxItem>
+                        </ComboBox>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ダウンロードファイル名にエピソード番号を付加">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                ダウンロードファイル名にエピソード番号を付加するかを設定します。
+                                <LineBreak/>
+                                ただし、番組によってはエピソード番号が固定になっている番組やエピソード番号が取得できない番組もありますのでご注意ください。
+                                <LineBreak/>
+                                「しない」の場合のファイル名は以下
+                                <LineBreak/>
+                                　番組シリーズ名 番組シーズン名 放送日 番組タイトル名.mp4
+                                <LineBreak/>
+                                「する」の際のファイル名は以下
+                                <LineBreak/>
+                                　番組シリーズ名 番組シーズン名 放送日 Epエピソード番号 番組タイトル名.mp4
+                                <LineBreak/>
+                                ※厳密にはファイル名は他のオプションによって決定されます
+                            </TextBlock>
+                        </Expander>
+                        <ComboBox x:Name="addEpisodeNumber" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+                            <ComboBoxItem>デフォルト値</ComboBoxItem>
+                            <ComboBoxItem>しない</ComboBoxItem>
+                            <ComboBoxItem>する</ComboBoxItem>
+                        </ComboBox>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="番組名に付くことがある不要なコメントを削除">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                番組名に付く《ドラマ特区》、《新シリーズ放送記念》、《ドラマ Paravi》、《〇〇出演 「〇〇」スタート記念》などの不要なコメント(補足情報?)を削除するかを設定します。
+                                <LineBreak/>
+                                「しない」の場合はTVerで配信されているとおりに番組名を設定
+                                <LineBreak/>
+                                「する」の場合は「《」と「》」で挟まれた部分を削除
+                            </TextBlock>
+                        </Expander>
+                        <ComboBox x:Name="removeSpecialNote" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+                            <ComboBoxItem>デフォルト値</ComboBoxItem>
+                            <ComboBoxItem>しない</ComboBoxItem>
+                            <ComboBoxItem>する</ComboBoxItem>
+                        </ComboBox>
+
+                    </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+
+                <TabItem Header="動作設定" Name="TabItem3" Style="{StaticResource TabItem}">
+                    <ScrollViewer>
+                    <StackPanel>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="並列処理の有効化">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                並列処理を有効化して処理を高速化するかを設定します。
+                                <LineBreak/>
+                                ただし、並列処理を有効化すると履歴ファイルやダウンロード対象外リストの破損リスクが高まる可能性が高くなります。
+                                現在のところ、並列処理を行うのはダウンロードリストの作成処理とダウンロード対象外番組の削除処理、空ディレクトリの削除処理です。
+                            </TextBlock>
+                        </Expander>
+                        <ComboBox x:Name="enableMultithread" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+                            <ComboBoxItem>デフォルト値</ComboBoxItem>
+                            <ComboBoxItem>しない</ComboBoxItem>
+                            <ComboBoxItem>する</ComboBoxItem>
+                        </ComboBox>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="並列処理の同時スレッド数">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                並列処理の際に同時に起動するスレッド数を指定します。
+                                <LineBreak/>
+                                最近のPCであれば50くらいの値を設定しても十分に動作すると思いますが、あまり大きな数を指定すると逆に処理時間が長くなる可能性があります。
+                            </TextBlock>
+                        </Expander>
+                        <TextBox x:Name="multithreadNum" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="トースト通知の無効化">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                トースト通知を無効化することが可能です。。
+                            </TextBlock>
+                        </Expander>
+                        <ComboBox x:Name="disableToastNotification" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+                            <ComboBoxItem>デフォルト値</ComboBoxItem>
+                            <ComboBoxItem>しない</ComboBoxItem>
+                            <ComboBoxItem>する</ComboBoxItem>
+                        </ComboBox>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="GUI版の最大ログ行数">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                GUI版で実行ログの最大行数を制限することができます。
+                                <LineBreak/>
+                                実行ログの行数が増えてくるとメモリ使用量の増大やレスポンスが低下する可能性が高いです。
+                                規定の設定では1000行に設定されています。0に設定することで無制限とすることができます。
+                            </TextBlock>
+                        </Expander>
+                        <TextBox x:Name="guiMaxExecLogLines" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ダウンロード履歴保持日数">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                ダウンロード履歴を保持する日数を指定します。
+                                <LineBreak/>
+                                保持期間を長くすると、同じ番組の再配信があった際に重複ダウンロードしなくて住む可能性が高くなりますが、処理時間が長くなる可能性があります。
+                            </TextBlock>
+                        </Expander>
+                        <TextBox x:Name="histRetentionPeriod" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="youtube-dlとffmpegのウィンドウの表示方法">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                youtube-dl と ffmpeg のウィンドウをどのように表示するかを設定します。
+                                <LineBreak/>
+                                Minimizedに設定することで最小化状態でウィンドウが作成されるようになり必要なときにだけ進捗確認をすることができます。
+                                <LineBreak/>
+                                Hiddenに設定すると非表示となります。
+                                <LineBreak/>
+                                Normalに設定すると多数のウィンドウが表示され鬱陶しいのでおすすめしません。
+                                <LineBreak/>
+                                Maximizedに設定すると最大化した状態でウィンドウが表示されますが、通常利用では利用することはないと思います。
+                            </TextBlock>
+                        </Expander>
+                        <ComboBox x:Name="windowShowStyle" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+                            <ComboBoxItem>デフォルト値</ComboBoxItem>
+                            <ComboBoxItem>Minimized</ComboBoxItem>
+                            <ComboBoxItem>Hidden</ComboBoxItem>
+                            <ComboBoxItem>Normal</ComboBoxItem>
+                            <ComboBoxItem>Maximized</ComboBoxItem>
+                        </ComboBox>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="サイトマップ処理時にエピソードのみ処理">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                キーワードファイルでサイトマップ指定をした際にエピソードのみを処理するかどうかを設定します。
+                                <LineBreak/>
+                                現在のところ、エピソードだけの処理でもすべての番組動画が含まれているようなので、エピソードだけの処理でも全番組のダウンロードが可能なようです。
+                                処理時間が長くなりますが、エピソード以外も処理することでダウンロード対象番組が増える可能性があります。
+                            </TextBlock>
+                        </Expander>
+                        <ComboBox x:Name="sitemapParseEpisodeOnly" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+                            <ComboBoxItem>デフォルト値</ComboBoxItem>
+                            <ComboBoxItem>しない</ComboBoxItem>
+                            <ComboBoxItem>する</ComboBoxItem>
+                        </ComboBox>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ダウンロードリストファイルへの番組説明の出力">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                ダウンロードリストファイルに番組説明情報を出力するかを設定します。
+                            </TextBlock>
+                        </Expander>
+                        <ComboBox x:Name="extractDescTextToList" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+                            <ComboBoxItem>デフォルト値</ComboBoxItem>
+                            <ComboBoxItem>しない</ComboBoxItem>
+                            <ComboBoxItem>する</ComboBoxItem>
+                        </ComboBox>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ダウンロードリスト作成時のダウンロード履歴との突合">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                ダウンロードリストファイル作成時にダウンロード履歴に含まれる番組を除外するかを設定します。
+                                <LineBreak/>
+                                「する」の場合ははダウンロード履歴に番組履歴がある際はリストファイルに出力しません。
+                                <LineBreak/>
+                                「しない」の場合はダウンロード履歴に番組履歴があってもリストファイルに出力します。
+                            </TextBlock>
+                        </Expander>
+                        <ComboBox x:Name="listGenHistoryCheck" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+                            <ComboBoxItem>デフォルト値</ComboBoxItem>
+                            <ComboBoxItem>しない</ComboBoxItem>
+                            <ComboBoxItem>する</ComboBoxItem>
+                        </ComboBox>
+
+                    </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+
+
+                <TabItem Header="youtube-dl設定" Name="TabItem4" Style="{StaticResource TabItem}">
+                    <ScrollViewer>
+                    <StackPanel>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="youtube-dlの取得元">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                youtube-dlに起因する問題(例えばダウンロードできないなど)が起きた際には2種類のyoutube-dlを使い分けることが可能です。
+                                <LineBreak/>
+                                yt-dlpを設定するとyt-dlp(https://github.com/yt-dlp/yt-dlp)から取得します。
+                                <LineBreak/>
+                                ytdl-patchedを設定するとytdl-patched(https://github.com/ytdl-patched/ytdl-patched)から取得します。
+                            </TextBlock>
+                        </Expander>
+                        <ComboBox x:Name="preferredYoutubedl" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+                            <ComboBoxItem>デフォルト値</ComboBoxItem>
+                            <ComboBoxItem>yt-dlp</ComboBoxItem>
+                            <ComboBoxItem>ytdl-patched</ComboBoxItem>
+                        </ComboBox>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="youtube-dlの自動アップデートを無効化">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                youtube-dlの配布元の不具合等により自動アップデートがうまく動作しない場合には無効化することが可能です。
+                            </TextBlock>
+                        </Expander>
+                        <ComboBox x:Name="disableUpdateYoutubedl" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+                            <ComboBoxItem>デフォルト値</ComboBoxItem>
+                            <ComboBoxItem>しない</ComboBoxItem>
+                            <ComboBoxItem>する</ComboBoxItem>
+                        </ComboBox>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="youtube-dlオプション">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                直接youtube-dlのオプションを記載することができます。
+                                <LineBreak/>
+                                動画の解像度を指定する場合などに使用します。
+                            </TextBlock>
+                        </Expander>
+                        <TextBox x:Name="ytdlOption" Text="未設定" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="Tverサイト以外のベース名設定">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                Tverサイト以外のベースファイル名を指定します。
+                            </TextBlock>
+                        </Expander>
+                        <TextBox x:Name="ytdlNonTVerFileName" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+
+                    </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+
+                <TabItem Header="ffmpeg設定" Name="TabItem5" Style="{StaticResource TabItem}">
+                    <ScrollViewer>
+                    <StackPanel>
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ffmpegのデコードオプション">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                直接ffmpegのオプションを記載することができます。
+                                <LineBreak/>
+                                ダウンロードファイルの整合性検証時にハードウェアアクセラレーションを有効化する際などに使用します。
+                                例えばIntel CPUを搭載した一般的なPCであれば、-hwaccel qsv -c:v h264_qsvを設定することで、CPU内蔵のアクセラレータを使ってCPU負荷を下げつつ高速に処理することが可能です。
+                                この設定はソフトウェアデコードの強制を有効に設定されていると無効化されます。
+                            </TextBlock>
+                        </Expander>
+                        <TextBox x:Name="ffmpegDecodeOption" Text="未設定" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ffmpegの自動アップデートを無効化">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                ffmpegの配布元の不具合等により自動アップデートがうまく動作しない場合には無効化することが可能です。
+                            </TextBlock>
+                        </Expander>
+                        <ComboBox x:Name="disableUpdateFfmpeg" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+                            <ComboBoxItem>デフォルト値</ComboBoxItem>
+                            <ComboBoxItem>しない</ComboBoxItem>
+                            <ComboBoxItem>する</ComboBoxItem>
+                        </ComboBox>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ソフトウェアデコードの強制">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                ダウンロードファイルの整合性検証時にハードウェアアクセラレーションを使わなくすることができます。
+                                <LineBreak/>
+                                高速なCPUが搭載されている場合はハードウェアアクセラレーションよりもCPUで処理したほうが処理が早いことがあります。
+                                概ね10世代以降のIntel Core CPUであれば、GPUを搭載していてもソフトウェアデコードの方が高速です。
+                                Apple Silicon搭載のMacでもソフトウェアデコードのほうが高速です。
+                            </TextBlock>
+                        </Expander>
+                        <ComboBox x:Name="forceSoftwareDecodeFlag" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+                            <ComboBoxItem>デフォルト値</ComboBoxItem>
+                            <ComboBoxItem>しない</ComboBoxItem>
+                            <ComboBoxItem>する</ComboBoxItem>
+                        </ComboBox>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="番組の整合性検証の高速化">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                番組検証を簡素化するかどうかを設定します。
+                                <LineBreak/>
+                                簡素化した場合、ffmpegによる番組の完全検証ではなく、ffprobeによる簡易検証に切り替えます。
+                                番組1本あたり数秒で検証が完了しますが、検証精度は低いです。(おそらくメタデータの検査だけの模様)
+                            </TextBlock>
+                        </Expander>
+                        <ComboBox x:Name="simplifiedValidation" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+                            <ComboBoxItem>デフォルト値</ComboBoxItem>
+                            <ComboBoxItem>しない</ComboBoxItem>
+                            <ComboBoxItem>する</ComboBoxItem>
+                        </ComboBox>
+
+                        <Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="番組の整合性検証の無効化">
+                            <TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+                                番組検証を行わなくするかどうかを設定します。
+                            </TextBlock>
+                        </Expander>
+                        <ComboBox x:Name="disableValidation" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+                            <ComboBoxItem>デフォルト値</ComboBoxItem>
+                            <ComboBoxItem>しない</ComboBoxItem>
+                            <ComboBoxItem>する</ComboBoxItem>
+                        </ComboBox>
+
+                    </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+            </TabControl>
+
         </Border>
         <!-- ボタンエリア -->
         <Button x:Name="btnWiki" Style="{DynamicResource ButtonStyle}" Content="📒 TVerRec Wiki" HorizontalAlignment="Left" Grid.Column="1" Grid.Row="7" VerticalAlignment="Center" Width="100"/>

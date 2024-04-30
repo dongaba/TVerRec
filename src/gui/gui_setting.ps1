@@ -68,7 +68,7 @@ function Select-Folder($description, $textBox) {
 #system_setting.ps1から各設定項目を読み込む
 function Read-SystemSetting {
 	Param ([Parameter(Mandatory = $true)][String]$key)
-	$defaultSetting = try {(Select-String -Pattern ('^{0}' -f $key.Replace('$', '\$')) -LiteralPath $systemSettingFile | ForEach-Object { $_.Line }).split('=')[1].Trim()}
+	$defaultSetting = try { (Select-String -Pattern ('^{0}' -f $key.Replace('$', '\$')) -LiteralPath $systemSettingFile | ForEach-Object { $_.Line }).split('=', 2)[1].Trim() }
 	catch { '' }
 	return $defaultSetting.Trim("'")
 	Remove-Variable -Name key, defaultSetting -ErrorAction SilentlyContinue
@@ -79,7 +79,7 @@ function Read-UserSetting {
 	Param ([Parameter(Mandatory = $true)][String]$key)
 	$currentSetting = ''
 	if (Test-Path (Join-Path $script:confDir 'user_setting.ps1')) {
-		try { $currentSetting = (Select-String -Pattern ('^{0}' -f [regex]::Escape($key)) -LiteralPath $userSettingFile | ForEach-Object { $_.Line }).split('=')[1].Trim() }
+		try { $currentSetting = (Select-String -Pattern ('^{0}' -f [regex]::Escape($key)) -LiteralPath $userSettingFile | ForEach-Object { $_.Line }).split('=', 2)[1].Trim() }
 		catch { return }
 	}
 	return $currentSetting.Trim("'")
@@ -117,8 +117,8 @@ function Save-UserSetting {
 				{ $_ -eq 'する' } { $newSetting += ('{0} = $true' -f $settingAttribute); continue }
 				{ $_ -eq 'しない' } { $newSetting += ('{0} = $false' -f $settingAttribute); continue }
 				default {
-					if ([Int]::TryParse($settingBox.Text, [ref]$null) -or $settingBox.Text -match '[${}]') {$newSetting += ('{0} = {1}' -f $settingAttribute, $settingBox.Text)}
-					else {$newSetting += ('{0} = ''{1}''' -f $settingAttribute, $settingBox.Text)}
+					if ([Int]::TryParse($settingBox.Text, [ref]$null) -or $settingBox.Text -match '[${}]') { $newSetting += ('{0} = {1}' -f $settingAttribute, $settingBox.Text) }
+					else { $newSetting += ('{0} = ''{1}''' -f $settingAttribute, $settingBox.Text) }
 				}
 			}
 		}
@@ -180,10 +180,10 @@ $lblVersion.Content = ('Version {0}' -f $script:appVersion)
 #region ボタンのアクション
 $btnWiki.Add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
 $btnCancel.Add_Click({ $settingWindow.close() })
-$btnSave.Add_Click({ Save-UserSetting; $settingWindow.close()})
-$btndownloadBaseDir.Add_Click({Select-Folder 'ダウンロード先ディレクトリを選択してください' $script:downloadBaseDir})
-$btndownloadWorkDir.Add_Click({Select-Folder '作業ディレクトリを選択してください' $script:downloadWorkDir})
-$btnsaveBaseDir.Add_Click({Select-Folder '移動先ディレクトリを選択してください' $script:saveBaseDir})
+$btnSave.Add_Click({ Save-UserSetting; $settingWindow.close() })
+$btndownloadBaseDir.Add_Click({ Select-Folder 'ダウンロード先ディレクトリを選択してください' $script:downloadBaseDir })
+$btndownloadWorkDir.Add_Click({ Select-Folder '作業ディレクトリを選択してください' $script:downloadWorkDir })
+$btnsaveBaseDir.Add_Click({ Select-Folder '移動先ディレクトリを選択してください' $script:saveBaseDir })
 
 #endregion ボタンのアクション
 #----------------------------------------------------------------------

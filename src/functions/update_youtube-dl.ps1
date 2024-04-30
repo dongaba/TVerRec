@@ -96,7 +96,7 @@ if ($latestVersion -eq $currentVersion) {
 		$tag = (Invoke-RestMethod -Uri $releases -Method 'GET')[0].Tag_Name
 		$downloadURL = ('https://github.com/{0}/releases/download/{1}/{2}' -f $repo, $tag, $fileBeforeRrename)
 		$ytdlFileLocation = Join-Path $script:binDir $fileAfterRename
-		Invoke-WebRequest -UseBasicParsing -Uri $downloadURL -Out $ytdlFileLocation
+		Invoke-WebRequest -Uri $downloadURL -Out $ytdlFileLocation
 	} catch { Throw ('❌️ youtube-dlのダウンロードに失敗しました') }
 
 	if (!$IsWindows) { (& chmod a+x $ytdlFileLocation) }
