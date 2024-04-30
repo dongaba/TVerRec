@@ -234,7 +234,6 @@ switch ($true) {
 		$os = ('macOS {0}' -f [System.Environment]::OSVersion.Version)
 		$arch = (& uname -m | tr '[:upper:]' '[:lower:]').replace('x86_64', 'amd64')
 
-
 		#残っているかもしれない中間ファイルを削除
 		$null = Remove-Item -LiteralPath (Join-Path $script:binDir 'ffmpeg.zip') -Force -ErrorAction SilentlyContinue
 		$null = Remove-Item -LiteralPath (Join-Path $script:binDir 'ffprobe.zip') -Force -ErrorAction SilentlyContinue
@@ -278,9 +277,6 @@ switch ($true) {
 				Invoke-WebRequest -Uri ('{0}{1}' -f $uriBase, ($uriBasePage.links | Where-Object { $_.href -match $arch } | Where-Object { $_.href -match $latestBuild } | Where-Object { $_.outerHTML -match 'ffmpeg.zip"' }).href) -OutFile (Join-Path $script:binDir 'ffmpeg.zip')
 				Invoke-WebRequest -Uri ('{0}{1}' -f $uriBase, ($uriBasePage.links | Where-Object { $_.href -match $arch } | Where-Object { $_.href -match $latestBuild } | Where-Object { $_.outerHTML -match 'ffprobe.zip"' }).href) -OutFile (Join-Path $script:binDir 'ffprobe.zip')
 			} catch { Throw ('❌️ ffmpegのダウンロードに失敗しました') }
-
-			#arm64 と amd64 でビルドナンバーが違う
-			#先にアーキテクチャを判定し、最新バージョンをそれぞれで取得する必要がある
 
 			#展開
 			Write-Output ('ダウンロードしたffmpegを解凍します')
