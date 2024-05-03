@@ -43,7 +43,7 @@ function Invoke-TVerRecUpdateCheck {
 	$repo = 'dongaba/TVerRec'
 	$releases = ('https://api.github.com/repos/{0}/releases' -f $repo)
 	try {
-		$appReleases = (Invoke-RestMethod -Uri $releases -Method 'GET' )
+		$appReleases = (Invoke-RestMethod -Uri $releases -Method 'GET' ).where{ ($_.prerelease -eq $false) }[0]
 		if (!$appReleases) { Write-Warning '最新版の情報を取得できませんでした' ; return }
 	} catch { Write-Warning '最新版の情報を取得できませんでした' ; return }
 	#GitHub側最新バージョンの整形 v1.2.3 → 1.2.3

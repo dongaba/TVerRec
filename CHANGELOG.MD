@@ -1,5 +1,15 @@
 ﻿# Change Log
 
+## [3.1.1](https://github.com/dongaba/TVerRec/releases/tag/v3.1.1)
+
+### 3.1.1 Added
+
+- TVerRecの自動アップデートでアップデートチャネルを選択可能に
+
+### 3.1.1 Changed
+
+### 3.1.1 Fixed
+
 ## [3.1.0](https://github.com/dongaba/TVerRec/releases/tag/v3.1.0)
 
 ### 3.1.0 Added

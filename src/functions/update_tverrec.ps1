@@ -109,7 +109,7 @@ Write-Output ('                       TVerRecアップデート処理')
 Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 
 $repo = 'dongaba/TVerRec'
-$releases = ('https://api.github.com/repos/{0}/releases/latest' -f $repo)
+$releases = ('https://api.github.com/repos/{0}/releases' -f $repo)
 
 #念のため過去のバージョンがあれば削除し、作業ディレクトリを作成
 Write-Output ('')
@@ -125,9 +125,13 @@ Write-Output ('')
 Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('TVerRecの最新版をダウンロードします')
 try {
-	if ((Get-Variable -Name 'updatedFromHead' -ErrorAction SilentlyContinue) -and ($script:updatedFromHead)) { $zipURL = 'https://github.com/dongaba/TVerRec/archive/refs/heads/master.zip' }
-	elseif ((Get-Variable -Name 'updatedFromDev' -ErrorAction SilentlyContinue) -and ($script:updatedFromDev)) { $zipURL = 'https://github.com/dongaba/TVerRec/archive/refs/heads/dev.zip' }
-	else { $zipURL = (Invoke-RestMethod -Uri $releases -Method 'GET').zipball_url }
+	$zipURL = switch ($script:updateChannel) {
+		'dev' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/dev.zip' }
+		'beta' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/beta.zip' }
+		'master' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/master.zip' }
+		'prerelease' { (Invoke-RestMethod -Uri $releases -Method 'GET').where{ ($_.prerelease -eq $true) }[0].zipball_url }
+		default { (Invoke-RestMethod -Uri $releases -Method 'GET').where{ ($_.prerelease -eq $false) }[0].zipball_url }
+	}
 	Invoke-WebRequest -Uri $zipURL -OutFile (Join-Path $updateTemp 'TVerRecLatest.zip')
 } catch { Throw ('❌️ ダウンロードに失敗しました');	exit 1 }
 
