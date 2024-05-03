@@ -25,7 +25,11 @@ BeforeAll {
 	$script:tagID = 'golf'	#ゴルフ
 	$script:genre = 'drama'	#ドラマ
 	$script:keyword = 'カンブリア'
-
+	$script:requestHeader = @{
+		'x-tver-platform-type' = 'web'
+		'Origin'               = 'https://tver.jp'
+		'Referer'              = 'https://tver.jp'
+	}
 	function MockProcessSearchResults {
 		param($baseURL, $type, $keyword)
 		return [PSCustomObject]@{
