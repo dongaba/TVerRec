@@ -228,7 +228,8 @@ $settingAttributes = @(
 	'$script:ytdlNonTVerFileName',
 	'$script:forceSingleDownload',
 	'$script:extractDescTextToList',
-	'$script:listGenHistoryCheck'
+	'$script:listGenHistoryCheck',
+	'$script:updateChannel'
 )
 $defaultSetting = @{}
 $currentSetting = @{}
