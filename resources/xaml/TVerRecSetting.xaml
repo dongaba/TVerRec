@@ -3,7 +3,7 @@
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	xmlns:local="clr-namespace:TVerRecSetting" mc:Ignorable="d" Title="Setting" Height="640" Width="640" MinHeight="480" MinWidth="320" Background="#f1f1f1"
+	xmlns:local="clr-namespace:TVerRecSetting" mc:Ignorable="d" Title="Setting" Height="640" Width="640" MinHeight="480" MinWidth="640" Background="#f1f1f1"
 	WindowStartupLocation="CenterScreen">
 	<Window.TaskbarItemInfo>
 		<TaskbarItemInfo/>
@@ -688,6 +688,18 @@
 								</TextBlock>
 							</Expander>
 							<TextBox x:Name="ffmpegDecodeOption" Text="未設定" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+							<StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="10,5,10,5">
+								<Button x:Name="ffmpegDecodeOption_Clear" Style="{DynamicResource ButtonStyle}" Content="クリア" Width="50" Margin="15,0,15,0"/>
+								<Button x:Name="ffmpegDecodeOption_Qsv" Style="{DynamicResource ButtonStyle}" Content="Intel QSV" Width="90" Margin="5,0,5,0"/>
+								<Button x:Name="ffmpegDecodeOption_D3d11" Style="{DynamicResource ButtonStyle}" Content="Direct3D 11" Width="90" Margin="5,0,5,0"/>
+								<Button x:Name="ffmpegDecodeOption_D3d9" Style="{DynamicResource ButtonStyle}" Content="Direct3D 9" Width="90" Margin="5,0,5,0"/>
+								<Button x:Name="ffmpegDecodeOption_Cuda" Style="{DynamicResource ButtonStyle}" Content="Cuda" Width="90" Margin="5,0,5,0"/>
+							</StackPanel>
+							<StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="10,0,10,5">
+								<Button x:Name="ffmpegDecodeOption_Vtb" Style="{DynamicResource ButtonStyle}" Content="VideoToolbox" Width="90" Margin="85,0,5,0"/>
+								<Button x:Name="ffmpegDecodeOption_Pi4" Style="{DynamicResource ButtonStyle}" Content="Pi4 64bit" Width="90" Margin="5,0,5,0"/>
+								<Button x:Name="ffmpegDecodeOption_Pi3" Style="{DynamicResource ButtonStyle}" Content="Pi3 32bit" Width="90" Margin="5,0,5,0"/>
+							</StackPanel>
 							<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ソフトウェアデコードの強制">
 								<TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
 									ダウンロードファイルの整合性検証時にハードウェアアクセラレーションを使わなくすることができます。 <LineBreak/>
@@ -752,6 +764,13 @@
 								</TextBlock>
 							</Expander>
 							<TextBox x:Name="ytdlOption" Text="未設定" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+							<StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="10,5,10,5">
+								<Button x:Name="btnYtdlOption_Clear" Style="{DynamicResource ButtonStyle}" Content="クリア" Width="50" Margin="15,0,15,0"/>
+								<Button x:Name="btnYtdlOption_1080" Style="{DynamicResource ButtonStyle}" Content="1080p以下" Width="90" Margin="5,0,5,0"/>
+								<Button x:Name="btnYtdlOption_720" Style="{DynamicResource ButtonStyle}" Content="720p以下" Width="90" Margin="5,0,5,0"/>
+								<Button x:Name="btnYtdlOption_480" Style="{DynamicResource ButtonStyle}" Content="480p以下" Width="90" Margin="5,0,5,0"/>
+								<Button x:Name="btnYtdlOption_360" Style="{DynamicResource ButtonStyle}" Content="360p以下" Width="90" Margin="5,0,5,0"/>
+							</StackPanel>
 						</StackPanel>
 					</ScrollViewer>
 				</TabItem>

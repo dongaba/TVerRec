@@ -236,7 +236,7 @@ $script:ffmpegDecodeOption = ''
 #	$script:ffmpegDecodeOption = '-hwaccel dxva2 -hwaccel_output_format dxva2_vld'
 #	CUDA : for NVIDIA Graphic Cards
 #	$script:ffmpegDecodeOption = '-hwaccel cuda -hwaccel_output_format cuda'
-#	VideoToolBox : for Macs
+#	VideoToolbox : for Macs
 #	$script:ffmpegDecodeOption = '-hwaccel videotoolbox'
 #	for Raspberry Pi 4 64bit
 #	$script:ffmpegDecodeOption = '-c:v h264_v4l2m2m -num_output_buffers 32 -num_capture_buffers 32'

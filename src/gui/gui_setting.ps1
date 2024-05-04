@@ -185,6 +185,25 @@ $btndownloadBaseDir.Add_Click({ Select-Folder 'ダウンロード先ディレク
 $btndownloadWorkDir.Add_Click({ Select-Folder '作業ディレクトリを選択してください' $script:downloadWorkDir })
 $btnsaveBaseDir.Add_Click({ Select-Folder '移動先ディレクトリを選択してください' $script:saveBaseDir })
 
+$ffmpegDecodeOption_Clear.Add_Click({ $ffmpegDecodeOption.Text = '' })
+$ffmpegDecodeOption_Qsv.Add_Click({ $ffmpegDecodeOption.Text = '-hwaccel qsv -c:v h264_qsv' })
+$ffmpegDecodeOption_D3d11.Add_Click({ $ffmpegDecodeOption.Text = '-hwaccel d3d11va -hwaccel_output_format d3d11' })
+$ffmpegDecodeOption_D3d9.Add_Click({ $ffmpegDecodeOption.Text = '-hwaccel dxva2 -hwaccel_output_format dxva2_vld' })
+$ffmpegDecodeOption_Cuda.Add_Click({ $ffmpegDecodeOption.Text = '-hwaccel cuda -hwaccel_output_format cuda' })
+$ffmpegDecodeOption_Vtb.Add_Click({ $ffmpegDecodeOption.Text = '-hwaccel videotoolbox' })
+$ffmpegDecodeOption_Pi4.Add_Click({ $ffmpegDecodeOption.Text = '-c:v h264_v4l2m2m -num_output_buffers 32 -num_capture_buffers 32' })
+$ffmpegDecodeOption_Pi3.Add_Click({ $ffmpegDecodeOption.Text = '-c:v h264_omx' })
+
+function Set-YtdlOption ($height) {
+	$ytdlOption.Text = if ($height -eq 'Clear') { ''} 
+	else {"-f bestvideo[height<=$height]+bestaudio/best[height<=$height]"}
+}
+$btnYtdlOption_Clear.Add_Click({ Set-YtdlOption 'Clear' })
+$btnYtdlOption_1080.Add_Click({ Set-YtdlOption 1080 })
+$btnYtdlOption_720.Add_Click({ Set-YtdlOption 720 })
+$btnYtdlOption_480.Add_Click({ Set-YtdlOption 480 })
+$btnYtdlOption_360.Add_Click({ Set-YtdlOption 360 })
+
 #endregion ボタンのアクション
 #----------------------------------------------------------------------
 
