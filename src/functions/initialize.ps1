@@ -127,10 +127,12 @@ if ( $myInvocation.ScriptName.Contains('gui')) {
 }
 
 #共通HTTPヘッダ
+$script:jpIP = Get-RandomIPv4Address
 $script:requestHeader = @{
 	'x-tver-platform-type' = 'web'
 	'Origin'               = 'https://tver.jp'
 	'Referer'              = 'https://tver.jp'
+	'X-Forwarded-For'      = $script:jpIP
 }
 
 #ロックファイル用

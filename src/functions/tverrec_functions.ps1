@@ -589,16 +589,36 @@ function Get-VideoInfo {
 	$endTime = (ConvertFrom-UnixTime ($response.Result.Episode.Content.EndAt)).AddHours(9)
 	#----------------------------------------------------------------------
 	#番組説明
-	$versionNum = $response.Result.Episode.Content.version
-	$tverVideoInfoBaseURL = 'https://statics.tver.jp/content/episode/'
-	$tverVideoInfoURL = ('{0}{1}.json?v={2}' -f $tverVideoInfoBaseURL, $episodeID, $versionNum)
 	try {
+		$versionNum = $response.Result.Episode.Content.version
+		$tverVideoInfoBaseURL = 'https://statics.tver.jp/content/episode/'
+		$tverVideoInfoURL = ('{0}{1}.json?v={2}' -f $tverVideoInfoBaseURL, $episodeID, $versionNum)
 		$videoInfo = Invoke-RestMethod -Uri $tverVideoInfoURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
 		$descriptionText = (Get-NarrowChars ($videoInfo.Description).Replace('&amp;', '&')).Trim()
 		$videoEpisodeNum = (Get-NarrowChars ($videoInfo.No)).Trim()
+		$accountID = $videoInfo.video.accountID
+		$videoRefID = if ($videoInfo.video.PSObject.Properties.Name -contains 'videoRefID') { ('ref%3A{0}' -f $videoInfo.video.videoRefID) } else { $videoInfo.video.videoID }
+		$playerID = $videoInfo.video.playerID
 	} catch { Write-Warning ('⚠️ エラーが発生しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message); return }
+	try {
+		$brightcoveJsURL = ('https://players.brightcove.net/{0}/{1}_default/index.min.js' -f $accountID, $playerID)
+		$brightcovePk = if ((Invoke-RestMethod -Uri $brightcoveJsURL -Method 'GET' -Headers $script:requestHeader) -match 'policyKey:"([a-zA-Z0-9_-]*)"') { $matches[1] }
+	} catch { Write-Warning ('⚠️ エラーが発生しました。m3u8ファイル取得のキーが取得できません。 - {0}' -f $_.Exception.Message) }
+	try {
+		$brightcoveURL = ('https://edge.api.brightcove.com/playback/v1/accounts/{0}/videos/{1}' -f $accountID, $videoRefID)
+		$headers = @{
+			'Accept'          = ('application/json;pk={0}' -f $brightcovePk)
+			'X-Forwarded-For' = $script:jpIP
+		}
+		$response = Invoke-RestMethod -Uri $brightcoveURL -Method 'GET' -Headers $headers
+		$m3u8URL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*mpeg*' }).where({ $_.ext_x_version -eq 4 })[0].src
+		$mpdURL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*dash*' })[0].src
+	} catch { Write-Warning ('⚠️ エラーが発生しました。m3u8ファイルが取得できません。 - {0}' -f $_.Exception.Message) }
+	
 	#「《」と「》」で挟まれた文字を除去
-	if ($script:removeSpecialNote) { $videoSeries = Remove-SpecialNote $videoSeries; $videoSeason = Remove-SpecialNote $videoSeason; $episodeName = Remove-SpecialNote $episodeName }
+	if ($script:removeSpecialNote) { 
+		; $videoSeason = Remove-SpecialNote $videoSeason; $episodeName = Remove-SpecialNote $episodeName 
+	}
 	#シーズン名が本編の場合はシーズン名をクリア
 	if ($videoSeason -eq '本編') { $videoSeason = '' }
 	#シリーズ名がシーズン名を含む場合はシーズン名をクリア
@@ -630,6 +650,8 @@ function Get-VideoInfo {
 		versionNum      = $versionNum
 		videoInfoURL    = $tverVideoInfoURL
 		descriptionText = $descriptionText
+		m3u8URL         = $m3u8URL
+		mpdURL          = $mpdURL
 	}
 	Remove-Variable -Name episodeID, tverVideoInfoBaseURL, tverVideoInfoURL, response -ErrorAction SilentlyContinue
 	Remove-Variable -Name videoSeries, videoSeriesID, videoSeriesPageURL, videoSeason, videoSeasonID, episodeName, videoEpisodeID, videoEpisodePageURL -ErrorAction SilentlyContinue
@@ -1008,6 +1030,27 @@ function Invoke-ValidityCheck {
 }
 
 #region 環境
+#----------------------------------------------------------------------
+#Geo IP関連
+#----------------------------------------------------------------------
+function Get-RandomIPv4Address {
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	#日本に割り当てられているIPアドレスレンジの取得
+	$allCIDR = (Invoke-RestMethod ('https://cdn-lite.ip2location.com/datasets/JP.json?_={0}' -f (ConvertTo-UnixTime (Get-Date)))).data
+	$randomCIDR = $allCIDR[[UInt32](Get-Random -Maximum $allCIDR.count)]
+	#ランダムなIPアドレスの取得
+	$startIPArray = [System.Net.IPAddress]::Parse($randomCIDR[0]).GetAddressBytes()
+	$endIPArray = [System.Net.IPAddress]::Parse($randomCIDR[1]).GetAddressBytes()
+	[Array]::Reverse($startIPArray)
+	[Array]::Reverse($endIPArray)
+	$startIPInt = [BitConverter]::ToUInt32($startIPArray, 0)
+	$endIPInt = [BitConverter]::ToUInt32($endIPArray, 0)
+	$randomIPInt = $startIPInt + [UInt32](Get-Random -Maximum ($endIPInt - $startIPInt - 1)) + 1	#CIDR範囲の先頭と末尾を除く
+	$randomIPArray = [System.BitConverter]::GetBytes($randomIPInt) 
+	[Array]::Reverse($randomIPArray)
+	return [System.Net.IPAddress]::new($randomIPArray).ToString()
+	Remove-Variable -Name allCIDR, randomCIDR, startIPArray, endIPArray, startIPInt, endIPInt, randomIPInt, randomIPArray -ErrorAction SilentlyContinue
+}
 
 #----------------------------------------------------------------------
 #設定取得
