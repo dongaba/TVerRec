@@ -29,6 +29,10 @@
 		"editor.autoIndent": "advanced",
 		"editor.defaultFormatter": "esbenp.prettier-vscode"
 	},
+	"[xaml]": {
+		"editor.autoIndent": "advanced",
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
 	"[powershell]": {
 		"editor.autoIndent": "advanced",
 		"editor.defaultFormatter": "ms-vscode.powershell"
