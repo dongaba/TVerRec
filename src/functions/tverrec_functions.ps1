@@ -434,7 +434,7 @@ function Invoke-VideoDownload {
 	#ダウンロードファイル名を生成
 	$videoInfo = Format-VideoFileInfo $videoInfo
 	#番組タイトルが取得できなかった場合はスキップ次の番組へ
-	if ($videoInfo.fileName -eq '.mp4') { Write-Warning ('　⚠️ 番組タイトルを特定できませんでした。スキップします') ; continue }
+	if (($videoInfo.fileName -eq '.mp4') -or ($videoInfo.fileName -eq '.ts')) { Write-Warning ('　⚠️ 番組タイトルを特定できませんでした。スキップします') ; continue }
 	#番組情報のコンソール出力
 	Show-VideoInfo $videoInfo
 	if ($DebugPreference -ne 'SilentlyContinue') { Show-VideoDebugInfo $videoInfo }
@@ -686,7 +686,7 @@ function Format-VideoFileInfo {
 		while ([System.Text.Encoding]::UTF8.GetByteCount($videoName) -gt $fileNameLimit) { $videoName = $videoName.Substring(0, $videoName.Length - 1) }
 		$videoName = ('{0}……' -f $videoName)
 	}
-	$videoName = Get-FileNameWithoutInvalidChars ('{0}.mp4' -f $videoName)
+	$videoName = Get-FileNameWithoutInvalidChars ('{0}.{1}' -f $videoName, $script:videoContainerFormat)
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'fileName' -Value $videoName
 	$videoFileDir = Get-FileNameWithoutInvalidChars (Remove-SpecialCharacter ('{0} {1}' -f $videoInfo.seriesName, $videoInfo.seasonName ).Trim(' ', '.'))
 	if ($script:sortVideoByMedia) { $videoFileDir = (Join-Path $script:downloadBaseDir (Get-FileNameWithoutInvalidChars $videoInfo.mediaName) | Join-Path -ChildPath $videoFileDir) }
@@ -707,7 +707,7 @@ function Show-VideoInfo {
 	[OutputType([System.Void])]
 	Param ([Parameter(Mandatory = $true)][pscustomobject]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	Write-Output ('　番組名:　 {0}' -f $videoInfo.fileName.Replace('.mp4', ''))
+	Write-Output ('　番組名:　 {0}' -f $videoInfo.fileName.Replace($script:videoContainerFormat, ''))
 	Write-Output ('　放送日:　 {0}' -f $videoInfo.broadcastDate)
 	Write-Output ('　テレビ局: {0}' -f $videoInfo.mediaName)
 	Write-Output ('　配信終了: {0}' -f $videoInfo.endTime)
@@ -739,25 +739,28 @@ function Invoke-Ytdl {
 	}
 	$tmpDir = ('temp:{0}' -f $script:downloadWorkDir)
 	$saveDir = ('home:{0}' -f $videoInfo.fileDir)
-	$subttlDir = ('subtitle:{0}' -f $script:downloadWorkDir)
-	$thumbDir = ('thumbnail:{0}' -f $script:downloadWorkDir)
-	$chaptDir = ('chapter:{0}' -f $script:downloadWorkDir)
-	$descDir = ('description:{0}' -f $script:downloadWorkDir)
 	$saveFile = ('{0}' -f $videoInfo.fileName)
 	$ytdlArgs = (' {0}' -f $script:ytdlBaseArgs)
+	if ($script:videoContainerFormat -eq 'mp4') { 
+		$ytdlArgs += (' {0}' -f '--merge-output-format mp4 --embed-thumbnail --embed-chapters')
+		$subttlDir = ('subtitle:{0}' -f $script:downloadWorkDir)
+		$thumbDir = ('thumbnail:{0}' -f $script:downloadWorkDir)
+		$chaptDir = ('chapter:{0}' -f $script:downloadWorkDir)
+		$descDir = ('description:{0}' -f $script:downloadWorkDir)
+		$ytdlArgs += (' {0} "{1}"' -f '--paths', $subttlDir)
+		$ytdlArgs += (' {0} "{1}"' -f '--paths', $thumbDir)
+		$ytdlArgs += (' {0} "{1}"' -f '--paths', $chaptDir)
+		$ytdlArgs += (' {0} "{1}"' -f '--paths', $descDir)
+		if ($script:embedSubtitle) { $ytdlArgs += (' {0}' -f '--sub-langs all --convert-subs srt --embed-subs') }
+		if ($script:embedMetatag) { $ytdlArgs += (' {0}' -f '--embed-metadata') }
+	}
 	$ytdlArgs += (' {0} {1}' -f '--concurrent-fragments', $script:parallelDownloadNumPerFile)
 	if ($script:rateLimit -notin @(0, '')) {
 		$rateLimit = [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8)
 		$ytdlArgs += (' {0} {1}M' -f '--limit-rate', $rateLimit)
 	}
-	if ($script:embedSubtitle) { $ytdlArgs += (' {0}' -f '--sub-langs all --convert-subs srt --embed-subs') }
-	if ($script:embedMetatag) { $ytdlArgs += (' {0}' -f '--embed-metadata') }
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $saveDir)
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $tmpDir)
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $subttlDir)
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $thumbDir)
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $chaptDir)
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $descDir)
 	$ytdlArgs += (' {0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
 	$ytdlArgs += (' {0} "{1}"' -f '--output', $saveFile)
 	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlAcceptLang)
@@ -796,25 +799,28 @@ function Invoke-NonTverYtdl {
 	}
 	$tmpDir = ('temp:{0}' -f $script:downloadWorkDir)
 	$baseDir = ('home:{0}' -f $script:downloadBaseDir)
-	$subttlDir = ('subtitle:{0}' -f $script:downloadWorkDir)
-	$thumbDir = ('thumbnail:{0}' -f $script:downloadWorkDir)
-	$chaptDir = ('chapter:{0}' -f $script:downloadWorkDir)
-	$descDir = ('description:{0}' -f $script:downloadWorkDir)
 	$saveFile = ('{0}' -f $script:ytdlNonTVerFileName)
 	$ytdlArgs = (' {0}' -f $script:ytdlBaseArgs)
+	if ($script:videoContainerFormat -eq 'mp4') {
+		$ytdlArgs += (' {0}' -f '--merge-output-format mp4 --embed-thumbnail --embed-chapters')
+		$subttlDir = ('subtitle:{0}' -f $script:downloadWorkDir)
+		$thumbDir = ('thumbnail:{0}' -f $script:downloadWorkDir)
+		$chaptDir = ('chapter:{0}' -f $script:downloadWorkDir)
+		$descDir = ('description:{0}' -f $script:downloadWorkDir)
+		$ytdlArgs += (' {0} "{1}"' -f '--paths', $subttlDir)
+		$ytdlArgs += (' {0} "{1}"' -f '--paths', $thumbDir)
+		$ytdlArgs += (' {0} "{1}"' -f '--paths', $chaptDir)
+		$ytdlArgs += (' {0} "{1}"' -f '--paths', $descDir)
+		if ($script:embedSubtitle) { $ytdlArgs += (' {0}' -f '--sub-langs all --convert-subs srt --embed-subs') }
+		if ($script:embedMetatag) { $ytdlArgs += (' {0}' -f '--embed-metadata') }
+	}
 	$ytdlArgs += (' {0} {1}' -f '--concurrent-fragments', $script:parallelDownloadNumPerFile)
 	if ($script:rateLimit -notin @(0, '')) {
 		$rateLimit = [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8)
 		$ytdlArgs += (' {0} {1}M' -f '--limit-rate', $rateLimit)
 	}
-	if ($script:embedSubtitle) { $ytdlArgs += (' {0}' -f '--sub-langs all --convert-subs srt --embed-subs') }
-	if ($script:embedMetatag) { $ytdlArgs += (' {0}' -f '--embed-metadata') }
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $baseDir)
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $tmpDir)
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $subttlDir)
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $thumbDir)
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $chaptDir)
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $descDir)
 	$ytdlArgs += (' {0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
 	$ytdlArgs += (' {0} "{1}"' -f '--output', $saveFile)
 	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlAcceptLang)

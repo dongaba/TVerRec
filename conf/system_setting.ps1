@@ -285,6 +285,14 @@ $script:listGenHistoryCheck = $true
 #　dev に設定すると、devブランチの最新版を取得します。開発中の最新機能をお試しいただけますが、安定動作しない可能性があるため特殊要件がなければおすすめしません。
 $script:updateChannel = 'release'
 
+#番組ファイルの動画コンテナ形式
+#　番組ファイルの動画コンテナ形式を設定します。
+#　デフォルトでは mp4 となっており、メタ情報や字幕、サムネイルなどの埋込はmp4形式のみで有効です。
+#　主に音ズレ対策として ts形式を指定することもできますが、ts形式を使うことで音ズレがなくなるかどうかはよくわかりません。
+#　ts 形式を指定した場合、メタ情報や字幕、サムネイルなどの埋め込みは利用できなくなります。
+#　機能に制限が出るため、基本的には mp4 を指定することが推奨で、特段理由がなければ ts を指定しない方が良いと思います。
+$script:videoContainerFormat = 'mp4'
+
 #----------------------------------------------------------------------
 #	以下は変更を推奨しない設定。変更の際は自己責任で。
 #----------------------------------------------------------------------
@@ -332,4 +340,4 @@ $script:iconPath = Convert-Path (Join-Path $script:imgDir 'TVerRec-Icon.png')
 
 #youtube-dlの引数
 $script:ytdlAcceptLang = 'Accept-Language:ja-JP'
-$script:ytdlBaseArgs = '--format "(bv*+ba/b)[protocol!*=dash] / (bv*+ba/b)" --format-sort proto --merge-output-format mp4 --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --embed-thumbnail --embed-chapters --no-cache-dir --verbose --ignore-config --no-check-certificates --buffer-size 16K '
+$script:ytdlBaseArgs = '--format "(bv*+ba/b)[protocol!*=dash] / (bv*+ba/b)" --format-sort proto --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --no-cache-dir --verbose --ignore-config --no-check-certificates --buffer-size 16K'

@@ -61,7 +61,7 @@ $toastUpdateParams.Rate = [Float]( 2 / 2 )
 Update-ProgressToast @toastUpdateParams
 Remove-Files `
 	-BasePath $script:downloadWorkDir `
-	-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.vtt', '*.srt', '*.part', '*.part-Frag*', '*.m4a', '*.live_chat.json', '*.mp4') `
+	-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.part', '*.part-Frag*', '*.m4a', '*.live_chat.json', '*.mp4', '*.ts') `
 	-DelPeriod 0
 
 # #ダウンロード先
@@ -71,7 +71,7 @@ Remove-Files `
 
 # Remove-Files `
 # 	-BasePath $script:downloadBaseDir `
-# 	-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.vtt', '*.srt', '*.part', '*.part-Frag*', '*.m4a', '*.live_chat.json', '*.temp.mp4') `
+# 	-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.part', '*.part-Frag*', '*.m4a', '*.live_chat.json', '*.temp.mp4', '*.temp.ts') `
 # 	-DelPeriod 0
 
 # #移動先
@@ -82,7 +82,7 @@ Remove-Files `
 # 		Update-ProgressToast @toastUpdateParams
 # 		Remove-Files `
 # 			-BasePath $saveDir `
-# 			-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.vtt', '*.srt', '*.part', '*.part-Frag*', '*.m4a', '*.live_chat.json', '*.temp.mp4') `
+# 			-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.part', '*.part-Frag*', '*.m4a', '*.live_chat.json', '*.temp.mp4', '*.temp.ts') `
 # 			-DelPeriod 0
 # 	}
 # }

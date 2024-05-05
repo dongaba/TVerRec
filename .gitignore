@@ -18,6 +18,7 @@ bin/*
 
 #ダウンロードファイル
 *.mp4
+*.ts
 
 #アップデート作業ディレクトリ
 tverrec-update-temp
@@ -27,8 +28,10 @@ tverrec-update-temp
 *.jpg
 *.vtt
 *temp.mp4
+*temp.ts
 *.part
 *mp4.part-Frag*
+*ts.part-Frag*
 *pid.txt
 pid*.txt
 .smb*

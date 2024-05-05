@@ -572,6 +572,20 @@
 								<ComboBoxItem>しない</ComboBoxItem>
 								<ComboBoxItem>する</ComboBoxItem>
 							</ComboBox>
+							<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="番組ファイルの動画コンテナ形式">
+								<TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+									番組ファイルの動画コンテナ形式を設定します。 <LineBreak/>
+									デフォルトでは mp4 となっており、メタ情報や字幕、サムネイルなどの埋込はmp4形式のみで有効です。 <LineBreak/>
+									主に音ズレ対策として ts形式を指定することもできますが、ts形式を使うことで音ズレがなくなるかどうかはよくわかりません。 <LineBreak/>
+									ts 形式を指定した場合、メタ情報や字幕、サムネイルなどの埋め込みは利用できなくなります。 <LineBreak/>
+									機能に制限が出るため、基本的には mp4 を指定することが推奨で、特段理由がなければ ts を指定しない方が良いと思います。
+								</TextBlock>
+							</Expander>
+							<ComboBox x:Name="videoContainerFormat" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+								<ComboBoxItem>デフォルト値</ComboBoxItem>
+								<ComboBoxItem>mp4</ComboBoxItem>
+								<ComboBoxItem>ts</ComboBoxItem>
+							</ComboBox>
 						</StackPanel>
 					</ScrollViewer>
 				</TabItem>

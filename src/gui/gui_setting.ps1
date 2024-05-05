@@ -248,7 +248,8 @@ $settingAttributes = @(
 	'$script:forceSingleDownload',
 	'$script:extractDescTextToList',
 	'$script:listGenHistoryCheck',
-	'$script:updateChannel'
+	'$script:updateChannel',
+	'$script:videoContainerFormat'
 )
 $defaultSetting = @{}
 $currentSetting = @{}
