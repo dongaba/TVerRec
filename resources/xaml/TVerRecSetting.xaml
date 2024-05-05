@@ -432,11 +432,35 @@
 							<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ダウンロードリスト作成時のダウンロード履歴との突合">
 								<TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
 									ダウンロードリストファイル作成時にダウンロード履歴に含まれる番組を除外するかを設定します。 <LineBreak/>
-									「する」の場合ははダウンロード履歴に番組履歴がある際はリストファイルに出力しません。 <LineBreak/>
+									「する」の場合はダウンロード履歴に番組履歴がある際はリストファイルに出力しません。 <LineBreak/>
 									「しない」の場合はダウンロード履歴に番組履歴があってもリストファイルに出力します。
 								</TextBlock>
 							</Expander>
 							<ComboBox x:Name="listGenHistoryCheck" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+								<ComboBoxItem>デフォルト値</ComboBoxItem>
+								<ComboBoxItem>しない</ComboBoxItem>
+								<ComboBoxItem>する</ComboBoxItem>
+							</ComboBox>
+							<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="不要ファイル削除時にダウンロードディレクトリのチェック">
+								<TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+									不要ファイル削除時にダウンロードディレクトリもチェック対象にするかを設定します。 <LineBreak/>
+									「する」の場合はダウンロードディレクトリにあるファイルも削除対象にします。 <LineBreak/>
+									「しない」の場合はダウンロードディレクトリにあるファイルも削除対象にしません。
+								</TextBlock>
+							</Expander>
+							<ComboBox x:Name="cleanupDownloadBaseDir" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+								<ComboBoxItem>デフォルト値</ComboBoxItem>
+								<ComboBoxItem>しない</ComboBoxItem>
+								<ComboBoxItem>する</ComboBoxItem>
+							</ComboBox>
+							<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="不要ファイル削除時に保存のチェック">
+								<TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+									不要ファイル削除時に保存ディレクトリもチェック対象にするかを設定します。 <LineBreak/>
+									「する」の場合は保存ディレクトリにあるファイルも削除対象にします。 <LineBreak/>
+									「しない」の場合は保存ディレクトリにあるファイルも削除対象にしません。
+								</TextBlock>
+							</Expander>
+							<ComboBox x:Name="cleanupSaveBaseDir" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
 								<ComboBoxItem>デフォルト値</ComboBoxItem>
 								<ComboBoxItem>しない</ComboBoxItem>
 								<ComboBoxItem>する</ComboBoxItem>

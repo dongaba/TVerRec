@@ -249,7 +249,9 @@ $settingAttributes = @(
 	'$script:extractDescTextToList',
 	'$script:listGenHistoryCheck',
 	'$script:updateChannel',
-	'$script:videoContainerFormat'
+	'$script:videoContainerFormat',
+	'$script:cleanupDownloadBaseDir',
+	'$script:cleanupSaveBaseDir'
 )
 $defaultSetting = @{}
 $currentSetting = @{}

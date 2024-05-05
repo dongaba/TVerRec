@@ -40,10 +40,14 @@ $toastShowParams = @{
 }
 Show-ProgressToast @toastShowParams
 
+if ($script:cleanupDownloadBaseDir -and $script:cleanupSaveBaseDir ) { $totalCleanupSteps = 4 }
+elseif ($script:cleanupDownloadBaseDir -or $script:cleanupSaveBaseDir ) { $totalCleanupSteps = 3 }
+else { $totalCleanupSteps = 2 }
+
 #半日以上前のログファイル・ロックファイルを削除
 $toastUpdateParams = @{
 	Title     = $script:logDir
-	Rate      = [Float]( 1 / 2 )
+	Rate      = [Float]( 1 / $totalCleanupSteps )
 	LeftText  = ''
 	RightText = ''
 	Tag       = $script:appName
@@ -57,35 +61,38 @@ Remove-Files `
 
 #作業ディレクトリ
 $toastUpdateParams.Title = $script:downloadWorkDir
-$toastUpdateParams.Rate = [Float]( 2 / 2 )
+$toastUpdateParams.Rate = [Float]( 2 / $totalCleanupSteps )
 Update-ProgressToast @toastUpdateParams
 Remove-Files `
 	-BasePath $script:downloadWorkDir `
 	-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.part', '*.part-Frag*', '*.m4a', '*.live_chat.json', '*.mp4', '*.ts') `
 	-DelPeriod 0
 
-# #ダウンロード先
-# $toastUpdateParams.Title = $script:downloadBaseDir
-# $toastUpdateParams.Rate = [Float]( 3 / 4 )
-# Update-ProgressToast @toastUpdateParams
+#ダウンロード先
+if ($script:cleanupDownloadBaseDir) {
+	$toastUpdateParams.Title = $script:downloadBaseDir
+	$toastUpdateParams.Rate = [Float]( 3 / $totalCleanupSteps )
+	Update-ProgressToast @toastUpdateParams
+	Remove-Files `
+		-BasePath $script:downloadBaseDir `
+		-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.part', '*.part-Frag*', '*.m4a', '*.live_chat.json', '*.temp.mp4', '*.temp.ts') `
+		-DelPeriod 0
+}
 
-# Remove-Files `
-# 	-BasePath $script:downloadBaseDir `
-# 	-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.part', '*.part-Frag*', '*.m4a', '*.live_chat.json', '*.temp.mp4', '*.temp.ts') `
-# 	-DelPeriod 0
-
-# #移動先
-# if ($script:saveBaseDir -ne '') {
-# 	foreach ($saveDir in $script:saveBaseDirArray) {
-# 		$toastUpdateParams.Title = $saveDir
-# 		$toastUpdateParams.Rate = [Float]( 4 / 4 )
-# 		Update-ProgressToast @toastUpdateParams
-# 		Remove-Files `
-# 			-BasePath $saveDir `
-# 			-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.part', '*.part-Frag*', '*.m4a', '*.live_chat.json', '*.temp.mp4', '*.temp.ts') `
-# 			-DelPeriod 0
-# 	}
-# }
+#移動先
+if ($script:cleanupSaveBaseDir)	{
+	if ($script:saveBaseDir -ne '') {
+		foreach ($saveDir in $script:saveBaseDirArray) {
+			$toastUpdateParams.Title = $saveDir
+			$toastUpdateParams.Rate = 1
+			Update-ProgressToast @toastUpdateParams
+			Remove-Files `
+				-BasePath $saveDir `
+				-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.part', '*.part-Frag*', '*.m4a', '*.live_chat.json', '*.temp.mp4', '*.temp.ts') `
+				-DelPeriod 0
+		}
+	}
+}
 
 #======================================================================
 #2/3 ダウンロード対象外に入っている番組は削除
