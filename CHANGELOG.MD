@@ -41,7 +41,7 @@
   - 設定ファイルに`$script:guiMaxExecLogLines`を追加
 - ダウンロードリスト作成処理でマルチスレッド処理を可能に(数倍の高速化)
 - WSBの日本語化用スクリプトの追加
-  - [使い方はWikiのこちらのページ参照](https://github.com/dongaba/TVerRec/wiki/Windows%E3%82%B5%E3%83%B3%E3%83%89%E3%83%9C%E3%83%83%E3%82%AF%E3%82%B9) 
+  - [使い方はWikiのこちらのページ参照](https://github.com/dongaba/TVerRec/wiki/Windows%E3%82%B5%E3%83%B3%E3%83%89%E3%83%9C%E3%83%83%E3%82%AF%E3%82%B9)
 
 ### 3.1.0 Changed
 
