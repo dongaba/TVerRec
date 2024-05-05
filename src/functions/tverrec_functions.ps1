@@ -614,12 +614,7 @@ function Get-VideoInfo {
 		$response = Invoke-RestMethod -Uri $brightcoveURL -Method 'GET' -Headers $headers
 		$m3u8URL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*mpeg*' }).where({ $_.ext_x_version -eq 4 })[0].src
 		$mpdURL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*dash*' })[0].src
-	} catch { 
-		Write-Warning ('⚠️ エラーが発生しました。m3u8ファイルが取得できません。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message)
-		$headers >> badHeaders.txt
-		return
-	}
-	
+	} catch { Write-Warning ('⚠️ エラーが発生しました。m3u8ファイルが取得できません。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) ; return }
 	#「《」と「》」で挟まれた文字を除去
 	if ($script:removeSpecialNote) { 
 		; $videoSeason = Remove-SpecialNote $videoSeason; $episodeName = Remove-SpecialNote $episodeName 
