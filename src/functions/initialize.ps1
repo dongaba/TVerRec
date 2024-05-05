@@ -116,6 +116,9 @@ else { $script:ffmpegPath = Join-Path $script:binDir 'ffmpeg' }
 if ($IsWindows) { $script:ffprobePath = Join-Path $script:binDir 'ffprobe.exe' }
 else { $script:ffprobePath = Join-Path $script:binDir 'ffprobe' }
 
+#Geo IPのパス
+$script:jpIPList = Join-Path $script:geoIPDir 'jp.csv'
+
 #GUI起動を判定
 if ( $myInvocation.ScriptName.Contains('gui')) {
 } else {
@@ -127,12 +130,11 @@ if ( $myInvocation.ScriptName.Contains('gui')) {
 }
 
 #共通HTTPヘッダ
-$script:jpIP = Get-RandomIPv4Address
 $script:requestHeader = @{
 	'x-tver-platform-type' = 'web'
 	'Origin'               = 'https://tver.jp'
 	'Referer'              = 'https://tver.jp'
-	'X-Forwarded-For'      = $script:jpIP
+	'X-Forwarded-For'      = Get-RandomIPv4Address
 }
 
 #ロックファイル用

@@ -455,7 +455,8 @@ function Invoke-VideoDownload {
 		#			ダウンロード対象外リストに存在しない	→ダウンロード
 		#ダウンロード履歴ファイルのデータを読み込み
 		$histFileData = @(Read-HistoryFile)
-		$histMatch = @($histFileData.Where({ $_.videoPath -eq $videoInfo.fileRelPath }))
+		if ($videoInfo.fileRelPath) {$histMatch = @($histFileData.Where({ $_.videoPath -eq $videoInfo.fileRelPath }))}
+		else { Write-Warning ('　⚠️ ファイル名が取得できませんでした。スキップします') ; continue }
 		if (($histMatch.Count -ne 0)) {
 			#履歴ファイルに存在する	→スキップして次のファイルに
 			Write-Warning ('　⚠️ 同名のファイルがすでに履歴ファイルに存在します。番組IDが変更になった可能性があります。ダウンロードをスキップします')
@@ -599,21 +600,21 @@ function Get-VideoInfo {
 		$accountID = $videoInfo.video.accountID
 		$videoRefID = if ($videoInfo.video.PSObject.Properties.Name -contains 'videoRefID') { ('ref%3A{0}' -f $videoInfo.video.videoRefID) } else { $videoInfo.video.videoID }
 		$playerID = $videoInfo.video.playerID
-	} catch { Write-Warning ('⚠️ エラーが発生しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message); return }
+	} catch { Write-Warning ('⚠️ エラーが発生しました。番組情報を取得できません。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message); return }
 	try {
 		$brightcoveJsURL = ('https://players.brightcove.net/{0}/{1}_default/index.min.js' -f $accountID, $playerID)
 		$brightcovePk = if ((Invoke-RestMethod -Uri $brightcoveJsURL -Method 'GET' -Headers $script:requestHeader) -match 'policyKey:"([a-zA-Z0-9_-]*)"') { $matches[1] }
-	} catch { Write-Warning ('⚠️ エラーが発生しました。m3u8ファイル取得のキーが取得できません。 - {0}' -f $_.Exception.Message) }
+	} catch { Write-Warning ('⚠️ エラーが発生しました。m3u8ファイル取得のキーが取得できません。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) ; return }
 	try {
 		$brightcoveURL = ('https://edge.api.brightcove.com/playback/v1/accounts/{0}/videos/{1}' -f $accountID, $videoRefID)
 		$headers = @{
 			'Accept'          = ('application/json;pk={0}' -f $brightcovePk)
-			'X-Forwarded-For' = $script:jpIP
+			'X-Forwarded-For' = Get-RandomIPv4Address
 		}
 		$response = Invoke-RestMethod -Uri $brightcoveURL -Method 'GET' -Headers $headers
 		$m3u8URL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*mpeg*' }).where({ $_.ext_x_version -eq 4 })[0].src
 		$mpdURL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*dash*' })[0].src
-	} catch { Write-Warning ('⚠️ エラーが発生しました。m3u8ファイルが取得できません。 - {0}' -f $_.Exception.Message) }
+	} catch { Write-Warning ('⚠️ エラーが発生しました。m3u8ファイルが取得できません。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) ; return }
 	
 	#「《」と「》」で挟まれた文字を除去
 	if ($script:removeSpecialNote) { 
@@ -1036,11 +1037,11 @@ function Invoke-ValidityCheck {
 function Get-RandomIPv4Address {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	#日本に割り当てられているIPアドレスレンジの取得
-	$allCIDR = (Invoke-RestMethod ('https://cdn-lite.ip2location.com/datasets/JP.json?_={0}' -f (ConvertTo-UnixTime (Get-Date)))).data
+	$allCIDR = Import-Csv $script:jpIPList
 	$randomCIDR = $allCIDR[[UInt32](Get-Random -Maximum $allCIDR.count)]
 	#ランダムなIPアドレスの取得
-	$startIPArray = [System.Net.IPAddress]::Parse($randomCIDR[0]).GetAddressBytes()
-	$endIPArray = [System.Net.IPAddress]::Parse($randomCIDR[1]).GetAddressBytes()
+	$startIPArray = [System.Net.IPAddress]::Parse($randomCIDR[0].start).GetAddressBytes()
+	$endIPArray = [System.Net.IPAddress]::Parse($randomCIDR[0].end).GetAddressBytes()
 	[Array]::Reverse($startIPArray)
 	[Array]::Reverse($endIPArray)
 	$startIPInt = [BitConverter]::ToUInt32($startIPArray, 0)
