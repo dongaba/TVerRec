@@ -344,7 +344,7 @@ function Wait-YtdlProcess {
 	while ($true) {
 		$ytdlCount = Get-YtdlProcessCount
 		if ([Int]$ytdlCount -lt [Int]$parallelDownloadFileNum ) { break }
-		Write-Information ('ダウンロードが{0}多重に達したので一時待機します。)' -f $parallelDownloadFileNum)
+		Write-Output ('ダウンロードが{0}多重に達したので一時待機します。' -f $parallelDownloadFileNum)
 		Write-Verbose ('現在のダウンロードプロセス一覧 ({0}個)' -f $ytdlCount)
 		Start-Sleep -Seconds 60
 	}
@@ -455,7 +455,7 @@ function Invoke-VideoDownload {
 		#			ダウンロード対象外リストに存在しない	→ダウンロード
 		#ダウンロード履歴ファイルのデータを読み込み
 		$histFileData = @(Read-HistoryFile)
-		if ($videoInfo.fileRelPath) {$histMatch = @($histFileData.Where({ $_.videoPath -eq $videoInfo.fileRelPath }))}
+		if ($videoInfo.fileRelPath) { $histMatch = @($histFileData.Where({ $_.videoPath -eq $videoInfo.fileRelPath })) }
 		else { Write-Warning ('　⚠️ ファイル名が取得できませんでした。スキップします') ; continue }
 		if (($histMatch.Count -ne 0)) {
 			#履歴ファイルに存在する	→スキップして次のファイルに
@@ -609,12 +609,16 @@ function Get-VideoInfo {
 		$brightcoveURL = ('https://edge.api.brightcove.com/playback/v1/accounts/{0}/videos/{1}' -f $accountID, $videoRefID)
 		$headers = @{
 			'Accept'          = ('application/json;pk={0}' -f $brightcovePk)
-			'X-Forwarded-For' = Get-RandomIPv4Address
+			'X-Forwarded-For' = $script:jpIP
 		}
 		$response = Invoke-RestMethod -Uri $brightcoveURL -Method 'GET' -Headers $headers
 		$m3u8URL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*mpeg*' }).where({ $_.ext_x_version -eq 4 })[0].src
 		$mpdURL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*dash*' })[0].src
-	} catch { Write-Warning ('⚠️ エラーが発生しました。m3u8ファイルが取得できません。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) ; return }
+	} catch { 
+		Write-Warning ('⚠️ エラーが発生しました。m3u8ファイルが取得できません。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message)
+		$headers >> badHeaders.txt
+		return
+	}
 	
 	#「《」と「》」で挟まれた文字を除去
 	if ($script:removeSpecialNote) { 
@@ -1034,23 +1038,30 @@ function Invoke-ValidityCheck {
 #----------------------------------------------------------------------
 #Geo IP関連
 #----------------------------------------------------------------------
-function Get-RandomIPv4Address {
+function Get-JpIP {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	#日本に割り当てられているIPアドレスレンジの取得
-	$allCIDR = Import-Csv $script:jpIPList
-	$randomCIDR = $allCIDR[[UInt32](Get-Random -Maximum $allCIDR.count)]
-	#ランダムなIPアドレスの取得
-	$startIPArray = [System.Net.IPAddress]::Parse($randomCIDR[0].start).GetAddressBytes()
-	$endIPArray = [System.Net.IPAddress]::Parse($randomCIDR[0].end).GetAddressBytes()
-	[Array]::Reverse($startIPArray)
-	[Array]::Reverse($endIPArray)
-	$startIPInt = [BitConverter]::ToUInt32($startIPArray, 0)
-	$endIPInt = [BitConverter]::ToUInt32($endIPArray, 0)
-	$randomIPInt = $startIPInt + [UInt32](Get-Random -Maximum ($endIPInt - $startIPInt - 1)) + 1	#CIDR範囲の先頭と末尾を除く
-	$randomIPArray = [System.BitConverter]::GetBytes($randomIPInt) 
-	[Array]::Reverse($randomIPArray)
-	return [System.Net.IPAddress]::new($randomIPArray).ToString()
-	Remove-Variable -Name allCIDR, randomCIDR, startIPArray, endIPArray, startIPInt, endIPInt, randomIPInt, randomIPArray -ErrorAction SilentlyContinue
+	$jpIP = ''
+	$check = Invoke-RestMethod -Uri ('http://ip-api.com/json/{0}?fields=16785410' -f $jpIP)
+	#クライアントのアドレスが日本ではない、またはホスティングの場合はランダムIP取得
+	While (($check.countryCode -ne 'JP') -or ($check.hosting -ne $false) ) {
+		#日本に割り当てられているIPアドレスレンジの取得
+		$allCIDR = Import-Csv $script:jpIPList
+		$randomCIDR = $allCIDR[[UInt32](Get-Random -Maximum $allCIDR.count)]
+		#ランダムなIPアドレスの取得
+		$startIPArray = [System.Net.IPAddress]::Parse($randomCIDR[0].start).GetAddressBytes()
+		$endIPArray = [System.Net.IPAddress]::Parse($randomCIDR[0].end).GetAddressBytes()
+		[Array]::Reverse($startIPArray)
+		[Array]::Reverse($endIPArray)
+		$startIPInt = [BitConverter]::ToUInt32($startIPArray, 0)
+		$endIPInt = [BitConverter]::ToUInt32($endIPArray, 0)
+		$randomIPInt = $startIPInt + [UInt32](Get-Random -Maximum ($endIPInt - $startIPInt - 1)) + 1	#CIDR範囲の先頭と末尾を除く
+		$randomIPArray = [System.BitConverter]::GetBytes($randomIPInt) 
+		[Array]::Reverse($randomIPArray)
+		$jpIP = [System.Net.IPAddress]::new($randomIPArray).ToString()
+		$check = Invoke-RestMethod -Uri ('http://ip-api.com/json/{0}?fields=16785410' -f $jpIP)
+	}
+	return $jpIP
+	Remove-Variable -Name jpIP, check, allCIDR, randomCIDR, startIPArray, endIPArray, startIPInt, endIPInt, randomIPInt, randomIPArray -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------

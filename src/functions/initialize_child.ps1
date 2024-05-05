@@ -88,11 +88,12 @@ else { $script:ffprobePath = Join-Path $script:binDir 'ffprobe' }
 $script:jpIPList = Join-Path $script:geoIPDir 'jp.csv'
 
 #共通HTTPヘッダ
+$script:jpIP = Get-JpIP
 $script:requestHeader = @{
 	'x-tver-platform-type' = 'web'
 	'Origin'               = 'https://tver.jp'
 	'Referer'              = 'https://tver.jp'
-	'X-Forwarded-For'      = Get-RandomIPv4Address
+	'X-Forwarded-For'      = $script:jpIP
 }
 
 #ロックファイル用

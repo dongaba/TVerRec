@@ -17,7 +17,7 @@ function Get-Token () {
 	$tverTokenURL = 'https://platform-api.tver.jp/v2/api/platform_users/browser/create'
 	$headers = @{
 		'Content-Type'    = 'application/x-www-form-urlencoded'
-		'X-Forwarded-For' = Get-RandomIPv4Address
+		'X-Forwarded-For' = $script:jpIP
 	}
 	$requestBody = 'device_type=pc'
 	try {
