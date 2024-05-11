@@ -756,11 +756,11 @@ function Invoke-Ytdl {
 	}
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $saveDir)
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $tmpDir)
-	$ytdlArgs += (' {0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
-	$ytdlArgs += (' {0} "{1}"' -f '--output', $saveFile)
 	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlAcceptLang)
+	$ytdlArgs += (' {0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
 	$ytdlArgs += (' {0}' -f $script:ytdlOption)
 	$ytdlArgs += (' {0}' -f $videoInfo.episodePageURL)
+	$ytdlArgs += (' {0} "{1}"' -f '--output', $saveFile)
 	Write-Debug ('youtube-dl起動コマンド: {0}{1}' -f $script:ytdlPath, $ytdlArgs)
 	try {
 		$startProcessParams = @{
@@ -795,20 +795,18 @@ function Invoke-NonTverYtdl {
 	$tmpDir = ('temp:{0}' -f $script:downloadWorkDir)
 	$baseDir = ('home:{0}' -f $script:downloadBaseDir)
 	$saveFile = ('{0}' -f $script:ytdlNonTVerFileName)
-	$ytdlArgs = (' {0}' -f $script:ytdlBaseArgs)
-	if ($script:videoContainerFormat -eq 'mp4') {
-		$ytdlArgs += (' {0}' -f '--merge-output-format mp4 --embed-thumbnail --embed-chapters')
-		$subttlDir = ('subtitle:{0}' -f $script:downloadWorkDir)
-		$thumbDir = ('thumbnail:{0}' -f $script:downloadWorkDir)
-		$chaptDir = ('chapter:{0}' -f $script:downloadWorkDir)
-		$descDir = ('description:{0}' -f $script:downloadWorkDir)
-		$ytdlArgs += (' {0} "{1}"' -f '--paths', $subttlDir)
-		$ytdlArgs += (' {0} "{1}"' -f '--paths', $thumbDir)
-		$ytdlArgs += (' {0} "{1}"' -f '--paths', $chaptDir)
-		$ytdlArgs += (' {0} "{1}"' -f '--paths', $descDir)
-		if ($script:embedSubtitle) { $ytdlArgs += (' {0}' -f '--sub-langs all --convert-subs srt --embed-subs') }
-		if ($script:embedMetatag) { $ytdlArgs += (' {0}' -f '--embed-metadata') }
-	}
+	$ytdlArgs = (' {0}' -f $script:nonTVerYtdlBaseArgs)
+	$ytdlArgs += (' {0}' -f '--merge-output-format mp4 --embed-thumbnail --embed-chapters')
+	$subttlDir = ('subtitle:{0}' -f $script:downloadWorkDir)
+	$thumbDir = ('thumbnail:{0}' -f $script:downloadWorkDir)
+	$chaptDir = ('chapter:{0}' -f $script:downloadWorkDir)
+	$descDir = ('description:{0}' -f $script:downloadWorkDir)
+	$ytdlArgs += (' {0} "{1}"' -f '--paths', $subttlDir)
+	$ytdlArgs += (' {0} "{1}"' -f '--paths', $thumbDir)
+	$ytdlArgs += (' {0} "{1}"' -f '--paths', $chaptDir)
+	$ytdlArgs += (' {0} "{1}"' -f '--paths', $descDir)
+	if ($script:embedSubtitle) { $ytdlArgs += (' {0}' -f '--sub-langs all --convert-subs srt --embed-subs') }
+	if ($script:embedMetatag) { $ytdlArgs += (' {0}' -f '--embed-metadata') }
 	$ytdlArgs += (' {0} {1}' -f '--concurrent-fragments', $script:parallelDownloadNumPerFile)
 	if ($script:rateLimit -notin @(0, '')) {
 		$rateLimit = [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8)
@@ -816,12 +814,12 @@ function Invoke-NonTverYtdl {
 	}
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $baseDir)
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $tmpDir)
-	$ytdlArgs += (' {0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
-	$ytdlArgs += (' {0} "{1}"' -f '--output', $saveFile)
 	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlAcceptLang)
+	$ytdlArgs += (' {0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
 	$ytdlArgs += (' {0}' -f $script:ytdlOption)
 	$ytdlArgs += (' {0}' -f $videoPageURL)
-	Write-Debug ('youtube-dl起動コマンド: {0}{1}' -f $script:ytdlPath, $ytdlArgs)
+	$ytdlArgs += (' {0} "{1}"' -f '--output', $saveFile)
+	Write-Output ('youtube-dl起動コマンド: {0}{1}' -f $script:ytdlPath, $ytdlArgs)
 	try {
 		$startProcessParams = @{
 			FilePath     = $script:ytdlPath

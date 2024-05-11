@@ -285,8 +285,8 @@ $script:listGenHistoryCheck = $true
 #　dev に設定すると、devブランチの最新版を取得します。開発中の最新機能をお試しいただけますが、安定動作しない可能性があるため特殊要件がなければおすすめしません。
 $script:updateChannel = 'release'
 
-#番組ファイルの動画コンテナ形式
-#　番組ファイルの動画コンテナ形式を設定します。
+#TVer番組ファイルの動画コンテナ形式
+#　TVer番組ファイルの動画コンテナ形式を設定します。
 #　デフォルトでは mp4 となっており、メタ情報や字幕、サムネイルなどの埋込はmp4形式のみで有効です。
 #　主に音ズレ対策として ts形式を指定することもできますが、ts形式を使うことで音ズレがなくなるかどうかはよくわかりません。
 #　ts 形式を指定した場合、メタ情報や字幕、サムネイルなどの埋め込みは利用できなくなります。
@@ -353,3 +353,4 @@ $script:iconPath = Convert-Path (Join-Path $script:imgDir 'TVerRec-Icon.png')
 #youtube-dlの引数
 $script:ytdlAcceptLang = 'Accept-Language:ja-JP'
 $script:ytdlBaseArgs = '--format "(bv*+ba/b)[protocol!*=dash] / (bv*+ba/b)" --format-sort proto --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --no-cache-dir --verbose --ignore-config --no-check-certificates --buffer-size 16K'
+$script:nonTVerYtdlBaseArgs = '--format "(bv*+ba/b)" --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --no-cache-dir --verbose --ignore-config --no-check-certificates --buffer-size 16K'
