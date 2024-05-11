@@ -196,7 +196,7 @@ $ffmpegDecodeOption_Pi3.Add_Click({ $ffmpegDecodeOption.Text = '-c:v h264_omx' }
 
 function Set-YtdlOption ($height) {
 	$ytdlOption.Text = if ($height -eq 'Clear') { '' }
-	else {"-f bestvideo[height<=$height]+bestaudio/best[height<=$height]"}
+	else { "-f bestvideo[height<=$height]+bestaudio/best[height<=$height]" }
 }
 $btnYtdlOption_Clear.Add_Click({ Set-YtdlOption 'Clear' })
 $btnYtdlOption_1080.Add_Click({ Set-YtdlOption 1080 })
@@ -263,11 +263,12 @@ foreach ($settingAttribute in $settingAttributes) {
 	#まずはシステム設定の値をGUIに反映
 	$settingBox = $settingWindow.FindName($settingBoxName)
 	#次にユーザー設定の値をGUIに反映
-	if ( (Read-UserSetting $settingAttribute) -ne '') {
+	if ( (Read-UserSetting $settingAttribute) ) {
 		$settingBox.Text = Read-UserSetting $settingAttribute
 		if ($settingBox.Text -eq '$true') { $settingBox.Text = 'する' }
 		if ($settingBox.Text -eq '$false') { $settingBox.Text = 'しない' }
-	}
+	} elsif($settingAttribute -in @('downloadBaseDir', 'downloadWorkDir', 'saveBaseDir')) { $settingBox.Text = '未設定' }
+	else { $settingBox.Text = 'デフォルト値' }
 }
 
 #endregion 設定ファイルの読み込み
