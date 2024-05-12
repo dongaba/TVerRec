@@ -124,6 +124,7 @@ catch { Throw ('❌️ 作業ディレクトリの作成に失敗しました') 
 Write-Output ('')
 Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('TVerRecの最新版をダウンロードします')
+if (!(Get-Variable updateChannel -Scope Script -ErrorAction SilentlyContinue)) { $script:updateChannel = 'release' }
 try {
 	$zipURL = switch ($script:updateChannel) {
 		'dev' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/dev.zip' }
@@ -223,14 +224,16 @@ Remove-IfExist -Path (Join-Path $script:scriptRoot '../resources/TVerRecSetting.
 if (Test-Path (Join-Path $script:scriptRoot '../db/list.csv')) {
 	$currentListFile = [pscustomobject](Import-Csv (Join-Path $script:scriptRoot '../db/list.csv'))
 	$propertyNames = @('episodePageURL', 'seriesPageURL', 'descriptionText')
-	$currentProperties = @($currentListFile | Get-Member -MemberType NoteProperty).Name
-	if ($propertyNames | Where-Object { $currentProperties -notContains $_ }) {
-		foreach ($propertyName in $propertyNames) {
-			if ($currentProperties -notContains $propertyName) { $currentListFile | Add-Member -MemberType NoteProperty -Name $propertyName -Value '' }
+	if ($currentListFile) {
+		$currentProperties = @($currentListFile | Get-Member -MemberType NoteProperty).Name
+		if ($propertyNames | Where-Object { $currentProperties -notContains $_ }) {
+			foreach ($propertyName in $propertyNames) {
+				if ($currentProperties -notContains $propertyName) { $currentListFile | Add-Member -MemberType NoteProperty -Name $propertyName -Value '' }
+			}
+			Set-Content -LiteralPath (Join-Path $script:scriptRoot '../db/list.csv') -Value 'episodeID,episodePageURL,episodeNo,episodeName,seriesID,seriesPageURL,seriesName,seasonID,seasonName,media,provider,broadcastDate,endTime,keyword,ignoreWord,descriptionText'
+			$currentListFile | Export-Csv -LiteralPath (Join-Path $script:scriptRoot '../db/list.csv') -Encoding UTF8 -Append
 		}
-		Set-Content -LiteralPath (Join-Path $script:scriptRoot '../db/list.csv') -Value 'episodeID,episodePageURL,episodeNo,episodeName,seriesID,seriesPageURL,seriesName,seasonID,seasonName,media,provider,broadcastDate,endTime,keyword,ignoreWord,descriptionText'
-		$currentListFile | Export-Csv -LiteralPath (Join-Path $script:scriptRoot '../db/list.csv') -Encoding UTF8 -Append
-	}
+	} else { Copy-Item -Path (Join-Path $script:scriptRoot '../resources/sample/list.sample.csv') -Destination (Join-Path $script:scriptRoot '../db/list.csv') }
 }
 
 #リストファイルのレイアウト変更(v2.9.9→v3.0.0)
