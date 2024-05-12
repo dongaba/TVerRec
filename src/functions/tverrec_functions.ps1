@@ -625,6 +625,8 @@ function Get-VideoInfo {
 	if ($videoSeries -cmatch [Regex]::Escape($videoSeason)) { $videoSeason = '' }
 	#エピソード番号を極力修正
 	if (($videoEpisodeNum -eq 1) -and ($episodeName -imatch '([#|第|Episode|ep|Take|Vol|Part|Chapter|Case|Stage|Mystery|Ope|Story|Sign|Trap|Letter|Act]+\.?\s?)(\d+)(.*)')) { $videoEpisodeNum = $matches[2] }
+	#エピソード番号が1桁の際は頭0埋めして2桁に
+	$videoEpisodeNum = $videoEpisodeNum.PadLeft(2, '0')
 	#放送日を整形
 	if ($broadcastDate -cmatch '([0-9]+)(月)([0-9]+)(日)(.+?)(放送)') {
 		$currentYear = (Get-Date).Year

@@ -76,7 +76,7 @@ if (Test-Path (Join-Path $script:scriptRoot '../log/updater_update.txt')) {
 
 #TVerRecの最新化チェック
 Invoke-TVerRecUpdateCheck
-if (!$?) { Write-Warning ('⚠️ TVerRecのバージョンチェックに失敗しました') }
+if (!$?) { Write-Warning ('⚠️ TVerRecのバージョンチェックに失敗しました。処理を継続します') }
 
 #----------------------------------------------------------------------
 #ダウンロード対象キーワードのパス
@@ -125,8 +125,10 @@ if ( $myInvocation.ScriptName.Contains('gui')) {
 	#Logo表示
 	if (!$script:guiMode) { Show-Logo }
 	#youtube-dl/ffmpegの最新化チェック
-	if (!$script:disableUpdateYoutubedl) { Invoke-ToolUpdateCheck -scriptName 'update_youtube-dl.ps1' -targetName 'youtube-dl' }
-	if (!$script:disableUpdateFfmpeg) { Invoke-ToolUpdateCheck -scriptName 'update_ffmpeg.ps1' -targetName 'ffmpeg' }
+	try { if (!$script:disableUpdateYoutubedl) { Invoke-ToolUpdateCheck -scriptName 'update_youtube-dl.ps1' -targetName 'youtube-dl' } }
+	catch { Write-Warning ('⚠️ youtube-dlのバージョンチェックに失敗しました。処理を継続します') }
+	try { if (!$script:disableUpdateFfmpeg) { Invoke-ToolUpdateCheck -scriptName 'update_ffmpeg.ps1' -targetName 'ffmpeg' } }
+	catch { Write-Warning ('⚠️ ffmpegのバージョンチェックに失敗しました。処理を継続します') }
 }
 
 #共通HTTPヘッダ
