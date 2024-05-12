@@ -296,7 +296,7 @@
 							<ColumnDefinition/>
 							<ColumnDefinition Width="auto"/>
 						</Grid.ColumnDefinitions>
-						<TextBox x:Name="downloadBaseDir" Text="未設定" Style="{DynamicResource TextBoxStyle}" Margin="20,0,0,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+						<TextBox x:Name="downloadBaseDir" Text="未設定" Style="{DynamicResource TextBoxStyle}" Margin="20,0,0,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1" TextWrapping="Wrap"/>
 						<Button x:Name="btndownloadBaseDir" Style="{DynamicResource ButtonStyle}" Content="..." Margin="0,0,20,0" HorizontalAlignment="Right" Grid.Column="2" Grid.Row="7" VerticalAlignment="Center" Width="30"/>
 					</Grid>
 					<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="作業ディレクトリ">
@@ -311,7 +311,7 @@
 							<ColumnDefinition/>
 							<ColumnDefinition Width="auto"/>
 						</Grid.ColumnDefinitions>
-						<TextBox x:Name="downloadWorkDir" Text="未設定" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+						<TextBox x:Name="downloadWorkDir" Text="未設定" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1" TextWrapping="Wrap"/>
 						<Button x:Name="btndownloadWorkDir" Style="{DynamicResource ButtonStyle}" Content="..." Margin="0,0,20,0" HorizontalAlignment="Right" Grid.Column="2" Grid.Row="7" VerticalAlignment="Center" Width="30"/>
 					</Grid>
 					<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="移動先ディレクトリ">
@@ -328,7 +328,7 @@
 							<ColumnDefinition/>
 							<ColumnDefinition Width="auto"/>
 						</Grid.ColumnDefinitions>
-						<TextBox x:Name="saveBaseDir" Text="未設定" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+						<TextBox x:Name="saveBaseDir" Text="未設定" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1" TextWrapping="Wrap"/>
 						<Button x:Name="btnsaveBaseDir" Style="{DynamicResource ButtonStyle}" Content="..." Margin="0,0,20,0" HorizontalAlignment="Right" Grid.Column="2" Grid.Row="7" VerticalAlignment="Center" Width="30"/>
 					</Grid>
 				</StackPanel>
@@ -365,7 +365,7 @@
 									最近のPCであれば50くらいの値を設定しても十分に動作すると思いますが、あまり大きな数を指定すると逆に処理時間が長くなる可能性があります。
 								</TextBlock>
 							</Expander>
-							<TextBox x:Name="multithreadNum" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+							<TextBox x:Name="multithreadNum" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1" TextWrapping="Wrap"/>
 							<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="トースト通知の無効化">
 								<TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
 									トースト通知を無効化することが可能です。。
@@ -383,14 +383,14 @@
 									規定の設定では1000行に設定されています。0に設定することで無制限とすることができます。
 								</TextBlock>
 							</Expander>
-							<TextBox x:Name="guiMaxExecLogLines" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+							<TextBox x:Name="guiMaxExecLogLines" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1" TextWrapping="Wrap"/>
 							<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ダウンロード履歴保持日数">
 								<TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
 									ダウンロード履歴を保持する日数を指定します。 <LineBreak/>
 									保持期間を長くすると、同じ番組の再配信があった際に重複ダウンロードしなくて住む可能性が高くなりますが、処理時間が長くなる可能性があります。
 								</TextBlock>
 							</Expander>
-							<TextBox x:Name="histRetentionPeriod" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+							<TextBox x:Name="histRetentionPeriod" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1" TextWrapping="Wrap"/>
 							<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="youtube-dlとffmpegのウィンドウの表示方法">
 								<TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
 									youtube-dl と ffmpeg のウィンドウをどのように表示するかを設定します。 <LineBreak/>
@@ -496,20 +496,20 @@
 									ここの数字を増やすことで同時ダウンロード数を増やすことはできますが、PCへの負荷が高まり逆にダウンロード効率が下がるのでご注意ください。
 								</TextBlock>
 							</Expander>
-							<TextBox x:Name="parallelDownloadFileNum" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+							<TextBox x:Name="parallelDownloadFileNum" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1" TextWrapping="Wrap"/>
 							<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="番組あたりの同時ダウンロード数">
 								<TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
 									それぞれの番組をダウンロードする際の並行ダウンロード数を設定します。 <LineBreak/>
 									ここの数字を増やすことで同時ダウンロード数を増やすことはできますが、PCへの負荷が高まり逆にダウンロード効率が下がるのでご注意ください。
 								</TextBlock>
 							</Expander>
-							<TextBox x:Name="parallelDownloadNumPerFile" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+							<TextBox x:Name="parallelDownloadNumPerFile" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1" TextWrapping="Wrap"/>
 							<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ループ処理の間隔(秒)">
 								<TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
 									ループ処理の実行間隔を指定します。
 								</TextBlock>
 							</Expander>
-							<TextBox x:Name="loopCycle" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+							<TextBox x:Name="loopCycle" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1" TextWrapping="Wrap"/>
 							<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="マイページ処理用のUID">
 								<TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
 									マイページに登録したお気に入りやあとでみる、続きから再生などをTVerRecでダウンロードするためのplatfprm_uidを指定します。 <LineBreak/>
@@ -518,7 +518,7 @@
 									詳細はWikiを参照してください。
 								</TextBlock>
 							</Expander>
-							<TextBox x:Name="myPlatformUID" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+							<TextBox x:Name="myPlatformUID" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1" TextWrapping="Wrap"/>
 							<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="マイページ処理用のToken">
 								<TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
 									マイページに登録したお気に入りやあとでみる、続きから再生などをTVerRecでダウンロードするためのplatform_tokenを指定します。 <LineBreak/>
@@ -527,7 +527,7 @@
 									詳細はWikiを参照してください。
 								</TextBlock>
 							</Expander>
-							<TextBox x:Name="myPlatformToken" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+							<TextBox x:Name="myPlatformToken" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1" TextWrapping="Wrap"/>
 							<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ダウンロード帯域制限(Mbps)">
 								<TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
 									ネットワーク帯域を使い切らないようにダウンロード速度制限を設定することができます。 <LineBreak/>
@@ -536,14 +536,14 @@
 									あくまでも目安となっており、瞬間的には設定値を超えることがあります。
 								</TextBlock>
 							</Expander>
-							<TextBox x:Name="rateLimit" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+							<TextBox x:Name="rateLimit" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1" TextWrapping="Wrap"/>
 							<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="HTTPアクセスのタイムアウト(秒)">
 								<TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
 									各種 HTTP のアクセス時のタイムアウト値(秒)です。 <LineBreak/>
 									設定した時間以内に HTTP の応答がなければエラーとして判断されます。
 								</TextBlock>
 							</Expander>
-							<TextBox x:Name="timeoutSec" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+							<TextBox x:Name="timeoutSec" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1" TextWrapping="Wrap"/>
 							<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="番組ファイルへの字幕データの埋め込み">
 								<TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
 									ダウンロードしたファイルに字幕データを埋め込むかを設定します。 <LineBreak/>
@@ -697,7 +697,7 @@
 									変更する場合は使用しているyoutube-dl(yt-dlp/ytdl-patched)に合わせてオプションを設定してください。
 							</TextBlock>
 							</Expander>
-							<TextBox x:Name="ytdlNonTVerFileName" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+							<TextBox x:Name="ytdlNonTVerFileName" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1" TextWrapping="Wrap"/>
 						</StackPanel>
 					</ScrollViewer>
 				</TabItem>
@@ -725,7 +725,7 @@
 									この設定はソフトウェアデコードの強制を有効に設定されていると無効化されます。
 								</TextBlock>
 							</Expander>
-							<TextBox x:Name="ffmpegDecodeOption" Text="未設定" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+							<TextBox x:Name="ffmpegDecodeOption" Text="未設定" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1" TextWrapping="Wrap"/>
 							<StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="10,5,10,5">
 								<Button x:Name="ffmpegDecodeOption_Clear" Style="{DynamicResource ButtonStyle}" Content="クリア" Width="50" Margin="15,0,15,0"/>
 								<Button x:Name="ffmpegDecodeOption_Qsv" Style="{DynamicResource ButtonStyle}" Content="Intel QSV" Width="90" Margin="5,0,5,0"/>
@@ -798,10 +798,11 @@
 									直接youtube-dlのオプションを記載することができます。 <LineBreak/>
 									動画の解像度を指定する場合などに使用します。 <LineBreak/>
 									例えば、1080pを上限としたい場合、-f bestvideo[height&lt;=1080]+bestaudio/best[height&lt;=1080] と設定することで、高さが1080以下の動画を取得するように制限することが可能です。同様に、720pや480p、360pなども設定できます。 <LineBreak/>
-									その他のyoutube-dlのオプションも設定可能です。使用しているyoutube-dl(yt-dlp/ytdl-patched)に合わせてオプションを設定してください。
+									その他のyoutube-dlのオプションも設定可能です。使用しているyoutube-dl(yt-dlp/ytdl-patched)に合わせてオプションを設定してください。 <LineBreak/>
+									ここで設定した内容はTVer以外のサイトにも適用されます。
 								</TextBlock>
 							</Expander>
-							<TextBox x:Name="ytdlOption" Text="未設定" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1"/>
+							<TextBox x:Name="ytdlOption" Text="未設定" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1" TextWrapping="Wrap"/>
 							<StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="10,5,10,5">
 								<Button x:Name="btnYtdlOption_Clear" Style="{DynamicResource ButtonStyle}" Content="クリア" Width="50" Margin="15,0,15,0"/>
 								<Button x:Name="btnYtdlOption_1080" Style="{DynamicResource ButtonStyle}" Content="1080p以下" Width="90" Margin="5,0,5,0"/>
@@ -809,6 +810,24 @@
 								<Button x:Name="btnYtdlOption_480" Style="{DynamicResource ButtonStyle}" Content="480p以下" Width="90" Margin="5,0,5,0"/>
 								<Button x:Name="btnYtdlOption_360" Style="{DynamicResource ButtonStyle}" Content="360p以下" Width="90" Margin="5,0,5,0"/>
 							</StackPanel>
+							<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="youtube-dlのHTTPヘッダ">
+								<TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+									youtube-dlがHTTPアクセスをする際に追加のHTTPヘッダを指定することができます。
+								</TextBlock>
+							</Expander>
+							<TextBox x:Name="ytdlHttpHeader" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1" TextWrapping="Wrap"/>
+							<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="TVerサイト用youtube-dlの引数">
+								<TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+									TVerサイトからのダウンロード設定です。TVerRecはsystem_setting.ps1に記載の設定が入っていることを前提としているので変更は自己責任でお願いします。
+								</TextBlock>
+							</Expander>
+							<TextBox x:Name="ytdlBaseArgs" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1" TextWrapping="Wrap"/>
+							<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="Tverサイト以外youtube-dlの引数">
+								<TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+									TVerサイト以外からのダウンロード設定です。TVerRecはsystem_setting.ps1に記載の設定が入っていることを前提としているので変更は自己責任でお願いします。
+								</TextBlock>
+							</Expander>
+							<TextBox x:Name="nonTVerYtdlBaseArgs" Text="デフォルト値" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1" TextWrapping="Wrap"/>
 						</StackPanel>
 					</ScrollViewer>
 				</TabItem>

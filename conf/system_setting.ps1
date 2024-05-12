@@ -246,6 +246,7 @@ $script:ffmpegDecodeOption = ''
 #youtube-dlオプション
 #　直接youtube-dlのオプションを記載することができます。
 #　動画の解像度を指定する場合などに使用します。
+#　ここで設定した内容はTVer以外のサイトにも適用されます。
 $script:ytdlOption = ''
 
 #以下は$script:ytdlOptionの設定例
@@ -305,6 +306,18 @@ $script:cleanupDownloadBaseDir = $false
 #　「$false」の場合は保存ディレクトリにあるファイルも削除対象にしません。
 $script:cleanupSaveBaseDir = $false
 
+#youtube-dlのHTTPヘッダ
+#　youtube-dlがHTTPアクセスをする際に追加のHTTPヘッダを指定することができます。
+$script:ytdlHttpHeader = 'Accept-Language:ja-JP'
+
+#TVerサイト用youtube-dlの引数
+#　TVerサイトからのダウンロード設定です。TVerRecはこの設定が入っていることを前提としているので変更は自己責任でお願いします。
+$script:ytdlBaseArgs = '--format "(bv*+ba/b)[protocol!*=dash] / (bv*+ba/b)" --format-sort proto --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --no-cache-dir --verbose --ignore-config --no-check-certificates --buffer-size 16K'
+
+#Tverサイト以外youtube-dlの引数
+#　TVerサイト以外からのダウンロード設定です。TVerRecはこの設定が入っていることを前提としているので変更は自己責任でお願いします。
+$script:nonTVerYtdlBaseArgs = '--format "(bv*+ba/b)" --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --no-cache-dir --verbose --ignore-config --no-check-certificates --buffer-size 16K'
+
 #----------------------------------------------------------------------
 #	以下は変更を推奨しない設定。変更の際は自己責任で。
 #----------------------------------------------------------------------
@@ -349,8 +362,3 @@ $script:toastAppLogo = Convert-Path (Join-Path $script:imgDir 'TVerRec-Toast.png
 
 #ウィンドウアイコン用画像のパス
 $script:iconPath = Convert-Path (Join-Path $script:imgDir 'TVerRec-Icon.png')
-
-#youtube-dlの引数
-$script:ytdlAcceptLang = 'Accept-Language:ja-JP'
-$script:ytdlBaseArgs = '--format "(bv*+ba/b)[protocol!*=dash] / (bv*+ba/b)" --format-sort proto --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --no-cache-dir --verbose --ignore-config --no-check-certificates --buffer-size 16K'
-$script:nonTVerYtdlBaseArgs = '--format "(bv*+ba/b)" --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --no-cache-dir --verbose --ignore-config --no-check-certificates --buffer-size 16K'

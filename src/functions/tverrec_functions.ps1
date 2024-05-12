@@ -758,7 +758,7 @@ function Invoke-Ytdl {
 	}
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $saveDir)
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $tmpDir)
-	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlAcceptLang)
+	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlHttpHeader)
 	$ytdlArgs += (' {0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
 	$ytdlArgs += (' {0}' -f $script:ytdlOption)
 	$ytdlArgs += (' {0}' -f $videoInfo.episodePageURL)
@@ -816,7 +816,7 @@ function Invoke-NonTverYtdl {
 	}
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $baseDir)
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $tmpDir)
-	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlAcceptLang)
+	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlHttpHeader)
 	$ytdlArgs += (' {0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
 	$ytdlArgs += (' {0}' -f $script:ytdlOption)
 	$ytdlArgs += (' {0}' -f $videoPageURL)

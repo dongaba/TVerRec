@@ -251,7 +251,10 @@ $settingAttributes = @(
 	'$script:updateChannel',
 	'$script:videoContainerFormat',
 	'$script:cleanupDownloadBaseDir',
-	'$script:cleanupSaveBaseDir'
+	'$script:cleanupSaveBaseDir',
+	'$script:ytdlHttpHeader',
+	'$script:ytdlBaseArgs',
+	'$script:nonTVerYtdlBaseArgs'
 )
 $defaultSetting = @{}
 $currentSetting = @{}
