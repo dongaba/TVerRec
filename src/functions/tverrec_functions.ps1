@@ -43,7 +43,7 @@ function Invoke-TVerRecUpdateCheck {
 	$repo = 'dongaba/TVerRec'
 	$releases = ('https://api.github.com/repos/{0}/releases' -f $repo)
 	try {
-		$appReleases = (Invoke-RestMethod -Uri $releases -Method 'GET' )
+		$appReleases = (Invoke-RestMethod -Uri $releases -Method 'GET' ).where{ ($_.prerelease -eq $false) }[0]
 		if (!$appReleases) { Write-Warning '最新版の情報を取得できませんでした' ; return }
 	} catch { Write-Warning '最新版の情報を取得できませんでした' ; return }
 	#GitHub側最新バージョンの整形 v1.2.3 → 1.2.3
@@ -344,7 +344,7 @@ function Wait-YtdlProcess {
 	while ($true) {
 		$ytdlCount = Get-YtdlProcessCount
 		if ([Int]$ytdlCount -lt [Int]$parallelDownloadFileNum ) { break }
-		Write-Information ('ダウンロードが{0}多重に達したので一時待機します。)' -f $parallelDownloadFileNum)
+		Write-Output ('ダウンロードが{0}多重に達したので一時待機します。' -f $parallelDownloadFileNum)
 		Write-Verbose ('現在のダウンロードプロセス一覧 ({0}個)' -f $ytdlCount)
 		Start-Sleep -Seconds 60
 	}
@@ -434,7 +434,7 @@ function Invoke-VideoDownload {
 	#ダウンロードファイル名を生成
 	$videoInfo = Format-VideoFileInfo $videoInfo
 	#番組タイトルが取得できなかった場合はスキップ次の番組へ
-	if ($videoInfo.fileName -eq '.mp4') { Write-Warning ('　⚠️ 番組タイトルを特定できませんでした。スキップします') ; continue }
+	if (($videoInfo.fileName -eq '.mp4') -or ($videoInfo.fileName -eq '.ts')) { Write-Warning ('　⚠️ 番組タイトルを特定できませんでした。スキップします') ; continue }
 	#番組情報のコンソール出力
 	Show-VideoInfo $videoInfo
 	if ($DebugPreference -ne 'SilentlyContinue') { Show-VideoDebugInfo $videoInfo }
@@ -455,7 +455,8 @@ function Invoke-VideoDownload {
 		#			ダウンロード対象外リストに存在しない	→ダウンロード
 		#ダウンロード履歴ファイルのデータを読み込み
 		$histFileData = @(Read-HistoryFile)
-		$histMatch = @($histFileData.Where({ $_.videoPath -eq $videoInfo.fileRelPath }))
+		if ($videoInfo.fileRelPath) { $histMatch = @($histFileData.Where({ $_.videoPath -eq $videoInfo.fileRelPath })) }
+		else { Write-Warning ('　⚠️ ファイル名が取得できませんでした。スキップします') ; continue }
 		if (($histMatch.Count -ne 0)) {
 			#履歴ファイルに存在する	→スキップして次のファイルに
 			Write-Warning ('　⚠️ 同名のファイルがすでに履歴ファイルに存在します。番組IDが変更になった可能性があります。ダウンロードをスキップします')
@@ -589,22 +590,43 @@ function Get-VideoInfo {
 	$endTime = (ConvertFrom-UnixTime ($response.Result.Episode.Content.EndAt)).AddHours(9)
 	#----------------------------------------------------------------------
 	#番組説明
-	$versionNum = $response.Result.Episode.Content.version
-	$tverVideoInfoBaseURL = 'https://statics.tver.jp/content/episode/'
-	$tverVideoInfoURL = ('{0}{1}.json?v={2}' -f $tverVideoInfoBaseURL, $episodeID, $versionNum)
 	try {
+		$versionNum = $response.Result.Episode.Content.version
+		$tverVideoInfoBaseURL = 'https://statics.tver.jp/content/episode/'
+		$tverVideoInfoURL = ('{0}{1}.json?v={2}' -f $tverVideoInfoBaseURL, $episodeID, $versionNum)
 		$videoInfo = Invoke-RestMethod -Uri $tverVideoInfoURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
 		$descriptionText = (Get-NarrowChars ($videoInfo.Description).Replace('&amp;', '&')).Trim()
 		$videoEpisodeNum = (Get-NarrowChars ($videoInfo.No)).Trim()
-	} catch { Write-Warning ('⚠️ エラーが発生しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message); return }
+		$accountID = $videoInfo.video.accountID
+		$videoRefID = if ($videoInfo.video.PSObject.Properties.Name -contains 'videoRefID') { ('ref%3A{0}' -f $videoInfo.video.videoRefID) } else { $videoInfo.video.videoID }
+		$playerID = $videoInfo.video.playerID
+	} catch { Write-Warning ('⚠️ エラーが発生しました。番組情報を取得できません。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message); return }
+	try {
+		$brightcoveJsURL = ('https://players.brightcove.net/{0}/{1}_default/index.min.js' -f $accountID, $playerID)
+		$brightcovePk = if ((Invoke-RestMethod -Uri $brightcoveJsURL -Method 'GET' -Headers $script:requestHeader) -match 'policyKey:"([a-zA-Z0-9_-]*)"') { $matches[1] }
+	} catch { Write-Warning ('⚠️ エラーが発生しました。m3u8ファイル取得のキーが取得できません。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) ; return }
+	try {
+		$brightcoveURL = ('https://edge.api.brightcove.com/playback/v1/accounts/{0}/videos/{1}' -f $accountID, $videoRefID)
+		$headers = @{
+			'Accept'          = ('application/json;pk={0}' -f $brightcovePk)
+			'X-Forwarded-For' = $script:jpIP
+		}
+		$response = Invoke-RestMethod -Uri $brightcoveURL -Method 'GET' -Headers $headers
+		$m3u8URL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*mpeg*' }).where({ $_.ext_x_version -eq 4 })[0].src
+		$mpdURL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*dash*' })[0].src
+	} catch { Write-Warning ('⚠️ エラーが発生しました。m3u8ファイルが取得できません。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) ; return }
 	#「《」と「》」で挟まれた文字を除去
-	if ($script:removeSpecialNote) { $videoSeries = Remove-SpecialNote $videoSeries; $videoSeason = Remove-SpecialNote $videoSeason; $episodeName = Remove-SpecialNote $episodeName }
+	if ($script:removeSpecialNote) { 
+		; $videoSeason = Remove-SpecialNote $videoSeason; $episodeName = Remove-SpecialNote $episodeName 
+	}
 	#シーズン名が本編の場合はシーズン名をクリア
 	if ($videoSeason -eq '本編') { $videoSeason = '' }
 	#シリーズ名がシーズン名を含む場合はシーズン名をクリア
 	if ($videoSeries -cmatch [Regex]::Escape($videoSeason)) { $videoSeason = '' }
 	#エピソード番号を極力修正
 	if (($videoEpisodeNum -eq 1) -and ($episodeName -imatch '([#|第|Episode|ep|Take|Vol|Part|Chapter|Case|Stage|Mystery|Ope|Story|Sign|Trap|Letter|Act]+\.?\s?)(\d+)(.*)')) { $videoEpisodeNum = $matches[2] }
+	#エピソード番号が1桁の際は頭0埋めして2桁に
+	$videoEpisodeNum = $videoEpisodeNum.PadLeft(2, '0')
 	#放送日を整形
 	if ($broadcastDate -cmatch '([0-9]+)(月)([0-9]+)(日)(.+?)(放送)') {
 		$currentYear = (Get-Date).Year
@@ -630,6 +652,8 @@ function Get-VideoInfo {
 		versionNum      = $versionNum
 		videoInfoURL    = $tverVideoInfoURL
 		descriptionText = $descriptionText
+		m3u8URL         = $m3u8URL
+		mpdURL          = $mpdURL
 	}
 	Remove-Variable -Name episodeID, tverVideoInfoBaseURL, tverVideoInfoURL, response -ErrorAction SilentlyContinue
 	Remove-Variable -Name videoSeries, videoSeriesID, videoSeriesPageURL, videoSeason, videoSeasonID, episodeName, videoEpisodeID, videoEpisodePageURL -ErrorAction SilentlyContinue
@@ -659,7 +683,7 @@ function Format-VideoFileInfo {
 		while ([System.Text.Encoding]::UTF8.GetByteCount($videoName) -gt $fileNameLimit) { $videoName = $videoName.Substring(0, $videoName.Length - 1) }
 		$videoName = ('{0}……' -f $videoName)
 	}
-	$videoName = Get-FileNameWithoutInvalidChars ('{0}.mp4' -f $videoName)
+	$videoName = Get-FileNameWithoutInvalidChars ('{0}.{1}' -f $videoName, $script:videoContainerFormat)
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'fileName' -Value $videoName
 	$videoFileDir = Get-FileNameWithoutInvalidChars (Remove-SpecialCharacter ('{0} {1}' -f $videoInfo.seriesName, $videoInfo.seasonName ).Trim(' ', '.'))
 	if ($script:sortVideoByMedia) { $videoFileDir = (Join-Path $script:downloadBaseDir (Get-FileNameWithoutInvalidChars $videoInfo.mediaName) | Join-Path -ChildPath $videoFileDir) }
@@ -680,7 +704,7 @@ function Show-VideoInfo {
 	[OutputType([System.Void])]
 	Param ([Parameter(Mandatory = $true)][pscustomobject]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	Write-Output ('　番組名:　 {0}' -f $videoInfo.fileName.Replace('.mp4', ''))
+	Write-Output ('　番組名:　 {0}' -f $videoInfo.fileName.Replace($script:videoContainerFormat, ''))
 	Write-Output ('　放送日:　 {0}' -f $videoInfo.broadcastDate)
 	Write-Output ('　テレビ局: {0}' -f $videoInfo.mediaName)
 	Write-Output ('　配信終了: {0}' -f $videoInfo.endTime)
@@ -712,30 +736,33 @@ function Invoke-Ytdl {
 	}
 	$tmpDir = ('temp:{0}' -f $script:downloadWorkDir)
 	$saveDir = ('home:{0}' -f $videoInfo.fileDir)
-	$subttlDir = ('subtitle:{0}' -f $script:downloadWorkDir)
-	$thumbDir = ('thumbnail:{0}' -f $script:downloadWorkDir)
-	$chaptDir = ('chapter:{0}' -f $script:downloadWorkDir)
-	$descDir = ('description:{0}' -f $script:downloadWorkDir)
 	$saveFile = ('{0}' -f $videoInfo.fileName)
 	$ytdlArgs = (' {0}' -f $script:ytdlBaseArgs)
+	if ($script:videoContainerFormat -eq 'mp4') { 
+		$ytdlArgs += (' {0}' -f '--merge-output-format mp4 --embed-thumbnail --embed-chapters')
+		$subttlDir = ('subtitle:{0}' -f $script:downloadWorkDir)
+		$thumbDir = ('thumbnail:{0}' -f $script:downloadWorkDir)
+		$chaptDir = ('chapter:{0}' -f $script:downloadWorkDir)
+		$descDir = ('description:{0}' -f $script:downloadWorkDir)
+		$ytdlArgs += (' {0} "{1}"' -f '--paths', $subttlDir)
+		$ytdlArgs += (' {0} "{1}"' -f '--paths', $thumbDir)
+		$ytdlArgs += (' {0} "{1}"' -f '--paths', $chaptDir)
+		$ytdlArgs += (' {0} "{1}"' -f '--paths', $descDir)
+		if ($script:embedSubtitle) { $ytdlArgs += (' {0}' -f '--sub-langs all --convert-subs srt --embed-subs') }
+		if ($script:embedMetatag) { $ytdlArgs += (' {0}' -f '--embed-metadata') }
+	}
 	$ytdlArgs += (' {0} {1}' -f '--concurrent-fragments', $script:parallelDownloadNumPerFile)
 	if ($script:rateLimit -notin @(0, '')) {
 		$rateLimit = [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8)
 		$ytdlArgs += (' {0} {1}M' -f '--limit-rate', $rateLimit)
 	}
-	if ($script:embedSubtitle) { $ytdlArgs += (' {0}' -f '--sub-langs all --convert-subs srt --embed-subs') }
-	if ($script:embedMetatag) { $ytdlArgs += (' {0}' -f '--embed-metadata') }
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $saveDir)
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $tmpDir)
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $subttlDir)
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $thumbDir)
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $chaptDir)
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $descDir)
+	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlHttpHeader)
 	$ytdlArgs += (' {0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
-	$ytdlArgs += (' {0} "{1}"' -f '--output', $saveFile)
-	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlAcceptLang)
 	$ytdlArgs += (' {0}' -f $script:ytdlOption)
 	$ytdlArgs += (' {0}' -f $videoInfo.episodePageURL)
+	$ytdlArgs += (' {0} "{1}"' -f '--output', $saveFile)
 	Write-Debug ('youtube-dl起動コマンド: {0}{1}' -f $script:ytdlPath, $ytdlArgs)
 	try {
 		$startProcessParams = @{
@@ -769,31 +796,32 @@ function Invoke-NonTverYtdl {
 	}
 	$tmpDir = ('temp:{0}' -f $script:downloadWorkDir)
 	$baseDir = ('home:{0}' -f $script:downloadBaseDir)
+	$saveFile = ('{0}' -f $script:ytdlNonTVerFileName)
+	$ytdlArgs = (' {0}' -f $script:nonTVerYtdlBaseArgs)
+	$ytdlArgs += (' {0}' -f '--merge-output-format mp4 --embed-thumbnail --embed-chapters')
 	$subttlDir = ('subtitle:{0}' -f $script:downloadWorkDir)
 	$thumbDir = ('thumbnail:{0}' -f $script:downloadWorkDir)
 	$chaptDir = ('chapter:{0}' -f $script:downloadWorkDir)
 	$descDir = ('description:{0}' -f $script:downloadWorkDir)
-	$saveFile = ('{0}' -f $script:ytdlNonTVerFileName)
-	$ytdlArgs = (' {0}' -f $script:ytdlBaseArgs)
+	$ytdlArgs += (' {0} "{1}"' -f '--paths', $subttlDir)
+	$ytdlArgs += (' {0} "{1}"' -f '--paths', $thumbDir)
+	$ytdlArgs += (' {0} "{1}"' -f '--paths', $chaptDir)
+	$ytdlArgs += (' {0} "{1}"' -f '--paths', $descDir)
+	if ($script:embedSubtitle) { $ytdlArgs += (' {0}' -f '--sub-langs all --convert-subs srt --embed-subs') }
+	if ($script:embedMetatag) { $ytdlArgs += (' {0}' -f '--embed-metadata') }
 	$ytdlArgs += (' {0} {1}' -f '--concurrent-fragments', $script:parallelDownloadNumPerFile)
 	if ($script:rateLimit -notin @(0, '')) {
 		$rateLimit = [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8)
 		$ytdlArgs += (' {0} {1}M' -f '--limit-rate', $rateLimit)
 	}
-	if ($script:embedSubtitle) { $ytdlArgs += (' {0}' -f '--sub-langs all --convert-subs srt --embed-subs') }
-	if ($script:embedMetatag) { $ytdlArgs += (' {0}' -f '--embed-metadata') }
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $baseDir)
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $tmpDir)
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $subttlDir)
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $thumbDir)
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $chaptDir)
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $descDir)
+	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlHttpHeader)
 	$ytdlArgs += (' {0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
-	$ytdlArgs += (' {0} "{1}"' -f '--output', $saveFile)
-	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlAcceptLang)
 	$ytdlArgs += (' {0}' -f $script:ytdlOption)
 	$ytdlArgs += (' {0}' -f $videoPageURL)
-	Write-Debug ('youtube-dl起動コマンド: {0}{1}' -f $script:ytdlPath, $ytdlArgs)
+	$ytdlArgs += (' {0} "{1}"' -f '--output', $saveFile)
+	Write-Output ('youtube-dl起動コマンド: {0}{1}' -f $script:ytdlPath, $ytdlArgs)
 	try {
 		$startProcessParams = @{
 			FilePath     = $script:ytdlPath
@@ -1008,6 +1036,28 @@ function Invoke-ValidityCheck {
 }
 
 #region 環境
+#----------------------------------------------------------------------
+#Geo IP関連
+#----------------------------------------------------------------------
+function Get-JpIP {
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	Do {
+		#日本に割り当てられているIPアドレスレンジの取得
+		$allCIDR = Import-Csv $script:jpIPList
+		$randomCIDR = $allCIDR[[UInt32](Get-Random -Maximum $allCIDR.count)]
+		#ランダムなIPアドレスの取得
+		$startIPArray = [System.Net.IPAddress]::Parse($randomCIDR[0].start).GetAddressBytes()
+		$endIPArray = [System.Net.IPAddress]::Parse($randomCIDR[0].end).GetAddressBytes()
+		[Array]::Reverse($startIPArray) ; $startIPInt = [BitConverter]::ToUInt32($startIPArray, 0)
+		[Array]::Reverse($endIPArray) ; $endIPInt = [BitConverter]::ToUInt32($endIPArray, 0)
+		$randomIPInt = $startIPInt + [UInt32](Get-Random -Maximum ($endIPInt - $startIPInt - 1)) + 1	#CIDR範囲の先頭と末尾を除く
+		$randomIPArray = [System.BitConverter]::GetBytes($randomIPInt) 
+		[Array]::Reverse($randomIPArray) ; $jpIP = [System.Net.IPAddress]::new($randomIPArray).ToString()
+		$check = Invoke-RestMethod -Uri ('http://ip-api.com/json/{0}?fields=16785410' -f $jpIP)
+	} While (($check.countryCode -ne 'JP') -or ($check.hosting -ne $false) )
+	return $jpIP
+	Remove-Variable -Name jpIP, check, allCIDR, randomCIDR, startIPArray, endIPArray, startIPInt, endIPInt, randomIPInt, randomIPArray -ErrorAction SilentlyContinue
+}
 
 #----------------------------------------------------------------------
 #設定取得

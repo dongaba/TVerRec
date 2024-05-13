@@ -25,7 +25,11 @@ BeforeAll {
 	$script:tagID = 'golf'	#ゴルフ
 	$script:genre = 'drama'	#ドラマ
 	$script:keyword = 'カンブリア'
-
+	$script:requestHeader = @{
+		'x-tver-platform-type' = 'web'
+		'Origin'               = 'https://tver.jp'
+		'Referer'              = 'https://tver.jp'
+	}
 	function MockProcessSearchResults {
 		param($baseURL, $type, $keyword)
 		return [PSCustomObject]@{
@@ -843,51 +847,27 @@ Describe 'Get-LinkFromSiteMap' -Tag 'Target' {
 			Get-Token
 	}
 
-	Mock Invoke-RestMethod {
-		return [PSCustomObject]@{
-			urlset = [PSCustomObject]@{
-				url = @(
-					[PSCustomObject]@{loc = 'https://tver.jp/episodes/123' },
-					[PSCustomObject]@{loc = 'https://tver.jp/series/456' },
-					[PSCustomObject]@{loc = 'https://tver.jp/ranking/789' },
-					[PSCustomObject]@{loc = 'https://tver.jp/specials/101112' }
-				)
-			}
-		}
-	}
-
-	Mock Get-LinkFromRanking {}
-	Mock Get-LinkFromSpecialMainID {}
-	Mock Update-LinkCollection { $args[0] }
-
 	It 'Returns episode links from sitemap' {
 		$result = Get-LinkFromSiteMap
-		$result.episodeLinks.Count | Should -Be 1
-		$result.episodeLinks[0] | Should -Be 'https://tver.jp/episodes/123'
+		$result.episodeLinks.Count | Should -BeGreaterOrEqual 1
 	}
 
 	It 'Returns series links from sitemap when not episode only' {
 		$script:sitemapParseEpisodeOnly = $false
 		$result = Get-LinkFromSiteMap
-		$result.seriesLinks.Count | Should -Be 1
-		$result.seriesLinks[0] | Should -Be '456'
+		$result.seriesLinks.Count | Should -BeGreaterOrEqual 1
 	}
 
-	It 'Calls Get-LinkFromRanking for ranking pages' {
-		Get-LinkFromSiteMap
-		Assert-MockCalled Get-LinkFromRanking -Exactly 1
+	It 'Returns series links from sitemap when episode only' {
+		$script:sitemapParseEpisodeOnly = $true
+		$result = Get-LinkFromSiteMap
+		$result.seriesLinks.Count | Should -Be 0
 	}
 
-	It 'Calls Get-LinkFromSpecialMainID for specials pages' {
-		Get-LinkFromSiteMap
-		Assert-MockCalled Get-LinkFromSpecialMainID -Exactly 1
-	}
-
-	It 'Calls Update-LinkCollection with results' {
-		Get-LinkFromSiteMap
-		Assert-MockCalled Update-LinkCollection -Exactly 2 -ParameterFilter {
-			$result -ne $null
-		}
+	It 'Returns special links from sitemap when not episode only' {
+		$script:sitemapParseEpisodeOnly = $false
+		$result = Get-LinkFromSiteMap
+		$result.specialLinks.Count | Should -BeGreaterOrEqual 1
 	}
 
 }

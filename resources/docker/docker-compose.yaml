@@ -1,14 +1,13 @@
-version: '3.8'
+version: "3.8"
 
 services:
   tverrec:
-    container_name: bulkdownload
+    container_name: TVerRec-loop
     image: dongaba/tverrec:latest
-    hostname: 'tverrec'
+    hostname: "tverrec"
     restart: unless-stopped
     tty: true
     stdin_open: true
-    network_mode: "host"
 
     build:
       context: .
@@ -16,25 +15,18 @@ services:
 
     environment:
       POWERSHELL_TELEMETRY_OPTOUT: 1
-      COMPOSE_PROJECT_NAME: tverrec
 
     tmpfs:
       - /mnt/Temp
 
     volumes:
-      - type: bind
-        source: ~/ContainerData/Work
-        target: /mnt/Work
-      - type: bind
-        source: ~/ContainerData/Save
-        target: /mnt/Save
-      - type: bind
-        source: ~/ContainerData/container-data
-        target: /app/TVerRec/container-data
+      - temp:/mnt/Temp
+      - work:/mnt/Work
+      - save:/mnt/Save
+      - container-data:/app/TVerRec/container-data
 
-    cap_add:
-      - ALL
-
-    cap_drop:
-      - NET_ADMIN
-      - SYS_ADMIN
+volumes:
+  temp:
+  work:
+  save:
+  container-data:
