@@ -47,6 +47,8 @@ linux-*
 mac-*
 win-*
 *.xlsx
+.anima
+.anima/*
 
 #Chrome拡張機能
 _*

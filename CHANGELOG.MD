@@ -1,14 +1,14 @@
 ﻿# Change Log
 
-## [3.1.1](https://github.com/dongaba/TVerRec/releases/tag/v3.1.1)
+## [3.2.0](https://github.com/dongaba/TVerRec/releases/tag/v3.2.0)
 
-### 3.1.1 Added
+### 3.2.0 Added
 
 - TVerRecの自動アップデートでアップデートチャネルを選択可能に
 - m3u8ファイルの取得、mpdファイルの取得に対応
 - TVer番組のtsファイルのダウンロードに対応
 
-### 3.1.1 Changed
+### 3.2.0 Changed
 
 - 念の為にGeoIP対策実施
 - GUI設定画面にプリセットを呼び出す機能を追加
@@ -18,9 +18,10 @@
 - GUI設定画面から設定できる項目を追加
 - GUI設定画面でテキストボックスの幅が足りない場合に複数行化
 
-### 3.1.1 Fixed
+### 3.2.0 Fixed
 
 - アップデータがリストファイルのレイアウト変更に失敗するケースがある不具合を修正
+- キーワードファイルに`epsodes/epxxxxxxxx`を指定すると`epsodes/epxxxxxxxx`でキーワード検索をしてしまう不具合を修正
 
 ## [3.1.0](https://github.com/dongaba/TVerRec/releases/tag/v3.1.0)
 

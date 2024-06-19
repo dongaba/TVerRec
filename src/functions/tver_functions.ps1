@@ -56,6 +56,7 @@ function Get-VideoLinksFromKeyword {
 		'toppage' { $result = Get-LinkFromTopPage; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result; continue }
 		'sitemap' { $result = Get-LinkFromSiteMap; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result; continue }
 		'mypage' { $result = Get-LinkFromMyPage $tverID; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result; continue }
+		'episodes' { continue }
 		default { $result = Get-LinkFromFreeKeyword $keyword; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result }
 	}
 	while (($linkCollection.specialMainLinks.Count -ne 0) -or ($linkCollection.specialLinks.Count -ne 0) -or ($linkCollection.talentLinks.Count -ne 0) -or ($linkCollection.seriesLinks.Count -ne 0) -or ($linkCollection.seasonLinks.Count -ne 0)) {
