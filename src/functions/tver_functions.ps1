@@ -15,14 +15,17 @@ function Get-Token () {
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$tverTokenURL = 'https://platform-api.tver.jp/v2/api/platform_users/browser/create'
-	$requestHeader = @{'Content-Type' = 'application/x-www-form-urlencoded' }
+	$headers = @{
+		'Content-Type'    = 'application/x-www-form-urlencoded'
+		'X-Forwarded-For' = $script:jpIP
+	}
 	$requestBody = 'device_type=pc'
 	try {
-		$tokenResponse = Invoke-RestMethod -Uri $tverTokenURL -Method 'POST' -Headers $requestHeader -Body $requestBody -TimeoutSec $script:timeoutSec
+		$tokenResponse = Invoke-RestMethod -Uri $tverTokenURL -Method 'POST' -Headers $headers -Body $requestBody -TimeoutSec $script:timeoutSec
 		$script:platformUID = $tokenResponse.Result.platform_uid
 		$script:platformToken = $tokenResponse.Result.platform_token
 	} catch { Throw ('　❌️ トークン取得エラー、終了します') }
-	Remove-Variable -Name tverTokenURL, requestHeader, requestBody, tokenResponse -ErrorAction SilentlyContinue
+	Remove-Variable -Name tverTokenURL, headers, requestBody, tokenResponse -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -53,6 +56,7 @@ function Get-VideoLinksFromKeyword {
 		'toppage' { $result = Get-LinkFromTopPage; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result; continue }
 		'sitemap' { $result = Get-LinkFromSiteMap; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result; continue }
 		'mypage' { $result = Get-LinkFromMyPage $tverID; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result; continue }
+		'episodes' { continue }
 		default { $result = Get-LinkFromFreeKeyword $keyword; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result }
 	}
 	while (($linkCollection.specialMainLinks.Count -ne 0) -or ($linkCollection.specialLinks.Count -ne 0) -or ($linkCollection.talentLinks.Count -ne 0) -or ($linkCollection.seriesLinks.Count -ne 0) -or ($linkCollection.seasonLinks.Count -ne 0)) {
@@ -350,7 +354,7 @@ function Get-LinkFromSiteMap {
 		specialLinks     = [System.Collections.Generic.List[string]]::new()
 	}
 	$callSearchURL = 'https://tver.jp/sitemap.xml'
-	$searchResultsRaw = Invoke-RestMethod -Uri $callSearchURL -Method 'GET' -TimeoutSec $script:timeoutSec
+	$searchResultsRaw = Invoke-RestMethod -Uri $callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
 	$searchResults = $searchResultsRaw.urlset.url.loc | Sort-Object -Unique
 	foreach ($url in $searchResults) {
 		try {

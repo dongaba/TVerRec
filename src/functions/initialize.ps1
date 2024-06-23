@@ -76,7 +76,7 @@ if (Test-Path (Join-Path $script:scriptRoot '../log/updater_update.txt')) {
 
 #TVerRecの最新化チェック
 Invoke-TVerRecUpdateCheck
-if (!$?) { Write-Warning ('⚠️ TVerRecのバージョンチェックに失敗しました') }
+if (!$?) { Write-Warning ('⚠️ TVerRecのバージョンチェックに失敗しました。処理を継続します') }
 
 #----------------------------------------------------------------------
 #ダウンロード対象キーワードのパス
@@ -116,21 +116,28 @@ else { $script:ffmpegPath = Join-Path $script:binDir 'ffmpeg' }
 if ($IsWindows) { $script:ffprobePath = Join-Path $script:binDir 'ffprobe.exe' }
 else { $script:ffprobePath = Join-Path $script:binDir 'ffprobe' }
 
+#Geo IPのパス
+$script:jpIPList = Join-Path $script:geoIPDir 'jp.csv'
+
 #GUI起動を判定
 if ( $myInvocation.ScriptName.Contains('gui')) {
 } else {
 	#Logo表示
 	if (!$script:guiMode) { Show-Logo }
 	#youtube-dl/ffmpegの最新化チェック
-	if (!$script:disableUpdateYoutubedl) { Invoke-ToolUpdateCheck -scriptName 'update_youtube-dl.ps1' -targetName 'youtube-dl' }
-	if (!$script:disableUpdateFfmpeg) { Invoke-ToolUpdateCheck -scriptName 'update_ffmpeg.ps1' -targetName 'ffmpeg' }
+	try { if (!$script:disableUpdateYoutubedl) { Invoke-ToolUpdateCheck -scriptName 'update_youtube-dl.ps1' -targetName 'youtube-dl' } }
+	catch { Write-Warning ('⚠️ youtube-dlのバージョンチェックに失敗しました。処理を継続します') }
+	try { if (!$script:disableUpdateFfmpeg) { Invoke-ToolUpdateCheck -scriptName 'update_ffmpeg.ps1' -targetName 'ffmpeg' } }
+	catch { Write-Warning ('⚠️ ffmpegのバージョンチェックに失敗しました。処理を継続します') }
 }
 
 #共通HTTPヘッダ
+$script:jpIP = Get-JpIP
 $script:requestHeader = @{
 	'x-tver-platform-type' = 'web'
 	'Origin'               = 'https://tver.jp'
 	'Referer'              = 'https://tver.jp'
+	'X-Forwarded-For'      = $script:jpIP
 }
 
 #ロックファイル用

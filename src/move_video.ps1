@@ -49,8 +49,8 @@ if ($script:saveBaseDir) {
 
 #作業ディレクトリ配下のディレクトリ一覧
 $moveFromPathsHash = @{}
-if ($script:saveBaseDir -and (Get-ChildItem -LiteralPath $script:downloadBaseDir -Filter '*.mp4' -Recurse)) {
-	Get-ChildItem -LiteralPath $script:downloadBaseDir -Filter '*.mp4' -Recurse -File | Select-Object Directory -Unique | ForEach-Object { $moveFromPathsHash[$_.Directory.Name] = $_.Directory.FullName }
+if ($script:saveBaseDir -and (Get-ChildItem -LiteralPath $script:downloadBaseDir -Include @('*.mp4', '*.ts') -Recurse)) {
+	Get-ChildItem -LiteralPath $script:downloadBaseDir -Include @('*.mp4', '*.ts') -Recurse -File | Select-Object Directory -Unique | ForEach-Object { $moveFromPathsHash[$_.Directory.Name] = $_.Directory.FullName }
 }
 
 #移動先ディレクトリと作業ディレクトリの一致を抽出
@@ -102,8 +102,8 @@ if ($moveDirs) {
 
 		#同名ディレクトリが存在する場合は配下のファイルを移動
 		if (Test-Path $moveFromPath) {
-			Write-Output ('　{0}\*.mp4' -f $moveFromPath)
-			try { $null = Move-Item -Path ('{0}\*.mp4' -f $moveFromPath) -Destination $moveToPath -Force }
+			Write-Output ('　{0}\(*.mp4;*.ts)' -f $moveFromPath)
+			try { $null = Move-Item -Path ('{0}\*' -f $moveFromPath) -Include @('*.mp4', '*.ts') -Destination $moveToPath -Force }
 			catch { Write-Warning ('⚠️ 移動できないファイルがありました - {0}' -f $moveFromPath) }
 		}
 	}

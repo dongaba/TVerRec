@@ -236,7 +236,7 @@ $script:ffmpegDecodeOption = ''
 #	$script:ffmpegDecodeOption = '-hwaccel dxva2 -hwaccel_output_format dxva2_vld'
 #	CUDA : for NVIDIA Graphic Cards
 #	$script:ffmpegDecodeOption = '-hwaccel cuda -hwaccel_output_format cuda'
-#	VideoToolBox : for Macs
+#	VideoToolbox : for Macs
 #	$script:ffmpegDecodeOption = '-hwaccel videotoolbox'
 #	for Raspberry Pi 4 64bit
 #	$script:ffmpegDecodeOption = '-c:v h264_v4l2m2m -num_output_buffers 32 -num_capture_buffers 32'
@@ -246,17 +246,18 @@ $script:ffmpegDecodeOption = ''
 #youtube-dlオプション
 #　直接youtube-dlのオプションを記載することができます。
 #　動画の解像度を指定する場合などに使用します。
+#　ここで設定した内容はTVer以外のサイトにも適用されます。
 $script:ytdlOption = ''
 
 #以下は$script:ytdlOptionの設定例
 #	1080p
-#	$script:ytdlOption = '-f bestvideo[height<=1080]+bestaudio/best[height<=1080]'
+#	$script:ytdlOption = '-f "bestvideo[height<=1080]+bestaudio/best[height<=1080]"'
 #	720p
-#	$script:ytdlOption = '-f bestvideo[height<=720]+bestaudio/best[height<=720]'
+#	$script:ytdlOption = '-f "bestvideo[height<=720]+bestaudio/best[height<=720]"'
 #	480p
-#	$script:ytdlOption = '-f bestvideo[height<=480]+bestaudio/best[height<=480]'
+#	$script:ytdlOption = '-f "bestvideo[height<=480]+bestaudio/best[height<=480]"'
 #	360p
-#	$script:ytdlOption = '-f bestvideo[height<=360]+bestaudio/best[height<=360]'
+#	$script:ytdlOption = '-f "bestvideo[height<=360]+bestaudio/best[height<=360]"'
 
 #Tverサイト以外のベースファイル名
 $script:ytdlNonTVerFileName = '%(webpage_url_domain)s - %(upload_date)s - %(title)s - [%(id)s].%(ext)s'
@@ -272,9 +273,50 @@ $script:extractDescTextToList = $false
 
 #ダウンロードリスト作成時のダウンロード履歴との突合
 #　ダウンロードリストファイル作成時にダウンロード履歴に含まれる番組を除外するかを設定します。
-#　「$true」の場合ははダウンロード履歴に番組履歴がある際はリストファイルに出力しません。
+#　「$true」の場合はダウンロード履歴に番組履歴がある際はリストファイルに出力しません。
 #　「$false」の場合はダウンロード履歴に番組履歴があってもリストファイルに出力します。
 $script:listGenHistoryCheck = $true
+
+#TVerRecのアップデートチャネル
+#　TVerRecのアップデータを実行した際に、どのチャネルから最新版をダウンロードするのかを設定します。
+#　規定では release が設定されており、リリース版の最新版をダウンロードします。(プレリリースは除きます)
+#　prerelease に設定すると、プレリリース版の最新版をダウンロードします。(リリース版のほうが新しくても常に一番新しいプレリリース板となるのでご注意ください)
+#　master に設定すると、masterブランチの最新版を取得します。リリース前の機能を先行取得できます。
+#　beta に設定すると、betaブランチの最新版を取得します。より新しい機能をお試しいただけますが、ベータ版のため不具合を含んでいる可能性があります。
+#　dev に設定すると、devブランチの最新版を取得します。開発中の最新機能をお試しいただけますが、安定動作しない可能性があるため特殊要件がなければおすすめしません。
+$script:updateChannel = 'release'
+
+#TVer番組ファイルの動画コンテナ形式
+#　TVer番組ファイルの動画コンテナ形式を設定します。
+#　デフォルトでは mp4 となっており、メタ情報や字幕、サムネイルなどの埋込はmp4形式のみで有効です。
+#　主に音ズレ対策として ts形式を指定することもできますが、ts形式を使うことで音ズレがなくなるかどうかはよくわかりません。
+#　ts 形式を指定した場合、メタ情報や字幕、サムネイルなどの埋め込みは利用できなくなります。
+#　機能に制限が出るため、基本的には mp4 を指定することが推奨で、特段理由がなければ ts を指定しない方が良いと思います。
+$script:videoContainerFormat = 'mp4'
+
+#不要ファイル削除時にダウンロードディレクトリのチェック
+#　不要ファイル削除時にダウンロードディレクトリもチェック対象にするかを設定します。
+#　「$true」の場合はダウンロードディレクトリにあるファイルも削除対象にします。
+#　「$false」の場合はダウンロードディレクトリにあるファイルも削除対象にしません。
+$script:cleanupDownloadBaseDir = $false
+
+#不要ファイル削除時に保存のチェック
+#　不要ファイル削除時に保存ディレクトリもチェック対象にするかを設定します。
+#　「$true」の場合は保存ディレクトリにあるファイルも削除対象にします。
+#　「$false」の場合は保存ディレクトリにあるファイルも削除対象にしません。
+$script:cleanupSaveBaseDir = $false
+
+#youtube-dlのHTTPヘッダ
+#　youtube-dlがHTTPアクセスをする際に追加のHTTPヘッダを指定することができます。
+$script:ytdlHttpHeader = 'Accept-Language:ja-JP'
+
+#TVerサイト用youtube-dlの引数
+#　TVerサイトからのダウンロード設定です。TVerRecはこの設定が入っていることを前提としているので変更は自己責任でお願いします。
+$script:ytdlBaseArgs = '--format "(bv*+ba/b)[protocol!*=dash] / (bv*+ba/b)" --format-sort proto --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --no-cache-dir --verbose --ignore-config --no-check-certificates --buffer-size 16K'
+
+#Tverサイト以外youtube-dlの引数
+#　TVerサイト以外からのダウンロード設定です。TVerRecはこの設定が入っていることを前提としているので変更は自己責任でお願いします。
+$script:nonTVerYtdlBaseArgs = '--format "(bv*+ba/b)" --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --no-cache-dir --verbose --ignore-config --no-check-certificates --buffer-size 16K'
 
 #----------------------------------------------------------------------
 #	以下は変更を推奨しない設定。変更の際は自己責任で。
@@ -308,6 +350,7 @@ $script:libDir = Convert-Path (Join-Path $scriptRoot '../resources/lib')
 $script:lockDir = Convert-Path (Join-Path $scriptRoot '../resources/lock')
 $script:sampleDir = Convert-Path (Join-Path $scriptRoot '../resources/sample')
 $script:xamlDir = Convert-Path (Join-Path $scriptRoot '../resources/xaml')
+$script:geoIPDir = Convert-Path (Join-Path $scriptRoot '../resources/geoip')
 $script:containerDir = Join-Path $scriptRoot '../container-data'
 
 #アイコンを設定
@@ -319,7 +362,3 @@ $script:toastAppLogo = Convert-Path (Join-Path $script:imgDir 'TVerRec-Toast.png
 
 #ウィンドウアイコン用画像のパス
 $script:iconPath = Convert-Path (Join-Path $script:imgDir 'TVerRec-Icon.png')
-
-#youtube-dlの引数
-$script:ytdlAcceptLang = 'Accept-Language:ja-JP'
-$script:ytdlBaseArgs = '--format "(bv*+ba/b)[protocol!*=dash] / (bv*+ba/b)" --format-sort proto --merge-output-format mp4 --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --embed-thumbnail --embed-chapters --no-cache-dir --verbose --ignore-config --no-check-certificates --buffer-size 16K --no-hls-use-mpegts'

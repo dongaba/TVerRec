@@ -1,5 +1,30 @@
 ﻿# Change Log
 
+## [3.2.0](https://github.com/dongaba/TVerRec/releases/tag/v3.2.0)
+
+### 3.2.0 Added
+
+- TVerRecの自動アップデートでアップデートチャネルを選択可能に
+- m3u8ファイルの取得、mpdファイルの取得に対応
+- TVer番組のtsファイルのダウンロードに対応
+
+### 3.2.0 Changed
+
+- 念の為にGeoIP対策実施
+- GUI設定画面にプリセットを呼び出す機能を追加
+- 不要ファイル削除時にダウンロードディレクトリと保存ディレクトリのチェックの可否を選択可能に(デフォルトはチェックしない)
+- GUI設定画面で、未設定項目について`デフォルト値`または`未設定`を表示するように変更
+- エピソード番号が1桁の際に頭0埋めして2桁にするように変更
+- GUI設定画面から設定できる項目を追加
+- GUI設定画面でテキストボックスの幅が足りない場合に複数行化
+
+### 3.2.0 Fixed
+
+- アップデータがリストファイルのレイアウト変更に失敗するケースがある不具合を修正
+- キーワードファイルに`epsodes/epxxxxxxxx`を指定すると`epsodes/epxxxxxxxx`でキーワード検索をしてしまう不具合を修正
+- 低解像度ファイルのダウンロードのオプション指定の記載例に誤りがあった問題を修正
+- Dockerコンテナで最新のPowerShellに実行権限がつかない問題を修正
+
 ## [3.1.0](https://github.com/dongaba/TVerRec/releases/tag/v3.1.0)
 
 ### 3.1.0 Added
@@ -25,7 +50,7 @@
   - 設定ファイルに`$script:guiMaxExecLogLines`を追加
 - ダウンロードリスト作成処理でマルチスレッド処理を可能に(数倍の高速化)
 - WSBの日本語化用スクリプトの追加
-  - [使い方はWikiのこちらのページ参照](https://github.com/dongaba/TVerRec/wiki/Windows%E3%82%B5%E3%83%B3%E3%83%89%E3%83%9C%E3%83%83%E3%82%AF%E3%82%B9) 
+  - [使い方はWikiのこちらのページ参照](https://github.com/dongaba/TVerRec/wiki/Windows%E3%82%B5%E3%83%B3%E3%83%89%E3%83%9C%E3%83%83%E3%82%AF%E3%82%B9)
 
 ### 3.1.0 Changed
 

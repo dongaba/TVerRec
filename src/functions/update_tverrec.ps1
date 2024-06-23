@@ -109,7 +109,7 @@ Write-Output ('                       TVerRecアップデート処理')
 Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 
 $repo = 'dongaba/TVerRec'
-$releases = ('https://api.github.com/repos/{0}/releases/latest' -f $repo)
+$releases = ('https://api.github.com/repos/{0}/releases' -f $repo)
 
 #念のため過去のバージョンがあれば削除し、作業ディレクトリを作成
 Write-Output ('')
@@ -124,10 +124,15 @@ catch { Throw ('❌️ 作業ディレクトリの作成に失敗しました') 
 Write-Output ('')
 Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('TVerRecの最新版をダウンロードします')
+if (!(Get-Variable updateChannel -Scope Script -ErrorAction SilentlyContinue)) { $script:updateChannel = 'release' }
 try {
-	if ((Get-Variable -Name 'updatedFromHead' -ErrorAction SilentlyContinue) -and ($script:updatedFromHead)) { $zipURL = 'https://github.com/dongaba/TVerRec/archive/refs/heads/master.zip' }
-	elseif ((Get-Variable -Name 'updatedFromDev' -ErrorAction SilentlyContinue) -and ($script:updatedFromDev)) { $zipURL = 'https://github.com/dongaba/TVerRec/archive/refs/heads/dev.zip' }
-	else { $zipURL = (Invoke-RestMethod -Uri $releases -Method 'GET').zipball_url }
+	$zipURL = switch ($script:updateChannel) {
+		'dev' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/dev.zip' }
+		'beta' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/beta.zip' }
+		'master' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/master.zip' }
+		'prerelease' { (Invoke-RestMethod -Uri $releases -Method 'GET').where{ ($_.prerelease -eq $true) }[0].zipball_url }
+		default { (Invoke-RestMethod -Uri $releases -Method 'GET').where{ ($_.prerelease -eq $false) }[0].zipball_url }
+	}
 	Invoke-WebRequest -Uri $zipURL -OutFile (Join-Path $updateTemp 'TVerRecLatest.zip')
 } catch { Throw ('❌️ ダウンロードに失敗しました');	exit 1 }
 
@@ -219,14 +224,16 @@ Remove-IfExist -Path (Join-Path $script:scriptRoot '../resources/TVerRecSetting.
 if (Test-Path (Join-Path $script:scriptRoot '../db/list.csv')) {
 	$currentListFile = [pscustomobject](Import-Csv (Join-Path $script:scriptRoot '../db/list.csv'))
 	$propertyNames = @('episodePageURL', 'seriesPageURL', 'descriptionText')
-	$currentProperties = @($currentListFile | Get-Member -MemberType NoteProperty).Name
-	if ($propertyNames | Where-Object { $currentProperties -notContains $_ }) {
-		foreach ($propertyName in $propertyNames) {
-			if ($currentProperties -notContains $propertyName) { $currentListFile | Add-Member -MemberType NoteProperty -Name $propertyName -Value '' }
+	if ($currentListFile) {
+		$currentProperties = @($currentListFile | Get-Member -MemberType NoteProperty).Name
+		if ($propertyNames | Where-Object { $currentProperties -notContains $_ }) {
+			foreach ($propertyName in $propertyNames) {
+				if ($currentProperties -notContains $propertyName) { $currentListFile | Add-Member -MemberType NoteProperty -Name $propertyName -Value '' }
+			}
+			Set-Content -LiteralPath (Join-Path $script:scriptRoot '../db/list.csv') -Value 'episodeID,episodePageURL,episodeNo,episodeName,seriesID,seriesPageURL,seriesName,seasonID,seasonName,media,provider,broadcastDate,endTime,keyword,ignoreWord,descriptionText'
+			$currentListFile | Export-Csv -LiteralPath (Join-Path $script:scriptRoot '../db/list.csv') -Encoding UTF8 -Append
 		}
-		Set-Content -LiteralPath (Join-Path $script:scriptRoot '../db/list.csv') -Value 'episodeID,episodePageURL,episodeNo,episodeName,seriesID,seriesPageURL,seriesName,seasonID,seasonName,media,provider,broadcastDate,endTime,keyword,ignoreWord,descriptionText'
-		$currentListFile | Export-Csv -LiteralPath (Join-Path $script:scriptRoot '../db/list.csv') -Encoding UTF8 -Append
-	}
+	} else { Copy-Item -Path (Join-Path $script:scriptRoot '../resources/sample/list.sample.csv') -Destination (Join-Path $script:scriptRoot '../db/list.csv') }
 }
 
 #リストファイルのレイアウト変更(v2.9.9→v3.0.0)
