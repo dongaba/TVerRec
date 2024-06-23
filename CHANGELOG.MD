@@ -22,6 +22,7 @@
 
 - アップデータがリストファイルのレイアウト変更に失敗するケースがある不具合を修正
 - キーワードファイルに`epsodes/epxxxxxxxx`を指定すると`epsodes/epxxxxxxxx`でキーワード検索をしてしまう不具合を修正
+- 低解像度ファイルのダウンロードのオプション指定の記載例に誤りがあった問題を修正
 
 ## [3.1.0](https://github.com/dongaba/TVerRec/releases/tag/v3.1.0)
 

@@ -196,7 +196,7 @@ $ffmpegDecodeOption_Pi3.Add_Click({ $ffmpegDecodeOption.Text = '-c:v h264_omx' }
 
 function Set-YtdlOption ($height) {
 	$ytdlOption.Text = if ($height -eq 'Clear') { '' }
-	else { "-f bestvideo[height<=$height]+bestaudio/best[height<=$height]" }
+	else { '-f "bestvideo[height<=' + $height + ']+bestaudio/best[height<=' + $height + ']"' }
 }
 $btnYtdlOption_Clear.Add_Click({ Set-YtdlOption 'Clear' })
 $btnYtdlOption_1080.Add_Click({ Set-YtdlOption 1080 })
