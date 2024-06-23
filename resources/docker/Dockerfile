@@ -26,13 +26,14 @@ RUN	apt-get update \
 	&& rm -rf /var/lib/apt/lists/*
 #Powershellのダウンロードと配置
 RUN /bin/bash -c ' \
-	arch=$(arch | sed s/aarch64/arm64/ | sed s/x86_64/x64/ | sed s/amd64/x64/) ; \
-	release=$(curl -sL https://api.github.com/repos/PowerShell/PowerShell/releases/latest) ; \
-	package=$(echo $release | jq -r ".assets[].browser_download_url" | grep "linux-${arch}.tar.gz") ; \
-	wget $package ; \
-	mkdir -p /opt/microsoft/powershell ; \
-	tar -xvf "./${package##*/}" -C /opt/microsoft/powershell ; \
-	ln -s /opt/microsoft/powershell/pwsh /usr/bin/pwsh ; \
+	arch=$(arch | sed s/aarch64/arm64/ | sed s/x86_64/x64/ | sed s/amd64/x64/) && \
+	release=$(curl -sL https://api.github.com/repos/PowerShell/PowerShell/releases/latest) && \
+	package=$(echo $release | jq -r ".assets[].browser_download_url" | grep "linux-${arch}.tar.gz") && \
+	wget $package && \
+	mkdir -p /opt/microsoft/powershell && \
+	tar -xvf "./${package##*/}" -C /opt/microsoft/powershell && \
+	ln -s /opt/microsoft/powershell/pwsh /usr/bin/pwsh && \
+	chmod a+x /opt/microsoft/powershell/pwsh && \
 	rm -rf "./${package##*/}" \
 	'
 
@@ -70,3 +71,4 @@ RUN chmod a+x ./unix/*.sh
 WORKDIR /app/TVerRec/unix
 ENTRYPOINT ["/bin/bash"]
 CMD ["start_tverrec.sh"]
+#CMD ["/bin/bash"]

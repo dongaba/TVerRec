@@ -251,13 +251,13 @@ $script:ytdlOption = ''
 
 #以下は$script:ytdlOptionの設定例
 #	1080p
-#	$script:ytdlOption = '-f bestvideo[height<=1080]+bestaudio/best[height<=1080]'
+#	$script:ytdlOption = '-f "bestvideo[height<=1080]+bestaudio/best[height<=1080]"'
 #	720p
-#	$script:ytdlOption = '-f bestvideo[height<=720]+bestaudio/best[height<=720]'
+#	$script:ytdlOption = '-f "bestvideo[height<=720]+bestaudio/best[height<=720]"'
 #	480p
-#	$script:ytdlOption = '-f bestvideo[height<=480]+bestaudio/best[height<=480]'
+#	$script:ytdlOption = '-f "bestvideo[height<=480]+bestaudio/best[height<=480]"'
 #	360p
-#	$script:ytdlOption = '-f bestvideo[height<=360]+bestaudio/best[height<=360]'
+#	$script:ytdlOption = '-f "bestvideo[height<=360]+bestaudio/best[height<=360]"'
 
 #Tverサイト以外のベースファイル名
 $script:ytdlNonTVerFileName = '%(webpage_url_domain)s - %(upload_date)s - %(title)s - [%(id)s].%(ext)s'
