@@ -1,5 +1,15 @@
 ﻿# Change Log
 
+## [3.2.1](https://github.com/dongaba/TVerRec/releases/tag/v3.2.1)
+
+### 3.2.1 Added
+
+### 3.2.1 Changed
+
+- 番組名から「《」と「》」に加え「【」と「】」で挟まれた文字も除去するように変更
+
+### 3.2.1 Fixed
+
 ## [3.2.0](https://github.com/dongaba/TVerRec/releases/tag/v3.2.0)
 
 ### 3.2.0 Added

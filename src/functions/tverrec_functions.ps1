@@ -405,12 +405,12 @@ function Format-ListRecord {
 }
 
 #----------------------------------------------------------------------
-#「《」と「》」で挟まれた文字を除去
+#「《」と「》」、「【」と「】」で挟まれた文字を除去
 #----------------------------------------------------------------------
 Function Remove-SpecialNote {
 	Param($text)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	return ($text -replace '《.*?》', '').Replace('  ', ' ').Trim()
+	return ($text -replace '《.*?》|【.*?】', '').Replace('  ', ' ').Trim()
 	Remove-Variable -Name text -ErrorAction SilentlyContinue
 }
 
@@ -617,7 +617,7 @@ function Get-VideoInfo {
 	} catch { Write-Warning ('⚠️ エラーが発生しました。m3u8ファイルが取得できません。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) ; return }
 	#「《」と「》」で挟まれた文字を除去
 	if ($script:removeSpecialNote) { 
-		; $videoSeason = Remove-SpecialNote $videoSeason; $episodeName = Remove-SpecialNote $episodeName 
+		$videoSeason = Remove-SpecialNote $videoSeason; $episodeName = Remove-SpecialNote $episodeName 
 	}
 	#シーズン名が本編の場合はシーズン名をクリア
 	if ($videoSeason -eq '本編') { $videoSeason = '' }
