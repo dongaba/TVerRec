@@ -67,7 +67,7 @@ function Sync-WpfEvents {
 function LimitRichTextBoxLines($richTextBox, $limit) {
 	if ($richTextBox.Document.Blocks.Count -gt $limit) {
 		$linesToRemove = $richTextBox.Document.Blocks.Count - $limit
-		for ($i = 0; $i -lt $linesToRemove; $i++) { $richTextBox.Document.Blocks.Remove($richTextBox.Document.Blocks.FirstBlock) }
+		for ($i = 0; $i -lt $linesToRemove; $i++) { $null = $richTextBox.Document.Blocks.Remove($richTextBox.Document.Blocks.FirstBlock) }
 	}
 	Remove-Variable -Name richTextBox, limit, linesToRemove, i -ErrorAction SilentlyContinue
 }
