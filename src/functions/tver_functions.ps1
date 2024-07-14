@@ -365,9 +365,16 @@ function Get-LinkFromSiteMap {
 		if ($tverID.id) {
 			switch ( $tverID.type) {
 				'episodes' { $linkCollection.episodeLinks.Add('https://tver.jp/episodes/{0}' -f $tverID.id) ; continue }
-				'series' { if (!$script:sitemapParseEpisodeOnly) { $linkCollection.seriesLinks.Add($tverID.id) }; continue }
+				'series' {
+					if (!$script:sitemapParseEpisodeOnly) {
+						Write-Information ('{0} - {1} {2} からEpisodeを抽出中...' -f (Get-Date), $tverID.type, $tverID.id)
+						$linkCollection.seriesLinks.Add($tverID.id)
+					}
+					continue
+					}
 				'ranking' {
 					if (!$script:sitemapParseEpisodeOnly) {
+						Write-Information ('{0} - {1} {2} からEpisodeを抽出中...' -f (Get-Date), $tverID.type, $tverID.id)
 						$result = Get-LinkFromRanking($tverID.id)
 						$linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result
 					}
@@ -375,6 +382,7 @@ function Get-LinkFromSiteMap {
 				}
 				'specials' {
 					if (!$script:sitemapParseEpisodeOnly) {
+						Write-Information ('{0} - {1} {2} からEpisodeを抽出中...' -f (Get-Date), $tverID.type, $tverID.id)
 						$result = Get-LinkFromSpecialMainID($tverID.id)
 						$linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result
 					}
@@ -444,7 +452,7 @@ function Convert-Buffer {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if ($tverIDs) {
 		foreach ($tverID in ($tverIDs | Sort-Object -Unique)) {
-			Write-Verbose ('{0} {1} からEpisodeを抽出中...' -f $tverIDType, $tverID)
+			Write-Information ('{0} - {1} {2} からEpisodeを抽出中...' -f (Get-Date), $tverIDType, $tverID)
 			switch ($tverIDType) {
 				'Special Main' { $result = Get-LinkFromSpecialMainID($tverID); $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result; continue }
 				'Special Detail' { $result = Get-LinkFromSpecialDetailID($tverID); $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result; continue }

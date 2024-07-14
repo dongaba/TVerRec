@@ -345,7 +345,7 @@ function Wait-YtdlProcess {
 		$ytdlCount = Get-YtdlProcessCount
 		if ([Int]$ytdlCount -lt [Int]$parallelDownloadFileNum ) { break }
 		Write-Output ('ダウンロードが{0}多重に達したので一時待機します。' -f $parallelDownloadFileNum)
-		Write-Verbose ('現在のダウンロードプロセス一覧 ({0}個)' -f $ytdlCount)
+		Write-Information ('{0} - 現在のダウンロードプロセス一覧 ({1}個)' -f (Get-Date), $ytdlCount)
 		Start-Sleep -Seconds 60
 	}
 	Remove-Variable -Name parallelDownloadFileNum, ytdlCount -ErrorAction SilentlyContinue
@@ -616,8 +616,8 @@ function Get-VideoInfo {
 		$mpdURL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*dash*' })[0].src
 	} catch { Write-Warning ('⚠️ エラーが発生しました。m3u8ファイルが取得できません。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) ; return }
 	#「《」と「》」で挟まれた文字を除去
-	if ($script:removeSpecialNote) { 
-		$videoSeason = Remove-SpecialNote $videoSeason; $episodeName = Remove-SpecialNote $episodeName 
+	if ($script:removeSpecialNote) {
+		$videoSeason = Remove-SpecialNote $videoSeason; $episodeName = Remove-SpecialNote $episodeName
 	}
 	#シーズン名が本編の場合はシーズン名をクリア
 	if ($videoSeason -eq '本編') { $videoSeason = '' }
@@ -738,7 +738,7 @@ function Invoke-Ytdl {
 	$saveDir = ('home:{0}' -f $videoInfo.fileDir)
 	$saveFile = ('{0}' -f $videoInfo.fileName)
 	$ytdlArgs = (' {0}' -f $script:ytdlBaseArgs)
-	if ($script:videoContainerFormat -eq 'mp4') { 
+	if ($script:videoContainerFormat -eq 'mp4') {
 		$ytdlArgs += (' {0}' -f '--merge-output-format mp4 --embed-thumbnail --embed-chapters')
 		$subttlDir = ('subtitle:{0}' -f $script:downloadWorkDir)
 		$thumbDir = ('thumbnail:{0}' -f $script:downloadWorkDir)
@@ -871,7 +871,7 @@ function Wait-DownloadCompletion () {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$ytdlCount = Get-YtdlProcessCount
 	while ($ytdlCount -ne 0) {
-		Write-Verbose ('現在のダウンロードプロセス一覧 ({0}個)' -f $ytdlCount)
+		Write-Information ('{0} - 現在のダウンロードプロセス一覧 ({1}個)' -f (Get-Date), $ytdlCount)
 		Start-Sleep -Seconds 60
 		$ytdlCount = Get-YtdlProcessCount
 	}
@@ -1051,7 +1051,7 @@ function Get-JpIP {
 		[Array]::Reverse($startIPArray) ; $startIPInt = [BitConverter]::ToUInt32($startIPArray, 0)
 		[Array]::Reverse($endIPArray) ; $endIPInt = [BitConverter]::ToUInt32($endIPArray, 0)
 		$randomIPInt = $startIPInt + [UInt32](Get-Random -Maximum ($endIPInt - $startIPInt - 1)) + 1	#CIDR範囲の先頭と末尾を除く
-		$randomIPArray = [System.BitConverter]::GetBytes($randomIPInt) 
+		$randomIPArray = [System.BitConverter]::GetBytes($randomIPInt)
 		[Array]::Reverse($randomIPArray) ; $jpIP = [System.Net.IPAddress]::new($randomIPArray).ToString()
 		$check = Invoke-RestMethod -Uri ('http://ip-api.com/json/{0}?fields=16785410' -f $jpIP)
 	} While (($check.countryCode -ne 'JP') -or ($check.hosting -ne $false) )

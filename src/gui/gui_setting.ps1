@@ -239,6 +239,7 @@ $settingAttributes = @(
 	'$script:simplifiedValidation',
 	'$script:disableValidation',
 	'$script:sitemapParseEpisodeOnly',
+	'$script:detailedProgress',
 	'$script:embedSubtitle',
 	'$script:embedMetatag',
 	'$script:windowShowStyle',
@@ -270,7 +271,7 @@ foreach ($settingAttribute in $settingAttributes) {
 		$settingBox.Text = Read-UserSetting $settingAttribute
 		if ($settingBox.Text -eq '$true') { $settingBox.Text = 'する' }
 		if ($settingBox.Text -eq '$false') { $settingBox.Text = 'しない' }
-	} elsif($settingAttribute -in @('downloadBaseDir', 'downloadWorkDir', 'saveBaseDir')) { $settingBox.Text = '未設定' }
+	}elseif($settingAttribute -in @('downloadBaseDir', 'downloadWorkDir', 'saveBaseDir')) { $settingBox.Text = '未設定' }
 	else { $settingBox.Text = 'デフォルト値' }
 }
 

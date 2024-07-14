@@ -37,11 +37,11 @@ try {
 	$devConfFile = Join-Path $script:devDir 'dev_setting.ps1'
 	if (Test-Path $devConfFile) {
 		. $devConfFile
-		Write-Information ('💡 開発ファイル用設定ファイルを読み込みました')
+		Write-Debug ('💡 開発ファイル用設定ファイルを読み込みました')
 	}
 	if (Test-Path $devFunctionFile) {
 		. $devFunctionFile
-		Write-Information ('💡 開発ファイル用共通関数ファイルを読み込みました')
+		Write-Debug ('💡 開発ファイル用共通関数ファイルを読み込みました')
 	}
 	Remove-Variable -Name devFunctionFile, devConfFile -ErrorAction SilentlyContinue
 } catch { Throw ('❌️ 開発用設定ファイルの読み込みに失敗しました') }
