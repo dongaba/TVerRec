@@ -616,9 +616,7 @@ function Get-VideoInfo {
 		$mpdURL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*dash*' })[0].src
 	} catch { Write-Warning ('⚠️ エラーが発生しました。m3u8ファイルが取得できません。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) ; return }
 	#「《」と「》」で挟まれた文字を除去
-	if ($script:removeSpecialNote) {
-		$videoSeason = Remove-SpecialNote $videoSeason; $episodeName = Remove-SpecialNote $episodeName
-	}
+	if ($script:removeSpecialNote) { $videoSeason = Remove-SpecialNote $videoSeason; $episodeName = Remove-SpecialNote $episodeName }
 	#シーズン名が本編の場合はシーズン名をクリア
 	if ($videoSeason -eq '本編') { $videoSeason = '' }
 	#シリーズ名がシーズン名を含む場合はシーズン名をクリア
