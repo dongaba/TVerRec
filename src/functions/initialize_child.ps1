@@ -84,6 +84,10 @@ else { $script:ffmpegPath = Join-Path $script:binDir 'ffmpeg' }
 if ($IsWindows) { $script:ffprobePath = Join-Path $script:binDir 'ffprobe.exe' }
 else { $script:ffprobePath = Join-Path $script:binDir 'ffprobe' }
 
+#進捗表示
+if ($script:detailedProgress) { $InformationPreference = 'Continue' }
+else { $InformationPreference = 'SilentlyContinue' }
+
 #Geo IPのパス
 $script:jpIPList = Join-Path $script:geoIPDir 'jp.csv'
 
