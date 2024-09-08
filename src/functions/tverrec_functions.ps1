@@ -418,7 +418,7 @@ Function Remove-SpecialNote {
 	$length2 = if ($start2 -ge 0 -and $end2 -ge 0) { $end2 - $start2 } else { 0 }
 	# 10文字以上あれば特殊文字とその間を削除
 	if ($length1 -gt 10 -or $length2 -gt 10) { $text = ($text -replace '《.*?》|【.*?】', '').Replace('  ', ' ').Trim() }
-	return $text 
+	return $text
 	Remove-Variable -Name text, start1, end1, start2, end2, length1, length2 -ErrorAction SilentlyContinue
 }
 
