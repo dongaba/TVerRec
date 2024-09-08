@@ -69,7 +69,6 @@ function Get-DirectoriesWithPlatformCheck {
 	switch ($true) {
 		$IsWindows { $results = Get-DirectoriesOnWindows -paths $paths } 
 		default { $results = Get-DirectoriesNotOnWindows -paths $paths } 
-		#default { $results = ($paths | ForEach-Object { Get-ChildItem -LiteralPath $_ -Directory -Recurse | Select-Object -ExpandProperty FullName }) }
 	}
 	return $results
 }
@@ -84,13 +83,6 @@ if ($script:saveBaseDir) {
 		$moveToPathsHash[$saveBaseDirLeaf] = $saveBaseDir
 	}
 }
-
-# #移動先ディレクトリ配下のディレクトリ一覧
-# $moveToPathsHash = @{}
-# if ($script:saveBaseDir) {
-# 	$script:saveBaseDirArray = $script:saveBaseDir.Split(';').Trim()
-# 	Get-ChildItem -LiteralPath $script:saveBaseDirArray -Directory -Recurse | ForEach-Object { $moveToPathsHash[$_.Name] = $_.FullName }
-# }
 
 #作業ディレクトリ配下のディレクトリ一覧
 $moveFromPathsHash = @{}
