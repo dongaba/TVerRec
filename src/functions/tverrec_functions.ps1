@@ -410,8 +410,16 @@ function Format-ListRecord {
 Function Remove-SpecialNote {
 	Param($text)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	return ($text -replace '《.*?》|【.*?】', '').Replace('  ', ' ').Trim()
-	Remove-Variable -Name text -ErrorAction SilentlyContinue
+	# 特殊文字の位置を取得
+	$start1 = $text.IndexOf('《'); $end1 = $text.IndexOf('》')
+	$start2 = $text.IndexOf('【'); $end2 = $text.IndexOf('】')
+	# 特殊文字間の長さを計算
+	$length1 = if ($start1 -ge 0 -and $end1 -ge 0) { $end1 - $start1 } else { 0 }
+	$length2 = if ($start2 -ge 0 -and $end2 -ge 0) { $end2 - $start2 } else { 0 }
+	# 10文字以上あれば特殊文字とその間を削除
+	if ($length1 -gt 10 -or $length2 -gt 10) { $text = ($text -replace '《.*?》|【.*?】', '').Replace('  ', ' ').Trim() }
+	return $text 
+	Remove-Variable -Name text, start1, end1, start2, end2, length1, length2 -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -430,7 +438,9 @@ function Invoke-VideoDownload {
 	$episodeID = $episodePage.Replace('https://tver.jp/episodes/', '')
 	#TVerのAPIを叩いて番組情報取得
 	Invoke-StatisticsCheck -Operation 'getinfo' -TVerType 'link' -TVerID $episodeID
-	$videoInfo = Get-VideoInfo $episodeID ; $videoInfo | Add-Member -MemberType NoteProperty -Name 'keyword' -Value $keyword
+	$videoInfo = Get-VideoInfo $episodeID
+	if ($null -eq $videoInfo) { Write-Warning ('　⚠️ 番組情報を取得できませんでした。スキップします') ; continue }
+	$videoInfo | Add-Member -MemberType NoteProperty -Name 'keyword' -Value $keyword
 	#ダウンロードファイル名を生成
 	$videoInfo = Format-VideoFileInfo $videoInfo
 	#番組タイトルが取得できなかった場合はスキップ次の番組へ
@@ -524,7 +534,9 @@ function Update-VideoList {
 	$episodeID = $episodePage.Replace('https://tver.jp/episodes/', '')
 	#TVerのAPIを叩いて番組情報取得
 	Invoke-StatisticsCheck -Operation 'getinfo' -TVerType 'link' -TVerID $episodeID
-	$videoInfo = Get-VideoInfo $episodeID ; $videoInfo | Add-Member -MemberType NoteProperty -Name 'keyword' -Value $keyword
+	$videoInfo = Get-VideoInfo $episodeID
+	if ($null -eq $videoInfo) { Write-Warning ('　⚠️ 番組情報を取得できませんでした。スキップします') ; continue }
+	$videoInfo | Add-Member -MemberType NoteProperty -Name 'keyword' -Value $keyword
 	#ダウンロード対象外に入っている番組の場合はリスト出力しない
 	$ignoreTitles = @(Read-IgnoreList)
 	foreach ($ignoreTitle in $ignoreTitles) {
@@ -622,7 +634,7 @@ function Get-VideoInfo {
 	#シリーズ名がシーズン名を含む場合はシーズン名をクリア
 	if ($videoSeries -cmatch [Regex]::Escape($videoSeason)) { $videoSeason = '' }
 	#エピソード番号を極力修正
-	if (($videoEpisodeNum -eq 1) -and ($episodeName -imatch '([#|第|Episode|ep|Take|Vol|Part|Chapter|Case|Stage|Mystery|Ope|Story|Sign|Trap|Letter|Act]+\.?\s?)(\d+)(.*)')) { $videoEpisodeNum = $matches[2] }
+	if ((($videoEpisodeNum -eq 1) -or ($videoEpisodeNum % 10 -eq 0)) -and ($episodeName -imatch '([#|第|Episode|ep|Take|Vol|Part|Chapter|Flight|Karte|Case|Stage|Mystery|Ope|Story|Sign|Trap|Letter|Act]+\.?\s?)(\d+)(.*)')) { $videoEpisodeNum = $matches[2] }
 	#エピソード番号が1桁の際は頭0埋めして2桁に
 	$videoEpisodeNum = $videoEpisodeNum.PadLeft(2, '0')
 	#放送日を整形
