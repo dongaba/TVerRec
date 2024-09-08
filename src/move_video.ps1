@@ -67,8 +67,8 @@ function Get-DirectoriesWithPlatformCheck {
 	param ([string[]]$paths)
 	#PowerShellではジャンクションの展開ができないので、cmd.exeを使ってジャンクションを解決する
 	switch ($true) {
-		$IsWindows { $results = Get-DirectoriesOnWindows -paths $paths } 
-		default { $results = Get-DirectoriesNotOnWindows -paths $paths } 
+		$IsWindows { $results = Get-DirectoriesOnWindows -paths $paths }
+		default { $results = Get-DirectoriesNotOnWindows -paths $paths }
 	}
 	return $results
 }
