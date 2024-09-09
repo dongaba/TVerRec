@@ -40,11 +40,48 @@ $toastShowParams = @{
 }
 Show-ProgressToast @toastShowParams
 
-#移動先ディレクトリ配下のディレクトリ一覧
+# Windowsのディレクトリ一覧を取得する関数
+function Get-DirectoriesOnWindows {
+	param ([string[]]$paths)
+	$results = @()
+	foreach ($path in $paths) {
+		$dirCmd = "dir `"$path`" /s /b /a:d"
+		$results += (& cmd /c $dirCmd) | ForEach-Object { $_ }
+	}
+	return $results
+}
+
+# Linux/Macのディレクトリ一覧を取得する関数
+function Get-DirectoriesNotOnWindows {
+	param ([string[]]$paths)
+	$results = @()
+	foreach ($path in $paths) {
+		$dirCmd = "find `"$path`" -type d"
+		$results += (& sh -c $dirCmd)
+	}
+	return $results
+}
+
+# プラットフォームに応じたディレクトリ一覧を取得する関数
+function Get-DirectoriesWithPlatformCheck {
+	param ([string[]]$paths)
+	#PowerShellではジャンクションの展開ができないので、cmd.exeを使ってジャンクションを解決する
+	switch ($true) {
+		$IsWindows { $results = Get-DirectoriesOnWindows -paths $paths }
+		default { $results = Get-DirectoriesNotOnWindows -paths $paths }
+	}
+	return $results
+}
+
+# 移動先ディレクトリ配下のディレクトリ一覧
 $moveToPathsHash = @{}
 if ($script:saveBaseDir) {
 	$script:saveBaseDirArray = $script:saveBaseDir.Split(';').Trim()
-	Get-ChildItem -LiteralPath $script:saveBaseDirArray -Directory -Recurse | ForEach-Object { $moveToPathsHash[$_.Name] = $_.FullName }
+	$saveBaseDirs = Get-DirectoriesWithPlatformCheck -paths $script:saveBaseDirArray
+	foreach ($saveBaseDir in $saveBaseDirs) {
+		$saveBaseDirLeaf = Split-Path -Leaf $saveBaseDir
+		$moveToPathsHash[$saveBaseDirLeaf] = $saveBaseDir
+	}
 }
 
 #作業ディレクトリ配下のディレクトリ一覧
@@ -101,11 +138,11 @@ if ($moveDirs) {
 		$moveToPath = $moveToPathsHash[$dir] ?? $moveToPathsHash[$dir.Normalize([Text.NormalizationForm]::FormC)]
 
 		#同名ディレクトリが存在する場合は配下のファイルを移動
-		if (Test-Path $moveFromPath) {
+		if ((Test-Path $moveFromPath) -and (Test-Path $moveToPath)) {
 			Write-Output ('　{0}\(*.mp4;*.ts)' -f $moveFromPath)
 			try { $null = Move-Item -Path ('{0}\*' -f $moveFromPath) -Include @('*.mp4', '*.ts') -Destination $moveToPath -Force }
 			catch { Write-Warning ('⚠️ 移動できないファイルがありました - {0}' -f $moveFromPath) }
-		}
+		}else{ Write-Warning ('⚠️ 移動元、または移動先にアクセスできなくなりました - {0}' -f $moveFromPath) }
 	}
 }
 #----------------------------------------------------------------------

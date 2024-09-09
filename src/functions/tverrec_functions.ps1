@@ -345,7 +345,7 @@ function Wait-YtdlProcess {
 		$ytdlCount = Get-YtdlProcessCount
 		if ([Int]$ytdlCount -lt [Int]$parallelDownloadFileNum ) { break }
 		Write-Output ('ダウンロードが{0}多重に達したので一時待機します。' -f $parallelDownloadFileNum)
-		Write-Verbose ('現在のダウンロードプロセス一覧 ({0}個)' -f $ytdlCount)
+		Write-Information ('{0} - 現在のダウンロードプロセス一覧 ({1}個)' -f (Get-Date), $ytdlCount)
 		Start-Sleep -Seconds 60
 	}
 	Remove-Variable -Name parallelDownloadFileNum, ytdlCount -ErrorAction SilentlyContinue
@@ -405,13 +405,21 @@ function Format-ListRecord {
 }
 
 #----------------------------------------------------------------------
-#「《」と「》」で挟まれた文字を除去
+#「《」と「》」、「【」と「】」で挟まれた文字を除去
 #----------------------------------------------------------------------
 Function Remove-SpecialNote {
 	Param($text)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	return ($text -replace '《.*?》', '').Replace('  ', ' ').Trim()
-	Remove-Variable -Name text -ErrorAction SilentlyContinue
+	# 特殊文字の位置を取得
+	$start1 = $text.IndexOf('《'); $end1 = $text.IndexOf('》')
+	$start2 = $text.IndexOf('【'); $end2 = $text.IndexOf('】')
+	# 特殊文字間の長さを計算
+	$length1 = if ($start1 -ge 0 -and $end1 -ge 0) { $end1 - $start1 } else { 0 }
+	$length2 = if ($start2 -ge 0 -and $end2 -ge 0) { $end2 - $start2 } else { 0 }
+	# 10文字以上あれば特殊文字とその間を削除
+	if ($length1 -gt 10 -or $length2 -gt 10) { $text = ($text -replace '《.*?》|【.*?】', '').Replace('  ', ' ').Trim() }
+	return $text
+	Remove-Variable -Name text, start1, end1, start2, end2, length1, length2 -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -430,7 +438,9 @@ function Invoke-VideoDownload {
 	$episodeID = $episodePage.Replace('https://tver.jp/episodes/', '')
 	#TVerのAPIを叩いて番組情報取得
 	Invoke-StatisticsCheck -Operation 'getinfo' -TVerType 'link' -TVerID $episodeID
-	$videoInfo = Get-VideoInfo $episodeID ; $videoInfo | Add-Member -MemberType NoteProperty -Name 'keyword' -Value $keyword
+	$videoInfo = Get-VideoInfo $episodeID
+	if ($null -eq $videoInfo) { Write-Warning ('　⚠️ 番組情報を取得できませんでした。スキップします') ; continue }
+	$videoInfo | Add-Member -MemberType NoteProperty -Name 'keyword' -Value $keyword
 	#ダウンロードファイル名を生成
 	$videoInfo = Format-VideoFileInfo $videoInfo
 	#番組タイトルが取得できなかった場合はスキップ次の番組へ
@@ -524,7 +534,9 @@ function Update-VideoList {
 	$episodeID = $episodePage.Replace('https://tver.jp/episodes/', '')
 	#TVerのAPIを叩いて番組情報取得
 	Invoke-StatisticsCheck -Operation 'getinfo' -TVerType 'link' -TVerID $episodeID
-	$videoInfo = Get-VideoInfo $episodeID ; $videoInfo | Add-Member -MemberType NoteProperty -Name 'keyword' -Value $keyword
+	$videoInfo = Get-VideoInfo $episodeID
+	if ($null -eq $videoInfo) { Write-Warning ('　⚠️ 番組情報を取得できませんでした。スキップします') ; continue }
+	$videoInfo | Add-Member -MemberType NoteProperty -Name 'keyword' -Value $keyword
 	#ダウンロード対象外に入っている番組の場合はリスト出力しない
 	$ignoreTitles = @(Read-IgnoreList)
 	foreach ($ignoreTitle in $ignoreTitles) {
@@ -616,15 +628,13 @@ function Get-VideoInfo {
 		$mpdURL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*dash*' })[0].src
 	} catch { Write-Warning ('⚠️ エラーが発生しました。m3u8ファイルが取得できません。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) ; return }
 	#「《」と「》」で挟まれた文字を除去
-	if ($script:removeSpecialNote) { 
-		; $videoSeason = Remove-SpecialNote $videoSeason; $episodeName = Remove-SpecialNote $episodeName 
-	}
+	if ($script:removeSpecialNote) { $videoSeason = Remove-SpecialNote $videoSeason; $episodeName = Remove-SpecialNote $episodeName }
 	#シーズン名が本編の場合はシーズン名をクリア
 	if ($videoSeason -eq '本編') { $videoSeason = '' }
 	#シリーズ名がシーズン名を含む場合はシーズン名をクリア
 	if ($videoSeries -cmatch [Regex]::Escape($videoSeason)) { $videoSeason = '' }
 	#エピソード番号を極力修正
-	if (($videoEpisodeNum -eq 1) -and ($episodeName -imatch '([#|第|Episode|ep|Take|Vol|Part|Chapter|Case|Stage|Mystery|Ope|Story|Sign|Trap|Letter|Act]+\.?\s?)(\d+)(.*)')) { $videoEpisodeNum = $matches[2] }
+	if ((($videoEpisodeNum -eq 1) -or ($videoEpisodeNum % 10 -eq 0)) -and ($episodeName -imatch '([#|第|Episode|ep|Take|Vol|Part|Chapter|Flight|Karte|Case|Stage|Mystery|Ope|Story|Sign|Trap|Letter|Act]+\.?\s?)(\d+)(.*)')) { $videoEpisodeNum = $matches[2] }
 	#エピソード番号が1桁の際は頭0埋めして2桁に
 	$videoEpisodeNum = $videoEpisodeNum.PadLeft(2, '0')
 	#放送日を整形
@@ -738,7 +748,7 @@ function Invoke-Ytdl {
 	$saveDir = ('home:{0}' -f $videoInfo.fileDir)
 	$saveFile = ('{0}' -f $videoInfo.fileName)
 	$ytdlArgs = (' {0}' -f $script:ytdlBaseArgs)
-	if ($script:videoContainerFormat -eq 'mp4') { 
+	if ($script:videoContainerFormat -eq 'mp4') {
 		$ytdlArgs += (' {0}' -f '--merge-output-format mp4 --embed-thumbnail --embed-chapters')
 		$subttlDir = ('subtitle:{0}' -f $script:downloadWorkDir)
 		$thumbDir = ('thumbnail:{0}' -f $script:downloadWorkDir)
@@ -871,7 +881,7 @@ function Wait-DownloadCompletion () {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$ytdlCount = Get-YtdlProcessCount
 	while ($ytdlCount -ne 0) {
-		Write-Verbose ('現在のダウンロードプロセス一覧 ({0}個)' -f $ytdlCount)
+		Write-Information ('{0} - 現在のダウンロードプロセス一覧 ({1}個)' -f (Get-Date), $ytdlCount)
 		Start-Sleep -Seconds 60
 		$ytdlCount = Get-YtdlProcessCount
 	}
@@ -1051,7 +1061,7 @@ function Get-JpIP {
 		[Array]::Reverse($startIPArray) ; $startIPInt = [BitConverter]::ToUInt32($startIPArray, 0)
 		[Array]::Reverse($endIPArray) ; $endIPInt = [BitConverter]::ToUInt32($endIPArray, 0)
 		$randomIPInt = $startIPInt + [UInt32](Get-Random -Maximum ($endIPInt - $startIPInt - 1)) + 1	#CIDR範囲の先頭と末尾を除く
-		$randomIPArray = [System.BitConverter]::GetBytes($randomIPInt) 
+		$randomIPArray = [System.BitConverter]::GetBytes($randomIPInt)
 		[Array]::Reverse($randomIPArray) ; $jpIP = [System.Net.IPAddress]::new($randomIPArray).ToString()
 		$check = Invoke-RestMethod -Uri ('http://ip-api.com/json/{0}?fields=16785410' -f $jpIP)
 	} While (($check.countryCode -ne 'JP') -or ($check.hosting -ne $false) )
