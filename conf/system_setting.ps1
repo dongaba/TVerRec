@@ -318,6 +318,11 @@ $script:ytdlBaseArgs = '--format "(bv*+ba/b)[protocol!*=dash] / (bv*+ba/b)" --fo
 #　TVerサイト以外からのダウンロード設定です。TVerRecはこの設定が入っていることを前提としているので変更は自己責任でお願いします。
 $script:nonTVerYtdlBaseArgs = '--format "(bv*+ba/b)" --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --no-cache-dir --verbose --ignore-config --no-check-certificates --buffer-size 16K'
 
+#進捗情報メッセージの表示
+#　キーワード配下の番組一覧取得における進捗情報を表示するかを設定します。
+#　処理時間が長く動作停止しているのか処理中なのか判断がつかない場合には、進捗表示をすることで進捗状況をより詳細に出力します。
+$script:detailedProgress = $false
+
 #----------------------------------------------------------------------
 #	以下は変更を推奨しない設定。変更の際は自己責任で。
 #----------------------------------------------------------------------

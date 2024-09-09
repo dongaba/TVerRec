@@ -419,6 +419,17 @@
 								<ComboBoxItem>しない</ComboBoxItem>
 								<ComboBoxItem>する</ComboBoxItem>
 							</ComboBox>
+							<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="進捗情報メッセージの表示">
+								<TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+									キーワード配下の番組一覧取得における進捗情報を表示するかを設定します。 <LineBreak/>
+									処理時間が長く動作停止しているのか処理中なのか判断がつかない場合には、進捗表示をすることで進捗状況をより詳細に出力します。
+								</TextBlock>
+							</Expander>
+							<ComboBox x:Name="detailedProgress" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+								<ComboBoxItem>デフォルト値</ComboBoxItem>
+								<ComboBoxItem>しない</ComboBoxItem>
+								<ComboBoxItem>する</ComboBoxItem>
+							</ComboBox>
 							<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="ダウンロードリストファイルへの番組説明の出力">
 								<TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
 									ダウンロードリストファイルに番組説明情報を出力するかを設定します。
