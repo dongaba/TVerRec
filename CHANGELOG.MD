@@ -1,5 +1,17 @@
 ﻿# Change Log
 
+## [3.2.2](https://github.com/dongaba/TVerRec/releases/tag/v3.2.2)
+
+### 3.2.2 Added
+
+### 3.2.2 Changed
+
+- シリーズタイトルの取得先を変更 (理由は、Series.Content.Titleだとファイル名が冗長になることがあることと、複数シーズン配信時に最新シーズン名になってしまうことがあるため)
+
+### 3.2.2 Fixed
+
+- ダウンロード先ディレクトリ、作業ディレクトリ、移動先ディレクトリの指定時に、末尾に`\`や`/`が入っていてもエラーとならないように修正
+
 ## [3.2.1](https://github.com/dongaba/TVerRec/releases/tag/v3.2.1)
 
 ### 3.2.1 Added
