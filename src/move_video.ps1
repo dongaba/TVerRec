@@ -138,9 +138,9 @@ if ($moveDirs) {
 		$moveToPath = $moveToPathsHash[$dir] ?? $moveToPathsHash[$dir.Normalize([Text.NormalizationForm]::FormC)]
 
 		#同名ディレクトリが存在する場合は配下のファイルを移動
-		if ((Test-Path $moveFromPath) -and (Test-Path $moveToPath)) {
-			Write-Output ('　{0}\(*.mp4;*.ts)' -f $moveFromPath)
-			try { $null = Move-Item -Path ('{0}\*' -f $moveFromPath) -Include @('*.mp4', '*.ts') -Destination $moveToPath -Force }
+		if ((Test-Path -LiteralPath $moveFromPath) -and (Test-Path -LiteralPath $moveToPath)) {
+			Write-Output ('　{0}\* -> {1}' -f $moveFromPath, $moveToPath)
+			try { $null = Move-Item -LiteralPath ('{0}' -f $moveFromPath) -Destination $(Split-Path $moveToPath -Parent) -Force }
 			catch { Write-Warning ('⚠️ 移動できないファイルがありました - {0}' -f $moveFromPath) }
 		}else{ Write-Warning ('⚠️ 移動元、または移動先にアクセスできなくなりました - {0}' -f $moveFromPath) }
 	}
