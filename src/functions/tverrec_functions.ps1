@@ -139,10 +139,12 @@ function Invoke-RequiredFileCheck {
 	Write-Debug ($MyInvocation.MyCommand.Name)
 	if ($script:downloadBaseDir -eq '') { Throw ('　❌️ 番組ダウンロード先ディレクトリが設定されていません。終了します。') }
 	else { Invoke-TverrecPathCheck -Path $script:downloadBaseDir -errorMessage '番組ダウンロード先ディレクトリ' }
+	$script:downloadBaseDir = $script:downloadBaseDir.TrimEnd('\/')
 	if ($script:downloadWorkDir -eq '') { Throw ('　❌️ ダウンロード作業ディレクトリが設定されていません。終了します。') }
 	else { Invoke-TverrecPathCheck -Path $script:downloadWorkDir -errorMessage 'ダウンロード作業ディレクトリ' }
+	$script:downloadWorkDir = $script:downloadWorkDir.TrimEnd('\/')
 	if ($script:saveBaseDir -ne '') {
-		$script:saveBaseDirArray = $script:saveBaseDir.split(';').Trim()
+		$script:saveBaseDirArray = $script:saveBaseDir.split(';').Trim().TrimEnd('\/')
 		foreach ($saveDir in $script:saveBaseDirArray) { Invoke-TverrecPathCheck -Path $saveDir.Trim() -errorMessage '番組移動先ディレクトリ' }
 	}
 	Invoke-TverrecPathCheck -Path $script:ytdlPath -errorMessage 'youtube-dl' -isFile
@@ -580,10 +582,11 @@ function Get-VideoInfo {
 	#シリーズ
 	#	Series.Content.Titleだと複数シーズンがある際に現在メインで配信中のシリーズ名が返ってくることがある
 	#	Episode.Content.SeriesTitleだとSeries名+Season名が設定される番組もある
-	#	なのでSeries.Content.TitleとEpisode.Content.SeriesTitleの短い方を採用する
-	if ($response.Result.Episode.Content.SeriesTitle.Length -le $response.Result.Series.Content.Title.Length ) {
-		$videoSeries = (Remove-SpecialCharacter (Get-NarrowChars ($response.Result.Episode.Content.SeriesTitle))).Trim()
-	} else { $videoSeries = (Remove-SpecialCharacter (Get-NarrowChars ($response.Result.Series.Content.Title))).Trim() }
+	#	3.2.2からEpisode.Content.SeriesTitleを採用することとする。
+	#	理由は、Series.Content.Titleだとファイル名が冗長になることがあることと、複数シーズン配信時に最新シーズン名になってしまうことがあるため。
+	#if ($response.Result.Episode.Content.SeriesTitle.Length -le $response.Result.Series.Content.Title.Length ) {
+	$videoSeries = (Remove-SpecialCharacter (Get-NarrowChars ($response.Result.Episode.Content.SeriesTitle))).Trim()
+	#} else { $videoSeries = (Remove-SpecialCharacter (Get-NarrowChars ($response.Result.Series.Content.Title))).Trim() }
 	$videoSeriesID = $response.Result.Series.Content.Id
 	$videoSeriesPageURL = ('https://tver.jp/series/{0}' -f $response.Result.Series.Content.Id)
 	#シーズン
