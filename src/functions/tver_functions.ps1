@@ -46,6 +46,7 @@ function Get-VideoLinksFromKeyword {
 	}
 	$key = $keyword.split(' ')[0].split("`t")[0].Split('/')[0]
 	$tverID = Remove-Comment(($keyword.Replace("$key/", '')).Trim())
+	if ($key -eq $tverID) { $key = 'episodes' }
 	Invoke-StatisticsCheck -Operation 'search' -TVerType $key -TVerID $tverID
 	switch ($key) {
 		'series' { $linkCollection.seriesLinks.Add($tverID); continue }
@@ -56,7 +57,7 @@ function Get-VideoLinksFromKeyword {
 		'toppage' { $result = Get-LinkFromTopPage; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result; continue }
 		'sitemap' { $result = Get-LinkFromSiteMap; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result; continue }
 		'mypage' { $result = Get-LinkFromMyPage $tverID; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result; continue }
-		'episodes' { continue }
+		'episodes' { $linkCollection.episodeLinks.Add(('https://tver.jp/{0}/{1}' -f $key, $tverID)); continue }
 		default { $result = Get-LinkFromFreeKeyword $keyword; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result }
 	}
 	while (($linkCollection.specialMainLinks.Count -ne 0) -or ($linkCollection.specialLinks.Count -ne 0) -or ($linkCollection.talentLinks.Count -ne 0) -or ($linkCollection.seriesLinks.Count -ne 0) -or ($linkCollection.seasonLinks.Count -ne 0)) {
