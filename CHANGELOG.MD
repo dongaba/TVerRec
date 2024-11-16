@@ -1,4 +1,12 @@
-﻿# Change Log
+## [3.2.3](https://github.com/dongaba/TVerRec/releases/tag/v3.2.3)
+
+### 3.2.3 Added
+
+- キーワード指定ファイルに番組エピソードの指定をできる機能を追加
+
+### 3.2.3 Changed
+
+### 3.2.3 Fixed
 
 ## [3.2.2](https://github.com/dongaba/TVerRec/releases/tag/v3.2.2)
 
