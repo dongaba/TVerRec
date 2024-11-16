@@ -1,5 +1,3 @@
-﻿# Change Log
-
 ## [3.2.3](https://github.com/dongaba/TVerRec/releases/tag/v3.2.3)
 
 ### 3.2.3 Added
