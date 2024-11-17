@@ -1,8 +1,8 @@
 ﻿{
 	"manifest_version": 3,
 	"name": "TVerRec Assistant",
-	"description": "Capture \"platform_uid\" and \"platform_token\" to download your TVer favorites in TVerRec",
-	"version": "0.0.6",
+	"description": "Capture \"platform_uid\" , \"platform_token\" and \"member_sid\" to download your TVer favorites in TVerRec",
+	"version": "0.0.9",
 	"author": "dongaba",
 	"homepage_url": "https://github.com/dongaba/TVerRec",
 	"incognito": "split",
@@ -27,9 +27,14 @@
 	"declarative_net_request": {
 		"rule_resources": [
 			{
-				"id": "ruleset",
+				"id": "platform-rule",
 				"enabled": true,
-				"path": "json/rule.json"
+				"path": "json/platform-rule.json"
+			},
+			{
+				"id": "member-rule",
+				"enabled": true,
+				"path": "json/member-rule.json"
 			}
 		]
 	},

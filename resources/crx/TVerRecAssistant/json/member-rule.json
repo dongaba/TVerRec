@@ -1,0 +1,15 @@
+[
+	{
+		"id": 2,
+		"priority": 2,
+		"action": {
+			"type": "block"
+		},
+		"condition": {
+			"urlFilter": "*member-api.tver.jp/v2/api/members/info?member_sid*",
+			"resourceTypes": [
+				"xmlhttprequest"
+			]
+		}
+	}
+]

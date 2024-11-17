@@ -1,4 +1,27 @@
-﻿# Change Log
+## [3.2.3](https://github.com/dongaba/TVerRec/releases/tag/v3.2.3)
+
+### 3.2.3 Added
+
+- キーワード指定ファイルに番組エピソードの指定をできる機能を追加
+- Chrome拡張機能のTVerRec AssistantにMember SIDの取得機能を追加(TVerにログインして使用する場合に必要)
+
+### 3.2.3 Changed
+
+### 3.2.3 Fixed
+
+## [3.2.2](https://github.com/dongaba/TVerRec/releases/tag/v3.2.2)
+
+### 3.2.2 Added
+
+### 3.2.2 Changed
+
+- シリーズタイトルの取得先を変更 (理由は、Series.Content.Titleだとファイル名が冗長になることがあることと、複数シーズン配信時に最新シーズン名になってしまうことがあるため)
+- 番組移動時に、mp4とtsファイルだけでなくすべてのファイルを移動の対象にするように変更
+
+### 3.2.2 Fixed
+
+- ダウンロード先ディレクトリ、作業ディレクトリ、移動先ディレクトリの指定時に、末尾に`\`や`/`が入っていてもエラーとならないように修正
+- 番組移動時に特殊文字を含むフォルダの取り扱いができていなかった問題を修正
 
 ## [3.2.2](https://github.com/dongaba/TVerRec/releases/tag/v3.2.2)
 

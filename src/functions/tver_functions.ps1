@@ -46,6 +46,7 @@ function Get-VideoLinksFromKeyword {
 	}
 	$key = $keyword.split(' ')[0].split("`t")[0].Split('/')[0]
 	$tverID = Remove-Comment(($keyword.Replace("$key/", '')).Trim())
+	if ($key -eq $tverID) { $key = 'episodes' }
 	Invoke-StatisticsCheck -Operation 'search' -TVerType $key -TVerID $tverID
 	switch ($key) {
 		'series' { $linkCollection.seriesLinks.Add($tverID); continue }
@@ -56,7 +57,7 @@ function Get-VideoLinksFromKeyword {
 		'toppage' { $result = Get-LinkFromTopPage; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result; continue }
 		'sitemap' { $result = Get-LinkFromSiteMap; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result; continue }
 		'mypage' { $result = Get-LinkFromMyPage $tverID; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result; continue }
-		'episodes' { continue }
+		'episodes' { $linkCollection.episodeLinks.Add(('https://tver.jp/{0}/{1}' -f $key, $tverID)); continue }
 		default { $result = Get-LinkFromFreeKeyword $keyword; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result }
 	}
 	while (($linkCollection.specialMainLinks.Count -ne 0) -or ($linkCollection.specialLinks.Count -ne 0) -or ($linkCollection.talentLinks.Count -ne 0) -or ($linkCollection.seriesLinks.Count -ne 0) -or ($linkCollection.seasonLinks.Count -ne 0)) {
@@ -106,16 +107,24 @@ function ProcessSearchResults {
 	$specialMainLinks = [System.Collections.Generic.List[string]]::new()
 	$specialLinks = [System.Collections.Generic.List[string]]::new()
 	#URLの整形
-	if ($requireData -and $script:myPlatformUID -ne '' -and $script:myPlatformToken -ne '') {
-		$uid = $script:myPlatformUID
-		$token = $script:myPlatformToken
+	$sid = $script:myMemberSID
+	$uid = $script:platformUID
+	$token = $script:platformToken
+	if ($sid) {
+		# TVerIDにログインして使う場合
+		$callSearchURL = '{0}?member_sid={1}' -f $baseURL, $sid
 	} else {
-		$uid = $script:platformUID
-		$token = $script:platformToken
+		# TVerIDを匿名で使う場合
+		if ($requireData -and $script:myPlatformUID -ne '' -and $script:myPlatformToken -ne '') {
+			$uid = $script:myPlatformUID
+			$token = $script:myPlatformToken
+		}
+		$callSearchURL = '{0}?platform_uid={1}&platform_token={2}' -f $baseURL, $uid, $token
 	}
-	$callSearchURL = ('{0}?platform_uid={1}&platform_token={2}' -f $baseURL, $uid, $token )
-	if ($type -eq 'keyword' -and $keyword) { $callSearchURL += "&keyword=$keyword" }
-	if ($type -eq 'mypage' -and $requireData) { $callSearchURL += "&require_data=$requireData" }
+	switch ($type) {
+		'keyword' { if ($keyword) { $callSearchURL += "&keyword=$keyword" } }
+		'mypage' { if ($requireData) { $callSearchURL += "&require_data=$requireData" } }
+	}
 	#取得した値をタイプごとに調整
 	try {
 		$searchResultsRaw = Invoke-RestMethod -Uri $callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
@@ -371,7 +380,7 @@ function Get-LinkFromSiteMap {
 						$linkCollection.seriesLinks.Add($tverID.id)
 					}
 					continue
-					}
+				}
 				'ranking' {
 					if (!$script:sitemapParseEpisodeOnly) {
 						Write-Information ('{0} - {1} {2} からEpisodeを抽出中...' -f (Get-Date), $tverID.type, $tverID.id)
@@ -406,11 +415,12 @@ function Get-LinkFromMyPage {
 	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly', '')]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$page)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$baseURLPrefix = if ($script:myMemberSID) { 'https://member-api.tver.jp' } else { 'https://platform-api.tver.jp' }
 	switch ($page) {
-		'fav' { $baseURL = ('https://platform-api.tver.jp/service/api/v2/callMylistDetail/{0}' -f (ConvertTo-UnixTime (Get-Date))); $requireData = 'mylist'; continue }
-		'favorite' { $baseURL = 'https://platform-api.tver.jp/service/api/v2/callMyFavorite'; $requireData = 'mylist'; continue }
-		'later' { $baseURL = 'https://platform-api.tver.jp/service/api/v2/callMyLater'; $requireData = 'later'; continue }
-		'resume' { $baseURL = 'https://platform-api.tver.jp/service/api/v2/callMyResume'; $requireData = 'resume'; continue }
+		'fav' { $baseURL = ('{0}/service/api/v2/callMylistDetail/{1}' -f $baseURLPrefix, (ConvertTo-UnixTime (Get-Date))); $requireData = 'mylist'; continue }
+		'later' { $baseURL = ('{0}/service/api/v2/callMyLater' -f $baseURLPrefix); $requireData = 'later'; continue }
+		'resume' { $baseURL = ('{0}/service/api/v2/callMyResume' -f $baseURLPrefix); $requireData = 'resume'; continue }
+		'favorite' { $baseURL = ('{0}/service/api/v2/callMyFavorite' -f $baseURLPrefix); $requireData = 'mylist'; continue }
 		default { Write-Warning "⚠️ 未知のパターンです。 - mypage/$page" }
 	}
 	$tverIDs = ProcessSearchResults -baseURL $baseURL -Type 'mypage' -RequireData $requireData
