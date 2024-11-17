@@ -1,7 +1,7 @@
 html {
 	font-family: Helvetica, Arial, Verdana, Tahoma, sans-serif;
-	font-size: 14px;
-	width: 470px;
+	font-size: 12px;
+	width: 800px;
 	height: 108px;
 	border-radius: 10px;
 	background-color: #eee;
@@ -21,9 +21,9 @@ html {
 }
 
 .message {
-	width: 392px;
+	width: 722px;
 	height: 58px;
-	font-size: 12px;
+	font-size: 11px;
 	position: absolute;
 	top: 10px;
 	left: 68px;
@@ -48,7 +48,7 @@ html {
 	position: absolute;
 	top: 78px;
 	left: 10px;
-	width: 450px;
+	width: 780px;
 	vertical-align: middle;
 	display: flex;
 	justify-content: center;
