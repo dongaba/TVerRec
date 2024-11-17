@@ -5,6 +5,7 @@
 ### 3.2.3 Added
 
 - キーワード指定ファイルに番組エピソードの指定をできる機能を追加
+- Chrome拡張機能のTVerRec AssistantにMember SIDの取得機能を追加(TVerにログインして使用する場合に必要)
 
 ### 3.2.3 Changed
 
