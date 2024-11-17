@@ -50,6 +50,7 @@ echo 最後にPowerShellをインストールします...
 winget install Microsoft.PowerShell --accept-source-agreements --accept-package-agreements
 
 echo.
-mshta vbscript:execute("MsgBox(""PowerShellのインストールが完了しました。""):close")
+rem mshta vbscript:execute("MsgBox(""PowerShellのインストールが完了しました。""):close")
+powershell -Command "Add-Type -Assembly System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show('PowerShellのインストールが完了しました。', 'TVerRec')"
 
 explorer.exe "C:\Users\WDAGUtilityAccount\Desktop\TVerRec\win"

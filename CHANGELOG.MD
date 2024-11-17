@@ -18,6 +18,7 @@
 ### 3.2.3 Fixed
 
 - 動画移動時に「Cannot create 'example' because a file or directory with the same name already exists.」が出てファイルの移動が出来ない問題を修正
+- Windows SandBox環境でmshtaによるメッセージボックス描画が動作しない問題を修正
 
 ## [3.2.2](https://github.com/dongaba/TVerRec/releases/tag/v3.2.2)
 
