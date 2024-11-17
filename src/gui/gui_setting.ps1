@@ -219,6 +219,7 @@ $settingAttributes = @(
 	'$script:loopCycle',
 	'$script:myPlatformUID',
 	'$script:myPlatformToken',
+	'$script:myMemberSID',
 	'$script:enableMultithread',
 	'$script:multithreadNum',
 	'$script:disableToastNotification',
@@ -266,12 +267,14 @@ foreach ($settingAttribute in $settingAttributes) {
 	$settingBoxName = $settingAttribute.Replace('$script:', '')
 	#まずはシステム設定の値をGUIに反映
 	$settingBox = $settingWindow.FindName($settingBoxName)
+	# ユーザー設定の値を取得
+	$userSettingValue = Read-UserSetting $settingAttribute
 	#次にユーザー設定の値をGUIに反映
-	if ( (Read-UserSetting $settingAttribute) ) {
-		$settingBox.Text = Read-UserSetting $settingAttribute
+	if ($userSettingValue) {
+		$settingBox.Text = $userSettingValue
 		if ($settingBox.Text -eq '$true') { $settingBox.Text = 'する' }
 		if ($settingBox.Text -eq '$false') { $settingBox.Text = 'しない' }
-	}elseif($settingAttribute -in @('downloadBaseDir', 'downloadWorkDir', 'saveBaseDir')) { $settingBox.Text = '未設定' }
+	} elseif ($settingAttribute -in @('$script:downloadBaseDir', '$script:downloadWorkDir', '$script:saveBaseDir', '$script:myPlatformUID', '$script:myPlatformToken', '$script:myMemberSID')) { $settingBox.Text = '未設定' }
 	else { $settingBox.Text = 'デフォルト値' }
 }
 
