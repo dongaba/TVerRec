@@ -29,6 +29,14 @@ echo VLCをインストールします...
 winget install -e --id VideoLAN.VLC --accept-source-agreements --accept-package-agreements --source winget
 
 echo.
+echo Gitをインストールします...
+winget install -e --id Git.Git --accept-source-agreements --accept-package-agreements --source winget
+
+echo.
+echo VS Codeをインストールします...
+winget install -e --id Microsoft.VisualStudioCode --accept-source-agreements --accept-package-agreements --source winget
+
+echo.
 echo PowerShellをインストールします...
 winget install -e --id Microsoft.PowerShell --accept-source-agreements --accept-package-agreements --source winget
 
