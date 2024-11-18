@@ -5,7 +5,8 @@
 ### 3.2.3 Added
 
 - キーワード指定ファイルに番組エピソードの指定をできる機能を追加
-- TVerIDを使っている人でもマイページからのダウンロードできる機能を追加
+- TVerIDを使っている人のマイページからの番組取得に対応
+  - 設定ファイルに$script:myMemberSIDを追加
   - 本機能により、ダウンロード対象番組の管理をブラウザ上のマイページで管理することができるようになります
 - Chrome拡張機能のTVerRec AssistantにMember SIDの取得機能を追加(TVerにログインして使用する場合に必要)
   - [使い方はWikiのこちらのページ参照](https://github.com/dongaba/TVerRec/wiki/platform_uid%E3%80%81platform_token%E3%80%81member_sid%E3%81%AE%E5%8F%96%E5%BE%97)
@@ -14,6 +15,7 @@
 ### 3.2.3 Changed
 
 - GUI版の設定画面の高度な設定のグルーピングを変更
+- Windows Sandbox環境の環境構築スクリプトを高速化
 
 ### 3.2.3 Fixed
 
