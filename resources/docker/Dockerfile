@@ -21,6 +21,7 @@ RUN	apt-get update \
 	jq \
 	libssl-dev \
 	libunwind8 \
+	vim \
 	&& apt-get autoremove -y \
 	&& apt-get clean -y  \
 	&& rm -rf /var/lib/apt/lists/*
