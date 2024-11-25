@@ -2,7 +2,7 @@ name: Push to Docker Hub for Dev
 
 on:
   push:
-    branches: [dev]
+    branches: [beta]
 
 env:
   # Use docker.io for Docker Hub if empty
@@ -19,7 +19,7 @@ jobs:
       - name: Set Tag Name as Preparation
         id: prep
         run: |
-          TAG="dev"
+          TAG="beta"
           echo "tag=${IMAGE_NAME}:${TAG}" >> $GITHUB_OUTPUT
 
       #Check out
