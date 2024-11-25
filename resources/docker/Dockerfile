@@ -22,9 +22,12 @@ RUN	apt-get update \
 	libssl-dev \
 	libunwind8 \
 	vim \
+	htop \
+	sudo \
 	&& apt-get autoremove -y \
 	&& apt-get clean -y  \
 	&& rm -rf /var/lib/apt/lists/*
+
 #Powershellのダウンロードと配置
 RUN /bin/bash -c ' \
 	arch=$(arch | sed s/aarch64/arm64/ | sed s/x86_64/x64/ | sed s/amd64/x64/) && \
@@ -38,12 +41,17 @@ RUN /bin/bash -c ' \
 	rm -rf "./${package##*/}" \
 	'
 
+
 #ディレクトリ準備
 RUN mkdir -p -m 777 \
 	/app \
 	/mnt/Temp \
 	/mnt/Work \
 	/mnt/Save
+
+#ユーザ切り替え
+RUN echo "ubuntu ALL=NOPASSWD: ALL" >> /etc/sudoers.d/tverrec
+USER ubuntu
 
 #TVerRecのインストール
 WORKDIR /app
@@ -69,7 +77,8 @@ RUN sed -i -e "s|'TVerRec'|'TVerRecContainer'|g" ./conf/system_setting.ps1 \
 
 RUN chmod a+x ./unix/*.sh
 
+ENV APP_TMP_DATA=/tmp
+
 WORKDIR /app/TVerRec/unix
-ENTRYPOINT ["/bin/bash"]
-CMD ["start_tverrec.sh"]
+ENTRYPOINT ["/bin/bash", "start_tverrec.sh"]
 #CMD ["/bin/bash"]
