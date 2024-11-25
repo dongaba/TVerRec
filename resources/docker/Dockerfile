@@ -50,7 +50,7 @@ RUN mkdir -p -m 777 \
 	/mnt/Save
 
 #ユーザ切り替え
-RUN echo "ubuntu ALL=NOPASSWD: ALL" >> /etc/sudoers.d/tverrec
+RUN echo "ubuntu ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers.d/tverrec
 USER ubuntu
 
 #TVerRecのインストール
