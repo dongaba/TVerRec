@@ -25,6 +25,8 @@ jobs:
       #Check out
       - name: Check out the repo
         uses: actions/checkout@v4
+        with:
+          ref: dev
 
       #Collect metadata
       - name: Extract metadata for Docker
