@@ -11,6 +11,7 @@
 - Chrome拡張機能のTVerRec AssistantにMember SIDの取得機能を追加(TVerにログインして使用する場合に必要)
   - [使い方はWikiのこちらのページ参照](https://github.com/dongaba/TVerRec/wiki/platform_uid%E3%80%81platform_token%E3%80%81member_sid%E3%81%AE%E5%8F%96%E5%BE%97)
 - GUI版の設定画面からMember SIDを指定できる機能を追加
+- 個別ダウンロード時に複数URLを指定できる機能を追加
 
 ### 3.2.3 Changed
 
