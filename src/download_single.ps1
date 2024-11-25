@@ -43,7 +43,7 @@ while ($true) {
 	$script:videoPageList = @()
 
 	if (!$script:guiMode) {
-		$script:videoPageList = (Read-Host '番組URLを入力してください。何も入力しないで Enter を押すと終了します。複数URLを指定する場合はスペースで区切ってください。').Trim().Split()
+		$script:videoPageList = (Read-Host '番組URLを入力してください。何も入力しないで Enter を押すと終了します。スペースで区切って複数入力可能です。').Trim().Split()
 	} else {
 		# アセンブリの読み込み
 		[void][System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms')
