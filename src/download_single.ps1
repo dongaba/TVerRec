@@ -38,7 +38,7 @@ while ($true) {
 	if (!(Test-Path $script:downloadBaseDir -PathType Container)) { Throw ('❌️ 番組ダウンロード先ディレクトリにアクセスできません。終了します') }
 	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 	Wait-YtdlProcess $script:parallelDownloadFileNum
-	
+
 	#複数アドレス入力用配列
 	$script:videoPageList = @()
 
