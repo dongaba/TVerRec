@@ -1,4 +1,28 @@
-﻿# Change Log
+# Change Log
+
+## [3.2.3](https://github.com/dongaba/TVerRec/releases/tag/v3.2.3)
+
+### 3.2.3 Added
+
+- キーワード指定ファイルに番組エピソードの指定をできる機能を追加
+- TVerIDを使っている人のマイページからの番組取得に対応
+  - 設定ファイルに$script:myMemberSIDを追加
+  - 本機能により、ダウンロード対象番組の管理をブラウザ上のマイページで管理することができるようになります
+- Chrome拡張機能のTVerRec AssistantにMember SIDの取得機能を追加(TVerにログインして使用する場合に必要)
+  - [使い方はWikiのこちらのページ参照](https://github.com/dongaba/TVerRec/wiki/platform_uid%E3%80%81platform_token%E3%80%81member_sid%E3%81%AE%E5%8F%96%E5%BE%97)
+- GUI版の設定画面からMember SIDを指定できる機能を追加
+- 個別ダウンロード時に複数URLを指定できる機能を追加
+
+### 3.2.3 Changed
+
+- GUI版の設定画面の高度な設定のグルーピングを変更
+- Windows Sandbox環境の環境構築スクリプトを高速化
+- Dockerコンテナにvimを同梱
+
+### 3.2.3 Fixed
+
+- 動画移動時に「Cannot create 'example' because a file or directory with the same name already exists.」が出てファイルの移動が出来ない問題を修正
+- Windows SandBox環境でmshtaによるメッセージボックス描画が動作しない問題を修正
 
 ## [3.2.2](https://github.com/dongaba/TVerRec/releases/tag/v3.2.2)
 

@@ -1,10 +1,8 @@
-name: Push to Docker Hub
+name: Push to Docker Hub for Dev
 
 on:
   push:
-    branches: [master]
-    tags:
-      - "v*.*.*"
+    branches: [dev]
 
 env:
   # Use docker.io for Docker Hub if empty
@@ -14,25 +12,21 @@ env:
 
 jobs:
   push_to_dockerhub:
-    name: Push Docker image to Docker Hub
+    name: Push Docker image to Docker Hub for Dev
     runs-on: ubuntu-latest
     steps:
       #Set Tag Name
       - name: Set Tag Name as Preparation
         id: prep
         run: |
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
-            TAG=${GITHUB_REF#refs/tags/}
-          else
-            TAG="latest"
-          fi
+          TAG="dev"
           echo "tag=${IMAGE_NAME}:${TAG}" >> $GITHUB_OUTPUT
 
       #Check out
       - name: Check out the repo
         uses: actions/checkout@v4
         with:
-          ref: master
+          ref: dev
 
       #Collect metadata
       - name: Extract metadata for Docker
@@ -41,7 +35,7 @@ jobs:
         with:
           #images: dongaba/tverrec
           images: ${{ env.IMAGE_NAME }}
-          flavor: latest=true
+          flavor: latest=false
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
@@ -70,18 +64,9 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: ./resources/docker
+          context: ./resources/docker/dev
           platforms: linux/amd64,linux/arm64
           push: true
           provenance: mode=max
           tags: ${{ steps.prep.outputs.tag }}
           labels: ${{ steps.meta.outputs.labels }}
-
-      #Push README.md to Docker Hub
-      - name: Docker Hub Description
-        uses: peter-evans/dockerhub-description@v4
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          repository: ${{ env.IMAGE_NAME }}
-          readme-filepath: ./README.md

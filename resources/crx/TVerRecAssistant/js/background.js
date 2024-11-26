@@ -1,25 +1,46 @@
 // ルールの有効化
-function enableRule() {
+function enablePlatformRule() {
 	chrome.declarativeNetRequest.updateEnabledRulesets(
-		{ enableRulesetIds: ["ruleset"] },
+		{ enableRulesetIds: ["platform-rule"] },
 		() => {}
 	);
-	console.log("TVerRec Assistant: Rule Enabled");
+	console.log("TVerRec Assistant: Platform API Rule Enabled");
 }
-// ルールの無効化
-function disableRule() {
+function enableMemberRule() {
 	chrome.declarativeNetRequest.updateEnabledRulesets(
-		{ disableRulesetIds: ["ruleset"] },
+		{ enableRulesetIds: ["member-rule"] },
 		() => {}
 	);
-	console.log("TVerRec Assistant: Rule Disabled");
+	console.log("TVerRec Assistant: Member API Rule Enabled");
+}
+
+// ルールの無効化
+function disablePlatformRule() {
+	chrome.declarativeNetRequest.updateEnabledRulesets(
+		{ disableRulesetIds: ["platform-rule"] },
+		() => {}
+	);
+	console.log("TVerRec Assistant: Platform API Rule Disabled");
+}
+function disableMemberRule() {
+	chrome.declarativeNetRequest.updateEnabledRulesets(
+		{ disableRulesetIds: ["member-rule"] },
+		() => {}
+	);
+	console.log("TVerRec Assistant: Member API Rule Disabled");
 }
 
 // 保存処理
-function saveStorage(platform_uid, platform_token) {
+function saveStoragePlatform(platform_uid, platform_token) {
 	chrome.storage.local.set({
 		key_uid: platform_uid,
 		key_token: platform_token,
+	});
+	chrome.storage.local.get(console.log);
+}
+function saveStorageMember(member_sid) {
+	chrome.storage.local.set({
+		key_sid: member_sid,
 	});
 	chrome.storage.local.get(console.log);
 }
@@ -93,17 +114,26 @@ chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((e) => {
 			console.log("TVerRec Assistant: URL:", e.request.url);
 			const searchParams = getSearchParams(url.search);
 			console.log("TVerRec Assistant: Param Array:", searchParams);
+
 			if (
 				searchParams.platform_uid !== undefined &&
 				searchParams.platform_token !== undefined
 			) {
 				console.log("TVerRec Assistant: Add below to user_settings.ps1");
-				console.log(`	$script:my_platform_uid = '${searchParams.platform_uid}'`);
-				console.log(
-					`	$script:my_platform_token = '${searchParams.platform_token}'`
+				console.log(`	$script:myPlatformUID = '${searchParams.platform_uid}'`);
+				console.log(`	$script:myPlatformToken = '${searchParams.platform_token}'`);
+				saveStoragePlatform(
+					searchParams.platform_uid,
+					searchParams.platform_token
 				);
-				saveStorage(searchParams.platform_uid, searchParams.platform_token);
-				disableRule(); // UID と TOKEN を取得したらルールを解除
+				disablePlatformRule(); // UID と TOKEN を取得したらルールを解除
+			}
+
+			if (searchParams.member_sid !== undefined) {
+				console.log("TVerRec Assistant: Add below to user_settings.ps1");
+				console.log(`	$script:myMemberSID = '${searchParams.member_sid}'`);
+				saveStorageMember(searchParams.member_sid);
+				disableMemberRule(); // SID を取得したらルールを解除
 			}
 		}
 	}
@@ -111,8 +141,12 @@ chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((e) => {
 
 //メッセージが受信された時にルール有効化
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-	if (message.action === "enableRule") {
-		enableRule();
-		sendResponse({ status: true, data: "ルールを有効化しました" });
+	if (message.action === "enablePlatformRule") {
+		enablePlatformRule();
+		sendResponse({ status: true, data: "Platformルールを有効化しました" });
+	}
+	if (message.action === "enableMemberRule") {
+		enableMemberRule();
+		sendResponse({ status: true, data: "Memberルールを有効化しました" });
 	}
 });

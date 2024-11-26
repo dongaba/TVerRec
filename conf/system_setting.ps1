@@ -63,14 +63,22 @@ $script:parallelDownloadNumPerFile = 10
 #　ループ処理の実行間隔を指定します。
 $script:loopCycle = 3600
 
-#マイページ処理用UIDとToken
-#　マイページに登録したお気に入りやあとでみる、続きから再生などをTVerRecでダウンロードするための
-#　platfprm_uidとplatform_tokenを指定します。
-#　これを指定しないとマイページ配下の番組はダウンロードできません。
+#マイページ処理用UIDとToken(TVerを匿名で利用する場合)
+#　TVerIDを登録しない状態で、マイページに登録したお気に入りやあとでみる、続きから再生などを
+#　TVerRecでダウンロードするためのplatfprm_uidとplatform_tokenを指定します。
+#　TVerIDを登録しないで利用する場合、これを指定しないとマイページ配下の番組はダウンロードできません。
 #　platform_uidとplatform_tokenはブラウザの開発者ツール、またはChrome拡張機能TVerRec Assistantを使って確認できます。
-#　詳細は[platform_uidとplatform_tokenの取得]を参照してください。
+#　詳細はWiKiの[platform_uid、platform_token、member_sidの取得]を参照してください。
 $script:myPlatformUID = ''
 $script:myPlatformToken = ''
+
+#マイページ処理用memberSID(TVerをユーザ登録して利用する場合)
+#　TVerIDを登録した状態で、マイページに登録したお気に入りやあとでみる、続きから再生などを
+#　TVerRecでダウンロードするためのmember_sidを指定します。
+#　TVerIDを登録した状態でマイページに保存した番組をダウンロードするには、これを指定しないとダウンロードできません。
+#　memberSIDはブラウザの開発者ツール、またはChrome拡張機能TVerRec Assistantを使って確認できるようになる予定です。
+#　詳細はWiKiの[platform_uid、platform_token、member_sidの取得]を参照してください。
+$script:myMemberSID = ''
 
 #並列処理の有効化
 #　並列処理を有効化して処理を高速化するかを設定します。

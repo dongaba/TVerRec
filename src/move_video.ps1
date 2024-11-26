@@ -140,7 +140,7 @@ if ($moveDirs) {
 		#同名ディレクトリが存在する場合は配下のファイルを移動
 		if ((Test-Path -LiteralPath $moveFromPath) -and (Test-Path -LiteralPath $moveToPath)) {
 			Write-Output ('　{0}\* -> {1}' -f $moveFromPath, $moveToPath)
-			try { $null = Move-Item -LiteralPath ('{0}' -f $moveFromPath) -Destination $(Split-Path $moveToPath -Parent) -Force }
+			try { $null = Get-ChildItem -LiteralPath $moveFromPath -File | Move-Item -Destination $moveToPath -Force }
 			catch { Write-Warning ('⚠️ 移動できないファイルがありました - {0}' -f $moveFromPath) }
 		}else{ Write-Warning ('⚠️ 移動元、または移動先にアクセスできなくなりました - {0}' -f $moveFromPath) }
 	}
