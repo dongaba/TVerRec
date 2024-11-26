@@ -108,7 +108,7 @@ while ($true) {
 			}
 			'^.*://' { #TVer以外のサイトへの対応
 				Write-Output ('ダウンロード：{0}' -f $videoPageURL)
-				Invoke-NonTverYtdl $videoPageURL 
+				Invoke-NonTverYtdl $videoPageURL
 				Start-Sleep -Seconds 1
 				continue
 			}
