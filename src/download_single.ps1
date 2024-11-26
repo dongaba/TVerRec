@@ -59,7 +59,7 @@ while ($true) {
 			FormBorderStyle = 'Fixed3D'
 			KeyPreview      = $True
 			TopLevel        = $true
-			ShowIcon = $False
+			ShowIcon        = $False
 		}
 		$inputForm.Add_KeyDown({ if ($_.KeyCode -eq 'Escape') { $inputForm.Close() } })
 		$inputForm.Add_Shown({ $inputForm.Activate() })
@@ -70,7 +70,7 @@ while ($true) {
 			Size     = New-Object System.Drawing.Size(75, 20)
 			Text     = 'OK'
 		}
-		$okButton.Add_Click({ $script:videoPageList = $inputTextBox.Text.Split("`r`n"); $inputForm.Close() })
+		$okButton.Add_Click({ $script:videoPageList = $inputTextBox.Text.Split("`r`n").Split(); $inputForm.Close() })
 		$inputForm.Controls.Add($okButton)
 
 		# テキストラベルの作成
@@ -94,31 +94,25 @@ while ($true) {
 		[void]$inputForm.ShowDialog()
 	}
 
-	Write-Debug [String]$script:videoPageList
-
-	#何も入力しなかった場合は終了
-	if (($script:videoPageList.Count -le 1) -and ($script:videoPageList[0] -eq '')) { break }
+	#配列の空白要素を削除
+	$script:videoPageList = $script:videoPageList -ne ""
+	if (-not $script:videoPageList) { break }
 
 	#複数入力されていたら全てダウンロード
-	foreach ($videoPageURL in  $script:videoPageList){
-		#正しいURLが入力されるまでループ
-		if ($videoPageURL -ne '') {
-			if ($videoPageURL -notmatch '^https://tver.jp/(/?.*)') {
-				#TVer以外のサイトへの対応
-				Write-Output ('{0}{1}' -f 'ダウンロード：', $videoPageURL)
-				try { Invoke-NonTverYtdl $videoPageURL }
-				catch { Throw ('　❌️ youtube-dlの起動に失敗しました') }
-				#5秒待機
-				Start-Sleep -Seconds 5
-			} else {
+	foreach ($videoPageURL in  $script:videoPageList) {
+		switch -Regex ($videoPageURL) {
+			'^https://tver.jp/(/?.*)' { #TVer番組ダウンロードのメイン処理
 				Write-Output ('{0}' -f $videoPageURL)
-				#TVer番組ダウンロードのメイン処理
-				Invoke-VideoDownload `
-					-Keyword $keyword `
-					-EpisodePage $videoPageURL `
-					-Force $script:forceSingleDownload
-				Invoke-GarbageCollection
+				Invoke-VideoDownload -Keyword $keyword -EpisodePage $videoPageURL -Force $script:forceSingleDownload
+				continue
 			}
+			'^.*://' { #TVer以外のサイトへの対応
+				Write-Output ('ダウンロード：{0}' -f $videoPageURL)
+				Invoke-NonTverYtdl $videoPageURL 
+				Start-Sleep -Seconds 1
+				continue
+			}
+			default { Write-Warning ('URLではありません: {0}' -f $videoPageURL); continue }
 		}
 	}
 
