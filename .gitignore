@@ -40,8 +40,8 @@ ffmpeg_error*
 ignore.conf.*
 
 #開発関連ファイル
-dev
-dev/*
+develop
+develop/*
 memo.txt
 linux-*
 mac-*

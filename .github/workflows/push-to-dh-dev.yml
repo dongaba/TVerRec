@@ -64,7 +64,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: ./resources/docker
+          context: ./resources/docker/dev
           platforms: linux/amd64,linux/arm64
           push: true
           provenance: mode=max
