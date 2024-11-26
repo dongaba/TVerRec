@@ -55,7 +55,7 @@ USER ubuntu
 
 #TVerRecのインストール
 WORKDIR /app
-RUN git clone https://github.com/dongaba/TVerRec.git
+RUN git clone -b beta https://github.com/dongaba/TVerRec.git
 
 #コンテナ用修正
 WORKDIR /app/TVerRec

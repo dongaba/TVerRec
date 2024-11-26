@@ -834,7 +834,7 @@ function Invoke-NonTverYtdl {
 	$ytdlArgs += (' {0}' -f $script:ytdlOption)
 	$ytdlArgs += (' {0}' -f $videoPageURL)
 	$ytdlArgs += (' {0} "{1}"' -f '--output', $saveFile)
-	Write-Output ('youtube-dl起動コマンド: {0}{1}' -f $script:ytdlPath, $ytdlArgs)
+	Write-Debug ('youtube-dl起動コマンド: {0}{1}' -f $script:ytdlPath, $ytdlArgs)
 	try {
 		$startProcessParams = @{
 			FilePath     = $script:ytdlPath
@@ -1019,7 +1019,7 @@ function Invoke-ValidityCheck {
 	catch { Write-Warning ('　⚠️ ffmpegエラーファイルを削除できませんでした') }
 	if ($ffmpegProcess.ExitCode -ne 0 -or $errorCount -gt 30) {
 		#終了コードが0以外 または エラーが一定以上 はダウンロード履歴とファイルを削除
-		Write-Warning ('　⚠️ チェックNGでした'); Write-Warning ('　　Exit Code: {0} Error Count: {1}' -f $ffmpegProcess.ExitCode, $errorCount)
+		Write-Warning ('　⚠️ チェックNGでした'); Write-Verbose ('　　Exit Code: {0} Error Count: {1}' -f $ffmpegProcess.ExitCode, $errorCount)
 		$script:validationFailed = $true
 		#破損しているダウンロードファイルをダウンロード履歴から削除
 		try {
