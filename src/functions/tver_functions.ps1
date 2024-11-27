@@ -47,6 +47,7 @@ function Get-VideoLinksFromKeyword {
 	$key = $keyword.split(' ')[0].split("`t")[0].Split('/')[0]
 	$tverID = Remove-Comment(($keyword.Replace("$key/", '')).Trim())
 	if ($key -eq $tverID) { $key = 'episodes' }
+	if ($tverID -eq 'sitemap') { $key = 'sitemap' }
 	Invoke-StatisticsCheck -Operation 'search' -TVerType $key -TVerID $tverID
 	switch ($key) {
 		'series' { $linkCollection.seriesLinks.Add($tverID); continue }
