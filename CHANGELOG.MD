@@ -8,7 +8,7 @@
 
 ### 3.2.4 Fixed
 
-- サイトマップからの動画取得に失敗する問題を修正
+- サイトマップとトップページからの動画取得に失敗する問題を修正
 
 ## [3.2.3](https://github.com/dongaba/TVerRec/releases/tag/v3.2.3)
 
