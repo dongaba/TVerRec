@@ -1,5 +1,15 @@
 # Change Log
 
+## [3.2.4](https://github.com/dongaba/TVerRec/releases/tag/v3.2.4)
+
+### 3.2.4 Added
+
+### 3.2.4 Changed
+
+### 3.2.4 Fixed
+
+- サイトマップとトップページからの動画取得に失敗する問題を修正
+
 ## [3.2.3](https://github.com/dongaba/TVerRec/releases/tag/v3.2.3)
 
 ### 3.2.3 Added
