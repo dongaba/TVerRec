@@ -3,8 +3,6 @@ name: Push to Docker Hub
 on:
   push:
     branches: [master]
-    tags:
-      - "v*.*.*"
 
 env:
   # Use docker.io for Docker Hub if empty
@@ -21,11 +19,7 @@ jobs:
       - name: Set Tag Name as Preparation
         id: prep
         run: |
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
-            TAG=${GITHUB_REF#refs/tags/}
-          else
-            TAG="latest"
-          fi
+          TAG="latest"
           echo "tag=${IMAGE_NAME}:${TAG}" >> $GITHUB_OUTPUT
 
       #Check out
