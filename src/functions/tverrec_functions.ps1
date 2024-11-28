@@ -600,7 +600,7 @@ function Get-VideoInfo {
 	$mediaName = (Get-NarrowChars ($response.Result.Episode.Content.BroadcasterName)).Trim()
 	$providerName = (Get-NarrowChars ($response.Result.Episode.Content.ProductionProviderName)).Trim()
 	#放送日
-	$broadcastDate = (($response.Result.Episode.Content.BroadcastDateLabel).Replace('ほか', '').Replace('放送分', '放送')).Trim()
+	$broadcastDate = (($response.Result.Episode.Content.BroadcastDateLabel).Replace('ほか', '').Replace('放送分', '放送').Replace('配信分', '配信')).Trim()
 	#配信終了日時
 	$endTime = (ConvertFrom-UnixTime ($response.Result.Episode.Content.EndAt)).AddHours(9)
 	#----------------------------------------------------------------------
@@ -641,7 +641,7 @@ function Get-VideoInfo {
 	#エピソード番号が1桁の際は頭0埋めして2桁に
 	$videoEpisodeNum = $videoEpisodeNum.PadLeft(2, '0')
 	#放送日を整形
-	if ($broadcastDate -cmatch '([0-9]+)(月)([0-9]+)(日)(.+?)(放送)') {
+	if ($broadcastDate -cmatch '([0-9]+)(月)([0-9]+)(日)(.+?)(放送|配信)') {
 		$currentYear = (Get-Date).Year
 		$parsedBroadcastDate = [DateTime]::ParseExact(('{0}{1}{2}' -f $currentYear, $matches[1].padleft(2, '0'), $matches[3].padleft(2, '0')), 'yyyyMMdd', $null)
 		#実日付の翌日よりも放送日が未来だったら当年ではなく昨年の番組と判断する(年末の番組を年初にダウンロードするケース)
