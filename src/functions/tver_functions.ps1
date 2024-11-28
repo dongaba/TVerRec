@@ -321,7 +321,8 @@ function Get-LinkFromTopPage {
 	}
 	$callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callHome'
 	$callSearchURL = ('{0}?platform_uid={1}&platform_token={2}' -f $callSearchBaseURL, $script:platformUID, $script:platformToken)
-	$searchResults = Invoke-RestMethod -Uri $callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
+	try { $searchResults = Invoke-RestMethod -Uri $callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec }
+	catch { Write-Warning 'トップページを取得できませんでした' ; return $linkCollection }
 	foreach ($component in $searchResults.Result.Components) {
 		switch ($component.Type) {
 			{ $_ -in @('horizontal', 'ranking', 'talents', 'billboard', 'episodeRanking', 'newer', 'ender', 'talent', 'special', 'specialContent', 'topics', 'spikeRanking') } {
@@ -364,7 +365,8 @@ function Get-LinkFromSiteMap {
 		specialLinks     = [System.Collections.Generic.List[string]]::new()
 	}
 	$callSearchURL = 'https://tver.jp/sitemap.xml'
-	$searchResultsRaw = Invoke-RestMethod -Uri $callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
+	try { $searchResultsRaw = Invoke-RestMethod -Uri $callSearchURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec }
+	catch { Write-Warning 'サイトマップを取得できませんでした' ; return $linkCollection }
 	$searchResults = $searchResultsRaw.urlset.url.loc | Sort-Object -Unique
 	foreach ($url in $searchResults) {
 		try {
