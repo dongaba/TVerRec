@@ -43,14 +43,14 @@ try {
 #GUIイベントの処理
 function Sync-WpfEvents {
 	[DispatcherFrame] $frame = [DispatcherFrame]::new($true)
-	$null = [Dispatcher]::CurrentDispatcher.BeginInvoke(
+	[Dispatcher]::CurrentDispatcher.BeginInvoke(
 		'Background',
 		[DispatcherOperationCallback] {
 			Param([object] $f)
 			($f -as [DispatcherFrame]).Continue = $false
 			return $null
 		},
-		$frame)
+		$frame) | Out-Null
 	[Dispatcher]::PushFrame($frame)
 	Remove-Variable -Name frame, f -ErrorAction SilentlyContinue
 }
@@ -93,7 +93,7 @@ function Save-UserSetting {
 	$endSegment = '##End Setting Generated from GUI'
 	#ファイルが無ければ作ればいい
 	if (!(Test-Path $userSettingFile)) {
-		$null = New-Item -Path $userSettingFile -ItemType File
+		New-Item -Path $userSettingFile -ItemType File | Out-Null
 		$content = Get-Content -LiteralPath $userSettingFile
 		$totalLineNum = 0
 	} else {
@@ -158,7 +158,7 @@ Add-Type -Name Window -Namespace Console -MemberDefinition '
 [DllImport("Kernel32.dll")]public static extern IntPtr GetConsoleWindow() ;
 [DllImport("user32.dll")]public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow) ;
 '
-$null = [Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0)
+[Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0) | Out-Null
 #タスクバーのアイコンにオーバーレイ表示
 $settingWindow.TaskbarItemInfo.Overlay = ConvertFrom-Base64 $script:iconBase64
 $settingWindow.TaskbarItemInfo.Description = $settingWindow.Title
@@ -285,9 +285,9 @@ foreach ($settingAttribute in $settingAttributes) {
 #ウィンドウ表示
 
 try {
-	$null = $settingWindow.Show()
-	$null = $settingWindow.Activate()
-	$null = [Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0)
+	$settingWindow.Show() | Out-Null
+	$settingWindow.Activate() | Out-Null
+	[Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0) | Out-Null
 } catch { Throw ('❌️ ウィンドウを描画できませんでした。TVerRecが破損しています。') }
 
 #メインウィンドウ取得

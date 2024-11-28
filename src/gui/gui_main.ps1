@@ -51,14 +51,14 @@ $msgInformation = [System.Collections.ArrayList]::new()
 #GUIイベントの処理
 function Sync-WpfEvents {
 	[DispatcherFrame] $frame = [DispatcherFrame]::new($true)
-	$null = [Dispatcher]::CurrentDispatcher.BeginInvoke(
+	[Dispatcher]::CurrentDispatcher.BeginInvoke(
 		'Background',
 		[DispatcherOperationCallback] {
 			Param([object] $f)
 			($f -as [DispatcherFrame]).Continue = $false
 			return $null
 		},
-		$frame)
+		$frame) | Out-Null
 	[Dispatcher]::PushFrame($frame)
 	Remove-Variable -Name frame, f -ErrorAction SilentlyContinue
 }
@@ -67,7 +67,7 @@ function Sync-WpfEvents {
 function LimitRichTextBoxLines($richTextBox, $limit) {
 	if ($richTextBox.Document.Blocks.Count -gt $limit) {
 		$linesToRemove = $richTextBox.Document.Blocks.Count - $limit
-		for ($i = 0; $i -lt $linesToRemove; $i++) { $null = $richTextBox.Document.Blocks.Remove($richTextBox.Document.Blocks.FirstBlock) }
+		for ($i = 0; $i -lt $linesToRemove; $i++) { $richTextBox.Document.Blocks.Remove($richTextBox.Document.Blocks.FirstBlock) | Out-Null }
 	}
 	Remove-Variable -Name richTextBox, limit, linesToRemove, i -ErrorAction SilentlyContinue
 }
@@ -105,7 +105,7 @@ Add-Type -Name Window -Namespace Console -MemberDefinition '
 [DllImport("Kernel32.dll")]public static extern IntPtr GetConsoleWindow() ;
 [DllImport("user32.dll")]public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow) ;
 '
-$null = [Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0)
+[Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0) | Out-Null
 #タスクバーのアイコンにオーバーレイ表示
 $mainWindow.TaskbarItemInfo.Overlay = ConvertFrom-Base64 $script:iconBase64
 $mainWindow.TaskbarItemInfo.Description = $mainWindow.Title
@@ -172,7 +172,7 @@ foreach ($btn in $btns) {
 			#処理停止ボタンの有効化
 			$btnKillAll.IsEnabled = $true
 			#バックグラウンドジョブの起動
-			$null = Start-ThreadJob -Name $this.Name -ScriptBlock $scriptBlocks[$this]
+			Start-ThreadJob -Name $this.Name -ScriptBlock $scriptBlocks[$this] | Out-Null
 		})
 }
 
@@ -219,9 +219,9 @@ $btnExit.Add_Click({ $mainWindow.close() })
 #処理停止ボタンの初期値は無効
 $btnKillAll.IsEnabled = $false
 try {
-	$null = $mainWindow.Show()
-	$null = $mainWindow.Activate()
-	$null = [Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0)
+	$mainWindow.Show() | Out-Null
+	$mainWindow.Activate() | Out-Null
+	[Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0) | Out-Null
 } catch { Throw ('❌️ ウィンドウを描画できませんでした。TVerRecが破損しています。') }
 
 #endregion ウィンドウ表示

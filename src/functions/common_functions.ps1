@@ -292,7 +292,7 @@ function Remove-Files {
 		try {
 			$conditions | ForEach-Object -Parallel {
 				Write-Output ('　{0}' -f (Join-Path $using:basePath $_))
-				$null = (Get-ChildItem -LiteralPath $using:basePath -Recurse -File -Filter $_ -ErrorAction SilentlyContinue).Where({ $_.LastWriteTime -lt $using:limitDateTime }) | Remove-Item -Force -ErrorAction SilentlyContinue
+				(Get-ChildItem -LiteralPath $using:basePath -Recurse -File -Filter $_ -ErrorAction SilentlyContinue).Where({ $_.LastWriteTime -lt $using:limitDateTime }) | Remove-Item -Force -ErrorAction SilentlyContinue | Out-Null
 			} -ThrottleLimit $script:multithreadNum
 		} catch { Write-Warning ('⚠️ 削除できないファイルがありました') }
 	} else {
@@ -300,7 +300,7 @@ function Remove-Files {
 		try {
 			foreach ($condition in $conditions) {
 				Write-Output ('　{0}' -f (Join-Path $basePath $condition))
-				$null = (Get-ChildItem -LiteralPath $basePath -Recurse -File -Filter $condition -ErrorAction SilentlyContinue).Where({ $_.LastWriteTime -lt $limitDateTime }) | Remove-Item -Force -ErrorAction SilentlyContinue
+				(Get-ChildItem -LiteralPath $basePath -Recurse -File -Filter $condition -ErrorAction SilentlyContinue).Where({ $_.LastWriteTime -lt $limitDateTime }) | Remove-Item -Force -ErrorAction SilentlyContinue | Out-Null
 			}
 		} catch { Write-Warning ('⚠️ 削除できないファイルがありました') }
 	}
@@ -462,7 +462,7 @@ function Show-GeneralToast {
 				$toastXML = [Windows.Data.Xml.Dom.XmlDocument]::new()
 				$toastXML.LoadXml($toastProgressContent)
 				$toastNotification = [Windows.UI.Notifications.ToastNotification]::new($toastXML)
-				$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Show($toastNotification)
+				[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Show($toastNotification) | Out-Null
 				continue
 			}
 			$IsLinux {
@@ -525,13 +525,13 @@ function Show-ProgressToast {
 				$toast.Tag = $tag
 				$toast.Group = $group
 				$toastData = [System.Collections.Generic.Dictionary[String, String]]::new()
-				$null = $toastData.Add('progressTitle', $workDetail)
-				$null = $toastData.Add('progressValue', '')
-				$null = $toastData.Add('progressValueString', '')
-				$null = $toastData.Add('progressStatus', '')
+				$toastData.Add('progressTitle', $workDetail) | Out-Null
+				$toastData.Add('progressValue', '') | Out-Null
+				$toastData.Add('progressValueString', '') | Out-Null
+				$toastData.Add('progressStatus', '') | Out-Null
 				$toast.Data = [Windows.UI.Notifications.NotificationData]::new($toastData)
 				$toast.Data.SequenceNumber = 1
-				$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Show($toast)
+				[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Show($toast) | Out-Null
 				continue
 			}
 			$IsLinux {
@@ -570,13 +570,13 @@ function Update-ProgressToast {
 		switch ($true) {
 			$IsWindows {
 				$toastData = [System.Collections.Generic.Dictionary[String, String]]::new()
-				$null = $toastData.Add('progressTitle', $script:appName)
-				$null = $toastData.Add('progressValue', $rate)
-				$null = $toastData.Add('progressValueString', $rightText)
-				$null = $toastData.Add('progressStatus', $leftText)
+				$toastData.Add('progressTitle', $script:appName) | Out-Null
+				$toastData.Add('progressValue', $rate) | Out-Null
+				$toastData.Add('progressValueString', $rightText) | Out-Null
+				$toastData.Add('progressStatus', $leftText) | Out-Null
 				$toastProgressData = [Windows.UI.Notifications.NotificationData]::new($toastData)
 				$toastProgressData.SequenceNumber = 2
-				$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Update($toastProgressData, $tag , $group)
+				[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Update($toastProgressData, $tag , $group) | Out-Null
 				continue
 			}
 			$IsLinux { continue }
@@ -636,17 +636,17 @@ function Show-ProgressToast2Row {
 				$toast.Tag = $tag
 				$toast.Group = $group
 				$toastData = [System.Collections.Generic.Dictionary[String, String]]::new()
-				$null = $toastData.Add('progressTitle1', $detail1)
-				$null = $toastData.Add('progressValue1', '')
-				$null = $toastData.Add('progressValueString1', '')
-				$null = $toastData.Add('progressStatus1', '')
-				$null = $toastData.Add('progressTitle2', $detail2)
-				$null = $toastData.Add('progressValue2', '')
-				$null = $toastData.Add('progressValueString2', '')
-				$null = $toastData.Add('progressStatus2', '')
+				$toastData.Add('progressTitle1', $detail1) | Out-Null
+				$toastData.Add('progressValue1', '') | Out-Null
+				$toastData.Add('progressValueString1', '') | Out-Null
+				$toastData.Add('progressStatus1', '') | Out-Null
+				$toastData.Add('progressTitle2', $detail2) | Out-Null
+				$toastData.Add('progressValue2', '') | Out-Null
+				$toastData.Add('progressValueString2', '') | Out-Null
+				$toastData.Add('progressStatus2', '') | Out-Null
 				$toast.Data = [Windows.UI.Notifications.NotificationData]::new($toastData)
 				$toast.Data.SequenceNumber = 1
-				$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Show($toast)
+				[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Show($toast) | Out-Null
 				continue
 			}
 			$IsLinux {
@@ -700,17 +700,17 @@ function Update-ProgressToast2Row {
 			switch ($true) {
 				$IsWindows {
 					$toastData = [System.Collections.Generic.Dictionary[String, String]]::new()
-					$null = $toastData.Add('progressTitle1', $title1)
-					$null = $toastData.Add('progressValue1', $rate1)
-					$null = $toastData.Add('progressValueString1', $rightText1)
-					$null = $toastData.Add('progressStatus1', $leftText1)
-					$null = $toastData.Add('progressTitle2', $title2)
-					$null = $toastData.Add('progressValue2', $rate2)
-					$null = $toastData.Add('progressValueString2', $rightText2)
-					$null = $toastData.Add('progressStatus2', $leftText2)
+					$toastData.Add('progressTitle1', $title1) | Out-Null
+					$toastData.Add('progressValue1', $rate1) | Out-Null
+					$toastData.Add('progressValueString1', $rightText1) | Out-Null
+					$toastData.Add('progressStatus1', $leftText1) | Out-Null
+					$toastData.Add('progressTitle2', $title2) | Out-Null
+					$toastData.Add('progressValue2', $rate2) | Out-Null
+					$toastData.Add('progressValueString2', $rightText2) | Out-Null
+					$toastData.Add('progressStatus2', $leftText2)
 					$toastProgressData = [Windows.UI.Notifications.NotificationData]::new($toastData)
 					$toastProgressData.SequenceNumber = 2
-					$null = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Update($toastProgressData, $tag , $group)
+					[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Update($toastProgressData, $tag , $group) | Out-Null
 					continue
 				}
 				$IsLinux { continue }

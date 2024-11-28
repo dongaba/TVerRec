@@ -124,9 +124,6 @@ foreach ($keyword in $keywords) {
 				$remainingJobs = Get-Job
 				Start-Sleep -Milliseconds 500
 			} while ($remainingJobs)
-			# $null = Get-Job | Wait-Job
-			# Write-Output (Get-Job | Receive-Job)
-			# Get-Job | Remove-Job
 		}
 	} else {
 		#並列化が無効の場合は従来型処理

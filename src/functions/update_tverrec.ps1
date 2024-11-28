@@ -41,11 +41,11 @@ function Move-Files() {
 		$items = (Get-ChildItem $source).Where({ $_.Name -inotlike '*update_tverrec.*' })
 		foreach ($item in $items) { Move-Files -Source $item.FullName -Destination (Join-Path $destination $item.Name) }
 		#移動し終わったディレクトリを削除
-		$null = Remove-Item -LiteralPath $source -Recurse -Force
+		Remove-Item -LiteralPath $source -Recurse -Force | Out-Null
 	} else {
 		#移動先に対象なし または ファイルの Move-Item に -Forece つけて実行
 		Write-Output ('{0} → {1}' -f $source, $destination)
-		$null = Move-Item -LiteralPath $source -Destination $destination -Force
+		Move-Item -LiteralPath $source -Destination $destination -Force | Out-Null
 	}
 	Remove-Variable -Name source, destination, items, item -ErrorAction SilentlyContinue
 }
@@ -56,7 +56,7 @@ function Move-Files() {
 Function Remove-IfExist {
 	param ([Parameter(Mandatory = $true)][string]$path)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	if (Test-Path $path) { $null = Remove-Item -LiteralPath $path -Force -Recurse }
+	if (Test-Path $path) { Remove-Item -LiteralPath $path -Force -Recurse | Out-Null }
 	Remove-Variable -Name path -ErrorAction SilentlyContinue
 }
 
@@ -82,7 +82,7 @@ Function Move-IfExist {
 		[Parameter(Mandatory = $true)][string]$destination
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	if (Test-Path $path -PathType Leaf) { $null = Move-Item -LiteralPath $path -Destination $destination -Force }
+	if (Test-Path $path -PathType Leaf) { Move-Item -LiteralPath $path -Destination $destination -Force | Out-Null }
 	Remove-Variable -Name path, destination -ErrorAction SilentlyContinue
 }
 
@@ -117,7 +117,7 @@ Write-Output ('━━━━━━━━━━━━━━━━━━━━━�
 Write-Output ('作業ディレクトリを作成します')
 $updateTemp = Join-Path $scriptRoot '../tverrec-update-temp'
 if (Test-Path $updateTemp ) { Remove-Item -LiteralPath $updateTemp -Force -Recurse -ErrorAction SilentlyContinue }
-try { $null = New-Item -ItemType Directory -Path $updateTemp }
+try { New-Item -ItemType Directory -Path $updateTemp | Out-Null }
 catch { Throw ('❌️ 作業ディレクトリの作成に失敗しました') }
 
 #TVerRecの最新バージョン取得
@@ -248,8 +248,8 @@ if (!$IsWindows) {
 }
 
 #アップデータ自体の更新のためのファイル作成
-$null = New-Item (Join-Path $script:scriptRoot '../log/updater_update.txt') -Type file -Force
-$null = 'このファイルはアップデータ自身のアプデートを完了させるために必要です。' | Out-File -FilePath (Join-Path $script:scriptRoot '../log/updater_update.txt')
+New-Item (Join-Path $script:scriptRoot '../log/updater_update.txt') -Type file -Force | Out-Null
+'このファイルはアップデータ自身のアプデートを完了させるために必要です。' | Out-File -FilePath (Join-Path $script:scriptRoot '../log/updater_update.txt')
 
 Write-Output ('')
 Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')

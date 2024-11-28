@@ -140,9 +140,9 @@ if ($moveDirs) {
 		#同名ディレクトリが存在する場合は配下のファイルを移動
 		if ((Test-Path -LiteralPath $moveFromPath) -and (Test-Path -LiteralPath $moveToPath)) {
 			Write-Output ('　{0}\* -> {1}' -f $moveFromPath, $moveToPath)
-			try { $null = Get-ChildItem -LiteralPath $moveFromPath -File | Move-Item -Destination $moveToPath -Force }
+			try { Get-ChildItem -LiteralPath $moveFromPath -File | Move-Item -Destination $moveToPath -Force | Out-Null }
 			catch { Write-Warning ('⚠️ 移動できないファイルがありました - {0}' -f $moveFromPath) }
-		}else{ Write-Warning ('⚠️ 移動元、または移動先にアクセスできなくなりました - {0}' -f $moveFromPath) }
+		} else { Write-Warning ('⚠️ 移動元、または移動先にアクセスできなくなりました - {0}' -f $moveFromPath) }
 	}
 }
 #----------------------------------------------------------------------
@@ -168,7 +168,7 @@ if ($emptyDirTotal -ne 0) {
 			$emptyDirNum = ([Array]::IndexOf($using:emptyDirs, $_)) + 1
 			$emptyDirTotal = $using:emptyDirs.Count
 			Write-Output ('　{0}/{1} - {2}' -f $emptyDirNum, $emptyDirTotal, $_)
-			try { $null = Remove-Item -LiteralPath $_ -Recurse -Force }
+			try { Remove-Item -LiteralPath $_ -Recurse -Force | Out-Null }
 			catch { Write-Warning ('⚠️ - 空ディレクトリの削除に失敗しました: {0}' -f $_) }
 		} -ThrottleLimit $script:multithreadNum
 	} else {
@@ -197,7 +197,7 @@ if ($emptyDirTotal -ne 0) {
 			Update-ProgressToast @toastUpdateParams
 
 			Write-Output ('　{0}/{1} - {2}' -f $emptyDirNum, $emptyDirTotal, $dir)
-			try { $null = Remove-Item -LiteralPath $dir -Recurse -Force -ErrorAction SilentlyContinue
+			try { Remove-Item -LiteralPath $dir -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
 			} catch { Write-Warning ('⚠️ - 空ディレクトリの削除に失敗しました: {0}' -f $dir) }
 		}
 	}
