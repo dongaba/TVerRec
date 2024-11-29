@@ -66,9 +66,7 @@ foreach ($keyword in $keywords) {
 
 	#処理時間の推計
 	$secElapsed = (Get-Date) - $totalStartTime
-	if ($keywordNum -ne 0) {
-		$secRemaining1 = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $keywordNum) * ($keywordTotal - $keywordNum))
-	} else { $secRemaining1 = '' }
+	if ($keywordNum -ne 0) {$secRemaining1 = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $keywordNum) * ($keywordTotal - $keywordNum))} else { $secRemaining1 = '' }
 
 	#キーワード数のインクリメント
 	$keywordNum++
@@ -116,10 +114,7 @@ foreach ($keyword in $keywords) {
 			}
 			do {
 				$completedJobs = Get-Job -State Completed
-				foreach ($job in $completedJobs) {
-					Write-Output (Receive-Job -Job $job)
-					Remove-Job -Job $job
-				}
+				foreach ($job in $completedJobs) { Write-Output (Receive-Job -Job $job) ; Remove-Job -Job $job }
 				Remove-Job -State Failed, Stopped, Suspended, Disconnected
 				$remainingJobs = Get-Job
 				Start-Sleep -Milliseconds 500

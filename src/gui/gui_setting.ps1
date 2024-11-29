@@ -46,7 +46,7 @@ function Sync-WpfEvents {
 	[Dispatcher]::CurrentDispatcher.BeginInvoke(
 		'Background',
 		[DispatcherOperationCallback] {
-			Param([object] $f)
+			Param ([object] $f)
 			($f -as [DispatcherFrame]).Continue = $false
 			return $null
 		},

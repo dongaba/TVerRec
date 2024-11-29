@@ -58,9 +58,8 @@ foreach ($keyword in $keywords) {
 
 	#処理時間の推計
 	$secElapsed = (Get-Date) - $totalStartTime
-	if ($keywordNum -ne 0) {
-		$secRemaining1 = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $keywordNum) * ($keywordTotal - $keywordNum))
-	} else { $secRemaining1 = '' }
+	if ($keywordNum -ne 0) {$secRemaining1 = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $keywordNum) * ($keywordTotal - $keywordNum))}
+	else { $secRemaining1 = '' }
 
 	#キーワード数のインクリメント
 	$keywordNum++

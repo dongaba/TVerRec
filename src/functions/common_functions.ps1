@@ -44,7 +44,7 @@ function Get-TimeStamp {
 function ConvertFrom-UnixTime {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
-	param ([Parameter(Mandatory = $true)][int64]$UnixTime)
+	Param ([Parameter(Mandatory = $true)][int64]$UnixTime)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$EpochDate = Get-Date -Year 1970 -Month 1 -Day 1 -Hour 0 -Minute 0 -Second 0 -AsUTC
 	return ($EpochDate.AddSeconds($UnixTime).ToLocalTime())
@@ -57,7 +57,7 @@ function ConvertFrom-UnixTime {
 function ConvertTo-UnixTime {
 	[CmdletBinding()]
 	[OutputType([int64])]
-	Param([Parameter(Mandatory = $true)][DateTime]$InputDate)
+	Param ([Parameter(Mandatory = $true)][DateTime]$InputDate)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$unixTime = New-TimeSpan -Start '1970-01-01' -End $InputDate.ToUniversalTime()
 	return [int64][math]::Round($unixTime.TotalSeconds)
@@ -292,8 +292,8 @@ function Remove-Files {
 #----------------------------------------------------------------------
 function Expand-Zip {
 	[CmdletBinding()]
-	[OutputType([void])]
-	Param(
+	[OutputType([System.Void])]
+	Param (
 		[Parameter(Mandatory = $true)][string]$path,
 		[Parameter(Mandatory = $true)][string]$destination
 	)
@@ -703,7 +703,7 @@ function Update-ProgressToast2Row {
 #Base64画像の展開
 #----------------------------------------------------------------------
 function ConvertFrom-Base64 {
-	param ($base64)
+	Param ($base64)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$img = [System.Windows.Media.Imaging.BitmapImage]::new()
 	$img.BeginInit()

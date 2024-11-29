@@ -11,8 +11,8 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
 #----------------------------------------------------------------------
 function Expand-Zip {
 	[CmdletBinding()]
-	[OutputType([void])]
-	Param(
+	[OutputType([System.Void])]
+	Param (
 		[Parameter(Mandatory = $true)][string]$path,
 		[Parameter(Mandatory = $true)][string]$destination
 	)

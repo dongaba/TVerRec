@@ -31,7 +31,7 @@ BeforeAll {
 		'Referer'              = 'https://tver.jp'
 	}
 	function MockProcessSearchResults {
-		param($baseURL, $type, $keyword)
+		Param ($baseURL, $type, $keyword)
 		return [PSCustomObject]@{
 			episodeLinks = @('https://tver.jp/episodes/dummy2', 'https://tver.jp/episodes/dummy1', 'https://tver.jp/episodes/dummy2')  | Sort-Object -Unique
 			seasonLinks  = @('seasonDummy2', 'seasonDummy1', 'seasonDummy2')  | Sort-Object -Unique

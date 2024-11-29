@@ -52,15 +52,16 @@ function Get-VideoLinksFromKeyword {
 	switch ($key) {
 		'series' { $linkCollection.seriesLinks.Add($tverID) ; continue }
 		'talents' { $linkCollection.talentLinks.Add($tverID) ; continue }
-		'tag' { $result = Get-LinkFromTag $tverID ; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result ; continue }
-		'new' { $result = Get-LinkFromNew $tverID ; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result ; continue }
-		'ranking' { $result = Get-LinkFromRanking $tverID ; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result ; continue }
-		'toppage' { $result = Get-LinkFromTopPage ; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result ; continue }
-		'sitemap' { $result = Get-LinkFromSiteMap ; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result ; continue }
-		'mypage' { $result = Get-LinkFromMyPage $tverID ; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result ; continue }
 		'episodes' { $linkCollection.episodeLinks.Add(('https://tver.jp/{0}/{1}' -f $key, $tverID)) ; continue }
-		default { $result = Get-LinkFromFreeKeyword $keyword ; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result }
+		'mypage' { $result = Get-LinkFromMyPage $tverID ; continue }
+		'tag' { $result = Get-LinkFromTag $tverID ; continue }
+		'ranking' { $result = Get-LinkFromRanking $tverID ; continue }
+		'new' { $result = Get-LinkFromNew $tverID ; continue }
+		'toppage' { $result = Get-LinkFromTopPage ; continue }
+		'sitemap' { $result = Get-LinkFromSiteMap ; continue }
+		default { $result = Get-LinkFromFreeKeyword $keyword }
 	}
+	$linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result 
 	while (($linkCollection.specialMainLinks.Count -ne 0) -or ($linkCollection.specialLinks.Count -ne 0) -or ($linkCollection.talentLinks.Count -ne 0) -or ($linkCollection.seriesLinks.Count -ne 0) -or ($linkCollection.seasonLinks.Count -ne 0)) {
 		if ($linkCollection.specialMainLinks) {
 			$linkCollection = Convert-Buffer -TverIDs $linkCollection.specialMainLinks -TverIDType 'Special Main' -LinkCollection $linkCollection
@@ -109,19 +110,10 @@ function ProcessSearchResults {
 	$specialLinks = [System.Collections.Generic.List[string]]::new()
 	#URLの整形
 	$sid = $script:myMemberSID
-	$uid = $script:platformUID
-	$token = $script:platformToken
-	if ($sid) {
-		# TVerIDにログインして使う場合
-		$callSearchURL = '{0}?member_sid={1}' -f $baseURL, $sid
-	} else {
-		# TVerIDを匿名で使う場合
-		if ($requireData -and $script:myPlatformUID -ne '' -and $script:myPlatformToken -ne '') {
-			$uid = $script:myPlatformUID
-			$token = $script:myPlatformToken
-		}
-		$callSearchURL = '{0}?platform_uid={1}&platform_token={2}' -f $baseURL, $uid, $token
-	}
+	if (($script:myPlatformUID -ne '') -and ($script:myPlatformToken -ne '')) { $uid = $script:myPlatformUID ; $token = $script:myPlatformToken }
+	else{ $uid = $script:platformUID ; $token = $script:platformToken }
+	if ($sid) {$callSearchURL = '{0}?member_sid={1}' -f $baseURL, $sid }								# TVerIDにログインして使う場合
+	else {$callSearchURL = '{0}?platform_uid={1}&platform_token={2}' -f $baseURL, $uid, $token }		# TVerIDを匿名で使う場合
 	switch ($type) {
 		'keyword' { if ($keyword) { $callSearchURL += "&keyword=$keyword" } }
 		'mypage' { if ($requireData) { $callSearchURL += "&require_data=$requireData" } }
@@ -158,7 +150,7 @@ function ProcessSearchResults {
 			Write-Warning ('⚠️ HTTP接続がタイムアウトしました。スキップして次のリンクを処理します。')
 			Write-Warning ('　　{0}, {1}, {2}' -f $type, $keyword, $requireData)
 		} elseif ($_.Exception.Message.Contains('Response status code does not indicate success:')) {
-			Write-Warning ('⚠️ HTTP接続が失敗しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message.Replace('Response status code does not indicate success:', ''))
+			Write-Warning ('⚠️ HTTP接続が失敗しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message)
 			Write-Warning ('　　{0}, {1}, {2}' -f $type, $keyword, $requireData)
 		} else {
 			Write-Warning ('⚠️ エラーが発生しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message)
@@ -336,13 +328,13 @@ function Get-LinkFromTopPage {
 						'talent' { $linkCollection.talentLinks.Add($content.Content.Id) ; continue }
 						'specialMain' { $linkCollection.specialMainLinks.Add($content.Content.Id) ; continue }
 						'special' { $linkCollection.specialLinks.Add($content.Content.Id) ; continue }
-						default { Write-Warning ('⚠️ 未知のパターンです。 - {0}/{1}' -f $content.Type, $content.Content.Id) }
+						default { Write-Warning ('⚠️ 未知のコンテンツタイプです。 - {0}/{1}' -f $content.Type, $content.Content.Id) }
 					}
 				}
 				continue
 			}
 			{ $_ -in @('banner', 'resume', 'favorite') ; continue } {}
-			default { Write-Warning "⚠️ 未知のパターンです。 - $($component.Type)" }
+			default { Write-Warning "⚠️ 未知のコンポーネントタイプです。 - $($component.Type)" }
 		}
 	}
 	return $linkCollection
@@ -438,7 +430,7 @@ function Get-LinkFromMyPage {
 #TVerIDの整理
 #----------------------------------------------------------------------
 function Update-LinkCollection {
-	param (
+	Param (
 		[PSCustomObject]$linkCollection,
 		[PSCustomObject]$result
 	)
@@ -450,7 +442,7 @@ function Update-LinkCollection {
 	if ($result.specialMainLinks) { $linkCollection.specialMainLinks = [System.Collections.Generic.List[string]](& { $linkCollection.specialMainLinks ; $result.specialMainLinks }) }
 	if ($result.specialLinks) { $linkCollection.specialLinks = [System.Collections.Generic.List[string]](& { $linkCollection.specialLinks ; $result.specialLinks }) }
 	return $linkCollection
-	Remove-Variable -Name linkCollection, result -ErrorAction SilentlyContinue
+	Remove-Variable -Name linkTypes, linkType, linkCollection, result -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -460,7 +452,7 @@ function Convert-Buffer {
 	[CmdletBinding()]
 	[OutputType([PSCustomObject])]
 	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly', '')]
-	param(
+	Param (
 		[Parameter(Mandatory = $false)][Object[]]$tverIDs,
 		[Parameter(Mandatory = $true)][ValidateSet('Special Main', 'Special Detail', 'Talent', 'Season', 'Series')][string]$tverIDType,
 		[Parameter(Mandatory = $true)][OutputType([PSCustomObject])]$linkCollection
@@ -469,18 +461,17 @@ function Convert-Buffer {
 	if ($tverIDs) {
 		foreach ($tverID in ($tverIDs | Sort-Object -Unique)) {
 			Write-Information ('{0} - {1} {2} からEpisodeを抽出中...' -f (Get-Date), $tverIDType, $tverID)
-			switch ($tverIDType) {
-				'Special Main' { $result = Get-LinkFromSpecialMainID($tverID) ; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result ; continue }
-				'Special Detail' { $result = Get-LinkFromSpecialDetailID($tverID) ; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result ; continue }
-				'Talent' { $result = Get-LinkFromTalentID($tverID) ; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result ; continue }
-				'Series' { $result = Get-LinkFromSeriesID($tverID) ; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result ; continue }
-				'Season' { $result = Get-LinkFromSeasonID($tverID) ; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result ; continue }
+			$result = switch ($tverIDType) {
+				'Special Main' { Get-LinkFromSpecialMainID($tverID) ; continue }
+				'Special Detail' { Get-LinkFromSpecialDetailID($tverID) ; continue }
+				'Talent' { Get-LinkFromTalentID($tverID) ; continue }
+				'Series' { Get-LinkFromSeriesID($tverID) ; continue }
+				'Season' { Get-LinkFromSeasonID($tverID) ; continue }
 			}
+			$linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result 
 		}
-		if ($linkCollection.episodeLinks) { $linkCollection.episodeLinks = $linkCollection.episodeLinks | Sort-Object -Unique }
-		if ($linkCollection.seasonLinks) { $linkCollection.seasonLinks = $linkCollection.seasonLinks | Sort-Object -Unique }
-		if ($linkCollection.seriesLinks) { $linkCollection.seriesLinks = $linkCollection.seriesLinks | Sort-Object -Unique }
-		if ($linkCollection.specialLinks) { $linkCollection.specialLinks = $linkCollection.specialLinks | Sort-Object -Unique }
+		$linkTypes = @('episodeLinks', 'seasonLinks', 'seriesLinks', 'specialLinks')
+		foreach ($linkType in $linkTypes) { if ($linkCollection.$linkType) { $linkCollection.$linkType = $linkCollection.$linkType | Sort-Object -Unique } }
 	}
 	return $linkCollection
 	Remove-Variable -Name tverIDs, tverIDType, linkCollection, tverID, result -ErrorAction SilentlyContinue

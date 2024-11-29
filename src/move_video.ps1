@@ -42,7 +42,7 @@ Show-ProgressToast @toastShowParams
 
 # Windowsのディレクトリ一覧を取得する関数
 function Get-DirectoriesOnWindows {
-	param ([string[]]$paths)
+	Param ([string[]]$paths)
 	$results = @()
 	foreach ($path in $paths) {
 		$dirCmd = "dir `"$path`" /s /b /a:d"
@@ -53,7 +53,7 @@ function Get-DirectoriesOnWindows {
 
 # Linux/Macのディレクトリ一覧を取得する関数
 function Get-DirectoriesNotOnWindows {
-	param ([string[]]$paths)
+	Param ([string[]]$paths)
 	$results = @()
 	foreach ($path in $paths) {
 		$dirCmd = "find `"$path`" -type d"
@@ -64,7 +64,7 @@ function Get-DirectoriesNotOnWindows {
 
 # プラットフォームに応じたディレクトリ一覧を取得する関数
 function Get-DirectoriesWithPlatformCheck {
-	param ([string[]]$paths)
+	Param ([string[]]$paths)
 	#PowerShellではジャンクションの展開ができないので、cmd.exeを使ってジャンクションを解決する
 	switch ($true) {
 		$IsWindows { $results = Get-DirectoriesOnWindows -paths $paths ; continue }
@@ -117,10 +117,7 @@ if ($moveDirs) {
 			$secRemaining = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $dirNum) * ($dirTotal - $dirNum))
 			$minRemaining = ('残り時間 {0}分' -f ([Int][Math]::Ceiling($secRemaining / 60)))
 			$progressRate = [Float]($dirNum / $dirTotal)
-		} else {
-			$minRemaining = ''
-			$progressRate = 0
-		}
+		} else { $minRemaining = '' ; $progressRate = 0 }
 		$dirNum++
 
 		$toastUpdateParams = @{
@@ -185,10 +182,7 @@ if ($emptyDirTotal -ne 0) {
 				$secRemaining = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $emptyDirNum) * ($emptyDirTotal - $emptyDirNum))
 				$minRemaining = ('残り時間 {0}分' -f ([Int][Math]::Ceiling($secRemaining / 60)))
 				$progressRate = [Float]($emptyDirNum / $emptyDirTotal)
-			} else {
-				$minRemaining = ''
-				$progressRate = 0
-			}
+			} else { $minRemaining = '' ; $progressRate = 0 }
 
 			$toastUpdateParams.Title = $dir
 			$toastUpdateParams.Rate = $progressRate

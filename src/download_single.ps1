@@ -91,7 +91,7 @@ while ($true) {
 		$inputForm.Controls.Add($inputTextBox)
 
 		# ダイアログの表示
-		[void]$inputForm.ShowDialog()
+		$inputForm.ShowDialog() | Out-Null
 	}
 
 	#配列の空白要素を削除

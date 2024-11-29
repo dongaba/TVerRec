@@ -11,8 +11,8 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
 #----------------------------------------------------------------------
 function Expand-Zip {
 	[CmdletBinding()]
-	[OutputType([void])]
-	Param(
+	[OutputType([System.Void])]
+	Param (
 		[Parameter(Mandatory = $true)][string]$path,
 		[Parameter(Mandatory = $true)][string]$destination
 	)
@@ -31,7 +31,7 @@ function Expand-Zip {
 function Move-Files() {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
-	Param(
+	Param (
 		[Parameter(Mandatory = $true)][String]$source,
 		[Parameter(Mandatory = $true)][String]$destination
 	)
@@ -54,7 +54,7 @@ function Move-Files() {
 #存在したら削除
 #----------------------------------------------------------------------
 Function Remove-IfExist {
-	param ([Parameter(Mandatory = $true)][string]$path)
+	Param ([Parameter(Mandatory = $true)][string]$path)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if (Test-Path $path) { Remove-Item -LiteralPath $path -Force -Recurse | Out-Null }
 	Remove-Variable -Name path -ErrorAction SilentlyContinue
@@ -64,7 +64,7 @@ Function Remove-IfExist {
 #存在したらリネーム
 #----------------------------------------------------------------------
 Function Rename-IfExist {
-	param (
+	Param (
 		[Parameter(Mandatory = $true)][string]$path,
 		[Parameter(Mandatory = $true)][string]$newname
 	)
@@ -77,7 +77,7 @@ Function Rename-IfExist {
 #存在したら移動
 #----------------------------------------------------------------------
 Function Move-IfExist {
-	param (
+	Param (
 		[Parameter(Mandatory = $true)][string]$path,
 		[Parameter(Mandatory = $true)][string]$destination
 	)

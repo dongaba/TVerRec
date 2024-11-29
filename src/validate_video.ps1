@@ -132,10 +132,7 @@ while ($videoNotValidatedNum -ne 0) {
 				$secRemaining = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $validateNum) * ($validateTotal - $validateNum))
 				$minRemaining = ('残り時間 {0}分' -f ([Int][Math]::Ceiling($secRemaining / 60)))
 				$progressRate = [Float]($validateNum / $validateTotal)
-			} else {
-				$minRemaining = ''
-				$progressRate = 0
-			}
+			} else { $minRemaining = '' ; $progressRate = 0 }
 			$validateNum++
 
 			$toastUpdateParams = @{

@@ -153,10 +153,7 @@ if ($script:forceSingleDownload) {
 					$secRemaining = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $ignoreNum) * ($ignoreTotal - $ignoreNum))
 					$minRemaining = ('残り時間 {0}分' -f ([Int][Math]::Ceiling($secRemaining / 60)))
 					$progressRate = [Float]($ignoreNum / $ignoreTotal)
-				} else {
-					$minRemaining = ''
-					$progressRate = 0
-				}
+				} else {$minRemaining = '' ; $progressRate = 0 }
 
 				$toastUpdateParams.Title = $ignoreDir.Name
 				$toastUpdateParams.Rate = $progressRate

@@ -172,7 +172,7 @@ Describe '英数のみ全角→半角(カタカナは全角)' {
 		@{Target = 'ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ' ; Expected = 'abcdefghijklmnopqrstuvwxyz' }
 		@{Target = 'ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ' ; Expected = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' }
 	) {
-		param ($Target, $Expected)
+		Param ($Target, $Expected)
 		Get-NarrowChars $Target | Should -Be $Expected
 	}
 	It '半角英数はそのまま返却されること' -TestCases @(
@@ -180,7 +180,7 @@ Describe '英数のみ全角→半角(カタカナは全角)' {
 		@{Target = 'abcdefghijklmnopqrstuvwxyz' ; Expected = 'abcdefghijklmnopqrstuvwxyz' }
 		@{Target = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' ; Expected = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' }
 	) {
-		param ($Target, $Expected)
+		Param ($Target, $Expected)
 		Get-NarrowChars $Target | Should -Be $Expected
 	}
 	It '全角記号が半角記号になること' -TestCases @(
@@ -189,13 +189,13 @@ Describe '英数のみ全角→半角(カタカナは全角)' {
 			Expected = '@#$%^&*-+_/[]{}()<> \\";:.,'
 		}
 	) {
-		param ($Target, $Expected)
+		Param ($Target, $Expected)
 		Get-NarrowChars $Target | Should -Be $Expected
 	}
 	It '半角記号はそのまま返却されること' -TestCases @(
 		@{Target = '@#$%^&*-+_/[]{}()<> \\";:.,' ; Expected = '@#$%^&*-+_/[]{}()<> \\";:.,' }
 	) {
-		param ($Target, $Expected)
+		Param ($Target, $Expected)
 		Get-NarrowChars $Target | Should -Be $Expected
 	}
 
@@ -209,7 +209,7 @@ Describe '英数のみ全角→半角(カタカナは全角)' {
 			Expected = 'ァィゥェォャュョッーヴガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポ'
 		}
 	) {
-		param ($Target, $Expected)
+		Param ($Target, $Expected)
 		Get-NarrowChars $Target | Should -Be $Expected
 	}
 	It '半角カタカナは全角となること' -TestCases @(
@@ -222,7 +222,7 @@ Describe '英数のみ全角→半角(カタカナは全角)' {
 			Expected = 'ァィゥェォャュョッーヴガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポ'
 		}
 	) {
-		param ($Target, $Expected)
+		Param ($Target, $Expected)
 		Get-NarrowChars $Target | Should -Be $Expected
 	}
 }
@@ -251,7 +251,7 @@ Describe 'いくつかの特殊文字を置換' {
 		@{Target = '<'     ; Expected = '＜' }
 		@{Target = '>'     ; Expected = '＞' }
 	) {
-		param ($Target, $Expected)
+		Param ($Target, $Expected)
 		Remove-SpecialCharacter $Target | Should -Be $Expected
 	}
 	It '文字列から指定された文字を取り除くこと' {
@@ -288,7 +288,7 @@ Describe 'タブとスペースを詰めて半角スペース1文字に' {
 		@{Target = '		' ; Expected = ' ' }
 		@{Target = '  '       ; Expected = ' ' }
 	) {
-		param ($Target, $Expected)
+		Param ($Target, $Expected)
 		Remove-TabSpace $Target | Should -Be $Expected
 	}
 }
@@ -310,7 +310,7 @@ Describe '設定ファイルの行末コメントを削除' {
 		@{Target = 'toppage  #トップページに表示される動画' ; Expected = 'toppage' }
 		@{Target = 'toppage #トップページに表示される動画' ; Expected = 'toppage' }
 	) {
-		param ($Target, $Expected)
+		Param ($Target, $Expected)
 		Remove-Comment $Target | Should -Be $Expected
 	}
 }

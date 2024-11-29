@@ -115,7 +115,7 @@ function Invoke-ToolUpdateCheck {
 #ファイル・ディレクトリの存在チェック、なければサンプルファイルコピー
 #----------------------------------------------------------------------
 function Invoke-TverrecPathCheck {
-	Param(
+	Param (
 		[Parameter(Mandatory = $true )][string]$path,
 		[Parameter(Mandatory = $true )][string]$errorMessage,
 		[Parameter(Mandatory = $false)][switch]$isFile,
@@ -252,19 +252,14 @@ function Update-IgnoreList {
 	Param ([Parameter(Mandatory = $true)][String]$ignoreTitle)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$ignoreListNew = @()
-	$ignoreComment = @()
-	$ignoreTarget = @()
-	$ignoreElse = @()
 	if (Test-Path $script:ignoreFilePath -PathType Leaf) {
 		try {
 			while ((Lock-File $script:ignoreLockFilePath).result -ne $true) { Write-Information ('　ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-			$ignoreLists = @((Get-Content $script:ignoreFilePath -Encoding UTF8).Where( { $_ -notmatch '^\s*$|^(;;.*)$' }))
+			$ignoreLists = @(Get-Content $script:ignoreFilePath -Encoding UTF8 | Where-Object { $_ -notmatch '^\s*$|^(;;.*)$' })
 			$ignoreComment = @(Get-Content $script:ignoreFileSamplePath -Encoding UTF8)
-			$ignoreTarget = @($ignoreLists.Where({ $_ -eq $ignoreTitle }) | Sort-Object -Unique)
-			$ignoreElse = @($ignoreLists.Where({ $_ -notin $ignoreTitle }))
-			if ($ignoreComment) { $ignoreListNew += $ignoreComment }
-			if ($ignoreTarget) { $ignoreListNew += $ignoreTarget }
-			if ($ignoreElse) { $ignoreListNew += $ignoreElse }
+			$ignoreTarget = @($ignoreLists | Where-Object { $_ -eq $ignoreTitle } | Sort-Object -Unique)
+			$ignoreElse = @($ignoreLists | Where-Object { $_ -ne $ignoreTitle })
+			$ignoreListNew = @($ignoreComment, $ignoreTarget, $ignoreElse)
 			#改行コードLFを強制 + NFCで出力
 			$ignoreListNew.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC)  | Out-File -LiteralPath $script:ignoreFilePath -Encoding UTF8 -NoNewline
 			Write-Debug ('　ダウンロード対象外リストのソート更新完了')
@@ -301,8 +296,7 @@ function Invoke-ListMatchCheck {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	#ダウンロードリストファイルのデータを読み込み
 	$listFileData = @(Read-DownloadList)
-	$listVideoPages = @()
-	foreach ($listFileLine in $listFileData) { $listVideoPages += ('https://tver.jp/episodes/{0}' -f $listFileLine.EpisodeID.Replace('#', '')) }
+	$listVideoPages = $listFileData | ForEach-Object { 'https://tver.jp/episodes/{0}' -f $_.EpisodeID.Replace('#', '') }
 	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 	$listCompResult = @(Compare-Object -IncludeEqual $resultLinks $listVideoPages)
 	try { $processedCount = ($listCompResult | Where-Object { $_.SideIndicator -eq '==' }).Count } catch { $processedCount = 0 }
@@ -320,11 +314,10 @@ function Invoke-HistoryAndListMatchCheck {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	#ダウンロードリストファイルのデータを読み込み
 	$listFileData = @(Read-DownloadList)
-	$listVideoPages = @()
-	foreach ($listFileLine in $listFileData) { $listVideoPages += ('https://tver.jp/episodes/{0}' -f $listFileLine.EpisodeID.Replace('#', '')) }
+	$listVideoPages = $listFileData | ForEach-Object { 'https://tver.jp/episodes/{0}' -f $_.EpisodeID.Replace('#', '') }
 	#ダウンロード履歴ファイルのデータを読み込み
 	$histFileData = @(Read-HistoryFile)
-	if ($histFileData.Count -eq 0) { $histVideoPages = @() } else { $histVideoPages = @($histFileData.VideoPage) }
+	$histVideoPages = if ($histFileData.Count -eq 0) { @() } else { $histFileData | Select-Object -ExpandProperty VideoPage }
 	#ダウンロードリストとダウンロード履歴をマージ
 	$listVideoPages += $histVideoPages
 	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
@@ -357,7 +350,7 @@ function Wait-YtdlProcess {
 #ダウンロード履歴データの作成
 #----------------------------------------------------------------------
 function Format-HistoryRecord {
-	Param([Parameter(Mandatory = $true)][pscustomobject]$videoInfo)
+	Param ([Parameter(Mandatory = $true)][pscustomobject]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	return [pscustomobject]@{
 		videoPage       = $videoInfo.episodePageURL
@@ -381,7 +374,7 @@ function Format-HistoryRecord {
 #ダウンロードリストデータの作成
 #----------------------------------------------------------------------
 function Format-ListRecord {
-	Param([Parameter(Mandatory = $true)][pscustomobject]$videoInfo)
+	Param ([Parameter(Mandatory = $true)][pscustomobject]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$customObject = [pscustomobject]@{
 		seriesName     = $videoInfo.seriesName
@@ -410,16 +403,13 @@ function Format-ListRecord {
 #「《」と「》」、「【」と「】」で挟まれた文字を除去
 #----------------------------------------------------------------------
 Function Remove-SpecialNote {
-	Param($text)
+	Param ($text)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	# 特殊文字の位置を取得
-	$start1 = $text.IndexOf('《') ; $end1 = $text.IndexOf('》')
-	$start2 = $text.IndexOf('【') ; $end2 = $text.IndexOf('】')
-	# 特殊文字間の長さを計算
-	$length1 = if ($start1 -ge 0 -and $end1 -ge 0) { $end1 - $start1 } else { 0 }
-	$length2 = if ($start2 -ge 0 -and $end2 -ge 0) { $end2 - $start2 } else { 0 }
+	# 特殊文字の位置を取得し、長さを計算
+	$length1 = [Math]::Max(0, $text.IndexOf('》') - $text.IndexOf('《'))
+	$length2 = [Math]::Max(0, $text.IndexOf('】') - $text.IndexOf('【'))
 	# 10文字以上あれば特殊文字とその間を削除
-	if ($length1 -gt 10 -or $length2 -gt 10) { $text = ($text -replace '《.*?》|【.*?】', '').Replace('  ', ' ').Trim() }
+	if (($length1 -gt 10) -or ($length2 -gt 10)) { $text = ($text -replace '《.*?》|【.*?】', '').Replace('  ', ' ').Trim() }
 	return $text
 	Remove-Variable -Name text, start1, end1, start2, end2, length1, length2 -ErrorAction SilentlyContinue
 }
@@ -584,9 +574,7 @@ function Get-VideoInfo {
 	#	Episode.Content.SeriesTitleだとSeries名+Season名が設定される番組もある
 	#	3.2.2からEpisode.Content.SeriesTitleを採用することとする。
 	#	理由は、Series.Content.Titleだとファイル名が冗長になることがあることと、複数シーズン配信時に最新シーズン名になってしまうことがあるため。
-	#if ($response.Result.Episode.Content.SeriesTitle.Length -le $response.Result.Series.Content.Title.Length ) {
 	$videoSeries = (Remove-SpecialCharacter (Get-NarrowChars ($response.Result.Episode.Content.SeriesTitle))).Trim()
-	#} else { $videoSeries = (Remove-SpecialCharacter (Get-NarrowChars ($response.Result.Series.Content.Title))).Trim() }
 	$videoSeriesID = $response.Result.Series.Content.Id
 	$videoSeriesPageURL = ('https://tver.jp/series/{0}' -f $response.Result.Series.Content.Id)
 	#シーズン
@@ -616,10 +604,12 @@ function Get-VideoInfo {
 		$videoRefID = if ($videoInfo.video.PSObject.Properties.Name -contains 'videoRefID') { ('ref%3A{0}' -f $videoInfo.video.videoRefID) } else { $videoInfo.video.videoID }
 		$playerID = $videoInfo.video.playerID
 	} catch { Write-Warning ('⚠️ エラーが発生しました。番組情報を取得できません。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) ; return }
+	#Brightcoveキー取得
 	try {
 		$brightcoveJsURL = ('https://players.brightcove.net/{0}/{1}_default/index.min.js' -f $accountID, $playerID)
 		$brightcovePk = if ((Invoke-RestMethod -Uri $brightcoveJsURL -Method 'GET' -Headers $script:requestHeader) -match 'policyKey:"([a-zA-Z0-9_-]*)"') { $matches[1] }
 	} catch { Write-Warning ('⚠️ エラーが発生しました。m3u8ファイル取得のキーが取得できません。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) ; return }
+	#m3u8とmpd URL取得
 	try {
 		$brightcoveURL = ('https://edge.api.brightcove.com/playback/v1/accounts/{0}/videos/{1}' -f $accountID, $videoRefID)
 		$headers = @{
@@ -743,14 +733,20 @@ function Invoke-Ytdl {
 	Param ([Parameter(Mandatory = $true)][pscustomobject]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	Invoke-StatisticsCheck -Operation 'download'
-	if ($IsWindows) {
-		if ($script:downloadWorkDir.Substring($script:downloadWorkDir.Length - 1, 1) -eq ':') { $script:downloadWorkDir += '\\' }
-		if ($script:downloadBaseDir.Substring($script:downloadBaseDir.Length - 1, 1) -eq ':') { $script:downloadBaseDir += '\\' }
-	}
+	if ($IsWindows) { foreach ($dir in @($script:downloadWorkDir, $script:downloadBaseDir)) { if ($dir[-1] -eq ':') { $dir += '\\' } } }
 	$tmpDir = ('temp:{0}' -f $script:downloadWorkDir)
 	$saveDir = ('home:{0}' -f $videoInfo.fileDir)
 	$saveFile = ('{0}' -f $videoInfo.fileName)
 	$ytdlArgs = (' {0}' -f $script:ytdlBaseArgs)
+	$ytdlArgs += (' {0} {1}' -f '--concurrent-fragments', $script:parallelDownloadNumPerFile)
+	$ytdlArgs += (' {0} "{1}"' -f '--paths', $saveDir)
+	$ytdlArgs += (' {0} "{1}"' -f '--paths', $tmpDir)
+	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlHttpHeader)
+	$ytdlArgs += (' {0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
+	if ($script:rateLimit -notin @(0, '')) {
+		$rateLimit = [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8)
+		$ytdlArgs += (' {0} {1}M' -f '--limit-rate', $rateLimit)
+	}
 	if ($script:videoContainerFormat -eq 'mp4') {
 		$ytdlArgs += (' {0}' -f '--merge-output-format mp4 --embed-thumbnail --embed-chapters')
 		$subttlDir = ('subtitle:{0}' -f $script:downloadWorkDir)
@@ -764,15 +760,6 @@ function Invoke-Ytdl {
 		if ($script:embedSubtitle) { $ytdlArgs += (' {0}' -f '--sub-langs all --convert-subs srt --embed-subs') }
 		if ($script:embedMetatag) { $ytdlArgs += (' {0}' -f '--embed-metadata') }
 	}
-	$ytdlArgs += (' {0} {1}' -f '--concurrent-fragments', $script:parallelDownloadNumPerFile)
-	if ($script:rateLimit -notin @(0, '')) {
-		$rateLimit = [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8)
-		$ytdlArgs += (' {0} {1}M' -f '--limit-rate', $rateLimit)
-	}
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $saveDir)
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $tmpDir)
-	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlHttpHeader)
-	$ytdlArgs += (' {0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
 	$ytdlArgs += (' {0}' -f $script:ytdlOption)
 	$ytdlArgs += (' {0}' -f $videoInfo.episodePageURL)
 	$ytdlArgs += (' {0} "{1}"' -f '--output', $saveFile)
@@ -784,10 +771,10 @@ function Invoke-Ytdl {
 			PassThru     = $true
 		}
 		if ($IsWindows) {
-			$startProcessParams.Add('WindowStyle', $script:windowShowStyle)
+			$startProcessParams.WindowStyle = $script:windowShowStyle
 		} else {
-			$startProcessParams.Add('RedirectStandardOutput', '/dev/null')
-			$startProcessParams.Add('RedirectStandardError', '/dev/zero')
+			$startProcessParams.RedirectStandardOutput = '/dev/null'
+			$startProcessParams.RedirectStandardError = '/dev/zero'
 		}
 		$ytdlProcess = Start-Process @startProcessParams
 		$ytdlProcess.Handle | Out-Null
@@ -803,14 +790,20 @@ function Invoke-NonTverYtdl {
 	Param ([Parameter(Mandatory = $true)][Alias('URL')]	[String]$videoPageURL)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	Invoke-StatisticsCheck -Operation 'nontver'
-	if ($IsWindows) {
-		if ($script:downloadWorkDir.Substring($script:downloadWorkDir.Length - 1, 1) -eq ':') { $script:downloadWorkDir += '\\' }
-		if ($script:downloadBaseDir.Substring($script:downloadBaseDir.Length - 1, 1) -eq ':') { $script:downloadBaseDir += '\\' }
-	}
+	if ($IsWindows) { foreach ($dir in @($script:downloadWorkDir, $script:downloadBaseDir)) { if ($dir[-1] -eq ':') { $dir += '\\' } } }
 	$tmpDir = ('temp:{0}' -f $script:downloadWorkDir)
 	$baseDir = ('home:{0}' -f $script:downloadBaseDir)
 	$saveFile = ('{0}' -f $script:ytdlNonTVerFileName)
 	$ytdlArgs = (' {0}' -f $script:nonTVerYtdlBaseArgs)
+	$ytdlArgs += (' {0} {1}' -f '--concurrent-fragments', $script:parallelDownloadNumPerFile)
+	$ytdlArgs += (' {0} "{1}"' -f '--paths', $baseDir)
+	$ytdlArgs += (' {0} "{1}"' -f '--paths', $tmpDir)
+	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlHttpHeader)
+	$ytdlArgs += (' {0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
+	if ($script:rateLimit -notin @(0, '')) {
+		$rateLimit = [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8)
+		$ytdlArgs += (' {0} {1}M' -f '--limit-rate', $rateLimit)
+	}
 	$ytdlArgs += (' {0}' -f '--merge-output-format mp4 --embed-thumbnail --embed-chapters')
 	$subttlDir = ('subtitle:{0}' -f $script:downloadWorkDir)
 	$thumbDir = ('thumbnail:{0}' -f $script:downloadWorkDir)
@@ -822,15 +815,6 @@ function Invoke-NonTverYtdl {
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $descDir)
 	if ($script:embedSubtitle) { $ytdlArgs += (' {0}' -f '--sub-langs all --convert-subs srt --embed-subs') }
 	if ($script:embedMetatag) { $ytdlArgs += (' {0}' -f '--embed-metadata') }
-	$ytdlArgs += (' {0} {1}' -f '--concurrent-fragments', $script:parallelDownloadNumPerFile)
-	if ($script:rateLimit -notin @(0, '')) {
-		$rateLimit = [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8)
-		$ytdlArgs += (' {0} {1}M' -f '--limit-rate', $rateLimit)
-	}
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $baseDir)
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $tmpDir)
-	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlHttpHeader)
-	$ytdlArgs += (' {0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
 	$ytdlArgs += (' {0}' -f $script:ytdlOption)
 	$ytdlArgs += (' {0}' -f $videoPageURL)
 	$ytdlArgs += (' {0} "{1}"' -f '--output', $saveFile)
@@ -842,15 +826,14 @@ function Invoke-NonTverYtdl {
 			PassThru     = $true
 		}
 		if ($IsWindows) {
-			$startProcessParams.Add('WindowStyle', $script:windowShowStyle)
+			$startProcessParams.WindowStyle = $script:windowShowStyle
 		} else {
-			$startProcessParams.Add('RedirectStandardOutput', '/dev/null')
-			$startProcessParams.Add('RedirectStandardError', '/dev/zero')
+			$startProcessParams.RedirectStandardOutput = '/dev/null'
+			$startProcessParams.RedirectStandardError = '/dev/zero'
 		}
 		$ytdlProcess = Start-Process @startProcessParams
 		$ytdlProcess.Handle | Out-Null
 	} catch { Write-Warning '　⚠️ youtube-dlの起動に失敗しました' ; return }
-
 	Remove-Variable -Name videoPageURL, tmpDir, baseDir, subttlDir, thumbDir, chaptDir, descDir, saveFile, ytdlArgs, rateLimit, startProcessParams, ytdlProcess -ErrorAction SilentlyContinue
 }
 
@@ -858,7 +841,7 @@ function Invoke-NonTverYtdl {
 # youtube-dlのプロセスカウントを取得
 #----------------------------------------------------------------------
 function Get-YtdlProcessCount {
-	param ()
+	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$processName = switch ($script:preferredYoutubedl) {
 		'yt-dlp' { 'yt-dlp' }
@@ -866,7 +849,7 @@ function Get-YtdlProcessCount {
 	}
 	try {
 		switch ($true) {
-			$IsWindows { return [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero );	continue }
+			$IsWindows { return [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ); continue }
 			$IsLinux { return @(Get-Process -ErrorAction Ignore -Name $processName).Count ; continue }
 			$IsMacOS { $psCmd = 'ps' ; return (& $psCmd | grep youtube-dl | grep -v grep | grep -c ^).Trim() ; continue }
 			default { Write-Debug ('ダウンロードプロセスの数を取得できませんでした') ; return 0 }
@@ -901,13 +884,7 @@ function Optimize-HistoryFile {
 	$mergedHistData = @()
 	try {
 		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ('　ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-		$histData = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $null -ne $_.videoValidated }))
-		#videoValidatedが空白でないもの
-		$mergedHistData = @(
-			$histData | Where-Object { $_.videoValidated -eq '0' }
-			$histData | Where-Object { $_.videoValidated -eq '1' }
-			$histData | Where-Object { $_.videoValidated -eq '2' }
-		)
+		$mergedHistData = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8 | Where-Object { $null -ne $_.videoValidated } )
 		$mergedHistData | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
 	} catch { Write-Warning ('　⚠️ ダウンロード履歴の更新に失敗しました') }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
@@ -980,31 +957,40 @@ function Invoke-ValidityCheck {
 	Invoke-StatisticsCheck -Operation 'validate'
 	if ($script:simplifiedValidation) {
 		#ffprobeを使った簡易検査
-		$ffprobeArgs = (' -hide_banner -v error -err_detect explode -i "{0}"' -f $videoFilePath)
-		Write-Debug ('ffprobe起動コマンド: {0}{1}' -f $script:ffprobePath, $ffprobeArgs)
+		$ffprobeArgs = ('-hide_banner -v error -err_detect explode -i "{0}"' -f $videoFilePath)
+		Write-Debug ('ffprobe起動コマンド: {0} {1}' -f $script:ffprobePath, $ffprobeArgs)
+		$commonParams = @{
+			FilePath              = $script:ffprobePath
+			ArgumentList          = $ffprobeArgs
+			PassThru              = $true
+			RedirectStandardError = $script:ffpmegErrorLogPath
+			Wait                  = $true
+		}
+		if ($IsWindows) { $commonParams.WindowStyle = $script:windowShowStyle }
+		else { $commonParams.RedirectStandardOutput = '/dev/null' }
 		try {
-			if ($IsWindows) {
-				$ffmpegProcess = Start-Process -FilePath $script:ffprobePath -ArgumentList $ffprobeArgs -PassThru -WindowStyle $script:windowShowStyle -RedirectStandardError $script:ffpmegErrorLogPath -Wait
-				$ffmpegProcess.Handle | Out-Null #ffmpegProcess.Handleをキャッシュ。PS7.4.0の終了コードを捕捉しないバグのために必要
-				$ffmpegProcess.WaitForExit()
-			} else {
-				$ffmpegProcess = Start-Process -FilePath $script:ffprobePath -ArgumentList $ffprobeArgs -PassThru -RedirectStandardOutput /dev/null -RedirectStandardError $script:ffpmegErrorLogPath -Wait
-				$ffmpegProcess.WaitForExit()
-			}
+			# ffmpegプロセスの開始
+			$ffmpegProcess = Start-Process @commonParams
+			$ffmpegProcess.Handle | Out-Null  # ffmpegProcess.Handleをキャッシュ。PS7.4.0の終了コードを捕捉しないバグのために必要
+			$ffmpegProcess.WaitForExit()
 		} catch { Write-Warning ('　⚠️ ffprobeを起動できませんでした') ; return }
 	} else {
 		#ffmpegeを使った完全検査
-		$ffmpegArgs = (' -hide_banner -v error -xerror {0} -i "{1}" -f null - ' -f $decodeOption, $videoFilePath)
-		Write-Debug ('ffmpeg起動コマンド: {0}{1}' -f $script:ffmpegPath, $ffmpegArgs)
+		$ffmpegArgs = ('-hide_banner -v error -xerror {0} -i "{1}" -f null - ' -f $decodeOption, $videoFilePath)
+		Write-Debug ('ffmpeg起動コマンド: {0} {1}' -f $script:ffmpegPath, $ffmpegArgs)
+		$commonParams = @{
+			FilePath              = $script:ffmpegPath
+			ArgumentList          = $ffmpegArgs
+			PassThru              = $true
+			RedirectStandardError = $script:ffpmegErrorLogPath
+		}
+		if ($IsWindows) { $commonParams.WindowStyle = $script:windowShowStyle }
+		else { $commonParams.RedirectStandardOutput = '/dev/null' }
 		try {
-			if ($IsWindows) {
-				$ffmpegProcess = Start-Process -FilePath $script:ffmpegPath -ArgumentList $ffmpegArgs -PassThru -WindowStyle $script:windowShowStyle -RedirectStandardError $script:ffpmegErrorLogPath
-				$ffmpegProcess.Handle | Out-Null #ffmpegProcess.Handleをキャッシュ。PS7.4.0の終了コードを捕捉しないバグのために必要
-				$ffmpegProcess.WaitForExit()
-			} else {
-				$ffmpegProcess = Start-Process -FilePath $script:ffmpegPath -ArgumentList $ffmpegArgs -PassThru -RedirectStandardOutput /dev/null -RedirectStandardError $script:ffpmegErrorLogPath
-				$ffmpegProcess.WaitForExit()
-			}
+			# ffmpegプロセスの開始
+			$ffmpegProcess = Start-Process @commonParams
+			$ffmpegProcess.Handle | Out-Null  # ffmpegProcess.Handleをキャッシュ。PS7.4.0の終了コードを捕捉しないバグのために必要
+			$ffmpegProcess.WaitForExit()
 		} catch { Write-Warning ('　⚠️ ffmpegを起動できませんでした') ; return }
 	}
 	#ffmpegが正常終了しても、大量エラーが出ることがあるのでエラーをカウント
@@ -1054,11 +1040,11 @@ function Invoke-ValidityCheck {
 #----------------------------------------------------------------------
 function Get-JpIP {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	#日本に割り当てられているIPアドレスレンジの取得
+	$allCIDR = Import-Csv $script:jpIPList
 	Do {
-		#日本に割り当てられているIPアドレスレンジの取得
-		$allCIDR = Import-Csv $script:jpIPList
-		$randomCIDR = $allCIDR[[UInt32](Get-Random -Maximum $allCIDR.count)]
 		#ランダムなIPアドレスの取得
+		$randomCIDR = $allCIDR | Get-Random
 		$startIPArray = [System.Net.IPAddress]::Parse($randomCIDR[0].start).GetAddressBytes()
 		$endIPArray = [System.Net.IPAddress]::Parse($randomCIDR[0].end).GetAddressBytes()
 		[Array]::Reverse($startIPArray) ; $startIPInt = [BitConverter]::ToUInt32($startIPArray, 0)
@@ -1067,7 +1053,7 @@ function Get-JpIP {
 		$randomIPArray = [System.BitConverter]::GetBytes($randomIPInt)
 		[Array]::Reverse($randomIPArray) ; $jpIP = [System.Net.IPAddress]::new($randomIPArray).ToString()
 		$check = Invoke-RestMethod -Uri ('http://ip-api.com/json/{0}?fields=16785410' -f $jpIP)
-	} While (($check.countryCode -ne 'JP') -or ($check.hosting -ne $false) )
+	} While (($check.countryCode -ne 'JP') -or ($check.hosting) )
 	return $jpIP
 	Remove-Variable -Name jpIP, check, allCIDR, randomCIDR, startIPArray, endIPArray, startIPInt, endIPInt, randomIPInt, randomIPArray -ErrorAction SilentlyContinue
 }
