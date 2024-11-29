@@ -5,7 +5,7 @@
 ###################################################################################
 Set-StrictMode -Version Latest
 Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-Add-Type -AssemblyName 'System.Globalization'
+Add-Type -AssemblyName 'System.Globalization' | Out-Null
 
 #----------------------------------------------------------------------
 #TVerRec Logo表示
@@ -53,8 +53,8 @@ function Invoke-TVerRecUpdateCheck {
 	$appMajorVersion = $script:appVersion.split(' ')[0]
 	#バージョン判定
 	$versionUp = switch ($true) {
-		{ $latestMajorVersion -gt $appMajorVersion } { $true; continue }
-		{ ($latestMajorVersion -eq $appMajorVersion) -and ($appMajorVersion -ne $script:appVersion) } { $true; continue }
+		{ $latestMajorVersion -gt $appMajorVersion } { $true ; continue }
+		{ ($latestMajorVersion -eq $appMajorVersion) -and ($appMajorVersion -ne $script:appVersion) } { $true ; continue }
 		default { $false }
 	}
 	$progressPreference = 'Continue'
@@ -413,8 +413,8 @@ Function Remove-SpecialNote {
 	Param($text)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# 特殊文字の位置を取得
-	$start1 = $text.IndexOf('《'); $end1 = $text.IndexOf('》')
-	$start2 = $text.IndexOf('【'); $end2 = $text.IndexOf('】')
+	$start1 = $text.IndexOf('《') ; $end1 = $text.IndexOf('》')
+	$start2 = $text.IndexOf('【') ; $end2 = $text.IndexOf('】')
 	# 特殊文字間の長さを計算
 	$length1 = if ($start1 -ge 0 -and $end1 -ge 0) { $end1 - $start1 } else { 0 }
 	$length2 = if ($start2 -ge 0 -and $end2 -ge 0) { $end2 - $start2 } else { 0 }
@@ -472,7 +472,7 @@ function Invoke-VideoDownload {
 		if (($histMatch.Count -ne 0)) {
 			#履歴ファイルに存在する	→スキップして次のファイルに
 			Write-Warning ('　⚠️ 同名のファイルがすでに履歴ファイルに存在します。番組IDが変更になった可能性があります。ダウンロードをスキップします')
-			$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '1'; $videoInfo.fileName = '-- SKIPPED --'
+			$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '1' ; $videoInfo.fileName = '-- SKIPPED --'
 			$newVideo = Format-HistoryRecord $videoInfo ; $skipDownload = $true
 		} elseif ( Test-Path $videoInfo.filePath) {
 			#履歴ファイルに存在しないが、実ファイルが存在する	→検証だけする
@@ -484,8 +484,8 @@ function Invoke-VideoDownload {
 			$ignoreTitles = @(Read-IgnoreList)
 			foreach ($ignoreTitle in $ignoreTitles) {
 				if (($videoInfo.fileName -like ('*{0}*' -f $ignoreTitle)) -or ($videoInfo.seriesName -like ('*{0}*' -f $ignoreTitle))) {
-					Update-IgnoreList $ignoreTitle; Write-Warning ('　⚠️ ダウンロード対象外としたファイルをダウンロード履歴に追加します')
-					$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'; $videoInfo.fileName = '-- IGNORED --' ; $videoInfo.fileRelPath = '-- IGNORED --'
+					Update-IgnoreList $ignoreTitle ; Write-Warning ('　⚠️ ダウンロード対象外としたファイルをダウンロード履歴に追加します')
+					$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0' ; $videoInfo.fileName = '-- IGNORED --' ; $videoInfo.fileRelPath = '-- IGNORED --'
 					$newVideo = Format-HistoryRecord $videoInfo ; $skipDownload = $true
 					break
 				}
@@ -554,8 +554,8 @@ function Update-VideoList {
 	#番組情報のコンソール出力
 	if ($DebugPreference -ne 'SilentlyContinue') { Show-VideoDebugInfo $videoInfo }
 	#スキップフラグが立っているかチェック
-	if ($ignore) { Write-Warning ('　　⚠️ 番組をコメントアウトした状態でリストファイルに追加します'); $newVideo = Format-ListRecord $videoInfo }
-	else { Write-Output ('　　💡 番組をリストファイルに追加します'); $newVideo = Format-ListRecord $videoInfo }
+	if ($ignore) { Write-Warning ('　　⚠️ 番組をコメントアウトした状態でリストファイルに追加します') ; $newVideo = Format-ListRecord $videoInfo }
+	else { Write-Output ('　　💡 番組をリストファイルに追加します') ; $newVideo = Format-ListRecord $videoInfo }
 	#ダウンロードリストCSV書き出し
 	try {
 		while ((Lock-File $script:listLockFilePath).result -ne $true) { Write-Information ('　ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
@@ -578,7 +578,7 @@ function Get-VideoInfo {
 	$tverVideoInfoBaseURL = 'https://platform-api.tver.jp/service/api/v1/callEpisode/'
 	$tverVideoInfoURL = ('{0}{1}?platform_uid={2}&platform_token={3}' -f $tverVideoInfoBaseURL, $episodeID, $script:platformUID, $script:platformToken)
 	try { $response = Invoke-RestMethod -Uri $tverVideoInfoURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec }
-	catch { Write-Warning ('⚠️ エラーが発生しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message); return }
+	catch { Write-Warning ('⚠️ エラーが発生しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) ; return }
 	#シリーズ
 	#	Series.Content.Titleだと複数シーズンがある際に現在メインで配信中のシリーズ名が返ってくることがある
 	#	Episode.Content.SeriesTitleだとSeries名+Season名が設定される番組もある
@@ -615,7 +615,7 @@ function Get-VideoInfo {
 		$accountID = $videoInfo.video.accountID
 		$videoRefID = if ($videoInfo.video.PSObject.Properties.Name -contains 'videoRefID') { ('ref%3A{0}' -f $videoInfo.video.videoRefID) } else { $videoInfo.video.videoID }
 		$playerID = $videoInfo.video.playerID
-	} catch { Write-Warning ('⚠️ エラーが発生しました。番組情報を取得できません。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message); return }
+	} catch { Write-Warning ('⚠️ エラーが発生しました。番組情報を取得できません。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) ; return }
 	try {
 		$brightcoveJsURL = ('https://players.brightcove.net/{0}/{1}_default/index.min.js' -f $accountID, $playerID)
 		$brightcovePk = if ((Invoke-RestMethod -Uri $brightcoveJsURL -Method 'GET' -Headers $script:requestHeader) -match 'policyKey:"([a-zA-Z0-9_-]*)"') { $matches[1] }
@@ -631,7 +631,7 @@ function Get-VideoInfo {
 		$mpdURL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*dash*' })[0].src
 	} catch { Write-Warning ('⚠️ エラーが発生しました。m3u8ファイルが取得できません。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) ; return }
 	#「《」と「》」で挟まれた文字を除去
-	if ($script:removeSpecialNote) { $videoSeason = Remove-SpecialNote $videoSeason; $episodeName = Remove-SpecialNote $episodeName }
+	if ($script:removeSpecialNote) { $videoSeason = Remove-SpecialNote $videoSeason ; $episodeName = Remove-SpecialNote $episodeName }
 	#シーズン名が本編の場合はシーズン名をクリア
 	if ($videoSeason -eq '本編') { $videoSeason = '' }
 	#シリーズ名がシーズン名を含む場合はシーズン名をクリア
@@ -867,9 +867,9 @@ function Get-YtdlProcessCount {
 	try {
 		switch ($true) {
 			$IsWindows { return [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero );	continue }
-			$IsLinux { return @(Get-Process -ErrorAction Ignore -Name $processName).Count; continue }
-			$IsMacOS { $psCmd = 'ps'; return (& $psCmd | grep youtube-dl | grep -v grep | grep -c ^).Trim(); continue }
-			default { Write-Debug ('ダウンロードプロセスの数を取得できませんでした'); return 0 }
+			$IsLinux { return @(Get-Process -ErrorAction Ignore -Name $processName).Count ; continue }
+			$IsMacOS { $psCmd = 'ps' ; return (& $psCmd | grep youtube-dl | grep -v grep | grep -c ^).Trim() ; continue }
+			default { Write-Debug ('ダウンロードプロセスの数を取得できませんでした') ; return 0 }
 		}
 	} catch { return 0 }
 	Remove-Variable -Name processName, psCmd -ErrorAction SilentlyContinue
@@ -970,10 +970,10 @@ function Invoke-ValidityCheck {
 		$checkStatus = ($videoHists.Where({ $_.videoPath -eq $path })).videoValidated
 		switch ($checkStatus) {
 			#0:未チェック、1:チェック済、2:チェック中
-			'0' { $videoHists.Where({ $_.videoPath -eq $path }).Where({ $_.videoValidated = '2' }); $videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8; continue }
+			'0' { $videoHists.Where({ $_.videoPath -eq $path }).Where({ $_.videoValidated = '2' }) ; $videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 ; continue }
 			'1' { Write-Output ('　💡 他プロセスでチェック済です') ; return ; continue }
 			'2' { Write-Output ('　💡 他プロセスでチェック中です') ; return ; continue }
-			default { Write-Warning ('　⚠️ 既にダウンロード履歴から削除されたようです: {0}' -f $path) ; return ; continue }
+			default { Write-Warning ('　⚠️ 既にダウンロード履歴から削除されたようです: {0}' -f $path) ; return }
 		}
 	} catch { Write-Warning ('　⚠️ ダウンロード履歴を更新できませんでした: {0}' -f $path) ; return }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
@@ -1019,7 +1019,7 @@ function Invoke-ValidityCheck {
 	catch { Write-Warning ('　⚠️ ffmpegエラーファイルを削除できませんでした') }
 	if ($ffmpegProcess.ExitCode -ne 0 -or $errorCount -gt 30) {
 		#終了コードが0以外 または エラーが一定以上 はダウンロード履歴とファイルを削除
-		Write-Warning ('　⚠️ チェックNGでした'); Write-Verbose ('　　Exit Code: {0} Error Count: {1}' -f $ffmpegProcess.ExitCode, $errorCount)
+		Write-Warning ('　⚠️ チェックNGでした') ; Write-Verbose ('　　Exit Code: {0} Error Count: {1}' -f $ffmpegProcess.ExitCode, $errorCount)
 		$script:validationFailed = $true
 		#破損しているダウンロードファイルをダウンロード履歴から削除
 		try {
@@ -1197,7 +1197,7 @@ switch ($true) {
 		$script:os = ('{0} {1}' -f (& sw_vers -productName), (& sw_vers -productVersion))
 		$script:kernel = (&  uname -r)
 		$script:arch = (& uname -m | tr '[:upper:]' '[:lower:]')
-		$script:guid = (& system_profiler SPHardwareDataType | awk '/UUID/ { print $3; }').replace('-', '')
+		$script:guid = (& system_profiler SPHardwareDataType | awk '/Hardware UUID/ { print $3 }').replace('-', '')
 		continue
 	}
 	default {
@@ -1205,6 +1205,5 @@ switch ($true) {
 		$script:kernel = ''
 		$script:arch = ''
 		$script:guid = ''
-		continue
 	}
 }

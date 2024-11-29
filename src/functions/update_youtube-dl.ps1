@@ -4,7 +4,7 @@
 #
 ###################################################################################
 Set-StrictMode -Version Latest
-Add-Type -AssemblyName System.IO.Compression.FileSystem
+Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
 
 #----------------------------------------------------------------------
 #Zipファイルを解凍
@@ -87,8 +87,8 @@ if ($latestVersion -eq $currentVersion) {
 	Write-Warning ('⚠️ youtube-dlが古いため更新します。')
 	Write-Warning ('　Local version: {0}' -f $currentVersion)
 	Write-Warning ('　Latest version: {0}' -f $latestVersion)
-	if (!$IsWindows) { $fileBeforeRrename = $script:preferredYoutubedl; $fileAfterRename = 'youtube-dl' }
-	else { $fileBeforeRrename = ('{0}.exe' -f $script:preferredYoutubedl); $fileAfterRename = 'youtube-dl.exe' }
+	if (!$IsWindows) { $fileBeforeRrename = $script:preferredYoutubedl ; $fileAfterRename = 'youtube-dl' }
+	else { $fileBeforeRrename = ('{0}.exe' -f $script:preferredYoutubedl) ; $fileAfterRename = 'youtube-dl.exe' }
 
 	Write-Output ('youtube-dlの最新版をダウンロードします')
 	try {

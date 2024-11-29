@@ -59,7 +59,7 @@ foreach ($keyword in $keywords) {
 	if ($listLinks.Count -ne 0) {
 		if ($script:listGenHistoryCheck) { $videoLinks, $processedCount = Invoke-HistoryAndListMatchCheck $listLinks }
 		else { $videoLinks, $processedCount = Invoke-ListMatchCheck $listLinks }
-	} else { $videoLinks = @(); $processedCount = 0 }
+	} else { $videoLinks = @() ; $processedCount = 0 }
 	$videoTotal = $videoLinks.Count
 	if ($videoTotal -eq 0) { Write-Output ('　処理対象{0}本　処理済{1}本' -f $videoTotal, $processedCount) }
 	else { Write-Output ('　💡 処理対象{0}本　処理済{1}本' -f $videoTotal, $processedCount) }
@@ -71,7 +71,7 @@ foreach ($keyword in $keywords) {
 	} else { $secRemaining1 = '' }
 
 	#キーワード数のインクリメント
-	$keywordNum += 1
+	$keywordNum++
 
 	#進捗情報の更新
 	$toastUpdateParams = @{
@@ -98,7 +98,7 @@ foreach ($keyword in $keywords) {
 			$partitions = @{}
 			$totalCount = $videoLinks.Count
 			$partitionSize = [math]::Ceiling($totalCount / $script:multithreadNum)
-			for ($i = 0; $i -lt $script:multithreadNum; $i++) {
+			for ($i = 0 ; $i -lt $script:multithreadNum ; $i++) {
 				$startIndex = $i * $partitionSize
 				$endIndex = [math]::Min(($i + 1) * $partitionSize, $totalCount)
 				if ($startIndex -lt $totalCount) { $partitions[$i] = $videoLinks[$startIndex..($endIndex - 1)] }
@@ -108,7 +108,7 @@ foreach ($keyword in $keywords) {
 			$paraJobDefs = @{}
 			$paraJobs = @{}
 			Write-Output ('　並列処理をするため進捗状況は順不同で表示されます')
-			for ($i = 0; $i -lt $partitions.Count; $i++) {
+			for ($i = 0 ; $i -lt $partitions.Count ; $i++) {
 				$links = [string]$partitions[$i]
 				$paraJobSBs[$i] = ("& ./generate_list_child.ps1 $keyword $links")
 				$paraJobDefs[$i] = [scriptblock]::Create($paraJobSBs[$i])
@@ -129,7 +129,7 @@ foreach ($keyword in $keywords) {
 		#並列化が無効の場合は従来型処理
 		$videoNum = 0
 		foreach ($videoLink in $videoLinks) {
-			$videoNum += 1
+			$videoNum++
 			#進捗情報の更新
 			$toastUpdateParams.Title2 = $videoLink
 			$toastUpdateParams.Rate2 = [Float]($videoNum / $videoTotal)

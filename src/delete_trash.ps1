@@ -145,7 +145,7 @@ if ($script:forceSingleDownload) {
 			$ignoreTotal = $ignoreDirs.Count
 			$totalStartTime = Get-Date
 			foreach ($ignoreDir in $ignoreDirs) {
-				$ignoreNum += 1
+				$ignoreNum++
 				#処理時間の推計
 				$secElapsed = (Get-Date) - $totalStartTime
 				$secRemaining = -1
@@ -205,7 +205,7 @@ if ($emptyDirTotal -ne 0) {
 		$emptyDirTotal = $emptyDirs.Count
 		$totalStartTime = Get-Date
 		foreach ($dir in $emptyDirs) {
-			$emptyDirNum += 1
+			$emptyDirNum++
 			#処理時間の推計
 			$secElapsed = (Get-Date) - $totalStartTime
 			$secRemaining = -1
@@ -213,10 +213,7 @@ if ($emptyDirTotal -ne 0) {
 				$secRemaining = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $emptyDirNum) * ($emptyDirTotal - $emptyDirNum))
 				$minRemaining = ('残り時間 {0}分' -f ([Int][Math]::Ceiling($secRemaining / 60)))
 				$progressRate = [Float]($emptyDirNum / $emptyDirTotal)
-			} else {
-				$minRemaining = ''
-				$progressRate = 0
-			}
+			} else {$minRemaining = '' ; $progressRate = 0 }
 
 			$toastUpdateParams.Title = $dir
 			$toastUpdateParams.Rate = $progressRate

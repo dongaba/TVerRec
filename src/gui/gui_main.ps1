@@ -6,7 +6,7 @@
 using namespace System.Windows.Threading
 Set-StrictMode -Version Latest
 if (!$IsWindows) { Throw ('❌️ Windows以外では動作しません') ; Start-Sleep 10 }
-Add-Type -AssemblyName PresentationFramework
+Add-Type -AssemblyName PresentationFramework | Out-Null
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #region 環境設定
@@ -67,7 +67,7 @@ function Sync-WpfEvents {
 function LimitRichTextBoxLines($richTextBox, $limit) {
 	if ($richTextBox.Document.Blocks.Count -gt $limit) {
 		$linesToRemove = $richTextBox.Document.Blocks.Count - $limit
-		for ($i = 0; $i -lt $linesToRemove; $i++) { $richTextBox.Document.Blocks.Remove($richTextBox.Document.Blocks.FirstBlock) | Out-Null }
+		for ($i = 0 ; $i -lt $linesToRemove ; $i++) { $richTextBox.Document.Blocks.Remove($richTextBox.Document.Blocks.FirstBlock) | Out-Null }
 	}
 	Remove-Variable -Name richTextBox, limit, linesToRemove, i -ErrorAction SilentlyContinue
 }
@@ -101,10 +101,10 @@ try {
 	$mainWindow = [System.Windows.Markup.XamlReader]::Load(([System.Xml.XmlNodeReader]::new($mainCleanXaml)))
 } catch { Throw ('❌️ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。') }
 #PowerShellのウィンドウを非表示に
-Add-Type -Name Window -Namespace Console -MemberDefinition '
-[DllImport("Kernel32.dll")]public static extern IntPtr GetConsoleWindow() ;
-[DllImport("user32.dll")]public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow) ;
-'
+Add-Type -Name Window -Namespace Console -MemberDefinition @'
+	[DllImport("Kernel32.dll")] public static extern IntPtr GetConsoleWindow();
+	[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow);
+'@ | Out-Null
 [Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0) | Out-Null
 #タスクバーのアイコンにオーバーレイ表示
 $mainWindow.TaskbarItemInfo.Overlay = ConvertFrom-Base64 $script:iconBase64
@@ -199,14 +199,14 @@ $btnClearLog.Add_Click({
 $btnKillAll.Add_Click({
 		Get-Job | Remove-Job -Force
 		foreach ($btn in $btns) { $btn.IsEnabled = $true }
-		$btnExit.IsEnabled = $true;$btnKillAll.IsEnabled = $false
+		$btnExit.IsEnabled = $true; $btnKillAll.IsEnabled = $false
 		$lblStatus.Content = '処理を強制停止しました'
 		Invoke-GarbageCollection
 	})
 $btnWiki.Add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
 $btnsetting.Add_Click({
 		& 'gui/gui_setting.ps1'
-		if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {. (Convert-Path (Join-Path $script:confDir 'user_setting.ps1'))}
+		if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
 		Invoke-GarbageCollection
 	})
 $btnExit.Add_Click({ $mainWindow.close() })
@@ -233,16 +233,16 @@ while ($mainWindow.IsVisible) {
 		#ジョブがある場合の処理
 		foreach ($job in $jobs) {
 			#各メッセージタイプごとに内容を取得(ただしReceive-Jobは次Stepで実行するので取りこぼす可能性あり)
-			foreach ($msgType in $msgTypes) {Set-Variable -Name ('msg' + $msgType) -Value $(if ($job.$msgType) { $job.$msgType } else { $null })}
+			foreach ($msgType in $msgTypes) { Set-Variable -Name ('msg' + $msgType) -Value $(if ($job.$msgType) { $job.$msgType } else { $null }) }
 			$jobMsgs = @(Receive-Job $job *>&1)
 			#Jobからメッセージを取得し事前に取得したメッセージタイプと照合し色付け
 			foreach ($jobMsg in $jobMsgs) {
 				$logType = switch ($jobMsg) {
-					{ $msgError -contains $_ } { 'Error' }
-					{ $msgWarning -contains $_ } { 'Warning' }
-					{ $msgVerbose -contains $_ } { 'Verbose' }
-					{ $msgDebug -contains $_ } { 'Debug' }
-					{ $msgInformation -contains $_ } { 'Information' }
+					{ $msgError -contains $_ } { 'Error' ; continue }
+					{ $msgWarning -contains $_ } { 'Warning' ; continue }
+					{ $msgVerbose -contains $_ } { 'Verbose' ; continue }
+					{ $msgDebug -contains $_ } { 'Debug' ; continue }
+					{ $msgInformation -contains $_ } { 'Information' ; continue }
 					Default { 'Output' }
 				}
 				Out-ExecutionLog -Message ($jobMsg -join "`n") -Type $logType

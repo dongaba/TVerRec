@@ -4,7 +4,7 @@
 #
 ###################################################################################
 Set-StrictMode -Version Latest
-Add-Type -AssemblyName System.IO.Compression.FileSystem
+Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
 
 #----------------------------------------------------------------------
 #Zipファイルを解凍
@@ -127,10 +127,10 @@ Write-Output ('TVerRecの最新版をダウンロードします')
 if (!(Get-Variable updateChannel -Scope Script -ErrorAction SilentlyContinue)) { $script:updateChannel = 'release' }
 try {
 	$zipURL = switch ($script:updateChannel) {
-		'dev' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/dev.zip' }
-		'beta' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/beta.zip' }
-		'master' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/master.zip' }
-		'prerelease' { (Invoke-RestMethod -Uri $releases -Method 'GET').where{ ($_.prerelease -eq $true) }[0].zipball_url }
+		'dev' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/dev.zip' ; continue }
+		'beta' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/beta.zip' ; continue }
+		'master' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/master.zip' ; continue }
+		'prerelease' { (Invoke-RestMethod -Uri $releases -Method 'GET').where{ ($_.prerelease -eq $true) }[0].zipball_url ; continue }
 		default { (Invoke-RestMethod -Uri $releases -Method 'GET').where{ ($_.prerelease -eq $false) }[0].zipball_url }
 	}
 	Invoke-WebRequest -Uri $zipURL -OutFile (Join-Path $updateTemp 'TVerRecLatest.zip')

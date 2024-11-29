@@ -50,16 +50,16 @@ function Get-VideoLinksFromKeyword {
 	if (($tverID -eq 'sitemap') -or ($tverID -eq 'toppage')) { $key = $tverID }
 	Invoke-StatisticsCheck -Operation 'search' -TVerType $key -TVerID $tverID
 	switch ($key) {
-		'series' { $linkCollection.seriesLinks.Add($tverID); continue }
-		'talents' { $linkCollection.talentLinks.Add($tverID); continue }
-		'tag' { $result = Get-LinkFromTag $tverID; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result; continue }
-		'new' { $result = Get-LinkFromNew $tverID; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result; continue }
-		'ranking' { $result = Get-LinkFromRanking $tverID; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result; continue }
-		'toppage' { $result = Get-LinkFromTopPage; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result; continue }
-		'sitemap' { $result = Get-LinkFromSiteMap; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result; continue }
-		'mypage' { $result = Get-LinkFromMyPage $tverID; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result; continue }
-		'episodes' { $linkCollection.episodeLinks.Add(('https://tver.jp/{0}/{1}' -f $key, $tverID)); continue }
-		default { $result = Get-LinkFromFreeKeyword $keyword; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result }
+		'series' { $linkCollection.seriesLinks.Add($tverID) ; continue }
+		'talents' { $linkCollection.talentLinks.Add($tverID) ; continue }
+		'tag' { $result = Get-LinkFromTag $tverID ; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result ; continue }
+		'new' { $result = Get-LinkFromNew $tverID ; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result ; continue }
+		'ranking' { $result = Get-LinkFromRanking $tverID ; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result ; continue }
+		'toppage' { $result = Get-LinkFromTopPage ; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result ; continue }
+		'sitemap' { $result = Get-LinkFromSiteMap ; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result ; continue }
+		'mypage' { $result = Get-LinkFromMyPage $tverID ; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result ; continue }
+		'episodes' { $linkCollection.episodeLinks.Add(('https://tver.jp/{0}/{1}' -f $key, $tverID)) ; continue }
+		default { $result = Get-LinkFromFreeKeyword $keyword ; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result }
 	}
 	while (($linkCollection.specialMainLinks.Count -ne 0) -or ($linkCollection.specialLinks.Count -ne 0) -or ($linkCollection.talentLinks.Count -ne 0) -or ($linkCollection.seriesLinks.Count -ne 0) -or ($linkCollection.seasonLinks.Count -ne 0)) {
 		if ($linkCollection.specialMainLinks) {
@@ -146,11 +146,11 @@ function ProcessSearchResults {
 				'talent' { $talentLinks.Add($searchResult.Content.Id) ; continue }
 				'special' {
 					if ($type -eq 'specialmain') { $specialLinks.Add($searchResult.Content.Id) }
-					else { $episodeLinks = & { $episodeLinks; (Get-LinkFromSpecialDetailID $searchResult.Content.Id) } }
+					else { $episodeLinks = & { $episodeLinks ; (Get-LinkFromSpecialDetailID $searchResult.Content.Id) } }
 					continue
 				}
-				'specialMain' { $specialMainLinks.Add($searchResult.Content.Id); continue }
-				default { $episodeLinks = & { $episodeLinks; ('https://tver.jp/{0}/{1}' -f $searchResult.Type, $searchResult.Content.Id) } }
+				'specialMain' { $specialMainLinks.Add($searchResult.Content.Id) ; continue }
+				default { $episodeLinks = & { $episodeLinks ; ('https://tver.jp/{0}/{1}' -f $searchResult.Type, $searchResult.Content.Id) } }
 			}
 		}
 	} catch {
@@ -325,7 +325,7 @@ function Get-LinkFromTopPage {
 	catch { Write-Warning 'トップページを取得できませんでした' ; return $linkCollection }
 	foreach ($component in $searchResults.Result.Components) {
 		switch ($component.Type) {
-			{ $_ -in @('horizontal', 'ranking', 'talents', 'billboard', 'episodeRanking', 'newer', 'ender', 'talent', 'special', 'specialContent', 'topics', 'spikeRanking') } {
+			{ $_ -in @('horizontal', 'richHorizontal', 'ranking', 'talents', 'billboard', 'episodeRanking', 'newer', 'ender', 'talent', 'special', 'specialContent', 'topics', 'spikeRanking') } {
 				$contents = if ($component.Type -eq 'topics') { $component.Contents.Content.Content } else { $component.Contents }
 				foreach ($content in $contents) {
 					if ($content.Type -eq 'live') { continue }
@@ -339,8 +339,9 @@ function Get-LinkFromTopPage {
 						default { Write-Warning ('⚠️ 未知のパターンです。 - {0}/{1}' -f $content.Type, $content.Content.Id) }
 					}
 				}
+				continue
 			}
-			{ $_ -in @('banner', 'resume', 'favorite') } { }
+			{ $_ -in @('banner', 'resume', 'favorite') ; continue } {}
 			default { Write-Warning "⚠️ 未知のパターンです。 - $($component.Type)" }
 		}
 	}
@@ -420,10 +421,10 @@ function Get-LinkFromMyPage {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$baseURLPrefix = if ($script:myMemberSID) { 'https://member-api.tver.jp' } else { 'https://platform-api.tver.jp' }
 	switch ($page) {
-		'fav' { $baseURL = ('{0}/service/api/v2/callMylistDetail/{1}' -f $baseURLPrefix, (ConvertTo-UnixTime (Get-Date))); $requireData = 'mylist'; continue }
-		'later' { $baseURL = ('{0}/service/api/v2/callMyLater' -f $baseURLPrefix); $requireData = 'later'; continue }
-		'resume' { $baseURL = ('{0}/service/api/v2/callMyResume' -f $baseURLPrefix); $requireData = 'resume'; continue }
-		'favorite' { $baseURL = ('{0}/service/api/v2/callMyFavorite' -f $baseURLPrefix); $requireData = 'mylist'; continue }
+		'fav' { $baseURL = ('{0}/service/api/v2/callMylistDetail/{1}' -f $baseURLPrefix, (ConvertTo-UnixTime (Get-Date))) ; $requireData = 'mylist' ; continue }
+		'later' { $baseURL = ('{0}/service/api/v2/callMyLater' -f $baseURLPrefix) ; $requireData = 'later' ; continue }
+		'resume' { $baseURL = ('{0}/service/api/v2/callMyResume' -f $baseURLPrefix) ; $requireData = 'resume' ; continue }
+		'favorite' { $baseURL = ('{0}/service/api/v2/callMyFavorite' -f $baseURLPrefix) ; $requireData = 'mylist' ; continue }
 		default { Write-Warning "⚠️ 未知のパターンです。 - mypage/$page" }
 	}
 	$tverIDs = ProcessSearchResults -baseURL $baseURL -Type 'mypage' -RequireData $requireData
@@ -467,11 +468,11 @@ function Convert-Buffer {
 		foreach ($tverID in ($tverIDs | Sort-Object -Unique)) {
 			Write-Information ('{0} - {1} {2} からEpisodeを抽出中...' -f (Get-Date), $tverIDType, $tverID)
 			switch ($tverIDType) {
-				'Special Main' { $result = Get-LinkFromSpecialMainID($tverID); $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result; continue }
-				'Special Detail' { $result = Get-LinkFromSpecialDetailID($tverID); $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result; continue }
-				'Talent' { $result = Get-LinkFromTalentID($tverID); $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result; continue }
-				'Series' { $result = Get-LinkFromSeriesID($tverID); $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result; continue }
-				'Season' { $result = Get-LinkFromSeasonID($tverID); $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result; continue }
+				'Special Main' { $result = Get-LinkFromSpecialMainID($tverID) ; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result ; continue }
+				'Special Detail' { $result = Get-LinkFromSpecialDetailID($tverID) ; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result ; continue }
+				'Talent' { $result = Get-LinkFromTalentID($tverID) ; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result ; continue }
+				'Series' { $result = Get-LinkFromSeriesID($tverID) ; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result ; continue }
+				'Season' { $result = Get-LinkFromSeasonID($tverID) ; $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result ; continue }
 			}
 		}
 		if ($linkCollection.episodeLinks) { $linkCollection.episodeLinks = $linkCollection.episodeLinks | Sort-Object -Unique }

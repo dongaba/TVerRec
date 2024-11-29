@@ -4,7 +4,7 @@
 #
 ###################################################################################
 Set-StrictMode -Version Latest
-Add-Type -AssemblyName System.IO.Compression.FileSystem
+Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
 Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 #region ガーベッジコレクション
@@ -17,13 +17,9 @@ function Invoke-GarbageCollection() {
 	[OutputType([System.Void])]
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-
-	Write-Verbose -Message 'Starting garbage collection...'
-	[System.GC]::Collect()
-	Write-Verbose -Message 'Waiting for pending finalizers...'
-	[System.GC]::WaitForPendingFinalizers()
-	Write-Verbose -Message 'Performing a final pass of garbage collection...'
-	[System.GC]::Collect()
+	Write-Verbose -Message 'Starting garbage collection...' ; [System.GC]::Collect()
+	Write-Verbose -Message 'Waiting for pending finalizers...' ; [System.GC]::WaitForPendingFinalizers()
+	Write-Verbose -Message 'Performing a final pass of garbage collection...' ; [System.GC]::Collect()
 	Write-Verbose -Message 'Garbage collection completed.'
 }
 
@@ -48,11 +44,8 @@ function Get-TimeStamp {
 function ConvertFrom-UnixTime {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
-	param (
-		[Parameter(Mandatory = $true)][int64]$UnixTime
-	)
+	param ([Parameter(Mandatory = $true)][int64]$UnixTime)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-
 	$EpochDate = Get-Date -Year 1970 -Month 1 -Day 1 -Hour 0 -Minute 0 -Second 0 -AsUTC
 	return ($EpochDate.AddSeconds($UnixTime).ToLocalTime())
 	Remove-Variable -Name UnixTime, EpochDate -ErrorAction SilentlyContinue
@@ -64,11 +57,8 @@ function ConvertFrom-UnixTime {
 function ConvertTo-UnixTime {
 	[CmdletBinding()]
 	[OutputType([int64])]
-	Param(
-		[Parameter(Mandatory = $true)][DateTime]$InputDate
-	)
+	Param([Parameter(Mandatory = $true)][DateTime]$InputDate)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-
 	$unixTime = New-TimeSpan -Start '1970-01-01' -End $InputDate.ToUniversalTime()
 	return [int64][math]::Round($unixTime.TotalSeconds)
 	Remove-Variable -Name InputDate, unixTime -ErrorAction SilentlyContinue
@@ -84,11 +74,8 @@ function ConvertTo-UnixTime {
 function Get-FileNameWithoutInvalidChars {
 	[CmdletBinding()]
 	[OutputType([String])]
-	Param (
-		[String]$Name = ''
-	)
+	Param ([String]$Name = '')
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-
 	$invalidCharsPattern = '[{0}]' -f [Regex]::Escape( [IO.Path]::GetInvalidFileNameChars() -Join '')
 	$Name = $Name.Replace($invalidCharsPattern , '')
 	#Linux/MacではGetInvalidFileNameChars()が不完全なため、ダメ押しで置換
@@ -106,9 +93,7 @@ function Get-FileNameWithoutInvalidChars {
 function Get-NarrowChars {
 	[CmdletBinding()]
 	[OutputType([String])]
-	Param (
-		[String]$text = ''
-	)
+	Param ([String]$text = '')
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$replaceChars = @{
 		'０１２３４５６７８９'                                           = '0123456789'
@@ -116,7 +101,7 @@ function Get-NarrowChars {
 		'＠＃＄％＾＆＊－＋＿／［］｛｝（）＜＞　￥＼”；：．，'                          = '@#$%^&*-+_/[]{}()<> \\";:.,'
 	}
 	foreach ($entry in $replaceChars.GetEnumerator()) {
-		for ($i = 0; $i -lt $entry.Name.Length; $i++) {
+		for ($i = 0 ; $i -lt $entry.Name.Length ; $i++) {
 			$text = $text.Replace($entry.Name[$i], $entry.Value[$i])
 		}
 	}
@@ -218,9 +203,7 @@ function Remove-SpecialCharacter {
 	[CmdletBinding()]
 	[OutputType([String])]
 	Param ([String]$text)
-
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-
 	$text = $text.Replace('&amp;', '&')
 	$replacements = @{
 		'*' = '＊'
@@ -238,10 +221,7 @@ function Remove-SpecialCharacter {
 		'<' = '＜'
 		'>' = '＞'
 	}
-	foreach ($replacement in $replacements.GetEnumerator()) {
-		$text = $text.Replace($replacement.Name, $replacement.Value)
-	}
-
+	foreach ($replacement in $replacements.GetEnumerator()) {$text = $text.Replace($replacement.Name, $replacement.Value)}
 	return $text
 	Remove-Variable -Name text, replacements, replacement -ErrorAction SilentlyContinue
 }
@@ -336,9 +316,7 @@ function Expand-Zip {
 function Lock-File {
 	[CmdletBinding()]
 	[OutputType([PSCustomObject])]
-	Param (
-		[parameter(Mandatory = $true)][String]$path
-	)
+	Param ([parameter(Mandatory = $true)][String]$path)
 	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $path)
 	try {
 		#ファイルを開こうとしファイルロックを検出
@@ -360,9 +338,7 @@ function Lock-File {
 function Unlock-File {
 	[CmdletBinding()]
 	[OutputType([PSCustomObject])]
-	Param (
-		[parameter(Mandatory = $true)][String]$path
-	)
+	Param ([parameter(Mandatory = $true)][String]$path)
 	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $path)
 	if (Test-Path $path) {
 		if ($script:fileStream[$path]) {
@@ -422,9 +398,9 @@ if ($IsWindows -and ($script:disableToastNotification -ne $true)) { Import-Modul
 
 #モジュールのインポート
 if ($IsWindows -and !$script:disableToastNotification -and (!('Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder' -as [Type]))) {
-	Add-Type -LiteralPath (Join-Path $script:libDir 'win/core/Microsoft.Windows.SDK.NET.dll')
-	Add-Type -LiteralPath (Join-Path $script:libDir 'win/core/WinRT.Runtime.dll')
-	Add-Type -LiteralPath (Join-Path $script:libDir 'win/core/Microsoft.Toolkit.Uwp.Notifications.dll')
+	Add-Type -LiteralPath (Join-Path $script:libDir 'win/core/Microsoft.Windows.SDK.NET.dll') | Out-Null
+	Add-Type -LiteralPath (Join-Path $script:libDir 'win/core/WinRT.Runtime.dll') | Out-Null
+	Add-Type -LiteralPath (Join-Path $script:libDir 'win/core/Microsoft.Toolkit.Uwp.Notifications.dll') | Out-Null
 }
 
 #----------------------------------------------------------------------
@@ -476,7 +452,7 @@ function Show-GeneralToast {
 				}
 				continue
 			}
-			default { continue }
+			default {}
 		}
 	}
 	Remove-Variable -Name text1, text2, duration, silent, toastSoundElement, toastProgressContent, toastXML, toastNotification, toastParams -ErrorAction SilentlyContinue
@@ -545,7 +521,7 @@ function Show-ProgressToast {
 				}
 				continue
 			}
-			default { continue }
+			default {}
 		}
 	}
 	Remove-Variable -Name text1, text2, workDetail, tag, group, duration, silent, toastSoundElement, toastContent, toastXML, toast, toastData, toastParams -ErrorAction SilentlyContinue
@@ -581,7 +557,7 @@ function Update-ProgressToast {
 			}
 			$IsLinux { continue }
 			$IsMacOS { continue }
-			default { continue }
+			default {}
 		}
 	}
 	Remove-Variable -Name title, rate, leftText, rightText, tag, group, toastData, toastProgressData -ErrorAction SilentlyContinue
@@ -660,7 +636,7 @@ function Show-ProgressToast2Row {
 				}
 				continue
 			}
-			default { continue }
+			default {}
 		}
 	}
 	Remove-Variable -Name text1, text2, detail1, detail2, tag, duration, silent, group, toastSoundElement, toastAttribution, toastContent, toastXML, toast, toastData, toastParams -ErrorAction SilentlyContinue
@@ -687,13 +663,13 @@ function Update-ProgressToast2Row {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if (!($script:disableToastNotification)) {
 		$rightText1 = switch ($rightText1 ) {
-			'' { '' }
-			'0' { '完了' }
+			'' { '' ; continue }
+			'0' { '完了' ; continue }
 			default { ('残り時間 {0}分' -f ([Int][Math]::Ceiling($rightText1 / 60))) }
 		}
 		$rightText2 = switch ($rightText2 ) {
-			'' { '' }
-			'0' { '完了' }
+			'' { '' ; continue }
+			'0' { '完了' ; continue }
 			default { ('残り時間 {0}分' -f ([Int][Math]::Ceiling($rightText2 / 60))) }
 		}
 		if ($script:disableToastNotification -ne $true) {
@@ -715,7 +691,7 @@ function Update-ProgressToast2Row {
 				}
 				$IsLinux { continue }
 				$IsMacOS { continue }
-				default { continue }
+				default {}
 			}
 		}
 	}

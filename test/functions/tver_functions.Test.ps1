@@ -13,7 +13,7 @@ BeforeAll {
 	Set-Location $script:scriptRoot
 	$script:disableToastNotification = $false
 	. ($targetfile).replace('tver', 'common')
-	function Invoke-StatisticsCheck { }
+	function Invoke-StatisticsCheck {}
 	. $targetfile
 	Write-Host ('　テスト対象の読み込みを行いました')
 
@@ -722,14 +722,14 @@ Describe 'トップページから番組ページのLinkを取得' {
 									@{Type = 'live' ; Content = @{ Id = 'horizontal-live' } },
 									@{Type = 'episode' ; Content = @{ Id = 'horizontal-episode' } },
 									@{Type = 'series' ; Content = @{ Id = 'horizontal-series' } },
-									@{Type = 'season'; Content = @{ Id = 'horizontal-season' } },
+									@{Type = 'season' ; Content = @{ Id = 'horizontal-season' } },
 									@{Type = 'talent' ; Content = @{ Id = 'horizontal-talent' } },
 									@{Type = 'specialMain' ; Content = @{ Id = 'horizontal-specialMain' } },
 									@{Type = 'special' ; Content = @{ Id = 'horizontal-specialDetail' } },
 									@{Type = 'unsupported' ; Content = @{ Id = 'horizontal-unsupported' } }
 								)
 							},
-							@{Type = 'topics'; Contents = @(@{Content = @(@{type = 'dummy' ; Content = @(
+							@{Type = 'topics' ; Contents = @(@{Content = @(@{type = 'dummy' ; Content = @(
 													@{Type = 'live' ; Content = @{ Id = 'topic-live' } },
 													@{Type = 'episode' ; Content = @{ Id = 'topic-episode' } },
 													@{Type = 'series' ; Content = @{ Id = 'topic-series' } },

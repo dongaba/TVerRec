@@ -6,8 +6,8 @@
 using namespace System.Windows.Threading
 Set-StrictMode -Version Latest
 if (!$IsWindows) { Throw ('❌️ Windows以外では動作しません') ; Start-Sleep 10 }
-Add-Type -AssemblyName System.Windows.Forms
-Add-Type -AssemblyName PresentationFramework
+Add-Type -AssemblyName System.Windows.Forms | Out-Null
+Add-Type -AssemblyName PresentationFramework | Out-Null
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #region 環境設定
@@ -114,8 +114,8 @@ function Save-UserSetting {
 			$settingBox = $settingWindow.FindName($settingBoxName)
 			switch -wildcard ($settingBox.Text) {
 				{ $_ -in '', 'デフォルト値', '未設定' } { continue }
-				{ $_ -eq 'する' } { $newSetting += ('{0} = $true' -f $settingAttribute); continue }
-				{ $_ -eq 'しない' } { $newSetting += ('{0} = $false' -f $settingAttribute); continue }
+				{ $_ -eq 'する' } { $newSetting += ('{0} = $true' -f $settingAttribute) ; continue }
+				{ $_ -eq 'しない' } { $newSetting += ('{0} = $false' -f $settingAttribute) ; continue }
 				default {
 					if ([Int]::TryParse($settingBox.Text, [ref]$null) -or $settingBox.Text -match '[${}]') { $newSetting += ('{0} = {1}' -f $settingAttribute, $settingBox.Text) }
 					else { $newSetting += ('{0} = ''{1}''' -f $settingAttribute, $settingBox.Text) }
@@ -154,10 +154,10 @@ try {
 	$settingWindow = [System.Windows.Markup.XamlReader]::Load(([System.Xml.XmlNodeReader]::new($mainCleanXaml)))
 } catch { Throw ('❌️ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。') }
 #PowerShellのウィンドウを非表示に
-Add-Type -Name Window -Namespace Console -MemberDefinition '
-[DllImport("Kernel32.dll")]public static extern IntPtr GetConsoleWindow() ;
-[DllImport("user32.dll")]public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow) ;
-'
+Add-Type -Name Window -Namespace Console -MemberDefinition @'
+	[DllImport("Kernel32.dll")] public static extern IntPtr GetConsoleWindow();
+	[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow);
+'@ | Out-Null
 [Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0) | Out-Null
 #タスクバーのアイコンにオーバーレイ表示
 $settingWindow.TaskbarItemInfo.Overlay = ConvertFrom-Base64 $script:iconBase64
@@ -180,7 +180,7 @@ $lblVersion.Content = ('Version {0}' -f $script:appVersion)
 #region ボタンのアクション
 $btnWiki.Add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
 $btnCancel.Add_Click({ $settingWindow.close() })
-$btnSave.Add_Click({ Save-UserSetting; $settingWindow.close() })
+$btnSave.Add_Click({ Save-UserSetting ; $settingWindow.close() })
 $btndownloadBaseDir.Add_Click({ Select-Folder 'ダウンロード先ディレクトリを選択してください' $script:downloadBaseDir })
 $btndownloadWorkDir.Add_Click({ Select-Folder '作業ディレクトリを選択してください' $script:downloadWorkDir })
 $btnsaveBaseDir.Add_Click({ Select-Folder '移動先ディレクトリを選択してください' $script:saveBaseDir })

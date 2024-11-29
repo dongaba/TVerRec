@@ -67,7 +67,7 @@ function Get-DirectoriesWithPlatformCheck {
 	param ([string[]]$paths)
 	#PowerShellではジャンクションの展開ができないので、cmd.exeを使ってジャンクションを解決する
 	switch ($true) {
-		$IsWindows { $results = Get-DirectoriesOnWindows -paths $paths }
+		$IsWindows { $results = Get-DirectoriesOnWindows -paths $paths ; continue }
 		default { $results = Get-DirectoriesNotOnWindows -paths $paths }
 	}
 	return $results
@@ -121,7 +121,7 @@ if ($moveDirs) {
 			$minRemaining = ''
 			$progressRate = 0
 		}
-		$dirNum += 1
+		$dirNum++
 
 		$toastUpdateParams = @{
 			Title     = $dir
@@ -177,7 +177,7 @@ if ($emptyDirTotal -ne 0) {
 		$emptyDirTotal = $emptyDirs.Count
 		$totalStartTime = Get-Date
 		foreach ($dir in $emptyDirs) {
-			$emptyDirNum += 1
+			$emptyDirNum++
 			#処理時間の推計
 			$secElapsed = (Get-Date) - $totalStartTime
 			$secRemaining = -1

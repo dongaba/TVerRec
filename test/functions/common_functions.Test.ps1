@@ -168,17 +168,17 @@ Describe '英数のみ全角→半角(カタカナは全角)' {
 		Get-NarrowChars 'ﾃｽﾄ' | Should -BeOfType String
 	}
 	It '全角英数が半角となること' -TestCases @(
-		@{Target = '０１２３４５６７８９'; Expected = '0123456789' }
-		@{Target = 'ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ'; Expected = 'abcdefghijklmnopqrstuvwxyz' }
-		@{Target = 'ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ'; Expected = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' }
+		@{Target = '０１２３４５６７８９' ; Expected = '0123456789' }
+		@{Target = 'ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ' ; Expected = 'abcdefghijklmnopqrstuvwxyz' }
+		@{Target = 'ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ' ; Expected = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' }
 	) {
 		param ($Target, $Expected)
 		Get-NarrowChars $Target | Should -Be $Expected
 	}
 	It '半角英数はそのまま返却されること' -TestCases @(
-		@{Target = '0123456789'; Expected = '0123456789' }
-		@{Target = 'abcdefghijklmnopqrstuvwxyz'; Expected = 'abcdefghijklmnopqrstuvwxyz' }
-		@{Target = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'; Expected = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' }
+		@{Target = '0123456789' ; Expected = '0123456789' }
+		@{Target = 'abcdefghijklmnopqrstuvwxyz' ; Expected = 'abcdefghijklmnopqrstuvwxyz' }
+		@{Target = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' ; Expected = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' }
 	) {
 		param ($Target, $Expected)
 		Get-NarrowChars $Target | Should -Be $Expected
@@ -193,7 +193,7 @@ Describe '英数のみ全角→半角(カタカナは全角)' {
 		Get-NarrowChars $Target | Should -Be $Expected
 	}
 	It '半角記号はそのまま返却されること' -TestCases @(
-		@{Target = '@#$%^&*-+_/[]{}()<> \\";:.,'; Expected = '@#$%^&*-+_/[]{}()<> \\";:.,' }
+		@{Target = '@#$%^&*-+_/[]{}()<> \\";:.,' ; Expected = '@#$%^&*-+_/[]{}()<> \\";:.,' }
 	) {
 		param ($Target, $Expected)
 		Get-NarrowChars $Target | Should -Be $Expected
@@ -235,21 +235,21 @@ Describe 'いくつかの特殊文字を置換' {
 		Remove-SpecialCharacter 'テスト' | Should -BeOfType String
 	}
 	It '特殊文字を置換または削除すること' -TestCases @(
-		@{Target = '&amp;'; Expected = '&' }
-		@{Target = '*'    ; Expected = '＊' }
-		@{Target = '|'    ; Expected = '｜' }
-		@{Target = ':'    ; Expected = '：' }
-		@{Target = ';'    ; Expected = '；' }
-		@{Target = '"'    ; Expected = '' }
-		@{Target = '“'    ; Expected = '' }
-		@{Target = '”'    ; Expected = '' }
-		@{Target = ','    ; Expected = '' }
-		@{Target = '?'    ; Expected = '？' }
-		@{Target = '!'    ; Expected = '！' }
-		@{Target = '/'    ; Expected = '-' }
-		@{Target = '\'    ; Expected = '-' }
-		@{Target = '<'    ; Expected = '＜' }
-		@{Target = '>'    ; Expected = '＞' }
+		@{Target = '&amp;' ; Expected = '&' }
+		@{Target = '*'     ; Expected = '＊' }
+		@{Target = '|'     ; Expected = '｜' }
+		@{Target = ':'     ; Expected = '：' }
+		@{Target = ';'     ; Expected = '；' }
+		@{Target = '"'     ; Expected = '' }
+		@{Target = '“'     ; Expected = '' }
+		@{Target = '”'     ; Expected = '' }
+		@{Target = ','     ; Expected = '' }
+		@{Target = '?'     ; Expected = '？' }
+		@{Target = '!'     ; Expected = '！' }
+		@{Target = '/'     ; Expected = '-' }
+		@{Target = '\'     ; Expected = '-' }
+		@{Target = '<'     ; Expected = '＜' }
+		@{Target = '>'     ; Expected = '＞' }
 	) {
 		param ($Target, $Expected)
 		Remove-SpecialCharacter $Target | Should -Be $Expected
@@ -278,15 +278,15 @@ Describe 'タブとスペースを詰めて半角スペース1文字に' {
 		Remove-TabSpace 'テスト' | Should -BeOfType String
 	}
 	It 'タブとスペースを詰めて半角スペース1文字に置換すること' -TestCases @(
-		@{Target = "`t"; Expected = ' ' }
-		@{Target = "`t`t"; Expected = ' ' }
-		@{Target = "`t "; Expected = ' ' }
-		@{Target = " `t"; Expected = ' ' }
-		@{Target = '	'; Expected = ' ' }
-		@{Target = ' 	'; Expected = ' ' }
-		@{Target = '	 '; Expected = ' ' }
-		@{Target = '		'; Expected = ' ' }
-		@{Target = '  '; Expected = ' ' }
+		@{Target = "`t"       ; Expected = ' ' }
+		@{Target = "`t`t"     ; Expected = ' ' }
+		@{Target = "`t "      ; Expected = ' ' }
+		@{Target = " `t"      ; Expected = ' ' }
+		@{Target = '	'     ; Expected = ' ' }
+		@{Target = ' 	'     ; Expected = ' ' }
+		@{Target = '	 '    ; Expected = ' ' }
+		@{Target = '		' ; Expected = ' ' }
+		@{Target = '  '       ; Expected = ' ' }
 	) {
 		param ($Target, $Expected)
 		Remove-TabSpace $Target | Should -Be $Expected
@@ -301,14 +301,14 @@ Describe '設定ファイルの行末コメントを削除' {
 		Remove-Comment 'テスト' | Should -BeOfType String
 	}
 	It '設定ファイルの行末コメントを削除すること' -TestCases @(
-		@{Target = 'series/srz38rt0a3		#情熱大陸'; Expected = 'series/srz38rt0a3' }
-		@{Target = 'series/srz38rt0a3	#情熱大陸'; Expected = 'series/srz38rt0a3' }
-		@{Target = 'series/srz38rt0a3  #情熱大陸'; Expected = 'series/srz38rt0a3' }
-		@{Target = 'series/srz38rt0a3 #情熱大陸'; Expected = 'series/srz38rt0a3' }
-		@{Target = 'toppage		#トップページに表示される動画'; Expected = 'toppage' }
-		@{Target = 'toppage	#トップページに表示される動画'; Expected = 'toppage' }
-		@{Target = 'toppage  #トップページに表示される動画'; Expected = 'toppage' }
-		@{Target = 'toppage #トップページに表示される動画'; Expected = 'toppage' }
+		@{Target = 'series/srz38rt0a3		#情熱大陸' ; Expected = 'series/srz38rt0a3' }
+		@{Target = 'series/srz38rt0a3	#情熱大陸' ; Expected = 'series/srz38rt0a3' }
+		@{Target = 'series/srz38rt0a3  #情熱大陸' ; Expected = 'series/srz38rt0a3' }
+		@{Target = 'series/srz38rt0a3 #情熱大陸' ; Expected = 'series/srz38rt0a3' }
+		@{Target = 'toppage		#トップページに表示される動画' ; Expected = 'toppage' }
+		@{Target = 'toppage	#トップページに表示される動画' ; Expected = 'toppage' }
+		@{Target = 'toppage  #トップページに表示される動画' ; Expected = 'toppage' }
+		@{Target = 'toppage #トップページに表示される動画' ; Expected = 'toppage' }
 	) {
 		param ($Target, $Expected)
 		Remove-Comment $Target | Should -Be $Expected

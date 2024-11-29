@@ -136,7 +136,7 @@ while ($videoNotValidatedNum -ne 0) {
 				$minRemaining = ''
 				$progressRate = 0
 			}
-			$validateNum += 1
+			$validateNum++
 
 			$toastUpdateParams = @{
 				Title     = $videoFileRelPath
