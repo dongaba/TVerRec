@@ -371,9 +371,11 @@ function Get-LinkFromSiteMap {
 	$searchResults = $searchResultsRaw.urlset.url.loc | Sort-Object -Unique
 	foreach ($url in $searchResults) {
 		try {
-			$url = $url.Replace('https://tver.jp/', '')
-			$url = $url -split '/'
-			$tverID = @{ type = $url[0] ; id = $url[1] }
+			$url = $url.Replace('https://tver.jp/', '') -split '/'
+			$tverID = @{
+				type = $url[0]
+				id   = $url[1]
+			}
 		} catch { $tverID = @{ type = $null ; id = $null } }
 		if ($tverID.id) {
 			switch ( $tverID.type) {

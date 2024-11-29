@@ -9,6 +9,8 @@ echo.
 echo.
 echo.
 echo.
+echo.
+echo.
 echo WinGetをインストールするために必要なソフトウェアをインストールします...
 
 echo 　WinGet PowerShell moduleをPSGalleryからインストールします...
