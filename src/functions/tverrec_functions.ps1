@@ -252,14 +252,19 @@ function Update-IgnoreList {
 	Param ([Parameter(Mandatory = $true)][String]$ignoreTitle)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$ignoreListNew = @()
+	$ignoreComment = @()
+	$ignoreTarget = @()
+	$ignoreElse = @()
 	if (Test-Path $script:ignoreFilePath -PathType Leaf) {
 		try {
 			while ((Lock-File $script:ignoreLockFilePath).result -ne $true) { Write-Information ('　ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-			$ignoreLists = @(Get-Content $script:ignoreFilePath -Encoding UTF8 | Where-Object { $_ -notmatch '^\s*$|^(;;.*)$' })
+			$ignoreLists = @((Get-Content $script:ignoreFilePath -Encoding UTF8).Where( { $_ -notmatch '^\s*$|^(;;.*)$' }))
 			$ignoreComment = @(Get-Content $script:ignoreFileSamplePath -Encoding UTF8)
-			$ignoreTarget = @($ignoreLists | Where-Object { $_ -eq $ignoreTitle } | Sort-Object -Unique)
-			$ignoreElse = @($ignoreLists | Where-Object { $_ -ne $ignoreTitle })
-			$ignoreListNew = @($ignoreComment, $ignoreTarget, $ignoreElse)
+			$ignoreTarget = @($ignoreLists.Where({ $_ -eq $ignoreTitle }) | Sort-Object -Unique)
+			$ignoreElse = @($ignoreLists.Where({ $_ -notin $ignoreTitle }))
+			if ($ignoreComment) { $ignoreListNew += $ignoreComment }
+			if ($ignoreTarget) { $ignoreListNew += $ignoreTarget }
+			if ($ignoreElse) { $ignoreListNew += $ignoreElse }
 			#改行コードLFを強制 + NFCで出力
 			$ignoreListNew.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC)  | Out-File -LiteralPath $script:ignoreFilePath -Encoding UTF8 -NoNewline
 			Write-Debug ('　ダウンロード対象外リストのソート更新完了')
