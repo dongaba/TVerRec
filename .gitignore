@@ -2,30 +2,52 @@
 .DS_Store
 .vs/*
 *.lnk
-!.gitkeep
 
 #debugディレクトリ配下は調査用
-debug
-debug/*
+/debug
+/debug/*
 
 #アーカイブ
 *.7z
 *.zip
 
-#実行ファイル
-bin/*
-*.exe
-
 #ダウンロードファイル
 *.mp4
 *.ts
 
+#実行ファイル
+/bin/*
+!/bin
+
 #アップデート作業ディレクトリ
-tverrec-update-temp
+/tverrec-update-temp
+
+#開発関連ファイル
+/dev
+/dev/*
+memo.txt
+linux-*
+mac-*
+win-*
+*.xlsx
+
+#テスト用のファイルなど
+/TestPath
+/TestPath/*
+/TestDrive
+/TestDrive/*
+
+#Chrome拡張機能
+/resources/crx/TVerRecAssistant/_metadata
+/resources/crx/TVerRecAssistant/_metadata/*
+/resources/crx/*.pem
+/resources/crx/*.crx
 
 #中間ファイル
 *.ytdl
 *.jpg
+*.webp
+*.webm
 *.vtt
 *temp.mp4
 *temp.ts
@@ -39,53 +61,21 @@ brightcovenew*
 ffmpeg_error*
 ignore.conf.*
 
-#開発関連ファイル
-develop
-develop/*
-memo.txt
-linux-*
-mac-*
-win-*
-*.xlsx
-.anima
-.anima/*
-
-#Chrome拡張機能
-_*
-_metadata
-_metadata/*
-generated_indexed_rulesets
-generated_indexed_rulesets/*
-_ruleset*
-*.pem
-*.crx
-
-#コードカウンタ
-.VSCodeCounter
-
 #その他雑多な不要ファイル
 * - コピー.*
 * - Copy.*
 * copy.*
+* copy *.*
 *.bak
 
-#テスト用のファイルなど
-TestPath
-TestPath/*
-TestDrive
-TestDrive/*
-
 #ローカルの変更をGitHubにアップしないために
-tver.csv
-history.csv
-list.csv
-ignore.conf
-keyword.conf
-user_setting.ps1
-sitemap.txt
-#git update-index --assume-unchanged conf/dev_setting.ps1
+/db/*
+!/db
+/log/*
+!/log
+/conf/ignore.conf
+/conf/keyword.conf
+/conf/user_setting.ps1
 
-#WSB temporary files
-resources/wsb/setup/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle
-resources/wsb/setup/Microsoft.VCLibs.x64.14.00.Desktop.appx
-resources/wsb/setup/TVerRec
+#コードカウンタ
+.VSCodeCounter
