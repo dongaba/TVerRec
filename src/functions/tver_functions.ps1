@@ -44,10 +44,11 @@ function Get-VideoLinksFromKeyword {
 		specialMainLinks = [System.Collections.Generic.List[string]]::new()
 		specialLinks     = [System.Collections.Generic.List[string]]::new()
 	}
-	$key = $keyword.split(' ')[0].split("`t")[0].Split('/')[0]
-	$tverID = Remove-Comment(($keyword.Replace("$key/", '')).Trim())
-	if ($key -eq $tverID) { $key = 'episodes' }
-	if (($tverID -eq 'sitemap') -or ($tverID -eq 'toppage')) { $key = $tverID }
+	if ($keyword.IndexOf('/') -gt 0) { 
+		$key = $keyword.split(' ')[0].split("`t")[0].Split('/')[0]
+		$tverID = Remove-Comment(($keyword.Replace("$key/", '')).Trim())
+	} else { $key = '' ; $tverID = '' }
+	if (($keyword -eq 'sitemap') -or ($keyword -eq 'toppage')) { $key = $keyword }
 	Invoke-StatisticsCheck -Operation 'search' -TVerType $key -TVerID $tverID
 	switch ($key) {
 		'series' { $linkCollection.seriesLinks.Add($tverID) ; continue }
@@ -61,7 +62,7 @@ function Get-VideoLinksFromKeyword {
 		'sitemap' { $result = Get-LinkFromSiteMap ; continue }
 		default { $result = Get-LinkFromFreeKeyword $keyword }
 	}
-	$linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result 
+	if (Test-Path Variable:result) { $linkCollection = Update-LinkCollection -linkCollection $linkCollection -result $result }
 	while (($linkCollection.specialMainLinks.Count -ne 0) -or ($linkCollection.specialLinks.Count -ne 0) -or ($linkCollection.talentLinks.Count -ne 0) -or ($linkCollection.seriesLinks.Count -ne 0) -or ($linkCollection.seasonLinks.Count -ne 0)) {
 		if ($linkCollection.specialMainLinks) {
 			$linkCollection = Convert-Buffer -TverIDs $linkCollection.specialMainLinks -TverIDType 'Special Main' -LinkCollection $linkCollection
@@ -99,7 +100,8 @@ function ProcessSearchResults {
 		[Parameter(Mandatory = $true)][String]$baseURL,
 		[Parameter(Mandatory = $false)][String]$type,
 		[Parameter(Mandatory = $false)][String]$keyword,
-		[Parameter(Mandatory = $false)][String]$requireData
+		[Parameter(Mandatory = $false)][String]$requireData,
+		[Parameter(Mandatory = $false)][Boolean]$loginRequired
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$episodeLinks = [System.Collections.Generic.List[string]]::new()
@@ -111,9 +113,9 @@ function ProcessSearchResults {
 	#URLの整形
 	$sid = $script:myMemberSID
 	if (($script:myPlatformUID -ne '') -and ($script:myPlatformToken -ne '')) { $uid = $script:myPlatformUID ; $token = $script:myPlatformToken }
-	else{ $uid = $script:platformUID ; $token = $script:platformToken }
-	if ($sid) {$callSearchURL = '{0}?member_sid={1}' -f $baseURL, $sid }								# TVerIDにログインして使う場合
-	else {$callSearchURL = '{0}?platform_uid={1}&platform_token={2}' -f $baseURL, $uid, $token }		# TVerIDを匿名で使う場合
+	else { $uid = $script:platformUID ; $token = $script:platformToken }
+	if ($loginRequired) { $callSearchURL = '{0}?member_sid={1}' -f $baseURL, $sid }						# TVerIDにログインして使う場合
+	else { $callSearchURL = '{0}?platform_uid={1}&platform_token={2}' -f $baseURL, $uid, $token }		# TVerIDを匿名で使う場合
 	switch ($type) {
 		'keyword' { if ($keyword) { $callSearchURL += "&keyword=$keyword" } }
 		'mypage' { if ($requireData) { $callSearchURL += "&require_data=$requireData" } }
@@ -413,7 +415,7 @@ function Get-LinkFromMyPage {
 	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly', '')]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$page)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	$baseURLPrefix = if ($script:myMemberSID) { 'https://member-api.tver.jp' } else { 'https://platform-api.tver.jp' }
+	$baseURLPrefix = if ($script:myMemberSID) { 'https://member-api.tver.jp' ; $loginRequired = $true } else { 'https://platform-api.tver.jp' ; $loginRequired = $false }
 	switch ($page) {
 		'fav' { $baseURL = ('{0}/service/api/v2/callMylistDetail/{1}' -f $baseURLPrefix, (ConvertTo-UnixTime (Get-Date))) ; $requireData = 'mylist' ; continue }
 		'later' { $baseURL = ('{0}/service/api/v2/callMyLater' -f $baseURLPrefix) ; $requireData = 'later' ; continue }
@@ -421,7 +423,7 @@ function Get-LinkFromMyPage {
 		'favorite' { $baseURL = ('{0}/service/api/v2/callMyFavorite' -f $baseURLPrefix) ; $requireData = 'mylist' ; continue }
 		default { Write-Warning "⚠️ 未知のパターンです。 - mypage/$page" }
 	}
-	$tverIDs = ProcessSearchResults -baseURL $baseURL -Type 'mypage' -RequireData $requireData
+	$tverIDs = ProcessSearchResults -baseURL $baseURL -Type 'mypage' -RequireData $requireData -LoginRequired $loginRequired
 	return $tverIDs
 	Remove-Variable -Name page, baseURL, requireData, tverIDs -ErrorAction SilentlyContinue
 }
