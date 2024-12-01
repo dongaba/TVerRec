@@ -70,12 +70,11 @@ ignore.conf.*
 
 #ローカルの変更をGitHubにアップしないために
 /db/*
-!/db
 /log/*
-!/log
-/conf/ignore.conf
-/conf/keyword.conf
-/conf/user_setting.ps1
+/conf/*
+!/db/.gitkeep
+!/log/.gitkeep
+!/conf/.gitkeep
 
 #コードカウンタ
 .VSCodeCounter
