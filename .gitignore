@@ -69,9 +69,11 @@ ignore.conf.*
 *.bak
 
 #ローカルの変更をGitHubにアップしないために
+/bin/*
 /db/*
 /log/*
 /conf/*
+!/bin/.gitkeep
 !/db/.gitkeep
 !/log/.gitkeep
 !/conf/.gitkeep
