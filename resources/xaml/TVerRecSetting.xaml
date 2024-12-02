@@ -6,9 +6,9 @@
 		xmlns:local="clr-namespace:TVerRecSetting"
 		mc:Ignorable="d"
 		Title="Setting"
-		Height="640"
+		Height="800"
 		Width="640"
-		MinHeight="480"
+		MinHeight="768"
 		MinWidth="640"
 		Background="#f1f1f1"
 		WindowStartupLocation="CenterScreen">

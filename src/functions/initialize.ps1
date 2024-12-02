@@ -44,21 +44,15 @@ catch { Throw ('❌️ 外部関数ファイル(tverrec_functions.ps1)の読み�
 try {
 	$devFunctionFile = Join-Path $script:devDir 'dev_funcitons.ps1'
 	$devConfFile = Join-Path $script:devDir 'dev_setting.ps1'
-	if (Test-Path $devConfFile) {
-		. $devConfFile
-		Write-Debug ('💡 開発ファイル用設定ファイルを読み込みました')
-	}
-	if (Test-Path $devFunctionFile) {
-		. $devFunctionFile
-		Write-Debug ('💡 開発ファイル用共通関数ファイルを読み込みました')
-	}
+	if (Test-Path $devConfFile) { . $devConfFile ; Write-Debug ('💡 開発ファイル用設定ファイルを読み込みました') }
+	if (Test-Path $devFunctionFile) { . $devFunctionFile ; Write-Debug ('💡 開発ファイル用共通関数ファイルを読み込みました') }
 	Remove-Variable -Name devFunctionFile, devConfFile -ErrorAction SilentlyContinue
 } catch { Throw ('❌️ 開発用設定ファイルの読み込みに失敗しました') }
 
 #----------------------------------------------------------------------
 #連続実行時は以降の処理は不要なのでexit
 #不要な理由はloop.ps1は「.」ではなく「&」で各処理を呼び出ししているので各種変数が不要なため
-if ($launchMode -eq 'loop') {Remove-Variable -Name launchMode -ErrorAction SilentlyContinue; exit 0 }
+if ($launchMode -eq 'loop') {Remove-Variable -Name launchMode -ErrorAction SilentlyContinue ; exit 0 }
 
 #----------------------------------------------------------------------
 #アップデータのアップデート(アップデート後の実行時にアップデータを更新)
@@ -70,7 +64,7 @@ if (Test-Path (Join-Path $script:scriptRoot '../log/updater_update.txt')) {
 		Invoke-WebRequest `
 			-Uri 'https://raw.githubusercontent.com/dongaba/TVerRec/master/win/update_tverrec.cmd' `
 			-OutFile (Join-Path $script:scriptRoot '../win/update_tverrec.cmd')
-		$null = Remove-Item (Join-Path $script:scriptRoot '../log/updater_update.txt') -Force
+		Remove-Item (Join-Path $script:scriptRoot '../log/updater_update.txt') -Force | Out-Null
 	} catch { Write-Warning ('⚠️ アップデータのアップデートに失敗しました。ご自身でアップデートを完了させる必要があります') }
 }
 

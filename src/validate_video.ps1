@@ -77,7 +77,7 @@ if (Test-Path $script:histFilePath -PathType Leaf) {
 		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$videoNotValidatedNum = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' })).Count
 	} catch { Throw ('❌️ ダウンロード履歴の読み込みに失敗しました') }
-	finally { $null = Unlock-File $script:histLockFilePath }
+	finally { Unlock-File $script:histLockFilePath | Out-Null }
 } else { $videoNotValidatedNum = 0 }
 
 while ($videoNotValidatedNum -ne 0) {
@@ -91,7 +91,7 @@ while ($videoNotValidatedNum -ne 0) {
 		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$videoHists = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' }) | Select-Object 'videoPage', 'videoPath', 'videoValidated')
 	} catch { Write-Warning ('⚠️ ダウンロード履歴の読み込みに失敗しました') }
-	finally { $null = Unlock-File $script:histLockFilePath }
+	finally { Unlock-File $script:histLockFilePath | Out-Null }
 
 	if (($null -eq $videoHists) -or ($videoHists.Count -eq 0)) {
 		#チェックする番組なし
@@ -132,11 +132,8 @@ while ($videoNotValidatedNum -ne 0) {
 				$secRemaining = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $validateNum) * ($validateTotal - $validateNum))
 				$minRemaining = ('残り時間 {0}分' -f ([Int][Math]::Ceiling($secRemaining / 60)))
 				$progressRate = [Float]($validateNum / $validateTotal)
-			} else {
-				$minRemaining = ''
-				$progressRate = 0
-			}
-			$validateNum += 1
+			} else { $minRemaining = '' ; $progressRate = 0 }
+			$validateNum++
 
 			$toastUpdateParams = @{
 				Title     = $videoFileRelPath
@@ -177,7 +174,7 @@ while ($videoNotValidatedNum -ne 0) {
 			$videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
 			$videoNotValidatedNum = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' })).Count
 		} catch { Throw ('❌️ ダウンロード履歴の更新に失敗しました') }
-		finally { $null = Unlock-File $script:histLockFilePath }
+		finally { Unlock-File $script:histLockFilePath | Out-Null }
 	} else { $videoNotValidatedNum = 0 }
 }
 

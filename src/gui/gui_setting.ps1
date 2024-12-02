@@ -6,8 +6,8 @@
 using namespace System.Windows.Threading
 Set-StrictMode -Version Latest
 if (!$IsWindows) { Throw ('❌️ Windows以外では動作しません') ; Start-Sleep 10 }
-Add-Type -AssemblyName System.Windows.Forms
-Add-Type -AssemblyName PresentationFramework
+Add-Type -AssemblyName System.Windows.Forms | Out-Null
+Add-Type -AssemblyName PresentationFramework | Out-Null
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #region 環境設定
@@ -43,14 +43,14 @@ try {
 #GUIイベントの処理
 function Sync-WpfEvents {
 	[DispatcherFrame] $frame = [DispatcherFrame]::new($true)
-	$null = [Dispatcher]::CurrentDispatcher.BeginInvoke(
+	[Dispatcher]::CurrentDispatcher.BeginInvoke(
 		'Background',
 		[DispatcherOperationCallback] {
-			Param([object] $f)
+			Param ([object] $f)
 			($f -as [DispatcherFrame]).Continue = $false
 			return $null
 		},
-		$frame)
+		$frame) | Out-Null
 	[Dispatcher]::PushFrame($frame)
 	Remove-Variable -Name frame, f -ErrorAction SilentlyContinue
 }
@@ -93,7 +93,7 @@ function Save-UserSetting {
 	$endSegment = '##End Setting Generated from GUI'
 	#ファイルが無ければ作ればいい
 	if (!(Test-Path $userSettingFile)) {
-		$null = New-Item -Path $userSettingFile -ItemType File
+		New-Item -Path $userSettingFile -ItemType File | Out-Null
 		$content = Get-Content -LiteralPath $userSettingFile
 		$totalLineNum = 0
 	} else {
@@ -114,8 +114,8 @@ function Save-UserSetting {
 			$settingBox = $settingWindow.FindName($settingBoxName)
 			switch -wildcard ($settingBox.Text) {
 				{ $_ -in '', 'デフォルト値', '未設定' } { continue }
-				{ $_ -eq 'する' } { $newSetting += ('{0} = $true' -f $settingAttribute); continue }
-				{ $_ -eq 'しない' } { $newSetting += ('{0} = $false' -f $settingAttribute); continue }
+				{ $_ -eq 'する' } { $newSetting += ('{0} = $true' -f $settingAttribute) ; continue }
+				{ $_ -eq 'しない' } { $newSetting += ('{0} = $false' -f $settingAttribute) ; continue }
 				default {
 					if ([Int]::TryParse($settingBox.Text, [ref]$null) -or $settingBox.Text -match '[${}]') { $newSetting += ('{0} = {1}' -f $settingAttribute, $settingBox.Text) }
 					else { $newSetting += ('{0} = ''{1}''' -f $settingAttribute, $settingBox.Text) }
@@ -154,11 +154,11 @@ try {
 	$settingWindow = [System.Windows.Markup.XamlReader]::Load(([System.Xml.XmlNodeReader]::new($mainCleanXaml)))
 } catch { Throw ('❌️ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。') }
 #PowerShellのウィンドウを非表示に
-Add-Type -Name Window -Namespace Console -MemberDefinition '
-[DllImport("Kernel32.dll")]public static extern IntPtr GetConsoleWindow() ;
-[DllImport("user32.dll")]public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow) ;
-'
-$null = [Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0)
+Add-Type -Name Window -Namespace Console -MemberDefinition @'
+	[DllImport("Kernel32.dll")] public static extern IntPtr GetConsoleWindow();
+	[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow);
+'@ | Out-Null
+[Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0) | Out-Null
 #タスクバーのアイコンにオーバーレイ表示
 $settingWindow.TaskbarItemInfo.Overlay = ConvertFrom-Base64 $script:iconBase64
 $settingWindow.TaskbarItemInfo.Description = $settingWindow.Title
@@ -180,7 +180,7 @@ $lblVersion.Content = ('Version {0}' -f $script:appVersion)
 #region ボタンのアクション
 $btnWiki.Add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
 $btnCancel.Add_Click({ $settingWindow.close() })
-$btnSave.Add_Click({ Save-UserSetting; $settingWindow.close() })
+$btnSave.Add_Click({ Save-UserSetting ; $settingWindow.close() })
 $btndownloadBaseDir.Add_Click({ Select-Folder 'ダウンロード先ディレクトリを選択してください' $script:downloadBaseDir })
 $btndownloadWorkDir.Add_Click({ Select-Folder '作業ディレクトリを選択してください' $script:downloadWorkDir })
 $btnsaveBaseDir.Add_Click({ Select-Folder '移動先ディレクトリを選択してください' $script:saveBaseDir })
@@ -285,9 +285,9 @@ foreach ($settingAttribute in $settingAttributes) {
 #ウィンドウ表示
 
 try {
-	$null = $settingWindow.Show()
-	$null = $settingWindow.Activate()
-	$null = [Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0)
+	$settingWindow.Show() | Out-Null
+	$settingWindow.Activate() | Out-Null
+	[Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0) | Out-Null
 } catch { Throw ('❌️ ウィンドウを描画できませんでした。TVerRecが破損しています。') }
 
 #メインウィンドウ取得

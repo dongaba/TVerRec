@@ -46,8 +46,8 @@ while ($true) {
 		$script:videoPageList = (Read-Host '番組URLを入力してください。何も入力しないで Enter を押すと終了します。スペースで区切って複数入力可能です。').Trim().Split()
 	} else {
 		# アセンブリの読み込み
-		[void][System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms')
-		[void][System.Reflection.Assembly]::LoadWithPartialName('System.Drawing')
+		Add-Type -AssemblyName System.Windows.Forms | Out-Null
+		Add-Type -AssemblyName System.Drawing | Out-Null
 
 		# フォームの作成
 		$inputForm = New-Object System.Windows.Forms.Form -Property @{
@@ -70,7 +70,7 @@ while ($true) {
 			Size     = New-Object System.Drawing.Size(75, 20)
 			Text     = 'OK'
 		}
-		$okButton.Add_Click({ $script:videoPageList = $inputTextBox.Text.Split("`r`n").Split(); $inputForm.Close() })
+		$okButton.Add_Click({ $script:videoPageList = $inputTextBox.Text.Split("`r`n").Split() ; $inputForm.Close() })
 		$inputForm.Controls.Add($okButton)
 
 		# テキストラベルの作成
@@ -91,11 +91,11 @@ while ($true) {
 		$inputForm.Controls.Add($inputTextBox)
 
 		# ダイアログの表示
-		[void]$inputForm.ShowDialog()
+		$inputForm.ShowDialog() | Out-Null
 	}
 
 	#配列の空白要素を削除
-	$script:videoPageList = $script:videoPageList -ne ""
+	$script:videoPageList = $script:videoPageList -ne ''
 	if (-not $script:videoPageList) { break }
 
 	#複数入力されていたら全てダウンロード
@@ -112,7 +112,7 @@ while ($true) {
 				Start-Sleep -Seconds 1
 				continue
 			}
-			default { Write-Warning ('URLではありません: {0}' -f $videoPageURL); continue }
+			default { Write-Warning ('URLではありません: {0}' -f $videoPageURL) ; continue }
 		}
 	}
 

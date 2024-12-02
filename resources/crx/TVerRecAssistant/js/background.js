@@ -126,14 +126,14 @@ chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((e) => {
 					searchParams.platform_uid,
 					searchParams.platform_token
 				);
-				disablePlatformRule(); // UID と TOKEN を取得したらルールを解除
+				disablePlatformRule() ; // UID と TOKEN を取得したらルールを解除
 			}
 
 			if (searchParams.member_sid !== undefined) {
 				console.log("TVerRec Assistant: Add below to user_settings.ps1");
 				console.log(`	$script:myMemberSID = '${searchParams.member_sid}'`);
 				saveStorageMember(searchParams.member_sid);
-				disableMemberRule(); // SID を取得したらルールを解除
+				disableMemberRule() ; // SID を取得したらルールを解除
 			}
 		}
 	}
