@@ -15,6 +15,7 @@
 ### 3.2.5 Fixed
 
 - フリーワードサーチが失敗する問題を修正
+- Windows GUI版で、個別ダウンロードがエラーとなる問題を修正 [Issue #125](https://github.com/dongaba/TVerRec/issues/125)
 
 ## [3.2.4](https://github.com/dongaba/TVerRec/releases/tag/v3.2.4)
 
