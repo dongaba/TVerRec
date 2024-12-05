@@ -43,7 +43,7 @@ while ($true) {
 	$script:videoPageList = @()
 
 	if (!$script:guiMode) {
-		$script:videoPageList = (Read-Host '番組URLを入力してください。何も入力しないで Enter を押すと終了します。スペースで区切って複数入力可能です。').Trim().Split()
+		$script:videoPageList = @((Read-Host '番組URLを入力してください。何も入力しないで Enter を押すと終了します。スペースで区切って複数入力可能です。').Trim().Split())
 	} else {
 		# アセンブリの読み込み
 		Add-Type -AssemblyName System.Windows.Forms | Out-Null
@@ -70,7 +70,7 @@ while ($true) {
 			Size     = New-Object System.Drawing.Size(75, 20)
 			Text     = 'OK'
 		}
-		$okButton.Add_Click({ $script:videoPageList = $inputTextBox.Text.Split("`r`n").Split() ; $inputForm.Close() })
+		$okButton.Add_Click({ $script:videoPageList = @($inputTextBox.Text.Split("`r`n").Split()) ; $inputForm.Close() })
 		$inputForm.Controls.Add($okButton)
 
 		# テキストラベルの作成
@@ -95,7 +95,7 @@ while ($true) {
 	}
 
 	#配列の空白要素を削除
-	$script:videoPageList = $script:videoPageList -ne ''
+	$script:videoPageList = @($script:videoPageList) -ne ''
 	if (-not $script:videoPageList) { break }
 
 	#複数入力されていたら全てダウンロード
