@@ -42,10 +42,8 @@ while ($true) {
 	#複数アドレス入力用配列
 	$script:videoPageList = @()
 
-	$script:guiMode = $true
-
 	if (!$script:guiMode) {
-		$script:videoPageList = (Read-Host '番組URLを入力してください。何も入力しないで Enter を押すと終了します。スペースで区切って複数入力可能です。').Trim().Split()
+		$script:videoPageList = @((Read-Host '番組URLを入力してください。何も入力しないで Enter を押すと終了します。スペースで区切って複数入力可能です。').Trim().Split())
 	} else {
 		# アセンブリの読み込み
 		Add-Type -AssemblyName System.Windows.Forms | Out-Null
