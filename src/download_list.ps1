@@ -31,7 +31,7 @@ $keyword = 'リスト指定'
 
 #URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 if ($listLinks.Count -ne 0) { $videoLinks, $processedCount = Invoke-HistoryMatchCheck $listLinks }
-else { $videoLinks = @(); $processedCount = 0 }
+else { $videoLinks = @() ; $processedCount = 0 }
 $videoTotal = $videoLinks.Count
 Write-Output ('')
 if ($videoTotal -eq 0) { Write-Output ('　処理対象{0}本　処理済{1}本' -f $videoTotal, $processedCount) }
@@ -55,7 +55,7 @@ Show-ProgressToast @toastShowParams
 #個々の番組ダウンロードここから
 $videoNum = 0
 foreach ($videoLink in $videoLinks) {
-	$videoNum += 1
+	$videoNum++
 	#ダウンロード先ディレクトリの存在確認先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
 	if (!(Test-Path $script:downloadBaseDir -PathType Container)) { Throw ('❌️ 番組ダウンロード先ディレクトリにアクセスできません。終了します') }
 

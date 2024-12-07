@@ -4,15 +4,15 @@
 #
 ###################################################################################
 Set-StrictMode -Version Latest
-Add-Type -AssemblyName System.IO.Compression.FileSystem
+Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
 
 #----------------------------------------------------------------------
 #Zipファイルを解凍
 #----------------------------------------------------------------------
 function Expand-Zip {
 	[CmdletBinding()]
-	[OutputType([void])]
-	Param(
+	[OutputType([System.Void])]
+	Param (
 		[Parameter(Mandatory = $true)][string]$path,
 		[Parameter(Mandatory = $true)][string]$destination
 	)
@@ -31,7 +31,7 @@ function Expand-Zip {
 function Move-Files() {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
-	Param(
+	Param (
 		[Parameter(Mandatory = $true)][String]$source,
 		[Parameter(Mandatory = $true)][String]$destination
 	)
@@ -41,11 +41,11 @@ function Move-Files() {
 		$items = (Get-ChildItem $source).Where({ $_.Name -inotlike '*update_tverrec.*' })
 		foreach ($item in $items) { Move-Files -Source $item.FullName -Destination (Join-Path $destination $item.Name) }
 		#移動し終わったディレクトリを削除
-		$null = Remove-Item -LiteralPath $source -Recurse -Force
+		Remove-Item -LiteralPath $source -Recurse -Force | Out-Null
 	} else {
 		#移動先に対象なし または ファイルの Move-Item に -Forece つけて実行
 		Write-Output ('{0} → {1}' -f $source, $destination)
-		$null = Move-Item -LiteralPath $source -Destination $destination -Force
+		Move-Item -LiteralPath $source -Destination $destination -Force | Out-Null
 	}
 	Remove-Variable -Name source, destination, items, item -ErrorAction SilentlyContinue
 }
@@ -54,9 +54,9 @@ function Move-Files() {
 #存在したら削除
 #----------------------------------------------------------------------
 Function Remove-IfExist {
-	param ([Parameter(Mandatory = $true)][string]$path)
+	Param ([Parameter(Mandatory = $true)][string]$path)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	if (Test-Path $path) { $null = Remove-Item -LiteralPath $path -Force -Recurse }
+	if (Test-Path $path) { Remove-Item -LiteralPath $path -Force -Recurse | Out-Null }
 	Remove-Variable -Name path -ErrorAction SilentlyContinue
 }
 
@@ -64,7 +64,7 @@ Function Remove-IfExist {
 #存在したらリネーム
 #----------------------------------------------------------------------
 Function Rename-IfExist {
-	param (
+	Param (
 		[Parameter(Mandatory = $true)][string]$path,
 		[Parameter(Mandatory = $true)][string]$newname
 	)
@@ -77,12 +77,12 @@ Function Rename-IfExist {
 #存在したら移動
 #----------------------------------------------------------------------
 Function Move-IfExist {
-	param (
+	Param (
 		[Parameter(Mandatory = $true)][string]$path,
 		[Parameter(Mandatory = $true)][string]$destination
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	if (Test-Path $path -PathType Leaf) { $null = Move-Item -LiteralPath $path -Destination $destination -Force }
+	if (Test-Path $path -PathType Leaf) { Move-Item -LiteralPath $path -Destination $destination -Force | Out-Null }
 	Remove-Variable -Name path, destination -ErrorAction SilentlyContinue
 }
 
@@ -117,7 +117,7 @@ Write-Output ('━━━━━━━━━━━━━━━━━━━━━�
 Write-Output ('作業ディレクトリを作成します')
 $updateTemp = Join-Path $scriptRoot '../tverrec-update-temp'
 if (Test-Path $updateTemp ) { Remove-Item -LiteralPath $updateTemp -Force -Recurse -ErrorAction SilentlyContinue }
-try { $null = New-Item -ItemType Directory -Path $updateTemp }
+try { New-Item -ItemType Directory -Path $updateTemp | Out-Null }
 catch { Throw ('❌️ 作業ディレクトリの作成に失敗しました') }
 
 #TVerRecの最新バージョン取得
@@ -127,10 +127,10 @@ Write-Output ('TVerRecの最新版をダウンロードします')
 if (!(Get-Variable updateChannel -Scope Script -ErrorAction SilentlyContinue)) { $script:updateChannel = 'release' }
 try {
 	$zipURL = switch ($script:updateChannel) {
-		'dev' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/dev.zip' }
-		'beta' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/beta.zip' }
-		'master' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/master.zip' }
-		'prerelease' { (Invoke-RestMethod -Uri $releases -Method 'GET').where{ ($_.prerelease -eq $true) }[0].zipball_url }
+		'dev' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/dev.zip' ; continue }
+		'beta' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/beta.zip' ; continue }
+		'master' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/master.zip' ; continue }
+		'prerelease' { (Invoke-RestMethod -Uri $releases -Method 'GET').where{ ($_.prerelease -eq $true) }[0].zipball_url ; continue }
 		default { (Invoke-RestMethod -Uri $releases -Method 'GET').where{ ($_.prerelease -eq $false) }[0].zipball_url }
 	}
 	Invoke-WebRequest -Uri $zipURL -OutFile (Join-Path $updateTemp 'TVerRecLatest.zip')
@@ -248,8 +248,8 @@ if (!$IsWindows) {
 }
 
 #アップデータ自体の更新のためのファイル作成
-$null = New-Item (Join-Path $script:scriptRoot '../log/updater_update.txt') -Type file -Force
-$null = 'このファイルはアップデータ自身のアプデートを完了させるために必要です。' | Out-File -FilePath (Join-Path $script:scriptRoot '../log/updater_update.txt')
+New-Item (Join-Path $script:scriptRoot '../log/updater_update.txt') -Type file -Force | Out-Null
+'このファイルはアップデータ自身のアプデートを完了させるために必要です。' | Out-File -FilePath (Join-Path $script:scriptRoot '../log/updater_update.txt')
 
 Write-Output ('')
 Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')

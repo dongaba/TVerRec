@@ -42,7 +42,7 @@ Show-ProgressToast @toastShowParams
 
 # Windowsのディレクトリ一覧を取得する関数
 function Get-DirectoriesOnWindows {
-	param ([string[]]$paths)
+	Param ([string[]]$paths)
 	$results = @()
 	foreach ($path in $paths) {
 		$dirCmd = "dir `"$path`" /s /b /a:d"
@@ -53,7 +53,7 @@ function Get-DirectoriesOnWindows {
 
 # Linux/Macのディレクトリ一覧を取得する関数
 function Get-DirectoriesNotOnWindows {
-	param ([string[]]$paths)
+	Param ([string[]]$paths)
 	$results = @()
 	foreach ($path in $paths) {
 		$dirCmd = "find `"$path`" -type d"
@@ -64,10 +64,10 @@ function Get-DirectoriesNotOnWindows {
 
 # プラットフォームに応じたディレクトリ一覧を取得する関数
 function Get-DirectoriesWithPlatformCheck {
-	param ([string[]]$paths)
+	Param ([string[]]$paths)
 	#PowerShellではジャンクションの展開ができないので、cmd.exeを使ってジャンクションを解決する
 	switch ($true) {
-		$IsWindows { $results = Get-DirectoriesOnWindows -paths $paths }
+		$IsWindows { $results = Get-DirectoriesOnWindows -paths $paths ; continue }
 		default { $results = Get-DirectoriesNotOnWindows -paths $paths }
 	}
 	return $results
@@ -117,11 +117,8 @@ if ($moveDirs) {
 			$secRemaining = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $dirNum) * ($dirTotal - $dirNum))
 			$minRemaining = ('残り時間 {0}分' -f ([Int][Math]::Ceiling($secRemaining / 60)))
 			$progressRate = [Float]($dirNum / $dirTotal)
-		} else {
-			$minRemaining = ''
-			$progressRate = 0
-		}
-		$dirNum += 1
+		} else { $minRemaining = '' ; $progressRate = 0 }
+		$dirNum++
 
 		$toastUpdateParams = @{
 			Title     = $dir
@@ -140,9 +137,9 @@ if ($moveDirs) {
 		#同名ディレクトリが存在する場合は配下のファイルを移動
 		if ((Test-Path -LiteralPath $moveFromPath) -and (Test-Path -LiteralPath $moveToPath)) {
 			Write-Output ('　{0}\* -> {1}' -f $moveFromPath, $moveToPath)
-			try { $null = Get-ChildItem -LiteralPath $moveFromPath -File | Move-Item -Destination $moveToPath -Force }
+			try { Get-ChildItem -LiteralPath $moveFromPath -File | Move-Item -Destination $moveToPath -Force | Out-Null }
 			catch { Write-Warning ('⚠️ 移動できないファイルがありました - {0}' -f $moveFromPath) }
-		}else{ Write-Warning ('⚠️ 移動元、または移動先にアクセスできなくなりました - {0}' -f $moveFromPath) }
+		} else { Write-Warning ('⚠️ 移動元、または移動先にアクセスできなくなりました - {0}' -f $moveFromPath) }
 	}
 }
 #----------------------------------------------------------------------
@@ -168,7 +165,7 @@ if ($emptyDirTotal -ne 0) {
 			$emptyDirNum = ([Array]::IndexOf($using:emptyDirs, $_)) + 1
 			$emptyDirTotal = $using:emptyDirs.Count
 			Write-Output ('　{0}/{1} - {2}' -f $emptyDirNum, $emptyDirTotal, $_)
-			try { $null = Remove-Item -LiteralPath $_ -Recurse -Force }
+			try { Remove-Item -LiteralPath $_ -Recurse -Force | Out-Null }
 			catch { Write-Warning ('⚠️ - 空ディレクトリの削除に失敗しました: {0}' -f $_) }
 		} -ThrottleLimit $script:multithreadNum
 	} else {
@@ -177,7 +174,7 @@ if ($emptyDirTotal -ne 0) {
 		$emptyDirTotal = $emptyDirs.Count
 		$totalStartTime = Get-Date
 		foreach ($dir in $emptyDirs) {
-			$emptyDirNum += 1
+			$emptyDirNum++
 			#処理時間の推計
 			$secElapsed = (Get-Date) - $totalStartTime
 			$secRemaining = -1
@@ -185,10 +182,7 @@ if ($emptyDirTotal -ne 0) {
 				$secRemaining = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $emptyDirNum) * ($emptyDirTotal - $emptyDirNum))
 				$minRemaining = ('残り時間 {0}分' -f ([Int][Math]::Ceiling($secRemaining / 60)))
 				$progressRate = [Float]($emptyDirNum / $emptyDirTotal)
-			} else {
-				$minRemaining = ''
-				$progressRate = 0
-			}
+			} else { $minRemaining = '' ; $progressRate = 0 }
 
 			$toastUpdateParams.Title = $dir
 			$toastUpdateParams.Rate = $progressRate
@@ -197,7 +191,7 @@ if ($emptyDirTotal -ne 0) {
 			Update-ProgressToast @toastUpdateParams
 
 			Write-Output ('　{0}/{1} - {2}' -f $emptyDirNum, $emptyDirTotal, $dir)
-			try { $null = Remove-Item -LiteralPath $dir -Recurse -Force -ErrorAction SilentlyContinue
+			try { Remove-Item -LiteralPath $dir -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
 			} catch { Write-Warning ('⚠️ - 空ディレクトリの削除に失敗しました: {0}' -f $dir) }
 		}
 	}

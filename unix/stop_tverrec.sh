@@ -12,7 +12,7 @@ echo -en "\033];TVerRec\007"
 export HostName="$(hostname)"
 export PIDFile="pid-$HostName.txt"
 
-if [ -e "$PIDFile" ]; then
+if [ -e "$PIDFile" ] ; then
 	export targetPPID=$(pgrep -P $(cat "$PIDFile"))
 	export targetPID=$(pgrep -P "$targetPPID")
 	kill -9 "$targetPID"
@@ -21,4 +21,3 @@ if [ -e "$PIDFile" ]; then
 else
 	rm -f "$PIDFile"
 fi
-

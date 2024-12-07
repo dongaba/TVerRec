@@ -9,6 +9,8 @@ echo.
 echo.
 echo.
 echo.
+echo.
+echo.
 echo WinGetをインストールするために必要なソフトウェアをインストールします...
 
 echo 　WinGet PowerShell moduleをPSGalleryからインストールします...
@@ -41,6 +43,6 @@ echo PowerShellをインストールします...
 winget install -e --id Microsoft.PowerShell --accept-source-agreements --accept-package-agreements --source winget
 
 echo.
-powershell -Command "Add-Type -Assembly System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show('PowerShellのインストールが完了しました。', 'TVerRec')"
+powershell -Command "Add-Type -AssemblyName System.Windows.Forms | Out-Null ; [System.Windows.Forms.MessageBox]::Show('PowerShellのインストールが完了しました。', 'TVerRec')"
 
 explorer.exe "C:\Users\WDAGUtilityAccount\Desktop\TVerRec\win"

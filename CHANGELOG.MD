@@ -1,5 +1,23 @@
 # Change Log
 
+## [3.2.5](https://github.com/dongaba/TVerRec/releases/tag/v3.2.5)
+
+### 3.2.5 Added
+
+- Windows用Arm版ffmpegのダウンロード機能を追加
+
+### 3.2.5 Changed
+
+- 「放送分」だけでなく「配信分」からも日付を取得
+- サイトマップとトップページにアクセスできない際のエラーを抑止
+- TVerIDを登録している状態でもマイページ以外ではTVerIDの情報を使わないように変更
+- 個別ダウンロード時に同時ダウンロード数の制御をするように変更 [Issue #124](https://github.com/dongaba/TVerRec/issues/124)
+
+### 3.2.5 Fixed
+
+- フリーワードサーチが失敗する問題を修正
+- Windows GUI版で、個別ダウンロードがエラーとなる問題を修正 [Issue #125](https://github.com/dongaba/TVerRec/issues/125)
+
 ## [3.2.4](https://github.com/dongaba/TVerRec/releases/tag/v3.2.4)
 
 ### 3.2.4 Added
