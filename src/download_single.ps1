@@ -116,6 +116,9 @@ while ($true) {
 		}
 	}
 
+	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
+	Wait-YtdlProcess $script:parallelDownloadFileNum
+
 }
 
 Remove-Variable -Name args, keyword, videoPageURL -ErrorAction SilentlyContinue
