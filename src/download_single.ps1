@@ -100,6 +100,8 @@ while ($true) {
 
 	#複数入力されていたら全てダウンロード
 	foreach ($videoLink in  $script:videoPageList) {
+		#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
+		Wait-YtdlProcess $script:parallelDownloadFileNum
 		switch -Regex ($videoLink) {
 			'^https://tver.jp/(/?.*)' { #TVer番組ダウンロードのメイン処理
 				Write-Output ('{0}' -f $videoLink)
@@ -115,9 +117,6 @@ while ($true) {
 			default { Write-Warning ('URLではありません: {0}' -f $videoLink) ; continue }
 		}
 	}
-
-	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
-	Wait-YtdlProcess $script:parallelDownloadFileNum
 
 }
 
