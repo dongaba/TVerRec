@@ -117,8 +117,9 @@ function ProcessSearchResults {
 	if ($loginRequired) { $callSearchURL = '{0}?member_sid={1}' -f $baseURL, $sid }						# TVerIDにログインして使う場合
 	else { $callSearchURL = '{0}?platform_uid={1}&platform_token={2}' -f $baseURL, $uid, $token }		# TVerIDを匿名で使う場合
 	switch ($type) {
-		'keyword' { if ($keyword) { $callSearchURL += "&keyword=$keyword" } }
-		'mypage' { if ($requireData) { $callSearchURL += "&require_data=$requireData" } }
+		'keyword' { if ($keyword) { $callSearchURL += "&keyword=$keyword" } ; continue }
+		'mypage' { if ($requireData) { $callSearchURL += "&require_data=$requireData" } ; continue }
+		default {}
 	}
 	#取得した値をタイプごとに調整
 	try {
