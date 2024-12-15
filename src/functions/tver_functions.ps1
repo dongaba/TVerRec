@@ -79,7 +79,7 @@ function Get-VideoLinksFromKeyword {
 		}
 	}
 	Remove-Variable -Name key, tverID, linkTypes, type -ErrorAction SilentlyContinue
-	$linkCollection.episodeLinks | Sort-Object -Unique
+	return $linkCollection.episodeLinks | Sort-Object -Unique
 	Remove-Variable -Name linkCollection -ErrorAction SilentlyContinue
 }
 
