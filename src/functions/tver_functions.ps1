@@ -150,13 +150,13 @@ function ProcessSearchResults {
 	} catch {
 		if ($_.Exception.Message.Contains('The request was canceled due to the configured HttpClient.Timeout of')) {
 			Write-Warning ('⚠️ HTTP接続がタイムアウトしました。スキップして次のリンクを処理します。')
-			Write-Warning ('　　{0}, {1}, {2}' -f $type, $keyword, $requireData)
+			Write-Warning ('　　{0}, {1}, {2}' -f $keyword, $type, $requireData)
 		} elseif ($_.Exception.Message.Contains('Response status code does not indicate success:')) {
 			Write-Warning ('⚠️ HTTP接続が失敗しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message)
-			Write-Warning ('　　{0}, {1}, {2}' -f $type, $keyword, $requireData)
+			Write-Warning ('　　{0}, {1}, {2}' -f $keyword, $type, $requireData)
 		} else {
 			Write-Warning ('⚠️ エラーが発生しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message)
-			Write-Warning ('　　{0}, {1}, {2}' -f $type, $keyword, $requireData)
+			Write-Warning ('　　{0}, {1}, {2}' -f $keyword, $type, $requireData)
 		}
 	}
 	return [PSCustomObject]@{
