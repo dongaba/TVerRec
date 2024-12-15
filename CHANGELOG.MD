@@ -7,7 +7,8 @@
 ### 3.2.6 Changed
 
 - シリーズ名、シーズン名がエピソード名と同一の場合に、番組ファイル名にシリーズ名、シーズン名が重複しないように変更 [Issue #130](https://github.com/dongaba/TVerRec/issues/130)
-- メモリ使用量の削減
+- 個別ダウンロード時に、一度に大量のURLを指定しても同時ダウンロード数制御をするように変更 [Issue #132](https://github.com/dongaba/TVerRec/issues/132)
+- メモリ使用量の削減と高速化
 
 ### 3.2.6 Fixed
 
