@@ -380,7 +380,7 @@ function Format-HistoryRecord {
 function Format-ListRecord {
 	Param ([Parameter(Mandatory = $true)][pscustomobject][ref]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	$customObject = [pscustomobject]@{
+	$downloadListItem = [pscustomobject]@{
 		seriesName     = $videoInfo.seriesName
 		seriesID       = $videoInfo.seriesID
 		seriesPageURL  = $videoInfo.seriesPageURL
@@ -397,9 +397,9 @@ function Format-ListRecord {
 		keyword        = $videoInfo.keyword
 		ignoreWord     = $videoInfo.ignoreWord
 	}
-	if ($script:extractDescTextToList) { $customObject | Add-Member -NotePropertyName descriptionText -NotePropertyValue $videoInfo.descriptionText }
-	else { $customObject | Add-Member -NotePropertyName descriptionText -NotePropertyValue '' }
-	return $customObject
+	if ($script:extractDescTextToList) { $downloadListItem | Add-Member -NotePropertyName descriptionText -NotePropertyValue $videoInfo.descriptionText }
+	else { $downloadListItem | Add-Member -NotePropertyName descriptionText -NotePropertyValue '' }
+	return $downloadListItem
 }
 
 #----------------------------------------------------------------------
@@ -563,7 +563,6 @@ function Update-VideoList {
 #TVerのAPIを叩いて番組情報取得
 #----------------------------------------------------------------------
 function Get-VideoInfo {
-	[OutputType([System.Void])]
 	Param ([Parameter(Mandatory = $true)][String]$episodeID)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	#----------------------------------------------------------------------
@@ -671,7 +670,7 @@ function Get-VideoInfo {
 #保存ファイル名を設定
 #----------------------------------------------------------------------
 function Format-VideoFileInfo {
-	[OutputType([pscustomobject])]
+	[OutputType([System.Void])]
 	Param ([Parameter(Mandatory = $true)][pscustomobject][ref]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$videoName = ''
@@ -1200,8 +1199,8 @@ switch ($true) {
 	}
 	default {
 		$script:os = [String][System.Environment]::OSVersion
-		$script:kernel = ''
-		$script:arch = ''
-		$script:guid = ''
+		$script:kernel = 'Unknown'
+		$script:arch = 'Unknown'
+		$script:guid = 'Unknown'
 	}
 }
