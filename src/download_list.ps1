@@ -82,10 +82,7 @@ foreach ($videoLink in $videoLinks) {
 	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 	Wait-YtdlProcess $script:parallelDownloadFileNum
 	#TVer番組ダウンロードのメイン処理
-	Invoke-VideoDownload `
-		-Keyword $keyword `
-		-EpisodePage $videoLink `
-		-Force $false
+	Invoke-VideoDownload -Keyword ([ref]$keyword) -VideoLink ([ref]$videoLink) -Force $false
 }
 #----------------------------------------------------------------------
 

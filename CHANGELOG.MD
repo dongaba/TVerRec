@@ -1,5 +1,16 @@
 # Change Log
 
+## [3.2.6](https://github.com/dongaba/TVerRec/releases/tag/v3.2.6)
+
+### 3.2.6 Added
+
+### 3.2.6 Changed
+
+- シリーズ名、シーズン名がエピソード名と同一の場合に、番組ファイル名にシリーズ名、シーズン名が重複しないように変更 [Issue #130](https://github.com/dongaba/TVerRec/issues/130)
+- メモリ使用量の削減
+
+### 3.2.6 Fixed
+
 ## [3.2.5](https://github.com/dongaba/TVerRec/releases/tag/v3.2.5)
 
 ### 3.2.5 Added
