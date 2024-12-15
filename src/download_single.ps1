@@ -104,11 +104,15 @@ while ($true) {
 		Wait-YtdlProcess $script:parallelDownloadFileNum
 		switch -Regex ($videoLink) {
 			'^https://tver.jp/(/?.*)' { #TVer番組ダウンロードのメイン処理
+				Write-Output ('')
+				Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 				Write-Output ('{0}' -f $videoLink)
 				Invoke-VideoDownload -Keyword ([ref]$keyword) -VideoLink ([ref]$videoLink) -Force $script:forceSingleDownload
 				continue
 			}
 			'^.*://' { #TVer以外のサイトへの対応
+				Write-Output ('')
+				Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 				Write-Output ('ダウンロード：{0}' -f $videoLink)
 				Invoke-NonTverYtdl $videoLink
 				Start-Sleep -Seconds 1
