@@ -91,7 +91,7 @@ function Get-LinkFromKeyword {
 	[OutputType([System.Void])]
 	Param (
 		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$id,
-		[Parameter(Mandatory = $false)][ValidateSet('series', 'season', 'talent', 'specialMain', 'specialDetail', 'tag', 'new', 'ranking', 'keyword')][string]$type,
+		[Parameter(Mandatory = $false)][ValidateSet('series', 'season', 'talent', 'specialMain', 'specialDetail', 'tag', 'new', 'ranking', 'keyword', 'category')][string]$type,
 		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject][ref]$linkCollection
 	)
 	Write-Debug ($MyInvocation.MyCommand.Name)
@@ -109,6 +109,7 @@ function Get-LinkFromKeyword {
 			else { ('https://platform-api.tver.jp/service/api/v1/callEpisodeRankingDetail/{0}' -f $id) }
 			$type = 'ranking' ; continue
 		}
+		'category' { 'https://platform-api.tver.jp/service/api/v1/callCategoryHome/{0}' -f $id; continue}
 		'keyword' { 'https://platform-api.tver.jp/service/api/v1/callKeywordSearch'; $keyword = $id ; continue }
 		default { Write-Warning '無効なタイプが指定されました。' }
 	}
@@ -157,6 +158,7 @@ function Get-SearchResults {
 	$searchResults = switch ($type) {
 		'specialmain' { $searchResultsRaw.Result.specialContents ; continue }
 		'specialdetail' { $searchResultsRaw.Result.Contents.Content.Contents ; continue }
+		'category' { $searchResultsRaw.Result.components.contents ; continue }
 		{ $_ -in 'new', 'ranking' } { $searchResultsRaw.Result.Contents.Contents ; continue }
 		default { $searchResultsRaw.Result.Contents }
 	}
@@ -164,6 +166,7 @@ function Get-SearchResults {
 	foreach ($searchResult in $searchResults) {
 		switch ($searchResult.Type) {
 			'live' { continue }
+			'banner' { continue }
 			'episode' { $linkCollection.episodeLinks.Add('https://tver.jp/episodes/{0}' -f $searchResult.Content.Id) ; continue }
 			'season' { $linkCollection.seasonLinks.Add($searchResult.Content.Id) ; continue }
 			'series' { $linkCollection.seriesLinks.Add($searchResult.Content.Id) ; continue }
@@ -225,7 +228,7 @@ function Get-LinkFromTopPage {
 	catch { Write-Warning 'トップページを取得できませんでした' return }
 	foreach ($component in $searchResults.Result.Components) {
 		switch ($component.Type) {
-			{ $_ -in @('horizontal', 'richHorizontal', 'ranking', 'talents', 'billboard', 'episodeRanking', 'newer', 'ender', 'talent', 'special', 'specialContent', 'topics', 'spikeRanking') } {
+			{ $_ -in @('horizontal', 'richHorizontal', 'ranking', 'talents', 'billboard', 'episodeRanking', 'newer', 'ender', 'talent', 'special', 'specialContent', 'topics', 'spikeRanking', 'seasonEpisode') } {
 				$contents = if ($component.Type -eq 'topics') { $component.Contents.Content.Content } else { $component.Contents }
 				foreach ($content in $contents) {
 					if ($content.Type -eq 'live') { continue }
@@ -284,6 +287,13 @@ function Get-LinkFromSiteMap {
 					if (!$script:sitemapParseEpisodeOnly) {
 						Write-Information ('{0} - {1} {2} からEpisodeを抽出中...' -f (Get-Date), $tverID.type, $tverID.id)
 						Get-LinkFromKeyword -id $tverID.id -type 'specialMain' -LinkCollection ([ref]$linkCollection)
+					}
+					continue
+				}
+				'categories' {
+					if (!$script:sitemapParseEpisodeOnly) {
+						Write-Information ('{0} - {1} {2} からEpisodeを抽出中...' -f (Get-Date), $tverID.type, $tverID.id)
+						Get-LinkFromKeyword -id $tverID.id -type 'category' -LinkCollection ([ref]$linkCollection)
 					}
 					continue
 				}
