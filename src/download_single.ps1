@@ -33,7 +33,7 @@ if (!$script:guiMode) { $script:guiMode = $false }
 #無限ループ
 while ($true) {
 	#いろいろ初期化
-	$videoPageURL = ''
+	$videoLink = ''
 	#移動先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
 	if (!(Test-Path $script:downloadBaseDir -PathType Container)) { Throw ('❌️ 番組ダウンロード先ディレクトリにアクセスできません。終了します') }
 	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
@@ -99,25 +99,28 @@ while ($true) {
 	if (-not $script:videoPageList) { break }
 
 	#複数入力されていたら全てダウンロード
-	foreach ($videoPageURL in  $script:videoPageList) {
-		switch -Regex ($videoPageURL) {
+	foreach ($videoLink in  $script:videoPageList) {
+		#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
+		Wait-YtdlProcess $script:parallelDownloadFileNum
+		switch -Regex ($videoLink) {
 			'^https://tver.jp/(/?.*)' { #TVer番組ダウンロードのメイン処理
-				Write-Output ('{0}' -f $videoPageURL)
-				Invoke-VideoDownload -Keyword $keyword -EpisodePage $videoPageURL -Force $script:forceSingleDownload
+				Write-Output ('')
+				Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+				Write-Output ('{0}' -f $videoLink)
+				Invoke-VideoDownload -Keyword ([ref]$keyword) -VideoLink ([ref]$videoLink) -Force $script:forceSingleDownload
 				continue
 			}
 			'^.*://' { #TVer以外のサイトへの対応
-				Write-Output ('ダウンロード：{0}' -f $videoPageURL)
-				Invoke-NonTverYtdl $videoPageURL
+				Write-Output ('')
+				Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+				Write-Output ('ダウンロード：{0}' -f $videoLink)
+				Invoke-NonTverYtdl $videoLink
 				Start-Sleep -Seconds 1
 				continue
 			}
-			default { Write-Warning ('URLではありません: {0}' -f $videoPageURL) ; continue }
+			default { Write-Warning ('URLではありません: {0}' -f $videoLink) ; continue }
 		}
 	}
-
-	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
-	Wait-YtdlProcess $script:parallelDownloadFileNum
 
 }
 

@@ -863,7 +863,7 @@
 							<Expander Margin="10,10,10,0"
 									IsExpanded="False"
 									FontFamily="Yu Gothic UI"
-									Header="不要ファイル削除時に保存のチェック">
+									Header="不要ファイル削除時に保存ディレクトリのチェック">
 								<TextBlock Margin="20,0,20,5"
 										TextWrapping="Wrap">
 									不要ファイル削除時に保存ディレクトリもチェック対象にするかを設定します。 <LineBreak/>

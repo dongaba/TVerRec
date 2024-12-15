@@ -53,7 +53,7 @@ foreach ($keyword in $keywords) {
 	Write-Output ('{0}' -f $keyword)
 
 	$keyword = (Remove-Comment($keyword.Replace('https://tver.jp/', '').Trim()))
-	$listLinks = @(Get-VideoLinksFromKeyword($keyword))
+	$listLinks = @(Get-VideoLinksFromKeyword ([ref]$keyword))
 
 	#URLがすでにダウンロードリストやダウンロード履歴に存在する場合は検索結果から除外
 	if ($listLinks.Count -ne 0) {
@@ -133,7 +133,7 @@ foreach ($keyword in $keywords) {
 			Update-ProgressToast2Row @toastUpdateParams
 			Write-Output ('　{0}/{1} - {2}' -f $videoNum, $videoTotal, $videoLink)
 			#TVer番組ダウンロードのメイン処理
-			Update-VideoList -Keyword $keyword -EpisodePage $videoLink
+			Update-VideoList -Keyword ([ref]$keyword) -VideoLink ([ref]$videoLink)
 		}
 	}
 	#----------------------------------------------------------------------
