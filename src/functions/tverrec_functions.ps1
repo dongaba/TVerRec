@@ -319,10 +319,11 @@ function Invoke-HistoryAndListMatchCheck {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	#ダウンロードリストファイルのデータを読み込み
 	$listFileData = @(Read-DownloadList)
-	$listVideoPages = $listFileData | ForEach-Object { 'https://tver.jp/episodes/{0}' -f $_.EpisodeID.Replace('#', '') }
+	$listVideoPages = @()
+	foreach ($listFileLine in $listFileData) { $listVideoPages += ('https://tver.jp/episodes/{0}' -f $listFileLine.EpisodeID.Replace('#', '')) }
 	#ダウンロード履歴ファイルのデータを読み込み
 	$histFileData = @(Read-HistoryFile)
-	$histVideoPages = if ($histFileData.Count -eq 0) { @() } else { $histFileData | Select-Object -ExpandProperty VideoPage }
+	if ($histFileData.Count -eq 0) { $histVideoPages = @() } else { $histVideoPages = @($histFileData.VideoPage) }
 	#ダウンロードリストとダウンロード履歴をマージ
 	$listVideoPages += $histVideoPages
 	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
@@ -877,6 +878,15 @@ function Wait-DownloadCompletion () {
 		$ytdlCount = Get-YtdlProcessCount
 	}
 	Remove-Variable -Name ytdlCount -ErrorAction SilentlyContinue
+}
+
+#----------------------------------------------------------------------
+#ダウンロードスケジュールに合わせたスケジュール制御
+#----------------------------------------------------------------------
+function Wait-DownloadSchedule () {
+	[OutputType([System.Void])]
+	Param ()
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 }
 
 #----------------------------------------------------------------------
