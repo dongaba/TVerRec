@@ -883,10 +883,27 @@ function Wait-DownloadCompletion () {
 #----------------------------------------------------------------------
 #ダウンロードスケジュールに合わせたスケジュール制御
 #----------------------------------------------------------------------
-function Wait-DownloadSchedule () {
+function Suspend-Process () {
 	[OutputType([System.Void])]
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if ($script:ScheduleStop) {
+		Write-Debug ('稼働スケジュールを確認します') 
+		while ($true) {
+			$currentDateTime = Get-Date
+			$currentDay = ($currentDateTime).DayOfWeek.ToString().Substring(0, 3)
+			$currentHour = ($currentDateTime).Hour
+			if ($script:StopSchedule.ContainsKey($currentDay)) {
+				if ($script:StopSchedule[$currentDay] -contains $currentHour) {
+					Write-Output ('{0} 現在は処理停止時間帯です。' -f ($currentDateTime))
+					# 次の正時までの時間差を計算
+					$timeDifference = $currentDateTime.AddHours(1).Date.AddHours($currentDateTime.Hour + 1) - $currentDateTime
+					Start-Sleep -Seconds ([math]::Ceiling($timeDifference.TotalSeconds))
+				} else { break }
+			} else { break }
+		}
+	}
+	Remove-Variable -Name currentDateTime, currentDay, currentHour, timeDifference -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
