@@ -50,6 +50,7 @@ $msgInformation = [System.Collections.ArrayList]::new()
 
 #GUIイベントの処理
 function Sync-WpfEvents {
+	Param ()
 	[DispatcherFrame] $frame = [DispatcherFrame]::new($true)
 	[Dispatcher]::CurrentDispatcher.BeginInvoke(
 		'Background',
@@ -64,7 +65,12 @@ function Sync-WpfEvents {
 }
 
 #最大行数以上の実行ログをクリア
-function LimitRichTextBoxLines($richTextBox, $limit) {
+function LimitRichTextBoxLines() {
+	[OutputType([System.Void])]
+	Param (
+		[parameter(Mandatory = $true)]$richTextBox,
+		[parameter(Mandatory = $true)]$limit
+	)
 	if ($richTextBox.Document.Blocks.Count -gt $limit) {
 		$linesToRemove = $richTextBox.Document.Blocks.Count - $limit
 		for ($i = 0 ; $i -lt $linesToRemove ; $i++) { $richTextBox.Document.Blocks.Remove($richTextBox.Document.Blocks.FirstBlock) | Out-Null }
@@ -74,6 +80,7 @@ function LimitRichTextBoxLines($richTextBox, $limit) {
 
 #テキストボックスへのログ出力と再描画
 function Out-ExecutionLog {
+	[OutputType([System.Void])]
 	Param (
 		[parameter(Mandatory = $false)][String]$message = '',
 		[parameter(Mandatory = $false)][String]$type = 'Output'
