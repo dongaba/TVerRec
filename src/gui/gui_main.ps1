@@ -65,7 +65,7 @@ function Sync-WpfEvents {
 }
 
 #最大行数以上の実行ログをクリア
-function LimitRichTextBoxLines() {
+function Clear-ExceededLogs() {
 	[OutputType([System.Void])]
 	Param (
 		[parameter(Mandatory = $true)]$richTextBox,
@@ -85,7 +85,7 @@ function Out-ExecutionLog {
 		[parameter(Mandatory = $false)][String]$message = '',
 		[parameter(Mandatory = $false)][String]$type = 'Output'
 	)
-	if ($script:guiMaxExecLogLines -gt 0) { LimitRichTextBoxLines $outText $script:guiMaxExecLogLines }
+	if ($script:guiMaxExecLogLines -gt 0) { Clear-ExceededLogs $outText $script:guiMaxExecLogLines }
 	$rtfRange = [System.Windows.Documents.TextRange]::new($outText.Document.ContentEnd, $outText.Document.ContentEnd)
 	$rtfRange.Text = ("{0}`n" -f $Message)
 	$rtfRange.ApplyPropertyValue([System.Windows.Documents.TextElement]::ForegroundProperty, $msgTypesColorMap[$type] )
