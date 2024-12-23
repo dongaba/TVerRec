@@ -24,6 +24,7 @@ RUN	apt-get update \
 	vim \
 	htop \
 	sudo \
+	tzdata \
 	&& apt-get autoremove -y \
 	&& apt-get clean -y  \
 	&& rm -rf /var/lib/apt/lists/*

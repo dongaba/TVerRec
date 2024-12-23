@@ -23,6 +23,7 @@ try {
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
 Invoke-RequiredFileCheck
+Suspend-Process
 
 #======================================================================
 #ダウンロード履歴ファイルのクリーンアップ
@@ -148,9 +149,8 @@ while ($videoNotValidatedNum -ne 0) {
 			if (!(Test-Path $script:downloadBaseDir -PathType Container)) { Throw ('❌️ 番組ダウンロード先ディレクトリにアクセスできません。終了します。') }
 			#番組の整合性チェック
 			Write-Output ('{0}/{1} - {2}' -f $validateNum, $validateTotal, $videoFileRelPath)
-			Invoke-ValidityCheck `
-				-Path $videoFileRelPath `
-				-DecodeOption $decodeOption
+			Invoke-ValidityCheck -Path $videoFileRelPath -DecodeOption $decodeOption
+			Suspend-Process
 			Start-Sleep -Seconds 1
 		}
 		#----------------------------------------------------------------------
