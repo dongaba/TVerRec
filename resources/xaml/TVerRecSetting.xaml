@@ -100,7 +100,7 @@
 				</Grid.ColumnDefinitions>
 				<Border x:Name="Border" Grid.ColumnSpan="2" BorderThickness="1" Style="{StaticResource ChangingColorComboBoxBorderStyle}"/>
 				<Border x:Name="TextBoxBorder" Grid.Column="0" Margin="1" Style="{StaticResource ChangingColorComboBoxBorderStyle}"/>
-				<Path x:Name="Arrow" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Data="M0,0 L0,2 L4,6 L8,2 L8,0 L4,4 z" Fill="#393939">
+				<Path x:Name="Arrow" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Data="M0,0 L0,2 L4,6 L8,2 L8,0 L4,4 z" Fill="#393939">
 				<!-- ↑ドロップダウンの矢印 -->
 				</Path>
 			</Grid>
@@ -253,6 +253,37 @@
 								<Setter Property="Background" TargetName="border" Value="{StaticResource Button.Disabled.Background}"/>
 								<Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Button.Disabled.Border}"/>
 								<Setter Property="TextElement.Foreground" TargetName="contentPresenter" Value="{StaticResource Button.Disabled.Foreground}"/>
+							</Trigger>
+						</ControlTemplate.Triggers>
+					</ControlTemplate>
+				</Setter.Value>
+			</Setter>
+		</Style>
+
+		<!-- チェックボックスのスタイル -->
+		<Style TargetType="CheckBox" x:Key="CustomCheckBoxStyle">
+			<Setter Property="Foreground" Value="DarkBlue"/>
+			<Setter Property="FontWeight" Value="Bold"/>
+			<Setter Property="Margin" Value="5"/>
+			<Setter Property="HorizontalContentAlignment" Value="Center"/>
+			<Setter Property="VerticalContentAlignment" Value="Center"/>
+			<Setter Property="Template">
+				<Setter.Value>
+					<ControlTemplate TargetType="CheckBox">
+						<BulletDecorator Background="Transparent" HorizontalAlignment="Center">
+							<BulletDecorator.Bullet>
+								<Border BorderBrush="#808080" BorderThickness="1" Width="14" Height="14" Background="{TemplateBinding Background}">
+									<Grid>
+										<!--<Ellipse Fill="Transparent" Stroke="Black" StrokeThickness="1"/>-->
+										<Path x:Name="checkMark" Data="M 0 6 L 4 10 L 12 2" Stroke="#393939" StrokeThickness="2" Visibility="Collapsed"/>
+									</Grid>
+								</Border>
+							</BulletDecorator.Bullet>
+							<ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center" Margin="4,0,0,0"/>
+						</BulletDecorator>
+						<ControlTemplate.Triggers>
+							<Trigger Property="IsChecked" Value="True">
+								<Setter TargetName="checkMark" Property="Visibility" Value="Visible"/>
 							</Trigger>
 						</ControlTemplate.Triggers>
 					</ControlTemplate>
@@ -884,8 +915,6 @@
 					</ScrollViewer>
 				</TabItem>
 
-
-
 				<!-- スケジュール設定タブ -->
 				<TabItem Header="スケジュール設定" Name="TabItem6" Style="{StaticResource TabItem}">
 					<ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -935,9 +964,13 @@
 									<RowDefinition/>
 									<RowDefinition/>
 									<RowDefinition/>
+									<RowDefinition/>
 								</Grid.RowDefinitions>
 								<Grid.ColumnDefinitions>
 									<ColumnDefinition Width="80"/>
+									<ColumnDefinition Width="1"/>
+									<ColumnDefinition Width="40"/>
+									<ColumnDefinition Width="1"/>
 									<ColumnDefinition Width="40"/>
 									<ColumnDefinition Width="40"/>
 									<ColumnDefinition Width="40"/>
@@ -948,242 +981,276 @@
 								</Grid.ColumnDefinitions>
 
 								<TextBlock Grid.Row="0" Grid.Column="0" Text="時間帯" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<TextBlock Grid.Row="0" Grid.Column="1" Text="月曜" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<TextBlock Grid.Row="0" Grid.Column="2" Text="火曜" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<TextBlock Grid.Row="0" Grid.Column="3" Text="水曜" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<TextBlock Grid.Row="0" Grid.Column="4" Text="木曜" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<TextBlock Grid.Row="0" Grid.Column="5" Text="金曜" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<TextBlock Grid.Row="0" Grid.Column="6" Text="土曜" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<TextBlock Grid.Row="0" Grid.Column="7" Text="日曜" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<Rectangle Grid.Row="0" Grid.ColumnSpan="8" Fill="#808080" RadiusX="1" RadiusY="1" Height="1" VerticalAlignment="Bottom" Margin="0,0,0,0"/>
+								<TextBlock Grid.Row="0" Grid.Column="2" Text="毎日" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<TextBlock Grid.Row="0" Grid.Column="4" Text="月曜" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<TextBlock Grid.Row="0" Grid.Column="5" Text="火曜" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<TextBlock Grid.Row="0" Grid.Column="6" Text="水曜" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<TextBlock Grid.Row="0" Grid.Column="7" Text="木曜" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<TextBlock Grid.Row="0" Grid.Column="8" Text="金曜" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<TextBlock Grid.Row="0" Grid.Column="9" Text="土曜" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<TextBlock Grid.Row="0" Grid.Column="10" Text="日曜" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<Rectangle Grid.Row="0" Grid.ColumnSpan="11" Fill="#393939" Height="1" VerticalAlignment="Bottom" Margin="0,0,0,0"/>
+								<Rectangle Grid.RowSpan="26" Grid.Column="1" Fill="#393939" Height="520" VerticalAlignment="Top" Margin="0,0,0,0"/>
+								<Rectangle Grid.RowSpan="26" Grid.Column="3" Fill="#808080" Height="520" VerticalAlignment="Top" Margin="0,0,0,0"/>
 
-								<TextBlock Text="0:00 - 0:59" Grid.Row="1" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopMon00" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopTue00" Grid.Row="1" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopWed00" Grid.Row="1" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopThu00" Grid.Row="1" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopFri00" Grid.Row="1" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSat00" Grid.Row="1" Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSun00" Grid.Row="1" Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<TextBlock Text="終日" Grid.Row="1" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopMonAll" Grid.Row="1" Grid.Column="4" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopTueAll" Grid.Row="1" Grid.Column="5" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopWedAll" Grid.Row="1" Grid.Column="6" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopThuAll" Grid.Row="1" Grid.Column="7" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopFriAll" Grid.Row="1" Grid.Column="8" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSatAll" Grid.Row="1" Grid.Column="9" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSunAll" Grid.Row="1" Grid.Column="10" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<Rectangle Grid.Row="1" Grid.ColumnSpan="11" Fill="#808080" Height="1" VerticalAlignment="Bottom" Margin="0,0,0,0"/>
 
-								<TextBlock Text="1:00 - 1:59" Grid.Row="2" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopMon01" Grid.Row="2" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopTue01" Grid.Row="2" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopWed01" Grid.Row="2" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopThu01" Grid.Row="2" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopFri01" Grid.Row="2" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSat01" Grid.Row="2" Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSun01" Grid.Row="2" Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<TextBlock Text="0:00 - 0:59" Grid.Row="2" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStop00All" Grid.Row="2" Grid.Column="2" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopMon00" Grid.Row="2" Grid.Column="4" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopTue00" Grid.Row="2" Grid.Column="5" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopWed00" Grid.Row="2" Grid.Column="6" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopThu00" Grid.Row="2" Grid.Column="7" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopFri00" Grid.Row="2" Grid.Column="8" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSat00" Grid.Row="2" Grid.Column="9" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSun00" Grid.Row="2" Grid.Column="10" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
 
-								<TextBlock Text="2:00 - 2:59" Grid.Row="3" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopMon02" Grid.Row="3" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopTue02" Grid.Row="3" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopWed02" Grid.Row="3" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopThu02" Grid.Row="3" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopFri02" Grid.Row="3" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSat02" Grid.Row="3" Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSun02" Grid.Row="3" Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<TextBlock Text="1:00 - 1:59" Grid.Row="3" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStop01All" Grid.Row="3" Grid.Column="2" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopMon01" Grid.Row="3" Grid.Column="4" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopTue01" Grid.Row="3" Grid.Column="5" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopWed01" Grid.Row="3" Grid.Column="6" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopThu01" Grid.Row="3" Grid.Column="7" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopFri01" Grid.Row="3" Grid.Column="8" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSat01" Grid.Row="3" Grid.Column="9" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSun01" Grid.Row="3" Grid.Column="10" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
 
-								<TextBlock Text="3:00 - 3:59" Grid.Row="4" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopMon03" Grid.Row="4" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopTue03" Grid.Row="4" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopWed03" Grid.Row="4" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopThu03" Grid.Row="4" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopFri03" Grid.Row="4" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSat03" Grid.Row="4" Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSun03" Grid.Row="4" Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<TextBlock Text="2:00 - 2:59" Grid.Row="4" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStop02All" Grid.Row="4" Grid.Column="2" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopMon02" Grid.Row="4" Grid.Column="4" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopTue02" Grid.Row="4" Grid.Column="5" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopWed02" Grid.Row="4" Grid.Column="6" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopThu02" Grid.Row="4" Grid.Column="7" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopFri02" Grid.Row="4" Grid.Column="8" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSat02" Grid.Row="4" Grid.Column="9" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSun02" Grid.Row="4" Grid.Column="10" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
 
-								<TextBlock Text="4:00 - 4:59" Grid.Row="5" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopMon04" Grid.Row="5" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopTue04" Grid.Row="5" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopWed04" Grid.Row="5" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopThu04" Grid.Row="5" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopFri04" Grid.Row="5" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSat04" Grid.Row="5" Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSun04" Grid.Row="5" Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<TextBlock Text="3:00 - 3:59" Grid.Row="5" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStop03All" Grid.Row="5" Grid.Column="2" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopMon03" Grid.Row="5" Grid.Column="4" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopTue03" Grid.Row="5" Grid.Column="5" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopWed03" Grid.Row="5" Grid.Column="6" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopThu03" Grid.Row="5" Grid.Column="7" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopFri03" Grid.Row="5" Grid.Column="8" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSat03" Grid.Row="5" Grid.Column="9" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSun03" Grid.Row="5" Grid.Column="10" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
 
-								<TextBlock Text="5:00 - 5:59" Grid.Row="6" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopMon05" Grid.Row="6" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopTue05" Grid.Row="6" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopWed05" Grid.Row="6" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopThu05" Grid.Row="6" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopFri05" Grid.Row="6" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSat05" Grid.Row="6" Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSun05" Grid.Row="6" Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<Rectangle Grid.Row="6" Grid.ColumnSpan="8" Fill="#BBBBBB" RadiusX="1" RadiusY="1" Height="1" VerticalAlignment="Bottom" Margin="0,0,0,0"/>
+								<TextBlock Text="4:00 - 4:59" Grid.Row="6" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStop04All" Grid.Row="6" Grid.Column="2" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopMon04" Grid.Row="6" Grid.Column="4" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopTue04" Grid.Row="6" Grid.Column="5" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopWed04" Grid.Row="6" Grid.Column="6" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopThu04" Grid.Row="6" Grid.Column="7" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopFri04" Grid.Row="6" Grid.Column="8" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSat04" Grid.Row="6" Grid.Column="9" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSun04" Grid.Row="6" Grid.Column="10" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
 
-								<TextBlock Text="6:00 - 6:59" Grid.Row="7" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopMon06" Grid.Row="7" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopTue06" Grid.Row="7" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopWed06" Grid.Row="7" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopThu06" Grid.Row="7" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopFri06" Grid.Row="7" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSat06" Grid.Row="7" Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSun06" Grid.Row="7" Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<TextBlock Text="5:00 - 5:59" Grid.Row="7" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStop05All" Grid.Row="7" Grid.Column="2" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopMon05" Grid.Row="7" Grid.Column="4" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopTue05" Grid.Row="7" Grid.Column="5" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopWed05" Grid.Row="7" Grid.Column="6" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopThu05" Grid.Row="7" Grid.Column="7" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopFri05" Grid.Row="7" Grid.Column="8" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSat05" Grid.Row="7" Grid.Column="9" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSun05" Grid.Row="7" Grid.Column="10" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<Rectangle Grid.Row="7" Grid.ColumnSpan="11" Fill="#BBBBBB" Height="1" VerticalAlignment="Bottom" Margin="0,0,0,0"/>
 
-								<TextBlock Text="7:00 - 7:59" Grid.Row="8" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopMon07" Grid.Row="8" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopTue07" Grid.Row="8" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopWed07" Grid.Row="8" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopThu07" Grid.Row="8" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopFri07" Grid.Row="8" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSat07" Grid.Row="8" Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSun07" Grid.Row="8" Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<TextBlock Text="6:00 - 6:59" Grid.Row="8" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStop06All" Grid.Row="8" Grid.Column="2" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopMon06" Grid.Row="8" Grid.Column="4" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopTue06" Grid.Row="8" Grid.Column="5" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopWed06" Grid.Row="8" Grid.Column="6" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopThu06" Grid.Row="8" Grid.Column="7" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopFri06" Grid.Row="8" Grid.Column="8" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSat06" Grid.Row="8" Grid.Column="9" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSun06" Grid.Row="8" Grid.Column="10" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
 
-								<TextBlock Text="8:00 - 8:59" Grid.Row="9" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopMon08" Grid.Row="9" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopTue08" Grid.Row="9" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopWed08" Grid.Row="9" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopThu08" Grid.Row="9" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopFri08" Grid.Row="9" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSat08" Grid.Row="9" Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSun08" Grid.Row="9" Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<TextBlock Text="7:00 - 7:59" Grid.Row="9" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStop07All" Grid.Row="9" Grid.Column="2" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopMon07" Grid.Row="9" Grid.Column="4" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopTue07" Grid.Row="9" Grid.Column="5" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopWed07" Grid.Row="9" Grid.Column="6" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopThu07" Grid.Row="9" Grid.Column="7" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopFri07" Grid.Row="9" Grid.Column="8" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSat07" Grid.Row="9" Grid.Column="9" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSun07" Grid.Row="9" Grid.Column="10" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
 
-								<TextBlock Text="9:00 - 9:59" Grid.Row="10" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopMon09" Grid.Row="10" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopTue09" Grid.Row="10" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopWed09" Grid.Row="10" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopThu09" Grid.Row="10" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopFri09" Grid.Row="10" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSat09" Grid.Row="10" Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSun09" Grid.Row="10" Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<TextBlock Text="8:00 - 8:59" Grid.Row="10" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStop08All" Grid.Row="10" Grid.Column="2" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopMon08" Grid.Row="10" Grid.Column="4" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopTue08" Grid.Row="10" Grid.Column="5" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopWed08" Grid.Row="10" Grid.Column="6" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopThu08" Grid.Row="10" Grid.Column="7" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopFri08" Grid.Row="10" Grid.Column="8" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSat08" Grid.Row="10" Grid.Column="9" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSun08" Grid.Row="10" Grid.Column="10" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
 
-								<TextBlock Text="10:00 - 10:59" Grid.Row="11" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopMon10" Grid.Row="11" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopTue10" Grid.Row="11" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopWed10" Grid.Row="11" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopThu10" Grid.Row="11" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopFri10" Grid.Row="11" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSat10" Grid.Row="11" Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSun10" Grid.Row="11" Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<TextBlock Text="9:00 - 9:59" Grid.Row="11" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStop09All" Grid.Row="11" Grid.Column="2" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopMon09" Grid.Row="11" Grid.Column="4" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopTue09" Grid.Row="11" Grid.Column="5" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopWed09" Grid.Row="11" Grid.Column="6" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopThu09" Grid.Row="11" Grid.Column="7" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopFri09" Grid.Row="11" Grid.Column="8" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSat09" Grid.Row="11" Grid.Column="9" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSun09" Grid.Row="11" Grid.Column="10" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
 
-								<TextBlock Text="11:00 - 11:59" Grid.Row="12" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopMon11" Grid.Row="12" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopTue11" Grid.Row="12" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopWed11" Grid.Row="12" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopThu11" Grid.Row="12" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopFri11" Grid.Row="12" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSat11" Grid.Row="12" Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSun11" Grid.Row="12" Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<Rectangle Grid.Row="12" Grid.ColumnSpan="8" Fill="#BBBBBB" RadiusX="1" RadiusY="1" Height="1" Margin="0,20,0,0"/>
+								<TextBlock Text="10:00 - 10:59" Grid.Row="12" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStop10All" Grid.Row="12" Grid.Column="2" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopMon10" Grid.Row="12" Grid.Column="4" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopTue10" Grid.Row="12" Grid.Column="5" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopWed10" Grid.Row="12" Grid.Column="6" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopThu10" Grid.Row="12" Grid.Column="7" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopFri10" Grid.Row="12" Grid.Column="8" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSat10" Grid.Row="12" Grid.Column="9" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSun10" Grid.Row="12" Grid.Column="10" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
 
-								<TextBlock Text="12:00 - 12:59" Grid.Row="13" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopMon12" Grid.Row="13" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopTue12" Grid.Row="13" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopWed12" Grid.Row="13" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopThu12" Grid.Row="13" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopFri12" Grid.Row="13" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSat12" Grid.Row="13" Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSun12" Grid.Row="13" Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<TextBlock Text="11:00 - 11:59" Grid.Row="13" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStop11All" Grid.Row="13" Grid.Column="2" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopMon11" Grid.Row="13" Grid.Column="4" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopTue11" Grid.Row="13" Grid.Column="5" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopWed11" Grid.Row="13" Grid.Column="6" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopThu11" Grid.Row="13" Grid.Column="7" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopFri11" Grid.Row="13" Grid.Column="8" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSat11" Grid.Row="13" Grid.Column="9" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSun11" Grid.Row="13" Grid.Column="10" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<Rectangle Grid.Row="13" Grid.ColumnSpan="11" Fill="#BBBBBB" Height="1" Margin="0,20,0,0"/>
 
-								<TextBlock Text="13:00 - 13:59" Grid.Row="14" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopMon13" Grid.Row="14" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopTue13" Grid.Row="14" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopWed13" Grid.Row="14" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopThu13" Grid.Row="14" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopFri13" Grid.Row="14" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSat13" Grid.Row="14" Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSun13" Grid.Row="14" Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<TextBlock Text="12:00 - 12:59" Grid.Row="14" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStop12All" Grid.Row="14" Grid.Column="2" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopMon12" Grid.Row="14" Grid.Column="4" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopTue12" Grid.Row="14" Grid.Column="5" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopWed12" Grid.Row="14" Grid.Column="6" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopThu12" Grid.Row="14" Grid.Column="7" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopFri12" Grid.Row="14" Grid.Column="8" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSat12" Grid.Row="14" Grid.Column="9" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSun12" Grid.Row="14" Grid.Column="10" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
 
-								<TextBlock Text="14:00 - 14:59" Grid.Row="15" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopMon14" Grid.Row="15" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopTue14" Grid.Row="15" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopWed14" Grid.Row="15" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopThu14" Grid.Row="15" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopFri14" Grid.Row="15" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSat14" Grid.Row="15" Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSun14" Grid.Row="15" Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<TextBlock Text="13:00 - 13:59" Grid.Row="15" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStop13All" Grid.Row="15" Grid.Column="2" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopMon13" Grid.Row="15" Grid.Column="4" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopTue13" Grid.Row="15" Grid.Column="5" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopWed13" Grid.Row="15" Grid.Column="6" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopThu13" Grid.Row="15" Grid.Column="7" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopFri13" Grid.Row="15" Grid.Column="8" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSat13" Grid.Row="15" Grid.Column="9" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSun13" Grid.Row="15" Grid.Column="10" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
 
-								<TextBlock Text="15:00 - 15:59" Grid.Row="16" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopMon15" Grid.Row="16" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopTue15" Grid.Row="16" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopWed15" Grid.Row="16" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopThu15" Grid.Row="16" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopFri15" Grid.Row="16" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSat15" Grid.Row="16" Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSun15" Grid.Row="16" Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<TextBlock Text="14:00 - 14:59" Grid.Row="16" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStop14All" Grid.Row="16" Grid.Column="2" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopMon14" Grid.Row="16" Grid.Column="4" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopTue14" Grid.Row="16" Grid.Column="5" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopWed14" Grid.Row="16" Grid.Column="6" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopThu14" Grid.Row="16" Grid.Column="7" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopFri14" Grid.Row="16" Grid.Column="8" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSat14" Grid.Row="16" Grid.Column="9" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSun14" Grid.Row="16" Grid.Column="10" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
 
-								<TextBlock Text="16:00 - 16:59" Grid.Row="17" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopMon16" Grid.Row="17" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopTue16" Grid.Row="17" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopWed16" Grid.Row="17" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopThu16" Grid.Row="17" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopFri16" Grid.Row="17" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSat16" Grid.Row="17" Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSun16" Grid.Row="17" Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<TextBlock Text="15:00 - 15:59" Grid.Row="17" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStop15All" Grid.Row="17" Grid.Column="2" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopMon15" Grid.Row="17" Grid.Column="4" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopTue15" Grid.Row="17" Grid.Column="5" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopWed15" Grid.Row="17" Grid.Column="6" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopThu15" Grid.Row="17" Grid.Column="7" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopFri15" Grid.Row="17" Grid.Column="8" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSat15" Grid.Row="17" Grid.Column="9" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSun15" Grid.Row="17" Grid.Column="10" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
 
-								<TextBlock Text="17:00 - 17:59" Grid.Row="18" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopMon17" Grid.Row="18" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopTue17" Grid.Row="18" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopWed17" Grid.Row="18" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopThu17" Grid.Row="18" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopFri17" Grid.Row="18" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSat17" Grid.Row="18" Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSun17" Grid.Row="18" Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<Rectangle Grid.Row="18" Grid.ColumnSpan="8" Fill="#BBBBBB" RadiusX="1" RadiusY="1" Height="1" VerticalAlignment="Bottom" Margin="0,0,0,0"/>
+								<TextBlock Text="16:00 - 16:59" Grid.Row="18" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStop16All" Grid.Row="18" Grid.Column="2" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopMon16" Grid.Row="18" Grid.Column="4" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopTue16" Grid.Row="18" Grid.Column="5" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopWed16" Grid.Row="18" Grid.Column="6" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopThu16" Grid.Row="18" Grid.Column="7" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopFri16" Grid.Row="18" Grid.Column="8" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSat16" Grid.Row="18" Grid.Column="9" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSun16" Grid.Row="18" Grid.Column="10" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
 
-								<TextBlock Text="18:00 - 18:59" Grid.Row="19" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopMon18" Grid.Row="19" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopTue18" Grid.Row="19" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopWed18" Grid.Row="19" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopThu18" Grid.Row="19" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopFri18" Grid.Row="19" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSat18" Grid.Row="19" Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSun18" Grid.Row="19" Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<TextBlock Text="17:00 - 17:59" Grid.Row="19" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStop17All" Grid.Row="19" Grid.Column="2" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopMon17" Grid.Row="19" Grid.Column="4" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopTue17" Grid.Row="19" Grid.Column="5" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopWed17" Grid.Row="19" Grid.Column="6" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopThu17" Grid.Row="19" Grid.Column="7" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopFri17" Grid.Row="19" Grid.Column="8" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSat17" Grid.Row="19" Grid.Column="9" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSun17" Grid.Row="19" Grid.Column="10" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<Rectangle Grid.Row="19" Grid.ColumnSpan="11" Fill="#BBBBBB" Height="1" VerticalAlignment="Bottom" Margin="0,0,0,0"/>
 
-								<TextBlock Text="19:00 - 19:59" Grid.Row="20" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopMon19" Grid.Row="20" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopTue19" Grid.Row="20" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopWed19" Grid.Row="20" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopThu19" Grid.Row="20" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopFri19" Grid.Row="20" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSat19" Grid.Row="20" Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSun19" Grid.Row="20" Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<TextBlock Text="18:00 - 18:59" Grid.Row="20" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStop18All" Grid.Row="20" Grid.Column="2" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopMon18" Grid.Row="20" Grid.Column="4" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopTue18" Grid.Row="20" Grid.Column="5" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopWed18" Grid.Row="20" Grid.Column="6" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopThu18" Grid.Row="20" Grid.Column="7" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopFri18" Grid.Row="20" Grid.Column="8" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSat18" Grid.Row="20" Grid.Column="9" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSun18" Grid.Row="20" Grid.Column="10" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
 
-								<TextBlock Text="20:00 - 20:59" Grid.Row="21" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopMon20" Grid.Row="21" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopTue20" Grid.Row="21" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopWed20" Grid.Row="21" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopThu20" Grid.Row="21" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopFri20" Grid.Row="21" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSat20" Grid.Row="21" Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSun20" Grid.Row="21" Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<TextBlock Text="19:00 - 19:59" Grid.Row="21" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStop19All" Grid.Row="21" Grid.Column="2" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopMon19" Grid.Row="21" Grid.Column="4" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopTue19" Grid.Row="21" Grid.Column="5" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopWed19" Grid.Row="21" Grid.Column="6" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopThu19" Grid.Row="21" Grid.Column="7" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopFri19" Grid.Row="21" Grid.Column="8" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSat19" Grid.Row="21" Grid.Column="9" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSun19" Grid.Row="21" Grid.Column="10" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
 
-								<TextBlock Text="21:00 - 21:59" Grid.Row="22" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopMon21" Grid.Row="22" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopTue21" Grid.Row="22" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopWed21" Grid.Row="22" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopThu21" Grid.Row="22" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopFri21" Grid.Row="22" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSat21" Grid.Row="22" Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSun21" Grid.Row="22" Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<TextBlock Text="20:00 - 20:59" Grid.Row="22" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStop20All" Grid.Row="22" Grid.Column="2" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopMon20" Grid.Row="22" Grid.Column="4" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopTue20" Grid.Row="22" Grid.Column="5" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopWed20" Grid.Row="22" Grid.Column="6" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopThu20" Grid.Row="22" Grid.Column="7" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopFri20" Grid.Row="22" Grid.Column="8" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSat20" Grid.Row="22" Grid.Column="9" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSun20" Grid.Row="22" Grid.Column="10" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
 
-								<TextBlock Text="22:00 - 22:59" Grid.Row="23" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopMon22" Grid.Row="23" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopTue22" Grid.Row="23" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopWed22" Grid.Row="23" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopThu22" Grid.Row="23" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopFri22" Grid.Row="23" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSat22" Grid.Row="23" Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSun22" Grid.Row="23" Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<TextBlock Text="21:00 - 21:59" Grid.Row="23" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStop21All" Grid.Row="23" Grid.Column="2" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopMon21" Grid.Row="23" Grid.Column="4" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopTue21" Grid.Row="23" Grid.Column="5" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopWed21" Grid.Row="23" Grid.Column="6" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopThu21" Grid.Row="23" Grid.Column="7" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopFri21" Grid.Row="23" Grid.Column="8" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSat21" Grid.Row="23" Grid.Column="9" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSun21" Grid.Row="23" Grid.Column="10" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
 
-								<TextBlock Text="23:00 - 23:59" Grid.Row="24" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopMon23" Grid.Row="24" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopTue23" Grid.Row="24" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopWed23" Grid.Row="24" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopThu23" Grid.Row="24" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopFri23" Grid.Row="24" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSat23" Grid.Row="24" Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<CheckBox x:Name="StopSun23" Grid.Row="24" Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
-								<Rectangle Grid.Row="24" Grid.ColumnSpan="8" Fill="#808080" RadiusX="1" RadiusY="1" Height="1" VerticalAlignment="Bottom" Margin="0,0,0,0"/>
+								<TextBlock Text="22:00 - 22:59" Grid.Row="24" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStop22All" Grid.Row="24" Grid.Column="2" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopMon22" Grid.Row="24" Grid.Column="4" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopTue22" Grid.Row="24" Grid.Column="5" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopWed22" Grid.Row="24" Grid.Column="6" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopThu22" Grid.Row="24" Grid.Column="7" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopFri22" Grid.Row="24" Grid.Column="8" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSat22" Grid.Row="24" Grid.Column="9" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSun22" Grid.Row="24" Grid.Column="10" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
 
+								<TextBlock Text="23:00 - 23:59" Grid.Row="25" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStop23All" Grid.Row="25" Grid.Column="2" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopMon23" Grid.Row="25" Grid.Column="4" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopTue23" Grid.Row="25" Grid.Column="5" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopWed23" Grid.Row="25" Grid.Column="6" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopThu23" Grid.Row="25" Grid.Column="7" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopFri23" Grid.Row="25" Grid.Column="8" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSat23" Grid.Row="25" Grid.Column="9" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<CheckBox x:Name="chkbxStopSun23" Grid.Row="25" Grid.Column="10" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2"/>
+								<Rectangle Grid.Row="25" Grid.ColumnSpan="11" Fill="#808080" Height="1" VerticalAlignment="Bottom" Margin="0,0,0,0"/>
 							</Grid>
 
 						</StackPanel>
 					</ScrollViewer>
 				</TabItem>
-
-
 
 			</TabControl>
 		</Border>
