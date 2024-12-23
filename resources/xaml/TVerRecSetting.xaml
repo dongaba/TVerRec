@@ -157,7 +157,7 @@
 									</ControlTemplate>
 								</TextBox.Template>
 							</TextBox>
-							<Popup x:Name="Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="False" Focusable="False" PopupAnimation="Slide">
+							<Popup x:Name="Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
 								<Grid x:Name="DropDown" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" MinWidth="{TemplateBinding ActualWidth}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
 									<Border x:Name="DropDownBorder" CornerRadius="3" BorderThickness="1" BorderBrush="#BBBBBB" Background="#FFFFFF"/>
 									<ScrollViewer Margin="4,6,4,6" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}">
