@@ -913,18 +913,18 @@ function Optimize-HistoryFile {
 	[OutputType([System.Void])]
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	$mergedHistData = @()
+	$cleanedHist = @()
 	try {
 		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ('　ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-		$mergedHistData = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8 | Where-Object { 
+		$cleanedHist = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8 | Where-Object { 
 				($null -ne $_.videoValidated) `
 					-and ([int]::TryParse($_.videoValidated, [ref]0) ) `
 					-and ([datetime]::TryParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null, [System.Globalization.DateTimeStyles]::None, [ref]([datetime]::MinValue))) 
 			})
-		$mergedHistData | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
+		$cleanedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
 	} catch { Write-Warning ('　⚠️ ダウンロード履歴の更新に失敗しました') }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
-	Remove-Variable -Name mergedHistData, histData -ErrorAction SilentlyContinue
+	Remove-Variable -Name cleanedHist -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
