@@ -319,10 +319,11 @@ function Invoke-HistoryAndListMatchCheck {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	#ダウンロードリストファイルのデータを読み込み
 	$listFileData = @(Read-DownloadList)
-	$listVideoPages = $listFileData | ForEach-Object { 'https://tver.jp/episodes/{0}' -f $_.EpisodeID.Replace('#', '') }
+	$listVideoPages = @()
+	foreach ($listFileLine in $listFileData) { $listVideoPages += ('https://tver.jp/episodes/{0}' -f $listFileLine.EpisodeID.Replace('#', '')) }
 	#ダウンロード履歴ファイルのデータを読み込み
 	$histFileData = @(Read-HistoryFile)
-	$histVideoPages = if ($histFileData.Count -eq 0) { @() } else { $histFileData | Select-Object -ExpandProperty VideoPage }
+	if ($histFileData.Count -eq 0) { $histVideoPages = @() } else { $histVideoPages = @($histFileData.VideoPage) }
 	#ダウンロードリストとダウンロード履歴をマージ
 	$listVideoPages += $histVideoPages
 	#URLがすでにダウンロード履歴に存在する場合は検索結果から除外
@@ -877,6 +878,32 @@ function Wait-DownloadCompletion () {
 		$ytdlCount = Get-YtdlProcessCount
 	}
 	Remove-Variable -Name ytdlCount -ErrorAction SilentlyContinue
+}
+
+#----------------------------------------------------------------------
+#ダウンロードスケジュールに合わせたスケジュール制御
+#----------------------------------------------------------------------
+function Suspend-Process () {
+	[OutputType([System.Void])]
+	Param ()
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if ($script:ScheduleStop) {
+		Write-Debug ('稼働スケジュールを確認します') 
+		while ($true) {
+			$currentDateTime = Get-Date
+			$currentDay = ($currentDateTime).DayOfWeek.ToString().Substring(0, 3)
+			$currentHour = ($currentDateTime).Hour
+			if ($script:StopSchedule.ContainsKey($currentDay)) {
+				if ($script:StopSchedule[$currentDay] -contains $currentHour) {
+					Write-Output ('{0} 現在は処理停止時間帯です。' -f ($currentDateTime))
+					# 次の正時までの時間差を計算
+					$timeDifference = $currentDateTime.AddHours(1).Date.AddHours($currentDateTime.Hour + 1) - $currentDateTime
+					Start-Sleep -Seconds ([math]::Ceiling($timeDifference.TotalSeconds))
+				} else { break }
+			} else { break }
+		}
+	}
+	Remove-Variable -Name currentDateTime, currentDay, currentHour, timeDifference -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------

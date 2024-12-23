@@ -31,9 +31,60 @@ try {
 #外部関数ファイルの読み込み
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/common_functions.ps1'))
-	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/tver_functions.ps1'))
-	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/tverrec_functions.ps1'))
 } catch { Throw ('❌️ 外部関数ファイルの読み込みに失敗しました') }
+
+$days = @('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')
+$hours = 0..23
+$userSettingFile = Join-Path $script:confDir 'user_setting.ps1'
+$settingAttributes = @(
+	'$script:downloadBaseDir',
+	'$script:downloadWorkDir',
+	'$script:saveBaseDir',
+	'$script:parallelDownloadFileNum',
+	'$script:parallelDownloadNumPerFile',
+	'$script:loopCycle',
+	'$script:myPlatformUID',
+	'$script:myPlatformToken',
+	'$script:myMemberSID',
+	'$script:enableMultithread',
+	'$script:multithreadNum',
+	'$script:disableToastNotification',
+	'$script:rateLimit',
+	'$script:timeoutSec',
+	'$script:guiMaxExecLogLines',
+	'$script:histRetentionPeriod',
+	'$script:sortVideoByMedia',
+	'$script:addSeriesName',
+	'$script:addSeasonName',
+	'$script:addBrodcastDate',
+	'$script:addEpisodeNumber',
+	'$script:removeSpecialNote',
+	'$script:preferredYoutubedl',
+	'$script:disableUpdateYoutubedl',
+	'$script:disableUpdateFfmpeg',
+	'$script:forceSoftwareDecodeFlag',
+	'$script:simplifiedValidation',
+	'$script:disableValidation',
+	'$script:sitemapParseEpisodeOnly',
+	'$script:detailedProgress',
+	'$script:embedSubtitle',
+	'$script:embedMetatag',
+	'$script:windowShowStyle',
+	'$script:ffmpegDecodeOption',
+	'$script:ytdlOption',
+	'$script:ytdlNonTVerFileName',
+	'$script:forceSingleDownload',
+	'$script:extractDescTextToList',
+	'$script:listGenHistoryCheck',
+	'$script:updateChannel',
+	'$script:videoContainerFormat',
+	'$script:cleanupDownloadBaseDir',
+	'$script:cleanupSaveBaseDir',
+	'$script:ytdlHttpHeader',
+	'$script:ytdlBaseArgs',
+	'$script:nonTVerYtdlBaseArgs',
+	'$script:ScheduleStop'
+)
 
 #endregion 環境設定
 
@@ -42,6 +93,8 @@ try {
 
 #GUIイベントの処理
 function Sync-WpfEvents {
+	[OutputType([System.Void])]
+	Param ()
 	[DispatcherFrame] $frame = [DispatcherFrame]::new($true)
 	[Dispatcher]::CurrentDispatcher.BeginInvoke(
 		'Background',
@@ -56,7 +109,12 @@ function Sync-WpfEvents {
 }
 
 #ディレクトリ選択ダイアログ
-function Select-Folder($description, $textBox) {
+function Select-Folder() {
+	[OutputType([System.Void])]
+	Param (
+		[parameter(Mandatory = $true)]$description,
+		[parameter(Mandatory = $true)]$textBox
+	)
 	$fd = [System.Windows.Forms.FolderBrowserDialog]::new()
 	$fd.Description = $description
 	$fd.RootFolder = [System.Environment+SpecialFolder]::MyComputer
@@ -65,29 +123,51 @@ function Select-Folder($description, $textBox) {
 	Remove-Variable -Name description, textBox, fd -ErrorAction SilentlyContinue
 }
 
-#system_setting.ps1から各設定項目を読み込む
-function Read-SystemSetting {
-	Param ([Parameter(Mandatory = $true)][String]$key)
-	$defaultSetting = try { (Select-String -Pattern ('^{0}' -f $key.Replace('$', '\$')) -LiteralPath $systemSettingFile | ForEach-Object { $_.Line }).split('=', 2)[1].Trim() }
-	catch { '' }
-	return $defaultSetting.Trim("'")
-	Remove-Variable -Name key, defaultSetting -ErrorAction SilentlyContinue
-}
-
 #user_setting.ps1から各設定項目を読み込む
 function Read-UserSetting {
-	Param ([Parameter(Mandatory = $true)][String]$key)
-	$currentSetting = ''
-	if (Test-Path (Join-Path $script:confDir 'user_setting.ps1')) {
-		try { $currentSetting = (Select-String -Pattern ('^{0}' -f [regex]::Escape($key)) -LiteralPath $userSettingFile | ForEach-Object { $_.Line }).split('=', 2)[1].Trim() }
-		catch { return }
+	[OutputType([System.Void])]
+	Param ()
+	if (Test-Path $userSettingFile) {
+		$userSettings = Get-Content -LiteralPath $userSettingFile -Encoding UTF8
+		# 動作停止設定以外の抽出
+		foreach ($settingAttribute in $settingAttributes) {
+			#変数名から「$script:」を取った名前がBox名
+			$settingBox = $settingWindow.FindName($settingAttribute.Replace('$script:', ''))
+			# ユーザー設定の値を取得しGUIに反映
+			$userSettingValue = ($userSettings -match ('^{0}' -f [regex]::Escape($settingAttribute)))
+			if ($userSettingValue) {
+				$settingBox.Text = $userSettingValue.split('=', 2)[1].Trim().Trim("'")
+				if ($settingBox.Text -eq '$true') { $settingBox.Text = 'する' }
+				elseif ($settingBox.Text -eq '$false') { $settingBox.Text = 'しない' }
+			} elseif ($settingAttribute -in @('$script:downloadBaseDir', '$script:downloadWorkDir', '$script:saveBaseDir', '$script:myPlatformUID', '$script:myPlatformToken', '$script:myMemberSID')) { $settingBox.Text = '未設定' }
+			else { $settingBox.Text = 'デフォルト値' }
+		}
+		# 動作停止設定の抽出
+		$schduleStopPattern = '\$script:StopSchedule\s*=\s*@\{([^}]*)\}'
+		$scheduleStopDetail = [regex]::Match($userSettings, $schduleStopPattern)
+		# 抽出した内容を解析してチェックボックスに反映
+		if ($scheduleStopDetail.Success) {
+			$scheduleStopString = $scheduleStopDetail.Groups[1].Value
+			foreach ($day in $days) {
+				if ($scheduleStopString -match "'$day'\s*=\s*@\(([^)]*)\)") {
+					$schedule = $matches[1].Split(',').Trim() | Where-Object { $_ -ne '' }
+					foreach ($hour in $schedule) {
+						$checkbox = $settingWindow.FindName(('chkbxStop{0}{1}' -f $day, ([int]$hour).ToString('D2')))
+						if ($checkbox) { $checkbox.IsChecked = $true }
+					}
+				}
+			}
+		}
 	}
-	return $currentSetting.Trim("'")
-	Remove-Variable -Name key, currentSetting -ErrorAction SilentlyContinue
+	Remove-Variable -Name userSettings, settingBox -ErrorAction SilentlyContinue
+	Remove-Variable -Name schduleStopPattern, scheduleStopDetail, scheduleStopString -ErrorAction SilentlyContinue
+	Remove-Variable -Name day, schedule, hour, checkbox -ErrorAction SilentlyContinue
 }
 
 #user_setting.ps1に各設定項目を書き込む
 function Save-UserSetting {
+	[OutputType([System.Void])]
+	Param ()
 	$newSetting = @()
 	$startSegment = '##Start Setting Generated from GUI'
 	$endSegment = '##End Setting Generated from GUI'
@@ -97,7 +177,7 @@ function Save-UserSetting {
 		$content = Get-Content -LiteralPath $userSettingFile
 		$totalLineNum = 0
 	} else {
-		$content = Get-Content -LiteralPath $userSettingFile
+		$content = Get-Content -LiteralPath $userSettingFile -Encoding UTF8
 		#自動生成部分の行数を取得
 		$totalLineNum = try { $content.Count + 1 } catch { 0 }
 		$headLineNum = try { ($content | Select-String $startSegment).LineNumber - 2 } catch { 0 }
@@ -106,7 +186,7 @@ function Save-UserSetting {
 	#自動生成より前の部分
 	#自動生成の開始位置が2行目以降の場合にだけ自動生成寄りの前の部分がある
 	if (Test-Path variable:headLineNum) { if ($headLineNum -ge 0 ) { $newSetting += $content[0..$headLineNum] } }
-	#自動生成の部分
+	#動作停止設定以外の部分
 	$newSetting += $startSegment
 	if ($settingAttributes) {
 		foreach ($settingAttribute in $settingAttributes) {
@@ -123,8 +203,23 @@ function Save-UserSetting {
 			}
 		}
 	}
-	$newSetting += $endSegment
+	#動作停止設定の部分
+	$stopSetting = @()
+	$stopSetting += '$script:StopSchedule = @{'
+	foreach ($day in $days) {
+		$stopHoursList = @()
+		foreach ($hour in $hours) {
+			$checkbox = $settingWindow.FindName(('chkbxStop{0}{1}' -f $day, $hour.ToString('D2')))
+			if ($checkbox -and $checkbox.IsChecked) { $stopHoursList += $hour }
+		}
+		# 停止時間を文字列に変換し、日付ごとのエントリを作成
+		$stopHours = "'{0}' = @({1})" -f $day, ($stopHoursList -join ', ')
+		$stopSetting += "`t" + $stopHours
+	}
+	$stopSetting += '}'
+	$newSetting += $stopSetting
 	#自動生成より後の部分
+	$newSetting += $endSegment
 	if ( $totalLineNum -ne 0 ) {
 		try { $newSetting += Get-Content $userSettingFile -Tail $tailLineNum }
 		catch { Write-Warning ('⚠️ 自動生成の終了部分を特定できませんでした') }
@@ -134,15 +229,13 @@ function Save-UserSetting {
 	Remove-Variable -Name newSetting, startSegment, endSegment, content -ErrorAction SilentlyContinue
 	Remove-Variable -Name totalLineNum, headLineNum, tailLineNum -ErrorAction SilentlyContinue
 	Remove-Variable -Name settingAttribute, settingBoxName, settingBox -ErrorAction SilentlyContinue
+	Remove-Variable -Name stopSetting, day, hour, checkbox, stopHours -ErrorAction SilentlyContinue
 }
 
 #endregion 関数定義
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
-
-$systemSettingFile = Join-Path $script:confDir 'system_setting.ps1'
-$userSettingFile = Join-Path $script:confDir 'user_setting.ps1'
 
 #----------------------------------------------------------------------
 #region WPFのWindow設定
@@ -204,80 +297,74 @@ $btnYtdlOption_720.Add_Click({ Set-YtdlOption 720 })
 $btnYtdlOption_480.Add_Click({ Set-YtdlOption 480 })
 $btnYtdlOption_360.Add_Click({ Set-YtdlOption 360 })
 
+function Sync-MultiCheckboxes {
+	param (
+		[string]$day,
+		[string]$hour,
+		[object]$allCheckbox
+	)
+	if ($day) {
+		foreach ($hour in $hours) {
+			$checkboxName = 'chkbxStop{0}{1:D2}' -f $day, [int]$hour
+			(Get-Variable -Name $checkboxName).Value.IsChecked = $allCheckbox.IsChecked
+			if ($allCheckbox.IsChecked -eq $false) {
+				$checkboxName = 'chkbxStop{0:D2}{1}' -f [int]$hour, 'All'
+				(Get-Variable -Name $checkboxName).Value.IsChecked = $allCheckbox.IsChecked
+			}
+		}
+	} elseif ($hour) {
+		foreach ($day in $days) {
+			$checkboxName = 'chkbxStop{0}{1:D2}' -f $day, [int]$hour
+			(Get-Variable -Name $checkboxName).Value.IsChecked = $allCheckbox.IsChecked
+			if ($allCheckbox.IsChecked -eq $false) {
+				$checkboxName = 'chkbxStop{0}{1}' -f $day, 'All'
+				(Get-Variable -Name $checkboxName).Value.IsChecked = $allCheckbox.IsChecked
+			}
+		}
+	}
+}
+
+# 各曜日に対してクリックイベントを登録
+$chkbxStopMonAll.Add_Click({ Sync-MultiCheckboxes -day 'Mon' -allCheckbox $chkbxStopMonAll })
+$chkbxStopTueAll.Add_Click({ Sync-MultiCheckboxes -day 'Tue' -allCheckbox $chkbxStopTueAll })
+$chkbxStopWedAll.Add_Click({ Sync-MultiCheckboxes -day 'Wed' -allCheckbox $chkbxStopWedAll })
+$chkbxStopThuAll.Add_Click({ Sync-MultiCheckboxes -day 'Thu' -allCheckbox $chkbxStopThuAll })
+$chkbxStopFriAll.Add_Click({ Sync-MultiCheckboxes -day 'Fri' -allCheckbox $chkbxStopFriAll })
+$chkbxStopSatAll.Add_Click({ Sync-MultiCheckboxes -day 'Sat' -allCheckbox $chkbxStopSatAll })
+$chkbxStopSunAll.Add_Click({ Sync-MultiCheckboxes -day 'Sun' -allCheckbox $chkbxStopSunAll })
+
+# 各時間に対してクリックイベントを登録
+$chkbxStop00All.Add_Click({ Sync-MultiCheckboxes -hour '00' -allCheckbox $chkbxStop00All })
+$chkbxStop01All.Add_Click({ Sync-MultiCheckboxes -hour '01' -allCheckbox $chkbxStop01All })
+$chkbxStop02All.Add_Click({ Sync-MultiCheckboxes -hour '02' -allCheckbox $chkbxStop02All })
+$chkbxStop03All.Add_Click({ Sync-MultiCheckboxes -hour '03' -allCheckbox $chkbxStop03All })
+$chkbxStop04All.Add_Click({ Sync-MultiCheckboxes -hour '04' -allCheckbox $chkbxStop04All })
+$chkbxStop05All.Add_Click({ Sync-MultiCheckboxes -hour '05' -allCheckbox $chkbxStop05All })
+$chkbxStop06All.Add_Click({ Sync-MultiCheckboxes -hour '06' -allCheckbox $chkbxStop06All })
+$chkbxStop07All.Add_Click({ Sync-MultiCheckboxes -hour '07' -allCheckbox $chkbxStop07All })
+$chkbxStop08All.Add_Click({ Sync-MultiCheckboxes -hour '08' -allCheckbox $chkbxStop08All })
+$chkbxStop09All.Add_Click({ Sync-MultiCheckboxes -hour '09' -allCheckbox $chkbxStop09All })
+$chkbxStop10All.Add_Click({ Sync-MultiCheckboxes -hour '10' -allCheckbox $chkbxStop10All })
+$chkbxStop11All.Add_Click({ Sync-MultiCheckboxes -hour '11' -allCheckbox $chkbxStop11All })
+$chkbxStop12All.Add_Click({ Sync-MultiCheckboxes -hour '12' -allCheckbox $chkbxStop12All })
+$chkbxStop13All.Add_Click({ Sync-MultiCheckboxes -hour '13' -allCheckbox $chkbxStop13All })
+$chkbxStop14All.Add_Click({ Sync-MultiCheckboxes -hour '14' -allCheckbox $chkbxStop14All })
+$chkbxStop15All.Add_Click({ Sync-MultiCheckboxes -hour '15' -allCheckbox $chkbxStop15All })
+$chkbxStop16All.Add_Click({ Sync-MultiCheckboxes -hour '16' -allCheckbox $chkbxStop16All })
+$chkbxStop17All.Add_Click({ Sync-MultiCheckboxes -hour '17' -allCheckbox $chkbxStop17All })
+$chkbxStop18All.Add_Click({ Sync-MultiCheckboxes -hour '18' -allCheckbox $chkbxStop18All })
+$chkbxStop19All.Add_Click({ Sync-MultiCheckboxes -hour '19' -allCheckbox $chkbxStop19All })
+$chkbxStop20All.Add_Click({ Sync-MultiCheckboxes -hour '20' -allCheckbox $chkbxStop20All })
+$chkbxStop21All.Add_Click({ Sync-MultiCheckboxes -hour '21' -allCheckbox $chkbxStop21All })
+$chkbxStop22All.Add_Click({ Sync-MultiCheckboxes -hour '22' -allCheckbox $chkbxStop22All })
+$chkbxStop23All.Add_Click({ Sync-MultiCheckboxes -hour '23' -allCheckbox $chkbxStop23All })
+
 #endregion ボタンのアクション
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
 #region 設定ファイルの読み込み
-
-$settingAttributes = @(
-	'$script:downloadBaseDir',
-	'$script:downloadWorkDir',
-	'$script:saveBaseDir',
-	'$script:parallelDownloadFileNum',
-	'$script:parallelDownloadNumPerFile',
-	'$script:loopCycle',
-	'$script:myPlatformUID',
-	'$script:myPlatformToken',
-	'$script:myMemberSID',
-	'$script:enableMultithread',
-	'$script:multithreadNum',
-	'$script:disableToastNotification',
-	'$script:rateLimit',
-	'$script:timeoutSec',
-	'$script:guiMaxExecLogLines',
-	'$script:histRetentionPeriod',
-	'$script:sortVideoByMedia',
-	'$script:addSeriesName',
-	'$script:addSeasonName',
-	'$script:addBrodcastDate',
-	'$script:addEpisodeNumber',
-	'$script:removeSpecialNote',
-	'$script:preferredYoutubedl',
-	'$script:disableUpdateYoutubedl',
-	'$script:disableUpdateFfmpeg',
-	'$script:forceSoftwareDecodeFlag',
-	'$script:simplifiedValidation',
-	'$script:disableValidation',
-	'$script:sitemapParseEpisodeOnly',
-	'$script:detailedProgress',
-	'$script:embedSubtitle',
-	'$script:embedMetatag',
-	'$script:windowShowStyle',
-	'$script:ffmpegDecodeOption',
-	'$script:ytdlOption',
-	'$script:ytdlNonTVerFileName',
-	'$script:forceSingleDownload',
-	'$script:extractDescTextToList',
-	'$script:listGenHistoryCheck',
-	'$script:updateChannel',
-	'$script:videoContainerFormat',
-	'$script:cleanupDownloadBaseDir',
-	'$script:cleanupSaveBaseDir',
-	'$script:ytdlHttpHeader',
-	'$script:ytdlBaseArgs',
-	'$script:nonTVerYtdlBaseArgs'
-)
-$defaultSetting = @{}
-$currentSetting = @{}
-foreach ($settingAttribute in $settingAttributes) {
-	$defaultSetting[$settingAttribute] = Read-SystemSetting $settingAttribute
-	$currentSetting[$settingAttribute] = Read-UserSetting $settingAttribute
-	#変数名から「$script:」を取った名前がBox名
-	$settingBoxName = $settingAttribute.Replace('$script:', '')
-	#まずはシステム設定の値をGUIに反映
-	$settingBox = $settingWindow.FindName($settingBoxName)
-	# ユーザー設定の値を取得
-	$userSettingValue = Read-UserSetting $settingAttribute
-	#次にユーザー設定の値をGUIに反映
-	if ($userSettingValue) {
-		$settingBox.Text = $userSettingValue
-		if ($settingBox.Text -eq '$true') { $settingBox.Text = 'する' }
-		if ($settingBox.Text -eq '$false') { $settingBox.Text = 'しない' }
-	} elseif ($settingAttribute -in @('$script:downloadBaseDir', '$script:downloadWorkDir', '$script:saveBaseDir', '$script:myPlatformUID', '$script:myPlatformToken', '$script:myMemberSID')) { $settingBox.Text = '未設定' }
-	else { $settingBox.Text = 'デフォルト値' }
-}
-
+Read-UserSetting
 #endregion 設定ファイルの読み込み
 #----------------------------------------------------------------------
 
@@ -304,7 +391,7 @@ $form.AssignHandle($currentProcess.MainWindowHandle)
 while ($settingWindow.IsVisible) {
 	#GUIイベント処理
 	Sync-WpfEvents
-	Start-Sleep -Milliseconds 100
+	Start-Sleep -Milliseconds 10
 }
 
 #endregion ウィンドウ表示後のループ処理
@@ -314,11 +401,9 @@ while ($settingWindow.IsVisible) {
 #終了処理
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Remove-Variable -Name systemSettingFile, userSettingFile -ErrorAction SilentlyContinue
 Remove-Variable -Name mainXaml, mainCleanXaml, settingWindow -ErrorAction SilentlyContinue
 Remove-Variable -Name LogoImage, lblVersion -ErrorAction SilentlyContinue
 Remove-Variable -Name btnWiki, btnCancel, btnSave -ErrorAction SilentlyContinue
 Remove-Variable -Name btndownloadBaseDir, btndownloadWorkDir, btnsaveBaseDir -ErrorAction SilentlyContinue
-Remove-Variable -Name settingAttributes, defaultSetting, currentSetting -ErrorAction SilentlyContinue
-Remove-Variable -Name settingAttribute, settingBoxName, settingBox -ErrorAction SilentlyContinue
+Remove-Variable -Name userSettingFile, settingAttributes -ErrorAction SilentlyContinue
 Remove-Variable -Name currentProcess, form -ErrorAction SilentlyContinue

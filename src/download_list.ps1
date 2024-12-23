@@ -23,6 +23,7 @@ try {
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
 Invoke-RequiredFileCheck
+Suspend-Process
 Get-Token
 #ダウンロードリストを読み込み
 $listLinks = @(Get-LinkFromDownloadList)
@@ -81,6 +82,8 @@ foreach ($videoLink in $videoLinks) {
 	Write-Output ('{0}/{1} - {2}' -f $videoNum, $videoTotal, $videoLink)
 	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 	Wait-YtdlProcess $script:parallelDownloadFileNum
+	Suspend-Process
+
 	#TVer番組ダウンロードのメイン処理
 	Invoke-VideoDownload -Keyword ([ref]$keyword) -VideoLink ([ref]$videoLink) -Force $false
 }

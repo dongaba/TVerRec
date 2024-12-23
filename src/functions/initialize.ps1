@@ -52,7 +52,7 @@ try {
 #----------------------------------------------------------------------
 #連続実行時は以降の処理は不要なのでexit
 #不要な理由はloop.ps1は「.」ではなく「&」で各処理を呼び出ししているので各種変数が不要なため
-if ($launchMode -eq 'loop') {Remove-Variable -Name launchMode -ErrorAction SilentlyContinue ; exit 0 }
+if ($launchMode -eq 'loop') { Remove-Variable -Name launchMode -ErrorAction SilentlyContinue ; exit 0 }
 
 #----------------------------------------------------------------------
 #アップデータのアップデート(アップデート後の実行時にアップデータを更新)

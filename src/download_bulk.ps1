@@ -21,6 +21,7 @@ if (!$?) { Throw ('❌️ TVerRecの初期化処理に失敗しました') }
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
 Invoke-RequiredFileCheck
+Suspend-Process
 Get-Token
 $keywords = @(Read-KeywordList)
 $keywordNum = 0
@@ -58,7 +59,7 @@ foreach ($keyword in $keywords) {
 
 	#処理時間の推計
 	$secElapsed = (Get-Date) - $totalStartTime
-	if ($keywordNum -ne 0) {$secRemaining1 = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $keywordNum) * ($keywordTotal - $keywordNum))}
+	if ($keywordNum -ne 0) { $secRemaining1 = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $keywordNum) * ($keywordTotal - $keywordNum)) }
 	else { $secRemaining1 = '' }
 
 	#キーワード数のインクリメント
@@ -85,7 +86,7 @@ foreach ($keyword in $keywords) {
 	foreach ($videoLink in $videoLinks) {
 		$videoNum++
 		#ダウンロード先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
-		if (!(Test-Path $script:downloadBaseDir -PathType Container)) {Throw ('❌️ 番組ダウンロード先ディレクトリにアクセスできません。終了します') }
+		if (!(Test-Path $script:downloadBaseDir -PathType Container)) { Throw ('❌️ 番組ダウンロード先ディレクトリにアクセスできません。終了します') }
 
 		#進捗情報の更新
 		$toastUpdateParams.Title2 = $videoLink
@@ -98,6 +99,7 @@ foreach ($keyword in $keywords) {
 
 		#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 		Wait-YtdlProcess $script:parallelDownloadFileNum
+		Suspend-Process
 
 		#TVer番組ダウンロードのメイン処理
 		Invoke-VideoDownload -Keyword ([ref]$keyword) -VideoLink ([ref]$videoLink) -Force $false

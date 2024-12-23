@@ -4,6 +4,10 @@
 
 ### 3.2.6 Added
 
+- トップページの新しいコンポーネントをパース可能に
+- サイトマップの新しいコンポーネントをパース可能に
+- 曜日ごとのダウンロード休止時間を指定できるように [Issue #131](https://github.com/dongaba/TVerRec/issues/131)
+
 ### 3.2.6 Changed
 
 - シリーズ名、シーズン名がエピソード名と同一の場合に、番組ファイル名にシリーズ名、シーズン名が重複しないように変更 [Issue #130](https://github.com/dongaba/TVerRec/issues/130)
@@ -11,6 +15,8 @@
 - メモリ使用量の削減と高速化
 
 ### 3.2.6 Fixed
+
+- リスト作成の初回実行時にエラーメッセージが出る不具合を修正 [Issue #134](https://github.com/dongaba/TVerRec/issues/134)
 
 ## [3.2.5](https://github.com/dongaba/TVerRec/releases/tag/v3.2.5)
 

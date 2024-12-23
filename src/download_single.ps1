@@ -23,6 +23,7 @@ try {
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #メイン処理
 Invoke-RequiredFileCheck
+Suspend-Process
 Get-Token
 $keyword = '個別指定'
 
@@ -38,6 +39,7 @@ while ($true) {
 	if (!(Test-Path $script:downloadBaseDir -PathType Container)) { Throw ('❌️ 番組ダウンロード先ディレクトリにアクセスできません。終了します') }
 	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 	Wait-YtdlProcess $script:parallelDownloadFileNum
+	Suspend-Process
 
 	#複数アドレス入力用配列
 	$script:videoPageList = @()
@@ -102,6 +104,8 @@ while ($true) {
 	foreach ($videoLink in  $script:videoPageList) {
 		#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 		Wait-YtdlProcess $script:parallelDownloadFileNum
+		Suspend-Process
+
 		switch -Regex ($videoLink) {
 			'^https://tver.jp/(/?.*)' { #TVer番組ダウンロードのメイン処理
 				Write-Output ('')

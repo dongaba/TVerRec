@@ -34,9 +34,9 @@
         "editor.defaultFormatter": "ms-vscode.powershell"
     },
     "[xaml]": {
-        "editor.autoIndent": "advanced",
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
+			"editor.autoIndent": "advanced",
+			"editor.defaultFormatter": "PrateekMahendrakar.prettyxml"
+		},
     "[yaml]": {
         "editor.autoIndent": "advanced"
     },
