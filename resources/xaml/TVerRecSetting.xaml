@@ -37,7 +37,7 @@
 			<Setter Property="Template">
 				<Setter.Value>
 					<ControlTemplate TargetType="{x:Type TextBox}">
-						<Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}">
+						<Border x:Name="border" CornerRadius="3" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}">
 							<ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
 						</Border>
 						<ControlTemplate.Triggers>
@@ -87,9 +87,6 @@
 				<DataTrigger Binding="{Binding IsChecked, ElementName=ToggleButton}" Value="True">
 					<Setter Property="Background" Value="{StaticResource ComboBox.IsChecked.Background}"/>
 				</DataTrigger>
-				<DataTrigger Binding="{Binding IsChecked, ElementName=ToggleButton}" Value="True">
-					<Setter Property="Background" Value="{StaticResource ComboBox.IsChecked.Background}"/>
-				</DataTrigger>
 			</Style.Triggers>
 		</Style>
 		<ControlTemplate x:Key="ComboBoxToggleButtonStyle" TargetType="{x:Type ToggleButton}">
@@ -98,8 +95,8 @@
 					<ColumnDefinition/>
 					<ColumnDefinition Width="20"/>
 				</Grid.ColumnDefinitions>
-				<Border x:Name="Border" Grid.ColumnSpan="2" BorderThickness="1" Style="{StaticResource ChangingColorComboBoxBorderStyle}"/>
-				<Border x:Name="TextBoxBorder" Grid.Column="0" Margin="1" Style="{StaticResource ChangingColorComboBoxBorderStyle}"/>
+				<Border x:Name="Border" CornerRadius="3" Grid.ColumnSpan="2" BorderThickness="1" Style="{StaticResource ChangingColorComboBoxBorderStyle}"/>
+				<Border x:Name="TextBoxBorder" CornerRadius="3" Grid.Column="0" Margin="1" Style="{StaticResource ChangingColorComboBoxBorderStyle}"/>
 				<Path x:Name="Arrow" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Data="M0,0 L0,2 L4,6 L8,2 L8,0 L4,4 z" Fill="#393939">
 				<!-- ↑ドロップダウンの矢印 -->
 				</Path>
@@ -113,7 +110,7 @@
 			<Setter Property="Template">
 				<Setter.Value>
 					<ControlTemplate TargetType="{x:Type ComboBoxItem}">
-						<Border x:Name="Border" Padding="1" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" Background="#FFFFFF" Height="{Binding Height, RelativeSource={RelativeSource AncestorType={x:Type ComboBox}}}">
+						<Border x:Name="Border" CornerRadius="3" Padding="1" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" Background="#FFFFFF" Height="{Binding Height, RelativeSource={RelativeSource AncestorType={x:Type ComboBox}}}">
 							<!--↑高さのみComboBoxと合わせる-->
 							<ContentPresenter
 								VerticalAlignment="{Binding VerticalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ComboBoxItem}}}"
@@ -156,20 +153,13 @@
 							<TextBox x:Name="PART_EditableTextBox" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="3,3,23,3" Focusable="True" Background="#FFFFFF" Visibility="Hidden" IsReadOnly="{TemplateBinding IsReadOnly}">
 								<TextBox.Template>
 									<ControlTemplate TargetType="TextBox">
-										<Border Name="PART_ContentHost" Focusable="False"/>
+										<Border Name="PART_ContentHost" CornerRadius="3" Focusable="False"/>
 									</ControlTemplate>
 								</TextBox.Template>
 							</TextBox>
 							<Popup x:Name="Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="False" Focusable="False" PopupAnimation="Slide">
 								<Grid x:Name="DropDown" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" MinWidth="{TemplateBinding ActualWidth}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
-									<Border x:Name="DropDownBorder" BorderThickness="1">
-										<Border.BorderBrush>
-											<SolidColorBrush Color="#BBBBBB"/>
-										</Border.BorderBrush>
-										<Border.Background>
-											<SolidColorBrush Color="#FFFFFF"/>
-										</Border.Background>
-									</Border>
+									<Border x:Name="DropDownBorder" CornerRadius="3" BorderThickness="1" BorderBrush="#BBBBBB" Background="#FFFFFF"/>
 									<ScrollViewer Margin="4,6,4,6" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}">
 										<StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained"/>
 									</ScrollViewer>
@@ -194,19 +184,19 @@
 			<Setter Property="Template">
 				<Setter.Value>
 					<ControlTemplate TargetType="{x:Type TabItem}">
-						<Border x:Name="border" BorderThickness="1,1,1,0" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="10,10,0,0">
+						<Border x:Name="border" BorderThickness="1,1,1,0" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="5,5,0,0">
 							<ContentPresenter x:Name="ContentSite" VerticalAlignment="Center" HorizontalAlignment="Center" ContentSource="Header" Margin="10,5,10,5"/>
 						</Border>
 						<ControlTemplate.Triggers>
 							<Trigger Property="IsSelected" Value="True">
 								<Setter TargetName="border" Property="Margin" Value="0,0,0,0"/>
-								<Setter TargetName="border" Property="Background" Value="#FFFFFF"/>
 								<Setter Property="BorderBrush" TargetName="border" Value="#393939"/>
+								<Setter TargetName="border" Property="Background" Value="#FFFFFF"/>
 							</Trigger>
 							<Trigger Property="IsSelected" Value="False">
 								<Setter TargetName="border" Property="Margin" Value="0,0,0,0"/>
-								<Setter TargetName="border" Property="Background" Value="#CCCCCC"/>
 								<Setter Property="BorderBrush" TargetName="border" Value="#393939"/>
+								<Setter TargetName="border" Property="Background" Value="#CCCCCC"/>
 							</Trigger>
 						</ControlTemplate.Triggers>
 					</ControlTemplate>
@@ -272,7 +262,7 @@
 					<ControlTemplate TargetType="CheckBox">
 						<BulletDecorator Background="Transparent" HorizontalAlignment="Center">
 							<BulletDecorator.Bullet>
-								<Border BorderBrush="#808080" BorderThickness="1" Width="14" Height="14" Background="{TemplateBinding Background}">
+								<Border BorderBrush="#808080" CornerRadius="3" BorderThickness="1" Width="14" Height="14" Background="{TemplateBinding Background}">
 									<Grid>
 										<!--<Ellipse Fill="Transparent" Stroke="Black" StrokeThickness="1"/>-->
 										<Path x:Name="checkMark" Data="M 0 6 L 4 10 L 12 2" Stroke="#393939" StrokeThickness="2" Visibility="Collapsed"/>
