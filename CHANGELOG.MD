@@ -1,5 +1,15 @@
 # Change Log
 
+## [3.2.7](https://github.com/dongaba/TVerRec/releases/tag/v3.2.7)
+
+### 3.2.7 Added
+
+### 3.2.7 Changed
+
+### 3.2.7 Fixed
+
+- 変数名の命名規則違反を修正
+
 ## [3.2.6](https://github.com/dongaba/TVerRec/releases/tag/v3.2.6)
 
 ### 3.2.6 Added

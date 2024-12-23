@@ -83,7 +83,7 @@ $settingAttributes = @(
 	'$script:ytdlHttpHeader',
 	'$script:ytdlBaseArgs',
 	'$script:nonTVerYtdlBaseArgs',
-	'$script:ScheduleStop'
+	'$script:scheduleStop'
 )
 
 #endregion 環境設定
@@ -143,7 +143,7 @@ function Read-UserSetting {
 			else { $settingBox.Text = 'デフォルト値' }
 		}
 		# 動作停止設定の抽出
-		$schduleStopPattern = '\$script:StopSchedule\s*=\s*@\{([^}]*)\}'
+		$schduleStopPattern = '\$script:stopSchedule\s*=\s*@\{([^}]*)\}'
 		$scheduleStopDetail = [regex]::Match($userSettings, $schduleStopPattern)
 		# 抽出した内容を解析してチェックボックスに反映
 		if ($scheduleStopDetail.Success) {
@@ -205,7 +205,7 @@ function Save-UserSetting {
 	}
 	#動作停止設定の部分
 	$stopSetting = @()
-	$stopSetting += '$script:StopSchedule = @{'
+	$stopSetting += '$script:stopSchedule = @{'
 	foreach ($day in $days) {
 		$stopHoursList = @()
 		foreach ($hour in $hours) {
