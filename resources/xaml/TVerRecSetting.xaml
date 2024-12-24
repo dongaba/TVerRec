@@ -917,7 +917,7 @@
 									仕組み上、処理の停止や再開は厳密には制御できませんので設定されたっ時間は目安としてしてください。
 								</TextBlock>
 							</Expander>
-							<ComboBox x:Name="ScheduleStop" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+							<ComboBox x:Name="scheduleStop" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
 								<ComboBoxItem>デフォルト値</ComboBoxItem>
 								<ComboBoxItem>しない</ComboBoxItem>
 								<ComboBoxItem>する</ComboBoxItem>
