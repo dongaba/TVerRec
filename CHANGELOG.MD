@@ -8,7 +8,7 @@
 
 ### 3.2.8 Fixed
 
-- GUIからスケジュールベースの動作停止設定の設定値が保存されなかった不具合を修正
+- GUIからスケジュールベースの動作停止設定の設定値が保存されなかった不具合を修正 [Issue #143](https://github.com/dongaba/TVerRec/issues/143)
 
 ## [3.2.7](https://github.com/dongaba/TVerRec/releases/tag/v3.2.7)
 
