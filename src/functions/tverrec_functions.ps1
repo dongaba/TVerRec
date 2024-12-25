@@ -38,12 +38,11 @@ function Invoke-TVerRecUpdateCheck {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$progressPreference = 'silentlyContinue'
 	Invoke-StatisticsCheck -Operation 'launch'
-	$versionUp = $false
 	#TVerRecの最新バージョン取得
 	$repo = 'dongaba/TVerRec'
 	$releases = ('https://api.github.com/repos/{0}/releases' -f $repo)
 	try {
-		$appReleases = (Invoke-RestMethod -Uri $releases -Method 'GET' ).where{ ($_.prerelease -eq $false) }[0]
+		$appReleases = (Invoke-RestMethod -Uri $releases -Method 'GET' ).where{ !$_.prerelease }[0]
 		if (!$appReleases) { Write-Warning '最新版の情報を取得できませんでした' ; return }
 	} catch { Write-Warning '最新版の情報を取得できませんでした' ; return }
 	#GitHub側最新バージョンの整形 v1.2.3 → 1.2.3
@@ -743,7 +742,8 @@ function Invoke-Ytdl {
 	$tmpDir = ('temp:{0}' -f $script:downloadWorkDir)
 	$saveDir = ('home:{0}' -f $videoInfo.fileDir)
 	$saveFile = ('{0}' -f $videoInfo.fileName)
-	$ytdlArgs = (' {0}' -f $script:ytdlBaseArgs)
+	$ytdlArgs = @()
+	$ytdlArgs += (' {0}' -f $script:ytdlBaseArgs)
 	$ytdlArgs += (' {0} {1}' -f '--concurrent-fragments', $script:parallelDownloadNumPerFile)
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $saveDir)
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $tmpDir)
@@ -769,11 +769,12 @@ function Invoke-Ytdl {
 	$ytdlArgs += (' {0}' -f $script:ytdlOption)
 	$ytdlArgs += (' {0}' -f $videoInfo.episodePageURL)
 	$ytdlArgs += (' {0} "{1}"' -f '--output', $saveFile)
-	Write-Debug ('youtube-dl起動コマンド: {0}{1}' -f $script:ytdlPath, $ytdlArgs)
+	$ytdlArgsString = $ytdlArgs -join ' '
+	Write-Debug ('youtube-dl起動コマンド: {0}{1}' -f $script:ytdlPath, $ytdlArgsString)
 	try {
 		$startProcessParams = @{
 			FilePath     = $script:ytdlPath
-			ArgumentList = $ytdlArgs
+			ArgumentList = $ytdlArgsString
 			PassThru     = $true
 		}
 		if ($IsWindows) {
@@ -785,7 +786,7 @@ function Invoke-Ytdl {
 		$ytdlProcess = Start-Process @startProcessParams
 		$ytdlProcess.Handle | Out-Null
 	} catch { Write-Warning '　⚠️ youtube-dlの起動に失敗しました' ; return }
-	Remove-Variable -Name tmpDir, saveDir, subttlDir, thumbDir, chaptDir, descDir, saveFile, ytdlArgs, rateLimit, startProcessParams, ytdlProcess -ErrorAction SilentlyContinue
+	Remove-Variable -Name tmpDir, saveDir, subttlDir, thumbDir, chaptDir, descDir, saveFile, ytdlArgs, ytdlArgsString, rateLimit, startProcessParams, ytdlProcess -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -800,7 +801,8 @@ function Invoke-NonTverYtdl {
 	$tmpDir = ('temp:{0}' -f $script:downloadWorkDir)
 	$baseDir = ('home:{0}' -f $script:downloadBaseDir)
 	$saveFile = ('{0}' -f $script:ytdlNonTVerFileName)
-	$ytdlArgs = (' {0}' -f $script:nonTVerYtdlBaseArgs)
+	$ytdlArgs = @()
+	$ytdlArgs += (' {0}' -f $script:nonTVerYtdlBaseArgs)
 	$ytdlArgs += (' {0} {1}' -f '--concurrent-fragments', $script:parallelDownloadNumPerFile)
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $baseDir)
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $tmpDir)
@@ -824,11 +826,12 @@ function Invoke-NonTverYtdl {
 	$ytdlArgs += (' {0}' -f $script:ytdlOption)
 	$ytdlArgs += (' {0}' -f $videoPageURL)
 	$ytdlArgs += (' {0} "{1}"' -f '--output', $saveFile)
-	Write-Debug ('youtube-dl起動コマンド: {0}{1}' -f $script:ytdlPath, $ytdlArgs)
+	$ytdlArgsString = $ytdlArgs -join ' '
+	Write-Debug ('youtube-dl起動コマンド: {0}{1}' -f $script:ytdlPath, $ytdlArgsString)
 	try {
 		$startProcessParams = @{
 			FilePath     = $script:ytdlPath
-			ArgumentList = $ytdlArgs
+			ArgumentList = $ytdlArgsString
 			PassThru     = $true
 		}
 		if ($IsWindows) {
@@ -840,7 +843,7 @@ function Invoke-NonTverYtdl {
 		$ytdlProcess = Start-Process @startProcessParams
 		$ytdlProcess.Handle | Out-Null
 	} catch { Write-Warning '　⚠️ youtube-dlの起動に失敗しました' ; return }
-	Remove-Variable -Name videoPageURL, tmpDir, baseDir, subttlDir, thumbDir, chaptDir, descDir, saveFile, ytdlArgs, rateLimit, startProcessParams, ytdlProcess -ErrorAction SilentlyContinue
+	Remove-Variable -Name videoPageURL, tmpDir, baseDir, subttlDir, thumbDir, chaptDir, descDir, saveFile, ytdlArgs, ytdlArgsString,  rateLimit, startProcessParams, ytdlProcess -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
