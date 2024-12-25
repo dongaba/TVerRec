@@ -121,7 +121,7 @@ if ($script:forceSingleDownload) {
 		$ignoreTitle = $_.Normalize([Text.NormalizationForm]::FormC)
 		$filteredDirs = $workDirEntities.Where({ $_.Name.Normalize([Text.NormalizationForm]::FormC) -like "*${ignoreTitle}*" })
 		$filteredDirs | ForEach-Object {
-			$ignoreDirs.Add($_) | Out-Null
+			$ignoreDirs.Add($_)
 			Update-IgnoreList $ignoreTitle
 		}
 	}
