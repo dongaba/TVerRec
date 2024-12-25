@@ -1149,13 +1149,13 @@ function Invoke-StatisticsCheck {
 			Locale       = @{ 'value' = $script:locale }
 			TimeZone     = @{ 'value' = $script:tz }
 		}
-		foreach ($clientEnv in $script:clientEnvs) {
+		foreach ($clientEnv in $script:clientEnvs.GetEnumerator() ) {
 			$value = [string]$clientEnv.Value
 			$userProperties[$clientEnv.Key] = @{ 'value' = $value.Substring(0, [Math]::Min($value.Length, 36)) }
 		}
 		$eventParams = @{}	#max 25 parameters, max 40 chars of property name, 100 chars of property value
 		foreach ($clientSetting in $script:clientSettings) {
-			if (!($clientSetting.Name -match '(.*Dir|.*Path|app.*|timeout.*|.*Preference|.*Max|.*Period|parallel.*|.*BaseArgs|.*FileName)')) {
+			if (!($clientSetting.Name -match '(.*Schedule|my.*|embed.*|.*Update.*|.*Dir|.*Path|app.*|timeout.*|.*Preference|.*Max|.*Period|parallel.*|.*BaseArgs|.*FileName)')) {
 				$paramValue = [String]((Get-Variable -Name $clientSetting.Name).Value)
 				$eventParams[$clientSetting.Key] = $paramValue.Substring(0, [Math]::Min($paramValue.Length, 99))
 			}
@@ -1172,7 +1172,8 @@ function Invoke-StatisticsCheck {
 				}
 			)
 		} | ConvertTo-Json -Depth 3
-		$gaURL = 'https://www.google-analytics.com/mp/collect'
+		if ($DebugPreference -eq 'Continue') { $gaURL = 'https://www.google-analytics.com/debug/mp/collect' }
+		else { $gaURL = 'https://www.google-analytics.com/mp/collect'}
 		$gaKey = 'api_secret=3URTslDhRVu4Qpb66nDyAA'
 		$gaID = 'measurement_id=G-V9TJN18D5Z'
 		$gaHeaders = @{
@@ -1180,10 +1181,11 @@ function Invoke-StatisticsCheck {
 			'Content-Type' = 'application/json'
 		}
 		$progressPreference = 'silentlyContinue'
-		try { Invoke-RestMethod -Uri ('{0}?{1}&{2}' -f $gaURL, $gaKey, $gaID) -Method 'POST' -Headers $gaHeaders -Body $gaBody -TimeoutSec $script:timeoutSec | Out-Null }
+		try { $response = Invoke-RestMethod -Uri ('{0}?{1}&{2}' -f $gaURL, $gaKey, $gaID) -Method 'POST' -Headers $gaHeaders -Body $gaBody -TimeoutSec $script:timeoutSec }
 		catch { Write-Debug ('Failed to collect statistics') }
 		finally { $progressPreference = 'Continue' }
 	}
+	if ($DebugPreference -eq 'Continue') { Write-Debug $response }
 	Remove-Variable -Name operation, tverType, tverID, statisticsBase, epochTime, userProperties, clientEnv, value, eventParams, clientSetting, paramValue -ErrorAction SilentlyContinue
 	Remove-Variable -Name gaBody, gaURL, gaKey, gaID, gaHeaders -ErrorAction SilentlyContinue
 }
@@ -1202,7 +1204,8 @@ try {
 	foreach ($geoIPValue in $geoIPValues) { $script:clientEnvs.Add($geoIPValue.Name, $geoIPValue.Value) | Out-Null }
 } catch { Write-Debug ('Failed to check Geo IP') }
 $progressPreference = 'Continue'
-$script:clientEnvs = $script:clientEnvs.GetEnumerator() | Sort-Object -Property key
+
+#$script:clientEnvs = $script:clientEnvs.GetEnumerator() | Sort-Object -Property key
 $script:clientSettings = Get-Setting
 switch ($true) {
 	$IsWindows {
