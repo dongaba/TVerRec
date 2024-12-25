@@ -113,7 +113,7 @@ if ($script:forceSingleDownload) {
 
 	#ダウンロード対象外番組が登録されていない場合はスキップ
 	$ignoreTitles = @(Read-IgnoreList)
-	$ignoreDirs = [System.Collections.Generic.List[object]]::new()
+	$ignoreDirs = New-Object System.Collections.Generic.List[object]
 	if ($ignoreTitles.Count -eq 0) { return }
 
 	#削除対象の特定
