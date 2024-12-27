@@ -221,6 +221,14 @@ $script:disableValidation = $false
 #　処理時間が長くなりますが、エピソード以外も処理することでダウンロード対象番組が増える可能性があります。
 $script:sitemapParseEpisodeOnly = $true
 
+#エピソードID変更時の再ダウンロード
+#　エピソードIDが変更された際に再ダウンロードするかを設定します。
+#　同一番組(保存ファイル名が同一ファイル名になる番組)でもエピソードIDが変更になることがあります。
+#　どのような場合にエピソードIDが変更されるのかはよくわかりませんが、字幕データの追加や配信内容が変更されている可能性があります。
+#　「$true」の場合はエピソードID変更時に番組動画を再ダウンロードします。
+#　「$false」の場合はエピソードID変更時に番組動画を再ダウンロードしません。
+$script:downloadWhenEpisodeIdChanged = $true
+
 #youtube-dlとffmpegのウィンドウの表示方法(Windowsのみ) Normal/Maximized/Minimized/Hidden
 #　youtube-dl と ffmpeg のウィンドウをどのように表示するかを設定します。
 #　Minimizedに設定することで最小化状態でウィンドウが作成されるようになり必要なときにだけ進捗確認をすることができます。

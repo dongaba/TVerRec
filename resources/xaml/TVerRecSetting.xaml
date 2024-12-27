@@ -651,6 +651,18 @@
 								<ComboBoxItem>しない</ComboBoxItem>
 								<ComboBoxItem>する</ComboBoxItem>
 							</ComboBox>
+							<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="エピソードID変更時の再ダウンロード">
+								<TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+									エピソードIDが変更された際に再ダウンロードするかを設定します。 <LineBreak/>
+									同一番組(保存ファイル名が同一ファイル名になる番組)でもエピソードIDが変更になることがあります。
+									どのような場合にエピソードIDが変更されるのかはよくわかりませんが、字幕データの追加や配信内容が変更されている可能性があります。
+								</TextBlock>
+							</Expander>
+							<ComboBox x:Name="downloadWhenEpisodeIdChanged" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+								<ComboBoxItem>デフォルト値</ComboBoxItem>
+								<ComboBoxItem>しない</ComboBoxItem>
+								<ComboBoxItem>する</ComboBoxItem>
+							</ComboBox>
 							<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="TVer番組ファイルの動画コンテナ形式">
 								<TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
 									TVer番組ファイルの動画コンテナ形式を設定します。 <LineBreak/>

@@ -37,12 +37,12 @@ function Get-VideoLinksFromKeyword {
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String][ref]$keyword)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$linkCollection = [PSCustomObject]@{
-		episodeLinks     = [System.Collections.Generic.List[string]]::new()
-		seriesLinks      = [System.Collections.Generic.List[string]]::new()
-		seasonLinks      = [System.Collections.Generic.List[string]]::new()
-		talentLinks      = [System.Collections.Generic.List[string]]::new()
-		specialMainLinks = [System.Collections.Generic.List[string]]::new()
-		specialLinks     = [System.Collections.Generic.List[string]]::new()
+		episodeLinks     = @{}
+		seriesLinks      = New-Object System.Collections.Generic.List[string]
+		seasonLinks      = New-Object System.Collections.Generic.List[string]
+		talentLinks      = New-Object System.Collections.Generic.List[string]
+		specialMainLinks = New-Object System.Collections.Generic.List[string]
+		specialLinks     = New-Object System.Collections.Generic.List[string]
 	}
 	if ($keyword.IndexOf('/') -gt 0) { 
 		$key = $keyword.split(' ')[0].split("`t")[0].Split('/')[0]
@@ -51,7 +51,7 @@ function Get-VideoLinksFromKeyword {
 	if (($keyword -eq 'sitemap') -or ($keyword -eq 'toppage')) { $key = $keyword }
 	Invoke-StatisticsCheck -Operation 'search' -TVerType $key -TVerID $tverID
 	switch ($key) {
-		'episodes' { $linkCollection.episodeLinks.Add(('https://tver.jp/{0}/{1}' -f $key, $tverID)) ; continue }
+		'episodes' { $linkCollection.episodeLinks[('https://tver.jp/episodes/{0}' -f $tverID)] = 0 ; continue }	#キーワードファイルにあるEpisodeはEndAtが不明なので0を設定
 		'series' { $linkCollection.seriesLinks.Add($tverID) ; continue }
 		'talents' { $linkCollection.talentLinks.Add($tverID) ; continue }
 		'tag' { Get-LinkFromKeyword -id $tverID -type 'tag' -LinkCollection ([ref]$linkCollection) ; continue }
@@ -79,7 +79,8 @@ function Get-VideoLinksFromKeyword {
 		}
 	}
 	Remove-Variable -Name key, tverID, linkTypes, type -ErrorAction SilentlyContinue
-	return $linkCollection.episodeLinks | Sort-Object -Unique
+	if ($linkCollection.episodeLinks.count -eq 0) { return }
+	else { return ($linkCollection.episodeLinks.GetEnumerator() | Sort-Object Value).Name }
 	Remove-Variable -Name linkCollection -ErrorAction SilentlyContinue
 }
 
@@ -109,7 +110,7 @@ function Get-LinkFromKeyword {
 			else { ('https://platform-api.tver.jp/service/api/v1/callEpisodeRankingDetail/{0}' -f $id) }
 			$type = 'ranking' ; continue
 		}
-		'category' { 'https://platform-api.tver.jp/service/api/v1/callCategoryHome/{0}' -f $id; continue}
+		'category' { 'https://platform-api.tver.jp/service/api/v1/callCategoryHome/{0}' -f $id; continue }
 		'keyword' { 'https://platform-api.tver.jp/service/api/v1/callKeywordSearch'; $keyword = $id ; continue }
 		default { Write-Warning '無効なタイプが指定されました。' }
 	}
@@ -162,12 +163,15 @@ function Get-SearchResults {
 		{ $_ -in 'new', 'ranking' } { $searchResultsRaw.Result.Contents.Contents ; continue }
 		default { $searchResultsRaw.Result.Contents }
 	}
+	# searchResultsを並び替え
+	$order = @('specialMain', 'special', 'talent', 'series', 'season', 'episode', 'live', 'banner')
+	$sortedSearchResults = $searchResults | Sort-Object { $order.IndexOf($_.Type) }
 	#タイプ別に再帰呼び出し
-	foreach ($searchResult in $searchResults) {
+	foreach ($searchResult in $sortedSearchResults) {
 		switch ($searchResult.Type) {
 			'live' { continue }
 			'banner' { continue }
-			'episode' { $linkCollection.episodeLinks.Add('https://tver.jp/episodes/{0}' -f $searchResult.Content.Id) ; continue }
+			'episode' { $linkCollection.episodeLinks[('https://tver.jp/episodes/{0}' -f $searchResult.Content.Id)] = $searchResult.Content.EndAt ; continue }
 			'season' { $linkCollection.seasonLinks.Add($searchResult.Content.Id) ; continue }
 			'series' { $linkCollection.seriesLinks.Add($searchResult.Content.Id) ; continue }
 			'talent' { $linkCollection.talentLinks.Add($searchResult.Content.Id) ; continue }
@@ -177,7 +181,7 @@ function Get-SearchResults {
 				continue
 			}
 			'specialMain' { $linkCollection.specialMainLinks.Add($searchResult.Content.Id) ; continue }
-			default { $linkCollection.episodeLinks = & { $linkCollection.episodeLinks ; ('https://tver.jp/{0}/{1}' -f $searchResult.Type, $searchResult.Content.Id) } }
+			default { Write-Warning '⚠️ 未知のコンテンツタイプです。 - {0}/{1}' -f $searchResult.Type, $searchResult.Content.Id }
 		}
 	}
 	Remove-Variable -Name baseURL, type, keyword, requireData -ErrorAction SilentlyContinue
@@ -199,7 +203,7 @@ function Convert-Buffer {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if ($tverIDs) {
 		foreach ($tverID in ($tverIDs | Sort-Object -Unique)) {
-			Write-Information ('{0} - {1} {2} からEpisodeを抽出中...' -f (Get-Date), $tverIDType, $tverID)
+			Write-Information ('　{0} - {1} {2} からEpisodeを抽出中...' -f (Get-Date), $tverIDType, $tverID)
 			switch ($tverIDType) {
 				'Series' { Get-LinkFromKeyword -id $tverID -type 'series' -LinkCollection ([ref]$linkCollection) ; continue }
 				'Season' { Get-LinkFromKeyword -id $tverID -type 'season' -LinkCollection ([ref]$linkCollection) ; continue }
@@ -208,7 +212,7 @@ function Convert-Buffer {
 				'Special Detail' { Get-LinkFromKeyword -id $tverID -type 'specialDetail' -LinkCollection ([ref]$linkCollection) ; continue }
 			}
 		}
-		$linkTypes = @('episodeLinks', 'seasonLinks', 'seriesLinks', 'specialLinks')
+		$linkTypes = @('seasonLinks', 'seriesLinks', 'specialLinks')
 		foreach ($linkType in $linkTypes) { if ($linkCollection.$linkType) { $linkCollection.$linkType = [System.Collections.Generic.List[string]]($linkCollection.$linkType | Sort-Object -Unique) } }
 	}
 	Remove-Variable -Name tverIDs, tverIDType, linkCollection, tverID, result -ErrorAction SilentlyContinue
@@ -233,7 +237,7 @@ function Get-LinkFromTopPage {
 				foreach ($content in $contents) {
 					if ($content.Type -eq 'live') { continue }
 					switch ($content.Type) {
-						'episode' { $linkCollection.episodeLinks.Add('https://tver.jp/episodes/{0}' -f $content.Content.Id) ; continue }
+						'episode' { $linkCollection.episodeLinks[('https://tver.jp/episodes/{0}' -f $content.Content.Id)] = $content.Content.EndAt ; continue }
 						'series' { $linkCollection.seriesLinks.Add($content.Content.Id) ; continue }
 						'season' { $linkCollection.seasonLinks.Add($content.Content.Id) ; continue }
 						'talent' { $linkCollection.talentLinks.Add($content.Content.Id) ; continue }
@@ -245,7 +249,7 @@ function Get-LinkFromTopPage {
 				continue
 			}
 			{ $_ -in @('banner', 'resume', 'favorite') } { continue }
-			default { Write-Warning "⚠️ 未知のコンポーネントタイプです。 - $($component.Type)" }
+			default { Write-Warning '⚠️ 未知のコンポーネントタイプです。 - {0}' -f $component.Type }
 		}
 	}
 	Remove-Variable -Name linkCollection, callSearchBaseURL, callSearchURL, searchResults, component, contents, content -ErrorAction SilentlyContinue
@@ -274,8 +278,15 @@ function Get-LinkFromSiteMap {
 		} catch { $tverID = @{ type = $null ; id = $null } }
 		if ($tverID.id) {
 			switch ($tverID.type) {
-				'episodes' { $linkCollection.episodeLinks.Add('https://tver.jp/episodes/{0}' -f $tverID.id) ; continue }
-				'series' { if (!$script:sitemapParseEpisodeOnly) { $linkCollection.seriesLinks.Add($tverID.id) } ; continue }
+				'episodes' { 
+					$linkCollection.episodeLinks[('https://tver.jp/episodes/{0}' -f $tverID.id)] = 0	#サイトマップにあるEpisodeはEndAtが不明なので0を設定
+					continue
+				}
+				'series' {
+					Write-Information ('{0} - {1} {2} からEpisodeを抽出中...' -f (Get-Date), $tverID.type, $tverID.id)
+					if (!$script:sitemapParseEpisodeOnly) { $linkCollection.seriesLinks.Add($tverID.id) }
+					continue
+				}
 				'ranking' {
 					if (!$script:sitemapParseEpisodeOnly) {
 						Write-Information ('{0} - {1} {2} からEpisodeを抽出中...' -f (Get-Date), $tverID.type, $tverID.id)
@@ -327,4 +338,134 @@ function Get-LinkFromMyPage {
 	}
 	Get-SearchResults -baseURL $baseURL -Type 'mypage' -RequireData $requireData -LoginRequired $loginRequired -LinkCollection ([ref]$linkCollection)
 	Remove-Variable -Name page, baseURLPrefix, baseURL, loginRequired, requireData, tverIDs -ErrorAction SilentlyContinue
+}
+
+#----------------------------------------------------------------------
+#TVerのAPIを叩いて番組情報取得
+#----------------------------------------------------------------------
+function Get-VideoInfo {
+	Param ([Parameter(Mandatory = $true)][String]$episodeID)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	#----------------------------------------------------------------------
+	#番組説明以外
+	$tverVideoInfoBaseURL = 'https://platform-api.tver.jp/service/api/v1/callEpisode/'
+	$tverVideoInfoURL = ('{0}{1}?platform_uid={2}&platform_token={3}' -f $tverVideoInfoBaseURL, $episodeID, $script:platformUID, $script:platformToken)
+	try { $response = Invoke-RestMethod -Uri $tverVideoInfoURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec }
+	catch { Write-Warning ('⚠️ エラーが発生しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) ; return }
+	#シリーズ
+	#	Series.Content.Titleだと複数シーズンがある際に現在メインで配信中のシリーズ名が返ってくることがある
+	#	Episode.Content.SeriesTitleだとSeries名+Season名が設定される番組もある
+	#	3.2.2からEpisode.Content.SeriesTitleを採用することとする。
+	#	理由は、Series.Content.Titleだとファイル名が冗長になることがあることと、複数シーズン配信時に最新シーズン名になってしまうことがあるため。
+	$videoSeries = (Remove-SpecialCharacter (Get-NarrowChars ($response.Result.Episode.Content.SeriesTitle))).Trim()
+	$videoSeriesID = $response.Result.Series.Content.Id
+	$videoSeriesPageURL = ('https://tver.jp/series/{0}' -f $response.Result.Series.Content.Id)
+	#シーズン
+	$videoSeason = (Remove-SpecialCharacter (Get-NarrowChars ($response.Result.Season.Content.Title))).Trim()
+	$videoSeasonID = $response.Result.Season.Content.Id
+	#エピソード
+	$episodeName = (Remove-SpecialCharacter (Get-NarrowChars ($response.Result.Episode.Content.Title))).Trim()
+	$videoEpisodeID = $response.Result.Episode.Content.Id
+	$videoEpisodePageURL = ('https://tver.jp/episodes/{0}' -f $videoEpisodeID)
+	#放送局
+	$mediaName = (Get-NarrowChars ($response.Result.Episode.Content.BroadcasterName)).Trim()
+	$providerName = (Get-NarrowChars ($response.Result.Episode.Content.ProductionProviderName)).Trim()
+	#放送日
+	$broadcastDate = (($response.Result.Episode.Content.BroadcastDateLabel).Replace('ほか', '').Replace('放送分', '放送').Replace('配信分', '配信')).Trim()
+	#配信終了日時
+	$endTime = (ConvertFrom-UnixTime ($response.Result.Episode.Content.EndAt)).AddHours(9)
+	#----------------------------------------------------------------------
+	#番組説明
+	try {
+		$versionNum = $response.Result.Episode.Content.version
+		$tverVideoInfoBaseURL = 'https://statics.tver.jp/content/episode/'
+		$tverVideoInfoURL = ('{0}{1}.json?v={2}' -f $tverVideoInfoBaseURL, $episodeID, $versionNum)
+		$videoInfo = Invoke-RestMethod -Uri $tverVideoInfoURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
+		$descriptionText = (Get-NarrowChars ($videoInfo.Description).Replace('&amp;', '&')).Trim()
+		$videoEpisodeNum = (Get-NarrowChars ($videoInfo.No)).Trim()
+		$accountID = $videoInfo.video.accountID
+		$videoRefID = if ($videoInfo.video.PSObject.Properties.Name -contains 'videoRefID') { ('ref%3A{0}' -f $videoInfo.video.videoRefID) } else { $videoInfo.video.videoID }
+		$playerID = $videoInfo.video.playerID
+	} catch { Write-Warning ('⚠️ エラーが発生しました。番組情報を取得できません。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) ; return }
+	#Brightcoveキー取得
+	try {
+		$brightcoveJsURL = ('https://players.brightcove.net/{0}/{1}_default/index.min.js' -f $accountID, $playerID)
+		$brightcovePk = if ((Invoke-RestMethod -Uri $brightcoveJsURL -Method 'GET' -Headers $script:requestHeader) -match 'policyKey:"([a-zA-Z0-9_-]*)"') { $matches[1] }
+	} catch { Write-Warning ('⚠️ エラーが発生しました。m3u8ファイル取得のキーが取得できません。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) ; return }
+	#m3u8とmpd URL取得
+	try {
+		$brightcoveURL = ('https://edge.api.brightcove.com/playback/v1/accounts/{0}/videos/{1}' -f $accountID, $videoRefID)
+		$headers = @{
+			'Accept'          = ('application/json;pk={0}' -f $brightcovePk)
+			'X-Forwarded-For' = $script:jpIP
+		}
+		$response = Invoke-RestMethod -Uri $brightcoveURL -Method 'GET' -Headers $headers
+		$m3u8URL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*mpeg*' }).where({ $_.ext_x_version -eq 4 })[0].src
+		$mpdURL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*dash*' })[0].src
+	} catch { Write-Warning ('⚠️ エラーが発生しました。m3u8ファイルが取得できません。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) ; return }
+	#「《」と「》」で挟まれた文字を除去
+	if ($script:removeSpecialNote) { $videoSeason = Remove-SpecialNote $videoSeason ; $episodeName = Remove-SpecialNote $episodeName }
+	#シーズン名が本編の場合はシーズン名をクリア
+	if ($videoSeason -eq '本編') { $videoSeason = '' }
+	#シリーズ名がシーズン名を含む場合はシーズン名をクリア
+	if ($videoSeries -cmatch [Regex]::Escape($videoSeason)) { $videoSeason = '' }
+	#エピソード番号を極力修正
+	if ((($videoEpisodeNum -eq 1) -or ($videoEpisodeNum % 10 -eq 0)) -and ($episodeName -imatch '([#|第|Episode|ep|Take|Vol|Part|Chapter|Flight|Karte|Case|Stage|Mystery|Ope|Story|Sign|Trap|Letter|Act]+\.?\s?)(\d+)(.*)')) { $videoEpisodeNum = $matches[2] }
+	#エピソード番号が1桁の際は頭0埋めして2桁に
+	$videoEpisodeNum = $videoEpisodeNum.PadLeft(2, '0')
+	#放送日を整形
+	if ($broadcastDate -cmatch '([0-9]+)(月)([0-9]+)(日)(.+?)(放送|配信)') {
+		$currentYear = (Get-Date).Year
+		$parsedBroadcastDate = [DateTime]::ParseExact(('{0}{1}{2}' -f $currentYear, $matches[1].padleft(2, '0'), $matches[3].padleft(2, '0')), 'yyyyMMdd', $null)
+		#実日付の翌日よりも放送日が未来だったら当年ではなく昨年の番組と判断する(年末の番組を年初にダウンロードするケース)
+		$broadcastYear = $parsedBroadcastDate -gt (Get-Date).AddDays(+1) ? $currentYear - 1 : $currentYear
+		$broadcastDate = ('{0}年{1}{2}{3}{4}{5}' -f $broadcastYear, $matches[1].padleft(2, '0'), $matches[2], $matches[3].padleft(2, '0'), $matches[4], $matches[6])
+	}
+	return [pscustomobject]@{
+		seriesName      = $videoSeries
+		seriesID        = $videoSeriesID
+		seriesPageURL   = $videoSeriesPageURL
+		seasonName      = $videoSeason
+		seasonID        = $videoSeasonID
+		episodeNum      = $videoEpisodeNum
+		episodeID       = $videoEpisodeID
+		episodePageURL  = $videoEpisodePageURL
+		episodeName     = $episodeName
+		mediaName       = $mediaName
+		providerName    = $providerName
+		broadcastDate   = $broadcastDate
+		endTime         = $endTime
+		versionNum      = $versionNum
+		videoInfoURL    = $tverVideoInfoURL
+		descriptionText = $descriptionText
+		m3u8URL         = $m3u8URL
+		mpdURL          = $mpdURL
+	}
+	Remove-Variable -Name episodeID, tverVideoInfoBaseURL, tverVideoInfoURL, response -ErrorAction SilentlyContinue
+	Remove-Variable -Name videoSeries, videoSeriesID, videoSeriesPageURL, videoSeason, videoSeasonID, episodeName, videoEpisodeID, videoEpisodePageURL -ErrorAction SilentlyContinue
+	Remove-Variable -Name mediaName, providerName, broadcastDate, endTime, versionNum, videoInfo, descriptionText, videoEpisodeNum -ErrorAction SilentlyContinue
+	Remove-Variable -Name currentYear, parsedBroadcastDate, broadcastYear, matches -ErrorAction SilentlyContinue
+}
+
+#----------------------------------------------------------------------
+#Geo IP関連
+#----------------------------------------------------------------------
+function Get-JpIP {
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	#日本に割り当てられているIPアドレスレンジの取得
+	$allCIDR = Import-Csv $script:jpIPList
+	Do {
+		#ランダムなIPアドレスの取得
+		$randomCIDR = $allCIDR | Get-Random
+		$startIPArray = [System.Net.IPAddress]::Parse($randomCIDR[0].start).GetAddressBytes()
+		[Array]::Reverse($startIPArray) ; $startIPInt = [BitConverter]::ToUInt32($startIPArray, 0)
+		$endIPArray = [System.Net.IPAddress]::Parse($randomCIDR[0].end).GetAddressBytes()
+		[Array]::Reverse($endIPArray) ; $endIPInt = [BitConverter]::ToUInt32($endIPArray, 0)
+		$randomIPInt = $startIPInt + [UInt32](Get-Random -Maximum ($endIPInt - $startIPInt - 1)) + 1	#CIDR範囲の先頭と末尾を除く
+		$randomIPArray = [System.BitConverter]::GetBytes($randomIPInt)
+		[Array]::Reverse($randomIPArray) ; $jpIP = [System.Net.IPAddress]::new($randomIPArray).ToString()
+		$check = Invoke-RestMethod -Uri ('http://ip-api.com/json/{0}?fields=16785410' -f $jpIP)
+	} While (($check.countryCode -ne 'JP') -or ($check.hosting) )
+	return $jpIP
+	Remove-Variable -Name jpIP, check, allCIDR, randomCIDR, startIPArray, endIPArray, startIPInt, endIPInt, randomIPInt, randomIPArray -ErrorAction SilentlyContinue
 }

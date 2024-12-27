@@ -66,6 +66,7 @@ $settingAttributes = @(
 	'$script:simplifiedValidation',
 	'$script:disableValidation',
 	'$script:sitemapParseEpisodeOnly',
+	'$script:downloadWhenEpisodeIdChanged',
 	'$script:detailedProgress',
 	'$script:embedSubtitle',
 	'$script:embedMetatag',

@@ -450,9 +450,14 @@ function Invoke-VideoDownload {
 		#ここまで来ているということはEpisodeIDでは履歴とマッチしなかったということ
 		#考えられる原因は履歴ファイルがクリアされてしまっていること、または、EpisodeIDが変更になったこと
 		#	履歴ファイルに存在する	→番組IDが変更になったあるいは、番組名の重複
-		#		検証済	→元々の番組IDとしては問題ないのでSKIP
-		#		検証中	→元々の番組IDとしてはそのうち検証されるのでSKIP
-		#		未検証	→元々の番組IDとしては次回検証されるのでSKIP
+		#		ID変更時のダウンロード設定あり
+		#			検証済	→再ダウンロード
+		#			検証中	→元々の番組IDとしてはそのうち検証されるので、再ダウンロード。検証に失敗しても新IDでダウンロード検証されるはず
+		#			未検証	→元々の番組IDとしては次回検証されるので、再ダウンロード。検証に失敗しても新IDでダウンロード検証されるはず
+		#		ID変更時のダウンロード設定なし
+		#			検証済	→元々の番組IDとしては問題ないのでSKIP
+		#			検証中	→元々の番組IDとしてはそのうち検証されるのでSKIP
+		#			未検証	→元々の番組IDとしては次回検証されるのでSKIP
 		#	履歴ファイルに存在しない
 		#		ファイルが存在する	→検証だけする
 		#		ファイルが存在しない
@@ -462,35 +467,63 @@ function Invoke-VideoDownload {
 		$histFileData = @(Read-HistoryFile)
 		if ($videoInfo.fileRelPath) { $histMatch = @($histFileData.Where({ $_.videoPath -eq $videoInfo.fileRelPath })) }
 		else { Write-Warning ('　⚠️ ファイル名が取得できませんでした。スキップします') ; continue }
-		if (($histMatch.Count -ne 0)) {
-			#履歴ファイルに存在する	→スキップして次のファイルに
-			Write-Warning ('　⚠️ 同名のファイルがすでに履歴ファイルに存在します。番組IDが変更になった可能性があります。ダウンロードをスキップします')
-			$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '1' ; $videoInfo.fileName = '-- SKIPPED --'
-			$newVideo = Format-HistoryRecord ([ref]$videoInfo) ; $skipDownload = $true
-		} elseif ( Test-Path $videoInfo.filePath) {
-			#履歴ファイルに存在しないが、実ファイルが存在する	→検証だけする
-			Write-Warning ('　⚠️ 履歴ファイルに存在しませんが番組ファイルが存在します。整合性検証の対象とします')
-			$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0' ; $videoInfo.fileName = '-- SKIPPED --'
-			$newVideo = Format-HistoryRecord ([ref]$videoInfo) ; $skipDownload = $true
-		} else {
-			#履歴ファイルに存在せず、実ファイルも存在せず、ダウンロード対象外リストと合致	→無視する
-			$ignoreTitles = @(Read-IgnoreList)
-			foreach ($ignoreTitle in $ignoreTitles) {
-				if (($videoInfo.fileName -like ('*{0}*' -f $ignoreTitle)) -or ($videoInfo.seriesName -like ('*{0}*' -f $ignoreTitle))) {
-					Update-IgnoreList $ignoreTitle ; Write-Warning ('　⚠️ ダウンロード対象外としたファイルをダウンロード履歴に追加します')
-					$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0' ; $videoInfo.fileName = '-- IGNORED --' ; $videoInfo.fileRelPath = '-- IGNORED --'
-					$newVideo = Format-HistoryRecord ([ref]$videoInfo) ; $skipDownload = $true
-					break
+
+		if ($script:downloadWhenEpisodeIdChanged) {
+			if (($histMatch.Count -ne 0) -or (Test-Path $videoInfo.filePath)) {
+					Write-Output ('　💡 エピソードIDが変更になりました。ダウンロードするファイルをダウンロード履歴に追加します')
+					$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
+					$newVideo = Format-HistoryRecord ([ref]$videoInfo)
+			} else {
+				#履歴ファイルに存在せず、実ファイルも存在せず、ダウンロード対象外リストと合致	→無視する
+				$ignoreTitles = @(Read-IgnoreList)
+				foreach ($ignoreTitle in $ignoreTitles) {
+					if (($videoInfo.fileName -like ('*{0}*' -f $ignoreTitle)) -or ($videoInfo.seriesName -like ('*{0}*' -f $ignoreTitle))) {
+						Update-IgnoreList $ignoreTitle ; Write-Warning ('　⚠️ ダウンロード対象外としたファイルをダウンロード履歴に追加します')
+						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0' ; $videoInfo.fileName = '-- IGNORED --' ; $videoInfo.fileRelPath = '-- IGNORED --'
+						$newVideo = Format-HistoryRecord ([ref]$videoInfo) ; $skipDownload = $true
+						break
+					}
+				}
+				#履歴ファイルに存在せず、実ファイルも存在せず、ダウンロード対象外リストとも合致しない	→ダウンロードする
+				if (!$skipDownload) {
+					Write-Output ('　💡 ダウンロードするファイルをダウンロード履歴に追加します')
+					$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
+					$newVideo = Format-HistoryRecord ([ref]$videoInfo)
 				}
 			}
-			#履歴ファイルに存在せず、実ファイルも存在せず、ダウンロード対象外リストとも合致しない	→ダウンロードする
-			if (!$skipDownload) {
-				Write-Output ('　💡 ダウンロードするファイルをダウンロード履歴に追加します')
-				$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
-				$newVideo = Format-HistoryRecord ([ref]$videoInfo)
+		} else {
+			if ($histMatch.Count -ne 0) {
+				#履歴ファイルに存在する	→スキップして次のファイルに
+				Write-Warning ('　⚠️ 同名のファイルがすでに履歴ファイルに存在します。エピソードIDが変更になりました。ダウンロードをスキップします')
+				$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '1' ; $videoInfo.fileName = '-- SKIPPED --'
+				$newVideo = Format-HistoryRecord ([ref]$videoInfo) ; $skipDownload = $true
+			} elseif (Test-Path $videoInfo.filePath) {
+				#履歴ファイルに存在しないが、実ファイルが存在する	→検証だけする
+				Write-Warning ('　⚠️ 履歴ファイルに存在しませんが番組ファイルが存在します。整合性検証の対象とします')
+				$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0' ; $videoInfo.fileName = '-- SKIPPED --'
+				$newVideo = Format-HistoryRecord ([ref]$videoInfo) ; $skipDownload = $true
+			} else {
+				#履歴ファイルに存在せず、実ファイルも存在せず、ダウンロード対象外リストと合致	→無視する
+				$ignoreTitles = @(Read-IgnoreList)
+				foreach ($ignoreTitle in $ignoreTitles) {
+					if (($videoInfo.fileName -like ('*{0}*' -f $ignoreTitle)) -or ($videoInfo.seriesName -like ('*{0}*' -f $ignoreTitle))) {
+						Update-IgnoreList $ignoreTitle ; Write-Warning ('　⚠️ ダウンロード対象外としたファイルをダウンロード履歴に追加します')
+						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0' ; $videoInfo.fileName = '-- IGNORED --' ; $videoInfo.fileRelPath = '-- IGNORED --'
+						$newVideo = Format-HistoryRecord ([ref]$videoInfo) ; $skipDownload = $true
+						break
+					}
+				}
+				#履歴ファイルに存在せず、実ファイルも存在せず、ダウンロード対象外リストとも合致しない	→ダウンロードする
+				if (!$skipDownload) {
+					Write-Output ('　💡 ダウンロードするファイルをダウンロード履歴に追加します')
+					$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
+					$newVideo = Format-HistoryRecord ([ref]$videoInfo)
+				}
 			}
 		}
+
 	}
+
 	#ダウンロード履歴CSV書き出し
 	try {
 		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
@@ -547,7 +580,7 @@ function Update-VideoList {
 	#番組情報のコンソール出力
 	if ($DebugPreference -ne 'SilentlyContinue') { Show-VideoDebugInfo ([ref]$videoInfo) }
 	#スキップフラグが立っているかチェック
-	if ($ignore) { Write-Warning ('　　⚠️ 番組をコメントアウトした状態でリストファイルに追加します') ; $newVideo = Format-ListRecord ([ref]$videoInfo) }
+	if ($ignore) { Write-Warning ('　　⚠️ ダウンロード対象外としてコメントアウトした状態でリストファイルに追加します') ; $newVideo = Format-ListRecord ([ref]$videoInfo) }
 	else { Write-Output ('　　💡 番組をリストファイルに追加します') ; $newVideo = Format-ListRecord ([ref]$videoInfo) }
 	#ダウンロードリストCSV書き出し
 	try {
@@ -557,113 +590,6 @@ function Update-VideoList {
 	} catch { Write-Warning ('　　⚠️ ダウンロードリストを更新できませんでした。スキップします') ; continue }
 	finally { Unlock-File $script:listLockFilePath | Out-Null }
 	Remove-Variable -Name ignoreWord, newVideo, ignore, episodeID, videoInfo, ignoreTitles, ignoreTitle -ErrorAction SilentlyContinue
-}
-
-#----------------------------------------------------------------------
-#TVerのAPIを叩いて番組情報取得
-#----------------------------------------------------------------------
-function Get-VideoInfo {
-	Param ([Parameter(Mandatory = $true)][String]$episodeID)
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	#----------------------------------------------------------------------
-	#番組説明以外
-	$tverVideoInfoBaseURL = 'https://platform-api.tver.jp/service/api/v1/callEpisode/'
-	$tverVideoInfoURL = ('{0}{1}?platform_uid={2}&platform_token={3}' -f $tverVideoInfoBaseURL, $episodeID, $script:platformUID, $script:platformToken)
-	try { $response = Invoke-RestMethod -Uri $tverVideoInfoURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec }
-	catch { Write-Warning ('⚠️ エラーが発生しました。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) ; return }
-	#シリーズ
-	#	Series.Content.Titleだと複数シーズンがある際に現在メインで配信中のシリーズ名が返ってくることがある
-	#	Episode.Content.SeriesTitleだとSeries名+Season名が設定される番組もある
-	#	3.2.2からEpisode.Content.SeriesTitleを採用することとする。
-	#	理由は、Series.Content.Titleだとファイル名が冗長になることがあることと、複数シーズン配信時に最新シーズン名になってしまうことがあるため。
-	$videoSeries = (Remove-SpecialCharacter (Get-NarrowChars ($response.Result.Episode.Content.SeriesTitle))).Trim()
-	$videoSeriesID = $response.Result.Series.Content.Id
-	$videoSeriesPageURL = ('https://tver.jp/series/{0}' -f $response.Result.Series.Content.Id)
-	#シーズン
-	$videoSeason = (Remove-SpecialCharacter (Get-NarrowChars ($response.Result.Season.Content.Title))).Trim()
-	$videoSeasonID = $response.Result.Season.Content.Id
-	#エピソード
-	$episodeName = (Remove-SpecialCharacter (Get-NarrowChars ($response.Result.Episode.Content.Title))).Trim()
-	$videoEpisodeID = $response.Result.Episode.Content.Id
-	$videoEpisodePageURL = ('https://tver.jp/episodes/{0}' -f $videoEpisodeID)
-	#放送局
-	$mediaName = (Get-NarrowChars ($response.Result.Episode.Content.BroadcasterName)).Trim()
-	$providerName = (Get-NarrowChars ($response.Result.Episode.Content.ProductionProviderName)).Trim()
-	#放送日
-	$broadcastDate = (($response.Result.Episode.Content.BroadcastDateLabel).Replace('ほか', '').Replace('放送分', '放送').Replace('配信分', '配信')).Trim()
-	#配信終了日時
-	$endTime = (ConvertFrom-UnixTime ($response.Result.Episode.Content.EndAt)).AddHours(9)
-	#----------------------------------------------------------------------
-	#番組説明
-	try {
-		$versionNum = $response.Result.Episode.Content.version
-		$tverVideoInfoBaseURL = 'https://statics.tver.jp/content/episode/'
-		$tverVideoInfoURL = ('{0}{1}.json?v={2}' -f $tverVideoInfoBaseURL, $episodeID, $versionNum)
-		$videoInfo = Invoke-RestMethod -Uri $tverVideoInfoURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
-		$descriptionText = (Get-NarrowChars ($videoInfo.Description).Replace('&amp;', '&')).Trim()
-		$videoEpisodeNum = (Get-NarrowChars ($videoInfo.No)).Trim()
-		$accountID = $videoInfo.video.accountID
-		$videoRefID = if ($videoInfo.video.PSObject.Properties.Name -contains 'videoRefID') { ('ref%3A{0}' -f $videoInfo.video.videoRefID) } else { $videoInfo.video.videoID }
-		$playerID = $videoInfo.video.playerID
-	} catch { Write-Warning ('⚠️ エラーが発生しました。番組情報を取得できません。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) ; return }
-	#Brightcoveキー取得
-	try {
-		$brightcoveJsURL = ('https://players.brightcove.net/{0}/{1}_default/index.min.js' -f $accountID, $playerID)
-		$brightcovePk = if ((Invoke-RestMethod -Uri $brightcoveJsURL -Method 'GET' -Headers $script:requestHeader) -match 'policyKey:"([a-zA-Z0-9_-]*)"') { $matches[1] }
-	} catch { Write-Warning ('⚠️ エラーが発生しました。m3u8ファイル取得のキーが取得できません。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) ; return }
-	#m3u8とmpd URL取得
-	try {
-		$brightcoveURL = ('https://edge.api.brightcove.com/playback/v1/accounts/{0}/videos/{1}' -f $accountID, $videoRefID)
-		$headers = @{
-			'Accept'          = ('application/json;pk={0}' -f $brightcovePk)
-			'X-Forwarded-For' = $script:jpIP
-		}
-		$response = Invoke-RestMethod -Uri $brightcoveURL -Method 'GET' -Headers $headers
-		$m3u8URL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*mpeg*' }).where({ $_.ext_x_version -eq 4 })[0].src
-		$mpdURL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*dash*' })[0].src
-	} catch { Write-Warning ('⚠️ エラーが発生しました。m3u8ファイルが取得できません。スキップして次のリンクを処理します。 - {0}' -f $_.Exception.Message) ; return }
-	#「《」と「》」で挟まれた文字を除去
-	if ($script:removeSpecialNote) { $videoSeason = Remove-SpecialNote $videoSeason ; $episodeName = Remove-SpecialNote $episodeName }
-	#シーズン名が本編の場合はシーズン名をクリア
-	if ($videoSeason -eq '本編') { $videoSeason = '' }
-	#シリーズ名がシーズン名を含む場合はシーズン名をクリア
-	if ($videoSeries -cmatch [Regex]::Escape($videoSeason)) { $videoSeason = '' }
-	#エピソード番号を極力修正
-	if ((($videoEpisodeNum -eq 1) -or ($videoEpisodeNum % 10 -eq 0)) -and ($episodeName -imatch '([#|第|Episode|ep|Take|Vol|Part|Chapter|Flight|Karte|Case|Stage|Mystery|Ope|Story|Sign|Trap|Letter|Act]+\.?\s?)(\d+)(.*)')) { $videoEpisodeNum = $matches[2] }
-	#エピソード番号が1桁の際は頭0埋めして2桁に
-	$videoEpisodeNum = $videoEpisodeNum.PadLeft(2, '0')
-	#放送日を整形
-	if ($broadcastDate -cmatch '([0-9]+)(月)([0-9]+)(日)(.+?)(放送|配信)') {
-		$currentYear = (Get-Date).Year
-		$parsedBroadcastDate = [DateTime]::ParseExact(('{0}{1}{2}' -f $currentYear, $matches[1].padleft(2, '0'), $matches[3].padleft(2, '0')), 'yyyyMMdd', $null)
-		#実日付の翌日よりも放送日が未来だったら当年ではなく昨年の番組と判断する(年末の番組を年初にダウンロードするケース)
-		$broadcastYear = $parsedBroadcastDate -gt (Get-Date).AddDays(+1) ? $currentYear - 1 : $currentYear
-		$broadcastDate = ('{0}年{1}{2}{3}{4}{5}' -f $broadcastYear, $matches[1].padleft(2, '0'), $matches[2], $matches[3].padleft(2, '0'), $matches[4], $matches[6])
-	}
-	return [pscustomobject]@{
-		seriesName      = $videoSeries
-		seriesID        = $videoSeriesID
-		seriesPageURL   = $videoSeriesPageURL
-		seasonName      = $videoSeason
-		seasonID        = $videoSeasonID
-		episodeNum      = $videoEpisodeNum
-		episodeID       = $videoEpisodeID
-		episodePageURL  = $videoEpisodePageURL
-		episodeName     = $episodeName
-		mediaName       = $mediaName
-		providerName    = $providerName
-		broadcastDate   = $broadcastDate
-		endTime         = $endTime
-		versionNum      = $versionNum
-		videoInfoURL    = $tverVideoInfoURL
-		descriptionText = $descriptionText
-		m3u8URL         = $m3u8URL
-		mpdURL          = $mpdURL
-	}
-	Remove-Variable -Name episodeID, tverVideoInfoBaseURL, tverVideoInfoURL, response -ErrorAction SilentlyContinue
-	Remove-Variable -Name videoSeries, videoSeriesID, videoSeriesPageURL, videoSeason, videoSeasonID, episodeName, videoEpisodeID, videoEpisodePageURL -ErrorAction SilentlyContinue
-	Remove-Variable -Name mediaName, providerName, broadcastDate, endTime, versionNum, videoInfo, descriptionText, videoEpisodeNum -ErrorAction SilentlyContinue
-	Remove-Variable -Name currentYear, parsedBroadcastDate, broadcastYear, matches -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -843,7 +769,7 @@ function Invoke-NonTverYtdl {
 		$ytdlProcess = Start-Process @startProcessParams
 		$ytdlProcess.Handle | Out-Null
 	} catch { Write-Warning '　⚠️ youtube-dlの起動に失敗しました' ; return }
-	Remove-Variable -Name videoPageURL, tmpDir, baseDir, subttlDir, thumbDir, chaptDir, descDir, saveFile, ytdlArgs, ytdlArgsString,  rateLimit, startProcessParams, ytdlProcess -ErrorAction SilentlyContinue
+	Remove-Variable -Name videoPageURL, tmpDir, baseDir, subttlDir, thumbDir, chaptDir, descDir, saveFile, ytdlArgs, ytdlArgsString, rateLimit, startProcessParams, ytdlProcess -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -1076,29 +1002,6 @@ function Invoke-ValidityCheck {
 }
 
 #region 環境
-#----------------------------------------------------------------------
-#Geo IP関連
-#----------------------------------------------------------------------
-function Get-JpIP {
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	#日本に割り当てられているIPアドレスレンジの取得
-	$allCIDR = Import-Csv $script:jpIPList
-	Do {
-		#ランダムなIPアドレスの取得
-		$randomCIDR = $allCIDR | Get-Random
-		$startIPArray = [System.Net.IPAddress]::Parse($randomCIDR[0].start).GetAddressBytes()
-		$endIPArray = [System.Net.IPAddress]::Parse($randomCIDR[0].end).GetAddressBytes()
-		[Array]::Reverse($startIPArray) ; $startIPInt = [BitConverter]::ToUInt32($startIPArray, 0)
-		[Array]::Reverse($endIPArray) ; $endIPInt = [BitConverter]::ToUInt32($endIPArray, 0)
-		$randomIPInt = $startIPInt + [UInt32](Get-Random -Maximum ($endIPInt - $startIPInt - 1)) + 1	#CIDR範囲の先頭と末尾を除く
-		$randomIPArray = [System.BitConverter]::GetBytes($randomIPInt)
-		[Array]::Reverse($randomIPArray) ; $jpIP = [System.Net.IPAddress]::new($randomIPArray).ToString()
-		$check = Invoke-RestMethod -Uri ('http://ip-api.com/json/{0}?fields=16785410' -f $jpIP)
-	} While (($check.countryCode -ne 'JP') -or ($check.hosting) )
-	return $jpIP
-	Remove-Variable -Name jpIP, check, allCIDR, randomCIDR, startIPArray, endIPArray, startIPInt, endIPInt, randomIPInt, randomIPArray -ErrorAction SilentlyContinue
-}
-
 #----------------------------------------------------------------------
 #設定取得
 #----------------------------------------------------------------------
