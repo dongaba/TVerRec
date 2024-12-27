@@ -988,7 +988,7 @@ function Invoke-ValidityCheck {
 		catch { Write-Warning ('　⚠️ ファイル削除できませんでした: {0}' -f $videoFilePath) }
 	} else {
 		#終了コードが0のときはダウンロード履歴にチェック済フラグを立てる
-		Write-Output ('　✅ 整合性チェック成功')
+		Write-Output ('　✅ 整合性チェックOKです')
 		try {
 			while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ('　ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 			$videoHists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
