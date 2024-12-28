@@ -65,7 +65,7 @@ $script:loopCycle = 3600
 
 # マイページ処理用UIDとToken(TVerを匿名で利用する場合)
 #　TVerIDを登録しない状態で、マイページに登録したお気に入りやあとでみる、続きから再生などを
-#　TVerRecでダウンロードするためのplatfprm_uidとplatform_tokenを指定します。
+#　TVerRecでダウンロードするためのplatform_uidとplatform_tokenを指定します。
 #　TVerIDを登録しないで利用する場合、これを指定しないとマイページ配下の番組はダウンロードできません。
 #　platform_uidとplatform_tokenはブラウザの開発者ツール、またはChrome拡張機能TVerRec Assistantを使って確認できます。
 #　詳細はWiKiの[platform_uid、platform_token、member_sidの取得]を参照してください。

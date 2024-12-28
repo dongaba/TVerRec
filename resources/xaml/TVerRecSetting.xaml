@@ -524,7 +524,7 @@
 						<StackPanel Background="#FFFFFF">
 							<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="マイページ処理用のPlatform UID">
 								<TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-									TVerIDを登録しない状態で、マイページに登録したお気に入りやあとでみる、続きから再生などをTVerRecでダウンロードするためのplatfprm_uidを指定します。 <LineBreak/>
+									TVerIDを登録しない状態で、マイページに登録したお気に入りやあとでみる、続きから再生などをTVerRecでダウンロードするためのplatform_uidを指定します。 <LineBreak/>
 									TVerIDを登録しないで利用する場合、これを指定しないとマイページ配下の番組はダウンロードできません。
 									platform_uidはブラウザの開発者ツール、またはChrome拡張機能TVerRec Assistantを使って確認できます。
 									詳細はWikiを参照してください。
