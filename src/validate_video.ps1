@@ -90,7 +90,7 @@ while ($videoNotValidatedNum -ne 0) {
 
 	try {
 		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
-		$videoHists = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' }) | Select-Object 'videoPage', 'videoPath', 'videoValidated')
+		$videoHists = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' }) )#| Select-Object 'videoPage', 'videoPath', 'videoValidated')
 	} catch { Write-Warning ('⚠️ ダウンロード履歴の読み込みに失敗しました') }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
 
@@ -124,8 +124,7 @@ while ($videoNotValidatedNum -ne 0) {
 		#----------------------------------------------------------------------
 		$totalStartTime = Get-Date
 		$validateNum = 0
-		foreach ($videoHist in $videoHists.videoPath) {
-			$videoFileRelPath = $videoHist
+		foreach ($videoHist in $videoHists) {
 			#処理時間の推計
 			$secElapsed = (Get-Date) - $totalStartTime
 			$secRemaining = -1
@@ -137,7 +136,7 @@ while ($videoNotValidatedNum -ne 0) {
 			$validateNum++
 
 			$toastUpdateParams = @{
-				Title     = $videoFileRelPath
+				Title     = $videoHist.videoName
 				Rate      = $progressRate
 				LeftText  = ('{0}/{1}' -f $validateNum, $validateTotal)
 				RightText = $minRemaining
@@ -148,8 +147,8 @@ while ($videoNotValidatedNum -ne 0) {
 
 			if (!(Test-Path $script:downloadBaseDir -PathType Container)) { Throw ('❌️ 番組ダウンロード先ディレクトリにアクセスできません。終了します。') }
 			#番組の整合性チェック
-			Write-Output ('{0}/{1} - {2}' -f $validateNum, $validateTotal, $videoFileRelPath)
-			Invoke-ValidityCheck -Path $videoFileRelPath -DecodeOption $decodeOption
+			Write-Output ('{0}/{1} - {2}' -f $validateNum, $validateTotal, $videoHist.videoPath)
+			Invoke-ValidityCheck -VideoHist $videoHist -DecodeOption $decodeOption
 			Suspend-Process
 			Start-Sleep -Seconds 1
 		}
@@ -190,7 +189,7 @@ $toastUpdateParams = @{
 }
 Update-ProgressToast @toastUpdateParams
 
-Remove-Variable -Name args, toastShowParams, videoNotValidatedNum, videoHists, videoHist, uncheckedVido, validateTotal, decodeOption, totalStartTime, validateNum, videoFileRelPath, secElapsed, secRemaining, minRemaining, progressRate, toastUpdateParams -ErrorAction SilentlyContinue
+Remove-Variable -Name args, toastShowParams, videoNotValidatedNum, videoHists, videoHist, uncheckedVido, validateTotal, decodeOption, totalStartTime, validateNum, secElapsed, secRemaining, minRemaining, progressRate, toastUpdateParams -ErrorAction SilentlyContinue
 
 Invoke-GarbageCollection
 

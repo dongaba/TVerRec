@@ -898,28 +898,28 @@ function Repair-HistoryFile {
 function Invoke-ValidityCheck {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true)][String]$path,
+		[Parameter(Mandatory = $true)]$videoHist,
 		[Parameter(Mandatory = $false)][String]$decodeOption = ''
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$errorCount = 0
 	$checkStatus = 0
-	$videoFilePath = Join-Path (Convert-Path $script:downloadBaseDir) $path
+	$videoFilePath = Join-Path (Convert-Path $script:downloadBaseDir) $videoHist.videoPath
 	try { New-Item -Path $script:ffpmegErrorLogPath -ItemType File -Force | Out-Null }
 	catch { Write-Warning ('　⚠️ ffmpegエラーファイルを初期化できませんでした') ; return }
 	#これからチェックする番組のステータスをチェック
 	try {
 		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ('　ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 		$videoHists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
-		$checkStatus = ($videoHists.Where({ $_.videoPath -eq $path })).videoValidated
+		$checkStatus = ($videoHists.Where({ $_.videoPage -eq $videoHist.videoPage })).videoValidated
 		switch ($checkStatus) {
 			#0:未チェック、1:チェック済、2:チェック中
-			'0' { $videoHists.Where({ $_.videoPath -eq $path }).Where({ $_.videoValidated = '2' }) ; $videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 ; continue }
+			'0' { $videoHists.Where({ $_.videoPage -eq $videoHist.videoPage }).Where({ $_.videoValidated = '2' }) ; $videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 ; continue }
 			'1' { Write-Output ('　💡 他プロセスでチェック済です') ; return ; continue }
 			'2' { Write-Output ('　💡 他プロセスでチェック中です') ; return ; continue }
-			default { Write-Warning ('　⚠️ 既にダウンロード履歴から削除されたようです: {0}' -f $path) ; return }
+			default { Write-Warning ('　⚠️ 既にダウンロード履歴から削除されたようです: {0}' -f $videoHist.videoPage) ; return }
 		}
-	} catch { Write-Warning ('　⚠️ ダウンロード履歴を更新できませんでした: {0}' -f $path) ; return }
+	} catch { Write-Warning ('　⚠️ ダウンロード履歴を更新できませんでした: {0}' -f $videoHist.videoPage) ; return }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
 	Invoke-StatisticsCheck -Operation 'validate'
 	if ($script:simplifiedValidation) {
@@ -993,9 +993,9 @@ function Invoke-ValidityCheck {
 			while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ('　ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 			$videoHists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 			#該当の番組のチェックステータスを1に
-			$videoHists.Where({ $_.videoPath -eq $path }).Where({ $_.videoValidated = '1' })
+			$videoHists.Where({ $_.videoPage -eq $videoHist.videoPage }).Where({ $_.videoValidated = '1' })
 			$videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
-		} catch { Write-Warning ('　⚠️ ダウンロード履歴を更新できませんでした: {0}' -f $path) }
+		} catch { Write-Warning ('　⚠️ ダウンロード履歴を更新できませんでした: {0}' -f $videoHist.videoPage) }
 		finally { Unlock-File $script:histLockFilePath | Out-Null }
 	}
 	Remove-Variable -Name path, decodeOption, errorCount, checkStatus, videoFilePath, videoHists, ffprobeArgs, ffmpegProcess, ffmpegArgs -ErrorAction SilentlyContinue
