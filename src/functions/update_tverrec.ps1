@@ -7,7 +7,7 @@ Set-StrictMode -Version Latest
 Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
 
 #----------------------------------------------------------------------
-#Zipファイルを解凍
+# Zipファイルを解凍
 #----------------------------------------------------------------------
 function Expand-Zip {
 	[CmdletBinding()]
@@ -26,7 +26,7 @@ function Expand-Zip {
 }
 
 #----------------------------------------------------------------------
-#ディレクトリの上書き
+# ディレクトリの上書き
 #----------------------------------------------------------------------
 function Move-Files() {
 	[CmdletBinding()]
@@ -37,13 +37,13 @@ function Move-Files() {
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if ((Test-Path $destination) -and (Test-Path -PathType Container $source)) {
-		#ディレクトリ上書き(移動先に存在 かつ ディレクトリ)は再帰的に Move-Files 呼び出し
+		# ディレクトリ上書き(移動先に存在 かつ ディレクトリ)は再帰的に Move-Files 呼び出し
 		$items = (Get-ChildItem $source).Where({ $_.Name -inotlike '*update_tverrec.*' })
 		foreach ($item in $items) { Move-Files -Source $item.FullName -Destination (Join-Path $destination $item.Name) }
-		#移動し終わったディレクトリを削除
+		# 移動し終わったディレクトリを削除
 		Remove-Item -LiteralPath $source -Recurse -Force | Out-Null
 	} else {
-		#移動先に対象なし または ファイルの Move-Item に -Forece つけて実行
+		# 移動先に対象なし または ファイルの Move-Item に -Forece つけて実行
 		Write-Output ('{0} → {1}' -f $source, $destination)
 		Move-Item -LiteralPath $source -Destination $destination -Force | Out-Null
 	}
@@ -51,7 +51,7 @@ function Move-Files() {
 }
 
 #----------------------------------------------------------------------
-#存在したら削除
+# 存在したら削除
 #----------------------------------------------------------------------
 Function Remove-IfExist {
 	Param ([Parameter(Mandatory = $true)][string]$path)
@@ -61,7 +61,7 @@ Function Remove-IfExist {
 }
 
 #----------------------------------------------------------------------
-#存在したらリネーム
+# 存在したらリネーム
 #----------------------------------------------------------------------
 Function Rename-IfExist {
 	Param (
@@ -74,7 +74,7 @@ Function Rename-IfExist {
 }
 
 #----------------------------------------------------------------------
-#存在したら移動
+# 存在したら移動
 #----------------------------------------------------------------------
 Function Move-IfExist {
 	Param (
@@ -87,7 +87,7 @@ Function Move-IfExist {
 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#環境設定
+# 環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 try {
 	if ($myInvocation.MyCommand.CommandType -eq 'ExternalScript') { $scriptRoot = Split-Path -Parent -Path (Split-Path -Parent -Path $myInvocation.MyCommand.Definition) }
@@ -102,7 +102,7 @@ try {
 } catch { Write-Warning ('⚠️ 設定ファイルの読み込みをせずに実行します') }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#メイン処理
+# メイン処理
 Write-Output ('')
 Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('                       TVerRecアップデート処理')
@@ -111,7 +111,7 @@ Write-Output ('━━━━━━━━━━━━━━━━━━━━━�
 $repo = 'dongaba/TVerRec'
 $releases = ('https://api.github.com/repos/{0}/releases' -f $repo)
 
-#念のため過去のバージョンがあれば削除し、作業ディレクトリを作成
+# 念のため過去のバージョンがあれば削除し、作業ディレクトリを作成
 Write-Output ('')
 Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('作業ディレクトリを作成します')
@@ -120,7 +120,7 @@ if (Test-Path $updateTemp ) { Remove-Item -LiteralPath $updateTemp -Force -Recur
 try { New-Item -ItemType Directory -Path $updateTemp | Out-Null }
 catch { Throw ('❌️ 作業ディレクトリの作成に失敗しました') }
 
-#TVerRecの最新バージョン取得
+# TVerRecの最新バージョン取得
 Write-Output ('')
 Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('TVerRecの最新版をダウンロードします')
@@ -136,7 +136,7 @@ try {
 	Invoke-WebRequest -Uri $zipURL -OutFile (Join-Path $updateTemp 'TVerRecLatest.zip')
 } catch { Throw ('❌️ ダウンロードに失敗しました');	exit 1 }
 
-#最新バージョンがダウンロードできていたら展開
+# 最新バージョンがダウンロードできていたら展開
 Write-Output ('')
 Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('ダウンロードしたTVerRecを解凍します')
@@ -145,7 +145,7 @@ try {
 	else { Throw ('❌️ ダウンロードしたファイルが見つかりません') }
 } catch { Throw ('❌️ ダウンロードしたファイルの解凍に失敗しました') }
 
-#ディレクトリは上書きできないので独自関数で以下のディレクトリをループ
+# ディレクトリは上書きできないので独自関数で以下のディレクトリをループ
 Write-Output ('')
 Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('ダウンロードしたTVerRecを配置します')
@@ -154,33 +154,33 @@ try {
 	Get-ChildItem -LiteralPath $newTVerRecDir -Force | ForEach-Object { Move-Files -Source $_.FullName -Destination ('{0}{1}' -f (Join-Path $scriptRoot '../'), $_.Name ) }
 } catch { Throw ('❌️ ダウンロードしたTVerRecの配置に失敗しました') }
 
-#作業ディレクトリを削除
+# 作業ディレクトリを削除
 Write-Output ('')
 Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('アップデートの作業ディレクトリを削除します')
 try { if (Test-Path $updateTemp ) { Remove-Item -LiteralPath $updateTemp -Force -Recurse } }
 catch { Throw ('❌️ 作業ディレクトリの削除に失敗しました') }
 
-#過去のバージョンで使用していたファイルを削除、または移行
+# 過去のバージョンで使用していたファイルを削除、または移行
 Write-Output ('')
 Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('過去のバージョンで使用していたファイルを削除、または移行します')
-#tver.lockをhistory.lockに移行(v2.6.5→v2.6.6)
+# tver.lockをhistory.lockに移行(v2.6.5→v2.6.6)
 Remove-IfExist -Path (Join-Path $script:scriptRoot '../db/tver.lock')
 
-#tver.sample.csvをhistory.sample.csvに移行(v2.6.5→v2.6.6)
+# tver.sample.csvをhistory.sample.csvに移行(v2.6.5→v2.6.6)
 Remove-IfExist -Path (Join-Path $script:scriptRoot '../db/tver.sample.csv')
 
-#tver.csvをhistory.csvに移行(v2.6.5→v2.6.6)
+# tver.csvをhistory.csvに移行(v2.6.5→v2.6.6)
 Rename-IfExist -Path (Join-Path $script:scriptRoot '../db/tver.csv') -NewName 'history.csv'
 
-#*.batを*.cmdに移行(v2.6.9→v2.7.0)
+# *.batを*.cmdに移行(v2.6.9→v2.7.0)
 Remove-IfExist -Path (Join-Path $script:scriptRoot '../win/*.bat')
 
-#TVerRec-Logo-Low.pngを削除(v2.7.5→v2.7.6)
+# TVerRec-Logo-Low.pngを削除(v2.7.5→v2.7.6)
 Remove-IfExist -Path (Join-Path $script:scriptRoot '../img/TVerRec-Logo-Low.png')
 
-#ダウンロード用のps1をリネーム(v2.7.5→v2.7.6)
+# ダウンロード用のps1をリネーム(v2.7.5→v2.7.6)
 Remove-IfExist -Path (Join-Path $script:scriptRoot 'tverrec_bulk.ps1')
 Remove-IfExist -Path (Join-Path $script:scriptRoot 'tverrec_list.ps1')
 Remove-IfExist -Path (Join-Path $script:scriptRoot 'tverrec_single.ps1')
@@ -191,17 +191,17 @@ Remove-IfExist -Path (Join-Path $script:scriptRoot '../unix/a.download_video.sh'
 Remove-IfExist -Path (Join-Path $script:scriptRoot '../unix/y.tverrec_list.sh')
 Remove-IfExist -Path (Join-Path $script:scriptRoot '../unix/z.download_single_video.sh')
 
-#ダウンロード用のps1をリネーム(v2.7.6→v2.7.7)
+# ダウンロード用のps1をリネーム(v2.7.6→v2.7.7)
 Remove-IfExist -Path (Join-Path $script:scriptRoot '../.wsb/setup/TVerRec')
 
-#dev containerの廃止(v2.8.0→v2.8.1)
+# dev containerの廃止(v2.8.0→v2.8.1)
 Remove-IfExist -Path (Join-Path $script:scriptRoot '../.devcontainer')
 
-#youtube-dlの旧更新スクリプトの削除(v2.8.1→v2.8.2)
+# youtube-dlの旧更新スクリプトの削除(v2.8.1→v2.8.2)
 Remove-IfExist -Path (Join-Path $script:scriptRoot 'functions/update_yt-dlp.ps1')
 Remove-IfExist -Path (Join-Path $script:scriptRoot 'functions/update_ytdl-patched.ps1')
 
-#ディレクトリ体系変更(v2.9.7→v2.9.8)
+# ディレクトリ体系変更(v2.9.7→v2.9.8)
 Move-IfExist -Path (Join-Path $script:scriptRoot '../list/list.csv') -Destination (Join-Path $script:scriptRoot '../db/list.csv')
 Remove-IfExist -Path (Join-Path $script:scriptRoot '../.wsb')
 Remove-IfExist -Path (Join-Path $script:scriptRoot '../colab')
@@ -220,7 +220,7 @@ Remove-IfExist -Path (Join-Path $script:scriptRoot '../resources/Logo.b64')
 Remove-IfExist -Path (Join-Path $script:scriptRoot '../resources/TVerRecMain.xaml')
 Remove-IfExist -Path (Join-Path $script:scriptRoot '../resources/TVerRecSetting.xaml')
 
-#リストファイルのレイアウト変更(v2.9.9→v3.0.0)
+# リストファイルのレイアウト変更(v2.9.9→v3.0.0)
 if (Test-Path (Join-Path $script:scriptRoot '../db/list.csv')) {
 	$currentListFile = [pscustomobject](Import-Csv (Join-Path $script:scriptRoot '../db/list.csv'))
 	$propertyNames = @('episodePageURL', 'seriesPageURL', 'descriptionText')
@@ -236,10 +236,10 @@ if (Test-Path (Join-Path $script:scriptRoot '../db/list.csv')) {
 	} else { Copy-Item -Path (Join-Path $script:scriptRoot '../resources/sample/list.sample.csv') -Destination (Join-Path $script:scriptRoot '../db/list.csv') }
 }
 
-#リストファイルのレイアウト変更(v2.9.9→v3.0.0)
+# リストファイルのレイアウト変更(v2.9.9→v3.0.0)
 Remove-IfExist -Path (Join-Path $script:scriptRoot '../.vscode/thunder-tests')
 
-#実行権限の付与
+# 実行権限の付与
 if (!$IsWindows) {
 	Write-Output ('')
 	Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
@@ -247,7 +247,7 @@ if (!$IsWindows) {
 	(& chmod a+x (Join-Path $script:scriptRoot '../unix/*.sh'))
 }
 
-#アップデータ自体の更新のためのファイル作成
+# アップデータ自体の更新のためのファイル作成
 New-Item (Join-Path $script:scriptRoot '../log/updater_update.txt') -Type file -Force | Out-Null
 'このファイルはアップデータ自身のアプデートを完了させるために必要です。' | Out-File -FilePath (Join-Path $script:scriptRoot '../log/updater_update.txt')
 

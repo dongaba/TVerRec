@@ -1,9 +1,9 @@
 Import-Module Pester -MinimumVersion 5.0
 
-#region BeforeAll
+# region BeforeAll
 
 #----------------------------------------------------------------------
-#テスト対象ファイルの読み込み
+# テスト対象ファイルの読み込み
 #----------------------------------------------------------------------
 BeforeAll {
 	Write-Host ('テストスクリプト: {0}' -f $PSCommandPath)
@@ -16,7 +16,7 @@ BeforeAll {
 	Write-Host ('　テスト対象の読み込みを行いました')
 }
 
-#endregion BeforeAll
+# endregion BeforeAll
 
 Describe '関数読み込みスクリプトテスト' {
 	It '設定ファイルが存在するか確認' {

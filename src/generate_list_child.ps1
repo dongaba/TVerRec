@@ -12,7 +12,7 @@ if ($args.Count -ge 2) {
 } else { Throw ('❌️ 子プロセスの引数が不足しています') }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#環境設定
+# 環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
@@ -26,7 +26,7 @@ try {
 } catch { Throw ('❌️ 関数の読み込みに失敗しました') }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#メイン処理
+# メイン処理
 Get-Token
 foreach ($videoLink in $videoLinks) {
 	Write-Output ('　{0}' -f $videoLink)
