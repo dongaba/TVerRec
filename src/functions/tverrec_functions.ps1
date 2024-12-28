@@ -970,8 +970,10 @@ function Invoke-ValidityCheck {
 	#エラーをカウントしたらファイルを削除
 	try { if (Test-Path $script:ffpmegErrorLogPath) { Remove-Item -LiteralPath $script:ffpmegErrorLogPath -Force -ErrorAction SilentlyContinue | Out-Null } }
 	catch { Write-Warning ('　⚠️ ffmpegエラーファイルを削除できませんでした') }
+
+	#終了コードが0以外 または エラーが一定以上
 	if ($ffmpegProcess.ExitCode -ne 0 -or $errorCount -gt 30) {
-		#終了コードが0以外 または エラーが一定以上 はダウンロード履歴とファイルを削除
+		#ダウンロード履歴とファイルを削除
 		Write-Warning ('　⚠️ チェックNGでした') ; Write-Verbose ('　　Exit Code: {0} Error Count: {1}' -f $ffmpegProcess.ExitCode, $errorCount)
 		$script:validationFailed = $true
 		#破損しているダウンロードファイルをダウンロード履歴から削除
@@ -979,9 +981,9 @@ function Invoke-ValidityCheck {
 			while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ('　ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 			$videoHists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 			#該当の番組のレコードを削除
-			$videoHists = @($videoHists.Where({ $_.videoPath -ne $path }))
+			$videoHists = @($videoHists.Where({ $_.videoPage -ne $videoHist.videoPage }))
 			$videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
-		} catch { Write-Warning ('　⚠️ ダウンロード履歴の更新に失敗しました: {0}' -f $path) }
+		} catch { Write-Warning ('　⚠️ ダウンロード履歴の更新に失敗しました: {0}' -f $videoHist.videoPage) }
 		finally { Unlock-File $script:histLockFilePath | Out-Null }
 		#破損しているダウンロードファイルを削除
 		try { Remove-Item -LiteralPath $videoFilePath -Force -ErrorAction SilentlyContinue | Out-Null }
@@ -998,7 +1000,7 @@ function Invoke-ValidityCheck {
 		} catch { Write-Warning ('　⚠️ ダウンロード履歴を更新できませんでした: {0}' -f $videoHist.videoPage) }
 		finally { Unlock-File $script:histLockFilePath | Out-Null }
 	}
-	Remove-Variable -Name path, decodeOption, errorCount, checkStatus, videoFilePath, videoHists, ffprobeArgs, ffmpegProcess, ffmpegArgs -ErrorAction SilentlyContinue
+	Remove-Variable -Name decodeOption, errorCount, checkStatus, videoFilePath, videoHists, ffprobeArgs, ffmpegProcess, ffmpegArgs -ErrorAction SilentlyContinue
 }
 
 #region 環境
