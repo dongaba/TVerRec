@@ -337,7 +337,7 @@
 							<ColumnDefinition Width="auto"/>
 						</Grid.ColumnDefinitions>
 						<TextBox x:Name="downloadBaseDir" Text="未設定" Style="{DynamicResource TextBoxStyle}" Margin="20,0,0,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1" TextWrapping="Wrap"/>
-						<Button x:Name="btndownloadBaseDir" Style="{DynamicResource ButtonStyle}" Content="..." Margin="0,0,20,0" HorizontalAlignment="Right" Grid.Column="2" Grid.Row="7" VerticalAlignment="Center" Width="30"/>
+						<Button x:Name="btnDownloadBaseDir" Style="{DynamicResource ButtonStyle}" Content="..." Margin="0,0,20,0" HorizontalAlignment="Right" Grid.Column="2" Grid.Row="7" VerticalAlignment="Center" Width="30"/>
 					</Grid>
 					<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="作業ディレクトリ">
 						<TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
@@ -352,7 +352,7 @@
 							<ColumnDefinition Width="auto"/>
 						</Grid.ColumnDefinitions>
 						<TextBox x:Name="downloadWorkDir" Text="未設定" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1" TextWrapping="Wrap"/>
-						<Button x:Name="btndownloadWorkDir" Style="{DynamicResource ButtonStyle}" Content="..." Margin="0,0,20,0" HorizontalAlignment="Right" Grid.Column="2" Grid.Row="7" VerticalAlignment="Center" Width="30"/>
+						<Button x:Name="btnDownloadWorkDir" Style="{DynamicResource ButtonStyle}" Content="..." Margin="0,0,20,0" HorizontalAlignment="Right" Grid.Column="2" Grid.Row="7" VerticalAlignment="Center" Width="30"/>
 					</Grid>
 					<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="移動先ディレクトリ">
 						<TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
@@ -369,7 +369,7 @@
 							<ColumnDefinition Width="auto"/>
 						</Grid.ColumnDefinitions>
 						<TextBox x:Name="saveBaseDir" Text="未設定" Style="{DynamicResource TextBoxStyle}" Margin="20,0,20,0" VerticalScrollBarVisibility="Auto" BorderThickness="0,0,0,1" TextWrapping="Wrap"/>
-						<Button x:Name="btnsaveBaseDir" Style="{DynamicResource ButtonStyle}" Content="..." Margin="0,0,20,0" HorizontalAlignment="Right" Grid.Column="2" Grid.Row="7" VerticalAlignment="Center" Width="30"/>
+						<Button x:Name="btnSaveBaseDir" Style="{DynamicResource ButtonStyle}" Content="..." Margin="0,0,20,0" HorizontalAlignment="Right" Grid.Column="2" Grid.Row="7" VerticalAlignment="Center" Width="30"/>
 					</Grid>
 				</StackPanel>
 			</ScrollViewer>
@@ -524,7 +524,7 @@
 						<StackPanel Background="#FFFFFF">
 							<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="マイページ処理用のPlatform UID">
 								<TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
-									TVerIDを登録しない状態で、マイページに登録したお気に入りやあとでみる、続きから再生などをTVerRecでダウンロードするためのplatfprm_uidを指定します。 <LineBreak/>
+									TVerIDを登録しない状態で、マイページに登録したお気に入りやあとでみる、続きから再生などをTVerRecでダウンロードするためのplatform_uidを指定します。 <LineBreak/>
 									TVerIDを登録しないで利用する場合、これを指定しないとマイページ配下の番組はダウンロードできません。
 									platform_uidはブラウザの開発者ツール、またはChrome拡張機能TVerRec Assistantを使って確認できます。
 									詳細はWikiを参照してください。
@@ -651,6 +651,18 @@
 								<ComboBoxItem>しない</ComboBoxItem>
 								<ComboBoxItem>する</ComboBoxItem>
 							</ComboBox>
+							<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="エピソードID変更時の再ダウンロード">
+								<TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
+									エピソードIDが変更された際に再ダウンロードするかを設定します。 <LineBreak/>
+									同一番組(保存ファイル名が同一ファイル名になる番組)でもエピソードIDが変更になることがあります。
+									どのような場合にエピソードIDが変更されるのかはよくわかりませんが、字幕データの追加や配信内容が変更されている可能性があります。
+								</TextBlock>
+							</Expander>
+							<ComboBox x:Name="downloadWhenEpisodeIdChanged" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+								<ComboBoxItem>デフォルト値</ComboBoxItem>
+								<ComboBoxItem>しない</ComboBoxItem>
+								<ComboBoxItem>する</ComboBoxItem>
+							</ComboBox>
 							<Expander Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="TVer番組ファイルの動画コンテナ形式">
 								<TextBlock Margin="20,0,20,5" TextWrapping="Wrap">
 									TVer番組ファイルの動画コンテナ形式を設定します。 <LineBreak/>
@@ -713,7 +725,7 @@
 									※厳密にはファイル名は他のオプションによって決定されます
 								</TextBlock>
 							</Expander>
-							<ComboBox x:Name="addBrodcastDate" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
+							<ComboBox x:Name="addBroadcastDate" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" Margin="20,0,20,0" Width="100" HorizontalAlignment="Left">
 								<ComboBoxItem>デフォルト値</ComboBoxItem>
 								<ComboBoxItem>しない</ComboBoxItem>
 								<ComboBoxItem>する</ComboBoxItem>

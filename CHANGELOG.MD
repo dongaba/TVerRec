@@ -1,5 +1,17 @@
 # Change Log
 
+## [3.2.9](https://github.com/dongaba/TVerRec/releases/tag/v3.2.9)
+
+### 3.2.9 Added
+
+- 番組のエピソードIDが変更になった際に再ダウンロードする機能を追加
+
+### 3.2.9 Changed
+
+- それぞれのキーワードにまっちする番組の中で配信終了までの短いものからダウンロードするように
+
+### 3.2.9 Fixed
+
 ## [3.2.8](https://github.com/dongaba/TVerRec/releases/tag/v3.2.8)
 
 ### 3.2.8 Added
