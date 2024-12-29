@@ -87,14 +87,14 @@ if ($latestVersion -eq $currentVersion) {
 	Write-Warning ('⚠️ youtube-dlが古いため更新します。')
 	Write-Warning ('　Local version: {0}' -f $currentVersion)
 	Write-Warning ('　Latest version: {0}' -f $latestVersion)
-	if (!$IsWindows) { $fileBeforeRrename = $script:preferredYoutubedl ; $fileAfterRename = 'youtube-dl' }
-	else { $fileBeforeRrename = ('{0}.exe' -f $script:preferredYoutubedl) ; $fileAfterRename = 'youtube-dl.exe' }
+	if (!$IsWindows) { $fileBeforeRename = $script:preferredYoutubedl ; $fileAfterRename = 'youtube-dl' }
+	else { $fileBeforeRename = ('{0}.exe' -f $script:preferredYoutubedl) ; $fileAfterRename = 'youtube-dl.exe' }
 
 	Write-Output ('youtube-dlの最新版をダウンロードします')
 	try {
 		#ダウンロード
 		$tag = (Invoke-RestMethod -Uri $releases -Method 'GET')[0].Tag_Name
-		$downloadURL = ('https://github.com/{0}/releases/download/{1}/{2}' -f $repo, $tag, $fileBeforeRrename)
+		$downloadURL = ('https://github.com/{0}/releases/download/{1}/{2}' -f $repo, $tag, $fileBeforeRename)
 		$ytdlFileLocation = Join-Path $script:binDir $fileAfterRename
 		Invoke-WebRequest -Uri $downloadURL -Out $ytdlFileLocation
 	} catch { Write-Warning ('❌️ youtube-dlのダウンロードに失敗しました') }
@@ -108,4 +108,4 @@ if ($latestVersion -eq $currentVersion) {
 
 }
 
-Remove-Variable -Name lookupTable, releases, ytdlPath, currentVersion, latestVersion, file, fileAfterRename, tag, downloadURL, ytdlFileLocation -ErrorAction SilentlyContinue
+Remove-Variable -Name lookupTable, releases, ytdlPath, currentVersion, latestVersion, file, fileAfterRename, fileBeforeRename, tag, downloadURL, ytdlFileLocation -ErrorAction SilentlyContinue

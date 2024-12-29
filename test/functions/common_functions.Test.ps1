@@ -7,11 +7,11 @@ Import-Module Pester -MinimumVersion 5.0
 #----------------------------------------------------------------------
 BeforeAll {
 	Write-Host ('テストスクリプト: {0}' -f $PSCommandPath)
-	$targetfile = $PSCommandPath.replace('test', 'src').replace('.Test.ps1', '.ps1')
-	Write-Host ('　テスト対象: {0}' -f $targetfile)
-	$script:libDir = Split-Path(Split-Path $targetfile.replace('src', 'resources/lib') -Parent) -Parent
+	$targetFile = $PSCommandPath.Replace('test', 'src').Replace('.Test.ps1', '.ps1')
+	Write-Host ('　テスト対象: {0}' -f $targetFile)
+	$script:libDir = Split-Path(Split-Path $targetFile.Replace('src', 'resources/lib') -Parent) -Parent
 	$script:disableToastNotification = $false
-	. $targetfile
+	. $targetFile
 	Write-Host ('　テスト対象の読み込みを行いました')
 }
 

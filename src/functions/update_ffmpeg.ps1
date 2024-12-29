@@ -212,7 +212,7 @@ switch ($true) {
 			} else { $currentVersion = '' }
 		} catch { $currentVersion = '' }
 		# ffmpegの最新バージョン取得
-		$arch = (& uname -m | tr '[:upper:]' '[:lower:]').replace('x86_64', 'amd64')
+		$arch = (& uname -m | tr '[:upper:]' '[:lower:]').Replace('x86_64', 'amd64')
 		$ffmpegReleases = ('https://ffmpeg.martin-riedl.de/info/history/macos/{0}/release' -f $arch)
 		$ffmpegReleaseInfo = ''
 		$latestVersion = ''
@@ -276,4 +276,4 @@ switch ($true) {
 	}
 }
 
-Remove-Variable -Name ffmpegPath, os, arch, ffmpegFileVersion, currentVersion, releases, latestRelease, latestVersion, cpu, donwloadURL, ffmpegFileVersion, ffmpegReleases, ffprobeReleases, ffmpegReleaseInfo, ffprobeReleaseInfo -ErrorAction SilentlyContinue
+Remove-Variable -Name ffmpegPath, os, arch, ffmpegFileVersion, currentVersion, releases, latestRelease, latestVersion, cpu, downloadURL, ffmpegFileVersion, ffmpegReleases, ffprobeReleases, ffmpegReleaseInfo, ffprobeReleaseInfo -ErrorAction SilentlyContinue

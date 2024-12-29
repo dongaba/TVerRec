@@ -604,11 +604,11 @@ function Format-VideoFileInfo {
 	if ($script:addSeriesName) { $videoName = ('{0}{1} ' -f $videoName, $videoInfo.seriesName) }
 	if ($script:addSeasonName) { $videoName = ('{0}{1} ' -f $videoName, $videoInfo.seasonName) }
 	if ($videoName.Trim() -ne $videoInfo.episodeName.Trim() ) {
-		if ($script:addBrodcastDate) { $videoName = ('{0}{1} ' -f $videoName, $videoInfo.broadcastDate) }
+		if ($script:addBroadcastDate) { $videoName = ('{0}{1} ' -f $videoName, $videoInfo.broadcastDate) }
 		if ($script:addEpisodeNumber) { $videoName = ('{0}Ep{1} ' -f $videoName, $videoInfo.episodeNum) }
 		$videoName = ('{0}{1}' -f $videoName, $videoInfo.episodeName)
 	} else {
-		if ($script:addBrodcastDate) { $videoName = ('{0}{1} ' -f $videoName, $videoInfo.broadcastDate) }
+		if ($script:addBroadcastDate) { $videoName = ('{0}{1} ' -f $videoName, $videoInfo.broadcastDate) }
 		if ($script:addEpisodeNumber) { $videoName = ('{0}Ep{1} ' -f $videoName, $videoInfo.episodeNum) }
 	}
 	# ファイル名にできない文字列を除去
@@ -905,7 +905,7 @@ function Invoke-ValidityCheck {
 	$errorCount = 0
 	$checkStatus = 0
 	$videoFilePath = Join-Path (Convert-Path $script:downloadBaseDir) $videoHist.videoPath
-	try { New-Item -Path $script:ffpmegErrorLogPath -ItemType File -Force | Out-Null }
+	try { New-Item -Path $script:ffmpegErrorLogPath -ItemType File -Force | Out-Null }
 	catch { Write-Warning ('　⚠️ ffmpegエラーファイルを初期化できませんでした') ; return }
 	# これからチェックする番組のステータスをチェック
 	try {
@@ -930,7 +930,7 @@ function Invoke-ValidityCheck {
 			FilePath              = $script:ffprobePath
 			ArgumentList          = $ffprobeArgs
 			PassThru              = $true
-			RedirectStandardError = $script:ffpmegErrorLogPath
+			RedirectStandardError = $script:ffmpegErrorLogPath
 			Wait                  = $true
 		}
 		if ($IsWindows) { $commonParams.WindowStyle = $script:windowShowStyle }
@@ -942,14 +942,14 @@ function Invoke-ValidityCheck {
 			$ffmpegProcess.WaitForExit()
 		} catch { Write-Warning ('　⚠️ ffprobeを起動できませんでした') ; return }
 	} else {
-		# ffmpegeを使った完全検査
+		# ffmpegを使った完全検査
 		$ffmpegArgs = ('-hide_banner -v error -xerror {0} -i "{1}" -f null - ' -f $decodeOption, $videoFilePath)
 		Write-Debug ('ffmpeg起動コマンド: {0} {1}' -f $script:ffmpegPath, $ffmpegArgs)
 		$commonParams = @{
 			FilePath              = $script:ffmpegPath
 			ArgumentList          = $ffmpegArgs
 			PassThru              = $true
-			RedirectStandardError = $script:ffpmegErrorLogPath
+			RedirectStandardError = $script:ffmpegErrorLogPath
 		}
 		if ($IsWindows) { $commonParams.WindowStyle = $script:windowShowStyle }
 		else { $commonParams.RedirectStandardOutput = '/dev/null' }
@@ -962,13 +962,13 @@ function Invoke-ValidityCheck {
 	}
 	# ffmpegが正常終了しても、大量エラーが出ることがあるのでエラーをカウント
 	try {
-		if (Test-Path $script:ffpmegErrorLogPath) {
-			$errorCount = (Get-Content -LiteralPath $script:ffpmegErrorLogPath | Measure-Object -Line).Lines
-			Get-Content -LiteralPath $script:ffpmegErrorLogPath -Encoding UTF8 | Write-Debug
+		if (Test-Path $script:ffmpegErrorLogPath) {
+			$errorCount = (Get-Content -LiteralPath $script:ffmpegErrorLogPath | Measure-Object -Line).Lines
+			Get-Content -LiteralPath $script:ffmpegErrorLogPath -Encoding UTF8 | Write-Debug
 		}
 	} catch { Write-Warning ('　⚠️ ffmpegエラーの数をカウントできませんでした') ; $errorCount = 9999999 }
 	# エラーをカウントしたらファイルを削除
-	try { if (Test-Path $script:ffpmegErrorLogPath) { Remove-Item -LiteralPath $script:ffpmegErrorLogPath -Force -ErrorAction SilentlyContinue | Out-Null } }
+	try { if (Test-Path $script:ffmpegErrorLogPath) { Remove-Item -LiteralPath $script:ffmpegErrorLogPath -Force -ErrorAction SilentlyContinue | Out-Null } }
 	catch { Write-Warning ('　⚠️ ffmpegエラーファイルを削除できませんでした') }
 
 	# 終了コードが0以外 または エラーが一定以上
@@ -1017,7 +1017,7 @@ function Get-Setting {
 			$excludePattern = '(.*PSStyle.*|.*Base64)'
 			foreach ($config in $configs) {
 				$configParts = $config -split '='
-				$key = $configParts[0].replace('script:', '').replace('$', '').trim()
+				$key = $configParts[0].Replace('script:', '').Replace('$', '').Trim()
 				if (!($key -match $excludePattern) -and (Get-Variable -Name $key)) { $configList[$key] = (Get-Variable -Name $key).Value }
 			}
 		}
@@ -1046,7 +1046,7 @@ function Invoke-StatisticsCheck {
 		if ($operation -eq 'search') { return }
 		$epochTime = [Int64]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() * 1000)
 		$userProperties = @{	# max 25 properties, max 24 chars of property name, 36 chars of property value
-			PSVersion    = @{ 'value' = $PSVersionTable.PSVersion.tostring() }
+			PSVersion    = @{ 'value' = $PSVersionTable.PSVersion.ToString() }
 			AppVersion   = @{ 'value' = $script:appVersion }
 			OS           = @{ 'value' = $script:os }
 			Kernel       = @{ 'value' = $script:kernel }
@@ -1124,14 +1124,14 @@ switch ($true) {
 		$script:os = if (Test-Path '/etc/os-release') { (& grep 'PRETTY_NAME' /etc/os-release).Replace('PRETTY_NAME=', '').Replace('"', '') } else { (& uname -n) }
 		$script:kernel = [String][System.Environment]::OSVersion.Version
 		$script:arch = (& uname -m | tr '[:upper:]' '[:lower:]')
-		$script:guid = if (Test-Path '/etc/machine-id') { (Get-Content /etc/machine-id) } else { (New-Guid).tostring().replace('-', '') }
+		$script:guid = if (Test-Path '/etc/machine-id') { (Get-Content /etc/machine-id) } else { (New-Guid).ToString().Replace('-', '') }
 		continue
 	}
 	$IsMacOS {
 		$script:os = ('{0} {1}' -f (& sw_vers -productName), (& sw_vers -productVersion))
 		$script:kernel = (&  uname -r)
 		$script:arch = (& uname -m | tr '[:upper:]' '[:lower:]')
-		$script:guid = (& system_profiler SPHardwareDataType | awk '/Hardware UUID/ { print $3 }').replace('-', '')
+		$script:guid = (& system_profiler SPHardwareDataType | awk '/Hardware UUID/ { print $3 }').Replace('-', '')
 		continue
 	}
 	default {

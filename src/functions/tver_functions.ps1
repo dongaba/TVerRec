@@ -79,7 +79,7 @@ function Get-VideoLinksFromKeyword {
 		}
 	}
 	Remove-Variable -Name key, tverID, linkTypes, type -ErrorAction SilentlyContinue
-	if ($linkCollection.episodeLinks.count -eq 0) { return }
+	if ($linkCollection.episodeLinks.Count -eq 0) { return }
 	else { return ($linkCollection.episodeLinks.GetEnumerator() | Sort-Object Value).Name }
 	Remove-Variable -Name linkCollection -ErrorAction SilentlyContinue
 }
@@ -416,10 +416,10 @@ function Get-VideoInfo {
 	# 放送日を整形
 	if ($broadcastDate -cmatch '([0-9]+)(月)([0-9]+)(日)(.+?)(放送|配信)') {
 		$currentYear = (Get-Date).Year
-		$parsedBroadcastDate = [DateTime]::ParseExact(('{0}{1}{2}' -f $currentYear, $matches[1].padleft(2, '0'), $matches[3].padleft(2, '0')), 'yyyyMMdd', $null)
+		$parsedBroadcastDate = [DateTime]::ParseExact(('{0}{1}{2}' -f $currentYear, $matches[1].PadLeft(2, '0'), $matches[3].PadLeft(2, '0')), 'yyyyMMdd', $null)
 		# 実日付の翌日よりも放送日が未来だったら当年ではなく昨年の番組と判断する(年末の番組を年初にダウンロードするケース)
 		$broadcastYear = $parsedBroadcastDate -gt (Get-Date).AddDays(+1) ? $currentYear - 1 : $currentYear
-		$broadcastDate = ('{0}年{1}{2}{3}{4}{5}' -f $broadcastYear, $matches[1].padleft(2, '0'), $matches[2], $matches[3].padleft(2, '0'), $matches[4], $matches[6])
+		$broadcastDate = ('{0}年{1}{2}{3}{4}{5}' -f $broadcastYear, $matches[1].PadLeft(2, '0'), $matches[2], $matches[3].PadLeft(2, '0'), $matches[4], $matches[6])
 	}
 	return [pscustomobject]@{
 		seriesName      = $videoSeries
@@ -465,7 +465,7 @@ function Get-JpIP {
 		$randomIPArray = [System.BitConverter]::GetBytes($randomIPInt)
 		[Array]::Reverse($randomIPArray) ; $jpIP = [System.Net.IPAddress]::new($randomIPArray).ToString()
 		$check = Invoke-RestMethod -Uri ('http://ip-api.com/json/{0}?fields=16785410' -f $jpIP)
-	} While (($check.countryCode -ne 'JP') -or ($check.hosting) )
+	} While (($check.CountryCode -ne 'JP') -or ($check.hosting) )
 	return $jpIP
 	Remove-Variable -Name jpIP, check, allCIDR, randomCIDR, startIPArray, endIPArray, startIPInt, endIPInt, randomIPInt, randomIPArray -ErrorAction SilentlyContinue
 }

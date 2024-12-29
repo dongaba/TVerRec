@@ -56,7 +56,7 @@ $settingAttributes = @(
 	'$script:sortVideoByMedia',
 	'$script:addSeriesName',
 	'$script:addSeasonName',
-	'$script:addBrodcastDate',
+	'$script:addBroadcastDate',
 	'$script:addEpisodeNumber',
 	'$script:removeSpecialNote',
 	'$script:preferredYoutubedl',
@@ -144,8 +144,8 @@ function Read-UserSetting {
 			else { $settingBox.Text = 'デフォルト値' }
 		}
 		# 動作停止設定の抽出
-		$schduleStopPattern = '\$script:stopSchedule\s*=\s*@\{([^}]*)\}'
-		$scheduleStopDetail = [regex]::Match($userSettings, $schduleStopPattern)
+		$scheduleStopPattern = '\$script:stopSchedule\s*=\s*@\{([^}]*)\}'
+		$scheduleStopDetail = [regex]::Match($userSettings, $scheduleStopPattern)
 		# 抽出した内容を解析してチェックボックスに反映
 		if ($scheduleStopDetail.Success) {
 			$scheduleStopString = $scheduleStopDetail.Groups[1].Value
@@ -161,7 +161,7 @@ function Read-UserSetting {
 		}
 	}
 	Remove-Variable -Name userSettings, settingBox -ErrorAction SilentlyContinue
-	Remove-Variable -Name schduleStopPattern, scheduleStopDetail, scheduleStopString -ErrorAction SilentlyContinue
+	Remove-Variable -Name scheduleStopPattern, scheduleStopDetail, scheduleStopString -ErrorAction SilentlyContinue
 	Remove-Variable -Name day, schedule, hour, checkbox -ErrorAction SilentlyContinue
 }
 
@@ -275,9 +275,9 @@ $lblVersion.Content = ('Version {0}' -f $script:appVersion)
 $btnWiki.Add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
 $btnCancel.Add_Click({ $settingWindow.close() })
 $btnSave.Add_Click({ Save-UserSetting ; $settingWindow.close() })
-$btndownloadBaseDir.Add_Click({ Select-Folder 'ダウンロード先ディレクトリを選択してください' $script:downloadBaseDir })
-$btndownloadWorkDir.Add_Click({ Select-Folder '作業ディレクトリを選択してください' $script:downloadWorkDir })
-$btnsaveBaseDir.Add_Click({ Select-Folder '移動先ディレクトリを選択してください' $script:saveBaseDir })
+$btnDownloadBaseDir.Add_Click({ Select-Folder 'ダウンロード先ディレクトリを選択してください' $script:downloadBaseDir })
+$btnDownloadWorkDir.Add_Click({ Select-Folder '作業ディレクトリを選択してください' $script:downloadWorkDir })
+$btnSaveBaseDir.Add_Click({ Select-Folder '移動先ディレクトリを選択してください' $script:saveBaseDir })
 
 $ffmpegDecodeOption_Clear.Add_Click({ $ffmpegDecodeOption.Text = '' })
 $ffmpegDecodeOption_Qsv.Add_Click({ $ffmpegDecodeOption.Text = '-hwaccel qsv -c:v h264_qsv' })
@@ -405,6 +405,6 @@ while ($settingWindow.IsVisible) {
 Remove-Variable -Name mainXaml, mainCleanXaml, settingWindow -ErrorAction SilentlyContinue
 Remove-Variable -Name LogoImage, lblVersion -ErrorAction SilentlyContinue
 Remove-Variable -Name btnWiki, btnCancel, btnSave -ErrorAction SilentlyContinue
-Remove-Variable -Name btndownloadBaseDir, btndownloadWorkDir, btnsaveBaseDir -ErrorAction SilentlyContinue
+Remove-Variable -Name btndownloadBaseDir, btnDownloadWorkDir, btnSaveBaseDir -ErrorAction SilentlyContinue
 Remove-Variable -Name userSettingFile, settingAttributes -ErrorAction SilentlyContinue
 Remove-Variable -Name currentProcess, form -ErrorAction SilentlyContinue

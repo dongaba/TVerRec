@@ -211,7 +211,7 @@ $btnKillAll.Add_Click({
 		Invoke-GarbageCollection
 	})
 $btnWiki.Add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
-$btnsetting.Add_Click({
+$btnSetting.Add_Click({
 		& 'gui/gui_setting.ps1'
 		if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
 		Invoke-GarbageCollection
@@ -259,7 +259,7 @@ while ($mainWindow.IsVisible) {
 			# 終了したジョブのボタンの再有効化
 			if ($job.State -in $jobTerminationStates) {
 				Remove-Job $job
-				$btns.ForEach({ $_.IsEnabled = $true });$btnExit.IsEnabled = $true;$btnKillAll.IsEnabled = $false
+				$btns.ForEach({ $_.IsEnabled = $true }); $btnExit.IsEnabled = $true; $btnKillAll.IsEnabled = $false
 				$lblStatus.Content = '処理を終了しました'
 				Invoke-GarbageCollection
 			}
@@ -285,7 +285,7 @@ Remove-Variable -Name LogoImage, lblVersion, outText -ErrorAction SilentlyContin
 Remove-Variable -Name btnBulk, btnDelete, btnList, btnListGen, btnLoop, btnMove, btnSingle, btnValidate, btnExit, btnKillAll -ErrorAction SilentlyContinue
 Remove-Variable -Name btns, scriptBlocks, threadNames, btn, lblStatus -ErrorAction SilentlyContinue
 Remove-Variable -Name btnWorkOpen, btnDownloadOpen, btnsaveOpen, btnKeywordOpen, btnIgnoreOpen, btnListOpen -ErrorAction SilentlyContinue
-Remove-Variable -Name btnClearLog, btnKillAll, btnWiki, btnsetting, btnExit -ErrorAction SilentlyContinue
+Remove-Variable -Name btnClearLog, btnKillAll, btnWiki, btnSetting, btnExit -ErrorAction SilentlyContinue
 Remove-Variable -Name jobs, job, msgType, jobMsg, logType -ErrorAction SilentlyContinue
 
 # endregion 終了処理

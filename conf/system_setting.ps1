@@ -158,7 +158,7 @@ $script:addSeasonName = $true
 #　「$true」の際のファイル名は以下
 #　  番組シリーズ名 番組シーズン名 放送日 Epエピソード番号 番組タイトル名.mp4
 #　※厳密にはファイル名は他のオプションによって決定されます
-$script:addBrodcastDate = $true
+$script:addBroadcastDate = $true
 
 # ダウンロードファイル名にエピソード番号を付加
 #　「$false」の場合のファイル名は以下

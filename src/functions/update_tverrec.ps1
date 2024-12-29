@@ -43,7 +43,7 @@ function Move-Files() {
 		# 移動し終わったディレクトリを削除
 		Remove-Item -LiteralPath $source -Recurse -Force | Out-Null
 	} else {
-		# 移動先に対象なし または ファイルの Move-Item に -Forece つけて実行
+		# 移動先に対象なし または ファイルの Move-Item に -Force つけて実行
 		Write-Output ('{0} → {1}' -f $source, $destination)
 		Move-Item -LiteralPath $source -Destination $destination -Force | Out-Null
 	}
@@ -66,11 +66,11 @@ Function Remove-IfExist {
 Function Rename-IfExist {
 	Param (
 		[Parameter(Mandatory = $true)][string]$path,
-		[Parameter(Mandatory = $true)][string]$newname
+		[Parameter(Mandatory = $true)][string]$newName
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	if (Test-Path $path -PathType Leaf) { Rename-Item -LiteralPath $path -NewName $newname -Force }
-	Remove-Variable -Name path, newname -ErrorAction SilentlyContinue
+	if (Test-Path $path -PathType Leaf) { Rename-Item -LiteralPath $path -NewName $newName -Force }
+	Remove-Variable -Name path, newName -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -236,8 +236,18 @@ if (Test-Path (Join-Path $script:scriptRoot '../db/list.csv')) {
 	} else { Copy-Item -Path (Join-Path $script:scriptRoot '../resources/sample/list.sample.csv') -Destination (Join-Path $script:scriptRoot '../db/list.csv') }
 }
 
-# リストファイルのレイアウト変更(v2.9.9→v3.0.0)
+# ThunderClientの廃止(v2.9.9→v3.0.0)
 Remove-IfExist -Path (Join-Path $script:scriptRoot '../.vscode/thunder-tests')
+
+# 変数名のTypo修正(v3.2.8→v3.2.9)
+(Get-Content (Convert-Path (Join-Path $script:scriptRoot '../conf/system_setting.ps1')) -Encoding UTF8) `
+| ForEach-Object { $_ -replace 'addBrodcastDate', 'addBroadcastDate' } `
+| Out-File (Convert-Path (Join-Path $script:scriptRoot '../conf/system_setting.ps1')) -Encoding UTF8
+if ( Test-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1') ) {
+	(Get-Content (Convert-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1')) -Encoding UTF8) `
+	| ForEach-Object { $_ -replace 'addBrodcastDate', 'addBroadcastDate' } `
+	| Out-File (Convert-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1')) -Encoding UTF8
+}
 
 # 実行権限の付与
 if (!$IsWindows) {

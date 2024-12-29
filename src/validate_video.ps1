@@ -169,7 +169,7 @@ while ($videoNotValidatedNum -ne 0) {
 		try {
 			while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ('ファイルのロック解除待ち中です') ; Start-Sleep -Seconds 1 }
 			$videoHists = @(Import-Csv -Path $script:histFilePath -Encoding UTF8)
-			foreach ($uncheckedVido in ($videoHists).Where({ $_.videoValidated -eq 2 })) { $uncheckedVido.videoValidated = '0' }
+			foreach ($uncheckedVideo in ($videoHists).Where({ $_.videoValidated -eq 2 })) { $uncheckedVideo.videoValidated = '0' }
 			$videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
 			$videoNotValidatedNum = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' })).Count
 		} catch { Throw ('❌️ ダウンロード履歴の更新に失敗しました') }
@@ -189,7 +189,7 @@ $toastUpdateParams = @{
 }
 Update-ProgressToast @toastUpdateParams
 
-Remove-Variable -Name args, toastShowParams, videoNotValidatedNum, videoHists, videoHist, uncheckedVido, validateTotal, decodeOption, totalStartTime, validateNum, secElapsed, secRemaining, minRemaining, progressRate, toastUpdateParams -ErrorAction SilentlyContinue
+Remove-Variable -Name args, toastShowParams, videoNotValidatedNum, videoHists, videoHist, uncheckedVideo, validateTotal, decodeOption, totalStartTime, validateNum, secElapsed, secRemaining, minRemaining, progressRate, toastUpdateParams -ErrorAction SilentlyContinue
 
 Invoke-GarbageCollection
 

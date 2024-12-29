@@ -7,12 +7,12 @@ Import-Module Pester -MinimumVersion 5.0
 #----------------------------------------------------------------------
 BeforeAll {
 	Write-Host ('テストスクリプト: {0}' -f $PSCommandPath)
-	$targetfile = $PSCommandPath.replace('test', 'src').replace('.Test.ps1', '.ps1')
-	Write-Host ('　テスト対象: {0}' -f $targetfile)
+	$targetFile = $PSCommandPath.Replace('test', 'src').Replace('.Test.ps1', '.ps1')
+	Write-Host ('　テスト対象: {0}' -f $targetFile)
 	$script:scriptRoot = Convert-Path ./src
 	Set-Location $script:scriptRoot
 	$script:guiMode = $null
-	. $targetfile
+	. $targetFile
 	Write-Host ('　テスト対象の読み込みを行いました')
 }
 
