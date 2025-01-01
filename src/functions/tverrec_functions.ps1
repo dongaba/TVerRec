@@ -30,6 +30,31 @@ function Show-Logo {
 }
 
 #----------------------------------------------------------------------
+# バージョン比較
+#----------------------------------------------------------------------
+function Compare-Version {
+	param (
+		[string]$remote,
+		[string]$local
+	)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if ($remote -eq $local) { return 0 }
+	# バージョンを"."でユニットに切り分ける
+	$remoteUnits = $remote -split '\.' | ForEach-Object { [int]$_ }
+	$localUnits = $local -split '\.' | ForEach-Object { [int]$_ }
+	# ユニット数が少ない方の表記に探索幅を合わせる
+	$unitLength = [Math]::Min($remoteUnits.Count, $localUnits.Count)
+	# 探索幅に従ってユニット毎に比較していく
+	for ($i = 0; $i -lt $unitLength; $i++) {
+		if ($remoteUnits[$i] -gt $localUnits[$i]) { return 1 }
+		if ($remoteUnits[$i] -lt $localUnits[$i]) { return -1 }
+	}
+	# 個々のユニットが完全に一致している場合はユニット数が多い方が大きいとする
+	return [Math]::Sign($remoteUnits.Count - $localUnits.Count)
+	Remove-Variable -Name remote, local, remoteUnits, localUnits, unitLength -ErrorAction SilentlyContinue
+}
+
+#----------------------------------------------------------------------
 # TVerRec最新化確認
 #----------------------------------------------------------------------
 function Invoke-TVerRecUpdateCheck {
@@ -45,18 +70,14 @@ function Invoke-TVerRecUpdateCheck {
 		$appReleases = (Invoke-RestMethod -Uri $releases -Method 'GET' ).where{ !$_.prerelease }[0]
 		if (!$appReleases) { Write-Warning '最新版の情報を取得できませんでした' ; return }
 	} catch { Write-Warning '最新版の情報を取得できませんでした' ; return }
-	# GitHub側最新バージョンの整形 v1.2.3 → 1.2.3
-	$latestVersion = $appReleases[0].Tag_Name.Trim('v', ' ')
-	$latestMajorVersion = $latestVersion.split(' ')[0]		# 1.2.3 beta 4 → 1.2.3
-	# ローカル側バージョンの整形 v1.2.3 beta 4 → 1.2.3
-	$appMajorVersion = $script:appVersion.split(' ')[0]
+	finally { $progressPreference = 'Continue' }
+	# GitHub側最新バージョンの整形
+	$latestVersion = $appReleases[0].Tag_Name.Trim('v', ' ')	# v1.2.3 → 1.2.3
+	$latestMajorVersion = $latestVersion.split(' ')[0]			# 1.2.3 beta 4 → 1.2.3
+	# ローカル側バージョンの整形
+	$appMajorVersion = $script:appVersion.split(' ')[0]			# 1.2.3 beta 4 → 1.2.3
 	# バージョン判定
-	$versionUp = switch ($true) {
-		{ $latestMajorVersion -gt $appMajorVersion } { $true ; continue }
-		{ ($latestMajorVersion -eq $appMajorVersion) -and ($appMajorVersion -ne $script:appVersion) } { $true ; continue }
-		default { $false }
-	}
-	$progressPreference = 'Continue'
+	$versionUp = (Compare-Version $latestMajorVersion $appMajorVersion) -gt 0
 	# バージョンアップメッセージ
 	if ($versionUp) {
 		[Console]::ForegroundColor = 'Green'
@@ -83,9 +104,9 @@ function Invoke-TVerRecUpdateCheck {
 		# アップデート実行
 		Write-Warning ('TVerRecをアップデートするにはこのウィンドウを閉じ update_tverrec を実行してください。')
 		foreach ($i in (1..10)) {
-			$complete = ('#' * $i) * 5
-			$remaining = ('.' * (10 - $i)) * 5
-			Write-Warning ('残り{0}秒... [{1}{2}]' -f (10 - $i), $complete, $remaining)
+			$complete = ('█' * $i) * 5
+			$remaining = ('▁' * (10 - $i)) * 5
+			Write-Warning ('{0}{1} 残り{2}秒' -f $complete, $remaining, (10 - $i) )
 			Start-Sleep -Second 1
 		}
 	}
