@@ -16,7 +16,6 @@ try {
 } catch { Throw ('❌️ カレントディレクトリの設定に失敗しました') }
 if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
 . (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
-if (!$?) { Throw ('❌️ TVerRecの初期化処理に失敗しました') }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # メイン処理
