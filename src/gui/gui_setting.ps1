@@ -10,7 +10,7 @@ Add-Type -AssemblyName System.Windows.Forms | Out-Null
 Add-Type -AssemblyName PresentationFramework | Out-Null
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#region 環境設定
+# region 環境設定
 
 try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
@@ -21,14 +21,14 @@ try {
 if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
 
 #----------------------------------------------------------------------
-#設定ファイル読み込み
+# 設定ファイル読み込み
 try {
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	. (Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
 } catch { Throw ('❌️ システム設定ファイルの読み込みに失敗しました') }
 
 #----------------------------------------------------------------------
-#外部関数ファイルの読み込み
+# 外部関数ファイルの読み込み
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/common_functions.ps1'))
 } catch { Throw ('❌️ 外部関数ファイルの読み込みに失敗しました') }
@@ -56,7 +56,7 @@ $settingAttributes = @(
 	'$script:sortVideoByMedia',
 	'$script:addSeriesName',
 	'$script:addSeasonName',
-	'$script:addBrodcastDate',
+	'$script:addBroadcastDate',
 	'$script:addEpisodeNumber',
 	'$script:removeSpecialNote',
 	'$script:preferredYoutubedl',
@@ -66,6 +66,7 @@ $settingAttributes = @(
 	'$script:simplifiedValidation',
 	'$script:disableValidation',
 	'$script:sitemapParseEpisodeOnly',
+	'$script:downloadWhenEpisodeIdChanged',
 	'$script:detailedProgress',
 	'$script:embedSubtitle',
 	'$script:embedMetatag',
@@ -86,12 +87,12 @@ $settingAttributes = @(
 	'$script:scheduleStop'
 )
 
-#endregion 環境設定
+# endregion 環境設定
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#region 関数定義
+# region 関数定義
 
-#GUIイベントの処理
+# GUIイベントの処理
 function Sync-WpfEvents {
 	[OutputType([System.Void])]
 	Param ()
@@ -108,7 +109,7 @@ function Sync-WpfEvents {
 	Remove-Variable -Name frame, f -ErrorAction SilentlyContinue
 }
 
-#ディレクトリ選択ダイアログ
+# ディレクトリ選択ダイアログ
 function Select-Folder() {
 	[OutputType([System.Void])]
 	Param (
@@ -123,7 +124,7 @@ function Select-Folder() {
 	Remove-Variable -Name description, textBox, fd -ErrorAction SilentlyContinue
 }
 
-#user_setting.ps1から各設定項目を読み込む
+# user_setting.ps1から各設定項目を読み込む
 function Read-UserSetting {
 	[OutputType([System.Void])]
 	Param ()
@@ -131,7 +132,7 @@ function Read-UserSetting {
 		$userSettings = Get-Content -LiteralPath $userSettingFile -Encoding UTF8
 		# 動作停止設定以外の抽出
 		foreach ($settingAttribute in $settingAttributes) {
-			#変数名から「$script:」を取った名前がBox名
+			# 変数名から「$script:」を取った名前がBox名
 			$settingBox = $settingWindow.FindName($settingAttribute.Replace('$script:', ''))
 			# ユーザー設定の値を取得しGUIに反映
 			$userSettingValue = ($userSettings -match ('^{0}' -f [regex]::Escape($settingAttribute)))
@@ -143,8 +144,8 @@ function Read-UserSetting {
 			else { $settingBox.Text = 'デフォルト値' }
 		}
 		# 動作停止設定の抽出
-		$schduleStopPattern = '\$script:stopSchedule\s*=\s*@\{([^}]*)\}'
-		$scheduleStopDetail = [regex]::Match($userSettings, $schduleStopPattern)
+		$scheduleStopPattern = '\$script:stopSchedule\s*=\s*@\{([^}]*)\}'
+		$scheduleStopDetail = [regex]::Match($userSettings, $scheduleStopPattern)
 		# 抽出した内容を解析してチェックボックスに反映
 		if ($scheduleStopDetail.Success) {
 			$scheduleStopString = $scheduleStopDetail.Groups[1].Value
@@ -160,18 +161,18 @@ function Read-UserSetting {
 		}
 	}
 	Remove-Variable -Name userSettings, settingBox -ErrorAction SilentlyContinue
-	Remove-Variable -Name schduleStopPattern, scheduleStopDetail, scheduleStopString -ErrorAction SilentlyContinue
+	Remove-Variable -Name scheduleStopPattern, scheduleStopDetail, scheduleStopString -ErrorAction SilentlyContinue
 	Remove-Variable -Name day, schedule, hour, checkbox -ErrorAction SilentlyContinue
 }
 
-#user_setting.ps1に各設定項目を書き込む
+# user_setting.ps1に各設定項目を書き込む
 function Save-UserSetting {
 	[OutputType([System.Void])]
 	Param ()
 	$newSetting = @()
 	$startSegment = '##Start Setting Generated from GUI'
 	$endSegment = '##End Setting Generated from GUI'
-	#ファイルが無ければ作ればいい
+	# ファイルが無ければ作ればいい
 	if (!(Test-Path $userSettingFile)) {
 		New-Item -Path $userSettingFile -ItemType File | Out-Null
 		$content = Get-Content -LiteralPath $userSettingFile
@@ -183,10 +184,10 @@ function Save-UserSetting {
 		$headLineNum = try { ($content | Select-String $startSegment).LineNumber - 2 } catch { 0 }
 		$tailLineNum = try { $totalLineNum - ($content | Select-String $endSegment).LineNumber - 1 } catch { 0 }
 	}
-	#自動生成より前の部分
-	#自動生成の開始位置が2行目以降の場合にだけ自動生成寄りの前の部分がある
+	# 自動生成より前の部分
+	# 自動生成の開始位置が2行目以降の場合にだけ自動生成寄りの前の部分がある
 	if (Test-Path variable:headLineNum) { if ($headLineNum -ge 0 ) { $newSetting += $content[0..$headLineNum] } }
-	#動作停止設定以外の部分
+	# 動作停止設定以外の部分
 	$newSetting += $startSegment
 	if ($settingAttributes) {
 		foreach ($settingAttribute in $settingAttributes) {
@@ -203,7 +204,7 @@ function Save-UserSetting {
 			}
 		}
 	}
-	#動作停止設定の部分
+	# 動作停止設定の部分
 	$stopSetting = @()
 	$stopSetting += '$script:stopSchedule = @{'
 	foreach ($day in $days) {
@@ -212,19 +213,19 @@ function Save-UserSetting {
 			$checkbox = $settingWindow.FindName(('chkbxStop{0}{1}' -f $day, $hour.ToString('D2')))
 			if ($checkbox -and $checkbox.IsChecked) { $stopHoursList += $hour }
 		}
-		# 停止時間を文字列に変換し、日付ごとのエントリを作成
+		# 停止時間を文字列に変換し、曜日ごとのエントリを作成
 		$stopHours = "'{0}' = @({1})" -f $day, ($stopHoursList -join ', ')
 		$stopSetting += "`t" + $stopHours
 	}
 	$stopSetting += '}'
 	$newSetting += $stopSetting
-	#自動生成より後の部分
+	# 自動生成より後の部分
 	$newSetting += $endSegment
 	if ( $totalLineNum -ne 0 ) {
 		try { $newSetting += Get-Content $userSettingFile -Tail $tailLineNum }
 		catch { Write-Warning ('⚠️ 自動生成の終了部分を特定できませんでした') }
 	}
-	#改行コードLFを強制 + NFCで出力
+	# 改行コードLFを強制 + NFCで出力
 	$newSetting.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC)  | Out-File -LiteralPath $userSettingFile -Encoding UTF8 -NoNewline
 	Remove-Variable -Name newSetting, startSegment, endSegment, content -ErrorAction SilentlyContinue
 	Remove-Variable -Name totalLineNum, headLineNum, tailLineNum -ErrorAction SilentlyContinue
@@ -232,13 +233,13 @@ function Save-UserSetting {
 	Remove-Variable -Name stopSetting, day, hour, checkbox, stopHours -ErrorAction SilentlyContinue
 }
 
-#endregion 関数定義
+# endregion 関数定義
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#メイン処理
+# メイン処理
 
 #----------------------------------------------------------------------
-#region WPFのWindow設定
+# region WPFのWindow設定
 
 try {
 	[String]$mainXaml = Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecSetting.xaml')
@@ -246,37 +247,37 @@ try {
 	[xml]$mainCleanXaml = $mainXaml
 	$settingWindow = [System.Windows.Markup.XamlReader]::Load(([System.Xml.XmlNodeReader]::new($mainCleanXaml)))
 } catch { Throw ('❌️ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。') }
-#PowerShellのウィンドウを非表示に
+# PowerShellのウィンドウを非表示に
 Add-Type -Name Window -Namespace Console -MemberDefinition @'
 	[DllImport("Kernel32.dll")] public static extern IntPtr GetConsoleWindow();
 	[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow);
 '@ | Out-Null
 [Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0) | Out-Null
-#タスクバーのアイコンにオーバーレイ表示
+# タスクバーのアイコンにオーバーレイ表示
 $settingWindow.TaskbarItemInfo.Overlay = ConvertFrom-Base64 $script:iconBase64
 $settingWindow.TaskbarItemInfo.Description = $settingWindow.Title
-#ウィンドウを読み込み時の処理
+# ウィンドウを読み込み時の処理
 $settingWindow.Add_Loaded({ $settingWindow.Icon = $script:iconPath })
-#ウィンドウを閉じる際の処理
+# ウィンドウを閉じる際の処理
 $settingWindow.Add_Closing({})
-#Name属性を持つ要素のオブジェクト作成
+# Name属性を持つ要素のオブジェクト作成
 $mainCleanXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $settingWindow.FindName($_.Name) -Scope Script }
-#WPFにロゴをロード
+# WPFにロゴをロード
 $LogoImage.Source = ConvertFrom-Base64 $script:logoBase64
-#バージョン表記
+# バージョン表記
 $lblVersion.Content = ('Version {0}' -f $script:appVersion)
 
-#endregion WPFのWindow設定
+# endregion WPFのWindow設定
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
-#region ボタンのアクション
+# region ボタンのアクション
 $btnWiki.Add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
 $btnCancel.Add_Click({ $settingWindow.close() })
 $btnSave.Add_Click({ Save-UserSetting ; $settingWindow.close() })
-$btndownloadBaseDir.Add_Click({ Select-Folder 'ダウンロード先ディレクトリを選択してください' $script:downloadBaseDir })
-$btndownloadWorkDir.Add_Click({ Select-Folder '作業ディレクトリを選択してください' $script:downloadWorkDir })
-$btnsaveBaseDir.Add_Click({ Select-Folder '移動先ディレクトリを選択してください' $script:saveBaseDir })
+$btnDownloadBaseDir.Add_Click({ Select-Folder 'ダウンロード先ディレクトリを選択してください' $script:downloadBaseDir })
+$btnDownloadWorkDir.Add_Click({ Select-Folder '作業ディレクトリを選択してください' $script:downloadWorkDir })
+$btnSaveBaseDir.Add_Click({ Select-Folder '移動先ディレクトリを選択してください' $script:saveBaseDir })
 
 $ffmpegDecodeOption_Clear.Add_Click({ $ffmpegDecodeOption.Text = '' })
 $ffmpegDecodeOption_Qsv.Add_Click({ $ffmpegDecodeOption.Text = '-hwaccel qsv -c:v h264_qsv' })
@@ -359,17 +360,17 @@ $chkbxStop21All.Add_Click({ Sync-MultiCheckboxes -hour '21' -allCheckbox $chkbxS
 $chkbxStop22All.Add_Click({ Sync-MultiCheckboxes -hour '22' -allCheckbox $chkbxStop22All })
 $chkbxStop23All.Add_Click({ Sync-MultiCheckboxes -hour '23' -allCheckbox $chkbxStop23All })
 
-#endregion ボタンのアクション
+# endregion ボタンのアクション
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
-#region 設定ファイルの読み込み
+# region 設定ファイルの読み込み
 Read-UserSetting
-#endregion 設定ファイルの読み込み
+# endregion 設定ファイルの読み込み
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
-#ウィンドウ表示
+# ウィンドウ表示
 
 try {
 	$settingWindow.Show() | Out-Null
@@ -377,33 +378,33 @@ try {
 	[Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0) | Out-Null
 } catch { Throw ('❌️ ウィンドウを描画できませんでした。TVerRecが破損しています。') }
 
-#メインウィンドウ取得
+# メインウィンドウ取得
 $currentProcess = [Diagnostics.Process]::GetCurrentProcess()
 $form = [Windows.Forms.NativeWindow]::new()
 $form.AssignHandle($currentProcess.MainWindowHandle)
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#ウィンドウ表示後のループ処理
+# ウィンドウ表示後のループ処理
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 #----------------------------------------------------------------------
-#region ウィンドウ表示後のループ処理
+# region ウィンドウ表示後のループ処理
 while ($settingWindow.IsVisible) {
-	#GUIイベント処理
+	# GUIイベント処理
 	Sync-WpfEvents
 	Start-Sleep -Milliseconds 10
 }
 
-#endregion ウィンドウ表示後のループ処理
+# endregion ウィンドウ表示後のループ処理
 #----------------------------------------------------------------------
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#終了処理
+# 終了処理
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Remove-Variable -Name mainXaml, mainCleanXaml, settingWindow -ErrorAction SilentlyContinue
 Remove-Variable -Name LogoImage, lblVersion -ErrorAction SilentlyContinue
 Remove-Variable -Name btnWiki, btnCancel, btnSave -ErrorAction SilentlyContinue
-Remove-Variable -Name btndownloadBaseDir, btndownloadWorkDir, btnsaveBaseDir -ErrorAction SilentlyContinue
+Remove-Variable -Name btndownloadBaseDir, btnDownloadWorkDir, btnSaveBaseDir -ErrorAction SilentlyContinue
 Remove-Variable -Name userSettingFile, settingAttributes -ErrorAction SilentlyContinue
 Remove-Variable -Name currentProcess, form -ErrorAction SilentlyContinue

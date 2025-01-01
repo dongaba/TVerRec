@@ -1,22 +1,22 @@
 Import-Module Pester -MinimumVersion 5.0
 
-#region BeforeAll
+# region BeforeAll
 
 #----------------------------------------------------------------------
-#テスト対象ファイルの読み込み
+# テスト対象ファイルの読み込み
 #----------------------------------------------------------------------
 BeforeAll {
 	Write-Host ('テストスクリプト: {0}' -f $PSCommandPath)
-	$targetfile = $PSCommandPath.replace('test', 'src').replace('.Test.ps1', '.ps1')
-	Write-Host ('　テスト対象: {0}' -f $targetfile)
+	$targetFile = $PSCommandPath.Replace('test', 'src').Replace('.Test.ps1', '.ps1')
+	Write-Host ('　テスト対象: {0}' -f $targetFile)
 	$script:scriptRoot = Convert-Path ./src
 	Set-Location $script:scriptRoot
 	$script:guiMode = $null
-	. $targetfile
+	. $targetFile
 	Write-Host ('　テスト対象の読み込みを行いました')
 }
 
-#endregion BeforeAll
+# endregion BeforeAll
 
 Describe '関数読み込みスクリプトテスト' {
 	It '設定ファイルが存在するか確認' {

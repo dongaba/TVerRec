@@ -7,7 +7,7 @@ Set-StrictMode -Version Latest
 $script:guiMode = if ($args) { [String]$args[0] } else { '' }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#環境設定
+# 環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path .// }
@@ -15,33 +15,30 @@ try {
 	Set-Location $script:scriptRoot
 } catch { Throw ('❌️ カレントディレクトリの設定に失敗しました') }
 if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
-try {
-	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
-	if (!$?) { Throw ('❌️ TVerRecの初期化処理に失敗しました') }
-} catch { Throw ('❌️ 関数の読み込みに失敗しました') }
+. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#メイン処理
+# メイン処理
 Invoke-RequiredFileCheck
 Suspend-Process
 Get-Token
 $keyword = '個別指定'
 
-#GUI起動を判定
+# GUI起動を判定
 if (!$script:guiMode) { $script:guiMode = $false }
 
 #----------------------------------------------------------------------
-#無限ループ
+# 無限ループ
 while ($true) {
-	#いろいろ初期化
+	# いろいろ初期化
 	$videoLink = ''
-	#移動先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
+	# 移動先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
 	if (!(Test-Path $script:downloadBaseDir -PathType Container)) { Throw ('❌️ 番組ダウンロード先ディレクトリにアクセスできません。終了します') }
-	#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
+	# youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 	Wait-YtdlProcess $script:parallelDownloadFileNum
 	Suspend-Process
 
-	#複数アドレス入力用配列
+	# 複数アドレス入力用配列
 	$script:videoPageList = @()
 
 	if (!$script:guiMode) {
@@ -96,25 +93,25 @@ while ($true) {
 		$inputForm.ShowDialog() | Out-Null
 	}
 
-	#配列の空白要素を削除
+	# 配列の空白要素を削除
 	$script:videoPageList = @($script:videoPageList) -ne ''
 	if (-not $script:videoPageList) { break }
 
-	#複数入力されていたら全てダウンロード
+	# 複数入力されていたら全てダウンロード
 	foreach ($videoLink in  $script:videoPageList) {
-		#youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
+		# youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 		Wait-YtdlProcess $script:parallelDownloadFileNum
 		Suspend-Process
 
 		switch -Regex ($videoLink) {
-			'^https://tver.jp/(/?.*)' { #TVer番組ダウンロードのメイン処理
+			'^https://tver.jp/(/?.*)' { # TVer番組ダウンロードのメイン処理
 				Write-Output ('')
 				Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 				Write-Output ('{0}' -f $videoLink)
 				Invoke-VideoDownload -Keyword ([ref]$keyword) -VideoLink ([ref]$videoLink) -Force $script:forceSingleDownload
 				continue
 			}
-			'^.*://' { #TVer以外のサイトへの対応
+			'^.*://' { # TVer以外のサイトへの対応
 				Write-Output ('')
 				Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 				Write-Output ('ダウンロード：{0}' -f $videoLink)

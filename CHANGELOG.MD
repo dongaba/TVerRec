@@ -1,5 +1,18 @@
 # Change Log
 
+## [3.2.9](https://github.com/dongaba/TVerRec/releases/tag/v3.2.9)
+
+### 3.2.9 Added
+
+- 番組のエピソードIDが変更になった際に再ダウンロードする機能を追加
+
+### 3.2.9 Changed
+
+- それぞれのキーワードにまっちする番組の中で配信終了までの短いものからダウンロードするように
+- 各種Typoを修正
+
+### 3.2.9 Fixed
+
 ## [3.2.8](https://github.com/dongaba/TVerRec/releases/tag/v3.2.8)
 
 ### 3.2.8 Added
@@ -288,7 +301,7 @@
 
 ### 2.9.7 Changed
 
-- tver_funcitons.ps1 を分割
+- tver_functions.ps1 を分割
 
 ### 2.9.7 Fixed
 
@@ -860,7 +873,7 @@ v2.8.2 以降で特定条件下で TVerRec の自動アップデートがされ�
 
 ### 2.5.7 Added
 
-- PowerSehll Core がインストールされていない Windows で実行した場合に、PowerShell を自動でインストールするか確認する機能を追加
+- PowerShell Core がインストールされていない Windows で実行した場合に、PowerShell を自動でインストールするか確認する機能を追加
 
 ### 2.5.7 Changed
 
@@ -874,7 +887,7 @@ v2.8.2 以降で特定条件下で TVerRec の自動アップデートがされ�
 
 ### 2.5.6 Changed
 
-- 標準の youtoube-dl を yt-dlp に変更
+- 標準の youtube-dl を yt-dlp に変更
 - 番組検証時のデコードオプションが設定されている際のメッセージの色を変更
 - ソースコードの可読性を向上
 - 番組検証時に検証結果を OK/NG で表示するように変更
@@ -882,8 +895,8 @@ v2.8.2 以降で特定条件下で TVerRec の自動アップデートがされ�
 
 ### 2.5.6 Fixed
 
-- Linux で youtoube-dl の指定を yt-dlp にした際に、同時多重ダウンロードの上限が効いていなかった問題を修正
-- 一部 Linux 環境で youtuve-dl の実行に失敗する問題の修正
+- Linux で youtube-dl の指定を yt-dlp にした際に、同時多重ダウンロードの上限が効いていなかった問題を修正
+- 一部 Linux 環境で youtube-dl の実行に失敗する問題の修正
 - サンプルファイルの名称設定ミスを修正
 - トップページの特集ページの処理のバグを修正
 
@@ -974,7 +987,7 @@ v2.8.2 以降で特定条件下で TVerRec の自動アップデートがされ�
 - ジャンル ID などの指定による検索を変更し、タグ検索として新着番組以外からも対象を検索するように改良
 - 指定可能な タグ検索 (旧 ID 検索) に使用する Tag の最新化(Keyword.conf を更新しています)
 - 指定可能な TV 局の最新化(Keyword.conf を更新しています)
-- 標準の youtoube-dl を ytdl-patched に変更
+- 標準の youtube-dl を ytdl-patched に変更
 - ダウンロード対象外リストの判定を番組シリーズ名だけでなく番組名でも判定するように変更
 
 ### 2.5.0 Fixed

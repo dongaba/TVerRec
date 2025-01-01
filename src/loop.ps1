@@ -7,7 +7,7 @@ Set-StrictMode -Version Latest
 $script:guiMode = if ($args) { [String]$args[0] } else { '' }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#環境設定
+# 環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
@@ -15,13 +15,10 @@ try {
 	Set-Location $script:scriptRoot
 } catch { Throw ('❌️ カレントディレクトリの設定に失敗しました') }
 if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
-try {
-	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1')) 'loop'
-	if (!$?) { Throw ('❌️ TVerRecの初期化処理に失敗しました') }
-} catch { Throw ('❌️ 関数の読み込みに失敗しました') }
+. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1')) 'loop'
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#メイン処理
+# メイン処理
 #----------------------------------------------------------------------
 while ($true) {
 	& ('{0}/download_bulk.ps1' -f $script:scriptRoot) $script:guiMode

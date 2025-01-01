@@ -7,10 +7,10 @@ Set-StrictMode -Version Latest
 Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
 Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
-#region ガーベッジコレクション
+# region ガーベッジコレクション
 
 #----------------------------------------------------------------------
-#ガーベッジコレクション
+# ガーベッジコレクション
 #----------------------------------------------------------------------
 function Invoke-GarbageCollection() {
 	[CmdletBinding()]
@@ -23,12 +23,12 @@ function Invoke-GarbageCollection() {
 	Write-Verbose -Message 'Garbage collection completed.'
 }
 
-#endregion ガーベッジコレクション
+# endregion ガーベッジコレクション
 
-#region タイムスタンプ
+# region タイムスタンプ
 
 #----------------------------------------------------------------------
-#タイムスタンプ更新
+# タイムスタンプ更新
 #----------------------------------------------------------------------
 function Get-TimeStamp {
 	[CmdletBinding()]
@@ -39,7 +39,7 @@ function Get-TimeStamp {
 }
 
 #----------------------------------------------------------------------
-#UNIX時間をDateTime型に変換
+# UNIX時間をDateTime型に変換
 #----------------------------------------------------------------------
 function ConvertFrom-UnixTime {
 	[CmdletBinding()]
@@ -52,7 +52,7 @@ function ConvertFrom-UnixTime {
 }
 
 #----------------------------------------------------------------------
-#DateTime型をUNIX時間に変換
+# DateTime型をUNIX時間に変換
 #----------------------------------------------------------------------
 function ConvertTo-UnixTime {
 	[CmdletBinding()]
@@ -64,12 +64,12 @@ function ConvertTo-UnixTime {
 	Remove-Variable -Name InputDate, unixTime -ErrorAction SilentlyContinue
 }
 
-#endregion タイムスタンプ
+# endregion タイムスタンプ
 
-#region 文字列操作
+# region 文字列操作
 
 #----------------------------------------------------------------------
-#ファイル名・ディレクトリ名に禁止文字の削除
+# ファイル名・ディレクトリ名に禁止文字の削除
 #----------------------------------------------------------------------
 function Get-FileNameWithoutInvalidChars {
 	[CmdletBinding()]
@@ -78,7 +78,7 @@ function Get-FileNameWithoutInvalidChars {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$invalidCharsPattern = '[{0}]' -f [Regex]::Escape( [IO.Path]::GetInvalidFileNameChars() -Join '')
 	$Name = $Name.Replace($invalidCharsPattern , '')
-	#Linux/MacではGetInvalidFileNameChars()が不完全なため、ダメ押しで置換
+	# Linux/MacではGetInvalidFileNameChars()が不完全なため、ダメ押しで置換
 	$additionalReplaces = '[*\?<>|]'
 	$Name = $Name -replace $additionalReplaces, '-'
 	$Name = $Name -replace '--', '-'
@@ -88,7 +88,7 @@ function Get-FileNameWithoutInvalidChars {
 }
 
 #----------------------------------------------------------------------
-#英数のみ全角→半角(カタカナは全角)
+# 英数のみ全角→半角(カタカナは全角)
 #----------------------------------------------------------------------
 function Get-NarrowChars {
 	[CmdletBinding()]
@@ -197,7 +197,7 @@ function Get-NarrowChars {
 }
 
 #----------------------------------------------------------------------
-#いくつかの特殊文字を置換
+# いくつかの特殊文字を置換
 #----------------------------------------------------------------------
 function Remove-SpecialCharacter {
 	[CmdletBinding()]
@@ -210,14 +210,14 @@ function Remove-SpecialCharacter {
 		'|' = '｜'
 		':' = '：'
 		';' = '；'
-		'"' = '' #削除
-		'“' = '' #削除
-		'”' = '' #削除
-		',' = '' #削除
+		'"' = '' # 削除
+		'“' = '' # 削除
+		'”' = '' # 削除
+		',' = '' # 削除
 		'?' = '？'
 		'!' = '！'
-		'/' = '-' #代替文字
-		'\' = '-' #代替文字
+		'/' = '-' # 代替文字
+		'\' = '-' # 代替文字
 		'<' = '＜'
 		'>' = '＞'
 	}
@@ -227,7 +227,7 @@ function Remove-SpecialCharacter {
 }
 
 #----------------------------------------------------------------------
-#タブとスペースを詰めて半角スペース1文字に
+# タブとスペースを詰めて半角スペース1文字に
 #----------------------------------------------------------------------
 function Remove-TabSpace {
 	[CmdletBinding()]
@@ -239,7 +239,7 @@ function Remove-TabSpace {
 }
 
 #----------------------------------------------------------------------
-#設定ファイルの行末コメントを削除
+# 設定ファイルの行末コメントを削除
 #----------------------------------------------------------------------
 function Remove-Comment {
 	[OutputType([String])]
@@ -249,12 +249,12 @@ function Remove-Comment {
 	Remove-Variable -Name text -ErrorAction SilentlyContinue
 }
 
-#endregion 文字列操作
+# endregion 文字列操作
 
-#region ファイル操作
+# region ファイル操作
 
 #----------------------------------------------------------------------
-#指定したPath配下の指定した条件でファイルを削除
+# 指定したPath配下の指定した条件でファイルを削除
 #----------------------------------------------------------------------
 function Remove-Files {
 	[CmdletBinding()]
@@ -268,7 +268,7 @@ function Remove-Files {
 	$limitDateTime = (Get-Date).AddDays(-1 * $delPeriod)
 	if ($script:enableMultithread) {
 		Write-Debug ('Multithread Processing Enabled')
-		#並列化が有効の場合は並列化
+		# 並列化が有効の場合は並列化
 		try {
 			$conditions | ForEach-Object -Parallel {
 				Write-Output ('　{0}' -f (Join-Path $using:basePath $_))
@@ -276,7 +276,7 @@ function Remove-Files {
 			} -ThrottleLimit $script:multithreadNum
 		} catch { Write-Warning ('⚠️ 削除できないファイルがありました') }
 	} else {
-		#並列化が無効の場合は従来型処理
+		# 並列化が無効の場合は従来型処理
 		try {
 			foreach ($condition in $conditions) {
 				Write-Output ('　{0}' -f (Join-Path $basePath $condition))
@@ -288,7 +288,7 @@ function Remove-Files {
 }
 
 #----------------------------------------------------------------------
-#Zipファイルを解凍
+# Zipファイルを解凍
 #----------------------------------------------------------------------
 function Expand-Zip {
 	[CmdletBinding()]
@@ -306,12 +306,12 @@ function Expand-Zip {
 	Remove-Variable -Name path, destination -ErrorAction SilentlyContinue
 }
 
-#endregion ファイル操作
+# endregion ファイル操作
 
-#region ファイルロック
+# region ファイルロック
 
 #----------------------------------------------------------------------
-#ファイルのロック
+# ファイルのロック
 #----------------------------------------------------------------------
 function Lock-File {
 	[CmdletBinding()]
@@ -319,12 +319,12 @@ function Lock-File {
 	Param ([parameter(Mandatory = $true)][String]$path)
 	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $path)
 	try {
-		#ファイルを開こうとしファイルロックを検出
+		# ファイルを開こうとしファイルロックを検出
 		$script:fileInfo[$path] = [System.IO.FileInfo]::new($path)
 		$script:fileStream[$path] = $script:fileInfo[$path].Open([System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
 		$result = $true
 	} catch { $result = $false }
-	#結果の返却
+	# 結果の返却
 	return [PSCustomObject]@{
 		path   = $path
 		result = $result
@@ -333,7 +333,7 @@ function Lock-File {
 }
 
 #----------------------------------------------------------------------
-#ファイルのアンロック
+# ファイルのアンロック
 #----------------------------------------------------------------------
 function Unlock-File {
 	[CmdletBinding()]
@@ -342,7 +342,7 @@ function Unlock-File {
 	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $path)
 	if (Test-Path $path) {
 		if ($script:fileStream[$path]) {
-			#ロックされていなければストリームを閉じる
+			# ロックされていなければストリームを閉じる
 			$script:fileStream[$path].Close()
 			$script:fileStream[$path].Dispose()
 			$script:fileStream[$path] = $null
@@ -350,7 +350,7 @@ function Unlock-File {
 		}
 		$result = $true
 	} else { $result = $false }
-	#結果の返却
+	# 結果の返却
 	return [PSCustomObject]@{
 		path   = $path
 		result = $result
@@ -358,12 +358,12 @@ function Unlock-File {
 	Remove-Variable -Name path, fileLocked, result -ErrorAction SilentlyContinue
 }
 
-#endregion ファイルロック
+# endregion ファイルロック
 
-#region コンソール出力
+# region コンソール出力
 
 #----------------------------------------------------------------------
-#色付きWrite-Output
+# 色付きWrite-Output
 #----------------------------------------------------------------------
 function Out-Msg-Color {
 	[CmdletBinding()]
@@ -389,14 +389,14 @@ function Out-Msg-Color {
 	Remove-Variable -Name text, fg, bg, noNL, prevFg, prevBg, writeHostParams -ErrorAction SilentlyContinue
 }
 
-#endregion コンソール出力
+# endregion コンソール出力
 
-#region トースト通知
+# region トースト通知
 
-#Toast用AppID取得に必要
+# Toast用AppID取得に必要
 if ($IsWindows -and ($script:disableToastNotification -ne $true)) { Import-Module StartLayout -SkipEditionCheck }
 
-#モジュールのインポート
+# モジュールのインポート
 if ($IsWindows -and !$script:disableToastNotification -and (!('Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder' -as [Type]))) {
 	Add-Type -LiteralPath (Join-Path $script:libDir 'win/core/Microsoft.Windows.SDK.NET.dll') | Out-Null
 	Add-Type -LiteralPath (Join-Path $script:libDir 'win/core/WinRT.Runtime.dll') | Out-Null
@@ -404,7 +404,7 @@ if ($IsWindows -and !$script:disableToastNotification -and (!('Microsoft.Toolkit
 }
 
 #----------------------------------------------------------------------
-#トースト表示
+# トースト表示
 #----------------------------------------------------------------------
 function Show-GeneralToast {
 	[CmdletBinding()]
@@ -442,13 +442,13 @@ function Show-GeneralToast {
 				continue
 			}
 			$IsLinux {
-				if (Get-Command notify-send -ea SilentlyContinue) { & notify-send -a $script:appName -t 5000 -i $script:toastAppLogo $text1 $text2 }
+				if (Get-Command notify-send -ea SilentlyContinue) { & notify-send -a $script:appName -t 5000 -i $script:toastAppLogo $text1 $text2 2> /dev/null }
 				continue
 			}
 			$IsMacOS {
 				if (Get-Command osascript -ea SilentlyContinue) {
 					$toastParams = ('display notification "{0}" with title "{1}" subtitle "{2}" sound name "Blow"' -f $text2, $script:appName, $text1)
-					$toastParams | & osascript
+					$toastParams | & osascript 2> /dev/null
 				}
 				continue
 			}
@@ -459,7 +459,7 @@ function Show-GeneralToast {
 }
 
 #----------------------------------------------------------------------
-#進捗バー付きトースト表示
+# 進捗バー付きトースト表示
 #----------------------------------------------------------------------
 function Show-ProgressToast {
 	[CmdletBinding()]
@@ -528,7 +528,7 @@ function Show-ProgressToast {
 }
 
 #----------------------------------------------------------------------
-#進捗バー付きトースト更新
+# 進捗バー付きトースト更新
 #----------------------------------------------------------------------
 function Update-ProgressToast {
 	[CmdletBinding()]
@@ -564,7 +564,7 @@ function Update-ProgressToast {
 }
 
 #----------------------------------------------------------------------
-#進捗表示(2行進捗バー)
+# 進捗表示(2行進捗バー)
 #----------------------------------------------------------------------
 function Show-ProgressToast2Row {
 	[CmdletBinding()]
@@ -643,7 +643,7 @@ function Show-ProgressToast2Row {
 }
 
 #----------------------------------------------------------------------
-#進捗更新(2行進捗バー)
+# 進捗更新(2行進捗バー)
 #----------------------------------------------------------------------
 function Update-ProgressToast2Row {
 	[CmdletBinding()]
@@ -697,10 +697,10 @@ function Update-ProgressToast2Row {
 	}
 	Remove-Variable -Name title1, rate1, leftText1, rightText1, title2, rate2, leftText2, rightText2, tag, group, toastData, toastProgressData -ErrorAction SilentlyContinue
 }
-#endregion トースト通知
+# endregion トースト通知
 
 #----------------------------------------------------------------------
-#Base64画像の展開
+# Base64画像の展開
 #----------------------------------------------------------------------
 function ConvertFrom-Base64 {
 	Param ($base64)

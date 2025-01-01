@@ -9,7 +9,7 @@ if (!$IsWindows) { Throw ('❌️ Windows以外では動作しません') ; Star
 Add-Type -AssemblyName PresentationFramework | Out-Null
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#region 環境設定
+# region 環境設定
 
 try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
@@ -18,12 +18,9 @@ try {
 	Set-Location $script:scriptRoot
 } catch { Throw ('❌️ ディレクトリ設定に失敗しました') }
 if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
-try {
-	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
-	if (!$?) { Throw ('❌️ TVerRecの初期化処理に失敗しました') }
-} catch { Throw ('❌️ 関数の読み込みに失敗しました') }
+. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 
-#パラメータ設定
+# パラメータ設定
 $jobTerminationStates = @('Completed', 'Failed', 'Stopped')
 $msgTypesColorMap = @{
 	Output      = 'DarkSlateGray'
@@ -34,21 +31,21 @@ $msgTypesColorMap = @{
 	Information = 'DarkGray'
 }
 
-#ログ出力用変数
+# ログ出力用変数
 $jobMsgs = @()
 $msgTypes = @('Output', 'Error', 'Warning', 'Verbose', 'Debug', 'Information')
-$msgError = [System.Collections.ArrayList]::new()
-$msgWarning = [System.Collections.ArrayList]::new()
-$msgVerbose = [System.Collections.ArrayList]::new()
-$msgDebug = [System.Collections.ArrayList]::new()
-$msgInformation = [System.Collections.ArrayList]::new()
+$msgError = New-Object System.Collections.Generic.List[string]
+$msgWarning = New-Object System.Collections.Generic.List[string]
+$msgVerbose = New-Object System.Collections.Generic.List[string]
+$msgDebug = New-Object System.Collections.Generic.List[string]
+$msgInformation = New-Object System.Collections.Generic.List[string]
 
-#endregion 環境設定
+# endregion 環境設定
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#region 関数定義
+# region 関数定義
 
-#GUIイベントの処理
+# GUIイベントの処理
 function Sync-WpfEvents {
 	Param ()
 	[DispatcherFrame] $frame = [DispatcherFrame]::new($true)
@@ -64,7 +61,7 @@ function Sync-WpfEvents {
 	Remove-Variable -Name frame, f -ErrorAction SilentlyContinue
 }
 
-#最大行数以上の実行ログをクリア
+# 最大行数以上の実行ログをクリア
 function Limit-LogLines() {
 	[OutputType([System.Void])]
 	Param (
@@ -78,7 +75,7 @@ function Limit-LogLines() {
 	Remove-Variable -Name richTextBox, limit, linesToRemove, i -ErrorAction SilentlyContinue
 }
 
-#テキストボックスへのログ出力と再描画
+# テキストボックスへのログ出力と再描画
 function Out-ExecutionLog {
 	[OutputType([System.Void])]
 	Param (
@@ -93,13 +90,13 @@ function Out-ExecutionLog {
 	Remove-Variable -Name message, type, rtfRange -ErrorAction SilentlyContinue
 }
 
-#endregion 関数定義
+# endregion 関数定義
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#メイン処理
+# メイン処理
 
 #----------------------------------------------------------------------
-#region WPFのWindow設定
+# region WPFのWindow設定
 
 try {
 	[String]$mainXaml = Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecMain.xaml')
@@ -107,32 +104,32 @@ try {
 	[xml]$mainCleanXaml = $mainXaml
 	$mainWindow = [System.Windows.Markup.XamlReader]::Load(([System.Xml.XmlNodeReader]::new($mainCleanXaml)))
 } catch { Throw ('❌️ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。') }
-#PowerShellのウィンドウを非表示に
+# PowerShellのウィンドウを非表示に
 Add-Type -Name Window -Namespace Console -MemberDefinition @'
 	[DllImport("Kernel32.dll")] public static extern IntPtr GetConsoleWindow();
 	[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow);
 '@ | Out-Null
 [Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0) | Out-Null
-#タスクバーのアイコンにオーバーレイ表示
+# タスクバーのアイコンにオーバーレイ表示
 $mainWindow.TaskbarItemInfo.Overlay = ConvertFrom-Base64 $script:iconBase64
 $mainWindow.TaskbarItemInfo.Description = $mainWindow.Title
-#ウィンドウを読み込み時の処理
+# ウィンドウを読み込み時の処理
 $mainWindow.Add_Loaded({ $mainWindow.Icon = $script:iconPath })
-#ウィンドウを閉じる際の処理
+# ウィンドウを閉じる際の処理
 $mainWindow.Add_Closing({ Get-Job | Receive-Job -Wait -AutoRemoveJob -Force })
-#Name属性を持つ要素のオブジェクト作成
+# Name属性を持つ要素のオブジェクト作成
 $mainCleanXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $mainWindow.FindName($_.Name) -Scope Local }
-#WPFにロゴをロード
+# WPFにロゴをロード
 $LogoImage.Source = ConvertFrom-Base64 $script:logoBase64
-#バージョン表記
+# バージョン表記
 $lblVersion.Content = ('Version {0}' -f $script:appVersion)
-#ログ出力するためのテキストボックス
+# ログ出力するためのテキストボックス
 $outText = $mainWindow.FindName('tbOutText')
 
-#endregion WPFのWindow設定
+# endregion WPFのWindow設定
 
 #----------------------------------------------------------------------
-#region バックグラウンドジョブ化する処理を持つボタン
+# region バックグラウンドジョブ化する処理を持つボタン
 
 $btns = @(
 	$mainWindow.FindName('btnSingle'), #0
@@ -145,7 +142,7 @@ $btns = @(
 	$mainWindow.FindName('btnLoop')
 )
 
-#バックグラウンドジョブ化するボタンの処理内容
+# バックグラウンドジョブ化するボタンの処理内容
 $scriptBlocks = @{
 	$btns[0] = { & './download_single.ps1' $true }
 	$btns[1] = { & './download_bulk.ps1' $true }
@@ -157,7 +154,7 @@ $scriptBlocks = @{
 	$btns[7] = { & './loop.ps1' $true }
 }
 
-#バックグラウンドジョブ化する処理の名前
+# バックグラウンドジョブ化する処理の名前
 $threadNames = @{
 	$btns[0] = { 個別ダウンロード処理を実行中 }
 	$btns[1] = { 一括ダウンロード処理を実行中 }
@@ -169,7 +166,7 @@ $threadNames = @{
 	$btns[7] = { ループ処理を実行中 }
 }
 
-#バックグラウンドジョブ化するボタンのアクション
+# バックグラウンドジョブ化するボタンのアクション
 foreach ($btn in $btns) {
 	$btn.Add_Click({
 			#ジョブの稼働中はボタンを無効化
@@ -183,10 +180,10 @@ foreach ($btn in $btns) {
 		})
 }
 
-#endregion バックグラウンドジョブ化する処理を持つボタン
+# endregion バックグラウンドジョブ化する処理を持つボタン
 
 #----------------------------------------------------------------------
-#region ジョブ化しないボタンのアクション
+# region ジョブ化しないボタンのアクション
 
 $btnWorkOpen.Add_Click({ Invoke-Item $script:downloadWorkDir })
 $btnDownloadOpen.Add_Click({ Invoke-Item $script:downloadBaseDir })
@@ -211,19 +208,19 @@ $btnKillAll.Add_Click({
 		Invoke-GarbageCollection
 	})
 $btnWiki.Add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
-$btnsetting.Add_Click({
+$btnSetting.Add_Click({
 		& 'gui/gui_setting.ps1'
 		if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
 		Invoke-GarbageCollection
 	})
 $btnExit.Add_Click({ $mainWindow.close() })
 
-#endregion ジョブ化しないボタンのアクション
+# endregion ジョブ化しないボタンのアクション
 
 #----------------------------------------------------------------------
-#region ウィンドウ表示
+# region ウィンドウ表示
 
-#処理停止ボタンの初期値は無効
+# 処理停止ボタンの初期値は無効
 $btnKillAll.IsEnabled = $false
 try {
 	$mainWindow.Show() | Out-Null
@@ -231,18 +228,18 @@ try {
 	[Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0) | Out-Null
 } catch { Throw ('❌️ ウィンドウを描画できませんでした。TVerRecが破損しています。') }
 
-#endregion ウィンドウ表示
+# endregion ウィンドウ表示
 
 #----------------------------------------------------------------------
-#region ウィンドウ表示後のループ処理
+# region ウィンドウ表示後のループ処理
 while ($mainWindow.IsVisible) {
 	if ($jobs = Get-Job) {
-		#ジョブがある場合の処理
+		# ジョブがある場合の処理
 		foreach ($job in $jobs) {
-			#各メッセージタイプごとに内容を取得(ただしReceive-Jobは次Stepで実行するので取りこぼす可能性あり)
+			# 各メッセージタイプごとに内容を取得(ただしReceive-Jobは次Stepで実行するので取りこぼす可能性あり)
 			foreach ($msgType in $msgTypes) { Set-Variable -Name ('msg' + $msgType) -Value $(if ($job.$msgType) { $job.$msgType } else { $null }) }
 			$jobMsgs = @(Receive-Job $job *>&1)
-			#Jobからメッセージを取得し事前に取得したメッセージタイプと照合し色付け
+			# Jobからメッセージを取得し事前に取得したメッセージタイプと照合し色付け
 			foreach ($jobMsg in $jobMsgs) {
 				$logType = switch ($jobMsg) {
 					{ $msgError -contains $_ } { 'Error' ; continue }
@@ -254,28 +251,28 @@ while ($mainWindow.IsVisible) {
 				}
 				Out-ExecutionLog -Message ($jobMsg -join "`n") -Type $logType
 			}
-			#各メッセージタイプごとの内容を保存する変数をクリア
+			# 各メッセージタイプごとの内容を保存する変数をクリア
 			foreach ($msgType in $msgTypes) { Clear-Variable -Name ('msg' + $msgType) }
-			#終了したジョブのボタンの再有効化
+			# 終了したジョブのボタンの再有効化
 			if ($job.State -in $jobTerminationStates) {
 				Remove-Job $job
-				$btns.ForEach({ $_.IsEnabled = $true });$btnExit.IsEnabled = $true;$btnKillAll.IsEnabled = $false
+				$btns.ForEach({ $_.IsEnabled = $true }); $btnExit.IsEnabled = $true; $btnKillAll.IsEnabled = $false
 				$lblStatus.Content = '処理を終了しました'
 				Invoke-GarbageCollection
 			}
 		}
 	}
-	#GUIイベント処理
+	# GUIイベント処理
 	Sync-WpfEvents
 	Start-Sleep -Milliseconds 10
 }
 
-#endregion ウィンドウ表示後のループ処理
+# endregion ウィンドウ表示後のループ処理
 
 #----------------------------------------------------------------------
-#region 終了処理
+# region 終了処理
 
-#Windowが閉じられたら乗っているゴミジョブを削除して終了
+# Windowが閉じられたら乗っているゴミジョブを削除して終了
 Get-Job | Receive-Job -Wait -AutoRemoveJob -Force
 
 Remove-Variable -Name jobTerminationStates, msgTypesColorMap -ErrorAction SilentlyContinue
@@ -285,7 +282,7 @@ Remove-Variable -Name LogoImage, lblVersion, outText -ErrorAction SilentlyContin
 Remove-Variable -Name btnBulk, btnDelete, btnList, btnListGen, btnLoop, btnMove, btnSingle, btnValidate, btnExit, btnKillAll -ErrorAction SilentlyContinue
 Remove-Variable -Name btns, scriptBlocks, threadNames, btn, lblStatus -ErrorAction SilentlyContinue
 Remove-Variable -Name btnWorkOpen, btnDownloadOpen, btnsaveOpen, btnKeywordOpen, btnIgnoreOpen, btnListOpen -ErrorAction SilentlyContinue
-Remove-Variable -Name btnClearLog, btnKillAll, btnWiki, btnsetting, btnExit -ErrorAction SilentlyContinue
+Remove-Variable -Name btnClearLog, btnKillAll, btnWiki, btnSetting, btnExit -ErrorAction SilentlyContinue
 Remove-Variable -Name jobs, job, msgType, jobMsg, logType -ErrorAction SilentlyContinue
 
-#endregion 終了処理
+# endregion 終了処理

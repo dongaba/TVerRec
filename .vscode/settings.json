@@ -1,95 +1,97 @@
 {
-    "[XAML]": {
-        "editor.defaultFormatter": "AndersonOliveira.zoiodelula"
-    },
-    "[css]": {
-        "editor.autoIndent": "advanced",
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[dockercompose]": {
-        "editor.autoIndent": "advanced",
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[github-actions-workflow]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[html]": {
-        "editor.autoIndent": "advanced",
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[javascript]": {
-        "editor.autoIndent": "advanced",
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[jsonc]": {
-        "editor.autoIndent": "advanced",
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[markdown]": {
-        "editor.autoIndent": "advanced",
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[powershell]": {
-        "editor.autoIndent": "advanced",
-        "editor.defaultFormatter": "ms-vscode.powershell"
-    },
-    "[xaml]": {
-			"editor.autoIndent": "advanced",
-			"editor.defaultFormatter": "PrateekMahendrakar.prettyxml"
-		},
-    "[yaml]": {
-        "editor.autoIndent": "advanced"
-    },
-    "diffEditor.codeLens": true,
-    "diffEditor.experimental.showMoves": true,
-    "diffEditor.ignoreTrimWhitespace": false,
-    "editor.autoIndent": "advanced",
-    "editor.bracketPairColorization.enabled": true,
-    "editor.defaultFormatter": "ms-vscode.powershell",
-    "editor.detectIndentation": true,
-    "editor.foldingImportsByDefault": true,
-    "editor.formatOnPaste": true,
-    "editor.formatOnSave": true,
-    "editor.formatOnType": true,
-    "editor.insertSpaces": false,
-    "editor.renderControlCharacters": true,
-    "editor.renderWhitespace": "all",
-    "editor.wordWrap": "on",
-    "files.autoGuessEncoding": true,
-    "files.autoSave": "afterDelay",
-    "files.insertFinalNewline": true,
-    "files.trimFinalNewlines": true,
-    "gitlens.graph.dimMergeCommits": true,
-    "notebook.insertFinalNewline": true,
-    "pester.runTestsInNewProcess": true,
-    "pester.suppressCodeLensNotice": true,
-    "powershell.buttons.showPanelMovementButtons": true,
-    "powershell.codeFormatting.addWhitespaceAroundPipe": true,
-    "powershell.codeFormatting.autoCorrectAliases": true,
-    "powershell.codeFormatting.avoidSemicolonsAsLineTerminators": true,
-    "powershell.codeFormatting.newLineAfterCloseBrace": false,
-    "powershell.codeFormatting.newLineAfterOpenBrace": false,
-    "powershell.codeFormatting.pipelineIndentationStyle": "IncreaseIndentationForFirstPipeline",
-    "powershell.codeFormatting.useConstantStrings": true,
-    "powershell.codeFormatting.useCorrectCasing": true,
-    "powershell.codeFormatting.whitespaceBetweenParameters": true,
-    "powershell.integratedConsole.forceClearScrollbackBuffer": true,
-    "powershell.integratedConsole.suppressStartupBanner": true,
-    "powershell.pester.useLegacyCodeLens": false,
-    "powershell.scriptAnalysis.enable": true,
-    "powershell.scriptAnalysis.settingsPath": "./.vscode/PSScriptAnalyzerSettings.psd1",
-    "powershell.startAsLoginShell.linux": true,
-    "prettier.useTabs": true,
-    "svg.preview.background": "transparent",
-    "thunder-client.saveToWorkspace": true,
-    "thunder-client.saveTokenPerEnvironment": true,
-    "thunder-client.sidebar.defaultTab": "Collections",
-    "thunder-client.sidebar.showActivityFromCollection": true,
-    "thunder-client.workspaceRelativePath": "./.vscode/",
-    "workbench.colorTheme": "Default Dark+",
-    "workbench.editor.enablePreview": true,
-    "workbench.iconTheme": "vscode-icons",
-    "workbench.preferredLightColorTheme": "Default Dark+",
-    "workbench.startupEditor": "newUntitledFile",
-    "xmlComplete.formattingStyle": "singleLineAttributes"
+	"[XAML]": {
+		"editor.autoIndent": "advanced",
+		"editor.defaultFormatter": "PrateekMahendrakar.prettyxml"
+	},
+	"[css]": {
+		"editor.autoIndent": "advanced",
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[dockercompose]": {
+		"editor.autoIndent": "advanced",
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[github-actions-workflow]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[html]": {
+		"editor.autoIndent": "advanced",
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[javascript]": {
+		"editor.autoIndent": "advanced",
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[jsonc]": {
+		"editor.autoIndent": "advanced",
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[markdown]": {
+		"editor.autoIndent": "advanced",
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[powershell]": {
+		"editor.autoIndent": "advanced",
+		"editor.defaultFormatter": "ms-vscode.powershell"
+	},
+	"[xaml]": {
+		"editor.autoIndent": "advanced",
+		"editor.defaultFormatter": "PrateekMahendrakar.prettyxml"
+	},
+	"[yaml]": {
+		"editor.autoIndent": "advanced"
+	},
+	"diffEditor.codeLens": true,
+	"diffEditor.experimental.showMoves": true,
+	"diffEditor.ignoreTrimWhitespace": false,
+	"editor.autoIndent": "advanced",
+	"editor.bracketPairColorization.enabled": true,
+	"editor.defaultFormatter": "ms-vscode.powershell",
+	"editor.detectIndentation": true,
+	"editor.foldingImportsByDefault": true,
+	"editor.formatOnPaste": true,
+	"editor.formatOnSave": true,
+	"editor.formatOnType": true,
+	"editor.insertSpaces": false,
+	"editor.renderControlCharacters": true,
+	"editor.renderWhitespace": "all",
+	"editor.wordWrap": "on",
+	"files.autoGuessEncoding": true,
+	"files.autoSave": "afterDelay",
+	"files.insertFinalNewline": true,
+	"files.trimFinalNewlines": true,
+	"gitlens.graph.dimMergeCommits": true,
+	"notebook.insertFinalNewline": true,
+	"pester.runTestsInNewProcess": true,
+	"pester.suppressCodeLensNotice": true,
+	"powershell.buttons.showPanelMovementButtons": true,
+	"powershell.codeFormatting.addWhitespaceAroundPipe": true,
+	"powershell.codeFormatting.autoCorrectAliases": true,
+	"powershell.codeFormatting.avoidSemicolonsAsLineTerminators": true,
+	"powershell.codeFormatting.newLineAfterCloseBrace": false,
+	"powershell.codeFormatting.newLineAfterOpenBrace": false,
+	"powershell.codeFormatting.pipelineIndentationStyle": "IncreaseIndentationForFirstPipeline",
+	"powershell.codeFormatting.useConstantStrings": true,
+	"powershell.codeFormatting.useCorrectCasing": true,
+	"powershell.codeFormatting.whitespaceBetweenParameters": true,
+	"powershell.integratedConsole.forceClearScrollbackBuffer": true,
+	"powershell.integratedConsole.suppressStartupBanner": true,
+	"powershell.pester.useLegacyCodeLens": false,
+	"powershell.scriptAnalysis.enable": true,
+	"powershell.scriptAnalysis.settingsPath": "./.vscode/PSScriptAnalyzerSettings.psd1",
+	"powershell.startAsLoginShell.linux": true,
+	"prettier.useTabs": true,
+	"svg.preview.background": "transparent",
+	"thunder-client.saveToWorkspace": true,
+	"thunder-client.saveTokenPerEnvironment": true,
+	"thunder-client.sidebar.defaultTab": "Collections",
+	"thunder-client.sidebar.showActivityFromCollection": true,
+	"thunder-client.workspaceRelativePath": "./.vscode/",
+	"workbench.colorTheme": "Default Dark+",
+	"workbench.editor.enablePreview": true,
+	"workbench.iconTheme": "material-icon-theme",
+	"workbench.preferredLightColorTheme": "Default Dark+",
+	"workbench.startupEditor": "newUntitledFile",
+	"xmlComplete.formattingStyle": "singleLineAttributes",
+	"cSpell.words": []
 }

@@ -7,7 +7,7 @@ Set-StrictMode -Version Latest
 Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
 
 #----------------------------------------------------------------------
-#Zipファイルを解凍
+# Zipファイルを解凍
 #----------------------------------------------------------------------
 function Expand-Zip {
 	[CmdletBinding()]
@@ -26,7 +26,7 @@ function Expand-Zip {
 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#環境設定
+# 環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 try {
 	if ($myInvocation.MyCommand.CommandType -eq 'ExternalScript') { $scriptRoot = Split-Path -Parent -Path (Split-Path -Parent -Path $myInvocation.MyCommand.Definition) }
@@ -35,7 +35,7 @@ try {
 } catch { Throw ('❌️ ディレクトリ設定に失敗しました') }
 if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
 
-#設定ファイル読み込み
+# 設定ファイル読み込み
 try {
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	. (Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
@@ -51,9 +51,9 @@ try {
 } catch { Throw ('❌️ 設定ファイルの読み込みに失敗しました') }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#メイン処理
+# メイン処理
 
-#githubの設定
+# githubの設定
 $lookupTable = @{
 	'yt-dlp'       = 'yt-dlp/yt-dlp'
 	'ytdl-patched' = 'ytdl-patched/ytdl-patched'
@@ -62,21 +62,21 @@ if ($lookupTable.ContainsKey($script:preferredYoutubedl)) { $repo = $lookupTable
 else { Write-Warning '❌️ youtube-dlの取得元の指定が無効です' }
 $releases = ('https://api.github.com/repos/{0}/releases' -f $repo)
 
-#youtube-dl移動先相対Path
+# youtube-dl移動先相対Path
 if ($IsWindows) { $ytdlPath = Join-Path $script:binDir 'youtube-dl.exe' }
 else { $ytdlPath = Join-Path $script:binDir 'youtube-dl' }
 
-#youtube-dlのバージョン取得
+# youtube-dlのバージョン取得
 try {
 	if (Test-Path $ytdlPath -PathType Leaf) { $currentVersion = (& $ytdlPath --version) }
 	else { $currentVersion = '' }
 } catch { $currentVersion = '' }
 
-#youtube-dlの最新バージョン取得
+# youtube-dlの最新バージョン取得
 try { $latestVersion = (Invoke-RestMethod -Uri $releases -Method 'GET')[0].Tag_Name }
 catch { Write-Warning ('⚠️ youtube-dlの最新バージョンを特定できませんでした') ; return }
 
-#youtube-dlのダウンロード
+# youtube-dlのダウンロード
 if ($latestVersion -eq $currentVersion) {
 	Write-Output ('')
 	Write-Output ('✅️ youtube-dlは最新です。')
@@ -87,20 +87,20 @@ if ($latestVersion -eq $currentVersion) {
 	Write-Warning ('⚠️ youtube-dlが古いため更新します。')
 	Write-Warning ('　Local version: {0}' -f $currentVersion)
 	Write-Warning ('　Latest version: {0}' -f $latestVersion)
-	if (!$IsWindows) { $fileBeforeRrename = $script:preferredYoutubedl ; $fileAfterRename = 'youtube-dl' }
-	else { $fileBeforeRrename = ('{0}.exe' -f $script:preferredYoutubedl) ; $fileAfterRename = 'youtube-dl.exe' }
+	if (!$IsWindows) { $fileBeforeRename = $script:preferredYoutubedl ; $fileAfterRename = 'youtube-dl' }
+	else { $fileBeforeRename = ('{0}.exe' -f $script:preferredYoutubedl) ; $fileAfterRename = 'youtube-dl.exe' }
 
 	Write-Output ('youtube-dlの最新版をダウンロードします')
 	try {
 		#ダウンロード
 		$tag = (Invoke-RestMethod -Uri $releases -Method 'GET')[0].Tag_Name
-		$downloadURL = ('https://github.com/{0}/releases/download/{1}/{2}' -f $repo, $tag, $fileBeforeRrename)
+		$downloadURL = ('https://github.com/{0}/releases/download/{1}/{2}' -f $repo, $tag, $fileBeforeRename)
 		$ytdlFileLocation = Join-Path $script:binDir $fileAfterRename
 		Invoke-WebRequest -Uri $downloadURL -Out $ytdlFileLocation
 	} catch { Write-Warning ('❌️ youtube-dlのダウンロードに失敗しました') }
 	if (!$IsWindows) { (& chmod a+x $ytdlFileLocation) }
 
-	#バージョンチェック
+	# バージョンチェック
 	try {
 		$currentVersion = (& $ytdlPath --version)
 		Write-Output ('💡 youtube-dlをversion {0}に更新しました。' -f $currentVersion)
@@ -108,4 +108,4 @@ if ($latestVersion -eq $currentVersion) {
 
 }
 
-Remove-Variable -Name lookupTable, releases, ytdlPath, currentVersion, latestVersion, file, fileAfterRename, tag, downloadURL, ytdlFileLocation -ErrorAction SilentlyContinue
+Remove-Variable -Name lookupTable, releases, ytdlPath, currentVersion, latestVersion, file, fileAfterRename, fileBeforeRename, tag, downloadURL, ytdlFileLocation -ErrorAction SilentlyContinue

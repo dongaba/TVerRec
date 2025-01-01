@@ -7,7 +7,7 @@ Set-StrictMode -Version Latest
 $script:guiMode = if ($args) { [String]$args[0] } else { '' }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#環境設定
+# 環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
@@ -15,18 +15,15 @@ try {
 	Set-Location $script:scriptRoot
 } catch { Throw ('❌️ カレントディレクトリの設定に失敗しました') }
 if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
-try {
-	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
-	if (!$?) { Throw ('❌️ TVerRecの初期化処理に失敗しました') }
-} catch { Throw ('❌️ 関数の読み込みに失敗しました') }
+. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#メイン処理
+# メイン処理
 Invoke-RequiredFileCheck
 Suspend-Process
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#初回呼び出し時
+# 初回呼び出し時
 $keywords = @(Read-KeywordList)
 Get-Token
 $keywordNum = 0
@@ -44,7 +41,7 @@ $toastShowParams = @{
 Show-ProgressToast2Row @toastShowParams
 
 #======================================================================
-#個々のキーワードチェックここから
+# 個々のキーワードチェックここから
 $totalStartTime = Get-Date
 foreach ($keyword in $keywords) {
 	$keyword = Remove-TabSpace($keyword)
@@ -56,7 +53,7 @@ foreach ($keyword in $keywords) {
 	$keyword = (Remove-Comment($keyword.Replace('https://tver.jp/', '').Trim()))
 	$listLinks = @(Get-VideoLinksFromKeyword ([ref]$keyword))
 
-	#URLがすでにダウンロードリストやダウンロード履歴に存在する場合は検索結果から除外
+	# URLがすでにダウンロードリストやダウンロード履歴に存在する場合は検索結果から除外
 	if ($listLinks.Count -ne 0) {
 		if ($script:listGenHistoryCheck) { $videoLinks, $processedCount = Invoke-HistoryAndListMatchCheck $listLinks }
 		else { $videoLinks, $processedCount = Invoke-ListMatchCheck $listLinks }
@@ -65,15 +62,15 @@ foreach ($keyword in $keywords) {
 	if ($videoTotal -eq 0) { Write-Output ('　処理対象{0}本　処理済{1}本' -f $videoTotal, $processedCount) }
 	else { Write-Output ('　💡 処理対象{0}本　処理済{1}本' -f $videoTotal, $processedCount) }
 
-	#処理時間の推計
+	# 処理時間の推計
 	$secElapsed = (Get-Date) - $totalStartTime
 	if ($keywordNum -ne 0) { $secRemaining1 = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $keywordNum) * ($keywordTotal - $keywordNum)) }
 	else { $secRemaining1 = '' }
 
-	#キーワード数のインクリメント
+	# キーワード数のインクリメント
 	$keywordNum++
 
-	#進捗情報の更新
+	# 進捗情報の更新
 	$toastUpdateParams = @{
 		Title1     = (Remove-TabSpace ($keyword))
 		Rate1      = [Float]($keywordNum / $keywordTotal)
@@ -89,10 +86,10 @@ foreach ($keyword in $keywords) {
 	Update-ProgressToast2Row @toastUpdateParams
 
 	#----------------------------------------------------------------------
-	#個々の番組の情報の取得ここから
+	# 個々の番組の情報の取得ここから
 	if ($script:enableMultithread) {
 		Write-Debug ('Multithread Processing Enabled')
-		#並列化が有効の場合は並列化
+		# 並列化が有効の場合は並列化
 		if ($videoLinks -ne 0) {
 			# 配列を分割
 			$partitions = @{}
@@ -123,17 +120,17 @@ foreach ($keyword in $keywords) {
 			} while ($remainingJobs)
 		}
 	} else {
-		#並列化が無効の場合は従来型処理
+		# 並列化が無効の場合は従来型処理
 		$videoNum = 0
 		foreach ($videoLink in $videoLinks) {
 			$videoNum++
-			#進捗情報の更新
+			# 進捗情報の更新
 			$toastUpdateParams.Title2 = $videoLink
 			$toastUpdateParams.Rate2 = [Float]($videoNum / $videoTotal)
 			$toastUpdateParams.LeftText2 = ('{0}/{1}' -f $videoNum, $videoTotal)
 			Update-ProgressToast2Row @toastUpdateParams
 			Write-Output ('　{0}/{1} - {2}' -f $videoNum, $videoTotal, $videoLink)
-			#TVer番組ダウンロードのメイン処理
+			# TVer番組ダウンロードのメイン処理
 			Update-VideoList -Keyword ([ref]$keyword) -VideoLink ([ref]$videoLink)
 		}
 	}
