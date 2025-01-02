@@ -442,11 +442,11 @@ function Show-GeneralToast {
 				continue
 			}
 			$IsLinux {
-				if (Get-Command notify-send -ea SilentlyContinue) { & notify-send -a $script:appName -t 5000 -i $script:toastAppLogo $text1 $text2 2> /dev/null }
+				if (Get-Command notify-send -ErrorAction SilentlyContinue) { & notify-send -a $script:appName -t 5000 -i $script:toastAppLogo $text1 $text2 2> /dev/null }
 				continue
 			}
 			$IsMacOS {
-				if (Get-Command osascript -ea SilentlyContinue) {
+				if (Get-Command osascript -ErrorAction SilentlyContinue) {
 					$toastParams = ('display notification "{0}" with title "{1}" subtitle "{2}" sound name "Blow"' -f $text2, $script:appName, $text1)
 					$toastParams | & osascript 2> /dev/null
 				}
@@ -511,11 +511,11 @@ function Show-ProgressToast {
 				continue
 			}
 			$IsLinux {
-				if (Get-Command notify-send -ea SilentlyContinue) { & notify-send -a $script:appName -t 5000 -i $script:toastAppLogo $text1 $text2 }
+				if (Get-Command notify-send -ErrorAction SilentlyContinue) { & notify-send -a $script:appName -t 5000 -i $script:toastAppLogo $text1 $text2 2> /dev/null }
 				continue
 			}
 			$IsMacOS {
-				if (Get-Command osascript -ea SilentlyContinue) {
+				if (Get-Command osascript -ErrorAction SilentlyContinue) {
 					$toastParams = ('display notification "{0}" with title "{1}" subtitle "{2}" sound name "Blow"' -f $text2, $script:appName, $text1)
 					$toastParams | & osascript
 				}
@@ -626,11 +626,11 @@ function Show-ProgressToast2Row {
 				continue
 			}
 			$IsLinux {
-				if (Get-Command notify-send -ea SilentlyContinue) { & notify-send -a $script:appName -t 5000 -i $script:toastAppLogo $text1 $text2 }
+				if (Get-Command notify-send -ErrorAction SilentlyContinue) { & notify-send -a $script:appName -t 5000 -i $script:toastAppLogo $text1 $text2 2> /dev/null }
 				continue
 			}
 			$IsMacOS {
-				if (Get-Command osascript -ea SilentlyContinue) {
+				if (Get-Command osascript -ErrorAction SilentlyContinue) {
 					$toastParams = ('display notification "{0}" with title "{1}" subtitle "{2}" sound name "Blow"' -f $text2, $script:appName, $text1)
 					$toastParams | & osascript
 				}

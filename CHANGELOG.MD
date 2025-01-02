@@ -1,5 +1,15 @@
 # Change Log
 
+## [3.3.0](https://github.com/dongaba/TVerRec/releases/tag/v3.3.0)
+
+### 3.3.0 Added
+
+### 3.3.0 Changed
+
+### 3.3.0 Fixed
+
+- Linuxでトースト通知時にコンソールにエラーメッセージが出る場合がある問題を修正
+
 ## [3.2.9](https://github.com/dongaba/TVerRec/releases/tag/v3.2.9)
 
 ### 3.2.9 Added
