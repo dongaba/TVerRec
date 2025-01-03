@@ -82,13 +82,19 @@ if ($script:saveBaseDir) {
 	}
 }
 
-# 作業ディレクトリ配下のディレクトリ一覧
+# ダウンロードディレクトリ配下のディレクトリ一覧
+Write-Output ('')
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+Write-Output ('ダウンロードディレクトリの一覧を作成しています')
 $moveFromPathsHash = @{}
 if ($script:saveBaseDir -and (Get-ChildItem -LiteralPath $script:downloadBaseDir -Include @('*.mp4', '*.ts') -Recurse)) {
 	Get-ChildItem -LiteralPath $script:downloadBaseDir -Include @('*.mp4', '*.ts') -Recurse -File | Select-Object Directory -Unique | ForEach-Object { $moveFromPathsHash[$_.Directory.Name] = $_.Directory.FullName }
 }
 
-# 移動先ディレクトリと作業ディレクトリの一致を抽出
+# 移動先ディレクトリとダウンロードディレクトリの一致を抽出
+Write-Output ('')
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+Write-Output ('移動先ディレクトリとダウンロードディレクトリの一致を抽出しています')
 if ($moveToPathsHash.Count -gt 0) {
 	$moveDirs = @(Compare-Object -ReferenceObject @($moveToPathsHash.Keys) -DifferenceObject @($moveFromPathsHash.Keys) -IncludeEqual -ExcludeDifferent | ForEach-Object { $_.InputObject })
 } else { $moveDirs = $null }
