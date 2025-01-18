@@ -13,8 +13,8 @@ try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
-} catch { Throw ('❌️ カレントディレクトリの設定に失敗しました') }
-if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
+} catch { Throw ('❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.') }
+if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space') }
 . (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -24,12 +24,12 @@ Invoke-RequiredFileCheck
 #======================================================================
 # 1/3 ダウンロードが中断した際にできたゴミファイルは削除
 Write-Output ('')
-Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-Write-Output ('処理が中断した際にできたゴミファイルを削除します')
+Write-Output ($script:msg.LongBoldBorder)
+Write-Output ($script:msg.DeleteTrashFiles)
 
 $toastShowParams = @{
-	Text1      = '不要ファイル削除中'
-	Text2      = '　処理1/3 - ダウンロード中断時のゴミファイルを削除'
+	Text1      = $script:msg.DeleteTrashes
+	Text2      = $script:msg.DeleteTrashesStep1
 	WorkDetail = ''
 	Tag        = $script:appName
 	Silent     = $false
@@ -94,15 +94,15 @@ if ($script:cleanupSaveBaseDir)	{
 #======================================================================
 # 2/3 ダウンロード対象外に入っている番組は削除
 Write-Output ('')
-Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-Write-Output ('ダウンロード対象外の番組を削除します')
+Write-Output ($script:msg.MediumBoldBorder)
+Write-Output ($script:msg.DeleteExcludeFiles)
 
-$toastShowParams.Text2 = '　処理2/3 - ダウンロード対象外の番組を削除'
+$toastShowParams.Text2 = $script:msg.DeleteTrashesStep2
 Show-ProgressToast @toastShowParams
 
 # 個別ダウンロードが強制モードの場合にはスキップ
 if ($script:forceSingleDownload) {
-	Write-Warning ('⚠️ - 強制ダウンロードフラグが設定されているためダウンロード対象外の番組の削除処理をスキップします')
+	Write-Warning ($script:msg.DisclaimerForForceDownloadFlag)
 } else {
 	# ダウンロード先にディレクトリがない場合はスキップ
 	$workDirEntities = @(Get-ChildItem -LiteralPath $script:downloadBaseDir)
@@ -133,7 +133,7 @@ if ($script:forceSingleDownload) {
 				$ignoreTotal = $using:ignoreDirs.Count
 				Write-Output ('　{0}/{1} - {2}' -f $ignoreNum, $ignoreTotal, $_.Name)
 				try { Remove-Item -LiteralPath $_ -Recurse -Force | Out-Null }
-				catch { Write-Warning ('⚠️ 削除できないファイルがありました: {0}' -f $_) }
+				catch { Write-Warning ($script:msg.FileCannotBeDeleted) }
 			} -ThrottleLimit $script:multithreadNum
 		} else {
 			# 並列化が無効の場合は従来型処理
@@ -148,9 +148,9 @@ if ($script:forceSingleDownload) {
 				$secRemaining = -1
 				if ($ignoreNum -ne 1) {
 					$secRemaining = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $ignoreNum) * ($ignoreTotal - $ignoreNum))
-					$minRemaining = ('残り時間 {0}分' -f ([Int][Math]::Ceiling($secRemaining / 60)))
+					$minRemaining = ($script:msg.MinRemaining -f ([Int][Math]::Ceiling($secRemaining / 60)))
 					$progressRate = [Float]($ignoreNum / $ignoreTotal)
-				} else {$minRemaining = '' ; $progressRate = 0 }
+				} else { $minRemaining = '' ; $progressRate = 0 }
 
 				$toastUpdateParams.Title = $ignoreDir.Name
 				$toastUpdateParams.Rate = $progressRate
@@ -160,7 +160,7 @@ if ($script:forceSingleDownload) {
 
 				Write-Output ('　{0}/{1} - {2}' -f $ignoreNum, $ignoreTotal, $ignoreDir.Name)
 				try { Remove-Item -LiteralPath $ignoreDir -Recurse -Force | Out-Null }
-				catch { Write-Warning ('⚠️ 削除できないファイルがありました: {0}' -f $ignoreDir) }
+				catch { Write-Warning ($script:msg.FileCannotBeDeleted) }
 			}
 		}
 	}
@@ -171,13 +171,15 @@ if ($script:forceSingleDownload) {
 #======================================================================
 # 3/3 空ディレクトリと隠しファイルしか入っていないディレクトリを一気に削除
 Write-Output ('')
-Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-Write-Output ('空ディレクトリを削除します')
+Write-Output ($script:msg.MediumBoldBorder)
+Write-Output ($script:msg.DeleteEmptyDirs)
 
-$toastShowParams.Text2 = '　処理3/3 - 空ディレクトリを削除'
+$toastShowParams.Text2 = $script:msg.DeleteTrashesStep3
 Show-ProgressToast @toastShowParams
 
-$emptyDirs = @(Get-ChildItem -Path $script:downloadBaseDir -Directory -Recurse | Where-Object { @($_.GetFileSystemInfos().Where({ -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) })).Count -eq 0 })
+try {
+	$emptyDirs = @(Get-ChildItem -Path $script:downloadBaseDir -Directory -Recurse | Where-Object { @($_.GetFileSystemInfos().Where({ -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) })).Count -eq 0 })
+} catch { continue }
 if ($emptyDirs.Count -ne 0) { $emptyDirs = @($emptyDirs.Fullname) }
 $emptyDirTotal = $emptyDirs.Count
 
@@ -191,7 +193,7 @@ if ($emptyDirTotal -ne 0) {
 			$emptyDirTotal = $using:emptyDirs.Count
 			Write-Output ('　{0}/{1} - {2}' -f $emptyDirNum, $emptyDirTotal, $_)
 			try { Remove-Item -LiteralPath $_ -Recurse -Force | Out-Null }
-			catch { Write-Warning ('⚠️ - 空ディレクトリの削除に失敗しました: {0}' -f $_) }
+			catch { Write-Warning ($script:msg.DeleteEmptyDirsFailed -f $_) }
 		} -ThrottleLimit $script:multithreadNum
 	} else {
 		# 並列化が無効の場合は従来型処理
@@ -205,9 +207,9 @@ if ($emptyDirTotal -ne 0) {
 			$secRemaining = -1
 			if ($emptyDirNum -ne 1) {
 				$secRemaining = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $emptyDirNum) * ($emptyDirTotal - $emptyDirNum))
-				$minRemaining = ('残り時間 {0}分' -f ([Int][Math]::Ceiling($secRemaining / 60)))
+				$minRemaining = ($script:msg.MinRemaining -f ([Int][Math]::Ceiling($secRemaining / 60)))
 				$progressRate = [Float]($emptyDirNum / $emptyDirTotal)
-			} else {$minRemaining = '' ; $progressRate = 0 }
+			} else { $minRemaining = '' ; $progressRate = 0 }
 
 			$toastUpdateParams.Title = $dir
 			$toastUpdateParams.Rate = $progressRate
@@ -217,16 +219,16 @@ if ($emptyDirTotal -ne 0) {
 
 			Write-Output ('　{0}/{1} - {2}' -f $emptyDirNum, $emptyDirTotal, $dir)
 			try { Remove-Item -LiteralPath $dir -Recurse -Force -ErrorAction SilentlyContinue | Out-Null }
-			catch { Write-Warning ('⚠️ - 空ディレクトリの削除に失敗しました: {0}' -f $dir) }
+			catch { Write-Warning ($script:msg.DeleteEmptyDirsFailed -f $dir) }
 		}
 	}
 }
 #----------------------------------------------------------------------
 
-$toastUpdateParams.Title = '不要ファイル削除'
+$toastUpdateParams.Title = $script:msg.DeleteTrash
 $toastUpdateParams.Rate = 1
 $toastUpdateParams.LeftText = ''
-$toastUpdateParams.RightText = '完了'
+$toastUpdateParams.RightText = $script:msg.Completed
 Update-ProgressToast @toastUpdateParams
 
 Remove-Variable -Name args, toastShowParams, toastUpdateParams, saveDir, workDirEntities, ignoreTitles, ignoreDirs, ignoreTitle, filteredDirs, filteredDir, ignoreNum, ignoreTotal, totalStartTime, ignoreDir, secElapsed, secRemaining, minRemaining, progressRate, emptyDirs, emptyDirTotal, emptyDirNum, dir -ErrorAction SilentlyContinue
@@ -234,6 +236,6 @@ Remove-Variable -Name args, toastShowParams, toastUpdateParams, saveDir, workDir
 Invoke-GarbageCollection
 
 Write-Output ('')
-Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-Write-Output ('不要ファイル削除処理を終了しました。')
-Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+Write-Output ($script:msg.LongBoldBorder)
+Write-Output ($script:msg.DeleteTrashCompleted)
+Write-Output ($script:msg.LongBoldBorder)

@@ -13,8 +13,8 @@ try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
-} catch { Throw ('❌️ カレントディレクトリの設定に失敗しました') }
-if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
+} catch { Throw ('❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.') }
+if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space') }
 . (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -24,28 +24,28 @@ Suspend-Process
 Get-Token
 # ダウンロードリストを読み込み
 $listLinks = @(Get-LinkFromDownloadList)
-if ($null -eq $listLinks) { Write-Warning ('⚠️ ダウンロードリストが0件です') ; exit 0 }
-$keyword = 'リスト指定'
+if ($null -eq $listLinks) { Write-Warning ($script:msg.DownloadListZero) ; exit 0 }
+$keyword = $script:msg.KeywordForListDownload
 
 # URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 if ($listLinks.Count -ne 0) { $videoLinks, $processedCount = Invoke-HistoryMatchCheck $listLinks }
 else { $videoLinks = @() ; $processedCount = 0 }
 $videoTotal = $videoLinks.Count
 Write-Output ('')
-if ($videoTotal -eq 0) { Write-Output ('　処理対象{0}本　処理済{1}本' -f $videoTotal, $processedCount) }
-else { Write-Output ('　💡 処理対象{0}本　処理済{1}本' -f $videoTotal, $processedCount) }
+if ($videoTotal -eq 0) { Write-Output ($script:msg.VideoCountWhenZero -f $videoTotal, $processedCount) }
+else { Write-Output ($script:msg.VideoCountNonZero -f $videoTotal, $processedCount) }
 
 # 処理時間の推計
 $totalStartTime = Get-Date
 $secRemaining = -1
 
 $toastShowParams = @{
-	Text1      = 'リストからの番組のダウンロード'
-	Text2      = 'リストファイルから番組をダウンロード'
-	WorkDetail = '読み込み中...'
+	Text1      = $script:msg.ListDownloading
+	Text2      = $script:msg.ExtractAndDownloadVideoFromLists
+	WorkDetail = $script:msg.Loading
 	Tag        = $script:appName
 	Silent     = $false
-	Group      = 'Bulk'
+	Group      = 'List'
 }
 Show-ProgressToast @toastShowParams
 
@@ -66,7 +66,7 @@ foreach ($videoLink in $videoLinks) {
 
 	# 進捗情報の更新
 	$toastUpdateParams = @{
-		Title     = 'リストからの番組のダウンロード'
+		Title     = $script:msg.ListDownloading
 		Rate      = [Float]($videoNum / $videoTotal)
 		LeftText  = ('{0}/{1}' -f $videoNum, $videoTotal)
 		RightText = $minRemaining
@@ -75,7 +75,7 @@ foreach ($videoLink in $videoLinks) {
 	}
 	Update-ProgressToast @toastUpdateParams
 
-	Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━')
+	Write-Output ($script:msg.ShortBoldBorder)
 	Write-Output ('{0}/{1} - {2}' -f $videoNum, $videoTotal, $videoLink)
 	# youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 	Wait-YtdlProcess $script:parallelDownloadFileNum
@@ -87,10 +87,10 @@ foreach ($videoLink in $videoLinks) {
 #----------------------------------------------------------------------
 
 $toastUpdateParams = @{
-	Title     = 'リストからの番組のダウンロード'
+	Title     = $script:msg.ListDownloading
 	Rate      = '1'
 	LeftText  = ''
-	RightText = '完了'
+	RightText = $script:msg.Completed
 	Tag       = $script:appName
 	Group     = 'List'
 }
@@ -98,7 +98,7 @@ Update-ProgressToast @toastUpdateParams
 
 # youtube-dlのプロセスが終わるまで待機
 Write-Output ('')
-Write-Output ('ダウンロードの終了を待機しています')
+Write-Output ($script:mst.WaitingDownloadCompletion)
 Wait-DownloadCompletion
 
 Remove-Variable -Name args, listLinks, keyword, videoLinks, processedCount, videoTotal, totalStartTime, secRemaining, toastShowParams, videoNum, videoLink, secElapsed, minRemaining, toastUpdateParams -ErrorAction SilentlyContinue
@@ -106,6 +106,6 @@ Remove-Variable -Name args, listLinks, keyword, videoLinks, processedCount, vide
 Invoke-GarbageCollection
 
 Write-Output ('')
-Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-Write-Output ('リストダウンロード処理を終了しました。')
-Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+Write-Output ($script:msg.LongBoldBorder)
+Write-Output ($script:msg.ListDownloadCompleted)
+Write-Output ($script:msg.LongBoldBorder)

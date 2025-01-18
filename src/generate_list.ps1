@@ -13,8 +13,8 @@ try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
-} catch { Throw ('❌️ カレントディレクトリの設定に失敗しました') }
-if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
+} catch { Throw ('❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.') }
+if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space') }
 . (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -30,10 +30,10 @@ $keywordNum = 0
 $keywordTotal = $keywords.Count
 
 $toastShowParams = @{
-	Text1   = 'キーワードから番組リスト作成中'
-	Text2   = 'キーワードから番組を抽出しダウンロード'
-	Detail1 = '読み込み中...'
-	Detail2 = '読み込み中...'
+	Text1   = $script:msg.ListCreation
+	Text2   = $script:msg.ExtractAndCreateListFromKeywords
+	Detail1 = $script:msg.Loading
+	Detail2 = $script:msg.Loading
 	Tag     = $script:appName
 	Silent  = $false
 	Group   = 'ListGen'
@@ -47,7 +47,7 @@ foreach ($keyword in $keywords) {
 	$keyword = Remove-TabSpace($keyword)
 
 	Write-Output ('')
-	Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+	Write-Output ($script:msg.ShortBoldBorder)
 	Write-Output ('{0}' -f $keyword)
 
 	$keyword = (Remove-Comment($keyword.Replace('https://tver.jp/', '').Trim()))
@@ -59,8 +59,8 @@ foreach ($keyword in $keywords) {
 		else { $videoLinks, $processedCount = Invoke-ListMatchCheck $listLinks }
 	} else { $videoLinks = @() ; $processedCount = 0 }
 	$videoTotal = $videoLinks.Count
-	if ($videoTotal -eq 0) { Write-Output ('　処理対象{0}本　処理済{1}本' -f $videoTotal, $processedCount) }
-	else { Write-Output ('　💡 処理対象{0}本　処理済{1}本' -f $videoTotal, $processedCount) }
+	if ($videoTotal -eq 0) { Write-Output ($script:msg.VideoCountWhenZero -f $videoTotal, $processedCount) }
+	else { Write-Output ($script:msg.VideoCountNonZero -f $videoTotal, $processedCount) }
 
 	# 処理時間の推計
 	$secElapsed = (Get-Date) - $totalStartTime
@@ -104,7 +104,7 @@ foreach ($keyword in $keywords) {
 			$paraJobSBs = @{}
 			$paraJobDefs = @{}
 			$paraJobs = @{}
-			Write-Output ('　並列処理をするため進捗状況は順不同で表示されます')
+			Write-Output ($script:msg.DisclaimerForMultithread)
 			for ($i = 0 ; $i -lt $partitions.Count ; $i++) {
 				$links = [string]$partitions[$i]
 				$paraJobSBs[$i] = ("& ./generate_list_child.ps1 $keyword $links")
@@ -140,11 +140,11 @@ foreach ($keyword in $keywords) {
 #======================================================================
 
 $toastUpdateParams = @{
-	Title1     = 'キーワードから番組の抽出'
+	Title1     = $script:msg.ExtractingVideoFromKeywords
 	Rate1      = 1
 	LeftText1  = ''
 	RightText1 = '0'
-	Title2     = '番組リストの作成'
+	Title2     = $script:msg.GenerateList
 	Rate2      = 1
 	LeftText2  = ''
 	RightText2 = '0'
@@ -158,8 +158,8 @@ Remove-Variable -Name args, keywords, keywordNum, keywordTotal, toastShowParams,
 Invoke-GarbageCollection
 
 Write-Output ('')
-Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-Write-Output ('番組リストファイル出力処理を終了しました。')
-Write-Output ('💡 必要に応じてリストファイルを編集してダウンロード不要な番組を削除してください')
-Write-Output ('　リストファイルパス: {0}' -f $script:listFilePath)
-Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+Write-Output ($script:msg.LongBoldBorder)
+Write-Output ($script:msg.ListCreationCompleted)
+Write-Output ($script:msg.ListCreationCompletionMessage1)
+Write-Output ($script:msg.ListCreationCompletionMessage2 -f $script:listFilePath)
+Write-Output ($script:msg.LongBoldBorder)

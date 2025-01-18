@@ -10,11 +10,11 @@ $script:guiMode = if ($args) { [String]$args[0] } else { '' }
 # 環境設定
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 try {
-	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path .// }
+	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
-} catch { Throw ('❌️ カレントディレクトリの設定に失敗しました') }
-if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
+} catch { Throw ('❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.') }
+if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space') }
 . (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -22,7 +22,7 @@ if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを
 Invoke-RequiredFileCheck
 Suspend-Process
 Get-Token
-$keyword = '個別指定'
+$keyword = $script:msg.KeywordForSingleDownload
 
 # GUI起動を判定
 if (!$script:guiMode) { $script:guiMode = $false }
@@ -33,7 +33,7 @@ while ($true) {
 	# いろいろ初期化
 	$videoLink = ''
 	# 移動先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
-	if (!(Test-Path $script:downloadBaseDir -PathType Container)) { Throw ('❌️ 番組ダウンロード先ディレクトリにアクセスできません。終了します') }
+	if (!(Test-Path $script:downloadBaseDir -PathType Container)) { Throw ($script:msg.DownloadDirNotAccessible) }
 	# youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
 	Wait-YtdlProcess $script:parallelDownloadFileNum
 	Suspend-Process
@@ -42,7 +42,7 @@ while ($true) {
 	$script:videoPageList = @()
 
 	if (!$script:guiMode) {
-		$script:videoPageList = @((Read-Host '番組URLを入力してください。何も入力しないで Enter を押すと終了します。スペースで区切って複数入力可能です。').Trim().Split())
+		$script:videoPageList = @((Read-Host $script:msg.SingleDownloadCUIMessage).Trim().Split())
 	} else {
 		# アセンブリの読み込み
 		Add-Type -AssemblyName System.Windows.Forms | Out-Null
@@ -50,8 +50,8 @@ while ($true) {
 
 		# フォームの作成
 		$inputForm = New-Object System.Windows.Forms.Form -Property @{
-			Text            = 'TVerRec個別ダウンロード'
-			Size            = New-Object System.Drawing.Size(480, 300)
+			Text            = $script:msg.SingleDownloadFormTitle
+			Size            = New-Object System.Drawing.Size(520, 300)
 			StartPosition   = 'CenterScreen'
 			MaximizeBox     = $False
 			MinimizeBox     = $False
@@ -63,11 +63,11 @@ while ($true) {
 		$inputForm.Add_KeyDown({ if ($_.KeyCode -eq 'Escape') { $inputForm.Close() } })
 		$inputForm.Add_Shown({ $inputForm.Activate() })
 
-		# OKボタンの作成
+		# ボタンの作成
 		$okButton = New-Object System.Windows.Forms.Button -Property @{
-			Location = New-Object System.Drawing.Size(380, 10)
+			Location = New-Object System.Drawing.Size(415, 10)
 			Size     = New-Object System.Drawing.Size(75, 20)
-			Text     = 'OK'
+			Text     = $script:msg.SingleDownloadGUIOkButton
 		}
 		$okButton.Add_Click({ $script:videoPageList = @($inputTextBox.Text.Split("`r`n").Split()) ; $inputForm.Close() })
 		$inputForm.Controls.Add($okButton)
@@ -75,15 +75,15 @@ while ($true) {
 		# テキストラベルの作成
 		$inputTextLabel = New-Object System.Windows.Forms.Label -Property @{
 			Location = New-Object System.Drawing.Size(10, 10)
-			Size     = New-Object System.Drawing.Size(440, 20)
-			Text     = '番組URLを入力してください。改行で区切って複数入力可能です。'
+			Size     = New-Object System.Drawing.Size(480, 20)
+			Text     = $script:msg.SingleDownloadGUIMessage
 		}
 		$inputForm.Controls.Add($inputTextLabel)
 
 		# テキストボックスの作成
 		$inputTextBox = New-Object System.Windows.Forms.TextBox -Property @{
 			Location   = New-Object System.Drawing.Size(10, 40)
-			Size       = New-Object System.Drawing.Size(445, 200)
+			Size       = New-Object System.Drawing.Size(480, 200)
 			Multiline  = $true
 			ScrollBars = [System.Windows.Forms.ScrollBars]::Vertical
 		}
@@ -106,20 +106,20 @@ while ($true) {
 		switch -Regex ($videoLink) {
 			'^https://tver.jp/(/?.*)' { # TVer番組ダウンロードのメイン処理
 				Write-Output ('')
-				Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-				Write-Output ('{0}' -f $videoLink)
+				Write-Output ($script:msg.MediumBoldBorder)
+				Write-Output ('{0}: {1}' -f $script:msg.SingleDownloadTVerURL, $videoLink)
 				Invoke-VideoDownload -Keyword ([ref]$keyword) -VideoLink ([ref]$videoLink) -Force $script:forceSingleDownload
 				continue
 			}
 			'^.*://' { # TVer以外のサイトへの対応
 				Write-Output ('')
-				Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-				Write-Output ('ダウンロード：{0}' -f $videoLink)
+				Write-Output ($script:msg.MediumBoldBorder)
+				Write-Output ('{0}: {1}' -f $script:msg.SingleDownloadNonTVerURL, $videoLink)
 				Invoke-NonTverYtdl $videoLink
 				Start-Sleep -Seconds 1
 				continue
 			}
-			default { Write-Warning ('URLではありません: {0}' -f $videoLink) ; continue }
+			default { Write-Warning ('{0}: {1}' -f $script:msg.SingleDownloadNotURL, $videoLink) ; continue }
 		}
 	}
 
@@ -130,6 +130,6 @@ Remove-Variable -Name args, keyword, videoPageURL -ErrorAction SilentlyContinue
 Invoke-GarbageCollection
 
 Write-Output ('')
-Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-Write-Output ('ダウンロード処理を終了しました。')
-Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+Write-Output ($script:msg.LongBoldBorder)
+Write-Output ($script:msg.SingleDownloadCompleted)
+Write-Output ($script:msg.LongBoldBorder)

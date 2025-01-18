@@ -11,4 +11,4 @@ echo -en "\033];TVerRec Video File Deleter\007"
 
 pwsh -NoProfile "../src/delete_trash.ps1"
 
-echo "Finished ..."
+echo "Completed ..."

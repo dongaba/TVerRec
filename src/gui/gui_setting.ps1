@@ -17,21 +17,31 @@ try {
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	$script:scriptRoot = Convert-Path (Join-Path $script:scriptRoot '../')
 	Set-Location $script:scriptRoot
-} catch { Throw ('❌️ ディレクトリ設定に失敗しました') }
-if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
+} catch { Throw ('❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.') }
+if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space') }
+
+#----------------------------------------------------------------------
+# メッセージファイル読み込み
+$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
+$script:langDir = Convert-Path (Join-Path $scriptRoot '../resources/lang')
+$script:currentCulture = [System.Globalization.CultureInfo]::CurrentUICulture.Name
+Write-Debug "Current Language: $script:currentCulture"
+$script:langFile = Get-Content -Path (Join-Path $script:langDir 'messages.json') | ConvertFrom-Json
+$script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:currentCulture)) { $script:langFile.$script:currentCulture }
+else { $script:langFile.default }
 
 #----------------------------------------------------------------------
 # 設定ファイル読み込み
 try {
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	. (Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
-} catch { Throw ('❌️ システム設定ファイルの読み込みに失敗しました') }
+} catch { Throw ($script:msg.LoadSystemSettingFailed) }
 
 #----------------------------------------------------------------------
 # 外部関数ファイルの読み込み
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/common_functions.ps1'))
-} catch { Throw ('❌️ 外部関数ファイルの読み込みに失敗しました') }
+} catch { Throw ($script:msg.LoadCommonFuncFailed) }
 
 $days = @('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')
 $hours = 0..23
@@ -138,10 +148,10 @@ function Read-UserSetting {
 			$userSettingValue = ($userSettings -match ('^{0}' -f [regex]::Escape($settingAttribute)))
 			if ($userSettingValue) {
 				$settingBox.Text = $userSettingValue.split('=', 2)[1].Trim().Trim("'")
-				if ($settingBox.Text -eq '$true') { $settingBox.Text = 'する' }
-				elseif ($settingBox.Text -eq '$false') { $settingBox.Text = 'しない' }
-			} elseif ($settingAttribute -in @('$script:downloadBaseDir', '$script:downloadWorkDir', '$script:saveBaseDir', '$script:myPlatformUID', '$script:myPlatformToken', '$script:myMemberSID')) { $settingBox.Text = '未設定' }
-			else { $settingBox.Text = 'デフォルト値' }
+				if ($settingBox.Text -eq '$true') { $settingBox.Text = $script:msg.SettingTrue }
+				elseif ($settingBox.Text -eq '$false') { $settingBox.Text = $script:msg.SettingFalse }
+			} elseif ($settingAttribute -in @('$script:downloadBaseDir', '$script:downloadWorkDir', '$script:saveBaseDir', '$script:myPlatformUID', '$script:myPlatformToken', '$script:myMemberSID')) { $settingBox.Text = $script:msg.SettingUndefined }
+			else { $settingBox.Text = $script:msg.SettingDefault }
 		}
 		# 動作停止設定の抽出
 		$scheduleStopPattern = '\$script:stopSchedule\s*=\s*@\{([^}]*)\}'
@@ -194,9 +204,9 @@ function Save-UserSetting {
 			$settingBoxName = $settingAttribute.Replace('$script:', '')
 			$settingBox = $settingWindow.FindName($settingBoxName)
 			switch -wildcard ($settingBox.Text) {
-				{ $_ -in '', 'デフォルト値', '未設定' } { continue }
-				{ $_ -eq 'する' } { $newSetting += ('{0} = $true' -f $settingAttribute) ; continue }
-				{ $_ -eq 'しない' } { $newSetting += ('{0} = $false' -f $settingAttribute) ; continue }
+				{ $_ -in '', $script:msg.SettingDefault, $script:msg.SettingUndefined } { continue }
+				{ $_ -eq $script:msg.SettingTrue } { $newSetting += ('{0} = $true' -f $settingAttribute) ; continue }
+				{ $_ -eq $script:msg.SettingFalse } { $newSetting += ('{0} = $false' -f $settingAttribute) ; continue }
 				default {
 					if (([Int]::TryParse($settingBox.Text, [ref]$null)) -or ($settingBox.Text -match '[${}]')) { $newSetting += ('{0} = {1}' -f $settingAttribute, $settingBox.Text) }
 					else { $newSetting += ('{0} = ''{1}''' -f $settingAttribute, $settingBox.Text) }
@@ -223,7 +233,7 @@ function Save-UserSetting {
 	$newSetting += $endSegment
 	if ( $totalLineNum -ne 0 ) {
 		try { $newSetting += Get-Content $userSettingFile -Tail $tailLineNum }
-		catch { Write-Warning ('⚠️ 自動生成の終了部分を特定できませんでした') }
+		catch { Write-Warning ($script:msg.AutoGenNotDetected) }
 	}
 	# 改行コードLFを強制 + NFCで出力
 	$newSetting.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC)  | Out-File -LiteralPath $userSettingFile -Encoding UTF8 -NoNewline
@@ -246,7 +256,7 @@ try {
 	$mainXaml = $mainXaml -ireplace 'mc:Ignorable="d"', '' -ireplace 'x:N', 'N' -ireplace 'x:Class=".*?"', ''
 	[xml]$mainCleanXaml = $mainXaml
 	$settingWindow = [System.Windows.Markup.XamlReader]::Load(([System.Xml.XmlNodeReader]::new($mainCleanXaml)))
-} catch { Throw ('❌️ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。') }
+} catch { Throw ($script:msg.GuiBroken) }
 # PowerShellのウィンドウを非表示に
 Add-Type -Name Window -Namespace Console -MemberDefinition @'
 	[DllImport("Kernel32.dll")] public static extern IntPtr GetConsoleWindow();
@@ -275,9 +285,9 @@ $lblVersion.Content = ('Version {0}' -f $script:appVersion)
 $btnWiki.Add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
 $btnCancel.Add_Click({ $settingWindow.close() })
 $btnSave.Add_Click({ Save-UserSetting ; $settingWindow.close() })
-$btnDownloadBaseDir.Add_Click({ Select-Folder 'ダウンロード先ディレクトリを選択してください' $script:downloadBaseDir })
-$btnDownloadWorkDir.Add_Click({ Select-Folder '作業ディレクトリを選択してください' $script:downloadWorkDir })
-$btnSaveBaseDir.Add_Click({ Select-Folder '移動先ディレクトリを選択してください' $script:saveBaseDir })
+$btnDownloadBaseDir.Add_Click({ Select-Folder $script:msg.SelectDownloadDir $script:downloadBaseDir })
+$btnDownloadWorkDir.Add_Click({ Select-Folder $script:msg.SelectWorkDir $script:downloadWorkDir })
+$btnSaveBaseDir.Add_Click({ Select-Folder $script:msg.SelectSaveDir $script:saveBaseDir })
 
 $ffmpegDecodeOption_Clear.Add_Click({ $ffmpegDecodeOption.Text = '' })
 $ffmpegDecodeOption_Qsv.Add_Click({ $ffmpegDecodeOption.Text = '-hwaccel qsv -c:v h264_qsv' })
@@ -376,7 +386,7 @@ try {
 	$settingWindow.Show() | Out-Null
 	$settingWindow.Activate() | Out-Null
 	[Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0) | Out-Null
-} catch { Throw ('❌️ ウィンドウを描画できませんでした。TVerRecが破損しています。') }
+} catch { Throw ($script:msg.WindowRenderError) }
 
 # メインウィンドウ取得
 $currentProcess = [Diagnostics.Process]::GetCurrentProcess()

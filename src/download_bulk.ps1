@@ -13,8 +13,8 @@ try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
-} catch { Throw ('❌️ カレントディレクトリの設定に失敗しました') }
-if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
+} catch { Throw ('❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.') }
+if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space') }
 . (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -27,10 +27,10 @@ $keywordNum = 0
 $keywordTotal = $keywords.Count
 
 $toastShowParams = @{
-	Text1   = '一括ダウンロード中'
-	Text2   = 'キーワードから番組を抽出しダウンロード'
-	Detail1 = '読み込み中...'
-	Detail2 = '読み込み中...'
+	Text1   = $script:msg.BulkDownloading
+	Text2   = $script:msg.ExtractAndDownloadVideoFromKeywords
+	Detail1 = $script:msg.Loading
+	Detail2 = $script:msg.Loading
 	Tag     = $script:appName
 	Silent  = $false
 	Group   = 'Bulk'
@@ -43,7 +43,7 @@ $totalStartTime = Get-Date
 foreach ($keyword in $keywords) {
 	$keyword = Remove-TabSpace($keyword)
 	Write-Output ('')
-	Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+	Write-Output ($script:msg.MediumBoldBorder)
 	Write-Output ('{0}' -f $keyword)
 
 	$keyword = (Remove-Comment($keyword.Replace('https://tver.jp/', '').Trim()))
@@ -53,8 +53,8 @@ foreach ($keyword in $keywords) {
 	if ($resultLinks.Count -ne 0) { $videoLinks, $processedCount = Invoke-HistoryMatchCheck $resultLinks }
 	else { $videoLinks = @() ; $processedCount = 0 }
 	$videoTotal = $videoLinks.Count
-	if ($videoTotal -eq 0) { Write-Output ('　処理対象{0}本　処理済{1}本' -f $videoTotal, $processedCount) }
-	else { Write-Output ('　💡 処理対象{0}本　処理済{1}本' -f $videoTotal, $processedCount) }
+	if ($videoTotal -eq 0) { Write-Output ($script:msg.VideoCountWhenZero -f $videoTotal, $processedCount) }
+	else { Write-Output ($script:msg.VideoCountNonZero -f $videoTotal, $processedCount) }
 
 	# 処理時間の推計
 	$secElapsed = (Get-Date) - $totalStartTime
@@ -85,7 +85,7 @@ foreach ($keyword in $keywords) {
 	foreach ($videoLink in $videoLinks) {
 		$videoNum++
 		# ダウンロード先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
-		if (!(Test-Path $script:downloadBaseDir -PathType Container)) { Throw ('❌️ 番組ダウンロード先ディレクトリにアクセスできません。終了します') }
+		if (!(Test-Path $script:downloadBaseDir -PathType Container)) { Throw ($script:msg.DownloadDirNotAccessible) }
 
 		# 進捗情報の更新
 		$toastUpdateParams.Title2 = $videoLink
@@ -93,7 +93,7 @@ foreach ($keyword in $keywords) {
 		$toastUpdateParams.LeftText2 = ('{0}/{1}' -f $videoNum, $videoTotal)
 		Update-ProgressToast2Row @toastUpdateParams
 
-		Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━')
+		Write-Output ($script:msg.ShortBoldBorder)
 		Write-Output ('{0}/{1} - {2}' -f $videoNum, $videoTotal, $videoLink)
 
 		# youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
@@ -109,11 +109,11 @@ foreach ($keyword in $keywords) {
 #======================================================================
 
 $toastUpdateParams = @{
-	Title1     = 'キーワードから番組の抽出'
+	Title1     = $script:msg.ExtractingVideoFromKeywords
 	Rate1      = 1
 	LeftText1  = ''
 	RightText1 = 0
-	Title2     = '番組のダウンロード'
+	Title2     = $script:msg.DownloadingVideo
 	Rate2      = 1
 	LeftText2  = ''
 	RightText2 = '0'
@@ -124,7 +124,7 @@ Update-ProgressToast2Row @toastUpdateParams
 
 # youtube-dlのプロセスが終わるまで待機
 Write-Output ('')
-Write-Output ('ダウンロードの終了を待機しています')
+Write-Output ($script:msg.WaitingDownloadCompletion)
 Wait-DownloadCompletion
 
 Remove-Variable -Name args, keywords, keywordNum, keywordTotal, toastShowParams, totalStartTime, keyword, resultLinks, processedCount, videoLinks, videoTotal, secElapsed, secRemaining1, videoLink, toastUpdateParams, videoNum -ErrorAction SilentlyContinue
@@ -132,6 +132,6 @@ Remove-Variable -Name args, keywords, keywordNum, keywordTotal, toastShowParams,
 Invoke-GarbageCollection
 
 Write-Output ('')
-Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-Write-Output ('一括ダウンロード処理を終了しました。')
-Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+Write-Output ($script:msg.LongBoldBorder)
+Write-Output ($script:msg.BulkDownloadCompleted)
+Write-Output ($script:msg.LongBoldBorder)

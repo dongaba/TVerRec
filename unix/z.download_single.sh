@@ -11,4 +11,4 @@ echo -en "\033];TVerRec Video File Downloader\007"
 
 pwsh -NoProfile "../src/download_single.ps1"
 
-echo "Finished ..."
+echo "Completed ..."
