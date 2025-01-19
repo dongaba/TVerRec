@@ -932,7 +932,7 @@ function Repair-HistoryFile {
 #----------------------------------------------------------------------
 # 番組の整合性チェック
 #----------------------------------------------------------------------
-function Invoke-ValidityCheck {
+function Invoke-IntegrityCheck {
 	[OutputType([System.Void])]
 	Param (
 		[Parameter(Mandatory = $true)]$videoHist,

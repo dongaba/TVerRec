@@ -29,8 +29,8 @@ Write-Output ($script:msg.MediumBoldBorder)
 Write-Output ($script:msg.DeleteCorruptedRecords)
 
 $toastShowParams = @{
-	Text1      = $script:msg.CheckingValidity
-	Text2      = $script:msg.ValidityCheckStep1
+	Text1      = $script:msg.CheckingIntegrity
+	Text2      = $script:msg.IntegrityCheckStep1
 	WorkDetail = ''
 	Tag        = $script:appName
 	Silent     = $false
@@ -45,7 +45,7 @@ Write-Output ('')
 Write-Output ($script:msg.MediumBoldBorder)
 Write-Output ($script:msg.DeleteOldRecords)
 
-$toastShowParams.Text2 = ($script:msg.ValidityCheckStep2 -f $script:histRetentionPeriod)
+$toastShowParams.Text2 = ($script:msg.IntegrityCheckStep2 -f $script:histRetentionPeriod)
 Show-ProgressToast @toastShowParams
 
 # 指定日以上前に処理したものはダウンロード履歴から削除
@@ -55,7 +55,7 @@ Write-Output ('')
 Write-Output ($script:msg.MediumBoldBorder)
 Write-Output ($script:msg.RemoveDuplicates)
 
-$toastShowParams.Text2 = $script:msg.ValidityCheckStep3
+$toastShowParams.Text2 = $script:msg.IntegrityCheckStep3
 Show-ProgressToast @toastShowParams
 
 # ダウンロード履歴の重複削除
@@ -83,7 +83,7 @@ while ($videoNotValidatedNum -ne 0) {
 	# ダウンロード履歴から番組チェックが終わっていないものを読み込み
 	Write-Output ('')
 	Write-Output ($script:msg.MediumBoldBorder)
-	Write-Output ($script:msg.ValidityCheck)
+	Write-Output ($script:msg.IntegrityCheck)
 
 	try {
 		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
@@ -114,7 +114,7 @@ while ($videoNotValidatedNum -ne 0) {
 			$decodeOption = $script:ffmpegDecodeOption
 		}
 
-		$toastShowParams.Text2 = $script:msg.ValidityCheckStep4
+		$toastShowParams.Text2 = $script:msg.IntegrityCheckStep4
 		$toastShowParams.WorkDetail = $script:msg.CalculatingRemainingTime
 		Show-ProgressToast @toastShowParams
 
@@ -145,7 +145,7 @@ while ($videoNotValidatedNum -ne 0) {
 			if (!(Test-Path $script:downloadBaseDir -PathType Container)) { Throw ($script:msg.DownloadDirNotAccessible) }
 			# 番組の整合性チェック
 			Write-Output ('{0}/{1} - {2}' -f $validateNum, $validateTotal, $videoHist.videoPath)
-			Invoke-ValidityCheck -VideoHist $videoHist -DecodeOption $decodeOption
+			Invoke-IntegrityCheck -VideoHist $videoHist -DecodeOption $decodeOption
 			Suspend-Process
 			Start-Sleep -Seconds 1
 		}
@@ -158,7 +158,7 @@ while ($videoNotValidatedNum -ne 0) {
 	Write-Output ($script:msg.MediumBoldBorder)
 	Write-Output ($script:msg.ClearValidationStatus)
 
-	$toastShowParams.Text2 = $script:msg.ValidityCheckStep5
+	$toastShowParams.Text2 = $script:msg.IntegrityCheckStep5
 	$toastShowParams.WorkDetail = ''
 	Show-ProgressToast @toastShowParams
 
@@ -192,5 +192,5 @@ Invoke-GarbageCollection
 
 Write-Output ('')
 Write-Output ($script:msg.LongBoldBorder)
-Write-Output ($script:msg.ValidityCheckCompleted)
+Write-Output ($script:msg.IntegrityCheckCompleted)
 Write-Output ($script:msg.LongBoldBorder)

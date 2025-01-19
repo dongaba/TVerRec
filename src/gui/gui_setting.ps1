@@ -147,6 +147,7 @@ function Select-Folder() {
 function Read-UserSetting {
 	[OutputType([System.Void])]
 	Param ()
+	$undefAttributes = @('$script:downloadBaseDir', '$script:downloadWorkDir', '$script:saveBaseDir', '$script:myPlatformUID', '$script:myPlatformToken', '$script:myMemberSID')
 	if (Test-Path $userSettingFile) {
 		$userSettings = Get-Content -LiteralPath $userSettingFile -Encoding UTF8
 		# 動作停止設定以外の抽出
@@ -160,7 +161,7 @@ function Read-UserSetting {
 				$settingBox.Text = $userSettingValue.split('=', 2)[1].Trim().Trim("'")
 				if ($settingBox.Text -eq '$true') { $settingBox.Text = $script:msg.SettingTrue }
 				elseif ($settingBox.Text -eq '$false') { $settingBox.Text = $script:msg.SettingFalse }
-			} elseif ($settingAttribute -in @('$script:downloadBaseDir', '$script:downloadWorkDir', '$script:saveBaseDir', '$script:myPlatformUID', '$script:myPlatformToken', '$script:myMemberSID')) { $settingBox.Text = $script:msg.SettingUndefined }
+			} elseif ($settingAttribute -in $undefAttributes) { $settingBox.Text = $script:msg.SettingUndefined }
 			else { $settingBox.Text = $script:msg.SettingDefault }
 		}
 		# 動作停止設定の抽出
@@ -180,7 +181,7 @@ function Read-UserSetting {
 			}
 		}
 	}
-	Remove-Variable -Name userSettings, settingBox -ErrorAction SilentlyContinue
+	Remove-Variable -Name undefAttributes, userSettings, settingBox -ErrorAction SilentlyContinue
 	Remove-Variable -Name scheduleStopPattern, scheduleStopDetail, scheduleStopString -ErrorAction SilentlyContinue
 	Remove-Variable -Name day, schedule, hour, checkbox -ErrorAction SilentlyContinue
 }
