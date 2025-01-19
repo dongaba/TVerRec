@@ -51,7 +51,7 @@ foreach ($keyword in $keywords) {
 	Write-Output ('{0}' -f $keyword)
 
 	$keyword = (Remove-Comment($keyword.Replace('https://tver.jp/', '').Trim()))
-	$listLinks = @(Get-VideoLinksFromKeyword ([ref]$keyword))
+	$listLinks = @(Get-VideoLinksFromKeyword ([Ref]$keyword))
 
 	# URLがすでにダウンロードリストやダウンロード履歴に存在する場合は検索結果から除外
 	if ($listLinks.Count -ne 0) {
@@ -106,7 +106,7 @@ foreach ($keyword in $keywords) {
 			$paraJobs = @{}
 			Write-Output ($script:msg.DisclaimerForMultithread)
 			for ($i = 0 ; $i -lt $partitions.Count ; $i++) {
-				$links = [string]$partitions[$i]
+				$links = [String]$partitions[$i]
 				$paraJobSBs[$i] = ("& ./generate_list_child.ps1 $keyword $links")
 				$paraJobDefs[$i] = [scriptblock]::Create($paraJobSBs[$i])
 				$paraJobs[$i] = Start-ThreadJob -ScriptBlock $paraJobDefs[$i]
@@ -131,7 +131,7 @@ foreach ($keyword in $keywords) {
 			Update-ProgressToast2Row @toastUpdateParams
 			Write-Output ('　{0}/{1} - {2}' -f $videoNum, $videoTotal, $videoLink)
 			# TVer番組ダウンロードのメイン処理
-			Update-VideoList -Keyword ([ref]$keyword) -VideoLink ([ref]$videoLink)
+			Update-VideoList -Keyword ([Ref]$keyword) -VideoLink ([Ref]$videoLink)
 		}
 	}
 	#----------------------------------------------------------------------

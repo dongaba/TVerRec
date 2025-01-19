@@ -13,8 +13,8 @@ function Expand-Zip {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true)][string]$path,
-		[Parameter(Mandatory = $true)][string]$destination
+		[Parameter(Mandatory = $true)][String]$path,
+		[Parameter(Mandatory = $true)][String]$destination
 	)
 	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $path)
 	if (Test-Path -Path $path) {
@@ -54,7 +54,7 @@ function Move-Files() {
 # 存在したら削除
 #----------------------------------------------------------------------
 Function Remove-IfExist {
-	Param ([Parameter(Mandatory = $true)][string]$path)
+	Param ([Parameter(Mandatory = $true)][String]$path)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if (Test-Path $path) { Remove-Item -LiteralPath $path -Force -Recurse | Out-Null }
 	Remove-Variable -Name path -ErrorAction SilentlyContinue
@@ -65,8 +65,8 @@ Function Remove-IfExist {
 #----------------------------------------------------------------------
 Function Rename-IfExist {
 	Param (
-		[Parameter(Mandatory = $true)][string]$path,
-		[Parameter(Mandatory = $true)][string]$newName
+		[Parameter(Mandatory = $true)][String]$path,
+		[Parameter(Mandatory = $true)][String]$newName
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if (Test-Path $path -PathType Leaf) { Rename-Item -LiteralPath $path -NewName $newName -Force }
@@ -78,8 +78,8 @@ Function Rename-IfExist {
 #----------------------------------------------------------------------
 Function Move-IfExist {
 	Param (
-		[Parameter(Mandatory = $true)][string]$path,
-		[Parameter(Mandatory = $true)][string]$destination
+		[Parameter(Mandatory = $true)][String]$path,
+		[Parameter(Mandatory = $true)][String]$destination
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if (Test-Path $path -PathType Leaf) { Move-Item -LiteralPath $path -Destination $destination -Force | Out-Null }

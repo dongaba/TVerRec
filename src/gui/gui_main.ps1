@@ -34,11 +34,11 @@ $msgTypesColorMap = @{
 # ログ出力用変数
 $jobMsgs = @()
 $msgTypes = @('Output', 'Error', 'Warning', 'Verbose', 'Debug', 'Information')
-$msgError = New-Object System.Collections.Generic.List[string]
-$msgWarning = New-Object System.Collections.Generic.List[string]
-$msgVerbose = New-Object System.Collections.Generic.List[string]
-$msgDebug = New-Object System.Collections.Generic.List[string]
-$msgInformation = New-Object System.Collections.Generic.List[string]
+$msgError = New-Object System.Collections.Generic.List[String]
+$msgWarning = New-Object System.Collections.Generic.List[String]
+$msgVerbose = New-Object System.Collections.Generic.List[String]
+$msgDebug = New-Object System.Collections.Generic.List[String]
+$msgInformation = New-Object System.Collections.Generic.List[String]
 
 # endregion 環境設定
 

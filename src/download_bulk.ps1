@@ -47,7 +47,7 @@ foreach ($keyword in $keywords) {
 	Write-Output ('{0}' -f $keyword)
 
 	$keyword = (Remove-Comment($keyword.Replace('https://tver.jp/', '').Trim()))
-	$resultLinks = @(Get-VideoLinksFromKeyword ([ref]$keyword))
+	$resultLinks = @(Get-VideoLinksFromKeyword ([Ref]$keyword))
 
 	# URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 	if ($resultLinks.Count -ne 0) { $videoLinks, $processedCount = Invoke-HistoryMatchCheck $resultLinks }
@@ -101,7 +101,7 @@ foreach ($keyword in $keywords) {
 		Suspend-Process
 
 		# TVer番組ダウンロードのメイン処理
-		Invoke-VideoDownload -Keyword ([ref]$keyword) -VideoLink ([ref]$videoLink) -Force $false
+		Invoke-VideoDownload -Keyword ([Ref]$keyword) -VideoLink ([Ref]$videoLink) -Force $false
 	}
 	#----------------------------------------------------------------------
 

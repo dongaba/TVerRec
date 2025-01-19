@@ -40,7 +40,7 @@ Show-ProgressToast @toastShowParams
 
 # Windowsのディレクトリ一覧を取得する関数
 function Get-DirectoriesOnWindows {
-	Param ([string[]]$paths)
+	Param ([String[]]$paths)
 	$results = @()
 	foreach ($path in $paths) {
 		$dirCmd = "dir `"$path`" /s /b /a:d"
@@ -51,7 +51,7 @@ function Get-DirectoriesOnWindows {
 
 # Linux/Macのディレクトリ一覧を取得する関数
 function Get-DirectoriesNotOnWindows {
-	Param ([string[]]$paths)
+	Param ([String[]]$paths)
 	$results = @()
 	foreach ($path in $paths) {
 		$dirCmd = "find `"$path`" -type d"
@@ -62,7 +62,7 @@ function Get-DirectoriesNotOnWindows {
 
 # プラットフォームに応じたディレクトリ一覧を取得する関数
 function Get-DirectoriesWithPlatformCheck {
-	Param ([string[]]$paths)
+	Param ([String[]]$paths)
 	# PowerShellではジャンクションの展開ができないので、cmd.exeを使ってジャンクションを解決する
 	switch ($true) {
 		$IsWindows { $results = Get-DirectoriesOnWindows -paths $paths ; continue }

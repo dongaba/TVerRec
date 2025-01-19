@@ -34,14 +34,14 @@ function Show-Logo {
 #----------------------------------------------------------------------
 function Compare-Version {
 	param (
-		[string]$remote,
-		[string]$local
+		[String]$remote,
+		[String]$local
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if ($remote -eq $local) { return 0 }
 	# バージョンを"."でユニットに切り分ける
-	$remoteUnits = $remote -split '\.' | ForEach-Object { [int]$_ }
-	$localUnits = $local -split '\.' | ForEach-Object { [int]$_ }
+	$remoteUnits = $remote -split '\.' | ForEach-Object { [Int]$_ }
+	$localUnits = $local -split '\.' | ForEach-Object { [Int]$_ }
 	# ユニット数が少ない方の表記に探索幅を合わせる
 	$unitLength = [Math]::Min($remoteUnits.Count, $localUnits.Count)
 	# 探索幅に従ってユニット毎に比較していく
@@ -120,8 +120,8 @@ function Invoke-ToolUpdateCheck {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true)][string]$scriptName,
-		[Parameter(Mandatory = $true)][string]$targetName
+		[Parameter(Mandatory = $true)][String]$scriptName,
+		[Parameter(Mandatory = $true)][String]$targetName
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$progressPreference = 'silentlyContinue'
@@ -136,10 +136,10 @@ function Invoke-ToolUpdateCheck {
 #----------------------------------------------------------------------
 function Invoke-TverrecPathCheck {
 	Param (
-		[Parameter(Mandatory = $true )][string]$path,
-		[Parameter(Mandatory = $true )][string]$errorMessage,
+		[Parameter(Mandatory = $true )][String]$path,
+		[Parameter(Mandatory = $true )][String]$errorMessage,
 		[Parameter(Mandatory = $false)][switch]$isFile,
-		[Parameter(Mandatory = $false)][string]$sampleFilePath
+		[Parameter(Mandatory = $false)][String]$sampleFilePath
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$pathType = if ($isFile) { 'Leaf' } else { 'Container' }
@@ -376,7 +376,7 @@ function Wait-YtdlProcess {
 # ダウンロード履歴データの作成
 #----------------------------------------------------------------------
 function Format-HistoryRecord {
-	Param ([Parameter(Mandatory = $true)][pscustomobject][ref]$videoInfo)
+	Param ([Parameter(Mandatory = $true)][pscustomobject][Ref]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	return [pscustomobject]@{
 		videoPage       = $videoInfo.episodePageURL
@@ -399,7 +399,7 @@ function Format-HistoryRecord {
 # ダウンロードリストデータの作成
 #----------------------------------------------------------------------
 function Format-ListRecord {
-	Param ([Parameter(Mandatory = $true)][pscustomobject][ref]$videoInfo)
+	Param ([Parameter(Mandatory = $true)][pscustomobject][Ref]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$downloadListItem = [pscustomobject]@{
 		seriesName     = $videoInfo.seriesName
@@ -444,8 +444,8 @@ Function Remove-SpecialNote {
 function Invoke-VideoDownload {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true )][String][ref]$keyword,
-		[Parameter(Mandatory = $true )][String][ref]$videoLink,
+		[Parameter(Mandatory = $true )][String][Ref]$keyword,
+		[Parameter(Mandatory = $true )][String][Ref]$videoLink,
 		[Parameter(Mandatory = $false)][Boolean]$force = $false
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -458,15 +458,15 @@ function Invoke-VideoDownload {
 	if ($null -eq $videoInfo) { Write-Warning ($script:msg.EpisodeInfoRetrievalFailed) ; continue }
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'keyword' -Value $keyword
 	# ダウンロードファイル名を生成
-	Format-VideoFileInfo ([ref]$videoInfo)
+	Format-VideoFileInfo ([Ref]$videoInfo)
 	# 番組タイトルが取得できなかった場合はスキップ次の番組へ
 	if (($videoInfo.fileName -eq '.mp4') -or ($videoInfo.fileName -eq '.ts')) { Write-Warning ($script:msg.EpisodeTitleRetrievalFailed) ; continue }
 	# 番組情報のコンソール出力
-	Show-VideoInfo ([ref]$videoInfo)
-	if ($DebugPreference -ne 'SilentlyContinue') { Show-VideoDebugInfo ([ref]$videoInfo) }
+	Show-VideoInfo ([Ref]$videoInfo)
+	if ($DebugPreference -ne 'SilentlyContinue') { Show-VideoDebugInfo ([Ref]$videoInfo) }
 	if ($force) {
 		$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
-		$newVideo = Format-HistoryRecord ([ref]$videoInfo)
+		$newVideo = Format-HistoryRecord ([Ref]$videoInfo)
 	} else {
 		# ここまで来ているということはEpisodeIDでは履歴とマッチしなかったということ
 		# 考えられる原因は履歴ファイルがクリアされてしまっていること、または、EpisodeIDが変更になったこと
@@ -493,14 +493,14 @@ function Invoke-VideoDownload {
 			if (($histMatch.Count -ne 0) -or (Test-Path $videoInfo.filePath)) {
 				# Write-Output ('　💡 エピソードIDが変更になりました。ダウンロードするファイルをダウンロード履歴に追加します')
 				# $videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
-				# $newVideo = Format-HistoryRecord ([ref]$videoInfo)
+				# $newVideo = Format-HistoryRecord ([Ref]$videoInfo)
 				$ignoreTitles = @(Read-IgnoreList)
 				foreach ($ignoreTitle in $ignoreTitles) {
 					if (($videoInfo.fileName -like ('*{0}*' -f $ignoreTitle)) -or ($videoInfo.seriesName -like ('*{0}*' -f $ignoreTitle))) {
 						# エピソードIDが変更になったがダウンロード対象外リストと合致	→無視する
 						Update-IgnoreList $ignoreTitle ; Write-Warning ($script:msg.IgnoreEpisodeAdded)
 						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0' ; $videoInfo.fileName = '-- IGNORED --' ; $videoInfo.fileRelPath = '-- IGNORED --'
-						$newVideo = Format-HistoryRecord ([ref]$videoInfo) ; $skipDownload = $true
+						$newVideo = Format-HistoryRecord ([Ref]$videoInfo) ; $skipDownload = $true
 						break
 					}
 				}
@@ -508,7 +508,7 @@ function Invoke-VideoDownload {
 				if (!$skipDownload) {
 					Write-Output ($script:msg.DownloadEpisodeIdChanged)
 					$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
-					$newVideo = Format-HistoryRecord ([ref]$videoInfo)
+					$newVideo = Format-HistoryRecord ([Ref]$videoInfo)
 				}
 			} else {
 				# 履歴ファイルに存在せず、実ファイルも存在せず、ダウンロード対象外リストと合致	→無視する
@@ -517,7 +517,7 @@ function Invoke-VideoDownload {
 					if (($videoInfo.fileName -like ('*{0}*' -f $ignoreTitle)) -or ($videoInfo.seriesName -like ('*{0}*' -f $ignoreTitle))) {
 						Update-IgnoreList $ignoreTitle ; Write-Warning ($script:msg.IgnoreEpisodeAdded)
 						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0' ; $videoInfo.fileName = '-- IGNORED --' ; $videoInfo.fileRelPath = '-- IGNORED --'
-						$newVideo = Format-HistoryRecord ([ref]$videoInfo) ; $skipDownload = $true
+						$newVideo = Format-HistoryRecord ([Ref]$videoInfo) ; $skipDownload = $true
 						break
 					}
 				}
@@ -525,7 +525,7 @@ function Invoke-VideoDownload {
 				if (!$skipDownload) {
 					Write-Output ($script:msg.DownloadEpisodeAdded)
 					$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
-					$newVideo = Format-HistoryRecord ([ref]$videoInfo)
+					$newVideo = Format-HistoryRecord ([Ref]$videoInfo)
 				}
 			}
 		} else {
@@ -533,12 +533,12 @@ function Invoke-VideoDownload {
 				# 履歴ファイルに存在する	→スキップして次のファイルに
 				Write-Warning ($script:msg.DownloadHistExists)
 				$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '1' ; $videoInfo.fileName = '-- SKIPPED --'
-				$newVideo = Format-HistoryRecord ([ref]$videoInfo) ; $skipDownload = $true
+				$newVideo = Format-HistoryRecord ([Ref]$videoInfo) ; $skipDownload = $true
 			} elseif (Test-Path $videoInfo.filePath) {
 				# 履歴ファイルに存在しないが、実ファイルが存在する	→検証だけする
 				Write-Warning ($script:msg.DownloadFileExists)
 				$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0' ; $videoInfo.fileName = '-- SKIPPED --'
-				$newVideo = Format-HistoryRecord ([ref]$videoInfo) ; $skipDownload = $true
+				$newVideo = Format-HistoryRecord ([Ref]$videoInfo) ; $skipDownload = $true
 			} else {
 				# 履歴ファイルに存在せず、実ファイルも存在せず、ダウンロード対象外リストと合致	→無視する
 				$ignoreTitles = @(Read-IgnoreList)
@@ -546,7 +546,7 @@ function Invoke-VideoDownload {
 					if (($videoInfo.fileName -like ('*{0}*' -f $ignoreTitle)) -or ($videoInfo.seriesName -like ('*{0}*' -f $ignoreTitle))) {
 						Update-IgnoreList $ignoreTitle ; Write-Warning ($script:msg.IgnoreEpisodeAdded)
 						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0' ; $videoInfo.fileName = '-- IGNORED --' ; $videoInfo.fileRelPath = '-- IGNORED --'
-						$newVideo = Format-HistoryRecord ([ref]$videoInfo) ; $skipDownload = $true
+						$newVideo = Format-HistoryRecord ([Ref]$videoInfo) ; $skipDownload = $true
 						break
 					}
 				}
@@ -554,7 +554,7 @@ function Invoke-VideoDownload {
 				if (!$skipDownload) {
 					Write-Output ($script:msg.DownloadEpisodeAdded)
 					$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
-					$newVideo = Format-HistoryRecord ([ref]$videoInfo)
+					$newVideo = Format-HistoryRecord ([Ref]$videoInfo)
 				}
 			}
 		}
@@ -576,7 +576,7 @@ function Invoke-VideoDownload {
 		catch { Write-Warning ($script:msg.CreateEpisodeDirFailed) ; continue }
 	}
 	# youtube-dl起動
-	try { Invoke-Ytdl ([ref]$videoInfo) }
+	try { Invoke-Ytdl ([Ref]$videoInfo) }
 	catch { Write-Warning ($script:msg.InvokeYtdlFailed) }
 	# 5秒待機
 	Start-Sleep -Seconds 5
@@ -589,8 +589,8 @@ function Invoke-VideoDownload {
 function Update-VideoList {
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true)][String][ref]$keyword,
-		[Parameter(Mandatory = $true)][String][ref]$videoLink
+		[Parameter(Mandatory = $true)][String][Ref]$keyword,
+		[Parameter(Mandatory = $true)][String][Ref]$videoLink
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$ignoreWord = ''
@@ -615,10 +615,10 @@ function Update-VideoList {
 	}
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'ignoreWord' -Value $ignoreWord
 	# 番組情報のコンソール出力
-	if ($DebugPreference -ne 'SilentlyContinue') { Show-VideoDebugInfo ([ref]$videoInfo) }
+	if ($DebugPreference -ne 'SilentlyContinue') { Show-VideoDebugInfo ([Ref]$videoInfo) }
 	# スキップフラグが立っているかチェック
-	if ($ignore) { Write-Warning ($script:msg.ListIgnoredAdded) ; $newVideo = Format-ListRecord ([ref]$videoInfo) }
-	else { Write-Output ($script:msg.ListAdded) ; $newVideo = Format-ListRecord ([ref]$videoInfo) }
+	if ($ignore) { Write-Warning ($script:msg.ListIgnoredAdded) ; $newVideo = Format-ListRecord ([Ref]$videoInfo) }
+	else { Write-Output ($script:msg.ListAdded) ; $newVideo = Format-ListRecord ([Ref]$videoInfo) }
 	# ダウンロードリストCSV書き出し
 	try {
 		while ((Lock-File $script:listLockFilePath).result -ne $true) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
@@ -634,7 +634,7 @@ function Update-VideoList {
 #----------------------------------------------------------------------
 function Format-VideoFileInfo {
 	[OutputType([System.Void])]
-	Param ([Parameter(Mandatory = $true)][pscustomobject][ref]$videoInfo)
+	Param ([Parameter(Mandatory = $true)][pscustomobject][Ref]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$videoName = ''
 	# ファイル名を生成
@@ -675,7 +675,7 @@ function Format-VideoFileInfo {
 #----------------------------------------------------------------------
 function Show-VideoInfo {
 	[OutputType([System.Void])]
-	Param ([Parameter(Mandatory = $true)][pscustomobject][ref]$videoInfo)
+	Param ([Parameter(Mandatory = $true)][pscustomobject][Ref]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	Write-Output ($script:msg.EpisodeName -f $videoInfo.fileName.Replace($script:videoContainerFormat, ''))
 	Write-Output ($script:msg.BroadcastDate -f $videoInfo.broadcastDate)
@@ -688,7 +688,7 @@ function Show-VideoInfo {
 #----------------------------------------------------------------------
 function Show-VideoDebugInfo {
 	[OutputType([System.Void])]
-	Param ([Parameter(Mandatory = $true)][pscustomobject][ref]$videoInfo)
+	Param ([Parameter(Mandatory = $true)][pscustomobject][Ref]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	Write-Debug $videoInfo.episodePageURL
 }
@@ -698,7 +698,7 @@ function Show-VideoDebugInfo {
 #----------------------------------------------------------------------
 function Invoke-Ytdl {
 	[OutputType([System.Void])]
-	Param ([Parameter(Mandatory = $true)][pscustomobject][ref]$videoInfo)
+	Param ([Parameter(Mandatory = $true)][pscustomobject][Ref]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	Invoke-StatisticsCheck -Operation 'download'
 	if ($IsWindows) { foreach ($dir in @($script:downloadWorkDir, $script:downloadBaseDir)) { if ($dir[-1] -eq ':') { $dir += '\\' } } }
@@ -884,8 +884,8 @@ function Optimize-HistoryFile {
 		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 		$cleanedHist = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8 | Where-Object { 
 				($null -ne $_.videoValidated) `
-					-and ([int]::TryParse($_.videoValidated, [ref]0) ) `
-					-and ([datetime]::TryParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null, [System.Globalization.DateTimeStyles]::None, [ref]([datetime]::MinValue))) 
+					-and ([Int]::TryParse($_.videoValidated, [Ref]0) ) `
+					-and ([datetime]::TryParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null, [System.Globalization.DateTimeStyles]::None, [Ref]([datetime]::MinValue))) 
 			})
 		$cleanedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
 	} catch { Write-Warning ($script:msg.OptimizeHistFailed) }
@@ -1092,7 +1092,7 @@ function Invoke-StatisticsCheck {
 			TimeZone     = @{ 'value' = $script:tz }
 		}
 		foreach ($clientEnv in $script:clientEnvs.GetEnumerator() ) {
-			$value = [string]$clientEnv.Value
+			$value = [String]$clientEnv.Value
 			$userProperties[$clientEnv.Key] = @{ 'value' = $value.Substring(0, [Math]::Min($value.Length, 36)) }
 		}
 		$eventParams = @{}	# max 25 parameters, max 40 chars of property name, 100 chars of property value

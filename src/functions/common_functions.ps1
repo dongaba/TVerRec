@@ -261,7 +261,7 @@ function Remove-Files {
 	[OutputType([System.Void])]
 	Param (
 		[parameter(Mandatory = $true)][System.IO.FileInfo]$basePath,
-		[Parameter(Mandatory = $true)][string[]]$conditions,
+		[Parameter(Mandatory = $true)][String[]]$conditions,
 		[Parameter(Mandatory = $true)][int32]$delPeriod
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -294,8 +294,8 @@ function Expand-Zip {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true)][string]$path,
-		[Parameter(Mandatory = $true)][string]$destination
+		[Parameter(Mandatory = $true)][String]$path,
+		[Parameter(Mandatory = $true)][String]$destination
 	)
 	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $path)
 	if (Test-Path -Path $path) {

@@ -13,10 +13,10 @@ $script:devDir = Join-Path $script:scriptRoot '../dev'
 #----------------------------------------------------------------------
 # メッセージファイル読み込み
 $script:langDir = Convert-Path (Join-Path $scriptRoot '../resources/lang')
-$script:currentCulture = [System.Globalization.CultureInfo]::CurrentUICulture.Name
-Write-Debug "Current Language: $script:currentCulture"
+$script:uiCulture = [System.Globalization.CultureInfo]::CurrentUICulture.Name
+Write-Debug "Current Language: $script:uiCulture"
 $script:langFile = Get-Content -Path (Join-Path $script:langDir 'messages.json') | ConvertFrom-Json
-$script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:currentCulture)) { $script:langFile.$script:currentCulture }
+$script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:uiCulture)) { $script:langFile.$script:uiCulture }
 else { $script:langFile.default }
 
 #----------------------------------------------------------------------
@@ -38,6 +38,10 @@ if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 		catch { Throw ($script:msg.LoadUserSettingFailed) }
 	} else { Throw ($script:msg.UserSettingNotCompleted) }
 } else { Throw ($script:msg.UserSettingNotCompleted) }
+if (Test-Path variable:lang) {
+	$script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:lang)) { $script:langFile.$script:lang }
+	else { $script:langFile.default }
+}
 
 #----------------------------------------------------------------------
 # 外部関数ファイルの読み込み

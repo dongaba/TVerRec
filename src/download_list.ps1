@@ -82,7 +82,7 @@ foreach ($videoLink in $videoLinks) {
 	Suspend-Process
 
 	# TVer番組ダウンロードのメイン処理
-	Invoke-VideoDownload -Keyword ([ref]$keyword) -VideoLink ([ref]$videoLink) -Force $false
+	Invoke-VideoDownload -Keyword ([Ref]$keyword) -VideoLink ([Ref]$videoLink) -Force $false
 }
 #----------------------------------------------------------------------
 

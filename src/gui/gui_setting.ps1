@@ -24,18 +24,27 @@ if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを
 # メッセージファイル読み込み
 $script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 $script:langDir = Convert-Path (Join-Path $scriptRoot '../resources/lang')
-$script:currentCulture = [System.Globalization.CultureInfo]::CurrentUICulture.Name
-Write-Debug "Current Language: $script:currentCulture"
+$script:uiCulture = [System.Globalization.CultureInfo]::CurrentUICulture.Name
+Write-Debug "Current Language: $script:uiCulture"
 $script:langFile = Get-Content -Path (Join-Path $script:langDir 'messages.json') | ConvertFrom-Json
-$script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:currentCulture)) { $script:langFile.$script:currentCulture }
+$script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:uiCulture)) { $script:langFile.$script:uiCulture }
 else { $script:langFile.default }
 
 #----------------------------------------------------------------------
 # 設定ファイル読み込み
-try {
-	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
-	. (Convert-Path (Join-Path $script:confDir 'system_setting.ps1'))
-} catch { Throw ($script:msg.LoadSystemSettingFailed) }
+$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
+if ( Test-Path (Join-Path $script:confDir 'system_setting.ps1') ) {
+	try { . (Convert-Path (Join-Path $script:confDir 'system_setting.ps1')) }
+	catch { Throw ($script:msg.LoadSystemSettingFailed) }
+} else { Throw ($script:msg.SystemSettingNotFound) }
+if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
+	try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
+	catch { Throw ($script:msg.LoadUserSettingFailed) }
+}
+if (Test-Path variable:lang) {
+	$script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:lang)) { $script:langFile.$script:lang }
+	else { $script:langFile.default }
+}
 
 #----------------------------------------------------------------------
 # 外部関数ファイルの読み込み
@@ -147,7 +156,7 @@ function Read-UserSetting {
 			# ユーザー設定の値を取得しGUIに反映
 			$userSettingValue = ($userSettings -match ('^{0}' -f [regex]::Escape($settingAttribute)))
 			if ($userSettingValue) {
-				Write-Debug $userSettingValue
+				Write-Debug [String]$userSettingValue
 				$settingBox.Text = $userSettingValue.split('=', 2)[1].Trim().Trim("'")
 				if ($settingBox.Text -eq '$true') { $settingBox.Text = $script:msg.SettingTrue }
 				elseif ($settingBox.Text -eq '$false') { $settingBox.Text = $script:msg.SettingFalse }
@@ -164,7 +173,7 @@ function Read-UserSetting {
 				if ($scheduleStopString -match "'$day'\s*=\s*@\(([^)]*)\)") {
 					$schedule = $matches[1].Split(',').Trim() | Where-Object { $_ -ne '' }
 					foreach ($hour in $schedule) {
-						$checkbox = $settingWindow.FindName(('chkbxStop{0}{1}' -f $day, ([int]$hour).ToString('D2')))
+						$checkbox = $settingWindow.FindName(('chkbxStop{0}{1}' -f $day, ([Int]$hour).ToString('D2')))
 						if ($checkbox) { $checkbox.IsChecked = $true }
 					}
 				}
@@ -209,7 +218,7 @@ function Save-UserSetting {
 				{ $_ -eq $script:msg.SettingTrue } { $newSetting += ('{0} = $true' -f $settingAttribute) ; continue }
 				{ $_ -eq $script:msg.SettingFalse } { $newSetting += ('{0} = $false' -f $settingAttribute) ; continue }
 				default {
-					if (([Int]::TryParse($settingBox.Text, [ref]$null)) -or ($settingBox.Text -match '[${}]')) { $newSetting += ('{0} = {1}' -f $settingAttribute, $settingBox.Text) }
+					if (([Int]::TryParse($settingBox.Text, [Ref]$null)) -or ($settingBox.Text -match '[${}]')) { $newSetting += ('{0} = {1}' -f $settingAttribute, $settingBox.Text) }
 					else { $newSetting += ('{0} = ''{1}''' -f $settingAttribute, $settingBox.Text) }
 				}
 			}
@@ -279,8 +288,8 @@ $LogoImage.Source = ConvertFrom-Base64 $script:logoBase64
 $lblVersion.Content = ('Version {0}' -f $script:appVersion)
 
 # GUI部品のラベルを言語別に設定
-$lblBasicSetting.Content = $script:msg.GuiLabelBasicSetting
-$lblAdvancedSetting.Content = $script:msg.GuiLabelAdvancedSetting
+$lblBasicSetting.Content = $script:msg.GuiHeaderBasicSetting
+$lblAdvancedSetting.Content = $script:msg.GuiHeaderAdvancedSetting
 $btnWiki.Content = $script:msg.GuiButtonWiki
 $btnCancel.Content = $script:msg.GuiButtonCancel
 $btnSave.Content = $script:msg.GuiButtonSave
@@ -421,47 +430,47 @@ $scheduleStopDay.Text = $script:msg.GuiTextScheduleStopDay
 
 # ComboBOxのラベルを言語別に設定
 $trueFalseOptions = @($script:msg.SettingDefault, $script:msg.SettingTrue, $script:msg.SettingFalse)
-foreach ($option in $trueFalseOptions) { $enableMultithread.Items.Add($option) }
-foreach ($option in $trueFalseOptions) { $disableToastNotification.Items.Add($option) }
-foreach ($option in $trueFalseOptions) { $detailedProgress.Items.Add($option) }
-foreach ($option in $trueFalseOptions) { $extractDescTextToList.Items.Add($option) }
-foreach ($option in $trueFalseOptions) { $listGenHistoryCheck.Items.Add($option) }
-foreach ($option in $trueFalseOptions) { $cleanupDownloadBaseDir.Items.Add($option) }
-foreach ($option in $trueFalseOptions) { $cleanupSaveBaseDir.Items.Add($option) }
-$updateChannel.Items.Add($script:msg.SettingDefault)
-$updateChannel.Items.Add('release')
-$updateChannel.Items.Add('prerelease')
-$updateChannel.Items.Add('master')
-$updateChannel.Items.Add('beta')
-$updateChannel.Items.Add('dev')
-foreach ($option in $trueFalseOptions) { $embedSubtitle.Items.Add($option) }
-foreach ($option in $trueFalseOptions) { $embedMetatag.Items.Add($option) }
-foreach ($option in $trueFalseOptions) { $sortVideoByMedia.Items.Add($option) }
-foreach ($option in $trueFalseOptions) { $forceSingleDownload.Items.Add($option) }
-foreach ($option in $trueFalseOptions) { $sitemapParseEpisodeOnly.Items.Add($option) }
-foreach ($option in $trueFalseOptions) { $downloadWhenEpisodeIdChanged.Items.Add($option) }
-$videoContainerFormat.Items.Add($script:msg.SettingDefault)
-$videoContainerFormat.Items.Add('mp4')
-$videoContainerFormat.Items.Add('ts')
-foreach ($option in $trueFalseOptions) { $addSeriesName.Items.Add($option) }
-foreach ($option in $trueFalseOptions) { $addSeasonName.Items.Add($option) }
-foreach ($option in $trueFalseOptions) { $addBroadcastDate.Items.Add($option) }
-foreach ($option in $trueFalseOptions) { $addEpisodeNumber.Items.Add($option) }
-foreach ($option in $trueFalseOptions) { $removeSpecialNote.Items.Add($option) }
-foreach ($option in $trueFalseOptions) { $forceSoftwareDecodeFlag.Items.Add($option) }
-foreach ($option in $trueFalseOptions) { $simplifiedValidation.Items.Add($option) }
-foreach ($option in $trueFalseOptions) { $disableValidation.Items.Add($option) }
-foreach ($option in $trueFalseOptions) { $disableUpdateYoutubedl.Items.Add($option) }
-foreach ($option in $trueFalseOptions) { $disableUpdateFfmpeg.Items.Add($option) }
-$windowShowStyle.Items.Add($script:msg.SettingDefault)
-$windowShowStyle.Items.Add('Minimized')
-$windowShowStyle.Items.Add('Hidden')
-$windowShowStyle.Items.Add('Normal')
-$windowShowStyle.Items.Add('Maximized')
-$preferredYoutubedl.Items.Add($script:msg.SettingDefault)
-$preferredYoutubedl.Items.Add('yt-dlp')
-$preferredYoutubedl.Items.Add('ytdl-patched')
-foreach ($option in $trueFalseOptions) { $scheduleStop.Items.Add($option) }
+foreach ($option in $trueFalseOptions) { $enableMultithread.Items.Add($option) | Out-Null }
+foreach ($option in $trueFalseOptions) { $disableToastNotification.Items.Add($option)  | Out-Null }
+foreach ($option in $trueFalseOptions) { $detailedProgress.Items.Add($option)  | Out-Null }
+foreach ($option in $trueFalseOptions) { $extractDescTextToList.Items.Add($option)  | Out-Null }
+foreach ($option in $trueFalseOptions) { $listGenHistoryCheck.Items.Add($option)  | Out-Null }
+foreach ($option in $trueFalseOptions) { $cleanupDownloadBaseDir.Items.Add($option)  | Out-Null }
+foreach ($option in $trueFalseOptions) { $cleanupSaveBaseDir.Items.Add($option)  | Out-Null }
+$updateChannel.Items.Add($script:msg.SettingDefault) | Out-Null
+$updateChannel.Items.Add('release') | Out-Null
+$updateChannel.Items.Add('prerelease') | Out-Null
+$updateChannel.Items.Add('master') | Out-Null
+$updateChannel.Items.Add('beta') | Out-Null
+$updateChannel.Items.Add('dev') | Out-Null
+foreach ($option in $trueFalseOptions) { $embedSubtitle.Items.Add($option)  | Out-Null }
+foreach ($option in $trueFalseOptions) { $embedMetatag.Items.Add($option)  | Out-Null }
+foreach ($option in $trueFalseOptions) { $sortVideoByMedia.Items.Add($option)  | Out-Null }
+foreach ($option in $trueFalseOptions) { $forceSingleDownload.Items.Add($option)  | Out-Null }
+foreach ($option in $trueFalseOptions) { $sitemapParseEpisodeOnly.Items.Add($option)  | Out-Null }
+foreach ($option in $trueFalseOptions) { $downloadWhenEpisodeIdChanged.Items.Add($option)  | Out-Null }
+$videoContainerFormat.Items.Add($script:msg.SettingDefault) | Out-Null
+$videoContainerFormat.Items.Add('mp4') | Out-Null
+$videoContainerFormat.Items.Add('ts') | Out-Null
+foreach ($option in $trueFalseOptions) { $addSeriesName.Items.Add($option)  | Out-Null }
+foreach ($option in $trueFalseOptions) { $addSeasonName.Items.Add($option)  | Out-Null }
+foreach ($option in $trueFalseOptions) { $addBroadcastDate.Items.Add($option)  | Out-Null }
+foreach ($option in $trueFalseOptions) { $addEpisodeNumber.Items.Add($option)  | Out-Null }
+foreach ($option in $trueFalseOptions) { $removeSpecialNote.Items.Add($option)  | Out-Null }
+foreach ($option in $trueFalseOptions) { $forceSoftwareDecodeFlag.Items.Add($option)  | Out-Null }
+foreach ($option in $trueFalseOptions) { $simplifiedValidation.Items.Add($option)  | Out-Null }
+foreach ($option in $trueFalseOptions) { $disableValidation.Items.Add($option)  | Out-Null }
+foreach ($option in $trueFalseOptions) { $disableUpdateYoutubedl.Items.Add($option)  | Out-Null }
+foreach ($option in $trueFalseOptions) { $disableUpdateFfmpeg.Items.Add($option)  | Out-Null }
+$windowShowStyle.Items.Add($script:msg.SettingDefault) | Out-Null
+$windowShowStyle.Items.Add('Minimized') | Out-Null
+$windowShowStyle.Items.Add('Hidden') | Out-Null
+$windowShowStyle.Items.Add('Normal') | Out-Null
+$windowShowStyle.Items.Add('Maximized') | Out-Null
+$preferredYoutubedl.Items.Add($script:msg.SettingDefault) | Out-Null
+$preferredYoutubedl.Items.Add('yt-dlp') | Out-Null
+$preferredYoutubedl.Items.Add('ytdl-patched') | Out-Null
+foreach ($option in $trueFalseOptions) { $scheduleStop.Items.Add($option)  | Out-Null }
 
 
 # endregion WPFのWindow設定
@@ -497,22 +506,22 @@ $btnYtdlOption360.Add_Click({ Set-YtdlOption 360 })
 
 function Sync-MultiCheckboxes {
 	param (
-		[string]$day,
-		[string]$hour,
+		[String]$day,
+		[String]$hour,
 		[object]$allCheckbox
 	)
 	if ($day) {
 		foreach ($hour in $hours) {
-			$checkboxName = 'chkbxStop{0}{1:D2}' -f $day, [int]$hour
+			$checkboxName = 'chkbxStop{0}{1:D2}' -f $day, [Int]$hour
 			(Get-Variable -Name $checkboxName).Value.IsChecked = $allCheckbox.IsChecked
 			if ($allCheckbox.IsChecked -eq $false) {
-				$checkboxName = 'chkbxStop{0:D2}{1}' -f [int]$hour, 'All'
+				$checkboxName = 'chkbxStop{0:D2}{1}' -f [Int]$hour, 'All'
 				(Get-Variable -Name $checkboxName).Value.IsChecked = $allCheckbox.IsChecked
 			}
 		}
 	} elseif ($hour) {
 		foreach ($day in $days) {
-			$checkboxName = 'chkbxStop{0}{1:D2}' -f $day, [int]$hour
+			$checkboxName = 'chkbxStop{0}{1:D2}' -f $day, [Int]$hour
 			(Get-Variable -Name $checkboxName).Value.IsChecked = $allCheckbox.IsChecked
 			if ($allCheckbox.IsChecked -eq $false) {
 				$checkboxName = 'chkbxStop{0}{1}' -f $day, 'All'

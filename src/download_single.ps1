@@ -108,7 +108,7 @@ while ($true) {
 				Write-Output ('')
 				Write-Output ($script:msg.MediumBoldBorder)
 				Write-Output ('{0}: {1}' -f $script:msg.SingleDownloadTVerURL, $videoLink)
-				Invoke-VideoDownload -Keyword ([ref]$keyword) -VideoLink ([ref]$videoLink) -Force $script:forceSingleDownload
+				Invoke-VideoDownload -Keyword ([Ref]$keyword) -VideoLink ([Ref]$videoLink) -Force $script:forceSingleDownload
 				continue
 			}
 			'^.*://' { # TVer以外のサイトへの対応
