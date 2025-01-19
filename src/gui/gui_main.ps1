@@ -127,9 +127,9 @@ $lblVersion.Content = ('Version {0}' -f $script:appVersion)
 $outText = $mainWindow.FindName('tbOutText')
 
 # GUI部品のラベルを言語別に設定
-$lblTool.Content = $script:msg.GuiLabelTool
-$lblLink.Content = $script:msg.GuiLabelLink
-$lblLog.Content = $script:msg.GuiLabelLog
+$lblTool.Content = $script:msg.GuiHeaderTool
+$lblLink.Content = $script:msg.GuiHeaderLink
+$lblLog.Content = $script:msg.GuiHeaderLog
 $btnLoop.Content = $script:msg.GuiButtonLoop
 $btnSingle.Content = $script:msg.GuiButtonSingle
 $btnBulk.Content = $script:msg.GuiButtonBulk

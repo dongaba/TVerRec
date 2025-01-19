@@ -307,8 +307,8 @@
         <Border Background="#FFFFFF" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel Margin="0,10,0,10">
-                    <Expander x:Name="expDownloadDir" Margin="10,0,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                        <TextBlock x:Name="tbDownloadDirDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                    <Expander x:Name="downloadDirHeader" Margin="10,0,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                        <TextBlock x:Name="downloadDirText" Margin="20,0,20,5" TextWrapping="Wrap" />
                     </Expander>
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -318,8 +318,8 @@
                         <TextBox x:Name="downloadBaseDir" Style="{DynamicResource TextBoxStyle}" Margin="20,0,0,0" BorderThickness="0,0,0,1" TextWrapping="Wrap" />
                         <Button x:Name="btnDownloadBaseDir" Style="{DynamicResource ButtonStyle}" Content="..." Margin="0,0,20,0" HorizontalAlignment="Right" Grid.Column="2" Grid.Row="7" VerticalAlignment="Center" Width="30" />
                     </Grid>
-                    <Expander x:Name="expWorkDir" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                        <TextBlock x:Name="tbWorkDirDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                    <Expander x:Name="workDirHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                        <TextBlock x:Name="workDirText" Margin="20,0,20,5" TextWrapping="Wrap" />
                     </Expander>
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -329,8 +329,8 @@
                         <TextBox x:Name="downloadWorkDir" Style="{DynamicResource TextBoxStyle}" />
                         <Button x:Name="btnDownloadWorkDir" Style="{DynamicResource ButtonStyle}" Content="..." Margin="0,0,20,0" HorizontalAlignment="Right" Grid.Column="2" Grid.Row="7" VerticalAlignment="Center" Width="30" />
                     </Grid>
-                    <Expander x:Name="expSaveDir" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                        <TextBlock x:Name="tbSaveDirDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                    <Expander x:Name="saveDirHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                        <TextBlock x:Name="saveDirText" Margin="20,0,20,5" TextWrapping="Wrap" />
                     </Expander>
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -356,52 +356,52 @@
                 <TabItem x:Name="tabOperation" Style="{StaticResource TabItem}" IsSelected="True">
                     <ScrollViewer>
                         <StackPanel>
-                            <Expander x:Name="expEnableMultithread" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbEnableMultithreadDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="enableMultithreadHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="enableMultithreadText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox x:Name="enableMultithread" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
-                            <Expander x:Name="expMultithreadNum" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbMultithreadNumDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="multithreadNumHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="multithreadNumText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <TextBox x:Name="multithreadNum" Style="{DynamicResource TextBoxStyle}" />
-                            <Expander x:Name="expDisableToast" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbDisableToastDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="disableToastHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="disableToastText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox x:Name="disableToastNotification" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
-                            <Expander x:Name="expMaxExecLogLines" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbMaxExecLogLinesDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="maxExecLogLinesHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="maxExecLogLinesText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <TextBox x:Name="guiMaxExecLogLines" Style="{DynamicResource TextBoxStyle}" />
-                            <Expander x:Name="expHistRetentionPeriod" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbHistRetentionPeriodDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="histRetentionPeriodHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="histRetentionPeriodText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <TextBox x:Name="histRetentionPeriod" Style="{DynamicResource TextBoxStyle}" />
-                            <Expander x:Name="expLoopCycle" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="">
-                                <TextBlock x:Name="tbLoopCycleDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="loopCycleHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="">
+                                <TextBlock x:Name="loopCycleText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <TextBox x:Name="loopCycle" Style="{DynamicResource TextBoxStyle}" />
-                            <Expander x:Name="expDetailedProgress" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbDetailedProgressDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="detailedProgressHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="detailedProgressText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox x:Name="detailedProgress" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
-                            <Expander x:Name="expExtractDescTextToList" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbExtractDescTextToListDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="extractDescTextToListHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="extractDescTextToListText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox x:Name="extractDescTextToList" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
-                            <Expander x:Name="expListGenHistoryCheck" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbListGenHistoryCheckDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="listGenHistoryCheckHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="listGenHistoryCheckText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox x:Name="listGenHistoryCheck" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
-                            <Expander x:Name="expCleanupDownloadBaseDir" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbCleanupDownloadBaseDirDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="cleanupDownloadBaseDirHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="cleanupDownloadBaseDirText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox x:Name="cleanupDownloadBaseDir" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
-                            <Expander x:Name="expCleanupSaveBaseDir" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbCleanupSaveBaseDir" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="cleanupSaveBaseDirHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="cleanupSaveBaseDirText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox x:Name="cleanupSaveBaseDir" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
-                            <Expander x:Name="expUpdateChannel" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbUpdateChannel" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="updateChannelHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="updateChannelText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox x:Name="updateChannel" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
                         </StackPanel>
@@ -411,16 +411,16 @@
                 <TabItem x:Name="tabMypage" Style="{StaticResource TabItem}">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Background="#FFFFFF">
-                            <Expander x:Name="expMyPlatformUID" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbMyPlatformUIDDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="myPlatformUIDHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="myPlatformUIDText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <TextBox x:Name="myPlatformUID" Style="{DynamicResource TextBoxStyle}" />
-                            <Expander x:Name="expMyPlatformToken" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbMyPlatformTokenDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="myPlatformTokenHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="myPlatformTokenText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <TextBox x:Name="myPlatformToken" Style="{DynamicResource TextBoxStyle}" />
-                            <Expander x:Name="expMyMemberSID" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbMyMemberSIDDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="myMemberSIDHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="myMemberSIDText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <TextBox x:Name="myMemberSID" Style="{DynamicResource TextBoxStyle}" />
                         </StackPanel>
@@ -430,48 +430,48 @@
                 <TabItem x:Name="tabDownload" Style="{StaticResource TabItem}">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Background="#FFFFFF">
-                            <Expander x:Name="expParallelDownloadFileNum" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbParallelDownloadFileNumDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="parallelDownloadFileNumHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="parallelDownloadFileNumText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <TextBox x:Name="parallelDownloadFileNum" Style="{DynamicResource TextBoxStyle}" />
-                            <Expander x:Name="expParallelDownloadNumPerFile" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbParallelDownloadNumPerFileDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="parallelDownloadNumPerFileHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="parallelDownloadNumPerFileText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <TextBox x:Name="parallelDownloadNumPerFile" Style="{DynamicResource TextBoxStyle}" />
-                            <Expander x:Name="expRateLimit" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbRateLimitDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="rateLimitHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="rateLimitText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <TextBox x:Name="rateLimit" Style="{DynamicResource TextBoxStyle}" />
-                            <Expander x:Name="expTimeoutSec" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbTimeoutSecDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="timeoutSecHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="timeoutSecText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <TextBox x:Name="timeoutSec" Style="{DynamicResource TextBoxStyle}" />
-                            <Expander x:Name="expEmbedSubtitle" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbEmbedSubtitleDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="embedSubtitleHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="embedSubtitleText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox x:Name="embedSubtitle" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
-                            <Expander x:Name="expEmbedMetatag" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbEmbedMetatagDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="embedMetatagHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="embedMetatagText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox x:Name="embedMetatag" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
-                            <Expander x:Name="expSortVideoByMedia" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbSortVideoByMediaDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="sortVideoByMediaHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="sortVideoByMediaText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox x:Name="sortVideoByMedia" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
-                            <Expander x:Name="expForceSingleDownload" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbForceSingleDownloadDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="forceSingleDownloadHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="forceSingleDownloadText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox x:Name="forceSingleDownload" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
-                            <Expander x:Name="expSitemapParseEpisodeOnly" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbSitemapParseEpisodeOnlyDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="sitemapParseEpisodeOnlyHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="sitemapParseEpisodeOnlyText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox x:Name="sitemapParseEpisodeOnly" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
-                            <Expander x:Name="expDownloadWhenEpisodeIdChanged" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbDownloadWhenEpisodeIdChangedDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="downloadWhenEpisodeIdChangedHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="downloadWhenEpisodeIdChangedText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox x:Name="downloadWhenEpisodeIdChanged" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
-                            <Expander x:Name="expVideoContainerFormat" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbVideoContainerFormatDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="videoContainerFormatHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="videoContainerFormatText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox x:Name="videoContainerFormat" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
                         </StackPanel>
@@ -481,28 +481,28 @@
                 <TabItem x:Name="tabVideoFile" Style="{StaticResource TabItem}">
                     <ScrollViewer>
                         <StackPanel>
-                            <Expander x:Name="expAddSeriesName" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbAddSeriesNameDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="addSeriesNameHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="addSeriesNameText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox x:Name="addSeriesName" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
-                            <Expander x:Name="expAddSeasonName" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbAddSeasonNameDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="addSeasonNameHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="addSeasonNameText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox x:Name="addSeasonName" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
-                            <Expander x:Name="expAddBroadcastDate" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbAddBroadcastDateDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="addBroadcastDateHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="addBroadcastDateText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox x:Name="addBroadcastDate" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
-                            <Expander x:Name="expAddEpisodeNumber" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbAddEpisodeNumberDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="addEpisodeNumberHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="addEpisodeNumberText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox x:Name="addEpisodeNumber" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
-                            <Expander x:Name="expRemoveSpecialNote" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbRemoveSpecialNoteDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="removeSpecialNoteHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="removeSpecialNoteText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox x:Name="removeSpecialNote" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
-                            <Expander x:Name="expYtdlNonTVerFileName" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbYtdlNonTVerFileNameDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="ytdlNonTVerFileNameHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="ytdlNonTVerFileNameText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <TextBox x:Name="ytdlNonTVerFileName" Style="{DynamicResource TextBoxStyle}" />
                         </StackPanel>
@@ -512,16 +512,16 @@
                 <TabItem x:Name="tabYtdlFfmpeg" Style="{StaticResource TabItem}">
                     <ScrollViewer>
                         <StackPanel>
-                            <Expander x:Name="expWindowShowStyle" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbWindowShowStyleDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="windowShowStyleHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="windowShowStyleText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox x:Name="windowShowStyle" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
-                            <Expander x:Name="expPreferredYoutubedl" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbPreferredYoutubedlDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="preferredYoutubedlHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="preferredYoutubedlText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox x:Name="preferredYoutubedl" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
-                            <Expander x:Name="expFfmpegDecodeOption" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbFfmpegDecodeOptionDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="ffmpegDecodeOptionHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="ffmpegDecodeOptionText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <TextBox x:Name="ffmpegDecodeOption" Style="{DynamicResource TextBoxStyle}" />
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="10,5,10,5">
@@ -536,28 +536,28 @@
                                 <Button x:Name="btnFfmpegDecodeOptionPi4" Style="{DynamicResource ButtonStyle}" Width="90" Margin="5,0,5,0" />
                                 <Button x:Name="btnFfmpegDecodeOptionPi3" Style="{DynamicResource ButtonStyle}" Width="90" Margin="5,0,5,0" />
                             </StackPanel>
-                            <Expander x:Name="expForceSoftwareDecodeFlag" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbForceSoftwareDecodeFlagDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="forceSoftwareDecodeFlagHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="forceSoftwareDecodeFlagText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox x:Name="forceSoftwareDecodeFlag" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
-                            <Expander x:Name="expSimplifiedValidation" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbSimplifiedValidationDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="simplifiedValidationHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="simplifiedValidationText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox x:Name="simplifiedValidation" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
-                            <Expander x:Name="expDisableValidation" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbDisableValidationDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="disableValidationHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="disableValidationText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox x:Name="disableValidation" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
-                            <Expander x:Name="expDisableUpdateYoutubedl" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbDisableUpdateYoutubedlDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="disableUpdateYoutubedlHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="disableUpdateYoutubedlText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox x:Name="disableUpdateYoutubedl" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
-                            <Expander x:Name="expDisableUpdateFfmpeg" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbDisableUpdateFfmpegDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="disableUpdateFfmpegHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="disableUpdateFfmpegText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox x:Name="disableUpdateFfmpeg" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
-                            <Expander x:Name="expYtdlOption" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbYtdlOptionDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="ytdlOptionHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="ytdlOptionText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <TextBox x:Name="ytdlOption" Style="{DynamicResource TextBoxStyle}" />
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="10,5,10,5">
@@ -567,16 +567,16 @@
                                 <Button x:Name="btnYtdlOption480" Style="{DynamicResource ButtonStyle}" Width="90" Margin="5,0,5,0" />
                                 <Button x:Name="btnYtdlOption360" Style="{DynamicResource ButtonStyle}" Width="90" Margin="5,0,5,0" />
                             </StackPanel>
-                            <Expander x:Name="expYtdlHttpHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbYtdlHttpHeaderDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="ytdlHttpHeaderHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="ytdlHttpHeaderText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <TextBox x:Name="ytdlHttpHeader" Style="{DynamicResource TextBoxStyle}" />
-                            <Expander x:Name="expYtdlBaseArgs" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbYtdlBaseArgsDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="ytdlBaseArgsHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="ytdlBaseArgsText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <TextBox x:Name="ytdlBaseArgs" Style="{DynamicResource TextBoxStyle}" />
-                            <Expander x:Name="expNonTVerYtdlBaseArgs" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
-                                <TextBlock x:Name="tbNonTVerYtdlBaseArgsDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="nonTVerYtdlBaseArgsHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
+                                <TextBlock x:Name="nonTVerYtdlBaseArgsText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <TextBox x:Name="nonTVerYtdlBaseArgs" Style="{DynamicResource TextBoxStyle}" />
                         </StackPanel>
@@ -586,11 +586,11 @@
                 <TabItem x:Name="tabSchedule" Style="{StaticResource TabItem}">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Background="#FFFFFF">
-                            <Expander x:Name="expScheduleStop" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="">
-                                <TextBlock x:Name="tbScheduleStopDesc" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            <Expander x:Name="scheduleStopHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI" Header="">
+                                <TextBlock x:Name="scheduleStopText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox x:Name="scheduleStop" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" HorizontalAlignment="Left" />
-                            <TextBlock x:Name="tbScheduleSpecifyDesc" Margin="20,10,20,5" TextWrapping="Wrap" />
+                            <TextBlock x:Name="scheduleSpecify" Margin="20,10,20,5" TextWrapping="Wrap" />
                             <Grid Margin="20,0,20,0">
                                 <Grid.RowDefinitions>
                                     <RowDefinition />
@@ -633,19 +633,19 @@
                                     <ColumnDefinition Width="40" />
                                     <ColumnDefinition Width="40" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock x:Name="tbScheduleStopTime" Grid.Row="0" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2" />
-                                <TextBlock x:Name="tbScheduleStopWeek" Grid.Row="0" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2" />
-                                <TextBlock x:Name="tbScheduleStopMon" Grid.Row="0" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2" />
-                                <TextBlock x:Name="tbScheduleStopTue" Grid.Row="0" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2" />
-                                <TextBlock x:Name="tbScheduleStopWed" Grid.Row="0" Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2" />
-                                <TextBlock x:Name="tbScheduleStopThu" Grid.Row="0" Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2" />
-                                <TextBlock x:Name="tbScheduleStopFri" Grid.Row="0" Grid.Column="8" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2" />
-                                <TextBlock x:Name="tbScheduleStopSat" Grid.Row="0" Grid.Column="9" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2" />
-                                <TextBlock x:Name="tbScheduleStopSun" Grid.Row="0" Grid.Column="10" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2" />
+                                <TextBlock x:Name="scheduleStopTime" Grid.Row="0" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2" />
+                                <TextBlock x:Name="scheduleStopWeek" Grid.Row="0" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2" />
+                                <TextBlock x:Name="scheduleStopMon" Grid.Row="0" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2" />
+                                <TextBlock x:Name="scheduleStopTue" Grid.Row="0" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2" />
+                                <TextBlock x:Name="scheduleStopWed" Grid.Row="0" Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2" />
+                                <TextBlock x:Name="scheduleStopThu" Grid.Row="0" Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2" />
+                                <TextBlock x:Name="scheduleStopFri" Grid.Row="0" Grid.Column="8" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2" />
+                                <TextBlock x:Name="scheduleStopSat" Grid.Row="0" Grid.Column="9" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2" />
+                                <TextBlock x:Name="scheduleStopSun" Grid.Row="0" Grid.Column="10" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2" />
                                 <Rectangle Grid.Row="0" Grid.ColumnSpan="11" Fill="#393939" Height="1" VerticalAlignment="Bottom" Margin="0,0,0,0" />
                                 <Rectangle Grid.RowSpan="26" Grid.Column="1" Fill="#393939" Height="520" VerticalAlignment="Top" Margin="0,0,0,0" />
                                 <Rectangle Grid.RowSpan="26" Grid.Column="3" Fill="#808080" Height="520" VerticalAlignment="Top" Margin="0,0,0,0" />
-                                <TextBlock x:Name="tbScheduleStopDay" Grid.Row="1" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2" />
+                                <TextBlock x:Name="scheduleStopDay" Grid.Row="1" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2" />
                                 <CheckBox x:Name="chkbxStopMonAll" Grid.Row="1" Grid.Column="4" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2" />
                                 <CheckBox x:Name="chkbxStopTueAll" Grid.Row="1" Grid.Column="5" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2" />
                                 <CheckBox x:Name="chkbxStopWedAll" Grid.Row="1" Grid.Column="6" Style="{StaticResource CustomCheckBoxStyle}" Margin="0,2,0,2" />
