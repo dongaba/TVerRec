@@ -147,6 +147,7 @@ function Read-UserSetting {
 			# ユーザー設定の値を取得しGUIに反映
 			$userSettingValue = ($userSettings -match ('^{0}' -f [regex]::Escape($settingAttribute)))
 			if ($userSettingValue) {
+				Write-Debug $userSettingValue
 				$settingBox.Text = $userSettingValue.split('=', 2)[1].Trim().Trim("'")
 				if ($settingBox.Text -eq '$true') { $settingBox.Text = $script:msg.SettingTrue }
 				elseif ($settingBox.Text -eq '$false') { $settingBox.Text = $script:msg.SettingFalse }
@@ -277,6 +278,192 @@ $LogoImage.Source = ConvertFrom-Base64 $script:logoBase64
 # バージョン表記
 $lblVersion.Content = ('Version {0}' -f $script:appVersion)
 
+# GUI部品のラベルを言語別に設定
+$lblBasicSetting.Content = $script:msg.GuiLabelBasicSetting
+$lblAdvancedSetting.Content = $script:msg.GuiLabelAdvancedSetting
+$btnWiki.Content = $script:msg.GuiButtonWiki
+$btnCancel.Content = $script:msg.GuiButtonCancel
+$btnSave.Content = $script:msg.GuiButtonSave
+# 基本的な設定
+$expDownloadDir.Header = $script:msg.GuiExpanderDownloadDir
+$tbDownloadDirDesc.Text = $script:msg.GuiTextboxDownloadDirDesc
+$expWorkDir.Header = $script:msg.GuiExpanderWorkDir
+$tbWorkDirDesc.Text = $script:msg.GuiTextboxWorkDirDesc
+$expSaveDir.Header = $script:msg.GuiExpanderSaveDir
+$tbSaveDirDesc.Text = $script:msg.GuiTextboxSaveDirDesc
+# 動作タブ
+$tabOperation.Header = $script:msg.GuiTabOperation
+$expEnableMultithread.Header = $script:msg.GuiExpanderEnableMultithread
+$tbEnableMultithreadDesc.Text = $script:msg.GuiTextboxEnableMultithreadDesc
+$expMultithreadNum.Header = $script:msg.GuiExpanderMultithreadNum
+$tbMultithreadNumDesc.Text = $script:msg.GuiTextBoxMultithreadNumDesc
+$expDisableToast.Header = $script:msg.GuiExpanderDisableToast
+$tbDisableToastDesc.Text = $script:msg.GuiTextBoxDisableToastDesc
+$expMaxExecLogLines.Header = $script:msg.GuiExpanderMaxExecLogLines
+$tbMaxExecLogLinesDesc.Text = $script:msg.GuiTextBoxMaxExecLogLinesDesc
+$expHistRetentionPeriod.Header = $script:msg.GuiExpanderHistRetentionPeriod
+$tbHistRetentionPeriodDesc.Text = $script:msg.GuiTextBoxHistRetentionPeriodDesc
+$expLoopCycle.Header = $script:msg.GuiExpanderLoopCycle
+$tbLoopCycleDesc.Text = $script:msg.GuiTextBoxLoopCycleDesc
+$expDetailedProgress.Header = $script:msg.GuiExpanderDetailedProgress
+$tbDetailedProgressDesc.Text = $script:msg.GuiTextBoxDetailedProgressDesc
+$expExtractDescTextToList.Header = $script:msg.GuiExpanderExtractDescTextToList
+$tbExtractDescTextToListDesc.Text = $script:msg.GuiTextBoxExtractDescTextToListDesc
+$expListGenHistoryCheck.Header = $script:msg.GuiExpanderListGenHistoryCheck
+$tbListGenHistoryCheckDesc.Text = $script:msg.GuiTextBoxListGenHistoryCheckDesc
+$expCleanupDownloadBaseDir.Header = $script:msg.GuiExpanderCleanupDownloadBaseDir
+$tbCleanupDownloadBaseDirDesc.Text = $script:msg.GuiTextBoxCleanupDownloadBaseDirDesc
+$expCleanupSaveBaseDir.Header = $script:msg.GuiExpanderCleanupSaveBaseDir
+$tbCleanupSaveBaseDir.Text = $script:msg.GuiTextBoxCleanupSaveBaseDirDesc
+$expUpdateChannel.Header = $script:msg.GuiExpanderUpdateChannel
+$tbUpdateChannel.Text = $script:msg.GuiTextBoxUpdateChannelDesc
+# マイページタブ
+$tabMypage.Header = $script:msg.GuiTabMypage
+$expMyPlatformUID.Header = $script:msg.GuiExpanderMyPlatformUID
+$tbMyPlatformUIDDesc.Text = $script:msg.GuiTextBoxMyPlatformUIDDesc
+$expMyPlatformToken.Header = $script:msg.GuiExpanderMyPlatformToken
+$tbMyPlatformTokenDesc.Text = $script:msg.GuiTextBoxMyPlatformTokenDesc
+$expMyMemberSID.Header = $script:msg.GuiExpanderMyMemberSID
+$tbMyMemberSIDDesc.Text = $script:msg.GuiTextBoxMyMemberSIDDesc
+# ダウンロードタブ
+$tabDownload.Header = $script:msg.GuiTabDownload
+$expParallelDownloadFileNum.Header = $script:msg.GuiExpanderParallelDownloadFileNum
+$tbParallelDownloadFileNumDesc.Text = $script:msg.GuiTextBoxParallelDownloadFileNumDesc
+$expParallelDownloadNumPerFile.Header = $script:msg.GuiExpanderParallelDownloadNumPerFile
+$tbParallelDownloadNumPerFileDesc.Text = $script:msg.GuiTextBoxParallelDownloadNumPerFileDesc
+$expRateLimit.Header = $script:msg.GuiExpanderRateLimit
+$tbRateLimitDesc.Text = $script:msg.GuiTextBoxRateLimitDesc
+$expTimeoutSec.Header = $script:msg.GuiExpanderTimeoutSec
+$tbTimeoutSecDesc.Text = $script:msg.GuiTextBoxTimeoutSecDesc
+$expEmbedSubtitle.Header = $script:msg.GuiExpanderEmbedSubtitle
+$tbEmbedSubtitleDesc.Text = $script:msg.GuiTextBoxEmbedSubtitleDesc
+$expEmbedMetatag.Header = $script:msg.GuiExpanderEmbedMetatag
+$tbEmbedMetatagDesc.Text = $script:msg.GuiTextBoxEmbedMetatagDesc
+$expSortVideoByMedia.Header = $script:msg.GuiExpanderSortVideoByMedia
+$tbSortVideoByMediaDesc.Text = $script:msg.GuiTextBoxSortVideoByMediaDesc
+$expForceSingleDownload.Header = $script:msg.GuiExpanderForceSingleDownload
+$tbForceSingleDownloadDesc.Text = $script:msg.GuiTextBoxForceSingleDownloadDesc
+$expSitemapParseEpisodeOnly.Header = $script:msg.GuiExpanderSitemapParseEpisodeOnly
+$tbSitemapParseEpisodeOnlyDesc.Text = $script:msg.GuiTextBoxSitemapParseEpisodeOnlyDesc
+$expDownloadWhenEpisodeIdChanged.Header = $script:msg.GuiExpanderDownloadWhenEpisodeIdChanged
+$tbDownloadWhenEpisodeIdChangedDesc.Text = $script:msg.GuiTextBoxDownloadWhenEpisodeIdChangedDesc
+$expVideoContainerFormat.Header = $script:msg.GuiExpanderVideoContainerFormat
+$tbVideoContainerFormatDesc.Text = $script:msg.GuiTextBoxVideoContainerFormatDesc
+# 動画ファイル名タブ
+$tabVideoFile.Header = $script:msg.GuiTabVideoFile
+$expAddSeriesName.Header = $script:msg.GuiExpanderAddSeriesName
+$tbAddSeriesNameDesc.Text = $script:msg.GuiTextBoxAddSeriesNameDesc
+$expAddSeasonName.Header = $script:msg.GuiExpanderAddSeasonName
+$tbAddSeasonNameDesc.Text = $script:msg.GuiTextBoxAddSeasonNameDesc
+$expAddBroadcastDate.Header = $script:msg.GuiExpanderAddBroadcastDate
+$tbAddBroadcastDateDesc.Text = $script:msg.GuiTextBoxAddBroadcastDateDesc
+$expAddEpisodeNumber.Header = $script:msg.GuiExpanderAddEpisodeNumber
+$tbAddEpisodeNumberDesc.Text = $script:msg.GuiTextBoxAddEpisodeNumberDesc
+$expRemoveSpecialNote.Header = $script:msg.GuiExpanderRemoveSpecialNote
+$tbRemoveSpecialNoteDesc.Text = $script:msg.GuiTextBoxRemoveSpecialNoteDesc
+$expYtdlNonTVerFileName.Header = $script:msg.GuiExpanderYtdlNonTVerFileName
+$tbYtdlNonTVerFileNameDesc.Text = $script:msg.GuiTextBoxYtdlNonTVerFileNameDesc
+# Ytdl/ffmpegタブ
+$tabYtdlFfmpeg.Header = $script:msg.GuiTabYtdlFfmpeg
+$btnFfmpegDecodeOptionClear.Content = $script:msg.GuiButtonFfmpegDecodeOptionClear
+$btnFfmpegDecodeOptionQsv.Content = $script:msg.GuiButtonFfmpegDecodeOptionQSV
+$btnFfmpegDecodeOptionD3d11.Content = $script:msg.GuiButtonFfmpegDecodeOptionD3D11
+$btnFfmpegDecodeOptionD3d9.Content = $script:msg.GuiButtonFfmpegDecodeOptionD3D9
+$btnFfmpegDecodeOptionCuda.Content = $script:msg.GuiButtonFfmpegDecodeOptionCuda
+$btnFfmpegDecodeOptionVTB.Content = $script:msg.GuiButtonFfmpegDecodeOptionVTB
+$btnFfmpegDecodeOptionPi4.Content = $script:msg.GuiButtonFfmpegDecodeOptionPi4
+$btnFfmpegDecodeOptionPi3.Content = $script:msg.GuiButtonFfmpegDecodeOptionPi3
+$btnYtdlOptionClear.Content = $script:msg.GuiButtonYtdlOptionClear
+$btnYtdlOption1080.Content = $script:msg.GuiButtonYtdlOption1080
+$btnYtdlOption720.Content = $script:msg.GuiButtonYtdlOption720
+$btnYtdlOption480.Content = $script:msg.GuiButtonYtdlOption480
+$btnYtdlOption360.Content = $script:msg.GuiButtonYtdlOption360
+$expWindowShowStyle.Header = $script:msg.GuiExpanderWindowShowStyle
+$tbWindowShowStyleDesc.Text = $script:msg.GuiTextBoxWindowShowStyleDesc
+$expPreferredYoutubedl.Header = $script:msg.GuiExpanderPreferredYoutubedl
+$tbPreferredYoutubedlDesc.Text = $script:msg.GuiTextBoxPreferredYoutubedlDesc
+$expFfmpegDecodeOption.Header = $script:msg.GuiExpanderFfmpegDecodeOption
+$tbFfmpegDecodeOptionDesc.Text = $script:msg.GuiTextBoxFfmpegDecodeOptionDesc
+$expForceSoftwareDecodeFlag.Header = $script:msg.GuiExpanderForceSoftwareDecodeFlag
+$tbForceSoftwareDecodeFlagDesc.Text = $script:msg.GuiTextBoxForceSoftwareDecodeFlagDesc
+$expSimplifiedValidation.Header = $script:msg.GuiExpanderSimplifiedValidation
+$tbSimplifiedValidationDesc.Text = $script:msg.GuiTextBoxSimplifiedValidationDesc
+$expDisableValidation.Header = $script:msg.GuiExpanderDisableValidation
+$tbDisableValidationDesc.Text = $script:msg.GuiTextBoxDisableValidationDesc
+$expDisableUpdateYoutubedl.Header = $script:msg.GuiExpanderDisableUpdateYoutubedl
+$tbDisableUpdateYoutubedlDesc.Text = $script:msg.GuiTextBoxDisableUpdateYoutubedlDesc
+$expDisableUpdateFfmpeg.Header = $script:msg.GuiExpanderDisableUpdateFfmpeg
+$tbDisableUpdateFfmpegDesc.Text = $script:msg.GuiTextBoxDisableUpdateFfmpegDesc
+$expYtdlOption.Header = $script:msg.GuiExpanderYtdlOption
+$tbYtdlOptionDesc.Text = $script:msg.GuiTextBoxYtdlOptionDesc
+$expYtdlHttpHeader.Header = $script:msg.GuiExpanderYtdlHttpHeader
+$tbYtdlHttpHeaderDesc.Text = $script:msg.GuiTextBoxYtdlHttpHeaderDesc
+$expYtdlBaseArgs.Header = $script:msg.GuiExpanderYtdlBaseArgs
+$tbYtdlBaseArgsDesc.Text = $script:msg.GuiTextBoxYtdlBaseArgsDesc
+$expNonTVerYtdlBaseArgs.Header = $script:msg.GuiExpanderNonTVerYtdlBaseArgs
+$tbNonTVerYtdlBaseArgsDesc.Text = $script:msg.GuiTextBoxNonTVerYtdlBaseArgsDesc
+
+# スケジュールタブ
+$tabSchedule.Header = $script:msg.GuiTabSchedule
+$expScheduleStop.Header = $script:msg.GuiExpanderScheduleStop
+$tbScheduleStopDesc.Text = $script:msg.GuiTextBoxScheduleStopDesc
+$tbScheduleSpecifyDesc.Text = $script:msg.GuiTextBoxScheduleSpecifyDesc
+$tbScheduleStopTime.Text = $script:msg.GuiTextBoxScheduleStopTime
+$tbScheduleStopWeek.Text = $script:msg.GuiTextBoxScheduleStopWeek
+$tbScheduleStopMon.Text = $script:msg.GuiTextBoxScheduleStopMon
+$tbScheduleStopTue.Text = $script:msg.GuiTextBoxScheduleStopTue
+$tbScheduleStopWed.Text = $script:msg.GuiTextBoxScheduleStopWed
+$tbScheduleStopThu.Text = $script:msg.GuiTextBoxScheduleStopThu
+$tbScheduleStopFri.Text = $script:msg.GuiTextBoxScheduleStopFri
+$tbScheduleStopSat.Text = $script:msg.GuiTextBoxScheduleStopSat
+$tbScheduleStopSun.Text = $script:msg.GuiTextBoxScheduleStopSun
+$tbScheduleStopDay.Text = $script:msg.GuiTextBoxScheduleStopDay
+
+# ComboBOxのラベルを言語別に設定
+$trueFalseOptions = @($script:msg.SettingDefault, $script:msg.SettingTrue, $script:msg.SettingFalse)
+foreach ($option in $trueFalseOptions) { $enableMultithread.Items.Add($option) }
+foreach ($option in $trueFalseOptions) { $disableToastNotification.Items.Add($option) }
+foreach ($option in $trueFalseOptions) { $detailedProgress.Items.Add($option) }
+foreach ($option in $trueFalseOptions) { $extractDescTextToList.Items.Add($option) }
+foreach ($option in $trueFalseOptions) { $listGenHistoryCheck.Items.Add($option) }
+foreach ($option in $trueFalseOptions) { $cleanupDownloadBaseDir.Items.Add($option) }
+foreach ($option in $trueFalseOptions) { $cleanupSaveBaseDir.Items.Add($option) }
+$updateChannel.Items.Add($script:msg.SettingDefault)
+$updateChannel.Items.Add('release')
+$updateChannel.Items.Add('prerelease')
+$updateChannel.Items.Add('master')
+$updateChannel.Items.Add('beta')
+$updateChannel.Items.Add('dev')
+foreach ($option in $trueFalseOptions) { $embedSubtitle.Items.Add($option) }
+foreach ($option in $trueFalseOptions) { $embedMetatag.Items.Add($option) }
+foreach ($option in $trueFalseOptions) { $sortVideoByMedia.Items.Add($option) }
+foreach ($option in $trueFalseOptions) { $forceSingleDownload.Items.Add($option) }
+foreach ($option in $trueFalseOptions) { $sitemapParseEpisodeOnly.Items.Add($option) }
+foreach ($option in $trueFalseOptions) { $downloadWhenEpisodeIdChanged.Items.Add($option) }
+$videoContainerFormat.Items.Add($script:msg.SettingDefault)
+$videoContainerFormat.Items.Add('mp4')
+$videoContainerFormat.Items.Add('ts')
+foreach ($option in $trueFalseOptions) { $addSeriesName.Items.Add($option) }
+foreach ($option in $trueFalseOptions) { $addSeasonName.Items.Add($option) }
+foreach ($option in $trueFalseOptions) { $addBroadcastDate.Items.Add($option) }
+foreach ($option in $trueFalseOptions) { $addEpisodeNumber.Items.Add($option) }
+foreach ($option in $trueFalseOptions) { $removeSpecialNote.Items.Add($option) }
+foreach ($option in $trueFalseOptions) { $forceSoftwareDecodeFlag.Items.Add($option) }
+foreach ($option in $trueFalseOptions) { $simplifiedValidation.Items.Add($option) }
+foreach ($option in $trueFalseOptions) { $disableValidation.Items.Add($option) }
+foreach ($option in $trueFalseOptions) { $disableUpdateYoutubedl.Items.Add($option) }
+foreach ($option in $trueFalseOptions) { $disableUpdateFfmpeg.Items.Add($option) }
+$windowShowStyle.Items.Add($script:msg.SettingDefault)
+$windowShowStyle.Items.Add('Minimized')
+$windowShowStyle.Items.Add('Hidden')
+$windowShowStyle.Items.Add('Normal')
+$windowShowStyle.Items.Add('Maximized')
+$preferredYoutubedl.Items.Add($script:msg.SettingDefault)
+$preferredYoutubedl.Items.Add('yt-dlp')
+$preferredYoutubedl.Items.Add('ytdl-patched')
+foreach ($option in $trueFalseOptions) { $scheduleStop.Items.Add($option) }
+
+
 # endregion WPFのWindow設定
 #----------------------------------------------------------------------
 
@@ -289,24 +476,24 @@ $btnDownloadBaseDir.Add_Click({ Select-Folder $script:msg.SelectDownloadDir $scr
 $btnDownloadWorkDir.Add_Click({ Select-Folder $script:msg.SelectWorkDir $script:downloadWorkDir })
 $btnSaveBaseDir.Add_Click({ Select-Folder $script:msg.SelectSaveDir $script:saveBaseDir })
 
-$ffmpegDecodeOption_Clear.Add_Click({ $ffmpegDecodeOption.Text = '' })
-$ffmpegDecodeOption_Qsv.Add_Click({ $ffmpegDecodeOption.Text = '-hwaccel qsv -c:v h264_qsv' })
-$ffmpegDecodeOption_D3d11.Add_Click({ $ffmpegDecodeOption.Text = '-hwaccel d3d11va -hwaccel_output_format d3d11' })
-$ffmpegDecodeOption_D3d9.Add_Click({ $ffmpegDecodeOption.Text = '-hwaccel dxva2 -hwaccel_output_format dxva2_vld' })
-$ffmpegDecodeOption_Cuda.Add_Click({ $ffmpegDecodeOption.Text = '-hwaccel cuda -hwaccel_output_format cuda' })
-$ffmpegDecodeOption_Vtb.Add_Click({ $ffmpegDecodeOption.Text = '-hwaccel videotoolbox' })
-$ffmpegDecodeOption_Pi4.Add_Click({ $ffmpegDecodeOption.Text = '-c:v h264_v4l2m2m -num_output_buffers 32 -num_capture_buffers 32' })
-$ffmpegDecodeOption_Pi3.Add_Click({ $ffmpegDecodeOption.Text = '-c:v h264_omx' })
+$btnFfmpegDecodeOptionClear.Add_Click({ $ffmpegDecodeOption.Text = '' })
+$btnFfmpegDecodeOptionQsv.Add_Click({ $ffmpegDecodeOption.Text = '-hwaccel qsv -c:v h264_qsv' })
+$btnFfmpegDecodeOptionD3d11.Add_Click({ $ffmpegDecodeOption.Text = '-hwaccel d3d11va -hwaccel_output_format d3d11' })
+$btnFfmpegDecodeOptionD3d9.Add_Click({ $ffmpegDecodeOption.Text = '-hwaccel dxva2 -hwaccel_output_format dxva2_vld' })
+$btnFfmpegDecodeOptionCuda.Add_Click({ $ffmpegDecodeOption.Text = '-hwaccel cuda -hwaccel_output_format cuda' })
+$btnFfmpegDecodeOptionVTB.Add_Click({ $ffmpegDecodeOption.Text = '-hwaccel videotoolbox' })
+$btnFfmpegDecodeOptionPi4.Add_Click({ $ffmpegDecodeOption.Text = '-c:v h264_v4l2m2m -num_output_buffers 32 -num_capture_buffers 32' })
+$btnFfmpegDecodeOptionPi3.Add_Click({ $ffmpegDecodeOption.Text = '-c:v h264_omx' })
 
 function Set-YtdlOption ($height) {
 	$ytdlOption.Text = if ($height -eq 'Clear') { '' }
 	else { '-f "bestvideo[height<=' + $height + ']+bestaudio/best[height<=' + $height + ']"' }
 }
-$btnYtdlOption_Clear.Add_Click({ Set-YtdlOption 'Clear' })
-$btnYtdlOption_1080.Add_Click({ Set-YtdlOption 1080 })
-$btnYtdlOption_720.Add_Click({ Set-YtdlOption 720 })
-$btnYtdlOption_480.Add_Click({ Set-YtdlOption 480 })
-$btnYtdlOption_360.Add_Click({ Set-YtdlOption 360 })
+$btnYtdlOptionClear.Add_Click({ Set-YtdlOption 'Clear' })
+$btnYtdlOption1080.Add_Click({ Set-YtdlOption 1080 })
+$btnYtdlOption720.Add_Click({ Set-YtdlOption 720 })
+$btnYtdlOption480.Add_Click({ Set-YtdlOption 480 })
+$btnYtdlOption360.Add_Click({ Set-YtdlOption 360 })
 
 function Sync-MultiCheckboxes {
 	param (
