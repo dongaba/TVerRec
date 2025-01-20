@@ -99,10 +99,8 @@ function Out-ExecutionLog {
 # region WPFのWindow設定
 
 try {
-	[String]$mainXaml = Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecMain.xaml')
-	$mainXaml = $mainXaml -ireplace 'mc:Ignorable="d"', '' -ireplace 'x:N', 'N' -ireplace 'x:Class=".*?"', ''
-	[xml]$mainCleanXaml = $mainXaml
-	$mainWindow = [System.Windows.Markup.XamlReader]::Load(([System.Xml.XmlNodeReader]::new($mainCleanXaml)))
+	[xml]$mainXaml = [String](Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecMain.xaml'))
+	$mainWindow = [System.Windows.Markup.XamlReader]::Load(([System.Xml.XmlNodeReader]::new($mainXaml)))
 } catch { Throw ($script:msg.GuiBroken) }
 # PowerShellのウィンドウを非表示に
 Add-Type -Name Window -Namespace Console -MemberDefinition @'
@@ -118,7 +116,7 @@ $mainWindow.Add_Loaded({ $mainWindow.Icon = $script:iconPath })
 # ウィンドウを閉じる際の処理
 $mainWindow.Add_Closing({ Get-Job | Receive-Job -Wait -AutoRemoveJob -Force })
 # Name属性を持つ要素のオブジェクト作成
-$mainCleanXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $mainWindow.FindName($_.Name) -Scope Local }
+$mainXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $mainWindow.FindName($_.Name) -Scope Local }
 # WPFにロゴをロード
 $LogoImage.Source = ConvertFrom-Base64 $script:logoBase64
 # バージョン表記
@@ -302,7 +300,7 @@ Get-Job | Receive-Job -Wait -AutoRemoveJob -Force
 
 Remove-Variable -Name jobTerminationStates, msgTypesColorMap -ErrorAction SilentlyContinue
 Remove-Variable -Name jobMsgs, msgTypes, msgError, msgWarning, msgVerbose, msgDebug, msgInformation -ErrorAction SilentlyContinue
-Remove-Variable -Name mainXaml, mainCleanXaml, mainWindow -ErrorAction SilentlyContinue
+Remove-Variable -Name mainXaml, mainWindow -ErrorAction SilentlyContinue
 Remove-Variable -Name LogoImage, lblVersion, outText -ErrorAction SilentlyContinue
 Remove-Variable -Name btnBulk, btnDelete, btnList, btnListGen, btnLoop, btnMove, btnSingle, btnValidate, btnExit, btnKillAll -ErrorAction SilentlyContinue
 Remove-Variable -Name btns, scriptBlocks, threadNames, btn, lblStatus -ErrorAction SilentlyContinue

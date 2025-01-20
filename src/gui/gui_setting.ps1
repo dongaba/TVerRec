@@ -280,10 +280,8 @@ function Save-UserSetting {
 # region WPFのWindow設定
 
 try {
-	[String]$mainXaml = Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecSetting.xaml')
-	$mainXaml = $mainXaml -ireplace 'mc:Ignorable="d"', '' -ireplace 'x:N', 'N' -ireplace 'x:Class=".*?"', ''
-	[xml]$mainCleanXaml = $mainXaml
-	$settingWindow = [System.Windows.Markup.XamlReader]::Load(([System.Xml.XmlNodeReader]::new($mainCleanXaml)))
+	[xml]$mainXaml = [String](Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecSetting.xaml'))
+	$settingWindow = [System.Windows.Markup.XamlReader]::Load(([System.Xml.XmlNodeReader]::new($mainXaml)))
 } catch { Throw ($script:msg.GuiBroken) }
 # PowerShellのウィンドウを非表示に
 Add-Type -Name Window -Namespace Console -MemberDefinition @'
@@ -299,7 +297,7 @@ $settingWindow.Add_Loaded({ $settingWindow.Icon = $script:iconPath })
 # ウィンドウを閉じる際の処理
 $settingWindow.Add_Closing({})
 # Name属性を持つ要素のオブジェクト作成
-$mainCleanXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $settingWindow.FindName($_.Name) -Scope Script }
+$mainXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $settingWindow.FindName($_.Name) -Scope Script }
 # WPFにロゴをロード
 $LogoImage.Source = ConvertFrom-Base64 $script:logoBase64
 # バージョン表記
@@ -632,7 +630,7 @@ while ($settingWindow.IsVisible) {
 # 終了処理
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Remove-Variable -Name mainXaml, mainCleanXaml, settingWindow -ErrorAction SilentlyContinue
+Remove-Variable -Name mainXaml, settingWindow -ErrorAction SilentlyContinue
 Remove-Variable -Name LogoImage, lblVersion -ErrorAction SilentlyContinue
 Remove-Variable -Name btnWiki, btnCancel, btnSave -ErrorAction SilentlyContinue
 Remove-Variable -Name btndownloadBaseDir, btnDownloadWorkDir, btnSaveBaseDir -ErrorAction SilentlyContinue
