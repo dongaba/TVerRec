@@ -51,12 +51,12 @@ CMは入っていないため気に入った番組を配信終了後も残して
 
 ## Windows GUI 版の動作イメージ
 
-![GUIMain](https://github.com/dongaba/TVerRec/assets/83079591/efcdb203-8401-4f2c-b11f-dfb92562599c)
-![GUISetting](https://github.com/dongaba/TVerRec/assets/83079591/5aab9395-e2c2-465f-b21b-3d7a39a1a04e)
+![GUIMain](https://github.com/user-attachments/assets/35d6e486-094a-4e7d-84fb-e8cdf88fbeb0)
+![GUISetting](https://github.com/user-attachments/assets/1e53fcd8-55db-4429-9064-66cb4facbe30)
 
 ## Windows CUI 版の動作イメージ
 
-![CUI](https://github.com/dongaba/TVerRec/assets/83079591/8804d194-a5db-424e-b97c-b76cc5500b52)
+![CUI](https://github.com/user-attachments/assets/728d618b-43ab-43fb-a4df-02108ca2e4fd)
 
 ## 主な機能
 
