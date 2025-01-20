@@ -6,12 +6,13 @@
 
 - 日本語以外の表記ができる機能を追加。とりあえず英語をサポート(その他の言語は言語ファイルの提供があれば追加)
 - GUIから言語の切り替えができる機能を追加
+- まもなく配信終了をダウンロードするキーワードを追加 [Issue #157](https://github.com/dongaba/TVerRec/issues/157)
 
 ### 3.3.1 Changed
 
 - サンプルキーワードファイルのすべてのエントリーをコメントアウト。[Issue #156](https://github.com/dongaba/TVerRec/issues/156) & [Issue #135](https://github.com/dongaba/TVerRec/issues/135)
 
-### 3.3.0 Fixed
+### 3.3.1 Fixed
 
 ## [3.3.0](https://github.com/dongaba/TVerRec/releases/tag/v3.3.0)
 
