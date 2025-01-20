@@ -28,7 +28,7 @@ $script:uiCulture = [System.Globalization.CultureInfo]::CurrentUICulture.Name
 Write-Debug "Current Language: $script:uiCulture"
 $script:langFile = Get-Content -Path (Join-Path $script:langDir 'messages.json') | ConvertFrom-Json
 $script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:uiCulture)) { $script:langFile.$script:uiCulture }
-else { $script:langFile.default }
+else { $defaultLang = 'en-US'; $script:langFile.$defaultLang }
 
 #----------------------------------------------------------------------
 # 設定ファイル読み込み
@@ -43,7 +43,7 @@ if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 }
 if (Test-Path variable:lang) {
 	$script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:lang)) { $script:langFile.$script:lang }
-	else { $script:langFile.default }
+	else { $defaultLang = 'en-US'; $script:langFile.$defaultLang }
 }
 
 #----------------------------------------------------------------------
@@ -103,7 +103,8 @@ $settingAttributes = @(
 	'$script:ytdlHttpHeader',
 	'$script:ytdlBaseArgs',
 	'$script:nonTVerYtdlBaseArgs',
-	'$script:scheduleStop'
+	'$script:scheduleStop',
+	'$script:lang'
 )
 
 # endregion 環境設定
@@ -412,7 +413,6 @@ $ytdlBaseArgsHeader.Header = $script:msg.GuiHeaderYtdlBaseArgs
 $ytdlBaseArgsText.Text = $script:msg.GuiTextYtdlBaseArgsText
 $nonTVerYtdlBaseArgsHeader.Header = $script:msg.GuiHeaderNonTVerYtdlBaseArgs
 $nonTVerYtdlBaseArgsText.Text = $script:msg.GuiTextNonTVerYtdlBaseArgsText
-
 # スケジュールタブ
 $tabSchedule.Header = $script:msg.GuiTabSchedule
 $scheduleStopHeader.Header = $script:msg.GuiHeaderScheduleStop
@@ -428,6 +428,10 @@ $scheduleStopFri.Text = $script:msg.GuiTextScheduleStopFri
 $scheduleStopSat.Text = $script:msg.GuiTextScheduleStopSat
 $scheduleStopSun.Text = $script:msg.GuiTextScheduleStopSun
 $scheduleStopDay.Text = $script:msg.GuiTextScheduleStopDay
+# 言語タブ
+$tabLanguage.Header = $script:msg.GuiTabLanguage
+$preferredLanguageHeader.Header = $script:msg.GuiHeaderPreferredLanguageHeader
+$preferredLanguageText.Text = $script:msg.GuiTextPreferredLanguageText
 
 # ComboBOxのラベルを言語別に設定
 $trueFalseOptions = @($script:msg.SettingDefault, $script:msg.SettingTrue, $script:msg.SettingFalse)
@@ -472,6 +476,9 @@ $preferredYoutubedl.Items.Add($script:msg.SettingDefault) | Out-Null
 $preferredYoutubedl.Items.Add('yt-dlp') | Out-Null
 $preferredYoutubedl.Items.Add('ytdl-patched') | Out-Null
 foreach ($option in $trueFalseOptions) { $scheduleStop.Items.Add($option)  | Out-Null }
+$lang.Items.Add($script:msg.SettingDefault) | Out-Null
+$lang.Items.Add('ja-JP') | Out-Null
+$lang.Items.Add('en-US') | Out-Null
 
 
 # endregion WPFのWindow設定

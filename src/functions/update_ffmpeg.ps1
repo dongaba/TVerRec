@@ -42,7 +42,7 @@ $script:uiCulture = [System.Globalization.CultureInfo]::CurrentUICulture.Name
 Write-Debug "Current Language: $script:uiCulture"
 $script:langFile = Get-Content -Path (Join-Path $script:langDir 'messages.json') | ConvertFrom-Json
 $script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:uiCulture)) { $script:langFile.$script:uiCulture }
-else { $script:langFile.default }
+else { $defaultLang = 'en-US'; $script:langFile.$defaultLang }
 
 #----------------------------------------------------------------------
 # 設定ファイル読み込み
@@ -65,7 +65,7 @@ if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 } else { Throw ($script:msg.UserSettingNotCompleted) }
 if (Test-Path variable:lang) {
 	$script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:lang)) { $script:langFile.$script:lang }
-	else { $script:langFile.default }
+	else { $defaultLang = 'en-US'; $script:langFile.$defaultLang }
 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -373,11 +373,14 @@
     "GuiTextScheduleStopSat": "土曜",
     "GuiTextScheduleStopSun": "日曜",
     "GuiTextScheduleStopDay": "終日",
+    "GuiTabLanguage": "言語 / Language",
+    "GuiHeaderPreferredLanguageHeader": "TVerRecの言語設定 / Language Setting",
+    "GuiTextPreferredLanguageText": "TVerRecはOSの言語設定に基づき自動的に言語を切り替えますが、自動設定がうまくいかない場合は言語設定を強制できます。\nTVerRec will automatically switch languages based on the OS language settings, but you can force overwrite language settings if the automatic settings do not work.",
     "GuiButtonCancel": "❌ キャンセル",
     "GuiButtonSave": "💾 保存",
     "おわり": "##########################################################################################"
   },
-  "default": {
+  "en-US": {
     "Common components": "##########################################################################################",
     "LongBoldBorder": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
     "MediumBoldBorder": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
@@ -750,6 +753,9 @@
     "GuiTextScheduleStopSat": "Sat",
     "GuiTextScheduleStopSun": "Sun",
     "GuiTextScheduleStopDay": "All Day",
+    "GuiTabLanguage": "Language / 言語",
+    "GuiHeaderPreferredLanguageHeader": "Language Setting / TVerRecの言語設定",
+    "GuiTextPreferredLanguageText": "TVerRec will automatically switch languages based on the OS language settings, but you can force overwrite language settings if the automatic settings do not work.\nTVerRecはOSの言語設定に基づき自動的に言語を切り替えますが、自動設定がうまくいかない場合は言語設定を強制できます。",
     "GuiButtonCancel": "❌ Cancel",
     "GuiButtonSave": "💾 Save",
     "End": "##########################################################################################"
