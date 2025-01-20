@@ -86,6 +86,11 @@ foreach ($videoLink in $videoLinks) {
 }
 #----------------------------------------------------------------------
 
+# youtube-dlのプロセスが終わるまで待機
+Write-Output ('')
+Write-Output ($script:mst.WaitingDownloadCompletion)
+Wait-DownloadCompletion
+
 $toastUpdateParams = @{
 	Title     = $script:msg.ListDownloading
 	Rate      = '1'
@@ -95,11 +100,6 @@ $toastUpdateParams = @{
 	Group     = 'List'
 }
 Update-ProgressToast @toastUpdateParams
-
-# youtube-dlのプロセスが終わるまで待機
-Write-Output ('')
-Write-Output ($script:mst.WaitingDownloadCompletion)
-Wait-DownloadCompletion
 
 Remove-Variable -Name args, listLinks, keyword, videoLinks, processedCount, videoTotal, totalStartTime, secRemaining, toastShowParams, videoNum, videoLink, secElapsed, minRemaining, toastUpdateParams -ErrorAction SilentlyContinue
 

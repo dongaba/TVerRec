@@ -46,16 +46,6 @@ foreach ($keyword in $keywords) {
 	Write-Output ($script:msg.MediumBoldBorder)
 	Write-Output ('{0}' -f $keyword)
 
-	$keyword = (Remove-Comment($keyword.Replace('https://tver.jp/', '').Trim()))
-	$resultLinks = @(Get-VideoLinksFromKeyword ([Ref]$keyword))
-
-	# URLがすでにダウンロード履歴に存在する場合は検索結果から除外
-	if ($resultLinks.Count -ne 0) { $videoLinks, $processedCount = Invoke-HistoryMatchCheck $resultLinks }
-	else { $videoLinks = @() ; $processedCount = 0 }
-	$videoTotal = $videoLinks.Count
-	if ($videoTotal -eq 0) { Write-Output ($script:msg.VideoCountWhenZero -f $videoTotal, $processedCount) }
-	else { Write-Output ($script:msg.VideoCountNonZero -f $videoTotal, $processedCount) }
-
 	# 処理時間の推計
 	$secElapsed = (Get-Date) - $totalStartTime
 	if ($keywordNum -ne 0) { $secRemaining1 = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $keywordNum) * ($keywordTotal - $keywordNum)) }
@@ -78,6 +68,16 @@ foreach ($keyword in $keywords) {
 		Group      = 'Bulk'
 	}
 	Update-ProgressToast2Row @toastUpdateParams
+
+	$keyword = (Remove-Comment($keyword.Replace('https://tver.jp/', '').Trim()))
+	$resultLinks = @(Get-VideoLinksFromKeyword ([Ref]$keyword))
+
+	# URLがすでにダウンロード履歴に存在する場合は検索結果から除外
+	if ($resultLinks.Count -ne 0) { $videoLinks, $processedCount = Invoke-HistoryMatchCheck $resultLinks }
+	else { $videoLinks = @() ; $processedCount = 0 }
+	$videoTotal = $videoLinks.Count
+	if ($videoTotal -eq 0) { Write-Output ($script:msg.VideoCountWhenZero -f $videoTotal, $processedCount) }
+	else { Write-Output ($script:msg.VideoCountNonZero -f $videoTotal, $processedCount) }
 
 	#----------------------------------------------------------------------
 	# 個々の番組ダウンロードここから
@@ -108,6 +108,11 @@ foreach ($keyword in $keywords) {
 }
 #======================================================================
 
+# youtube-dlのプロセスが終わるまで待機
+Write-Output ('')
+Write-Output ($script:msg.WaitingDownloadCompletion)
+Wait-DownloadCompletion
+
 $toastUpdateParams = @{
 	Title1     = $script:msg.ExtractingVideoFromKeywords
 	Rate1      = 1
@@ -121,11 +126,6 @@ $toastUpdateParams = @{
 	Group      = 'Bulk'
 }
 Update-ProgressToast2Row @toastUpdateParams
-
-# youtube-dlのプロセスが終わるまで待機
-Write-Output ('')
-Write-Output ($script:msg.WaitingDownloadCompletion)
-Wait-DownloadCompletion
 
 Remove-Variable -Name args, keywords, keywordNum, keywordTotal, toastShowParams, totalStartTime, keyword, resultLinks, processedCount, videoLinks, videoTotal, secElapsed, secRemaining1, videoLink, toastUpdateParams, videoNum -ErrorAction SilentlyContinue
 

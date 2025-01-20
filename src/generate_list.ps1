@@ -50,18 +50,6 @@ foreach ($keyword in $keywords) {
 	Write-Output ($script:msg.ShortBoldBorder)
 	Write-Output ('{0}' -f $keyword)
 
-	$keyword = (Remove-Comment($keyword.Replace('https://tver.jp/', '').Trim()))
-	$listLinks = @(Get-VideoLinksFromKeyword ([Ref]$keyword))
-
-	# URLがすでにダウンロードリストやダウンロード履歴に存在する場合は検索結果から除外
-	if ($listLinks.Count -ne 0) {
-		if ($script:listGenHistoryCheck) { $videoLinks, $processedCount = Invoke-HistoryAndListMatchCheck $listLinks }
-		else { $videoLinks, $processedCount = Invoke-ListMatchCheck $listLinks }
-	} else { $videoLinks = @() ; $processedCount = 0 }
-	$videoTotal = $videoLinks.Count
-	if ($videoTotal -eq 0) { Write-Output ($script:msg.VideoCountWhenZero -f $videoTotal, $processedCount) }
-	else { Write-Output ($script:msg.VideoCountNonZero -f $videoTotal, $processedCount) }
-
 	# 処理時間の推計
 	$secElapsed = (Get-Date) - $totalStartTime
 	if ($keywordNum -ne 0) { $secRemaining1 = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $keywordNum) * ($keywordTotal - $keywordNum)) }
@@ -84,6 +72,18 @@ foreach ($keyword in $keywords) {
 		Group      = 'ListGen'
 	}
 	Update-ProgressToast2Row @toastUpdateParams
+
+	$keyword = (Remove-Comment($keyword.Replace('https://tver.jp/', '').Trim()))
+	$listLinks = @(Get-VideoLinksFromKeyword ([Ref]$keyword))
+
+	# URLがすでにダウンロードリストやダウンロード履歴に存在する場合は検索結果から除外
+	if ($listLinks.Count -ne 0) {
+		if ($script:listGenHistoryCheck) { $videoLinks, $processedCount = Invoke-HistoryAndListMatchCheck $listLinks }
+		else { $videoLinks, $processedCount = Invoke-ListMatchCheck $listLinks }
+	} else { $videoLinks = @() ; $processedCount = 0 }
+	$videoTotal = $videoLinks.Count
+	if ($videoTotal -eq 0) { Write-Output ($script:msg.VideoCountWhenZero -f $videoTotal, $processedCount) }
+	else { Write-Output ($script:msg.VideoCountNonZero -f $videoTotal, $processedCount) }
 
 	#----------------------------------------------------------------------
 	# 個々の番組の情報の取得ここから
