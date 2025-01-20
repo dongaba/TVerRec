@@ -885,7 +885,7 @@
                             <Expander x:Name="preferredLanguageHeader" Margin="10,10,10,0" IsExpanded="False" FontFamily="Yu Gothic UI">
                                 <TextBlock x:Name="preferredLanguageText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
-                            <ComboBox x:Name="lang" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
+                            <ComboBox x:Name="preferredLanguage" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>

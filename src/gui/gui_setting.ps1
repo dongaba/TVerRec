@@ -41,8 +41,8 @@ if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
 	catch { Throw ($script:msg.LoadUserSettingFailed) }
 }
-if (Test-Path variable:lang) {
-	$script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:lang)) { $script:langFile.$script:lang }
+if (Test-Path variable:preferredLanguage) {
+	$script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:preferredLanguage)) { $script:langFile.$script:preferredLanguage }
 	else { $defaultLang = 'en-US'; $script:langFile.$defaultLang }
 }
 
@@ -104,7 +104,7 @@ $settingAttributes = @(
 	'$script:ytdlBaseArgs',
 	'$script:nonTVerYtdlBaseArgs',
 	'$script:scheduleStop',
-	'$script:lang'
+	'$script:preferredLanguage'
 )
 
 # endregion 環境設定
@@ -160,6 +160,15 @@ function Read-UserSetting {
 			if ($userSettingValue) {
 				Write-Debug [String]$userSettingValue
 				$settingBox.Text = $userSettingValue.split('=', 2)[1].Trim().Trim("'")
+
+				if ($settingBox.Name -eq 'preferredLanguage') {
+					switch ($settingBox.Text) {
+						'ja-JP' { $settingBox.Text = '日本語' }
+						'en-US' { $settingBox.Text = 'English' }
+						default { $settingBox.Text = $script:msg.SettingDefault }
+					}
+				}
+
 				if ($settingBox.Text -eq '$true') { $settingBox.Text = $script:msg.SettingTrue }
 				elseif ($settingBox.Text -eq '$false') { $settingBox.Text = $script:msg.SettingFalse }
 			} elseif ($settingAttribute -in $undefAttributes) { $settingBox.Text = $script:msg.SettingUndefined }
@@ -215,6 +224,13 @@ function Save-UserSetting {
 		foreach ($settingAttribute in $settingAttributes) {
 			$settingBoxName = $settingAttribute.Replace('$script:', '')
 			$settingBox = $settingWindow.FindName($settingBoxName)
+			if ($settingBox.Name -eq 'preferredLanguage') {
+				switch ($settingBox.Text) {
+					'日本語' { $settingBox.Text = 'ja-JP'}
+					'English' { $settingBox.Text = 'en-US'}
+					default { $settingBox.Text = ''}
+				}
+			}
 			switch -wildcard ($settingBox.Text) {
 				{ $_ -in '', $script:msg.SettingDefault, $script:msg.SettingUndefined } { continue }
 				{ $_ -eq $script:msg.SettingTrue } { $newSetting += ('{0} = $true' -f $settingAttribute) ; continue }
@@ -476,9 +492,9 @@ $preferredYoutubedl.Items.Add($script:msg.SettingDefault) | Out-Null
 $preferredYoutubedl.Items.Add('yt-dlp') | Out-Null
 $preferredYoutubedl.Items.Add('ytdl-patched') | Out-Null
 foreach ($option in $trueFalseOptions) { $scheduleStop.Items.Add($option)  | Out-Null }
-$lang.Items.Add($script:msg.SettingDefault) | Out-Null
-$lang.Items.Add('ja-JP') | Out-Null
-$lang.Items.Add('en-US') | Out-Null
+$preferredLanguage.Items.Add($script:msg.SettingDefault) | Out-Null
+$preferredLanguage.Items.Add('日本語') | Out-Null	# ja-JP
+$preferredLanguage.Items.Add('English') | Out-Null	# en-US
 
 
 # endregion WPFのWindow設定

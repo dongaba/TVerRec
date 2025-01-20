@@ -128,27 +128,27 @@
         <Border Background="#EEEEEE" Grid.Row="1" Grid.ColumnSpan="4" Grid.RowSpan="14" />
         <Border Background="#333333" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
-                <Label x:Name="lblTool" Foreground="#FFFFFF" Margin="10,0,0,0" Content="ツール起動" VerticalAlignment="Center" FontSize="14" />
+                <Label x:Name="lblTool" Foreground="#FFFFFF" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" />
             </StackPanel>
         </Border>
         <Border Background="#FFFFFF" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2">
             <StackPanel Margin="10,5,10,5" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Button x:Name="btnLoop" Style="{DynamicResource ButtonStyle}" Content="🔃 ループ実行" Margin="10,0,10,0" Width="200" />
+                <Button x:Name="btnLoop" Style="{DynamicResource ButtonStyle}" Margin="10,0,10,0" Width="200" />
             </StackPanel>
         </Border>
         <Border Background="#FFFFFF" Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2">
             <StackPanel Margin="10,0,10,5" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Button x:Name="btnSingle" Style="{DynamicResource ButtonStyle}" Content="🔽 個別ダウンロード" Margin="10,0,10,0" Width="120" />
-                <Button x:Name="btnBulk" Style="{DynamicResource ButtonStyle}" Content="⏬️ 一括ダウンロード" Margin="10,0,10,0" Width="120" />
-                <Button x:Name="btnListGen" Style="{DynamicResource ButtonStyle}" Content="📝 リスト作成" Margin="10,0,10,0" Width="120" />
-                <Button x:Name="btnList" Style="{DynamicResource ButtonStyle}" Content="🎯 リストダウンロード" Margin="10,0,10,0" Width="120" />
+                <Button x:Name="btnSingle" Style="{DynamicResource ButtonStyle}" Margin="10,0,10,0" Width="120" />
+                <Button x:Name="btnBulk" Style="{DynamicResource ButtonStyle}" Margin="10,0,10,0" Width="120" />
+                <Button x:Name="btnListGen" Style="{DynamicResource ButtonStyle}" Margin="10,0,10,0" Width="120" />
+                <Button x:Name="btnList" Style="{DynamicResource ButtonStyle}" Margin="10,0,10,0" Width="120" />
             </StackPanel>
         </Border>
         <Border Background="#FFFFFF" Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2">
             <StackPanel Margin="10,0,10,5" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Button x:Name="btnDelete" Style="{DynamicResource ButtonStyle}" Content="🚮 不要ファイル削除" Margin="10,0,10,0" Width="120" />
-                <Button x:Name="btnValidate" Style="{DynamicResource ButtonStyle}" Content="✅ 番組整合性検証" Margin="10,0,10,0" Width="120" />
-                <Button x:Name="btnMove" Style="{DynamicResource ButtonStyle}" Content="🔀 番組移動" Margin="10,0,10,0" Width="120" />
+                <Button x:Name="btnDelete" Style="{DynamicResource ButtonStyle}" Margin="10,0,10,0" Width="120" />
+                <Button x:Name="btnValidate" Style="{DynamicResource ButtonStyle}" Margin="10,0,10,0" Width="120" />
+                <Button x:Name="btnMove" Style="{DynamicResource ButtonStyle}" Margin="10,0,10,0" Width="120" />
             </StackPanel>
         </Border>
         <Border Background="#FFFFFF" Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2">
@@ -159,45 +159,45 @@
                     <ColumnDefinition />
                     <ColumnDefinition Width="30" />
                 </Grid.ColumnDefinitions>
-                <Button x:Name="btnKillAll" Style="{DynamicResource ButtonStyle}" Content="❌ 処理停止" Margin="5,0,5,10" Grid.Column="1" Width="100" />
+                <Button x:Name="btnKillAll" Style="{DynamicResource ButtonStyle}" Margin="5,0,5,10" Grid.Column="1" Width="120" />
                 <Label x:Name="lblStatus" Content="" Margin="5,0,5,10" VerticalAlignment="Center" Grid.Column="2" Foreground="#FF393939" />
             </Grid>
         </Border>
         <!-- クイックリンク -->
         <Border Background="#333333" Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="2">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
-                <Label x:Name="lblLink" Foreground="#FFFFFF" Margin="10,0,0,0" Content="クイックリンク" VerticalAlignment="Center" FontSize="14" />
+                <Label x:Name="lblLink" Foreground="#FFFFFF" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" />
             </StackPanel>
         </Border>
         <Border Background="#FFFFFF" Grid.Row="8" Grid.Column="1" Grid.ColumnSpan="2">
             <StackPanel Margin="10,5,10,5" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Button x:Name="btnWorkOpen" Style="{DynamicResource ButtonStyle}" Content="♻️ 作業ディレクトリ" Margin="10,0,10,0" Width="140" />
-                <Button x:Name="btnDownloadOpen" Style="{DynamicResource ButtonStyle}" Content="📚 ダウンロードディレクトリ" Margin="10,0,10,0" Width="140" />
-                <Button x:Name="btnSaveOpen" Style="{DynamicResource ButtonStyle}" Content="💾 保存ディレクトリ" Margin="10,0,10,0" Width="140" />
+                <Button x:Name="btnWorkOpen" Style="{DynamicResource ButtonStyle}" Margin="10,0,10,0" Width="140" />
+                <Button x:Name="btnDownloadOpen" Style="{DynamicResource ButtonStyle}" Margin="10,0,10,0" Width="140" />
+                <Button x:Name="btnSaveOpen" Style="{DynamicResource ButtonStyle}" Margin="10,0,10,0" Width="140" />
             </StackPanel>
         </Border>
         <Border Background="#FFFFFF" Grid.Row="9" Grid.Column="1" Grid.ColumnSpan="2">
             <StackPanel Margin="10,0,10,10" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Button x:Name="btnKeywordOpen" Style="{DynamicResource ButtonStyle}" Content="🔎 キーワードファイル" Margin="10,0,10,0" Width="140" />
-                <Button x:Name="btnIgnoreOpen" Style="{DynamicResource ButtonStyle}" Content="🚫 除外リスト" Margin="10,0,10,0" Width="140" />
-                <Button x:Name="btnListOpen" Style="{DynamicResource ButtonStyle}" Content="📝 リストファイル" Margin="10,0,10,0" Width="140" />
+                <Button x:Name="btnKeywordOpen" Style="{DynamicResource ButtonStyle}" Margin="10,0,10,0" Width="140" />
+                <Button x:Name="btnIgnoreOpen" Style="{DynamicResource ButtonStyle}" Margin="10,0,10,0" Width="140" />
+                <Button x:Name="btnListOpen" Style="{DynamicResource ButtonStyle}" Margin="10,0,10,0" Width="140" />
             </StackPanel>
         </Border>
         <!-- 実行ログ -->
         <Border Background="#333333" Grid.Row="10" Grid.Column="1" Grid.ColumnSpan="2">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
-                <Label x:Name="lblLog" Foreground="#FFFFFF" Margin="10,0,0,0" Content="実行ログ" VerticalAlignment="Center" FontSize="14" />
+                <Label x:Name="lblLog" Foreground="#FFFFFF" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" />
             </StackPanel>
         </Border>
         <Border Background="#FFFFFF" Grid.Row="11" Grid.Column="1" Grid.ColumnSpan="2">
-            <Button x:Name="btnClearLog" Style="{DynamicResource ButtonStyle}" Content="🗑️ 実行ログクリア" Margin="10,5,10,0" HorizontalAlignment="Left" VerticalAlignment="Center" Width="100" />
+            <Button x:Name="btnClearLog" Style="{DynamicResource ButtonStyle}" Margin="10,5,10,0" HorizontalAlignment="Left" VerticalAlignment="Center" Width="100" />
         </Border>
         <Border Background="#FFFFFF" Grid.Row="12" Grid.Column="1" Grid.ColumnSpan="2">
             <RichTextBox x:Name="tbOutText" Style="{DynamicResource RichTextBoxStyle}" Block.LineHeight="1" Margin="10,0,10,10" IsReadOnly="True" VerticalScrollBarVisibility="Auto" FontFamily="HackGen Console NF, MS Gothic" Foreground="#FF393939" BorderThickness="0,1,0,1" />
         </Border>
         <!-- ボタンエリア -->
-        <Button x:Name="btnWiki" Style="{DynamicResource ButtonStyle}" Content="📒 TVerRec Wiki" Grid.Column="1" Grid.Row="13" HorizontalAlignment="Left" VerticalAlignment="Center" Width="100" />
-        <Button x:Name="btnSetting" Style="{DynamicResource ButtonStyle}" Content="🛠️ 設定" Grid.Column="1" Grid.Row="13" HorizontalAlignment="Right" VerticalAlignment="Center" Width="100" />
-        <Button x:Name="btnExit" Style="{DynamicResource ButtonStyle}" Content="終了" Grid.Column="2" Grid.Row="13" HorizontalAlignment="Right" VerticalAlignment="Center" Width="100" />
+        <Button x:Name="btnWiki" Style="{DynamicResource ButtonStyle}" Grid.Column="1" Grid.Row="13" HorizontalAlignment="Left" VerticalAlignment="Center" Width="100" />
+        <Button x:Name="btnSetting" Style="{DynamicResource ButtonStyle}" Grid.Column="1" Grid.Row="13" HorizontalAlignment="Right" VerticalAlignment="Center" Width="100" />
+        <Button x:Name="btnExit" Style="{DynamicResource ButtonStyle}" Grid.Column="2" Grid.Row="13" HorizontalAlignment="Right" VerticalAlignment="Center" Width="100" />
     </Grid>
 </Window>
