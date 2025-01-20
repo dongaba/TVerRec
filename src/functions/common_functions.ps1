@@ -17,9 +17,9 @@ function Invoke-GarbageCollection() {
 	[OutputType([System.Void])]
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	Write-Verbose -Message 'Starting garbage collection...' ; [System.GC]::Collect()
-	Write-Verbose -Message 'Waiting for pending finalizers...' ; [System.GC]::WaitForPendingFinalizers()
-	Write-Verbose -Message 'Performing a final pass of garbage collection...' ; [System.GC]::Collect()
+	Write-Verbose -Message 'Starting garbage collection ...' ; [System.GC]::Collect()
+	Write-Verbose -Message 'Waiting for pending finalizers ...' ; [System.GC]::WaitForPendingFinalizers()
+	Write-Verbose -Message 'Performing a final pass of garbage collection ...' ; [System.GC]::Collect()
 	Write-Verbose -Message 'Garbage collection completed.'
 }
 
@@ -261,7 +261,7 @@ function Remove-Files {
 	[OutputType([System.Void])]
 	Param (
 		[parameter(Mandatory = $true)][System.IO.FileInfo]$basePath,
-		[Parameter(Mandatory = $true)][string[]]$conditions,
+		[Parameter(Mandatory = $true)][String[]]$conditions,
 		[Parameter(Mandatory = $true)][int32]$delPeriod
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -274,7 +274,7 @@ function Remove-Files {
 				Write-Output ('　{0}' -f (Join-Path $using:basePath $_))
 				(Get-ChildItem -LiteralPath $using:basePath -Recurse -File -Filter $_ -ErrorAction SilentlyContinue).Where({ $_.LastWriteTime -lt $using:limitDateTime }) | Remove-Item -Force -ErrorAction SilentlyContinue | Out-Null
 			} -ThrottleLimit $script:multithreadNum
-		} catch { Write-Warning ('⚠️ 削除できないファイルがありました') }
+		} catch { Write-Warning ($script:msg.FileCannotBeDeleted) }
 	} else {
 		# 並列化が無効の場合は従来型処理
 		try {
@@ -282,7 +282,7 @@ function Remove-Files {
 				Write-Output ('　{0}' -f (Join-Path $basePath $condition))
 				(Get-ChildItem -LiteralPath $basePath -Recurse -File -Filter $condition -ErrorAction SilentlyContinue).Where({ $_.LastWriteTime -lt $limitDateTime }) | Remove-Item -Force -ErrorAction SilentlyContinue | Out-Null
 			}
-		} catch { Write-Warning ('⚠️ 削除できないファイルがありました') }
+		} catch { Write-Warning ($script:msg.FileCannotBeDeleted) }
 	}
 	Remove-Variable -Name basePath, conditions, delPeriod, limitDateTime, condition -ErrorAction SilentlyContinue
 }
@@ -294,15 +294,15 @@ function Expand-Zip {
 	[CmdletBinding()]
 	[OutputType([System.Void])]
 	Param (
-		[Parameter(Mandatory = $true)][string]$path,
-		[Parameter(Mandatory = $true)][string]$destination
+		[Parameter(Mandatory = $true)][String]$path,
+		[Parameter(Mandatory = $true)][String]$destination
 	)
 	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $path)
 	if (Test-Path -Path $path) {
-		Write-Verbose ('{0}を{1}に展開します' -f $path, $destination)
+		Write-Verbose ('Extracting {0} into {1}' -f $path, $destination)
 		[System.IO.Compression.ZipFile]::ExtractToDirectory($path, $destination, $true)
-		Write-Verbose ('{0}を展開しました' -f $path)
-	} else { Throw ('❌️ {0}が見つかりません' -f $path) }
+		Write-Verbose ('Extracted {0}' -f $path)
+	} else { Throw ($script:msg.FileNotFound -f $path) }
 	Remove-Variable -Name path, destination -ErrorAction SilentlyContinue
 }
 
@@ -664,13 +664,13 @@ function Update-ProgressToast2Row {
 	if (!($script:disableToastNotification)) {
 		$rightText1 = switch ($rightText1 ) {
 			'' { '' ; continue }
-			'0' { '完了' ; continue }
-			default { ('残り時間 {0}分' -f ([Int][Math]::Ceiling($rightText1 / 60))) }
+			'0' { $script:msg.Completed ; continue }
+			default { ($script:msg.MinRemaining -f ([Int][Math]::Ceiling($rightText1 / 60))) }
 		}
 		$rightText2 = switch ($rightText2 ) {
 			'' { '' ; continue }
-			'0' { '完了' ; continue }
-			default { ('残り時間 {0}分' -f ([Int][Math]::Ceiling($rightText2 / 60))) }
+			'0' { $script:msg.Completed ; continue }
+			default { ($script:msg.MinRemaining -f ([Int][Math]::Ceiling($rightText2 / 60))) }
 		}
 		if ($script:disableToastNotification -ne $true) {
 			switch ($true) {

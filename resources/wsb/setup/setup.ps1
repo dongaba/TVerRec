@@ -1,4 +1,4 @@
-﻿Write-Output 'ファイアウォールを無効化します...'
+﻿Write-Output 'ファイアウォールを無効化します ...'
 Set-NetFirewallProfile -Enabled False
 
 # 日本語化するためのショートカットをデスクトップに配置

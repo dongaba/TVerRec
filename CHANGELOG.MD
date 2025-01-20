@@ -1,5 +1,18 @@
 # Change Log
 
+## [3.3.1](https://github.com/dongaba/TVerRec/releases/tag/v3.3.1)
+
+### 3.3.1 Added
+
+- 日本語以外の表記ができる機能を追加。とりあえず英語をサポート(その他の言語は言語ファイルの提供があれば追加)
+- GUIから言語の切り替えができる機能を追加
+
+### 3.3.1 Changed
+
+- サンプルキーワードファイルのすべてのエントリーをコメントアウト。[Issue #156](https://github.com/dongaba/TVerRec/issues/156) & [Issue #135](https://github.com/dongaba/TVerRec/issues/135)
+
+### 3.3.0 Fixed
+
 ## [3.3.0](https://github.com/dongaba/TVerRec/releases/tag/v3.3.0)
 
 ### 3.3.0 Added
@@ -18,7 +31,7 @@
 
 ### 3.2.9 Changed
 
-- それぞれのキーワードにまっちする番組の中で配信終了までの短いものからダウンロードするように
+- それぞれのキーワードにマッチする番組の中で配信終了までの短いものからダウンロードするように
 - 各種Typoを修正
 
 ### 3.2.9 Fixed

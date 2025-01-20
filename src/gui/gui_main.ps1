@@ -5,7 +5,7 @@
 ###################################################################################
 using namespace System.Windows.Threading
 Set-StrictMode -Version Latest
-if (!$IsWindows) { Throw ('❌️ Windows以外では動作しません') ; Start-Sleep 10 }
+if (!$IsWindows) { Throw ('❌️ Windows以外では動作しません。For Windows only') ; Start-Sleep 10 }
 Add-Type -AssemblyName PresentationFramework | Out-Null
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -16,8 +16,8 @@ try {
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	$script:scriptRoot = Convert-Path (Join-Path $script:scriptRoot '../')
 	Set-Location $script:scriptRoot
-} catch { Throw ('❌️ ディレクトリ設定に失敗しました') }
-if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
+} catch { Throw ('❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.') }
+if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space') }
 . (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 
 # パラメータ設定
@@ -34,11 +34,11 @@ $msgTypesColorMap = @{
 # ログ出力用変数
 $jobMsgs = @()
 $msgTypes = @('Output', 'Error', 'Warning', 'Verbose', 'Debug', 'Information')
-$msgError = New-Object System.Collections.Generic.List[string]
-$msgWarning = New-Object System.Collections.Generic.List[string]
-$msgVerbose = New-Object System.Collections.Generic.List[string]
-$msgDebug = New-Object System.Collections.Generic.List[string]
-$msgInformation = New-Object System.Collections.Generic.List[string]
+$msgError = New-Object System.Collections.Generic.List[String]
+$msgWarning = New-Object System.Collections.Generic.List[String]
+$msgVerbose = New-Object System.Collections.Generic.List[String]
+$msgDebug = New-Object System.Collections.Generic.List[String]
+$msgInformation = New-Object System.Collections.Generic.List[String]
 
 # endregion 環境設定
 
@@ -99,11 +99,9 @@ function Out-ExecutionLog {
 # region WPFのWindow設定
 
 try {
-	[String]$mainXaml = Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecMain.xaml')
-	$mainXaml = $mainXaml -ireplace 'mc:Ignorable="d"', '' -ireplace 'x:N', 'N' -ireplace 'x:Class=".*?"', ''
-	[xml]$mainCleanXaml = $mainXaml
-	$mainWindow = [System.Windows.Markup.XamlReader]::Load(([System.Xml.XmlNodeReader]::new($mainCleanXaml)))
-} catch { Throw ('❌️ ウィンドウデザイン読み込めませんでした。TVerRecが破損しています。') }
+	[xml]$mainXaml = [String](Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecMain.xaml'))
+	$mainWindow = [System.Windows.Markup.XamlReader]::Load(([System.Xml.XmlNodeReader]::new($mainXaml)))
+} catch { Throw ($script:msg.GuiBroken) }
 # PowerShellのウィンドウを非表示に
 Add-Type -Name Window -Namespace Console -MemberDefinition @'
 	[DllImport("Kernel32.dll")] public static extern IntPtr GetConsoleWindow();
@@ -118,13 +116,37 @@ $mainWindow.Add_Loaded({ $mainWindow.Icon = $script:iconPath })
 # ウィンドウを閉じる際の処理
 $mainWindow.Add_Closing({ Get-Job | Receive-Job -Wait -AutoRemoveJob -Force })
 # Name属性を持つ要素のオブジェクト作成
-$mainCleanXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $mainWindow.FindName($_.Name) -Scope Local }
+$mainXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $mainWindow.FindName($_.Name) -Scope Local }
 # WPFにロゴをロード
 $LogoImage.Source = ConvertFrom-Base64 $script:logoBase64
 # バージョン表記
 $lblVersion.Content = ('Version {0}' -f $script:appVersion)
 # ログ出力するためのテキストボックス
 $outText = $mainWindow.FindName('tbOutText')
+
+# GUI部品のラベルを言語別に設定
+$lblTool.Content = $script:msg.GuiHeaderTool
+$lblLink.Content = $script:msg.GuiHeaderLink
+$lblLog.Content = $script:msg.GuiHeaderLog
+$btnLoop.Content = $script:msg.GuiButtonLoop
+$btnSingle.Content = $script:msg.GuiButtonSingle
+$btnBulk.Content = $script:msg.GuiButtonBulk
+$btnListGen.Content = $script:msg.GuiButtonListGen
+$btnList.Content = $script:msg.GuiButtonList
+$btnDelete.Content = $script:msg.GuiButtonDelete
+$btnValidate.Content = $script:msg.GuiButtonValidate
+$btnMove.Content = $script:msg.GuiButtonMove
+$btnKillAll.Content = $script:msg.GuiButtonKillAll
+$btnWorkOpen.Content = $script:msg.GuiButtonWorkOpen
+$btnDownloadOpen.Content = $script:msg.GuiButtonDownloadOpen
+$btnSaveOpen.Content = $script:msg.GuiButtonSaveOpen
+$btnKeywordOpen.Content = $script:msg.GuiButtonKeywordOpen
+$btnIgnoreOpen.Content = $script:msg.GuiButtonIgnoreOpen
+$btnListOpen.Content = $script:msg.GuiButtonListOpen
+$btnClearLog.Content = $script:msg.GuiButtonClearLog
+$btnWiki.Content = $script:msg.GuiButtonWiki
+$btnSetting.Content = $script:msg.GuiButtonSetting
+$btnExit.Content = $script:msg.GuiButtonExit
 
 # endregion WPFのWindow設定
 
@@ -155,15 +177,16 @@ $scriptBlocks = @{
 }
 
 # バックグラウンドジョブ化する処理の名前
+# $script:msgに定義されているメッセージを取得するためのキーを引用符なしで指定
 $threadNames = @{
-	$btns[0] = { 個別ダウンロード処理を実行中 }
-	$btns[1] = { 一括ダウンロード処理を実行中 }
-	$btns[2] = { リスト作成処理を実行中 }
-	$btns[3] = { リストダウンロード処理を実行中 }
-	$btns[4] = { 不要ファイル削除処理を実行中 }
-	$btns[5] = { 番組整合性検証処理を実行中 }
-	$btns[6] = { 番組移動処理を実行中 }
-	$btns[7] = { ループ処理を実行中 }
+	$btns[0] = { ProcessBulkDownload }
+	$btns[1] = { ProcessSingleDownload }
+	$btns[2] = { ProcessListGenerate }
+	$btns[3] = { ProcessListDownload }
+	$btns[4] = { ProcessDelete }
+	$btns[5] = { ProcessValidate }
+	$btns[6] = { ProcessMove }
+	$btns[7] = { ProcessLoop }
 }
 
 # バックグラウンドジョブ化するボタンのアクション
@@ -172,7 +195,7 @@ foreach ($btn in $btns) {
 			#ジョブの稼働中はボタンを無効化
 			foreach ($btn in $btns) { $btn.IsEnabled = $false }
 			$btnExit.IsEnabled = $false
-			$lblStatus.Content = ([String]$threadNames[$this]).Trim()
+			$lblStatus.Content = $script:msg.(([String]$threadNames[$this]).trim())
 			#処理停止ボタンの有効化
 			$btnKillAll.IsEnabled = $true
 			#バックグラウンドジョブの起動
@@ -189,7 +212,7 @@ $btnWorkOpen.Add_Click({ Invoke-Item $script:downloadWorkDir })
 $btnDownloadOpen.Add_Click({ Invoke-Item $script:downloadBaseDir })
 $btnsaveOpen.Add_Click({
 		if ($script:saveBaseDir -ne '') { $script:saveBaseDir.Split(';').Trim() | ForEach-Object { Invoke-Item $_ } }
-		else { [System.Windows.MessageBox]::Show('保存ディレクトリが設定されていません') }
+		else { [System.Windows.MessageBox]::Show($script:msg.SaveDirNotSpecified) }
 	})
 $btnKeywordOpen.Add_Click({ Invoke-Item $script:keywordFilePath })
 $btnIgnoreOpen.Add_Click({ Invoke-Item $script:ignoreFilePath })
@@ -204,7 +227,7 @@ $btnKillAll.Add_Click({
 		Get-Job | Remove-Job -Force
 		foreach ($btn in $btns) { $btn.IsEnabled = $true }
 		$btnExit.IsEnabled = $true; $btnKillAll.IsEnabled = $false
-		$lblStatus.Content = '処理を強制停止しました'
+		$lblStatus.Content = $script:msg.ProcessForceStopped
 		Invoke-GarbageCollection
 	})
 $btnWiki.Add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
@@ -226,7 +249,7 @@ try {
 	$mainWindow.Show() | Out-Null
 	$mainWindow.Activate() | Out-Null
 	[Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0) | Out-Null
-} catch { Throw ('❌️ ウィンドウを描画できませんでした。TVerRecが破損しています。') }
+} catch { Throw ($script:msg.WindowRenderError) }
 
 # endregion ウィンドウ表示
 
@@ -257,7 +280,7 @@ while ($mainWindow.IsVisible) {
 			if ($job.State -in $jobTerminationStates) {
 				Remove-Job $job
 				$btns.ForEach({ $_.IsEnabled = $true }); $btnExit.IsEnabled = $true; $btnKillAll.IsEnabled = $false
-				$lblStatus.Content = '処理を終了しました'
+				$lblStatus.Content = $script:msg.ProcessCompleted
 				Invoke-GarbageCollection
 			}
 		}
@@ -277,7 +300,7 @@ Get-Job | Receive-Job -Wait -AutoRemoveJob -Force
 
 Remove-Variable -Name jobTerminationStates, msgTypesColorMap -ErrorAction SilentlyContinue
 Remove-Variable -Name jobMsgs, msgTypes, msgError, msgWarning, msgVerbose, msgDebug, msgInformation -ErrorAction SilentlyContinue
-Remove-Variable -Name mainXaml, mainCleanXaml, mainWindow -ErrorAction SilentlyContinue
+Remove-Variable -Name mainXaml, mainWindow -ErrorAction SilentlyContinue
 Remove-Variable -Name LogoImage, lblVersion, outText -ErrorAction SilentlyContinue
 Remove-Variable -Name btnBulk, btnDelete, btnList, btnListGen, btnLoop, btnMove, btnSingle, btnValidate, btnExit, btnKillAll -ErrorAction SilentlyContinue
 Remove-Variable -Name btns, scriptBlocks, threadNames, btn, lblStatus -ErrorAction SilentlyContinue

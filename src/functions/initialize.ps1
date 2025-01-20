@@ -7,47 +7,60 @@ Set-StrictMode -Version Latest
 Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 try { $launchMode = [String]$args[0] } catch { $launchMode = '' }
 
-#----------------------------------------------------------------------
-# 設定ファイル読み込み
 $script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 $script:devDir = Join-Path $script:scriptRoot '../dev'
 
+#----------------------------------------------------------------------
+# メッセージファイル読み込み
+$script:langDir = Convert-Path (Join-Path $scriptRoot '../resources/lang')
+$script:uiCulture = [System.Globalization.CultureInfo]::CurrentUICulture.Name
+Write-Debug "Current Language: $script:uiCulture"
+$script:langFile = Get-Content -Path (Join-Path $script:langDir 'messages.json') | ConvertFrom-Json
+$script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:uiCulture)) { $script:langFile.$script:uiCulture }
+else { $defaultLang = 'en-US'; $script:langFile.$defaultLang }
+
+#----------------------------------------------------------------------
+# 設定ファイル読み込み
 if ( Test-Path (Join-Path $script:confDir 'system_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'system_setting.ps1')) }
-	catch { Throw ('❌️ システム設定ファイルの読み込みに失敗しました') }
-} else { Throw ('❌️ システム設定ファイルが見つかりません') }
+	catch { Throw ($script:msg.LoadSystemSettingFailed) }
+} else { Throw ($script:msg.SystemSettingNotFound) }
 
 if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
-	catch { Throw ('❌️ ユーザ設定ファイルの読み込みに失敗しました') }
+	catch { Throw ($script:msg.LoadUserSettingFailed) }
 } elseif ($IsWindows) {
-	Write-Output ('ユーザ設定ファイルを作成する必要があります')
+	Write-Output ($script:msg.UserSettingNeedsToBeCreated)
 	try { & 'gui/gui_setting.ps1' }
-	catch { Throw ('❌️ 設定画面の起動に失敗しました') }
+	catch { Throw ($script:msg.LoadSettingGUIFailed) }
 	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 		try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
-		catch { Throw ('❌️ ユーザ設定ファイルの読み込みに失敗しました') }
-	} else { Throw ('❌️ ユーザ設定が完了してません') }
-} else { Throw ('❌️ ユーザ設定が完了してません') }
+		catch { Throw ($script:msg.LoadUserSettingFailed) }
+	} else { Throw ($script:msg.UserSettingNotCompleted) }
+} else { Throw ($script:msg.UserSettingNotCompleted) }
+if (Test-Path variable:preferredLanguage) {
+	$script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:preferredLanguage)) { $script:langFile.$script:preferredLanguage }
+	else { $defaultLang = 'en-US'; $script:langFile.$defaultLang }
+}
 
 #----------------------------------------------------------------------
 # 外部関数ファイルの読み込み
 try { . (Convert-Path (Join-Path $script:scriptRoot 'functions/common_functions.ps1')) }
-catch { Throw ('❌️ 外部関数ファイル(common_functions.ps1)の読み込みに失敗しました') }
+catch { Throw ($script:msg.LoadCommonFuncFailed) }
 try { . (Convert-Path (Join-Path $script:scriptRoot 'functions/tver_functions.ps1')) }
-catch { Throw ('❌️ 外部関数ファイル(tver_functions.ps1)の読み込みに失敗しました') }
+catch { Throw ($script:msg.LoadTVerFuncFailed) }
 try { . (Convert-Path (Join-Path $script:scriptRoot 'functions/tverrec_functions.ps1')) }
-catch { Throw ('❌️ 外部関数ファイル(tverrec_functions.ps1)の読み込みに失敗しました') }
+catch { Throw ($script:msg.LoadTVerRecFuncFailed) }
 
 #----------------------------------------------------------------------
 # 開発環境用に設定上書き
 try {
 	$devFunctionFile = Join-Path $script:devDir 'dev_functions.ps1'
 	$devConfFile = Join-Path $script:devDir 'dev_setting.ps1'
-	if (Test-Path $devConfFile) { . $devConfFile ; Write-Debug ('💡 開発ファイル用設定ファイルを読み込みました') }
-	if (Test-Path $devFunctionFile) { . $devFunctionFile ; Write-Debug ('💡 開発ファイル用共通関数ファイルを読み込みました') }
+	if (Test-Path $devConfFile) { . $devConfFile ; Write-Debug ($script:msg.DevConfLoaded) }
+	if (Test-Path $devFunctionFile) { . $devFunctionFile ; Write-Debug ($script:msg.DevFuncLoaded) }
 	Remove-Variable -Name devFunctionFile, devConfFile -ErrorAction SilentlyContinue
-} catch { Throw ('❌️ 開発用設定ファイルの読み込みに失敗しました') }
+} catch { Throw ($script:msg.LoadDevFilesFailed) }
 
 #----------------------------------------------------------------------
 # 連続実行時は以降の処理は不要なのでexit
@@ -65,12 +78,12 @@ if (Test-Path (Join-Path $script:scriptRoot '../log/updater_update.txt')) {
 			-Uri 'https://raw.githubusercontent.com/dongaba/TVerRec/master/win/update_tverrec.cmd' `
 			-OutFile (Join-Path $script:scriptRoot '../win/update_tverrec.cmd')
 		Remove-Item (Join-Path $script:scriptRoot '../log/updater_update.txt') -Force | Out-Null
-	} catch { Write-Warning ('⚠️ アップデータのアップデートに失敗しました。ご自身でアップデートを完了させる必要があります') }
+	} catch { Write-Warning ($script:msg.UpdateUpdaterFailed) }
 }
 
 # TVerRecの最新化チェック
 Invoke-TVerRecUpdateCheck
-if (!$?) { Write-Warning ('⚠️ TVerRecのバージョンチェックに失敗しました。処理を継続します') }
+if (!$?) { Write-Warning ($script:msg.TVerRecVersionCheckFailed) }
 
 #----------------------------------------------------------------------
 # ダウンロード対象キーワードのパス
@@ -121,9 +134,9 @@ if ( $myInvocation.ScriptName.Contains('gui')) {
 	if (!$script:guiMode) { Show-Logo }
 	# youtube-dl/ffmpegの最新化チェック
 	try { if (!$script:disableUpdateYoutubedl) { Invoke-ToolUpdateCheck -scriptName 'update_youtube-dl.ps1' -targetName 'youtube-dl' } }
-	catch { Write-Warning ('⚠️ youtube-dlのバージョンチェックに失敗しました。処理を継続します') }
+	catch { Write-Warning ($script:msg.YoutubeDLVersionCheckFailed) }
 	try { if (!$script:disableUpdateFfmpeg) { Invoke-ToolUpdateCheck -scriptName 'update_ffmpeg.ps1' -targetName 'ffmpeg' } }
-	catch { Write-Warning ('⚠️ ffmpegのバージョンチェックに失敗しました。処理を継続します') }
+	catch { Write-Warning ($script:msg.FfmpegVersionCheckFailed) }
 }
 
 # 共通HTTPヘッダ
