@@ -107,8 +107,8 @@ function Get-LinkFromKeyword {
 		'tag' { ('https://platform-api.tver.jp/service/api/v1/callTagSearch/{0}' -f $id) ; continue }
 		'new' { ('https://platform-api.tver.jp/service/api/v1/callNewerDetail/{0}' -f $id) ; $type = 'new' ; continue }
 		'end' { ('https://platform-api.tver.jp/service/api/v1/callEnderDetail/{0}' -f $id) ; $type = 'end' ; continue }
-		'ranking' { 
-			if ($id -eq 'all') { 'https://platform-api.tver.jp/service/api/v1/callEpisodeRanking' } 
+		'ranking' {
+			if ($id -eq 'all') { 'https://platform-api.tver.jp/service/api/v1/callEpisodeRanking' }
 			else { ('https://platform-api.tver.jp/service/api/v1/callEpisodeRankingDetail/{0}' -f $id) }
 			$type = 'ranking' ; continue
 		}
@@ -280,7 +280,7 @@ function Get-LinkFromSiteMap {
 		} catch { $tverID = @{ type = $null ; id = $null } }
 		if ($tverID.id) {
 			switch ($tverID.type) {
-				'episodes' { 
+				'episodes' {
 					$linkCollection.episodeLinks[('https://tver.jp/episodes/{0}' -f $tverID.id)] = 0	# サイトマップにあるEpisodeはEndAtが不明なので0を設定
 					continue
 				}
