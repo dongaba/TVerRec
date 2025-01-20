@@ -92,5 +92,5 @@
 	"workbench.iconTheme": "material-icon-theme",
 	"workbench.preferredLightColorTheme": "Default Dark+",
 	"workbench.startupEditor": "newUntitledFile",
-	"xmlComplete.formattingStyle": "singleLineAttributes",
+	"xmlComplete.formattingStyle": "singleLineAttributes"
 }
