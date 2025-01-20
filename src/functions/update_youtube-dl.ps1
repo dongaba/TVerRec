@@ -107,7 +107,7 @@ if ($latestVersion -eq $currentVersion) {
 	Write-Output ($script:msg.ToolRemoteVersion -f $latestVersion)
 	if (!$IsWindows) { $fileBeforeRename = $script:preferredYoutubedl ; $fileAfterRename = 'youtube-dl' }
 	else { $fileBeforeRename = ('{0}.exe' -f $script:preferredYoutubedl) ; $fileAfterRename = 'youtube-dl.exe' }
-	Write-Output ($script:msg.ToolDownload -f 'youtube-dl', [String][System.Environment]::OSVersion)
+	Write-Output ($script:msg.ToolDownload -f 'youtube-dl', [String]([System.Runtime.InteropServices.RuntimeInformation]::OSDescription).split()[0..2])
 	try {
 		#ダウンロード
 		$tag = (Invoke-RestMethod -Uri $releases -Method 'GET')[0].Tag_Name
