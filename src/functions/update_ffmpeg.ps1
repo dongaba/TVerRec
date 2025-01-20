@@ -106,8 +106,8 @@ switch ($true) {
 			Write-Output ($script:msg.ToolRemoteVersion -f $latestVersion)
 		}
 		# アーキテクチャごとのURLパターン
-		$cpu = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture
-		$pattern = switch ($cpu) {
+		$arch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture
+		$pattern = switch ($arch) {
 			'X64' { '-win64-gpl-' ; continue }
 			'Arm64' { '-winarm64-gpl-' ; continue }
 			'X86' { '-win32-gpl-' ; continue }
@@ -116,7 +116,7 @@ switch ($true) {
 		if ($latestRelease -cmatch "https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(${pattern})(.*).zip") {
 			$downloadURL = $matches[0]
 			# ダウンロード
-			Write-Output ($script:msg.ToolDownload -f 'ffmpeg', $cpu)
+			Write-Output ($script:msg.ToolDownload -f 'ffmpeg', $arch)
 			try { Invoke-WebRequest -Uri $downloadURL -OutFile (Join-Path $script:binDir 'ffmpeg.zip') }
 			catch { Write-Warning ($script:msg.ToolDownloadFailed -f 'ffmpeg') ; return }
 			# 展開
@@ -171,13 +171,13 @@ switch ($true) {
 			Write-Output ($script:msg.ToolRemoteVersion -f $latestVersion)
 		}
 		# アーキテクチャごとのURLパターン
-		$cpuPatterns = @{
+		$pattern = @{
 			'arm64' = @('aarch64', 'armv8')
 			'64'    = @('x86_64', 'ia64')
 		}
 		# アーキテクチャに対応するCPUタイプを取得
 		$arch = (& uname -m | tr '[:upper:]' '[:lower:]')
-		$cpu = $cpuPatterns.GetEnumerator() | Where-Object { $arch -in $_.Value } | Select-Object -ExpandProperty Key
+		$cpu = $pattern.GetEnumerator() | Where-Object { $arch -in $_.Value } | Select-Object -ExpandProperty Key
 		# CPUタイプが見つからない場合のエラーメッセージ
 		if (-not $cpu) {
 			Write-Warning ($script:msg.ToolArchitectureNotIdentified1 -f 'ffmpeg')
@@ -187,7 +187,7 @@ switch ($true) {
 		if ($latestRelease -cmatch "https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-linux${cpu}-gpl-)(.*).tar.xz") {
 			$downloadURL = $matches[0]
 			# ダウンロード
-			Write-Output ($script:msg.ToolDownload -f 'ffmpeg', $cpu)
+			Write-Output ($script:msg.ToolDownload -f 'ffmpeg', $arch )
 			try { Invoke-WebRequest -Uri $downloadURL -OutFile (Join-Path $script:binDir 'ffmpeg.tar.xz') }
 			catch { Write-Warning ($script:msg.ToolDownloadFailed -f 'ffmpeg') ; return }
 			# 展開

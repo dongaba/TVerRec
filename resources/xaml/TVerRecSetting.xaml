@@ -892,8 +892,8 @@
             </TabControl>
         </Border>
         <!-- ボタンエリア -->
-        <Button Name="btnWiki" Style="{DynamicResource ButtonStyle}" HorizontalAlignment="Left" Grid.Column="1" Grid.Row="7" VerticalAlignment="Center" Width="100" />
-        <Button Name="btnCancel" Style="{DynamicResource ButtonStyle}" HorizontalAlignment="Left" Grid.Column="2" Grid.Row="7" VerticalAlignment="Center" Width="100" />
-        <Button Name="btnSave" Style="{DynamicResource ButtonStyle}" HorizontalAlignment="Right" Grid.Column="2" Grid.Row="7" VerticalAlignment="Center" Width="100" />
+        <Button Name="btnWiki" Style="{DynamicResource ButtonStyle}" HorizontalAlignment="Left" Grid.Column="1" Grid.Row="7" VerticalAlignment="Center" Width="120" />
+        <Button Name="btnCancel" Style="{DynamicResource ButtonStyle}" HorizontalAlignment="Left" Grid.Column="2" Grid.Row="7" VerticalAlignment="Center" Width="120" />
+        <Button Name="btnSave" Style="{DynamicResource ButtonStyle}" HorizontalAlignment="Right" Grid.Column="2" Grid.Row="7" VerticalAlignment="Center" Width="120" />
     </Grid>
 </Window>

@@ -57,6 +57,7 @@ function Get-VideoLinksFromKeyword {
 		'tag' { Get-LinkFromKeyword -id $tverID -type 'tag' -LinkCollection ([Ref]$linkCollection) ; continue }
 		'ranking' { Get-LinkFromKeyword -id $tverID -type 'ranking' -LinkCollection ([Ref]$linkCollection) ; continue }
 		'new' { Get-LinkFromKeyword -id $tverID -type 'new' -LinkCollection ([Ref]$linkCollection)  ; continue }
+		'end' { Get-LinkFromKeyword -id $tverID -type 'end' -LinkCollection ([Ref]$linkCollection)  ; continue }
 		'mypage' { Get-LinkFromMyPage -Page $tverID -LinkCollection ([Ref]$linkCollection) ; continue }
 		'toppage' { Get-LinkFromTopPage ([Ref]$linkCollection) ; continue }
 		'sitemap' { Get-LinkFromSiteMap ([Ref]$linkCollection) ; continue }
@@ -92,7 +93,7 @@ function Get-LinkFromKeyword {
 	[OutputType([System.Void])]
 	Param (
 		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$id,
-		[Parameter(Mandatory = $false)][ValidateSet('series', 'season', 'talent', 'specialMain', 'specialDetail', 'tag', 'new', 'ranking', 'keyword', 'category')][String]$type,
+		[Parameter(Mandatory = $false)][ValidateSet('series', 'season', 'talent', 'specialMain', 'specialDetail', 'tag', 'new', 'end', 'ranking', 'keyword', 'category')][String]$type,
 		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject][Ref]$linkCollection
 	)
 	Write-Debug ($MyInvocation.MyCommand.Name)
@@ -105,8 +106,9 @@ function Get-LinkFromKeyword {
 		'specialDetail' { ('https://platform-api.tver.jp/service/api/v1/callSpecialContentsDetail/{0}' -f $id) ; $type = 'specialdetail' ; continue }
 		'tag' { ('https://platform-api.tver.jp/service/api/v1/callTagSearch/{0}' -f $id) ; continue }
 		'new' { ('https://platform-api.tver.jp/service/api/v1/callNewerDetail/{0}' -f $id) ; $type = 'new' ; continue }
-		'ranking' { 
-			if ($id -eq 'all') { 'https://platform-api.tver.jp/service/api/v1/callEpisodeRanking' } 
+		'end' { ('https://platform-api.tver.jp/service/api/v1/callEnderDetail/{0}' -f $id) ; $type = 'end' ; continue }
+		'ranking' {
+			if ($id -eq 'all') { 'https://platform-api.tver.jp/service/api/v1/callEpisodeRanking' }
 			else { ('https://platform-api.tver.jp/service/api/v1/callEpisodeRankingDetail/{0}' -f $id) }
 			$type = 'ranking' ; continue
 		}
@@ -160,7 +162,7 @@ function Get-SearchResults {
 		'specialmain' { $searchResultsRaw.Result.specialContents ; continue }
 		'specialdetail' { $searchResultsRaw.Result.Contents.Content.Contents ; continue }
 		'category' { $searchResultsRaw.Result.components.contents ; continue }
-		{ $_ -in 'new', 'ranking' } { $searchResultsRaw.Result.Contents.Contents ; continue }
+		{ $_ -in 'new', 'end', 'ranking' } { $searchResultsRaw.Result.Contents.Contents ; continue }
 		default { $searchResultsRaw.Result.Contents }
 	}
 	# searchResultsを並び替え
@@ -278,7 +280,7 @@ function Get-LinkFromSiteMap {
 		} catch { $tverID = @{ type = $null ; id = $null } }
 		if ($tverID.id) {
 			switch ($tverID.type) {
-				'episodes' { 
+				'episodes' {
 					$linkCollection.episodeLinks[('https://tver.jp/episodes/{0}' -f $tverID.id)] = 0	# サイトマップにあるEpisodeはEndAtが不明なので0を設定
 					continue
 				}

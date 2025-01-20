@@ -882,10 +882,10 @@ function Optimize-HistoryFile {
 	$cleanedHist = @()
 	try {
 		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-		$cleanedHist = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8 | Where-Object { 
+		$cleanedHist = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8 | Where-Object {
 				($null -ne $_.videoValidated) `
 					-and ([Int]::TryParse($_.videoValidated, [Ref]0) ) `
-					-and ([datetime]::TryParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null, [System.Globalization.DateTimeStyles]::None, [Ref]([datetime]::MinValue))) 
+					-and ([datetime]::TryParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null, [System.Globalization.DateTimeStyles]::None, [Ref]([datetime]::MinValue)))
 			})
 		$cleanedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
 	} catch { Write-Warning ($script:msg.OptimizeHistFailed) }
@@ -902,7 +902,7 @@ function Limit-HistoryFile {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	try {
 		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-		$purgedHist = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8) | Where-Object { 
+		$purgedHist = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8) | Where-Object {
 				[DateTime]::ParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null) -gt (Get-Date).AddDays(-1 * [Int32]$retentionPeriod)
 			})
 		$purgedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
