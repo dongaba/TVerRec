@@ -104,16 +104,16 @@ try {
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # メイン処理
 Write-Output ('')
-Write-Output ($script:msg.LongBoldBorder)
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('                       TVerRecアップデート処理')
-Write-Output ($script:msg.LongBoldBorder)
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 
 $repo = 'dongaba/TVerRec'
 $releases = ('https://api.github.com/repos/{0}/releases' -f $repo)
 
 # 念のため過去のバージョンがあれば削除し、作業ディレクトリを作成
 Write-Output ('')
-Write-Output ($script:msg.MediumBoldBorder)
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('作業ディレクトリを作成します')
 $updateTemp = Join-Path $scriptRoot '../tverrec-update-temp'
 if (Test-Path $updateTemp ) { Remove-Item -LiteralPath $updateTemp -Force -Recurse -ErrorAction SilentlyContinue }
@@ -122,7 +122,7 @@ catch { Throw ('❌️ 作業ディレクトリの作成に失敗しました') 
 
 # TVerRecの最新バージョン取得
 Write-Output ('')
-Write-Output ($script:msg.MediumBoldBorder)
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('TVerRecの最新版をダウンロードします')
 if (!(Get-Variable updateChannel -Scope Script -ErrorAction SilentlyContinue)) { $script:updateChannel = 'release' }
 try {
@@ -138,7 +138,7 @@ try {
 
 # 最新バージョンがダウンロードできていたら展開
 Write-Output ('')
-Write-Output ($script:msg.MediumBoldBorder)
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('ダウンロードしたTVerRecを解凍します')
 try {
 	if (Test-Path (Join-Path $updateTemp 'TVerRecLatest.zip') -PathType Leaf) { Expand-Zip -Path (Join-Path $updateTemp 'TVerRecLatest.zip') -Destination $updateTemp }
@@ -147,7 +147,7 @@ try {
 
 # ディレクトリは上書きできないので独自関数で以下のディレクトリをループ
 Write-Output ('')
-Write-Output ($script:msg.MediumBoldBorder)
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('ダウンロードしたTVerRecを配置します')
 try {
 	$newTVerRecDir = (Get-ChildItem -LiteralPath $updateTemp -Directory ).fullname
@@ -156,14 +156,14 @@ try {
 
 # 作業ディレクトリを削除
 Write-Output ('')
-Write-Output ($script:msg.MediumBoldBorder)
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('アップデートの作業ディレクトリを削除します')
 try { if (Test-Path $updateTemp ) { Remove-Item -LiteralPath $updateTemp -Force -Recurse } }
 catch { Throw ('❌️ 作業ディレクトリの削除に失敗しました') }
 
 # 過去のバージョンで使用していたファイルを削除、または移行
 Write-Output ('')
-Write-Output ($script:msg.MediumBoldBorder)
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('過去のバージョンで使用していたファイルを削除、または移行します')
 # tver.lockをhistory.lockに移行(v2.6.5→v2.6.6)
 Remove-IfExist -Path (Join-Path $script:scriptRoot '../db/tver.lock')
@@ -252,7 +252,7 @@ if ( Test-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1') ) {
 # 実行権限の付与
 if (!$IsWindows) {
 	Write-Output ('')
-	Write-Output ($script:msg.MediumBoldBorder)
+	Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 	Write-Output ('実行権限の付与します')
 	(& chmod a+x (Join-Path $script:scriptRoot '../unix/*.sh'))
 }
@@ -262,11 +262,11 @@ New-Item (Join-Path $script:scriptRoot '../log/updater_update.txt') -Type file -
 'このファイルはアップデータ自身のアプデートを完了させるために必要です。' | Out-File -FilePath (Join-Path $script:scriptRoot '../log/updater_update.txt')
 
 Write-Output ('')
-Write-Output ($script:msg.LongBoldBorder)
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('')
 Write-Output ('💡 TVerRecのアップデートを終了しました。TVerRecを再実行してください。')
 Write-Output ('')
-Write-Output ($script:msg.LongBoldBorder)
+Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 
 Remove-Variable -Name repo, releases, updateTemp, zipURL, newTVerRecDir, currentListFile, propertyNames, currentProperties, propertyName -ErrorAction SilentlyContinue
 
