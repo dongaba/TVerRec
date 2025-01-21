@@ -51,12 +51,14 @@ You can start using it immediately after preparing and modifying the configurati
 
 ## Operation image of Windows GUI version
 
-![GUIMain](https://github.com/dongaba/TVerRec/assets/83079591/efcdb203-8401-4f2c-b11f-dfb92562599c)
-![GUISetting](https://github.com/dongaba/TVerRec/assets/83079591/5aab9395-e2c2-465f-b21b-3d7a39a1a04e)
+![GUIMain](https://github.com/user-attachments/assets/013b70f7-7508-423e-bdb9-3abced9cafc7)
+![GUISetting](https://github.com/user-attachments/assets/c77860c0-7665-445c-963f-a45756498cba)
+
 
 ## Operation image of Windows CUI version
 
-![CUI](https://github.com/dongaba/TVerRec/assets/83079591/8804d194-a5db-424e-b97c-b76cc5500b52)
+![CUI](https://github.com/user-attachments/assets/0a19f90a-ffc0-4d70-acc9-4d77969014c3)
+
 
 ## Main Features
 
