@@ -130,7 +130,7 @@ Describe 'ファイル名・ディレクトリ名に禁止文字の削除' {
 		$invalidChars = [IO.Path]::GetInvalidFileNameChars()
 		# Assert that none of the invalid characters are present in the result
 		foreach ($char in $invalidChars) {
-			$charString = [string]$char
+			$charString = [String]$char
 			if ($charString.Trim() -ne '') { # Exclude empty or whitespace characters
 				$result | Should -Not -Contain $charString
 			}

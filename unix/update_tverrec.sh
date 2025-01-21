@@ -13,4 +13,4 @@ pwsh -NoProfile -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.
 
 pwsh -NoProfile "../src/functions/update_tverrec.ps1"
 
-echo "Finished ..."
+echo "Completed ..."

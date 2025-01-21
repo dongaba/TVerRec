@@ -16,4 +16,4 @@ echo $PPID > "$PIDFile"
 
 pwsh -NoProfile "../src/loop.ps1"
 
-echo "Finished ..."
+echo "Completed ..."

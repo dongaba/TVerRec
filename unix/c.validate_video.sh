@@ -11,4 +11,4 @@ echo -en "\033];TVerRec Video File Checker\007"
 
 pwsh -NoProfile "../src/validate_video.ps1"
 
-echo "Finished ..."
+echo "Completed ..."
