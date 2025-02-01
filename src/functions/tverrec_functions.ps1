@@ -139,12 +139,18 @@ function Invoke-TverrecPathCheck {
 		[Parameter(Mandatory = $true )][String]$path,
 		[Parameter(Mandatory = $true )][String]$errorMessage,
 		[Parameter(Mandatory = $false)][switch]$isFile,
-		[Parameter(Mandatory = $false)][String]$sampleFilePath
+		[Parameter(Mandatory = $false)][String]$sampleFilePath,
+		[Parameter(Mandatory = $false)][Boolean]$continue
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$pathType = if ($isFile) { 'Leaf' } else { 'Container' }
 	if (!(Test-Path $path -PathType $pathType)) {
-		if (!($sampleFilePath -and (Test-Path $sampleFilePath -PathType 'Leaf'))) { Throw ($script:msg.NotExist -f $errorMessage) }
+		if (!($sampleFilePath -and (Test-Path $sampleFilePath -PathType 'Leaf'))) {
+			if ($continue) {
+				Write-Warning ($script:msg.NotExistContinue -f $errorMessage)
+				return
+			} else { Throw ($script:msg.NotExist -f $errorMessage) }
+		}
 		Copy-Item -LiteralPath $sampleFilePath -Destination $path -Force | Out-Null
 	}
 	Remove-Variable -Name path, errorMessage, isFile, sampleFilePath, pathType -ErrorAction SilentlyContinue
@@ -165,7 +171,7 @@ function Invoke-RequiredFileCheck {
 	$script:downloadWorkDir = $script:downloadWorkDir.TrimEnd('\/')
 	if ($script:saveBaseDir -ne '') {
 		$script:saveBaseDirArray = $script:saveBaseDir.split(';').Trim().TrimEnd('\/')
-		foreach ($saveDir in $script:saveBaseDirArray) { Invoke-TverrecPathCheck -Path $saveDir.Trim() -errorMessage $script:msg.SaveDir }
+		foreach ($saveDir in $script:saveBaseDirArray) { Invoke-TverrecPathCheck -Path $saveDir.Trim() -errorMessage $script:msg.SaveDir -continue $true }
 	}
 	Invoke-TverrecPathCheck -Path $script:ytdlPath -errorMessage 'youtube-dl' -isFile
 	Invoke-TverrecPathCheck -Path $script:ffmpegPath -errorMessage 'ffmpeg' -isFile
