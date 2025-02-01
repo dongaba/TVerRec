@@ -732,7 +732,7 @@ function Invoke-Ytdl {
 	$ytdlArgs += (' {0}' -f $script:ytdlOption)
 	$ytdlArgs += (' {0}' -f $videoInfo.episodePageURL)
 	$ytdlArgs += (' {0} "{1}"' -f '--output', $saveFile)
-	$ytdlArgsString = $ytdlArgs -join ' '
+	$ytdlArgsString = $ytdlArgs -join ''
 	Write-Debug ($script:msg.ExecCommand -f 'youtube-dl', $script:ytdlPath, $ytdlArgsString)
 	try {
 		$startProcessParams = @{
@@ -789,7 +789,7 @@ function Invoke-NonTverYtdl {
 	$ytdlArgs += (' {0}' -f $script:ytdlOption)
 	$ytdlArgs += (' {0}' -f $videoPageURL)
 	$ytdlArgs += (' {0} "{1}"' -f '--output', $saveFile)
-	$ytdlArgsString = $ytdlArgs -join ' '
+	$ytdlArgsString = $ytdlArgs -join ''
 	Write-Debug ($script:msg.ExecCommand -f 'youtube-dl', $script:ytdlPath, $ytdlArgsString)
 	try {
 		$startProcessParams = @{
