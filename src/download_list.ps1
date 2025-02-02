@@ -88,7 +88,7 @@ foreach ($videoLink in $videoLinks) {
 
 # youtube-dlのプロセスが終わるまで待機
 Write-Output ('')
-Write-Output ($script:mst.WaitingDownloadCompletion)
+Write-Output ($script:msg.WaitingDownloadCompletion)
 Wait-DownloadCompletion
 
 $toastUpdateParams = @{
