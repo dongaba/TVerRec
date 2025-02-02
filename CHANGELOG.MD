@@ -1,5 +1,17 @@
 # Change Log
 
+## [3.3.2](https://github.com/dongaba/TVerRec/releases/tag/v3.3.2)
+
+### 3.3.2 Added
+
+### 3.3.2 Changed
+
+- 移動先ディレクトリのチェックNGの場合でも処理停止しないように変更 [Issue #167](https://github.com/dongaba/TVerRec/issues/167)
+
+### 3.3.2 Fixed
+
+- リストダウンロード時にエラー表示される問題を修正 [Issue #169](https://github.com/dongaba/TVerRec/issues/169)
+
 ## [3.3.1](https://github.com/dongaba/TVerRec/releases/tag/v3.3.1)
 
 ### 3.3.1 Added
