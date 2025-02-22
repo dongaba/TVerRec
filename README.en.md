@@ -128,6 +128,8 @@ Directory structure is as follows.
     │  │  └─ Dockerfile .................... Docker file
     │  ├─ img/ ........................... Images
     │  ├─ lib/ ........................... Library
+    │  ├─ lang/ .......................... Language file
+    │  │  └─ message.json .................. Message definition file
     │  ├─ lock/ .......................... Lock management files
     │  ├─ sample/ ........................ Sample file
     │  │  ├─ history.sample.csv ............ Empty download history file

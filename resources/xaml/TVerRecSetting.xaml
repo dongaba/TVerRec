@@ -454,6 +454,10 @@
                                 <TextBlock Name="embedMetatagText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox Name="embedMetatag" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
+                            <Expander Name="sortVideoBySeriesHeader" Margin="10,10,10,0" IsExpanded="False" >
+                                <TextBlock Name="sortVideoBySeriesText" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            </Expander>
+                            <ComboBox Name="sortVideoBySeries" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
                             <Expander Name="sortVideoByMediaHeader" Margin="10,10,10,0" IsExpanded="False" >
                                 <TextBlock Name="sortVideoByMediaText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
