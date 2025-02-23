@@ -577,7 +577,7 @@ function Invoke-VideoDownload {
 	# スキップ対象やダウンロード対象外は飛ばして次のファイルへ
 	if ($skipDownload) { continue }
 	# 番組ディレクトリがなければ作成
-	if (!(Test-Path $videoInfo.fileDir -PathType Container)) {
+	if ($script:sortVideoBySeries -and !(Test-Path $videoInfo.fileDir -PathType Container)) {
 		try { New-Item -ItemType Directory -Path $videoInfo.fileDir -Force | Out-Null }
 		catch { Write-Warning ($script:msg.CreateEpisodeDirFailed) ; continue }
 	}
@@ -665,11 +665,16 @@ function Format-VideoFileInfo {
 	$videoName = Get-FileNameWithoutInvalidChars ('{0}.{1}' -f $videoName, $script:videoContainerFormat)
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'fileName' -Value $videoName
 	# フォルダ名を生成
-	$videoFileDir = Get-FileNameWithoutInvalidChars (Remove-SpecialCharacter ('{0} {1}' -f $videoInfo.seriesName, $videoInfo.seasonName ).Trim(' ', '.'))
-	if ($script:sortVideoByMedia) { $videoFileDir = (Join-Path $script:downloadBaseDir (Get-FileNameWithoutInvalidChars $videoInfo.mediaName) | Join-Path -ChildPath $videoFileDir) }
-	else { $videoFileDir = (Join-Path $script:downloadBaseDir $videoFileDir) }
+	if ($script:sortVideoBySeries) {
+		$videoFileDir = Get-FileNameWithoutInvalidChars (Remove-SpecialCharacter ('{0} {1}' -f $videoInfo.seriesName, $videoInfo.seasonName ).Trim(' ', '.'))
+		if ($script:sortVideoByMedia) { $videoFileDir = (Join-Path $script:downloadBaseDir (Get-FileNameWithoutInvalidChars $videoInfo.mediaName) | Join-Path -ChildPath $videoFileDir) }
+		else { $videoFileDir = (Join-Path $script:downloadBaseDir $videoFileDir) }
+		$videoFilePath = Join-Path $videoFileDir $videoInfo.fileName
+	} else {
+		$videoFileDir = $script:downloadBaseDir
+		$videoFilePath = $videoInfo.fileName
+	}
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'fileDir' -Value $videoFileDir
-	$videoFilePath = Join-Path $videoFileDir $videoInfo.fileName
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'filePath' -Value $videoFilePath
 	$videoFileRelPath = $videoInfo.filePath.Replace($script:downloadBaseDir, '').Replace('\', '/').TrimStart('/')
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'fileRelPath' -Value $videoFileRelPath

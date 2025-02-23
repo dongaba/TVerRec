@@ -1,5 +1,17 @@
 # Change Log
 
+## [3.3.3](https://github.com/dongaba/TVerRec/releases/tag/v3.3.3)
+
+### 3.3.3 Added
+
+- 番組ディレクトリを作成せずにダウンロードするオプションを追加 [Issue #176](https://github.com/dongaba/TVerRec/issues/176)
+
+### 3.3.3 Changed
+
+- 個別ダウンロード時にダウンロード完了を待つまで処理を終了しないように変更 [Issue #175](https://github.com/dongaba/TVerRec/issues/175)
+
+### 3.3.3 Fixed
+
 ## [3.3.2](https://github.com/dongaba/TVerRec/releases/tag/v3.3.2)
 
 ### 3.3.2 Added

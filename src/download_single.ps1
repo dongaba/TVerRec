@@ -125,6 +125,11 @@ while ($true) {
 
 }
 
+# youtube-dlのプロセスが終わるまで待機
+Write-Output ('')
+Write-Output ($script:msg.WaitingDownloadCompletion)
+Wait-DownloadCompletion
+
 Remove-Variable -Name args, keyword, videoPageURL -ErrorAction SilentlyContinue
 
 Invoke-GarbageCollection

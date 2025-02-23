@@ -72,6 +72,7 @@ $settingAttributes = @(
 	'$script:timeoutSec',
 	'$script:guiMaxExecLogLines',
 	'$script:histRetentionPeriod',
+	'$script:sortVideoBySeries',
 	'$script:sortVideoByMedia',
 	'$script:addSeriesName',
 	'$script:addSeasonName',
@@ -226,9 +227,9 @@ function Save-UserSetting {
 			$settingBox = $settingWindow.FindName($settingBoxName)
 			if ($settingBox.Name -eq 'preferredLanguage') {
 				switch ($settingBox.Text) {
-					'日本語' { $settingBox.Text = 'ja-JP'}
-					'English' { $settingBox.Text = 'en-US'}
-					default { $settingBox.Text = ''}
+					'日本語' { $settingBox.Text = 'ja-JP' }
+					'English' { $settingBox.Text = 'en-US' }
+					default { $settingBox.Text = '' }
 				}
 			}
 			switch -wildcard ($settingBox.Text) {
@@ -364,6 +365,8 @@ $embedSubtitleHeader.Header = $script:msg.GuiHeaderEmbedSubtitle
 $embedSubtitleText.Text = $script:msg.GuiTextEmbedSubtitleText
 $embedMetatagHeader.Header = $script:msg.GuiHeaderEmbedMetatag
 $embedMetatagText.Text = $script:msg.GuiTextEmbedMetatagText
+$sortVideoBySeriesHeader.Header = $script:msg.GuiHeaderSortVideoBySeries
+$sortVideoBySeriesText.Text = $script:msg.GuiTextSortVideoBySeriesText
 $sortVideoByMediaHeader.Header = $script:msg.GuiHeaderSortVideoByMedia
 $sortVideoByMediaText.Text = $script:msg.GuiTextSortVideoByMediaText
 $forceSingleDownloadHeader.Header = $script:msg.GuiHeaderForceSingleDownload
@@ -464,6 +467,7 @@ $updateChannel.Items.Add('beta') | Out-Null
 $updateChannel.Items.Add('dev') | Out-Null
 foreach ($option in $trueFalseOptions) { $embedSubtitle.Items.Add($option)  | Out-Null }
 foreach ($option in $trueFalseOptions) { $embedMetatag.Items.Add($option)  | Out-Null }
+foreach ($option in $trueFalseOptions) { $sortVideoBySeries.Items.Add($option)  | Out-Null }
 foreach ($option in $trueFalseOptions) { $sortVideoByMedia.Items.Add($option)  | Out-Null }
 foreach ($option in $trueFalseOptions) { $forceSingleDownload.Items.Add($option)  | Out-Null }
 foreach ($option in $trueFalseOptions) { $sitemapParseEpisodeOnly.Items.Add($option)  | Out-Null }
