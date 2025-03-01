@@ -745,18 +745,25 @@ function Invoke-Ytdl {
 	$ytdlArgs += (' {0} "{1}"' -f '--output', $saveFile)
 	$ytdlArgsString = $ytdlArgs -join ''
 	Write-Debug ($script:msg.ExecCommand -f 'youtube-dl', $script:ytdlPath, $ytdlArgsString)
-	try {
+	if ($script:appName -eq 'TVerRecContainer') {
+		$startProcessParams = @{
+			FilePath     = 'timeout'
+			ArgumentList = "3600 $script:ytdlPath $ytdlArgsString"
+			PassThru     = $true
+		}
+	} else {
 		$startProcessParams = @{
 			FilePath     = $script:ytdlPath
 			ArgumentList = $ytdlArgsString
 			PassThru     = $true
 		}
-		if ($IsWindows) {
-			$startProcessParams.WindowStyle = $script:windowShowStyle
-		} else {
-			$startProcessParams.RedirectStandardOutput = '/dev/null'
-			$startProcessParams.RedirectStandardError = '/dev/zero'
-		}
+	}
+	if ($IsWindows) { $startProcessParams.WindowStyle = $script:windowShowStyle }
+	else {
+		$startProcessParams.RedirectStandardOutput = '/dev/null'
+		$startProcessParams.RedirectStandardError = '/dev/zero'
+	}
+	try {
 		$ytdlProcess = Start-Process @startProcessParams
 		$ytdlProcess.Handle | Out-Null
 	} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') ; return }
@@ -802,18 +809,25 @@ function Invoke-NonTverYtdl {
 	$ytdlArgs += (' {0} "{1}"' -f '--output', $saveFile)
 	$ytdlArgsString = $ytdlArgs -join ''
 	Write-Debug ($script:msg.ExecCommand -f 'youtube-dl', $script:ytdlPath, $ytdlArgsString)
-	try {
+	if ($script:appName -eq 'TVerRecContainer') {
+		$startProcessParams = @{
+			FilePath     = 'timeout'
+			ArgumentList = "3600 $script:ytdlPath $ytdlArgsString"
+			PassThru     = $true
+		}
+	} else {
 		$startProcessParams = @{
 			FilePath     = $script:ytdlPath
 			ArgumentList = $ytdlArgsString
 			PassThru     = $true
 		}
-		if ($IsWindows) {
-			$startProcessParams.WindowStyle = $script:windowShowStyle
-		} else {
-			$startProcessParams.RedirectStandardOutput = '/dev/null'
-			$startProcessParams.RedirectStandardError = '/dev/zero'
-		}
+	}
+	if ($IsWindows) { $startProcessParams.WindowStyle = $script:windowShowStyle }
+	else {
+		$startProcessParams.RedirectStandardOutput = '/dev/null'
+		$startProcessParams.RedirectStandardError = '/dev/zero'
+	}
+	try {
 		$ytdlProcess = Start-Process @startProcessParams
 		$ytdlProcess.Handle | Out-Null
 	} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') ; return }
@@ -834,7 +848,7 @@ function Get-YtdlProcessCount {
 		switch ($true) {
 			$IsWindows { return [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ); continue }
 			$IsLinux { return @(Get-Process -ErrorAction Ignore -Name $processName).Count ; continue }
-			$IsMacOS { $psCmd = 'ps' ; return (& $psCmd | grep youtube-dl | grep -v grep | grep -c ^).Trim() ; continue }
+			$IsMacOS { $psCmd = 'ps' ; return (& $psCmd | grep youtube-dl | grep -v grep | grep -v Python.app | grep -c ^).Trim() ; continue }
 			default { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
 		}
 	} catch { return 0 }

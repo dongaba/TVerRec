@@ -9,6 +9,7 @@
 ### 3.3.3 Changed
 
 - 個別ダウンロード時にダウンロード完了を待つまで処理を終了しないように変更 [Issue #175](https://github.com/dongaba/TVerRec/issues/175)
+- コンテナのフリーズ対策として、コンテナ実行時にはyoutube-dlにタイムアウトを設定
 
 ### 3.3.3 Fixed
 
