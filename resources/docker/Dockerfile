@@ -25,6 +25,8 @@ RUN	apt-get update \
 	htop \
 	sudo \
 	tzdata \
+	net-tools \
+	&& apt-get upgrade -y \
 	&& apt-get autoremove -y \
 	&& apt-get clean -y  \
 	&& rm -rf /var/lib/apt/lists/*
