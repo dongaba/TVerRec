@@ -13,7 +13,7 @@ RUN	apt-get update \
 	curl \
 	git \
 	bash \
-	python3 \
+	python3-minimal \
 	xz-utils \
 	wget \
 	apt-transport-https \
