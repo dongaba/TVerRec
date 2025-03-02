@@ -26,6 +26,7 @@ RUN	apt-get update \
 	sudo \
 	tzdata \
 	net-tools \
+	python3-pycryptodome \
 	&& apt-get upgrade -y \
 	&& apt-get autoremove -y \
 	&& apt-get clean -y  \
