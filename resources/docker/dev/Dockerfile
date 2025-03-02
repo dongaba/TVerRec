@@ -40,8 +40,7 @@ RUN apt-get update \
 	&& apt-get clean -y  \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& sed -i 's/^#PasswordAuthentication yes/PasswordAuthentication yes/g' /etc/ssh/sshd_config \
-	&& echo 'ubuntu:tverrec' | chpasswd \
-	service ssh start
+	&& echo 'ubuntu:tverrec' | chpasswd 
 EXPOSE 22
 
 #Powershellのダウンロードと配置
@@ -93,6 +92,8 @@ RUN sed -i -e "s|'TVerRec'|'TVerRecContainer'|g" ./conf/system_setting.ps1 \
 RUN chmod a+x ./unix/*.sh
 
 ENV APP_TMP_DATA=/tmp
+
+RUN service ssh start
 
 WORKDIR /app/TVerRec/unix
 ENTRYPOINT ["/bin/bash", "start_tverrec.sh"]
