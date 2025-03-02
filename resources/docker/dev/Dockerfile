@@ -32,6 +32,18 @@ RUN	apt-get update \
 	&& apt-get clean -y  \
 	&& rm -rf /var/lib/apt/lists/*
 
+#Devコンテナはsshをインストール
+RUN apt-get update \
+	&& apt-get install --no-install-recommends -y \
+	openssh-server \
+	&& apt-get autoremove -y \
+	&& apt-get clean -y  \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& sed -i 's/^#PasswordAuthentication yes/PasswordAuthentication yes/g' /etc/ssh/sshd_config \
+	&& echo 'ubuntu:tverrec' | chpasswd \
+	service ssh start
+EXPOSE 22
+
 #Powershellのダウンロードと配置
 RUN /bin/bash -c ' \
 	arch=$(arch | sed s/aarch64/arm64/ | sed s/x86_64/x64/ | sed s/amd64/x64/) && \
@@ -44,7 +56,6 @@ RUN /bin/bash -c ' \
 	chmod a+x /opt/microsoft/powershell/pwsh && \
 	rm -rf "./${package##*/}" \
 	'
-
 
 #ディレクトリ準備
 RUN mkdir -p -m 777 \
