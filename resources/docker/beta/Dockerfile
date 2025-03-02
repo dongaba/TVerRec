@@ -45,7 +45,6 @@ RUN /bin/bash -c ' \
 	rm -rf "./${package##*/}" \
 	'
 
-
 #ディレクトリ準備
 RUN mkdir -p -m 777 \
 	/app \
