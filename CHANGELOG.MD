@@ -15,6 +15,8 @@
 
 ### 3.3.3 Fixed
 
+- 放送年がわからない際に2/29の日付が取得されると処理が停止する問題を修正
+
 ## [3.3.2](https://github.com/dongaba/TVerRec/releases/tag/v3.3.2)
 
 ### 3.3.2 Added
