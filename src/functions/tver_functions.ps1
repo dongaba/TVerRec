@@ -418,10 +418,15 @@ function Get-VideoInfo {
 	# 放送日を整形
 	if ($broadcastDate -cmatch '([0-9]+)(月)([0-9]+)(日)(.+?)(放送|配信)') {
 		$currentYear = (Get-Date).Year
-		$parsedBroadcastDate = [DateTime]::ParseExact(('{0}{1}{2}' -f $currentYear, $matches[1].PadLeft(2, '0'), $matches[3].PadLeft(2, '0')), 'yyyyMMdd', $null)
-		# 実日付の翌日よりも放送日が未来だったら当年ではなく昨年の番組と判断する(年末の番組を年初にダウンロードするケース)
-		$broadcastYear = $parsedBroadcastDate -gt (Get-Date).AddDays(+1) ? $currentYear - 1 : $currentYear
-		$broadcastDate = ('{0}年{1}{2}{3}{4}{5}' -f $broadcastYear, $matches[1].PadLeft(2, '0'), $matches[2], $matches[3].PadLeft(2, '0'), $matches[4], $matches[6])
+		try {
+			$parsedBroadcastDate = [DateTime]::ParseExact(('{0}{1}{2}' -f $currentYear, $matches[1].PadLeft(2, '0'), $matches[3].PadLeft(2, '0')), 'yyyyMMdd', $null)
+			# 実日付の翌日よりも放送日が未来だったら当年ではなく昨年の番組と判断する(年末の番組を年初にダウンロードするケース)
+			$broadcastYear = $parsedBroadcastDate -gt (Get-Date).AddDays(+1) ? $currentYear - 1 : $currentYear
+			$broadcastDate = ('{0}年{1}{2}{3}{4}{5}' -f $broadcastYear, $matches[1].PadLeft(2, '0'), $matches[2], $matches[3].PadLeft(2, '0'), $matches[4], $matches[6])
+		} catch {
+			# 上記でエラーが出た場合は年が間違っているはず。年が不明なので年無しで整形する
+			$broadcastDate = ('{0}{1}{2}{3}{4}' -f $matches[1].PadLeft(2, '0'), $matches[2], $matches[3].PadLeft(2, '0'), $matches[4], $matches[6])
+		}
 	}
 	return [pscustomobject]@{
 		seriesName      = $videoSeries
