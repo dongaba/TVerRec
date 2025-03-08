@@ -1109,6 +1109,7 @@ function Invoke-StatisticsCheck {
 		$epochTime = [Int64]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() * 1000)
 		$userProperties = @{	# max 25 properties, max 24 chars of property name, 36 chars of property value
 			PSVersion    = @{ 'value' = $PSVersionTable.PSVersion.ToString() }
+			AppName      = @{ 'value' = $script:appName }
 			AppVersion   = @{ 'value' = $script:appVersion }
 			OS           = @{ 'value' = $script:os }
 			Kernel       = @{ 'value' = $script:kernel }
