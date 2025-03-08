@@ -1,4 +1,4 @@
-FROM ubuntu:24.04
+FROM ubuntu:24.10
 
 ENV POWERSHELL_TELEMETRY_OPTOUT=1
 
@@ -13,7 +13,7 @@ RUN	apt-get update \
 	curl \
 	git \
 	bash \
-	python3 \
+	python3-minimal \
 	xz-utils \
 	wget \
 	apt-transport-https \
@@ -25,6 +25,9 @@ RUN	apt-get update \
 	htop \
 	sudo \
 	tzdata \
+	net-tools \
+	python3-pycryptodome \
+	&& apt-get upgrade -y \
 	&& apt-get autoremove -y \
 	&& apt-get clean -y  \
 	&& rm -rf /var/lib/apt/lists/*
@@ -41,7 +44,6 @@ RUN /bin/bash -c ' \
 	chmod a+x /opt/microsoft/powershell/pwsh && \
 	rm -rf "./${package##*/}" \
 	'
-
 
 #ディレクトリ準備
 RUN mkdir -p -m 777 \

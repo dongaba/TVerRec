@@ -385,26 +385,26 @@ function Get-VideoInfo {
 		$videoInfo = Invoke-RestMethod -Uri $tverVideoInfoURL -Method 'GET' -Headers $script:requestHeader -TimeoutSec $script:timeoutSec
 		$descriptionText = (Get-NarrowChars ($videoInfo.Description).Replace('&amp;', '&')).Trim()
 		$videoEpisodeNum = (Get-NarrowChars ($videoInfo.No)).Trim()
-		$accountID = $videoInfo.video.accountID
-		$videoRefID = if ($videoInfo.video.PSObject.Properties.Name -contains 'videoRefID') { ('ref%3A{0}' -f $videoInfo.video.videoRefID) } else { $videoInfo.video.videoID }
-		$playerID = $videoInfo.video.playerID
+	#	$accountID = $videoInfo.video.accountID
+	#	$videoRefID = if ($videoInfo.video.PSObject.Properties.Name -contains 'videoRefID') { ('ref%3A{0}' -f $videoInfo.video.videoRefID) } else { $videoInfo.video.videoID }
+	#	$playerID = $videoInfo.video.playerID
 	} catch { Write-Warning ($script:msg.VideoInfoRetrievalFailed -f $_.Exception.Message) ; return }
-	# Brightcoveキー取得
-	try {
-		$brightcoveJsURL = ('https://players.brightcove.net/{0}/{1}_default/index.min.js' -f $accountID, $playerID)
-		$brightcovePk = if ((Invoke-RestMethod -Uri $brightcoveJsURL -Method 'GET' -Headers $script:requestHeader) -match 'policyKey:"([a-zA-Z0-9_-]*)"') { $matches[1] }
-	} catch { Write-Warning ($script:msg.M3u8KeyRetrievalFailed -f $_.Exception.Message) ; return }
-	# m3u8とmpd URL取得
-	try {
-		$brightcoveURL = ('https://edge.api.brightcove.com/playback/v1/accounts/{0}/videos/{1}' -f $accountID, $videoRefID)
-		$headers = @{
-			'Accept'          = ('application/json;pk={0}' -f $brightcovePk)
-			'X-Forwarded-For' = $script:jpIP
-		}
-		$response = Invoke-RestMethod -Uri $brightcoveURL -Method 'GET' -Headers $headers
-		$m3u8URL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*mpeg*' }).where({ $_.ext_x_version -eq 4 })[0].src
-		$mpdURL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*dash*' })[0].src
-	} catch { Write-Warning ($script:msg.M3u8FileRetrievalFailed -f $_.Exception.Message) ; return }
+	#	# Brightcoveキー取得
+	#	try {
+	#		$brightcoveJsURL = ('https://players.brightcove.net/{0}/{1}_default/index.min.js' -f $accountID, $playerID)
+	#		$brightcovePk = if ((Invoke-RestMethod -Uri $brightcoveJsURL -Method 'GET' -Headers $script:requestHeader) -match 'policyKey:"([a-zA-Z0-9_-]*)"') { $matches[1] }
+	#	} catch { Write-Warning ($script:msg.M3u8KeyRetrievalFailed -f $_.Exception.Message) ; return }
+	#	# m3u8とmpd URL取得
+	#	try {
+	#		$brightcoveURL = ('https://edge.api.brightcove.com/playback/v1/accounts/{0}/videos/{1}' -f $accountID, $videoRefID)
+	#		$headers = @{
+	#			'Accept'          = ('application/json;pk={0}' -f $brightcovePk)
+	#			'X-Forwarded-For' = $script:jpIP
+	#		}
+	#		$response = Invoke-RestMethod -Uri $brightcoveURL -Method 'GET' -Headers $headers
+	#		$m3u8URL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*mpeg*' }).where({ $_.ext_x_version -eq 4 })[0].src
+	#		$mpdURL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*dash*' })[0].src
+	#	} catch { Write-Warning ($script:msg.M3u8FileRetrievalFailed -f $_.Exception.Message) ; return }
 	# 「《」と「》」で挟まれた文字を除去
 	if ($script:removeSpecialNote) { $videoSeason = Remove-SpecialNote $videoSeason ; $episodeName = Remove-SpecialNote $episodeName }
 	# シーズン名が本編の場合はシーズン名をクリア
@@ -418,10 +418,15 @@ function Get-VideoInfo {
 	# 放送日を整形
 	if ($broadcastDate -cmatch '([0-9]+)(月)([0-9]+)(日)(.+?)(放送|配信)') {
 		$currentYear = (Get-Date).Year
-		$parsedBroadcastDate = [DateTime]::ParseExact(('{0}{1}{2}' -f $currentYear, $matches[1].PadLeft(2, '0'), $matches[3].PadLeft(2, '0')), 'yyyyMMdd', $null)
-		# 実日付の翌日よりも放送日が未来だったら当年ではなく昨年の番組と判断する(年末の番組を年初にダウンロードするケース)
-		$broadcastYear = $parsedBroadcastDate -gt (Get-Date).AddDays(+1) ? $currentYear - 1 : $currentYear
-		$broadcastDate = ('{0}年{1}{2}{3}{4}{5}' -f $broadcastYear, $matches[1].PadLeft(2, '0'), $matches[2], $matches[3].PadLeft(2, '0'), $matches[4], $matches[6])
+		try {
+			$parsedBroadcastDate = [DateTime]::ParseExact(('{0}{1}{2}' -f $currentYear, $matches[1].PadLeft(2, '0'), $matches[3].PadLeft(2, '0')), 'yyyyMMdd', $null)
+			# 実日付の翌日よりも放送日が未来だったら当年ではなく昨年の番組と判断する(年末の番組を年初にダウンロードするケース)
+			$broadcastYear = $parsedBroadcastDate -gt (Get-Date).AddDays(+1) ? $currentYear - 1 : $currentYear
+			$broadcastDate = ('{0}年{1}{2}{3}{4}{5}' -f $broadcastYear, $matches[1].PadLeft(2, '0'), $matches[2], $matches[3].PadLeft(2, '0'), $matches[4], $matches[6])
+		} catch {
+			# 上記でエラーが出た場合は年が間違っているはず。年が不明なので年無しで整形する
+			$broadcastDate = ('{0}{1}{2}{3}{4}' -f $matches[1].PadLeft(2, '0'), $matches[2], $matches[3].PadLeft(2, '0'), $matches[4], $matches[6])
+		}
 	}
 	return [pscustomobject]@{
 		seriesName      = $videoSeries
@@ -440,8 +445,8 @@ function Get-VideoInfo {
 		versionNum      = $versionNum
 		videoInfoURL    = $tverVideoInfoURL
 		descriptionText = $descriptionText
-		m3u8URL         = $m3u8URL
-		mpdURL          = $mpdURL
+		#	m3u8URL         = $m3u8URL
+		#	mpdURL          = $mpdURL
 	}
 	Remove-Variable -Name episodeID, tverVideoInfoBaseURL, tverVideoInfoURL, response -ErrorAction SilentlyContinue
 	Remove-Variable -Name videoSeries, videoSeriesID, videoSeriesPageURL, videoSeason, videoSeasonID, episodeName, videoEpisodeID, videoEpisodePageURL -ErrorAction SilentlyContinue

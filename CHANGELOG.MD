@@ -9,8 +9,13 @@
 ### 3.3.3 Changed
 
 - 個別ダウンロード時にダウンロード完了を待つまで処理を終了しないように変更 [Issue #175](https://github.com/dongaba/TVerRec/issues/175)
+- DockerコンテナのベースイメージをUbuntu24.10に更新
+- Dockerコンテナのフリーズ対策として、コンテナ実行時にはyoutube-dlにタイムアウトを設定
+- Dockerコンテナでのダウンロードを高速化
 
 ### 3.3.3 Fixed
+
+- 放送年がわからない際に2/29の日付が取得されると処理が停止する問題を修正
 
 ## [3.3.2](https://github.com/dongaba/TVerRec/releases/tag/v3.3.2)
 
