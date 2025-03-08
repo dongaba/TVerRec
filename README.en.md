@@ -1,6 +1,6 @@
 # **🎞 TVerRec 📺** TVer Bulk download and Save
 
-[🇺🇸English](README.en.md) | [🇯🇵日本語](README.md)
+[🇺🇸English](https://github.com/dongaba/TVerRec/blob/master/README.en.md) | [🇯🇵日本語](https://github.com/dongaba/TVerRec/blob/master/README.md)
 
 ![Logo](https://raw.githubusercontent.com/dongaba/TVerRec/master/resources/img/TVerRec-Logo.png)
 [![GitHub release](https://img.shields.io/github/v/release/dongaba/TVerRec?style=social&label=Release&logo=github)](https://github.com/dongaba/TVerRec/releases)
