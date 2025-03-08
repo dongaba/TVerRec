@@ -64,7 +64,7 @@ function Get-VideoLinksFromKeyword {
 		default { Get-LinkFromKeyword -id $keyword -type 'keyword' -LinkCollection ([Ref]$linkCollection) }
 	}
 	while (($linkCollection.specialMainLinks.Count -ne 0) -or ($linkCollection.specialLinks.Count -ne 0) -or ($linkCollection.talentLinks.Count -ne 0) -or ($linkCollection.seriesLinks.Count -ne 0) -or ($linkCollection.seasonLinks.Count -ne 0)) {
-		$linkTypes = @{
+		$linkTypes = [ordered]@{
 			'Special Main'   = 'specialMainLinks'
 			'Special Detail' = 'specialLinks'
 			'Talent'         = 'talentLinks'
@@ -273,10 +273,7 @@ function Get-LinkFromSiteMap {
 	foreach ($url in $searchResults) {
 		try {
 			$url = $url.Split('/')
-			$tverID = @{
-				type = $url[0]
-				id   = $url[1]
-			}
+			$tverID = @{ type = $url[0] ; id   = $url[1] }
 		} catch { $tverID = @{ type = $null ; id = $null } }
 		if ($tverID.id) {
 			switch ($tverID.type) {
