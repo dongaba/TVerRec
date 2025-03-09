@@ -99,7 +99,7 @@ function Get-LinkFromBuffer {
 		$linkTypes = @('specialLinks', 'talentLinks', 'seriesLinks', 'seasonLinks')
 		foreach ($linkType in $linkTypes) {
 			if ($linkCollection.$linkType) {
-				Write-Information ($script:msg.DistinctIDs -f (Get-Date), $tverIDType)
+				Write-Information ($script:msg.DistinctIDs -f (Get-Date), $linkType)
 				$linkCollection.$linkType = [System.Collections.Generic.List[String]]($linkCollection.$linkType | Sort-Object -Unique)
 			}
 		}
