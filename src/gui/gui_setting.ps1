@@ -101,6 +101,7 @@ $settingAttributes = @(
 	'$script:videoContainerFormat',
 	'$script:cleanupDownloadBaseDir',
 	'$script:cleanupSaveBaseDir',
+	'$script:ytdlRandomIp',
 	'$script:ytdlHttpHeader',
 	'$script:ytdlBaseArgs',
 	'$script:nonTVerYtdlBaseArgs',
@@ -424,6 +425,8 @@ $disableUpdateFfmpegHeader.Header = $script:msg.GuiHeaderDisableUpdateFfmpeg
 $disableUpdateFfmpegText.Text = $script:msg.GuiTextDisableUpdateFfmpegText
 $ytdlOptionHeader.Header = $script:msg.GuiHeaderYtdlOption
 $ytdlOptionText.Text = $script:msg.GuiTextYtdlOptionText
+$ytdlRandomIpHeader.Header = $script:msg.GuiHeaderYtdlRandomIp
+$ytdlRandomIpText.Text = $script:msg.GuiTextYtdlRandomIpText
 $ytdlHttpHeaderHeader.Header = $script:msg.GuiHeaderYtdlHttpHeader
 $ytdlHttpHeaderText.Text = $script:msg.GuiTextYtdlHttpHeaderText
 $ytdlBaseArgsHeader.Header = $script:msg.GuiHeaderYtdlBaseArgs
@@ -485,6 +488,7 @@ foreach ($option in $trueFalseOptions) { $simplifiedValidation.Items.Add($option
 foreach ($option in $trueFalseOptions) { $disableValidation.Items.Add($option)  | Out-Null }
 foreach ($option in $trueFalseOptions) { $disableUpdateYoutubedl.Items.Add($option)  | Out-Null }
 foreach ($option in $trueFalseOptions) { $disableUpdateFfmpeg.Items.Add($option)  | Out-Null }
+foreach ($option in $trueFalseOptions) { $ytdlRandomIp.Items.Add($option)  | Out-Null }
 $windowShowStyle.Items.Add($script:msg.SettingDefault) | Out-Null
 $windowShowStyle.Items.Add('Minimized') | Out-Null
 $windowShowStyle.Items.Add('Hidden') | Out-Null

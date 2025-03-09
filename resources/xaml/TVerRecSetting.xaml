@@ -571,6 +571,10 @@
                                 <Button Name="btnYtdlOption480" Style="{DynamicResource ButtonStyle}" Width="90" Margin="5,0,5,0" />
                                 <Button Name="btnYtdlOption360" Style="{DynamicResource ButtonStyle}" Width="90" Margin="5,0,5,0" />
                             </StackPanel>
+                            <Expander Name="ytdlRandomIpHeader" Margin="10,10,10,0" IsExpanded="False" >
+                                <TextBlock Name="ytdlRandomIpText" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            </Expander>
+                            <ComboBox Name="ytdlRandomIp" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
                             <Expander Name="ytdlHttpHeaderHeader" Margin="10,10,10,0" IsExpanded="False" >
                                 <TextBlock Name="ytdlHttpHeaderText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
