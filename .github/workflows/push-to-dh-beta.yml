@@ -12,7 +12,7 @@ env:
 
 jobs:
   push_to_dockerhub:
-    name: Push Docker image to Docker Hub for Dev
+    name: Push Docker image to Docker Hub for Beta
     runs-on: ubuntu-latest
     steps:
       #Set Tag Name
