@@ -275,7 +275,6 @@ function Get-LinkFromSiteMap {
 					continue
 				}
 				'series' {
-					Write-Information ($script:msg.ExtractingEpisodes -f (Get-Date), $tverID.type, $tverID.id)
 					if (!$script:sitemapParseEpisodeOnly) { $linkCollection.seriesLinks.Add($tverID.id) }
 					continue
 				}
