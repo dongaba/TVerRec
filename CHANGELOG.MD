@@ -5,7 +5,7 @@
 ### 3.3.3 Added
 
 - 番組ディレクトリを作成せずにダウンロードするオプションを追加 [Issue #176](https://github.com/dongaba/TVerRec/issues/176)
-- youtube-dlを使ったダウンロード時に、ランダムに生成したIPアドレスを使用するオプションを追加[Issue #180](https://github.com/dongaba/TVerRec/issues/176)[Issue #181](https://github.com/dongaba/TVerRec/issues/176)
+- youtube-dlを使ったダウンロード時に、ランダムに生成したIPアドレスを使用するオプションを追加[Issue #180](https://github.com/dongaba/TVerRec/issues/180)[Issue #181](https://github.com/dongaba/TVerRec/issues/181)
 
 ### 3.3.3 Changed
 
