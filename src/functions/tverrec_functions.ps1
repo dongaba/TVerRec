@@ -723,6 +723,7 @@ function Invoke-Ytdl {
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $tmpDir)
 	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlHttpHeader)
 	$ytdlArgs += (' {0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
+	$ytdlArgs += (' {0} "{1}/32"' -f '--xff', $script:jpIP)
 	if ($script:rateLimit -notin @(0, '')) {
 		$rateLimit = [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8)
 		$ytdlArgs += (' {0} {1}M' -f '--limit-rate', $rateLimit)
@@ -789,6 +790,7 @@ function Invoke-NonTverYtdl {
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $tmpDir)
 	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlHttpHeader)
 	$ytdlArgs += (' {0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
+	$ytdlArgs += (' {0} "{1}/32"' -f '--xff', $script:jpIP)
 	if ($script:rateLimit -notin @(0, '')) {
 		$rateLimit = [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8)
 		$ytdlArgs += (' {0} {1}M' -f '--limit-rate', $rateLimit)
