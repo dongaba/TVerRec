@@ -288,6 +288,14 @@ $script:ytdlOption = ''
 #	360p
 #	$script:ytdlOption = '-f "bestvideo[height<=360]+bestaudio/best[height<=360]"'
 
+# ダウンロード時にのランダムIPアドレス使用
+#　youtube-dlはデフォルトで固定の日本のIPアドレスを使用しますが、動画のダウンロード時にTVerRecが生成したランダムの日本のIPアドレスを使用することができます。
+#　IPアドレスによるBANの可能性を低減できるかもしれません。
+#　ここで設定した内容はTVer以外のサイトにも適用されます。
+#　「$true」の場合は起動ごとに生成されるランダムIPアドレスを使用します。
+#　「$false」の場合はyoutube-dlのデフォルト機能を使用します。
+$script:ytdlRandomIp = $false
+
 # Tverサイト以外のベースファイル名
 $script:ytdlNonTVerFileName = '%(webpage_url_domain)s - %(upload_date)s - %(title)s - [%(id)s].%(ext)s'
 
