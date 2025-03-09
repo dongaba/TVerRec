@@ -13,7 +13,8 @@ env:
 jobs:
   push_to_dockerhub:
     name: Push Docker image to Docker Hub for Beta
-    runs-on: ubuntu-latest
+    #runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       #Set Tag Name
       - name: Set Tag Name as Preparation

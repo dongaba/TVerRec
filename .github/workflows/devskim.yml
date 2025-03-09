@@ -11,7 +11,8 @@ on:
 jobs:
   lint:
     name: DevSkim
-    runs-on: ubuntu-latest
+    #runs-on: ubuntu-latest
+    runs-on: self-hosted
     permissions:
       actions: read
       contents: read
