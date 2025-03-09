@@ -97,7 +97,8 @@ $script:jpIPList = Join-Path $script:geoIPDir 'jp.csv'
 
 # 共通HTTPヘッダ
 $script:jpIP = Get-JpIP
-$script:requestHeader = @{
+Write-Output ($script:msg.JpIPFound -f $script:jpIP)
+$script:commonHttpHeader = @{
 	'x-tver-platform-type' = 'web'
 	'Origin'               = 'https://tver.jp'
 	'Referer'              = 'https://tver.jp'
