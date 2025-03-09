@@ -124,10 +124,8 @@ function Invoke-ToolUpdateCheck {
 		[Parameter(Mandatory = $true)][String]$targetName
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	$progressPreference = 'silentlyContinue'
 	& (Join-Path $scriptRoot ('functions/{0}' -f $scriptName) )
 	if (!$?) { Throw ($script:msg.ToolUpdateFailed -f $targetName) }
-	$progressPreference = 'Continue'
 	Remove-Variable -Name scriptName, targetName -ErrorAction SilentlyContinue
 }
 
@@ -723,6 +721,7 @@ function Invoke-Ytdl {
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $tmpDir)
 	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlHttpHeader)
 	$ytdlArgs += (' {0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
+	if ($script:ytdlRandomIp) { $ytdlArgs += (' {0} "{1}/32"' -f '--xff', $script:jpIP) }
 	if ($script:rateLimit -notin @(0, '')) {
 		$rateLimit = [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8)
 		$ytdlArgs += (' {0} {1}M' -f '--limit-rate', $rateLimit)
@@ -789,6 +788,7 @@ function Invoke-NonTverYtdl {
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $tmpDir)
 	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlHttpHeader)
 	$ytdlArgs += (' {0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
+	if ($script:ytdlRandomIp) { $ytdlArgs += (' {0} "{1}/32"' -f '--xff', $script:jpIP) }
 	if ($script:rateLimit -notin @(0, '')) {
 		$rateLimit = [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8)
 		$ytdlArgs += (' {0} {1}M' -f '--limit-rate', $rateLimit)

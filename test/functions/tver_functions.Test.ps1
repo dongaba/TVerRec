@@ -25,7 +25,7 @@ BeforeAll {
 	$script:tagID = 'golf'	# ゴルフ
 	$script:genre = 'drama'	# ドラマ
 	$script:keyword = 'カンブリア'
-	$script:requestHeader = @{
+	$script:commonHttpHeader = @{
 		'x-tver-platform-type' = 'web'
 		'Origin'               = 'https://tver.jp'
 		'Referer'              = 'https://tver.jp'
@@ -791,7 +791,7 @@ Describe 'トップページから番組ページのLinkを取得' {
 			Mock Write-Warning {}
 			$script:platformUID = 'test_platform_uid'
 			$script:platformToken = 'test_platform_token'
-			$script:requestHeader = @{ 'Test-Header' = 'HeaderValue' }
+			$script:commonHttpHeader = @{ 'Test-Header' = 'HeaderValue' }
 			$script:timeoutSec = 30
 		}
 
@@ -810,7 +810,7 @@ Describe 'トップページから番組ページのLinkを取得' {
 		BeforeAll {
 			$script:timeoutSec = 30
 			Get-Token
-			$script:requestHeader = @{
+			$script:commonHttpHeader = @{
 				'x-tver-platform-type' = 'web'
 				'Origin'               = 'https://tver.jp'
 				'Referer'              = 'https://tver.jp'

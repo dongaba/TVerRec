@@ -57,8 +57,8 @@ catch { Throw ($script:msg.LoadTVerRecFuncFailed) }
 try {
 	$devFunctionFile = Join-Path $script:devDir 'dev_functions.ps1'
 	$devConfFile = Join-Path $script:devDir 'dev_setting.ps1'
-	if (Test-Path $devConfFile) { . $devConfFile ; Write-Debug ($script:msg.DevConfLoaded) }
-	if (Test-Path $devFunctionFile) { . $devFunctionFile ; Write-Debug ($script:msg.DevFuncLoaded) }
+	if (Test-Path $devConfFile) { . $devConfFile ; Write-Output ($script:msg.DevConfLoaded) }
+	if (Test-Path $devFunctionFile) { . $devFunctionFile ; Write-Output ($script:msg.DevFuncLoaded) }
 	Remove-Variable -Name devFunctionFile, devConfFile -ErrorAction SilentlyContinue
 } catch { Throw ($script:msg.LoadDevFilesFailed) }
 
@@ -141,7 +141,9 @@ if ( $myInvocation.ScriptName.Contains('gui')) {
 
 # 共通HTTPヘッダ
 $script:jpIP = Get-JpIP
-$script:requestHeader = @{
+Write-Output ('')
+Write-Output ($script:msg.JpIPFound -f $script:jpIP)
+$script:commonHttpHeader = @{
 	'x-tver-platform-type' = 'web'
 	'Origin'               = 'https://tver.jp'
 	'Referer'              = 'https://tver.jp'

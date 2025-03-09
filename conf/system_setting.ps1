@@ -288,6 +288,14 @@ $script:ytdlOption = ''
 #	360p
 #	$script:ytdlOption = '-f "bestvideo[height<=360]+bestaudio/best[height<=360]"'
 
+# ダウンロード時にのランダムIPアドレス使用
+#　youtube-dlはデフォルトで固定の日本のIPアドレスを使用しますが、動画のダウンロード時にTVerRecが生成したランダムの日本のIPアドレスを使用することができます。
+#　IPアドレスによるBANの可能性を低減できるかもしれません。
+#　ここで設定した内容はTVer以外のサイトにも適用されます。
+#　「$true」の場合は起動ごとに生成されるランダムIPアドレスを使用します。
+#　「$false」の場合はyoutube-dlのデフォルト機能を使用します。
+$script:ytdlRandomIp = $false
+
 # Tverサイト以外のベースファイル名
 $script:ytdlNonTVerFileName = '%(webpage_url_domain)s - %(upload_date)s - %(title)s - [%(id)s].%(ext)s'
 
@@ -341,11 +349,12 @@ $script:ytdlHttpHeader = 'Accept-Language:ja-JP'
 
 # TVerサイト用youtube-dlの引数
 #　TVerサイトからのダウンロード設定です。TVerRecはこの設定が入っていることを前提としているので変更は自己責任でお願いします。
-$script:ytdlBaseArgs = '--format "(bv*+ba/b)[protocol!*=dash] / (bv*+ba/b)" --format-sort proto --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --no-cache-dir --verbose --ignore-config --no-check-certificates --buffer-size 16K --xattr-set-filesize'
+$script:ytdlBaseArgs = '--format "(bv*+ba/b)[protocol!*=dash]/(bv*+ba/b)" --format-sort proto --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --no-cache-dir --verbose --ignore-config --no-check-certificates --buffer-size 16K --xattr-set-filesize'
 
 # Tverサイト以外youtube-dlの引数
 #　TVerサイト以外からのダウンロード設定です。TVerRecはこの設定が入っていることを前提としているので変更は自己責任でお願いします。
 $script:nonTVerYtdlBaseArgs = '--format "(bv*+ba/b)" --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --no-cache-dir --verbose --ignore-config --no-check-certificates --buffer-size 16K --xattr-set-filesize'
+
 
 # 進捗情報メッセージの表示
 #　キーワード配下の番組一覧取得における進捗情報を表示するかを設定します。
