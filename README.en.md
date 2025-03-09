@@ -45,6 +45,9 @@ Once launched, programs will be downloaded each time a new program is distribute
   - ffmpeg (will be automatically downloaded)
   - Python (required only for Linux/Mac, not required for Windows)
 
+- Recommended Libraries
+  - PyCryptodome (for faster downloads for Linux/Mac)
+
 Alternatively, it can be run as a container using Docker.
 The container is created with an Ubuntu Linux image and starts with all necessary tools already configured.
 You can start using it immediately after preparing and modifying the configuration file and setting the disk mount bindings.
