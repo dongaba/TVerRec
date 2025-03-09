@@ -124,10 +124,8 @@ function Invoke-ToolUpdateCheck {
 		[Parameter(Mandatory = $true)][String]$targetName
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	$progressPreference = 'silentlyContinue'
 	& (Join-Path $scriptRoot ('functions/{0}' -f $scriptName) )
 	if (!$?) { Throw ($script:msg.ToolUpdateFailed -f $targetName) }
-	$progressPreference = 'Continue'
 	Remove-Variable -Name scriptName, targetName -ErrorAction SilentlyContinue
 }
 

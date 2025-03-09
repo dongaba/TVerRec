@@ -141,6 +141,7 @@ if ( $myInvocation.ScriptName.Contains('gui')) {
 
 # 共通HTTPヘッダ
 $script:jpIP = Get-JpIP
+Write-Output ('')
 Write-Output ($script:msg.JpIPFound -f $script:jpIP)
 $script:commonHttpHeader = @{
 	'x-tver-platform-type' = 'web'
