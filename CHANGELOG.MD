@@ -1,5 +1,24 @@
 # Change Log
 
+## [3.3.3](https://github.com/dongaba/TVerRec/releases/tag/v3.3.3)
+
+### 3.3.3 Added
+
+- 番組ディレクトリを作成せずにダウンロードするオプションを追加 [Issue #176](https://github.com/dongaba/TVerRec/issues/176)
+- youtube-dlを使ったダウンロード時に、ランダムに生成したIPアドレスを使用するオプションを追加[Issue #180](https://github.com/dongaba/TVerRec/issues/180) [Issue #181](https://github.com/dongaba/TVerRec/issues/181)
+
+### 3.3.3 Changed
+
+- 個別ダウンロード時にダウンロード完了を待つまで処理を終了しないように変更 [Issue #175](https://github.com/dongaba/TVerRec/issues/175)
+- DockerコンテナのベースイメージをUbuntu24.10に更新
+- Dockerコンテナのフリーズ対策として、コンテナ実行時にはyoutube-dlにタイムアウトを設定
+- Dockerコンテナでのダウンロードを高速化
+- エピソード抽出処理を高速化
+
+### 3.3.3 Fixed
+
+- 放送年がわからない際に2/29の日付が取得されると処理が停止する問題を修正
+
 ## [3.3.2](https://github.com/dongaba/TVerRec/releases/tag/v3.3.2)
 
 ### 3.3.2 Added

@@ -124,10 +124,8 @@ function Invoke-ToolUpdateCheck {
 		[Parameter(Mandatory = $true)][String]$targetName
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	$progressPreference = 'silentlyContinue'
 	& (Join-Path $scriptRoot ('functions/{0}' -f $scriptName) )
 	if (!$?) { Throw ($script:msg.ToolUpdateFailed -f $targetName) }
-	$progressPreference = 'Continue'
 	Remove-Variable -Name scriptName, targetName -ErrorAction SilentlyContinue
 }
 
@@ -577,7 +575,7 @@ function Invoke-VideoDownload {
 	# スキップ対象やダウンロード対象外は飛ばして次のファイルへ
 	if ($skipDownload) { continue }
 	# 番組ディレクトリがなければ作成
-	if (!(Test-Path $videoInfo.fileDir -PathType Container)) {
+	if ($script:sortVideoBySeries -and !(Test-Path $videoInfo.fileDir -PathType Container)) {
 		try { New-Item -ItemType Directory -Path $videoInfo.fileDir -Force | Out-Null }
 		catch { Write-Warning ($script:msg.CreateEpisodeDirFailed) ; continue }
 	}
@@ -665,11 +663,16 @@ function Format-VideoFileInfo {
 	$videoName = Get-FileNameWithoutInvalidChars ('{0}.{1}' -f $videoName, $script:videoContainerFormat)
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'fileName' -Value $videoName
 	# フォルダ名を生成
-	$videoFileDir = Get-FileNameWithoutInvalidChars (Remove-SpecialCharacter ('{0} {1}' -f $videoInfo.seriesName, $videoInfo.seasonName ).Trim(' ', '.'))
-	if ($script:sortVideoByMedia) { $videoFileDir = (Join-Path $script:downloadBaseDir (Get-FileNameWithoutInvalidChars $videoInfo.mediaName) | Join-Path -ChildPath $videoFileDir) }
-	else { $videoFileDir = (Join-Path $script:downloadBaseDir $videoFileDir) }
+	if ($script:sortVideoBySeries) {
+		$videoFileDir = Get-FileNameWithoutInvalidChars (Remove-SpecialCharacter ('{0} {1}' -f $videoInfo.seriesName, $videoInfo.seasonName ).Trim(' ', '.'))
+		if ($script:sortVideoByMedia) { $videoFileDir = (Join-Path $script:downloadBaseDir (Get-FileNameWithoutInvalidChars $videoInfo.mediaName) | Join-Path -ChildPath $videoFileDir) }
+		else { $videoFileDir = (Join-Path $script:downloadBaseDir $videoFileDir) }
+		$videoFilePath = Join-Path $videoFileDir $videoInfo.fileName
+	} else {
+		$videoFileDir = $script:downloadBaseDir
+		$videoFilePath = $videoInfo.fileName
+	}
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'fileDir' -Value $videoFileDir
-	$videoFilePath = Join-Path $videoFileDir $videoInfo.fileName
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'filePath' -Value $videoFilePath
 	$videoFileRelPath = $videoInfo.filePath.Replace($script:downloadBaseDir, '').Replace('\', '/').TrimStart('/')
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'fileRelPath' -Value $videoFileRelPath
@@ -718,6 +721,7 @@ function Invoke-Ytdl {
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $tmpDir)
 	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlHttpHeader)
 	$ytdlArgs += (' {0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
+	if ($script:ytdlRandomIp) { $ytdlArgs += (' {0} "{1}/32"' -f '--xff', $script:jpIP) }
 	if ($script:rateLimit -notin @(0, '')) {
 		$rateLimit = [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8)
 		$ytdlArgs += (' {0} {1}M' -f '--limit-rate', $rateLimit)
@@ -740,18 +744,25 @@ function Invoke-Ytdl {
 	$ytdlArgs += (' {0} "{1}"' -f '--output', $saveFile)
 	$ytdlArgsString = $ytdlArgs -join ''
 	Write-Debug ($script:msg.ExecCommand -f 'youtube-dl', $script:ytdlPath, $ytdlArgsString)
-	try {
+	if ($script:appName -eq 'TVerRecContainer') {
+		$startProcessParams = @{
+			FilePath     = 'timeout'
+			ArgumentList = "3600 $script:ytdlPath $ytdlArgsString"
+			PassThru     = $true
+		}
+	} else {
 		$startProcessParams = @{
 			FilePath     = $script:ytdlPath
 			ArgumentList = $ytdlArgsString
 			PassThru     = $true
 		}
-		if ($IsWindows) {
-			$startProcessParams.WindowStyle = $script:windowShowStyle
-		} else {
-			$startProcessParams.RedirectStandardOutput = '/dev/null'
-			$startProcessParams.RedirectStandardError = '/dev/zero'
-		}
+	}
+	if ($IsWindows) { $startProcessParams.WindowStyle = $script:windowShowStyle }
+	else {
+		$startProcessParams.RedirectStandardOutput = '/dev/null'
+		$startProcessParams.RedirectStandardError = '/dev/zero'
+	}
+	try {
 		$ytdlProcess = Start-Process @startProcessParams
 		$ytdlProcess.Handle | Out-Null
 	} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') ; return }
@@ -777,6 +788,7 @@ function Invoke-NonTverYtdl {
 	$ytdlArgs += (' {0} "{1}"' -f '--paths', $tmpDir)
 	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlHttpHeader)
 	$ytdlArgs += (' {0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
+	if ($script:ytdlRandomIp) { $ytdlArgs += (' {0} "{1}/32"' -f '--xff', $script:jpIP) }
 	if ($script:rateLimit -notin @(0, '')) {
 		$rateLimit = [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8)
 		$ytdlArgs += (' {0} {1}M' -f '--limit-rate', $rateLimit)
@@ -797,18 +809,25 @@ function Invoke-NonTverYtdl {
 	$ytdlArgs += (' {0} "{1}"' -f '--output', $saveFile)
 	$ytdlArgsString = $ytdlArgs -join ''
 	Write-Debug ($script:msg.ExecCommand -f 'youtube-dl', $script:ytdlPath, $ytdlArgsString)
-	try {
+	if ($script:appName -eq 'TVerRecContainer') {
+		$startProcessParams = @{
+			FilePath     = 'timeout'
+			ArgumentList = "3600 $script:ytdlPath $ytdlArgsString"
+			PassThru     = $true
+		}
+	} else {
 		$startProcessParams = @{
 			FilePath     = $script:ytdlPath
 			ArgumentList = $ytdlArgsString
 			PassThru     = $true
 		}
-		if ($IsWindows) {
-			$startProcessParams.WindowStyle = $script:windowShowStyle
-		} else {
-			$startProcessParams.RedirectStandardOutput = '/dev/null'
-			$startProcessParams.RedirectStandardError = '/dev/zero'
-		}
+	}
+	if ($IsWindows) { $startProcessParams.WindowStyle = $script:windowShowStyle }
+	else {
+		$startProcessParams.RedirectStandardOutput = '/dev/null'
+		$startProcessParams.RedirectStandardError = '/dev/zero'
+	}
+	try {
 		$ytdlProcess = Start-Process @startProcessParams
 		$ytdlProcess.Handle | Out-Null
 	} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') ; return }
@@ -829,7 +848,7 @@ function Get-YtdlProcessCount {
 		switch ($true) {
 			$IsWindows { return [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ); continue }
 			$IsLinux { return @(Get-Process -ErrorAction Ignore -Name $processName).Count ; continue }
-			$IsMacOS { $psCmd = 'ps' ; return (& $psCmd | grep youtube-dl | grep -v grep | grep -c ^).Trim() ; continue }
+			$IsMacOS { $psCmd = 'ps' ; return (& $psCmd | grep youtube-dl | grep -v grep | grep -v Python.app | grep -c ^).Trim() ; continue }
 			default { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
 		}
 	} catch { return 0 }
@@ -1090,6 +1109,7 @@ function Invoke-StatisticsCheck {
 		$epochTime = [Int64]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() * 1000)
 		$userProperties = @{	# max 25 properties, max 24 chars of property name, 36 chars of property value
 			PSVersion    = @{ 'value' = $PSVersionTable.PSVersion.ToString() }
+			AppName      = @{ 'value' = $script:appName }
 			AppVersion   = @{ 'value' = $script:appVersion }
 			OS           = @{ 'value' = $script:os }
 			Kernel       = @{ 'value' = $script:kernel }

@@ -1,6 +1,6 @@
 # **🎞 TVerRec 📺** TVer Bulk download and Save
 
-[🇺🇸English](README.en.md) | [🇯🇵日本語](README.md)
+[🇺🇸English](https://github.com/dongaba/TVerRec/blob/master/README.en.md) | [🇯🇵日本語](https://github.com/dongaba/TVerRec/blob/master/README.md)
 
 ![Logo](https://raw.githubusercontent.com/dongaba/TVerRec/master/resources/img/TVerRec-Logo.png)
 [![GitHub release](https://img.shields.io/github/v/release/dongaba/TVerRec?style=social&label=Release&logo=github)](https://github.com/dongaba/TVerRec/releases)
@@ -44,6 +44,9 @@ Once launched, programs will be downloaded each time a new program is distribute
   - youtube-dl (will be automatically downloaded)
   - ffmpeg (will be automatically downloaded)
   - Python (required only for Linux/Mac, not required for Windows)
+
+- Recommended Libraries
+  - PyCryptodome (for faster downloads for Linux/Mac)
 
 Alternatively, it can be run as a container using Docker.
 The container is created with an Ubuntu Linux image and starts with all necessary tools already configured.
@@ -128,6 +131,8 @@ Directory structure is as follows.
     │  │  └─ Dockerfile .................... Docker file
     │  ├─ img/ ........................... Images
     │  ├─ lib/ ........................... Library
+    │  ├─ lang/ .......................... Language file
+    │  │  └─ message.json .................. Message definition file
     │  ├─ lock/ .......................... Lock management files
     │  ├─ sample/ ........................ Sample file
     │  │  ├─ history.sample.csv ............ Empty download history file

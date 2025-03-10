@@ -72,6 +72,7 @@ $settingAttributes = @(
 	'$script:timeoutSec',
 	'$script:guiMaxExecLogLines',
 	'$script:histRetentionPeriod',
+	'$script:sortVideoBySeries',
 	'$script:sortVideoByMedia',
 	'$script:addSeriesName',
 	'$script:addSeasonName',
@@ -100,6 +101,7 @@ $settingAttributes = @(
 	'$script:videoContainerFormat',
 	'$script:cleanupDownloadBaseDir',
 	'$script:cleanupSaveBaseDir',
+	'$script:ytdlRandomIp',
 	'$script:ytdlHttpHeader',
 	'$script:ytdlBaseArgs',
 	'$script:nonTVerYtdlBaseArgs',
@@ -226,9 +228,9 @@ function Save-UserSetting {
 			$settingBox = $settingWindow.FindName($settingBoxName)
 			if ($settingBox.Name -eq 'preferredLanguage') {
 				switch ($settingBox.Text) {
-					'日本語' { $settingBox.Text = 'ja-JP'}
-					'English' { $settingBox.Text = 'en-US'}
-					default { $settingBox.Text = ''}
+					'日本語' { $settingBox.Text = 'ja-JP' }
+					'English' { $settingBox.Text = 'en-US' }
+					default { $settingBox.Text = '' }
 				}
 			}
 			switch -wildcard ($settingBox.Text) {
@@ -364,6 +366,8 @@ $embedSubtitleHeader.Header = $script:msg.GuiHeaderEmbedSubtitle
 $embedSubtitleText.Text = $script:msg.GuiTextEmbedSubtitleText
 $embedMetatagHeader.Header = $script:msg.GuiHeaderEmbedMetatag
 $embedMetatagText.Text = $script:msg.GuiTextEmbedMetatagText
+$sortVideoBySeriesHeader.Header = $script:msg.GuiHeaderSortVideoBySeries
+$sortVideoBySeriesText.Text = $script:msg.GuiTextSortVideoBySeriesText
 $sortVideoByMediaHeader.Header = $script:msg.GuiHeaderSortVideoByMedia
 $sortVideoByMediaText.Text = $script:msg.GuiTextSortVideoByMediaText
 $forceSingleDownloadHeader.Header = $script:msg.GuiHeaderForceSingleDownload
@@ -421,6 +425,8 @@ $disableUpdateFfmpegHeader.Header = $script:msg.GuiHeaderDisableUpdateFfmpeg
 $disableUpdateFfmpegText.Text = $script:msg.GuiTextDisableUpdateFfmpegText
 $ytdlOptionHeader.Header = $script:msg.GuiHeaderYtdlOption
 $ytdlOptionText.Text = $script:msg.GuiTextYtdlOptionText
+$ytdlRandomIpHeader.Header = $script:msg.GuiHeaderYtdlRandomIp
+$ytdlRandomIpText.Text = $script:msg.GuiTextYtdlRandomIpText
 $ytdlHttpHeaderHeader.Header = $script:msg.GuiHeaderYtdlHttpHeader
 $ytdlHttpHeaderText.Text = $script:msg.GuiTextYtdlHttpHeaderText
 $ytdlBaseArgsHeader.Header = $script:msg.GuiHeaderYtdlBaseArgs
@@ -464,6 +470,7 @@ $updateChannel.Items.Add('beta') | Out-Null
 $updateChannel.Items.Add('dev') | Out-Null
 foreach ($option in $trueFalseOptions) { $embedSubtitle.Items.Add($option)  | Out-Null }
 foreach ($option in $trueFalseOptions) { $embedMetatag.Items.Add($option)  | Out-Null }
+foreach ($option in $trueFalseOptions) { $sortVideoBySeries.Items.Add($option)  | Out-Null }
 foreach ($option in $trueFalseOptions) { $sortVideoByMedia.Items.Add($option)  | Out-Null }
 foreach ($option in $trueFalseOptions) { $forceSingleDownload.Items.Add($option)  | Out-Null }
 foreach ($option in $trueFalseOptions) { $sitemapParseEpisodeOnly.Items.Add($option)  | Out-Null }
@@ -481,6 +488,7 @@ foreach ($option in $trueFalseOptions) { $simplifiedValidation.Items.Add($option
 foreach ($option in $trueFalseOptions) { $disableValidation.Items.Add($option)  | Out-Null }
 foreach ($option in $trueFalseOptions) { $disableUpdateYoutubedl.Items.Add($option)  | Out-Null }
 foreach ($option in $trueFalseOptions) { $disableUpdateFfmpeg.Items.Add($option)  | Out-Null }
+foreach ($option in $trueFalseOptions) { $ytdlRandomIp.Items.Add($option)  | Out-Null }
 $windowShowStyle.Items.Add($script:msg.SettingDefault) | Out-Null
 $windowShowStyle.Items.Add('Minimized') | Out-Null
 $windowShowStyle.Items.Add('Hidden') | Out-Null

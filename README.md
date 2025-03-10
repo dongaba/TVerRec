@@ -1,6 +1,6 @@
 # **🎞 TVerRec 📺** TVer 一括ダウンロード・保存
 
-[🇺🇸English](README.en.md) | [🇯🇵日本語](README.md)
+[🇺🇸English](https://github.com/dongaba/TVerRec/blob/master/README.en.md) | [🇯🇵日本語](https://github.com/dongaba/TVerRec/blob/master/README.md)
 
 ![Logo](https://raw.githubusercontent.com/dongaba/TVerRec/master/resources/img/TVerRec-Logo.png)
 [![GitHub release](https://img.shields.io/github/v/release/dongaba/TVerRec?style=social&label=Release&logo=github)](https://github.com/dongaba/TVerRec/releases)
@@ -44,6 +44,9 @@ CMは入っていないため気に入った番組を配信終了後も残して
   - youtube-dl (自動ダウンロードされます)
   - ffmpeg (自動ダウンロードされます)
   - Python (Linux/Macのみ必要。Windowsでは不要)
+
+- 推奨ライブラリ
+  - PyCryptodome (Linux/Mac環境でダウンロードが高速化します)
 
 または、Dockerを使ってコンテナとして動作させることも可能です。
 コンテナはUbuntu Linuxのイメージで作成されており、必要なツールは全て設定済みの状態で起動します。
@@ -126,6 +129,8 @@ CMは入っていないため気に入った番組を配信終了後も残して
     │  │  └─ Dockerfile .................... Dockerファイル
     │  ├─ img/ ........................... 画像(配下のファイルは省略)
     │  ├─ lib/ ........................... ライブラリ(配下のファイルは省略)
+    │  ├─ lang/ .......................... 言語ファイル
+    │  │  └─ message.json .................. メッセージ定義ファイル
     │  ├─ lock/ .......................... ファイルのロック管理(配下のファイルは省略)
     │  ├─ sample/ ........................ サンプルファイル
     │  │  ├─ history.sample.csv ............ 空のダウンロード履歴
