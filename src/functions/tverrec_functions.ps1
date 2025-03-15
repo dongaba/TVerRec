@@ -848,7 +848,7 @@ function Get-YtdlProcessCount {
 		switch ($true) {
 			$IsWindows { return [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ); continue }
 			$IsLinux { return @(Get-Process -ErrorAction Ignore -Name $processName).Count ; continue }
-			$IsMacOS { $psCmd = 'ps' ; return (& $psCmd | grep youtube-dl | grep -v grep | grep -v Python.app | grep -c ^).Trim() ; continue }
+			$IsMacOS { $psCmd = 'ps' ; return (& $psCmd | grep youtube-dl | grep -v grep | grep -c ^).Trim() ; continue }
 			default { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
 		}
 	} catch { return 0 }
