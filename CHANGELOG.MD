@@ -1,5 +1,15 @@
 # Change Log
 
+## [3.3.4](https://github.com/dongaba/TVerRec/releases/tag/v3.3.4)
+
+### 3.3.4 Added
+
+### 3.3.4 Changed
+
+### 3.3.4 Fixed
+
+- mac環境の一部でyoutube-dlのプロセス数を正しくカウントできない問題を修正 [Issue #186](https://github.com/dongaba/TVerRec/issues/186)  [Issue #188](https://github.com/dongaba/TVerRec/issues/188) [Issue #189](https://github.com/dongaba/TVerRec/issues/189)
+
 ## [3.3.3](https://github.com/dongaba/TVerRec/releases/tag/v3.3.3)
 
 ### 3.3.3 Added
