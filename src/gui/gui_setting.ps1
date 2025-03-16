@@ -177,7 +177,7 @@ function Read-UserSetting {
 			else { $settingBox.Text = $script:msg.SettingDefault }
 		}
 		# 動作停止設定の抽出
-		$scheduleStopPattern = '$script:stopSchedule\s*=\s*@\{([^}]*)\}'
+		$scheduleStopPattern = '\$script:stopSchedule\s*=\s*@\{([^}]*)\}'
 		$scheduleStopDetail = [regex]::Match($userSettings, $scheduleStopPattern)
 		# 抽出した内容を解析してチェックボックスに反映
 		if ($scheduleStopDetail.Success) {

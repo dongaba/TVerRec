@@ -10,6 +10,7 @@
 
 - ダウンロード対象外ファイルがクリアされてしまうことがある問題を修正(できてるといいな) [Issue #187](https://github.com/dongaba/TVerRec/issues/187)
 - ダウンロード履歴ファイルにも同様の対策を実施
+- スケジュール設定の読み込みに失敗する問題を修正 [Issue #195](https://github.com/dongaba/TVerRec/issues/195)
 
 ## [3.3.4](https://github.com/dongaba/TVerRec/releases/tag/v3.3.4)
 
