@@ -289,9 +289,15 @@ function Update-IgnoreList {
 			if ($ignoreComment) { $ignoreListNew += $ignoreComment }
 			if ($ignoreTarget) { $ignoreListNew += $ignoreTarget }
 			if ($ignoreElse) { $ignoreListNew += $ignoreElse }
-			# 改行コードLFを強制 + NFCで出力
-			$ignoreListNew.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC)  | Out-File -LiteralPath $script:ignoreFilePath -Encoding UTF8 -NoNewline
-			Write-Debug ($script:msg.IgnoreFileSortCompleted)
+			try {
+				# 改行コードLFを強制 + NFCで出力
+				$ignoreListNew.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC) | Out-File -LiteralPath $script:ignoreFilePath -Encoding UTF8 -NoNewline
+				Write-Debug ($script:msg.IgnoreFileSortCompleted)
+			} catch {
+				# 更新後の対象外リストの書き込みに失敗したら読み込んだ対象外リストの出力を試みる
+				$ignoreLists.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC) | Out-File -LiteralPath $script:ignoreFilePath -Encoding UTF8 -NoNewline
+				Write-Error ($script:msg.IgnoreFileSortFailed)
+			}
 		} catch { Write-Warning ($script:msg.IgnoreFileSortFailed) }
 		finally { Unlock-File $script:ignoreLockFilePath | Out-Null }
 	}
@@ -377,7 +383,7 @@ function Wait-YtdlProcess {
 }
 
 #----------------------------------------------------------------------
-# ダウンロード履歴データの作成
+# ダウンロード履歴データの成形
 #----------------------------------------------------------------------
 function Format-HistoryRecord {
 	Param ([Parameter(Mandatory = $true)][pscustomobject][Ref]$videoInfo)
@@ -400,7 +406,7 @@ function Format-HistoryRecord {
 }
 
 #----------------------------------------------------------------------
-# ダウンロードリストデータの作成
+# ダウンロードリストデータの成形
 #----------------------------------------------------------------------
 function Format-ListRecord {
 	Param ([Parameter(Mandatory = $true)][pscustomobject][Ref]$videoInfo)
@@ -907,12 +913,17 @@ function Optimize-HistoryFile {
 	$cleanedHist = @()
 	try {
 		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-		$cleanedHist = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8 | Where-Object {
+		$originalLists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+		$cleanedHist = @($originalLists | Where-Object {
 				($null -ne $_.videoValidated) `
 					-and ([Int]::TryParse($_.videoValidated, [Ref]0) ) `
 					-and ([datetime]::TryParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null, [System.Globalization.DateTimeStyles]::None, [Ref]([datetime]::MinValue)))
 			})
-		$cleanedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
+		try { $cleanedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
+		catch {
+			# 不整合解消後のダウンロード履歴の書き込みに失敗したら読み込んだダウンロード履歴の出力を試みる
+			$originalLists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
+		}
 	} catch { Write-Warning ($script:msg.OptimizeHistFailed) }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
 	Remove-Variable -Name cleanedHist -ErrorAction SilentlyContinue
@@ -927,10 +938,13 @@ function Limit-HistoryFile {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	try {
 		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-		$purgedHist = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8) | Where-Object {
-				[DateTime]::ParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null) -gt (Get-Date).AddDays(-1 * [Int32]$retentionPeriod)
-			})
-		$purgedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
+		$originalLists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+		$purgedHist = @($originalLists | Where-Object { [DateTime]::ParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null) -gt (Get-Date).AddDays(-1 * [Int32]$retentionPeriod) })
+		try { $purgedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
+		catch {
+			# 指定日以上前の履歴を削除後のダウンロード履歴の書き込みに失敗したら読み込んだダウンロード履歴の出力を試みる
+			$originalLists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
+		}
 	} catch { Write-Warning ($script:msg.CleanupHistFailed) }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
 	Remove-Variable -Name retentionPeriod, purgedHist -ErrorAction SilentlyContinue
@@ -946,12 +960,46 @@ function Repair-HistoryFile {
 	$uniquedHist = @()
 	try {
 		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+		$originalLists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 		# videoPageで1つしかないもの残し、ダウンロード日時でソート
-		$uniquedHist = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8 | Group-Object -Property 'videoPage' | Where-Object count -EQ 1 | Select-Object -ExpandProperty group | Sort-Object -Property downloadDate)
-		$uniquedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
+		$uniquedHist = @($originalLists  | Group-Object -Property 'videoPage' | Where-Object count -EQ 1 | Select-Object -ExpandProperty group | Sort-Object -Property downloadDate)
+		try { $uniquedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
+		catch {
+			# 重複削除後のダウンロード履歴の書き込みに失敗したら読み込んだダウンロード履歴の出力を試みる
+			$originalLists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
+		}
 	} catch { Write-Warning ($script:msg.DistinctHistFailed) }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
 	Remove-Variable -Name uniquedHist -ErrorAction SilentlyContinue
+}
+
+#----------------------------------------------------------------------
+# ffmpeg/ffprobeプロセスの起動
+#----------------------------------------------------------------------
+function Invoke-FFmpegProcess {
+	param (
+		[string]$filePath,
+		[string]$ffmpegArgs,
+		[string]$execName
+	)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$commonParams = @{
+		FilePath              = $filePath
+		ArgumentList          = $ffmpegArgs
+		PassThru              = $true
+		RedirectStandardError = $script:ffmpegErrorLogPath
+		Wait                  = $true
+	}
+	Invoke-StatisticsCheck -Operation 'validate'
+	if ($IsWindows) {$commonParams.WindowStyle = $script:windowShowStyle}
+	else {$commonParams.RedirectStandardOutput = '/dev/null'}
+	try {
+		# プロセスの開始
+		$process = Start-Process @commonParams
+		$process.Handle | Out-Null  # プロセスハンドルをキャッシュ。PS7.4.0の終了コードを捕捉しないバグのために必要
+		$process.WaitForExit()
+	} catch { Write-Warning ($script:msg.ExecFailed -f $execName) ; return }
+	return $process.ExitCode
 }
 
 #----------------------------------------------------------------------
@@ -964,64 +1012,46 @@ function Invoke-IntegrityCheck {
 		[Parameter(Mandatory = $false)][String]$decodeOption = ''
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$ffmpegProcessExitCode = 0
 	$errorCount = 0
 	$checkStatus = 0
 	$videoFilePath = Join-Path (Convert-Path $script:downloadBaseDir) $videoHist.videoPath
 	try { New-Item -Path $script:ffmpegErrorLogPath -ItemType File -Force | Out-Null }
 	catch { Write-Warning ($script:msg.InitializeErrorFileFailed) ; return }
+
 	# これからチェックする番組のステータスをチェック
 	try {
 		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 		$videoHists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 		$checkStatus = ($videoHists.Where({ $_.videoPage -eq $videoHist.videoPage })).videoValidated
 		switch ($checkStatus) {
-			# 0:未チェック、1:チェック済、2:チェック中
-			'0' { $videoHists.Where({ $_.videoPage -eq $videoHist.videoPage }).Where({ $_.videoValidated = '2' }) ; $videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 ; continue }
-			'1' { Write-Output ($script:msg.ValidationCompleted) ; return ; continue }
-			'2' { Write-Output ($script:msg.ValidationInProgress) ; return ; continue }
+			# 0:未チェック、1:チェック済、2:チェック中、レコードなしは履歴が削除済み
+			# 「0:未チェック」のレコードは「2:チェック中」に変更して出力
+			# 「0:未チェック」以外のステータスの際はスキップして次を処理
+			'0' {
+					$videoHists.Where({ $_.videoPage -eq $videoHist.videoPage }).Where({ $_.videoValidated = '2' })
+					$videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
+					continue
+				}
+			'1' { Write-Output ($script:msg.ValidationCompleted) ; return }
+			'2' { Write-Output ($script:msg.ValidationInProgress) ; return }
 			default { Write-Warning ($script:msg.HistRecordRemoved -f $videoHist.videoPage) ; return }
 		}
 	} catch { Write-Warning ($script:msg.HistUpdateFailed) ; return }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
-	Invoke-StatisticsCheck -Operation 'validate'
+
 	if ($script:simplifiedValidation) {
 		# ffprobeを使った簡易検査
 		$ffprobeArgs = ('-hide_banner -v error -err_detect explode -i "{0}"' -f $videoFilePath)
 		Write-Debug ($script:msg.ExecCommand -f 'ffprobe', $script:ffprobePath, $ffprobeArgs)
-		$commonParams = @{
-			FilePath              = $script:ffprobePath
-			ArgumentList          = $ffprobeArgs
-			PassThru              = $true
-			RedirectStandardError = $script:ffmpegErrorLogPath
-			Wait                  = $true
-		}
-		if ($IsWindows) { $commonParams.WindowStyle = $script:windowShowStyle }
-		else { $commonParams.RedirectStandardOutput = '/dev/null' }
-		try {
-			# ffmpegプロセスの開始
-			$ffmpegProcess = Start-Process @commonParams
-			$ffmpegProcess.Handle | Out-Null  # ffmpegProcess.Handleをキャッシュ。PS7.4.0の終了コードを捕捉しないバグのために必要
-			$ffmpegProcess.WaitForExit()
-		} catch { Write-Warning ($script:msg.ExecFailed -f 'ffprobe') ; return }
+		$ffmpegProcessExitCode = Invoke-FFmpegProcess -filePath $script:ffprobePath -ffmpegArgs $ffprobeArgs -execName 'ffprobe'
 	} else {
 		# ffmpegを使った完全検査
 		$ffmpegArgs = ('-hide_banner -v error -xerror {0} -i "{1}" -f null - ' -f $decodeOption, $videoFilePath)
 		Write-Debug ($script:msg.ExecCommand -f 'ffmpeg', $script:ffmpegPath, $ffmpegArgs)
-		$commonParams = @{
-			FilePath              = $script:ffmpegPath
-			ArgumentList          = $ffmpegArgs
-			PassThru              = $true
-			RedirectStandardError = $script:ffmpegErrorLogPath
-		}
-		if ($IsWindows) { $commonParams.WindowStyle = $script:windowShowStyle }
-		else { $commonParams.RedirectStandardOutput = '/dev/null' }
-		try {
-			# ffmpegプロセスの開始
-			$ffmpegProcess = Start-Process @commonParams
-			$ffmpegProcess.Handle | Out-Null  # ffmpegProcess.Handleをキャッシュ。PS7.4.0の終了コードを捕捉しないバグのために必要
-			$ffmpegProcess.WaitForExit()
-		} catch { Write-Warning ($script:msg.ExecFailed -f 'ffmpeg') ; return }
+		$ffmpegProcessExitCode = Invoke-FFmpegProcess -filePath $script:ffmpegPath -ffmpegArgs $ffmpegArgs -execName 'ffmpeg'
 	}
+
 	# ffmpegが正常終了しても、大量エラーが出ることがあるのでエラーをカウント
 	try {
 		if (Test-Path $script:ffmpegErrorLogPath) {
@@ -1034,17 +1064,21 @@ function Invoke-IntegrityCheck {
 	catch { Write-Warning ($script:msg.DeleteErrorFailed) }
 
 	# 終了コードが0以外 または エラーが一定以上
-	if (($ffmpegProcess.ExitCode -ne 0) -or ($errorCount -gt 30)) {
+	if (($ffmpegProcessExitCode -ne 0) -or ($errorCount -gt 30)) {
 		# ダウンロード履歴とファイルを削除
-		Write-Warning ($script:msg.ValidationNG) ; Write-Verbose ($script:msg.ErrorCount -f $ffmpegProcess.ExitCode, $errorCount)
+		Write-Warning ($script:msg.ValidationNG) ; Write-Verbose ($script:msg.ErrorCount -f $ffmpegProcessExitCode, $errorCount)
 		$script:validationFailed = $true
-		# 破損しているダウンロードファイルをダウンロード履歴から削除
+		# 整合性検証に失敗したダウンロードファイルをダウンロード履歴から削除
 		try {
 			while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-			$videoHists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+			$originalHistFile = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 			# 該当の番組のレコードを削除
-			$videoHists = @($videoHists.Where({ $_.videoPage -ne $videoHist.videoPage }))
-			$videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
+			$updatedHistFile = @($originalHistFile.Where({ $_.videoPage -ne $videoHist.videoPage }))
+			try{ $updatedHistFile | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
+			catch{
+				# 該当の番組のレコード削除後のダウンロード履歴の書き込みに失敗したら読み込んだダウンロード履歴の出力を試みる
+				$originalHistFile | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
+			}
 		} catch { Write-Warning ($script:msg.HistUpdateFailed) }
 		finally { Unlock-File $script:histLockFilePath | Out-Null }
 		# 破損しているダウンロードファイルを削除
@@ -1055,10 +1089,15 @@ function Invoke-IntegrityCheck {
 		Write-Output ($script:msg.ValidationOK)
 		try {
 			while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-			$videoHists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+			$originalHistFile = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 			# 該当の番組のチェックステータスを1に
-			$videoHists.Where({ $_.videoPage -eq $videoHist.videoPage }).Where({ $_.videoValidated = '1' })
-			$videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
+			$updatedHistFile = $originalHistFile
+			$updatedHistFile.Where({ $_.videoPage -eq $videoHist.videoPage }).Where({ $_.videoValidated = '1' })
+			try { $updatedHistFile | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
+			catch {
+				# 該当の番組のチェックステータス更新後のダウンロード履歴の書き込みに失敗したら読み込んだダウンロード履歴の出力を試みる
+				$originalHistFile | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
+			}
 		} catch { Write-Warning ($script:msg.HistUpdateFailed) }
 		finally { Unlock-File $script:histLockFilePath | Out-Null }
 	}
