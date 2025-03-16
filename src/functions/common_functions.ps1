@@ -266,23 +266,26 @@ function Remove-Files {
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$limitDateTime = (Get-Date).AddDays(-1 * $delPeriod)
+	Write-Output ('　{0}' -f $basePath)
 	if ($script:enableMultithread) {
 		Write-Debug ('Multithread Processing Enabled')
 		# 並列化が有効の場合は並列化
-		try {
-			$conditions | ForEach-Object -Parallel {
-				Write-Output ('　{0}' -f (Join-Path $using:basePath $_))
-				(Get-ChildItem -LiteralPath $using:basePath -Recurse -File -Filter $_ -ErrorAction SilentlyContinue).Where({ $_.LastWriteTime -lt $using:limitDateTime }) | Remove-Item -Force -ErrorAction SilentlyContinue | Out-Null
-			} -ThrottleLimit $script:multithreadNum
-		} catch { Write-Warning ($script:msg.FileCannotBeDeleted) }
+		$filesToDelete = Get-ChildItem -Path $basePath -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object -Parallel {
+			if (($using:conditions -contains $_.Extension) -and ($_.LastWriteTime -lt $using:limitDateTime)) { $_ }
+		} -ThrottleLimit $script:multithreadNum
+		$filesToDelete | ForEach-Object -Parallel {
+			try { Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue | Out-Null }
+			catch { Write-Warning ($script:msg.FileCannotBeDeleted) }
+		} -ThrottleLimit $script:multithreadNum
 	} else {
 		# 並列化が無効の場合は従来型処理
-		try {
-			foreach ($condition in $conditions) {
-				Write-Output ('　{0}' -f (Join-Path $basePath $condition))
-				(Get-ChildItem -LiteralPath $basePath -Recurse -File -Filter $condition -ErrorAction SilentlyContinue).Where({ $_.LastWriteTime -lt $limitDateTime }) | Remove-Item -Force -ErrorAction SilentlyContinue | Out-Null
-			}
-		} catch { Write-Warning ($script:msg.FileCannotBeDeleted) }
+		$filesToDelete = Get-ChildItem -Path $basePath -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object {
+			if (($using:conditions -contains $_.Extension) -and ($_.LastWriteTime -lt $using:limitDateTime)) { $_ }
+		}
+		$filesToDelete | ForEach-Object {
+			try { Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue | Out-Null }
+			catch { Write-Warning ($script:msg.FileCannotBeDeleted) }
+		}
 	}
 	Remove-Variable -Name basePath, conditions, delPeriod, limitDateTime, condition -ErrorAction SilentlyContinue
 }

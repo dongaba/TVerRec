@@ -178,7 +178,10 @@ $toastShowParams.Text2 = $script:msg.DeleteTrashesStep3
 Show-ProgressToast @toastShowParams
 
 try {
-	$emptyDirs = @(Get-ChildItem -Path $script:downloadBaseDir -Directory -Recurse | Where-Object { @($_.GetFileSystemInfos().Where({ -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) })).Count -eq 0 })
+	$emptyDirs = @()
+	Get-ChildItem -Path $script:downloadBaseDir -Directory -Recurse | ForEach-Object {
+		if ($_.GetFileSystemInfos().Where({ -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) }).Count -eq 0) { $emptyDirs += $_ }
+	}
 } catch { continue }
 if ($emptyDirs.Count -ne 0) { $emptyDirs = @($emptyDirs.Fullname) }
 $emptyDirTotal = $emptyDirs.Count

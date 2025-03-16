@@ -176,8 +176,8 @@ switch ($true) {
 			'64'    = @('x86_64', 'ia64')
 		}
 		# アーキテクチャに対応するCPUタイプを取得
-		$arch = (& uname -m | tr '[:upper:]' '[:lower:]')
-		$cpu = $pattern.GetEnumerator() | Where-Object { $arch -in $_.Value } | Select-Object -ExpandProperty Key
+		$arch = (& uname -m).ToLower()
+		$cpu = $pattern.GetEnumerator().where({ $_.Value -contains $arch }) | Select-Object -ExpandProperty Key
 		# CPUタイプが見つからない場合のエラーメッセージ
 		if (-not $cpu) {
 			Write-Warning ($script:msg.ToolArchitectureNotIdentified1 -f 'ffmpeg')
@@ -255,7 +255,12 @@ switch ($true) {
 			$uriBase = 'https://ffmpeg.martin-riedl.de/'
 			$uriBasePage = Invoke-WebRequest -Uri $uriBase
 			foreach ($file in $downloadFiles) {
-				$downloadLink = $uriBasePage.links | Where-Object { ($_.href -match $arch) -and ($_.href -match $latestBuild) -and ($_.outerHTML -match $file) -and ($_.href -notmatch '.sha256') }
+				$downloadLink = $uriBasePage.links.where({
+					$_.href -match $arch `
+						-and $_.href -match $latestBuild `
+						-and $_.outerHTML -match $file `
+						-and $_.href -notmatch '.sha256'
+				}) | Select-Object -First 1
 				Invoke-WebRequest -Uri ('{0}{1}' -f $uriBase, $downloadLink.href) -OutFile (Join-Path $script:binDir $file)
 			}
 		} catch { Write-Warning ($script:msg.ToolDownloadFailed -f 'ffmpeg') ; return }
