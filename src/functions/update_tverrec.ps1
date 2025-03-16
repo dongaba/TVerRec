@@ -226,7 +226,7 @@ if (Test-Path (Join-Path $script:scriptRoot '../db/list.csv')) {
 	$propertyNames = @('episodePageURL', 'seriesPageURL', 'descriptionText')
 	if ($currentListFile) {
 		$currentProperties = @($currentListFile | Get-Member -MemberType NoteProperty).Name
-		if ($propertyNames | Where-Object { $currentProperties -notContains $_ }) {
+		if ($propertyNames.where({ $currentProperties -notContains $_ })) {
 			foreach ($propertyName in $propertyNames) {
 				if ($currentProperties -notContains $propertyName) { $currentListFile | Add-Member -MemberType NoteProperty -Name $propertyName -Value '' }
 			}

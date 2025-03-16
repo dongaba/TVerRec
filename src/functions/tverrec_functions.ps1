@@ -205,7 +205,7 @@ function Read-HistoryFile {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$histFileData = @()
 	try {
-		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 		$histFileData = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 	} catch { Throw ($script:msg.LoadFailed -f $script:msg.HistFile) }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
@@ -222,7 +222,7 @@ function Read-DownloadList {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$listFileData = @()
 	try {
-		while ((Lock-File $script:listLockFilePath).result -ne $true) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+		while (-not (Lock-File $script:listLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 		$listFileData = @(Import-Csv -LiteralPath $script:listFilePath -Encoding UTF8)
 	} catch { Throw ($script:msg.LoadFailed -f $script:msg.ListFile) }
 	finally { Unlock-File $script:listLockFilePath | Out-Null }
@@ -239,7 +239,7 @@ function Get-LinkFromDownloadList {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if (Test-Path $script:listFilePath -PathType Leaf) {
 		try {
-			while ((Lock-File $script:listLockFilePath).result -ne $true) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+			while (-not (Lock-File $script:listLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 			# 空行とダウンロード対象外を除き、EpisodeIDのみを抽出
 			$videoLinks = @((Import-Csv -LiteralPath $script:listFilePath -Encoding UTF8).Where({ !($_ -cmatch '^\s*$') }).Where({ !($_.EpisodeID -cmatch '^#') }) | Select-Object episodeID)
 		} catch { Throw ($script:msg.LoadFailed -f $script:msg.ListFile) }
@@ -259,7 +259,7 @@ function Read-IgnoreList {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$ignoreTitles = @()
 	try {
-		while ((Lock-File $script:ignoreLockFilePath).result -ne $true) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+		while (-not (Lock-File $script:ignoreLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 		# コメントと空行を除いて抽出
 		$ignoreTitles = @((Get-Content $script:ignoreFilePath -Encoding UTF8).Where({ !($_ -cmatch '^\s*$') }).Where({ !($_ -cmatch '^;.*$') }))
 	} catch { Throw ($script:msg.LoadFailed -f $script:msg.IgnoreFile) }
@@ -281,7 +281,7 @@ function Update-IgnoreList {
 	$ignoreElse = @()
 	if (Test-Path $script:ignoreFilePath -PathType Leaf) {
 		try {
-			while ((Lock-File $script:ignoreLockFilePath).result -ne $true) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+			while (-not (Lock-File $script:ignoreLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 			$ignoreLists = @((Get-Content $script:ignoreFilePath -Encoding UTF8).Where( { $_ -notmatch '^\s*$|^(;;.*)$' }))
 			$ignoreComment = @(Get-Content $script:ignoreFileSamplePath -Encoding UTF8)
 			$ignoreTarget = @($ignoreLists.Where({ $_ -eq $ignoreTitle }) | Sort-Object -Unique)
@@ -573,7 +573,7 @@ function Invoke-VideoDownload {
 
 	# ダウンロード履歴CSV書き出し
 	try {
-		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 		$newVideo | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append
 		Write-Debug ($script:msg.HistWritten)
 	} catch { Write-Warning ($script:msg.HistUpdateFailed) ; continue }
@@ -912,7 +912,7 @@ function Optimize-HistoryFile {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$cleanedHist = @()
 	try {
-		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 		$originalLists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 		$cleanedHist = $originalLists.Where({
 			($null -ne $_.videoValidated) `
@@ -937,7 +937,7 @@ function Limit-HistoryFile {
 	Param ([Parameter(Mandatory = $true)][Int32]$retentionPeriod)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	try {
-		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 		$originalLists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 		$purgedHist = $originalLists.Where({ [DateTime]::ParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null) -gt (Get-Date).AddDays(-1 * $retentionPeriod) })
 		try { $purgedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
@@ -959,10 +959,10 @@ function Repair-HistoryFile {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$uniquedHist = @()
 	try {
-		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 		$originalLists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 		# videoPageで1つしかないもの残し、ダウンロード日時でソート
-		$uniquedHist = @($originalLists | Group-Object -Property 'videoPage' | Where-Object { $_.Count -eq 1 } | ForEach-Object { $_.Group } | Sort-Object -Property downloadDate)
+		$uniquedHist = @(($originalLists | Group-Object -Property 'videoPage').Where({ $_.Count -eq 1 }) | ForEach-Object { $_.Group } | Sort-Object -Property downloadDate)
 		try { $uniquedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
 		catch {
 			# 重複削除後のダウンロード履歴の書き込みに失敗したら読み込んだダウンロード履歴の出力を試みる
@@ -1021,7 +1021,7 @@ function Invoke-IntegrityCheck {
 
 	# これからチェックする番組のステータスをチェック
 	try {
-		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 		$videoHists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 		$checkStatus = ($videoHists.Where({ $_.videoPage -eq $videoHist.videoPage })).videoValidated
 		switch ($checkStatus) {
@@ -1070,7 +1070,7 @@ function Invoke-IntegrityCheck {
 		$script:validationFailed = $true
 		# 整合性検証に失敗したダウンロードファイルをダウンロード履歴から削除
 		try {
-			while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+			while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 			$originalHistFile = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 			# 該当の番組のレコードを削除
 			$updatedHistFile = @($originalHistFile.Where({ $_.videoPage -ne $videoHist.videoPage }))
@@ -1088,7 +1088,7 @@ function Invoke-IntegrityCheck {
 		# 終了コードが0のときはダウンロード履歴にチェック済フラグを立てる
 		Write-Output ($script:msg.ValidationOK)
 		try {
-			while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+			while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 			$originalHistFile = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 			# 該当の番組のチェックステータスを1に
 			$updatedHistFile = $originalHistFile
@@ -1220,7 +1220,11 @@ switch ($true) {
 		$script:kernel = (Get-CimInstance -Class Win32_OperatingSystem).Version
 		$script:arch = $Env:PROCESSOR_ARCHITECTURE.ToLower()
 		$script:guid = (Get-CimInstance -Class Win32_ComputerSystemProduct).UUID
-		$script:appId = (Get-StartApps).Where({ $_.Name -cmatch 'PowerShell*' }, 'First').AppId
+		# Toast用AppID取得に必要
+		if (!$script:disableToastNotification) {
+			Import-Module StartLayout -SkipEditionCheck
+			$script:appId = (Get-StartApps).Where({ $_.Name -cmatch 'PowerShell*' }, 'First').AppId
+		}
 		continue
 	}
 	$IsLinux {

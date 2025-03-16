@@ -184,7 +184,7 @@ function Read-UserSetting {
 			$scheduleStopString = $scheduleStopDetail.Groups[1].Value
 			foreach ($day in $days) {
 				if ($scheduleStopString -match "'$day'\s*=\s*@\(([^)]*)\)") {
-					$schedule = $matches[1].Split(',').Trim() | Where-Object { $_ -ne '' }
+					$schedule = $matches[1].Split(',').Trim().where({ $_ -ne '' })
 					foreach ($hour in $schedule) {
 						$checkbox = $settingWindow.FindName(('chkbxStop{0}{1}' -f $day, ([Int]$hour).ToString('D2')))
 						if ($checkbox) { $checkbox.IsChecked = $true }
