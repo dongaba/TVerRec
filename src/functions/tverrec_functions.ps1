@@ -1216,14 +1216,17 @@ $progressPreference = 'Continue'
 $script:clientSettings = Get-Setting
 switch ($true) {
 	$IsWindows {
-		$script:os = (Get-CimInstance -Class Win32_OperatingSystem).Caption
-		$script:kernel = (Get-CimInstance -Class Win32_OperatingSystem).Version
+		$osInfo = Get-CimInstance -Class Win32_OperatingSystem
+		$script:os = $osInfo.Caption
+		$script:kernel = $osInfo.Version
 		$script:arch = $Env:PROCESSOR_ARCHITECTURE.ToLower()
 		$script:guid = (Get-CimInstance -Class Win32_ComputerSystemProduct).UUID
 		# Toast用AppID取得に必要
 		if (!$script:disableToastNotification) {
-			Import-Module StartLayout -SkipEditionCheck
-			$script:appId = (Get-StartApps).Where({ $_.Name -cmatch 'PowerShell*' }, 'First').AppId
+			try {
+				Import-Module StartLayout -SkipEditionCheck
+				$script:appId = (Get-StartApps).Where({ $_.Name -cmatch 'PowerShell*' }, 'First').AppId
+			} catch { Write-Debug 'Failed to import StartLayout module' }
 		}
 		continue
 	}
