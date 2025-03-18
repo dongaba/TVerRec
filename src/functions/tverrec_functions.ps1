@@ -661,7 +661,7 @@ function Format-VideoFileInfo {
 	# ファイル名にできない文字列を除去
 	$videoName = (Get-FileNameWithoutInvalidChars $videoName).Replace('  ', ' ').Trim()
 	# SMBで255バイトまでしかファイル名を持てないらしいので、超えないようにファイル名をトリミング。youtube-dlの中間ファイル等を考慮して安全目の上限値
-	$fileNameLimit = $script:fileNameLengthMax - 25
+	$fileNameLimit = $script:fileNameLengthMax - 30
 	if ([System.Text.Encoding]::UTF8.GetByteCount($videoName) -gt $fileNameLimit) {
 		while ([System.Text.Encoding]::UTF8.GetByteCount($videoName) -gt $fileNameLimit) { $videoName = $videoName.Substring(0, $videoName.Length - 1) }
 		$videoName = ('{0}……' -f $videoName)
