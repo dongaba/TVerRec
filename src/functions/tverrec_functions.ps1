@@ -849,6 +849,7 @@ function Get-YtdlProcessCount {
 	$processName = switch ($script:preferredYoutubedl) {
 		'yt-dlp' { 'yt-dlp' }
 		'ytdl-patched' { 'youtube-dl' }
+		'yt-dlp-nightly' { 'yt-dlp' }
 	}
 	try {
 		switch ($true) {

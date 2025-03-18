@@ -77,8 +77,9 @@ else { $ytdlPath = Join-Path $script:binDir 'youtube-dl' }
 
 # githubの設定
 $lookupTable = @{
-	'yt-dlp'       = 'yt-dlp/yt-dlp'
-	'ytdl-patched' = 'ytdl-patched/ytdl-patched'
+	'yt-dlp'         = 'yt-dlp/yt-dlp'
+	'ytdl-patched'   = 'ytdl-patched/ytdl-patched'
+	'yt-dlp-nightly' = 'yt-dlp/yt-dlp-nightly-builds'
 }
 if ($lookupTable.ContainsKey($script:preferredYoutubedl)) { $repo = $lookupTable[$script:preferredYoutubedl] }
 else { Write-Warning ($script:msg.ToolInvalidSource -f 'youtube-dl') ; return }
@@ -105,8 +106,10 @@ if ($latestVersion -eq $currentVersion) {
 	Write-Warning ($script:msg.ToolOutdated -f 'youtube-dl')
 	Write-Output ($script:msg.ToolLocalVersion -f $currentVersion)
 	Write-Output ($script:msg.ToolRemoteVersion -f $latestVersion)
-	if (!$IsWindows) { $fileBeforeRename = $script:preferredYoutubedl ; $fileAfterRename = 'youtube-dl' }
-	else { $fileBeforeRename = ('{0}.exe' -f $script:preferredYoutubedl) ; $fileAfterRename = 'youtube-dl.exe' }
+	if ($script:preferredYoutubedl -eq 'yt-dlp-nightly') { $downloadFileName = 'yt-dlp' }
+	else { $downloadFileName = $script:preferredYoutubedl }
+	if (!$IsWindows) { $fileBeforeRename = $downloadFileName ; $fileAfterRename = 'youtube-dl' }
+	else { $fileBeforeRename = ('{0}.exe' -f $downloadFileName) ; $fileAfterRename = 'youtube-dl.exe' }
 	Write-Output ($script:msg.ToolDownload -f 'youtube-dl', [String]([System.Runtime.InteropServices.RuntimeInformation]::OSDescription).split()[0..1])
 	try {
 		#ダウンロード

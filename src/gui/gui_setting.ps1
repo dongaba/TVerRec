@@ -496,6 +496,7 @@ $windowShowStyle.Items.Add('Normal') | Out-Null
 $windowShowStyle.Items.Add('Maximized') | Out-Null
 $preferredYoutubedl.Items.Add($script:msg.SettingDefault) | Out-Null
 $preferredYoutubedl.Items.Add('yt-dlp') | Out-Null
+$preferredYoutubedl.Items.Add('yt-dlp-nightly') | Out-Null
 $preferredYoutubedl.Items.Add('ytdl-patched') | Out-Null
 foreach ($option in $trueFalseOptions) { $scheduleStop.Items.Add($option)  | Out-Null }
 $preferredLanguage.Items.Add($script:msg.SettingDefault) | Out-Null
