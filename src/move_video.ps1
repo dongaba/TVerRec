@@ -44,7 +44,7 @@ function Get-DirectoriesOnWindows {
 	$results = @()
 	foreach ($path in $paths) {
 		$dirCmd = "dir `"$path`" /s /b /a:d"
-		$results += (& cmd /c $dirCmd) | ForEach-Object { $_ }
+		$results += (& cmd /c $dirCmd)
 	}
 	return $results
 }
@@ -64,11 +64,8 @@ function Get-DirectoriesNotOnWindows {
 function Get-DirectoriesWithPlatformCheck {
 	Param ([String[]]$paths)
 	# PowerShellではジャンクションの展開ができないので、cmd.exeを使ってジャンクションを解決する
-	switch ($true) {
-		$IsWindows { $results = Get-DirectoriesOnWindows -paths $paths ; continue }
-		default { $results = Get-DirectoriesNotOnWindows -paths $paths }
-	}
-	return $results
+	if ($IsWindows) { return Get-DirectoriesOnWindows -paths $paths }
+	else { return Get-DirectoriesNotOnWindows -paths $paths }
 }
 
 # 移動先ディレクトリ配下のディレクトリ一覧
@@ -86,9 +83,17 @@ if ($script:saveBaseDir) {
 Write-Output ('')
 Write-Output ($script:msg.MediumBoldBorder)
 Write-Output ($script:msg.ListUpSourceDirs)
+# $moveFromPathsHash = @{}
+# if ($script:saveBaseDir -and (Get-ChildItem -LiteralPath $script:downloadBaseDir -Include @('*.mp4', '*.ts') -Recurse)) {
+# 	Get-ChildItem -LiteralPath $script:downloadBaseDir -Include @('*.mp4', '*.ts') -Recurse -File `
+# 	| Select-Object Directory -Unique `
+# 	| ForEach-Object { $moveFromPathsHash[$_.Directory.Name] = $_.Directory.FullName }
+# }
 $moveFromPathsHash = @{}
-if ($script:saveBaseDir -and (Get-ChildItem -LiteralPath $script:downloadBaseDir -Include @('*.mp4', '*.ts') -Recurse)) {
-	Get-ChildItem -LiteralPath $script:downloadBaseDir -Include @('*.mp4', '*.ts') -Recurse -File | Select-Object Directory -Unique | ForEach-Object { $moveFromPathsHash[$_.Directory.Name] = $_.Directory.FullName }
+if ($script:saveBaseDir) {
+	Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse -Directory `
+	| Select-Object Name -Unique `
+	| ForEach-Object { $moveFromPathsHash[$_.Name] = $script:downloadBaseDir + '/' + $_.Name }
 }
 
 # 移動先ディレクトリとダウンロードディレクトリの一致を抽出
