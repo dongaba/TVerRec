@@ -25,7 +25,7 @@ TVerRecは、テレビ番組配信サイトTVerの番組をダウンロード保
 CMは入っていないため気に入った番組を配信終了後も残しておくことができます。
 1 回起動すれば新しい番組が配信される度にダウンロードされます。
 
-- **TVerRecはWindows PowerShellをサポートません。PowerShell Coreでご利用ください。**
+- **TVerRecはWindows PowerShellをサポートしません。PowerShell Coreでご利用ください。**
 - TVerRecはPowerShell CoreをインストールしたWindows/Mac/Linuxで動作します。
 - WindowsでPowerShell Coreがインストールされていない場合は、TVerRecが自動的にPowerShell Coreをインストールします。
 - Windowsに手動でPowerShell Coreをインストールする方法や Mac、LinuxへのPowerShellのインストールについては[Wikiのこちらのページ](https://github.com/dongaba/TVerRec/wiki/PowerShell%E3%81%AE%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB)を参照してください。

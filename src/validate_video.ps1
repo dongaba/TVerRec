@@ -72,7 +72,7 @@ $script:validationFailed = $false
 $videoNotValidatedNum = 0
 if (Test-Path $script:histFilePath -PathType Leaf) {
 	try {
-		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 		$videoNotValidatedNum = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' })).Count
 	} catch { Throw ($script:msg.LoadFailed -f $script:msg.HistFile) }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
@@ -86,7 +86,7 @@ while ($videoNotValidatedNum -ne 0) {
 	Write-Output ($script:msg.IntegrityCheck)
 
 	try {
-		while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 		$videoHists = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' }) )
 	} catch { Write-Warning ($script:msg.LoadFailed -f $script:msg.HistFile) }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
@@ -164,7 +164,7 @@ while ($videoNotValidatedNum -ne 0) {
 
 	if (Test-Path $script:histFilePath -PathType Leaf) {
 		try {
-			while ((Lock-File $script:histLockFilePath).result -ne $true) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+			while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 			$videoHists = @(Import-Csv -Path $script:histFilePath -Encoding UTF8)
 			foreach ($uncheckedVideo in ($videoHists).Where({ $_.videoValidated -eq 2 })) { $uncheckedVideo.videoValidated = '0' }
 			$videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8

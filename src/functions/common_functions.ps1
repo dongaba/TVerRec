@@ -393,9 +393,6 @@ function Out-Msg-Color {
 
 # region トースト通知
 
-# Toast用AppID取得に必要
-if ($IsWindows -and ($script:disableToastNotification -ne $true)) { Import-Module StartLayout -SkipEditionCheck }
-
 # モジュールのインポート
 if ($IsWindows -and !$script:disableToastNotification -and (!('Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder' -as [Type]))) {
 	Add-Type -LiteralPath (Join-Path $script:libDir 'win/core/Microsoft.Windows.SDK.NET.dll') | Out-Null
@@ -474,7 +471,7 @@ function Show-ProgressToast {
 		[Parameter(Mandatory = $false)][Boolean]$silent = $false
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	if ($script:disableToastNotification -ne $true) {
+	if (!$script:disableToastNotification) {
 		switch ($true) {
 			$IsWindows {
 				$toastSoundElement = if ($silent) { '<audio silent="true" />' }
@@ -542,7 +539,7 @@ function Update-ProgressToast {
 		[Parameter(Mandatory = $true )][String]$group
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	if ($script:disableToastNotification -ne $true) {
+	if (!$script:disableToastNotification) {
 		switch ($true) {
 			$IsWindows {
 				$toastData = [System.Collections.Generic.Dictionary[String, String]]::new()
@@ -580,7 +577,7 @@ function Show-ProgressToast2Row {
 		[Parameter(Mandatory = $true )][String]$group
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	if ($script:disableToastNotification -ne $true) {
+	if (!$script:disableToastNotification) {
 		$text2 = $text2 ?? ''
 		$detail1 = $detail1 ?? ''
 		$detail2 = $detail2 ?? ''
@@ -672,7 +669,7 @@ function Update-ProgressToast2Row {
 			'0' { $script:msg.Completed ; continue }
 			default { ($script:msg.MinRemaining -f ([Int][Math]::Ceiling($rightText2 / 60))) }
 		}
-		if ($script:disableToastNotification -ne $true) {
+		if (!$script:disableToastNotification) {
 			switch ($true) {
 				$IsWindows {
 					$toastData = [System.Collections.Generic.Dictionary[String, String]]::new()
