@@ -6,6 +6,8 @@
 
 ### 3.3.5 Changed
 
+- 番組移動時のディレクトリ検出を高速化
+
 ### 3.3.5 Fixed
 
 - ダウンロード対象外ファイルがクリアされてしまうことがある問題を修正(できてるといいな) [Issue #187](https://github.com/dongaba/TVerRec/issues/187)
