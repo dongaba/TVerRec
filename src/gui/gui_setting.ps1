@@ -177,14 +177,14 @@ function Read-UserSetting {
 			else { $settingBox.Text = $script:msg.SettingDefault }
 		}
 		# 動作停止設定の抽出
-		$scheduleStopPattern = '$script:stopSchedule\s*=\s*@\{([^}]*)\}'
+		$scheduleStopPattern = '\$script:stopSchedule\s*=\s*@\{([^}]*)\}'
 		$scheduleStopDetail = [regex]::Match($userSettings, $scheduleStopPattern)
 		# 抽出した内容を解析してチェックボックスに反映
 		if ($scheduleStopDetail.Success) {
 			$scheduleStopString = $scheduleStopDetail.Groups[1].Value
 			foreach ($day in $days) {
 				if ($scheduleStopString -match "'$day'\s*=\s*@\(([^)]*)\)") {
-					$schedule = $matches[1].Split(',').Trim() | Where-Object { $_ -ne '' }
+					$schedule = $matches[1].Split(',').Trim().where({ $_ -ne '' })
 					foreach ($hour in $schedule) {
 						$checkbox = $settingWindow.FindName(('chkbxStop{0}{1}' -f $day, ([Int]$hour).ToString('D2')))
 						if ($checkbox) { $checkbox.IsChecked = $true }
@@ -496,6 +496,7 @@ $windowShowStyle.Items.Add('Normal') | Out-Null
 $windowShowStyle.Items.Add('Maximized') | Out-Null
 $preferredYoutubedl.Items.Add($script:msg.SettingDefault) | Out-Null
 $preferredYoutubedl.Items.Add('yt-dlp') | Out-Null
+$preferredYoutubedl.Items.Add('yt-dlp-nightly') | Out-Null
 $preferredYoutubedl.Items.Add('ytdl-patched') | Out-Null
 foreach ($option in $trueFalseOptions) { $scheduleStop.Items.Add($option)  | Out-Null }
 $preferredLanguage.Items.Add($script:msg.SettingDefault) | Out-Null
