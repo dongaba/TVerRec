@@ -218,7 +218,7 @@ function Save-UserSetting {
 		$tailLineNum = try { $totalLineNum - ($content | Select-String $endSegment).LineNumber - 1 } catch { 0 }
 	}
 	# 自動生成より前の部分
-	# 自動生成の開始位置が2行目以降の場合にだけ自動生成寄りの前の部分がある
+	# 自動生成の開始位置が2行目以降の場合にだけ自動生成よりの前の部分がある
 	if (Test-Path variable:headLineNum) { if ($headLineNum -ge 0 ) { $newSetting += $content[0..$headLineNum] } }
 	# 動作停止設定以外の部分
 	$newSetting += $startSegment

@@ -41,10 +41,10 @@ Show-ProgressToast @toastShowParams
 # Windowsのディレクトリ一覧を取得する関数
 function Get-DirectoriesOnWindows {
 	Param ([String[]]$paths)
-	$results = @()
+	$results = New-Object System.Collections.Generic.List[System.String]
 	foreach ($path in $paths) {
 		$dirCmd = "dir `"$path`" /s /b /a:d"
-		$results += (& cmd /c $dirCmd)
+		$results.AddRange((& cmd /c $dirCmd))
 	}
 	return $results
 }
@@ -52,10 +52,10 @@ function Get-DirectoriesOnWindows {
 # Linux/Macのディレクトリ一覧を取得する関数
 function Get-DirectoriesNotOnWindows {
 	Param ([String[]]$paths)
-	$results = @()
+	$results = New-Object System.Collections.Generic.List[System.String]
 	foreach ($path in $paths) {
 		$dirCmd = "find `"$path`" -type d"
-		$results += (& sh -c $dirCmd)
+		$results.AddRange((& sh -c $dirCmd))
 	}
 	return $results
 }
@@ -100,9 +100,9 @@ Write-Output ($script:msg.MatchingTargetAndSource)
 # 	$moveDirs = @(Compare-Object -ReferenceObject @($moveToPathsHash.Keys) -DifferenceObject @($moveFromPathsHash.Keys) -IncludeEqual -ExcludeDifferent | ForEach-Object { $_.InputObject })
 # } else { $moveDirs = $null }
 if ($moveToPathsHash.Count -gt 0) {
-	$moveDirs = @()
+	$moveDirs = New-Object System.Collections.Generic.List[System.Object]
 	foreach ($item in Compare-Object -ReferenceObject @($moveToPathsHash.Keys) -DifferenceObject @($moveFromPathsHash.Keys) -IncludeEqual -ExcludeDifferent) {
-		$moveDirs += $item.InputObject
+		$moveDirs.Add($item.InputObject)
 	}
 } else {$moveDirs = $null}
 
@@ -163,18 +163,7 @@ Write-Output ($script:msg.DeleteEmptyDirs)
 
 $toastShowParams.Text2 = $script:msg.MoveVideosStep3
 Show-ProgressToast @toastShowParams
-
-# try {
-# 	$emptyDirs = @()
-# 	Get-ChildItem -Path $script:downloadBaseDir -Directory -Recurse | ForEach-Object {
-# 		if ($_.GetFileSystemInfos().Where({ -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) }).Count -eq 0) { $emptyDirs += $_ }
-# 	}
-# } catch { continue }
-# if ($emptyDirs.Count -ne 0) { $emptyDirs = @($emptyDirs.Fullname) }
 try {
-	# $emptyDirs = @(Get-ChildItem -Path $script:downloadBaseDir -Directory -Recurse `
-	# 	| Where-Object { $_.GetFileSystemInfos().Where({ -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) }).Count -eq 0 } `
-	# 	| Select-Object -ExpandProperty FullName)
 	$emptyDirs = New-Object System.Collections.Generic.List[string]	# .NET Listを使用して高速化
 	foreach ($dir in (Get-ChildItem -Path $script:downloadBaseDir -Directory -Recurse)) {
 		$files = $dir.GetFileSystemInfos()

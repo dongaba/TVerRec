@@ -275,20 +275,20 @@ function Update-IgnoreList {
 	[OutputType([System.Void])]
 	Param ([Parameter(Mandatory = $true)][String]$ignoreTitle)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	$ignoreListNew = @()
-	$ignoreComment = @()
-	$ignoreTarget = @()
-	$ignoreElse = @()
+	$ignoreListNew = New-Object System.Collections.Generic.List[System.String]
+	$ignoreComment = New-Object System.Collections.Generic.List[System.String]
+	$ignoreTarget = New-Object System.Collections.Generic.List[System.String]
+	$ignoreElse = New-Object System.Collections.Generic.List[System.String]
 	if (Test-Path $script:ignoreFilePath -PathType Leaf) {
 		try {
 			while (-not (Lock-File $script:ignoreLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-			$ignoreLists = @((Get-Content $script:ignoreFilePath -Encoding UTF8).Where( { $_ -notmatch '^\s*$|^(;;.*)$' }))
-			$ignoreComment = @(Get-Content $script:ignoreFileSamplePath -Encoding UTF8)
-			$ignoreTarget = @($ignoreLists.Where({ $_ -eq $ignoreTitle }) | Sort-Object -Unique)
-			$ignoreElse = @($ignoreLists.Where({ $_ -notin $ignoreTitle }))
-			if ($ignoreComment) { $ignoreListNew += $ignoreComment }
-			if ($ignoreTarget) { $ignoreListNew += $ignoreTarget }
-			if ($ignoreElse) { $ignoreListNew += $ignoreElse }
+			$ignoreLists.AddRange((Get-Content $script:ignoreFilePath -Encoding UTF8).Where( { $_ -notmatch '^\s*$|^(;;.*)$' }))
+			$ignoreComment.AddRange((Get-Content $script:ignoreFileSamplePath -Encoding UTF8))
+			$ignoreTarget.AddRange(($ignoreLists.Where({ $_ -eq $ignoreTitle }) | Sort-Object -Unique))
+			$ignoreElse.AddRange($ignoreLists.Where({ $_ -notin $ignoreTitle }))
+			if ($ignoreComment.Count -gt 0) { $ignoreListNew.AddRange($ignoreComment) }
+			if ($ignoreTarget.Count -gt 0) { $ignoreListNew.AddRange($ignoreTarget) }
+			if ($ignoreElse.Count -gt 0) { $ignoreListNew.AddRange($ignoreElse) }
 			try {
 				# 改行コードLFを強制 + NFCで出力
 				$ignoreListNew.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC) | Out-File -LiteralPath $script:ignoreFilePath -Encoding UTF8 -NoNewline
@@ -353,15 +353,15 @@ function Invoke-HistoryAndListMatchCheck {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# ダウンロードリストファイルのデータを読み込み
 	$listFileData = @(Read-DownloadList)
-	$listVideoPages = @()
-	foreach ($listFileLine in $listFileData) { $listVideoPages += ('https://tver.jp/episodes/{0}' -f $listFileLine.EpisodeID.Replace('#', '')) }
+	$listVideoPages = New-Object System.Collections.Generic.List[System.String]
+	foreach ($listFileLine in $listFileData) { $listVideoPages.Add(('https://tver.jp/episodes/{0}' -f $listFileLine.EpisodeID.Replace('#', ''))) }
 	# ダウンロード履歴ファイルのデータを読み込み
 	$histFileData = @(Read-HistoryFile)
-	if ($histFileData.Count -eq 0) { $histVideoPages = @() } else { $histVideoPages = @($histFileData.VideoPage) }
+	$histVideoPages = if ($histFileData.Count -eq 0) { @() } else { $histFileData.VideoPage }
 	# ダウンロードリストとダウンロード履歴をマージ
-	$listVideoPages += $histVideoPages
+	$listVideoPages.AddRange($histVideoPages)
 	# URLがすでにダウンロード履歴に存在する場合は検索結果から除外
-	$listCompResult = @(Compare-Object -IncludeEqual $resultLinks $listVideoPages)
+	$listCompResult = Compare-Object -IncludeEqual $resultLinks $listVideoPages
 	try { $processedCount = ($listCompResult.Where({ $_.SideIndicator -eq '==' })).Count } catch { $processedCount = 0 }
 	try { $videoLinks = @($listCompResult.Where({ $_.SideIndicator -eq '<=' }).InputObject) } catch { $videoLinks = @() }
 	return @($videoLinks, $processedCount)
@@ -961,17 +961,13 @@ function Limit-HistoryFile {
 function Repair-HistoryFile {
 	[OutputType([System.Void])]
 	Param ()
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	$uniquedHist = @()
+	# $uniquedHist = @()
+	$uniquedHist = New-Object System.Collections.Generic.List[object]	# .NET Listを使用して高速化
 	try {
 		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 		$originalLists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 		# videoPageで1つしかないもの残し、ダウンロード日時でソート
-		# $uniquedHist = @(($originalLists | Group-Object -Property 'videoPage').Where({ $_.Count -eq 1 }) | ForEach-Object { $_.Group } | Sort-Object -Property downloadDate)
-		$uniquedHist = New-Object System.Collections.Generic.List[object]	# .NET Listを使用して高速化
-		foreach ($group in ($originalLists | Group-Object -Property 'videoPage')) {
-			if ($group.Count -eq 1) { $uniquedHist.Add($group.Group) }
-		}
+		$uniquedHist = @(($originalLists | Group-Object -Property 'videoPage').Where({ $_.Count -eq 1 }) | ForEach-Object { $_.Group } | Sort-Object -Property downloadDate)
 		$uniquedHist = $uniquedHist | Sort-Object -Property downloadDate
 		try { $uniquedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
 		catch {
