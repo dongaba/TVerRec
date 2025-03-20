@@ -241,12 +241,12 @@ Remove-IfExist -Path (Join-Path $script:scriptRoot '../.vscode/thunder-tests')
 
 # 変数名のTypo修正(v3.2.8→v3.2.9)
 (Get-Content (Convert-Path (Join-Path $script:scriptRoot '../conf/system_setting.ps1')) -Encoding UTF8) `
-| ForEach-Object { $_ -replace 'addBrodcastDate', 'addBroadcastDate' } `
-| Out-File (Convert-Path (Join-Path $script:scriptRoot '../conf/system_setting.ps1')) -Encoding UTF8
+	| ForEach-Object { $_ -replace 'addBrodcastDate', 'addBroadcastDate' } `
+	| Out-File (Convert-Path (Join-Path $script:scriptRoot '../conf/system_setting.ps1')) -Encoding UTF8
 if ( Test-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1') ) {
 	(Get-Content (Convert-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1')) -Encoding UTF8) `
-	| ForEach-Object { $_ -replace 'addBrodcastDate', 'addBroadcastDate' } `
-	| Out-File (Convert-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1')) -Encoding UTF8
+		| ForEach-Object { $_ -replace 'addBrodcastDate', 'addBroadcastDate' } `
+		| Out-File (Convert-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1')) -Encoding UTF8
 }
 
 # 実行権限の付与

@@ -114,11 +114,19 @@ if ($script:forceSingleDownload) {
 	if ($ignoreTitles.Count -eq 0) { return }
 
 	# 削除対象の特定
-	$ignoreTitles | ForEach-Object {
-		$ignoreTitle = $_.Normalize([Text.NormalizationForm]::FormC)
+	# $ignoreTitles | ForEach-Object {
+	# 	$ignoreTitle = $_.Normalize([Text.NormalizationForm]::FormC)
+	# 	$filteredDirs = $workDirEntities.Where({ $_.Name.Normalize([Text.NormalizationForm]::FormC) -like "*${ignoreTitle}*" })
+	# 	$filteredDirs | ForEach-Object {
+	# 		$ignoreDirs.Add($_)
+	# 		Update-IgnoreList $ignoreTitle
+	# 	}
+	# }
+	foreach ($ignoreTitleRaw in $ignoreTitles) {
+		$ignoreTitle = $ignoreTitleRaw.Normalize([Text.NormalizationForm]::FormC)
 		$filteredDirs = $workDirEntities.Where({ $_.Name.Normalize([Text.NormalizationForm]::FormC) -like "*${ignoreTitle}*" })
-		$filteredDirs | ForEach-Object {
-			$ignoreDirs.Add($_)
+		foreach ($filteredDir in $filteredDirs) {
+			$ignoreDirs.Add($filteredDir)
 			Update-IgnoreList $ignoreTitle
 		}
 	}

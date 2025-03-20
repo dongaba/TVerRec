@@ -299,7 +299,9 @@ $settingWindow.Add_Loaded({ $settingWindow.Icon = $script:iconPath })
 # ウィンドウを閉じる際の処理
 $settingWindow.Add_Closing({})
 # Name属性を持つ要素のオブジェクト作成
-$mainXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $settingWindow.FindName($_.Name) -Scope Script }
+# $mainXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $settingWindow.FindName($_.Name) -Scope Script }
+foreach ($node in $mainXaml.SelectNodes('//*[@Name]')) { Set-Variable -Name $name -Value $settingWindow.FindName($node.Name) -Scope Script }
+
 # WPFにロゴをロード
 $LogoImage.Source = ConvertFrom-Base64 $script:logoBase64
 # バージョン表記

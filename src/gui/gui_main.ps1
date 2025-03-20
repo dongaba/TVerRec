@@ -116,7 +116,8 @@ $mainWindow.Add_Loaded({ $mainWindow.Icon = $script:iconPath })
 # ウィンドウを閉じる際の処理
 $mainWindow.Add_Closing({ Get-Job | Receive-Job -Wait -AutoRemoveJob -Force })
 # Name属性を持つ要素のオブジェクト作成
-$mainXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $mainWindow.FindName($_.Name) -Scope Local }
+# $mainXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $mainWindow.FindName($_.Name) -Scope Local }
+foreach ($node in $mainXaml.SelectNodes('//*[@Name]')) { Set-Variable -Name $name -Value $mainWindow.FindName($node.Name) -Scope Local }
 # WPFにロゴをロード
 $LogoImage.Source = ConvertFrom-Base64 $script:logoBase64
 # バージョン表記

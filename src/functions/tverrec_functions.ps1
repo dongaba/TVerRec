@@ -331,7 +331,11 @@ function Invoke-ListMatchCheck {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# ダウンロードリストファイルのデータを読み込み
 	$listFileData = @(Read-DownloadList)
-	$listVideoPages = $listFileData | ForEach-Object { 'https://tver.jp/episodes/{0}' -f $_.EpisodeID.Replace('#', '') }
+	# $listVideoPages = $listFileData | ForEach-Object { 'https://tver.jp/episodes/{0}' -f $_.EpisodeID.Replace('#', '') }
+	$listVideoPages = New-Object System.Collections.Generic.List[string]	# .NET Listを使用して高速化
+	foreach ($item in $listFileData) {
+		$listVideoPages.Add('https://tver.jp/episodes/{0}' -f $item.EpisodeID.Replace('#', ''))
+	}
 	# URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 	$listCompResult = @(Compare-Object -IncludeEqual $resultLinks $listVideoPages)
 	try { $processedCount = ($listCompResult.Where({ $_.SideIndicator -eq '==' })).Count } catch { $processedCount = 0 }
@@ -963,7 +967,12 @@ function Repair-HistoryFile {
 		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 		$originalLists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 		# videoPageで1つしかないもの残し、ダウンロード日時でソート
-		$uniquedHist = @(($originalLists | Group-Object -Property 'videoPage').Where({ $_.Count -eq 1 }) | ForEach-Object { $_.Group } | Sort-Object -Property downloadDate)
+		# $uniquedHist = @(($originalLists | Group-Object -Property 'videoPage').Where({ $_.Count -eq 1 }) | ForEach-Object { $_.Group } | Sort-Object -Property downloadDate)
+		$uniquedHist = New-Object System.Collections.Generic.List[object]	# .NET Listを使用して高速化
+		foreach ($group in ($originalLists | Group-Object -Property 'videoPage')) {
+			if ($group.Count -eq 1) { $uniquedHist.Add($group.Group) }
+		}
+		$uniquedHist = $uniquedHist | Sort-Object -Property downloadDate
 		try { $uniquedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
 		catch {
 			# 重複削除後のダウンロード履歴の書き込みに失敗したら読み込んだダウンロード履歴の出力を試みる

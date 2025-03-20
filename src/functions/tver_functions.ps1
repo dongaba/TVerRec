@@ -262,7 +262,12 @@ function Get-LinkFromSiteMap {
 	try { $searchResultsRaw = Invoke-RestMethod -Uri $callSearchURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec }
 	catch { Write-Warning $script:msg.SiteMapRetrievalFailed ; return }
 	# Special Detailを拾わないように「/」2個目以降は無視して重複削除
-	$searchResults = $searchResultsRaw.urlset.url.loc | ForEach-Object { $_.Replace('https://tver.jp/', '') -replace '^([^/]+/[^/]+).*', '$1' } | Sort-Object -Unique
+	# $searchResults = $searchResultsRaw.urlset.url.loc | ForEach-Object { $_.Replace('https://tver.jp/', '') -replace '^([^/]+/[^/]+).*', '$1' } | Sort-Object -Unique
+	$searchResults = @()
+	foreach ($url in $searchResultsRaw.urlset.url.loc) {
+		$modifiedUrl = $url.Replace('https://tver.jp/', '') -replace '^([^/]+/[^/]+).*', '$1'
+		if ($searchResults -notcontains $modifiedUrl) { $searchResults += $modifiedUrl }
+	}
 	foreach ($url in $searchResults) {
 		try {
 			$url = $url.Split('/')

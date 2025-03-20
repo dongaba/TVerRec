@@ -96,9 +96,15 @@ if ($script:saveBaseDir) {
 Write-Output ('')
 Write-Output ($script:msg.MediumBoldBorder)
 Write-Output ($script:msg.MatchingTargetAndSource)
+# if ($moveToPathsHash.Count -gt 0) {
+# 	$moveDirs = @(Compare-Object -ReferenceObject @($moveToPathsHash.Keys) -DifferenceObject @($moveFromPathsHash.Keys) -IncludeEqual -ExcludeDifferent | ForEach-Object { $_.InputObject })
+# } else { $moveDirs = $null }
 if ($moveToPathsHash.Count -gt 0) {
-	$moveDirs = @(Compare-Object -ReferenceObject @($moveToPathsHash.Keys) -DifferenceObject @($moveFromPathsHash.Keys) -IncludeEqual -ExcludeDifferent | ForEach-Object { $_.InputObject })
-} else { $moveDirs = $null }
+	$moveDirs = @()
+	foreach ($item in Compare-Object -ReferenceObject @($moveToPathsHash.Keys) -DifferenceObject @($moveFromPathsHash.Keys) -IncludeEqual -ExcludeDifferent) {
+		$moveDirs += $item.InputObject
+	}
+} else {$moveDirs = $null}
 
 #======================================================================
 # 2/3 移動先ディレクトリと同名のディレクトリ配下の番組を移動

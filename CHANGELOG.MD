@@ -6,6 +6,8 @@
 
 ### 3.3.6 Changed
 
+- ForEach-Ojbectの利用を極力避け、高速化
+
 ### 3.3.6 Fixed
 
 - 放送局ごとのフォルダを作成している際にファイルの移動に失敗する問題を修正 [Issue #204](https://github.com/dongaba/TVerRec/issues/204)
