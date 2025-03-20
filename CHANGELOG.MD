@@ -1,5 +1,15 @@
 # Change Log
 
+## [3.3.6](https://github.com/dongaba/TVerRec/releases/tag/v3.3.6)
+
+### 3.3.6 Added
+
+### 3.3.6 Changed
+
+### 3.3.6 Fixed
+
+- 放送局ごとのフォルダを作成している際にファイルの移動に失敗する問題を修正 [Issue #204](https://github.com/dongaba/TVerRec/issues/204)
+
 ## [3.3.5](https://github.com/dongaba/TVerRec/releases/tag/v3.3.5)
 
 ### 3.3.5 Added

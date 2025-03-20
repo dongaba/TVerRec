@@ -83,17 +83,13 @@ if ($script:saveBaseDir) {
 Write-Output ('')
 Write-Output ($script:msg.MediumBoldBorder)
 Write-Output ($script:msg.ListUpSourceDirs)
-# $moveFromPathsHash = @{}
-# if ($script:saveBaseDir -and (Get-ChildItem -LiteralPath $script:downloadBaseDir -Include @('*.mp4', '*.ts') -Recurse)) {
-# 	Get-ChildItem -LiteralPath $script:downloadBaseDir -Include @('*.mp4', '*.ts') -Recurse -File `
-# 	| Select-Object Directory -Unique `
-# 	| ForEach-Object { $moveFromPathsHash[$_.Directory.Name] = $_.Directory.FullName }
-# }
 $moveFromPathsHash = @{}
 if ($script:saveBaseDir) {
-	Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse -Directory `
-	| Select-Object Name -Unique `
-	| ForEach-Object { $moveFromPathsHash[$_.Name] = $script:downloadBaseDir + '/' + $_.Name }
+	$moveFromFiles = Get-ChildItem -LiteralPath $script:downloadBaseDir -Include @('*.mp4', '*.ts') -Recurse -File
+	foreach ($moveFromFile in $moveFromFiles) {
+		$moveFromDirName = $moveFromFile.Directory.Name
+		if (-not $moveFromPathsHash.ContainsKey($moveFromDirName)) {$moveFromPathsHash[$moveFromDirName] = $moveFromFile.Directory.FullName}
+	}
 }
 
 # 移動先ディレクトリとダウンロードディレクトリの一致を抽出
