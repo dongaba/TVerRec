@@ -38,11 +38,11 @@ function Get-VideoLinksFromKeyword {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$linkCollection = [PSCustomObject]@{
 		episodeLinks     = @{}
-		seriesLinks      = New-Object System.Collections.Generic.List[String]
-		seasonLinks      = New-Object System.Collections.Generic.List[String]
-		talentLinks      = New-Object System.Collections.Generic.List[String]
-		specialMainLinks = New-Object System.Collections.Generic.List[String]
-		specialLinks     = New-Object System.Collections.Generic.List[String]
+		seriesLinks      = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
+		seasonLinks      = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
+		talentLinks      = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
+		specialMainLinks = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
+		specialLinks     = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
 	}
 	if ($keyword.IndexOf('/') -gt 0) {
 		$key = $keyword.split(' ')[0].split("`t")[0].Split('/')[0]

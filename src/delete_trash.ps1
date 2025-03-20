@@ -110,7 +110,7 @@ if ($script:forceSingleDownload) {
 
 	# ダウンロード対象外番組が登録されていない場合はスキップ
 	$ignoreTitles = @(Read-IgnoreList)
-	$ignoreDirs = New-Object System.Collections.Generic.List[object]
+	$ignoreDirs = New-Object System.Collections.Generic.List[object]	# .NET Listを使用して高速化
 	if ($ignoreTitles.Count -eq 0) { return }
 
 	# 削除対象の特定
@@ -193,9 +193,15 @@ Show-ProgressToast @toastShowParams
 # } catch { continue }
 # if ($emptyDirs.Count -ne 0) { $emptyDirs = @($emptyDirs.Fullname) }
 try {
-	$emptyDirs = @(Get-ChildItem -Path $script:downloadBaseDir -Directory -Recurse `
-		| Where-Object { $_.GetFileSystemInfos().Where({ -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) }).Count -eq 0 } `
-		| Select-Object -ExpandProperty FullName)
+	# $emptyDirs = @(Get-ChildItem -Path $script:downloadBaseDir -Directory -Recurse `
+	# 	| Where-Object { $_.GetFileSystemInfos().Where({ -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) }).Count -eq 0 } `
+	# 	| Select-Object -ExpandProperty FullName)
+	$emptyDirs = New-Object System.Collections.Generic.List[string]	# .NET Listを使用して高速化
+	foreach ($dir in (Get-ChildItem -Path $script:downloadBaseDir -Directory -Recurse)) {
+		$files = $dir.GetFileSystemInfos()
+		$visibleFiles = $files | Where-Object { -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) }
+		if ($visibleFiles.Count -eq 0) { $emptyDirs.Add($dir.FullName) }
+	}
 } catch { $emptyDirs = @() }
 $emptyDirTotal = $emptyDirs.Count
 
