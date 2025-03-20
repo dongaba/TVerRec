@@ -34,11 +34,11 @@ $msgTypesColorMap = @{
 # ログ出力用変数
 $jobMsgs = @()
 $msgTypes = @('Output', 'Error', 'Warning', 'Verbose', 'Debug', 'Information')
-$msgError = New-Object System.Collections.Generic.List[String]
-$msgWarning = New-Object System.Collections.Generic.List[String]
-$msgVerbose = New-Object System.Collections.Generic.List[String]
-$msgDebug = New-Object System.Collections.Generic.List[String]
-$msgInformation = New-Object System.Collections.Generic.List[String]
+$msgError = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
+$msgWarning = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
+$msgVerbose = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
+$msgDebug = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
+$msgInformation = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
 
 # endregion 環境設定
 
@@ -117,7 +117,7 @@ $mainWindow.Add_Loaded({ $mainWindow.Icon = $script:iconPath })
 $mainWindow.Add_Closing({ Get-Job | Receive-Job -Wait -AutoRemoveJob -Force })
 # Name属性を持つ要素のオブジェクト作成
 # $mainXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $mainWindow.FindName($_.Name) -Scope Local }
-foreach ($node in $mainXaml.SelectNodes('//*[@Name]')) { Set-Variable -Name $name -Value $mainWindow.FindName($node.Name) -Scope Local }
+foreach ($node in $mainXaml.SelectNodes('//*[@Name]')) { Set-Variable -Name $node.Name -Value $mainWindow.FindName($node.Name) -Scope Script }
 # WPFにロゴをロード
 $LogoImage.Source = ConvertFrom-Base64 $script:logoBase64
 # バージョン表記
