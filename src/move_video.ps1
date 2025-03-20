@@ -44,7 +44,7 @@ function Get-DirectoriesOnWindows {
 	$results = New-Object System.Collections.Generic.List[System.String]
 	foreach ($path in $paths) {
 		$dirCmd = "dir `"$path`" /s /b /a:d"
-		$results.AddRange((& cmd /c $dirCmd))
+		$results.AddRange([string[]](& cmd /c $dirCmd))
 	}
 	return $results
 }
@@ -55,7 +55,7 @@ function Get-DirectoriesNotOnWindows {
 	$results = New-Object System.Collections.Generic.List[System.String]
 	foreach ($path in $paths) {
 		$dirCmd = "find `"$path`" -type d"
-		$results.AddRange((& sh -c $dirCmd))
+		$results.AddRange([string[]](& sh -c $dirCmd))
 	}
 	return $results
 }

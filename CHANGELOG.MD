@@ -6,7 +6,7 @@
 
 ### 3.3.6 Changed
 
-- ForEach-Ojbectの利用を極力避け、高速化
+- ForEach-Objectの利用を極力避け、高速化
 - ファイルシステムへのアクセスを極力減らし、高速化
 
 ### 3.3.6 Fixed
