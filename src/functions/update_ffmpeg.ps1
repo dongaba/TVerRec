@@ -90,7 +90,7 @@ switch ($true) {
 		# ffmpegの最新バージョン取得
 		$releases = 'https://github.com/yt-dlp/FFmpeg-Builds/wiki/Latest'
 		try {
-			$latestRelease = Invoke-RestMethod -Uri $releases -Method 'GET'
+			$latestRelease = Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec
 			if ($latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)/ffmpeg-(\w*)(\d+\.*\d*\.*\d*)(.*)(-win64-gpl-)(.*).zip') { $latestVersion = $matches[7] }
 		} catch { Write-Warning ($script:msg.ToolLatestNotIdentified -f 'ffmpeg') ; return }
 		if ($currentVersion -eq $latestVersion) {
@@ -155,7 +155,7 @@ switch ($true) {
 		# ffmpegの最新バージョン取得
 		$releases = 'https://github.com/yt-dlp/FFmpeg-Builds/wiki/Latest'
 		try {
-			$latestRelease = Invoke-RestMethod -Uri $releases -Method 'GET'
+			$latestRelease = Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec
 			if ($latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)/ffmpeg-(\w*)(\d+\.*\d*\.*\d*)(.*)(-linux64-gpl-)(.*).tar.xz') { $latestVersion = $matches[7] }
 		} catch { Write-Warning ($script:msg.ToolLatestNotIdentified -f 'ffmpeg') ; return }
 		if ($currentVersion -eq $latestVersion) {

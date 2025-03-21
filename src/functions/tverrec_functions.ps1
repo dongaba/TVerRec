@@ -67,7 +67,7 @@ function Invoke-TVerRecUpdateCheck {
 	$repo = 'dongaba/TVerRec'
 	$releases = ('https://api.github.com/repos/{0}/releases' -f $repo)
 	try {
-		$appReleases = (Invoke-RestMethod -Uri $releases -Method 'GET' ).where{ !$_.prerelease }
+		$appReleases = (Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec).where{ !$_.prerelease }
 		if (!$appReleases) { Write-Warning $script:msg.ToolLatestNotIdentified -f 'TVerRec' ; return }
 	} catch { Write-Warning $script:msg.ToolLatestNotRetrieved -f 'TVerRec' ; return }
 	finally { $progressPreference = 'Continue' }
@@ -275,10 +275,11 @@ function Update-IgnoreList {
 	[OutputType([System.Void])]
 	Param ([Parameter(Mandatory = $true)][String]$ignoreTitle)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	$ignoreListNew = @()
+	$ignoreLists = @()
 	$ignoreComment = @()
 	$ignoreTarget = @()
 	$ignoreElse = @()
+	$ignoreListNew = @()
 	if (Test-Path $script:ignoreFilePath -PathType Leaf) {
 		try {
 			while (-not (Lock-File $script:ignoreLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
@@ -331,7 +332,11 @@ function Invoke-ListMatchCheck {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# ダウンロードリストファイルのデータを読み込み
 	$listFileData = @(Read-DownloadList)
-	$listVideoPages = $listFileData | ForEach-Object { 'https://tver.jp/episodes/{0}' -f $_.EpisodeID.Replace('#', '') }
+	# $listVideoPages = $listFileData | ForEach-Object { 'https://tver.jp/episodes/{0}' -f $_.EpisodeID.Replace('#', '') }
+	$listVideoPages = New-Object System.Collections.Generic.List[string]	# .NET Listを使用して高速化
+	foreach ($item in $listFileData) {
+		$listVideoPages.Add('https://tver.jp/episodes/{0}' -f $item.EpisodeID.Replace('#', ''))
+	}
 	# URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 	$listCompResult = @(Compare-Object -IncludeEqual $resultLinks $listVideoPages)
 	try { $processedCount = ($listCompResult.Where({ $_.SideIndicator -eq '==' })).Count } catch { $processedCount = 0 }
@@ -349,15 +354,15 @@ function Invoke-HistoryAndListMatchCheck {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# ダウンロードリストファイルのデータを読み込み
 	$listFileData = @(Read-DownloadList)
-	$listVideoPages = @()
-	foreach ($listFileLine in $listFileData) { $listVideoPages += ('https://tver.jp/episodes/{0}' -f $listFileLine.EpisodeID.Replace('#', '')) }
+	$listVideoPages = New-Object System.Collections.Generic.List[System.String]
+	foreach ($listFileLine in $listFileData) { $listVideoPages.Add(('https://tver.jp/episodes/{0}' -f $listFileLine.EpisodeID.Replace('#', ''))) }
 	# ダウンロード履歴ファイルのデータを読み込み
 	$histFileData = @(Read-HistoryFile)
-	if ($histFileData.Count -eq 0) { $histVideoPages = @() } else { $histVideoPages = @($histFileData.VideoPage) }
+	$histVideoPages = if ($histFileData.Count -eq 0) { @() } else { $histFileData.VideoPage }
 	# ダウンロードリストとダウンロード履歴をマージ
-	$listVideoPages += $histVideoPages
+	$listVideoPages.AddRange($histVideoPages)
 	# URLがすでにダウンロード履歴に存在する場合は検索結果から除外
-	$listCompResult = @(Compare-Object -IncludeEqual $resultLinks $listVideoPages)
+	$listCompResult = Compare-Object -IncludeEqual $resultLinks $listVideoPages
 	try { $processedCount = ($listCompResult.Where({ $_.SideIndicator -eq '==' })).Count } catch { $processedCount = 0 }
 	try { $videoLinks = @($listCompResult.Where({ $_.SideIndicator -eq '<=' }).InputObject) } catch { $videoLinks = @() }
 	return @($videoLinks, $processedCount)
@@ -373,10 +378,11 @@ function Wait-YtdlProcess {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# youtube-dlのプロセスが設定値を超えたら一時待機
 	while ($true) {
-		$ytdlCount = Get-YtdlProcessCount
-		if ([Int]$ytdlCount -lt [Int]$parallelDownloadFileNum ) { break }
+		$ytdlCount = [Int](Get-YtdlProcessCount)
+		$ffmpegCount = [Int](Get-FfmpegProcessCount)
+		if (([Int]$ytdlCount + [Int]$ffmpegCount) -lt [Int]$parallelDownloadFileNum ) { break }
 		Write-Output ($script:msg.WaitingNumDownloadProc -f $parallelDownloadFileNum)
-		Write-Information ($script:msg.NumDownloadProc -f (Get-Date), $ytdlCount)
+		Write-Information ($script:msg.NumDownloadProc -f (Get-Date), ($ytdlCount + $ffmpegCount))
 		Start-Sleep -Seconds 60
 	}
 	Remove-Variable -Name parallelDownloadFileNum, ytdlCount -ErrorAction SilentlyContinue
@@ -568,7 +574,6 @@ function Invoke-VideoDownload {
 				}
 			}
 		}
-
 	}
 
 	# ダウンロード履歴CSV書き出し
@@ -586,8 +591,13 @@ function Invoke-VideoDownload {
 		catch { Write-Warning ($script:msg.CreateEpisodeDirFailed) ; continue }
 	}
 	# youtube-dl起動
-	try { Invoke-Ytdl ([Ref]$videoInfo) }
-	catch { Write-Warning ($script:msg.InvokeYtdlFailed) }
+	if ($videoInfo.isStreaks -and $script:useFfmpegDownload) {
+		try { Invoke-FfmpegDownload ([Ref]$videoInfo) }
+		catch { Write-Warning ($script:msg.InvokeFfmpegDownloadFailed) }
+	} else {
+		try { Invoke-Ytdl ([Ref]$videoInfo) }
+		catch { Write-Warning ($script:msg.InvokeYtdlFailed) }
+	}
 	# 5秒待機
 	Start-Sleep -Seconds 5
 	Remove-Variable -Name force, newVideo, skipDownload, episodeID, videoInfo, newVideo, histFileData, histMatch, ignoreTitles, ignoreTitle -ErrorAction SilentlyContinue
@@ -696,6 +706,7 @@ function Show-VideoInfo {
 	Write-Output ($script:msg.BroadcastDate -f $videoInfo.broadcastDate)
 	Write-Output ($script:msg.MediaName -f $videoInfo.mediaName)
 	Write-Output ($script:msg.EndDate -f $videoInfo.endTime)
+	Write-Output ($script:msg.IsStreaks -f $videoInfo.isStreaks)
 	Write-Output ($script:msg.EpisodeDetail -f $videoInfo.descriptionText)
 }
 #----------------------------------------------------------------------
@@ -706,6 +717,55 @@ function Show-VideoDebugInfo {
 	Param ([Parameter(Mandatory = $true)][pscustomobject][Ref]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	Write-Debug $videoInfo.episodePageURL
+}
+
+#----------------------------------------------------------------------
+# ffmpegを使ったダウンロードプロセスの起動
+#----------------------------------------------------------------------
+function Invoke-FfmpegDownload {
+	[OutputType([System.Void])]
+	Param ([Parameter(Mandatory = $true)][pscustomobject][Ref]$videoInfo)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	Invoke-StatisticsCheck -Operation 'download-ffmpeg'
+	if ($IsWindows) { foreach ($dir in @($script:downloadWorkDir, $script:downloadBaseDir)) { if ($dir[-1] -eq ':') { $dir += '\\' } } }
+	$ffmpegArgs = @()
+	$ffmpegArgs += (' -y -http_multiple 1 -seg_max_retry 10 -timeout 5000000')
+	$ffmpegArgs += (' -reconnect 1 -reconnect_on_network_error 1 -reconnect_on_http_error 1 -reconnect_streamed 1')
+	$ffmpegArgs += (' -reconnect_max_retries 10 -reconnect_delay_max 30 -reconnect_delay_total_max 600')
+	$ffmpegArgs += (' -i "{0}"' -f $videoInfo.m3u8URL)
+	if ($script:videoContainerFormat -eq 'mp4') {
+		$ffmpegArgs += (' -c copy')
+		$ffmpegArgs += (' -c:v copy -c:a copy')
+		# $ffmpegArgs += (' -bsf:a aac_adtstoasc')
+		$ffmpegArgs += (' -c:s mov_text')
+		$ffmpegArgs += (' -metadata:s:s:0 language=ja')
+	}
+	$ffmpegArgs += (' "{0}"' -f $videoInfo.filePath)
+	$ffmpegArgsString = $ffmpegArgs -join ''
+	Write-Debug ($script:msg.ExecCommand -f 'ffmpeg', $script:ffmpegPath, $ffmpegArgsString)
+	if ($script:appName -eq 'TVerRecContainer') {
+		$startProcessParams = @{
+			FilePath     = 'timeout'
+			ArgumentList = "3600 $script:ffmpegPath $ffmpegArgsString"
+			PassThru     = $true
+		}
+	} else {
+		$startProcessParams = @{
+			FilePath     = $script:ffmpegPath
+			ArgumentList = $ffmpegArgsString
+			PassThru     = $true
+		}
+	}
+	if ($IsWindows) { $startProcessParams.WindowStyle = $script:windowShowStyle }
+	else {
+		$startProcessParams.RedirectStandardOutput = '/dev/null'
+		$startProcessParams.RedirectStandardError = '/dev/zero'
+	}
+	try {
+		$ffmpegProcess = Start-Process @startProcessParams
+		$ffmpegProcess.Handle | Out-Null
+	} catch { Write-Warning ($script:msg.ExecFailed -f 'ffmpeg') ; return }
+	Remove-Variable -Name tmpDir, saveDir, subttlDir, thumbDir, chaptDir, descDir, saveFile, ffmpegArgs, ffmpegArgsString, rateLimit, startProcessParams, ffmpegProcess -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -853,9 +913,27 @@ function Get-YtdlProcessCount {
 	}
 	try {
 		switch ($true) {
-			$IsWindows { return [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name youtube-dl).Count / 2, [MidpointRounding]::AwayFromZero ); continue }
+			$IsWindows { return [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2, [MidpointRounding]::AwayFromZero ); continue }
 			$IsLinux { return @(Get-Process -ErrorAction Ignore -Name $processName).Count ; continue }
-			$IsMacOS { $psCmd = 'ps' ; return (& $psCmd | grep youtube-dl | grep -v grep | grep -c ^).Trim() ; continue }
+			$IsMacOS { $psCmd = 'ps' ; return (& $psCmd | grep yt-dlp | grep -v grep | grep -c ^).Trim() ; continue }
+			default { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
+		}
+	} catch { return 0 }
+	Remove-Variable -Name processName, psCmd -ErrorAction SilentlyContinue
+}
+
+#----------------------------------------------------------------------
+# ffmpegのプロセスカウントを取得
+#----------------------------------------------------------------------
+function Get-FfmpegProcessCount {
+	Param ()
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$processName = 'ffmpeg'
+	try {
+		switch ($true) {
+			$IsWindows { return [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name $processName).Count, [MidpointRounding]::AwayFromZero ); continue }
+			$IsLinux { return @(Get-Process -ErrorAction Ignore -Name $processName).Count ; continue }
+			$IsMacOS { $psCmd = 'ps' ; return (& $psCmd | grep ffmpeg | grep -v grep | grep -c ^).Trim() ; continue }
 			default { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
 		}
 	} catch { return 0 }
@@ -869,11 +947,13 @@ function Wait-DownloadCompletion () {
 	[OutputType([System.Void])]
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	$ytdlCount = Get-YtdlProcessCount
-	while ($ytdlCount -ne 0) {
-		Write-Information ($script:msg.NumDownloadProc -f (Get-Date), $ytdlCount)
+	$ytdlCount = [Int](Get-YtdlProcessCount)
+	$ffmpegCount = [Int](Get-FfmpegProcessCount)
+	while (($ytdlCount + $ffmpegCount) -ne 0) {
+		Write-Information ($script:msg.NumDownloadProc -f (Get-Date), ($ytdlCount + $ffmpegCount))
 		Start-Sleep -Seconds 60
-		$ytdlCount = Get-YtdlProcessCount
+		$ytdlCount = [Int](Get-YtdlProcessCount)
+		$ffmpegCount = [Int](Get-FfmpegProcessCount)
 	}
 	Remove-Variable -Name ytdlCount -ErrorAction SilentlyContinue
 }
@@ -957,13 +1037,14 @@ function Limit-HistoryFile {
 function Repair-HistoryFile {
 	[OutputType([System.Void])]
 	Param ()
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	$uniquedHist = @()
+	# $uniquedHist = @()
+	$uniquedHist = New-Object System.Collections.Generic.List[object]	# .NET Listを使用して高速化
 	try {
 		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 		$originalLists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 		# videoPageで1つしかないもの残し、ダウンロード日時でソート
 		$uniquedHist = @(($originalLists | Group-Object -Property 'videoPage').Where({ $_.Count -eq 1 }) | ForEach-Object { $_.Group } | Sort-Object -Property downloadDate)
+		$uniquedHist = $uniquedHist | Sort-Object -Property downloadDate
 		try { $uniquedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
 		catch {
 			# 重複削除後のダウンロード履歴の書き込みに失敗したら読み込んだダウンロード履歴の出力を試みる

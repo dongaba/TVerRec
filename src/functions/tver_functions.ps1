@@ -16,8 +16,12 @@ function Get-Token () {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$tverTokenURL = 'https://platform-api.tver.jp/v2/api/platform_users/browser/create'
 	$httpHeader = @{
-		'Content-Type'    = 'application/x-www-form-urlencoded'
-		'X-Forwarded-For' = $script:jpIP
+		'Content-Type'     = 'application/x-www-form-urlencoded'
+		'Forwarded'        = $script:jpIP
+		'Forwarded-For'    = $script:jpIP
+		'X-Forwarded'      = $script:jpIP
+		'X-Forwarded-For'  = $script:jpIP
+		'X-Originating-IP' = $script:jpIP
 	}
 	$requestBody = 'device_type=pc'
 	try {
@@ -38,11 +42,11 @@ function Get-VideoLinksFromKeyword {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$linkCollection = [PSCustomObject]@{
 		episodeLinks     = @{}
-		seriesLinks      = New-Object System.Collections.Generic.List[String]
-		seasonLinks      = New-Object System.Collections.Generic.List[String]
-		talentLinks      = New-Object System.Collections.Generic.List[String]
-		specialMainLinks = New-Object System.Collections.Generic.List[String]
-		specialLinks     = New-Object System.Collections.Generic.List[String]
+		seriesLinks      = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
+		seasonLinks      = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
+		talentLinks      = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
+		specialMainLinks = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
+		specialLinks     = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
 	}
 	if ($keyword.IndexOf('/') -gt 0) {
 		$key = $keyword.split(' ')[0].split("`t")[0].Split('/')[0]
@@ -262,7 +266,11 @@ function Get-LinkFromSiteMap {
 	try { $searchResultsRaw = Invoke-RestMethod -Uri $callSearchURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec }
 	catch { Write-Warning $script:msg.SiteMapRetrievalFailed ; return }
 	# Special Detailを拾わないように「/」2個目以降は無視して重複削除
-	$searchResults = $searchResultsRaw.urlset.url.loc | ForEach-Object { $_.Replace('https://tver.jp/', '') -replace '^([^/]+/[^/]+).*', '$1' } | Sort-Object -Unique
+	$searchResults = New-Object System.Collections.Generic.List[System.String]
+	foreach ($url in $searchResultsRaw.urlset.url.loc) {
+		$modifiedUrl = $url.Replace('https://tver.jp/', '') -replace '^([^/]+/[^/]+).*', '$1'
+		if (-not $searchResults.Contains($modifiedUrl)) { $searchResults.Add($modifiedUrl) }
+	}
 	foreach ($url in $searchResults) {
 		try {
 			$url = $url.Split('/')
@@ -372,28 +380,78 @@ function Get-VideoInfo {
 		$tverVideoInfoBaseURL = 'https://statics.tver.jp/content/episode/'
 		$tverVideoInfoURL = ('{0}{1}.json?v={2}' -f $tverVideoInfoBaseURL, $episodeID, $versionNum)
 		$videoInfo = Invoke-RestMethod -Uri $tverVideoInfoURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec
+		Write-Debug $videoInfo
 		$descriptionText = (Get-NarrowChars ($videoInfo.Description).Replace('&amp;', '&')).Trim()
 		$videoEpisodeNum = (Get-NarrowChars ($videoInfo.No)).Trim()
-		#	$accountID = $videoInfo.video.accountID
-		#	$videoRefID = if ($videoInfo.video.PSObject.Properties.Name -contains 'videoRefID') { ('ref%3A{0}' -f $videoInfo.video.videoRefID) } else { $videoInfo.video.videoID }
-		#	$playerID = $videoInfo.video.playerID
+		# Streaks情報取得
+		if ($videoInfo.PSObject.Properties.Name -contains 'streaks') {
+			$streaksRefID = $videoInfo.streaks.videoRefID
+			# $streaksMediaID = $videoInfo.streaks.mediaID
+			$streaksProjectID = $videoInfo.streaks.projectID
+			# Streaksキー取得
+			try {
+				$adTemplateJsonURL = ('https://player.tver.jp/player/ad_template.json')
+				$ati = (Invoke-RestMethod -Uri $adTemplateJsonURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec).$streaksProjectID.pc
+			} catch { Write-Warning ($script:msg.StreaksKeyRetrievalFailed -f $_.Exception.Message) ; return }
+			# m3u8 URL取得
+			try {
+				$streaksInfoBaseURL = 'https://playback.api.streaks.jp/v1/projects/{0}/medias/ref:{1}?ati={2}' -f $streaksProjectID, $streaksRefID, $ati
+				$httpHeader = @{
+					'Origin'           = 'https://tver.jp'
+					'Referer'          = 'https://tver.jp/'
+					'Forwarded'        = $script:jpIP
+					'Forwarded-For'    = $script:jpIP
+					'X-Forwarded'      = $script:jpIP
+					'X-Forwarded-For'  = $script:jpIP
+					'X-Originating-IP' = $script:jpIP
+				}
+				# if ( !(Test-Path Variable:Script:proxyUrl ) -or ($script:proxyUrl -eq '')) {
+				# 	$response = Invoke-RestMethod -Uri $streaksInfoBaseURL -Method 'GET' -Headers $httpHeader -TimeoutSec $script:timeoutSec
+				# }elseif( !(Test-Path Variable:Script:proxyCredential ) -or ($script:proxyCredential -eq '')) {
+				# 	$response = Invoke-RestMethod -Uri $streaksInfoBaseURL -Method 'GET' -Headers $httpHeader -Proxy $proxyUrl -TimeoutSec $script:timeoutSec
+				# }else{
+				# 	$response = Invoke-RestMethod -Uri $streaksInfoBaseURL -Method 'GET' -Headers $httpHeader -Proxy $proxyUrl -ProxyCredential $script:proxyCredential -TimeoutSec $script:timeoutSec
+				# }
+				$params = @{
+					Uri        = $streaksInfoBaseURL
+					Method     = 'GET'
+					Headers    = $httpHeader
+					TimeoutSec = $script:timeoutSec
+				}
+				if ((Test-Path Variable:Script:proxyUrl) -and ($script:proxyUrl -ne '')) { $params.Proxy = $script:proxyUrl}
+				if ((Test-Path Variable:Script:proxyCredential) -and ($script:proxyCredential -ne '')) { $params.ProxyCredential = $script:proxyCredential }
+				$m3u8URL = (Invoke-RestMethod @params).sources.src
+				$isStreaks = $true
+			} catch { Write-Warning ($script:msg.StreaksM3U8RetrievalFailed -f $_.Exception.Message) ; return }
+		} else { $m3u8URL = ''; $isStreaks = $false }
+		# Brightcove情報取得
+		if ($videoInfo.PSObject.Properties.Name -contains 'video') {
+			# $accountID = $videoInfo.video.accountID
+			# $videoRefID = if ($videoInfo.video.PSObject.Properties.Name -contains 'videoRefID') { ('ref%3A{0}' -f $videoInfo.video.videoRefID) } else { $videoInfo.video.videoID }
+			# $playerID = $videoInfo.video.playerID
+			# # Brightcoveキー取得
+			# try {
+			# 	$brightcoveJsURL = ('https://players.brightcove.net/{0}/{1}_default/index.min.js' -f $accountID, $playerID)
+			# 	$brightcovePk = if ((Invoke-RestMethod -Uri $brightcoveJsURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec) -match 'policyKey:"([a-zA-Z0-9_-]*)"') { $matches[1] }
+			# } catch { Write-Warning ($script:msg.BrightcoveKeyRetrievalFailed -f $_.Exception.Message) ; return }
+			# # m3u8とmpd URL取得
+			# try {
+			# 	$brightcoveURL = ('https://edge.api.brightcove.com/playback/v1/accounts/{0}/videos/{1}' -f $accountID, $videoRefID)
+			# 	$httpHeader = @{
+			# 		'Accept'           = ('application/json;pk={0}' -f $brightcovePk)
+			# 		'Forwarded'        = $script:jpIP
+			# 		'Forwarded-For'    = $script:jpIP
+			# 		'X-Forwarded'      = $script:jpIP
+			# 		'X-Forwarded-For'  = $script:jpIP
+			# 		'X-Originating-IP' = $script:jpIP
+			# 	}
+			# 	$response = Invoke-RestMethod -Uri $brightcoveURL -Method 'GET' -Headers $httpHeader -TimeoutSec $script:timeoutSec
+			# 	$m3u8URL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*mpeg*' }).where({ $_.ext_x_version -eq 4 })[0].src
+			# 	$mpdURL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*dash*' })[0].src
+			# } catch { Write-Warning ($script:msg.BrightcoveM3U8RetrievalFailed -f $_.Exception.Message) ; return }
+		}
 	} catch { Write-Warning ($script:msg.VideoInfoRetrievalFailed -f $_.Exception.Message) ; return }
-	#	# Brightcoveキー取得
-	#	try {
-	#		$brightcoveJsURL = ('https://players.brightcove.net/{0}/{1}_default/index.min.js' -f $accountID, $playerID)
-	#		$brightcovePk = if ((Invoke-RestMethod -Uri $brightcoveJsURL -Method 'GET' -Headers $script:commonHttpHeader) -match 'policyKey:"([a-zA-Z0-9_-]*)"') { $matches[1] }
-	#	} catch { Write-Warning ($script:msg.M3u8KeyRetrievalFailed -f $_.Exception.Message) ; return }
-	#	# m3u8とmpd URL取得
-	#	try {
-	#		$brightcoveURL = ('https://edge.api.brightcove.com/playback/v1/accounts/{0}/videos/{1}' -f $accountID, $videoRefID)
-	#		$httpHeader = @{
-	#			'Accept'          = ('application/json;pk={0}' -f $brightcovePk)
-	#			'X-Forwarded-For' = $script:jpIP
-	#		}
-	#		$response = Invoke-RestMethod -Uri $brightcoveURL -Method 'GET' -Headers $httpHeader
-	#		$m3u8URL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*mpeg*' }).where({ $_.ext_x_version -eq 4 })[0].src
-	#		$mpdURL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*dash*' })[0].src
-	#	} catch { Write-Warning ($script:msg.M3u8FileRetrievalFailed -f $_.Exception.Message) ; return }
+
 	# 「《」と「》」で挟まれた文字を除去
 	if ($script:removeSpecialNote) { $videoSeason = Remove-SpecialNote $videoSeason ; $episodeName = Remove-SpecialNote $episodeName }
 	# シーズン名が本編の場合はシーズン名をクリア
@@ -434,8 +492,9 @@ function Get-VideoInfo {
 		versionNum      = $versionNum
 		videoInfoURL    = $tverVideoInfoURL
 		descriptionText = $descriptionText
-		#	m3u8URL         = $m3u8URL
-		#	mpdURL          = $mpdURL
+		m3u8URL         = $m3u8URL
+		# mpdURL          = $mpdURL
+		isStreaks        = $isStreaks
 	}
 	Remove-Variable -Name episodeID, tverVideoInfoBaseURL, tverVideoInfoURL, response -ErrorAction SilentlyContinue
 	Remove-Variable -Name videoSeries, videoSeriesID, videoSeriesPageURL, videoSeason, videoSeasonID, episodeName, videoEpisodeID, videoEpisodePageURL -ErrorAction SilentlyContinue
@@ -460,7 +519,7 @@ function Get-JpIP {
 		$randomIPInt = $startIPInt + [UInt32](Get-Random -Maximum ($endIPInt - $startIPInt - 1)) + 1	# CIDR範囲の先頭と末尾を除く
 		$randomIPArray = [System.BitConverter]::GetBytes($randomIPInt)
 		[Array]::Reverse($randomIPArray) ; $jpIP = [System.Net.IPAddress]::new($randomIPArray).ToString()
-		try { $check = Invoke-RestMethod -Uri ('http://ip-api.com/json/{0}?fields=16785410' -f $jpIP) }
+		try { $check = Invoke-RestMethod -Uri ('http://ip-api.com/json/{0}?fields=16785410' -f $jpIP) -TimeoutSec $script:timeoutSec }
 		catch { $check.CountryCode = '' ; $check.hosting = $true }
 	} While (($check.CountryCode -ne 'JP') -or ($check.hosting) )
 	return $jpIP

@@ -110,15 +110,23 @@ if ($script:forceSingleDownload) {
 
 	# ダウンロード対象外番組が登録されていない場合はスキップ
 	$ignoreTitles = @(Read-IgnoreList)
-	$ignoreDirs = New-Object System.Collections.Generic.List[object]
+	$ignoreDirs = New-Object System.Collections.Generic.List[object]	# .NET Listを使用して高速化
 	if ($ignoreTitles.Count -eq 0) { return }
 
 	# 削除対象の特定
-	$ignoreTitles | ForEach-Object {
-		$ignoreTitle = $_.Normalize([Text.NormalizationForm]::FormC)
+	# $ignoreTitles | ForEach-Object {
+	# 	$ignoreTitle = $_.Normalize([Text.NormalizationForm]::FormC)
+	# 	$filteredDirs = $workDirEntities.Where({ $_.Name.Normalize([Text.NormalizationForm]::FormC) -like "*${ignoreTitle}*" })
+	# 	$filteredDirs | ForEach-Object {
+	# 		$ignoreDirs.Add($_)
+	# 		Update-IgnoreList $ignoreTitle
+	# 	}
+	# }
+	foreach ($ignoreTitleRaw in $ignoreTitles) {
+		$ignoreTitle = $ignoreTitleRaw.Normalize([Text.NormalizationForm]::FormC)
 		$filteredDirs = $workDirEntities.Where({ $_.Name.Normalize([Text.NormalizationForm]::FormC) -like "*${ignoreTitle}*" })
-		$filteredDirs | ForEach-Object {
-			$ignoreDirs.Add($_)
+		foreach ($filteredDir in $filteredDirs) {
+			$ignoreDirs.Add($filteredDir)
 			Update-IgnoreList $ignoreTitle
 		}
 	}
@@ -176,18 +184,13 @@ Write-Output ($script:msg.DeleteEmptyDirs)
 
 $toastShowParams.Text2 = $script:msg.DeleteTrashesStep3
 Show-ProgressToast @toastShowParams
-
-# try {
-# 	$emptyDirs = @()
-# 	Get-ChildItem -Path $script:downloadBaseDir -Directory -Recurse | ForEach-Object {
-# 		if ($_.GetFileSystemInfos().Where({ -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) }).Count -eq 0) { $emptyDirs += $_ }
-# 	}
-# } catch { continue }
-# if ($emptyDirs.Count -ne 0) { $emptyDirs = @($emptyDirs.Fullname) }
 try {
-	$emptyDirs = @(Get-ChildItem -Path $script:downloadBaseDir -Directory -Recurse `
-		| Where-Object { $_.GetFileSystemInfos().Where({ -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) }).Count -eq 0 } `
-		| Select-Object -ExpandProperty FullName)
+	$emptyDirs = New-Object System.Collections.Generic.List[string]	# .NET Listを使用して高速化
+	foreach ($dir in (Get-ChildItem -Path $script:downloadBaseDir -Directory -Recurse -ErrorAction SilentlyContinue)) {
+		$files = $dir.GetFileSystemInfos()
+		$visibleFiles = @($files | Where-Object { -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) })
+		if ($visibleFiles.Count -eq 0) { $emptyDirs.Add($dir.FullName) }
+	}
 } catch { $emptyDirs = @() }
 $emptyDirTotal = $emptyDirs.Count
 

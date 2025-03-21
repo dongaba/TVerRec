@@ -130,8 +130,8 @@ try {
 		'dev' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/dev.zip' ; continue }
 		'beta' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/beta.zip' ; continue }
 		'master' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/master.zip' ; continue }
-		'prerelease' { (Invoke-RestMethod -Uri $releases -Method 'GET').where{ ($_.prerelease -eq $true) }[0].zipball_url ; continue }
-		default { (Invoke-RestMethod -Uri $releases -Method 'GET').where{ ($_.prerelease -eq $false) }[0].zipball_url }
+		'prerelease' { (Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec).where{ ($_.prerelease -eq $true) }[0].zipball_url ; continue }
+		default { (Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec).where{ ($_.prerelease -eq $false) }[0].zipball_url }
 	}
 	Invoke-WebRequest -Uri $zipURL -OutFile (Join-Path $updateTemp 'TVerRecLatest.zip')
 } catch { Throw ('❌️ ダウンロードに失敗しました');	exit 1 }
@@ -241,13 +241,17 @@ Remove-IfExist -Path (Join-Path $script:scriptRoot '../.vscode/thunder-tests')
 
 # 変数名のTypo修正(v3.2.8→v3.2.9)
 (Get-Content (Convert-Path (Join-Path $script:scriptRoot '../conf/system_setting.ps1')) -Encoding UTF8) `
-| ForEach-Object { $_ -replace 'addBrodcastDate', 'addBroadcastDate' } `
-| Out-File (Convert-Path (Join-Path $script:scriptRoot '../conf/system_setting.ps1')) -Encoding UTF8
+	| ForEach-Object { $_ -replace 'addBrodcastDate', 'addBroadcastDate' } `
+	| Out-File (Convert-Path (Join-Path $script:scriptRoot '../conf/system_setting.ps1')) -Encoding UTF8
 if ( Test-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1') ) {
 	(Get-Content (Convert-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1')) -Encoding UTF8) `
-	| ForEach-Object { $_ -replace 'addBrodcastDate', 'addBroadcastDate' } `
-	| Out-File (Convert-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1')) -Encoding UTF8
+		| ForEach-Object { $_ -replace 'addBrodcastDate', 'addBroadcastDate' } `
+		| Out-File (Convert-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1')) -Encoding UTF8
 }
+
+# 実行ファイル名変更(v3.3.5→v3.3.6)
+Remove-IfExist -Path (Join-Path $script:scriptRoot '../bin/youtube-dl.exe')
+Remove-IfExist -Path (Join-Path $script:scriptRoot '../bin/youtube-dl')
 
 # 実行権限の付与
 if (!$IsWindows) {

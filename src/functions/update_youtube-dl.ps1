@@ -72,8 +72,8 @@ if ($script:preferredLanguage -ne '') {
 # メイン処理
 
 # youtube-dl移動先相対Path
-if ($IsWindows) { $ytdlPath = Join-Path $script:binDir 'youtube-dl.exe' }
-else { $ytdlPath = Join-Path $script:binDir 'youtube-dl' }
+if ($IsWindows) { $ytdlPath = Join-Path $script:binDir 'yt-dlp.exe' }
+else { $ytdlPath = Join-Path $script:binDir 'yt-dlp' }
 
 # githubの設定
 $lookupTable = @{
@@ -92,7 +92,7 @@ try {
 } catch { $currentVersion = '' }
 
 # youtube-dlの最新バージョン取得
-try { $latestVersion = (Invoke-RestMethod -Uri $releases -Method 'GET')[0].Tag_Name }
+try { $latestVersion = (Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec)[0].Tag_Name }
 catch { Write-Warning ($script:msg.ToolLatestNotIdentified -f 'youtube-dl') ; return }
 
 # youtube-dlのダウンロード
@@ -108,12 +108,12 @@ if ($latestVersion -eq $currentVersion) {
 	Write-Output ($script:msg.ToolRemoteVersion -f $latestVersion)
 	if ($script:preferredYoutubedl -eq 'yt-dlp-nightly') { $downloadFileName = 'yt-dlp' }
 	else { $downloadFileName = $script:preferredYoutubedl }
-	if (!$IsWindows) { $fileBeforeRename = $downloadFileName ; $fileAfterRename = 'youtube-dl' }
-	else { $fileBeforeRename = ('{0}.exe' -f $downloadFileName) ; $fileAfterRename = 'youtube-dl.exe' }
+	if (!$IsWindows) { $fileBeforeRename = $downloadFileName ; $fileAfterRename = 'yt-dlp' }
+	else { $fileBeforeRename = ('{0}.exe' -f $downloadFileName) ; $fileAfterRename = 'yt-dlp.exe' }
 	Write-Output ($script:msg.ToolDownload -f 'youtube-dl', [String]([System.Runtime.InteropServices.RuntimeInformation]::OSDescription).split()[0..1])
 	try {
 		#ダウンロード
-		$tag = (Invoke-RestMethod -Uri $releases -Method 'GET')[0].Tag_Name
+		$tag = (Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec)[0].Tag_Name
 		$downloadURL = ('https://github.com/{0}/releases/download/{1}/{2}' -f $repo, $tag, $fileBeforeRename)
 		$ytdlFileLocation = Join-Path $script:binDir $fileAfterRename
 		Invoke-WebRequest -Uri $downloadURL -Out $ytdlFileLocation
