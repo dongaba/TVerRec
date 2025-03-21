@@ -571,10 +571,6 @@
                                 <Button Name="btnYtdlOption480" Style="{DynamicResource ButtonStyle}" Width="90" Margin="5,0,5,0" />
                                 <Button Name="btnYtdlOption360" Style="{DynamicResource ButtonStyle}" Width="90" Margin="5,0,5,0" />
                             </StackPanel>
-                            <Expander Name="ytdlRandomIpHeader" Margin="10,10,10,0" IsExpanded="False" >
-                                <TextBlock Name="ytdlRandomIpText" Margin="20,0,20,5" TextWrapping="Wrap" />
-                            </Expander>
-                            <ComboBox Name="ytdlRandomIp" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
                             <Expander Name="ytdlHttpHeaderHeader" Margin="10,10,10,0" IsExpanded="False" >
                                 <TextBlock Name="ytdlHttpHeaderText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
@@ -587,6 +583,21 @@
                                 <TextBlock Name="nonTVerYtdlBaseArgsText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <TextBox Name="nonTVerYtdlBaseArgs" Style="{DynamicResource TextBoxStyle}" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+                <!-- Geo IPタブ -->
+                <TabItem Name="tabGeoIP" Style="{StaticResource TabItem}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Background="#FFFFFF">
+                            <Expander Name="proxyUrlHeader" Margin="10,10,10,0" IsExpanded="False" >
+                                <TextBlock Name="proxyUrlText" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            </Expander>
+                            <TextBox Name="proxyUrl" Style="{DynamicResource TextBoxStyle}" />
+                            <Expander Name="ytdlRandomIpHeader" Margin="10,10,10,0" IsExpanded="False" >
+                                <TextBlock Name="ytdlRandomIpText" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            </Expander>
+                            <ComboBox Name="ytdlRandomIp" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>
