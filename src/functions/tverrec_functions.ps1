@@ -591,7 +591,7 @@ function Invoke-VideoDownload {
 		catch { Write-Warning ($script:msg.CreateEpisodeDirFailed) ; continue }
 	}
 	# youtube-dl起動
-	if ($videoInfo.isStreak -and $script:useFfmpegDownload) {
+	if ($videoInfo.isStreaks -and $script:useFfmpegDownload) {
 		try { Invoke-FfmpegDownload ([Ref]$videoInfo) }
 		catch { Write-Warning ($script:msg.InvokeFfmpegDownloadFailed) }
 	} else {
@@ -706,7 +706,7 @@ function Show-VideoInfo {
 	Write-Output ($script:msg.BroadcastDate -f $videoInfo.broadcastDate)
 	Write-Output ($script:msg.MediaName -f $videoInfo.mediaName)
 	Write-Output ($script:msg.EndDate -f $videoInfo.endTime)
-	Write-Output ($script:msg.IsStreak -f $videoInfo.isStreak)
+	Write-Output ($script:msg.IsStreaks -f $videoInfo.isStreaks)
 	Write-Output ($script:msg.EpisodeDetail -f $videoInfo.descriptionText)
 }
 #----------------------------------------------------------------------

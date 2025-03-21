@@ -383,7 +383,7 @@ function Get-VideoInfo {
 		Write-Debug $videoInfo
 		$descriptionText = (Get-NarrowChars ($videoInfo.Description).Replace('&amp;', '&')).Trim()
 		$videoEpisodeNum = (Get-NarrowChars ($videoInfo.No)).Trim()
-		# Streak情報取得
+		# Streaks情報取得
 		if ($videoInfo.PSObject.Properties.Name -contains 'streaks') {
 			$streaksRefID = $videoInfo.streaks.videoRefID
 			# $streaksMediaID = $videoInfo.streaks.mediaID
@@ -392,7 +392,7 @@ function Get-VideoInfo {
 			try {
 				$adTemplateJsonURL = ('https://player.tver.jp/player/ad_template.json')
 				$ati = (Invoke-RestMethod -Uri $adTemplateJsonURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec).$streaksProjectID.pc
-			} catch { Write-Warning ($script:msg.StreakKeyRetrievalFailed -f $_.Exception.Message) ; return }
+			} catch { Write-Warning ($script:msg.StreaksKeyRetrievalFailed -f $_.Exception.Message) ; return }
 			# m3u8 URL取得
 			try {
 				$streaksInfoBaseURL = 'https://playback.api.streaks.jp/v1/projects/{0}/medias/ref:{1}?ati={2}' -f $streaksProjectID, $streaksRefID, $ati
@@ -421,9 +421,9 @@ function Get-VideoInfo {
 				if ((Test-Path Variable:Script:proxyURL) -and ($script:proxyURL -ne '')) { $params.Proxy = $script:proxyURL}
 				if ((Test-Path Variable:Script:proxyCredential) -and ($script:proxyCredential -ne '')) { $params.ProxyCredential = $script:proxyCredential }
 				$m3u8URL = (Invoke-RestMethod @params).sources.src
-				$isStreak = $true
-			} catch { Write-Warning ($script:msg.StreakM3U8RetrievalFailed -f $_.Exception.Message) ; return }
-		} else { $m3u8URL = ''; $isStreak = $false }
+				$isStreaks = $true
+			} catch { Write-Warning ($script:msg.StreaksM3U8RetrievalFailed -f $_.Exception.Message) ; return }
+		} else { $m3u8URL = ''; $isStreaks = $false }
 		# Brightcove情報取得
 		if ($videoInfo.PSObject.Properties.Name -contains 'video') {
 			# $accountID = $videoInfo.video.accountID
@@ -494,7 +494,7 @@ function Get-VideoInfo {
 		descriptionText = $descriptionText
 		m3u8URL         = $m3u8URL
 		# mpdURL          = $mpdURL
-		isStreak        = $isStreak
+		isStreaks        = $isStreaks
 	}
 	Remove-Variable -Name episodeID, tverVideoInfoBaseURL, tverVideoInfoURL, response -ErrorAction SilentlyContinue
 	Remove-Variable -Name videoSeries, videoSeriesID, videoSeriesPageURL, videoSeason, videoSeasonID, episodeName, videoEpisodeID, videoEpisodePageURL -ErrorAction SilentlyContinue
