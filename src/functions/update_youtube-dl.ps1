@@ -72,8 +72,8 @@ if ($script:preferredLanguage -ne '') {
 # メイン処理
 
 # youtube-dl移動先相対Path
-if ($IsWindows) { $ytdlPath = Join-Path $script:binDir 'youtube-dl.exe' }
-else { $ytdlPath = Join-Path $script:binDir 'youtube-dl' }
+if ($IsWindows) { $ytdlPath = Join-Path $script:binDir 'yt-dlp.exe' }
+else { $ytdlPath = Join-Path $script:binDir 'yt-dlp' }
 
 # githubの設定
 $lookupTable = @{
@@ -108,8 +108,8 @@ if ($latestVersion -eq $currentVersion) {
 	Write-Output ($script:msg.ToolRemoteVersion -f $latestVersion)
 	if ($script:preferredYoutubedl -eq 'yt-dlp-nightly') { $downloadFileName = 'yt-dlp' }
 	else { $downloadFileName = $script:preferredYoutubedl }
-	if (!$IsWindows) { $fileBeforeRename = $downloadFileName ; $fileAfterRename = 'youtube-dl' }
-	else { $fileBeforeRename = ('{0}.exe' -f $downloadFileName) ; $fileAfterRename = 'youtube-dl.exe' }
+	if (!$IsWindows) { $fileBeforeRename = $downloadFileName ; $fileAfterRename = 'yt-dlp' }
+	else { $fileBeforeRename = ('{0}.exe' -f $downloadFileName) ; $fileAfterRename = 'yt-dlp.exe' }
 	Write-Output ($script:msg.ToolDownload -f 'youtube-dl', [String]([System.Runtime.InteropServices.RuntimeInformation]::OSDescription).split()[0..1])
 	try {
 		#ダウンロード
