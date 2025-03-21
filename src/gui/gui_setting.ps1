@@ -56,6 +56,7 @@ $days = @('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')
 $hours = 0..23
 $userSettingFile = Join-Path $script:confDir 'user_setting.ps1'
 $settingAttributes = @(
+	'$script:proxyUrl',
 	'$script:downloadBaseDir',
 	'$script:downloadWorkDir',
 	'$script:saveBaseDir',
@@ -101,10 +102,10 @@ $settingAttributes = @(
 	'$script:videoContainerFormat',
 	'$script:cleanupDownloadBaseDir',
 	'$script:cleanupSaveBaseDir',
-	'$script:ytdlRandomIp',
 	'$script:ytdlHttpHeader',
 	'$script:ytdlBaseArgs',
 	'$script:nonTVerYtdlBaseArgs',
+	'$script:ytdlRandomIp',
 	'$script:scheduleStop',
 	'$script:preferredLanguage'
 )
@@ -150,19 +151,19 @@ function Select-Folder() {
 function Read-UserSetting {
 	[OutputType([System.Void])]
 	Param ()
-	$undefAttributes = @('$script:downloadBaseDir', '$script:downloadWorkDir', '$script:saveBaseDir', '$script:myPlatformUID', '$script:myPlatformToken', '$script:myMemberSID')
+	$undefAttributes = @('$script:downloadBaseDir', '$script:downloadWorkDir', '$script:saveBaseDir', '$script:myPlatformUID', '$script:myPlatformToken', '$script:myMemberSID', '$script:proxyUrl')
 	if (Test-Path $userSettingFile) {
 		$userSettings = Get-Content -LiteralPath $userSettingFile -Encoding UTF8
 		# 動作停止設定以外の抽出
 		foreach ($settingAttribute in $settingAttributes) {
 			# 変数名から「$script:」を取った名前がBox名
 			$settingBox = $settingWindow.FindName($settingAttribute.Replace('$script:', ''))
+			if ($null -eq $settingBox) { Write-Debug "$settingAttribute is null" ; continue }
 			# ユーザー設定の値を取得しGUIに反映
 			$userSettingValue = ($userSettings -match ('^{0}' -f [regex]::Escape($settingAttribute)))
 			if ($userSettingValue) {
 				Write-Debug [String]$userSettingValue
 				$settingBox.Text = $userSettingValue.split('=', 2)[1].Trim().Trim("'")
-
 				if ($settingBox.Name -eq 'preferredLanguage') {
 					switch ($settingBox.Text) {
 						'ja-JP' { $settingBox.Text = '日本語' }
@@ -425,14 +426,18 @@ $disableUpdateFfmpegHeader.Header = $script:msg.GuiHeaderDisableUpdateFfmpeg
 $disableUpdateFfmpegText.Text = $script:msg.GuiTextDisableUpdateFfmpegText
 $ytdlOptionHeader.Header = $script:msg.GuiHeaderYtdlOption
 $ytdlOptionText.Text = $script:msg.GuiTextYtdlOptionText
-$ytdlRandomIpHeader.Header = $script:msg.GuiHeaderYtdlRandomIp
-$ytdlRandomIpText.Text = $script:msg.GuiTextYtdlRandomIpText
 $ytdlHttpHeaderHeader.Header = $script:msg.GuiHeaderYtdlHttpHeader
 $ytdlHttpHeaderText.Text = $script:msg.GuiTextYtdlHttpHeaderText
 $ytdlBaseArgsHeader.Header = $script:msg.GuiHeaderYtdlBaseArgs
 $ytdlBaseArgsText.Text = $script:msg.GuiTextYtdlBaseArgsText
 $nonTVerYtdlBaseArgsHeader.Header = $script:msg.GuiHeaderNonTVerYtdlBaseArgs
 $nonTVerYtdlBaseArgsText.Text = $script:msg.GuiTextNonTVerYtdlBaseArgsText
+# Geo IPタブ
+$tabGeoIP.Header = $script:msg.GuiTabGeoIP
+$proxyUrlHeader.Header = $script:msg.GuiHeaderProxyUrl
+$proxyUrlText.Text = $script:msg.GuiTextProxyUrlText
+$ytdlRandomIpHeader.Header = $script:msg.GuiHeaderYtdlRandomIp
+$ytdlRandomIpText.Text = $script:msg.GuiTextYtdlRandomIpText
 # スケジュールタブ
 $tabSchedule.Header = $script:msg.GuiTabSchedule
 $scheduleStopHeader.Header = $script:msg.GuiHeaderScheduleStop
@@ -488,7 +493,6 @@ foreach ($option in $trueFalseOptions) { $simplifiedValidation.Items.Add($option
 foreach ($option in $trueFalseOptions) { $disableValidation.Items.Add($option)  | Out-Null }
 foreach ($option in $trueFalseOptions) { $disableUpdateYoutubedl.Items.Add($option)  | Out-Null }
 foreach ($option in $trueFalseOptions) { $disableUpdateFfmpeg.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $ytdlRandomIp.Items.Add($option)  | Out-Null }
 $windowShowStyle.Items.Add($script:msg.SettingDefault) | Out-Null
 $windowShowStyle.Items.Add('Minimized') | Out-Null
 $windowShowStyle.Items.Add('Hidden') | Out-Null
@@ -498,11 +502,11 @@ $preferredYoutubedl.Items.Add($script:msg.SettingDefault) | Out-Null
 $preferredYoutubedl.Items.Add('yt-dlp') | Out-Null
 $preferredYoutubedl.Items.Add('yt-dlp-nightly') | Out-Null
 $preferredYoutubedl.Items.Add('ytdl-patched') | Out-Null
+foreach ($option in $trueFalseOptions) { $ytdlRandomIp.Items.Add($option)  | Out-Null }
 foreach ($option in $trueFalseOptions) { $scheduleStop.Items.Add($option)  | Out-Null }
 $preferredLanguage.Items.Add($script:msg.SettingDefault) | Out-Null
 $preferredLanguage.Items.Add('日本語') | Out-Null	# ja-JP
 $preferredLanguage.Items.Add('English') | Out-Null	# en-US
-
 
 # endregion WPFのWindow設定
 #----------------------------------------------------------------------

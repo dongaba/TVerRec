@@ -405,12 +405,12 @@ function Get-VideoInfo {
 					'X-Forwarded-For'  = $script:jpIP
 					'X-Originating-IP' = $script:jpIP
 				}
-				# if ( !(Test-Path Variable:Script:proxyURL ) -or ($script:proxyURL -eq '')) {
+				# if ( !(Test-Path Variable:Script:proxyUrl ) -or ($script:proxyUrl -eq '')) {
 				# 	$response = Invoke-RestMethod -Uri $streaksInfoBaseURL -Method 'GET' -Headers $httpHeader -TimeoutSec $script:timeoutSec
 				# }elseif( !(Test-Path Variable:Script:proxyCredential ) -or ($script:proxyCredential -eq '')) {
-				# 	$response = Invoke-RestMethod -Uri $streaksInfoBaseURL -Method 'GET' -Headers $httpHeader -Proxy $proxyURL -TimeoutSec $script:timeoutSec
+				# 	$response = Invoke-RestMethod -Uri $streaksInfoBaseURL -Method 'GET' -Headers $httpHeader -Proxy $proxyUrl -TimeoutSec $script:timeoutSec
 				# }else{
-				# 	$response = Invoke-RestMethod -Uri $streaksInfoBaseURL -Method 'GET' -Headers $httpHeader -Proxy $proxyURL -ProxyCredential $script:proxyCredential -TimeoutSec $script:timeoutSec
+				# 	$response = Invoke-RestMethod -Uri $streaksInfoBaseURL -Method 'GET' -Headers $httpHeader -Proxy $proxyUrl -ProxyCredential $script:proxyCredential -TimeoutSec $script:timeoutSec
 				# }
 				$params = @{
 					Uri        = $streaksInfoBaseURL
@@ -418,7 +418,7 @@ function Get-VideoInfo {
 					Headers    = $httpHeader
 					TimeoutSec = $script:timeoutSec
 				}
-				if ((Test-Path Variable:Script:proxyURL) -and ($script:proxyURL -ne '')) { $params.Proxy = $script:proxyURL}
+				if ((Test-Path Variable:Script:proxyUrl) -and ($script:proxyUrl -ne '')) { $params.Proxy = $script:proxyUrl}
 				if ((Test-Path Variable:Script:proxyCredential) -and ($script:proxyCredential -ne '')) { $params.ProxyCredential = $script:proxyCredential }
 				$m3u8URL = (Invoke-RestMethod @params).sources.src
 				$isStreaks = $true
