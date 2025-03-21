@@ -92,7 +92,7 @@ try {
 } catch { $currentVersion = '' }
 
 # youtube-dlの最新バージョン取得
-try { $latestVersion = (Invoke-RestMethod -Uri $releases -Method 'GET')[0].Tag_Name }
+try { $latestVersion = (Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec)[0].Tag_Name }
 catch { Write-Warning ($script:msg.ToolLatestNotIdentified -f 'youtube-dl') ; return }
 
 # youtube-dlのダウンロード
@@ -113,7 +113,7 @@ if ($latestVersion -eq $currentVersion) {
 	Write-Output ($script:msg.ToolDownload -f 'youtube-dl', [String]([System.Runtime.InteropServices.RuntimeInformation]::OSDescription).split()[0..1])
 	try {
 		#ダウンロード
-		$tag = (Invoke-RestMethod -Uri $releases -Method 'GET')[0].Tag_Name
+		$tag = (Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec)[0].Tag_Name
 		$downloadURL = ('https://github.com/{0}/releases/download/{1}/{2}' -f $repo, $tag, $fileBeforeRename)
 		$ytdlFileLocation = Join-Path $script:binDir $fileAfterRename
 		Invoke-WebRequest -Uri $downloadURL -Out $ytdlFileLocation

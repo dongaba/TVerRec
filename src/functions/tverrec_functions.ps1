@@ -67,7 +67,7 @@ function Invoke-TVerRecUpdateCheck {
 	$repo = 'dongaba/TVerRec'
 	$releases = ('https://api.github.com/repos/{0}/releases' -f $repo)
 	try {
-		$appReleases = (Invoke-RestMethod -Uri $releases -Method 'GET' ).where{ !$_.prerelease }
+		$appReleases = (Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec).where{ !$_.prerelease }
 		if (!$appReleases) { Write-Warning $script:msg.ToolLatestNotIdentified -f 'TVerRec' ; return }
 	} catch { Write-Warning $script:msg.ToolLatestNotRetrieved -f 'TVerRec' ; return }
 	finally { $progressPreference = 'Continue' }

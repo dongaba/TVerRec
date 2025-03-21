@@ -130,8 +130,8 @@ try {
 		'dev' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/dev.zip' ; continue }
 		'beta' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/beta.zip' ; continue }
 		'master' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/master.zip' ; continue }
-		'prerelease' { (Invoke-RestMethod -Uri $releases -Method 'GET').where{ ($_.prerelease -eq $true) }[0].zipball_url ; continue }
-		default { (Invoke-RestMethod -Uri $releases -Method 'GET').where{ ($_.prerelease -eq $false) }[0].zipball_url }
+		'prerelease' { (Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec).where{ ($_.prerelease -eq $true) }[0].zipball_url ; continue }
+		default { (Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec).where{ ($_.prerelease -eq $false) }[0].zipball_url }
 	}
 	Invoke-WebRequest -Uri $zipURL -OutFile (Join-Path $updateTemp 'TVerRecLatest.zip')
 } catch { Throw ('❌️ ダウンロードに失敗しました');	exit 1 }
