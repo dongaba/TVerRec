@@ -377,8 +377,8 @@ function Wait-YtdlProcess {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# youtube-dlのプロセスが設定値を超えたら一時待機
 	while ($true) {
-		$ytdlCount = Get-YtdlProcessCount
-		$ffmpegCount = Get-FfmpegProcessCount
+		$ytdlCount = [Int](Get-YtdlProcessCount)
+		$ffmpegCount = [Int](Get-FfmpegProcessCount)
 		if (([Int]$ytdlCount + [Int]$ffmpegCount) -lt [Int]$parallelDownloadFileNum ) { break }
 		Write-Output ($script:msg.WaitingNumDownloadProc -f $parallelDownloadFileNum)
 		Write-Information ($script:msg.NumDownloadProc -f (Get-Date), ($ytdlCount + $ffmpegCount))
@@ -946,12 +946,13 @@ function Wait-DownloadCompletion () {
 	[OutputType([System.Void])]
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	$ytdlCount = Get-YtdlProcessCount
-	$ffmpegCount = Get-FfmpegProcessCount
+	$ytdlCount = [Int](Get-YtdlProcessCount)
+	$ffmpegCount = [Int](Get-FfmpegProcessCount)
 	while (($ytdlCount + $ffmpegCount) -ne 0) {
 		Write-Information ($script:msg.NumDownloadProc -f (Get-Date), ($ytdlCount + $ffmpegCount))
 		Start-Sleep -Seconds 60
-		$ytdlCount = Get-YtdlProcessCount
+		$ytdlCount = [Int](Get-YtdlProcessCount)
+		$ffmpegCount = [Int](Get-FfmpegProcessCount)
 	}
 	Remove-Variable -Name ytdlCount -ErrorAction SilentlyContinue
 }
