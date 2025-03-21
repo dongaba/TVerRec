@@ -26,6 +26,7 @@
 
 - ForEach-Objectの利用を極力避け、高速化
 - ファイルシステムへのアクセスを極力減らし、高速化
+- youtube-dlの実行ファイル名を`youtube-dl`から`yt-dlp`に変更
 
 ### 3.3.6 Fixed
 
