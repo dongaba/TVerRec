@@ -165,7 +165,7 @@ $toastShowParams.Text2 = $script:msg.MoveVideosStep3
 Show-ProgressToast @toastShowParams
 try {
 	$emptyDirs = New-Object System.Collections.Generic.List[string]	# .NET Listを使用して高速化
-	foreach ($dir in (Get-ChildItem -Path $script:downloadBaseDir -Directory -Recurse)) {
+	foreach ($dir in (Get-ChildItem -Path $script:downloadBaseDir -Directory -Recurse -ErrorAction SilentlyContinue)) {
 		$files = $dir.GetFileSystemInfos()
 		$visibleFiles = @($files | Where-Object { -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) })
 		if ($visibleFiles.Count -eq 0) { $emptyDirs.Add($dir.FullName) }
