@@ -16,8 +16,12 @@ function Get-Token () {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$tverTokenURL = 'https://platform-api.tver.jp/v2/api/platform_users/browser/create'
 	$httpHeader = @{
-		'Content-Type'    = 'application/x-www-form-urlencoded'
-		'X-Forwarded-For' = $script:jpIP
+		'Content-Type'     = 'application/x-www-form-urlencoded'
+		'Forwarded'        = $script:jpIP
+		'Forwarded-For'    = $script:jpIP
+		'X-Forwarded'      = $script:jpIP
+		'X-Forwarded-For'  = $script:jpIP
+		'X-Originating-IP' = $script:jpIP
 	}
 	$requestBody = 'device_type=pc'
 	try {
@@ -376,28 +380,64 @@ function Get-VideoInfo {
 		$tverVideoInfoBaseURL = 'https://statics.tver.jp/content/episode/'
 		$tverVideoInfoURL = ('{0}{1}.json?v={2}' -f $tverVideoInfoBaseURL, $episodeID, $versionNum)
 		$videoInfo = Invoke-RestMethod -Uri $tverVideoInfoURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec
+		Write-Debug $videoInfo
 		$descriptionText = (Get-NarrowChars ($videoInfo.Description).Replace('&amp;', '&')).Trim()
 		$videoEpisodeNum = (Get-NarrowChars ($videoInfo.No)).Trim()
-		$accountID = $videoInfo.video.accountID
-		$videoRefID = if ($videoInfo.video.PSObject.Properties.Name -contains 'videoRefID') { ('ref%3A{0}' -f $videoInfo.video.videoRefID) } else { $videoInfo.video.videoID }
-		$playerID = $videoInfo.video.playerID
-	} catch { Write-Warning ($script:msg.VideoInfoRetrievalFailed -f $_.Exception.Message) ; return }
-	# Brightcoveキー取得
-	try {
-		$brightcoveJsURL = ('https://players.brightcove.net/{0}/{1}_default/index.min.js' -f $accountID, $playerID)
-		$brightcovePk = if ((Invoke-RestMethod -Uri $brightcoveJsURL -Method 'GET' -Headers $script:commonHttpHeader) -match 'policyKey:"([a-zA-Z0-9_-]*)"') { $matches[1] }
-	} catch { Write-Warning ($script:msg.M3u8KeyRetrievalFailed -f $_.Exception.Message) ; return }
-	# m3u8とmpd URL取得
-	try {
-		$brightcoveURL = ('https://edge.api.brightcove.com/playback/v1/accounts/{0}/videos/{1}' -f $accountID, $videoRefID)
-		$httpHeader = @{
-			'Accept'          = ('application/json;pk={0}' -f $brightcovePk)
-			'X-Forwarded-For' = $script:jpIP
+		# Streak情報取得
+		if ($videoInfo.PSObject.Properties.Name -contains 'streaks') {
+			$streaksRefID = $videoInfo.streaks.videoRefID
+			# $streaksMediaID = $videoInfo.streaks.mediaID
+			$streaksProjectID = $videoInfo.streaks.projectID
+			# Streaksキー取得
+			try {
+				$adTemplateJsonURL = ('https://player.tver.jp/player/ad_template.json')
+				$ati = (Invoke-RestMethod -Uri $adTemplateJsonURL -Method 'GET' -Headers $script:commonHttpHeader).$streaksProjectID.pc
+			} catch { Write-Warning ($script:msg.StreakKeyRetrievalFailed -f $_.Exception.Message) ; return }
+			# m3u8 URL取得
+			try {
+				$streaksInfoBaseURL = 'https://playback.api.streaks.jp/v1/projects/{0}/medias/ref:{1}?ati={2}' -f $streaksProjectID, $streaksRefID, $ati
+				$httpHeader = @{
+					'Origin'           = 'https://tver.jp'
+					'Referer'          = 'https://tver.jp/'
+					'Forwarded'        = $script:jpIP
+					'Forwarded-For'    = $script:jpIP
+					'X-Forwarded'      = $script:jpIP
+					'X-Forwarded-For'  = $script:jpIP
+					'X-Originating-IP' = $script:jpIP
+				}
+				$response = Invoke-RestMethod -Uri $streaksInfoBaseURL -Method 'GET' -Headers $httpHeader
+				$m3u8URL = $response.sources.src
+				$isStreak = $true
+			} catch { Write-Warning ($script:msg.StreakM3U8RetrievalFailed -f $_.Exception.Message) ; return }
+		} else { $m3u8URL = ''; $isStreak = $false }
+		# Brightcove情報取得
+		if ($videoInfo.PSObject.Properties.Name -contains 'video') {
+			# $accountID = $videoInfo.video.accountID
+			# $videoRefID = if ($videoInfo.video.PSObject.Properties.Name -contains 'videoRefID') { ('ref%3A{0}' -f $videoInfo.video.videoRefID) } else { $videoInfo.video.videoID }
+			# $playerID = $videoInfo.video.playerID
+			# # Brightcoveキー取得
+			# try {
+			# 	$brightcoveJsURL = ('https://players.brightcove.net/{0}/{1}_default/index.min.js' -f $accountID, $playerID)
+			# 	$brightcovePk = if ((Invoke-RestMethod -Uri $brightcoveJsURL -Method 'GET' -Headers $script:commonHttpHeader) -match 'policyKey:"([a-zA-Z0-9_-]*)"') { $matches[1] }
+			# } catch { Write-Warning ($script:msg.BrightcoveKeyRetrievalFailed -f $_.Exception.Message) ; return }
+			# # m3u8とmpd URL取得
+			# try {
+			# 	$brightcoveURL = ('https://edge.api.brightcove.com/playback/v1/accounts/{0}/videos/{1}' -f $accountID, $videoRefID)
+			# 	$httpHeader = @{
+			# 		'Accept'           = ('application/json;pk={0}' -f $brightcovePk)
+			# 		'Forwarded'        = $script:jpIP
+			# 		'Forwarded-For'    = $script:jpIP
+			# 		'X-Forwarded'      = $script:jpIP
+			# 		'X-Forwarded-For'  = $script:jpIP
+			# 		'X-Originating-IP' = $script:jpIP
+			# 	}
+			# 	$response = Invoke-RestMethod -Uri $brightcoveURL -Method 'GET' -Headers $httpHeader
+			# 	$m3u8URL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*mpeg*' }).where({ $_.ext_x_version -eq 4 })[0].src
+			# 	$mpdURL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*dash*' })[0].src
+			# } catch { Write-Warning ($script:msg.BrightcoveM3U8RetrievalFailed -f $_.Exception.Message) ; return }
 		}
-		$response = Invoke-RestMethod -Uri $brightcoveURL -Method 'GET' -Headers $httpHeader
-		$m3u8URL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*mpeg*' }).where({ $_.ext_x_version -eq 4 })[0].src
-		$mpdURL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*dash*' })[0].src
-	} catch { Write-Warning ($script:msg.M3u8FileRetrievalFailed -f $_.Exception.Message) ; return }
+	} catch { Write-Warning ($script:msg.VideoInfoRetrievalFailed -f $_.Exception.Message) ; return }
+
 	# 「《」と「》」で挟まれた文字を除去
 	if ($script:removeSpecialNote) { $videoSeason = Remove-SpecialNote $videoSeason ; $episodeName = Remove-SpecialNote $episodeName }
 	# シーズン名が本編の場合はシーズン名をクリア
@@ -439,7 +479,8 @@ function Get-VideoInfo {
 		videoInfoURL    = $tverVideoInfoURL
 		descriptionText = $descriptionText
 		m3u8URL         = $m3u8URL
-		mpdURL          = $mpdURL
+		# mpdURL          = $mpdURL
+		isStreak        = $isStreak
 	}
 	Remove-Variable -Name episodeID, tverVideoInfoBaseURL, tverVideoInfoURL, response -ErrorAction SilentlyContinue
 	Remove-Variable -Name videoSeries, videoSeriesID, videoSeriesPageURL, videoSeason, videoSeasonID, episodeName, videoEpisodeID, videoEpisodePageURL -ErrorAction SilentlyContinue
