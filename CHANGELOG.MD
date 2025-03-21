@@ -1,5 +1,15 @@
 # Change Log
 
+## [3.3.7](https://github.com/dongaba/TVerRec/releases/tag/v3.3.7)
+
+### 3.3.7 Added
+
+### 3.3.7 Changed
+
+### 3.3.7 Fixed
+
+- 3.3.6で追加になった設定項目の初期設定値を`system_setting.ps1`に追加
+
 ## [3.3.6](https://github.com/dongaba/TVerRec/releases/tag/v3.3.6)
 
 ### 3.3.6 Added
