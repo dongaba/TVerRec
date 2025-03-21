@@ -8,8 +8,19 @@
   - ただし、サムネイルやメタデータの埋め込み、帯域制限など、これまでTVerRecが提供していた便利機能の大半は効かない
   - かつ、ダウンロードはyoutube-dlより10倍以上遅い
   - でも、**ダウンロードできないよりはマシ、という人向け**
+  - `user_setting.ps1`に`$script:useFfmpegDownload`として`$true`と指定してください。Streaksからのダウンロード時にはffmpegを使用するようになります。
+
+- TVerの仕様変更対策として**暫定で**TVer用のエクストラクタをローカル配置してyoutube-dlでダウンロードできるように対応
+  - 配置場所は`bin`ディレクトリ配下の`yt-dlp-plugins/tver/yt_dlp_plugins/extractor/tver.py`
+  - ただし、依然としてダウンロードできないようなので、自身で`tver.py`を用意できる人向け
+  - youtube-dl側でTVerの仕様変更への対応がされたら削除予定
+  - でも、**ダウンロードできないよりはマシ、という人向け**
+  - `user_setting.ps1`に`$script:useCustomExtractor`として`$true`と指定してください。youtube-dlがカスタムエクストラクタを使用するようになります。
+
+- Streaks用のm3u8の取得エラーが出る人向けにProxy接続をサポート
   - TVerの仕様変更に伴い、**日本国外からのダウンロードはエラーとなる可能性が非常に高いです**
   - **VPNやProxyなどを使って日本国内経由で利用**することでエラーを回避できる可能性があります
+  - `user_setting.ps1`に`$script:proxyURL`として`http://123.45.67.89:12345`形式で指定してください。Streaksからのマニフェスト取得時にはProxyを使用するようになります。
 
 ### 3.3.6 Changed
 
