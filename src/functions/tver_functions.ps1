@@ -391,7 +391,7 @@ function Get-VideoInfo {
 			# Streaksキー取得
 			try {
 				$adTemplateJsonURL = ('https://player.tver.jp/player/ad_template.json')
-				$ati = (Invoke-RestMethod -Uri $adTemplateJsonURL -Method 'GET' -Headers $script:commonHttpHeader).$streaksProjectID.pc
+				$ati = (Invoke-RestMethod -Uri $adTemplateJsonURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec).$streaksProjectID.pc
 			} catch { Write-Warning ($script:msg.StreakKeyRetrievalFailed -f $_.Exception.Message) ; return }
 			# m3u8 URL取得
 			try {
@@ -405,8 +405,22 @@ function Get-VideoInfo {
 					'X-Forwarded-For'  = $script:jpIP
 					'X-Originating-IP' = $script:jpIP
 				}
-				$response = Invoke-RestMethod -Uri $streaksInfoBaseURL -Method 'GET' -Headers $httpHeader
-				$m3u8URL = $response.sources.src
+				# if ( !(Test-Path Variable:Script:proxyURL ) -or ($script:proxyURL -eq '')) {
+				# 	$response = Invoke-RestMethod -Uri $streaksInfoBaseURL -Method 'GET' -Headers $httpHeader -TimeoutSec $script:timeoutSec
+				# }elseif( !(Test-Path Variable:Script:proxyCredential ) -or ($script:proxyCredential -eq '')) {
+				# 	$response = Invoke-RestMethod -Uri $streaksInfoBaseURL -Method 'GET' -Headers $httpHeader -Proxy $proxyURL -TimeoutSec $script:timeoutSec
+				# }else{
+				# 	$response = Invoke-RestMethod -Uri $streaksInfoBaseURL -Method 'GET' -Headers $httpHeader -Proxy $proxyURL -ProxyCredential $script:proxyCredential -TimeoutSec $script:timeoutSec
+				# }
+				$params = @{
+					Uri        = $streaksInfoBaseURL
+					Method     = 'GET'
+					Headers    = $httpHeader
+					TimeoutSec = $script:timeoutSec
+				}
+				if ((Test-Path Variable:Script:proxyURL) -and ($script:proxyURL -ne '')) { $params.Proxy = $script:proxyURL}
+				if ((Test-Path Variable:Script:proxyCredential) -and ($script:proxyCredential -ne '')) { $params.ProxyCredential = $script:proxyCredential }
+				$m3u8URL = (Invoke-RestMethod @params).sources.src
 				$isStreak = $true
 			} catch { Write-Warning ($script:msg.StreakM3U8RetrievalFailed -f $_.Exception.Message) ; return }
 		} else { $m3u8URL = ''; $isStreak = $false }
@@ -418,7 +432,7 @@ function Get-VideoInfo {
 			# # Brightcoveキー取得
 			# try {
 			# 	$brightcoveJsURL = ('https://players.brightcove.net/{0}/{1}_default/index.min.js' -f $accountID, $playerID)
-			# 	$brightcovePk = if ((Invoke-RestMethod -Uri $brightcoveJsURL -Method 'GET' -Headers $script:commonHttpHeader) -match 'policyKey:"([a-zA-Z0-9_-]*)"') { $matches[1] }
+			# 	$brightcovePk = if ((Invoke-RestMethod -Uri $brightcoveJsURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec) -match 'policyKey:"([a-zA-Z0-9_-]*)"') { $matches[1] }
 			# } catch { Write-Warning ($script:msg.BrightcoveKeyRetrievalFailed -f $_.Exception.Message) ; return }
 			# # m3u8とmpd URL取得
 			# try {
@@ -431,7 +445,7 @@ function Get-VideoInfo {
 			# 		'X-Forwarded-For'  = $script:jpIP
 			# 		'X-Originating-IP' = $script:jpIP
 			# 	}
-			# 	$response = Invoke-RestMethod -Uri $brightcoveURL -Method 'GET' -Headers $httpHeader
+			# 	$response = Invoke-RestMethod -Uri $brightcoveURL -Method 'GET' -Headers $httpHeader -TimeoutSec $script:timeoutSec
 			# 	$m3u8URL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*mpeg*' }).where({ $_.ext_x_version -eq 4 })[0].src
 			# 	$mpdURL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*dash*' })[0].src
 			# } catch { Write-Warning ($script:msg.BrightcoveM3U8RetrievalFailed -f $_.Exception.Message) ; return }
@@ -505,7 +519,7 @@ function Get-JpIP {
 		$randomIPInt = $startIPInt + [UInt32](Get-Random -Maximum ($endIPInt - $startIPInt - 1)) + 1	# CIDR範囲の先頭と末尾を除く
 		$randomIPArray = [System.BitConverter]::GetBytes($randomIPInt)
 		[Array]::Reverse($randomIPArray) ; $jpIP = [System.Net.IPAddress]::new($randomIPArray).ToString()
-		try { $check = Invoke-RestMethod -Uri ('http://ip-api.com/json/{0}?fields=16785410' -f $jpIP) }
+		try { $check = Invoke-RestMethod -Uri ('http://ip-api.com/json/{0}?fields=16785410' -f $jpIP) -TimeoutSec $script:timeoutSec }
 		catch { $check.CountryCode = '' ; $check.hosting = $true }
 	} While (($check.CountryCode -ne 'JP') -or ($check.hosting) )
 	return $jpIP
