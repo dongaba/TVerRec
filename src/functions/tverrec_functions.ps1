@@ -275,20 +275,21 @@ function Update-IgnoreList {
 	[OutputType([System.Void])]
 	Param ([Parameter(Mandatory = $true)][String]$ignoreTitle)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	$ignoreListNew = New-Object System.Collections.Generic.List[System.String]
-	$ignoreComment = New-Object System.Collections.Generic.List[System.String]
-	$ignoreTarget = New-Object System.Collections.Generic.List[System.String]
-	$ignoreElse = New-Object System.Collections.Generic.List[System.String]
+	$ignoreLists = @()
+	$ignoreComment = @()
+	$ignoreTarget = @()
+	$ignoreElse = @()
+	$ignoreListNew = @()
 	if (Test-Path $script:ignoreFilePath -PathType Leaf) {
 		try {
 			while (-not (Lock-File $script:ignoreLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-			$ignoreLists.AddRange((Get-Content $script:ignoreFilePath -Encoding UTF8).Where( { $_ -notmatch '^\s*$|^(;;.*)$' }))
-			$ignoreComment.AddRange((Get-Content $script:ignoreFileSamplePath -Encoding UTF8))
-			$ignoreTarget.AddRange(($ignoreLists.Where({ $_ -eq $ignoreTitle }) | Sort-Object -Unique))
-			$ignoreElse.AddRange($ignoreLists.Where({ $_ -notin $ignoreTitle }))
-			if ($ignoreComment.Count -gt 0) { $ignoreListNew.AddRange($ignoreComment) }
-			if ($ignoreTarget.Count -gt 0) { $ignoreListNew.AddRange($ignoreTarget) }
-			if ($ignoreElse.Count -gt 0) { $ignoreListNew.AddRange($ignoreElse) }
+			$ignoreLists = @((Get-Content $script:ignoreFilePath -Encoding UTF8).Where( { $_ -notmatch '^\s*$|^(;;.*)$' }))
+			$ignoreComment = @(Get-Content $script:ignoreFileSamplePath -Encoding UTF8)
+			$ignoreTarget = @($ignoreLists.Where({ $_ -eq $ignoreTitle }) | Sort-Object -Unique)
+			$ignoreElse = @($ignoreLists.Where({ $_ -notin $ignoreTitle }))
+			if ($ignoreComment) { $ignoreListNew += $ignoreComment }
+			if ($ignoreTarget) { $ignoreListNew += $ignoreTarget }
+			if ($ignoreElse) { $ignoreListNew += $ignoreElse }
 			try {
 				# 改行コードLFを強制 + NFCで出力
 				$ignoreListNew.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC) | Out-File -LiteralPath $script:ignoreFilePath -Encoding UTF8 -NoNewline
