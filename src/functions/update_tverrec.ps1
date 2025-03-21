@@ -249,6 +249,10 @@ if ( Test-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1') ) {
 		| Out-File (Convert-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1')) -Encoding UTF8
 }
 
+# 実行ファイル名変更(v3.3.5→v3.3.6)
+Remove-IfExist -Path (Join-Path $script:scriptRoot '../bin/youtube-dl.exe')
+Remove-IfExist -Path (Join-Path $script:scriptRoot '../bin/youtube-dl')
+
 # 実行権限の付与
 if (!$IsWindows) {
 	Write-Output ('')
