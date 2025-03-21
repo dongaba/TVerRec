@@ -218,7 +218,7 @@ function Save-UserSetting {
 		$tailLineNum = try { $totalLineNum - ($content | Select-String $endSegment).LineNumber - 1 } catch { 0 }
 	}
 	# 自動生成より前の部分
-	# 自動生成の開始位置が2行目以降の場合にだけ自動生成寄りの前の部分がある
+	# 自動生成の開始位置が2行目以降の場合にだけ自動生成よりの前の部分がある
 	if (Test-Path variable:headLineNum) { if ($headLineNum -ge 0 ) { $newSetting += $content[0..$headLineNum] } }
 	# 動作停止設定以外の部分
 	$newSetting += $startSegment
@@ -299,7 +299,7 @@ $settingWindow.Add_Loaded({ $settingWindow.Icon = $script:iconPath })
 # ウィンドウを閉じる際の処理
 $settingWindow.Add_Closing({})
 # Name属性を持つ要素のオブジェクト作成
-$mainXaml.SelectNodes('//*[@Name]') | ForEach-Object { Set-Variable -Name ($_.Name) -Value $settingWindow.FindName($_.Name) -Scope Script }
+foreach ($node in $mainXaml.SelectNodes('//*[@Name]')) { Set-Variable -Name $node.Name -Value $settingWindow.FindName($node.Name) -Scope Script }
 # WPFにロゴをロード
 $LogoImage.Source = ConvertFrom-Base64 $script:logoBase64
 # バージョン表記

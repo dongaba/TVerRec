@@ -41,10 +41,10 @@ Show-ProgressToast @toastShowParams
 # Windowsのディレクトリ一覧を取得する関数
 function Get-DirectoriesOnWindows {
 	Param ([String[]]$paths)
-	$results = @()
+	$results = New-Object System.Collections.Generic.List[System.String]
 	foreach ($path in $paths) {
 		$dirCmd = "dir `"$path`" /s /b /a:d"
-		$results += (& cmd /c $dirCmd)
+		$results.AddRange([string[]](& cmd /c $dirCmd))
 	}
 	return $results
 }
@@ -52,10 +52,10 @@ function Get-DirectoriesOnWindows {
 # Linux/Macのディレクトリ一覧を取得する関数
 function Get-DirectoriesNotOnWindows {
 	Param ([String[]]$paths)
-	$results = @()
+	$results = New-Object System.Collections.Generic.List[System.String]
 	foreach ($path in $paths) {
 		$dirCmd = "find `"$path`" -type d"
-		$results += (& sh -c $dirCmd)
+		$results.AddRange([string[]](& sh -c $dirCmd))
 	}
 	return $results
 }
@@ -83,26 +83,28 @@ if ($script:saveBaseDir) {
 Write-Output ('')
 Write-Output ($script:msg.MediumBoldBorder)
 Write-Output ($script:msg.ListUpSourceDirs)
-# $moveFromPathsHash = @{}
-# if ($script:saveBaseDir -and (Get-ChildItem -LiteralPath $script:downloadBaseDir -Include @('*.mp4', '*.ts') -Recurse)) {
-# 	Get-ChildItem -LiteralPath $script:downloadBaseDir -Include @('*.mp4', '*.ts') -Recurse -File `
-# 	| Select-Object Directory -Unique `
-# 	| ForEach-Object { $moveFromPathsHash[$_.Directory.Name] = $_.Directory.FullName }
-# }
 $moveFromPathsHash = @{}
 if ($script:saveBaseDir) {
-	Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse -Directory `
-	| Select-Object Name -Unique `
-	| ForEach-Object { $moveFromPathsHash[$_.Name] = $script:downloadBaseDir + '/' + $_.Name }
+	$moveFromFiles = Get-ChildItem -LiteralPath $script:downloadBaseDir -Include @('*.mp4', '*.ts') -Recurse -File
+	foreach ($moveFromFile in $moveFromFiles) {
+		$moveFromDirName = $moveFromFile.Directory.Name
+		if (-not $moveFromPathsHash.ContainsKey($moveFromDirName)) {$moveFromPathsHash[$moveFromDirName] = $moveFromFile.Directory.FullName}
+	}
 }
 
 # 移動先ディレクトリとダウンロードディレクトリの一致を抽出
 Write-Output ('')
 Write-Output ($script:msg.MediumBoldBorder)
 Write-Output ($script:msg.MatchingTargetAndSource)
+# if ($moveToPathsHash.Count -gt 0) {
+# 	$moveDirs = @(Compare-Object -ReferenceObject @($moveToPathsHash.Keys) -DifferenceObject @($moveFromPathsHash.Keys) -IncludeEqual -ExcludeDifferent | ForEach-Object { $_.InputObject })
+# } else { $moveDirs = $null }
 if ($moveToPathsHash.Count -gt 0) {
-	$moveDirs = @(Compare-Object -ReferenceObject @($moveToPathsHash.Keys) -DifferenceObject @($moveFromPathsHash.Keys) -IncludeEqual -ExcludeDifferent | ForEach-Object { $_.InputObject })
-} else { $moveDirs = $null }
+	$moveDirs = New-Object System.Collections.Generic.List[System.Object]
+	foreach ($item in Compare-Object -ReferenceObject @($moveToPathsHash.Keys) -DifferenceObject @($moveFromPathsHash.Keys) -IncludeEqual -ExcludeDifferent) {
+		$moveDirs.Add($item.InputObject)
+	}
+} else {$moveDirs = $null}
 
 #======================================================================
 # 2/3 移動先ディレクトリと同名のディレクトリ配下の番組を移動
@@ -161,18 +163,13 @@ Write-Output ($script:msg.DeleteEmptyDirs)
 
 $toastShowParams.Text2 = $script:msg.MoveVideosStep3
 Show-ProgressToast @toastShowParams
-
-# try {
-# 	$emptyDirs = @()
-# 	Get-ChildItem -Path $script:downloadBaseDir -Directory -Recurse | ForEach-Object {
-# 		if ($_.GetFileSystemInfos().Where({ -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) }).Count -eq 0) { $emptyDirs += $_ }
-# 	}
-# } catch { continue }
-# if ($emptyDirs.Count -ne 0) { $emptyDirs = @($emptyDirs.Fullname) }
 try {
-	$emptyDirs = @(Get-ChildItem -Path $script:downloadBaseDir -Directory -Recurse `
-		| Where-Object { $_.GetFileSystemInfos().Where({ -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) }).Count -eq 0 } `
-		| Select-Object -ExpandProperty FullName)
+	$emptyDirs = New-Object System.Collections.Generic.List[string]	# .NET Listを使用して高速化
+	foreach ($dir in (Get-ChildItem -Path $script:downloadBaseDir -Directory -Recurse -ErrorAction SilentlyContinue)) {
+		$files = $dir.GetFileSystemInfos()
+		$visibleFiles = @($files | Where-Object { -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) })
+		if ($visibleFiles.Count -eq 0) { $emptyDirs.Add($dir.FullName) }
+	}
 } catch { $emptyDirs = @() }
 $emptyDirTotal = $emptyDirs.Count
 

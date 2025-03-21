@@ -77,8 +77,8 @@ $script:listLockFilePath = Join-Path $script:lockDir 'list.lock'
 $script:ffmpegErrorLogPath = Join-Path $script:logDir ('ffmpeg_error_{0}.log' -f $PID)
 
 # youtube-dlのパス
-if ($IsWindows) { $script:ytdlPath = Join-Path $script:binDir 'youtube-dl.exe' }
-else { $script:ytdlPath = Join-Path $script:binDir 'youtube-dl' }
+if ($IsWindows) { $script:ytdlPath = Join-Path $script:binDir 'yt-dlp.exe' }
+else { $script:ytdlPath = Join-Path $script:binDir 'yt-dlp' }
 
 # ffmpegのパス
 if ($IsWindows) { $script:ffmpegPath = Join-Path $script:binDir 'ffmpeg.exe' }
@@ -103,7 +103,11 @@ $script:commonHttpHeader = @{
 	'x-tver-platform-type' = 'web'
 	'Origin'               = 'https://tver.jp'
 	'Referer'              = 'https://tver.jp'
+	'Forwarded'            = $script:jpIP
+	'Forwarded-For'        = $script:jpIP
+	'X-Forwarded'          = $script:jpIP
 	'X-Forwarded-For'      = $script:jpIP
+	'X-Originating-IP'     = $script:jpIP
 }
 
 # ロックファイル用

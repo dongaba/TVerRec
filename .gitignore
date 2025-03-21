@@ -16,11 +16,16 @@
 *.ts
 
 #実行ファイル
-/bin/*
-!/bin
+/bin/*.exe
+/bin/ff*
+/bin/yt-dlp
+
 
 #アップデート作業ディレクトリ
 /tverrec-update-temp
+
+#yt-dlpエクストラクタ
+!/bin/yt-dlp-plugins/*
 
 #開発関連ファイル
 /dev
@@ -67,9 +72,9 @@ ignore.conf.*
 * copy.*
 * copy *.*
 *.bak
+*__pycache__*
 
 #ローカルの変更をGitHubにアップしないために
-/bin/*
 /db/*
 /log/*
 /conf/*
