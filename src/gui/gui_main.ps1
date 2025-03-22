@@ -125,28 +125,28 @@ $lblVersion.Content = ('Version {0}' -f $script:appVersion)
 $outText = $mainWindow.FindName('tbOutText')
 
 # GUI部品のラベルを言語別に設定
-$lblTool.Content = $script:msg.GuiHeaderTool
-$lblLink.Content = $script:msg.GuiHeaderLink
-$lblLog.Content = $script:msg.GuiHeaderLog
-$btnLoop.Content = $script:msg.GuiButtonLoop
-$btnSingle.Content = $script:msg.GuiButtonSingle
-$btnBulk.Content = $script:msg.GuiButtonBulk
-$btnListGen.Content = $script:msg.GuiButtonListGen
-$btnList.Content = $script:msg.GuiButtonList
-$btnDelete.Content = $script:msg.GuiButtonDelete
-$btnValidate.Content = $script:msg.GuiButtonValidate
-$btnMove.Content = $script:msg.GuiButtonMove
-$btnKillAll.Content = $script:msg.GuiButtonKillAll
-$btnWorkOpen.Content = $script:msg.GuiButtonWorkOpen
-$btnDownloadOpen.Content = $script:msg.GuiButtonDownloadOpen
-$btnSaveOpen.Content = $script:msg.GuiButtonSaveOpen
-$btnKeywordOpen.Content = $script:msg.GuiButtonKeywordOpen
-$btnIgnoreOpen.Content = $script:msg.GuiButtonIgnoreOpen
-$btnListOpen.Content = $script:msg.GuiButtonListOpen
-$btnClearLog.Content = $script:msg.GuiButtonClearLog
-$btnWiki.Content = $script:msg.GuiButtonWiki
-$btnSetting.Content = $script:msg.GuiButtonSetting
-$btnExit.Content = $script:msg.GuiButtonExit
+$lblTool.Content = $script:msg.lblTool
+$lblLink.Content = $script:msg.lblLink
+$lblLog.Content = $script:msg.lblLog
+$btnLoop.Content = $script:msg.btnLoop
+$btnSingle.Content = $script:msg.btnSingle
+$btnBulk.Content = $script:msg.btnBulk
+$btnListGen.Content = $script:msg.btnListGen
+$btnList.Content = $script:msg.btnList
+$btnDelete.Content = $script:msg.btnDelete
+$btnValidate.Content = $script:msg.btnValidate
+$btnMove.Content = $script:msg.btnMove
+$btnKillAll.Content = $script:msg.btnKillAll
+$btnWorkOpen.Content = $script:msg.btnWorkOpen
+$btnDownloadOpen.Content = $script:msg.btnDownloadOpen
+$btnSaveOpen.Content = $script:msg.btnSaveOpen
+$btnKeywordOpen.Content = $script:msg.btnKeywordOpen
+$btnIgnoreOpen.Content = $script:msg.btnIgnoreOpen
+$btnListOpen.Content = $script:msg.btnListOpen
+$btnClearLog.Content = $script:msg.btnClearLog
+$btnWiki.Content = $script:msg.btnWiki
+$btnSetting.Content = $script:msg.btnSetting
+$btnExit.Content = $script:msg.btnExit
 
 # endregion WPFのWindow設定
 

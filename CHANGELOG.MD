@@ -13,7 +13,6 @@
 
 ### 3.3.8 Fixed
 
-
 ## [3.3.7](https://github.com/dongaba/TVerRec/releases/tag/v3.3.7)
 
 ### 3.3.7 Added
