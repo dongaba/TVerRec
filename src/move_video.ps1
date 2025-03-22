@@ -41,10 +41,10 @@ Show-ProgressToast @toastShowParams
 # Windowsのディレクトリ一覧を取得する関数
 function Get-DirectoriesOnWindows {
 	Param ([String[]]$paths)
-	$results = New-Object System.Collections.Generic.List[System.String]
+	$results = New-Object System.Collections.Generic.List[String]
 	foreach ($path in $paths) {
 		$dirCmd = "dir `"$path`" /s /b /a:d"
-		$results.AddRange([string[]](& cmd /c $dirCmd))
+		$results.AddRange([String[]](& cmd /c $dirCmd))
 	}
 	return $results
 }
@@ -52,10 +52,10 @@ function Get-DirectoriesOnWindows {
 # Linux/Macのディレクトリ一覧を取得する関数
 function Get-DirectoriesNotOnWindows {
 	Param ([String[]]$paths)
-	$results = New-Object System.Collections.Generic.List[System.String]
+	$results = New-Object System.Collections.Generic.List[String]
 	foreach ($path in $paths) {
 		$dirCmd = "find `"$path`" -type d"
-		$results.AddRange([string[]](& sh -c $dirCmd))
+		$results.AddRange([String[]](& sh -c $dirCmd))
 	}
 	return $results
 }
@@ -88,7 +88,7 @@ if ($script:saveBaseDir) {
 	$moveFromFiles = Get-ChildItem -LiteralPath $script:downloadBaseDir -Include @('*.mp4', '*.ts') -Recurse -File
 	foreach ($moveFromFile in $moveFromFiles) {
 		$moveFromDirName = $moveFromFile.Directory.Name
-		if (-not $moveFromPathsHash.ContainsKey($moveFromDirName)) {$moveFromPathsHash[$moveFromDirName] = $moveFromFile.Directory.FullName}
+		if (-not $moveFromPathsHash.ContainsKey($moveFromDirName)) { $moveFromPathsHash[$moveFromDirName] = $moveFromFile.Directory.FullName }
 	}
 }
 
@@ -100,11 +100,11 @@ Write-Output ($script:msg.MatchingTargetAndSource)
 # 	$moveDirs = @(Compare-Object -ReferenceObject @($moveToPathsHash.Keys) -DifferenceObject @($moveFromPathsHash.Keys) -IncludeEqual -ExcludeDifferent | ForEach-Object { $_.InputObject })
 # } else { $moveDirs = $null }
 if ($moveToPathsHash.Count -gt 0) {
-	$moveDirs = New-Object System.Collections.Generic.List[System.Object]
+	$moveDirs = New-Object System.Collections.Generic.List[Object]
 	foreach ($item in Compare-Object -ReferenceObject @($moveToPathsHash.Keys) -DifferenceObject @($moveFromPathsHash.Keys) -IncludeEqual -ExcludeDifferent) {
 		$moveDirs.Add($item.InputObject)
 	}
-} else {$moveDirs = $null}
+} else { $moveDirs = $null }
 
 #======================================================================
 # 2/3 移動先ディレクトリと同名のディレクトリ配下の番組を移動
@@ -166,7 +166,7 @@ Show-ProgressToast @toastShowParams
 
 if ($script:emptyDownloadBaseDir) {
 	try {
-		$emptyDirs = New-Object System.Collections.Generic.List[string]	# .NET Listを使用して高速化
+		$emptyDirs = New-Object System.Collections.Generic.List[String]
 		foreach ($dir in (Get-ChildItem -Path $script:downloadBaseDir -Directory -Recurse -ErrorAction SilentlyContinue)) {
 			$files = $dir.GetFileSystemInfos()
 			$visibleFiles = @($files | Where-Object { -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) })

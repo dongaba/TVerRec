@@ -14,7 +14,7 @@ Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 #----------------------------------------------------------------------
 function Invoke-GarbageCollection() {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	Write-Verbose -Message 'Starting garbage collection ...' ; [System.GC]::Collect()
@@ -43,7 +43,7 @@ function Get-TimeStamp {
 #----------------------------------------------------------------------
 function ConvertFrom-UnixTime {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param ([Parameter(Mandatory = $true)][int64]$UnixTime)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$EpochDate = Get-Date -Year 1970 -Month 1 -Day 1 -Hour 0 -Minute 0 -Second 0 -AsUTC
@@ -76,7 +76,7 @@ function Get-FileNameWithoutInvalidChars {
 	[OutputType([String])]
 	Param ([String]$Name = '')
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	$invalidCharsPattern = '[{0}]' -f [Regex]::Escape( [IO.Path]::GetInvalidFileNameChars() -Join '')
+	$invalidCharsPattern = '[{0}]' -f [RegEx]::Escape( [IO.Path]::GetInvalidFileNameChars() -Join '')
 	$Name = $Name.Replace($invalidCharsPattern , '')
 	# Linux/MacではGetInvalidFileNameChars()が不完全なため、ダメ押しで置換
 	$additionalReplaces = '[*\?<>|]'
@@ -258,7 +258,7 @@ function Remove-Comment {
 #----------------------------------------------------------------------
 function Remove-Files {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param (
 		[parameter(Mandatory = $true)][System.IO.FileInfo]$basePath,
 		[Parameter(Mandatory = $true)][String[]]$conditions,
@@ -292,7 +292,7 @@ function Remove-Files {
 #----------------------------------------------------------------------
 function Expand-Zip {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param (
 		[Parameter(Mandatory = $true)][String]$path,
 		[Parameter(Mandatory = $true)][String]$destination
@@ -367,7 +367,7 @@ function Unlock-File {
 #----------------------------------------------------------------------
 function Out-Msg-Color {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param (
 		[Parameter(Mandatory = $false)][Object]$text = '',
 		[Parameter(Mandatory = $false)][ConsoleColor]$fg,
@@ -405,7 +405,7 @@ if ($IsWindows -and !$script:disableToastNotification -and (!('Microsoft.Toolkit
 #----------------------------------------------------------------------
 function Show-GeneralToast {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param (
 		[Parameter(Mandatory = $true )][String]$text1,
 		[Parameter(Mandatory = $false)][String]$text2 = '',
@@ -460,7 +460,7 @@ function Show-GeneralToast {
 #----------------------------------------------------------------------
 function Show-ProgressToast {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param (
 		[Parameter(Mandatory = $true )][String]$text1,
 		[Parameter(Mandatory = $false)][String]$text2 = '',
@@ -529,7 +529,7 @@ function Show-ProgressToast {
 #----------------------------------------------------------------------
 function Update-ProgressToast {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param (
 		[Parameter(Mandatory = $false)][String]$title = '',
 		[Parameter(Mandatory = $true )][String]$rate,
@@ -565,7 +565,7 @@ function Update-ProgressToast {
 #----------------------------------------------------------------------
 function Show-ProgressToast2Row {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param (
 		[Parameter(Mandatory = $true )][String]$text1,
 		[Parameter(Mandatory = $false)][String]$text2 = '',
@@ -644,7 +644,7 @@ function Show-ProgressToast2Row {
 #----------------------------------------------------------------------
 function Update-ProgressToast2Row {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param (
 		[Parameter(Mandatory = $false)][String]$title1 = '',
 		[Parameter(Mandatory = $true )][String]$rate1,

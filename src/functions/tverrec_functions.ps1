@@ -11,7 +11,7 @@ Add-Type -AssemblyName 'System.Globalization' | Out-Null
 # TVerRec Logo表示
 #----------------------------------------------------------------------
 function Show-Logo {
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# [Console]::ForegroundColor = 'Red'
@@ -58,7 +58,7 @@ function Compare-Version {
 # TVerRec最新化確認
 #----------------------------------------------------------------------
 function Invoke-TVerRecUpdateCheck {
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$progressPreference = 'silentlyContinue'
@@ -118,7 +118,7 @@ function Invoke-TVerRecUpdateCheck {
 #----------------------------------------------------------------------
 function Invoke-ToolUpdateCheck {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param (
 		[Parameter(Mandatory = $true)][String]$scriptName,
 		[Parameter(Mandatory = $true)][String]$targetName
@@ -136,7 +136,7 @@ function Invoke-TverrecPathCheck {
 	Param (
 		[Parameter(Mandatory = $true )][String]$path,
 		[Parameter(Mandatory = $true )][String]$errorMessage,
-		[Parameter(Mandatory = $false)][switch]$isFile,
+		[Parameter(Mandatory = $false)][Switch]$isFile,
 		[Parameter(Mandatory = $false)][String]$sampleFilePath,
 		[Parameter(Mandatory = $false)][Boolean]$continue
 	)
@@ -156,7 +156,7 @@ function Invoke-TverrecPathCheck {
 # 設定で指定したファイル・ディレクトリの存在チェック
 #----------------------------------------------------------------------
 function Invoke-RequiredFileCheck {
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param ()
 	Write-Debug ($MyInvocation.MyCommand.Name)
 	if (!$script:downloadBaseDir) { Throw ($script:msg.DirNotSpecified -f $script:msg.DownloadDir) }
@@ -270,7 +270,7 @@ function Read-IgnoreList {
 # ダウンロード対象外番組のソート(使用したものを上に移動)
 #----------------------------------------------------------------------
 function Update-IgnoreList {
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param ([Parameter(Mandatory = $true)][String]$ignoreTitle)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$ignoreLists = @()
@@ -331,7 +331,7 @@ function Invoke-ListMatchCheck {
 	# ダウンロードリストファイルのデータを読み込み
 	$listFileData = @(Read-DownloadList)
 	# $listVideoPages = $listFileData | ForEach-Object { 'https://tver.jp/episodes/{0}' -f $_.EpisodeID.Replace('#', '') }
-	$listVideoPages = New-Object System.Collections.Generic.List[string]	# .NET Listを使用して高速化
+	$listVideoPages = New-Object System.Collections.Generic.List[String]
 	foreach ($item in $listFileData) {
 		$listVideoPages.Add('https://tver.jp/episodes/{0}' -f $item.EpisodeID.Replace('#', ''))
 	}
@@ -352,7 +352,7 @@ function Invoke-HistoryAndListMatchCheck {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# ダウンロードリストファイルのデータを読み込み
 	$listFileData = @(Read-DownloadList)
-	$listVideoPages = New-Object System.Collections.Generic.List[System.String]
+	$listVideoPages = New-Object System.Collections.Generic.List[String[]]
 	foreach ($listFileLine in $listFileData) { $listVideoPages.Add(('https://tver.jp/episodes/{0}' -f $listFileLine.EpisodeID.Replace('#', ''))) }
 	# ダウンロード履歴ファイルのデータを読み込み
 	$histFileData = @(Read-HistoryFile)
@@ -371,7 +371,7 @@ function Invoke-HistoryAndListMatchCheck {
 # youtube-dlプロセスの確認と待機
 #----------------------------------------------------------------------
 function Wait-YtdlProcess {
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param ([Int32]$parallelDownloadFileNum)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# youtube-dlのプロセスが設定値を超えたら一時待機
@@ -390,9 +390,9 @@ function Wait-YtdlProcess {
 # ダウンロード履歴データの成形
 #----------------------------------------------------------------------
 function Format-HistoryRecord {
-	Param ([Parameter(Mandatory = $true)][pscustomobject][Ref]$videoInfo)
+	Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	return [pscustomobject]@{
+	return [PSCustomObject]@{
 		videoPage       = $videoInfo.episodePageURL
 		videoSeriesPage = $videoInfo.seriesPageURL
 		genre           = $videoInfo.keyword
@@ -413,9 +413,9 @@ function Format-HistoryRecord {
 # ダウンロードリストデータの成形
 #----------------------------------------------------------------------
 function Format-ListRecord {
-	Param ([Parameter(Mandatory = $true)][pscustomobject][Ref]$videoInfo)
+	Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	$downloadListItem = [pscustomobject]@{
+	$downloadListItem = [PSCustomObject]@{
 		seriesName     = $videoInfo.seriesName
 		seriesID       = $videoInfo.seriesID
 		seriesPageURL  = $videoInfo.seriesPageURL
@@ -457,7 +457,7 @@ Function Remove-SpecialNote {
 # TVer番組ダウンロードのメイン処理
 #----------------------------------------------------------------------
 function Invoke-VideoDownload {
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param (
 		[Parameter(Mandatory = $true )][String][Ref]$keyword,
 		[Parameter(Mandatory = $true )][String][Ref]$videoLink,
@@ -606,7 +606,7 @@ function Invoke-VideoDownload {
 # TVer番組ダウンロードリスト作成のメイン処理
 #----------------------------------------------------------------------
 function Update-VideoList {
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param (
 		[Parameter(Mandatory = $true)][String][Ref]$keyword,
 		[Parameter(Mandatory = $true)][String][Ref]$videoLink
@@ -625,7 +625,7 @@ function Update-VideoList {
 	$ignoreTitles = @(Read-IgnoreList)
 	foreach ($ignoreTitle in $ignoreTitles) {
 		if ($ignoreTitle) {
-			if (($videoInfo.seriesName -cmatch [Regex]::Escape($ignoreTitle)) -or ($videoInfo.episodeName -cmatch [Regex]::Escape($ignoreTitle))) {
+			if (($videoInfo.seriesName -cmatch [RegEx]::Escape($ignoreTitle)) -or ($videoInfo.episodeName -cmatch [RegEx]::Escape($ignoreTitle))) {
 				$ignoreWord = $ignoreTitle ; Update-IgnoreList $ignoreTitle ; $ignore = $true
 				$videoInfo.episodeID = ('#{0}' -f $videoInfo.episodeID)
 				break
@@ -652,8 +652,8 @@ function Update-VideoList {
 # 保存ファイル名を設定
 #----------------------------------------------------------------------
 function Format-VideoFileInfo {
-	[OutputType([System.Void])]
-	Param ([Parameter(Mandatory = $true)][pscustomobject][Ref]$videoInfo)
+	[OutputType([Void])]
+	Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$videoName = ''
 	# ファイル名を生成
@@ -698,8 +698,8 @@ function Format-VideoFileInfo {
 # 番組情報表示
 #----------------------------------------------------------------------
 function Show-VideoInfo {
-	[OutputType([System.Void])]
-	Param ([Parameter(Mandatory = $true)][pscustomobject][Ref]$videoInfo)
+	[OutputType([Void])]
+	Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	Write-Output ($script:msg.EpisodeName -f $videoInfo.fileName.Replace($script:videoContainerFormat, ''))
 	Write-Output ($script:msg.BroadcastDate -f $videoInfo.broadcastDate)
@@ -713,8 +713,8 @@ function Show-VideoInfo {
 # 番組情報デバッグ表示
 #----------------------------------------------------------------------
 function Show-VideoDebugInfo {
-	[OutputType([System.Void])]
-	Param ([Parameter(Mandatory = $true)][pscustomobject][Ref]$videoInfo)
+	[OutputType([Void])]
+	Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	Write-Debug $videoInfo.episodePageURL
 }
@@ -723,8 +723,8 @@ function Show-VideoDebugInfo {
 # ffmpegを使ったダウンロードプロセスの起動
 #----------------------------------------------------------------------
 function Invoke-FfmpegDownload {
-	[OutputType([System.Void])]
-	Param ([Parameter(Mandatory = $true)][pscustomobject][Ref]$videoInfo)
+	[OutputType([Void])]
+	Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	Invoke-StatisticsCheck -Operation 'download-ffmpeg'
 	if ($IsWindows) { foreach ($dir in @($script:downloadWorkDir, $script:downloadBaseDir)) { if ($dir[-1] -eq ':') { $dir += '\\' } } }
@@ -772,8 +772,8 @@ function Invoke-FfmpegDownload {
 # youtube-dlプロセスの起動
 #----------------------------------------------------------------------
 function Invoke-Ytdl {
-	[OutputType([System.Void])]
-	Param ([Parameter(Mandatory = $true)][pscustomobject][Ref]$videoInfo)
+	[OutputType([Void])]
+	Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	Invoke-StatisticsCheck -Operation 'download'
 	if ($IsWindows) { foreach ($dir in @($script:downloadWorkDir, $script:downloadBaseDir)) { if ($dir[-1] -eq ':') { $dir += '\\' } } }
@@ -840,7 +840,7 @@ function Invoke-Ytdl {
 # youtube-dlプロセスの起動 (TVer以外のサイトへの対応)
 #----------------------------------------------------------------------
 function Invoke-NonTverYtdl {
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param ([Parameter(Mandatory = $true)][Alias('URL')]	[String]$videoPageURL)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	Invoke-StatisticsCheck -Operation 'nontver'
@@ -946,7 +946,7 @@ function Get-FfmpegProcessCount {
 # youtube-dlのプロセスが終わるまで待機
 #----------------------------------------------------------------------
 function Wait-DownloadCompletion () {
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$ytdlCount = [Int](Get-YtdlProcessCount)
@@ -964,7 +964,7 @@ function Wait-DownloadCompletion () {
 # ダウンロードスケジュールに合わせたスケジュール制御
 #----------------------------------------------------------------------
 function Suspend-Process () {
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if ($script:scheduleStop) {
@@ -990,7 +990,7 @@ function Suspend-Process () {
 # ダウンロード履歴の不整合を解消
 #----------------------------------------------------------------------
 function Optimize-HistoryFile {
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$cleanedHist = @()
@@ -1000,7 +1000,7 @@ function Optimize-HistoryFile {
 		$cleanedHist = $originalLists.Where({
 			($null -ne $_.videoValidated) `
 					-and ([Int]::TryParse($_.videoValidated, [Ref]0)) `
-					-and ([datetime]::TryParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null, [System.Globalization.DateTimeStyles]::None, [Ref]([datetime]::MinValue)))
+					-and ([DateTime]::TryParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null, [System.Globalization.DateTimeStyles]::None, [Ref]([DateTime]::MinValue)))
 			})
 		try { $cleanedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
 		catch {
@@ -1016,7 +1016,7 @@ function Optimize-HistoryFile {
 # 指定日以上前に処理したものはダウンロード履歴から削除
 #----------------------------------------------------------------------
 function Limit-HistoryFile {
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param ([Parameter(Mandatory = $true)][Int32]$retentionPeriod)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	try {
@@ -1037,10 +1037,10 @@ function Limit-HistoryFile {
 # ダウンロード履歴の重複削除
 #----------------------------------------------------------------------
 function Repair-HistoryFile {
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param ()
 	# $uniquedHist = @()
-	$uniquedHist = New-Object System.Collections.Generic.List[object]	# .NET Listを使用して高速化
+	$uniquedHist = New-Object System.Collections.Generic.List[Object]
 	try {
 		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 		$originalLists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
@@ -1062,9 +1062,9 @@ function Repair-HistoryFile {
 #----------------------------------------------------------------------
 function Invoke-FFmpegProcess {
 	param (
-		[string]$filePath,
-		[string]$ffmpegArgs,
-		[string]$execName
+		[String]$filePath,
+		[String]$ffmpegArgs,
+		[String]$execName
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$commonParams = @{
@@ -1091,7 +1091,7 @@ function Invoke-FFmpegProcess {
 # 番組の整合性チェック
 #----------------------------------------------------------------------
 function Invoke-IntegrityCheck {
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param (
 		[Parameter(Mandatory = $true)]$videoHist,
 		[Parameter(Mandatory = $false)][String]$decodeOption = ''
@@ -1216,7 +1216,7 @@ function Get-Setting {
 # 統計取得
 #----------------------------------------------------------------------
 function Invoke-StatisticsCheck {
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param (
 		[Parameter(Mandatory = $true )][String]$operation,
 		[Parameter(Mandatory = $false)][String]$tverType = 'none',

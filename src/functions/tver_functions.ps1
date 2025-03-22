@@ -11,7 +11,7 @@ Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 #----------------------------------------------------------------------
 function Get-Token () {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$tverTokenURL = 'https://platform-api.tver.jp/v2/api/platform_users/browser/create'
@@ -42,11 +42,11 @@ function Get-VideoLinksFromKeyword {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$linkCollection = [PSCustomObject]@{
 		episodeLinks     = @{}
-		seriesLinks      = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
-		seasonLinks      = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
-		talentLinks      = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
-		specialMainLinks = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
-		specialLinks     = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
+		seriesLinks      = New-Object System.Collections.Generic.List[String]
+		seasonLinks      = New-Object System.Collections.Generic.List[String]
+		talentLinks      = New-Object System.Collections.Generic.List[String]
+		specialMainLinks = New-Object System.Collections.Generic.List[String]
+		specialLinks     = New-Object System.Collections.Generic.List[String]
 	}
 	if ($keyword.IndexOf('/') -gt 0) {
 		$key = $keyword.split(' ')[0].split("`t")[0].Split('/')[0]
@@ -86,7 +86,7 @@ function Get-VideoLinksFromKeyword {
 #----------------------------------------------------------------------
 function Get-LinkFromBuffer {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly', '')]
 	Param (
 		[Parameter(Mandatory = $false)][Object[]]$tverIDs,
@@ -115,7 +115,7 @@ function Get-LinkFromBuffer {
 #----------------------------------------------------------------------
 function Get-LinkFromKeyword {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param (
 		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$id,
 		[Parameter(Mandatory = $false)][ValidateSet('seriesLinks', 'seasonLinks', 'talentLinks', 'specialMainLinks', 'specialLinks', 'tag', 'new', 'end', 'ranking', 'keyword', 'category')][String]$linkType,
@@ -152,7 +152,7 @@ function Get-LinkFromKeyword {
 #----------------------------------------------------------------------
 function Get-SearchResults {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly', '')]
 	Param (
 		[Parameter(Mandatory = $true)][String]$baseURL,
@@ -220,7 +220,7 @@ function Get-SearchResults {
 #----------------------------------------------------------------------
 function Get-LinkFromTopPage {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject][Ref]$linkCollection)
 	Write-Debug ('Dev - {0}' -f $MyInvocation.MyCommand.Name)
 	$callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callHome'
@@ -257,14 +257,14 @@ function Get-LinkFromTopPage {
 #----------------------------------------------------------------------
 function Get-LinkFromSiteMap {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject][Ref]$linkCollection)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$callSearchURL = 'https://tver.jp/sitemap.xml'
 	try { $searchResultsRaw = Invoke-RestMethod -Uri $callSearchURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec }
 	catch { Write-Warning $script:msg.SiteMapRetrievalFailed ; return }
 	# Special Detailを拾わないように「/」2個目以降は無視して重複削除
-	$searchResults = New-Object System.Collections.Generic.List[System.String]
+	$searchResults = New-Object System.Collections.Generic.List[String]
 	foreach ($url in $searchResultsRaw.urlset.url.loc) {
 		$modifiedUrl = $url.Replace('https://tver.jp/', '') -replace '^([^/]+/[^/]+).*', '$1'
 		if (-not $searchResults.Contains($modifiedUrl)) { $searchResults.Add($modifiedUrl) }
@@ -318,7 +318,7 @@ function Get-LinkFromSiteMap {
 #----------------------------------------------------------------------
 function Get-LinkFromMyPage {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly', '')]
 	Param (
 		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$page,
@@ -451,7 +451,7 @@ function Get-VideoInfo {
 	# シーズン名が本編の場合はシーズン名をクリア
 	if ($videoSeason -eq '本編') { $videoSeason = '' }
 	# シリーズ名がシーズン名を含む場合はシーズン名をクリア
-	if ($videoSeries -cmatch [Regex]::Escape($videoSeason)) { $videoSeason = '' }
+	if ($videoSeries -cmatch [RegEx]::Escape($videoSeason)) { $videoSeason = '' }
 	# エピソード番号を極力修正
 	if ((($videoEpisodeNum -eq 1) -or ($videoEpisodeNum % 10 -eq 0)) -and ($episodeName -imatch '([#|第|Episode|ep|Take|Vol|Part|Chapter|Flight|Karte|Case|Stage|Mystery|Ope|Story|Sign|Trap|Letter|Act]+\.?\s?)(\d+)(.*)')) { $videoEpisodeNum = $matches[2] }
 	# エピソード番号が1桁の際は頭0埋めして2桁に
@@ -469,7 +469,7 @@ function Get-VideoInfo {
 			$broadcastDate = ('{0}{1}{2}{3}{4}' -f $matches[1].PadLeft(2, '0'), $matches[2], $matches[3].PadLeft(2, '0'), $matches[4], $matches[6])
 		}
 	}
-	return [pscustomobject]@{
+	return [PSCustomObject]@{
 		seriesName      = $videoSeries
 		seriesID        = $videoSeriesID
 		seriesPageURL   = $videoSeriesPageURL

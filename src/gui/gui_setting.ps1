@@ -118,13 +118,13 @@ $settingAttributes = @(
 
 # GUIイベントの処理
 function Sync-WpfEvents {
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param ()
 	[DispatcherFrame] $frame = [DispatcherFrame]::new($true)
 	[Dispatcher]::CurrentDispatcher.BeginInvoke(
 		'Background',
 		[DispatcherOperationCallback] {
-			Param ([object] $f)
+			Param ([Object] $f)
 			($f -as [DispatcherFrame]).Continue = $false
 			return $null
 		},
@@ -135,7 +135,7 @@ function Sync-WpfEvents {
 
 # ディレクトリ選択ダイアログ
 function Select-Folder() {
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param (
 		[parameter(Mandatory = $true)]$description,
 		[parameter(Mandatory = $true)]$textBox
@@ -150,7 +150,7 @@ function Select-Folder() {
 
 # user_setting.ps1から各設定項目を読み込む
 function Read-UserSetting {
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param ()
 	$undefAttributes = @('$script:downloadBaseDir', '$script:downloadWorkDir', '$script:saveBaseDir', '$script:myPlatformUID', '$script:myPlatformToken', '$script:myMemberSID', '$script:proxyUrl')
 	if (Test-Path $userSettingFile) {
@@ -161,7 +161,7 @@ function Read-UserSetting {
 			$settingBox = $settingWindow.FindName($settingAttribute.Replace('$script:', ''))
 			if ($null -eq $settingBox) { Write-Debug "$settingAttribute is null" ; continue }
 			# ユーザー設定の値を取得しGUIに反映
-			$userSettingValue = ($userSettings -match ('^{0}' -f [regex]::Escape($settingAttribute)))
+			$userSettingValue = ($userSettings -match ('^{0}' -f [RegEx]::Escape($settingAttribute)))
 			if ($userSettingValue) {
 				Write-Debug [String]$userSettingValue
 				$settingBox.Text = $userSettingValue.split('=', 2)[1].Trim().Trim("'")
@@ -180,7 +180,7 @@ function Read-UserSetting {
 		}
 		# 動作停止設定の抽出
 		$scheduleStopPattern = '\$script:stopSchedule\s*=\s*@\{([^}]*)\}'
-		$scheduleStopDetail = [regex]::Match($userSettings, $scheduleStopPattern)
+		$scheduleStopDetail = [RegEx]::Match($userSettings, $scheduleStopPattern)
 		# 抽出した内容を解析してチェックボックスに反映
 		if ($scheduleStopDetail.Success) {
 			$scheduleStopString = $scheduleStopDetail.Groups[1].Value
@@ -202,7 +202,7 @@ function Read-UserSetting {
 
 # user_setting.ps1に各設定項目を書き込む
 function Save-UserSetting {
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param ()
 	$newSetting = @()
 	$startSegment = '##Start Setting Generated from GUI'
@@ -284,7 +284,7 @@ function Save-UserSetting {
 # region WPFのWindow設定
 
 try {
-	[xml]$mainXaml = [String](Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecSetting.xaml'))
+	[Xml]$mainXaml = [String](Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecSetting.xaml'))
 	$settingWindow = [System.Windows.Markup.XamlReader]::Load(([System.Xml.XmlNodeReader]::new($mainXaml)))
 } catch { Throw ($script:msg.GuiBroken) }
 # PowerShellのウィンドウを非表示に
@@ -547,7 +547,7 @@ function Sync-MultiCheckboxes {
 	param (
 		[String]$day,
 		[String]$hour,
-		[object]$allCheckbox
+		[Object]$allCheckbox
 	)
 	if ($day) {
 		foreach ($hour in $hours) {

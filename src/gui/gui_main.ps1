@@ -34,11 +34,11 @@ $msgTypesColorMap = @{
 # ログ出力用変数
 $jobMsgs = @()
 $msgTypes = @('Output', 'Error', 'Warning', 'Verbose', 'Debug', 'Information')
-$msgError = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
-$msgWarning = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
-$msgVerbose = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
-$msgDebug = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
-$msgInformation = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
+$msgError = New-Object System.Collections.Generic.List[String]
+$msgWarning = New-Object System.Collections.Generic.List[String]
+$msgVerbose = New-Object System.Collections.Generic.List[String]
+$msgDebug = New-Object System.Collections.Generic.List[String]
+$msgInformation = New-Object System.Collections.Generic.List[String]
 
 # endregion 環境設定
 
@@ -52,7 +52,7 @@ function Sync-WpfEvents {
 	[Dispatcher]::CurrentDispatcher.BeginInvoke(
 		'Background',
 		[DispatcherOperationCallback] {
-			Param ([object] $f)
+			Param ([Object] $f)
 			($f -as [DispatcherFrame]).Continue = $false
 			return $null
 		},
@@ -63,7 +63,7 @@ function Sync-WpfEvents {
 
 # 最大行数以上の実行ログをクリア
 function Limit-LogLines() {
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param (
 		[parameter(Mandatory = $true)]$richTextBox,
 		[parameter(Mandatory = $true)]$limit
@@ -77,7 +77,7 @@ function Limit-LogLines() {
 
 # テキストボックスへのログ出力と再描画
 function Out-ExecutionLog {
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param (
 		[parameter(Mandatory = $false)][String]$message = '',
 		[parameter(Mandatory = $false)][String]$type = 'Output'
@@ -99,7 +99,7 @@ function Out-ExecutionLog {
 # region WPFのWindow設定
 
 try {
-	[xml]$mainXaml = [String](Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecMain.xaml'))
+	[Xml]$mainXaml = [String](Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecMain.xaml'))
 	$mainWindow = [System.Windows.Markup.XamlReader]::Load(([System.Xml.XmlNodeReader]::new($mainXaml)))
 } catch { Throw ($script:msg.GuiBroken) }
 # PowerShellのウィンドウを非表示に
