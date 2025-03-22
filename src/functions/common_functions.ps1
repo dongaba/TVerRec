@@ -264,7 +264,7 @@ function Remove-Files {
 		[Parameter(Mandatory = $true)][String[]]$conditions,
 		[Parameter(Mandatory = $true)][int32]$delPeriod
 	)
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $basePath)
 	$limitDateTime = (Get-Date).AddDays(-1 * $delPeriod)
 	if ($script:enableMultithread) {
 		Write-Debug ('Multithread Processing Enabled')

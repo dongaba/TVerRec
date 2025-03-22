@@ -140,7 +140,7 @@ function Invoke-TverrecPathCheck {
 		[Parameter(Mandatory = $false)][String]$sampleFilePath,
 		[Parameter(Mandatory = $false)][Boolean]$continue
 	)
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $path)
 	$pathType = if ($isFile) { 'Leaf' } else { 'Container' }
 	if (!(Test-Path $path -PathType $pathType)) {
 		if (!($sampleFilePath -and (Test-Path $sampleFilePath -PathType 'Leaf'))) {
@@ -594,6 +594,14 @@ function Invoke-VideoDownload {
 		try { Invoke-FfmpegDownload ([Ref]$videoInfo) }
 		catch { Write-Warning ($script:msg.InvokeFfmpegDownloadFailed) }
 	} else {
+		if($script:ytdlRandomIp -and $script:proxyUrl){
+			Write-Output ($script:msg.MediumBoldBorder)
+			Write-Output ($script:msg.NotifyYtdlOptions1)
+			Write-Output ($script:msg.NotifyYtdlOptions2)
+			Write-Output ($script:msg.NotifyYtdlOptions3)
+			Write-Output ($script:msg.MediumBoldBorder)
+		}
+		$script:ytdlRandomIp = $false
 		try { Invoke-Ytdl ([Ref]$videoInfo) }
 		catch { Write-Warning ($script:msg.InvokeYtdlFailed) }
 	}
@@ -1222,7 +1230,7 @@ function Invoke-StatisticsCheck {
 		[Parameter(Mandatory = $false)][String]$tverType = 'none',
 		[Parameter(Mandatory = $false)][String]$tverID = 'none'
 	)
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $operation)
 	if (!$env:PESTER) {
 		$progressPreference = 'silentlyContinue'
 		$statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
