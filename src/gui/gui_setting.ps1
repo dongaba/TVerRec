@@ -56,7 +56,6 @@ $days = @('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')
 $hours = 0..23
 $userSettingFile = Join-Path $script:confDir 'user_setting.ps1'
 $settingAttributes = @(
-	'$script:proxyUrl',
 	'$script:downloadBaseDir',
 	'$script:downloadWorkDir',
 	'$script:saveBaseDir',
@@ -106,6 +105,7 @@ $settingAttributes = @(
 	'$script:ytdlHttpHeader',
 	'$script:ytdlBaseArgs',
 	'$script:nonTVerYtdlBaseArgs',
+	'$script:proxyUrl',
 	'$script:ytdlRandomIp',
 	'$script:scheduleStop',
 	'$script:preferredLanguage'
