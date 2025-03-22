@@ -29,7 +29,7 @@ function Get-Token () {
 		$script:platformUID = $tokenResponse.Result.platform_uid
 		$script:platformToken = $tokenResponse.Result.platform_token
 	} catch { Throw ($script:msg.TokenRetrievalFailed) }
-	Remove-Variable -Name tverTokenURL, headers, requestBody, tokenResponse -ErrorAction SilentlyContinue
+	Remove-Variable -Name tverTokenURL, httpHeader, requestBody, tokenResponse -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -76,10 +76,9 @@ function Get-VideoLinksFromKeyword {
 			}
 		}
 	}
-	Remove-Variable -Name key, tverID, linkTypes, type -ErrorAction SilentlyContinue
 	if ($linkCollection.episodeLinks.Count -eq 0) { return }
 	else { return ($linkCollection.episodeLinks.GetEnumerator() | Sort-Object Value).Name }
-	Remove-Variable -Name linkCollection -ErrorAction SilentlyContinue
+	Remove-Variable -Name keyword, key, tverID, linkTypes, linkType -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -108,7 +107,7 @@ function Get-LinkFromBuffer {
 			}
 		}
 	}
-	Remove-Variable -Name tverIDs, tverIDType, tverID, linkCollection, result -ErrorAction SilentlyContinue
+	Remove-Variable -Name tverID, tverIDs, tverIDType, linkTypes, linkType -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -145,7 +144,7 @@ function Get-LinkFromKeyword {
 	}
 	# 検索結果の取得
 	Get-SearchResults -baseURL $baseURL -Type $type -Keyword $keyword -LinkCollection ([Ref]$linkCollection)
-	Remove-Variable -Name id, type, baseURL -ErrorAction SilentlyContinue
+	Remove-Variable -Name id, linkType, type, baseURL, keyword -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -213,8 +212,7 @@ function Get-SearchResults {
 			default { Write-Warning $script:msg.UnknownContentsType -f $searchResult.Type, $searchResult.Content.Id }
 		}
 	}
-	Remove-Variable -Name baseURL, type, keyword, requireData -ErrorAction SilentlyContinue
-	Remove-Variable -Name uid, token, callSearchURL, searchResultsRaw, searchResults, searchResult -ErrorAction SilentlyContinue
+	Remove-Variable -Name baseURL, type, keyword, requireData, loginRequired, sid, uid, token, callSearchURL, searchResultsRaw, searchResults, order, sortedSearchResults, searchResult -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -312,7 +310,7 @@ function Get-LinkFromSiteMap {
 			}
 		}
 	}
-	Remove-Variable -Name callSearchURL, searchResultsRaw, searchResults, url, tverID, result -ErrorAction SilentlyContinue
+	Remove-Variable -Name callSearchURL, searchResultsRaw, searchResults, url, tverID -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -336,7 +334,7 @@ function Get-LinkFromMyPage {
 		default { Write-Warning ($script:msg.UnknownContentsType -f 'mypage', $page) }
 	}
 	Get-SearchResults -baseURL $baseURL -Type 'mypage' -RequireData $requireData -LoginRequired $loginRequired -LinkCollection ([Ref]$linkCollection)
-	Remove-Variable -Name page, baseURLPrefix, baseURL, loginRequired, requireData, tverIDs -ErrorAction SilentlyContinue
+	Remove-Variable -Name baseURLPrefix, baseURL, requireData, loginRequired -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -493,10 +491,7 @@ function Get-VideoInfo {
 		isStreaks       = $isStreaks
 		isBrightcove    = $isBrightcove
 	}
-	Remove-Variable -Name episodeID, tverVideoInfoBaseURL, tverVideoInfoURL, response -ErrorAction SilentlyContinue
-	Remove-Variable -Name videoSeries, videoSeriesID, videoSeriesPageURL, videoSeason, videoSeasonID, episodeName, videoEpisodeID, videoEpisodePageURL -ErrorAction SilentlyContinue
-	Remove-Variable -Name mediaName, providerName, broadcastDate, endTime, versionNum, videoInfo, descriptionText, videoEpisodeNum -ErrorAction SilentlyContinue
-	Remove-Variable -Name currentYear, parsedBroadcastDate, broadcastYear, matches -ErrorAction SilentlyContinue
+	Remove-Variable -Name episodeID, tverVideoInfoBaseURL, tverVideoInfoURL, response, videoSeries, videoSeriesID, videoSeriesPageURL, videoSeason, videoSeasonID, episodeName, videoEpisodeID, videoEpisodePageURL, mediaName, providerName, broadcastDate, endTime, versionNum, videoInfo, descriptionText, videoEpisodeNum, streaksRefID, streaksProjectID, ati, brightcoveJsURL, brightcovePk, brightcoveURL, accountID, videoRefID, playerID, httpHeader, response, m3u8URL, isStreaks, isBrightcove -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -520,5 +515,5 @@ function Get-JpIP {
 		catch { $check.CountryCode = '' ; $check.hosting = $true }
 	} While (($check.CountryCode -ne 'JP') -or ($check.hosting) )
 	return $jpIP
-	Remove-Variable -Name jpIP, check, allCIDR, randomCIDR, startIPArray, endIPArray, startIPInt, endIPInt, randomIPInt, randomIPArray -ErrorAction SilentlyContinue
+	Remove-Variable -Name allCIDR, randomCIDR, startIPArray, startIPInt, endIPArray, endIPInt, randomIPInt, randomIPArray, check -ErrorAction SilentlyContinue
 }

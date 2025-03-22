@@ -280,13 +280,13 @@ $script:ytdlOption = ''
 
 # 以下は$script:ytdlOptionの設定例
 #	1080p
-#	$script:ytdlOption = '-f "bestvideo[height<=1080]+bestaudio/best[height<=1080]"'
+#	$script:ytdlOption = '-f "bv[height<=1080]+ba/b[height<=1080]"'
 #	720p
-#	$script:ytdlOption = '-f "bestvideo[height<=720]+bestaudio/best[height<=720]"'
+#	$script:ytdlOption = '-f "bv[height<=720]+ba/b[height<=720]"'
 #	480p
-#	$script:ytdlOption = '-f "bestvideo[height<=480]+bestaudio/best[height<=480]"'
+#	$script:ytdlOption = '-f "bv[height<=480]+ba/b[height<=480]"'
 #	360p
-#	$script:ytdlOption = '-f "bestvideo[height<=360]+bestaudio/best[height<=360]"'
+#	$script:ytdlOption = '-f "bv[height<=360]+ba/b[height<=360]"'
 
 # ダウンロード時にのランダムIPアドレス使用
 #　youtube-dlはデフォルトで固定の日本のIPアドレスを使用しますが、動画のダウンロード時にTVerRecが生成したランダムの日本のIPアドレスを使用することができます。

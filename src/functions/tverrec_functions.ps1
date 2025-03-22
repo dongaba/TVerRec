@@ -51,7 +51,7 @@ function Compare-Version {
 	}
 	# 個々のユニットが完全に一致している場合はユニット数が多い方が大きいとする
 	return [Math]::Sign($remoteUnits.Count - $localUnits.Count)
-	Remove-Variable -Name remote, local, remoteUnits, localUnits, unitLength -ErrorAction SilentlyContinue
+	Remove-Variable -Name remote, local, remoteUnits, localUnits, unitLength, i -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -144,14 +144,12 @@ function Invoke-TverrecPathCheck {
 	$pathType = if ($isFile) { 'Leaf' } else { 'Container' }
 	if (!(Test-Path $path -PathType $pathType)) {
 		if (!($sampleFilePath -and (Test-Path $sampleFilePath -PathType 'Leaf'))) {
-			if ($continue) {
-				Write-Warning ($script:msg.NotExistContinue -f $errorMessage)
-				return
-			} else { Throw ($script:msg.NotExist -f $errorMessage) }
+			if ($continue) { Write-Warning ($script:msg.NotExistContinue -f $errorMessage) ; return }
+			else { Throw ($script:msg.NotExist -f $errorMessage) }
 		}
 		Copy-Item -LiteralPath $sampleFilePath -Destination $path -Force | Out-Null
 	}
-	Remove-Variable -Name path, errorMessage, isFile, sampleFilePath, pathType -ErrorAction SilentlyContinue
+	Remove-Variable -Name path, errorMessage, isFile, sampleFilePath, continue, pathType -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -302,7 +300,7 @@ function Update-IgnoreList {
 		} catch { Write-Warning ($script:msg.IgnoreFileSortFailed) }
 		finally { Unlock-File $script:ignoreLockFilePath | Out-Null }
 	}
-	Remove-Variable -Name ignoreTitle, ignoreListNew, ignoreComment, ignoreTarget, ignoreElse, ignoreLists -ErrorAction SilentlyContinue
+	Remove-Variable -Name ignoreTitle, ignoreLists, ignoreComment, ignoreTarget, ignoreElse, ignoreListNew -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -385,7 +383,7 @@ function Wait-YtdlProcess {
 		Write-Information ($script:msg.NumDownloadProc -f (Get-Date), ($ytdlCount + $ffmpegCount))
 		Start-Sleep -Seconds 60
 	}
-	Remove-Variable -Name parallelDownloadFileNum, ytdlCount -ErrorAction SilentlyContinue
+	Remove-Variable -Name parallelDownloadFileNum, ytdlCount, ffmpegCount -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -437,6 +435,7 @@ function Format-ListRecord {
 	if ($script:extractDescTextToList) { $downloadListItem | Add-Member -NotePropertyName descriptionText -NotePropertyValue $videoInfo.descriptionText }
 	else { $downloadListItem | Add-Member -NotePropertyName descriptionText -NotePropertyValue '' }
 	return $downloadListItem
+	Remove-Variable -Name downloadListItem -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -451,7 +450,7 @@ Function Remove-SpecialNote {
 	# 10文字以上あれば特殊文字とその間を削除
 	if (($length1 -gt 10) -or ($length2 -gt 10)) { $text = ($text -replace '《.*?》|【.*?】', '').Replace('  ', ' ').Trim() }
 	return $text
-	Remove-Variable -Name text, start1, end1, start2, end2, length1, length2 -ErrorAction SilentlyContinue
+	Remove-Variable -Name text, length1, length2 -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -600,7 +599,7 @@ function Invoke-VideoDownload {
 	}
 	# 5秒待機
 	Start-Sleep -Seconds 5
-	Remove-Variable -Name force, newVideo, skipDownload, episodeID, videoInfo, newVideo, histFileData, histMatch, ignoreTitles, ignoreTitle -ErrorAction SilentlyContinue
+	Remove-Variable -Name keyword, videoLink, force, newVideo, skipDownload, episodeID, histFileData, histMatch, ignoreTitles, ignoreTitle -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -646,7 +645,7 @@ function Update-VideoList {
 		Write-Debug ($script:msg.ListWritten)
 	} catch { Write-Warning ($script:msg.ListUpdateFailed) ; continue }
 	finally { Unlock-File $script:listLockFilePath | Out-Null }
-	Remove-Variable -Name ignoreWord, newVideo, ignore, episodeID, videoInfo, ignoreTitles, ignoreTitle -ErrorAction SilentlyContinue
+	Remove-Variable -Name keyword, videoLink, ignoreWord, newVideo, ignore, episodeID, ignoreTitles, ignoreTitle -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -766,7 +765,7 @@ function Invoke-FfmpegDownload {
 		$ffmpegProcess = Start-Process @startProcessParams
 		$ffmpegProcess.Handle | Out-Null
 	} catch { Write-Warning ($script:msg.ExecFailed -f 'ffmpeg') ; return }
-	Remove-Variable -Name tmpDir, saveDir, subttlDir, thumbDir, chaptDir, descDir, saveFile, ffmpegArgs, ffmpegArgsString, rateLimit, startProcessParams, ffmpegProcess -ErrorAction SilentlyContinue
+	Remove-Variable -Name ffmpegArgs, ffmpegArgsString -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -834,7 +833,7 @@ function Invoke-Ytdl {
 		$ytdlProcess = Start-Process @startProcessParams
 		$ytdlProcess.Handle | Out-Null
 	} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') ; return }
-	Remove-Variable -Name tmpDir, saveDir, subttlDir, thumbDir, chaptDir, descDir, saveFile, ytdlArgs, ytdlArgsString, rateLimit, startProcessParams, ytdlProcess -ErrorAction SilentlyContinue
+	Remove-Variable -Name tmpDir, saveDir, subttlDir, thumbDir, chaptDir, descDir, saveFile, ytdlArgs, ytdlArgsString -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -958,7 +957,7 @@ function Wait-DownloadCompletion () {
 		$ytdlCount = [Int](Get-YtdlProcessCount)
 		$ffmpegCount = [Int](Get-FfmpegProcessCount)
 	}
-	Remove-Variable -Name ytdlCount -ErrorAction SilentlyContinue
+	Remove-Variable -Name ytdlCount, ffmpegCount -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -1085,6 +1084,7 @@ function Invoke-FFmpegProcess {
 		$process.WaitForExit()
 	} catch { Write-Warning ($script:msg.ExecFailed -f $execName) ; return }
 	return $process.ExitCode
+	Remove-Variable -Name commonParams -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -1186,7 +1186,7 @@ function Invoke-IntegrityCheck {
 		} catch { Write-Warning ($script:msg.HistUpdateFailed) }
 		finally { Unlock-File $script:histLockFilePath | Out-Null }
 	}
-	Remove-Variable -Name decodeOption, errorCount, checkStatus, videoFilePath, videoHists, ffprobeArgs, ffmpegProcess, ffmpegArgs -ErrorAction SilentlyContinue
+	Remove-Variable -Name ffmpegProcessExitCode, decodeOption, errorCount, checkStatus, videoFilePath, videoHists, ffprobeArgs, ffmpegProcess, ffmpegArgs -ErrorAction SilentlyContinue
 }
 
 # region 環境
@@ -1209,7 +1209,7 @@ function Get-Setting {
 		}
 	}
 	return $configList.GetEnumerator() | Sort-Object -Property key
-	Remove-Variable -Name filePathList, configList, filePath, configs, excludePattern, config, configParts, key -ErrorAction SilentlyContinue
+	Remove-Variable -Name configList, configs, excludePattern, filePath, filePathList, key, config, configParts -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -1279,8 +1279,7 @@ function Invoke-StatisticsCheck {
 		} catch { Write-Debug ('Failed to collect statistics') }
 		finally { $progressPreference = 'Continue' }
 	}
-	Remove-Variable -Name operation, tverType, tverID, statisticsBase, epochTime, userProperties, clientEnv, value, eventParams, clientSetting, paramValue -ErrorAction SilentlyContinue
-	Remove-Variable -Name gaBody, gaURL, gaKey, gaID, gaHeaders -ErrorAction SilentlyContinue
+	Remove-Variable -Name operation, tverType, tverID, statisticsBase, epochTime, userProperties, clientEnv, value, eventParams, clientSetting, paramValue, gaBody, gaURL, gaKey, gaID, gaHeaders, response -ErrorAction SilentlyContinue
 }
 
 # endregion 環境
@@ -1336,3 +1335,4 @@ switch ($true) {
 		$script:guid = 'Unknown'
 	}
 }
+Remove-Variable -Name geoIPValues, geoIPValue, osInfo -ErrorAction SilentlyContinue
