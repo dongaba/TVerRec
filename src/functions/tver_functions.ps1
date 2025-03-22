@@ -266,8 +266,8 @@ function Get-LinkFromSiteMap {
 	# Special Detailを拾わないように「/」2個目以降は無視して重複削除
 	$searchResults = New-Object System.Collections.Generic.List[String]
 	foreach ($url in $searchResultsRaw.urlset.url.loc) {
-		$modifiedUrl = $url.Replace('https://tver.jp/', '') -replace '^([^/]+/[^/]+).*', '$1'
-		if (-not $searchResults.Contains($modifiedUrl)) { $searchResults.Add($modifiedUrl) }
+		$modifiedURL = $url.Replace('https://tver.jp/', '') -replace '^([^/]+/[^/]+).*', '$1'
+		if (-not $searchResults.Contains($modifiedURL)) { $searchResults.Add($modifiedURL) }
 	}
 	foreach ($url in $searchResults) {
 		try {

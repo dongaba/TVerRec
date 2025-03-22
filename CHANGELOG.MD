@@ -4,9 +4,12 @@
 
 ### 3.3.8 Added
 
+- 空フォルダを削除しないオプション`$script:emptyDownloadBaseDir`を追加(既定値は`$true`)
+
 ### 3.3.8 Changed
 
-- StreksのGeoIPチェック対策として、`$script:proxyUrl`が設定されている場合はyoutube-dlでもGeoIPチェック時のみProxyを使うように変更
+- StreaksのGeoIPチェック対策として、`$script:proxyUrl`が設定されている場合はyoutube-dlでもGeoIPチェック時のみProxyを使うように変更
+- Brightcoveの情報が取れなくてもyt-dlpに任せて処理を継続するように変更
 
 ### 3.3.8 Fixed
 

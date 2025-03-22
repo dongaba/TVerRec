@@ -352,8 +352,8 @@ function Invoke-HistoryAndListMatchCheck {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# ダウンロードリストファイルのデータを読み込み
 	$listFileData = @(Read-DownloadList)
-	$listVideoPages = New-Object System.Collections.Generic.List[String[]]
-	foreach ($listFileLine in $listFileData) { $listVideoPages.Add(('https://tver.jp/episodes/{0}' -f $listFileLine.EpisodeID.Replace('#', ''))) }
+	$listVideoPages = New-Object System.Collections.Generic.List[Object]
+	foreach ($listFileLine in $listFileData) { $listVideoPages.Add(@('https://tver.jp/episodes/{0}' -f $listFileLine.EpisodeID.Replace('#', ''))) }
 	# ダウンロード履歴ファイルのデータを読み込み
 	$histFileData = @(Read-HistoryFile)
 	$histVideoPages = if ($histFileData.Count -eq 0) { @() } else { $histFileData.VideoPage }
