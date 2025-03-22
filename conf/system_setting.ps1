@@ -392,7 +392,7 @@ $script:preferredLanguage = ''
 $script:useFfmpegDownload = $false
 
 # Streaksからのマニフェスト取得時に使用するProxyのURL
-#　GuiTextProxyUrlText": "Streaksからマニフェストを取得する際には日本のIPアドレスからアクセスする必要があります。
+#　Streaksからマニフェストを取得する際には日本のIPアドレスからアクセスする必要があります。
 #　しかし、すべてのネット接続にProxyを使用するとダウンロードが遅くなるなどの弊害があるため、マニフェスト取得に必要なときにだけProxyを使用することができます。
 #　ProxyサーバのURLを「http://123.45.67.89:12345」のフォーマットで指定してください。
 #　Proxyを使用しない場合は空白にしておいてください。

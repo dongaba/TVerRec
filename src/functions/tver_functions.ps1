@@ -166,7 +166,7 @@ function Get-SearchResults {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# URLの整形
 	$sid = $script:myMemberSID
-	if (($script:myPlatformUID -ne '') -and ($script:myPlatformToken -ne '')) { $uid = $script:myPlatformUID ; $token = $script:myPlatformToken }
+	if (($script:myPlatformUID) -and ($script:myPlatformToken)) { $uid = $script:myPlatformUID ; $token = $script:myPlatformToken }
 	else { $uid = $script:platformUID ; $token = $script:platformToken }
 	if ($loginRequired) { $callSearchURL = '{0}?member_sid={1}' -f $baseURL, $sid }						# TVerIDにログインして使う場合
 	else { $callSearchURL = '{0}?platform_uid={1}&platform_token={2}' -f $baseURL, $uid, $token }		# TVerIDを匿名で使う場合
@@ -405,21 +405,14 @@ function Get-VideoInfo {
 					'X-Forwarded-For'  = $script:jpIP
 					'X-Originating-IP' = $script:jpIP
 				}
-				# if ( !(Test-Path Variable:Script:proxyUrl ) -or ($script:proxyUrl -eq '')) {
-				# 	$response = Invoke-RestMethod -Uri $streaksInfoBaseURL -Method 'GET' -Headers $httpHeader -TimeoutSec $script:timeoutSec
-				# }elseif( !(Test-Path Variable:Script:proxyCredential ) -or ($script:proxyCredential -eq '')) {
-				# 	$response = Invoke-RestMethod -Uri $streaksInfoBaseURL -Method 'GET' -Headers $httpHeader -Proxy $proxyUrl -TimeoutSec $script:timeoutSec
-				# }else{
-				# 	$response = Invoke-RestMethod -Uri $streaksInfoBaseURL -Method 'GET' -Headers $httpHeader -Proxy $proxyUrl -ProxyCredential $script:proxyCredential -TimeoutSec $script:timeoutSec
-				# }
 				$params = @{
 					Uri        = $streaksInfoBaseURL
 					Method     = 'GET'
 					Headers    = $httpHeader
 					TimeoutSec = $script:timeoutSec
 				}
-				if ((Test-Path Variable:Script:proxyUrl) -and ($script:proxyUrl -ne '')) { $params.Proxy = $script:proxyUrl}
-				if ((Test-Path Variable:Script:proxyCredential) -and ($script:proxyCredential -ne '')) { $params.ProxyCredential = $script:proxyCredential }
+				if ((Test-Path Variable:Script:proxyUrl) -and ($script:proxyUrl)) { $params.Proxy = $script:proxyUrl}
+				if ((Test-Path Variable:Script:proxyCredential) -and ($script:proxyCredential)) { $params.ProxyCredential = $script:proxyCredential }
 				$m3u8URL = (Invoke-RestMethod @params).sources.src
 				$isStreaks = $true
 			} catch { Write-Warning ($script:msg.StreaksM3U8RetrievalFailed -f $_.Exception.Message) ; return }

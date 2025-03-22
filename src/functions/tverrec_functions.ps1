@@ -161,13 +161,13 @@ function Invoke-RequiredFileCheck {
 	[OutputType([System.Void])]
 	Param ()
 	Write-Debug ($MyInvocation.MyCommand.Name)
-	if ($script:downloadBaseDir -eq '') { Throw ($script:msg.DirNotSpecified -f $script:msg.DownloadDir) }
+	if (!$script:downloadBaseDir) { Throw ($script:msg.DirNotSpecified -f $script:msg.DownloadDir) }
 	else { Invoke-TverrecPathCheck -Path $script:downloadBaseDir -errorMessage $script:msg.DownloadDir }
 	$script:downloadBaseDir = $script:downloadBaseDir.TrimEnd('\/')
-	if ($script:downloadWorkDir -eq '') { Throw ($script:msg.DirNotSpecified -f $script:msg.WorkDir) }
+	if (!$script:downloadWorkDir) { Throw ($script:msg.DirNotSpecified -f $script:msg.WorkDir) }
 	else { Invoke-TverrecPathCheck -Path $script:downloadWorkDir -errorMessage $script:msg.WorkDir }
 	$script:downloadWorkDir = $script:downloadWorkDir.TrimEnd('\/')
-	if ($script:saveBaseDir -ne '') {
+	if ($script:saveBaseDir) {
 		$script:saveBaseDirArray = $script:saveBaseDir.split(';').Trim().TrimEnd('\/')
 		foreach ($saveDir in $script:saveBaseDirArray) { Invoke-TverrecPathCheck -Path $saveDir.Trim() -errorMessage $script:msg.SaveDir -continue $true }
 	}
@@ -625,7 +625,7 @@ function Update-VideoList {
 	# ダウンロード対象外に入っている番組の場合はリスト出力しない
 	$ignoreTitles = @(Read-IgnoreList)
 	foreach ($ignoreTitle in $ignoreTitles) {
-		if ($ignoreTitle -ne '') {
+		if ($ignoreTitle) {
 			if (($videoInfo.seriesName -cmatch [Regex]::Escape($ignoreTitle)) -or ($videoInfo.episodeName -cmatch [Regex]::Escape($ignoreTitle))) {
 				$ignoreWord = $ignoreTitle ; Update-IgnoreList $ignoreTitle ; $ignore = $true
 				$videoInfo.episodeID = ('#{0}' -f $videoInfo.episodeID)
@@ -788,6 +788,7 @@ function Invoke-Ytdl {
 	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlHttpHeader)
 	$ytdlArgs += (' {0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
 	if ($script:ytdlRandomIp) { $ytdlArgs += (' {0} "{1}/32"' -f '--xff', $script:jpIP) }
+	if ($script:proxyUrl) { $ytdlArgs += (' {0} {1}' -f '--geo-verification-proxy', $script:proxyUrl) }
 	if ($script:rateLimit -notin @(0, '')) {
 		$rateLimit = [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8)
 		$ytdlArgs += (' {0} {1}M' -f '--limit-rate', $rateLimit)
@@ -855,6 +856,7 @@ function Invoke-NonTverYtdl {
 	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlHttpHeader)
 	$ytdlArgs += (' {0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
 	if ($script:ytdlRandomIp) { $ytdlArgs += (' {0} "{1}/32"' -f '--xff', $script:jpIP) }
+	if ($script:proxyUrl) { $ytdlArgs += (' {0} {1}' -f '--geo-verification-proxy', $script:proxyUrl) }
 	if ($script:rateLimit -notin @(0, '')) {
 		$rateLimit = [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8)
 		$ytdlArgs += (' {0} {1}M' -f '--limit-rate', $rateLimit)

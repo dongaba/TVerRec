@@ -38,7 +38,7 @@ if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 		catch { Throw ($script:msg.LoadUserSettingFailed) }
 	} else { Throw ($script:msg.UserSettingNotCompleted) }
 } else { Throw ($script:msg.UserSettingNotCompleted) }
-if ($script:preferredLanguage -ne '') {
+if ($script:preferredLanguage) {
 	$script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:preferredLanguage)) { $script:langFile.$script:preferredLanguage }
 	else { $defaultLang = 'en-US'; $script:langFile.$defaultLang }
 }

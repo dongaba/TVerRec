@@ -131,7 +131,7 @@ Describe 'ファイル名・ディレクトリ名に禁止文字の削除' {
 		# Assert that none of the invalid characters are present in the result
 		foreach ($char in $invalidChars) {
 			$charString = [String]$char
-			if ($charString.Trim() -ne '') { # Exclude empty or whitespace characters
+			if ($charString.Trim()) { # Exclude empty or whitespace characters
 				$result | Should -Not -Contain $charString
 			}
 		}

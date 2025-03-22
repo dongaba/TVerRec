@@ -1,5 +1,16 @@
 # Change Log
 
+## [3.3.8](https://github.com/dongaba/TVerRec/releases/tag/v3.3.8)
+
+### 3.3.8 Added
+
+### 3.3.8 Changed
+
+- StreksのGeoIPチェック対策として、`$script:proxyUrl`が設定されている場合はyoutube-dlでもGeoIPチェック時のみProxyを使うように変更
+
+### 3.3.8 Fixed
+
+
 ## [3.3.7](https://github.com/dongaba/TVerRec/releases/tag/v3.3.7)
 
 ### 3.3.7 Added

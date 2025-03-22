@@ -78,7 +78,7 @@ if ($script:cleanupDownloadBaseDir) {
 
 # 移動先
 if ($script:cleanupSaveBaseDir)	{
-	if ($script:saveBaseDir -ne '') {
+	if ($script:saveBaseDir) {
 		foreach ($saveDir in $script:saveBaseDirArray) {
 			$toastUpdateParams.Title = $saveDir
 			$toastUpdateParams.Rate = 1
