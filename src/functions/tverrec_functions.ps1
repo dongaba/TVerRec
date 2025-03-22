@@ -706,6 +706,7 @@ function Show-VideoInfo {
 	Write-Output ($script:msg.BroadcastDate -f $videoInfo.broadcastDate)
 	Write-Output ($script:msg.MediaName -f $videoInfo.mediaName)
 	Write-Output ($script:msg.EndDate -f $videoInfo.endTime)
+	Write-Output ($script:msg.IsBrightcove -f $videoInfo.isBrightcove)
 	Write-Output ($script:msg.IsStreaks -f $videoInfo.isStreaks)
 	Write-Output ($script:msg.EpisodeDetail -f $videoInfo.descriptionText)
 }

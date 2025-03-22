@@ -94,7 +94,7 @@ while ($true) {
 	}
 
 	# 配列の空白要素を削除
-	$script:videoPageList = @($script:videoPageList) -ne ''
+	$script:videoPageList = $script:videoPageList.where({ $_ -ne '' })
 	if (-not $script:videoPageList) { break }
 
 	# 複数入力されていたら全てダウンロード
