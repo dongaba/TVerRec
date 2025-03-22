@@ -102,6 +102,7 @@ $settingAttributes = @(
 	'$script:videoContainerFormat',
 	'$script:cleanupDownloadBaseDir',
 	'$script:cleanupSaveBaseDir',
+	'$script:emptyDownloadBaseDir',
 	'$script:ytdlHttpHeader',
 	'$script:ytdlBaseArgs',
 	'$script:nonTVerYtdlBaseArgs',
@@ -314,85 +315,87 @@ $btnCancel.Content = $script:msg.GuiButtonCancel
 $btnSave.Content = $script:msg.GuiButtonSave
 # 基本的な設定
 $downloadDirHeader.Header = $script:msg.GuiHeaderDownloadDir
-$downloadDirText.Text = $script:msg.GuiTextDownloadDirText
+$downloadDirText.Text = $script:msg.GuiTextDownloadDir
 $workDirHeader.Header = $script:msg.GuiHeaderWorkDir
-$workDirText.Text = $script:msg.GuiTextWorkDirText
+$workDirText.Text = $script:msg.GuiTextWorkDir
 $saveDirHeader.Header = $script:msg.GuiHeaderSaveDir
-$saveDirText.Text = $script:msg.GuiTextSaveDirText
+$saveDirText.Text = $script:msg.GuiTextSaveDir
 # 動作タブ
 $tabOperation.Header = $script:msg.GuiTabOperation
 $enableMultithreadHeader.Header = $script:msg.GuiHeaderEnableMultithread
-$enableMultithreadText.Text = $script:msg.GuiTextEnableMultithreadText
+$enableMultithreadText.Text = $script:msg.GuiTextEnableMultithread
 $multithreadNumHeader.Header = $script:msg.GuiHeaderMultithreadNum
-$multithreadNumText.Text = $script:msg.GuiTextMultithreadNumText
+$multithreadNumText.Text = $script:msg.GuiTextMultithreadNum
 $disableToastHeader.Header = $script:msg.GuiHeaderDisableToast
-$disableToastText.Text = $script:msg.GuiTextDisableToastText
+$disableToastText.Text = $script:msg.GuiTextDisableToast
 $maxExecLogLinesHeader.Header = $script:msg.GuiHeaderMaxExecLogLines
-$maxExecLogLinesText.Text = $script:msg.GuiTextMaxExecLogLinesText
+$maxExecLogLinesText.Text = $script:msg.GuiTextMaxExecLogLines
 $histRetentionPeriodHeader.Header = $script:msg.GuiHeaderHistRetentionPeriod
-$histRetentionPeriodText.Text = $script:msg.GuiTextHistRetentionPeriodText
+$histRetentionPeriodText.Text = $script:msg.GuiTextHistRetentionPeriod
 $loopCycleHeader.Header = $script:msg.GuiHeaderLoopCycle
-$loopCycleText.Text = $script:msg.GuiTextLoopCycleText
+$loopCycleText.Text = $script:msg.GuiTextLoopCycle
 $detailedProgressHeader.Header = $script:msg.GuiHeaderDetailedProgress
-$detailedProgressText.Text = $script:msg.GuiTextDetailedProgressText
+$detailedProgressText.Text = $script:msg.GuiTextDetailedProgress
 $extractDescTextToListHeader.Header = $script:msg.GuiHeaderExtractDescTextToList
-$extractDescTextToListText.Text = $script:msg.GuiTextExtractDescTextToListText
+$extractDescTextToListText.Text = $script:msg.GuiTextExtractDescTextToList
 $listGenHistoryCheckHeader.Header = $script:msg.GuiHeaderListGenHistoryCheck
-$listGenHistoryCheckText.Text = $script:msg.GuiTextListGenHistoryCheckText
+$listGenHistoryCheckText.Text = $script:msg.GuiTextListGenHistoryCheck
 $cleanupDownloadBaseDirHeader.Header = $script:msg.GuiHeaderCleanupDownloadBaseDir
-$cleanupDownloadBaseDirText.Text = $script:msg.GuiTextCleanupDownloadBaseDirText
+$cleanupDownloadBaseDirText.Text = $script:msg.GuiTextCleanupDownloadBaseDir
 $cleanupSaveBaseDirHeader.Header = $script:msg.GuiHeaderCleanupSaveBaseDir
-$cleanupSaveBaseDirText.Text = $script:msg.GuiTextCleanupSaveBaseDirText
+$cleanupSaveBaseDirText.Text = $script:msg.GuiTextCleanupSaveBaseDir
+$emptyDownloadBaseDirHeader.Header = $script:msg.GuiHeaderEmptyDownloadBaseDir
+$emptyDownloadBaseDirText.Text = $script:msg.GuiTextEmptyDownloadBaseDir
 $updateChannelHeader.Header = $script:msg.GuiHeaderUpdateChannel
-$updateChannelText.Text = $script:msg.GuiTextUpdateChannelText
+$updateChannelText.Text = $script:msg.GuiTextUpdateChannel
 # マイページタブ
 $tabMypage.Header = $script:msg.GuiTabMypage
 $myPlatformUIDHeader.Header = $script:msg.GuiHeaderMyPlatformUID
-$myPlatformUIDText.Text = $script:msg.GuiTextMyPlatformUIDText
+$myPlatformUIDText.Text = $script:msg.GuiTextMyPlatformUID
 $myPlatformTokenHeader.Header = $script:msg.GuiHeaderMyPlatformToken
-$myPlatformTokenText.Text = $script:msg.GuiTextMyPlatformTokenText
+$myPlatformTokenText.Text = $script:msg.GuiTextMyPlatformToken
 $myMemberSIDHeader.Header = $script:msg.GuiHeaderMyMemberSID
-$myMemberSIDText.Text = $script:msg.GuiTextMyMemberSIDText
+$myMemberSIDText.Text = $script:msg.GuiTextMyMemberSID
 # ダウンロードタブ
 $tabDownload.Header = $script:msg.GuiTabDownload
 $parallelDownloadFileNumHeader.Header = $script:msg.GuiHeaderParallelDownloadFileNum
-$parallelDownloadFileNumText.Text = $script:msg.GuiTextParallelDownloadFileNumText
+$parallelDownloadFileNumText.Text = $script:msg.GuiTextParallelDownloadFileNum
 $parallelDownloadNumPerFileHeader.Header = $script:msg.GuiHeaderParallelDownloadNumPerFile
-$parallelDownloadNumPerFileText.Text = $script:msg.GuiTextParallelDownloadNumPerFileText
+$parallelDownloadNumPerFileText.Text = $script:msg.GuiTextParallelDownloadNumPerFile
 $rateLimitHeader.Header = $script:msg.GuiHeaderRateLimit
-$rateLimitText.Text = $script:msg.GuiTextRateLimitText
+$rateLimitText.Text = $script:msg.GuiTextRateLimit
 $timeoutSecHeader.Header = $script:msg.GuiHeaderTimeoutSec
-$timeoutSecText.Text = $script:msg.GuiTextTimeoutSecText
+$timeoutSecText.Text = $script:msg.GuiTextTimeoutSec
 $embedSubtitleHeader.Header = $script:msg.GuiHeaderEmbedSubtitle
-$embedSubtitleText.Text = $script:msg.GuiTextEmbedSubtitleText
+$embedSubtitleText.Text = $script:msg.GuiTextEmbedSubtitle
 $embedMetatagHeader.Header = $script:msg.GuiHeaderEmbedMetatag
-$embedMetatagText.Text = $script:msg.GuiTextEmbedMetatagText
+$embedMetatagText.Text = $script:msg.GuiTextEmbedMetatag
 $sortVideoBySeriesHeader.Header = $script:msg.GuiHeaderSortVideoBySeries
-$sortVideoBySeriesText.Text = $script:msg.GuiTextSortVideoBySeriesText
+$sortVideoBySeriesText.Text = $script:msg.GuiTextSortVideoBySeries
 $sortVideoByMediaHeader.Header = $script:msg.GuiHeaderSortVideoByMedia
-$sortVideoByMediaText.Text = $script:msg.GuiTextSortVideoByMediaText
+$sortVideoByMediaText.Text = $script:msg.GuiTextSortVideoByMedia
 $forceSingleDownloadHeader.Header = $script:msg.GuiHeaderForceSingleDownload
-$forceSingleDownloadText.Text = $script:msg.GuiTextForceSingleDownloadText
+$forceSingleDownloadText.Text = $script:msg.GuiTextForceSingleDownload
 $sitemapParseEpisodeOnlyHeader.Header = $script:msg.GuiHeaderSitemapParseEpisodeOnly
-$sitemapParseEpisodeOnlyText.Text = $script:msg.GuiTextSitemapParseEpisodeOnlyText
+$sitemapParseEpisodeOnlyText.Text = $script:msg.GuiTextSitemapParseEpisodeOnly
 $downloadWhenEpisodeIdChangedHeader.Header = $script:msg.GuiHeaderDownloadWhenEpisodeIdChanged
-$downloadWhenEpisodeIdChangedText.Text = $script:msg.GuiTextDownloadWhenEpisodeIdChangedText
+$downloadWhenEpisodeIdChangedText.Text = $script:msg.GuiTextDownloadWhenEpisodeIdChanged
 $VideoContainerFormatHeader.Header = $script:msg.GuiHeaderVideoContainerFormat
-$videoContainerFormatText.Text = $script:msg.GuiTextVideoContainerFormatText
+$videoContainerFormatText.Text = $script:msg.GuiTextVideoContainerFormat
 # 動画ファイル名タブ
 $tabVideoFile.Header = $script:msg.GuiTabVideoFile
 $addSeriesNameHeader.Header = $script:msg.GuiHeaderAddSeriesName
-$addSeriesNameText.Text = $script:msg.GuiTextAddSeriesNameText
+$addSeriesNameText.Text = $script:msg.GuiTextAddSeriesName
 $addSeasonNameHeader.Header = $script:msg.GuiHeaderAddSeasonName
-$addSeasonNameText.Text = $script:msg.GuiTextAddSeasonNameText
+$addSeasonNameText.Text = $script:msg.GuiTextAddSeasonName
 $addBroadcastDateHeader.Header = $script:msg.GuiHeaderAddBroadcastDate
-$addBroadcastDateText.Text = $script:msg.GuiTextAddBroadcastDateText
+$addBroadcastDateText.Text = $script:msg.GuiTextAddBroadcastDate
 $addEpisodeNumberHeader.Header = $script:msg.GuiHeaderAddEpisodeNumber
-$addEpisodeNumberText.Text = $script:msg.GuiTextAddEpisodeNumberText
+$addEpisodeNumberText.Text = $script:msg.GuiTextAddEpisodeNumber
 $removeSpecialNoteHeader.Header = $script:msg.GuiHeaderRemoveSpecialNote
-$removeSpecialNoteText.Text = $script:msg.GuiTextRemoveSpecialNoteText
+$removeSpecialNoteText.Text = $script:msg.GuiTextRemoveSpecialNote
 $ytdlNonTVerFileNameHeader.Header = $script:msg.GuiHeaderYtdlNonTVerFileName
-$ytdlNonTVerFileNameText.Text = $script:msg.GuiTextYtdlNonTVerFileNameText
+$ytdlNonTVerFileNameText.Text = $script:msg.GuiTextYtdlNonTVerFileName
 # Ytdl/ffmpegタブ
 $tabYtdlFfmpeg.Header = $script:msg.GuiTabYtdlFfmpeg
 $btnFfmpegDecodeOptionClear.Content = $script:msg.GuiButtonFfmpegDecodeOptionClear
@@ -409,40 +412,40 @@ $btnYtdlOption720.Content = $script:msg.GuiButtonYtdlOption720
 $btnYtdlOption480.Content = $script:msg.GuiButtonYtdlOption480
 $btnYtdlOption360.Content = $script:msg.GuiButtonYtdlOption360
 $windowShowStyleHeader.Header = $script:msg.GuiHeaderWindowShowStyle
-$windowShowStyleText.Text = $script:msg.GuiTextWindowShowStyleText
+$windowShowStyleText.Text = $script:msg.GuiTextWindowShowStyle
 $preferredYoutubedlHeader.Header = $script:msg.GuiHeaderPreferredYoutubedl
-$preferredYoutubedlText.Text = $script:msg.GuiTextPreferredYoutubedlText
+$preferredYoutubedlText.Text = $script:msg.GuiTextPreferredYoutubedl
 $ffmpegDecodeOptionHeader.Header = $script:msg.GuiHeaderFfmpegDecodeOption
-$ffmpegDecodeOptionText.Text = $script:msg.GuiTextFfmpegDecodeOptionText
+$ffmpegDecodeOptionText.Text = $script:msg.GuiTextFfmpegDecodeOption
 $forceSoftwareDecodeFlagHeader.Header = $script:msg.GuiHeaderForceSoftwareDecodeFlag
-$forceSoftwareDecodeFlagText.Text = $script:msg.GuiTextForceSoftwareDecodeFlagText
+$forceSoftwareDecodeFlagText.Text = $script:msg.GuiTextForceSoftwareDecodeFlag
 $simplifiedValidationHeader.Header = $script:msg.GuiHeaderSimplifiedValidation
-$simplifiedValidationText.Text = $script:msg.GuiTextSimplifiedValidationText
+$simplifiedValidationText.Text = $script:msg.GuiTextSimplifiedValidation
 $disableValidationHeader.Header = $script:msg.GuiHeaderDisableValidation
-$disableValidationText.Text = $script:msg.GuiTextDisableValidationText
+$disableValidationText.Text = $script:msg.GuiTextDisableValidation
 $disableUpdateYoutubedlHeader.Header = $script:msg.GuiHeaderDisableUpdateYoutubedl
-$disableUpdateYoutubedlText.Text = $script:msg.GuiTextDisableUpdateYoutubedlText
+$disableUpdateYoutubedlText.Text = $script:msg.GuiTextDisableUpdateYoutubedl
 $disableUpdateFfmpegHeader.Header = $script:msg.GuiHeaderDisableUpdateFfmpeg
-$disableUpdateFfmpegText.Text = $script:msg.GuiTextDisableUpdateFfmpegText
+$disableUpdateFfmpegText.Text = $script:msg.GuiTextDisableUpdateFfmpeg
 $ytdlOptionHeader.Header = $script:msg.GuiHeaderYtdlOption
-$ytdlOptionText.Text = $script:msg.GuiTextYtdlOptionText
+$ytdlOptionText.Text = $script:msg.GuiTextYtdlOption
 $ytdlHttpHeaderHeader.Header = $script:msg.GuiHeaderYtdlHttpHeader
-$ytdlHttpHeaderText.Text = $script:msg.GuiTextYtdlHttpHeaderText
+$ytdlHttpHeaderText.Text = $script:msg.GuiTextYtdlHttpHeader
 $ytdlBaseArgsHeader.Header = $script:msg.GuiHeaderYtdlBaseArgs
-$ytdlBaseArgsText.Text = $script:msg.GuiTextYtdlBaseArgsText
+$ytdlBaseArgsText.Text = $script:msg.GuiTextYtdlBaseArgs
 $nonTVerYtdlBaseArgsHeader.Header = $script:msg.GuiHeaderNonTVerYtdlBaseArgs
-$nonTVerYtdlBaseArgsText.Text = $script:msg.GuiTextNonTVerYtdlBaseArgsText
+$nonTVerYtdlBaseArgsText.Text = $script:msg.GuiTextNonTVerYtdlBaseArgs
 # Geo IPタブ
 $tabGeoIP.Header = $script:msg.GuiTabGeoIP
 $proxyUrlHeader.Header = $script:msg.GuiHeaderProxyUrl
-$proxyUrlText.Text = $script:msg.GuiTextProxyUrlText
+$proxyUrlText.Text = $script:msg.GuiTextProxyUrl
 $ytdlRandomIpHeader.Header = $script:msg.GuiHeaderYtdlRandomIp
-$ytdlRandomIpText.Text = $script:msg.GuiTextYtdlRandomIpText
+$ytdlRandomIpText.Text = $script:msg.GuiTextYtdlRandomIp
 # スケジュールタブ
 $tabSchedule.Header = $script:msg.GuiTabSchedule
 $scheduleStopHeader.Header = $script:msg.GuiHeaderScheduleStop
-$scheduleStopText.Text = $script:msg.GuiTextScheduleStopText
-$scheduleSpecify.Text = $script:msg.GuiTextScheduleSpecifyText
+$scheduleStopText.Text = $script:msg.GuiTextScheduleStop
+$scheduleSpecify.Text = $script:msg.GuiTextScheduleSpecify
 $scheduleStopTime.Text = $script:msg.GuiTextScheduleStopTime
 $scheduleStopWeek.Text = $script:msg.GuiTextScheduleStopWeek
 $scheduleStopMon.Text = $script:msg.GuiTextScheduleStopMon
@@ -456,7 +459,7 @@ $scheduleStopDay.Text = $script:msg.GuiTextScheduleStopDay
 # 言語タブ
 $tabLanguage.Header = $script:msg.GuiTabLanguage
 $preferredLanguageHeader.Header = $script:msg.GuiHeaderPreferredLanguageHeader
-$preferredLanguageText.Text = $script:msg.GuiTextPreferredLanguageText
+$preferredLanguageText.Text = $script:msg.GuiTextPreferredLanguage
 
 # ComboBOxのラベルを言語別に設定
 $trueFalseOptions = @($script:msg.SettingDefault, $script:msg.SettingTrue, $script:msg.SettingFalse)
@@ -467,6 +470,7 @@ foreach ($option in $trueFalseOptions) { $extractDescTextToList.Items.Add($optio
 foreach ($option in $trueFalseOptions) { $listGenHistoryCheck.Items.Add($option)  | Out-Null }
 foreach ($option in $trueFalseOptions) { $cleanupDownloadBaseDir.Items.Add($option)  | Out-Null }
 foreach ($option in $trueFalseOptions) { $cleanupSaveBaseDir.Items.Add($option)  | Out-Null }
+foreach ($option in $trueFalseOptions) { $emptyDownloadBaseDir.Items.Add($option)  | Out-Null }
 $updateChannel.Items.Add($script:msg.SettingDefault) | Out-Null
 $updateChannel.Items.Add('release') | Out-Null
 $updateChannel.Items.Add('prerelease') | Out-Null

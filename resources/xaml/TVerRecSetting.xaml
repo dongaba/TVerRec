@@ -400,6 +400,10 @@
                                 <TextBlock Name="cleanupSaveBaseDirText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox Name="cleanupSaveBaseDir" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
+                            <Expander Name="emptyDownloadBaseDirHeader" Margin="10,10,10,0" IsExpanded="False" >
+                                <TextBlock Name="emptyDownloadBaseDirText" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            </Expander>
+                            <ComboBox Name="emptyDownloadBaseDir" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
                             <Expander Name="updateChannelHeader" Margin="10,10,10,0" IsExpanded="False" >
                                 <TextBlock Name="updateChannelText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>

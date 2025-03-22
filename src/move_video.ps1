@@ -163,59 +163,60 @@ Write-Output ($script:msg.DeleteEmptyDirs)
 
 $toastShowParams.Text2 = $script:msg.MoveVideosStep3
 Show-ProgressToast @toastShowParams
-try {
-	$emptyDirs = New-Object System.Collections.Generic.List[string]	# .NET Listを使用して高速化
-	foreach ($dir in (Get-ChildItem -Path $script:downloadBaseDir -Directory -Recurse -ErrorAction SilentlyContinue)) {
-		$files = $dir.GetFileSystemInfos()
-		$visibleFiles = @($files | Where-Object { -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) })
-		if ($visibleFiles.Count -eq 0) { $emptyDirs.Add($dir.FullName) }
-	}
-} catch { $emptyDirs = @() }
-$emptyDirTotal = $emptyDirs.Count
 
-#----------------------------------------------------------------------
-if ($emptyDirTotal -ne 0) {
-	if ($script:enableMultithread) {
-		Write-Debug ('Multithread Processing Enabled')
-		# 並列化が有効の場合は並列化
-		$emptyDirs | ForEach-Object -Parallel {
-			$emptyDirNum = ([Array]::IndexOf($using:emptyDirs, $_)) + 1
-			$emptyDirTotal = $using:emptyDirs.Count
-			Write-Output ('　{0}/{1} - {2}' -f $emptyDirNum, $emptyDirTotal, $_)
-			try { Remove-Item -LiteralPath $_ -Recurse -Force | Out-Null }
-			catch { Write-Warning ($script:msg.DeleteEmptyDirsFailed -f $_) }
-		} -ThrottleLimit $script:multithreadNum
-	} else {
-		# 並列化が無効の場合は従来型処理
-		$emptyDirNum = 0
-		$emptyDirTotal = $emptyDirs.Count
-		$totalStartTime = Get-Date
-		foreach ($dir in $emptyDirs) {
-			$emptyDirNum++
-			# 処理時間の推計
-			$secElapsed = (Get-Date) - $totalStartTime
-			$secRemaining = -1
-			if ($emptyDirNum -ne 1) {
-				$secRemaining = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $emptyDirNum) * ($emptyDirTotal - $emptyDirNum))
-				$minRemaining = ($script:msg.MinRemaining -f ([Int][Math]::Ceiling($secRemaining / 60)))
-				$progressRate = [Float]($emptyDirNum / $emptyDirTotal)
-			} else { $minRemaining = '' ; $progressRate = 0 }
+if ($script:emptyDownloadBaseDir) {
+	try {
+		$emptyDirs = New-Object System.Collections.Generic.List[string]	# .NET Listを使用して高速化
+		foreach ($dir in (Get-ChildItem -Path $script:downloadBaseDir -Directory -Recurse -ErrorAction SilentlyContinue)) {
+			$files = $dir.GetFileSystemInfos()
+			$visibleFiles = @($files | Where-Object { -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) })
+			if ($visibleFiles.Count -eq 0) { $emptyDirs.Add($dir.FullName) }
+		}
+	} catch { $emptyDirs = @() }
+	$emptyDirTotal = $emptyDirs.Count
 
-			$toastUpdateParams.Title = $dir
-			$toastUpdateParams.Rate = $progressRate
-			$toastUpdateParams.LeftText = ('{0}/{1}' -f $emptyDirNum, $emptyDirTotal)
-			$toastUpdateParams.RightText = $minRemaining
-			Update-ProgressToast @toastUpdateParams
+	#----------------------------------------------------------------------
+	if ($emptyDirTotal -ne 0) {
+		if ($script:enableMultithread) {
+			Write-Debug ('Multithread Processing Enabled')
+			# 並列化が有効の場合は並列化
+			$emptyDirs | ForEach-Object -Parallel {
+				$emptyDirNum = ([Array]::IndexOf($using:emptyDirs, $_)) + 1
+				$emptyDirTotal = $using:emptyDirs.Count
+				Write-Output ('　{0}/{1} - {2}' -f $emptyDirNum, $emptyDirTotal, $_)
+				try { Remove-Item -LiteralPath $_ -Recurse -Force | Out-Null }
+				catch { Write-Warning ($script:msg.DeleteEmptyDirsFailed -f $_) }
+			} -ThrottleLimit $script:multithreadNum
+		} else {
+			# 並列化が無効の場合は従来型処理
+			$emptyDirNum = 0
+			$emptyDirTotal = $emptyDirs.Count
+			$totalStartTime = Get-Date
+			foreach ($dir in $emptyDirs) {
+				$emptyDirNum++
+				# 処理時間の推計
+				$secElapsed = (Get-Date) - $totalStartTime
+				$secRemaining = -1
+				if ($emptyDirNum -ne 1) {
+					$secRemaining = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $emptyDirNum) * ($emptyDirTotal - $emptyDirNum))
+					$minRemaining = ($script:msg.MinRemaining -f ([Int][Math]::Ceiling($secRemaining / 60)))
+					$progressRate = [Float]($emptyDirNum / $emptyDirTotal)
+				} else { $minRemaining = '' ; $progressRate = 0 }
 
-			Write-Output ('　{0}/{1} - {2}' -f $emptyDirNum, $emptyDirTotal, $dir)
-			try { Remove-Item -LiteralPath $dir -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
-			} catch { Write-Warning ($script:msg.DeleteEmptyDirsFailed -f $dir) }
+				$toastUpdateParams.Title = $dir
+				$toastUpdateParams.Rate = $progressRate
+				$toastUpdateParams.LeftText = ('{0}/{1}' -f $emptyDirNum, $emptyDirTotal)
+				$toastUpdateParams.RightText = $minRemaining
+				Update-ProgressToast @toastUpdateParams
+
+				Write-Output ('　{0}/{1} - {2}' -f $emptyDirNum, $emptyDirTotal, $dir)
+				try { Remove-Item -LiteralPath $dir -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
+				} catch { Write-Warning ($script:msg.DeleteEmptyDirsFailed -f $dir) }
+			}
 		}
 	}
+	#----------------------------------------------------------------------
 }
-#----------------------------------------------------------------------
-
-$script:guiMode = if ($args) { [String]$args[0] } else { '' }
 
 $toastUpdateParams = @{
 	Title     = $script:msg.MoveVideo

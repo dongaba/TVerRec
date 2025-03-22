@@ -343,6 +343,12 @@ $script:cleanupDownloadBaseDir = $false
 #　「$false」の場合は保存ディレクトリにあるファイルも削除対象にしません。
 $script:cleanupSaveBaseDir = $false
 
+# 空ディレクトリ削除時処理を実行するかのチェック
+#　不要ファイル削除処理時とファイル移動処理時に空ディレクトリを削除するかを設定します。
+#　「$true」の場合は空ディレクトリ削除時処理を実行します。
+#　「$false」の場合は空ディレクトリ削除時処理を実行しません。
+$script:emptyDownloadBaseDir = $true
+
 # youtube-dlのHTTPヘッダ
 #　youtube-dlがHTTPアクセスをする際に追加のHTTPヘッダを指定することができます。
 $script:ytdlHttpHeader = 'Accept-Language:ja-JP'
