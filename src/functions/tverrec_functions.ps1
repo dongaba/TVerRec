@@ -158,7 +158,7 @@ function Invoke-TverrecPathCheck {
 function Invoke-RequiredFileCheck {
 	[OutputType([Void])]
 	Param ()
-	Write-Debug ($MyInvocation.MyCommand.Name)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if (!$script:downloadBaseDir) { Throw ($script:msg.DirNotSpecified -f $script:msg.DownloadDir) }
 	else { Invoke-TverrecPathCheck -Path $script:downloadBaseDir -errorMessage $script:msg.DownloadDir }
 	$script:downloadBaseDir = $script:downloadBaseDir.TrimEnd('\/')
@@ -377,13 +377,15 @@ function Wait-YtdlProcess {
 	# youtube-dlのプロセスが設定値を超えたら一時待機
 	while ($true) {
 		$ytdlCount = [Int](Get-YtdlProcessCount)
-		$ffmpegCount = [Int](Get-FfmpegProcessCount)
-		if (([Int]$ytdlCount + [Int]$ffmpegCount) -lt [Int]$parallelDownloadFileNum ) { break }
+		# $ffmpegCount = [Int](Get-FfmpegProcessCount)
+		# if (([Int]$ytdlCount + [Int]$ffmpegCount) -lt [Int]$parallelDownloadFileNum ) { break }
+		if ([Int]$ytdlCount -lt [Int]$parallelDownloadFileNum ) { break }
 		Write-Output ($script:msg.WaitingNumDownloadProc -f $parallelDownloadFileNum)
-		Write-Information ($script:msg.NumDownloadProc -f (Get-Date), ($ytdlCount + $ffmpegCount))
+		# Write-Information ($script:msg.NumDownloadProc -f (Get-Date), ($ytdlCount + $ffmpegCount))
+		Write-Information ($script:msg.NumDownloadProc -f (Get-Date), $ytdlCount)
 		Start-Sleep -Seconds 60
 	}
-	Remove-Variable -Name parallelDownloadFileNum, ytdlCount, ffmpegCount -ErrorAction SilentlyContinue
+	Remove-Variable -Name parallelDownloadFileNum, ytdlCount -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -590,11 +592,11 @@ function Invoke-VideoDownload {
 		catch { Write-Warning ($script:msg.CreateEpisodeDirFailed) ; continue }
 	}
 	# youtube-dl起動
-	if ($videoInfo.isStreaks -and $script:useFfmpegDownload) {
-		try { Invoke-FfmpegDownload ([Ref]$videoInfo) }
-		catch { Write-Warning ($script:msg.InvokeFfmpegDownloadFailed) }
-	} else {
-		if($script:ytdlRandomIp -and $script:proxyUrl){
+	# if ($videoInfo.isStreaks -and $script:useFfmpegDownload) {
+	# 	try { Invoke-FfmpegDownload ([Ref]$videoInfo) }
+	# 	catch { Write-Warning ($script:msg.InvokeFfmpegDownloadFailed) }
+	# } else {
+		if ($script:ytdlRandomIp -and $script:proxyUrl) {
 			Write-Output ($script:msg.MediumBoldBorder)
 			Write-Output ($script:msg.NotifyYtdlOptions1)
 			Write-Output ($script:msg.NotifyYtdlOptions2)
@@ -604,7 +606,7 @@ function Invoke-VideoDownload {
 		$script:ytdlRandomIp = $false
 		try { Invoke-Ytdl ([Ref]$videoInfo) }
 		catch { Write-Warning ($script:msg.InvokeYtdlFailed) }
-	}
+	# }
 	# 5秒待機
 	Start-Sleep -Seconds 5
 	Remove-Variable -Name keyword, videoLink, force, newVideo, skipDownload, episodeID, histFileData, histMatch, ignoreTitles, ignoreTitle -ErrorAction SilentlyContinue
@@ -730,51 +732,51 @@ function Show-VideoDebugInfo {
 #----------------------------------------------------------------------
 # ffmpegを使ったダウンロードプロセスの起動
 #----------------------------------------------------------------------
-function Invoke-FfmpegDownload {
-	[OutputType([Void])]
-	Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	Invoke-StatisticsCheck -Operation 'download-ffmpeg'
-	if ($IsWindows) { foreach ($dir in @($script:downloadWorkDir, $script:downloadBaseDir)) { if ($dir[-1] -eq ':') { $dir += '\\' } } }
-	$ffmpegArgs = @()
-	$ffmpegArgs += (' -y -http_multiple 1 -seg_max_retry 10 -timeout 5000000')
-	$ffmpegArgs += (' -reconnect 1 -reconnect_on_network_error 1 -reconnect_on_http_error 1 -reconnect_streamed 1')
-	$ffmpegArgs += (' -reconnect_max_retries 10 -reconnect_delay_max 30 -reconnect_delay_total_max 600')
-	$ffmpegArgs += (' -i "{0}"' -f $videoInfo.m3u8URL)
-	if ($script:videoContainerFormat -eq 'mp4') {
-		$ffmpegArgs += (' -c copy')
-		$ffmpegArgs += (' -c:v copy -c:a copy')
-		# $ffmpegArgs += (' -bsf:a aac_adtstoasc')
-		$ffmpegArgs += (' -c:s mov_text')
-		$ffmpegArgs += (' -metadata:s:s:0 language=ja')
-	}
-	$ffmpegArgs += (' "{0}"' -f $videoInfo.filePath)
-	$ffmpegArgsString = $ffmpegArgs -join ''
-	Write-Debug ($script:msg.ExecCommand -f 'ffmpeg', $script:ffmpegPath, $ffmpegArgsString)
-	if ($script:appName -eq 'TVerRecContainer') {
-		$startProcessParams = @{
-			FilePath     = 'timeout'
-			ArgumentList = "3600 $script:ffmpegPath $ffmpegArgsString"
-			PassThru     = $true
-		}
-	} else {
-		$startProcessParams = @{
-			FilePath     = $script:ffmpegPath
-			ArgumentList = $ffmpegArgsString
-			PassThru     = $true
-		}
-	}
-	if ($IsWindows) { $startProcessParams.WindowStyle = $script:windowShowStyle }
-	else {
-		$startProcessParams.RedirectStandardOutput = '/dev/null'
-		$startProcessParams.RedirectStandardError = '/dev/zero'
-	}
-	try {
-		$ffmpegProcess = Start-Process @startProcessParams
-		$ffmpegProcess.Handle | Out-Null
-	} catch { Write-Warning ($script:msg.ExecFailed -f 'ffmpeg') ; return }
-	Remove-Variable -Name ffmpegArgs, ffmpegArgsString -ErrorAction SilentlyContinue
-}
+# function Invoke-FfmpegDownload {
+# 	[OutputType([Void])]
+# 	Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
+# 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+# 	Invoke-StatisticsCheck -Operation 'download-ffmpeg'
+# 	if ($IsWindows) { foreach ($dir in @($script:downloadWorkDir, $script:downloadBaseDir)) { if ($dir[-1] -eq ':') { $dir += '\\' } } }
+# 	$ffmpegArgs = @()
+# 	$ffmpegArgs += (' -y -http_multiple 1 -seg_max_retry 10 -timeout 5000000')
+# 	$ffmpegArgs += (' -reconnect 1 -reconnect_on_network_error 1 -reconnect_on_http_error 1 -reconnect_streamed 1')
+# 	$ffmpegArgs += (' -reconnect_max_retries 10 -reconnect_delay_max 30 -reconnect_delay_total_max 600')
+# 	$ffmpegArgs += (' -i "{0}"' -f $videoInfo.m3u8URL)
+# 	if ($script:videoContainerFormat -eq 'mp4') {
+# 		$ffmpegArgs += (' -c copy')
+# 		$ffmpegArgs += (' -c:v copy -c:a copy')
+# 		# $ffmpegArgs += (' -bsf:a aac_adtstoasc')
+# 		$ffmpegArgs += (' -c:s mov_text')
+# 		$ffmpegArgs += (' -metadata:s:s:0 language=ja')
+# 	}
+# 	$ffmpegArgs += (' "{0}"' -f $videoInfo.filePath)
+# 	$ffmpegArgsString = $ffmpegArgs -join ''
+# 	Write-Debug ($script:msg.ExecCommand -f 'ffmpeg', $script:ffmpegPath, $ffmpegArgsString)
+# 	if ($script:appName -eq 'TVerRecContainer') {
+# 		$startProcessParams = @{
+# 			FilePath     = 'timeout'
+# 			ArgumentList = "3600 $script:ffmpegPath $ffmpegArgsString"
+# 			PassThru     = $true
+# 		}
+# 	} else {
+# 		$startProcessParams = @{
+# 			FilePath     = $script:ffmpegPath
+# 			ArgumentList = $ffmpegArgsString
+# 			PassThru     = $true
+# 		}
+# 	}
+# 	if ($IsWindows) { $startProcessParams.WindowStyle = $script:windowShowStyle }
+# 	else {
+# 		$startProcessParams.RedirectStandardOutput = '/dev/null'
+# 		$startProcessParams.RedirectStandardError = '/dev/zero'
+# 	}
+# 	try {
+# 		$ffmpegProcess = Start-Process @startProcessParams
+# 		$ffmpegProcess.Handle | Out-Null
+# 	} catch { Write-Warning ($script:msg.ExecFailed -f 'ffmpeg') ; return }
+# 	Remove-Variable -Name ffmpegArgs, ffmpegArgsString -ErrorAction SilentlyContinue
+# }
 
 #----------------------------------------------------------------------
 # youtube-dlプロセスの起動
@@ -787,50 +789,36 @@ function Invoke-Ytdl {
 	if ($IsWindows) { foreach ($dir in @($script:downloadWorkDir, $script:downloadBaseDir)) { if ($dir[-1] -eq ':') { $dir += '\\' } } }
 	$tmpDir = ('temp:{0}' -f $script:downloadWorkDir)
 	$saveDir = ('home:{0}' -f $videoInfo.fileDir)
-	$saveFile = ('{0}' -f $videoInfo.fileName)
-	$ytdlArgs = @()
-	$ytdlArgs += (' {0}' -f $script:ytdlBaseArgs)
-	$ytdlArgs += (' {0} {1}' -f '--concurrent-fragments', $script:parallelDownloadNumPerFile)
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $saveDir)
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $tmpDir)
-	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlHttpHeader)
-	$ytdlArgs += (' {0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
-	if ($script:ytdlRandomIp) { $ytdlArgs += (' {0} "{1}/32"' -f '--xff', $script:jpIP) }
-	if ($script:proxyUrl) { $ytdlArgs += (' {0} {1}' -f '--geo-verification-proxy', $script:proxyUrl) }
+	$saveFile = $videoInfo.fileName
+
+	$ytdlArgs = @(
+		$script:ytdlBaseArgs
+		('{0} {1}' -f '--concurrent-fragments', $script:parallelDownloadNumPerFile)
+		('{0} {1}' -f '--add-header', $script:ytdlHttpHeader)
+		('{0} "{1}"' -f '--paths', $saveDir)
+		('{0} "{1}"' -f '--paths', $tmpDir)
+		('{0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
+	)
+	if ($script:ytdlRandomIp) { $ytdlArgs += ('{0} "{1}/32"' -f '--xff', $script:jpIP) }
+	if ($script:proxyUrl) { $ytdlArgs += ('{0} {1}' -f '--geo-verification-proxy', $script:proxyUrl) }
 	if ($script:rateLimit -notin @(0, '')) {
 		$rateLimit = [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8)
-		$ytdlArgs += (' {0} {1}M' -f '--limit-rate', $rateLimit)
+		$ytdlArgs += ('{0} {1}M' -f '--limit-rate', $rateLimit)
 	}
 	if ($script:videoContainerFormat -eq 'mp4') {
-		$ytdlArgs += (' {0}' -f '--merge-output-format mp4 --embed-thumbnail --embed-chapters')
-		$subttlDir = ('subtitle:{0}' -f $script:downloadWorkDir)
-		$thumbDir = ('thumbnail:{0}' -f $script:downloadWorkDir)
-		$chaptDir = ('chapter:{0}' -f $script:downloadWorkDir)
-		$descDir = ('description:{0}' -f $script:downloadWorkDir)
-		$ytdlArgs += (' {0} "{1}"' -f '--paths', $subttlDir)
-		$ytdlArgs += (' {0} "{1}"' -f '--paths', $thumbDir)
-		$ytdlArgs += (' {0} "{1}"' -f '--paths', $chaptDir)
-		$ytdlArgs += (' {0} "{1}"' -f '--paths', $descDir)
-		if ($script:embedSubtitle) { $ytdlArgs += (' {0}' -f '--sub-langs all --convert-subs srt --embed-subs') }
-		if ($script:embedMetatag) { $ytdlArgs += (' {0}' -f '--embed-metadata') }
+		$ytdlArgs += '--merge-output-format mp4 --embed-thumbnail --embed-chapters'
+		$ytdlArgs += @('subtitle', 'thumbnail', 'chapter', 'description') | ForEach-Object { ('{0} "{1}:{2}"' -f '--paths', $_, $script:downloadWorkDir) }
+		if ($script:embedSubtitle) { $ytdlArgs += '--sub-langs all --convert-subs srt --embed-subs' }
+		if ($script:embedMetatag) { $ytdlArgs += '--embed-metadata' }
 	}
-	$ytdlArgs += (' {0}' -f $script:ytdlOption)
-	$ytdlArgs += (' {0}' -f $videoInfo.episodePageURL)
-	$ytdlArgs += (' {0} "{1}"' -f '--output', $saveFile)
-	$ytdlArgsString = $ytdlArgs -join ''
+	$ytdlArgs += $script:ytdlOption, $videoInfo.episodePageURL, ('{0} "{1}"' -f '--output', $saveFile)
+	$ytdlArgsString = $ytdlArgs -join ' '
 	Write-Debug ($script:msg.ExecCommand -f 'youtube-dl', $script:ytdlPath, $ytdlArgsString)
-	if ($script:appName -eq 'TVerRecContainer') {
-		$startProcessParams = @{
-			FilePath     = 'timeout'
-			ArgumentList = "3600 $script:ytdlPath $ytdlArgsString"
-			PassThru     = $true
-		}
-	} else {
-		$startProcessParams = @{
-			FilePath     = $script:ytdlPath
-			ArgumentList = $ytdlArgsString
-			PassThru     = $true
-		}
+
+	$startProcessParams = @{
+		FilePath     = if ($script:appName -eq 'TVerRecContainer') { 'timeout' } else { $script:ytdlPath }
+		ArgumentList = if ($script:appName -eq 'TVerRecContainer') { "3600 $script:ytdlPath $ytdlArgsString" } else { $ytdlArgsString }
+		PassThru     = $true
 	}
 	if ($IsWindows) { $startProcessParams.WindowStyle = $script:windowShowStyle }
 	else {
@@ -841,7 +829,7 @@ function Invoke-Ytdl {
 		$ytdlProcess = Start-Process @startProcessParams
 		$ytdlProcess.Handle | Out-Null
 	} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') ; return }
-	Remove-Variable -Name tmpDir, saveDir, subttlDir, thumbDir, chaptDir, descDir, saveFile, ytdlArgs, ytdlArgsString -ErrorAction SilentlyContinue
+	Remove-Variable -Name tmpDir, saveDir, saveFile, ytdlArgs, paths, ytdlArgsString, startProcessParams -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -849,54 +837,41 @@ function Invoke-Ytdl {
 #----------------------------------------------------------------------
 function Invoke-NonTverYtdl {
 	[OutputType([Void])]
-	Param ([Parameter(Mandatory = $true)][Alias('URL')]	[String]$videoPageURL)
+	Param ([Parameter(Mandatory = $true)][Alias('URL')][String]$videoPageURL)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	Invoke-StatisticsCheck -Operation 'nontver'
 	if ($IsWindows) { foreach ($dir in @($script:downloadWorkDir, $script:downloadBaseDir)) { if ($dir[-1] -eq ':') { $dir += '\\' } } }
 	$tmpDir = ('temp:{0}' -f $script:downloadWorkDir)
-	$baseDir = ('home:{0}' -f $script:downloadBaseDir)
+	$saveDir = ('home:{0}' -f $script:downloadBaseDir)
 	$saveFile = ('{0}' -f $script:ytdlNonTVerFileName)
-	$ytdlArgs = @()
-	$ytdlArgs += (' {0}' -f $script:nonTVerYtdlBaseArgs)
-	$ytdlArgs += (' {0} {1}' -f '--concurrent-fragments', $script:parallelDownloadNumPerFile)
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $baseDir)
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $tmpDir)
-	$ytdlArgs += (' {0} {1}' -f '--add-header', $script:ytdlHttpHeader)
-	$ytdlArgs += (' {0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
-	if ($script:ytdlRandomIp) { $ytdlArgs += (' {0} "{1}/32"' -f '--xff', $script:jpIP) }
-	if ($script:proxyUrl) { $ytdlArgs += (' {0} {1}' -f '--geo-verification-proxy', $script:proxyUrl) }
-	if ($script:rateLimit -notin @(0, '')) {
-		$rateLimit = [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8)
-		$ytdlArgs += (' {0} {1}M' -f '--limit-rate', $rateLimit)
-	}
-	$ytdlArgs += (' {0}' -f '--merge-output-format mp4 --embed-thumbnail --embed-chapters')
-	$subttlDir = ('subtitle:{0}' -f $script:downloadWorkDir)
-	$thumbDir = ('thumbnail:{0}' -f $script:downloadWorkDir)
-	$chaptDir = ('chapter:{0}' -f $script:downloadWorkDir)
-	$descDir = ('description:{0}' -f $script:downloadWorkDir)
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $subttlDir)
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $thumbDir)
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $chaptDir)
-	$ytdlArgs += (' {0} "{1}"' -f '--paths', $descDir)
-	if ($script:embedSubtitle) { $ytdlArgs += (' {0}' -f '--sub-langs all --convert-subs srt --embed-subs') }
-	if ($script:embedMetatag) { $ytdlArgs += (' {0}' -f '--embed-metadata') }
-	$ytdlArgs += (' {0}' -f $script:ytdlOption)
-	$ytdlArgs += (' {0}' -f $videoPageURL)
-	$ytdlArgs += (' {0} "{1}"' -f '--output', $saveFile)
-	$ytdlArgsString = $ytdlArgs -join ''
+
+	$ytdlArgs = @(
+		$script:nonTVerYtdlBaseArgs
+		('{0} {1}' -f '--concurrent-fragments', $script:parallelDownloadNumPerFile)
+		('{0} {1}' -f '--add-header', $script:ytdlHttpHeader)
+		('{0} "{1}"' -f '--paths', $saveDir)
+		('{0} "{1}"' -f '--paths', $tmpDir)
+		('{0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
+		$(if ($script:ytdlRandomIp) { "--xff $script:jpIP/32" })
+		$(if ($script:proxyUrl) { "--geo-verification-proxy $script:proxyUrl" })
+		$(if ($script:rateLimit -notin @(0, '')) {
+				$rateLimit = [math]::Ceiling([int]$script:rateLimit / $script:parallelDownloadNumPerFile / 8)
+				"--limit-rate ${rateLimit}M"
+			})
+		'--merge-output-format mp4 --embed-thumbnail --embed-chapters'
+		$(@('subtitle', 'thumbnail', 'chapter', 'description') | ForEach-Object { ('{0} "{1}:{2}"' -f '--paths', $_, $script:downloadWorkDir) })
+		$(if ($script:embedSubtitle) { '--sub-langs all --convert-subs srt --embed-subs' })
+		$(if ($script:embedMetatag) { '--embed-metadata' })
+		$script:ytdlOption
+		"$videoPageURL"
+		"--output `"$saveFile`""
+	)
+	$ytdlArgsString = $ytdlArgs -join ' '
 	Write-Debug ($script:msg.ExecCommand -f 'youtube-dl', $script:ytdlPath, $ytdlArgsString)
-	if ($script:appName -eq 'TVerRecContainer') {
-		$startProcessParams = @{
-			FilePath     = 'timeout'
-			ArgumentList = "3600 $script:ytdlPath $ytdlArgsString"
-			PassThru     = $true
-		}
-	} else {
-		$startProcessParams = @{
-			FilePath     = $script:ytdlPath
-			ArgumentList = $ytdlArgsString
-			PassThru     = $true
-		}
+	$startProcessParams = @{
+		FilePath     = if ($script:appName -eq 'TVerRecContainer') { 'timeout' } else { $script:ytdlPath }
+		ArgumentList = if ($script:appName -eq 'TVerRecContainer') { "3600 $script:ytdlPath $ytdlArgsString" } else { $ytdlArgsString }
+		PassThru     = $true
 	}
 	if ($IsWindows) { $startProcessParams.WindowStyle = $script:windowShowStyle }
 	else {
@@ -958,14 +933,16 @@ function Wait-DownloadCompletion () {
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$ytdlCount = [Int](Get-YtdlProcessCount)
-	$ffmpegCount = [Int](Get-FfmpegProcessCount)
-	while (($ytdlCount + $ffmpegCount) -ne 0) {
-		Write-Information ($script:msg.NumDownloadProc -f (Get-Date), ($ytdlCount + $ffmpegCount))
+	# $ffmpegCount = [Int](Get-FfmpegProcessCount)
+	# while (($ytdlCount + $ffmpegCount) -ne 0) {
+	while ($ytdlCount -ne 0) {
+		# Write-Information ($script:msg.NumDownloadProc -f (Get-Date), ($ytdlCount + $ffmpegCount))
+		Write-Information ($script:msg.NumDownloadProc -f (Get-Date), $ytdlCount)
 		Start-Sleep -Seconds 60
 		$ytdlCount = [Int](Get-YtdlProcessCount)
-		$ffmpegCount = [Int](Get-FfmpegProcessCount)
+		# $ffmpegCount = [Int](Get-FfmpegProcessCount)
 	}
-	Remove-Variable -Name ytdlCount, ffmpegCount -ErrorAction SilentlyContinue
+	Remove-Variable -Name ytdlCount -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------

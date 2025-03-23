@@ -1,5 +1,17 @@
 # Change Log
 
+## [3.3.9](https://github.com/dongaba/TVerRec/releases/tag/v3.3.9)
+
+### 3.3.9 Added
+
+### 3.3.9 Changed
+
+- `tver.py`をうまく配置できない人が多いようなので`tver.py`を同梱(暫定)
+- なので、ffmpegを使ったダウンロード機能を削除
+- Brightcoveからデータ取得できない場合のメッセージをWarningからInformationに
+
+### 3.3.9 Fixed
+
 ## [3.3.8](https://github.com/dongaba/TVerRec/releases/tag/v3.3.8)
 
 ### 3.3.8 Added
