@@ -2,8 +2,7 @@
 
 [🇺🇸English](https://github.com/dongaba/TVerRec/blob/master/README.en.md) | [🇯🇵日本語](https://github.com/dongaba/TVerRec/blob/master/README.md)
 
-### 暫定対応として、仕様変更に対応したtver.pyを同梱しています ###
-### 日本国外からはVPNまたはプロキシが必要です ###
+### 暫定対応として、仕様変更に対応したtver.pyを同梱しています。日本国外からはVPNまたはプロキシが必要です ###
 
 ![Logo](https://raw.githubusercontent.com/dongaba/TVerRec/master/resources/img/TVerRec-Logo.png)
 [![GitHub release](https://img.shields.io/github/v/release/dongaba/TVerRec?style=social&label=Release&logo=github)](https://github.com/dongaba/TVerRec/releases)
