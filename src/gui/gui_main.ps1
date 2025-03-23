@@ -34,11 +34,11 @@ $msgTypesColorMap = @{
 # ログ出力用変数
 $jobMsgs = @()
 $msgTypes = @('Output', 'Error', 'Warning', 'Verbose', 'Debug', 'Information')
-$msgError = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
-$msgWarning = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
-$msgVerbose = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
-$msgDebug = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
-$msgInformation = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
+$msgError = New-Object System.Collections.Generic.List[String]
+$msgWarning = New-Object System.Collections.Generic.List[String]
+$msgVerbose = New-Object System.Collections.Generic.List[String]
+$msgDebug = New-Object System.Collections.Generic.List[String]
+$msgInformation = New-Object System.Collections.Generic.List[String]
 
 # endregion 環境設定
 
@@ -52,7 +52,7 @@ function Sync-WpfEvents {
 	[Dispatcher]::CurrentDispatcher.BeginInvoke(
 		'Background',
 		[DispatcherOperationCallback] {
-			Param ([object] $f)
+			Param ([Object] $f)
 			($f -as [DispatcherFrame]).Continue = $false
 			return $null
 		},
@@ -63,7 +63,7 @@ function Sync-WpfEvents {
 
 # 最大行数以上の実行ログをクリア
 function Limit-LogLines() {
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param (
 		[parameter(Mandatory = $true)]$richTextBox,
 		[parameter(Mandatory = $true)]$limit
@@ -77,7 +77,7 @@ function Limit-LogLines() {
 
 # テキストボックスへのログ出力と再描画
 function Out-ExecutionLog {
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param (
 		[parameter(Mandatory = $false)][String]$message = '',
 		[parameter(Mandatory = $false)][String]$type = 'Output'
@@ -99,7 +99,7 @@ function Out-ExecutionLog {
 # region WPFのWindow設定
 
 try {
-	[xml]$mainXaml = [String](Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecMain.xaml'))
+	[Xml]$mainXaml = [String](Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecMain.xaml'))
 	$mainWindow = [System.Windows.Markup.XamlReader]::Load(([System.Xml.XmlNodeReader]::new($mainXaml)))
 } catch { Throw ($script:msg.GuiBroken) }
 # PowerShellのウィンドウを非表示に
@@ -125,28 +125,28 @@ $lblVersion.Content = ('Version {0}' -f $script:appVersion)
 $outText = $mainWindow.FindName('tbOutText')
 
 # GUI部品のラベルを言語別に設定
-$lblTool.Content = $script:msg.GuiHeaderTool
-$lblLink.Content = $script:msg.GuiHeaderLink
-$lblLog.Content = $script:msg.GuiHeaderLog
-$btnLoop.Content = $script:msg.GuiButtonLoop
-$btnSingle.Content = $script:msg.GuiButtonSingle
-$btnBulk.Content = $script:msg.GuiButtonBulk
-$btnListGen.Content = $script:msg.GuiButtonListGen
-$btnList.Content = $script:msg.GuiButtonList
-$btnDelete.Content = $script:msg.GuiButtonDelete
-$btnValidate.Content = $script:msg.GuiButtonValidate
-$btnMove.Content = $script:msg.GuiButtonMove
-$btnKillAll.Content = $script:msg.GuiButtonKillAll
-$btnWorkOpen.Content = $script:msg.GuiButtonWorkOpen
-$btnDownloadOpen.Content = $script:msg.GuiButtonDownloadOpen
-$btnSaveOpen.Content = $script:msg.GuiButtonSaveOpen
-$btnKeywordOpen.Content = $script:msg.GuiButtonKeywordOpen
-$btnIgnoreOpen.Content = $script:msg.GuiButtonIgnoreOpen
-$btnListOpen.Content = $script:msg.GuiButtonListOpen
-$btnClearLog.Content = $script:msg.GuiButtonClearLog
-$btnWiki.Content = $script:msg.GuiButtonWiki
-$btnSetting.Content = $script:msg.GuiButtonSetting
-$btnExit.Content = $script:msg.GuiButtonExit
+$lblTool.Content = $script:msg.lblTool
+$lblLink.Content = $script:msg.lblLink
+$lblLog.Content = $script:msg.lblLog
+$btnLoop.Content = $script:msg.btnLoop
+$btnSingle.Content = $script:msg.btnSingle
+$btnBulk.Content = $script:msg.btnBulk
+$btnListGen.Content = $script:msg.btnListGen
+$btnList.Content = $script:msg.btnList
+$btnDelete.Content = $script:msg.btnDelete
+$btnValidate.Content = $script:msg.btnValidate
+$btnMove.Content = $script:msg.btnMove
+$btnKillAll.Content = $script:msg.btnKillAll
+$btnWorkOpen.Content = $script:msg.btnWorkOpen
+$btnDownloadOpen.Content = $script:msg.btnDownloadOpen
+$btnSaveOpen.Content = $script:msg.btnSaveOpen
+$btnKeywordOpen.Content = $script:msg.btnKeywordOpen
+$btnIgnoreOpen.Content = $script:msg.btnIgnoreOpen
+$btnListOpen.Content = $script:msg.btnListOpen
+$btnClearLog.Content = $script:msg.btnClearLog
+$btnWiki.Content = $script:msg.btnWiki
+$btnSetting.Content = $script:msg.btnSetting
+$btnExit.Content = $script:msg.btnExit
 
 # endregion WPFのWindow設定
 
@@ -211,7 +211,7 @@ foreach ($btn in $btns) {
 $btnWorkOpen.Add_Click({ Invoke-Item $script:downloadWorkDir })
 $btnDownloadOpen.Add_Click({ Invoke-Item $script:downloadBaseDir })
 $btnsaveOpen.Add_Click({
-		if ($script:saveBaseDir -ne '') { $script:saveBaseDir.Split(';').Trim() | ForEach-Object { Invoke-Item $_ } }
+		if ($script:saveBaseDir) { $script:saveBaseDir.Split(';').Trim() | ForEach-Object { Invoke-Item $_ } }
 		else { [System.Windows.MessageBox]::Show($script:msg.SaveDirNotSpecified) }
 	})
 $btnKeywordOpen.Add_Click({ Invoke-Item $script:keywordFilePath })

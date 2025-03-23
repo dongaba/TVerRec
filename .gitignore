@@ -72,7 +72,6 @@ ignore.conf.*
 * copy.*
 * copy *.*
 *.bak
-*__pycache__*
 
 #ローカルの変更をGitHubにアップしないために
 /db/*
@@ -85,3 +84,7 @@ ignore.conf.*
 
 #コードカウンタ
 .VSCodeCounter
+
+#yt-dlpエクストラクタ
+/bin/yt-dlp-plugins/tver/yt_dlp_plugins/extractor/tver.py
+*__pycache__*

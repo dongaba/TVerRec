@@ -11,7 +11,7 @@ Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 #----------------------------------------------------------------------
 function Get-Token () {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$tverTokenURL = 'https://platform-api.tver.jp/v2/api/platform_users/browser/create'
@@ -29,7 +29,7 @@ function Get-Token () {
 		$script:platformUID = $tokenResponse.Result.platform_uid
 		$script:platformToken = $tokenResponse.Result.platform_token
 	} catch { Throw ($script:msg.TokenRetrievalFailed) }
-	Remove-Variable -Name tverTokenURL, headers, requestBody, tokenResponse -ErrorAction SilentlyContinue
+	Remove-Variable -Name tverTokenURL, httpHeader, requestBody, tokenResponse -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -42,11 +42,11 @@ function Get-VideoLinksFromKeyword {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$linkCollection = [PSCustomObject]@{
 		episodeLinks     = @{}
-		seriesLinks      = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
-		seasonLinks      = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
-		talentLinks      = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
-		specialMainLinks = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
-		specialLinks     = New-Object System.Collections.Generic.List[String]	# .NET Listを使用して高速化
+		seriesLinks      = New-Object System.Collections.Generic.List[String]
+		seasonLinks      = New-Object System.Collections.Generic.List[String]
+		talentLinks      = New-Object System.Collections.Generic.List[String]
+		specialMainLinks = New-Object System.Collections.Generic.List[String]
+		specialLinks     = New-Object System.Collections.Generic.List[String]
 	}
 	if ($keyword.IndexOf('/') -gt 0) {
 		$key = $keyword.split(' ')[0].split("`t")[0].Split('/')[0]
@@ -76,10 +76,9 @@ function Get-VideoLinksFromKeyword {
 			}
 		}
 	}
-	Remove-Variable -Name key, tverID, linkTypes, type -ErrorAction SilentlyContinue
 	if ($linkCollection.episodeLinks.Count -eq 0) { return }
 	else { return ($linkCollection.episodeLinks.GetEnumerator() | Sort-Object Value).Name }
-	Remove-Variable -Name linkCollection -ErrorAction SilentlyContinue
+	Remove-Variable -Name keyword, key, tverID, linkTypes, linkType -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -87,7 +86,7 @@ function Get-VideoLinksFromKeyword {
 #----------------------------------------------------------------------
 function Get-LinkFromBuffer {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly', '')]
 	Param (
 		[Parameter(Mandatory = $false)][Object[]]$tverIDs,
@@ -108,7 +107,7 @@ function Get-LinkFromBuffer {
 			}
 		}
 	}
-	Remove-Variable -Name tverIDs, tverIDType, tverID, linkCollection, result -ErrorAction SilentlyContinue
+	Remove-Variable -Name tverID, tverIDs, tverIDType, linkTypes, linkType -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -116,7 +115,7 @@ function Get-LinkFromBuffer {
 #----------------------------------------------------------------------
 function Get-LinkFromKeyword {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param (
 		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$id,
 		[Parameter(Mandatory = $false)][ValidateSet('seriesLinks', 'seasonLinks', 'talentLinks', 'specialMainLinks', 'specialLinks', 'tag', 'new', 'end', 'ranking', 'keyword', 'category')][String]$linkType,
@@ -145,7 +144,7 @@ function Get-LinkFromKeyword {
 	}
 	# 検索結果の取得
 	Get-SearchResults -baseURL $baseURL -Type $type -Keyword $keyword -LinkCollection ([Ref]$linkCollection)
-	Remove-Variable -Name id, type, baseURL -ErrorAction SilentlyContinue
+	Remove-Variable -Name id, linkType, type, baseURL, keyword -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -153,7 +152,7 @@ function Get-LinkFromKeyword {
 #----------------------------------------------------------------------
 function Get-SearchResults {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly', '')]
 	Param (
 		[Parameter(Mandatory = $true)][String]$baseURL,
@@ -166,7 +165,7 @@ function Get-SearchResults {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# URLの整形
 	$sid = $script:myMemberSID
-	if (($script:myPlatformUID -ne '') -and ($script:myPlatformToken -ne '')) { $uid = $script:myPlatformUID ; $token = $script:myPlatformToken }
+	if (($script:myPlatformUID) -and ($script:myPlatformToken)) { $uid = $script:myPlatformUID ; $token = $script:myPlatformToken }
 	else { $uid = $script:platformUID ; $token = $script:platformToken }
 	if ($loginRequired) { $callSearchURL = '{0}?member_sid={1}' -f $baseURL, $sid }						# TVerIDにログインして使う場合
 	else { $callSearchURL = '{0}?platform_uid={1}&platform_token={2}' -f $baseURL, $uid, $token }		# TVerIDを匿名で使う場合
@@ -213,8 +212,7 @@ function Get-SearchResults {
 			default { Write-Warning $script:msg.UnknownContentsType -f $searchResult.Type, $searchResult.Content.Id }
 		}
 	}
-	Remove-Variable -Name baseURL, type, keyword, requireData -ErrorAction SilentlyContinue
-	Remove-Variable -Name uid, token, callSearchURL, searchResultsRaw, searchResults, searchResult -ErrorAction SilentlyContinue
+	Remove-Variable -Name baseURL, type, keyword, requireData, loginRequired, sid, uid, token, callSearchURL, searchResultsRaw, searchResults, order, sortedSearchResults, searchResult -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -222,7 +220,7 @@ function Get-SearchResults {
 #----------------------------------------------------------------------
 function Get-LinkFromTopPage {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject][Ref]$linkCollection)
 	Write-Debug ('Dev - {0}' -f $MyInvocation.MyCommand.Name)
 	$callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callHome'
@@ -259,17 +257,17 @@ function Get-LinkFromTopPage {
 #----------------------------------------------------------------------
 function Get-LinkFromSiteMap {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject][Ref]$linkCollection)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$callSearchURL = 'https://tver.jp/sitemap.xml'
 	try { $searchResultsRaw = Invoke-RestMethod -Uri $callSearchURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec }
 	catch { Write-Warning $script:msg.SiteMapRetrievalFailed ; return }
 	# Special Detailを拾わないように「/」2個目以降は無視して重複削除
-	$searchResults = New-Object System.Collections.Generic.List[System.String]
+	$searchResults = New-Object System.Collections.Generic.List[String]
 	foreach ($url in $searchResultsRaw.urlset.url.loc) {
-		$modifiedUrl = $url.Replace('https://tver.jp/', '') -replace '^([^/]+/[^/]+).*', '$1'
-		if (-not $searchResults.Contains($modifiedUrl)) { $searchResults.Add($modifiedUrl) }
+		$modifiedURL = $url.Replace('https://tver.jp/', '') -replace '^([^/]+/[^/]+).*', '$1'
+		if (-not $searchResults.Contains($modifiedURL)) { $searchResults.Add($modifiedURL) }
 	}
 	foreach ($url in $searchResults) {
 		try {
@@ -312,7 +310,7 @@ function Get-LinkFromSiteMap {
 			}
 		}
 	}
-	Remove-Variable -Name callSearchURL, searchResultsRaw, searchResults, url, tverID, result -ErrorAction SilentlyContinue
+	Remove-Variable -Name callSearchURL, searchResultsRaw, searchResults, url, tverID -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -320,7 +318,7 @@ function Get-LinkFromSiteMap {
 #----------------------------------------------------------------------
 function Get-LinkFromMyPage {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly', '')]
 	Param (
 		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$page,
@@ -336,7 +334,7 @@ function Get-LinkFromMyPage {
 		default { Write-Warning ($script:msg.UnknownContentsType -f 'mypage', $page) }
 	}
 	Get-SearchResults -baseURL $baseURL -Type 'mypage' -RequireData $requireData -LoginRequired $loginRequired -LinkCollection ([Ref]$linkCollection)
-	Remove-Variable -Name page, baseURLPrefix, baseURL, loginRequired, requireData, tverIDs -ErrorAction SilentlyContinue
+	Remove-Variable -Name baseURLPrefix, baseURL, requireData, loginRequired -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -405,50 +403,49 @@ function Get-VideoInfo {
 					'X-Forwarded-For'  = $script:jpIP
 					'X-Originating-IP' = $script:jpIP
 				}
-				# if ( !(Test-Path Variable:Script:proxyUrl ) -or ($script:proxyUrl -eq '')) {
-				# 	$response = Invoke-RestMethod -Uri $streaksInfoBaseURL -Method 'GET' -Headers $httpHeader -TimeoutSec $script:timeoutSec
-				# }elseif( !(Test-Path Variable:Script:proxyCredential ) -or ($script:proxyCredential -eq '')) {
-				# 	$response = Invoke-RestMethod -Uri $streaksInfoBaseURL -Method 'GET' -Headers $httpHeader -Proxy $proxyUrl -TimeoutSec $script:timeoutSec
-				# }else{
-				# 	$response = Invoke-RestMethod -Uri $streaksInfoBaseURL -Method 'GET' -Headers $httpHeader -Proxy $proxyUrl -ProxyCredential $script:proxyCredential -TimeoutSec $script:timeoutSec
-				# }
 				$params = @{
 					Uri        = $streaksInfoBaseURL
 					Method     = 'GET'
 					Headers    = $httpHeader
 					TimeoutSec = $script:timeoutSec
 				}
-				if ((Test-Path Variable:Script:proxyUrl) -and ($script:proxyUrl -ne '')) { $params.Proxy = $script:proxyUrl}
-				if ((Test-Path Variable:Script:proxyCredential) -and ($script:proxyCredential -ne '')) { $params.ProxyCredential = $script:proxyCredential }
+				if ($script:proxyUrl) { $params.Proxy = $script:proxyUrl }
+				if ((Test-Path Variable:Script:proxyAuthRequired) -and ($script:proxyAuthRequired)) {
+					$proxyCredential = Get-Credential -Message 'Please enter your username and password for the proxy server.'
+					$params.ProxyCredential = $proxyCredential
+				}
 				$m3u8URL = (Invoke-RestMethod @params).sources.src
 				$isStreaks = $true
 			} catch { Write-Warning ($script:msg.StreaksM3U8RetrievalFailed -f $_.Exception.Message) ; return }
 		} else { $m3u8URL = ''; $isStreaks = $false }
 		# Brightcove情報取得
 		if ($videoInfo.PSObject.Properties.Name -contains 'video') {
-			# $accountID = $videoInfo.video.accountID
-			# $videoRefID = if ($videoInfo.video.PSObject.Properties.Name -contains 'videoRefID') { ('ref%3A{0}' -f $videoInfo.video.videoRefID) } else { $videoInfo.video.videoID }
-			# $playerID = $videoInfo.video.playerID
-			# # Brightcoveキー取得
-			# try {
-			# 	$brightcoveJsURL = ('https://players.brightcove.net/{0}/{1}_default/index.min.js' -f $accountID, $playerID)
-			# 	$brightcovePk = if ((Invoke-RestMethod -Uri $brightcoveJsURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec) -match 'policyKey:"([a-zA-Z0-9_-]*)"') { $matches[1] }
-			# } catch { Write-Warning ($script:msg.BrightcoveKeyRetrievalFailed -f $_.Exception.Message) ; return }
-			# # m3u8とmpd URL取得
-			# try {
-			# 	$brightcoveURL = ('https://edge.api.brightcove.com/playback/v1/accounts/{0}/videos/{1}' -f $accountID, $videoRefID)
-			# 	$httpHeader = @{
-			# 		'Accept'           = ('application/json;pk={0}' -f $brightcovePk)
-			# 		'Forwarded'        = $script:jpIP
-			# 		'Forwarded-For'    = $script:jpIP
-			# 		'X-Forwarded'      = $script:jpIP
-			# 		'X-Forwarded-For'  = $script:jpIP
-			# 		'X-Originating-IP' = $script:jpIP
-			# 	}
-			# 	$response = Invoke-RestMethod -Uri $brightcoveURL -Method 'GET' -Headers $httpHeader -TimeoutSec $script:timeoutSec
-			# 	$m3u8URL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*mpeg*' }).where({ $_.ext_x_version -eq 4 })[0].src
-			# 	$mpdURL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*dash*' })[0].src
-			# } catch { Write-Warning ($script:msg.BrightcoveM3U8RetrievalFailed -f $_.Exception.Message) ; return }
+			$accountID = $videoInfo.video.accountID
+			$videoRefID = if ($videoInfo.video.PSObject.Properties.Name -contains 'videoRefID') { ('ref%3A{0}' -f $videoInfo.video.videoRefID) } else { $videoInfo.video.videoID }
+			$playerID = $videoInfo.video.playerID
+			# Brightcoveキー取得
+			try {
+				$brightcoveJsURL = ('https://players.brightcove.net/{0}/{1}_default/index.min.js' -f $accountID, $playerID)
+				$brightcovePk = if ((Invoke-RestMethod -Uri $brightcoveJsURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec) -match 'policyKey:"([a-zA-Z0-9_-]*)"') { $matches[1] }
+			} catch { Write-Warning ($script:msg.BrightcoveKeyRetrievalFailed -f $_.Exception.Message) ; return }
+			# m3u8とmpd URL取得
+			try {
+				$brightcoveURL = ('https://edge.api.brightcove.com/playback/v1/accounts/{0}/videos/{1}' -f $accountID, $videoRefID)
+				$httpHeader = @{
+					'Accept'           = ('application/json;pk={0}' -f $brightcovePk)
+					'Forwarded'        = $script:jpIP
+					'Forwarded-For'    = $script:jpIP
+					'X-Forwarded'      = $script:jpIP
+					'X-Forwarded-For'  = $script:jpIP
+					'X-Originating-IP' = $script:jpIP
+				}
+				$response = Invoke-RestMethod -Uri $brightcoveURL -Method 'GET' -Headers $httpHeader -TimeoutSec $script:timeoutSec
+				# HLS
+				$m3u8URL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*mpeg*' }).where({ $_.ext_x_version -eq 4 })[0].src
+				# Dash
+				# $mpdURL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*dash*' })[0].src
+				$isBrightcove = $true
+			} catch { Write-Warning ($script:msg.BrightcoveM3U8RetrievalFailed -f $_.Exception.Message) ; $isBrightcove = $false }
 		}
 	} catch { Write-Warning ($script:msg.VideoInfoRetrievalFailed -f $_.Exception.Message) ; return }
 
@@ -457,7 +454,7 @@ function Get-VideoInfo {
 	# シーズン名が本編の場合はシーズン名をクリア
 	if ($videoSeason -eq '本編') { $videoSeason = '' }
 	# シリーズ名がシーズン名を含む場合はシーズン名をクリア
-	if ($videoSeries -cmatch [Regex]::Escape($videoSeason)) { $videoSeason = '' }
+	if ($videoSeries -cmatch [RegEx]::Escape($videoSeason)) { $videoSeason = '' }
 	# エピソード番号を極力修正
 	if ((($videoEpisodeNum -eq 1) -or ($videoEpisodeNum % 10 -eq 0)) -and ($episodeName -imatch '([#|第|Episode|ep|Take|Vol|Part|Chapter|Flight|Karte|Case|Stage|Mystery|Ope|Story|Sign|Trap|Letter|Act]+\.?\s?)(\d+)(.*)')) { $videoEpisodeNum = $matches[2] }
 	# エピソード番号が1桁の際は頭0埋めして2桁に
@@ -475,7 +472,7 @@ function Get-VideoInfo {
 			$broadcastDate = ('{0}{1}{2}{3}{4}' -f $matches[1].PadLeft(2, '0'), $matches[2], $matches[3].PadLeft(2, '0'), $matches[4], $matches[6])
 		}
 	}
-	return [pscustomobject]@{
+	return [PSCustomObject]@{
 		seriesName      = $videoSeries
 		seriesID        = $videoSeriesID
 		seriesPageURL   = $videoSeriesPageURL
@@ -494,12 +491,10 @@ function Get-VideoInfo {
 		descriptionText = $descriptionText
 		m3u8URL         = $m3u8URL
 		# mpdURL          = $mpdURL
-		isStreaks        = $isStreaks
+		isStreaks       = $isStreaks
+		isBrightcove    = $isBrightcove
 	}
-	Remove-Variable -Name episodeID, tverVideoInfoBaseURL, tverVideoInfoURL, response -ErrorAction SilentlyContinue
-	Remove-Variable -Name videoSeries, videoSeriesID, videoSeriesPageURL, videoSeason, videoSeasonID, episodeName, videoEpisodeID, videoEpisodePageURL -ErrorAction SilentlyContinue
-	Remove-Variable -Name mediaName, providerName, broadcastDate, endTime, versionNum, videoInfo, descriptionText, videoEpisodeNum -ErrorAction SilentlyContinue
-	Remove-Variable -Name currentYear, parsedBroadcastDate, broadcastYear, matches -ErrorAction SilentlyContinue
+	Remove-Variable -Name episodeID, tverVideoInfoBaseURL, tverVideoInfoURL, response, videoSeries, videoSeriesID, videoSeriesPageURL, videoSeason, videoSeasonID, episodeName, videoEpisodeID, videoEpisodePageURL, mediaName, providerName, broadcastDate, endTime, versionNum, videoInfo, descriptionText, videoEpisodeNum, streaksRefID, streaksProjectID, ati, brightcoveJsURL, brightcovePk, brightcoveURL, accountID, videoRefID, playerID, httpHeader, response, m3u8URL, isStreaks, isBrightcove -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -523,5 +518,5 @@ function Get-JpIP {
 		catch { $check.CountryCode = '' ; $check.hosting = $true }
 	} While (($check.CountryCode -ne 'JP') -or ($check.hosting) )
 	return $jpIP
-	Remove-Variable -Name jpIP, check, allCIDR, randomCIDR, startIPArray, endIPArray, startIPInt, endIPInt, randomIPInt, randomIPArray -ErrorAction SilentlyContinue
+	Remove-Variable -Name allCIDR, randomCIDR, startIPArray, startIPInt, endIPArray, endIPInt, randomIPInt, randomIPArray, check -ErrorAction SilentlyContinue
 }

@@ -280,13 +280,13 @@ $script:ytdlOption = ''
 
 # 以下は$script:ytdlOptionの設定例
 #	1080p
-#	$script:ytdlOption = '-f "bestvideo[height<=1080]+bestaudio/best[height<=1080]"'
+#	$script:ytdlOption = '-f "bv[height<=1080]+ba/b[height<=1080]"'
 #	720p
-#	$script:ytdlOption = '-f "bestvideo[height<=720]+bestaudio/best[height<=720]"'
+#	$script:ytdlOption = '-f "bv[height<=720]+ba/b[height<=720]"'
 #	480p
-#	$script:ytdlOption = '-f "bestvideo[height<=480]+bestaudio/best[height<=480]"'
+#	$script:ytdlOption = '-f "bv[height<=480]+ba/b[height<=480]"'
 #	360p
-#	$script:ytdlOption = '-f "bestvideo[height<=360]+bestaudio/best[height<=360]"'
+#	$script:ytdlOption = '-f "bv[height<=360]+ba/b[height<=360]"'
 
 # ダウンロード時にのランダムIPアドレス使用
 #　youtube-dlはデフォルトで固定の日本のIPアドレスを使用しますが、動画のダウンロード時にTVerRecが生成したランダムの日本のIPアドレスを使用することができます。
@@ -343,13 +343,19 @@ $script:cleanupDownloadBaseDir = $false
 #　「$false」の場合は保存ディレクトリにあるファイルも削除対象にしません。
 $script:cleanupSaveBaseDir = $false
 
+# 空ディレクトリ削除時処理を実行するかのチェック
+#　不要ファイル削除処理時とファイル移動処理時に空ディレクトリを削除するかを設定します。
+#　「$true」の場合は空ディレクトリ削除時処理を実行します。
+#　「$false」の場合は空ディレクトリ削除時処理を実行しません。
+$script:emptyDownloadBaseDir = $true
+
 # youtube-dlのHTTPヘッダ
 #　youtube-dlがHTTPアクセスをする際に追加のHTTPヘッダを指定することができます。
 $script:ytdlHttpHeader = 'Accept-Language:ja-JP'
 
 # TVerサイト用youtube-dlの引数
 #　TVerサイトからのダウンロード設定です。TVerRecはこの設定が入っていることを前提としているので変更は自己責任でお願いします。
-$script:ytdlBaseArgs = '--format "(bv*+ba/b)[protocol!*=dash]/(bv*+ba/b)" --format-sort proto --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --no-cache-dir --verbose --no-check-certificates --buffer-size 16K --xattr-set-filesize'
+$script:ytdlBaseArgs = '--format "(bv*+ba/b)" --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --no-cache-dir --verbose --no-check-certificates --buffer-size 16K --xattr-set-filesize'
 
 # Tverサイト以外youtube-dlの引数
 #　TVerサイト以外からのダウンロード設定です。TVerRecはこの設定が入っていることを前提としているので変更は自己責任でお願いします。
@@ -385,16 +391,17 @@ $script:stopSchedule = @{
 $script:preferredLanguage = ''
 
 # ffmpegを用いたStreaksからのダウンロード
-#　TVerの仕様変更に伴い2025年3月22日現在youtube-dlでは動画のダウンロードができません。
+#　TVerの仕様変更に伴い2025年3月22日現在youtube-dlではカスタムエクストラクタを使用しない限り動画のダウンロードができません。
 #　そのため、暫定対策としてffmpegを用いたダウンロードを行うことができます。
 #　ただし、サムネイルやメタデータの埋め込み、帯域制限など、これまでTVerRecが提供していた便利機能の大半は効かず、ダウンロードはyoutube-dlより10倍以上遅いです。
 #　それでも、ダウンロードできないよりはマシ、という人向けです
 $script:useFfmpegDownload = $false
 
-# Streaksからのマニフェスト取得時に使用するProxyのURL
-#　GuiTextProxyUrlText": "Streaksからマニフェストを取得する際には日本のIPアドレスからアクセスする必要があります。
-#　しかし、すべてのネット接続にProxyを使用するとダウンロードが遅くなるなどの弊害があるため、マニフェスト取得に必要なときにだけProxyを使用することができます。
-#　ProxyサーバのURLを「http://123.45.67.89:12345」のフォーマットで指定してください。
+# Geo IPチェック回避用Proxy URL
+#　TVerではかなり厳しいGeo IPチェックが実施されているため、日本国外から利用することができません。
+#　Proxyを使うことがでGeo IPチェックを回避できますが、常にProxyを使用するとダウンロードまで遅くなってしまいます。
+#　TVerRecではマニフェスト取得などの本当に必要なときにだけProxyを使用し、動画のダウンロードにはProxyを使用しません。
+#　ProxyサーバのURLは「http://123.45.67.89:12345」のフォーマットで指定してください。
 #　Proxyを使用しない場合は空白にしておいてください。
 $script:proxyUrl = ''
 

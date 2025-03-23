@@ -77,7 +77,7 @@ Refer to [this page on the Wiki](https://github.com/dongaba/TVerRec/wiki/) for m
 8. **Automatically organize** downloaded files into media labrary.
 9. **Automatically download the latest required components** (such as youtube-dl and ffmpeg).
 10. Toast notifications to keep you informed of the status.
-11. Able to use from outside of Japan **without VPN**.
+11. ~~**No VPN required** from outside Japan. ~~(VPN or Proxy is required due to TVer's spec change.)
 12. Update notification when stable version of TVerRec is updated.
 13. GUI is available for Windows.
 14. Specify whether or not downloading is available for each day of the week and time.
