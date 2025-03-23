@@ -409,8 +409,11 @@ function Get-VideoInfo {
 					Headers    = $httpHeader
 					TimeoutSec = $script:timeoutSec
 				}
-				if ((Test-Path Variable:Script:proxyUrl) -and ($script:proxyUrl)) { $params.Proxy = $script:proxyUrl }
-				if ((Test-Path Variable:Script:proxyCredential) -and ($script:proxyCredential)) { $params.ProxyCredential = $script:proxyCredential }
+				if ($script:proxyUrl) { $params.Proxy = $script:proxyUrl }
+				if ((Test-Path Variable:Script:proxyAuthRequired) -and ($script:proxyAuthRequired)) {
+					$proxyCredential = Get-Credential -Message 'Please enter your username and password for the proxy server.'
+					$params.ProxyCredential = $proxyCredential
+				}
 				$m3u8URL = (Invoke-RestMethod @params).sources.src
 				$isStreaks = $true
 			} catch { Write-Warning ($script:msg.StreaksM3U8RetrievalFailed -f $_.Exception.Message) ; return }
