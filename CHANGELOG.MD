@@ -7,6 +7,7 @@
 ### 3.3.9 Changed
 
 - `tver.py`をうまく配置できない人が多いようなので`tver.py`を同梱(暫定)
+- なので、ffmpegを使ったダウンロード機能を削除
 - Brightcoveからデータ取得できない場合のメッセージをWarningからInformationに
 
 ### 3.3.9 Fixed
