@@ -8,6 +8,7 @@
 #	このファイルに書かれた内容はそのままPowershellスクリプトとして実行。
 #----------------------------------------------------------------------
 Set-StrictMode -Version Latest
+$InformationPreference = 'Continue'
 
 #----------------------------------------------------------------------
 #	基本的な設定
@@ -355,11 +356,11 @@ $script:ytdlHttpHeader = 'Accept-Language:ja-JP'
 
 # TVerサイト用youtube-dlの引数
 #　TVerサイトからのダウンロード設定です。TVerRecはこの設定が入っていることを前提としているので変更は自己責任でお願いします。
-$script:ytdlBaseArgs = '--format "(bv*+ba/b)" --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --no-cache-dir --verbose --no-check-certificates --buffer-size 16K --xattr-set-filesize'
+$script:ytdlBaseArgs = ' --format "(bv*+ba/b)" --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --no-cache-dir --verbose --no-check-certificates --buffer-size 16K --xattr-set-filesize'
 
 # Tverサイト以外youtube-dlの引数
 #　TVerサイト以外からのダウンロード設定です。TVerRecはこの設定が入っていることを前提としているので変更は自己責任でお願いします。
-$script:nonTVerYtdlBaseArgs = '--format "(bv*+ba/b)" --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --no-cache-dir --verbose --no-check-certificates --buffer-size 16K --xattr-set-filesize'
+$script:nonTVerYtdlBaseArgs = ' --format "(bv*+ba/b)" --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --no-cache-dir --verbose --no-check-certificates --buffer-size 16K --xattr-set-filesize'
 
 
 # 進捗情報メッセージの表示
@@ -389,13 +390,6 @@ $script:stopSchedule = @{
 #　設定可能な値はresources/lang/mesasges.jsonにエントリがある言語コードで、現時点では｢ja-JP｣と｢en-US｣が設定可能です。
 #　何も指定しなければOSの言語設定に基づき自動的に言語が切り替わります。(言語データが無い場合は英語表記となります)
 $script:preferredLanguage = ''
-
-# ffmpegを用いたStreaksからのダウンロード
-#　TVerの仕様変更に伴い2025年3月22日現在youtube-dlではカスタムエクストラクタを使用しない限り動画のダウンロードができません。
-#　そのため、暫定対策としてffmpegを用いたダウンロードを行うことができます。
-#　ただし、サムネイルやメタデータの埋め込み、帯域制限など、これまでTVerRecが提供していた便利機能の大半は効かず、ダウンロードはyoutube-dlより10倍以上遅いです。
-#　それでも、ダウンロードできないよりはマシ、という人向けです
-$script:useFfmpegDownload = $false
 
 # Geo IPチェック回避用Proxy URL
 #　TVerではかなり厳しいGeo IPチェックが実施されているため、日本国外から利用することができません。
