@@ -102,7 +102,7 @@ while ($videoNotValidatedNum -ne 0) {
 		# ffmpegのデコードオプションの設定
 		if ($script:forceSoftwareDecodeFlag) { $decodeOption = '' }
 		else {
-			if ($script:ffmpegDecodeOption -ne '') {
+			if ($script:ffmpegDecodeOption) {
 				Write-Output ($script:msg.MediumBoldBorder)
 				Write-Output ($script:msg.NotifyFfmpegOptions1)
 				Write-Output ('　　　{0}' -f $ffmpegDecodeOption)

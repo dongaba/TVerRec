@@ -11,7 +11,7 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
 #----------------------------------------------------------------------
 function Expand-Zip {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param (
 		[Parameter(Mandatory = $true)][String]$path,
 		[Parameter(Mandatory = $true)][String]$destination
@@ -30,7 +30,7 @@ function Expand-Zip {
 #----------------------------------------------------------------------
 function Move-Files() {
 	[CmdletBinding()]
-	[OutputType([System.Void])]
+	[OutputType([Void])]
 	Param (
 		[Parameter(Mandatory = $true)][String]$source,
 		[Parameter(Mandatory = $true)][String]$destination
@@ -222,7 +222,7 @@ Remove-IfExist -Path (Join-Path $script:scriptRoot '../resources/TVerRecSetting.
 
 # リストファイルのレイアウト変更(v2.9.9→v3.0.0)
 if (Test-Path (Join-Path $script:scriptRoot '../db/list.csv')) {
-	$currentListFile = [pscustomobject](Import-Csv (Join-Path $script:scriptRoot '../db/list.csv'))
+	$currentListFile = [PSCustomObject](Import-Csv (Join-Path $script:scriptRoot '../db/list.csv'))
 	$propertyNames = @('episodePageURL', 'seriesPageURL', 'descriptionText')
 	if ($currentListFile) {
 		$currentProperties = @($currentListFile | Get-Member -MemberType NoteProperty).Name

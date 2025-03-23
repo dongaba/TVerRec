@@ -108,7 +108,7 @@ foreach ($keyword in $keywords) {
 			for ($i = 0 ; $i -lt $partitions.Count ; $i++) {
 				$links = [String]$partitions[$i]
 				$paraJobSBs[$i] = ("& ./generate_list_child.ps1 $keyword $links")
-				$paraJobDefs[$i] = [scriptblock]::Create($paraJobSBs[$i])
+				$paraJobDefs[$i] = [ScriptBlock]::Create($paraJobSBs[$i])
 				$paraJobs[$i] = Start-ThreadJob -ScriptBlock $paraJobDefs[$i]
 			}
 			do {
