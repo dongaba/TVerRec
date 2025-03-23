@@ -377,13 +377,15 @@ function Wait-YtdlProcess {
 	# youtube-dlのプロセスが設定値を超えたら一時待機
 	while ($true) {
 		$ytdlCount = [Int](Get-YtdlProcessCount)
-		$ffmpegCount = [Int](Get-FfmpegProcessCount)
-		if (([Int]$ytdlCount + [Int]$ffmpegCount) -lt [Int]$parallelDownloadFileNum ) { break }
+		# $ffmpegCount = [Int](Get-FfmpegProcessCount)
+		# if (([Int]$ytdlCount + [Int]$ffmpegCount) -lt [Int]$parallelDownloadFileNum ) { break }
+		if ([Int]$ytdlCount -lt [Int]$parallelDownloadFileNum ) { break }
 		Write-Output ($script:msg.WaitingNumDownloadProc -f $parallelDownloadFileNum)
-		Write-Information ($script:msg.NumDownloadProc -f (Get-Date), ($ytdlCount + $ffmpegCount))
+		# Write-Information ($script:msg.NumDownloadProc -f (Get-Date), ($ytdlCount + $ffmpegCount))
+		Write-Information ($script:msg.NumDownloadProc -f (Get-Date), $ytdlCount)
 		Start-Sleep -Seconds 60
 	}
-	Remove-Variable -Name parallelDownloadFileNum, ytdlCount, ffmpegCount -ErrorAction SilentlyContinue
+	Remove-Variable -Name parallelDownloadFileNum, ytdlCount -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -590,10 +592,10 @@ function Invoke-VideoDownload {
 		catch { Write-Warning ($script:msg.CreateEpisodeDirFailed) ; continue }
 	}
 	# youtube-dl起動
-	if ($videoInfo.isStreaks -and $script:useFfmpegDownload) {
-		try { Invoke-FfmpegDownload ([Ref]$videoInfo) }
-		catch { Write-Warning ($script:msg.InvokeFfmpegDownloadFailed) }
-	} else {
+	# if ($videoInfo.isStreaks -and $script:useFfmpegDownload) {
+	# 	try { Invoke-FfmpegDownload ([Ref]$videoInfo) }
+	# 	catch { Write-Warning ($script:msg.InvokeFfmpegDownloadFailed) }
+	# } else {
 		if ($script:ytdlRandomIp -and $script:proxyUrl) {
 			Write-Output ($script:msg.MediumBoldBorder)
 			Write-Output ($script:msg.NotifyYtdlOptions1)
@@ -604,7 +606,7 @@ function Invoke-VideoDownload {
 		$script:ytdlRandomIp = $false
 		try { Invoke-Ytdl ([Ref]$videoInfo) }
 		catch { Write-Warning ($script:msg.InvokeYtdlFailed) }
-	}
+	# }
 	# 5秒待機
 	Start-Sleep -Seconds 5
 	Remove-Variable -Name keyword, videoLink, force, newVideo, skipDownload, episodeID, histFileData, histMatch, ignoreTitles, ignoreTitle -ErrorAction SilentlyContinue
@@ -730,51 +732,51 @@ function Show-VideoDebugInfo {
 #----------------------------------------------------------------------
 # ffmpegを使ったダウンロードプロセスの起動
 #----------------------------------------------------------------------
-function Invoke-FfmpegDownload {
-	[OutputType([Void])]
-	Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	Invoke-StatisticsCheck -Operation 'download-ffmpeg'
-	if ($IsWindows) { foreach ($dir in @($script:downloadWorkDir, $script:downloadBaseDir)) { if ($dir[-1] -eq ':') { $dir += '\\' } } }
-	$ffmpegArgs = @()
-	$ffmpegArgs += (' -y -http_multiple 1 -seg_max_retry 10 -timeout 5000000')
-	$ffmpegArgs += (' -reconnect 1 -reconnect_on_network_error 1 -reconnect_on_http_error 1 -reconnect_streamed 1')
-	$ffmpegArgs += (' -reconnect_max_retries 10 -reconnect_delay_max 30 -reconnect_delay_total_max 600')
-	$ffmpegArgs += (' -i "{0}"' -f $videoInfo.m3u8URL)
-	if ($script:videoContainerFormat -eq 'mp4') {
-		$ffmpegArgs += (' -c copy')
-		$ffmpegArgs += (' -c:v copy -c:a copy')
-		# $ffmpegArgs += (' -bsf:a aac_adtstoasc')
-		$ffmpegArgs += (' -c:s mov_text')
-		$ffmpegArgs += (' -metadata:s:s:0 language=ja')
-	}
-	$ffmpegArgs += (' "{0}"' -f $videoInfo.filePath)
-	$ffmpegArgsString = $ffmpegArgs -join ''
-	Write-Debug ($script:msg.ExecCommand -f 'ffmpeg', $script:ffmpegPath, $ffmpegArgsString)
-	if ($script:appName -eq 'TVerRecContainer') {
-		$startProcessParams = @{
-			FilePath     = 'timeout'
-			ArgumentList = "3600 $script:ffmpegPath $ffmpegArgsString"
-			PassThru     = $true
-		}
-	} else {
-		$startProcessParams = @{
-			FilePath     = $script:ffmpegPath
-			ArgumentList = $ffmpegArgsString
-			PassThru     = $true
-		}
-	}
-	if ($IsWindows) { $startProcessParams.WindowStyle = $script:windowShowStyle }
-	else {
-		$startProcessParams.RedirectStandardOutput = '/dev/null'
-		$startProcessParams.RedirectStandardError = '/dev/zero'
-	}
-	try {
-		$ffmpegProcess = Start-Process @startProcessParams
-		$ffmpegProcess.Handle | Out-Null
-	} catch { Write-Warning ($script:msg.ExecFailed -f 'ffmpeg') ; return }
-	Remove-Variable -Name ffmpegArgs, ffmpegArgsString -ErrorAction SilentlyContinue
-}
+# function Invoke-FfmpegDownload {
+# 	[OutputType([Void])]
+# 	Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
+# 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+# 	Invoke-StatisticsCheck -Operation 'download-ffmpeg'
+# 	if ($IsWindows) { foreach ($dir in @($script:downloadWorkDir, $script:downloadBaseDir)) { if ($dir[-1] -eq ':') { $dir += '\\' } } }
+# 	$ffmpegArgs = @()
+# 	$ffmpegArgs += (' -y -http_multiple 1 -seg_max_retry 10 -timeout 5000000')
+# 	$ffmpegArgs += (' -reconnect 1 -reconnect_on_network_error 1 -reconnect_on_http_error 1 -reconnect_streamed 1')
+# 	$ffmpegArgs += (' -reconnect_max_retries 10 -reconnect_delay_max 30 -reconnect_delay_total_max 600')
+# 	$ffmpegArgs += (' -i "{0}"' -f $videoInfo.m3u8URL)
+# 	if ($script:videoContainerFormat -eq 'mp4') {
+# 		$ffmpegArgs += (' -c copy')
+# 		$ffmpegArgs += (' -c:v copy -c:a copy')
+# 		# $ffmpegArgs += (' -bsf:a aac_adtstoasc')
+# 		$ffmpegArgs += (' -c:s mov_text')
+# 		$ffmpegArgs += (' -metadata:s:s:0 language=ja')
+# 	}
+# 	$ffmpegArgs += (' "{0}"' -f $videoInfo.filePath)
+# 	$ffmpegArgsString = $ffmpegArgs -join ''
+# 	Write-Debug ($script:msg.ExecCommand -f 'ffmpeg', $script:ffmpegPath, $ffmpegArgsString)
+# 	if ($script:appName -eq 'TVerRecContainer') {
+# 		$startProcessParams = @{
+# 			FilePath     = 'timeout'
+# 			ArgumentList = "3600 $script:ffmpegPath $ffmpegArgsString"
+# 			PassThru     = $true
+# 		}
+# 	} else {
+# 		$startProcessParams = @{
+# 			FilePath     = $script:ffmpegPath
+# 			ArgumentList = $ffmpegArgsString
+# 			PassThru     = $true
+# 		}
+# 	}
+# 	if ($IsWindows) { $startProcessParams.WindowStyle = $script:windowShowStyle }
+# 	else {
+# 		$startProcessParams.RedirectStandardOutput = '/dev/null'
+# 		$startProcessParams.RedirectStandardError = '/dev/zero'
+# 	}
+# 	try {
+# 		$ffmpegProcess = Start-Process @startProcessParams
+# 		$ffmpegProcess.Handle | Out-Null
+# 	} catch { Write-Warning ($script:msg.ExecFailed -f 'ffmpeg') ; return }
+# 	Remove-Variable -Name ffmpegArgs, ffmpegArgsString -ErrorAction SilentlyContinue
+# }
 
 #----------------------------------------------------------------------
 # youtube-dlプロセスの起動
@@ -931,14 +933,16 @@ function Wait-DownloadCompletion () {
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$ytdlCount = [Int](Get-YtdlProcessCount)
-	$ffmpegCount = [Int](Get-FfmpegProcessCount)
-	while (($ytdlCount + $ffmpegCount) -ne 0) {
-		Write-Information ($script:msg.NumDownloadProc -f (Get-Date), ($ytdlCount + $ffmpegCount))
+	# $ffmpegCount = [Int](Get-FfmpegProcessCount)
+	# while (($ytdlCount + $ffmpegCount) -ne 0) {
+	while ($ytdlCount -ne 0) {
+		# Write-Information ($script:msg.NumDownloadProc -f (Get-Date), ($ytdlCount + $ffmpegCount))
+		Write-Information ($script:msg.NumDownloadProc -f (Get-Date), $ytdlCount)
 		Start-Sleep -Seconds 60
 		$ytdlCount = [Int](Get-YtdlProcessCount)
-		$ffmpegCount = [Int](Get-FfmpegProcessCount)
+		# $ffmpegCount = [Int](Get-FfmpegProcessCount)
 	}
-	Remove-Variable -Name ytdlCount, ffmpegCount -ErrorAction SilentlyContinue
+	Remove-Variable -Name ytdlCount -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
