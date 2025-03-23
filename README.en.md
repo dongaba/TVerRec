@@ -57,30 +57,29 @@ You can start using it immediately after preparing and modifying the configurati
 ![GUIMain](https://github.com/user-attachments/assets/013b70f7-7508-423e-bdb9-3abced9cafc7)
 ![GUISetting](https://github.com/user-attachments/assets/c77860c0-7665-445c-963f-a45756498cba)
 
-
 ## Operation image of Windows CUI version
 
 ![CUI](https://github.com/user-attachments/assets/0a19f90a-ffc0-4d70-acc9-4d77969014c3)
-
 
 ## Main Features
 
 Refer to [this page on the Wiki](https://github.com/dongaba/TVerRec/wiki/) for more information on each feature.
 
 1. **Specify keywords** such as **genre**, **talent**, **program name**, etc. and **bulk download** them.
-2. **Record all TVer programs**. (Technically, it is not recording, but downloading.)
-3. **Embed TVer's program thumbnails** into the downloaded file
-4. **Embed subtitle** into the downloaded files when subtitle data is available in TVer.
-5. **Ultra high speed download** by parallel downloading is available. (In my environment, downloading at 1Gbps on a 1Gbps line.)
-6. Of course, **individual downloading** by specifying TVer program URL is also available.
-7. **Verify the integrity** of the the downloaded files.
-8. **Automatically organize** downloaded files into media labrary.
-9. **Automatically download the latest required components** (such as youtube-dl and ffmpeg).
-10. Toast notifications to keep you informed of the status.
-11. ~~**No VPN required** from outside Japan. ~~(VPN or Proxy is required due to TVer's spec change.)
+2. Bulk downloads from TVer's **My Page, including registered programs, specials, etc.**
+3. **Record all TVer programs**. (Technically, it is not recording, but downloading.)
+4. **Embed TVer's program thumbnails** into the downloaded file
+5. **Embed subtitle** into the downloaded files when subtitle data is available in TVer.
+6. **Ultra high speed download** by parallel downloading is available. (In my environment, downloading at 1Gbps on a 1Gbps line.)
+7. Of course, **individual downloading** by specifying TVer program URL is also available.
+8. **Verify the integrity** of the the downloaded files.
+9. **Automatically organize** downloaded files into media labrary.
+10. **Automatically download the latest required components** (such as youtube-dl and ffmpeg).
+11. Toast notifications to keep you informed of the status.
 12. Update notification when stable version of TVerRec is updated.
 13. GUI is available for Windows.
 14. Specify whether or not downloading is available for each day of the week and time.
+15. Proxy server can be specified to bypass Geo IP checks; the Proxy is only used for Geo IP checks.
 
 ## How to Use
 
