@@ -1,5 +1,17 @@
 # Change Log
 
+## [3.4.0](https://github.com/dongaba/TVerRec/releases/tag/v3.4.0)
+
+### 3.4.0 Added
+
+### 3.4.0 Changed
+
+- yt-dlpがTVerの仕様変更に対応したので`tver.py`の同梱を廃止
+
+### 3.4.0 Fixed
+
+- 今日のわんこのダウンロードフォルダがおかしくなる問題を修正
+
 ## [3.3.9](https://github.com/dongaba/TVerRec/releases/tag/v3.3.9)
 
 ### 3.3.9 Added
