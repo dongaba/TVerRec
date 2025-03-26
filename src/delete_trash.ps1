@@ -62,7 +62,7 @@ $toastUpdateParams.Rate = [Float]( 2 / $totalCleanupSteps )
 Update-ProgressToast @toastUpdateParams
 Remove-Files `
 	-BasePath $script:downloadWorkDir `
-	-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.part', '*.part-Frag*', '*.m4a', '*.live_chat.json', '*.mp4', '*.ts') `
+	-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a', '*.live_chat.json', '*.mp4*', '*.ts') `
 	-DelPeriod 0
 
 # ダウンロード先
@@ -72,7 +72,7 @@ if ($script:cleanupDownloadBaseDir) {
 	Update-ProgressToast @toastUpdateParams
 	Remove-Files `
 		-BasePath $script:downloadBaseDir `
-		-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.part', '*.part-Frag*', '*.m4a', '*.live_chat.json', '*.temp.mp4', '*.temp.ts') `
+		-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a', '*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*') `
 		-DelPeriod 0
 }
 
@@ -85,7 +85,7 @@ if ($script:cleanupSaveBaseDir)	{
 			Update-ProgressToast @toastUpdateParams
 			Remove-Files `
 				-BasePath $saveDir `
-				-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.part', '*.part-Frag*', '*.m4a', '*.live_chat.json', '*.temp.mp4', '*.temp.ts') `
+				-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a', '*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*') `
 				-DelPeriod 0
 		}
 	}
