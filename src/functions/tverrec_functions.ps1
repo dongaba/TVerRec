@@ -811,7 +811,13 @@ function Invoke-Ytdl {
 		if ($script:embedSubtitle) { $ytdlArgs += '--sub-langs all --convert-subs srt --embed-subs' }
 		if ($script:embedMetatag) { $ytdlArgs += '--embed-metadata' }
 	}
-	$ytdlArgs += $script:ytdlOption, $videoInfo.episodePageURL, ('{0} "{1}"' -f '--output', $saveFile)
+	$pwshRemoveIfExists = 'Remove-Item -Path \"{0}\" -Force -ErrorAction SilentlyContinue' -f $videoInfo.filePath
+	$ytdlOutFileVar = '{}'
+	$pwshRenameFile = 'Rename-Item -Path \"{0}\" -NewName \"{1}\" -Force -ErrorAction SilentlyContinue' -f $ytdlOutFileVar, $videoInfo.fileName
+	$ytdlExecArg = "pwsh -Command '{0} ; {1}'" -f $pwshRemoveIfExists, $pwshRenameFile
+	$ytdlArgs += ('{0} "{1}"' -f '--exec', $ytdlExecArg)
+	$ytdlArgs += $script:ytdlOption, $videoInfo.episodePageURL, ('{0} "{1}.{2}"' -f '--output', $videoInfo.episodeID, $script:videoContainerFormat)
+
 	$ytdlArgsString = $ytdlArgs -join ' '
 	Write-Debug ($script:msg.ExecCommand -f 'youtube-dl', $script:ytdlPath, $ytdlArgsString)
 
@@ -826,10 +832,10 @@ function Invoke-Ytdl {
 		$startProcessParams.RedirectStandardError = '/dev/zero'
 	}
 	try {
-		$ytdlProcess = Start-Process @startProcessParams
+	$ytdlProcess = Start-Process @startProcessParams
 		$ytdlProcess.Handle | Out-Null
 	} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') ; return }
-	Remove-Variable -Name tmpDir, saveDir, saveFile, ytdlArgs, paths, ytdlArgsString, startProcessParams -ErrorAction SilentlyContinue
+	Remove-Variable -Name tmpDir, saveDir, saveFile, ytdlArgs, paths, ytdlArgsString, pwshRemoveIfExists, ytdlOutFileVar, pwshRenameFile, ytdlExecArg, startProcessParams -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
