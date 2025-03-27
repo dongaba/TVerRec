@@ -812,10 +812,10 @@ function Invoke-Ytdl {
 	}
 
 	$pwshRemoveIfExists = 'Remove-Item -LiteralPath ''{0}'' -Force -ErrorAction SilentlyContinue' -f $videoInfo.filePath
-	$ytdlOutFileVar = '{}'
-	$pwshRenameFile = 'Rename-Item -LiteralPath {0} -NewName ''{1}'' -Force -ErrorAction SilentlyContinue' -f $ytdlOutFileVar, $videoInfo.fileName
+	$ytdlTempOutFile = ('{0}/{1}.{2}' -f $videoInfo.fileDir, $videoInfo.episodeID, $script:videoContainerFormat)
+	$pwshRenameFile = 'Rename-Item -LiteralPath ''{0}'' -NewName ''{1}'' -Force -ErrorAction SilentlyContinue' -f $ytdlTempOutFile, $videoInfo.fileName
 	$ytdlExecArg = 'pwsh -Command \"{0} ; {1}\"' -f $pwshRemoveIfExists, $pwshRenameFile
-	$ytdlArgs += ('{0} "{1}"' -f '--exec', $ytdlExecArg)
+	$ytdlArgs += ('--exec "after_video:{0}"' -f $ytdlExecArg)
 	$ytdlArgs += $script:ytdlOption, $videoInfo.episodePageURL, ('{0} "{1}.{2}"' -f '--output', $videoInfo.episodeID, $script:videoContainerFormat)
 
 	$ytdlArgsString = $ytdlArgs -join ' '
@@ -835,7 +835,7 @@ function Invoke-Ytdl {
 		$ytdlProcess = Start-Process @startProcessParams
 		$ytdlProcess.Handle | Out-Null
 	} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') ; return }
-	Remove-Variable -Name tmpDir, saveDir, saveFile, ytdlArgs, paths, ytdlArgsString, pwshRemoveIfExists, ytdlOutFileVar, pwshRenameFile, ytdlExecArg, startProcessParams -ErrorAction SilentlyContinue
+	Remove-Variable -Name tmpDir, saveDir, saveFile, ytdlArgs, paths, ytdlArgsString, pwshRemoveIfExists, ytdlTempOutFile, pwshRenameFile, ytdlExecArg, startProcessParams -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -1118,12 +1118,12 @@ function Invoke-IntegrityCheck {
 
 	if ($script:simplifiedValidation) {
 		# ffprobeを使った簡易検査
-		$ffprobeArgs = (' -hide_banner -v error -err_detect explode -i "{0}"' -f $videoFilePath)
+		$ffprobeArgs = ('-hide_banner -v error -err_detect explode -i "{0}"' -f $videoFilePath)
 		Write-Debug ($script:msg.ExecCommand -f 'ffprobe', $script:ffprobePath, $ffprobeArgs)
 		$ffmpegProcessExitCode = Invoke-FFmpegProcess -filePath $script:ffprobePath -ffmpegArgs $ffprobeArgs -execName 'ffprobe'
 	} else {
 		# ffmpegを使った完全検査
-		$ffmpegArgs = (' -hide_banner -v error -xerror {0} -i "{1}" -f null - ' -f $decodeOption, $videoFilePath)
+		$ffmpegArgs = ('-hide_banner -v error -xerror {0} -i "{1}" -f null - ' -f $decodeOption, $videoFilePath)
 		Write-Debug ($script:msg.ExecCommand -f 'ffmpeg', $script:ffmpegPath, $ffmpegArgs)
 		$ffmpegProcessExitCode = Invoke-FFmpegProcess -filePath $script:ffmpegPath -ffmpegArgs $ffmpegArgs -execName 'ffmpeg'
 	}
