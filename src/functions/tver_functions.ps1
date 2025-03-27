@@ -515,7 +515,7 @@ function Get-JpIP {
 		$randomIPArray = [System.BitConverter]::GetBytes($randomIPInt)
 		[Array]::Reverse($randomIPArray) ; $jpIP = [System.Net.IPAddress]::new($randomIPArray).ToString()
 		try { $check = Invoke-RestMethod -Uri ('http://ip-api.com/json/{0}?fields=16785410' -f $jpIP) -TimeoutSec $script:timeoutSec }
-		catch { $check.CountryCode = '' ; $check.hosting = $true }
+		catch { $check = [pscustomobject]@{ CountryCode = ''; hosting = $true } }
 	} While (($check.CountryCode -ne 'JP') -or ($check.hosting) )
 	return $jpIP
 	Remove-Variable -Name allCIDR, randomCIDR, startIPArray, startIPInt, endIPArray, endIPInt, randomIPInt, randomIPArray, check -ErrorAction SilentlyContinue
