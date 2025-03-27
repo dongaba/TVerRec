@@ -789,7 +789,6 @@ function Invoke-Ytdl {
 	if ($IsWindows) { foreach ($dir in @($script:downloadWorkDir, $script:downloadBaseDir)) { if ($dir[-1] -eq ':') { $dir += '\\' } } }
 	$tmpDir = ('temp:{0}' -f $script:downloadWorkDir)
 	$saveDir = ('home:{0}' -f $videoInfo.fileDir)
-	$saveFile = $videoInfo.fileName
 
 	$ytdlArgs = @(
 		$script:ytdlBaseArgs
