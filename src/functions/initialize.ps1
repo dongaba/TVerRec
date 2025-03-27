@@ -133,7 +133,7 @@ if ( $myInvocation.ScriptName.Contains('gui')) {
 	# Logo表示
 	if (!$script:guiMode) { Show-Logo }
 	# youtube-dl/ffmpegの最新化チェック
-	try { if (!$script:disableUpdateYoutubedl) { Invoke-ToolUpdateCheck -scriptName 'update_youtube-dl.ps1' -targetName 'youtube-dl' } }
+	try { if (!$script:disableUpdateYoutubedl) { Invoke-ToolUpdateCheck -scriptName 'update_youtube-dl.ps1' -targetName $script:preferredYoutubedl } }
 	catch { Write-Warning ($script:msg.YoutubeDLVersionCheckFailed) }
 	try { if (!$script:disableUpdateFfmpeg) { Invoke-ToolUpdateCheck -scriptName 'update_ffmpeg.ps1' -targetName 'ffmpeg' } }
 	catch { Write-Warning ($script:msg.FfmpegVersionCheckFailed) }
