@@ -209,7 +209,7 @@ function Get-SearchResults {
 				continue
 			}
 			'specialMain' { $linkCollection.specialMainLinks.Add($searchResult.Content.Id) ; continue }
-			default { Write-Warning $script:msg.UnknownContentsType -f $searchResult.Type, $searchResult.Content.Id }
+			default { Write-Warning ($script:msg.UnknownContentsType -f $searchResult.Type, $searchResult.Content.Id) }
 		}
 	}
 	Remove-Variable -Name baseURL, type, keyword, requireData, loginRequired, sid, uid, token, callSearchURL, searchResultsRaw, searchResults, order, sortedSearchResults, searchResult -ErrorAction SilentlyContinue
@@ -246,7 +246,7 @@ function Get-LinkFromTopPage {
 				continue
 			}
 			{ $_ -in @('banner', 'resume', 'favorite') } { continue }
-			default { Write-Warning $script:msg.UnknownComponentType -f $component.Type }
+			default { Write-Warning ($script:msg.UnknownComponentType -f $component.Type) }
 		}
 	}
 	Remove-Variable -Name callSearchBaseURL, callSearchURL, searchResults, component, contents, content -ErrorAction SilentlyContinue
