@@ -811,10 +811,10 @@ function Invoke-Ytdl {
 		if ($script:embedMetatag) { $ytdlArgs += '--embed-metadata' }
 	}
 
-	$pwshRemoveIfExists = 'Remove-Item -Path \"{0}\" -Force -ErrorAction SilentlyContinue' -f $videoInfo.filePath
+	$pwshRemoveIfExists = 'Remove-Item -LiteralPath ''{0}'' -Force -ErrorAction SilentlyContinue' -f $videoInfo.filePath
 	$ytdlOutFileVar = '{}'
-	$pwshRenameFile = 'Rename-Item -Path \"{0}\" -NewName \"{1}\" -Force -ErrorAction SilentlyContinue' -f $ytdlOutFileVar, $videoInfo.fileName
-	$ytdlExecArg = "pwsh -Command '{0} ; {1}'" -f $pwshRemoveIfExists, $pwshRenameFile
+	$pwshRenameFile = 'Rename-Item -LiteralPath {0} -NewName ''{1}'' -Force -ErrorAction SilentlyContinue' -f $ytdlOutFileVar, $videoInfo.fileName
+	$ytdlExecArg = 'pwsh -Command \"{0} ; {1}\"' -f $pwshRemoveIfExists, $pwshRenameFile
 	$ytdlArgs += ('{0} "{1}"' -f '--exec', $ytdlExecArg)
 	$ytdlArgs += $script:ytdlOption, $videoInfo.episodePageURL, ('{0} "{1}.{2}"' -f '--output', $videoInfo.episodeID, $script:videoContainerFormat)
 
