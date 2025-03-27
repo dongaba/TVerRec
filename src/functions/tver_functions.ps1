@@ -427,7 +427,7 @@ function Get-VideoInfo {
 			try {
 				$brightcoveJsURL = ('https://players.brightcove.net/{0}/{1}_default/index.min.js' -f $accountID, $playerID)
 				$brightcovePk = if ((Invoke-RestMethod -Uri $brightcoveJsURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec) -match 'policyKey:"([a-zA-Z0-9_-]*)"') { $matches[1] }
-			} catch { Write-Information ($script:msg.BrightcoveKeyRetrievalFailed -f $_.Exception.Message) ; return }
+			} catch { Write-Debug ($script:msg.BrightcoveKeyRetrievalFailed -f $_.Exception.Message) ; return }
 			# m3u8とmpd URL取得
 			try {
 				$brightcoveURL = ('https://edge.api.brightcove.com/playback/v1/accounts/{0}/videos/{1}' -f $accountID, $videoRefID)
@@ -445,7 +445,7 @@ function Get-VideoInfo {
 				# Dash
 				# $mpdURL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*dash*' })[0].src
 				$isBrightcove = $true
-			} catch { Write-Information ($script:msg.BrightcoveM3U8RetrievalFailed -f $_.Exception.Message) ; $isBrightcove = $false }
+			} catch { Write-Debug ($script:msg.BrightcoveM3U8RetrievalFailed -f $_.Exception.Message) ; $isBrightcove = $false }
 		}
 	} catch { Write-Warning ($script:msg.VideoInfoRetrievalFailed -f $_.Exception.Message) ; return }
 

@@ -811,6 +811,7 @@ function Invoke-Ytdl {
 		if ($script:embedSubtitle) { $ytdlArgs += '--sub-langs all --convert-subs srt --embed-subs' }
 		if ($script:embedMetatag) { $ytdlArgs += '--embed-metadata' }
 	}
+
 	$pwshRemoveIfExists = 'Remove-Item -Path \"{0}\" -Force -ErrorAction SilentlyContinue' -f $videoInfo.filePath
 	$ytdlOutFileVar = '{}'
 	$pwshRenameFile = 'Rename-Item -Path \"{0}\" -NewName \"{1}\" -Force -ErrorAction SilentlyContinue' -f $ytdlOutFileVar, $videoInfo.fileName
@@ -832,7 +833,7 @@ function Invoke-Ytdl {
 		$startProcessParams.RedirectStandardError = '/dev/zero'
 	}
 	try {
-	$ytdlProcess = Start-Process @startProcessParams
+		$ytdlProcess = Start-Process @startProcessParams
 		$ytdlProcess.Handle | Out-Null
 	} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') ; return }
 	Remove-Variable -Name tmpDir, saveDir, saveFile, ytdlArgs, paths, ytdlArgsString, pwshRemoveIfExists, ytdlOutFileVar, pwshRenameFile, ytdlExecArg, startProcessParams -ErrorAction SilentlyContinue

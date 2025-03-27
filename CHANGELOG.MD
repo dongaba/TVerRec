@@ -1,5 +1,18 @@
 # Change Log
 
+## [3.4.1](https://github.com/dongaba/TVerRec/releases/tag/v3.4.1)
+
+### 3.4.1 Added
+
+### 3.4.1 Changed
+
+- Brightcoveからデータが取得できない際のメッセージを抑止
+
+### 3.4.1 Fixed
+
+- ファイル名が長すぎてダウンロードされないことがある問題を修正 #227
+- exFATでフォーマットされているディスクにダウンロードできない不具合を修正 #228
+
 ## [3.4.0](https://github.com/dongaba/TVerRec/releases/tag/v3.4.0)
 
 ### 3.4.0 Added
