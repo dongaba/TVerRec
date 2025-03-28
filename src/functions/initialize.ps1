@@ -18,6 +18,7 @@ Write-Debug "Current Language: $script:uiCulture"
 $script:langFile = Get-Content -Path (Join-Path $script:langDir 'messages.json') | ConvertFrom-Json
 $script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:uiCulture)) { $script:langFile.$script:uiCulture }
 else { $defaultLang = 'en-US'; $script:langFile.$defaultLang }
+Write-Debug "Message Table Loaded: $script:uiCulture"
 
 #----------------------------------------------------------------------
 # 設定ファイル読み込み
@@ -73,10 +74,12 @@ if (Test-Path (Join-Path $script:scriptRoot '../log/updater_update.txt')) {
 	try {
 		Invoke-WebRequest `
 			-Uri 'https://raw.githubusercontent.com/dongaba/TVerRec/master/unix/update_tverrec.sh' `
-			-OutFile (Join-Path $script:scriptRoot '../unix/update_tverrec.sh')
+			-OutFile (Join-Path $script:scriptRoot '../unix/update_tverrec.sh') `
+			-ConnectionTimeoutSeconds $script:timeoutSec
 		Invoke-WebRequest `
 			-Uri 'https://raw.githubusercontent.com/dongaba/TVerRec/master/win/update_tverrec.cmd' `
-			-OutFile (Join-Path $script:scriptRoot '../win/update_tverrec.cmd')
+			-OutFile (Join-Path $script:scriptRoot '../win/update_tverrec.cmd') `
+			-ConnectionTimeoutSeconds $script:timeoutSec
 		Remove-Item (Join-Path $script:scriptRoot '../log/updater_update.txt') -Force | Out-Null
 	} catch { Write-Warning ($script:msg.UpdateUpdaterFailed) }
 }
@@ -146,7 +149,7 @@ Write-Output ($script:msg.JpIPFound -f $script:jpIP)
 $script:commonHttpHeader = @{
 	'x-tver-platform-type' = 'web'
 	'Origin'               = 'https://tver.jp'
-	'Referer'              = 'https://tver.jp'
+	'Referer'              = 'https://tver.jp/'
 	'Forwarded'            = $script:jpIP
 	'Forwarded-For'        = $script:jpIP
 	'X-Forwarded'          = $script:jpIP

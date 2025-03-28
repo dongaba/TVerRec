@@ -43,6 +43,7 @@ Write-Debug "Current Language: $script:uiCulture"
 $script:langFile = Get-Content -Path (Join-Path $script:langDir 'messages.json') | ConvertFrom-Json
 $script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:uiCulture)) { $script:langFile.$script:uiCulture }
 else { $defaultLang = 'en-US'; $script:langFile.$defaultLang }
+Write-Debug "Message Table Loaded: $script:uiCulture"
 
 #----------------------------------------------------------------------
 # 設定ファイル読み込み
@@ -116,7 +117,7 @@ if ($latestVersion -eq $currentVersion) {
 		$tag = (Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec)[0].Tag_Name
 		$downloadURL = ('https://github.com/{0}/releases/download/{1}/{2}' -f $repo, $tag, $fileBeforeRename)
 		$ytdlFileLocation = Join-Path $script:binDir $fileAfterRename
-		Invoke-WebRequest -Uri $downloadURL -Out $ytdlFileLocation
+		Invoke-WebRequest -Uri $downloadURL -Out $ytdlFileLocation -ConnectionTimeoutSeconds $script:timeoutSec
 	} catch { Write-Warning ($script:msg.ToolDownloadFailed -f $script:preferredYoutubedl) ; return }
 	if (!$IsWindows) { (& chmod a+x $ytdlFileLocation) }
 

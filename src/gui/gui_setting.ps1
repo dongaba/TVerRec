@@ -29,6 +29,7 @@ Write-Debug "Current Language: $script:uiCulture"
 $script:langFile = Get-Content -Path (Join-Path $script:langDir 'messages.json') | ConvertFrom-Json
 $script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:uiCulture)) { $script:langFile.$script:uiCulture }
 else { $defaultLang = 'en-US'; $script:langFile.$defaultLang }
+Write-Debug "Message Table Loaded: $script:uiCulture"
 
 #----------------------------------------------------------------------
 # 設定ファイル読み込み

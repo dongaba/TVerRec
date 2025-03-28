@@ -133,7 +133,7 @@ try {
 		'prerelease' { (Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec).where{ ($_.prerelease -eq $true) }[0].zipball_url ; continue }
 		default { (Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec).where{ ($_.prerelease -eq $false) }[0].zipball_url }
 	}
-	Invoke-WebRequest -Uri $zipURL -OutFile (Join-Path $updateTemp 'TVerRecLatest.zip')
+	Invoke-WebRequest -Uri $zipURL -OutFile (Join-Path $updateTemp 'TVerRecLatest.zip') -ConnectionTimeoutSeconds $script:timeoutSec
 } catch { Throw ('❌️ ダウンロードに失敗しました');	exit 1 }
 
 # 最新バージョンがダウンロードできていたら展開

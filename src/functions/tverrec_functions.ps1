@@ -99,7 +99,7 @@ function Invoke-TVerRecUpdateCheck {
 		}
 		# 最新のアップデータを取得
 		$latestUpdater = 'https://raw.githubusercontent.com/dongaba/TVerRec/master/src/functions/update_tverrec.ps1'
-		Invoke-WebRequest -Uri $latestUpdater -OutFile (Join-Path $script:scriptRoot 'functions//update_tverrec.ps1')
+		Invoke-WebRequest -Uri $latestUpdater -OutFile (Join-Path $script:scriptRoot 'functions//update_tverrec.ps1') -ConnectionTimeoutSeconds $script:timeoutSec
 		if (!($IsLinux)) { Unblock-File -LiteralPath (Join-Path $script:scriptRoot 'functions//update_tverrec.ps1') }
 		# アップデート実行
 		Write-Warning ($script:msg.ToolUpdateInstruction -f 'TVerRec', 'update_tverrec')
@@ -715,8 +715,8 @@ function Show-VideoInfo {
 	Write-Output ($script:msg.BroadcastDate -f $videoInfo.broadcastDate)
 	Write-Output ($script:msg.MediaName -f $videoInfo.mediaName)
 	Write-Output ($script:msg.EndDate -f $videoInfo.endTime)
-	Write-Output ($script:msg.IsBrightcove -f $videoInfo.isBrightcove)
-	Write-Output ($script:msg.IsStreaks -f $videoInfo.isStreaks)
+	# Write-Output ($script:msg.IsBrightcove -f $videoInfo.isBrightcove)
+	# Write-Output ($script:msg.IsStreaks -f $videoInfo.isStreaks)
 	Write-Output ($script:msg.EpisodeDetail -f $videoInfo.descriptionText)
 }
 #----------------------------------------------------------------------
@@ -1217,7 +1217,7 @@ function Invoke-StatisticsCheck {
 	if (!$env:PESTER) {
 		$progressPreference = 'silentlyContinue'
 		$statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
-		try { Invoke-WebRequest -Uri ('{0}{1}.svg' -f $statisticsBase, $operation) -Method 'GET' -TimeoutSec $script:timeoutSec | Out-Null }
+		try { Invoke-WebRequest -Uri ('{0}{1}.svg' -f $statisticsBase, $operation) -Method 'GET' -ConnectionTimeoutSeconds 5 | Out-Null }
 		catch { Write-Debug ('Failed to collect count') }
 		finally { $progressPreference = 'Continue' }
 		if ($operation -eq 'search') { return }
@@ -1265,7 +1265,7 @@ function Invoke-StatisticsCheck {
 		}
 		$progressPreference = 'silentlyContinue'
 		try {
-			$response = Invoke-RestMethod -Uri ('{0}?{1}&{2}' -f $gaURL, $gaKey, $gaID) -Method 'POST' -Headers $gaHeaders -Body $gaBody -TimeoutSec $script:timeoutSec
+			$response = Invoke-RestMethod -Uri ('{0}?{1}&{2}' -f $gaURL, $gaKey, $gaID) -Method 'POST' -Headers $gaHeaders -Body $gaBody -TimeoutSec 5	#$script:timeoutSec
 			if ($DebugPreference -eq 'Continue') { Write-Debug ('GA Response: {0}' -f $response) }
 		} catch { Write-Debug ('Failed to collect statistics') }
 		finally { $progressPreference = 'Continue' }
