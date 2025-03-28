@@ -209,7 +209,7 @@ function Get-SearchResults {
 				continue
 			}
 			'specialMain' { $linkCollection.specialMainLinks.Add($searchResult.Content.Id) ; continue }
-			default { Write-Warning $script:msg.UnknownContentsType -f $searchResult.Type, $searchResult.Content.Id }
+			default { Write-Warning ($script:msg.UnknownContentsType -f $searchResult.Type, $searchResult.Content.Id) }
 		}
 	}
 	Remove-Variable -Name baseURL, type, keyword, requireData, loginRequired, sid, uid, token, callSearchURL, searchResultsRaw, searchResults, order, sortedSearchResults, searchResult -ErrorAction SilentlyContinue
@@ -246,7 +246,7 @@ function Get-LinkFromTopPage {
 				continue
 			}
 			{ $_ -in @('banner', 'resume', 'favorite') } { continue }
-			default { Write-Warning $script:msg.UnknownComponentType -f $component.Type }
+			default { Write-Warning ($script:msg.UnknownComponentType -f $component.Type) }
 		}
 	}
 	Remove-Variable -Name callSearchBaseURL, callSearchURL, searchResults, component, contents, content -ErrorAction SilentlyContinue
@@ -377,76 +377,83 @@ function Get-VideoInfo {
 		$versionNum = $response.Result.Episode.Content.version
 		$tverVideoInfoBaseURL = 'https://statics.tver.jp/content/episode/'
 		$tverVideoInfoURL = ('{0}{1}.json?v={2}' -f $tverVideoInfoBaseURL, $episodeID, $versionNum)
-		$videoInfo = Invoke-RestMethod -Uri $tverVideoInfoURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec
+		$httpParams = @{
+			Uri        = $tverVideoInfoURL
+			Method     = 'GET'
+			Headers    = $script:commonHttpHeader
+			TimeoutSec = $script:timeoutSec
+		}
+		if ($script:proxyUrl) { $httpParams.Proxy = $script:proxyUrl }
+		$videoInfo = Invoke-RestMethod @httpParams
 		Write-Debug $videoInfo
 		$descriptionText = (Get-NarrowChars ($videoInfo.Description).Replace('&amp;', '&')).Trim()
 		$videoEpisodeNum = (Get-NarrowChars ($videoInfo.No)).Trim()
 		# Streaks情報取得
 		if ($videoInfo.PSObject.Properties.Name -contains 'streaks') {
-			$streaksRefID = $videoInfo.streaks.videoRefID
-			# $streaksMediaID = $videoInfo.streaks.mediaID
-			$streaksProjectID = $videoInfo.streaks.projectID
-			# Streaksキー取得
-			try {
-				$adTemplateJsonURL = ('https://player.tver.jp/player/ad_template.json')
-				$ati = (Invoke-RestMethod -Uri $adTemplateJsonURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec).$streaksProjectID.pc
-			} catch { Write-Warning ($script:msg.StreaksKeyRetrievalFailed -f $_.Exception.Message) ; return }
-			# m3u8 URL取得
-			try {
-				$streaksInfoBaseURL = 'https://playback.api.streaks.jp/v1/projects/{0}/medias/ref:{1}?ati={2}' -f $streaksProjectID, $streaksRefID, $ati
-				$httpHeader = @{
-					'Origin'           = 'https://tver.jp'
-					'Referer'          = 'https://tver.jp/'
-					'Forwarded'        = $script:jpIP
-					'Forwarded-For'    = $script:jpIP
-					'X-Forwarded'      = $script:jpIP
-					'X-Forwarded-For'  = $script:jpIP
-					'X-Originating-IP' = $script:jpIP
-				}
-				$params = @{
-					Uri        = $streaksInfoBaseURL
-					Method     = 'GET'
-					Headers    = $httpHeader
-					TimeoutSec = $script:timeoutSec
-				}
-				if ($script:proxyUrl) { $params.Proxy = $script:proxyUrl }
-				if ((Test-Path Variable:Script:proxyAuthRequired) -and ($script:proxyAuthRequired)) {
-					$proxyCredential = Get-Credential -Message 'Please enter your username and password for the proxy server.'
-					$params.ProxyCredential = $proxyCredential
-				}
-				$m3u8URL = (Invoke-RestMethod @params).sources.src
-				$isStreaks = $true
-			} catch { Write-Warning ($script:msg.StreaksM3U8RetrievalFailed -f $_.Exception.Message) ; return }
-		} else { $m3u8URL = ''; $isStreaks = $false }
-		# Brightcove情報取得
-		if ($videoInfo.PSObject.Properties.Name -contains 'video') {
-			$accountID = $videoInfo.video.accountID
-			$videoRefID = if ($videoInfo.video.PSObject.Properties.Name -contains 'videoRefID') { ('ref%3A{0}' -f $videoInfo.video.videoRefID) } else { $videoInfo.video.videoID }
-			$playerID = $videoInfo.video.playerID
-			# Brightcoveキー取得
-			try {
-				$brightcoveJsURL = ('https://players.brightcove.net/{0}/{1}_default/index.min.js' -f $accountID, $playerID)
-				$brightcovePk = if ((Invoke-RestMethod -Uri $brightcoveJsURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec) -match 'policyKey:"([a-zA-Z0-9_-]*)"') { $matches[1] }
-			} catch { Write-Information ($script:msg.BrightcoveKeyRetrievalFailed -f $_.Exception.Message) ; return }
-			# m3u8とmpd URL取得
-			try {
-				$brightcoveURL = ('https://edge.api.brightcove.com/playback/v1/accounts/{0}/videos/{1}' -f $accountID, $videoRefID)
-				$httpHeader = @{
-					'Accept'           = ('application/json;pk={0}' -f $brightcovePk)
-					'Forwarded'        = $script:jpIP
-					'Forwarded-For'    = $script:jpIP
-					'X-Forwarded'      = $script:jpIP
-					'X-Forwarded-For'  = $script:jpIP
-					'X-Originating-IP' = $script:jpIP
-				}
-				$response = Invoke-RestMethod -Uri $brightcoveURL -Method 'GET' -Headers $httpHeader -TimeoutSec $script:timeoutSec
-				# HLS
-				$m3u8URL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*mpeg*' }).where({ $_.ext_x_version -eq 4 })[0].src
-				# Dash
-				# $mpdURL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*dash*' })[0].src
-				$isBrightcove = $true
-			} catch { Write-Information ($script:msg.BrightcoveM3U8RetrievalFailed -f $_.Exception.Message) ; $isBrightcove = $false }
-		}
+			# $isStreaks = $true
+			# $streaksRefID = $videoInfo.streaks.videoRefID
+			# # $streaksMediaID = $videoInfo.streaks.mediaID
+			# $streaksProjectID = $videoInfo.streaks.projectID
+			# # Streaksキー取得
+			# try {
+			# 	$adTemplateJsonURL = ('https://player.tver.jp/player/ad_template.json')
+			# 	$ati = (Invoke-RestMethod -Uri $adTemplateJsonURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec).$streaksProjectID.pc
+			# } catch { Write-Warning ($script:msg.StreaksKeyRetrievalFailed -f $_.Exception.Message) ; return }
+			# # m3u8 URL取得
+			# try {
+			# 	$streaksInfoBaseURL = 'https://playback.api.streaks.jp/v1/projects/{0}/medias/ref:{1}?ati={2}' -f $streaksProjectID, $streaksRefID, $ati
+			# 	$httpHeader = @{
+			# 		'Origin'           = 'https://tver.jp'
+			# 		'Referer'          = 'https://tver.jp/'
+			# 		'Forwarded'        = $script:jpIP
+			# 		'Forwarded-For'    = $script:jpIP
+			# 		'X-Forwarded'      = $script:jpIP
+			# 		'X-Forwarded-For'  = $script:jpIP
+			# 		'X-Originating-IP' = $script:jpIP
+			# 	}
+			# 	$httpParams = @{
+			# 		Uri        = $streaksInfoBaseURL
+			# 		Method     = 'GET'
+			# 		Headers    = $httpHeader
+			# 		TimeoutSec = $script:timeoutSec
+			# 	}
+			# 	if ($script:proxyUrl) { $httpParams.Proxy = $script:proxyUrl }
+			# 	if ((Test-Path Variable:Script:proxyAuthRequired) -and ($script:proxyAuthRequired)) {
+			# 		$proxyCredential = Get-Credential -Message 'Please enter your username and password for the proxy server.'
+			# 		$httpParams.ProxyCredential = $proxyCredential
+			# 	}
+			# 	$m3u8URL = (Invoke-RestMethod @httpParams).sources.src
+			# } catch { Write-Warning ($script:msg.StreaksM3U8RetrievalFailed -f $_.Exception.Message) ; $m3u8URL = '' }
+		}		# else { $m3u8URL = '' }		#; $isStreaks = $false }
+		# # Brightcove情報取得
+		# if ($videoInfo.PSObject.Properties.Name -contains 'video') {
+		# 	$accountID = $videoInfo.video.accountID
+		# 	$videoRefID = if ($videoInfo.video.PSObject.Properties.Name -contains 'videoRefID') { ('ref%3A{0}' -f $videoInfo.video.videoRefID) } else { $videoInfo.video.videoID }
+		# 	$playerID = $videoInfo.video.playerID
+		# 	# Brightcoveキー取得
+		# 	try {
+		# 		$brightcoveJsURL = ('https://players.brightcove.net/{0}/{1}_default/index.min.js' -f $accountID, $playerID)
+		# 		$brightcovePk = if ((Invoke-RestMethod -Uri $brightcoveJsURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec) -match 'policyKey:"([a-zA-Z0-9_-]*)"') { $matches[1] }
+		# 	} catch { Write-Debug ($script:msg.BrightcoveKeyRetrievalFailed -f $_.Exception.Message) ; return }
+		# 	# m3u8とmpd URL取得
+		# 	try {
+		# 		$brightcoveURL = ('https://edge.api.brightcove.com/playback/v1/accounts/{0}/videos/{1}' -f $accountID, $videoRefID)
+		# 		$httpHeader = @{
+		# 			'Accept'           = ('application/json;pk={0}' -f $brightcovePk)
+		# 			'Forwarded'        = $script:jpIP
+		# 			'Forwarded-For'    = $script:jpIP
+		# 			'X-Forwarded'      = $script:jpIP
+		# 			'X-Forwarded-For'  = $script:jpIP
+		# 			'X-Originating-IP' = $script:jpIP
+		# 		}
+		# 		$response = Invoke-RestMethod -Uri $brightcoveURL -Method 'GET' -Headers $httpHeader -TimeoutSec $script:timeoutSec
+		# 		# HLS
+		# 		$m3u8URL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*mpeg*' }).where({ $_.ext_x_version -eq 4 })[0].src
+		# 		# Dash
+		# 		# $mpdURL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*dash*' })[0].src
+		# 		$isBrightcove = $true
+		# 	} catch { Write-Debug ($script:msg.BrightcoveM3U8RetrievalFailed -f $_.Exception.Message) ; $isBrightcove = $false }
+		# }
 	} catch { Write-Warning ($script:msg.VideoInfoRetrievalFailed -f $_.Exception.Message) ; return }
 
 	# 「《」と「》」で挟まれた文字を除去
@@ -489,10 +496,10 @@ function Get-VideoInfo {
 		versionNum      = $versionNum
 		videoInfoURL    = $tverVideoInfoURL
 		descriptionText = $descriptionText
-		m3u8URL         = $m3u8URL
+		# m3u8URL         = $m3u8URL
 		# mpdURL          = $mpdURL
-		isStreaks       = $isStreaks
-		isBrightcove    = $isBrightcove
+		# isStreaks       = $isStreaks
+		# isBrightcove    = $isBrightcove
 	}
 	Remove-Variable -Name episodeID, tverVideoInfoBaseURL, tverVideoInfoURL, response, videoSeries, videoSeriesID, videoSeriesPageURL, videoSeason, videoSeasonID, episodeName, videoEpisodeID, videoEpisodePageURL, mediaName, providerName, broadcastDate, endTime, versionNum, videoInfo, descriptionText, videoEpisodeNum, streaksRefID, streaksProjectID, ati, brightcoveJsURL, brightcovePk, brightcoveURL, accountID, videoRefID, playerID, httpHeader, response, m3u8URL, isStreaks, isBrightcove -ErrorAction SilentlyContinue
 }
@@ -515,7 +522,7 @@ function Get-JpIP {
 		$randomIPArray = [System.BitConverter]::GetBytes($randomIPInt)
 		[Array]::Reverse($randomIPArray) ; $jpIP = [System.Net.IPAddress]::new($randomIPArray).ToString()
 		try { $check = Invoke-RestMethod -Uri ('http://ip-api.com/json/{0}?fields=16785410' -f $jpIP) -TimeoutSec $script:timeoutSec }
-		catch { $check.CountryCode = '' ; $check.hosting = $true }
+		catch { $check = [pscustomobject]@{ CountryCode = ''; hosting = $true } }
 	} While (($check.CountryCode -ne 'JP') -or ($check.hosting) )
 	return $jpIP
 	Remove-Variable -Name allCIDR, randomCIDR, startIPArray, startIPInt, endIPArray, endIPInt, randomIPInt, randomIPArray, check -ErrorAction SilentlyContinue

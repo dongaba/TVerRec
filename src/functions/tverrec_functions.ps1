@@ -68,8 +68,8 @@ function Invoke-TVerRecUpdateCheck {
 	$releases = ('https://api.github.com/repos/{0}/releases' -f $repo)
 	try {
 		$appReleases = (Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec).where{ !$_.prerelease }
-		if (!$appReleases) { Write-Warning $script:msg.ToolLatestNotIdentified -f 'TVerRec' ; return }
-	} catch { Write-Warning $script:msg.ToolLatestNotRetrieved -f 'TVerRec' ; return }
+		if (!$appReleases) { Write-Warning ($script:msg.ToolLatestNotIdentified -f 'TVerRec') ; return }
+	} catch { Write-Warning ($script:msg.ToolLatestNotRetrieved -f 'TVerRec') ; return }
 	finally { $progressPreference = 'Continue' }
 	# GitHub側最新バージョンの整形
 	$latestVersion = $appReleases[0].Tag_Name.Trim('v', ' ')	# v1.2.3 → 1.2.3
@@ -99,7 +99,7 @@ function Invoke-TVerRecUpdateCheck {
 		}
 		# 最新のアップデータを取得
 		$latestUpdater = 'https://raw.githubusercontent.com/dongaba/TVerRec/master/src/functions/update_tverrec.ps1'
-		Invoke-WebRequest -Uri $latestUpdater -OutFile (Join-Path $script:scriptRoot 'functions//update_tverrec.ps1')
+		Invoke-WebRequest -Uri $latestUpdater -OutFile (Join-Path $script:scriptRoot 'functions//update_tverrec.ps1') -ConnectionTimeoutSeconds $script:timeoutSec
 		if (!($IsLinux)) { Unblock-File -LiteralPath (Join-Path $script:scriptRoot 'functions//update_tverrec.ps1') }
 		# アップデート実行
 		Write-Warning ($script:msg.ToolUpdateInstruction -f 'TVerRec', 'update_tverrec')
@@ -508,15 +508,14 @@ function Invoke-VideoDownload {
 
 		if ($script:downloadWhenEpisodeIdChanged) {
 			if (($histMatch.Count -ne 0) -or (Test-Path $videoInfo.filePath)) {
-				# Write-Output ('　💡 エピソードIDが変更になりました。ダウンロードするファイルをダウンロード履歴に追加します')
-				# $videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
-				# $newVideo = Format-HistoryRecord ([Ref]$videoInfo)
 				$ignoreTitles = @(Read-IgnoreList)
 				foreach ($ignoreTitle in $ignoreTitles) {
 					if (($videoInfo.fileName -like ('*{0}*' -f $ignoreTitle)) -or ($videoInfo.seriesName -like ('*{0}*' -f $ignoreTitle))) {
 						# エピソードIDが変更になったがダウンロード対象外リストと合致	→無視する
 						Update-IgnoreList $ignoreTitle ; Write-Warning ($script:msg.IgnoreEpisodeAdded)
-						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0' ; $videoInfo.fileName = '-- IGNORED --' ; $videoInfo.fileRelPath = '-- IGNORED --'
+						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
+						$videoInfo.fileName = '-- IGNORED --'
+						$videoInfo.fileRelPath = '-- IGNORED --'
 						$newVideo = Format-HistoryRecord ([Ref]$videoInfo) ; $skipDownload = $true
 						break
 					}
@@ -533,7 +532,9 @@ function Invoke-VideoDownload {
 				foreach ($ignoreTitle in $ignoreTitles) {
 					if (($videoInfo.fileName -like ('*{0}*' -f $ignoreTitle)) -or ($videoInfo.seriesName -like ('*{0}*' -f $ignoreTitle))) {
 						Update-IgnoreList $ignoreTitle ; Write-Warning ($script:msg.IgnoreEpisodeAdded)
-						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0' ; $videoInfo.fileName = '-- IGNORED --' ; $videoInfo.fileRelPath = '-- IGNORED --'
+						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
+						$videoInfo.fileName = '-- IGNORED --'
+						$videoInfo.fileRelPath = '-- IGNORED --'
 						$newVideo = Format-HistoryRecord ([Ref]$videoInfo) ; $skipDownload = $true
 						break
 					}
@@ -592,21 +593,15 @@ function Invoke-VideoDownload {
 		catch { Write-Warning ($script:msg.CreateEpisodeDirFailed) ; continue }
 	}
 	# youtube-dl起動
-	# if ($videoInfo.isStreaks -and $script:useFfmpegDownload) {
-	# 	try { Invoke-FfmpegDownload ([Ref]$videoInfo) }
-	# 	catch { Write-Warning ($script:msg.InvokeFfmpegDownloadFailed) }
-	# } else {
-		if ($script:ytdlRandomIp -and $script:proxyUrl) {
-			Write-Output ($script:msg.MediumBoldBorder)
-			Write-Output ($script:msg.NotifyYtdlOptions1)
-			Write-Output ($script:msg.NotifyYtdlOptions2)
-			Write-Output ($script:msg.NotifyYtdlOptions3)
-			Write-Output ($script:msg.MediumBoldBorder)
-		}
-		$script:ytdlRandomIp = $false
-		try { Invoke-Ytdl ([Ref]$videoInfo) }
-		catch { Write-Warning ($script:msg.InvokeYtdlFailed) }
-	# }
+	if ($script:ytdlRandomIp -and $script:proxyUrl) {
+		Write-Output ($script:msg.MediumBoldBorder)
+		Write-Output ($script:msg.NotifyYtdlOptions1)
+		Write-Output ($script:msg.NotifyYtdlOptions2)
+		Write-Output ($script:msg.NotifyYtdlOptions3)
+		Write-Output ($script:msg.MediumBoldBorder)
+	}
+	try { Invoke-Ytdl ([Ref]$videoInfo) }
+	catch { Write-Warning ($script:msg.InvokeYtdlFailed) }
 	# 5秒待機
 	Start-Sleep -Seconds 5
 	Remove-Variable -Name keyword, videoLink, force, newVideo, skipDownload, episodeID, histFileData, histMatch, ignoreTitles, ignoreTitle -ErrorAction SilentlyContinue
@@ -715,8 +710,8 @@ function Show-VideoInfo {
 	Write-Output ($script:msg.BroadcastDate -f $videoInfo.broadcastDate)
 	Write-Output ($script:msg.MediaName -f $videoInfo.mediaName)
 	Write-Output ($script:msg.EndDate -f $videoInfo.endTime)
-	Write-Output ($script:msg.IsBrightcove -f $videoInfo.isBrightcove)
-	Write-Output ($script:msg.IsStreaks -f $videoInfo.isStreaks)
+	# Write-Output ($script:msg.IsBrightcove -f $videoInfo.isBrightcove)
+	# Write-Output ($script:msg.IsStreaks -f $videoInfo.isStreaks)
 	Write-Output ($script:msg.EpisodeDetail -f $videoInfo.descriptionText)
 }
 #----------------------------------------------------------------------
@@ -789,7 +784,6 @@ function Invoke-Ytdl {
 	if ($IsWindows) { foreach ($dir in @($script:downloadWorkDir, $script:downloadBaseDir)) { if ($dir[-1] -eq ':') { $dir += '\\' } } }
 	$tmpDir = ('temp:{0}' -f $script:downloadWorkDir)
 	$saveDir = ('home:{0}' -f $videoInfo.fileDir)
-	$saveFile = $videoInfo.fileName
 
 	$ytdlArgs = @(
 		$script:ytdlBaseArgs
@@ -799,8 +793,8 @@ function Invoke-Ytdl {
 		('{0} "{1}"' -f '--paths', $tmpDir)
 		('{0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
 	)
-	if ($script:ytdlRandomIp) { $ytdlArgs += ('{0} "{1}/32"' -f '--xff', $script:jpIP) }
 	if ($script:proxyUrl) { $ytdlArgs += ('{0} {1}' -f '--geo-verification-proxy', $script:proxyUrl) }
+	if (($script:ytdlRandomIp) -and (!$script:proxyUrl)) { $ytdlArgs += ('{0} "{1}/32"' -f '--xff', $script:jpIP) }
 	if ($script:rateLimit -notin @(0, '')) {
 		$rateLimit = [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8)
 		$ytdlArgs += ('{0} {1}M' -f '--limit-rate', $rateLimit)
@@ -811,7 +805,14 @@ function Invoke-Ytdl {
 		if ($script:embedSubtitle) { $ytdlArgs += '--sub-langs all --convert-subs srt --embed-subs' }
 		if ($script:embedMetatag) { $ytdlArgs += '--embed-metadata' }
 	}
-	$ytdlArgs += $script:ytdlOption, $videoInfo.episodePageURL, ('{0} "{1}"' -f '--output', $saveFile)
+
+	$pwshRemoveIfExists = 'Remove-Item -LiteralPath ''{0}'' -Force -ErrorAction SilentlyContinue' -f $videoInfo.filePath
+	$ytdlTempOutFile = ('{0}/{1}.{2}' -f $videoInfo.fileDir, $videoInfo.episodeID, $script:videoContainerFormat)
+	$pwshRenameFile = 'Rename-Item -LiteralPath ''{0}'' -NewName ''{1}'' -Force -ErrorAction SilentlyContinue' -f $ytdlTempOutFile, $videoInfo.fileName
+	$ytdlExecArg = 'pwsh -Command \"{0} ; {1}\"' -f $pwshRemoveIfExists, $pwshRenameFile
+	$ytdlArgs += ('--exec "after_video:{0}"' -f $ytdlExecArg)
+	$ytdlArgs += $script:ytdlOption, $videoInfo.episodePageURL, ('{0} "{1}.{2}"' -f '--output', $videoInfo.episodeID, $script:videoContainerFormat)
+
 	$ytdlArgsString = $ytdlArgs -join ' '
 	Write-Debug ($script:msg.ExecCommand -f 'youtube-dl', $script:ytdlPath, $ytdlArgsString)
 
@@ -829,7 +830,7 @@ function Invoke-Ytdl {
 		$ytdlProcess = Start-Process @startProcessParams
 		$ytdlProcess.Handle | Out-Null
 	} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') ; return }
-	Remove-Variable -Name tmpDir, saveDir, saveFile, ytdlArgs, paths, ytdlArgsString, startProcessParams -ErrorAction SilentlyContinue
+	Remove-Variable -Name tmpDir, saveDir, saveFile, ytdlArgs, paths, ytdlArgsString, pwshRemoveIfExists, ytdlTempOutFile, pwshRenameFile, ytdlExecArg, startProcessParams -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -852,8 +853,8 @@ function Invoke-NonTverYtdl {
 		('{0} "{1}"' -f '--paths', $saveDir)
 		('{0} "{1}"' -f '--paths', $tmpDir)
 		('{0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
-		$(if ($script:ytdlRandomIp) { "--xff $script:jpIP/32" })
 		$(if ($script:proxyUrl) { "--geo-verification-proxy $script:proxyUrl" })
+		$(if (($script:ytdlRandomIp) -and (!$script:proxyUrl)) { "--xff $script:jpIP/32" })
 		$(if ($script:rateLimit -notin @(0, '')) {
 				$rateLimit = [math]::Ceiling([int]$script:rateLimit / $script:parallelDownloadNumPerFile / 8)
 				"--limit-rate ${rateLimit}M"
@@ -1211,7 +1212,7 @@ function Invoke-StatisticsCheck {
 	if (!$env:PESTER) {
 		$progressPreference = 'silentlyContinue'
 		$statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
-		try { Invoke-WebRequest -Uri ('{0}{1}.svg' -f $statisticsBase, $operation) -Method 'GET' -TimeoutSec $script:timeoutSec | Out-Null }
+		try { Invoke-WebRequest -Uri ('{0}{1}.svg' -f $statisticsBase, $operation) -Method 'GET' -ConnectionTimeoutSeconds 5 | Out-Null }
 		catch { Write-Debug ('Failed to collect count') }
 		finally { $progressPreference = 'Continue' }
 		if ($operation -eq 'search') { return }
@@ -1259,7 +1260,7 @@ function Invoke-StatisticsCheck {
 		}
 		$progressPreference = 'silentlyContinue'
 		try {
-			$response = Invoke-RestMethod -Uri ('{0}?{1}&{2}' -f $gaURL, $gaKey, $gaID) -Method 'POST' -Headers $gaHeaders -Body $gaBody -TimeoutSec $script:timeoutSec
+			$response = Invoke-RestMethod -Uri ('{0}?{1}&{2}' -f $gaURL, $gaKey, $gaID) -Method 'POST' -Headers $gaHeaders -Body $gaBody -TimeoutSec 5	#$script:timeoutSec
 			if ($DebugPreference -eq 'Continue') { Write-Debug ('GA Response: {0}' -f $response) }
 		} catch { Write-Debug ('Failed to collect statistics') }
 		finally { $progressPreference = 'Continue' }

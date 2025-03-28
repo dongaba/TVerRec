@@ -43,6 +43,7 @@ Write-Debug "Current Language: $script:uiCulture"
 $script:langFile = Get-Content -Path (Join-Path $script:langDir 'messages.json') | ConvertFrom-Json
 $script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:uiCulture)) { $script:langFile.$script:uiCulture }
 else { $defaultLang = 'en-US'; $script:langFile.$defaultLang }
+Write-Debug "Message Table Loaded: $script:uiCulture"
 
 #----------------------------------------------------------------------
 # 設定ファイル読み込み
@@ -117,7 +118,7 @@ switch ($true) {
 			$downloadURL = $matches[0]
 			# ダウンロード
 			Write-Output ($script:msg.ToolDownload -f 'ffmpeg', $arch)
-			try { Invoke-WebRequest -Uri $downloadURL -OutFile (Join-Path $script:binDir 'ffmpeg.zip') }
+			try { Invoke-WebRequest -Uri $downloadURL -OutFile (Join-Path $script:binDir 'ffmpeg.zip') -ConnectionTimeoutSeconds $script:timeoutSec }
 			catch { Write-Warning ($script:msg.ToolDownloadFailed -f 'ffmpeg') ; return }
 			# 展開
 			Write-Output ($script:msg.ToolExtract -f 'ffmpeg')
@@ -188,7 +189,7 @@ switch ($true) {
 			$downloadURL = $matches[0]
 			# ダウンロード
 			Write-Output ($script:msg.ToolDownload -f 'ffmpeg', $arch )
-			try { Invoke-WebRequest -Uri $downloadURL -OutFile (Join-Path $script:binDir 'ffmpeg.tar.xz') }
+			try { Invoke-WebRequest -Uri $downloadURL -OutFile (Join-Path $script:binDir 'ffmpeg.tar.xz') -ConnectionTimeoutSeconds $script:timeoutSec }
 			catch { Write-Warning ($script:msg.ToolDownloadFailed -f 'ffmpeg') ; return }
 			# 展開
 			Write-Output ($script:msg.ToolExtract -f 'ffmpeg')
@@ -234,7 +235,7 @@ switch ($true) {
 		$latestVersion = ''
 		$latestBuild = ''
 		try {
-			$ffmpegReleaseInfo = (Invoke-WebRequest -Uri $ffmpegReleases).links.href[0]
+			$ffmpegReleaseInfo = (Invoke-WebRequest -Uri $ffmpegReleases -ConnectionTimeoutSeconds $script:timeoutSec).links.href[0]
 			if ($ffmpegReleaseInfo -cmatch ('{0}/(\d+)_(.+)' -f $arch)) { $latestBuild = $matches[1] ; $latestVersion = $matches[2] }
 		} catch { Write-Warning ($script:msg.ToolLatestNotIdentified -f 'ffmpeg') ; return }
 		if ($currentVersion -eq $latestVersion) {
@@ -253,7 +254,7 @@ switch ($true) {
 		Write-Output ($script:msg.ToolDownload -f 'ffmpeg', 'Mac')
 		try {
 			$uriBase = 'https://ffmpeg.martin-riedl.de/'
-			$uriBasePage = Invoke-WebRequest -Uri $uriBase
+			$uriBasePage = Invoke-WebRequest -Uri $uriBase -ConnectionTimeoutSeconds $script:timeoutSec
 			foreach ($file in $downloadFiles) {
 				$downloadLink = $uriBasePage.links.where({
 					$_.href -match $arch `
@@ -261,7 +262,7 @@ switch ($true) {
 						-and $_.outerHTML -match $file `
 						-and $_.href -notmatch '.sha256'
 				}) | Select-Object -First 1
-				Invoke-WebRequest -Uri ('{0}{1}' -f $uriBase, $downloadLink.href) -OutFile (Join-Path $script:binDir $file)
+				Invoke-WebRequest -Uri ('{0}{1}' -f $uriBase, $downloadLink.href) -OutFile (Join-Path $script:binDir $file) -ConnectionTimeoutSeconds $script:timeoutSec
 			}
 		} catch { Write-Warning ($script:msg.ToolDownloadFailed -f 'ffmpeg') ; return }
 		# 展開
