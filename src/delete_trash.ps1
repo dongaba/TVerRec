@@ -66,6 +66,13 @@ Remove-Files `
 	-DelPeriod 0
 
 # ダウンロード先
+# リネームに失敗したファイルを削除
+Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse -File -Filter 'ep*.*' |
+	ForEach-Object {
+		if ($_.BaseName -cmatch '^ep[a-z0-9]{8}$' -and ($_.Extension -eq '.mp4' -or $_.Extension -eq '.ts')) {
+			Remove-Item -LiteralPath $_.FullName -Force
+		}
+	}
 if ($script:cleanupDownloadBaseDir) {
 	$toastUpdateParams.Title = $script:downloadBaseDir
 	$toastUpdateParams.Rate = [Float]( 3 / $totalCleanupSteps )
