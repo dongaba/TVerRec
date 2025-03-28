@@ -43,6 +43,7 @@ Write-Debug "Current Language: $script:uiCulture"
 $script:langFile = Get-Content -Path (Join-Path $script:langDir 'messages.json') | ConvertFrom-Json
 $script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:uiCulture)) { $script:langFile.$script:uiCulture }
 else { $defaultLang = 'en-US'; $script:langFile.$defaultLang }
+Write-Debug "Message Table Loaded: $script:uiCulture"
 
 #----------------------------------------------------------------------
 # 設定ファイル読み込み
@@ -82,7 +83,7 @@ $lookupTable = @{
 	'yt-dlp-nightly' = 'yt-dlp/yt-dlp-nightly-builds'
 }
 if ($lookupTable.ContainsKey($script:preferredYoutubedl)) { $repo = $lookupTable[$script:preferredYoutubedl] }
-else { Write-Warning ($script:msg.ToolInvalidSource -f 'youtube-dl') ; return }
+else { Write-Warning ($script:msg.ToolInvalidSource -f $script:preferredYoutubedl) ; return }
 $releases = ('https://api.github.com/repos/{0}/releases' -f $repo)
 
 # youtube-dlのバージョン取得
@@ -93,37 +94,37 @@ try {
 
 # youtube-dlの最新バージョン取得
 try { $latestVersion = (Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec)[0].Tag_Name }
-catch { Write-Warning ($script:msg.ToolLatestNotIdentified -f 'youtube-dl') ; return }
+catch { Write-Warning ($script:msg.ToolLatestNotIdentified -f $script:preferredYoutubedl) ; return }
 
 # youtube-dlのダウンロード
 if ($latestVersion -eq $currentVersion) {
 	Write-Output ('')
-	Write-Output ($script:msg.ToolUpToDate -f 'youtube-dl')
+	Write-Output ($script:msg.ToolUpToDate -f $script:preferredYoutubedl)
 	Write-Output ($script:msg.ToolLocalVersion -f $currentVersion)
 	Write-Output ($script:msg.ToolRemoteVersion -f $latestVersion)
 } else {
 	Write-Output ('')
-	Write-Warning ($script:msg.ToolOutdated -f 'youtube-dl')
+	Write-Warning ($script:msg.ToolOutdated -f $script:preferredYoutubedl)
 	Write-Output ($script:msg.ToolLocalVersion -f $currentVersion)
 	Write-Output ($script:msg.ToolRemoteVersion -f $latestVersion)
 	if ($script:preferredYoutubedl -eq 'yt-dlp-nightly') { $downloadFileName = 'yt-dlp' }
 	else { $downloadFileName = $script:preferredYoutubedl }
 	if (!$IsWindows) { $fileBeforeRename = $downloadFileName ; $fileAfterRename = 'yt-dlp' }
 	else { $fileBeforeRename = ('{0}.exe' -f $downloadFileName) ; $fileAfterRename = 'yt-dlp.exe' }
-	Write-Output ($script:msg.ToolDownload -f 'youtube-dl', [String]([System.Runtime.InteropServices.RuntimeInformation]::OSDescription).split()[0..1])
+	Write-Output ($script:msg.ToolDownload -f $script:preferredYoutubedl, [String]([System.Runtime.InteropServices.RuntimeInformation]::OSDescription).split()[0..1])
 	try {
 		#ダウンロード
 		$tag = (Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec)[0].Tag_Name
 		$downloadURL = ('https://github.com/{0}/releases/download/{1}/{2}' -f $repo, $tag, $fileBeforeRename)
 		$ytdlFileLocation = Join-Path $script:binDir $fileAfterRename
-		Invoke-WebRequest -Uri $downloadURL -Out $ytdlFileLocation
-	} catch { Write-Warning ($script:msg.ToolDownloadFailed -f 'youtube-dl') ; return }
+		Invoke-WebRequest -Uri $downloadURL -Out $ytdlFileLocation -ConnectionTimeoutSeconds $script:timeoutSec
+	} catch { Write-Warning ($script:msg.ToolDownloadFailed -f $script:preferredYoutubedl) ; return }
 	if (!$IsWindows) { (& chmod a+x $ytdlFileLocation) }
 
 	# バージョンチェック
 	try {
 		$currentVersion = (& $ytdlPath --version)
-		Write-Output ($script:msg.ToolUpdated -f 'youtube-dl', $currentVersion)
+		Write-Output ($script:msg.ToolUpdated -f $script:preferredYoutubedl, $currentVersion)
 	} catch { Write-Warning $script:msg.ToolVersionCheckFailed ; return }
 
 }
