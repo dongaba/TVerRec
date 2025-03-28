@@ -508,15 +508,14 @@ function Invoke-VideoDownload {
 
 		if ($script:downloadWhenEpisodeIdChanged) {
 			if (($histMatch.Count -ne 0) -or (Test-Path $videoInfo.filePath)) {
-				# Write-Output ('　💡 エピソードIDが変更になりました。ダウンロードするファイルをダウンロード履歴に追加します')
-				# $videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
-				# $newVideo = Format-HistoryRecord ([Ref]$videoInfo)
 				$ignoreTitles = @(Read-IgnoreList)
 				foreach ($ignoreTitle in $ignoreTitles) {
 					if (($videoInfo.fileName -like ('*{0}*' -f $ignoreTitle)) -or ($videoInfo.seriesName -like ('*{0}*' -f $ignoreTitle))) {
 						# エピソードIDが変更になったがダウンロード対象外リストと合致	→無視する
 						Update-IgnoreList $ignoreTitle ; Write-Warning ($script:msg.IgnoreEpisodeAdded)
-						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0' ; $videoInfo.fileName = '-- IGNORED --' ; $videoInfo.fileRelPath = '-- IGNORED --'
+						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
+						$videoInfo.fileName = '-- IGNORED --'
+						$videoInfo.fileRelPath = '-- IGNORED --'
 						$newVideo = Format-HistoryRecord ([Ref]$videoInfo) ; $skipDownload = $true
 						break
 					}
@@ -533,7 +532,9 @@ function Invoke-VideoDownload {
 				foreach ($ignoreTitle in $ignoreTitles) {
 					if (($videoInfo.fileName -like ('*{0}*' -f $ignoreTitle)) -or ($videoInfo.seriesName -like ('*{0}*' -f $ignoreTitle))) {
 						Update-IgnoreList $ignoreTitle ; Write-Warning ($script:msg.IgnoreEpisodeAdded)
-						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0' ; $videoInfo.fileName = '-- IGNORED --' ; $videoInfo.fileRelPath = '-- IGNORED --'
+						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
+						$videoInfo.fileName = '-- IGNORED --'
+						$videoInfo.fileRelPath = '-- IGNORED --'
 						$newVideo = Format-HistoryRecord ([Ref]$videoInfo) ; $skipDownload = $true
 						break
 					}
@@ -592,21 +593,15 @@ function Invoke-VideoDownload {
 		catch { Write-Warning ($script:msg.CreateEpisodeDirFailed) ; continue }
 	}
 	# youtube-dl起動
-	# if ($videoInfo.isStreaks -and $script:useFfmpegDownload) {
-	# 	try { Invoke-FfmpegDownload ([Ref]$videoInfo) }
-	# 	catch { Write-Warning ($script:msg.InvokeFfmpegDownloadFailed) }
-	# } else {
-		if ($script:ytdlRandomIp -and $script:proxyUrl) {
-			Write-Output ($script:msg.MediumBoldBorder)
-			Write-Output ($script:msg.NotifyYtdlOptions1)
-			Write-Output ($script:msg.NotifyYtdlOptions2)
-			Write-Output ($script:msg.NotifyYtdlOptions3)
-			Write-Output ($script:msg.MediumBoldBorder)
-		}
-		$script:ytdlRandomIp = $false
-		try { Invoke-Ytdl ([Ref]$videoInfo) }
-		catch { Write-Warning ($script:msg.InvokeYtdlFailed) }
-	# }
+	if ($script:ytdlRandomIp -and $script:proxyUrl) {
+		Write-Output ($script:msg.MediumBoldBorder)
+		Write-Output ($script:msg.NotifyYtdlOptions1)
+		Write-Output ($script:msg.NotifyYtdlOptions2)
+		Write-Output ($script:msg.NotifyYtdlOptions3)
+		Write-Output ($script:msg.MediumBoldBorder)
+	}
+	try { Invoke-Ytdl ([Ref]$videoInfo) }
+	catch { Write-Warning ($script:msg.InvokeYtdlFailed) }
 	# 5秒待機
 	Start-Sleep -Seconds 5
 	Remove-Variable -Name keyword, videoLink, force, newVideo, skipDownload, episodeID, histFileData, histMatch, ignoreTitles, ignoreTitle -ErrorAction SilentlyContinue
@@ -798,8 +793,8 @@ function Invoke-Ytdl {
 		('{0} "{1}"' -f '--paths', $tmpDir)
 		('{0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
 	)
-	if ($script:ytdlRandomIp) { $ytdlArgs += ('{0} "{1}/32"' -f '--xff', $script:jpIP) }
 	if ($script:proxyUrl) { $ytdlArgs += ('{0} {1}' -f '--geo-verification-proxy', $script:proxyUrl) }
+	if (($script:ytdlRandomIp) -and (!$script:proxyUrl)) { $ytdlArgs += ('{0} "{1}/32"' -f '--xff', $script:jpIP) }
 	if ($script:rateLimit -notin @(0, '')) {
 		$rateLimit = [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8)
 		$ytdlArgs += ('{0} {1}M' -f '--limit-rate', $rateLimit)
@@ -858,8 +853,8 @@ function Invoke-NonTverYtdl {
 		('{0} "{1}"' -f '--paths', $saveDir)
 		('{0} "{1}"' -f '--paths', $tmpDir)
 		('{0} "{1}"' -f '--ffmpeg-location', $script:ffmpegPath)
-		$(if ($script:ytdlRandomIp) { "--xff $script:jpIP/32" })
 		$(if ($script:proxyUrl) { "--geo-verification-proxy $script:proxyUrl" })
+		$(if (($script:ytdlRandomIp) -and (!$script:proxyUrl)) { "--xff $script:jpIP/32" })
 		$(if ($script:rateLimit -notin @(0, '')) {
 				$rateLimit = [math]::Ceiling([int]$script:rateLimit / $script:parallelDownloadNumPerFile / 8)
 				"--limit-rate ${rateLimit}M"
