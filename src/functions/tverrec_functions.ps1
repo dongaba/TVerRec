@@ -508,15 +508,14 @@ function Invoke-VideoDownload {
 
 		if ($script:downloadWhenEpisodeIdChanged) {
 			if (($histMatch.Count -ne 0) -or (Test-Path $videoInfo.filePath)) {
-				# Write-Output ('　💡 エピソードIDが変更になりました。ダウンロードするファイルをダウンロード履歴に追加します')
-				# $videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
-				# $newVideo = Format-HistoryRecord ([Ref]$videoInfo)
 				$ignoreTitles = @(Read-IgnoreList)
 				foreach ($ignoreTitle in $ignoreTitles) {
 					if (($videoInfo.fileName -like ('*{0}*' -f $ignoreTitle)) -or ($videoInfo.seriesName -like ('*{0}*' -f $ignoreTitle))) {
 						# エピソードIDが変更になったがダウンロード対象外リストと合致	→無視する
 						Update-IgnoreList $ignoreTitle ; Write-Warning ($script:msg.IgnoreEpisodeAdded)
-						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0' ; $videoInfo.fileName = '-- IGNORED --' ; $videoInfo.fileRelPath = '-- IGNORED --'
+						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
+						$videoInfo.fileName = '-- IGNORED --'
+						$videoInfo.fileRelPath = '-- IGNORED --'
 						$newVideo = Format-HistoryRecord ([Ref]$videoInfo) ; $skipDownload = $true
 						break
 					}
@@ -533,7 +532,9 @@ function Invoke-VideoDownload {
 				foreach ($ignoreTitle in $ignoreTitles) {
 					if (($videoInfo.fileName -like ('*{0}*' -f $ignoreTitle)) -or ($videoInfo.seriesName -like ('*{0}*' -f $ignoreTitle))) {
 						Update-IgnoreList $ignoreTitle ; Write-Warning ($script:msg.IgnoreEpisodeAdded)
-						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0' ; $videoInfo.fileName = '-- IGNORED --' ; $videoInfo.fileRelPath = '-- IGNORED --'
+						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
+						$videoInfo.fileName = '-- IGNORED --'
+						$videoInfo.fileRelPath = '-- IGNORED --'
 						$newVideo = Format-HistoryRecord ([Ref]$videoInfo) ; $skipDownload = $true
 						break
 					}
