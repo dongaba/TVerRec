@@ -165,13 +165,21 @@ while ($videoNotValidatedNum -ne 0) {
 	if (Test-Path $script:histFilePath -PathType Leaf) {
 		try {
 			while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-			$videoHists = @(Import-Csv -Path $script:histFilePath -Encoding UTF8)
-			foreach ($uncheckedVideo in ($videoHists).Where({ $_.videoValidated -eq 2 })) { $uncheckedVideo.videoValidated = '0' }
-			$videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
-			$videoNotValidatedNum = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' })).Count
+			$videoHists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+			# videoPage事に最新のdownloadDateを持つレコードを取得し、videoValidatedが2のものを探す
+			$latestHists = $videoHists | Group-Object -Property 'videoPage' | ForEach-Object {
+				$_.Group | Sort-Object -Property downloadDate -Descending | Select-Object -First 1
+			}
+			# videoValidated が 2 のものをフィルタリングして更新
+			$newRecords = $latestHists | Where-Object { $_.videoValidated -eq '2' } | ForEach-Object {
+				$_.videoValidated = '0'
+				$_.downloadDate = Get-TimeStamp
+				$_
+			}
+			$newRecords | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append
 		} catch { Throw ($script:msg.UpdateFailed -f $script:msg.HistFile) }
 		finally { Unlock-File $script:histLockFilePath | Out-Null }
-	} else { $videoNotValidatedNum = 0 }
+	}
 }
 
 #======================================================================
@@ -186,7 +194,7 @@ $toastUpdateParams = @{
 }
 Update-ProgressToast @toastUpdateParams
 
-Remove-Variable -Name args, toastShowParams, videoNotValidatedNum, videoHists, videoHist, uncheckedVideo, validateTotal, decodeOption, totalStartTime, validateNum, secElapsed, secRemaining, minRemaining, progressRate, toastUpdateParams -ErrorAction SilentlyContinue
+Remove-Variable -Name args, toastShowParams, videoHists, videoHist, uncheckedVideo, validateTotal, decodeOption, totalStartTime, validateNum, secElapsed, secRemaining, minRemaining, progressRate, toastUpdateParams -ErrorAction SilentlyContinue
 
 Invoke-GarbageCollection
 
