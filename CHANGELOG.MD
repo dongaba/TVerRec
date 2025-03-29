@@ -10,6 +10,8 @@
 
 ### 3.4.3 Fixed
 
+- 進捗バー付きトースト(Windows環境)でメッセージが不正だった問題を修正
+
 ## [3.4.2](https://github.com/dongaba/TVerRec/releases/tag/v3.4.2)
 
 ### 3.4.2 Added

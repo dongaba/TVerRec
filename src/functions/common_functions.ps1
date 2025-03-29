@@ -572,7 +572,7 @@ function Update-ProgressToast {
 		switch ($true) {
 			$IsWindows {
 				$toastData = [System.Collections.Generic.Dictionary[String, String]]::new()
-				$toastData.Add('progressTitle', $script:appName) | Out-Null
+				$toastData.Add('progressTitle', $title) | Out-Null
 				$toastData.Add('progressValue', $rate) | Out-Null
 				$toastData.Add('progressValueString', $rightText) | Out-Null
 				$toastData.Add('progressStatus', $leftText) | Out-Null
