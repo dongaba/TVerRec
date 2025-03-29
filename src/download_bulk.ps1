@@ -46,6 +46,10 @@ foreach ($keyword in $keywords) {
 	Write-Output ($script:msg.MediumBoldBorder)
 	Write-Output ('{0}' -f $keyword)
 
+	# 空き容量少ないときは中断
+	if((Get-RemainingCapacity $script:downloadWorkDir) -lt 100 ){ Write-Warning ($script:msg:NoEnoughCapacity -f $script:downloadWorkDir ) ; break }
+	if((Get-RemainingCapacity $script:downloadBaseDir) -lt 100 ){ Write-Warning ($script:msg:NoEnoughCapacity -f $script:downloadBaseDir ) ; break }
+
 	# 処理時間の推計
 	$secElapsed = (Get-Date) - $totalStartTime
 	if ($keywordNum -ne 0) { $secRemaining1 = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $keywordNum) * ($keywordTotal - $keywordNum)) }
@@ -86,6 +90,10 @@ foreach ($keyword in $keywords) {
 		$videoNum++
 		# ダウンロード先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
 		if (!(Test-Path $script:downloadBaseDir -PathType Container)) { Throw ($script:msg.DownloadDirNotAccessible) }
+
+		# 空き容量少ないときは中断
+		if((Get-RemainingCapacity $script:downloadWorkDir) -lt 100 ){ Write-Warning ($script:msg:NoEnoughCapacity -f $script:downloadWorkDir ) ; break }
+		if((Get-RemainingCapacity $script:downloadBaseDir) -lt 100 ){ Write-Warning ($script:msg:NoEnoughCapacity -f $script:downloadBaseDir ) ; break }
 
 		# 進捗情報の更新
 		$toastUpdateParams.Title2 = $videoLink

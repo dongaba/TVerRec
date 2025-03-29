@@ -55,16 +55,16 @@ function Get-VideoLinksFromKeyword {
 	if (($keyword -eq 'sitemap') -or ($keyword -eq 'toppage')) { $key = $keyword }
 	Invoke-StatisticsCheck -Operation 'search' -TVerType $key -TVerID $tverID
 	switch ($key) {
-		'episodes' { $linkCollection.episodeLinks[('https://tver.jp/episodes/{0}' -f $tverID)] = 0 ; continue }	# キーワードファイルにあるEpisodeはEndAtが不明なので0を設定
-		'series' { $linkCollection.seriesLinks.Add($tverID) ; continue }
-		'talents' { $linkCollection.talentLinks.Add($tverID) ; continue }
-		'tag' { Get-LinkFromKeyword -id $tverID -linkType 'tag' -LinkCollection ([Ref]$linkCollection) ; continue }
-		'ranking' { Get-LinkFromKeyword -id $tverID -linkType 'ranking' -LinkCollection ([Ref]$linkCollection) ; continue }
-		'new' { Get-LinkFromKeyword -id $tverID -linkType 'new' -LinkCollection ([Ref]$linkCollection)  ; continue }
-		'end' { Get-LinkFromKeyword -id $tverID -linkType 'end' -LinkCollection ([Ref]$linkCollection)  ; continue }
-		'mypage' { Get-LinkFromMyPage -Page $tverID -LinkCollection ([Ref]$linkCollection) ; continue }
-		'toppage' { Get-LinkFromTopPage ([Ref]$linkCollection) ; continue }
-		'sitemap' { Get-LinkFromSiteMap ([Ref]$linkCollection) ; continue }
+		'episodes' { $linkCollection.episodeLinks[('https://tver.jp/episodes/{0}' -f $tverID)] = 0 ; break }	# キーワードファイルにあるEpisodeはEndAtが不明なので0を設定
+		'series' { $linkCollection.seriesLinks.Add($tverID) ; break }
+		'talents' { $linkCollection.talentLinks.Add($tverID) ; break }
+		'tag' { Get-LinkFromKeyword -id $tverID -linkType 'tag' -LinkCollection ([Ref]$linkCollection) ; break }
+		'ranking' { Get-LinkFromKeyword -id $tverID -linkType 'ranking' -LinkCollection ([Ref]$linkCollection) ; break }
+		'new' { Get-LinkFromKeyword -id $tverID -linkType 'new' -LinkCollection ([Ref]$linkCollection)  ; break }
+		'end' { Get-LinkFromKeyword -id $tverID -linkType 'end' -LinkCollection ([Ref]$linkCollection)  ; break }
+		'mypage' { Get-LinkFromMyPage -Page $tverID -LinkCollection ([Ref]$linkCollection) ; break }
+		'toppage' { Get-LinkFromTopPage ([Ref]$linkCollection) ; break }
+		'sitemap' { Get-LinkFromSiteMap ([Ref]$linkCollection) ; break }
 		default { Get-LinkFromKeyword -id $keyword -linkType 'keyword' -LinkCollection ([Ref]$linkCollection) }
 	}
 	while (($linkCollection.specialMainLinks.Count -ne 0) -or ($linkCollection.specialLinks.Count -ne 0) -or ($linkCollection.talentLinks.Count -ne 0) -or ($linkCollection.seriesLinks.Count -ne 0) -or ($linkCollection.seasonLinks.Count -ne 0)) {
@@ -87,7 +87,6 @@ function Get-VideoLinksFromKeyword {
 function Get-LinkFromBuffer {
 	[CmdletBinding()]
 	[OutputType([Void])]
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly', '')]
 	Param (
 		[Parameter(Mandatory = $false)][Object[]]$tverIDs,
 		[Parameter(Mandatory = $true)][ValidateSet('specialMainLinks', 'specialLinks', 'talentLinks', 'seriesLinks', 'seasonLinks')][String]$tverIDType,
@@ -125,21 +124,21 @@ function Get-LinkFromKeyword {
 	$type = ''
 	# ベースURLをタイプに応じて設定
 	$baseURL = switch ($linkType) {
-		'seriesLinks' { ('https://platform-api.tver.jp/service/api/v1/callSeriesSeasons/{0}' -f $id) ; continue }
-		'seasonLinks' { ('https://platform-api.tver.jp/service/api/v1/callSeasonEpisodes/{0}' -f $id) ; continue }
-		'talentLinks' { ('https://platform-api.tver.jp/service/api/v1/callTalentEpisode/{0}' -f $id) ; continue }
-		'specialMainLinks' { ('https://platform-api.tver.jp/service/api/v1/callSpecialContents/{0}' -f $id) ; $type = 'specialmain' ; continue }
-		'specialLinks' { ('https://platform-api.tver.jp/service/api/v1/callSpecialContentsDetail/{0}' -f $id) ; $type = 'specialdetail' ; continue }
-		'tag' { ('https://platform-api.tver.jp/service/api/v1/callTagSearch/{0}' -f $id) ; continue }
-		'new' { ('https://platform-api.tver.jp/service/api/v1/callNewerDetail/{0}' -f $id) ; $type = 'new' ; continue }
-		'end' { ('https://platform-api.tver.jp/service/api/v1/callEnderDetail/{0}' -f $id) ; $type = 'end' ; continue }
+		'seriesLinks' { ('https://platform-api.tver.jp/service/api/v1/callSeriesSeasons/{0}' -f $id) ; break }
+		'seasonLinks' { ('https://platform-api.tver.jp/service/api/v1/callSeasonEpisodes/{0}' -f $id) ; break }
+		'talentLinks' { ('https://platform-api.tver.jp/service/api/v1/callTalentEpisode/{0}' -f $id) ; break }
+		'specialMainLinks' { ('https://platform-api.tver.jp/service/api/v1/callSpecialContents/{0}' -f $id) ; $type = 'specialmain' ; break }
+		'specialLinks' { ('https://platform-api.tver.jp/service/api/v1/callSpecialContentsDetail/{0}' -f $id) ; $type = 'specialdetail' ; break }
+		'tag' { ('https://platform-api.tver.jp/service/api/v1/callTagSearch/{0}' -f $id) ; break }
+		'new' { ('https://platform-api.tver.jp/service/api/v1/callNewerDetail/{0}' -f $id) ; $type = 'new' ; break }
+		'end' { ('https://platform-api.tver.jp/service/api/v1/callEnderDetail/{0}' -f $id) ; $type = 'end' ; break }
 		'ranking' {
 			if ($id -eq 'all') { 'https://platform-api.tver.jp/service/api/v1/callEpisodeRanking' }
 			else { ('https://platform-api.tver.jp/service/api/v1/callEpisodeRankingDetail/{0}' -f $id) }
-			$type = 'ranking' ; continue
+			$type = 'ranking' ; break
 		}
-		'category' { 'https://platform-api.tver.jp/service/api/v1/callCategoryHome/{0}' -f $id; continue }
-		'keyword' { 'https://platform-api.tver.jp/service/api/v1/callKeywordSearch'; $keyword = $id ; continue }
+		'category' { 'https://platform-api.tver.jp/service/api/v1/callCategoryHome/{0}' -f $id; break }
+		'keyword' { 'https://platform-api.tver.jp/service/api/v1/callKeywordSearch'; $keyword = $id ; break }
 		default { Write-Warning $script:msg.InvalidTypeSpecified }
 	}
 	# 検索結果の取得
@@ -153,7 +152,6 @@ function Get-LinkFromKeyword {
 function Get-SearchResults {
 	[CmdletBinding()]
 	[OutputType([Void])]
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly', '')]
 	Param (
 		[Parameter(Mandatory = $true)][String]$baseURL,
 		[Parameter(Mandatory = $false)][String]$type,
@@ -170,8 +168,8 @@ function Get-SearchResults {
 	if ($loginRequired) { $callSearchURL = '{0}?member_sid={1}' -f $baseURL, $sid }						# TVerIDにログインして使う場合
 	else { $callSearchURL = '{0}?platform_uid={1}&platform_token={2}' -f $baseURL, $uid, $token }		# TVerIDを匿名で使う場合
 	switch ($type) {
-		'keyword' { if ($keyword) { $callSearchURL += "&keyword=$keyword" } ; continue }
-		'mypage' { if ($requireData) { $callSearchURL += "&require_data=$requireData" } ; continue }
+		'keyword' { if ($keyword) { $callSearchURL += "&keyword=$keyword" } ; break }
+		'mypage' { if ($requireData) { $callSearchURL += "&require_data=$requireData" } ; break }
 		default {}
 	}
 	# 取得した値をタイプごとに調整
@@ -185,10 +183,10 @@ function Get-SearchResults {
 	}
 	# タイプ別に参照先を調整
 	$searchResults = switch ($type) {
-		'specialmain' { $searchResultsRaw.Result.specialContents ; continue }
-		'specialdetail' { $searchResultsRaw.Result.Contents.Content.Contents ; continue }
-		'category' { $searchResultsRaw.Result.components.contents ; continue }
-		{ $_ -in 'new', 'end', 'ranking' } { $searchResultsRaw.Result.Contents.Contents ; continue }
+		'specialmain' { $searchResultsRaw.Result.specialContents ; break }
+		'specialdetail' { $searchResultsRaw.Result.Contents.Content.Contents ; break }
+		'category' { $searchResultsRaw.Result.components.contents ; break }
+		{ $_ -in 'new', 'end', 'ranking' } { $searchResultsRaw.Result.Contents.Contents ; break }
 		default { $searchResultsRaw.Result.Contents }
 	}
 	# searchResultsを並び替え
@@ -197,18 +195,18 @@ function Get-SearchResults {
 	# タイプ別に再帰呼び出し
 	foreach ($searchResult in $sortedSearchResults) {
 		switch ($searchResult.Type) {
-			'live' { continue }
-			'banner' { continue }
-			'episode' { $linkCollection.episodeLinks[('https://tver.jp/episodes/{0}' -f $searchResult.Content.Id)] = $searchResult.Content.EndAt ; continue }
-			'season' { $linkCollection.seasonLinks.Add($searchResult.Content.Id) ; continue }
-			'series' { $linkCollection.seriesLinks.Add($searchResult.Content.Id) ; continue }
-			'talent' { $linkCollection.talentLinks.Add($searchResult.Content.Id) ; continue }
+			'live' { break }
+			'banner' { break }
+			'episode' { $linkCollection.episodeLinks[('https://tver.jp/episodes/{0}' -f $searchResult.Content.Id)] = $searchResult.Content.EndAt ; break }
+			'season' { $linkCollection.seasonLinks.Add($searchResult.Content.Id) ; break }
+			'series' { $linkCollection.seriesLinks.Add($searchResult.Content.Id) ; break }
+			'talent' { $linkCollection.talentLinks.Add($searchResult.Content.Id) ; break }
 			'special' {
 				if ($type -eq 'specialmain') { $linkCollection.specialLinks.Add($searchResult.Content.Id) }
 				else { Get-LinkFromKeyword -id $searchResult.Content.Id -linkType 'specialLinks' -LinkCollection ([Ref]$linkCollection) }
-				continue
+				break
 			}
-			'specialMain' { $linkCollection.specialMainLinks.Add($searchResult.Content.Id) ; continue }
+			'specialMain' { $linkCollection.specialMainLinks.Add($searchResult.Content.Id) ; break }
 			default { Write-Warning ($script:msg.UnknownContentsType -f $searchResult.Type, $searchResult.Content.Id) }
 		}
 	}
@@ -232,20 +230,20 @@ function Get-LinkFromTopPage {
 			{ $_ -in @('horizontal', 'richHorizontal', 'ranking', 'talents', 'billboard', 'episodeRanking', 'newer', 'ender', 'talent', 'special', 'specialContent', 'topics', 'spikeRanking', 'seasonEpisode') } {
 				$contents = if ($component.Type -eq 'topics') { $component.Contents.Content.Content } else { $component.Contents }
 				foreach ($content in $contents) {
-					if ($content.Type -eq 'live') { continue }
+					if ($content.Type -eq 'live') { break }
 					switch ($content.Type) {
-						'episode' { $linkCollection.episodeLinks[('https://tver.jp/episodes/{0}' -f $content.Content.Id)] = $content.Content.EndAt ; continue }
-						'series' { $linkCollection.seriesLinks.Add($content.Content.Id) ; continue }
-						'season' { $linkCollection.seasonLinks.Add($content.Content.Id) ; continue }
-						'talent' { $linkCollection.talentLinks.Add($content.Content.Id) ; continue }
-						'specialMain' { $linkCollection.specialMainLinks.Add($content.Content.Id) ; continue }
-						'special' { $linkCollection.specialLinks.Add($content.Content.Id) ; continue }
+						'episode' { $linkCollection.episodeLinks[('https://tver.jp/episodes/{0}' -f $content.Content.Id)] = $content.Content.EndAt ; break }
+						'series' { $linkCollection.seriesLinks.Add($content.Content.Id) ; break }
+						'season' { $linkCollection.seasonLinks.Add($content.Content.Id) ; break }
+						'talent' { $linkCollection.talentLinks.Add($content.Content.Id) ; break }
+						'specialMain' { $linkCollection.specialMainLinks.Add($content.Content.Id) ; break }
+						'special' { $linkCollection.specialLinks.Add($content.Content.Id) ; break }
 						default { Write-Warning ($script:msg.UnknownContentsType -f $content.Type, $content.Content.Id) }
 					}
 				}
-				continue
+				break
 			}
-			{ $_ -in @('banner', 'resume', 'favorite') } { continue }
+			{ $_ -in @('banner', 'resume', 'favorite') } { break }
 			default { Write-Warning ($script:msg.UnknownComponentType -f $component.Type) }
 		}
 	}
@@ -278,34 +276,34 @@ function Get-LinkFromSiteMap {
 			switch ($tverID.type) {
 				'episodes' {
 					$linkCollection.episodeLinks[('https://tver.jp/episodes/{0}' -f $tverID.id)] = 0	# サイトマップにあるEpisodeはEndAtが不明なので0を設定
-					continue
+					break
 				}
 				'series' {
 					if (!$script:sitemapParseEpisodeOnly) { $linkCollection.seriesLinks.Add($tverID.id) }
-					continue
+					break
 				}
 				'ranking' {
 					if (!$script:sitemapParseEpisodeOnly) {
 						Write-Information ($script:msg.ExtractingEpisodes -f (Get-Date), $tverID.type, $tverID.id)
 						Get-LinkFromKeyword -id $tverID.id -linkType 'ranking' -LinkCollection ([Ref]$linkCollection)
 					}
-					continue
+					break
 				}
 				'specials' {
 					if (!$script:sitemapParseEpisodeOnly) {
 						Write-Information ($script:msg.ExtractingEpisodes -f (Get-Date), $tverID.type, $tverID.id)
 						Get-LinkFromKeyword -id $tverID.id -linkType 'specialMainLinks' -LinkCollection ([Ref]$linkCollection)
 					}
-					continue
+					break
 				}
 				'categories' {
 					if (!$script:sitemapParseEpisodeOnly) {
 						Write-Information ($script:msg.ExtractingEpisodes -f (Get-Date), $tverID.type, $tverID.id)
 						Get-LinkFromKeyword -id $tverID.id -linkType 'category' -LinkCollection ([Ref]$linkCollection)
 					}
-					continue
+					break
 				}
-				{ $_ -in @('info', 'live', 'mypage') } { continue }
+				{ $_ -in @('info', 'live', 'mypage') } { break }
 				default { if (!$script:sitemapParseEpisodeOnly) { Write-Warning ($script:msg.UnknownContentsType -f $tverID.type, $tverID.id) } }
 			}
 		}
@@ -319,7 +317,6 @@ function Get-LinkFromSiteMap {
 function Get-LinkFromMyPage {
 	[CmdletBinding()]
 	[OutputType([Void])]
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseOutputTypeCorrectly', '')]
 	Param (
 		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$page,
 		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject][Ref]$linkCollection
@@ -327,10 +324,10 @@ function Get-LinkFromMyPage {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$baseURLPrefix = if ($script:myMemberSID) { 'https://member-api.tver.jp' ; $loginRequired = $true } else { 'https://platform-api.tver.jp' ; $loginRequired = $false }
 	switch ($page) {
-		'fav' { $baseURL = ('{0}/service/api/v2/callMylistDetail/{1}' -f $baseURLPrefix, (ConvertTo-UnixTime (Get-Date))) ; $requireData = 'mylist' ; continue }
-		'later' { $baseURL = ('{0}/service/api/v2/callMyLater' -f $baseURLPrefix) ; $requireData = $page ; continue }
-		'resume' { $baseURL = ('{0}/service/api/v2/callMyResume' -f $baseURLPrefix) ; $requireData = $page ; continue }
-		'favorite' { $baseURL = ('{0}/service/api/v2/callMyFavorite' -f $baseURLPrefix) ; $requireData = 'mylist' ; continue }
+		'fav' { $baseURL = ('{0}/service/api/v2/callMylistDetail/{1}' -f $baseURLPrefix, (ConvertTo-UnixTime (Get-Date))) ; $requireData = 'mylist' ; break }
+		'later' { $baseURL = ('{0}/service/api/v2/callMyLater' -f $baseURLPrefix) ; $requireData = $page ; break }
+		'resume' { $baseURL = ('{0}/service/api/v2/callMyResume' -f $baseURLPrefix) ; $requireData = $page ; break }
+		'favorite' { $baseURL = ('{0}/service/api/v2/callMyFavorite' -f $baseURLPrefix) ; $requireData = 'mylist' ; break }
 		default { Write-Warning ($script:msg.UnknownContentsType -f 'mypage', $page) }
 	}
 	Get-SearchResults -baseURL $baseURL -Type 'mypage' -RequireData $requireData -LoginRequired $loginRequired -LinkCollection ([Ref]$linkCollection)

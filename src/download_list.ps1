@@ -57,6 +57,10 @@ foreach ($videoLink in $videoLinks) {
 	# ダウンロード先ディレクトリの存在確認先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
 	if (!(Test-Path $script:downloadBaseDir -PathType Container)) { Throw ('❌️ 番組ダウンロード先ディレクトリにアクセスできません。終了します') }
 
+	# 空き容量少ないときは中断
+	if((Get-RemainingCapacity $script:downloadWorkDir) -lt 100 ){ Write-Warning ($script:msg:NoEnoughCapacity -f $script:downloadWorkDir ) ; break }
+	if((Get-RemainingCapacity $script:downloadBaseDir) -lt 100 ){ Write-Warning ($script:msg:NoEnoughCapacity -f $script:downloadBaseDir ) ; break }
+
 	# 進捗率の計算
 	$secElapsed = (Get-Date) - $totalStartTime
 	if ($videoNum -ne 0) {

@@ -99,7 +99,7 @@ function Invoke-TVerRecUpdateCheck {
 		}
 		# 最新のアップデータを取得
 		$latestUpdater = 'https://raw.githubusercontent.com/dongaba/TVerRec/master/src/functions/update_tverrec.ps1'
-		Invoke-WebRequest -Uri $latestUpdater -OutFile (Join-Path $script:scriptRoot 'functions//update_tverrec.ps1') -ConnectionTimeoutSeconds $script:timeoutSec
+		Invoke-WebRequest -Uri $latestUpdater -OutFile (Join-Path $script:scriptRoot 'functions//update_tverrec.ps1') -TimeoutSec $script:timeoutSec
 		if (!($IsLinux)) { Unblock-File -LiteralPath (Join-Path $script:scriptRoot 'functions//update_tverrec.ps1') }
 		# アップデート実行
 		Write-Warning ($script:msg.ToolUpdateInstruction -f 'TVerRec', 'update_tverrec')
@@ -899,9 +899,9 @@ function Get-YtdlProcessCount {
 	}
 	try {
 		switch ($true) {
-			$IsWindows { return [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2, [MidpointRounding]::AwayFromZero ); continue }
-			$IsLinux { return @(Get-Process -ErrorAction Ignore -Name $processName).Count ; continue }
-			$IsMacOS { $psCmd = 'ps' ; return (& $psCmd | grep yt-dlp | grep -v grep | grep -c ^).Trim() ; continue }
+			$IsWindows { return [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2, [MidpointRounding]::AwayFromZero ); break }
+			$IsLinux { return @(Get-Process -ErrorAction Ignore -Name $processName).Count ; break }
+			$IsMacOS { $psCmd = 'ps' ; return (& $psCmd | grep yt-dlp | grep -v grep | grep -c ^).Trim() ; break }
 			default { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
 		}
 	} catch { return 0 }
@@ -917,9 +917,9 @@ function Get-FfmpegProcessCount {
 	$processName = 'ffmpeg'
 	try {
 		switch ($true) {
-			$IsWindows { return [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name $processName).Count, [MidpointRounding]::AwayFromZero ); continue }
-			$IsLinux { return @(Get-Process -ErrorAction Ignore -Name $processName).Count ; continue }
-			$IsMacOS { $psCmd = 'ps' ; return (& $psCmd | grep ffmpeg | grep -v grep | grep -c ^).Trim() ; continue }
+			$IsWindows { return [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name $processName).Count, [MidpointRounding]::AwayFromZero ); break }
+			$IsLinux { return @(Get-Process -ErrorAction Ignore -Name $processName).Count ; break }
+			$IsMacOS { $psCmd = 'ps' ; return (& $psCmd | grep ffmpeg | grep -v grep | grep -c ^).Trim() ; break }
 			default { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
 		}
 	} catch { return 0 }
@@ -1102,7 +1102,7 @@ function Invoke-IntegrityCheck {
 			'0' {
 				$videoHists.Where({ $_.videoPage -eq $videoHist.videoPage }).Where({ $_.videoValidated = '2' })
 				$videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
-				continue
+				break
 			}
 			'1' { Write-Output ($script:msg.ValidationCompleted) ; return }
 			'2' { Write-Output ($script:msg.ValidationInProgress) ; return }
@@ -1212,7 +1212,7 @@ function Invoke-StatisticsCheck {
 	if (!$env:PESTER) {
 		$progressPreference = 'silentlyContinue'
 		$statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
-		try { Invoke-WebRequest -Uri ('{0}{1}.svg' -f $statisticsBase, $operation) -Method 'GET' -ConnectionTimeoutSeconds 5 | Out-Null }
+		try { Invoke-WebRequest -Uri ('{0}{1}.svg' -f $statisticsBase, $operation) -Method 'GET' -TimeoutSec 5 | Out-Null }
 		catch { Write-Debug ('Failed to collect count') }
 		finally { $progressPreference = 'Continue' }
 		if ($operation -eq 'search') { return }
@@ -1298,21 +1298,21 @@ switch ($true) {
 				$script:appId = (Get-StartApps).Where({ $_.Name -cmatch 'PowerShell*' }, 'First').AppId
 			} catch { Write-Debug 'Failed to import StartLayout module' }
 		}
-		continue
+		break
 	}
 	$IsLinux {
 		$script:os = if (Test-Path '/etc/os-release') { (& grep 'PRETTY_NAME' /etc/os-release).Replace('PRETTY_NAME=', '').Replace('"', '') } else { (& uname -n) }
 		$script:kernel = [String][System.Environment]::OSVersion.Version
 		$script:arch = (& uname -m | tr '[:upper:]' '[:lower:]')
 		$script:guid = if (Test-Path '/etc/machine-id') { (Get-Content /etc/machine-id) } else { (New-Guid).ToString().Replace('-', '') }
-		continue
+		break
 	}
 	$IsMacOS {
 		$script:os = ('{0} {1}' -f (& sw_vers -productName), (& sw_vers -productVersion))
 		$script:kernel = (&  uname -r)
 		$script:arch = (& uname -m | tr '[:upper:]' '[:lower:]')
 		$script:guid = (& system_profiler SPHardwareDataType | awk '/Hardware UUID/ { print $3 }').Replace('-', '')
-		continue
+		break
 	}
 	default {
 		$script:os = [String][System.Environment]::OSVersion

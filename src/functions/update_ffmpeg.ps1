@@ -109,16 +109,16 @@ switch ($true) {
 		# アーキテクチャごとのURLパターン
 		$arch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture
 		$pattern = switch ($arch) {
-			'X64' { '-win64-gpl-' ; continue }
-			'Arm64' { '-winarm64-gpl-' ; continue }
-			'X86' { '-win32-gpl-' ; continue }
+			'X64' { '-win64-gpl-' ; break }
+			'Arm64' { '-winarm64-gpl-' ; break }
+			'X86' { '-win32-gpl-' ; break }
 			Default { '-win32-gpl-' }
 		}
 		if ($latestRelease -cmatch "https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(${pattern})(.*).zip") {
 			$downloadURL = $matches[0]
 			# ダウンロード
 			Write-Output ($script:msg.ToolDownload -f 'ffmpeg', $arch)
-			try { Invoke-WebRequest -Uri $downloadURL -OutFile (Join-Path $script:binDir 'ffmpeg.zip') -ConnectionTimeoutSeconds $script:timeoutSec }
+			try { Invoke-WebRequest -Uri $downloadURL -OutFile (Join-Path $script:binDir 'ffmpeg.zip') -TimeoutSec $script:timeoutSec }
 			catch { Write-Warning ($script:msg.ToolDownloadFailed -f 'ffmpeg') ; return }
 			# 展開
 			Write-Output ($script:msg.ToolExtract -f 'ffmpeg')
@@ -139,7 +139,7 @@ switch ($true) {
 				Write-Output ($script:msg.ToolUpdated -f 'ffmpeg', $currentVersion)
 			} catch { Write-Warning $script:msg.ToolVersionCheckFailed ; return }
 		}
-		continue
+		break
 	}
 
 	$IsLinux {
@@ -189,7 +189,7 @@ switch ($true) {
 			$downloadURL = $matches[0]
 			# ダウンロード
 			Write-Output ($script:msg.ToolDownload -f 'ffmpeg', $arch )
-			try { Invoke-WebRequest -Uri $downloadURL -OutFile (Join-Path $script:binDir 'ffmpeg.tar.xz') -ConnectionTimeoutSeconds $script:timeoutSec }
+			try { Invoke-WebRequest -Uri $downloadURL -OutFile (Join-Path $script:binDir 'ffmpeg.tar.xz') -TimeoutSec $script:timeoutSec }
 			catch { Write-Warning ($script:msg.ToolDownloadFailed -f 'ffmpeg') ; return }
 			# 展開
 			Write-Output ($script:msg.ToolExtract -f 'ffmpeg')
@@ -213,7 +213,7 @@ switch ($true) {
 				Write-Output ($script:msg.ToolUpdated -f 'ffmpeg', $currentVersion)
 			} catch { Write-Warning $script:msg.ToolVersionCheckFailed ; return }
 		}
-		continue
+		break
 	}
 
 	$IsMacOS {
@@ -235,7 +235,7 @@ switch ($true) {
 		$latestVersion = ''
 		$latestBuild = ''
 		try {
-			$ffmpegReleaseInfo = (Invoke-WebRequest -Uri $ffmpegReleases -ConnectionTimeoutSeconds $script:timeoutSec).links.href[0]
+			$ffmpegReleaseInfo = (Invoke-WebRequest -Uri $ffmpegReleases -TimeoutSec $script:timeoutSec).links.href[0]
 			if ($ffmpegReleaseInfo -cmatch ('{0}/(\d+)_(.+)' -f $arch)) { $latestBuild = $matches[1] ; $latestVersion = $matches[2] }
 		} catch { Write-Warning ($script:msg.ToolLatestNotIdentified -f 'ffmpeg') ; return }
 		if ($currentVersion -eq $latestVersion) {
@@ -254,15 +254,15 @@ switch ($true) {
 		Write-Output ($script:msg.ToolDownload -f 'ffmpeg', 'Mac')
 		try {
 			$uriBase = 'https://ffmpeg.martin-riedl.de/'
-			$uriBasePage = Invoke-WebRequest -Uri $uriBase -ConnectionTimeoutSeconds $script:timeoutSec
+			$uriBasePage = Invoke-WebRequest -Uri $uriBase -TimeoutSec $script:timeoutSec
 			foreach ($file in $downloadFiles) {
 				$downloadLink = $uriBasePage.links.where({
-					$_.href -match $arch `
-						-and $_.href -match $latestBuild `
-						-and $_.outerHTML -match $file `
-						-and $_.href -notmatch '.sha256'
-				}) | Select-Object -First 1
-				Invoke-WebRequest -Uri ('{0}{1}' -f $uriBase, $downloadLink.href) -OutFile (Join-Path $script:binDir $file) -ConnectionTimeoutSeconds $script:timeoutSec
+						$_.href -match $arch `
+							-and $_.href -match $latestBuild `
+							-and $_.outerHTML -match $file `
+							-and $_.href -notmatch '.sha256'
+					}) | Select-Object -First 1
+				Invoke-WebRequest -Uri ('{0}{1}' -f $uriBase, $downloadLink.href) -OutFile (Join-Path $script:binDir $file) -TimeoutSec $script:timeoutSec
 			}
 		} catch { Write-Warning ($script:msg.ToolDownloadFailed -f 'ffmpeg') ; return }
 		# 展開
@@ -285,7 +285,7 @@ switch ($true) {
 			if ($ffmpegFileVersion[0] -cmatch 'ffmpeg version (\d+\.*\d*\.*\d*)') { $currentVersion = $matches[1] }
 			Write-Output ($script:msg.ToolUpdated -f 'ffmpeg', $currentVersion)
 		} catch { Write-Warning $script:msg.ToolVersionCheckFailed ; return }
-		continue
+		break
 	}
 
 	default {

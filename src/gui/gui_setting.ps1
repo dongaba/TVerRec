@@ -237,9 +237,9 @@ function Save-UserSetting {
 				}
 			}
 			switch -wildcard ($settingBox.Text) {
-				{ $_ -in '', $script:msg.SettingDefault, $script:msg.SettingUndefined } { continue }
-				{ $_ -eq $script:msg.SettingTrue } { $newSetting += ('{0} = $true' -f $settingAttribute) ; continue }
-				{ $_ -eq $script:msg.SettingFalse } { $newSetting += ('{0} = $false' -f $settingAttribute) ; continue }
+				{ $_ -in '', $script:msg.SettingDefault, $script:msg.SettingUndefined } { break }
+				{ $_ -eq $script:msg.SettingTrue } { $newSetting += ('{0} = $true' -f $settingAttribute) ; break }
+				{ $_ -eq $script:msg.SettingFalse } { $newSetting += ('{0} = $false' -f $settingAttribute) ; break }
 				default {
 					if (([Int]::TryParse($settingBox.Text, [Ref]$null)) -or ($settingBox.Text -match '[${}]')) { $newSetting += ('{0} = {1}' -f $settingAttribute, $settingBox.Text) }
 					else { $newSetting += ('{0} = ''{1}''' -f $settingAttribute, $settingBox.Text) }
