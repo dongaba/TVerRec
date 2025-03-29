@@ -1,5 +1,15 @@
 # Change Log
 
+## [3.4.3](https://github.com/dongaba/TVerRec/releases/tag/v3.4.3)
+
+### 3.4.3 Added
+
+### 3.4.3 Changed
+
+- 海外からVPNやProxy使ってる方向けのチューニング
+
+### 3.4.3 Fixed
+
 ## [3.4.2](https://github.com/dongaba/TVerRec/releases/tag/v3.4.2)
 
 ### 3.4.2 Added

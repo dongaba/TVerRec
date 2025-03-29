@@ -1278,7 +1278,7 @@ $script:tz = [String][TimeZoneInfo]::Local.BaseUtcOffset
 $progressPreference = 'SilentlyContinue'
 $script:clientEnvs = @{}
 try {
-	$geoIPValues = (Invoke-RestMethod -Uri 'http://ip-api.com/json/?fields=18030841' -TimeoutSec $script:timeoutSec).psobject.properties
+	$geoIPValues = (Invoke-RestMethod -Uri 'http://ip-api.com/json/?fields=18030841' -TimeoutSec 5).psobject.properties
 	foreach ($geoIPValue in $geoIPValues) { $script:clientEnvs.Add($geoIPValue.Name, $geoIPValue.Value) | Out-Null }
 } catch { Write-Debug ('Failed to check Geo IP') }
 $progressPreference = 'Continue'
