@@ -665,15 +665,15 @@ function Format-VideoFileInfo {
 	if ($script:addSeriesName) { $videoName = ('{0}{1} ' -f $videoName, $videoInfo.seriesName) }
 	if ($script:addSeasonName) { $videoName = ('{0}{1} ' -f $videoName, $videoInfo.seasonName) }
 	if ($videoName.Trim() -ne $videoInfo.episodeName.Trim() ) {
-		if ($script:addBroadcastDate) { $videoName = ('{0}{1} ' -f $videoName, $videoInfo.broadcastDate.replace('/', '-')) }	#きょうのわんこなど「2025/3/17週放送」のようなパターンもある
+		if ($script:addBroadcastDate) { $videoName = ('{0}{1} ' -f $videoName, $videoInfo.broadcastDate.replace('/', '-')) }	#きょうのわんこなど「2025/3/17週放送」のようなパターン
 		if ($script:addEpisodeNumber) { $videoName = ('{0}Ep{1} ' -f $videoName, $videoInfo.episodeNum) }
 		$videoName = ('{0}{1}' -f $videoName, $videoInfo.episodeName)
 	} else {
-		if ($script:addBroadcastDate) { $videoName = ('{0}{1} ' -f $videoName, $videoInfo.broadcastDate) }
+		if ($script:addBroadcastDate) { $videoName = ('{0}{1} ' -f $videoName, $videoInfo.broadcastDate.replace('/', '-')) }	#きょうのわんこなど「2025/3/17週放送」のようなパターン
 		if ($script:addEpisodeNumber) { $videoName = ('{0}Ep{1} ' -f $videoName, $videoInfo.episodeNum) }
 	}
 	# ファイル名にできない文字列を除去
-	$videoName = (Get-FileNameWithoutInvalidChars $videoName).Replace('  ', ' ').Trim()
+	$videoName = (Get-FileNameWithoutInvalidChars (Remove-SpecialCharacter $videoName)).Replace('  ', ' ').Trim()
 	# SMBで255バイトまでしかファイル名を持てないらしいので、超えないようにファイル名をトリミング。youtube-dlの中間ファイル等を考慮して安全目の上限値
 	$fileNameLimit = $script:fileNameLengthMax - 30
 	if ([System.Text.Encoding]::UTF8.GetByteCount($videoName) -gt $fileNameLimit) {
@@ -682,20 +682,21 @@ function Format-VideoFileInfo {
 	}
 	$videoName = Get-FileNameWithoutInvalidChars ('{0}.{1}' -f $videoName, $script:videoContainerFormat)
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'fileName' -Value $videoName
+
 	# フォルダ名を生成
 	if ($script:sortVideoBySeries) {
 		$videoFileDir = Get-FileNameWithoutInvalidChars (Remove-SpecialCharacter ('{0} {1}' -f $videoInfo.seriesName, $videoInfo.seasonName ).Trim(' ', '.'))
-		if ($script:sortVideoByMedia) { $videoFileDir = (Join-Path $script:downloadBaseDir (Get-FileNameWithoutInvalidChars $videoInfo.mediaName) | Join-Path -ChildPath $videoFileDir) }
-		else { $videoFileDir = (Join-Path $script:downloadBaseDir $videoFileDir) }
-		$videoFilePath = Join-Path $videoFileDir $videoInfo.fileName
-	} else {
-		$videoFileDir = $script:downloadBaseDir
-		$videoFilePath = $videoInfo.fileName
-	}
+	} else { $videoFileDir = $script:downloadBaseDir }
+	if ($script:sortVideoByMedia) {
+		$videoFileDir = (Join-Path $script:downloadBaseDir (Get-FileNameWithoutInvalidChars (Remove-SpecialCharacter $videoInfo.mediaName)) | Join-Path -ChildPath $videoFileDir)
+	} else { $videoFileDir = (Join-Path $script:downloadBaseDir $videoFileDir) }
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'fileDir' -Value $videoFileDir
+
+	$videoFilePath = Join-Path $videoFileDir $videoInfo.fileName
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'filePath' -Value $videoFilePath
 	$videoFileRelPath = $videoInfo.filePath.Replace($script:downloadBaseDir, '').Replace('\', '/').TrimStart('/')
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'fileRelPath' -Value $videoFileRelPath
+
 	Remove-Variable -Name videoName, fileNameLimit, videoFileDir, videoFilePath, videoFileRelPath -ErrorAction SilentlyContinue
 }
 
@@ -806,9 +807,9 @@ function Invoke-Ytdl {
 		if ($script:embedMetatag) { $ytdlArgs += '--embed-metadata' }
 	}
 
-	$pwshRemoveIfExists = 'Remove-Item -LiteralPath ''{0}'' -Force -ErrorAction SilentlyContinue' -f $videoInfo.filePath
+	$pwshRemoveIfExists = 'Remove-Item -LiteralPath ''{0}'' -Force -ErrorAction SilentlyContinue' -f $videoInfo.filePath.Replace("'", "''")
 	$ytdlTempOutFile = ('{0}/{1}.{2}' -f $videoInfo.fileDir, $videoInfo.episodeID, $script:videoContainerFormat)
-	$pwshRenameFile = 'Rename-Item -LiteralPath ''{0}'' -NewName ''{1}'' -Force -ErrorAction SilentlyContinue' -f $ytdlTempOutFile, $videoInfo.fileName
+	$pwshRenameFile = 'Rename-Item -LiteralPath ''{0}'' -NewName ''{1}'' -Force -ErrorAction SilentlyContinue' -f $ytdlTempOutFile, $videoInfo.fileName.Replace("'", "''")
 	$ytdlExecArg = 'pwsh -Command \"{0} ; {1}\"' -f $pwshRemoveIfExists, $pwshRenameFile
 	$ytdlArgs += ('--exec "after_video:{0}"' -f $ytdlExecArg)
 	$ytdlArgs += $script:ytdlOption, $videoInfo.episodePageURL, ('{0} "{1}.{2}"' -f '--output', $videoInfo.episodeID, $script:videoContainerFormat)

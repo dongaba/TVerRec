@@ -74,17 +74,18 @@ function ConvertTo-UnixTime {
 function Get-FileNameWithoutInvalidChars {
 	[CmdletBinding()]
 	[OutputType([String])]
-	Param ([String]$Name = '')
+	Param ([String]$name = '')
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$invalidCharsPattern = '[{0}]' -f [RegEx]::Escape( [IO.Path]::GetInvalidFileNameChars() -Join '')
-	$Name = $Name.Replace($invalidCharsPattern , '')
+	$name = $name.Replace($invalidCharsPattern , '')
 	# Linux/MacではGetInvalidFileNameChars()が不完全なため、ダメ押しで置換
 	$additionalReplaces = '[*\?<>|]'
-	$Name = $Name -replace $additionalReplaces, '-'
-	$Name = $Name -replace '--', '-'
+	$name = $name -replace $additionalReplaces, '-'
+	$name = $name -replace '--', '-'
+	$name = $name -replace "’", "'"		#U+2019 を U+0027 に変換
 	$nonPrintableChars = '[]'
-	return $Name -replace $nonPrintableChars, ''
-	Remove-Variable -Name invalidCharsPattern, Name, additionalReplaces, nonPrintableChars -ErrorAction SilentlyContinue
+	return $name -replace $nonPrintableChars, ''
+	Remove-Variable -Name invalidCharsPattern, name, additionalReplaces, nonPrintableChars -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -206,20 +207,20 @@ function Remove-SpecialCharacter {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$text = $text.Replace('&amp;', '&')
 	$replacements = @{
-		'*' = '＊'
-		'|' = '｜'
-		':' = '：'
-		';' = '；'
+		'*' = '＊' # 全角
+		'|' = '｜' # 全角
+		':' = '：' # 全角
+		';' = '；' # 全角
 		'"' = '' # 削除
 		'“' = '' # 削除
 		'”' = '' # 削除
-		',' = '' # 削除
-		'?' = '？'
-		'!' = '！'
-		'/' = '-' # 代替文字
-		'\' = '-' # 代替文字
-		'<' = '＜'
-		'>' = '＞'
+		# ',' = '' # 削除
+		'?' = '？' # 全角
+		'!' = '！' # 全角
+		'/' = '／' # 全角
+		'\' = '＼' # 全角
+		'<' = '＜' # 全角
+		'>' = '＞' # 全角
 	}
 	foreach ($replacement in $replacements.GetEnumerator()) { $text = $text.Replace($replacement.Name, $replacement.Value) }
 	return $text
