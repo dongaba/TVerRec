@@ -23,7 +23,7 @@ Invoke-RequiredFileCheck
 Suspend-Process
 
 #======================================================================
-# 1/3 移動先ディレクトリを起点として、配下のディレクトリを取得
+# 1/3移動先ディレクトリを起点として、配下のディレクトリを取得
 Write-Output ('')
 Write-Output ($script:msg.MediumBoldBorder)
 Write-Output ($script:msg.ListUpDestinationDirs)
@@ -107,7 +107,7 @@ if ($moveToPathsHash.Count -gt 0) {
 } else { $moveDirs = $null }
 
 #======================================================================
-# 2/3 移動先ディレクトリと同名のディレクトリ配下の番組を移動
+# 2/3移動先ディレクトリと同名のディレクトリ配下の番組を移動
 Write-Output ('')
 Write-Output ($script:msg.MediumBoldBorder)
 Write-Output ($script:msg.MovingVideos)
@@ -156,7 +156,7 @@ if ($moveDirs) {
 #----------------------------------------------------------------------
 
 #======================================================================
-# 3/3 空ディレクトリと隠しファイルしか入っていないディレクトリを一気に削除
+# 3/3空ディレクトリと隠しファイルしか入っていないディレクトリを一気に削除
 Write-Output ('')
 Write-Output ($script:msg.MediumBoldBorder)
 Write-Output ($script:msg.DeleteEmptyDirs)

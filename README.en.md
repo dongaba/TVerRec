@@ -1,4 +1,4 @@
-# **🎞 TVerRec 📺** TVer Bulk download and Save
+# **🎞TVerRec📺** TVer Bulk download and Save
 
 [🇺🇸English](https://github.com/dongaba/TVerRec/blob/master/README.en.md) | [🇯🇵日本語](https://github.com/dongaba/TVerRec/blob/master/README.md)
 

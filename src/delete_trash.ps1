@@ -22,7 +22,7 @@ if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを
 Invoke-RequiredFileCheck
 
 #======================================================================
-# 1/3 ダウンロードが中断した際にできたゴミファイルは削除
+# 1/3ダウンロードが中断した際にできたゴミファイルは削除
 Write-Output ('')
 Write-Output ($script:msg.LongBoldBorder)
 Write-Output ($script:msg.DeleteTrashFiles)
@@ -99,7 +99,7 @@ if ($script:cleanupSaveBaseDir)	{
 }
 
 #======================================================================
-# 2/3 ダウンロード対象外に入っている番組は削除
+# 2/3ダウンロード対象外に入っている番組は削除
 Write-Output ('')
 Write-Output ($script:msg.MediumBoldBorder)
 Write-Output ($script:msg.DeleteExcludeFiles)
@@ -184,7 +184,7 @@ if ($script:forceSingleDownload) {
 #----------------------------------------------------------------------
 
 #======================================================================
-# 3/3 空ディレクトリと隠しファイルしか入っていないディレクトリを一気に削除
+# 3/3空ディレクトリと隠しファイルしか入っていないディレクトリを一気に削除
 Write-Output ('')
 Write-Output ($script:msg.MediumBoldBorder)
 Write-Output ($script:msg.DeleteEmptyDirs)

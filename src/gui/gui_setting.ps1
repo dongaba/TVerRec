@@ -282,7 +282,7 @@ function Save-UserSetting {
 # メイン処理
 
 #----------------------------------------------------------------------
-# region WPFのWindow設定
+# region  WPFのWindow設定
 
 try {
 	[Xml]$mainXaml = [String](Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecSetting.xaml'))
@@ -513,12 +513,12 @@ $preferredLanguage.Items.Add($script:msg.SettingDefault) | Out-Null
 $preferredLanguage.Items.Add('日本語') | Out-Null	# ja-JP
 $preferredLanguage.Items.Add('English') | Out-Null	# en-US
 
-# endregion WPFのWindow設定
+# endregion  WPFのWindow設定
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
 # region ボタンのアクション
-$btnWiki.Add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
+$btnWiki.Add_Click({ Start-Process‘https://github.com/dongaba/TVerRec/wiki’ })
 $btnCancel.Add_Click({ $settingWindow.close() })
 $btnSave.Add_Click({ Save-UserSetting ; $settingWindow.close() })
 $btnDownloadBaseDir.Add_Click({ Select-Folder $script:msg.SelectDownloadDir $script:downloadBaseDir })

@@ -82,7 +82,7 @@ function Get-FileNameWithoutInvalidChars {
 	$additionalReplaces = '[*\?<>|]'
 	$name = $name -replace $additionalReplaces, '-'
 	$name = $name -replace '--', '-'
-	$name = $name -replace "’", "'"		#U+2019 を U+0027 に変換
+	$name = $name -replace "’", "'"		#U+2019をU+0027に変換
 	$nonPrintableChars = '[]'
 	return $name -replace $nonPrintableChars, ''
 	Remove-Variable -Name invalidCharsPattern, name, additionalReplaces, nonPrintableChars -ErrorAction SilentlyContinue

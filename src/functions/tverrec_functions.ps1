@@ -72,10 +72,10 @@ function Invoke-TVerRecUpdateCheck {
 	} catch { Write-Warning ($script:msg.ToolLatestNotRetrieved -f 'TVerRec') ; return }
 	finally { $progressPreference = 'Continue' }
 	# GitHub側最新バージョンの整形
-	$latestVersion = $appReleases[0].Tag_Name.Trim('v', ' ')	# v1.2.3 → 1.2.3
-	$latestMajorVersion = $latestVersion.split(' ')[0]			# 1.2.3 beta 4 → 1.2.3
+	$latestVersion = $appReleases[0].Tag_Name.Trim('v', ' ')	# v1.2.3→1.2.3
+	$latestMajorVersion = $latestVersion.split(' ')[0]			# 1.2.3 beta 4→1.2.3
 	# ローカル側バージョンの整形
-	$appMajorVersion = $script:appVersion.split(' ')[0]			# 1.2.3 beta 4 → 1.2.3
+	$appMajorVersion = $script:appVersion.split(' ')[0]			# 1.2.3 beta 4→1.2.3
 	# バージョン判定
 	$versionUp = (Compare-Version $latestMajorVersion $appMajorVersion) -gt 0
 	# バージョンアップメッセージ
@@ -296,7 +296,7 @@ function Update-IgnoreList {
 				# 更新後の対象外リストの書き込みに失敗したら読み込んだ対象外リストの出力を試みる
 				$ignoreLists.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC) | Out-File -LiteralPath $script:ignoreFilePath -Encoding UTF8 -NoNewline
 				Write-Error ($script:msg.IgnoreFileSortFailed)
-			}
+			} finally { Start-Sleep -Seconds 1 }
 		} catch { Write-Warning ($script:msg.IgnoreFileSortFailed) }
 		finally { Unlock-File $script:ignoreLockFilePath | Out-Null }
 	}
@@ -994,7 +994,7 @@ function Optimize-HistoryFile {
 		catch {
 			# 不整合解消後のダウンロード履歴の書き込みに失敗したら読み込んだダウンロード履歴の出力を試みる
 			$originalLists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
-		}
+		} finally { Start-Sleep -Seconds 1 }
 	} catch { Write-Warning ($script:msg.OptimizeHistFailed) }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
 	Remove-Variable -Name cleanedHist -ErrorAction SilentlyContinue
@@ -1015,7 +1015,7 @@ function Limit-HistoryFile {
 		catch {
 			# 指定日以上前の履歴を削除後のダウンロード履歴の書き込みに失敗したら読み込んだダウンロード履歴の出力を試みる
 			$originalLists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
-		}
+		} finally { Start-Sleep -Seconds 1 }
 	} catch { Write-Warning ($script:msg.CleanupHistFailed) }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
 	Remove-Variable -Name retentionPeriod, purgedHist -ErrorAction SilentlyContinue
@@ -1031,18 +1031,17 @@ function Repair-HistoryFile {
 	try {
 		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 		$originalLists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
-		# # videoPageで1つしかないもの残し、ダウンロード日時でソート
-		# $uniquedHist = @(($originalLists | Group-Object -Property 'videoPage').Where({ $_.Count -eq 1 }) | ForEach-Object { $_.Group } | Sort-Object -Property downloadDate)
-		# $uniquedHist = $uniquedHist | Sort-Object -Property downloadDate
-		# videoPage ごとにグループ化し、downloadDate が最大のものを取得
+		# videoPageごとにグループ化し、downloadDateが最大のものを取得
 		$uniquedHist = $originalLists | Group-Object -Property 'videoPage' | ForEach-Object {
 			$_.Group | Sort-Object -Property downloadDate -Descending | Select-Object -First 1
 		} | Sort-Object -Property downloadDate
+		# videoValidatedが「3:チェック失敗」のものを削除
+		$uniquedHist = $uniquedHist.Where({ $_.videoValidated -ne '3' })
 		try { $uniquedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
 		catch {
 			# 重複削除後のダウンロード履歴の書き込みに失敗したら読み込んだダウンロード履歴の出力を試みる
 			$originalLists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
-		}
+		} finally { Start-Sleep -Seconds 1 }
 	} catch { Write-Warning ($script:msg.DistinctHistFailed) }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
 	Remove-Variable -Name uniquedHist -ErrorAction SilentlyContinue
@@ -1101,9 +1100,9 @@ function Invoke-IntegrityCheck {
 		# videoPageが一致するレコードを取得し、最新のdownloadDateを持つレコードを選択
 		$matchVideoHist = $videoHists.Where({ $_.videoPage -eq $videoHist.videoPage }) | Sort-Object -Property downloadDate -Descending | Select-Object -First 1
 		if ($null -ne $matchVideoHist) {
-			# 0:未チェック、1:チェック済、2:チェック中、レコードなしは履歴が削除済み
+			# 0:未チェック、1:チェック済、2:チェック中、3:チェック失敗、レコードなしは履歴が削除済み
 			switch ($matchVideoHist.videoValidated) {
-				# 「0:未チェック」のレコードは「2:チェック中」に変更したレコードを追記。(downloadDate は現在日時)
+				# 「0:未チェック」のレコードは「2:チェック中」に変更したレコードを追記。(downloadDateは現在日時)
 				'0' {
 					# 該当のレコードを複製
 					$matchVideoHist.downloadDate = Get-TimeStamp
@@ -1114,6 +1113,7 @@ function Invoke-IntegrityCheck {
 				# 「0:未チェック」以外のステータスの際はスキップして次を処理
 				'1' { Write-Output ($script:msg.ValidationCompleted) ; return }
 				'2' { Write-Output ($script:msg.ValidationInProgress) ; return }
+				'3' { Write-Output ($script:msg.ValidationInProgress) ; return }
 				default { Write-Warning ($script:msg.HistRecordRemoved -f $videoHist.videoPage) ; return }
 			}
 		}
@@ -1147,18 +1147,12 @@ function Invoke-IntegrityCheck {
 	if (($ffmpegProcessExitCode -ne 0) -or ($errorCount -gt 30)) {
 		# ダウンロード履歴とファイルを削除
 		Write-Warning ($script:msg.ValidationNG) ; Write-Verbose ($script:msg.ErrorCount -f $ffmpegProcessExitCode, $errorCount)
-		$script:validationFailed = $true
-		# 整合性検証に失敗したダウンロードファイルをダウンロード履歴から削除
 		try {
 			while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-			$originalHistFile = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
-			# 該当の番組のレコードを削除
-			$updatedHistFile = @($originalHistFile.Where({ $_.videoPage -ne $videoHist.videoPage }))
-			try { $updatedHistFile | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
-			catch {
-				# 該当の番組のレコード削除後のダウンロード履歴の書き込みに失敗したら読み込んだダウンロード履歴の出力を試みる
-				$originalHistFile | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
-			}
+			# 「3:チェック失敗」に変更したレコードを追記。(downloadDateは現在日時)
+			$matchVideoHist.downloadDate = Get-TimeStamp
+			$matchVideoHist.videoValidated = '3'
+			$matchVideoHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append
 		} catch { Write-Warning ($script:msg.HistUpdateFailed) }
 		finally { Unlock-File $script:histLockFilePath | Out-Null }
 		# 破損しているダウンロードファイルを削除
@@ -1169,8 +1163,7 @@ function Invoke-IntegrityCheck {
 		Write-Output ($script:msg.ValidationOK)
 		try {
 			while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-			$originalHistFile = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
-			# 「1:チェック済」に変更したレコードを追記。(downloadDate は現在日時)
+			# 「1:チェック済」に変更したレコードを追記。(downloadDateは現在日時)
 			$matchVideoHist.downloadDate = Get-TimeStamp
 			$matchVideoHist.videoValidated = '1'
 			$matchVideoHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append

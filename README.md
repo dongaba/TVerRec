@@ -1,4 +1,4 @@
-# **🎞 TVerRec 📺** TVer 一括ダウンロード・保存
+# **🎞TVerRec📺** TVer一括ダウンロード・保存
 
 [🇺🇸English](https://github.com/dongaba/TVerRec/blob/master/README.en.md) | [🇯🇵日本語](https://github.com/dongaba/TVerRec/blob/master/README.md)
 
@@ -23,12 +23,12 @@
 TVerRecは、テレビ番組配信サイトTVerの番組をダウンロード保存するためのダウンローダー、ダウンロード支援ツールです。
 番組のジャンルや出演タレント、番組名などを指定して一括ダウンロードする支援をします。
 CMは入っていないため気に入った番組を配信終了後も残しておくことができます。
-1 回起動すれば新しい番組が配信される度にダウンロードされます。
+1回起動すれば新しい番組が配信される度にダウンロードされます。
 
 - **TVerRecはWindows PowerShellをサポートしません。PowerShell Coreでご利用ください。**
 - TVerRecはPowerShell CoreをインストールしたWindows/Mac/Linuxで動作します。
 - WindowsでPowerShell Coreがインストールされていない場合は、TVerRecが自動的にPowerShell Coreをインストールします。
-- Windowsに手動でPowerShell Coreをインストールする方法や Mac、LinuxへのPowerShellのインストールについては[Wikiのこちらのページ](https://github.com/dongaba/TVerRec/wiki/PowerShell%E3%81%AE%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB)を参照してください。
+- Windowsに手動でPowerShell Coreをインストールする方法やMac、LinuxへのPowerShellのインストールについては[Wikiのこちらのページ](https://github.com/dongaba/TVerRec/wiki/PowerShell%E3%81%AE%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB)を参照してください。
 - Dockerイメージも[配布中](https://hub.docker.com/r/dongaba/tverrec)です。
 - 安定版は[リリース](https://github.com/dongaba/TVerRec/releases)から取得してください。
 
@@ -40,7 +40,7 @@ CMは入っていないため気に入った番組を配信終了後も残して
   - Linux
 
 - 必要なソフトウェア
-  - PowerShell Core (Windows 環境では自動インストールされます)
+  - PowerShell Core (Windows環境では自動インストールされます)
   - youtube-dl (自動ダウンロードされます)
   - ffmpeg (自動ダウンロードされます)
   - Python (Linux/Macのみ必要。Windowsでは不要)
@@ -52,12 +52,12 @@ CMは入っていないため気に入った番組を配信終了後も残して
 コンテナはUbuntu Linuxのイメージで作成されており、必要なツールは全て設定済みの状態で起動します。
 設定ファイルを用意・修正し、ディスクのマウント・バインドを設定すればすぐに利用開始できます。
 
-## Windows GUI 版の動作イメージ
+## Windows GUI版の動作イメージ
 
 ![GUIMain](https://github.com/user-attachments/assets/35d6e486-094a-4e7d-84fb-e8cdf88fbeb0)
 ![GUISetting](https://github.com/user-attachments/assets/1e53fcd8-55db-4429-9064-66cb4facbe30)
 
-## Windows CUI 版の動作イメージ
+## Windows CUI版の動作イメージ
 
 ![CUI](https://github.com/user-attachments/assets/728d618b-43ab-43fb-a4df-02108ca2e4fd)
 
@@ -69,12 +69,12 @@ CMは入っていないため気に入った番組を配信終了後も残して
 2. TVerの**マイページに登録した番組、特集など**からの一括ダウンロード
 3. TVerの**全録**が可能です。
 4. TVerの**番組サムネイルをダウンロードファイルに埋め込み**ます。
-5. 字幕データが TVerにある場合は、**字幕情報もダウンロードファイルに埋め込み**ます。
-6. 並列ダウンロードによる**高速ダウンロード**が可能です。(当方環境では 1Gbps の回線で 1Gbps でダウンロード可能)
-7. もちろん**番組を 1 本ずつ指定したダウンロード**も可能です。
+5. 字幕データがTVerにある場合は、**字幕情報もダウンロードファイルに埋め込み**ます。
+6. 並列ダウンロードによる**高速ダウンロード**が可能です。(当方環境では1Gbpsの回線で1Gbpsでダウンロード可能)
+7. もちろん**番組を1本ずつ指定したダウンロード**も可能です。
 8. また、ダウンロードした**番組が破損していないかの検証**も行います。
 9. ダウンロードされたファイルは、最終移動先に**自動的に整理**可能です。
-10. 動作に必要な youtube-dl や ffmpeg などの必要コンポーネントは**自動的に最新版がダウンロード**されます。
+10. 動作に必要なyoutube-dlやffmpegなどの必要コンポーネントは**自動的に最新版がダウンロード**されます。
 11. トースト通知により動作状況を通知します。
 12. TVerRecの安定版が更新されるとアップデートが通知されます。
 13. Windows環境のみGUIも利用可能です。
@@ -203,6 +203,6 @@ CMは入っていないため気に入った番組を配信終了後も残して
 
 ## ライセンス
 
-- TVerRec は[The MIT License](https://opensource.org/licenses/MIT)に基づき、複製や再配布、改変が許可されます。
+- TVerRecは[The MIT License](https://opensource.org/licenses/MIT)に基づき、複製や再配布、改変が許可されます。
 
 Copyright (c) dongaba. All rights reserved.

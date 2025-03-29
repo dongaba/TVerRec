@@ -96,7 +96,7 @@ function Out-ExecutionLog {
 # メイン処理
 
 #----------------------------------------------------------------------
-# region WPFのWindow設定
+# region  WPFのWindow設定
 
 try {
 	[Xml]$mainXaml = [String](Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecMain.xaml'))
@@ -148,7 +148,7 @@ $btnWiki.Content = $script:msg.btnWiki
 $btnSetting.Content = $script:msg.btnSetting
 $btnExit.Content = $script:msg.btnExit
 
-# endregion WPFのWindow設定
+# endregion  WPFのWindow設定
 
 #----------------------------------------------------------------------
 # region バックグラウンドジョブ化する処理を持つボタン
@@ -230,7 +230,7 @@ $btnKillAll.Add_Click({
 		$lblStatus.Content = $script:msg.ProcessForceStopped
 		Invoke-GarbageCollection
 	})
-$btnWiki.Add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
+$btnWiki.Add_Click({ Start-Process‘https://github.com/dongaba/TVerRec/wiki’ })
 $btnSetting.Add_Click({
 		& 'gui/gui_setting.ps1'
 		if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
