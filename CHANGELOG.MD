@@ -1,5 +1,15 @@
 # Change Log
 
+## [3.4.2](https://github.com/dongaba/TVerRec/releases/tag/v3.4.2)
+
+### 3.4.2 Added
+
+### 3.4.2 Changed
+
+### 3.4.2 Fixed
+
+- 使っているPowerShellCoreが古いとエラーが出る問題を修正 #236
+
 ## [3.4.1](https://github.com/dongaba/TVerRec/releases/tag/v3.4.1)
 
 ### 3.4.1 Added

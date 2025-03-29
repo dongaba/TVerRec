@@ -265,11 +265,11 @@ while ($mainWindow.IsVisible) {
 			# Jobからメッセージを取得し事前に取得したメッセージタイプと照合し色付け
 			foreach ($jobMsg in $jobMsgs) {
 				$logType = switch ($jobMsg) {
-					{ $msgError -contains $_ } { 'Error' ; continue }
-					{ $msgWarning -contains $_ } { 'Warning' ; continue }
-					{ $msgVerbose -contains $_ } { 'Verbose' ; continue }
-					{ $msgDebug -contains $_ } { 'Debug' ; continue }
-					{ $msgInformation -contains $_ } { 'Information' ; continue }
+					{ $msgError -contains $_ } { 'Error' ; break }
+					{ $msgWarning -contains $_ } { 'Warning' ; break }
+					{ $msgVerbose -contains $_ } { 'Verbose' ; break }
+					{ $msgDebug -contains $_ } { 'Debug' ; break }
+					{ $msgInformation -contains $_ } { 'Information' ; break }
 					Default { 'Output' }
 				}
 				Out-ExecutionLog -Message ($jobMsg -join "`n") -Type $logType

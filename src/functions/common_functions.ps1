@@ -221,7 +221,7 @@ function Remove-SpecialCharacter {
 		'<' = '＜'
 		'>' = '＞'
 	}
-	foreach ($replacement in $replacements.GetEnumerator()) {$text = $text.Replace($replacement.Name, $replacement.Value)}
+	foreach ($replacement in $replacements.GetEnumerator()) { $text = $text.Replace($replacement.Name, $replacement.Value) }
 	return $text
 	Remove-Variable -Name text, replacements, replacement -ErrorAction SilentlyContinue
 }
@@ -361,6 +361,35 @@ function Unlock-File {
 # endregion ファイルロック
 
 # region コンソール出力
+#----------------------------------------------------------------------
+# ディレクトリの空き容量確認(MB)
+#----------------------------------------------------------------------
+function Get-RemainingCapacity {
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][string]$targetDir
+	)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if ($IsWindows) {
+		try {
+			# ローカルディスクか、マウントされているか(例: "Z:")か、UNCパス(例: "\\server\share")かを判定
+			if ($targetDir -match '^[a-zA-Z]:') {
+				# ローカルorマウントされたネットワークドライブ 例: "C:\", "Z:\"
+				$targetDrive = ($targetDir -split '\\')[0]
+				$FreeSpace = (Get-CimInstance Win32_LogicalDisk | Where-Object { $_.DeviceID -eq $targetDrive }).FreeSpace
+			} elseif ($targetDir -match '^\\\\') {
+				# UNCパス (例: "\\server\share")
+				$targetRoot = ($targetDir -replace '(^\\\\[^\\]+\\[^\\]+).*', '$1')  # \\server\share
+				$freeSpace = (&cmd /c dir $targetRoot) | Select-Object -Last 1 | ForEach-Object { $_ -replace ',' -split '\s+' } | Select-Object -Index 3
+			} else { Write-Information ($script:msg.CapacityUnknown -f $targetDir) ; $freeSpace = 9999999999 }
+		} catch { Write-Information ($script:msg.CapacityUnknown -f $targetDir) ; $freeSpace = 9999999999 }
+	} else { $freeSpace = [int64]((df -P $targetDir | Select-Object -Skip 1) -split '\s+')[3] * 1024 }
+	return [int64]($freeSpace / 1MB)
+	Remove-Variable -Name targetDir, targetDrive, targetRoot, freeSpace -ErrorAction SilentlyContinue
+}
+# endregion コンソール出力
+
+# region ファイルロック
 
 #----------------------------------------------------------------------
 # 色付きWrite-Output
@@ -436,18 +465,18 @@ function Show-GeneralToast {
 				$toastXML.LoadXml($toastProgressContent)
 				$toastNotification = [Windows.UI.Notifications.ToastNotification]::new($toastXML)
 				[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Show($toastNotification) | Out-Null
-				continue
+				break
 			}
 			$IsLinux {
 				if (Get-Command notify-send -ErrorAction SilentlyContinue) { & notify-send -a $script:appName -t 5000 -i $script:toastAppLogo $text1 $text2 2> /dev/null }
-				continue
+				break
 			}
 			$IsMacOS {
 				if (Get-Command osascript -ErrorAction SilentlyContinue) {
 					$toastParams = ('display notification "{0}" with title "{1}" subtitle "{2}" sound name "Blow"' -f $text2, $script:appName, $text1)
 					$toastParams | & osascript 2> /dev/null
 				}
-				continue
+				break
 			}
 			default {}
 		}
@@ -505,18 +534,18 @@ function Show-ProgressToast {
 				$toast.Data = [Windows.UI.Notifications.NotificationData]::new($toastData)
 				$toast.Data.SequenceNumber = 1
 				[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Show($toast) | Out-Null
-				continue
+				break
 			}
 			$IsLinux {
 				if (Get-Command notify-send -ErrorAction SilentlyContinue) { & notify-send -a $script:appName -t 5000 -i $script:toastAppLogo $text1 $text2 2> /dev/null }
-				continue
+				break
 			}
 			$IsMacOS {
 				if (Get-Command osascript -ErrorAction SilentlyContinue) {
 					$toastParams = ('display notification "{0}" with title "{1}" subtitle "{2}" sound name "Blow"' -f $text2, $script:appName, $text1)
 					$toastParams | & osascript
 				}
-				continue
+				break
 			}
 			default {}
 		}
@@ -550,10 +579,10 @@ function Update-ProgressToast {
 				$toastProgressData = [Windows.UI.Notifications.NotificationData]::new($toastData)
 				$toastProgressData.SequenceNumber = 2
 				[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Update($toastProgressData, $tag , $group) | Out-Null
-				continue
+				break
 			}
-			$IsLinux { continue }
-			$IsMacOS { continue }
+			$IsLinux { break }
+			$IsMacOS { break }
 			default {}
 		}
 	}
@@ -620,18 +649,18 @@ function Show-ProgressToast2Row {
 				$toast.Data = [Windows.UI.Notifications.NotificationData]::new($toastData)
 				$toast.Data.SequenceNumber = 1
 				[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Show($toast) | Out-Null
-				continue
+				break
 			}
 			$IsLinux {
 				if (Get-Command notify-send -ErrorAction SilentlyContinue) { & notify-send -a $script:appName -t 5000 -i $script:toastAppLogo $text1 $text2 2> /dev/null }
-				continue
+				break
 			}
 			$IsMacOS {
 				if (Get-Command osascript -ErrorAction SilentlyContinue) {
 					$toastParams = ('display notification "{0}" with title "{1}" subtitle "{2}" sound name "Blow"' -f $text2, $script:appName, $text1)
 					$toastParams | & osascript
 				}
-				continue
+				break
 			}
 			default {}
 		}
@@ -660,13 +689,13 @@ function Update-ProgressToast2Row {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if (!($script:disableToastNotification)) {
 		$rightText1 = switch ($rightText1 ) {
-			'' { '' ; continue }
-			'0' { $script:msg.Completed ; continue }
+			'' { '' ; break }
+			'0' { $script:msg.Completed ; break }
 			default { ($script:msg.MinRemaining -f ([Int][Math]::Ceiling($rightText1 / 60))) }
 		}
 		$rightText2 = switch ($rightText2 ) {
-			'' { '' ; continue }
-			'0' { $script:msg.Completed ; continue }
+			'' { '' ; break }
+			'0' { $script:msg.Completed ; break }
 			default { ($script:msg.MinRemaining -f ([Int][Math]::Ceiling($rightText2 / 60))) }
 		}
 		if (!$script:disableToastNotification) {
@@ -684,10 +713,10 @@ function Update-ProgressToast2Row {
 					$toastProgressData = [Windows.UI.Notifications.NotificationData]::new($toastData)
 					$toastProgressData.SequenceNumber = 2
 					[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($script:appID).Update($toastProgressData, $tag , $group) | Out-Null
-					continue
+					break
 				}
-				$IsLinux { continue }
-				$IsMacOS { continue }
+				$IsLinux { break }
+				$IsMacOS { break }
 				default {}
 			}
 		}

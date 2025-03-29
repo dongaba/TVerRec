@@ -127,13 +127,13 @@ Write-Output ('TVerRecの最新版をダウンロードします')
 if (!(Get-Variable updateChannel -Scope Script -ErrorAction SilentlyContinue)) { $script:updateChannel = 'release' }
 try {
 	$zipURL = switch ($script:updateChannel) {
-		'dev' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/dev.zip' ; continue }
-		'beta' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/beta.zip' ; continue }
-		'master' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/master.zip' ; continue }
-		'prerelease' { (Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec).where{ ($_.prerelease -eq $true) }[0].zipball_url ; continue }
+		'dev' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/dev.zip' ; break }
+		'beta' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/beta.zip' ; break }
+		'master' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/master.zip' ; break }
+		'prerelease' { (Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec).where{ ($_.prerelease -eq $true) }[0].zipball_url ; break }
 		default { (Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec).where{ ($_.prerelease -eq $false) }[0].zipball_url }
 	}
-	Invoke-WebRequest -Uri $zipURL -OutFile (Join-Path $updateTemp 'TVerRecLatest.zip') -ConnectionTimeoutSeconds $script:timeoutSec
+	Invoke-WebRequest -Uri $zipURL -OutFile (Join-Path $updateTemp 'TVerRecLatest.zip') -TimeoutSec $script:timeoutSec
 } catch { Throw ('❌️ ダウンロードに失敗しました');	exit 1 }
 
 # 最新バージョンがダウンロードできていたら展開

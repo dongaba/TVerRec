@@ -117,7 +117,7 @@ if ($latestVersion -eq $currentVersion) {
 		$tag = (Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec)[0].Tag_Name
 		$downloadURL = ('https://github.com/{0}/releases/download/{1}/{2}' -f $repo, $tag, $fileBeforeRename)
 		$ytdlFileLocation = Join-Path $script:binDir $fileAfterRename
-		Invoke-WebRequest -Uri $downloadURL -Out $ytdlFileLocation -ConnectionTimeoutSeconds $script:timeoutSec
+		Invoke-WebRequest -Uri $downloadURL -Out $ytdlFileLocation -TimeoutSec $script:timeoutSec
 	} catch { Write-Warning ($script:msg.ToolDownloadFailed -f $script:preferredYoutubedl) ; return }
 	if (!$IsWindows) { (& chmod a+x $ytdlFileLocation) }
 

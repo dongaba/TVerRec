@@ -109,7 +109,7 @@ while ($true) {
 				Write-Output ($script:msg.MediumBoldBorder)
 				Write-Output ('{0}: {1}' -f $script:msg.SingleDownloadTVerURL, $videoLink)
 				Invoke-VideoDownload -Keyword ([Ref]$keyword) -VideoLink ([Ref]$videoLink) -Force $script:forceSingleDownload
-				continue
+				break
 			}
 			'^.*://' { # TVer以外のサイトへの対応
 				Write-Output ('')
@@ -117,12 +117,11 @@ while ($true) {
 				Write-Output ('{0}: {1}' -f $script:msg.SingleDownloadNonTVerURL, $videoLink)
 				Invoke-NonTverYtdl $videoLink
 				Start-Sleep -Seconds 1
-				continue
+				break
 			}
-			default { Write-Warning ('{0}: {1}' -f $script:msg.SingleDownloadNotURL, $videoLink) ; continue }
+			default { Write-Warning ('{0}: {1}' -f $script:msg.SingleDownloadNotURL, $videoLink) }
 		}
 	}
-
 }
 
 # youtube-dlのプロセスが終わるまで待機
