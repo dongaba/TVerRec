@@ -78,7 +78,7 @@ if (Test-Path $script:histFilePath -PathType Leaf) {
 			$_.Group | Sort-Object -Property downloadDate, videoValidated -Descending | Select-Object -First 1
 		}
 		# videoValidatedが「0:未チェック」のものをカウント
-		$videoNotValidatedNum = @($latestHists.Where({ $_.videoValidated -eq '0' })).Count
+		$videoNotValidatedNum = @($latestHists.Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' }).Where({ $_.videoValidated -ne '3' }) ).Count
 	} catch { Throw ($script:msg.LoadFailed -f $script:msg.HistFile) }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
 } else { $videoNotValidatedNum = 0 }
@@ -92,7 +92,7 @@ while ($videoNotValidatedNum -ne 0) {
 
 	try {
 		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-		$videoHists = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' }) )
+		$videoHists = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' }).Where({ $_.videoValidated -ne '3' }) )
 	} catch { Write-Warning ($script:msg.LoadFailed -f $script:msg.HistFile) }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
 
@@ -190,7 +190,7 @@ while ($videoNotValidatedNum -ne 0) {
 				$_.Group | Sort-Object -Property downloadDate, videoValidated -Descending | Select-Object -First 1
 			}
 			# videoValidatedが「0:未チェック」のものをカウント
-			$videoNotValidatedNum = @($latestHists.Where({ $_.videoValidated -eq '0' })).Count
+			$videoNotValidatedNum = @($latestHists.Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' }).Where({ $_.videoValidated -ne '3' }) ).Count
 		} catch { Throw ($script:msg.UpdateFailed -f $script:msg.HistFile) }
 		finally { Unlock-File $script:histLockFilePath | Out-Null }
 	} else { $videoNotValidatedNum = 0 }

@@ -805,7 +805,7 @@ function Invoke-Ytdl {
 	}
 
 	$pwshRemoveIfExists = 'Remove-Item -LiteralPath ''{0}'' -Force -ErrorAction SilentlyContinue' -f $videoInfo.filePath.Replace("'", "''")
-	$ytdlTempOutFile = ('{0}/{1}.{2}' -f $videoInfo.fileDir, $videoInfo.episodeID, $script:videoContainerFormat)
+	$ytdlTempOutFile = ('{0}/{1}.{2}' -f $videoInfo.fileDir.Replace("'", "''"), $videoInfo.episodeID, $script:videoContainerFormat)
 	$pwshRenameFile = 'Rename-Item -LiteralPath ''{0}'' -NewName ''{1}'' -Force -ErrorAction SilentlyContinue' -f $ytdlTempOutFile, $videoInfo.fileName.Replace("'", "''")
 	$ytdlExecArg = 'pwsh -Command \"{0} ; {1}\"' -f $pwshRemoveIfExists, $pwshRenameFile
 	$ytdlArgs += ('--exec "after_video:{0}"' -f $ytdlExecArg)
