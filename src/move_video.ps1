@@ -38,34 +38,25 @@ $toastShowParams = @{
 }
 Show-ProgressToast @toastShowParams
 
-# Windowsのディレクトリ一覧を取得する関数
-function Get-DirectoriesOnWindows {
-	Param ([String[]]$paths)
-	$results = New-Object System.Collections.Generic.List[String]
-	foreach ($path in $paths) {
-		$dirCmd = "dir `"$path`" /s /b /a:d"
-		$results.AddRange([String[]](& cmd /c $dirCmd))
-	}
-	return $results
-}
-
-# Linux/Macのディレクトリ一覧を取得する関数
-function Get-DirectoriesNotOnWindows {
-	Param ([String[]]$paths)
-	$results = New-Object System.Collections.Generic.List[String]
-	foreach ($path in $paths) {
-		$dirCmd = "find `"$path`" -type d"
-		$results.AddRange([String[]](& sh -c $dirCmd))
-	}
-	return $results
-}
-
 # プラットフォームに応じたディレクトリ一覧を取得する関数
 function Get-DirectoriesWithPlatformCheck {
 	Param ([String[]]$paths)
+	$results = New-Object System.Collections.Generic.List[String]
 	# PowerShellではジャンクションの展開ができないので、cmd.exeを使ってジャンクションを解決する
-	if ($IsWindows) { return Get-DirectoriesOnWindows -paths $paths }
-	else { return Get-DirectoriesNotOnWindows -paths $paths }
+	if ($IsWindows) {
+		foreach ($path in $paths) {
+			$dirCmd = "dir `"$path`" /s /b /a:d"
+			$resultTemp = [String[]](& cmd /c $dirCmd)
+			if ($resultTemp) { $results.AddRange($resultTemp ) }
+		}
+	}else {
+		foreach ($path in $paths) {
+			$dirCmd = "find `"$path`" -type d"
+			$resultTemp = [String[]](& sh -c $dirCmd)
+			if ($resultTemp) { $results.AddRange($resultTemp ) }
+		}
+	}
+	return $results
 }
 
 # 移動先ディレクトリ配下のディレクトリ一覧

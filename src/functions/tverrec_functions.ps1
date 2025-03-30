@@ -355,7 +355,7 @@ function Invoke-HistoryAndListMatchCheck {
 	$histFileData = @(Read-HistoryFile)
 	$histVideoPages = if ($histFileData.Count -eq 0) { @() } else { $histFileData.VideoPage }
 	# ダウンロードリストとダウンロード履歴をマージ
-	$listVideoPages.AddRange($histVideoPages)
+	if($histVideoPages) { $listVideoPages.AddRange($histVideoPages)}
 	# URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 	$listCompResult = Compare-Object -IncludeEqual $resultLinks $listVideoPages
 	try { $processedCount = ($listCompResult.Where({ $_.SideIndicator -eq '==' })).Count } catch { $processedCount = 0 }
