@@ -204,7 +204,7 @@ function Read-HistoryFile {
 	$histFileData = @()
 	try {
 		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-		$histFileData = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+		$histFileData = Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8
 	} catch { Throw ($script:msg.LoadFailed -f $script:msg.HistFile) }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
 	return $histFileData
@@ -221,7 +221,7 @@ function Read-DownloadList {
 	$listFileData = @()
 	try {
 		while (-not (Lock-File $script:listLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-		$listFileData = @(Import-Csv -LiteralPath $script:listFilePath -Encoding UTF8)
+		$listFileData = Import-Csv -LiteralPath $script:listFilePath -Encoding UTF8
 	} catch { Throw ($script:msg.LoadFailed -f $script:msg.ListFile) }
 	finally { Unlock-File $script:listLockFilePath | Out-Null }
 	return $listFileData
@@ -971,6 +971,28 @@ function Suspend-Process () {
 }
 
 #----------------------------------------------------------------------
+# ダウンロード履歴の最新履歴を取得
+#----------------------------------------------------------------------
+function Get-LatestHistory {
+	[OutputType([PSCustomObject])]
+	Param ()
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	try {
+		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+		$videoHists = Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8
+		# videoPageごとに最新のdownloadDateを持つレコードを取得
+		$latestHists = $videoHists |
+			Group-Object -Property 'videoPage' |
+			ForEach-Object {
+				$_.Group | Sort-Object -Property downloadDate, videoValidated -Descending | Select-Object -First 1
+			}
+	} catch { Write-Warning ($script:msg.LoadFailed -f $script:msg.HistFile) }
+	finally { Unlock-File $script:histLockFilePath | Out-Null }
+	return $latestHists
+	Remove-Variable -Name cleanedHist -ErrorAction SilentlyContinue
+}
+
+#----------------------------------------------------------------------
 # ダウンロード履歴の不整合を解消
 #----------------------------------------------------------------------
 function Optimize-HistoryFile {
@@ -989,7 +1011,7 @@ function Optimize-HistoryFile {
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
 	try {
 		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-		$originalLists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+		$originalLists = Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8
 		# videoValidatedがNullでなく、整数に変換可能。downloadDateが日付に変換できるものを残す
 		$cleanedHist = $originalLists.Where({
 			($null -ne $_.videoValidated) `
@@ -1013,7 +1035,7 @@ function Limit-HistoryFile {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	try {
 		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-		$originalLists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+		$originalLists = Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8
 		$purgedHist = $originalLists.Where({ [DateTime]::ParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null) -gt (Get-Date).AddDays(-1 * $retentionPeriod) })
 		try { $purgedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
 		catch { $originalLists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
@@ -1030,22 +1052,17 @@ function Repair-HistoryFile {
 	[OutputType([Void])]
 	Param ()
 	try {
-		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-		$originalLists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
-		# videoValidatedが3のもののvideoPageを取得
-		$invalidPages = $originalLists.Where({ $_.videoValidated -eq '3' }) | Select-Object -ExpandProperty videoPage -Unique
-		# videoPageごとにグループ化し、downloadDateが最大のものを取得
-		$uniquedHist = @($originalLists | Group-Object -Property 'videoPage' | ForEach-Object {
-				$_.Group | Sort-Object -Property downloadDate, videoValidated -Descending | Select-Object -First 1
-			} | Sort-Object -Property downloadDate)
+		# videoPageごとに最新のdownloadDateを持つレコードを取得
+		$latestHists = Get-LatestHistory
 		# videoValidatedが「3:チェック失敗」のものと同じvideoPageを持つレコードを削除
-		$uniquedHist = $uniquedHist.Where({ $_.videoPage -notin $invalidPages })
+		$uniquedHist = $latestHists.Where({ $_.videoValidated -ne '3' })
+		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 		try { $uniquedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
 		catch { $originalLists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
 		finally { Start-Sleep -Seconds 1 }
 	} catch { Write-Warning ($script:msg.DistinctHistFailed) }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
-	Remove-Variable -Name originalLists, invalidPages, uniquedHist -ErrorAction SilentlyContinue
+	Remove-Variable -Name originalLists, latestHists, uniquedHist -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -1095,40 +1112,32 @@ function Invoke-IntegrityCheck {
 	catch { Write-Warning ($script:msg.InitializeErrorFileFailed) ; return }
 
 	# これからチェックする番組のステータスをチェック
-	try {
-		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-		$videoHists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' })
-		# videoValidatedが「1:チェック済」または「3:チェック失敗」のものは既にチェック済み(失敗を含む)
-		$validatedPages = $videoHists.Where({ ($_.videoValidated -eq '1') -or ($_.videoValidated -eq '3') }) | Select-Object -ExpandProperty videoPage -Unique
-		# videoPageごとにグループ化し、downloadDateが最大のものを取得
-		$targetHists = @($videoHists | Group-Object -Property 'videoPage' | ForEach-Object {
-				$_.Group | Sort-Object -Property downloadDate, videoValidated -Descending | Select-Object -First 1
-			} | Sort-Object -Property downloadDate)
-		# videoValidatedが「1:チェック済」または「3:チェック失敗」のものと同じvideoPageを持つレコードを削除した上で対象のレコードを取得
-		$targetHist = $targetHists.Where({ $_.videoPage -eq $videoHist.videoPage }).Where({ $_.videoPage -notin $validatedPages })
-		if ($targetHist) {
-			$checkStatus = $targetHist.videoValidated
-			if ($null -ne $checkStatus) {
-				# 0:未チェック、1:チェック済、2:チェック中、3:チェック失敗、レコードなしは履歴が削除済み
-				switch ($checkStatus) {
-					# 「0:未チェック」のレコードは「2:チェック中」に変更したレコードを追記。(downloadDateは現在日時)
-					'0' {
-						# 該当のレコードを複製
-						$targetHist[0].downloadDate = Get-TimeStamp
-						$targetHist[0].videoValidated = '2'
-						$targetHist[0] | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append
-						break
-					}
-					# 「0:未チェック」以外のステータスの際はスキップして次を処理
-					'1' { Write-Output ($script:msg.ValidationCompleted) ; return }		# ないはず
-					'2' { Write-Output ($script:msg.ValidationInProgress) ; return }
-					'3' { Write-Output ($script:msg.ValidationFailed) ; return }		# ないはず
-					default { Write-Warning ($script:msg.HistRecordRemoved -f $videoHist.videoPage) ; return }
+	$latestHists = Get-LatestHistory
+	$targetHist = $latestHists.Where({ $_.videoPage -eq $videoHist.videoPage }) | Select-Object -First 1
+	if ($targetHist) {
+		$checkStatus = $targetHist.videoValidated
+		if ($null -ne $checkStatus) {
+			# 0:未チェック、1:チェック済、2:チェック中、3:チェック失敗、レコードなしは履歴が削除済み
+			switch ($checkStatus) {
+				# 「0:未チェック」のレコードは「2:チェック中」に変更したレコードを追記。(downloadDateは現在日時)
+				'0' {
+					# 該当のレコードを複製
+					$targetHist.downloadDate = Get-TimeStamp
+					$targetHist.videoValidated = '2'
+					while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+					try { $targetHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append }
+					catch { Write-Warning ($script:msg.HistUpdateFailed) ; return }
+					finally { Unlock-File $script:histLockFilePath | Out-Null }
+					break
 				}
+				# 「0:未チェック」以外のステータスの際はスキップして次を処理
+				'2' { Write-Output ($script:msg.ValidationInProgress) ; return }
+				'1' { Write-Output ($script:msg.ValidationCompleted) ; return }		# ないはず
+				'3' { Write-Output ($script:msg.ValidationFailed) ; return }		# ないはず
+				default { Write-Warning ($script:msg.HistRecordRemoved -f $videoHist.videoPage) ; return }
 			}
 		}
-	} catch { Write-Warning ($script:msg.HistUpdateFailed) ; return }
-	finally { Unlock-File $script:histLockFilePath | Out-Null }
+	}
 
 	if ($script:simplifiedValidation) {
 		# ffprobeを使った簡易検査
@@ -1152,42 +1161,39 @@ function Invoke-IntegrityCheck {
 	try { if (Test-Path $script:ffmpegErrorLogPath) { Remove-Item -LiteralPath $script:ffmpegErrorLogPath -Force -ErrorAction SilentlyContinue | Out-Null } }
 	catch { Write-Warning ($script:msg.DeleteErrorFailed) }
 
-	try {
-		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-		$videoHists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' })
-		# videoPageごとにグループ化し、downloadDateが最大のものを取得
-		$targetHists = @($videoHists | Group-Object -Property 'videoPage' | ForEach-Object {
-				$_.Group | Sort-Object -Property downloadDate, videoValidated -Descending | Select-Object -First 1
-			} | Sort-Object -Property downloadDate)
-		# レコードを取得
-		$targetHist = $targetHists.Where({ $_.videoPage -eq $videoHist.videoPage })
-		if ($targetHist) {
-			# 終了コードが0以外 または エラーが一定以上
-			if ( ($ffmpegProcessExitCode -ne 0) -or ($errorCount -gt 30)) {
-				# ダウンロード履歴とファイルを削除
-				Write-Warning ($script:msg.ValidationNG) ; Write-Verbose ($script:msg.ErrorCount -f $ffmpegProcessExitCode, $errorCount)
-				# 「3:チェック失敗」に変更したレコードを追記。(downloadDateは現在日時)
-				$targetHist[0].downloadDate = Get-TimeStamp
-				$targetHist[0].videoValidated = '3'
-				$targetHist[0] | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append
-				try { Remove-Item -LiteralPath $videoFilePath -Force -ErrorAction SilentlyContinue | Out-Null }
-				catch { Write-Warning ($script:msg.DeleteVideoFailed -f $videoFilePath) }
-			} else {
-				# 終了コードが0のときはダウンロード履歴にチェック済フラグを立てる
-				Write-Output ($script:msg.ValidationOK)
-				$targetHist[0].downloadDate = Get-TimeStamp
-				$targetHist[0].videoValidated = '1'
-				$targetHist[0] | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append
-			}
-		} else {
-			Write-Warning ($script:msg.HistRecordNotFound)
-			# 該当のレコードがない場合は履歴が削除済み。念の為ファイルも消しておく
+	$latestHists = Get-LatestHistory
+	$targetHist = $latestHists.Where({ $_.videoPage -eq $videoHist.videoPage }) | Select-Object -First 1
+	if ($targetHist) {
+		# 終了コードが0以外 または エラーが一定以上
+		if ( ($ffmpegProcessExitCode -ne 0) -or ($errorCount -gt 30)) {
+			Write-Warning ($script:msg.ValidationNG) ; Write-Verbose ($script:msg.ErrorCount -f $ffmpegProcessExitCode, $errorCount)
+			# 「3:チェック失敗」に変更したレコードを追記。(downloadDateは現在日時)
+			$targetHist.downloadDate = Get-TimeStamp
+			$targetHist.videoValidated = '3'
+			while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+			try { $targetHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append}
+			catch { Write-Warning ($script:msg.HistUpdateFailed) }
+			finally { Unlock-File $script:histLockFilePath | Out-Null }
+			# ファイルを削除
 			try { Remove-Item -LiteralPath $videoFilePath -Force -ErrorAction SilentlyContinue | Out-Null }
 			catch { Write-Warning ($script:msg.DeleteVideoFailed -f $videoFilePath) }
+		} else {
+			# 終了コードが0のときはダウンロード履歴にチェック済フラグを立てる
+			Write-Output ($script:msg.ValidationOK)
+			$targetHist.downloadDate = Get-TimeStamp
+			$targetHist.videoValidated = '1'
+			while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+			try { $targetHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append}
+			catch { Write-Warning ($script:msg.HistUpdateFailed) }
+			finally { Unlock-File $script:histLockFilePath | Out-Null }
 		}
-	} catch { Write-Warning ($script:msg.HistUpdateFailed) }
-	finally { Unlock-File $script:histLockFilePath | Out-Null }
-	Remove-Variable -Name ffmpegProcessExitCode, decodeOption, errorCount, videoFilePath, videoHists, targetHist, ffprobeArgs, ffmpegProcess, ffmpegArgs -ErrorAction SilentlyContinue
+	} else {
+		Write-Warning ($script:msg.HistRecordNotFound)
+		# 該当のレコードがない場合は履歴が削除済み。念の為ファイルも消しておく
+		try { Remove-Item -LiteralPath $videoFilePath -Force -ErrorAction SilentlyContinue | Out-Null }
+		catch { Write-Warning ($script:msg.DeleteVideoFailed -f $videoFilePath) }
+	}
+	Remove-Variable -Name videoFilePath, ffmpegProcessExitCode, errorCount, targetHist, checkStatus, latestHists -ErrorAction SilentlyContinue
 }
 
 # region 環境
