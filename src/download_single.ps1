@@ -132,9 +132,15 @@ Wait-DownloadCompletion
 # リネームに失敗したファイルを削除
 Write-Output ('')
 Write-Output ($script:msg.DeleteFilesFailedToRename)
-Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse -File -Include 'ep*.mp4', 'ep*.ts' |
-	Where-Object { $_.BaseName -cmatch '^ep[a-z0-9]{8}$' } |
-	Remove-Item -Force
+if ($IsWindows) {
+	(& cmd /c "dir /s /b $($script:downloadBaseDir)\ep*.mp4 $($script:downloadBaseDir)\ep*.ts") |
+		Where-Object { ($_ -cmatch 'ep[a-z0-9]{8}.mp4$') -or ($_ -cmatch 'ep[a-z0-9]{8}.ts$') } |
+		Remove-Item -Force -ErrorAction SilentlyContinue
+} else {
+	(& find "$script:downloadBaseDir" -type f -name 'ep*.mp4' -or -type f -name 'ep*.ts') |
+		Where-Object { ($_ -cmatch 'ep[a-z0-9]{8}.mp4$') -or ($_ -cmatch 'ep[a-z0-9]{8}.ts$') } |
+		Remove-Item -Force -ErrorAction SilentlyContinue
+}
 
 Remove-Variable -Name args, keyword, videoPageURL -ErrorAction SilentlyContinue
 

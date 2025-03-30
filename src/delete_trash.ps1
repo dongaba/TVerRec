@@ -66,14 +66,20 @@ Remove-Files `
 	-DelPeriod 0
 
 # ダウンロード先
+$toastUpdateParams.Title = $script:downloadBaseDir
+$toastUpdateParams.Rate = [Float]( 3 / $totalCleanupSteps )
+Update-ProgressToast @toastUpdateParams
 # リネームに失敗したファイルを削除
-Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse -File -Include 'ep*.mp4', 'ep*.ts' |
-	Where-Object { $_.BaseName -cmatch '^ep[a-z0-9]{8}$' } |
-	Remove-Item -Force
+if ($IsWindows) {
+	(& cmd /c "dir /s /b $($script:downloadBaseDir)\ep*.mp4 $($script:downloadBaseDir)\ep*.ts") |
+		Where-Object { ($_ -cmatch 'ep[a-z0-9]{8}.mp4$') -or ($_ -cmatch 'ep[a-z0-9]{8}.ts$') } |
+		Remove-Item -Force -ErrorAction SilentlyContinue
+} else {
+	(& find "$script:downloadBaseDir" -type f -name 'ep*.mp4' -or -type f -name 'ep*.ts') |
+		Where-Object { ($_ -cmatch 'ep[a-z0-9]{8}.mp4$') -or ($_ -cmatch 'ep[a-z0-9]{8}.ts$') } |
+		Remove-Item -Force -ErrorAction SilentlyContinue
+}
 if ($script:cleanupDownloadBaseDir) {
-	$toastUpdateParams.Title = $script:downloadBaseDir
-	$toastUpdateParams.Rate = [Float]( 3 / $totalCleanupSteps )
-	Update-ProgressToast @toastUpdateParams
 	Remove-Files `
 		-BasePath $script:downloadBaseDir `
 		-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a', '*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*') `
@@ -81,12 +87,12 @@ if ($script:cleanupDownloadBaseDir) {
 }
 
 # 移動先
+$toastUpdateParams.Title = $saveDir
+$toastUpdateParams.Rate = 1
+Update-ProgressToast @toastUpdateParams
 if ($script:cleanupSaveBaseDir)	{
 	if ($script:saveBaseDir) {
 		foreach ($saveDir in $script:saveBaseDirArray) {
-			$toastUpdateParams.Title = $saveDir
-			$toastUpdateParams.Rate = 1
-			Update-ProgressToast @toastUpdateParams
 			Remove-Files `
 				-BasePath $saveDir `
 				-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a', '*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*') `
