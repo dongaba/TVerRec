@@ -34,7 +34,6 @@ function Get-TimeStamp {
 	[CmdletBinding()]
 	[OutputType([String])]
 	Param ()
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	return (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
 }
 
