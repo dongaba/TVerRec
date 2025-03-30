@@ -75,7 +75,7 @@ if (Test-Path $script:histFilePath -PathType Leaf) {
 		$videoHists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 		# videoPageごとに最新のdownloadDateを持つレコードを取得
 		$latestHists = $videoHists | Group-Object -Property 'videoPage' | ForEach-Object {
-			$_.Group | Sort-Object -Property downloadDate -Descending | Select-Object -First 1
+			$_.Group | Sort-Object -Property downloadDate, videoValidated -Descending | Select-Object -First 1
 		}
 		# videoValidatedが「0:未チェック」のものをカウント
 		$videoNotValidatedNum = @($latestHists.Where({ $_.videoValidated -eq '0' })).Count
@@ -173,7 +173,7 @@ while ($videoNotValidatedNum -ne 0) {
 			$videoHists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 			# videoPageごとに最新のdownloadDateを持つレコードを取得
 			$latestHists = $videoHists | Group-Object -Property 'videoPage' | ForEach-Object {
-				$_.Group | Sort-Object -Property downloadDate -Descending | Select-Object -First 1
+				$_.Group | Sort-Object -Property downloadDate, videoValidated -Descending | Select-Object -First 1
 			}
 			# videoValidatedが「2:チェック中」のものをフィルタリングして、「0:未チェック」のレコード追加
 			$newRecords = $latestHists | Where-Object { $_.videoValidated -eq '2' } | ForEach-Object {
@@ -182,6 +182,13 @@ while ($videoNotValidatedNum -ne 0) {
 				$_
 			}
 			$newRecords | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append
+			Start-Sleep -Seconds 1
+
+			$videoHists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+			# videoPageごとに最新のdownloadDateを持つレコードを取得
+			$latestHists = $videoHists | Group-Object -Property 'videoPage' | ForEach-Object {
+				$_.Group | Sort-Object -Property downloadDate, videoValidated -Descending | Select-Object -First 1
+			}
 			# videoValidatedが「0:未チェック」のものをカウント
 			$videoNotValidatedNum = @($latestHists.Where({ $_.videoValidated -eq '0' })).Count
 		} catch { Throw ($script:msg.UpdateFailed -f $script:msg.HistFile) }

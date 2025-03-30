@@ -288,15 +288,12 @@ function Update-IgnoreList {
 			if ($ignoreComment) { $ignoreListNew += $ignoreComment }
 			if ($ignoreTarget) { $ignoreListNew += $ignoreTarget }
 			if ($ignoreElse) { $ignoreListNew += $ignoreElse }
+			# 改行コードLFを強制 + NFCで出力
 			try {
-				# 改行コードLFを強制 + NFCで出力
 				$ignoreListNew.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC) | Out-File -LiteralPath $script:ignoreFilePath -Encoding UTF8 -NoNewline
 				Write-Debug ($script:msg.IgnoreFileSortCompleted)
-			} catch {
-				# 更新後の対象外リストの書き込みに失敗したら読み込んだ対象外リストの出力を試みる
-				$ignoreLists.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC) | Out-File -LiteralPath $script:ignoreFilePath -Encoding UTF8 -NoNewline
-				Write-Error ($script:msg.IgnoreFileSortFailed)
-			} finally { Start-Sleep -Seconds 1 }
+			} catch { $ignoreLists.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC) | Out-File -LiteralPath $script:ignoreFilePath -Encoding UTF8 -NoNewline }
+			finally { Start-Sleep -Seconds 1 }
 		} catch { Write-Warning ($script:msg.IgnoreFileSortFailed) }
 		finally { Unlock-File $script:ignoreLockFilePath | Out-Null }
 	}
@@ -980,7 +977,16 @@ function Optimize-HistoryFile {
 	[OutputType([Void])]
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	$cleanedHist = @()
+	try {
+		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+		$originalLists = @(Get-Content -LiteralPath $script:histFilePath -Encoding UTF8)
+		# NULL文字(0x00)を含む行をフィルタリング
+		$cleanedHist = $originalLists.Where({ $_ -notmatch "`0" })
+		try { $cleanedHist | Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 }
+		catch { $originalLists | Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 }
+		finally { Start-Sleep -Seconds 1 }
+	} catch { Write-Warning ($script:msg.OptimizeHistFailed) }
+	finally { Unlock-File $script:histLockFilePath | Out-Null }
 	try {
 		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 		$originalLists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
@@ -991,10 +997,8 @@ function Optimize-HistoryFile {
 					-and ([DateTime]::TryParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null, [System.Globalization.DateTimeStyles]::None, [Ref]([DateTime]::MinValue)))
 			})
 		try { $cleanedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
-		catch {
-			# 不整合解消後のダウンロード履歴の書き込みに失敗したら読み込んだダウンロード履歴の出力を試みる
-			$originalLists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
-		} finally { Start-Sleep -Seconds 1 }
+		catch { $originalLists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
+		finally { Start-Sleep -Seconds 1 }
 	} catch { Write-Warning ($script:msg.OptimizeHistFailed) }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
 	Remove-Variable -Name cleanedHist -ErrorAction SilentlyContinue
@@ -1012,10 +1016,8 @@ function Limit-HistoryFile {
 		$originalLists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
 		$purgedHist = $originalLists.Where({ [DateTime]::ParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null) -gt (Get-Date).AddDays(-1 * $retentionPeriod) })
 		try { $purgedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
-		catch {
-			# 指定日以上前の履歴を削除後のダウンロード履歴の書き込みに失敗したら読み込んだダウンロード履歴の出力を試みる
-			$originalLists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
-		} finally { Start-Sleep -Seconds 1 }
+		catch { $originalLists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
+		finally { Start-Sleep -Seconds 1 }
 	} catch { Write-Warning ($script:msg.CleanupHistFailed) }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
 	Remove-Variable -Name retentionPeriod, purgedHist -ErrorAction SilentlyContinue
@@ -1027,24 +1029,23 @@ function Limit-HistoryFile {
 function Repair-HistoryFile {
 	[OutputType([Void])]
 	Param ()
-	$uniquedHist = New-Object System.Collections.Generic.List[Object]
 	try {
 		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 		$originalLists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+		# videoValidatedが3のもののvideoPageを取得
+		$invalidPages = $originalLists.Where({ $_.videoValidated -eq '3' }) | Select-Object -ExpandProperty videoPage -Unique
 		# videoPageごとにグループ化し、downloadDateが最大のものを取得
-		$uniquedHist = $originalLists | Group-Object -Property 'videoPage' | ForEach-Object {
-			$_.Group | Sort-Object -Property downloadDate -Descending | Select-Object -First 1
-		} | Sort-Object -Property downloadDate
-		# videoValidatedが「3:チェック失敗」のものを削除
-		$uniquedHist = $uniquedHist.Where({ $_.videoValidated -ne '3' })
+		$uniquedHist = @($originalLists | Group-Object -Property 'videoPage' | ForEach-Object {
+				$_.Group | Sort-Object -Property downloadDate, videoValidated -Descending | Select-Object -First 1
+			} | Sort-Object -Property downloadDate)
+		# videoValidatedが「3:チェック失敗」のものと同じvideoPageを持つレコードを削除
+		$uniquedHist = $uniquedHist.Where({ $_.videoPage -notin $invalidPages })
 		try { $uniquedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
-		catch {
-			# 重複削除後のダウンロード履歴の書き込みに失敗したら読み込んだダウンロード履歴の出力を試みる
-			$originalLists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
-		} finally { Start-Sleep -Seconds 1 }
+		catch { $originalLists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
+		finally { Start-Sleep -Seconds 1 }
 	} catch { Write-Warning ($script:msg.DistinctHistFailed) }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
-	Remove-Variable -Name uniquedHist -ErrorAction SilentlyContinue
+	Remove-Variable -Name originalLists, invalidPages, uniquedHist -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -1096,9 +1097,9 @@ function Invoke-IntegrityCheck {
 	# これからチェックする番組のステータスをチェック
 	try {
 		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-		$videoHists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+		$videoHists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' })
 		# videoPageが一致するレコードを取得し、最新のdownloadDateを持つレコードを選択
-		$matchVideoHist = $videoHists.Where({ $_.videoPage -eq $videoHist.videoPage }) | Sort-Object -Property downloadDate -Descending | Select-Object -First 1
+		$matchVideoHist = $videoHists.Where({ $_.videoPage -eq $videoHist.videoPage }) | Sort-Object -Property downloadDate, videoValidated -Descending | Select-Object -First 1
 		if ($null -ne $matchVideoHist) {
 			# 0:未チェック、1:チェック済、2:チェック中、3:チェック失敗、レコードなしは履歴が削除済み
 			switch ($matchVideoHist.videoValidated) {
