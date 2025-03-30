@@ -211,7 +211,7 @@ foreach ($btn in $btns) {
 $btnWorkOpen.Add_Click({ Invoke-Item $script:downloadWorkDir })
 $btnDownloadOpen.Add_Click({ Invoke-Item $script:downloadBaseDir })
 $btnsaveOpen.Add_Click({
-		if ($script:saveBaseDir) { $script:saveBaseDir.Split(';').Trim() | ForEach-Object { Invoke-Item $_ } }
+		if ($script:saveBaseDir) { $script:saveBaseDir.Split(';').Trim().ForEach{ Invoke-Item $_ } }
 		else { [System.Windows.MessageBox]::Show($script:msg.SaveDirNotSpecified) }
 	})
 $btnKeywordOpen.Add_Click({ Invoke-Item $script:keywordFilePath })

@@ -118,14 +118,6 @@ if ($script:forceSingleDownload) {
 	if ($ignoreTitles.Count -eq 0) { return }
 
 	# 削除対象の特定
-	# $ignoreTitles | ForEach-Object {
-	# 	$ignoreTitle = $_.Normalize([Text.NormalizationForm]::FormC)
-	# 	$filteredDirs = $workDirEntities.Where({ $_.Name.Normalize([Text.NormalizationForm]::FormC) -like "*${ignoreTitle}*" })
-	# 	$filteredDirs | ForEach-Object {
-	# 		$ignoreDirs.Add($_)
-	# 		Update-IgnoreList $ignoreTitle
-	# 	}
-	# }
 	foreach ($ignoreTitleRaw in $ignoreTitles) {
 		$ignoreTitle = $ignoreTitleRaw.Normalize([Text.NormalizationForm]::FormC)
 		$filteredDirs = $workDirEntities.Where({ $_.Name.Normalize([Text.NormalizationForm]::FormC) -like "*${ignoreTitle}*" })
@@ -149,7 +141,6 @@ if ($script:forceSingleDownload) {
 			} -ThrottleLimit $script:multithreadNum
 		} else {
 			# 並列化が無効の場合は従来型処理
-			# ダウンロード対象外内のエントリ合計数
 			$ignoreNum = 0
 			$ignoreTotal = $ignoreDirs.Count
 			$totalStartTime = Get-Date

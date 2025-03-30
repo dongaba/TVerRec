@@ -372,16 +372,23 @@ function Get-RemainingCapacity {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if ($IsWindows) {
 		try {
-			# ローカルディスクか、マウントされているか(例: "Z:")か、UNCパス(例: "\\server\share")かを判定
-			if ($targetDir -match '^[a-zA-Z]:') {
-				# ローカルorマウントされたネットワークドライブ 例: "C:\", "Z:\"
-				$targetDrive = ($targetDir -split '\\')[0]
-				$FreeSpace = (Get-CimInstance Win32_LogicalDisk | Where-Object { $_.DeviceID -eq $targetDrive }).FreeSpace
-			} elseif ($targetDir -match '^\\\\') {
-				# UNCパス (例: "\\server\share")
-				$targetRoot = ($targetDir -replace '(^\\\\[^\\]+\\[^\\]+).*', '$1')  # \\server\share
-				$freeSpace = (&cmd /c dir $targetRoot) | Select-Object -Last 1 | ForEach-Object { $_ -replace ',' -split '\s+' } | Select-Object -Index 3
-			} else { Write-Information ($script:msg.CapacityUnknown -f $targetDir) ; $freeSpace = 9999999999 }
+			switch -Regex ($targetDir) {
+				'^[a-zA-Z]:' {
+					# ローカルディスクまたはマウントされたネットワークドライブ (例: "C:\", "Z:\")
+					$targetDrive = $targetDir.Substring(0, 2)  # "C:" or "Z:"
+					$freeSpace = (Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='$targetDrive'").FreeSpace
+					break
+				}
+				'^\\\\' {
+					# UNC パス (例: "\\server\share")
+					$targetRoot = ($targetDir -replace '(^\\\\[^\\]+\\[^\\]+).*', '$1')
+					$dirOutput = &cmd /c dir $targetRoot 2>$null | Select-Object -Last 1
+					if ($dirOutput -match '(\d[\d,]*)\s+bytes\s+free') { $freeSpace = ($matches[1] -replace ',') -as [int64] }
+					else { Write-Information ($script:msg.CapacityUnknown -f $targetDir) ; $freeSpace = 9999999999 }
+					break
+				}
+				default { Write-Information ($script:msg.CapacityUnknown -f $targetDir) ; $freeSpace = 9999999999 }
+			}
 		} catch { Write-Information ($script:msg.CapacityUnknown -f $targetDir) ; $freeSpace = 9999999999 }
 	} else { $freeSpace = [int64]((df -P $targetDir | Select-Object -Skip 1) -split '\s+')[3] * 1024 }
 	return [int64]($freeSpace / 1MB)

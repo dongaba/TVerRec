@@ -87,9 +87,6 @@ if ($script:saveBaseDir) {
 Write-Output ('')
 Write-Output ($script:msg.MediumBoldBorder)
 Write-Output ($script:msg.MatchingTargetAndSource)
-# if ($moveToPathsHash.Count -gt 0) {
-# 	$moveDirs = @(Compare-Object -ReferenceObject @($moveToPathsHash.Keys) -DifferenceObject @($moveFromPathsHash.Keys) -IncludeEqual -ExcludeDifferent | ForEach-Object { $_.InputObject })
-# } else { $moveDirs = $null }
 if ($moveToPathsHash.Count -gt 0) {
 	$moveDirs = New-Object System.Collections.Generic.List[Object]
 	foreach ($item in Compare-Object -ReferenceObject @($moveToPathsHash.Keys) -DifferenceObject @($moveFromPathsHash.Keys) -IncludeEqual -ExcludeDifferent) {
