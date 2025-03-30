@@ -70,6 +70,7 @@ $toastUpdateParams.Title = $script:downloadBaseDir
 $toastUpdateParams.Rate = [Float]( 3 / $totalCleanupSteps )
 Update-ProgressToast @toastUpdateParams
 # リネームに失敗したファイルを削除
+Write-Output ($script:msg.DeleteFilesFailedToRename)
 if ($IsWindows) {
 	(& cmd /c "dir /s /b $($script:downloadBaseDir)\ep*.mp4 $($script:downloadBaseDir)\ep*.ts") |
 		Where-Object { ($_ -cmatch 'ep[a-z0-9]{8}.mp4$') -or ($_ -cmatch 'ep[a-z0-9]{8}.ts$') } |
