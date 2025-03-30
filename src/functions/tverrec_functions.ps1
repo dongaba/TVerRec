@@ -1145,7 +1145,7 @@ function Invoke-IntegrityCheck {
 	catch { Write-Warning ($script:msg.DeleteErrorFailed) }
 
 	# 終了コードが0以外 または エラーが一定以上
-	if (($ffmpegProcessExitCode -ne 0) -or ($errorCount -gt 30)) {
+	if ( ($ffmpegProcessExitCode -ne 0) -or ($errorCount -gt 30)) {
 		# ダウンロード履歴とファイルを削除
 		Write-Warning ($script:msg.ValidationNG) ; Write-Verbose ($script:msg.ErrorCount -f $ffmpegProcessExitCode, $errorCount)
 		try {

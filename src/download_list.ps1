@@ -98,12 +98,9 @@ Wait-DownloadCompletion
 # リネームに失敗したファイルを削除
 Write-Output ('')
 Write-Output ($script:msg.DeleteFilesFailedToRename)
-Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse -File -Filter 'ep*.*' |
-	ForEach-Object {
-		if ($_.BaseName -cmatch '^ep[a-z0-9]{8}$' -and ($_.Extension -eq '.mp4' -or $_.Extension -eq '.ts')) {
-			Remove-Item -LiteralPath $_.FullName -Force
-		}
-	}
+Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse -File -Include 'ep*.mp4', 'ep*.ts' |
+	Where-Object { $_.BaseName -cmatch '^ep[a-z0-9]{8}$' } |
+	Remove-Item -Force
 
 $toastUpdateParams = @{
 	Title     = $script:msg.ListDownloading
