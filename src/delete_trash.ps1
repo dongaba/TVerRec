@@ -88,7 +88,7 @@ if ($script:cleanupDownloadBaseDir) {
 }
 
 # 移動先
-$toastUpdateParams.Title = $saveDir
+$toastUpdateParams.Title = $script:saveBaseDir
 $toastUpdateParams.Rate = 1
 Update-ProgressToast @toastUpdateParams
 if ($script:cleanupSaveBaseDir)	{
