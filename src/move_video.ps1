@@ -51,8 +51,8 @@ function Get-DirectoriesWithPlatformCheck {
 		}
 	}else {
 		foreach ($path in $paths) {
-			$dirCmd = "find `"$path`" -type d"
-			$resultTemp = [String[]](& sh -c $dirCmd)
+			$findCmd = "find `"$path`" -type d"
+			$resultTemp = [String[]](& sh -c $findCmd)
 			if ($resultTemp) { $results.AddRange($resultTemp ) }
 		}
 	}

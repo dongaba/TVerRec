@@ -81,7 +81,7 @@ function Get-FileNameWithoutInvalidChars {
 	$additionalReplaces = '[*\?<>|]'
 	$name = $name -replace $additionalReplaces, '-'
 	$name = $name -replace '--', '-'
-	$name = $name -replace "’", "'"		#U+2019をU+0027に変換
+	$name = $name -replace "’", "'"		# U+2019をU+0027に変換
 	$nonPrintableChars = '[]'
 	return $name -replace $nonPrintableChars, ''
 	Remove-Variable -Name invalidCharsPattern, name, additionalReplaces, nonPrintableChars -ErrorAction SilentlyContinue
@@ -360,7 +360,7 @@ function Unlock-File {
 
 # endregion ファイルロック
 
-# region コンソール出力
+# region ディスク監視
 #----------------------------------------------------------------------
 # ディレクトリの空き容量確認(MB)
 #----------------------------------------------------------------------
@@ -381,20 +381,41 @@ function Get-RemainingCapacity {
 				}
 				'^\\\\' {
 					# UNC パス (例: "\\server\share")
-					$targetRoot = ($targetDir -replace '(^\\\\[^\\]+\\[^\\]+).*', '$1')
-					$dirOutput = &cmd /c dir $targetRoot 2>$null | Select-Object -Last 1
-					if ($dirOutput -match '(\d[\d,]*)\s+bytes\s+free') { $freeSpace = ($matches[1] -replace ',') -as [int64] }
-					else { Write-Information ($script:msg.CapacityUnknown -f $targetDir) ; $freeSpace = 9999999999 }
+					$targetRoot = ($targetDir -replace '(^\\\\[^\\]+\\[^\\]+).*', '$1')  # \\server\share
+					$freeSpace = (& cmd /c dir $targetRoot) | Select-Object -Last 1 | ForEach-Object { $_ -replace ',' -split '\s+' } | Select-Object -Index 3
 					break
 				}
 				default { Write-Information ($script:msg.CapacityUnknown -f $targetDir) ; $freeSpace = 9999999999 }
 			}
 		} catch { Write-Information ($script:msg.CapacityUnknown -f $targetDir) ; $freeSpace = 9999999999 }
-	} else { $freeSpace = [int64]((df -P $targetDir | Select-Object -Skip 1) -split '\s+')[3] * 1024 }
+	} else {
+		$dfCmd = "df -P `"$targetDir`""
+		$freeSpace = [int64](((& sh -c $dfCmd) | Select-Object -Skip 1) -split '\s+')[3] * 1024
+	}
 	return [int64]($freeSpace / 1MB)
-	Remove-Variable -Name targetDir, targetDrive, targetRoot, freeSpace -ErrorAction SilentlyContinue
+	Remove-Variable -Name targetDir, targetDrive, freeSpace, targetRoot -ErrorAction SilentlyContinue
 }
-# endregion コンソール出力
+
+#----------------------------------------------------------------------
+# リネームに失敗したファイルを削除
+#----------------------------------------------------------------------
+function Remove-UnRenamedTempFiles {
+	[CmdletBinding()]
+	Param ()
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if ($IsWindows) {
+		$dirCmd = "dir  /s /b /a:d `"$script:downloadBaseDir\ep*.mp4`" `"$script:downloadBaseDir\ep*.ts`""
+		(& cmd /c $dirCmd) |
+				Where-Object { ($_ -cmatch 'ep[a-z0-9]{8}.mp4$') -or ($_ -cmatch 'ep[a-z0-9]{8}.ts$') } |
+				Remove-Item -Force -ErrorAction SilentlyContinue
+	} else {
+		$findCmd = "find `"$script:downloadBaseDir`" -type f -name 'ep*.mp4' -or -type f -name 'ep*.ts'"
+		(& sh -c $findCmd) |
+				Where-Object { ($_ -cmatch 'ep[a-z0-9]{8}.mp4$') -or ($_ -cmatch 'ep[a-z0-9]{8}.ts$') } |
+				Remove-Item -Force -ErrorAction SilentlyContinue
+	}
+}
+# endregion ディスク監視
 
 # region ファイルロック
 

@@ -900,7 +900,7 @@ function Get-YtdlProcessCount {
 		switch ($true) {
 			$IsWindows { return [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2, [MidpointRounding]::AwayFromZero ); break }
 			$IsLinux { return @(Get-Process -ErrorAction Ignore -Name $processName).Count ; break }
-			$IsMacOS { $psCmd = 'ps' ; return (& $psCmd | grep yt-dlp | grep -v grep | grep -c ^).Trim() ; break }
+			$IsMacOS { $psCmd = 'ps' ; return (& sh -c $psCmd | grep yt-dlp | grep -v grep | grep -c ^).Trim() ; break }
 			default { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
 		}
 	} catch { return 0 }
@@ -918,7 +918,7 @@ function Get-FfmpegProcessCount {
 		switch ($true) {
 			$IsWindows { return [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name $processName).Count, [MidpointRounding]::AwayFromZero ); break }
 			$IsLinux { return @(Get-Process -ErrorAction Ignore -Name $processName).Count ; break }
-			$IsMacOS { $psCmd = 'ps' ; return (& $psCmd | grep ffmpeg | grep -v grep | grep -c ^).Trim() ; break }
+			$IsMacOS { $psCmd = 'ps' ; return (& sh -c $psCmd | grep ffmpeg | grep -v grep | grep -c ^).Trim() ; break }
 			default { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
 		}
 	} catch { return 0 }
