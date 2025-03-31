@@ -96,7 +96,7 @@ function Out-ExecutionLog {
 # メイン処理
 
 #----------------------------------------------------------------------
-# region  WPFのWindow設定
+# region WPFのWindow設定
 
 try {
 	[Xml]$mainXaml = [String](Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecMain.xaml'))
@@ -148,7 +148,7 @@ $btnWiki.Content = $script:msg.btnWiki
 $btnSetting.Content = $script:msg.btnSetting
 $btnExit.Content = $script:msg.btnExit
 
-# endregion  WPFのWindow設定
+# endregion WPFのWindow設定
 
 #----------------------------------------------------------------------
 # region バックグラウンドジョブ化する処理を持つボタン

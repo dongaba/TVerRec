@@ -75,15 +75,16 @@ function Get-FileNameWithoutInvalidChars {
 	[OutputType([String])]
 	Param ([String]$name = '')
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	# 使用する正規表現パターンを定義
 	$invalidCharsPattern = '[{0}]' -f [RegEx]::Escape( [IO.Path]::GetInvalidFileNameChars() -Join '')
-	$name = $name.Replace($invalidCharsPattern , '')
-	# Linux/MacではGetInvalidFileNameChars()が不完全なため、ダメ押しで置換
-	$additionalReplaces = '[*\?<>|]'
-	$name = $name -replace $additionalReplaces, '-'
-	$name = $name -replace '--', '-'
-	$name = $name -replace "’", "'"		# U+2019をU+0027に変換
-	$nonPrintableChars = '[]'
-	return $name -replace $nonPrintableChars, ''
+	$additionalReplaces = '[*\?<>|]'	# Linux/MacではGetInvalidFileNameChars()が不完全なため、ダメ押しで置換
+	$nonPrintableChars = '[\x00-\x1F\x7F]'	# ASCII制御文字()
+	# 無効な文字を削除
+	$name = $name -replace $invalidCharsPattern, '' `
+				-replace $additionalReplaces, '-' `
+				-replace '--', '-' `
+				-replace $nonPrintableChars, ''
+	return $name
 	Remove-Variable -Name invalidCharsPattern, name, additionalReplaces, nonPrintableChars -ErrorAction SilentlyContinue
 }
 
@@ -210,10 +211,11 @@ function Remove-SpecialCharacter {
 		'|' = '｜' # 全角
 		':' = '：' # 全角
 		';' = '；' # 全角
+		"‘" = "'" # U+2018をU+0027に変換
+		"’" = "'" # U+2019をU+0027に変換
 		'"' = '' # 削除
-		'“' = '' # 削除
-		'”' = '' # 削除
-		# ',' = '' # 削除
+		'“' = '' # 全角でもダブルクォートとして認識されるようなので削除
+		'”' = '' # 全角でもダブルクォートとして認識されるようなので削除
 		'?' = '？' # 全角
 		'!' = '！' # 全角
 		'/' = '／' # 全角

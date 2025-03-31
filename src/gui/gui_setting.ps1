@@ -282,7 +282,7 @@ function Save-UserSetting {
 # メイン処理
 
 #----------------------------------------------------------------------
-# region  WPFのWindow設定
+# region WPFのWindow設定
 
 try {
 	[Xml]$mainXaml = [String](Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecSetting.xaml'))
@@ -513,7 +513,7 @@ $preferredLanguage.Items.Add($script:msg.SettingDefault) | Out-Null
 $preferredLanguage.Items.Add('日本語') | Out-Null	# ja-JP
 $preferredLanguage.Items.Add('English') | Out-Null	# en-US
 
-# endregion  WPFのWindow設定
+# endregion WPFのWindow設定
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------

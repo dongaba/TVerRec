@@ -815,20 +815,57 @@ function Invoke-Ytdl {
 	$ytdlArgsString = $ytdlArgs -join ' '
 	Write-Debug ($script:msg.ExecCommand -f 'youtube-dl', $script:ytdlPath, $ytdlArgsString)
 
-	$startProcessParams = @{
-		FilePath     = if ($script:appName -eq 'TVerRecContainer') { 'timeout' } else { $script:ytdlPath }
-		ArgumentList = if ($script:appName -eq 'TVerRecContainer') { "3600 $script:ytdlPath $ytdlArgsString" } else { $ytdlArgsString }
-		PassThru     = $true
+	if ($script:YtdlTimeoutSec) {
+
+			$startProcessParams = @{
+				FilePath     = $script:ytdlPath
+				ArgumentList = $ytdlArgsString
+				PassThru     = $true
+			}
+			if ($IsWindows) { $startProcessParams.WindowStyle = $script:windowShowStyle }
+			else {
+				$startProcessParams.RedirectStandardOutput = '/dev/null'
+				$startProcessParams.RedirectStandardError = '/dev/zero'
+			}
+		try {
+			# youtube-dl プロセスを起動
+			$ytdlProcess = Start-Process @startProcessParams
+			$processId = $ytdlProcess.Id
+
+			# タイムアウト監視ジョブを開始
+			$monitorJob = Start-Job -ScriptBlock {
+				Param ($processId, $timeoutSeconds)
+				Start-Sleep -Seconds $timeoutSeconds
+				if (Get-Process -Id $processId -ErrorAction SilentlyContinue) {
+					Stop-Process -Id $processId -Force
+					Write-Output "Process $processId timed out and was terminated."
+				}
+			} -ArgumentList $processId, $script:YtdlTimeoutSec
+
+			# youtube-dl の終了を待機
+			$ytdlProcess.WaitForExit()
+
+			# ジョブの状態を確認し、不要なら削除)
+			if ($monitorJob.State -eq 'Running') { Stop-Job $monitorJob }
+			Remove-Job $monitorJob -Force
+		} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl')return }
+
+	} else {
+		$startProcessParams = @{
+			FilePath     = if ($script:appName -eq 'TVerRecContainer') { 'timeout' } else { $script:ytdlPath }
+			ArgumentList = if ($script:appName -eq 'TVerRecContainer') { "3600 $script:ytdlPath $ytdlArgsString" } else { $ytdlArgsString }
+			PassThru     = $true
+		}
+		if ($IsWindows) { $startProcessParams.WindowStyle = $script:windowShowStyle }
+		else {
+			$startProcessParams.RedirectStandardOutput = '/dev/null'
+			$startProcessParams.RedirectStandardError = '/dev/zero'
+		}
+		try {
+			$ytdlProcess = Start-Process @startProcessParams
+			$ytdlProcess.Handle | Out-Null
+		} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') ; return }
 	}
-	if ($IsWindows) { $startProcessParams.WindowStyle = $script:windowShowStyle }
-	else {
-		$startProcessParams.RedirectStandardOutput = '/dev/null'
-		$startProcessParams.RedirectStandardError = '/dev/zero'
-	}
-	try {
-		$ytdlProcess = Start-Process @startProcessParams
-		$ytdlProcess.Handle | Out-Null
-	} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') ; return }
 	Remove-Variable -Name tmpDir, saveDir, saveFile, ytdlArgs, paths, ytdlArgsString, pwshRemoveIfExists, ytdlTempOutFile, pwshRenameFile, ytdlExecArg, startProcessParams -ErrorAction SilentlyContinue
 }
 
@@ -868,20 +905,51 @@ function Invoke-NonTverYtdl {
 	)
 	$ytdlArgsString = $ytdlArgs -join ' '
 	Write-Debug ($script:msg.ExecCommand -f 'youtube-dl', $script:ytdlPath, $ytdlArgsString)
-	$startProcessParams = @{
-		FilePath     = if ($script:appName -eq 'TVerRecContainer') { 'timeout' } else { $script:ytdlPath }
-		ArgumentList = if ($script:appName -eq 'TVerRecContainer') { "3600 $script:ytdlPath $ytdlArgsString" } else { $ytdlArgsString }
-		PassThru     = $true
+
+	if ($script:YtdlTimeoutSec) {
+
+		try {
+			# youtube-dl プロセスを起動
+			$ytdlProcess = Start-Process -FilePath $script:ytdlPath -ArgumentList $ytdlArgsString -PassThru -NoNewWindow
+			$processId = $ytdlProcess.Id
+
+			# タイムアウト時間（秒）
+			$timeoutSeconds = 3600
+
+			# タイムアウト監視ジョブを開始
+			$monitorJob = Start-Job -ScriptBlock {
+				Param ($processId, $timeoutSeconds)
+				Start-Sleep -Seconds $timeoutSeconds
+				if (Get-Process -Id $processId -ErrorAction SilentlyContinue) {
+					Stop-Process -Id $processId -Force
+					Write-Output "Process $processId timed out and was terminated."
+				}
+			} -ArgumentList $processId, $timeoutSeconds
+
+			# youtube-dl の終了を待機
+			$ytdlProcess.WaitForExit()
+
+			# ジョブの状態を確認し、不要なら削除
+			if ($monitorJob.State -eq 'Running') { Stop-Job $monitorJob }
+			Remove-Job $monitorJob -Force
+		} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl')return }
+
+	} else {
+		$startProcessParams = @{
+			FilePath     = if ($script:appName -eq 'TVerRecContainer') { 'timeout' } else { $script:ytdlPath }
+			ArgumentList = if ($script:appName -eq 'TVerRecContainer') { "3600 $script:ytdlPath $ytdlArgsString" } else { $ytdlArgsString }
+			PassThru     = $true
+		}
+		if ($IsWindows) { $startProcessParams.WindowStyle = $script:windowShowStyle }
+		else {
+			$startProcessParams.RedirectStandardOutput = '/dev/null'
+			$startProcessParams.RedirectStandardError = '/dev/zero'
+		}
+		try {
+			$ytdlProcess = Start-Process @startProcessParams
+			$ytdlProcess.Handle | Out-Null
+		} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') ; return }
 	}
-	if ($IsWindows) { $startProcessParams.WindowStyle = $script:windowShowStyle }
-	else {
-		$startProcessParams.RedirectStandardOutput = '/dev/null'
-		$startProcessParams.RedirectStandardError = '/dev/zero'
-	}
-	try {
-		$ytdlProcess = Start-Process @startProcessParams
-		$ytdlProcess.Handle | Out-Null
-	} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') ; return }
 	Remove-Variable -Name videoPageURL, tmpDir, baseDir, subttlDir, thumbDir, chaptDir, descDir, saveFile, ytdlArgs, ytdlArgsString, rateLimit, startProcessParams, ytdlProcess -ErrorAction SilentlyContinue
 }
 
@@ -1171,7 +1239,7 @@ function Invoke-IntegrityCheck {
 			$targetHist.downloadDate = Get-TimeStamp
 			$targetHist.videoValidated = '3'
 			while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-			try { $targetHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append}
+			try { $targetHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append }
 			catch { Write-Warning ($script:msg.HistUpdateFailed) }
 			finally { Unlock-File $script:histLockFilePath | Out-Null }
 			# ファイルを削除
@@ -1183,7 +1251,7 @@ function Invoke-IntegrityCheck {
 			$targetHist.downloadDate = Get-TimeStamp
 			$targetHist.videoValidated = '1'
 			while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-			try { $targetHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append}
+			try { $targetHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append }
 			catch { Write-Warning ($script:msg.HistUpdateFailed) }
 			finally { Unlock-File $script:histLockFilePath | Out-Null }
 		}

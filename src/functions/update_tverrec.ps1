@@ -94,7 +94,7 @@ try {
 	else { $scriptRoot = Convert-Path .. }
 	Set-Location $scriptRoot
 } catch { Throw ('❌️ ディレクトリ設定に失敗しました') }
-if ($script:scriptRoot.Contains(' ')) { Throw ('❌️TVerRecはスペースを含むディレクトリに配置できません') }
+if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
 try {
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	. (Convert-Path (Join-Path $script:scriptRoot '../conf/system_setting.ps1'))
@@ -277,7 +277,7 @@ New-Item (Join-Path $script:scriptRoot '../log/updater_update.txt') -Type file -
 Write-Output ('')
 Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('')
-Write-Output ('💡TVerRecのアップデートを終了しました。TVerRecを再実行してください。')
+Write-Output ('💡 TVerRecのアップデートを終了しました。TVerRecを再実行してください。')
 Write-Output ('')
 Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 
