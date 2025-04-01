@@ -34,7 +34,6 @@ function Get-TimeStamp {
 	[CmdletBinding()]
 	[OutputType([String])]
 	Param ()
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	return (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
 }
 
@@ -74,17 +73,19 @@ function ConvertTo-UnixTime {
 function Get-FileNameWithoutInvalidChars {
 	[CmdletBinding()]
 	[OutputType([String])]
-	Param ([String]$Name = '')
+	Param ([String]$name = '')
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	# 使用する正規表現パターンを定義
 	$invalidCharsPattern = '[{0}]' -f [RegEx]::Escape( [IO.Path]::GetInvalidFileNameChars() -Join '')
-	$Name = $Name.Replace($invalidCharsPattern , '')
-	# Linux/MacではGetInvalidFileNameChars()が不完全なため、ダメ押しで置換
-	$additionalReplaces = '[*\?<>|]'
-	$Name = $Name -replace $additionalReplaces, '-'
-	$Name = $Name -replace '--', '-'
-	$nonPrintableChars = '[]'
-	return $Name -replace $nonPrintableChars, ''
-	Remove-Variable -Name invalidCharsPattern, Name, additionalReplaces, nonPrintableChars -ErrorAction SilentlyContinue
+	$additionalReplaces = '[*\?<>|]'	# Linux/MacではGetInvalidFileNameChars()が不完全なため、ダメ押しで置換
+	$nonPrintableChars = '[\x00-\x1F\x7F]'	# ASCII制御文字()
+	# 無効な文字を削除
+	$name = $name -replace $invalidCharsPattern, '' `
+				-replace $additionalReplaces, '-' `
+				-replace '--', '-' `
+				-replace $nonPrintableChars, ''
+	return $name
+	Remove-Variable -Name invalidCharsPattern, name, additionalReplaces, nonPrintableChars -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -206,20 +207,21 @@ function Remove-SpecialCharacter {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$text = $text.Replace('&amp;', '&')
 	$replacements = @{
-		'*' = '＊'
-		'|' = '｜'
-		':' = '：'
-		';' = '；'
+		'*' = '＊' # 全角
+		'|' = '｜' # 全角
+		':' = '：' # 全角
+		';' = '；' # 全角
+		"‘" = "'" # U+2018をU+0027に変換
+		"’" = "'" # U+2019をU+0027に変換
 		'"' = '' # 削除
-		'“' = '' # 削除
-		'”' = '' # 削除
-		',' = '' # 削除
-		'?' = '？'
-		'!' = '！'
-		'/' = '-' # 代替文字
-		'\' = '-' # 代替文字
-		'<' = '＜'
-		'>' = '＞'
+		'“' = '' # 全角でもダブルクォートとして認識されるようなので削除
+		'”' = '' # 全角でもダブルクォートとして認識されるようなので削除
+		'?' = '？' # 全角
+		'!' = '！' # 全角
+		'/' = '／' # 全角
+		'\' = '＼' # 全角
+		'<' = '＜' # 全角
+		'>' = '＞' # 全角
 	}
 	foreach ($replacement in $replacements.GetEnumerator()) { $text = $text.Replace($replacement.Name, $replacement.Value) }
 	return $text
@@ -360,7 +362,7 @@ function Unlock-File {
 
 # endregion ファイルロック
 
-# region コンソール出力
+# region ディスク監視
 #----------------------------------------------------------------------
 # ディレクトリの空き容量確認(MB)
 #----------------------------------------------------------------------
@@ -372,22 +374,50 @@ function Get-RemainingCapacity {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if ($IsWindows) {
 		try {
-			# ローカルディスクか、マウントされているか(例: "Z:")か、UNCパス(例: "\\server\share")かを判定
-			if ($targetDir -match '^[a-zA-Z]:') {
-				# ローカルorマウントされたネットワークドライブ 例: "C:\", "Z:\"
-				$targetDrive = ($targetDir -split '\\')[0]
-				$FreeSpace = (Get-CimInstance Win32_LogicalDisk | Where-Object { $_.DeviceID -eq $targetDrive }).FreeSpace
-			} elseif ($targetDir -match '^\\\\') {
-				# UNCパス (例: "\\server\share")
-				$targetRoot = ($targetDir -replace '(^\\\\[^\\]+\\[^\\]+).*', '$1')  # \\server\share
-				$freeSpace = (&cmd /c dir $targetRoot) | Select-Object -Last 1 | ForEach-Object { $_ -replace ',' -split '\s+' } | Select-Object -Index 3
-			} else { Write-Information ($script:msg.CapacityUnknown -f $targetDir) ; $freeSpace = 9999999999 }
+			switch -Regex ($targetDir) {
+				'^[a-zA-Z]:' {
+					# ローカルディスクまたはマウントされたネットワークドライブ (例: "C:\", "Z:\")
+					$targetDrive = $targetDir.Substring(0, 2)  # "C:" or "Z:"
+					$freeSpace = (Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='$targetDrive'").FreeSpace
+					break
+				}
+				'^\\\\' {
+					# UNC パス (例: "\\server\share")
+					$targetRoot = ($targetDir -replace '(^\\\\[^\\]+\\[^\\]+).*', '$1')  # \\server\share
+					$freeSpace = (& cmd /c dir $targetRoot) | Select-Object -Last 1 | ForEach-Object { $_ -replace ',' -split '\s+' } | Select-Object -Index 3
+					break
+				}
+				default { Write-Information ($script:msg.CapacityUnknown -f $targetDir) ; $freeSpace = 9999999999 }
+			}
 		} catch { Write-Information ($script:msg.CapacityUnknown -f $targetDir) ; $freeSpace = 9999999999 }
-	} else { $freeSpace = [int64]((df -P $targetDir | Select-Object -Skip 1) -split '\s+')[3] * 1024 }
+	} else {
+		$dfCmd = "df -P `"$targetDir`""
+		$freeSpace = [int64](((& sh -c $dfCmd) | Select-Object -Skip 1) -split '\s+')[3] * 1024
+	}
 	return [int64]($freeSpace / 1MB)
-	Remove-Variable -Name targetDir, targetDrive, targetRoot, freeSpace -ErrorAction SilentlyContinue
+	Remove-Variable -Name targetDir, targetDrive, freeSpace, targetRoot -ErrorAction SilentlyContinue
 }
-# endregion コンソール出力
+
+#----------------------------------------------------------------------
+# リネームに失敗したファイルを削除
+#----------------------------------------------------------------------
+function Remove-UnRenamedTempFiles {
+	[CmdletBinding()]
+	Param ()
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if ($IsWindows) {
+		$forCmd = "for %E in (mp4 ts) do for /r `"$script:downloadBaseDir`" %F in (ep*.%E) do @echo %F"
+		(& cmd /c $forCmd) |
+				Where-Object { ($_ -cmatch 'ep[a-z0-9]{8}.mp4$') -or ($_ -cmatch 'ep[a-z0-9]{8}.ts$') } |
+				Remove-Item -Force -ErrorAction SilentlyContinue
+	} else {
+		$findCmd = "find `"$script:downloadBaseDir`" -type f -name 'ep*.mp4' -or -type f -name 'ep*.ts'"
+		(& sh -c $findCmd) |
+				Where-Object { ($_ -cmatch 'ep[a-z0-9]{8}.mp4$') -or ($_ -cmatch 'ep[a-z0-9]{8}.ts$') } |
+				Remove-Item -Force -ErrorAction SilentlyContinue
+	}
+}
+# endregion ディスク監視
 
 # region ファイルロック
 
@@ -572,7 +602,7 @@ function Update-ProgressToast {
 		switch ($true) {
 			$IsWindows {
 				$toastData = [System.Collections.Generic.Dictionary[String, String]]::new()
-				$toastData.Add('progressTitle', $script:appName) | Out-Null
+				$toastData.Add('progressTitle', $title) | Out-Null
 				$toastData.Add('progressValue', $rate) | Out-Null
 				$toastData.Add('progressValueString', $rightText) | Out-Null
 				$toastData.Add('progressStatus', $leftText) | Out-Null

@@ -58,8 +58,8 @@ foreach ($videoLink in $videoLinks) {
 	if (!(Test-Path $script:downloadBaseDir -PathType Container)) { Throw ('❌️ 番組ダウンロード先ディレクトリにアクセスできません。終了します') }
 
 	# 空き容量少ないときは中断
-	if((Get-RemainingCapacity $script:downloadWorkDir) -lt 100 ){ Write-Warning ($script:msg:NoEnoughCapacity -f $script:downloadWorkDir ) ; break }
-	if((Get-RemainingCapacity $script:downloadBaseDir) -lt 100 ){ Write-Warning ($script:msg:NoEnoughCapacity -f $script:downloadBaseDir ) ; break }
+	if ((Get-RemainingCapacity $script:downloadWorkDir) -lt $script:minDownloadWorkDirCapacity ) { Write-Warning ($script:msg.NoEnoughCapacity -f $script:downloadWorkDir ) ; break }
+	if ((Get-RemainingCapacity $script:downloadBaseDir) -lt $script:minDownloadBaseDirCapacity ) { Write-Warning ($script:msg.NoEnoughCapacity -f $script:downloadBaseDir ) ; break }
 
 	# 進捗率の計算
 	$secElapsed = (Get-Date) - $totalStartTime
@@ -98,12 +98,7 @@ Wait-DownloadCompletion
 # リネームに失敗したファイルを削除
 Write-Output ('')
 Write-Output ($script:msg.DeleteFilesFailedToRename)
-Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse -File -Filter 'ep*.*' |
-	ForEach-Object {
-		if ($_.BaseName -cmatch '^ep[a-z0-9]{8}$' -and ($_.Extension -eq '.mp4' -or $_.Extension -eq '.ts')) {
-			Remove-Item -LiteralPath $_.FullName -Force
-		}
-	}
+Remove-UnRenamedTempFiles
 
 $toastUpdateParams = @{
 	Title     = $script:msg.ListDownloading

@@ -37,13 +37,13 @@ function Move-Files() {
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if ((Test-Path $destination) -and (Test-Path -PathType Container $source)) {
-		# ディレクトリ上書き(移動先に存在 かつ ディレクトリ)は再帰的に Move-Files 呼び出し
+		# ディレクトリ上書き(移動先に存在 かつ ディレクトリ)は再帰的にMove-Files呼び出し
 		$items = (Get-ChildItem $source).Where({ $_.Name -inotlike '*update_tverrec.*' })
 		foreach ($item in $items) { Move-Files -Source $item.FullName -Destination (Join-Path $destination $item.Name) }
 		# 移動し終わったディレクトリを削除
 		Remove-Item -LiteralPath $source -Recurse -Force | Out-Null
 	} else {
-		# 移動先に対象なし または ファイルの Move-Item に -Force つけて実行
+		# 移動先に対象なし または ファイルのMove-Itemに-Forceつけて実行
 		Write-Output ('{0} → {1}' -f $source, $destination)
 		Move-Item -LiteralPath $source -Destination $destination -Force | Out-Null
 	}
@@ -247,6 +247,15 @@ if ( Test-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1') ) {
 	(Get-Content (Convert-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1')) -Encoding UTF8) |
 		ForEach-Object { $_ -replace 'addBrodcastDate', 'addBroadcastDate' } |
 		Out-File (Convert-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1')) -Encoding UTF8
+
+(Get-Content (Convert-Path (Join-Path $script:scriptRoot '../conf/system_setting.ps1')) -Encoding UTF8)
+	.ForEach { $_ -replace 'addBrodcastDate', 'addBroadcastDate' } |
+		Out-File (Convert-Path (Join-Path $script:scriptRoot '../conf/system_setting.ps1')) -Encoding UTF8
+	if (Test-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1')) {
+    (Get-Content (Convert-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1')) -Encoding UTF8)
+		.ForEach { $_ -replace 'addBrodcastDate', 'addBroadcastDate' } |
+			Out-File (Convert-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1')) -Encoding UTF8
+	}
 }
 
 # 実行ファイル名変更(v3.3.5→v3.3.6)

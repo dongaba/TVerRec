@@ -61,21 +61,15 @@ Show-ProgressToast @toastShowParams
 # ダウンロード履歴の重複削除
 Repair-HistoryFile
 
-if ($script:disableValidation) {
-	Write-Warning ($script:msg.DisclaimerForNotValidating)
-	exit 0
-}
+if ($script:disableValidation) { Write-Warning ($script:msg.DisclaimerForNotValidating) ; exit 0 }
 
 #======================================================================
 # 未検証のファイルが0になるまでループ
-$script:validationFailed = $false
-$videoNotValidatedNum = 0
 if (Test-Path $script:histFilePath -PathType Leaf) {
-	try {
-		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-		$videoNotValidatedNum = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' })).Count
-	} catch { Throw ($script:msg.LoadFailed -f $script:msg.HistFile) }
-	finally { Unlock-File $script:histLockFilePath | Out-Null }
+	# videoPageごとに最新のdownloadDateを持つレコードを取得
+	$latestHists = Get-LatestHistory
+	# videoValidatedが「0:未チェック」のものをカウント
+	$videoNotValidatedNum = ($latestHists.Where({ ($_.videoPath -ne '-- IGNORED --') -and ($_.videoValidated -eq '0') })).Count
 } else { $videoNotValidatedNum = 0 }
 
 while ($videoNotValidatedNum -ne 0) {
@@ -85,11 +79,8 @@ while ($videoNotValidatedNum -ne 0) {
 	Write-Output ($script:msg.MediumBoldBorder)
 	Write-Output ($script:msg.IntegrityCheck)
 
-	try {
-		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-		$videoHists = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' }) )
-	} catch { Write-Warning ($script:msg.LoadFailed -f $script:msg.HistFile) }
-	finally { Unlock-File $script:histLockFilePath | Out-Null }
+	$latestHists = Get-LatestHistory
+	$videoHists = $latestHists.Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' })
 
 	if (($null -eq $videoHists) -or ($videoHists.Count -eq 0)) {
 		# チェックする番組なし
@@ -163,16 +154,27 @@ while ($videoNotValidatedNum -ne 0) {
 	Show-ProgressToast @toastShowParams
 
 	if (Test-Path $script:histFilePath -PathType Leaf) {
-		try {
-			while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-			$videoHists = @(Import-Csv -Path $script:histFilePath -Encoding UTF8)
-			foreach ($uncheckedVideo in ($videoHists).Where({ $_.videoValidated -eq 2 })) { $uncheckedVideo.videoValidated = '0' }
-			$videoHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8
-			$videoNotValidatedNum = @((Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Where({ $_.videoPath -ne '-- IGNORED --' }).Where({ $_.videoValidated -eq '0' })).Count
-		} catch { Throw ($script:msg.UpdateFailed -f $script:msg.HistFile) }
+		# videoPageごとに最新のdownloadDateを持つレコードを取得
+		$latestHists = Get-LatestHistory
+		# videoValidatedが「2:チェック中」のものをフィルタリングして、「0:未チェック」のレコード追加
+		$newRecords = $latestHists.Where({ $_.videoValidated -eq '2' }).ForEach({
+				$_.videoValidated = '0'
+				$_.downloadDate = Get-TimeStamp
+				$_
+			})
+		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+		try { $newRecords | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append ; Start-Sleep -Seconds 1 }
+		catch { Throw ($script:msg.UpdateFailed -f $script:msg.HistFile) }
 		finally { Unlock-File $script:histLockFilePath | Out-Null }
+		# videoPageごとに最新のdownloadDateを持つレコードを取得
+		$latestHists = Get-LatestHistory
+		# videoValidatedが「0:未チェック」のものをカウント
+		$videoNotValidatedNum = ($latestHists.Where({ ($_.videoPath -ne '-- IGNORED --') -and ($_.videoValidated -eq '0') -and ($_.videoValidated -ne '3') })).Count
 	} else { $videoNotValidatedNum = 0 }
 }
+
+# ダウンロード履歴の重複削除
+Repair-HistoryFile
 
 #======================================================================
 # 完了処理
