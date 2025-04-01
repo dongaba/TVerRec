@@ -857,7 +857,7 @@ function Invoke-Ytdl {
 				exit
 			} -ArgumentList $processId, $script:ytdlTimeoutSec
 			# ジョブIDをグローバル変数に追加
-			$global:jobList += $monitorJob.Id
+			$script:jobList += $monitorJob.Id
 		} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') ; return }
 	} else {
 		try {
@@ -950,7 +950,7 @@ function Invoke-NonTverYtdl {
 				exit
 			} -ArgumentList $processId, $script:ytdlTimeoutSec
 			# ジョブIDをグローバル変数に追加
-			$global:jobList += $monitorJob.Id
+			$script:jobList += $monitorJob.Id
 		} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') ; return }
 	} else {
 		try {

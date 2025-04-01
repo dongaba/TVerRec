@@ -165,11 +165,11 @@ $script:fileInfo = @{}
 $script:fileStream = @{}
 
 # グローバル変数でジョブを管理
-$global:jobList = @()
+$script:jobList = @()
 
 # スクリプト終了時にジョブを停止
 Register-EngineEvent PowerShell.Exiting -Action {
-	foreach ($jobId in $global:jobList) {
+	foreach ($jobId in $script:jobList) {
 		Stop-Job -Id $jobId -Force -ErrorAction SilentlyContinue
 		Remove-Job -Id $jobId -Force -ErrorAction SilentlyContinue
 	}
