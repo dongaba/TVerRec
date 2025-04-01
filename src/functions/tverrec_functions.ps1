@@ -814,59 +814,62 @@ function Invoke-Ytdl {
 
 	$ytdlArgsString = $ytdlArgs -join ' '
 	Write-Debug ($script:msg.ExecCommand -f 'youtube-dl', $script:ytdlPath, $ytdlArgsString)
-
-	if ($script:YtdlTimeoutSec) {
-
-			$startProcessParams = @{
-				FilePath     = $script:ytdlPath
-				ArgumentList = $ytdlArgsString
-				PassThru     = $true
-			}
-			if ($IsWindows) { $startProcessParams.WindowStyle = $script:windowShowStyle }
-			else {
-				$startProcessParams.RedirectStandardOutput = '/dev/null'
-				$startProcessParams.RedirectStandardError = '/dev/zero'
-			}
+	$startProcessParams = @{
+		FilePath     = $script:ytdlPath
+		ArgumentList = $ytdlArgsString
+		PassThru     = $true
+	}
+	if ($IsWindows) { $startProcessParams.WindowStyle = $script:windowShowStyle }
+	else {
+		$randomNum = -join (1..16 | ForEach-Object { Get-Random -Minimum 0 -Maximum 10 })
+		$logFiles = @(
+			@{ Path = $script:ytdlStdOutLogPath; Redirect = 'RedirectStandardOutput' },
+			@{ Path = $script:ytdlStdErrLogPath; Redirect = 'RedirectStandardError' }
+		)
+		foreach ($logFile in $logFiles) {
+			$logFilePath = $logFile.Path.Replace('.log', ('_{0}.log' -f $randomNum))
+			try { New-Item -Path $logFilePath -ItemType File -Force | Out-Null }
+			catch { Write-Warning ($script:msg.FfmpegErrFileInitializeFailed) ; return }
+			$startProcessParams[$logFile.Redirect] = $logFilePath
+		}
+	}
+	if ($script:ytdlTimeoutSec -ne 0) {
 		try {
 			# youtube-dl プロセスを起動
 			$ytdlProcess = Start-Process @startProcessParams
 			$processId = $ytdlProcess.Id
-
+			$ytdlProcess.Handle | Out-Null
+			Write-Debug ('youtube-dl Process ID: {0}' -f $processId)
 			# タイムアウト監視ジョブを開始
 			$monitorJob = Start-Job -ScriptBlock {
 				Param ($processId, $timeoutSeconds)
-				Start-Sleep -Seconds $timeoutSeconds
-				if (Get-Process -Id $processId -ErrorAction SilentlyContinue) {
-					Stop-Process -Id $processId -Force
-					Write-Output "Process $processId timed out and was terminated."
+				$startTime = Get-Date
+				while ((Get-Process -Id $processId -ErrorAction SilentlyContinue)) {
+					# 指定時間が経過したら強制終了
+					if ((New-TimeSpan -Start $startTime -End (Get-Date)).TotalSeconds -ge $timeoutSeconds) {
+						if ($IsWindows) { Start-Process -FilePath 'taskkill' -ArgumentList "/F /T /PID $processId" -NoNewWindow -Wait }
+						else { Stop-Process -Id $processId -Force }
+						Write-Warning ($script:msg.TerminateDueToTimeout -f 'youtube-dl', $script:ytdlTimeoutSec)
+						break
+					}
+					Start-Sleep -Seconds 1
 				}
-			} -ArgumentList $processId, $script:YtdlTimeoutSec
-
-			# youtube-dl の終了を待機
-			$ytdlProcess.WaitForExit()
-
-			# ジョブの状態を確認し、不要なら削除)
-			if ($monitorJob.State -eq 'Running') { Stop-Job $monitorJob }
-			Remove-Job $monitorJob -Force
-		} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl')return }
+				exit
+			} -ArgumentList $processId, $script:ytdlTimeoutSec
+			# ジョブIDをグローバル変数に追加
+			$global:jobList += $monitorJob.Id
+		} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') ; return }
 
 	} else {
-		$startProcessParams = @{
-			FilePath     = if ($script:appName -eq 'TVerRecContainer') { 'timeout' } else { $script:ytdlPath }
-			ArgumentList = if ($script:appName -eq 'TVerRecContainer') { "3600 $script:ytdlPath $ytdlArgsString" } else { $ytdlArgsString }
-			PassThru     = $true
-		}
-		if ($IsWindows) { $startProcessParams.WindowStyle = $script:windowShowStyle }
-		else {
-			$startProcessParams.RedirectStandardOutput = '/dev/null'
-			$startProcessParams.RedirectStandardError = '/dev/zero'
-		}
 		try {
 			$ytdlProcess = Start-Process @startProcessParams
+			$processId = $ytdlProcess.Id
 			$ytdlProcess.Handle | Out-Null
+			Write-Debug ('youtube-dl Process ID: {0}' -f $processId)
 		} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') ; return }
 	}
-	Remove-Variable -Name tmpDir, saveDir, saveFile, ytdlArgs, paths, ytdlArgsString, pwshRemoveIfExists, ytdlTempOutFile, pwshRenameFile, ytdlExecArg, startProcessParams -ErrorAction SilentlyContinue
+
+	Remove-Variable -Name tmpDir, saveDir, ytdlArgs, ytdlArgsString, ytdlExecArg, pwshRemoveIfExists, pwshRenameFile, startProcessParams, ytdlProcess, processId -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -905,49 +908,55 @@ function Invoke-NonTverYtdl {
 	)
 	$ytdlArgsString = $ytdlArgs -join ' '
 	Write-Debug ($script:msg.ExecCommand -f 'youtube-dl', $script:ytdlPath, $ytdlArgsString)
-
-	if ($script:YtdlTimeoutSec) {
-
+	$startProcessParams = @{
+		FilePath     = $script:ytdlPath
+		ArgumentList = $ytdlArgsString
+		PassThru     = $true
+	}
+	if ($IsWindows) { $startProcessParams.WindowStyle = $script:windowShowStyle }
+	else {
+		$randomNum = -join (1..16 | ForEach-Object { Get-Random -Minimum 0 -Maximum 10 })
+		$logFiles = @(
+			@{ Path = $script:ytdlStdOutLogPath; Redirect = 'RedirectStandardOutput' },
+			@{ Path = $script:ytdlStdErrLogPath; Redirect = 'RedirectStandardError' }
+		)
+		foreach ($logFile in $logFiles) {
+			$logFilePath = $logFile.Path.Replace('.log', ('_{0}.log' -f $randomNum))
+			try { New-Item -Path $logFilePath -ItemType File -Force | Out-Null }
+			catch { Write-Warning ($script:msg.FfmpegErrFileInitializeFailed) ; return }
+			$startProcessParams[$logFile.Redirect] = $logFilePath
+		}
+	}
+	if ($script:ytdlTimeoutSec -ne 0) {
 		try {
 			# youtube-dl プロセスを起動
-			$ytdlProcess = Start-Process -FilePath $script:ytdlPath -ArgumentList $ytdlArgsString -PassThru -NoNewWindow
+			$ytdlProcess = Start-Process @startProcessParams
 			$processId = $ytdlProcess.Id
-
-			# タイムアウト時間（秒）
-			$timeoutSeconds = 3600
-
+			$ytdlProcess.Handle | Out-Null
+			Write-Debug ('youtube-dl Process ID: {0}' -f $processId)
 			# タイムアウト監視ジョブを開始
-			$monitorJob = Start-Job -ScriptBlock {
+			Start-Job -ScriptBlock {
 				Param ($processId, $timeoutSeconds)
-				Start-Sleep -Seconds $timeoutSeconds
-				if (Get-Process -Id $processId -ErrorAction SilentlyContinue) {
-					Stop-Process -Id $processId -Force
-					Write-Output "Process $processId timed out and was terminated."
+				$startTime = Get-Date
+				while ((Get-Process -Id $processId -ErrorAction SilentlyContinue)) {
+					# 指定時間が経過したら強制終了
+					if ((New-TimeSpan -Start $startTime -End (Get-Date)).TotalSeconds -ge $timeoutSeconds) {
+						if ($IsWindows) { Start-Process -FilePath 'taskkill' -ArgumentList "/F /T /PID $processId" -NoNewWindow -Wait }
+						else { Stop-Process -Id $processId -Force }
+						Write-Warning ($script:msg.TerminateDueToTimeout -f 'youtube-dl', $script:ytdlTimeoutSec)
+						break
+					}
+					Start-Sleep -Seconds 1
 				}
-			} -ArgumentList $processId, $timeoutSeconds
-
-			# youtube-dl の終了を待機
-			$ytdlProcess.WaitForExit()
-
-			# ジョブの状態を確認し、不要なら削除
-			if ($monitorJob.State -eq 'Running') { Stop-Job $monitorJob }
-			Remove-Job $monitorJob -Force
-		} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl')return }
-
+				exit
+			} -ArgumentList $processId, $script:ytdlTimeoutSec | Out-Null
+		} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') ; return }
 	} else {
-		$startProcessParams = @{
-			FilePath     = if ($script:appName -eq 'TVerRecContainer') { 'timeout' } else { $script:ytdlPath }
-			ArgumentList = if ($script:appName -eq 'TVerRecContainer') { "3600 $script:ytdlPath $ytdlArgsString" } else { $ytdlArgsString }
-			PassThru     = $true
-		}
-		if ($IsWindows) { $startProcessParams.WindowStyle = $script:windowShowStyle }
-		else {
-			$startProcessParams.RedirectStandardOutput = '/dev/null'
-			$startProcessParams.RedirectStandardError = '/dev/zero'
-		}
 		try {
 			$ytdlProcess = Start-Process @startProcessParams
+			$processId = $ytdlProcess.Id
 			$ytdlProcess.Handle | Out-Null
+			Write-Debug ('youtube-dl Process ID: {0}' -f $processId)
 		} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') ; return }
 	}
 	Remove-Variable -Name videoPageURL, tmpDir, baseDir, subttlDir, thumbDir, chaptDir, descDir, saveFile, ytdlArgs, ytdlArgsString, rateLimit, startProcessParams, ytdlProcess -ErrorAction SilentlyContinue
@@ -1177,7 +1186,7 @@ function Invoke-IntegrityCheck {
 	$errorCount = 0
 	$videoFilePath = Join-Path (Convert-Path $script:downloadBaseDir) $videoHist.videoPath
 	try { New-Item -Path $script:ffmpegErrorLogPath -ItemType File -Force | Out-Null }
-	catch { Write-Warning ($script:msg.InitializeErrorFileFailed) ; return }
+	catch { Write-Warning ($script:msg.FfmpegErrFileInitializeFailed) ; return }
 
 	# これからチェックする番組のステータスをチェック
 	$latestHists = Get-LatestHistory

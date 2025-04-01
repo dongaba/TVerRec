@@ -132,7 +132,7 @@
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="ItemContainerStyle" Value="{StaticResource ChangingColorComboBoxItemStyle}" />
             <Setter Property="Margin" Value="20,0,20,0" />
-            <Setter Property="Width" Value="100" />
+            <Setter Property="Width" Value="200" />
             <Setter Property="HorizontalAlignment" Value="Left" />
             <Setter Property="Template">
                 <Setter.Value>
@@ -446,6 +446,18 @@
                                 <TextBlock Name="rateLimitText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <TextBox Name="rateLimit" Style="{DynamicResource TextBoxStyle}" />
+                            <Expander Name="ytdlTimeoutSecHeader" Margin="10,10,10,0" IsExpanded="False" >
+                                <TextBlock Name="YtdlTimeoutSecText" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            </Expander>
+                            <TextBox Name="ytdlTimeoutSec" Style="{DynamicResource TextBoxStyle}" />
+                            <Expander Name="minDownloadWorkDirCapacityHeader" Margin="10,10,10,0" IsExpanded="False" >
+                                <TextBlock Name="minDownloadWorkDirCapacityText" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            </Expander>
+                            <TextBox Name="minDownloadWorkDirCapacity" Style="{DynamicResource TextBoxStyle}" />
+                            <Expander Name="minDownloadBaseDirCapacityHeader" Margin="10,10,10,0" IsExpanded="False" >
+                                <TextBlock Name="minDownloadBaseDirCapacityText" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            </Expander>
+                            <TextBox Name="minDownloadBaseDirCapacity" Style="{DynamicResource TextBoxStyle}" />
                             <Expander Name="timeoutSecHeader" Margin="10,10,10,0" IsExpanded="False" >
                                 <TextBlock Name="timeoutSecText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>

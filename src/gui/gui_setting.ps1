@@ -41,7 +41,7 @@ if ( Test-Path (Join-Path $script:confDir 'system_setting.ps1') ) {
 if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
 	catch { Throw ($script:msg.LoadUserSettingFailed) }
-}
+} else { New-Item (Join-Path $script:confDir 'user_setting.ps1') -Force | Out-Null }
 if ($script:preferredLanguage) {
 	$script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:preferredLanguage)) { $script:langFile.$script:preferredLanguage }
 	else { $defaultLang = 'en-US'; $script:langFile.$defaultLang }
@@ -62,6 +62,9 @@ $settingAttributes = @(
 	'$script:saveBaseDir',
 	'$script:parallelDownloadFileNum',
 	'$script:parallelDownloadNumPerFile',
+	'$script:ytdlTimeoutSec',
+	'$script:minDownloadWorkDirCapacity',
+	'$script:minDownloadBaseDirCapacity',
 	'$script:loopCycle',
 	'$script:myPlatformUID',
 	'$script:myPlatformToken',
@@ -154,33 +157,34 @@ function Read-UserSetting {
 	[OutputType([Void])]
 	Param ()
 	$undefAttributes = @('$script:downloadBaseDir', '$script:downloadWorkDir', '$script:saveBaseDir', '$script:myPlatformUID', '$script:myPlatformToken', '$script:myMemberSID', '$script:proxyUrl')
-	if (Test-Path $userSettingFile) {
-		$userSettings = Get-Content -LiteralPath $userSettingFile -Encoding UTF8
-		# 動作停止設定以外の抽出
-		foreach ($settingAttribute in $settingAttributes) {
-			# 変数名から「$script:」を取った名前がBox名
-			$settingBox = $settingWindow.FindName($settingAttribute.Replace('$script:', ''))
-			if ($null -eq $settingBox) { Write-Debug "$settingAttribute is null" ; continue }
-			# ユーザー設定の値を取得しGUIに反映
-			$userSettingValue = ($userSettings -match ('^{0}' -f [RegEx]::Escape($settingAttribute)))
-			if ($userSettingValue) {
-				Write-Debug [String]$userSettingValue
-				$settingBox.Text = $userSettingValue.split('=', 2)[1].Trim().Trim("'")
-				if ($settingBox.Name -eq 'preferredLanguage') {
-					switch ($settingBox.Text) {
-						'ja-JP' { $settingBox.Text = '日本語' }
-						'en-US' { $settingBox.Text = 'English' }
-						default { $settingBox.Text = $script:msg.SettingDefault }
-					}
+	$userSettings = Get-Content -LiteralPath $userSettingFile -Encoding UTF8
+	# 動作停止設定以外の抽出
+	foreach ($settingAttribute in $settingAttributes) {
+		# 変数名から「$script:」を取った名前がBox名
+		$settingBox = $settingWindow.FindName($settingAttribute.Replace('$script:', ''))
+		if ($null -eq $settingBox) { Write-Debug "$settingAttribute is null" ; continue }
+		# ユーザー設定の値を取得しGUIに反映
+		$userSettingValue = ($userSettings -match ('^{0}' -f [RegEx]::Escape($settingAttribute)))
+		if ($userSettingValue) {
+			Write-Debug [String]$userSettingValue
+			$settingBox.Text = $userSettingValue.split('=', 2)[1].Trim().Trim("'")
+			if ($settingBox.Name -eq 'preferredLanguage') {
+				switch ($settingBox.Text) {
+					'ja-JP' { $settingBox.Text = '日本語' }
+					'en-US' { $settingBox.Text = 'English' }
+					default { $settingBox.Text = $script:msg.SettingDefault }
 				}
-
-				if ($settingBox.Text -eq '$true') { $settingBox.Text = $script:msg.SettingTrue }
-				elseif ($settingBox.Text -eq '$false') { $settingBox.Text = $script:msg.SettingFalse }
-			} elseif ($settingAttribute -in $undefAttributes) { $settingBox.Text = $script:msg.SettingUndefined }
-			else { $settingBox.Text = $script:msg.SettingDefault }
-		}
-		# 動作停止設定の抽出
-		$scheduleStopPattern = '\$script:stopSchedule\s*=\s*@\{([^}]*)\}'
+			}
+			switch ($settingBox.Text) {
+				'$true' { $settingBox.Text = $script:msg.SettingTrue }
+				'$false' { $settingBox.Text = $script:msg.SettingFalse }
+			}
+		} elseif ($settingAttribute -in $undefAttributes) { $settingBox.Text = $script:msg.SettingUndefined }
+		else { $settingBox.Text = $script:msg.SettingDefault }
+	}
+	# 動作停止設定の抽出
+	$scheduleStopPattern = '\$script:stopSchedule\s*=\s*@\{([^}]*)\}'
+	try {
 		$scheduleStopDetail = [RegEx]::Match($userSettings, $scheduleStopPattern)
 		# 抽出した内容を解析してチェックボックスに反映
 		if ($scheduleStopDetail.Success) {
@@ -195,7 +199,7 @@ function Read-UserSetting {
 				}
 			}
 		}
-	}
+	} catch { return }
 	Remove-Variable -Name undefAttributes, userSettings, settingBox -ErrorAction SilentlyContinue
 	Remove-Variable -Name scheduleStopPattern, scheduleStopDetail, scheduleStopString -ErrorAction SilentlyContinue
 	Remove-Variable -Name day, schedule, hour, checkbox -ErrorAction SilentlyContinue
@@ -216,19 +220,19 @@ function Save-UserSetting {
 	} else {
 		$content = Get-Content -LiteralPath $userSettingFile -Encoding UTF8
 		#自動生成部分の行数を取得
-		$totalLineNum = try { $content.Count + 1 } catch { 0 }
-		$headLineNum = try { ($content | Select-String $startSegment).LineNumber - 2 } catch { 0 }
-		$tailLineNum = try { $totalLineNum - ($content | Select-String $endSegment).LineNumber - 1 } catch { 0 }
+		$totalLineNum = try { $content.Count } catch { 0 }
+		$headLineNum = try { ($content | Select-String $startSegment).LineNumber } catch { 0 }
+		$tailLineNum = try { $totalLineNum - ($content | Select-String $endSegment).LineNumber } catch { 0 }
 	}
 	# 自動生成より前の部分
 	# 自動生成の開始位置が2行目以降の場合にだけ自動生成よりの前の部分がある
-	if (Test-Path variable:headLineNum) { if ($headLineNum -ge 0 ) { $newSetting += $content[0..$headLineNum] } }
+	if ($headLineNum -ge 2 ) { $newSetting += $content[0..$($headLineNum - 2)] }
 	# 動作停止設定以外の部分
 	$newSetting += $startSegment
 	if ($settingAttributes) {
 		foreach ($settingAttribute in $settingAttributes) {
-			$settingBoxName = $settingAttribute.Replace('$script:', '')
-			$settingBox = $settingWindow.FindName($settingBoxName)
+			$settingBox = $settingWindow.FindName($settingAttribute.Replace('$script:', ''))
+			# 言語設定はラベルから保存値に変える
 			if ($settingBox.Name -eq 'preferredLanguage') {
 				switch ($settingBox.Text) {
 					'日本語' { $settingBox.Text = 'ja-JP' }
@@ -272,7 +276,7 @@ function Save-UserSetting {
 	$newSetting.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC)  | Out-File -LiteralPath $userSettingFile -Encoding UTF8 -NoNewline
 	Remove-Variable -Name newSetting, startSegment, endSegment, content -ErrorAction SilentlyContinue
 	Remove-Variable -Name totalLineNum, headLineNum, tailLineNum -ErrorAction SilentlyContinue
-	Remove-Variable -Name settingAttribute, settingBoxName, settingBox -ErrorAction SilentlyContinue
+	Remove-Variable -Name settingAttribute, settingBox -ErrorAction SilentlyContinue
 	Remove-Variable -Name stopSetting, day, hour, checkbox, stopHours -ErrorAction SilentlyContinue
 }
 
@@ -363,6 +367,12 @@ $parallelDownloadFileNumHeader.Header = $script:msg.parallelDownloadFileNumHeade
 $parallelDownloadFileNumText.Text = $script:msg.parallelDownloadFileNumText
 $parallelDownloadNumPerFileHeader.Header = $script:msg.parallelDownloadNumPerFileHeader
 $parallelDownloadNumPerFileText.Text = $script:msg.parallelDownloadNumPerFileText
+$ytdlTimeoutSecHeader.Header = $script:msg.ytdlTimeoutSecHeader
+$YtdlTimeoutSecText.Text = $script:msg.YtdlTimeoutSecText
+$minDownloadWorkDirCapacityHeader.Header = $script:msg.minDownloadWorkDirCapacityHeader
+$minDownloadWorkDirCapacityText.Text = $script:msg.minDownloadWorkDirCapacityText
+$minDownloadBaseDirCapacityHeader.Header = $script:msg.minDownloadBaseDirCapacityHeader
+$minDownloadBaseDirCapacityText.Text = $script:msg.minDownloadBaseDirCapacityText
 $rateLimitHeader.Header = $script:msg.rateLimitHeader
 $rateLimitText.Text = $script:msg.rateLimitText
 $timeoutSecHeader.Header = $script:msg.timeoutSecHeader

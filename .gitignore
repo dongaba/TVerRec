@@ -64,6 +64,9 @@ pid*.txt
 .smb*
 brightcovenew*
 ffmpeg_error*
+ffmpeg_err*
+ytdl_out*
+ytdl_err*
 ignore.conf.*
 
 #その他雑多な不要ファイル

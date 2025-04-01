@@ -75,7 +75,11 @@ $script:listFileSamplePath = Join-Path $script:sampleDir 'list.sample.csv'
 $script:listLockFilePath = Join-Path $script:lockDir 'list.lock'
 
 # ffmpegで番組検証時のエラーファイルのパス
-$script:ffmpegErrorLogPath = Join-Path $script:logDir ('ffmpeg_error_{0}.log' -f $PID)
+$script:ffmpegErrorLogPath = Join-Path $script:logDir ('ffmpeg_err_{0}.log' -f $PID)
+
+# youtube-dlでダウンロードするときのログファイルのパス
+$script:ytdlStdOutLogPath = Join-Path $script:logDir ('ytdl_out_{0}.log' -f $PID)
+$script:ytdlStdErrLogPath = Join-Path $script:logDir ('ytdl_err_{0}.log' -f $PID)
 
 # youtube-dlのパス
 if ($IsWindows) { $script:ytdlPath = Join-Path $script:binDir 'yt-dlp.exe' }

@@ -47,8 +47,8 @@ foreach ($keyword in $keywords) {
 	Write-Output ('{0}' -f $keyword)
 
 	# 空き容量少ないときは中断
-	if ((Get-RemainingCapacity $script:downloadWorkDir) -lt 100 ) { Write-Warning ($script:msg.NoEnoughCapacity -f $script:downloadWorkDir ) ; break }
-	if ((Get-RemainingCapacity $script:downloadBaseDir) -lt 100 ) { Write-Warning ($script:msg.NoEnoughCapacity -f $script:downloadBaseDir ) ; break }
+	if ((Get-RemainingCapacity $script:downloadWorkDir) -lt $script:minDownloadWorkDirCapacity ) { Write-Warning ($script:msg.NoEnoughCapacity -f $script:downloadWorkDir ) ; break }
+	if ((Get-RemainingCapacity $script:downloadBaseDir) -lt $script:minDownloadBaseDirCapacity ) { Write-Warning ($script:msg.NoEnoughCapacity -f $script:downloadBaseDir ) ; break }
 
 	# 処理時間の推計
 	$secElapsed = (Get-Date) - $totalStartTime
@@ -92,8 +92,8 @@ foreach ($keyword in $keywords) {
 		if (!(Test-Path $script:downloadBaseDir -PathType Container)) { Throw ($script:msg.DownloadDirNotAccessible) }
 
 		# 空き容量少ないときは中断
-		if ((Get-RemainingCapacity $script:downloadWorkDir) -lt 100 ) { Write-Warning ($script:msg.NoEnoughCapacity -f $script:downloadWorkDir ) ; break }
-		if ((Get-RemainingCapacity $script:downloadBaseDir) -lt 100 ) { Write-Warning ($script:msg.NoEnoughCapacity -f $script:downloadBaseDir ) ; break }
+		if ((Get-RemainingCapacity $script:downloadWorkDir) -lt $script:minDownloadWorkDirCapacity ) { Write-Warning ($script:msg.NoEnoughCapacity -f $script:downloadWorkDir ) ; break }
+		if ((Get-RemainingCapacity $script:downloadBaseDir) -lt $script:minDownloadBaseDirCapacity ) { Write-Warning ($script:msg.NoEnoughCapacity -f $script:downloadBaseDir ) ; break }
 
 		# 進捗情報の更新
 		$toastUpdateParams.Title2 = $videoLink

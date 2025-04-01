@@ -406,8 +406,8 @@ function Remove-UnRenamedTempFiles {
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if ($IsWindows) {
-		$dirCmd = "dir  /s /b /a:d `"$script:downloadBaseDir\ep*.mp4`" `"$script:downloadBaseDir\ep*.ts`""
-		(& cmd /c $dirCmd) |
+		$forCmd = "for %E in (mp4 ts) do for /r `"$script:downloadBaseDir`" %F in (ep*.%E) do @echo %F"
+		(& cmd /c $forCmd) |
 				Where-Object { ($_ -cmatch 'ep[a-z0-9]{8}.mp4$') -or ($_ -cmatch 'ep[a-z0-9]{8}.ts$') } |
 				Remove-Item -Force -ErrorAction SilentlyContinue
 	} else {

@@ -58,8 +58,8 @@ foreach ($videoLink in $videoLinks) {
 	if (!(Test-Path $script:downloadBaseDir -PathType Container)) { Throw ('❌️ 番組ダウンロード先ディレクトリにアクセスできません。終了します') }
 
 	# 空き容量少ないときは中断
-	if ((Get-RemainingCapacity $script:downloadWorkDir) -lt 100 ) { Write-Warning ($script:msg.NoEnoughCapacity -f $script:downloadWorkDir ) ; break }
-	if ((Get-RemainingCapacity $script:downloadBaseDir) -lt 100 ) { Write-Warning ($script:msg.NoEnoughCapacity -f $script:downloadBaseDir ) ; break }
+	if ((Get-RemainingCapacity $script:downloadWorkDir) -lt $script:minDownloadWorkDirCapacity ) { Write-Warning ($script:msg.NoEnoughCapacity -f $script:downloadWorkDir ) ; break }
+	if ((Get-RemainingCapacity $script:downloadBaseDir) -lt $script:minDownloadBaseDirCapacity ) { Write-Warning ($script:msg.NoEnoughCapacity -f $script:downloadBaseDir ) ; break }
 
 	# 進捗率の計算
 	$secElapsed = (Get-Date) - $totalStartTime

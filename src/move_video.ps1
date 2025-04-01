@@ -42,14 +42,15 @@ Show-ProgressToast @toastShowParams
 function Get-DirectoriesWithPlatformCheck {
 	Param ([String[]]$paths)
 	$results = New-Object System.Collections.Generic.List[String]
-	# PowerShellではジャンクションの展開ができないので、cmd.exeを使ってジャンクションを解決する
 	if ($IsWindows) {
+		# PowerShellではジャンクションの展開ができないので、cmd.exeを使ってジャンクションを解決する
 		foreach ($path in $paths) {
 			$dirCmd = "dir `"$path`" /s /b /a:d"
 			$resultTemp = [String[]](& cmd /c $dirCmd)
 			if ($resultTemp) { $results.AddRange($resultTemp ) }
 		}
-	}else {
+	} else {
+		# 念の為、Linux/Macでもfindを使う
 		foreach ($path in $paths) {
 			$findCmd = "find `"$path`" -type d"
 			$resultTemp = [String[]](& sh -c $findCmd)
@@ -76,7 +77,7 @@ Write-Output ($script:msg.MediumBoldBorder)
 Write-Output ($script:msg.ListUpSourceDirs)
 $moveFromPathsHash = @{}
 if ($script:saveBaseDir) {
-	$moveFromFiles = Get-ChildItem -LiteralPath $script:downloadBaseDir -Include @('*.mp4', '*.ts') -Recurse -File
+	$moveFromFiles = Get-ChildItem -LiteralPath $script:downloadBaseDir -Include @('*.mp4', '*.ts') -Recurse -File -Force -ErrorAction SilentlyContinue
 	foreach ($moveFromFile in $moveFromFiles) {
 		$moveFromDirName = $moveFromFile.Directory.Name
 		if (-not $moveFromPathsHash.ContainsKey($moveFromDirName)) { $moveFromPathsHash[$moveFromDirName] = $moveFromFile.Directory.FullName }

@@ -53,7 +53,7 @@ $toastUpdateParams = @{
 Update-ProgressToast @toastUpdateParams
 Remove-Files `
 	-BasePath $script:logDir `
-	-Conditions @('ffmpeg_error_*.log') `
+	-Conditions @('ffmpeg_error_*.log', 'ffmpeg_err_*.log', 'ytdl_out_*.log', 'ytdl_err_*.log') `
 	-DelPeriod 1
 
 # 作業ディレクトリ

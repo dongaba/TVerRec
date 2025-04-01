@@ -199,7 +199,8 @@ foreach ($btn in $btns) {
 			#処理停止ボタンの有効化
 			$btnKillAll.IsEnabled = $true
 			#バックグラウンドジョブの起動
-			Start-ThreadJob -Name $this.Name -ScriptBlock $scriptBlocks[$this] | Out-Null
+			$guiJob = Start-ThreadJob -Name $this.Name -ScriptBlock $scriptBlocks[$this]
+			$global:jobList += $guiJob.Id
 		})
 }
 

@@ -60,6 +60,25 @@ $script:parallelDownloadFileNum = 5
 #　PCへの負荷が高まり逆にダウンロード効率が下がるのでご注意ください。
 $script:parallelDownloadNumPerFile = 10
 
+# youtube-dlのタイムアウト時間(秒)
+#　たまにyoutube-dlのプロセスがフリーズしてしまうことがあり、
+#　永遠にyoutube-dlの終了を待ち続けてしまうことがあります。
+#　ここで設定した時間内にそれぞれのyoutube-dlのプロセスが完了しない場合に強制終了させることができます。
+#　0を設定するとタイムアウトしないようになります。
+$script:ytdlTimeoutSec = 0
+
+# 作業フォルダの最低容量(MB)
+#　作業フォルダの容量が少ないときに処理を中断するための設定です。
+#　ダウンロード開始時点で作業フォルダが設定値を下回った場合にダウンロードを中断します。
+#　0を設定する中断しないようになります。
+$script:minDownloadWorkDirCapacity = 1000
+
+# ダウンロード先フォルダの最低容量(MB)
+#　ダウンロード先フォルダの容量が少ないときに処理を中断するための設定です。
+#　ダウンロード開始時点でダウンロード先フォルダ容量が設定値を下回った場合にダウンロードを中断します。
+#　0を設定する中断しないようになります。
+$script:minDownloadBaseDirCapacity = 1000
+
 # ループ処理の間隔(秒)
 #　ループ処理の実行間隔を指定します。
 $script:loopCycle = 3600
@@ -356,11 +375,11 @@ $script:ytdlHttpHeader = 'Accept-Language:ja-JP'
 
 # TVerサイト用youtube-dlの引数
 #　TVerサイトからのダウンロード設定です。TVerRecはこの設定が入っていることを前提としているので変更は自己責任でお願いします。
-$script:ytdlBaseArgs = ' --format "(bv*+ba/b)" --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --no-cache-dir --verbose --no-check-certificates --buffer-size 16K'
+$script:ytdlBaseArgs = ' --verbose --format "(bv*+ba/b)" --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --no-cache-dir --verbose --no-check-certificates --buffer-size 16K'
 
 # Tverサイト以外youtube-dlの引数
 #　TVerサイト以外からのダウンロード設定です。TVerRecはこの設定が入っていることを前提としているので変更は自己責任でお願いします。
-$script:nonTVerYtdlBaseArgs = ' --format "(bv*+ba/b)" --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --no-cache-dir --verbose --no-check-certificates --buffer-size 16K'
+$script:nonTVerYtdlBaseArgs = ' --verbose --format "(bv*+ba/b)" --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --no-cache-dir --verbose --no-check-certificates --buffer-size 16K'
 
 
 # 進捗情報メッセージの表示

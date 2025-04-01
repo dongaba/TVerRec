@@ -173,6 +173,9 @@ while ($videoNotValidatedNum -ne 0) {
 	} else { $videoNotValidatedNum = 0 }
 }
 
+# ダウンロード履歴の重複削除
+Repair-HistoryFile
+
 #======================================================================
 # 完了処理
 $toastUpdateParams = @{
