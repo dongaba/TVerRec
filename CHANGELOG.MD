@@ -1,5 +1,17 @@
 # Change Log
 
+## [3.4.4](https://github.com/dongaba/TVerRec/releases/tag/v3.4.4)
+
+### 3.4.4 Added
+
+### 3.4.4 Changed
+
+### 3.4.4 Fixed
+
+- TVerRecのアップデータの不具合を修正 #249
+- `common_functions.ps1`のマージミス不具合を修正
+
+
 ## [3.4.3](https://github.com/dongaba/TVerRec/releases/tag/v3.4.3)
 
 ### 3.4.3 Added

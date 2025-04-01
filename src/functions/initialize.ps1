@@ -173,6 +173,6 @@ Register-EngineEvent PowerShell.Exiting -Action {
 		Stop-Job -Id $jobId -Force -ErrorAction SilentlyContinue
 		Remove-Job -Id $jobId -Force -ErrorAction SilentlyContinue
 	}
-}
+} | Out-Null
 
 Remove-Variable -Name launchMode -ErrorAction SilentlyContinue

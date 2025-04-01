@@ -248,12 +248,12 @@ if ( Test-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1') ) {
 		ForEach-Object { $_ -replace 'addBrodcastDate', 'addBroadcastDate' } |
 		Out-File (Convert-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1')) -Encoding UTF8
 
-(Get-Content (Convert-Path (Join-Path $script:scriptRoot '../conf/system_setting.ps1')) -Encoding UTF8)
-	.ForEach { $_ -replace 'addBrodcastDate', 'addBroadcastDate' } |
+(Get-Content (Convert-Path (Join-Path $script:scriptRoot '../conf/system_setting.ps1')) -Encoding UTF8) |
+		ForEach-Object { $_ -replace 'addBrodcastDate', 'addBroadcastDate' } |
 		Out-File (Convert-Path (Join-Path $script:scriptRoot '../conf/system_setting.ps1')) -Encoding UTF8
 	if (Test-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1')) {
-    (Get-Content (Convert-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1')) -Encoding UTF8)
-		.ForEach { $_ -replace 'addBrodcastDate', 'addBroadcastDate' } |
+		(Get-Content (Convert-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1')) -Encoding UTF8) |
+			ForEach-Object { $_ -replace 'addBrodcastDate', 'addBroadcastDate' } |
 			Out-File (Convert-Path (Join-Path $script:scriptRoot '../conf/user_setting.ps1')) -Encoding UTF8
 	}
 }

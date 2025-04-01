@@ -374,7 +374,6 @@ function Get-RemainingCapacity {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if ($IsWindows) {
 		try {
-		try {
 			switch -Regex ($targetDir) {
 				'^[a-zA-Z]:' {
 					# ローカルディスクまたはマウントされたネットワークドライブ (例: "C:\", "Z:\")
