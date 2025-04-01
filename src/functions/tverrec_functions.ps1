@@ -859,7 +859,6 @@ function Invoke-Ytdl {
 			# ジョブIDをグローバル変数に追加
 			$global:jobList += $monitorJob.Id
 		} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') ; return }
-
 	} else {
 		try {
 			$ytdlProcess = Start-Process @startProcessParams
@@ -935,7 +934,7 @@ function Invoke-NonTverYtdl {
 			$ytdlProcess.Handle | Out-Null
 			Write-Debug ('youtube-dl Process ID: {0}' -f $processId)
 			# タイムアウト監視ジョブを開始
-			Start-Job -ScriptBlock {
+			$monitorJob = Start-Job -ScriptBlock {
 				Param ($processId, $timeoutSeconds)
 				$startTime = Get-Date
 				while ((Get-Process -Id $processId -ErrorAction SilentlyContinue)) {
@@ -949,7 +948,9 @@ function Invoke-NonTverYtdl {
 					Start-Sleep -Seconds 1
 				}
 				exit
-			} -ArgumentList $processId, $script:ytdlTimeoutSec | Out-Null
+			} -ArgumentList $processId, $script:ytdlTimeoutSec
+			# ジョブIDをグローバル変数に追加
+			$global:jobList += $monitorJob.Id
 		} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') ; return }
 	} else {
 		try {
