@@ -23,7 +23,7 @@ Invoke-RequiredFileCheck
 Suspend-Process
 
 #======================================================================
-# 1/3 移動先ディレクトリを起点として、配下のディレクトリを取得
+# 1/3移動先ディレクトリを起点として、配下のディレクトリを取得
 Write-Output ('')
 Write-Output ($script:msg.MediumBoldBorder)
 Write-Output ($script:msg.ListUpDestinationDirs)
@@ -38,34 +38,26 @@ $toastShowParams = @{
 }
 Show-ProgressToast @toastShowParams
 
-# Windowsのディレクトリ一覧を取得する関数
-function Get-DirectoriesOnWindows {
-	Param ([String[]]$paths)
-	$results = New-Object System.Collections.Generic.List[String]
-	foreach ($path in $paths) {
-		$dirCmd = "dir `"$path`" /s /b /a:d"
-		$results.AddRange([String[]](& cmd /c $dirCmd))
-	}
-	return $results
-}
-
-# Linux/Macのディレクトリ一覧を取得する関数
-function Get-DirectoriesNotOnWindows {
-	Param ([String[]]$paths)
-	$results = New-Object System.Collections.Generic.List[String]
-	foreach ($path in $paths) {
-		$dirCmd = "find `"$path`" -type d"
-		$results.AddRange([String[]](& sh -c $dirCmd))
-	}
-	return $results
-}
-
 # プラットフォームに応じたディレクトリ一覧を取得する関数
 function Get-DirectoriesWithPlatformCheck {
 	Param ([String[]]$paths)
-	# PowerShellではジャンクションの展開ができないので、cmd.exeを使ってジャンクションを解決する
-	if ($IsWindows) { return Get-DirectoriesOnWindows -paths $paths }
-	else { return Get-DirectoriesNotOnWindows -paths $paths }
+	$results = New-Object System.Collections.Generic.List[String]
+	if ($IsWindows) {
+		# PowerShellではジャンクションの展開ができないので、cmd.exeを使ってジャンクションを解決する
+		foreach ($path in $paths) {
+			$dirCmd = "dir `"$path`" /s /b /a:d"
+			$resultTemp = [String[]](& cmd /c $dirCmd)
+			if ($resultTemp) { $results.AddRange($resultTemp ) }
+		}
+	} else {
+		# 念の為、Linux/Macでもfindを使う
+		foreach ($path in $paths) {
+			$findCmd = "find `"$path`" -type d"
+			$resultTemp = [String[]](& sh -c $findCmd)
+			if ($resultTemp) { $results.AddRange($resultTemp ) }
+		}
+	}
+	return $results
 }
 
 # 移動先ディレクトリ配下のディレクトリ一覧
@@ -85,7 +77,7 @@ Write-Output ($script:msg.MediumBoldBorder)
 Write-Output ($script:msg.ListUpSourceDirs)
 $moveFromPathsHash = @{}
 if ($script:saveBaseDir) {
-	$moveFromFiles = Get-ChildItem -LiteralPath $script:downloadBaseDir -Include @('*.mp4', '*.ts') -Recurse -File
+	$moveFromFiles = Get-ChildItem -LiteralPath $script:downloadBaseDir -Include @('*.mp4', '*.ts') -Recurse -File -Force -ErrorAction SilentlyContinue
 	foreach ($moveFromFile in $moveFromFiles) {
 		$moveFromDirName = $moveFromFile.Directory.Name
 		if (-not $moveFromPathsHash.ContainsKey($moveFromDirName)) { $moveFromPathsHash[$moveFromDirName] = $moveFromFile.Directory.FullName }
@@ -96,9 +88,6 @@ if ($script:saveBaseDir) {
 Write-Output ('')
 Write-Output ($script:msg.MediumBoldBorder)
 Write-Output ($script:msg.MatchingTargetAndSource)
-# if ($moveToPathsHash.Count -gt 0) {
-# 	$moveDirs = @(Compare-Object -ReferenceObject @($moveToPathsHash.Keys) -DifferenceObject @($moveFromPathsHash.Keys) -IncludeEqual -ExcludeDifferent | ForEach-Object { $_.InputObject })
-# } else { $moveDirs = $null }
 if ($moveToPathsHash.Count -gt 0) {
 	$moveDirs = New-Object System.Collections.Generic.List[Object]
 	foreach ($item in Compare-Object -ReferenceObject @($moveToPathsHash.Keys) -DifferenceObject @($moveFromPathsHash.Keys) -IncludeEqual -ExcludeDifferent) {
@@ -107,7 +96,7 @@ if ($moveToPathsHash.Count -gt 0) {
 } else { $moveDirs = $null }
 
 #======================================================================
-# 2/3 移動先ディレクトリと同名のディレクトリ配下の番組を移動
+# 2/3移動先ディレクトリと同名のディレクトリ配下の番組を移動
 Write-Output ('')
 Write-Output ($script:msg.MediumBoldBorder)
 Write-Output ($script:msg.MovingVideos)
@@ -156,7 +145,7 @@ if ($moveDirs) {
 #----------------------------------------------------------------------
 
 #======================================================================
-# 3/3 空ディレクトリと隠しファイルしか入っていないディレクトリを一気に削除
+# 3/3空ディレクトリと隠しファイルしか入っていないディレクトリを一気に削除
 Write-Output ('')
 Write-Output ($script:msg.MediumBoldBorder)
 Write-Output ($script:msg.DeleteEmptyDirs)

@@ -22,7 +22,7 @@ if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを
 Invoke-RequiredFileCheck
 
 #======================================================================
-# 1/3 ダウンロードが中断した際にできたゴミファイルは削除
+# 1/3ダウンロードが中断した際にできたゴミファイルは削除
 Write-Output ('')
 Write-Output ($script:msg.LongBoldBorder)
 Write-Output ($script:msg.DeleteTrashFiles)
@@ -53,7 +53,7 @@ $toastUpdateParams = @{
 Update-ProgressToast @toastUpdateParams
 Remove-Files `
 	-BasePath $script:logDir `
-	-Conditions @('ffmpeg_error_*.log') `
+	-Conditions @('ffmpeg_error_*.log', 'ffmpeg_err_*.log', 'ytdl_out_*.log', 'ytdl_err_*.log') `
 	-DelPeriod 1
 
 # 作業ディレクトリ
@@ -66,17 +66,13 @@ Remove-Files `
 	-DelPeriod 0
 
 # ダウンロード先
+$toastUpdateParams.Title = $script:downloadBaseDir
+$toastUpdateParams.Rate = [Float]( 3 / $totalCleanupSteps )
+Update-ProgressToast @toastUpdateParams
 # リネームに失敗したファイルを削除
-Get-ChildItem -LiteralPath $script:downloadBaseDir -Recurse -File -Filter 'ep*.*' |
-	ForEach-Object {
-		if ($_.BaseName -cmatch '^ep[a-z0-9]{8}$' -and ($_.Extension -eq '.mp4' -or $_.Extension -eq '.ts')) {
-			Remove-Item -LiteralPath $_.FullName -Force
-		}
-	}
+Write-Output ($script:msg.DeleteFilesFailedToRename)
+Remove-UnRenamedTempFiles
 if ($script:cleanupDownloadBaseDir) {
-	$toastUpdateParams.Title = $script:downloadBaseDir
-	$toastUpdateParams.Rate = [Float]( 3 / $totalCleanupSteps )
-	Update-ProgressToast @toastUpdateParams
 	Remove-Files `
 		-BasePath $script:downloadBaseDir `
 		-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a', '*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*') `
@@ -84,12 +80,12 @@ if ($script:cleanupDownloadBaseDir) {
 }
 
 # 移動先
+$toastUpdateParams.Title = $script:saveBaseDir
+$toastUpdateParams.Rate = 1
+Update-ProgressToast @toastUpdateParams
 if ($script:cleanupSaveBaseDir)	{
 	if ($script:saveBaseDir) {
 		foreach ($saveDir in $script:saveBaseDirArray) {
-			$toastUpdateParams.Title = $saveDir
-			$toastUpdateParams.Rate = 1
-			Update-ProgressToast @toastUpdateParams
 			Remove-Files `
 				-BasePath $saveDir `
 				-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a', '*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*') `
@@ -99,7 +95,7 @@ if ($script:cleanupSaveBaseDir)	{
 }
 
 #======================================================================
-# 2/3 ダウンロード対象外に入っている番組は削除
+# 2/3ダウンロード対象外に入っている番組は削除
 Write-Output ('')
 Write-Output ($script:msg.MediumBoldBorder)
 Write-Output ($script:msg.DeleteExcludeFiles)
@@ -121,14 +117,6 @@ if ($script:forceSingleDownload) {
 	if ($ignoreTitles.Count -eq 0) { return }
 
 	# 削除対象の特定
-	# $ignoreTitles | ForEach-Object {
-	# 	$ignoreTitle = $_.Normalize([Text.NormalizationForm]::FormC)
-	# 	$filteredDirs = $workDirEntities.Where({ $_.Name.Normalize([Text.NormalizationForm]::FormC) -like "*${ignoreTitle}*" })
-	# 	$filteredDirs | ForEach-Object {
-	# 		$ignoreDirs.Add($_)
-	# 		Update-IgnoreList $ignoreTitle
-	# 	}
-	# }
 	foreach ($ignoreTitleRaw in $ignoreTitles) {
 		$ignoreTitle = $ignoreTitleRaw.Normalize([Text.NormalizationForm]::FormC)
 		$filteredDirs = $workDirEntities.Where({ $_.Name.Normalize([Text.NormalizationForm]::FormC) -like "*${ignoreTitle}*" })
@@ -152,7 +140,6 @@ if ($script:forceSingleDownload) {
 			} -ThrottleLimit $script:multithreadNum
 		} else {
 			# 並列化が無効の場合は従来型処理
-			# ダウンロード対象外内のエントリ合計数
 			$ignoreNum = 0
 			$ignoreTotal = $ignoreDirs.Count
 			$totalStartTime = Get-Date
@@ -184,7 +171,7 @@ if ($script:forceSingleDownload) {
 #----------------------------------------------------------------------
 
 #======================================================================
-# 3/3 空ディレクトリと隠しファイルしか入っていないディレクトリを一気に削除
+# 3/3空ディレクトリと隠しファイルしか入っていないディレクトリを一気に削除
 Write-Output ('')
 Write-Output ($script:msg.MediumBoldBorder)
 Write-Output ($script:msg.DeleteEmptyDirs)

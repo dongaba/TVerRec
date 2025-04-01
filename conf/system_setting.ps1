@@ -16,7 +16,7 @@ $InformationPreference = 'Continue'
 
 # ダウンロード先のフルパス(絶対パス指定)
 #　ダウンロード先とは、ダウンロードが終わった動画ファイルが配置される場所です。
-#　例えば C:\Users\yamada-taro\Video にダウンロードするのであれば
+#　例えばC:\Users\yamada-taro\Videoにダウンロードするのであれば
 #　$script:downloadBaseDir = 'C:\Users\yamada-taro\Video' と設定します。
 #　MacOSやLinuxでは $script:downloadBaseDir = '/mnt/Work' や
 #　$script:downloadBaseDir = '/Volumes/Work' などのように設定します。
@@ -26,7 +26,7 @@ $script:downloadBaseDir = ''
 #　作業ディレクトリは、動画のダウンロード中に処理途中のファイルが配置される場所です。
 #　多数のファイルが作成され読み書きが多発するので、SSDやRamDriveなどの
 #　高速なディスクを指定すると動作速度が向上します。
-#　例えば C:\Temp にダウンロードするのであれば $script:downloadWorkDir = 'C:\Temp' と設定します。
+#　例えばC:\Tempにダウンロードするのであれば $script:downloadWorkDir = 'C:\Temp' と設定します。
 #　MacOSやLinuxでは $script:downloadWorkDir = '/var/tmp' や
 #　$script:downloadWorkDir = '/Volumes/RamDrive/Temp' などのように設定します。
 $script:downloadWorkDir = ''
@@ -35,7 +35,7 @@ $script:downloadWorkDir = ''
 #　移動先とは、動画ファイルを最終的に整理するためのライブラリ等が配置されている場所です。
 #　規定の設定では設定されていません。
 #　ダウンロード先のディレクトリで動画を再生するのであれば、指定しなくてもOKです。
-#　例えば C:\TverLibrary を移動先にするのであれば
+#　例えばC:\TverLibraryを移動先にするのであれば
 #　$script:saveBaseDir = 'C:\TverLibrary' と設定します。
 #　複数のディレクトリを移動先として指定する場合には
 #　$script:saveBaseDir = 'V:;X:' のようにセミコロン区切りで複数指定可能です。
@@ -59,6 +59,25 @@ $script:parallelDownloadFileNum = 5
 #　ここの数字を増やすことで同時ダウンロード数を増やすことはできますが、
 #　PCへの負荷が高まり逆にダウンロード効率が下がるのでご注意ください。
 $script:parallelDownloadNumPerFile = 10
+
+# youtube-dlのタイムアウト時間(秒)
+#　たまにyoutube-dlのプロセスがフリーズしてしまうことがあり、
+#　永遠にyoutube-dlの終了を待ち続けてしまうことがあります。
+#　ここで設定した時間内にそれぞれのyoutube-dlのプロセスが完了しない場合に強制終了させることができます。
+#　0を設定するとタイムアウトしないようになります。
+$script:ytdlTimeoutSec = 0
+
+# 作業フォルダの最低容量(MB)
+#　作業フォルダの容量が少ないときに処理を中断するための設定です。
+#　ダウンロード開始時点で作業フォルダが設定値を下回った場合にダウンロードを中断します。
+#　0を設定する中断しないようになります。
+$script:minDownloadWorkDirCapacity = 1000
+
+# ダウンロード先フォルダの最低容量(MB)
+#　ダウンロード先フォルダの容量が少ないときに処理を中断するための設定です。
+#　ダウンロード開始時点でダウンロード先フォルダ容量が設定値を下回った場合にダウンロードを中断します。
+#　0を設定する中断しないようになります。
+$script:minDownloadBaseDirCapacity = 1000
 
 # ループ処理の間隔(秒)
 #　ループ処理の実行間隔を指定します。
@@ -106,8 +125,8 @@ $script:disableToastNotification = $false
 $script:rateLimit = 0
 
 # HTTPアクセスのタイムアウト(sec)
-#　各種 HTTP のアクセス時のタイムアウト値(秒)です。
-#　設定した時間以内に HTTP の応答がなければエラーとして判断されます。
+#　各種HTTPのアクセス時のタイムアウト値(秒)です。
+#　設定した時間以内にHTTPの応答がなければエラーとして判断されます。
 $script:timeoutSec = 60
 
 # GUI版の最大ログ行数
@@ -151,25 +170,25 @@ $script:sortVideoByMedia = $false
 
 # ダウンロードファイル名に番組シリーズ名を付加
 #　「$false」の場合のファイル名は以下
-#　  番組シーズン名 放送日 Epエピソード番号 番組タイトル名.mp4
+#　  番組シーズン名 放送日Epエピソード番号 番組タイトル名.mp4
 #　「$true」の際のファイル名は以下
-#　  番組シリーズ名 番組シーズン名 放送日 Epエピソード番号 番組タイトル名.mp4
+#　  番組シリーズ名 番組シーズン名 放送日Epエピソード番号 番組タイトル名.mp4
 #　※厳密にはファイル名は他のオプションによって決定されます
 $script:addSeriesName = $true
 
 # ダウンロードファイル名に番組シーズン名を付加
 #　「$false」の場合のファイル名は以下
-#　  番組シリーズ名 放送日 Epエピソード番号 番組タイトル名.mp4
+#　  番組シリーズ名 放送日Epエピソード番号 番組タイトル名.mp4
 #　「$true」の際のファイル名は以下
-#　  番組シリーズ名 番組シーズン名 放送日 Epエピソード番号 番組タイトル名.mp4
+#　  番組シリーズ名 番組シーズン名 放送日Epエピソード番号 番組タイトル名.mp4
 #　※厳密にはファイル名は他のオプションによって決定されます
 $script:addSeasonName = $true
 
 # ダウンロードファイル名に番組放送日を付加
 #　「$false」の場合のファイル名は以下
-#　  番組シリーズ名 番組シーズン名 Epエピソード番号 番組タイトル名.mp4
+#　  番組シリーズ名 番組シーズン名Epエピソード番号 番組タイトル名.mp4
 #　「$true」の際のファイル名は以下
-#　  番組シリーズ名 番組シーズン名 放送日 Epエピソード番号 番組タイトル名.mp4
+#　  番組シリーズ名 番組シーズン名 放送日Epエピソード番号 番組タイトル名.mp4
 #　※厳密にはファイル名は他のオプションによって決定されます
 $script:addBroadcastDate = $true
 
@@ -177,7 +196,7 @@ $script:addBroadcastDate = $true
 #　「$false」の場合のファイル名は以下
 #　  番組シリーズ名 番組シーズン名 放送日 番組タイトル名.mp4
 #　「$true」の際のファイル名は以下
-#　  番組シリーズ名 番組シーズン名 放送日 Epエピソード番号 番組タイトル名.mp4
+#　  番組シリーズ名 番組シーズン名 放送日Epエピソード番号 番組タイトル名.mp4
 #　※厳密にはファイル名は他のオプションによって決定されます
 $script:addEpisodeNumber = $true
 
@@ -243,7 +262,7 @@ $script:sitemapParseEpisodeOnly = $true
 $script:downloadWhenEpisodeIdChanged = $true
 
 # youtube-dlとffmpegのウィンドウの表示方法(Windowsのみ) Normal/Maximized/Minimized/Hidden
-#　youtube-dl と ffmpeg のウィンドウをどのように表示するかを設定します。
+#　youtube-dlとffmpegのウィンドウをどのように表示するかを設定します。
 #　Minimizedに設定することで最小化状態でウィンドウが作成されるようになり必要なときにだけ進捗確認をすることができます。
 #　Hiddenに設定すると非表示となります。
 #　Normalに設定すると多数のウィンドウが表示され鬱陶しいのでおすすめしません。
@@ -317,19 +336,19 @@ $script:listGenHistoryCheck = $true
 
 # TVerRecのアップデートチャネル
 #　TVerRecのアップデータを実行した際に、どのチャネルから最新版をダウンロードするのかを設定します。
-#　規定では release が設定されており、リリース版の最新版をダウンロードします。(プレリリースは除きます)
-#　prerelease に設定すると、プレリリース版の最新版をダウンロードします。(リリース版のほうが新しくても常に一番新しいプレリリース板となるのでご注意ください)
-#　master に設定すると、masterブランチの最新版を取得します。リリース前の機能を先行取得できます。
-#　beta に設定すると、betaブランチの最新版を取得します。より新しい機能をお試しいただけますが、ベータ版のため不具合を含んでいる可能性があります。
-#　dev に設定すると、devブランチの最新版を取得します。開発中の最新機能をお試しいただけますが、安定動作しない可能性があるため特殊要件がなければおすすめしません。
+#　規定ではreleaseが設定されており、リリース版の最新版をダウンロードします。(プレリリースは除きます)
+#　prereleaseに設定すると、プレリリース版の最新版をダウンロードします。(リリース版のほうが新しくても常に一番新しいプレリリース板となるのでご注意ください)
+#　masterに設定すると、masterブランチの最新版を取得します。リリース前の機能を先行取得できます。
+#　betaに設定すると、betaブランチの最新版を取得します。より新しい機能をお試しいただけますが、ベータ版のため不具合を含んでいる可能性があります。
+#　devに設定すると、devブランチの最新版を取得します。開発中の最新機能をお試しいただけますが、安定動作しない可能性があるため特殊要件がなければおすすめしません。
 $script:updateChannel = 'release'
 
 # TVer番組ファイルの動画コンテナ形式
 #　TVer番組ファイルの動画コンテナ形式を設定します。
-#　デフォルトでは mp4 となっており、メタ情報や字幕、サムネイルなどの埋込はmp4形式のみで有効です。
-#　主に音ズレ対策として ts形式を指定することもできますが、ts形式を使うことで音ズレがなくなるかどうかはよくわかりません。
+#　デフォルトではmp4となっており、メタ情報や字幕、サムネイルなどの埋込はmp4形式のみで有効です。
+#　主に音ズレ対策としてts形式を指定することもできますが、ts形式を使うことで音ズレがなくなるかどうかはよくわかりません。
 #　ts形式を指定した場合、メタ情報や字幕、サムネイルなどの埋め込みは利用できなくなります。
-#　機能に制限が出るため、基本的には mp4 を指定することが推奨で、特段理由がなければ ts を指定しない方が良いと思います。
+#　機能に制限が出るため、基本的にはmp4を指定することが推奨で、特段理由がなければtsを指定しない方が良いと思います。
 $script:videoContainerFormat = 'mp4'
 
 # 不要ファイル削除時にダウンロードディレクトリのチェック
@@ -356,11 +375,11 @@ $script:ytdlHttpHeader = 'Accept-Language:ja-JP'
 
 # TVerサイト用youtube-dlの引数
 #　TVerサイトからのダウンロード設定です。TVerRecはこの設定が入っていることを前提としているので変更は自己責任でお願いします。
-$script:ytdlBaseArgs = ' --format "(bv*+ba/b)" --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --no-cache-dir --verbose --no-check-certificates --buffer-size 16K'
+$script:ytdlBaseArgs = ' --verbose --format "(bv*+ba/b)" --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --no-cache-dir --verbose --no-check-certificates --buffer-size 16K'
 
 # Tverサイト以外youtube-dlの引数
 #　TVerサイト以外からのダウンロード設定です。TVerRecはこの設定が入っていることを前提としているので変更は自己責任でお願いします。
-$script:nonTVerYtdlBaseArgs = ' --format "(bv*+ba/b)" --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --no-cache-dir --verbose --no-check-certificates --buffer-size 16K'
+$script:nonTVerYtdlBaseArgs = ' --verbose --format "(bv*+ba/b)" --force-overwrites --console-title --no-mtime --retries 10 --fragment-retries 10 --abort-on-unavailable-fragment --no-keep-fragments --abort-on-error --no-continue --windows-filenames --no-cache-dir --verbose --no-check-certificates --buffer-size 16K'
 
 
 # 進捗情報メッセージの表示

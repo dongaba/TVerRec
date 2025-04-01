@@ -1,4 +1,4 @@
-# **🎞 TVerRec 📺** TVer Bulk download and Save
+# **🎞TVerRec📺** TVer Bulk download and Save
 
 [🇺🇸English](https://github.com/dongaba/TVerRec/blob/master/README.en.md) | [🇯🇵日本語](https://github.com/dongaba/TVerRec/blob/master/README.md)
 
@@ -118,7 +118,9 @@ Directory structure is as follows.
     │  └─ list.csv ......................... Download list file (automatically created)
     │
     ├─ log/ .............................. Log
-    │  └─ ffmpeg_error_*.log ............... ffmpeg error log file (Automatically created during processing and deleted after a certain period of time)
+    │  ├─ ffmpeg_err_*.log ................. ffmpeg error log file (Automatically created during processing and deleted after a certain period of time)
+    │  ├─ ytdl_err_*.log ................... youtube-dl execution log file (Automatically created during processing and deleted after a certain period of time)
+    │  └─ ytdl_out_*.log ................... youtube-dl error log file (Automatically created during processing and deleted after a certain period of time)
     │
     ├─ resources/ ........................ Various Resources
     │  ├─ b64/ ........................... Images for GUI
