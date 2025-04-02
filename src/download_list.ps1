@@ -49,6 +49,17 @@ $toastShowParams = @{
 }
 Show-ProgressToast @toastShowParams
 
+# ジョブを管理
+$script:jobList = @()
+
+# スクリプト終了時にジョブを停止
+Register-EngineEvent PowerShell.Exiting -Action {
+	foreach ($jobId in $script:jobList) {
+		Stop-Job -Id $jobId -Force -ErrorAction SilentlyContinue
+		Remove-Job -Id $jobId -Force -ErrorAction SilentlyContinue
+	}
+} | Out-Null
+
 #----------------------------------------------------------------------
 # 個々の番組ダウンロードここから
 $videoNum = 0
