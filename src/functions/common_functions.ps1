@@ -70,7 +70,7 @@ function ConvertTo-UnixTime {
 #----------------------------------------------------------------------
 # ファイル名・ディレクトリ名に禁止文字の削除
 #----------------------------------------------------------------------
-function Get-FileNameWithoutInvalidChars {
+function Get-FileNameWoInvalidChars {
 	[CmdletBinding()]
 	[OutputType([String])]
 	Param ([String]$name = '')
@@ -81,9 +81,9 @@ function Get-FileNameWithoutInvalidChars {
 	$nonPrintableChars = '[\x00-\x1F\x7F]'	# ASCII制御文字()
 	# 無効な文字を削除
 	$name = $name -replace $invalidCharsPattern, '' `
-				-replace $additionalReplaces, '-' `
-				-replace '--', '-' `
-				-replace $nonPrintableChars, ''
+		-replace $additionalReplaces, '-' `
+		-replace '--', '-' `
+		-replace $nonPrintableChars, ''
 	return $name
 	Remove-Variable -Name invalidCharsPattern, name, additionalReplaces, nonPrintableChars -ErrorAction SilentlyContinue
 }
@@ -91,7 +91,7 @@ function Get-FileNameWithoutInvalidChars {
 #----------------------------------------------------------------------
 # 英数のみ全角→半角(カタカナは全角)
 #----------------------------------------------------------------------
-function Get-NarrowChars {
+function Get-NarrowChar {
 	[CmdletBinding()]
 	[OutputType([String])]
 	Param ([String]$text = '')
@@ -243,7 +243,7 @@ function Remove-TabSpace {
 #----------------------------------------------------------------------
 # 設定ファイルの行末コメントを削除
 #----------------------------------------------------------------------
-function Remove-Comment {
+function Get-ContentWoComment {
 	[OutputType([String])]
 	Param ([String]$text)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -258,7 +258,7 @@ function Remove-Comment {
 #----------------------------------------------------------------------
 # 指定したPath配下の指定した条件でファイルを削除
 #----------------------------------------------------------------------
-function Remove-Files {
+function Remove-File {
 	[CmdletBinding()]
 	[OutputType([Void])]
 	Param (

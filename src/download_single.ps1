@@ -143,7 +143,7 @@ Wait-DownloadCompletion
 # リネームに失敗したファイルを削除
 Write-Output ('')
 Write-Output ($script:msg.DeleteFilesFailedToRename)
-Remove-UnRenamedTempFiles
+Remove-UnRenamedTempFile
 
 Remove-Variable -Name args, keyword, videoPageURL -ErrorAction SilentlyContinue
 

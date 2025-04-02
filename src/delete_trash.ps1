@@ -51,7 +51,7 @@ $toastUpdateParams = @{
 	Group     = 'Delete'
 }
 Update-ProgressToast @toastUpdateParams
-Remove-Files `
+Remove-File `
 	-BasePath $script:logDir `
 	-Conditions @('ffmpeg_error_*.log', 'ffmpeg_err_*.log', 'ytdl_out_*.log', 'ytdl_err_*.log') `
 	-DelPeriod 1
@@ -60,8 +60,8 @@ Remove-Files `
 $toastUpdateParams.Title = $script:downloadWorkDir
 $toastUpdateParams.Rate = [Float]( 2 / $totalCleanupSteps )
 Update-ProgressToast @toastUpdateParams
-Remove-UnMovedTempFiles
-Remove-Files `
+Remove-UnMovedTempFile
+Remove-File `
 	-BasePath $script:downloadWorkDir `
 	-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a-Frag*', '*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*') `
 	-DelPeriod 0
@@ -72,9 +72,9 @@ $toastUpdateParams.Rate = [Float]( 3 / $totalCleanupSteps )
 Update-ProgressToast @toastUpdateParams
 # リネームに失敗したファイルを削除
 Write-Output ($script:msg.DeleteFilesFailedToRename)
-Remove-UnRenamedTempFiles
+Remove-UnRenamedTempFile
 if ($script:cleanupDownloadBaseDir) {
-	Remove-Files `
+	Remove-File `
 		-BasePath $script:downloadBaseDir `
 		-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a-Frag*', '*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*') `
 		-DelPeriod 0
@@ -87,7 +87,7 @@ Update-ProgressToast @toastUpdateParams
 if ($script:cleanupSaveBaseDir)	{
 	if ($script:saveBaseDir) {
 		foreach ($saveDir in $script:saveBaseDirArray) {
-			Remove-Files `
+			Remove-File `
 				-BasePath $saveDir `
 				-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a-Frag*', '*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*') `
 				-DelPeriod 0

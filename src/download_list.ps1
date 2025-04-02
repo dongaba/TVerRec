@@ -109,7 +109,7 @@ Wait-DownloadCompletion
 # リネームに失敗したファイルを削除
 Write-Output ('')
 Write-Output ($script:msg.DeleteFilesFailedToRename)
-Remove-UnRenamedTempFiles
+Remove-UnRenamedTempFile
 
 $toastUpdateParams = @{
 	Title     = $script:msg.ListDownloading

@@ -84,7 +84,7 @@ foreach ($keyword in $keywords) {
 	}
 	Update-ProgressToast2Row @toastUpdateParams
 
-	$keyword = (Remove-Comment($keyword.Replace('https://tver.jp/', '').Trim()))
+	$keyword = (Get-ContentWoComment($keyword.Replace('https://tver.jp/', '').Trim()))
 	$resultLinks = @(Get-VideoLinksFromKeyword ([Ref]$keyword))
 
 	# URLがすでにダウンロード履歴に存在する場合は検索結果から除外
@@ -135,7 +135,7 @@ Wait-DownloadCompletion
 # リネームに失敗したファイルを削除
 Write-Output ('')
 Write-Output ($script:msg.DeleteFilesFailedToRename)
-Remove-UnRenamedTempFiles
+Remove-UnRenamedTempFile
 
 $toastUpdateParams = @{
 	Title1     = $script:msg.ExtractingVideoFromKeywords

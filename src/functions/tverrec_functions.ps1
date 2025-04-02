@@ -669,20 +669,20 @@ function Format-VideoFileInfo {
 		if ($script:addEpisodeNumber) { $videoName = ('{0}Ep{1} ' -f $videoName, $videoInfo.episodeNum) }
 	}
 	# ファイル名にできない文字列を除去
-	$videoName = (Get-FileNameWithoutInvalidChars (Remove-SpecialCharacter $videoName)).Replace('  ', ' ').Trim()
+	$videoName = (Get-FileNameWoInvalidChars (Remove-SpecialCharacter $videoName)).Replace('  ', ' ').Trim()
 	# SMBで255バイトまでしかファイル名を持てないらしいので、超えないようにファイル名をトリミング。youtube-dlの中間ファイル等を考慮して安全目の上限値
 	$fileNameLimit = $script:fileNameLengthMax - 30
 	if ([System.Text.Encoding]::UTF8.GetByteCount($videoName) -gt $fileNameLimit) {
 		while ([System.Text.Encoding]::UTF8.GetByteCount($videoName) -gt $fileNameLimit) { $videoName = $videoName.Substring(0, $videoName.Length - 1) }
 		$videoName = ('{0}……' -f $videoName)
 	}
-	$videoName = Get-FileNameWithoutInvalidChars ('{0}.{1}' -f $videoName, $script:videoContainerFormat)
+	$videoName = Get-FileNameWoInvalidChars ('{0}.{1}' -f $videoName, $script:videoContainerFormat)
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'fileName' -Value $videoName
 
 	# フォルダ名を生成
 	$videoFileDir = @()
-	if ($script:sortVideoByMedia) { $videoFileDir += Get-FileNameWithoutInvalidChars (Remove-SpecialCharacter ($videoInfo.mediaName).Trim(' ', '.')) }
-	if ($script:sortVideoBySeries) { $videoFileDir += Get-FileNameWithoutInvalidChars (Remove-SpecialCharacter ('{0} {1}' -f $videoInfo.seriesName, $videoInfo.seasonName ).Trim(' ', '.')) }
+	if ($script:sortVideoByMedia) { $videoFileDir += Get-FileNameWoInvalidChars (Remove-SpecialCharacter ($videoInfo.mediaName).Trim(' ', '.')) }
+	if ($script:sortVideoBySeries) { $videoFileDir += Get-FileNameWoInvalidChars (Remove-SpecialCharacter ('{0} {1}' -f $videoInfo.seriesName, $videoInfo.seasonName ).Trim(' ', '.')) }
 	$videoFileDir = Join-Path $script:downloadBaseDir ($videoFileDir -join '/')
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'fileDir' -Value $videoFileDir.Replace('\', '/')
 
@@ -1277,7 +1277,7 @@ function Invoke-IntegrityCheck {
 #----------------------------------------------------------------------
 # 移動に失敗したファイルを削除(作業フォルダ)
 #----------------------------------------------------------------------
-function Remove-UnMovedTempFiles {
+function Remove-UnMovedTempFile {
 	[CmdletBinding()]
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -1287,7 +1287,7 @@ function Remove-UnMovedTempFiles {
 #----------------------------------------------------------------------
 # リネームに失敗したファイルを削除(ダウンロード先フォルダ)
 #----------------------------------------------------------------------
-function Remove-UnRenamedTempFiles {
+function Remove-UnRenamedTempFile {
 	[CmdletBinding()]
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)

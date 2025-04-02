@@ -73,7 +73,7 @@ foreach ($keyword in $keywords) {
 	}
 	Update-ProgressToast2Row @toastUpdateParams
 
-	$keyword = (Remove-Comment($keyword.Replace('https://tver.jp/', '').Trim()))
+	$keyword = (Get-ContentWoComment($keyword.Replace('https://tver.jp/', '').Trim()))
 	$listLinks = @(Get-VideoLinksFromKeyword ([Ref]$keyword))
 
 	# URLがすでにダウンロードリストやダウンロード履歴に存在する場合は検索結果から除外

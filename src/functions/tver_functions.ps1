@@ -50,7 +50,7 @@ function Get-VideoLinksFromKeyword {
 	}
 	if ($keyword.IndexOf('/') -gt 0) {
 		$key = $keyword.split(' ')[0].split("`t")[0].Split('/')[0]
-		$tverID = Remove-Comment(($keyword.Replace("$key/", '')).Trim())
+		$tverID = Get-ContentWoComment(($keyword.Replace("$key/", '')).Trim())
 	} else { $key = '' ; $tverID = '' }
 	if (($keyword -eq 'sitemap') -or ($keyword -eq 'toppage')) { $key = $keyword }
 	Invoke-StatisticsCheck -Operation 'search' -TVerType $key -TVerID $tverID
@@ -142,14 +142,14 @@ function Get-LinkFromKeyword {
 		default { Write-Warning $script:msg.InvalidTypeSpecified }
 	}
 	# 検索結果の取得
-	Get-SearchResults -baseURL $baseURL -Type $type -Keyword $keyword -LinkCollection ([Ref]$linkCollection)
+	Get-SearchResult -baseURL $baseURL -Type $type -Keyword $keyword -LinkCollection ([Ref]$linkCollection)
 	Remove-Variable -Name id, linkType, type, baseURL, keyword -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
 # 各種IDによる番組検索から番組ページのLinkを取得
 #----------------------------------------------------------------------
-function Get-SearchResults {
+function Get-SearchResult {
 	[CmdletBinding()]
 	[OutputType([Void])]
 	Param (
@@ -330,7 +330,7 @@ function Get-LinkFromMyPage {
 		'favorite' { $baseURL = ('{0}/service/api/v2/callMyFavorite' -f $baseURLPrefix) ; $requireData = 'mylist' ; break }
 		default { Write-Warning ($script:msg.UnknownContentsType -f 'mypage', $page) }
 	}
-	Get-SearchResults -baseURL $baseURL -Type 'mypage' -RequireData $requireData -LoginRequired $loginRequired -LinkCollection ([Ref]$linkCollection)
+	Get-SearchResult -baseURL $baseURL -Type 'mypage' -RequireData $requireData -LoginRequired $loginRequired -LinkCollection ([Ref]$linkCollection)
 	Remove-Variable -Name baseURLPrefix, baseURL, requireData, loginRequired -ErrorAction SilentlyContinue
 }
 
@@ -353,19 +353,19 @@ function Get-VideoInfo {
 		3.2.2からEpisode.Content.SeriesTitleを採用することとする。
 		理由は、Series.Content.Titleだとファイル名が冗長になることがあることと、複数シーズン配信時に最新シーズン名になってしまうことがあるため。
 	#>
-	$videoSeries = (Remove-SpecialCharacter (Get-NarrowChars ($response.Result.Episode.Content.SeriesTitle))).Trim()
+	$videoSeries = (Remove-SpecialCharacter (Get-NarrowChar ($response.Result.Episode.Content.SeriesTitle))).Trim()
 	$videoSeriesID = $response.Result.Series.Content.Id
 	$videoSeriesPageURL = ('https://tver.jp/series/{0}' -f $response.Result.Series.Content.Id)
 	# シーズン
-	$videoSeason = (Remove-SpecialCharacter (Get-NarrowChars ($response.Result.Season.Content.Title))).Trim()
+	$videoSeason = (Remove-SpecialCharacter (Get-NarrowChar ($response.Result.Season.Content.Title))).Trim()
 	$videoSeasonID = $response.Result.Season.Content.Id
 	# エピソード
-	$episodeName = (Remove-SpecialCharacter (Get-NarrowChars ($response.Result.Episode.Content.Title))).Trim()
+	$episodeName = (Remove-SpecialCharacter (Get-NarrowChar ($response.Result.Episode.Content.Title))).Trim()
 	$videoEpisodeID = $response.Result.Episode.Content.Id
 	$videoEpisodePageURL = ('https://tver.jp/episodes/{0}' -f $videoEpisodeID)
 	# 放送局
-	$mediaName = (Get-NarrowChars ($response.Result.Episode.Content.BroadcasterName)).Trim()
-	$providerName = (Get-NarrowChars ($response.Result.Episode.Content.ProductionProviderName)).Trim()
+	$mediaName = (Get-NarrowChar ($response.Result.Episode.Content.BroadcasterName)).Trim()
+	$providerName = (Get-NarrowChar ($response.Result.Episode.Content.ProductionProviderName)).Trim()
 	# 放送日
 	$broadcastDate = (($response.Result.Episode.Content.BroadcastDateLabel).Replace('ほか', '').Replace('放送分', '放送').Replace('配信分', '配信')).Trim()
 	# 配信終了日時
@@ -385,8 +385,8 @@ function Get-VideoInfo {
 		if ($script:proxyUrl) { $httpParams.Proxy = $script:proxyUrl }
 		$videoInfo = Invoke-RestMethod @httpParams
 		Write-Debug $videoInfo
-		$descriptionText = (Get-NarrowChars ($videoInfo.Description).Replace('&amp;', '&')).Trim()
-		$videoEpisodeNum = (Get-NarrowChars ($videoInfo.No)).Trim()
+		$descriptionText = (Get-NarrowChar ($videoInfo.Description).Replace('&amp;', '&')).Trim()
+		$videoEpisodeNum = (Get-NarrowChar ($videoInfo.No)).Trim()
 		# Streaks情報取得
 		if ($videoInfo.PSObject.Properties.Name -contains 'streaks') {
 			<#
