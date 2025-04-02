@@ -480,22 +480,22 @@ function Invoke-VideoDownload {
 		$newVideo = Format-HistoryRecord ([Ref]$videoInfo)
 	} else {
 		<#
-		ここまで来ているということはEpisodeIDでは履歴とマッチしなかったということ
-		考えられる原因は履歴ファイルがクリアされてしまっていること、または、EpisodeIDが変更になったこと
-			履歴ファイルに存在する	→番組IDが変更になったあるいは、番組名の重複
-				ID変更時のダウンロード設定あり
-					検証済	→再ダウンロード
-					検証中	→元々の番組IDとしてはそのうち検証されるので、再ダウンロード。検証に失敗しても新IDでダウンロード検証されるはず
-					未検証	→元々の番組IDとしては次回検証されるので、再ダウンロード。検証に失敗しても新IDでダウンロード検証されるはず
-				ID変更時のダウンロード設定なし
-					検証済	→元々の番組IDとしては問題ないのでSKIP
-					検証中	→元々の番組IDとしてはそのうち検証されるのでSKIP
-					未検証	→元々の番組IDとしては次回検証されるのでSKIP
-			履歴ファイルに存在しない
-				ファイルが存在する	→検証だけする
-				ファイルが存在しない
-					ダウンロード対象外リストに存在する	→無視
-					ダウンロード対象外リストに存在しない	→ダウンロード
+			ここまで来ているということはEpisodeIDでは履歴とマッチしなかったということ
+			考えられる原因は履歴ファイルがクリアされてしまっていること、または、EpisodeIDが変更になったこと
+				履歴ファイルに存在する	→番組IDが変更になったあるいは、番組名の重複
+					ID変更時のダウンロード設定あり
+						検証済	→再ダウンロード
+						検証中	→元々の番組IDとしてはそのうち検証されるので、再ダウンロード。検証に失敗しても新IDでダウンロード検証されるはず
+						未検証	→元々の番組IDとしては次回検証されるので、再ダウンロード。検証に失敗しても新IDでダウンロード検証されるはず
+					ID変更時のダウンロード設定なし
+						検証済	→元々の番組IDとしては問題ないのでSKIP
+						検証中	→元々の番組IDとしてはそのうち検証されるのでSKIP
+						未検証	→元々の番組IDとしては次回検証されるのでSKIP
+				履歴ファイルに存在しない
+					ファイルが存在する	→検証だけする
+					ファイルが存在しない
+						ダウンロード対象外リストに存在する	→無視
+						ダウンロード対象外リストに存在しない	→ダウンロード
 		#>
 		#ダウンロード履歴ファイルのデータを読み込み
 		$histFileData = @(Read-HistoryFile)
@@ -681,8 +681,8 @@ function Format-VideoFileInfo {
 
 	# フォルダ名を生成
 	$videoFileDir = @()
-	if ($script:sortVideoByMedia) {$videoFileDir += Get-FileNameWithoutInvalidChars (Remove-SpecialCharacter ($videoInfo.mediaName).Trim(' ', '.'))}
-	if ($script:sortVideoBySeries) {$videoFileDir += Get-FileNameWithoutInvalidChars (Remove-SpecialCharacter ('{0} {1}' -f $videoInfo.seriesName, $videoInfo.seasonName ).Trim(' ', '.'))}
+	if ($script:sortVideoByMedia) { $videoFileDir += Get-FileNameWithoutInvalidChars (Remove-SpecialCharacter ($videoInfo.mediaName).Trim(' ', '.')) }
+	if ($script:sortVideoBySeries) { $videoFileDir += Get-FileNameWithoutInvalidChars (Remove-SpecialCharacter ('{0} {1}' -f $videoInfo.seriesName, $videoInfo.seasonName ).Trim(' ', '.')) }
 	$videoFileDir = Join-Path $script:downloadBaseDir ($videoFileDir -join '/')
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'fileDir' -Value $videoFileDir.Replace('\', '/')
 
@@ -723,51 +723,51 @@ function Show-VideoDebugInfo {
 # ffmpegを使ったダウンロードプロセスの起動
 #----------------------------------------------------------------------
 <#
-function Invoke-FfmpegDownload {
-	[OutputType([Void])]
-	Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	Invoke-StatisticsCheck -Operation 'download-ffmpeg'
-	if ($IsWindows) { foreach ($dir in @($script:downloadWorkDir, $script:downloadBaseDir)) { if ($dir[-1] -eq ':') { $dir += '\\' } } }
-	$ffmpegArgs = @()
-	$ffmpegArgs += (' -y -http_multiple 1 -seg_max_retry 10 -timeout 5000000')
-	$ffmpegArgs += (' -reconnect 1 -reconnect_on_network_error 1 -reconnect_on_http_error 1 -reconnect_streamed 1')
-	$ffmpegArgs += (' -reconnect_max_retries 10 -reconnect_delay_max 30 -reconnect_delay_total_max 600')
-	$ffmpegArgs += (' -i "{0}"' -f $videoInfo.m3u8URL)
-	if ($script:videoContainerFormat -eq 'mp4') {
-		$ffmpegArgs += (' -c copy')
-		$ffmpegArgs += (' -c:v copy -c:a copy')
-		# $ffmpegArgs += (' -bsf:a aac_adtstoasc')
-		$ffmpegArgs += (' -c:s mov_text')
-		$ffmpegArgs += (' -metadata:s:s:0 language=ja')
-	}
-	$ffmpegArgs += (' "{0}"' -f $videoInfo.filePath)
-	$ffmpegArgsString = $ffmpegArgs -join ''
-	Write-Debug ($script:msg.ExecCommand -f 'ffmpeg', $script:ffmpegPath, $ffmpegArgsString)
-	if ($script:appName -eq 'TVerRecContainer') {
-		$startProcessParams = @{
-			FilePath     = 'timeout'
-			ArgumentList = "3600 $script:ffmpegPath $ffmpegArgsString"
-			PassThru     = $true
+	function Invoke-FfmpegDownload {
+		[OutputType([Void])]
+		Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
+		Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+		Invoke-StatisticsCheck -Operation 'download-ffmpeg'
+		if ($IsWindows) { foreach ($dir in @($script:downloadWorkDir, $script:downloadBaseDir)) { if ($dir[-1] -eq ':') { $dir += '\\' } } }
+		$ffmpegArgs = @()
+		$ffmpegArgs += (' -y -http_multiple 1 -seg_max_retry 10 -timeout 5000000')
+		$ffmpegArgs += (' -reconnect 1 -reconnect_on_network_error 1 -reconnect_on_http_error 1 -reconnect_streamed 1')
+		$ffmpegArgs += (' -reconnect_max_retries 10 -reconnect_delay_max 30 -reconnect_delay_total_max 600')
+		$ffmpegArgs += (' -i "{0}"' -f $videoInfo.m3u8URL)
+		if ($script:videoContainerFormat -eq 'mp4') {
+			$ffmpegArgs += (' -c copy')
+			$ffmpegArgs += (' -c:v copy -c:a copy')
+			# $ffmpegArgs += (' -bsf:a aac_adtstoasc')
+			$ffmpegArgs += (' -c:s mov_text')
+			$ffmpegArgs += (' -metadata:s:s:0 language=ja')
 		}
-	} else {
-		$startProcessParams = @{
-			FilePath     = $script:ffmpegPath
-			ArgumentList = $ffmpegArgsString
-			PassThru     = $true
+		$ffmpegArgs += (' "{0}"' -f $videoInfo.filePath)
+		$ffmpegArgsString = $ffmpegArgs -join ''
+		Write-Debug ($script:msg.ExecCommand -f 'ffmpeg', $script:ffmpegPath, $ffmpegArgsString)
+		if ($script:appName -eq 'TVerRecContainer') {
+			$startProcessParams = @{
+				FilePath     = 'timeout'
+				ArgumentList = "3600 $script:ffmpegPath $ffmpegArgsString"
+				PassThru     = $true
+			}
+		} else {
+			$startProcessParams = @{
+				FilePath     = $script:ffmpegPath
+				ArgumentList = $ffmpegArgsString
+				PassThru     = $true
+			}
 		}
+		if ($IsWindows) { $startProcessParams.WindowStyle = $script:windowShowStyle }
+		else {
+			$startProcessParams.RedirectStandardOutput = '/dev/null'
+			$startProcessParams.RedirectStandardError = '/dev/zero'
+		}
+		try {
+			$ffmpegProcess = Start-Process @startProcessParams
+			$ffmpegProcess.Handle | Out-Null
+		} catch { Write-Warning ($script:msg.ExecFailed -f 'ffmpeg') ; return }
+		Remove-Variable -Name ffmpegArgs, ffmpegArgsString -ErrorAction SilentlyContinue
 	}
-	if ($IsWindows) { $startProcessParams.WindowStyle = $script:windowShowStyle }
-	else {
-		$startProcessParams.RedirectStandardOutput = '/dev/null'
-		$startProcessParams.RedirectStandardError = '/dev/zero'
-	}
-	try {
-		$ffmpegProcess = Start-Process @startProcessParams
-		$ffmpegProcess.Handle | Out-Null
-	} catch { Write-Warning ($script:msg.ExecFailed -f 'ffmpeg') ; return }
-	Remove-Variable -Name ffmpegArgs, ffmpegArgsString -ErrorAction SilentlyContinue
-}
 #>
 
 #----------------------------------------------------------------------
@@ -1010,15 +1010,17 @@ function Wait-DownloadCompletion () {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$ytdlCount = [Int](Get-YtdlProcessCount)
 	<#
-	$ffmpegCount = [Int](Get-FfmpegProcessCount)
-	while (($ytdlCount + $ffmpegCount) -ne 0) {
+		$ffmpegCount = [Int](Get-FfmpegProcessCount)
+		while (($ytdlCount + $ffmpegCount) -ne 0) {
 	#>
 	while ($ytdlCount -ne 0) {
 		# Write-Information ($script:msg.NumDownloadProc -f (Get-Date), ($ytdlCount + $ffmpegCount))
 		Write-Information ($script:msg.NumDownloadProc -f (Get-Date), $ytdlCount)
 		Start-Sleep -Seconds 60
 		$ytdlCount = [Int](Get-YtdlProcessCount)
-		# $ffmpegCount = [Int](Get-FfmpegProcessCount)
+		<#
+			# $ffmpegCount = [Int](Get-FfmpegProcessCount)
+		#>
 	}
 	Remove-Variable -Name ytdlCount -ErrorAction SilentlyContinue
 }
@@ -1269,7 +1271,33 @@ function Invoke-IntegrityCheck {
 		try { Remove-Item -LiteralPath $videoFilePath -Force -ErrorAction SilentlyContinue | Out-Null }
 		catch { Write-Warning ($script:msg.DeleteVideoFailed -f $videoFilePath) }
 	}
-	Remove-Variable -Name videoFilePath, ffmpegProcessExitCode, errorCount, targetHist, checkStatus, latestHists -ErrorAction SilentlyContinue
+	Remove-Variable -Name videoFilePath, ffmpegProcessExitCode, errorCount, targetHist, checkStatus, latestHists -ErrorAction SilentlyContinue	#----------------------------------------------------------------------
+}	# リネームに失敗したファイルを削除
+
+#----------------------------------------------------------------------
+# 移動に失敗したファイルを削除(作業フォルダ)
+#----------------------------------------------------------------------
+function Remove-UnMovedTempFiles {
+	[CmdletBinding()]
+	Param ()
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	(Get-ChildItem -Path $script:downloadWorkDir -File).Where({ $_.Name -match '^ep[a-z0-9]{8}\..*\.(mp4|ts)$' }) | Remove-Item -Force -ErrorAction SilentlyContinue
+}
+
+#----------------------------------------------------------------------
+# リネームに失敗したファイルを削除(ダウンロード先フォルダ)
+#----------------------------------------------------------------------
+function Remove-UnRenamedTempFiles {
+	[CmdletBinding()]
+	Param ()
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if ($IsWindows) {
+		$forCmd = "for %E in (mp4 ts) do for /r `"$script:downloadBaseDir`" %F in (ep*.%E) do @echo %F"
+		(& cmd /c $forCmd).Where({ ($_ -cmatch 'ep[a-z0-9]{8}.mp4$') -or ($_ -cmatch 'ep[a-z0-9]{8}.ts$') }) | Remove-Item -Force -ErrorAction SilentlyContinue
+	} else {
+		$findCmd = "find `"$script:downloadBaseDir`" -type f -name 'ep*.mp4' -or -type f -name 'ep*.ts'"
+		(& sh -c $findCmd).Where({ ($_ -cmatch 'ep[a-z0-9]{8}.mp4$') -or ($_ -cmatch 'ep[a-z0-9]{8}.ts$') }) | Remove-Item -Force -ErrorAction SilentlyContinue
+	}
 }
 
 # region 環境

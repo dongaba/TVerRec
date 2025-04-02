@@ -397,26 +397,6 @@ function Get-RemainingCapacity {
 	return [int64]($freeSpace / 1MB)
 	Remove-Variable -Name targetDir, targetDrive, freeSpace, targetRoot -ErrorAction SilentlyContinue
 }
-
-#----------------------------------------------------------------------
-# リネームに失敗したファイルを削除
-#----------------------------------------------------------------------
-function Remove-UnRenamedTempFiles {
-	[CmdletBinding()]
-	Param ()
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	if ($IsWindows) {
-		$forCmd = "for %E in (mp4 ts) do for /r `"$script:downloadBaseDir`" %F in (ep*.%E) do @echo %F"
-		(& cmd /c $forCmd) |
-				Where-Object { ($_ -cmatch 'ep[a-z0-9]{8}.mp4$') -or ($_ -cmatch 'ep[a-z0-9]{8}.ts$') } |
-				Remove-Item -Force -ErrorAction SilentlyContinue
-	} else {
-		$findCmd = "find `"$script:downloadBaseDir`" -type f -name 'ep*.mp4' -or -type f -name 'ep*.ts'"
-		(& sh -c $findCmd) |
-				Where-Object { ($_ -cmatch 'ep[a-z0-9]{8}.mp4$') -or ($_ -cmatch 'ep[a-z0-9]{8}.ts$') } |
-				Remove-Item -Force -ErrorAction SilentlyContinue
-	}
-}
 # endregion ディスク監視
 
 # region ファイルロック

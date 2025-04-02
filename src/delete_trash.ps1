@@ -60,9 +60,10 @@ Remove-Files `
 $toastUpdateParams.Title = $script:downloadWorkDir
 $toastUpdateParams.Rate = [Float]( 2 / $totalCleanupSteps )
 Update-ProgressToast @toastUpdateParams
+Remove-UnMovedTempFiles
 Remove-Files `
 	-BasePath $script:downloadWorkDir `
-	-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a', '*.live_chat.json', '*.mp4-Frag*', '*.ts-Frag*') `
+	-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a-Frag*', '*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*') `
 	-DelPeriod 0
 
 # ダウンロード先
@@ -75,7 +76,7 @@ Remove-UnRenamedTempFiles
 if ($script:cleanupDownloadBaseDir) {
 	Remove-Files `
 		-BasePath $script:downloadBaseDir `
-		-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a', '*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*') `
+		-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a-Frag*', '*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*') `
 		-DelPeriod 0
 }
 
@@ -88,7 +89,7 @@ if ($script:cleanupSaveBaseDir)	{
 		foreach ($saveDir in $script:saveBaseDirArray) {
 			Remove-Files `
 				-BasePath $saveDir `
-				-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a', '*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*') `
+				-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a-Frag*', '*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*') `
 				-DelPeriod 0
 		}
 	}

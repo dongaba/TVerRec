@@ -1,5 +1,17 @@
 # Change Log
 
+## [3.4.6](https://github.com/dongaba/TVerRec/releases/tag/v3.4.6)
+
+### 3.4.6 Added
+
+### 3.4.6 Changed
+
+- 作業ディレクトリをTVerRec専用で使わない人がいるようなので、不要ファイル削除の処理を変更
+
+### 3.4.6 Fixed
+
+- 番組ごとのディレクトリ配下にダウンロードファイルを保存「しない」設定をすると動画のない空のフォルダが作成される不具合を修正 #256
+
 ## [3.4.5](https://github.com/dongaba/TVerRec/releases/tag/v3.4.5)
 
 ### 3.4.5 Added
