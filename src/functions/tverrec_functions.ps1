@@ -680,18 +680,16 @@ function Format-VideoFileInfo {
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'fileName' -Value $videoName
 
 	# フォルダ名を生成
-	if ($script:sortVideoBySeries) {
-		$videoFileDir = Get-FileNameWithoutInvalidChars (Remove-SpecialCharacter ('{0} {1}' -f $videoInfo.seriesName, $videoInfo.seasonName ).Trim(' ', '.'))
-	} else { $videoFileDir = $script:downloadBaseDir }
-	if ($script:sortVideoByMedia) {
-		$videoFileDir = (Join-Path $script:downloadBaseDir (Get-FileNameWithoutInvalidChars (Remove-SpecialCharacter $videoInfo.mediaName)) | Join-Path -ChildPath $videoFileDir)
-	} else { $videoFileDir = (Join-Path $script:downloadBaseDir $videoFileDir) }
-	$videoInfo | Add-Member -MemberType NoteProperty -Name 'fileDir' -Value $videoFileDir
+	$videoFileDir = @()
+	if ($script:sortVideoByMedia) {$videoFileDir += Get-FileNameWithoutInvalidChars (Remove-SpecialCharacter ($videoInfo.mediaName).Trim(' ', '.'))}
+	if ($script:sortVideoBySeries) {$videoFileDir += Get-FileNameWithoutInvalidChars (Remove-SpecialCharacter ('{0} {1}' -f $videoInfo.seriesName, $videoInfo.seasonName ).Trim(' ', '.'))}
+	$videoFileDir = Join-Path $script:downloadBaseDir ($videoFileDir -join '/')
+	$videoInfo | Add-Member -MemberType NoteProperty -Name 'fileDir' -Value $videoFileDir.Replace('\', '/')
 
 	$videoFilePath = Join-Path $videoFileDir $videoInfo.fileName
-	$videoInfo | Add-Member -MemberType NoteProperty -Name 'filePath' -Value $videoFilePath
-	$videoFileRelPath = $videoInfo.filePath.Replace($script:downloadBaseDir, '').Replace('\', '/').TrimStart('/')
-	$videoInfo | Add-Member -MemberType NoteProperty -Name 'fileRelPath' -Value $videoFileRelPath
+	$videoInfo | Add-Member -MemberType NoteProperty -Name 'filePath' -Value $videoFilePath.Replace('\', '/')
+	$videoFileRelPath = $videoFilePath.Replace($script:downloadBaseDir, '')
+	$videoInfo | Add-Member -MemberType NoteProperty -Name 'fileRelPath' -Value $videoFileRelPath.Replace('\', '/').TrimStart('/')
 
 	Remove-Variable -Name videoName, fileNameLimit, videoFileDir, videoFilePath, videoFileRelPath -ErrorAction SilentlyContinue
 }
