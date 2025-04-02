@@ -368,6 +368,7 @@ function Unlock-File {
 #----------------------------------------------------------------------
 function Get-RemainingCapacity {
 	[CmdletBinding()]
+	[OutputType([int64])]
 	Param (
 		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][string]$targetDir
 	)

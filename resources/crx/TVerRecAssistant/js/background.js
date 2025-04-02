@@ -1,3 +1,5 @@
+/*global chrome*/
+
 // ルールの有効化
 function enablePlatformRule() {
 	chrome.declarativeNetRequest.updateEnabledRulesets(
@@ -121,19 +123,21 @@ chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((e) => {
 			) {
 				console.log("TVerRec Assistant: Add below to user_settings.ps1");
 				console.log(`	$script:myPlatformUID = '${searchParams.platform_uid}'`);
-				console.log(`	$script:myPlatformToken = '${searchParams.platform_token}'`);
+				console.log(
+					`	$script:myPlatformToken = '${searchParams.platform_token}'`
+				);
 				saveStoragePlatform(
 					searchParams.platform_uid,
 					searchParams.platform_token
 				);
-				disablePlatformRule() ; // UIDとTOKENを取得したらルールを解除
+				disablePlatformRule(); // UIDとTOKENを取得したらルールを解除
 			}
 
 			if (searchParams.member_sid !== undefined) {
 				console.log("TVerRec Assistant: Add below to user_settings.ps1");
 				console.log(`	$script:myMemberSID = '${searchParams.member_sid}'`);
 				saveStorageMember(searchParams.member_sid);
-				disableMemberRule() ; // SIDを取得したらルールを解除
+				disableMemberRule(); // SIDを取得したらルールを解除
 			}
 		}
 	}
