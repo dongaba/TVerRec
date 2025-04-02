@@ -199,8 +199,7 @@ foreach ($btn in $btns) {
 			#処理停止ボタンの有効化
 			$btnKillAll.IsEnabled = $true
 			#バックグラウンドジョブの起動
-			$guiJob = Start-ThreadJob -Name $this.Name -ScriptBlock $scriptBlocks[$this]
-			$script:jobList += $guiJob.Id
+			Start-ThreadJob -Name $this.Name -ScriptBlock $scriptBlocks[$this] | Out-Null
 		})
 }
 
@@ -231,7 +230,7 @@ $btnKillAll.Add_Click({
 		$lblStatus.Content = $script:msg.ProcessForceStopped
 		Invoke-GarbageCollection
 	})
-$btnWiki.Add_Click({ Start-Process‘https://github.com/dongaba/TVerRec/wiki’ })
+$btnWiki.Add_Click({ Start-Process ‘https://github.com/dongaba/TVerRec/wiki’ })
 $btnSetting.Add_Click({
 		& 'gui/gui_setting.ps1'
 		if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
