@@ -1,5 +1,18 @@
 # Change Log
 
+## [3.4.5](https://github.com/dongaba/TVerRec/releases/tag/v3.4.5)
+
+### 3.4.5 Added
+
+### 3.4.5 Changed
+
+- 作業フォルダ配下のゴミ掃除時にmp4とtsファイルを削除しないように変更
+  - 以前に勝手にファイルが消されたと報告があった件に対する対策になるかも?
+
+### 3.4.5 Fixed
+
+- フリーズしたような状態になる問題を解決したつもり #251 #252
+
 ## [3.4.4](https://github.com/dongaba/TVerRec/releases/tag/v3.4.4)
 
 ### 3.4.4 Added
@@ -10,7 +23,6 @@
 
 - TVerRecのアップデータの不具合を修正 #249
 - `common_functions.ps1`のマージミス不具合を修正
-
 
 ## [3.4.3](https://github.com/dongaba/TVerRec/releases/tag/v3.4.3)
 
