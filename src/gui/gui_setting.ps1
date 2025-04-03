@@ -472,42 +472,52 @@ $tabLanguage.Header = $script:msg.tabLanguage
 $preferredLanguageHeader.Header = $script:msg.preferredLanguageHeader
 $preferredLanguageText.Text = $script:msg.preferredLanguageText
 
+
 # ComboBOxのラベルを言語別に設定
+# True/Falseオプションを追加するコントロール
 $trueFalseOptions = @($script:msg.SettingDefault, $script:msg.SettingTrue, $script:msg.SettingFalse)
-foreach ($option in $trueFalseOptions) { $enableMultithread.Items.Add($option) | Out-Null }
-foreach ($option in $trueFalseOptions) { $disableToastNotification.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $detailedProgress.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $extractDescTextToList.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $listGenHistoryCheck.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $cleanupDownloadBaseDir.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $cleanupSaveBaseDir.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $emptyDownloadBaseDir.Items.Add($option)  | Out-Null }
+$trueFalseControls = @(
+	$enableMultithread,
+	$disableToastNotification,
+	$detailedProgress,
+	$extractDescTextToList,
+	$listGenHistoryCheck,
+	$cleanupDownloadBaseDir,
+	$cleanupSaveBaseDir,
+	$emptyDownloadBaseDir,
+	$embedSubtitle,
+	$embedMetatag,
+	$sortVideoBySeries,
+	$sortVideoByMedia,
+	$forceSingleDownload,
+	$sitemapParseEpisodeOnly,
+	$downloadWhenEpisodeIdChanged,
+	$addSeriesName,
+	$addSeasonName,
+	$addBroadcastDate,
+	$addEpisodeNumber,
+	$removeSpecialNote,
+	$forceSoftwareDecodeFlag,
+	$simplifiedValidation,
+	$disableValidation,
+	$disableUpdateYoutubedl,
+	$disableUpdateFfmpeg,
+	$ytdlRandomIp,
+	$scheduleStop
+)
+foreach ($control in $trueFalseControls) {
+	foreach ($option in $trueFalseOptions) { $control.Items.Add($option) | Out-Null }
+}
+# カスタムオプションを追加するコントロール
 $updateChannel.Items.Add($script:msg.SettingDefault) | Out-Null
 $updateChannel.Items.Add('release') | Out-Null
 $updateChannel.Items.Add('prerelease') | Out-Null
 $updateChannel.Items.Add('master') | Out-Null
 $updateChannel.Items.Add('beta') | Out-Null
 $updateChannel.Items.Add('dev') | Out-Null
-foreach ($option in $trueFalseOptions) { $embedSubtitle.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $embedMetatag.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $sortVideoBySeries.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $sortVideoByMedia.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $forceSingleDownload.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $sitemapParseEpisodeOnly.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $downloadWhenEpisodeIdChanged.Items.Add($option)  | Out-Null }
 $videoContainerFormat.Items.Add($script:msg.SettingDefault) | Out-Null
 $videoContainerFormat.Items.Add('mp4') | Out-Null
 $videoContainerFormat.Items.Add('ts') | Out-Null
-foreach ($option in $trueFalseOptions) { $addSeriesName.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $addSeasonName.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $addBroadcastDate.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $addEpisodeNumber.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $removeSpecialNote.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $forceSoftwareDecodeFlag.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $simplifiedValidation.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $disableValidation.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $disableUpdateYoutubedl.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $disableUpdateFfmpeg.Items.Add($option)  | Out-Null }
 $windowShowStyle.Items.Add($script:msg.SettingDefault) | Out-Null
 $windowShowStyle.Items.Add('Minimized') | Out-Null
 $windowShowStyle.Items.Add('Hidden') | Out-Null
@@ -517,11 +527,10 @@ $preferredYoutubedl.Items.Add($script:msg.SettingDefault) | Out-Null
 $preferredYoutubedl.Items.Add('yt-dlp') | Out-Null
 $preferredYoutubedl.Items.Add('yt-dlp-nightly') | Out-Null
 $preferredYoutubedl.Items.Add('ytdl-patched') | Out-Null
-foreach ($option in $trueFalseOptions) { $ytdlRandomIp.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $scheduleStop.Items.Add($option)  | Out-Null }
 $preferredLanguage.Items.Add($script:msg.SettingDefault) | Out-Null
 $preferredLanguage.Items.Add('日本語') | Out-Null	# ja-JP
 $preferredLanguage.Items.Add('English') | Out-Null	# en-US
+
 
 # endregion WPFのWindow設定
 #----------------------------------------------------------------------
