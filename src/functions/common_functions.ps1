@@ -82,8 +82,8 @@ function Get-FileNameWoInvalidChars {
 	# 無効な文字を削除
 	$name = $name -replace $invalidCharsPattern, '' `
 		-replace $additionalReplaces, '-' `
-		-replace '--', '-' `
-		-replace $nonPrintableChars, ''
+		-replace $nonPrintableChars, '' `
+		-replace '-+', '-'
 	return $name
 	Remove-Variable -Name invalidCharsPattern, name, additionalReplaces, nonPrintableChars -ErrorAction SilentlyContinue
 }
@@ -236,7 +236,7 @@ function Remove-TabSpace {
 	[OutputType([String])]
 	Param ([String]$text)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	return $text.Replace("`t", ' ').Replace('  ', ' ')
+	return $text.Replace("`t", ' ') -replace '\s+', ' '
 	Remove-Variable -Name text -ErrorAction SilentlyContinue
 }
 
