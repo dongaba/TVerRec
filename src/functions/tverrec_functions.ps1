@@ -14,17 +14,20 @@ function Show-Logo {
 	[OutputType([Void])]
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$logoLines = @(
+		'⣴⠟⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦',
+		'⣿⠀⠀⣿⣿⣿⣿⡿⠟⠛⠛⠛⠛⠳⢦⣄⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿',
+		'⣿⠀⠀⣿⣿⡟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠈⢳⣄⠀⠀⠀⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⣿⠀⠀⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠙⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿',
+		'⣿⠀⠀⣿⠏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⣆⠀⠀⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣿⣦⠀⠈⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿',
+		'⣿⠀⠀⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⠀⠀⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⠀⠀⣿⡟⠁⣀⣀⠈⢻⣿⠀⠋⢀⣀⡀⠙⣿⠀⠀⣿⣿⣿⠟⠀⢀⣿⡟⠁⣀⣀⠈⢻⣿⡟⠁⣀⣀⠈⢻⣿⣿⣿⣿',
+		'⣿⠀⠀⣿⣆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⠏⠀⠀⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⠀⠀⣿⠀⠾⠿⠿⠷⠀⣿⠀⣾⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⣠⣿⣿⠀⠾⠿⠿⠷⠀⣿⠀⣾⣿⣿⣿⣿⣿⣿⣿⣿',
+		'⣿⠀⠀⣿⣿⣧⡀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡼⠋⠀⠀⠀⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⣦⡀⠈⠻⠟⠁⢀⣴⣿⠀⢶⣶⣶⣶⣶⣿⠀⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣧⠀⠘⣿⣿⠀⢶⣶⣶⣶⣶⣿⠀⢿⣿⣿⣿⣿⣿⣿⣿⣿',
+		'⣿⠀⠀⣿⣿⣿⣿⣷⣦⣤⣤⣤⣤⣴⣾⠋⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⣿⣿⣦⡀⢀⣴⣿⣿⣿⣧⡀⠉⠉⢀⣼⣿⠀⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣿⣧⠀⠘⣿⣧⡀⠉⠉⢀⣼⣿⣧⡀⠉⠉⢀⣼⣿⣿⣿⣿',
+		'⣿⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⠙⢷⣄⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿',
+		'⠻⣦⣤⣿⣿⣿⣿⣿⣿⣿⣿⣤⣤⣤⣤⣽⣷⣤⣤⣤⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟'
+	)
 	# [Console]::ForegroundColor = 'Red'
-	Write-Output ('⣴⠟⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦')
-	Write-Output ('⣿⠀⠀⣿⣿⣿⣿⡿⠟⠛⠛⠛⠛⠳⢦⣄⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿')
-	Write-Output ('⣿⠀⠀⣿⣿⡟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠈⢳⣄⠀⠀⠀⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⣿⠀⠀⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠙⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿')
-	Write-Output ('⣿⠀⠀⣿⠏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⣆⠀⠀⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣿⣦⠀⠈⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿')
-	Write-Output ('⣿⠀⠀⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⠀⠀⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⠀⠀⣿⡟⠁⣀⣀⠈⢻⣿⠀⠋⢀⣀⡀⠙⣿⠀⠀⣿⣿⣿⠟⠀⢀⣿⡟⠁⣀⣀⠈⢻⣿⡟⠁⣀⣀⠈⢻⣿⣿⣿⣿')
-	Write-Output ('⣿⠀⠀⣿⣆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⠏⠀⠀⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⠀⠀⣿⠀⠾⠿⠿⠷⠀⣿⠀⣾⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⣠⣿⣿⠀⠾⠿⠿⠷⠀⣿⠀⣾⣿⣿⣿⣿⣿⣿⣿⣿')
-	Write-Output ('⣿⠀⠀⣿⣿⣧⡀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡼⠋⠀⠀⠀⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⣦⡀⠈⠻⠟⠁⢀⣴⣿⠀⢶⣶⣶⣶⣶⣿⠀⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣧⠀⠘⣿⣿⠀⢶⣶⣶⣶⣶⣿⠀⢿⣿⣿⣿⣿⣿⣿⣿⣿')
-	Write-Output ('⣿⠀⠀⣿⣿⣿⣿⣷⣦⣤⣤⣤⣤⣴⣾⠋⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⣿⣿⣦⡀⢀⣴⣿⣿⣿⣧⡀⠉⠉⢀⣼⣿⠀⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣿⣧⠀⠘⣿⣧⡀⠉⠉⢀⣼⣿⣧⡀⠉⠉⢀⣼⣿⣿⣿⣿')
-	Write-Output ('⣿⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⠙⢷⣄⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿')
-	Write-Output ('⠻⣦⣤⣿⣿⣿⣿⣿⣿⣿⣿⣤⣤⣤⣤⣽⣷⣤⣤⣤⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟')
+	foreach ($line in $logoLines) { Write-Output $line }
 	# [Console]::ResetColor()
 	Write-Output (" {0,$(72 - $script:appVersion.Length)}Version. {1}  " -f ' ', $script:appVersion)
 }
@@ -194,21 +197,42 @@ function Read-KeywordList {
 	Remove-Variable -Name keywords -ErrorAction SilentlyContinue
 }
 
+<#
+	#----------------------------------------------------------------------
+	# ダウンロード履歴の読み込み
+	#----------------------------------------------------------------------
+	function Read-HistoryFile {
+		[OutputType([String[]])]
+		Param ()
+		Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+		$histFileData = @()
+		try {
+			while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+			$histFileData = Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8
+		} catch { Throw ($script:msg.LoadFailed -f $script:msg.HistFile) }
+		finally { Unlock-File $script:histLockFilePath | Out-Null }
+		return $histFileData
+		Remove-Variable -Name histFileData -ErrorAction SilentlyContinue
+	}
+#>
+
 #----------------------------------------------------------------------
-# ダウンロード履歴の読み込み
+# ダウンロード履歴の最新履歴を取得
 #----------------------------------------------------------------------
-function Read-HistoryFile {
-	[OutputType([String[]])]
+function Get-LatestHistory {
+	[OutputType([PSCustomObject])]
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	$histFileData = @()
+	while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 	try {
-		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-		$histFileData = Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8
-	} catch { Throw ($script:msg.LoadFailed -f $script:msg.HistFile) }
+		# videoPageごとに最新のdownloadDateを持つレコードを取得
+		$latestHists = (Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8) |
+			Group-Object -Property 'videoPage' |
+			ForEach-Object { $_.Group | Sort-Object -Property downloadDate, videoValidated -Descending | Select-Object -First 1 }
+	} catch { Write-Warning ($script:msg.LoadFailed -f $script:msg.HistFile) }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
-	return $histFileData
-	Remove-Variable -Name histFileData -ErrorAction SilentlyContinue
+	return $latestHists
+	Remove-Variable -Name latestHists -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -290,10 +314,13 @@ function Update-IgnoreList {
 			if ($ignoreElse) { $ignoreListNew += $ignoreElse }
 			# 改行コードLFを強制 + NFCで出力
 			try {
-				$ignoreListNew.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC) | Out-File -LiteralPath $script:ignoreFilePath -Encoding UTF8 -NoNewline
+				$ignoreListNew.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC) |
+					Out-File -LiteralPath $script:ignoreFilePath -Encoding UTF8 -NoNewline ; Start-Sleep -Seconds 1
 				Write-Debug ($script:msg.IgnoreFileSortCompleted)
-			} catch { $ignoreLists.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC) | Out-File -LiteralPath $script:ignoreFilePath -Encoding UTF8 -NoNewline }
-			finally { Start-Sleep -Seconds 1 }
+			} catch {
+				$ignoreLists.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC) |
+					Out-File -LiteralPath $script:ignoreFilePath -Encoding UTF8 -NoNewline ; Start-Sleep -Seconds 1
+			} finally { Start-Sleep -Seconds 1 }
 		} catch { Write-Warning ($script:msg.IgnoreFileSortFailed) }
 		finally { Unlock-File $script:ignoreLockFilePath | Out-Null }
 	}
@@ -308,7 +335,7 @@ function Invoke-HistoryMatchCheck {
 	Param ([Parameter(Mandatory = $true)][Alias('links')][String[]]$resultLinks)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# ダウンロード履歴ファイルのデータを読み込み
-	$histFileData = @(Read-HistoryFile)
+	$histFileData = @(Get-LatestHistory)
 	if ($histFileData.Count -eq 0) { $histVideoPages = @() } else { $histVideoPages = @($histFileData.VideoPage) }
 	# URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 	$histCompResult = @(Compare-Object -IncludeEqual $resultLinks $histVideoPages)
@@ -349,7 +376,7 @@ function Invoke-HistoryAndListMatchCheck {
 	$listVideoPages = New-Object System.Collections.Generic.List[Object]
 	foreach ($listFileLine in $listFileData) { $listVideoPages.Add(@('https://tver.jp/episodes/{0}' -f $listFileLine.EpisodeID.Replace('#', ''))) }
 	# ダウンロード履歴ファイルのデータを読み込み
-	$histFileData = @(Read-HistoryFile)
+	$histFileData = @(Get-LatestHistory)
 	$histVideoPages = if ($histFileData.Count -eq 0) { @() } else { $histFileData.VideoPage }
 	# ダウンロードリストとダウンロード履歴をマージ
 	if ($histVideoPages) { $listVideoPages.AddRange($histVideoPages) }
@@ -444,7 +471,7 @@ Function Remove-SpecialNote {
 	$length1 = [Math]::Max(0, $text.IndexOf('》') - $text.IndexOf('《'))
 	$length2 = [Math]::Max(0, $text.IndexOf('】') - $text.IndexOf('【'))
 	# 10文字以上あれば特殊文字とその間を削除
-	if (($length1 -gt 10) -or ($length2 -gt 10)) { $text = ($text -replace '《.*?》|【.*?】', '').Replace('  ', ' ').Trim() }
+	if (($length1 -gt 10) -or ($length2 -gt 10)) { $text = (($text -replace '《.*?》|【.*?】', '') -replace '\s+', ' ').Trim() }
 	return $text
 	Remove-Variable -Name text, length1, length2 -ErrorAction SilentlyContinue
 }
@@ -498,7 +525,7 @@ function Invoke-VideoDownload {
 						ダウンロード対象外リストに存在しない	→ダウンロード
 		#>
 		#ダウンロード履歴ファイルのデータを読み込み
-		$histFileData = @(Read-HistoryFile)
+		$histFileData = @(Get-LatestHistory)
 		if ($videoInfo.fileRelPath) { $histMatch = @($histFileData.Where({ $_.videoPath -eq $videoInfo.fileRelPath })) }
 		else { Write-Warning ($script:msg.FileNameRetrievalFailed) ; continue }
 
@@ -575,9 +602,9 @@ function Invoke-VideoDownload {
 	}
 
 	# ダウンロード履歴CSV書き出し
+	while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 	try {
-		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-		$newVideo | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append
+		$newVideo | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append ; Start-Sleep -Seconds 1
 		Write-Debug ($script:msg.HistWritten)
 	} catch { Write-Warning ($script:msg.HistUpdateFailed) ; continue }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
@@ -669,21 +696,21 @@ function Format-VideoFileInfo {
 		if ($script:addEpisodeNumber) { $videoName = ('{0}Ep{1} ' -f $videoName, $videoInfo.episodeNum) }
 	}
 	# ファイル名にできない文字列を除去
-	$videoName = (Get-FileNameWoInvalidChars (Remove-SpecialCharacter $videoName)).Replace('  ', ' ').Trim()
-	# SMBで255バイトまでしかファイル名を持てないらしいので、超えないようにファイル名をトリミング。youtube-dlの中間ファイル等を考慮して安全目の上限値
+	$videoName = ((Get-FileNameWoInvalidChars (Remove-SpecialCharacter $videoName)) -replace '\s+', ' ').Trim()
+	# SMBで255バイトまでしかファイル名を持てないらしいので、超えないようにファイル名をトリミング。安全目の上限値としており、限界値は攻めていない
 	$fileNameLimit = $script:fileNameLengthMax - 30
 	if ([System.Text.Encoding]::UTF8.GetByteCount($videoName) -gt $fileNameLimit) {
 		while ([System.Text.Encoding]::UTF8.GetByteCount($videoName) -gt $fileNameLimit) { $videoName = $videoName.Substring(0, $videoName.Length - 1) }
 		$videoName = ('{0}……' -f $videoName)
 	}
-	$videoName = Get-FileNameWoInvalidChars ('{0}.{1}' -f $videoName, $script:videoContainerFormat)
+	$videoName = ('{0}.{1}' -f $videoName, $script:videoContainerFormat)
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'fileName' -Value $videoName
 
 	# フォルダ名を生成
 	$videoFileDir = @()
 	if ($script:sortVideoByMedia) { $videoFileDir += Get-FileNameWoInvalidChars (Remove-SpecialCharacter ($videoInfo.mediaName).Trim(' ', '.')) }
 	if ($script:sortVideoBySeries) { $videoFileDir += Get-FileNameWoInvalidChars (Remove-SpecialCharacter ('{0} {1}' -f $videoInfo.seriesName, $videoInfo.seasonName ).Trim(' ', '.')) }
-	$videoFileDir = Join-Path $script:downloadBaseDir ($videoFileDir -join '/')
+	$videoFileDir = Join-Path $script:downloadBaseDir @videoFileDir		# 3コ以上行けるので配列のまま渡す
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'fileDir' -Value $videoFileDir.Replace('\', '/')
 
 	$videoFilePath = Join-Path $videoFileDir $videoInfo.fileName
@@ -705,8 +732,10 @@ function Show-VideoInfo {
 	Write-Output ($script:msg.BroadcastDate -f $videoInfo.broadcastDate)
 	Write-Output ($script:msg.MediaName -f $videoInfo.mediaName)
 	Write-Output ($script:msg.EndDate -f $videoInfo.endTime)
-	# Write-Output ($script:msg.IsBrightcove -f $videoInfo.isBrightcove)
-	# Write-Output ($script:msg.IsStreaks -f $videoInfo.isStreaks)
+	<#
+		Write-Output ($script:msg.IsBrightcove -f $videoInfo.isBrightcove)
+		Write-Output ($script:msg.IsStreaks -f $videoInfo.isStreaks)
+	#>
 	Write-Output ($script:msg.EpisodeDetail -f $videoInfo.descriptionText)
 }
 #----------------------------------------------------------------------
@@ -1052,25 +1081,6 @@ function Suspend-Process () {
 }
 
 #----------------------------------------------------------------------
-# ダウンロード履歴の最新履歴を取得
-#----------------------------------------------------------------------
-function Get-LatestHistory {
-	[OutputType([PSCustomObject])]
-	Param ()
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-	try {
-		# videoPageごとに最新のdownloadDateを持つレコードを取得
-		$latestHists = (Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8) |
-			Group-Object -Property 'videoPage' |
-			ForEach-Object { $_.Group | Sort-Object -Property downloadDate, videoValidated -Descending | Select-Object -First 1 }
-	} catch { Write-Warning ($script:msg.LoadFailed -f $script:msg.HistFile) }
-	finally { Unlock-File $script:histLockFilePath | Out-Null }
-	return $latestHists
-	Remove-Variable -Name latestHists -ErrorAction SilentlyContinue
-}
-
-#----------------------------------------------------------------------
 # ダウンロード履歴の不整合を解消
 #----------------------------------------------------------------------
 function Optimize-HistoryFile {
@@ -1203,7 +1213,7 @@ function Invoke-IntegrityCheck {
 					$targetHist.downloadDate = Get-TimeStamp
 					$targetHist.videoValidated = '2'
 					while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-					try { $targetHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append }
+					try { $targetHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append ; Start-Sleep -Seconds 1 }
 					catch { Write-Warning ($script:msg.HistUpdateFailed) ; return }
 					finally { Unlock-File $script:histLockFilePath | Out-Null }
 					break
@@ -1249,7 +1259,7 @@ function Invoke-IntegrityCheck {
 			$targetHist.downloadDate = Get-TimeStamp
 			$targetHist.videoValidated = '3'
 			while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-			try { $targetHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append }
+			try { $targetHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append ; Start-Sleep -Seconds 1 }
 			catch { Write-Warning ($script:msg.HistUpdateFailed) }
 			finally { Unlock-File $script:histLockFilePath | Out-Null }
 			# ファイルを削除
@@ -1261,7 +1271,7 @@ function Invoke-IntegrityCheck {
 			$targetHist.downloadDate = Get-TimeStamp
 			$targetHist.videoValidated = '1'
 			while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-			try { $targetHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append }
+			try { $targetHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append ; Start-Sleep -Seconds 1 }
 			catch { Write-Warning ($script:msg.HistUpdateFailed) }
 			finally { Unlock-File $script:histLockFilePath | Out-Null }
 		}
