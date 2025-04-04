@@ -7,6 +7,7 @@ Set-StrictMode -Version Latest
 Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 Add-Type -AssemblyName 'System.Globalization' | Out-Null
 
+# region 起動時関連処理
 #----------------------------------------------------------------------
 # TVerRec Logo表示
 #----------------------------------------------------------------------
@@ -24,18 +25,6 @@ function Show-Logo {
 	[OutputType([Void])]
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	$logoLines = @(
-		'⣴⠟⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦',
-		'⣿⠀⠀⣿⣿⣿⣿⡿⠟⠛⠛⠛⠛⠳⢦⣄⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿',
-		'⣿⠀⠀⣿⣿⡟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠈⢳⣄⠀⠀⠀⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⣿⠀⠀⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠙⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿',
-		'⣿⠀⠀⣿⠏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⣆⠀⠀⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣿⣦⠀⠈⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿',
-		'⣿⠀⠀⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⠀⠀⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⠀⠀⣿⡟⠁⣀⣀⠈⢻⣿⠀⠋⢀⣀⡀⠙⣿⠀⠀⣿⣿⣿⠟⠀⢀⣿⡟⠁⣀⣀⠈⢻⣿⡟⠁⣀⣀⠈⢻⣿⣿⣿⣿',
-		'⣿⠀⠀⣿⣆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⠏⠀⠀⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⠀⠀⣿⠀⠾⠿⠿⠷⠀⣿⠀⣾⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⣠⣿⣿⠀⠾⠿⠿⠷⠀⣿⠀⣾⣿⣿⣿⣿⣿⣿⣿⣿',
-		'⣿⠀⠀⣿⣿⣧⡀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡼⠋⠀⠀⠀⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⣦⡀⠈⠻⠟⠁⢀⣴⣿⠀⢶⣶⣶⣶⣶⣿⠀⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣧⠀⠘⣿⣿⠀⢶⣶⣶⣶⣶⣿⠀⢿⣿⣿⣿⣿⣿⣿⣿⣿',
-		'⣿⠀⠀⣿⣿⣿⣿⣷⣦⣤⣤⣤⣤⣴⣾⠋⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⣿⣿⣦⡀⢀⣴⣿⣿⣿⣧⡀⠉⠉⢀⣼⣿⠀⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣿⣧⠀⠘⣿⣧⡀⠉⠉⢀⣼⣿⣧⡀⠉⠉⢀⣼⣿⣿⣿⣿',
-		'⣿⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⠙⢷⣄⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿',
-		'⠻⣦⣤⣿⣿⣿⣿⣿⣿⣿⣿⣤⣤⣤⣤⣽⣷⣤⣤⣤⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟'
-	)
 	# [Console]::ForegroundColor = 'Red'
 	foreach ($line in $logoLines) { Write-Output $line }
 	# [Console]::ResetColor()
@@ -317,7 +306,9 @@ function Invoke-RequiredFileCheck {
 	Invoke-TverrecPathCheck -Path $script:listFilePath -errorMessage $script:msg.ListFile -isFile -sampleFilePath $script:listFileSamplePath
 	Remove-Variable -Name saveDir -ErrorAction SilentlyContinue
 }
+# endregion 起動時関連処理
 
+# region ダウンロード関連処理
 #----------------------------------------------------------------------
 # ダウンロード対象キーワードの読み込み
 #----------------------------------------------------------------------
@@ -511,7 +502,9 @@ function Get-LinkFromDownloadList {
 	return @($videoLinks)
 	Remove-Variable -Name videoLinks -ErrorAction SilentlyContinue
 }
+# endregion ダウンロード関連処理
 
+# region ダウンロード対象外リスト関連
 #----------------------------------------------------------------------
 # ダウンロード対象外番組の読み込み
 #----------------------------------------------------------------------
@@ -611,7 +604,9 @@ function Update-IgnoreList {
 	}
 	Remove-Variable -Name ignoreTitle, ignoreLists, ignoreComment, ignoreTarget, ignoreElse, ignoreListNew -ErrorAction SilentlyContinue
 }
+# endregion ダウンロード対象外リスト関連
 
+# region ダウンロード対象判定処理
 #----------------------------------------------------------------------
 # URLが既にダウンロード履歴に存在するかチェックし、存在しない番組だけ返す
 #----------------------------------------------------------------------
@@ -748,7 +743,9 @@ function Invoke-HistoryAndListMatchCheck {
 	return @($videoLinks, $processedCount)
 	Remove-Variable -Name resultLinks, listFileData, listVideoPages, listFileLine, histFileData, histVideoPages, listCompResult, processedCount, videoLinks -ErrorAction SilentlyContinue
 }
+# endregion ダウンロード対象判定処理
 
+# region ダウンロード関連
 #----------------------------------------------------------------------
 # youtube-dlプロセスの確認と待機
 #----------------------------------------------------------------------
@@ -854,6 +851,47 @@ function Format-HistoryRecord {
 #----------------------------------------------------------------------
 # ダウンロードリストデータの成形
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    ビデオ情報をダウンロードリストレコードの形式に整形します。
+
+.DESCRIPTION
+    ビデオ情報オブジェクトを参照で受け取り、ダウンロードリストファイルに
+    保存するための形式に整形します。
+
+.PARAMETER videoInfo
+    ビデオ情報を含むオブジェクトを参照で指定します。
+
+.OUTPUTS
+    [PSCustomObject]
+    ダウンロードリストレコード。以下のプロパティを含みます：
+    - seriesName: シリーズ名
+    - seriesID: シリーズID
+    - seriesPageURL: シリーズページのURL
+    - seasonName: シーズン名
+    - seasonID: シーズンID
+    - episodeNo: エピソード番号
+    - episodeName: エピソードタイトル
+    - episodeID: エピソードID
+    - episodePageURL: エピソードページのURL
+    - media: メディア名
+    - provider: プロバイダー名
+    - broadcastDate: 放送日
+    - endTime: 終了時間
+    - keyword: キーワード
+    - ignoreWord: 無視する単語
+    - descriptionText: 説明文（オプション）
+
+.EXAMPLE
+    $listRecord = Format-ListRecord -videoInfo ([ref]$videoInfo)
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. ビデオ情報から必要なデータを抽出
+    2. ダウンロードリストレコードの形式に整形
+    3. 説明文の有無に応じてプロパティを追加
+    4. 整形したレコードを返す
+#>
 function Format-ListRecord {
 	Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -883,8 +921,33 @@ function Format-ListRecord {
 #----------------------------------------------------------------------
 # 「《」と「》」、「【」と「】」で挟まれた文字を除去
 #----------------------------------------------------------------------
-Function Remove-SpecialNote {
-	Param ($text)
+<#
+.SYNOPSIS
+    特定の特殊文字で囲まれた文字列を削除します。
+
+.DESCRIPTION
+    入力テキストから特定の特殊文字（《》、【】）で囲まれた文字列を削除します。
+    ただし、文字列の長さが一定の閾値（10文字）を超える場合のみ削除を行います。
+
+.PARAMETER text
+    処理対象のテキストを指定します。
+
+.OUTPUTS
+    [String]
+    特殊文字で囲まれた文字列が削除されたテキスト。
+
+.EXAMPLE
+    $cleanedText = Remove-SpecialNote -text "これは【テスト】です"
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. 《》と【】の各ペアの位置を検出
+    2. 文字列の長さが閾値（10文字）を超える場合のみ削除
+    3. 削除後、余分な空白を除去
+    4. 処理後のテキストを返す
+#>
+function Remove-SpecialNote {
+	Param ([Parameter(Mandatory = $true)][String]$text)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# 特殊文字の位置を取得し、長さを計算
 	$length1 = [Math]::Max(0, $text.IndexOf('》') - $text.IndexOf('《'))
@@ -898,6 +961,48 @@ Function Remove-SpecialNote {
 #----------------------------------------------------------------------
 # TVer番組ダウンロードのメイン処理
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    TVer番組のダウンロードを実行するメイン処理です。
+
+.DESCRIPTION
+    指定されたURLからTVer番組をダウンロードし、必要な情報を記録します。
+    ダウンロード履歴とダウンロードリストの両方を更新します。
+
+.PARAMETER keyword
+    検索キーワードを参照で指定します。
+
+.PARAMETER videoLink
+    ダウンロードするTVer番組のURLを参照で指定します。
+
+.PARAMETER force
+    強制的にダウンロードを実行するかどうかを指定します。
+    デフォルトは$falseです。
+
+.OUTPUTS
+    [Void]
+    この関数は値を返しません。
+
+.EXAMPLE
+    Invoke-VideoDownload -keyword ([ref]$keyword) -videoLink ([ref]$videoLink) -force $true
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. 指定されたURLから番組情報を取得
+    2. ダウンロード履歴とダウンロードリストを更新
+    3. youtube-dlを使用して番組をダウンロード
+    4. ダウンロード結果を記録
+
+    状態の振り分け設定：
+    - 履歴ファイルに存在する場合：
+      - ID変更時のダウンロード設定あり：再ダウンロード
+      - ID変更時のダウンロード設定なし：スキップ
+    - 履歴ファイルに存在しない場合：
+      - ファイルが存在する：検証のみ
+      - ファイルが存在しない：
+        - ダウンロード対象外リストに存在：無視
+        - ダウンロード対象外リストに存在しない：ダウンロード
+#>
 function Invoke-VideoDownload {
 	[OutputType([Void])]
 	Param (
@@ -925,19 +1030,19 @@ function Invoke-VideoDownload {
 		$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
 		$newVideo = Format-HistoryRecord ([Ref]$videoInfo)
 	} else {
-		<#
-			ここまで来ているということはEpisodeIDでは履歴とマッチしなかったということ
-			考えられる原因は履歴ファイルがクリアされてしまっていること、または、EpisodeIDが変更になったこと
-				履歴ファイルに存在する	→番組IDが変更になったあるいは、番組名の重複
-					ID変更時のダウンロード設定あり
+		<# * 状態の振り分け設定
+			* ここまで来ているということはEpisodeIDでは履歴とマッチしなかったということ
+			* 考えられる原因は履歴ファイルがクリアされてしまっていること、または、EpisodeIDが変更になったこと
+				* 履歴ファイルに存在する	→番組IDが変更になったあるいは、番組名の重複
+					* ID変更時のダウンロード設定あり
 						検証済	→再ダウンロード
 						検証中	→元々の番組IDとしてはそのうち検証されるので、再ダウンロード。検証に失敗しても新IDでダウンロード検証されるはず
 						未検証	→元々の番組IDとしては次回検証されるので、再ダウンロード。検証に失敗しても新IDでダウンロード検証されるはず
-					ID変更時のダウンロード設定なし
+					* ID変更時のダウンロード設定なし
 						検証済	→元々の番組IDとしては問題ないのでSKIP
 						検証中	→元々の番組IDとしてはそのうち検証されるのでSKIP
 						未検証	→元々の番組IDとしては次回検証されるのでSKIP
-				履歴ファイルに存在しない
+				* 履歴ファイルに存在しない
 					ファイルが存在する	→検証だけする
 					ファイルが存在しない
 						ダウンロード対象外リストに存在する	→無視
@@ -1052,6 +1157,34 @@ function Invoke-VideoDownload {
 #----------------------------------------------------------------------
 # TVer番組ダウンロードリスト作成のメイン処理
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    TVer番組のダウンロードリストを作成・更新します。
+
+.DESCRIPTION
+    指定されたURLからTVer番組の情報を取得し、ダウンロードリストに追加します。
+    ダウンロード対象外リストに含まれる番組は無視されます。
+
+.PARAMETER keyword
+    検索キーワードを参照で指定します。
+
+.PARAMETER videoLink
+    ダウンロードするTVer番組のURLを参照で指定します。
+
+.OUTPUTS
+    [Void]
+    この関数は値を返しません。
+
+.EXAMPLE
+    Update-VideoList -keyword ([ref]$keyword) -videoLink ([ref]$videoLink)
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. 指定されたURLから番組情報を取得
+    2. ダウンロード対象外リストとの照合
+    3. ダウンロードリストへの追加
+    4. リストファイルの更新
+#>
 function Update-VideoList {
 	[OutputType([Void])]
 	Param (
@@ -1098,6 +1231,31 @@ function Update-VideoList {
 #----------------------------------------------------------------------
 # 保存ファイル名を設定
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    ビデオファイルの保存情報を設定します。
+
+.DESCRIPTION
+    ビデオ情報からファイル名、ディレクトリパス、相対パスなどの
+    保存に必要な情報を生成します。
+
+.PARAMETER videoInfo
+    ビデオ情報を含むオブジェクトを参照で指定します。
+
+.OUTPUTS
+    [Void]
+    この関数は値を返しません。
+
+.EXAMPLE
+    Format-VideoFileInfo -videoInfo ([ref]$videoInfo)
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. シリーズ名、シーズン名、エピソード番号などからファイル名を生成
+    2. メディア名やシリーズ名に基づいてディレクトリパスを生成
+    3. ファイル名の長さ制限を適用
+    4. ビデオ情報オブジェクトに保存情報を追加
+#>
 function Format-VideoFileInfo {
 	[OutputType([Void])]
 	Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
@@ -1143,6 +1301,32 @@ function Format-VideoFileInfo {
 #----------------------------------------------------------------------
 # 番組情報表示
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    番組の基本情報をコンソールに表示します。
+
+.DESCRIPTION
+    指定されたビデオ情報から、番組名、放送日、メディア名、終了日時、
+    エピソード詳細などの情報をコンソールに表示します。
+
+.PARAMETER videoInfo
+    表示する番組情報を含むオブジェクトを参照で指定します。
+
+.OUTPUTS
+    [Void]
+    この関数は値を返しません。
+
+.EXAMPLE
+    Show-VideoInfo -videoInfo ([ref]$videoInfo)
+
+.NOTES
+    この関数は以下の情報を表示します：
+    1. エピソード名（ファイル名から拡張子を除いたもの）
+    2. 放送日
+    3. メディア名
+    4. 終了日時
+    5. エピソード詳細（説明文）
+#>
 function Show-VideoInfo {
 	[OutputType([Void])]
 	Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
@@ -1157,69 +1341,117 @@ function Show-VideoInfo {
 	#>
 	Write-Output ($script:msg.EpisodeDetail -f $videoInfo.descriptionText)
 }
+
 #----------------------------------------------------------------------
 # 番組情報デバッグ表示
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    番組のデバッグ情報をコンソールに表示します。
+
+.DESCRIPTION
+    指定されたビデオ情報から、デバッグ用の情報（エピソードページURL）を
+    コンソールに表示します。
+
+.PARAMETER videoInfo
+    表示する番組情報を含むオブジェクトを参照で指定します。
+
+.OUTPUTS
+    [Void]
+    この関数は値を返しません。
+
+.EXAMPLE
+    Show-VideoDebugInfo -videoInfo ([ref]$videoInfo)
+
+.NOTES
+    この関数は以下の情報を表示します：
+    1. エピソードページのURL
+#>
 function Show-VideoDebugInfo {
 	[OutputType([Void])]
 	Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	Write-Debug $videoInfo.episodePageURL
 }
+
 #----------------------------------------------------------------------
 # ffmpegを使ったダウンロードプロセスの起動
 #----------------------------------------------------------------------
-<#
-	function Invoke-FfmpegDownload {
-		[OutputType([Void])]
-		Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
-		Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-		Invoke-StatisticsCheck -Operation 'download-ffmpeg'
-		if ($IsWindows) { foreach ($dir in @($script:downloadWorkDir, $script:downloadBaseDir)) { if ($dir[-1] -eq ':') { $dir += '\\' } } }
-		$ffmpegArgs = @()
-		$ffmpegArgs += (' -y -http_multiple 1 -seg_max_retry 10 -timeout 5000000')
-		$ffmpegArgs += (' -reconnect 1 -reconnect_on_network_error 1 -reconnect_on_http_error 1 -reconnect_streamed 1')
-		$ffmpegArgs += (' -reconnect_max_retries 10 -reconnect_delay_max 30 -reconnect_delay_total_max 600')
-		$ffmpegArgs += (' -i "{0}"' -f $videoInfo.m3u8URL)
-		if ($script:videoContainerFormat -eq 'mp4') {
-			$ffmpegArgs += (' -c copy')
-			$ffmpegArgs += (' -c:v copy -c:a copy')
-			# $ffmpegArgs += (' -bsf:a aac_adtstoasc')
-			$ffmpegArgs += (' -c:s mov_text')
-			$ffmpegArgs += (' -metadata:s:s:0 language=ja')
-		}
-		$ffmpegArgs += (' "{0}"' -f $videoInfo.filePath)
-		$ffmpegArgsString = $ffmpegArgs -join ''
-		Write-Debug ($script:msg.ExecCommand -f 'ffmpeg', $script:ffmpegPath, $ffmpegArgsString)
-		if ($script:appName -eq 'TVerRecContainer') {
-			$startProcessParams = @{
-				FilePath     = 'timeout'
-				ArgumentList = "3600 $script:ffmpegPath $ffmpegArgsString"
-				PassThru     = $true
-			}
-		} else {
-			$startProcessParams = @{
-				FilePath     = $script:ffmpegPath
-				ArgumentList = $ffmpegArgsString
-				PassThru     = $true
-			}
-		}
-		if ($IsWindows) { $startProcessParams.WindowStyle = $script:windowShowStyle }
-		else {
-			$startProcessParams.RedirectStandardOutput = '/dev/null'
-			$startProcessParams.RedirectStandardError = '/dev/zero'
-		}
-		try {
-			$ffmpegProcess = Start-Process @startProcessParams
-			$ffmpegProcess.Handle | Out-Null
-		} catch { Write-Warning ($script:msg.ExecFailed -f 'ffmpeg') ; return }
-		Remove-Variable -Name ffmpegArgs, ffmpegArgsString -ErrorAction SilentlyContinue
+<# * ffmpegでのダウンロード機能を有効化時に必要
+function Invoke-FfmpegDownload {
+	[OutputType([Void])]
+	Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	Invoke-StatisticsCheck -Operation 'download-ffmpeg'
+	if ($IsWindows) { foreach ($dir in @($script:downloadWorkDir, $script:downloadBaseDir)) { if ($dir[-1] -eq ':') { $dir += '\\' } } }
+	$ffmpegArgs = @()
+	$ffmpegArgs += (' -y -http_multiple 1 -seg_max_retry 10 -timeout 5000000')
+	$ffmpegArgs += (' -reconnect 1 -reconnect_on_network_error 1 -reconnect_on_http_error 1 -reconnect_streamed 1')
+	$ffmpegArgs += (' -reconnect_max_retries 10 -reconnect_delay_max 30 -reconnect_delay_total_max 600')
+	$ffmpegArgs += (' -i "{0}"' -f $videoInfo.m3u8URL)
+	if ($script:videoContainerFormat -eq 'mp4') {
+		$ffmpegArgs += (' -c copy')
+		$ffmpegArgs += (' -c:v copy -c:a copy')
+		$ffmpegArgs += (' -c:s mov_text')
+		$ffmpegArgs += (' -metadata:s:s:0 language=ja')
 	}
+	$ffmpegArgs += (' "{0}"' -f $videoInfo.filePath)
+	$ffmpegArgsString = $ffmpegArgs -join ''
+	Write-Debug ($script:msg.ExecCommand -f 'ffmpeg', $script:ffmpegPath, $ffmpegArgsString)
+	if ($script:appName -eq 'TVerRecContainer') {
+		$startProcessParams = @{
+			FilePath     = 'timeout'
+			ArgumentList = "3600 $script:ffmpegPath $ffmpegArgsString"
+			PassThru     = $true
+		}
+	} else {
+		$startProcessParams = @{
+			FilePath     = $script:ffmpegPath
+			ArgumentList = $ffmpegArgsString
+			PassThru     = $true
+		}
+	}
+	if ($IsWindows) { $startProcessParams.WindowStyle = $script:windowShowStyle }
+	else {
+		$startProcessParams.RedirectStandardOutput = '/dev/null'
+		$startProcessParams.RedirectStandardError = '/dev/zero'
+	}
+	try {
+		$ffmpegProcess = Start-Process @startProcessParams
+		$ffmpegProcess.Handle | Out-Null
+	} catch { Write-Warning ($script:msg.ExecFailed -f 'ffmpeg') ; return }
+	Remove-Variable -Name ffmpegArgs, ffmpegArgsString -ErrorAction SilentlyContinue
+}
 #>
 
 #----------------------------------------------------------------------
 # youtube-dlプロセスの起動
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    youtube-dlを使用してTVer番組をダウンロードします。
+
+.DESCRIPTION
+    youtube-dlを使用してTVer番組をダウンロードし、指定された形式で保存します。
+    プロキシ設定、レート制限、字幕埋め込みなどのオプションをサポートします。
+
+.PARAMETER videoInfo
+    ダウンロードする番組の情報を含むオブジェクトを参照で指定します。
+
+.OUTPUTS
+    [Void]
+    この関数は値を返しません。
+
+.EXAMPLE
+    Invoke-Ytdl -videoInfo ([ref]$videoInfo)
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. ダウンロード用の一時ディレクトリと保存ディレクトリを設定
+    2. youtube-dlの引数を構築（プロキシ、レート制限、字幕設定など）
+    3. 既存ファイルの削除とリネーム用のコマンドを設定
+    4. youtube-dlプロセスを起動し、タイムアウト監視を開始
+#>
 function Invoke-Ytdl {
 	[OutputType([Void])]
 	Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
@@ -1320,6 +1552,32 @@ function Invoke-Ytdl {
 #----------------------------------------------------------------------
 # youtube-dlプロセスの起動 (TVer以外のサイトへの対応)
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    youtube-dlを使用してTVer以外のサイトから動画をダウンロードします。
+
+.DESCRIPTION
+    youtube-dlを使用してTVer以外のサイトから動画をダウンロードし、
+    指定された形式で保存します。プロキシ設定やレート制限などの
+    オプションをサポートします。
+
+.PARAMETER videoPageURL
+    ダウンロードする動画のページURLを指定します。
+
+.OUTPUTS
+    [Void]
+    この関数は値を返しません。
+
+.EXAMPLE
+    Invoke-NonTverYtdl -URL 'https://example.com/video'
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. ダウンロード用の一時ディレクトリと保存ディレクトリを設定
+    2. youtube-dlの引数を構築（プロキシ、レート制限など）
+    3. 既存ファイルの削除とリネーム用のコマンドを設定
+    4. youtube-dlプロセスを起動
+#>
 function Invoke-NonTverYtdl {
 	[OutputType([Void])]
 	Param ([Parameter(Mandatory = $true)][Alias('URL')][String]$videoPageURL)
@@ -1413,6 +1671,25 @@ function Invoke-NonTverYtdl {
 #----------------------------------------------------------------------
 # youtube-dlのプロセスカウントを取得
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    現在実行中のyoutube-dlプロセスの数を取得します。
+
+.DESCRIPTION
+    現在実行中のyoutube-dlプロセスの数を取得します。
+    プラットフォームに応じて適切な方法でプロセス数をカウントします。
+
+.OUTPUTS
+    [Int]
+    実行中のyoutube-dlプロセスの数。
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. プラットフォームに応じて適切な方法でプロセスをカウント
+    2. Windows: youtube-dlプロセスの数を2で割って返す
+    3. Linux: youtube-dlプロセスの数をそのまま返す
+    4. macOS: psコマンドでyoutube-dlプロセスをカウント
+#>
 function Get-YtdlProcessCount {
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -1423,18 +1700,37 @@ function Get-YtdlProcessCount {
 	}
 	try {
 		switch ($true) {
-			$IsWindows { return [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name yt-dlp).Count / 2, [MidpointRounding]::AwayFromZero ); break }
+			$IsWindows { return [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name $processName).Count / 2, [MidpointRounding]::AwayFromZero ); break }
 			$IsLinux { return @(Get-Process -ErrorAction Ignore -Name $processName).Count ; break }
-			$IsMacOS { $psCmd = 'ps' ; return (& sh -c $psCmd | grep yt-dlp | grep -v grep | grep -c ^).Trim() ; break }
+			$IsMacOS { $psCmd = 'ps' ; return (& sh -c $psCmd | grep $processName | grep -v grep | grep -c ^).Trim() ; break }
 			default { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
 		}
-	} catch { return 0 }
+	} catch { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
 	Remove-Variable -Name processName, psCmd -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
-# ffmpegのプロセスカウントを取得
+# ffmpegプロセス数の取得
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    現在実行中のffmpegプロセスの数を取得します。
+
+.DESCRIPTION
+    現在実行中のffmpegプロセスの数を取得します。
+    プラットフォームに応じて適切な方法でプロセス数をカウントします。
+
+.OUTPUTS
+    [Int]
+    実行中のffmpegプロセスの数。
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. プラットフォームに応じて適切な方法でプロセスをカウント
+    2. Windows: ffmpegプロセスの数をそのまま返す
+    3. Linux: ffmpegプロセスの数をそのまま返す
+    4. macOS: psコマンドでffmpegプロセスをカウント
+#>
 function Get-FfmpegProcessCount {
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -1443,22 +1739,40 @@ function Get-FfmpegProcessCount {
 		switch ($true) {
 			$IsWindows { return [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name $processName).Count, [MidpointRounding]::AwayFromZero ); break }
 			$IsLinux { return @(Get-Process -ErrorAction Ignore -Name $processName).Count ; break }
-			$IsMacOS { $psCmd = 'ps' ; return (& sh -c $psCmd | grep ffmpeg | grep -v grep | grep -c ^).Trim() ; break }
+			$IsMacOS { $psCmd = 'ps' ; return (& sh -c $psCmd | grep $processName | grep -v grep | grep -c ^).Trim() ; break }
 			default { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
 		}
-	} catch { return 0 }
+	} catch { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
 	Remove-Variable -Name processName, psCmd -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
 # youtube-dlのプロセスが終わるまで待機
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    youtube-dlプロセスが終了するまで待機します。
+
+.DESCRIPTION
+    youtube-dlプロセスが終了するまで待機します。
+    1分ごとにプロセス数を確認し、すべてのプロセスが終了するまで待機します。
+
+.OUTPUTS
+    [Void]
+    この関数は値を返しません。
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. 現在のyoutube-dlプロセス数を取得
+    2. プロセス数が0になるまで1分ごとに確認
+    3. プロセス数をコンソールに表示
+#>
 function Wait-DownloadCompletion () {
 	[OutputType([Void])]
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$ytdlCount = [Int](Get-YtdlProcessCount)
-	<#
+	<# * ffmpegでのダウンロード機能を有効化時に必要
 		$ffmpegCount = [Int](Get-FfmpegProcessCount)
 		while (($ytdlCount + $ffmpegCount) -ne 0) {
 	#>
@@ -1467,7 +1781,7 @@ function Wait-DownloadCompletion () {
 		Write-Information ($script:msg.NumDownloadProc -f (Get-Date), $ytdlCount)
 		Start-Sleep -Seconds 60
 		$ytdlCount = [Int](Get-YtdlProcessCount)
-		<#
+		<# * ffmpegでのダウンロード機能を有効化時に必要
 			# $ffmpegCount = [Int](Get-FfmpegProcessCount)
 		#>
 	}
@@ -1475,8 +1789,86 @@ function Wait-DownloadCompletion () {
 }
 
 #----------------------------------------------------------------------
+# 移動に失敗したファイルを削除(作業フォルダ)
+#----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    作業フォルダ内の移動に失敗したファイルを削除します。
+
+.DESCRIPTION
+    作業フォルダ内の移動に失敗したファイルを削除します。
+    ファイル名が特定のパターンに一致するファイルを削除します。
+
+.OUTPUTS
+    [Void]
+    この関数は値を返しません。
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. 作業フォルダ内のファイルを検索
+    2. ファイル名が特定のパターンに一致するファイルを削除
+#>
+function Remove-UnMovedTempFile {
+	[CmdletBinding()]
+	Param ()
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	(Get-ChildItem -Path $script:downloadWorkDir -File).Where({ $_.Name -match '^ep[a-z0-9]{8}\..*\.(mp4|ts)$' }) | Remove-Item -Force -ErrorAction SilentlyContinue
+}
+
+#----------------------------------------------------------------------
+# リネームに失敗したファイルを削除(ダウンロード先フォルダ)
+#----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    ダウンロード先フォルダ内のリネームに失敗したファイルを削除します。
+
+.DESCRIPTION
+    ダウンロード先フォルダ内のリネームに失敗したファイルを削除します。
+    ファイル名が特定のパターンに一致するファイルを削除します。
+
+.OUTPUTS
+    [Void]
+    この関数は値を返しません。
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. ダウンロード先フォルダ内のファイルを検索
+    2. ファイル名が特定のパターンに一致するファイルを削除
+#>
+function Remove-UnRenamedTempFile {
+	[CmdletBinding()]
+	Param ()
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if ($IsWindows) {
+		$forCmd = "for %E in (mp4 ts) do for /r `"$script:downloadBaseDir`" %F in (ep*.%E) do @echo %F"
+		(& cmd /c $forCmd).Where({ ($_ -cmatch 'ep[a-z0-9]{8}.mp4$') -or ($_ -cmatch 'ep[a-z0-9]{8}.ts$') }) | Remove-Item -Force -ErrorAction SilentlyContinue
+	} else {
+		$findCmd = "find `"$script:downloadBaseDir`" -type f -name 'ep*.mp4' -or -type f -name 'ep*.ts'"
+		(& sh -c $findCmd).Where({ ($_ -cmatch 'ep[a-z0-9]{8}.mp4$') -or ($_ -cmatch 'ep[a-z0-9]{8}.ts$') }) | Remove-Item -Force -ErrorAction SilentlyContinue
+	}
+}
+
+#----------------------------------------------------------------------
 # ダウンロードスケジュールに合わせたスケジュール制御
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    ダウンロードスケジュールに基づいてプロセスを一時停止します。
+
+.DESCRIPTION
+    ダウンロードスケジュールに基づいてプロセスを一時停止します。
+    指定された曜日と時間にダウンロードを停止し、次の正時まで待機します。
+
+.OUTPUTS
+    [Void]
+    この関数は値を返しません。
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. 現在の日付と時刻を取得
+    2. スケジュールに基づいて停止時間を確認
+    3. 停止時間の場合は次の正時まで待機
+#>
 function Suspend-Process () {
 	[OutputType([Void])]
 	Param ()
@@ -1501,8 +1893,107 @@ function Suspend-Process () {
 }
 
 #----------------------------------------------------------------------
+# ダウンロード履歴の書き込み
+#----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    ダウンロード履歴ファイルに内容を書き込みます。
+
+.DESCRIPTION
+    指定された内容をダウンロード履歴ファイルに書き込みます。
+    ファイルが存在しない場合は新規作成します。
+
+.PARAMETER content
+    履歴ファイルに書き込む内容を指定します。
+
+.EXAMPLE
+    Write-HistoryFile -content "新しい履歴エントリ"
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. 履歴ファイルをロック
+    2. UTF8エンコーディングで書き込み
+    3. ロックを解除
+#>
+function Write-HistoryFile {
+	[OutputType([void])]
+	Param ([Parameter(Mandatory = $true)][String[]]$content)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	try {
+		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+		Set-Content -LiteralPath $script:histFilePath -Value $content -Encoding UTF8
+	} catch { Write-Warning ($script:msg.SaveFailed -f $script:msg.HistFile) }
+	finally { Unlock-File $script:histLockFilePath | Out-Null }
+	Remove-Variable -Name content -ErrorAction SilentlyContinue
+}
+
+#----------------------------------------------------------------------
+# ダウンロード履歴の取得
+#----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    ダウンロード履歴ファイルから履歴情報を取得します。
+
+.DESCRIPTION
+    ダウンロード履歴ファイルをCSV形式で読み込み、履歴情報を配列として返します。
+    ファイルが存在しない場合は空の配列を返します。
+
+.OUTPUTS
+    [PSCustomObject[]]
+    ダウンロード履歴情報の配列。各オブジェクトは以下のプロパティを持ちます：
+    - VideoPage: ビデオページのURL
+    - DownloadDate: ダウンロード日時
+    - VideoTitle: ビデオのタイトル
+    - VideoValidated: ビデオの検証状態
+
+.EXAMPLE
+    $history = Get-DownloadHistory
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. 履歴ファイルをロック
+    2. CSVファイルとして読み込み
+    3. ロックを解除
+    4. 履歴情報を返す
+#>
+function Get-DownloadHistory {
+	[OutputType([PSCustomObject[]])]
+	Param ()
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$histFileData = @()
+	try {
+		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+		$histFileData = Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8
+	} catch { Write-Warning ($script:msg.LoadFailed -f $script:msg.HistFile) }
+	finally { Unlock-File $script:histLockFilePath | Out-Null }
+	return $histFileData
+	Remove-Variable -Name histFileData -ErrorAction SilentlyContinue
+}
+# endregion ダウンロード関連
+
+# region 整合性チェックド関連処理
+#----------------------------------------------------------------------
 # ダウンロード履歴の不整合を解消
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    ダウンロード履歴ファイルの不整合を解消します。
+
+.DESCRIPTION
+    ダウンロード履歴ファイルの不整合を解消します。
+    NULL文字を含む行を削除し、videoValidatedとdownloadDateの形式を検証します。
+
+.OUTPUTS
+    [Void]
+    この関数は値を返しません。
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. 履歴ファイルをロック
+    2. NULL文字を含む行を削除
+    3. videoValidatedとdownloadDateの形式を検証
+    4. 検証に合格したレコードのみを残す
+#>
 function Optimize-HistoryFile {
 	[OutputType([Void])]
 	Param ()
@@ -1537,6 +2028,30 @@ function Optimize-HistoryFile {
 #----------------------------------------------------------------------
 # 指定日以上前に処理したものはダウンロード履歴から削除
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    指定された期間より古いダウンロード履歴を削除します。
+
+.DESCRIPTION
+    指定された期間より古いダウンロード履歴を削除します。
+    保持期間を過ぎたレコードは履歴ファイルから削除されます。
+
+.PARAMETER retentionPeriod
+    履歴を保持する期間（日数）を指定します。
+
+.OUTPUTS
+    [Void]
+    この関数は値を返しません。
+
+.EXAMPLE
+    Limit-HistoryFile -retentionPeriod 30
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. 履歴ファイルをロック
+    2. 指定期間より古いレコードをフィルタリング
+    3. フィルタリングされたレコードを履歴ファイルに保存
+#>
 function Limit-HistoryFile {
 	[OutputType([Void])]
 	Param ([Parameter(Mandatory = $true)][Int32]$retentionPeriod)
@@ -1556,6 +2071,25 @@ function Limit-HistoryFile {
 #----------------------------------------------------------------------
 # ダウンロード履歴の重複削除
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    ダウンロード履歴から重複を削除します。
+
+.DESCRIPTION
+    ダウンロード履歴から重複を削除します。
+    videoPageごとに最新のdownloadDateを持つレコードを残し、
+    videoValidatedが「3:チェック失敗」のものと同じvideoPageを持つレコードを削除します。
+
+.OUTPUTS
+    [Void]
+    この関数は値を返しません。
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. videoPageごとに最新のdownloadDateを持つレコードを取得
+    2. videoValidatedが「3:チェック失敗」のものと同じvideoPageを持つレコードを削除
+    3. 重複削除されたレコードを履歴ファイルに保存
+#>
 function Repair-HistoryFile {
 	[OutputType([Void])]
 	Param ()
@@ -1574,8 +2108,71 @@ function Repair-HistoryFile {
 }
 
 #----------------------------------------------------------------------
+# ダウンロードプロセスの待機
+#----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    ダウンロードプロセスが完了するまで待機します。
+
+.DESCRIPTION
+    現在実行中のダウンロードプロセス（yt-dlpとffmpeg）が
+    すべて完了するまで待機します。
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. 現在のダウンロードプロセス数を取得
+    2. プロセス数が0になるまで60秒ごとにチェック
+    3. プロセス数が0になったら待機を終了
+#>
+function Wait-DownloadProcess {
+	Param ()
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$ytdlCount = [Int](Get-YtdlProcessCount)
+	# ffmpegでのダウンロード機能を有効化時に必要
+	$ffmpegCount = [Int](Get-FfmpegProcessCount)
+	while (($ytdlCount + $ffmpegCount) -ne 0) {
+		Write-Output ($script:msg.WaitingDownloadProcess -f ($ytdlCount + $ffmpegCount))
+		Start-Sleep -Seconds 60
+		$ytdlCount = [Int](Get-YtdlProcessCount)
+		# ffmpegでのダウンロード機能を有効化時に必要
+		$ffmpegCount = [Int](Get-FfmpegProcessCount)
+	}
+}
+
+#----------------------------------------------------------------------
 # ffmpeg/ffprobeプロセスの起動
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    ffmpegまたはffprobeプロセスを起動します。
+
+.DESCRIPTION
+    ffmpegまたはffprobeプロセスを起動し、指定された引数で実行します。
+    エラーログを記録し、プロセスの終了コードを返します。
+
+.PARAMETER filePath
+    実行するffmpegまたはffprobeのパスを指定します。
+
+.PARAMETER ffmpegArgs
+    ffmpegまたはffprobeに渡す引数を指定します。
+
+.PARAMETER execName
+    実行するコマンドの名前（'ffmpeg'または'ffprobe'）を指定します。
+
+.OUTPUTS
+    [Int]
+    プロセスの終了コードを返します。
+
+.EXAMPLE
+    Invoke-FFmpegProcess -filePath 'ffmpeg' -ffmpegArgs '-i input.mp4 output.mp4' -execName 'ffmpeg'
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. プロセス起動用のパラメータを設定
+    2. エラーログの出力先を設定
+    3. プロセスを起動し、終了を待機
+    4. プロセスの終了コードを返す
+#>
 function Invoke-FFmpegProcess {
 	param (
 		[String]$filePath,
@@ -1606,6 +2203,31 @@ function Invoke-FFmpegProcess {
 #----------------------------------------------------------------------
 # 番組の整合性チェック
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    ダウンロードした番組の整合性をチェックします。
+
+.DESCRIPTION
+    ダウンロードした番組の整合性をチェックします。
+    ffmpegまたはffprobeを使用して、ビデオファイルのエラーを検出します。
+
+.PARAMETER videoHist
+    チェックする番組の履歴情報を指定します。
+
+.PARAMETER decodeOption
+    デコードオプションを指定します。デフォルトは空文字列です。
+
+.OUTPUTS
+    [Void]
+    この関数は値を返しません。
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. ビデオファイルのパスを取得
+    2. チェックステータスを確認
+    3. ffmpegまたはffprobeを使用してエラーを検出
+    4. エラー数に基づいてチェック結果を記録
+#>
 function Invoke-IntegrityCheck {
 	[OutputType([Void])]
 	Param (
@@ -1701,39 +2323,33 @@ function Invoke-IntegrityCheck {
 		try { Remove-Item -LiteralPath $videoFilePath -Force -ErrorAction SilentlyContinue | Out-Null }
 		catch { Write-Warning ($script:msg.DeleteVideoFailed -f $videoFilePath) }
 	}
-	Remove-Variable -Name videoFilePath, ffmpegProcessExitCode, errorCount, targetHist, checkStatus, latestHists -ErrorAction SilentlyContinue	#----------------------------------------------------------------------
-}	# リネームに失敗したファイルを削除
-
-#----------------------------------------------------------------------
-# 移動に失敗したファイルを削除(作業フォルダ)
-#----------------------------------------------------------------------
-function Remove-UnMovedTempFile {
-	[CmdletBinding()]
-	Param ()
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	(Get-ChildItem -Path $script:downloadWorkDir -File).Where({ $_.Name -match '^ep[a-z0-9]{8}\..*\.(mp4|ts)$' }) | Remove-Item -Force -ErrorAction SilentlyContinue
+	Remove-Variable -Name videoFilePath, ffmpegProcessExitCode, errorCount, targetHist, checkStatus, latestHists -ErrorAction SilentlyContinue
 }
+# endregion 整合性チェックド関連処理
 
-#----------------------------------------------------------------------
-# リネームに失敗したファイルを削除(ダウンロード先フォルダ)
-#----------------------------------------------------------------------
-function Remove-UnRenamedTempFile {
-	[CmdletBinding()]
-	Param ()
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	if ($IsWindows) {
-		$forCmd = "for %E in (mp4 ts) do for /r `"$script:downloadBaseDir`" %F in (ep*.%E) do @echo %F"
-		(& cmd /c $forCmd).Where({ ($_ -cmatch 'ep[a-z0-9]{8}.mp4$') -or ($_ -cmatch 'ep[a-z0-9]{8}.ts$') }) | Remove-Item -Force -ErrorAction SilentlyContinue
-	} else {
-		$findCmd = "find `"$script:downloadBaseDir`" -type f -name 'ep*.mp4' -or -type f -name 'ep*.ts'"
-		(& sh -c $findCmd).Where({ ($_ -cmatch 'ep[a-z0-9]{8}.mp4$') -or ($_ -cmatch 'ep[a-z0-9]{8}.ts$') }) | Remove-Item -Force -ErrorAction SilentlyContinue
-	}
-}
 
 # region 環境
 #----------------------------------------------------------------------
 # 設定取得
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    システム設定とユーザー設定を取得します。
+
+.DESCRIPTION
+    システム設定とユーザー設定を取得します。
+    設定ファイルから設定値を読み込み、変数に格納します。
+
+.OUTPUTS
+    [System.Collections.Generic.Dictionary[string, object]]
+    設定のキーと値のペアを含む辞書。
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. 設定ファイルのパスを取得
+    2. 設定ファイルから設定値を読み込み
+    3. 設定値を変数に格納
+#>
 function Get-Setting {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$filePathList = @((Join-Path $script:confDir 'system_setting.ps1'), (Join-Path $script:confDir 'user_setting.ps1'))
@@ -1756,6 +2372,33 @@ function Get-Setting {
 #----------------------------------------------------------------------
 # 統計取得
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    統計情報を取得します。
+
+.DESCRIPTION
+    統計情報を取得します。
+    指定された操作の統計情報を収集し、必要に応じて送信します。
+
+.PARAMETER operation
+    統計を取得する操作を指定します。
+
+.PARAMETER tverType
+    TVerのタイプを指定します。デフォルトは'none'です。
+
+.PARAMETER tverID
+    TVerのIDを指定します。デフォルトは'none'です。
+
+.OUTPUTS
+    [Void]
+    この関数は値を返しません。
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. 統計情報のベースURLを設定
+    2. 指定された操作の統計情報を取得
+    3. 必要に応じて統計情報を送信
+#>
 function Invoke-StatisticsCheck {
 	[OutputType([Void])]
 	Param (
@@ -1877,81 +2520,3 @@ switch ($true) {
 	}
 }
 Remove-Variable -Name geoIPValues, geoIPValue, osInfo -ErrorAction SilentlyContinue
-
-#----------------------------------------------------------------------
-# ダウンロード履歴の書き込み
-#----------------------------------------------------------------------
-<#
-.SYNOPSIS
-    ダウンロード履歴ファイルに内容を書き込みます。
-
-.DESCRIPTION
-    指定された内容をダウンロード履歴ファイルに書き込みます。
-    ファイルが存在しない場合は新規作成します。
-
-.PARAMETER content
-    履歴ファイルに書き込む内容を指定します。
-
-.EXAMPLE
-    Write-HistoryFile -content "新しい履歴エントリ"
-
-.NOTES
-    この関数は以下の処理を行います：
-    1. 履歴ファイルをロック
-    2. UTF8エンコーディングで書き込み
-    3. ロックを解除
-#>
-function Write-HistoryFile {
-	[OutputType([void])]
-	Param ([Parameter(Mandatory = $true)][String[]]$content)
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	try {
-		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-		Set-Content -LiteralPath $script:histFilePath -Value $content -Encoding UTF8
-	} catch { Write-Warning ($script:msg.SaveFailed -f $script:msg.HistFile) }
-	finally { Unlock-File $script:histLockFilePath | Out-Null }
-	Remove-Variable -Name content -ErrorAction SilentlyContinue
-}
-
-#----------------------------------------------------------------------
-# ダウンロード履歴の取得
-#----------------------------------------------------------------------
-<#
-.SYNOPSIS
-    ダウンロード履歴ファイルから履歴情報を取得します。
-
-.DESCRIPTION
-    ダウンロード履歴ファイルをCSV形式で読み込み、履歴情報を配列として返します。
-    ファイルが存在しない場合は空の配列を返します。
-
-.OUTPUTS
-    [PSCustomObject[]]
-    ダウンロード履歴情報の配列。各オブジェクトは以下のプロパティを持ちます：
-    - VideoPage: ビデオページのURL
-    - DownloadDate: ダウンロード日時
-    - VideoTitle: ビデオのタイトル
-    - VideoValidated: ビデオの検証状態
-
-.EXAMPLE
-    $history = Get-DownloadHistory
-
-.NOTES
-    この関数は以下の処理を行います：
-    1. 履歴ファイルをロック
-    2. CSVファイルとして読み込み
-    3. ロックを解除
-    4. 履歴情報を返す
-#>
-function Get-DownloadHistory {
-	[OutputType([PSCustomObject[]])]
-	Param ()
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	$histFileData = @()
-	try {
-		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-		$histFileData = Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8
-	} catch { Write-Warning ($script:msg.LoadFailed -f $script:msg.HistFile) }
-	finally { Unlock-File $script:histLockFilePath | Out-Null }
-	return $histFileData
-	Remove-Variable -Name histFileData -ErrorAction SilentlyContinue
-}
