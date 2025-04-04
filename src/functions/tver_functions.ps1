@@ -9,6 +9,20 @@ Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 #----------------------------------------------------------------------
 # TVerのAPI Tokenを取得
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    TVerのAPIトークンを取得します。
+
+.DESCRIPTION
+    TVerのプラットフォームAPIを使用するために必要なトークンを取得します。
+    この関数は匿名ユーザーとしてのトークンを取得します。
+
+.EXAMPLE
+    Get-Token
+
+.NOTES
+    この関数は内部で使用される変数$script:platformUIDと$script:platformTokenを設定します。
+#>
 function Get-Token () {
 	[CmdletBinding()]
 	[OutputType([Void])]
@@ -35,6 +49,40 @@ function Get-Token () {
 #----------------------------------------------------------------------
 # キーワードから番組のリンクへの変換
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    キーワードからTVerの番組リンクを取得します。
+
+.DESCRIPTION
+    指定されたキーワードに基づいて、TVerの番組リンクを取得します。
+    キーワードは以下の形式で指定できます：
+    - episodes/{id}: 特定のエピソード
+    - series/{id}: シリーズ
+    - talents/{id}: タレント
+    - tag/{id}: タグ
+    - ranking/{id}: ランキング
+    - new/{id}: 新着
+    - end/{id}: 終了間近
+    - mypage/{page}: マイページ
+    - toppage: トップページ
+    - sitemap: サイトマップ
+
+.PARAMETER keyword
+    検索するキーワードを指定します。
+
+.EXAMPLE
+    Get-VideoLinksFromKeyword -keyword "episodes/123456"
+
+.EXAMPLE
+    Get-VideoLinksFromKeyword -keyword "series/789012"
+
+.OUTPUTS
+    System.Collections.Generic.List[String]
+    取得したエピソードリンクのリストを返します。
+
+.NOTES
+    この関数は内部で他の関数を呼び出して、様々な種類のリンクを取得します。
+#>
 function Get-VideoLinksFromKeyword {
 	[CmdletBinding()]
 	[OutputType([System.Collections.Generic.List[String]])]
@@ -84,6 +132,34 @@ function Get-VideoLinksFromKeyword {
 #----------------------------------------------------------------------
 # エピソード以外のリンクをためたバッファを順次API呼び出し
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    バッファに格納されたリンクからエピソードリンクを取得します。
+
+.DESCRIPTION
+    エピソード以外のリンク（シリーズ、タレント、スペシャルなど）を格納したバッファから、
+    実際のエピソードリンクを取得します。
+
+.PARAMETER tverIDs
+    処理するTVerのIDの配列。
+
+.PARAMETER tverIDType
+    リンクの種類を指定します。以下のいずれかを指定できます：
+    - specialMainLinks
+    - specialLinks
+    - talentLinks
+    - seriesLinks
+    - seasonLinks
+
+.PARAMETER linkCollection
+    リンクを格納するオブジェクトへの参照。
+
+.EXAMPLE
+    Get-LinkFromBuffer -tverIDs @("123456", "789012") -tverIDType "seriesLinks" -linkCollection $linkCollection
+
+.NOTES
+    この関数は内部でGet-LinkFromKeywordを呼び出して、実際のエピソードリンクを取得します。
+#>
 function Get-LinkFromBuffer {
 	[CmdletBinding()]
 	[OutputType([Void])]
@@ -112,6 +188,43 @@ function Get-LinkFromBuffer {
 #----------------------------------------------------------------------
 # IDまたはキーワードによる番組検索から番組ページのLinkを取得
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    IDまたはキーワードを使用してTVerの番組リンクを取得します。
+
+.DESCRIPTION
+    指定されたIDまたはキーワードを使用して、TVerのAPIを呼び出し、
+    番組のリンクを取得します。
+
+.PARAMETER id
+    検索するIDまたはキーワード。
+
+.PARAMETER linkType
+    リンクの種類を指定します。以下のいずれかを指定できます：
+    - seriesLinks
+    - seasonLinks
+    - talentLinks
+    - specialMainLinks
+    - specialLinks
+    - tag
+    - new
+    - end
+    - ranking
+    - keyword
+    - category
+
+.PARAMETER linkCollection
+    リンクを格納するオブジェクトへの参照。
+
+.EXAMPLE
+    Get-LinkFromKeyword -id "123456" -linkType "seriesLinks" -linkCollection $linkCollection
+
+.EXAMPLE
+    Get-LinkFromKeyword -id "ドラマ" -linkType "keyword" -linkCollection $linkCollection
+
+.NOTES
+    この関数は内部でGet-SearchResultを呼び出して、実際の検索結果を取得します。
+#>
 function Get-LinkFromKeyword {
 	[CmdletBinding()]
 	[OutputType([Void])]
@@ -149,6 +262,41 @@ function Get-LinkFromKeyword {
 #----------------------------------------------------------------------
 # 各種IDによる番組検索から番組ページのLinkを取得
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    TVerのAPIを使用して検索結果を取得します。
+
+.DESCRIPTION
+    指定されたパラメータを使用してTVerのAPIを呼び出し、
+    検索結果を取得してリンクコレクションに追加します。
+
+.PARAMETER baseURL
+    検索に使用するAPIのベースURL。
+
+.PARAMETER type
+    検索の種類を指定します。
+
+.PARAMETER keyword
+    キーワード検索の場合の検索キーワード。
+
+.PARAMETER requireData
+    マイページ検索の場合に必要なデータ。
+
+.PARAMETER loginRequired
+    ログインが必要かどうかを指定します。
+
+.PARAMETER linkCollection
+    リンクを格納するオブジェクトへの参照。
+
+.EXAMPLE
+    Get-SearchResult -baseURL "https://platform-api.tver.jp/service/api/v1/callSeriesSeasons/123456" -type "series" -linkCollection $linkCollection
+
+.EXAMPLE
+    Get-SearchResult -baseURL "https://platform-api.tver.jp/service/api/v1/callKeywordSearch" -type "keyword" -keyword "ドラマ" -linkCollection $linkCollection
+
+.NOTES
+    この関数は内部でTVerのAPIを呼び出し、結果を解析してリンクコレクションに追加します。
+#>
 function Get-SearchResult {
 	[CmdletBinding()]
 	[OutputType([Void])]
@@ -216,6 +364,24 @@ function Get-SearchResult {
 #----------------------------------------------------------------------
 # トップページから番組ページのLinkを取得
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    TVerのトップページから番組リンクを取得します。
+
+.DESCRIPTION
+    TVerのトップページのコンテンツを解析し、表示されている番組のリンクを取得します。
+    トップページには様々な種類のコンテンツ（新着、ランキング、タレントなど）が表示されています。
+
+.PARAMETER linkCollection
+    リンクを格納するオブジェクトへの参照。
+
+.EXAMPLE
+    Get-LinkFromTopPage -linkCollection $linkCollection
+
+.NOTES
+    この関数はTVerのトップページAPIを呼び出し、表示されているコンテンツから
+    番組リンクを抽出します。
+#>
 function Get-LinkFromTopPage {
 	[CmdletBinding()]
 	[OutputType([Void])]
@@ -253,6 +419,24 @@ function Get-LinkFromTopPage {
 #----------------------------------------------------------------------
 # サイトマップから番組ページのLinkを取得
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    TVerのサイトマップから番組リンクを取得します。
+
+.DESCRIPTION
+    TVerのサイトマップを解析し、公開されている番組のリンクを取得します。
+    サイトマップには様々な種類のコンテンツ（エピソード、シリーズ、スペシャルなど）が含まれています。
+
+.PARAMETER linkCollection
+    リンクを格納するオブジェクトへの参照。
+
+.EXAMPLE
+    Get-LinkFromSiteMap -linkCollection $linkCollection
+
+.NOTES
+    この関数はTVerのサイトマップXMLを取得し、その中から番組リンクを抽出します。
+    サイトマップには重複したリンクが含まれる可能性があるため、重複は除去されます。
+#>
 function Get-LinkFromSiteMap {
 	[CmdletBinding()]
 	[OutputType([Void])]
@@ -314,6 +498,38 @@ function Get-LinkFromSiteMap {
 #----------------------------------------------------------------------
 # マイページから番組ページのLinkを取得
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    TVerのマイページから番組リンクを取得します。
+
+.DESCRIPTION
+    TVerのマイページのコンテンツを解析し、ユーザーに関連する番組のリンクを取得します。
+    マイページには以下のようなコンテンツが含まれます：
+    - お気に入り
+    - あとで見る
+    - 視聴履歴
+    - お気に入り
+
+.PARAMETER page
+    取得するマイページの種類を指定します：
+    - fav: お気に入り
+    - later: あとで見る
+    - resume: 視聴履歴
+    - favorite: お気に入り
+
+.PARAMETER linkCollection
+    リンクを格納するオブジェクトへの参照。
+
+.EXAMPLE
+    Get-LinkFromMyPage -page "fav" -linkCollection $linkCollection
+
+.EXAMPLE
+    Get-LinkFromMyPage -page "later" -linkCollection $linkCollection
+
+.NOTES
+    この関数はTVerのマイページAPIを呼び出し、ユーザーに関連するコンテンツから
+    番組リンクを抽出します。ログインが必要な場合があります。
+#>
 function Get-LinkFromMyPage {
 	[CmdletBinding()]
 	[OutputType([Void])]
@@ -337,6 +553,51 @@ function Get-LinkFromMyPage {
 #----------------------------------------------------------------------
 # TVerのAPIを叩いて番組情報取得
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    TVerの番組情報を取得します。
+
+.DESCRIPTION
+    指定されたエピソードIDを使用して、TVerのAPIから番組の詳細情報を取得します。
+    取得される情報には以下のようなものがあります：
+    - シリーズ情報
+    - シーズン情報
+    - エピソード情報
+    - 放送局情報
+    - 放送日時
+    - 配信終了日時
+    - 番組説明
+
+.PARAMETER episodeID
+    情報を取得するエピソードのID。
+
+.EXAMPLE
+    Get-VideoInfo -episodeID "123456"
+
+.OUTPUTS
+    PSCustomObject
+    以下のプロパティを持つオブジェクトを返します：
+    - seriesName: シリーズ名
+    - seriesID: シリーズID
+    - seriesPageURL: シリーズページのURL
+    - seasonName: シーズン名
+    - seasonID: シーズンID
+    - episodeNum: エピソード番号
+    - episodeID: エピソードID
+    - episodePageURL: エピソードページのURL
+    - episodeName: エピソード名
+    - mediaName: 放送局名
+    - providerName: 制作会社名
+    - broadcastDate: 放送日
+    - endTime: 配信終了日時
+    - versionNum: バージョン番号
+    - videoInfoURL: 動画情報のURL
+    - descriptionText: 番組説明
+
+.NOTES
+    この関数はTVerのAPIを呼び出し、番組の詳細情報を取得します。
+    取得した情報は整形されて返されます。
+#>
 function Get-VideoInfo {
 	Param ([Parameter(Mandatory = $true)][String]$episodeID)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -513,6 +774,26 @@ function Get-VideoInfo {
 #----------------------------------------------------------------------
 # Geo IP関連
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    日本のIPアドレスをランダムに取得します。
+
+.DESCRIPTION
+    日本に割り当てられているIPアドレスレンジから、
+    ランダムにIPアドレスを選択して返します。
+    IP-API.comを使用して、選択したIPアドレスが実際に日本に割り当てられていることを確認します。
+
+.EXAMPLE
+    Get-JpIP
+
+.OUTPUTS
+    String
+    日本のIPアドレスを返します。
+
+.NOTES
+    この関数はTVerのAPIアクセス時に使用されるIPアドレスを取得するために使用されます。
+    日本国内のIPアドレスを使用することで、地域制限のあるコンテンツにアクセスできるようになります。
+#>
 function Get-JpIP {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# 日本に割り当てられているIPアドレスレンジの取得

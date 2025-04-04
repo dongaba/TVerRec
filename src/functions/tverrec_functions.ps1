@@ -10,6 +10,16 @@ Add-Type -AssemblyName 'System.Globalization' | Out-Null
 #----------------------------------------------------------------------
 # TVerRec Logo表示
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    TVerRecのロゴを表示します。
+
+.DESCRIPTION
+    TVerRecのロゴをコンソールに表示します。
+
+.EXAMPLE
+    Show-Logo
+#>
 function Show-Logo {
 	[OutputType([Void])]
 	Param ()
@@ -35,6 +45,32 @@ function Show-Logo {
 #----------------------------------------------------------------------
 # バージョン比較
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    バージョン文字列を比較します。
+
+.DESCRIPTION
+    2つのバージョン文字列を比較し、大小関係を返します。
+
+.PARAMETER remote
+    比較対象のリモートバージョン文字列です。
+
+.PARAMETER local
+    比較対象のローカルバージョン文字列です。
+
+.OUTPUTS
+    [int] バージョンの大小関係を示す整数値。
+    リモートバージョンが新しい場合は1、ローカルバージョンが新しい場合は-1、同じ場合は0を返します。
+
+.EXAMPLE
+    $result = Compare-Version -remote "1.2.3" -local "1.2.2"
+    Write-Output $result
+
+.NOTES
+    この関数は、バージョン文字列を"."でユニットに切り分け、ユニット毎に比較します。
+    ユニット数が少ない方の表記に探索幅を合わせ、探索幅に従ってユニット毎に比較していきます。
+    個々のユニットが完全に一致している場合は、ユニット数が多い方が大きいとします。
+#>
 function Compare-Version {
 	param (
 		[String]$remote,
@@ -60,6 +96,26 @@ function Compare-Version {
 #----------------------------------------------------------------------
 # TVerRec最新化確認
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    TVerRecの最新バージョンを確認し、必要に応じて更新を促します。
+
+.DESCRIPTION
+    GitHubのリリースページからTVerRecの最新バージョンを取得し、
+    現在のバージョンと比較します。新しいバージョンが存在する場合は、
+    更新を促すメッセージを表示し、変更履歴を表示します。
+
+.EXAMPLE
+    Invoke-TVerRecUpdateCheck
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. GitHubから最新リリース情報を取得
+    2. 現在のバージョンと比較
+    3. 新しいバージョンがある場合は更新を促す
+    4. 変更履歴を表示
+    5. 必要に応じてアップデーターを取得
+#>
 function Invoke-TVerRecUpdateCheck {
 	[OutputType([Void])]
 	Param ()
@@ -119,6 +175,29 @@ function Invoke-TVerRecUpdateCheck {
 #----------------------------------------------------------------------
 # ytdl/ffmpegの最新化確認
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    ytdlまたはffmpegの更新スクリプトを実行します。
+
+.DESCRIPTION
+    指定されたツールの更新スクリプトを実行し、更新処理を行います。
+    更新に失敗した場合はエラーをスローします。
+
+.PARAMETER scriptName
+    実行する更新スクリプトの名前を指定します。
+
+.PARAMETER targetName
+    更新対象のツール名を指定します。
+
+.EXAMPLE
+    Invoke-ToolUpdateCheck -scriptName "update_ytdl.ps1" -targetName "youtube-dl"
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. 指定された更新スクリプトを実行
+    2. 更新の成功/失敗を確認
+    3. 失敗した場合はエラーをスロー
+#>
 function Invoke-ToolUpdateCheck {
 	[CmdletBinding()]
 	[OutputType([Void])]
@@ -135,6 +214,39 @@ function Invoke-ToolUpdateCheck {
 #----------------------------------------------------------------------
 # ファイル・ディレクトリの存在チェック、なければサンプルファイルコピー
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    指定されたパスのファイルまたはディレクトリの存在を確認し、必要に応じてサンプルファイルをコピーします。
+
+.DESCRIPTION
+    指定されたパスのファイルまたはディレクトリが存在するか確認します。
+    存在しない場合、サンプルファイルが指定されていればそれをコピーします。
+    サンプルファイルも存在しない場合は、エラーメッセージを表示します。
+
+.PARAMETER path
+    確認するファイルまたはディレクトリのパスを指定します。
+
+.PARAMETER errorMessage
+    パスが存在しない場合に表示するエラーメッセージを指定します。
+
+.PARAMETER isFile
+    パスがファイルかディレクトリかを指定します。デフォルトはディレクトリです。
+
+.PARAMETER sampleFilePath
+    サンプルファイルのパスを指定します。省略可能です。
+
+.PARAMETER continue
+    エラーが発生した場合に処理を続行するかどうかを指定します。デフォルトは$falseです。
+
+.EXAMPLE
+    Invoke-TverrecPathCheck -path "C:\TVerRec\config" -errorMessage "設定ディレクトリ" -isFile $false
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. 指定されたパスの存在確認
+    2. 存在しない場合、サンプルファイルのコピーを試みる
+    3. サンプルファイルも存在しない場合、エラーメッセージを表示
+#>
 function Invoke-TverrecPathCheck {
 	Param (
 		[Parameter(Mandatory = $true )][String]$path,
@@ -158,6 +270,30 @@ function Invoke-TverrecPathCheck {
 #----------------------------------------------------------------------
 # 設定で指定したファイル・ディレクトリの存在チェック
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    設定で指定された必須ファイルとディレクトリの存在を確認します。
+
+.DESCRIPTION
+    設定ファイルで指定された必須のファイルとディレクトリが存在するか確認します。
+    存在しない場合はエラーをスローします。
+
+.EXAMPLE
+    Invoke-RequiredFileCheck
+
+.NOTES
+    この関数は以下のファイルとディレクトリの存在を確認します：
+    1. ダウンロードベースディレクトリ
+    2. 作業ディレクトリ
+    3. 保存ベースディレクトリ
+    4. youtube-dl実行ファイル
+    5. ffmpeg実行ファイル
+    6. ffprobe実行ファイル（簡易検証が有効な場合）
+    7. キーワードファイル
+    8. 無視ファイル
+    9. 履歴ファイル
+    10. リストファイル
+#>
 function Invoke-RequiredFileCheck {
 	[OutputType([Void])]
 	Param ()
@@ -185,6 +321,26 @@ function Invoke-RequiredFileCheck {
 #----------------------------------------------------------------------
 # ダウンロード対象キーワードの読み込み
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    キーワードファイルからダウンロード対象のキーワードを読み込みます。
+
+.DESCRIPTION
+    キーワードファイルからコメント行と空行を除いたキーワードを読み込み、
+    配列として返します。
+
+.OUTPUTS
+    [String[]] キーワードの配列
+
+.EXAMPLE
+    $keywords = Read-KeywordList
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. キーワードファイルをUTF8エンコーディングで読み込み
+    2. コメント行（#で始まる行）と空行を除外
+    3. 残りの行を配列として返す
+#>
 function Read-KeywordList {
 	[OutputType([String[]])]
 	Param ()
@@ -197,28 +353,70 @@ function Read-KeywordList {
 	Remove-Variable -Name keywords -ErrorAction SilentlyContinue
 }
 
+#----------------------------------------------------------------------
+# ダウンロード履歴の読み込み
+#----------------------------------------------------------------------
 <#
-	#----------------------------------------------------------------------
-	# ダウンロード履歴の読み込み
-	#----------------------------------------------------------------------
-	function Read-HistoryFile {
-		[OutputType([String[]])]
-		Param ()
-		Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-		$histFileData = @()
-		try {
-			while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-			$histFileData = Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8
-		} catch { Throw ($script:msg.LoadFailed -f $script:msg.HistFile) }
-		finally { Unlock-File $script:histLockFilePath | Out-Null }
-		return $histFileData
-		Remove-Variable -Name histFileData -ErrorAction SilentlyContinue
-	}
+.SYNOPSIS
+    ダウンロード履歴ファイルを読み込み、その内容を返します。
+
+.DESCRIPTION
+    ダウンロード履歴ファイルをCSV形式で読み込み、その内容を返します。
+    ファイルが存在しない場合は空の配列を返します。
+
+.OUTPUTS
+    [PSCustomObject[]]
+    履歴ファイルの内容をCSVとして読み込んだ配列。
+
+.EXAMPLE
+    $history = Read-HistoryFile
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. 履歴ファイルをロック
+    2. CSVファイルとして読み込み
+    3. ロックを解除
+    4. ファイルの内容を返す
 #>
+function Read-HistoryFile {
+	[OutputType([String[]])]
+	Param ()
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$histFileData = @()
+	try {
+		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+		$histFileData = Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8
+	} catch { Throw ($script:msg.LoadFailed -f $script:msg.HistFile) }
+	finally { Unlock-File $script:histLockFilePath | Out-Null }
+	return $histFileData
+	Remove-Variable -Name histFileData -ErrorAction SilentlyContinue
+}
 
 #----------------------------------------------------------------------
 # ダウンロード履歴の最新履歴を取得
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    ダウンロード履歴ファイルから各ビデオページの最新の履歴を取得します。
+
+.DESCRIPTION
+    ダウンロード履歴ファイルを読み込み、各ビデオページごとに
+    最新のダウンロード日時を持つレコードを取得します。
+
+.OUTPUTS
+    [PSCustomObject[]] 各ビデオページの最新履歴レコードの配列
+
+.EXAMPLE
+    $latestHists = Get-LatestHistory
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. 履歴ファイルをロック
+    2. CSVファイルとして読み込み
+    3. ビデオページごとにグループ化
+    4. 各グループから最新のレコードを取得
+    5. ロックを解除
+#>
 function Get-LatestHistory {
 	[OutputType([PSCustomObject])]
 	Param ()
@@ -238,6 +436,26 @@ function Get-LatestHistory {
 #----------------------------------------------------------------------
 # ダウンロードリストの読み込み
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    ダウンロードリストファイルからダウンロード対象の情報を読み込みます。
+
+.DESCRIPTION
+    ダウンロードリストファイルをCSV形式で読み込み、ダウンロード対象の
+    情報を配列として返します。
+
+.OUTPUTS
+    [PSCustomObject[]] ダウンロード対象の情報の配列
+
+.EXAMPLE
+    $downloadList = Read-DownloadList
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. リストファイルをロック
+    2. CSVファイルとして読み込み
+    3. ロックを解除
+#>
 function Read-DownloadList {
 	[OutputType([String[]])]
 	Param ()
@@ -255,6 +473,28 @@ function Read-DownloadList {
 #----------------------------------------------------------------------
 # ダウンロードリストからダウンロードリンクの読み込み
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    ダウンロードリストからTVerのエピソードリンクを取得します。
+
+.DESCRIPTION
+    ダウンロードリストファイルからEpisodeIDを抽出し、TVerのエピソード
+    リンクに変換して返します。
+
+.OUTPUTS
+    [String[]] TVerのエピソードリンクの配列
+
+.EXAMPLE
+    $videoLinks = Get-LinkFromDownloadList
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. リストファイルをロック
+    2. CSVファイルとして読み込み
+    3. 空行とダウンロード対象外（#で始まる行）を除外
+    4. EpisodeIDをTVerのエピソードリンクに変換
+    5. ロックを解除
+#>
 function Get-LinkFromDownloadList {
 	[OutputType([String[]])]
 	Param ()
@@ -275,6 +515,27 @@ function Get-LinkFromDownloadList {
 #----------------------------------------------------------------------
 # ダウンロード対象外番組の読み込み
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    ダウンロード対象外番組のリストを読み込みます。
+
+.DESCRIPTION
+    ダウンロード対象外番組のリストファイルから、コメント行と空行を除いた
+    番組名を読み込み、配列として返します。
+
+.OUTPUTS
+    [String[]] ダウンロード対象外番組名の配列
+
+.EXAMPLE
+    $ignoreTitles = Read-IgnoreList
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. 無視ファイルをロック
+    2. UTF8エンコーディングで読み込み
+    3. コメント行（;で始まる行）と空行を除外
+    4. ロックを解除
+#>
 function Read-IgnoreList {
 	[OutputType([String[]])]
 	Param ()
@@ -293,6 +554,30 @@ function Read-IgnoreList {
 #----------------------------------------------------------------------
 # ダウンロード対象外番組のソート(使用したものを上に移動)
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    ダウンロード対象外番組リストを更新し、使用した番組をリストの先頭に移動します。
+
+.DESCRIPTION
+    指定された番組名をダウンロード対象外リストに追加し、使用した番組を
+    リストの先頭に移動します。リストの構造（コメント、対象番組、その他）を
+    維持しながら更新します。
+
+.PARAMETER ignoreTitle
+    ダウンロード対象外リストに追加する番組名を指定します。
+
+.EXAMPLE
+    Update-IgnoreList -ignoreTitle "テスト番組"
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. 無視ファイルをロック
+    2. 既存のリストを読み込み
+    3. コメント、対象番組、その他の行を分類
+    4. 新しいリストを作成（コメント→対象番組→その他の順）
+    5. リストを更新
+    6. ロックを解除
+#>
 function Update-IgnoreList {
 	[OutputType([Void])]
 	Param ([Parameter(Mandatory = $true)][String]$ignoreTitle)
@@ -330,6 +615,31 @@ function Update-IgnoreList {
 #----------------------------------------------------------------------
 # URLが既にダウンロード履歴に存在するかチェックし、存在しない番組だけ返す
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    指定されたURLがダウンロード履歴に存在するかチェックし、未ダウンロードのURLのみを返します。
+
+.DESCRIPTION
+    指定されたURLリストとダウンロード履歴を比較し、まだダウンロードされていない
+    URLのみを返します。また、既にダウンロード済みのURLの数も返します。
+
+.PARAMETER resultLinks
+    チェック対象のURLリストを指定します。
+
+.OUTPUTS
+    [String[]]
+    未ダウンロードのURLの配列と、既にダウンロード済みのURLの数を含む配列。
+
+.EXAMPLE
+    $result = Invoke-HistoryMatchCheck -resultLinks @("https://tver.jp/...", "https://tver.jp/...")
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. 最新のダウンロード履歴を取得
+    2. 履歴に存在するURLを抽出
+    3. 指定されたURLリストと履歴を比較
+    4. 未ダウンロードのURLとダウンロード済みの数を返す
+#>
 function Invoke-HistoryMatchCheck {
 	[OutputType([String[]])]
 	Param ([Parameter(Mandatory = $true)][Alias('links')][String[]]$resultLinks)
@@ -348,6 +658,31 @@ function Invoke-HistoryMatchCheck {
 #----------------------------------------------------------------------
 # URLが既にダウンロードリストに存在するかチェックし、存在しない番組だけ返す
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    指定されたURLがダウンロードリストに存在するかチェックし、未登録のURLのみを返します。
+
+.DESCRIPTION
+    指定されたURLリストとダウンロードリストを比較し、まだ登録されていない
+    URLのみを返します。また、既に登録済みのURLの数も返します。
+
+.PARAMETER resultLinks
+    チェック対象のURLリストを指定します。
+
+.OUTPUTS
+    [String[]]
+    未登録のURLの配列と、既に登録済みのURLの数を含む配列。
+
+.EXAMPLE
+    $result = Invoke-ListMatchCheck -resultLinks @("https://tver.jp/...", "https://tver.jp/...")
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. ダウンロードリストファイルを読み込み
+    2. リストに存在するURLを抽出
+    3. 指定されたURLリストと比較
+    4. 未登録のURLと登録済みの数を返す
+#>
 function Invoke-ListMatchCheck {
 	[OutputType([String[]])]
 	Param ([Parameter(Mandatory = $true)][Alias('links')][String[]]$resultLinks)
@@ -367,6 +702,32 @@ function Invoke-ListMatchCheck {
 #----------------------------------------------------------------------
 # URLが既にダウンロードリストまたはダウンロード履歴に存在するかチェックし、存在しない番組だけ返す
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    指定されたURLがダウンロードリストまたはダウンロード履歴に存在するかチェックし、未登録のURLのみを返します。
+
+.DESCRIPTION
+    指定されたURLリストとダウンロードリスト、ダウンロード履歴を比較し、
+    まだ登録されていないURLのみを返します。また、既に登録済みのURLの数も返します。
+
+.PARAMETER resultLinks
+    チェック対象のURLリストを指定します。
+
+.OUTPUTS
+    [String[]]
+    未登録のURLの配列と、既に登録済みのURLの数を含む配列。
+
+.EXAMPLE
+    $result = Invoke-HistoryAndListMatchCheck -resultLinks @("https://tver.jp/...", "https://tver.jp/...")
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. ダウンロードリストファイルを読み込み
+    2. ダウンロード履歴ファイルを読み込み
+    3. 両方のリストをマージ
+    4. 指定されたURLリストと比較
+    5. 未登録のURLと登録済みの数を返す
+#>
 function Invoke-HistoryAndListMatchCheck {
 	[OutputType([String[]])]
 	Param ([Parameter(Mandatory = $true)][Alias('links')][String[]]$resultLinks)
@@ -391,6 +752,27 @@ function Invoke-HistoryAndListMatchCheck {
 #----------------------------------------------------------------------
 # youtube-dlプロセスの確認と待機
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    youtube-dlプロセスの数を確認し、指定された数以下になるまで待機します。
+
+.DESCRIPTION
+    youtube-dlプロセスの数を監視し、指定された並列ダウンロード数以下になるまで
+    待機します。定期的にプロセス数を表示しながら、60秒間隔でチェックします。
+
+.PARAMETER parallelDownloadFileNum
+    並列ダウンロードの最大数を指定します。
+
+.EXAMPLE
+    Wait-YtdlProcess -parallelDownloadFileNum 3
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. youtube-dlプロセスの数を取得
+    2. 指定された数以下になるまで待機
+    3. プロセス数を表示
+    4. 60秒間隔でチェックを繰り返す
+#>
 function Wait-YtdlProcess {
 	[OutputType([Void])]
 	Param ([Int32]$parallelDownloadFileNum)
@@ -412,6 +794,43 @@ function Wait-YtdlProcess {
 #----------------------------------------------------------------------
 # ダウンロード履歴データの成形
 #----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    ビデオ情報をダウンロード履歴レコードの形式に整形します。
+
+.DESCRIPTION
+    ビデオ情報オブジェクトを参照で受け取り、ダウンロード履歴ファイルに
+    保存するための形式に整形します。
+
+.PARAMETER videoInfo
+    ビデオ情報を含むオブジェクトを参照で指定します。
+
+.OUTPUTS
+    [PSCustomObject]
+    ダウンロード履歴レコード。以下のプロパティを含みます：
+    - videoPage: エピソードページのURL
+    - videoSeriesPage: シリーズページのURL
+    - genre: ジャンル
+    - series: シリーズ名
+    - season: シーズン名
+    - title: エピソードタイトル
+    - media: メディア名
+    - broadcastDate: 放送日
+    - downloadDate: ダウンロード日時
+    - videoDir: ビデオディレクトリ
+    - videoName: ビデオファイル名
+    - videoPath: ビデオファイルの相対パス
+    - videoValidated: 検証状態
+
+.EXAMPLE
+    $historyRecord = Format-HistoryRecord -videoInfo ([ref]$videoInfo)
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. ビデオ情報から必要なデータを抽出
+    2. ダウンロード履歴レコードの形式に整形
+    3. 整形したレコードを返す
+#>
 function Format-HistoryRecord {
 	Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -747,7 +1166,6 @@ function Show-VideoDebugInfo {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	Write-Debug $videoInfo.episodePageURL
 }
-
 #----------------------------------------------------------------------
 # ffmpegを使ったダウンロードプロセスの起動
 #----------------------------------------------------------------------
@@ -846,8 +1264,9 @@ function Invoke-Ytdl {
 		ArgumentList = $ytdlArgsString
 		PassThru     = $true
 	}
-	if ($IsWindows) { $startProcessParams.WindowStyle = $script:windowShowStyle }
+	if ($IsWindows -and ($script:windowShowStyle -ne 'Hidden')) { $startProcessParams.WindowStyle = $script:windowShowStyle }
 	else {
+		if ($IsWindows -and ($script:windowShowStyle -eq 'Hidden')) { $startProcessParams.WindowStyle = $script:windowShowStyle }
 		$randomNum = -join (1..16 | ForEach-Object { Get-Random -Minimum 0 -Maximum 10 })
 		$logFiles = @(
 			@{ Path = $script:ytdlStdOutLogPath; Redirect = 'RedirectStandardOutput' },
@@ -939,8 +1358,9 @@ function Invoke-NonTverYtdl {
 		ArgumentList = $ytdlArgsString
 		PassThru     = $true
 	}
-	if ($IsWindows) { $startProcessParams.WindowStyle = $script:windowShowStyle }
+	if ($IsWindows -and ($script:windowShowStyle -ne 'Hidden')) { $startProcessParams.WindowStyle = $script:windowShowStyle }
 	else {
+		if ($IsWindows -and ($script:windowShowStyle -eq 'Hidden')) { $startProcessParams.WindowStyle = $script:windowShowStyle }
 		$randomNum = -join (1..16 | ForEach-Object { Get-Random -Minimum 0 -Maximum 10 })
 		$logFiles = @(
 			@{ Path = $script:ytdlStdOutLogPath; Redirect = 'RedirectStandardOutput' },
@@ -1457,3 +1877,81 @@ switch ($true) {
 	}
 }
 Remove-Variable -Name geoIPValues, geoIPValue, osInfo -ErrorAction SilentlyContinue
+
+#----------------------------------------------------------------------
+# ダウンロード履歴の書き込み
+#----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    ダウンロード履歴ファイルに内容を書き込みます。
+
+.DESCRIPTION
+    指定された内容をダウンロード履歴ファイルに書き込みます。
+    ファイルが存在しない場合は新規作成します。
+
+.PARAMETER content
+    履歴ファイルに書き込む内容を指定します。
+
+.EXAMPLE
+    Write-HistoryFile -content "新しい履歴エントリ"
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. 履歴ファイルをロック
+    2. UTF8エンコーディングで書き込み
+    3. ロックを解除
+#>
+function Write-HistoryFile {
+	[OutputType([void])]
+	Param ([Parameter(Mandatory = $true)][String[]]$content)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	try {
+		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+		Set-Content -LiteralPath $script:histFilePath -Value $content -Encoding UTF8
+	} catch { Write-Warning ($script:msg.SaveFailed -f $script:msg.HistFile) }
+	finally { Unlock-File $script:histLockFilePath | Out-Null }
+	Remove-Variable -Name content -ErrorAction SilentlyContinue
+}
+
+#----------------------------------------------------------------------
+# ダウンロード履歴の取得
+#----------------------------------------------------------------------
+<#
+.SYNOPSIS
+    ダウンロード履歴ファイルから履歴情報を取得します。
+
+.DESCRIPTION
+    ダウンロード履歴ファイルをCSV形式で読み込み、履歴情報を配列として返します。
+    ファイルが存在しない場合は空の配列を返します。
+
+.OUTPUTS
+    [PSCustomObject[]]
+    ダウンロード履歴情報の配列。各オブジェクトは以下のプロパティを持ちます：
+    - VideoPage: ビデオページのURL
+    - DownloadDate: ダウンロード日時
+    - VideoTitle: ビデオのタイトル
+    - VideoValidated: ビデオの検証状態
+
+.EXAMPLE
+    $history = Get-DownloadHistory
+
+.NOTES
+    この関数は以下の処理を行います：
+    1. 履歴ファイルをロック
+    2. CSVファイルとして読み込み
+    3. ロックを解除
+    4. 履歴情報を返す
+#>
+function Get-DownloadHistory {
+	[OutputType([PSCustomObject[]])]
+	Param ()
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$histFileData = @()
+	try {
+		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+		$histFileData = Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8
+	} catch { Write-Warning ($script:msg.LoadFailed -f $script:msg.HistFile) }
+	finally { Unlock-File $script:histLockFilePath | Out-Null }
+	return $histFileData
+	Remove-Variable -Name histFileData -ErrorAction SilentlyContinue
+}

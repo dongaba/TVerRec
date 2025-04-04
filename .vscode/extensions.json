@@ -1,7 +1,6 @@
 {
 	"recommendations": [
 		"usernamehw.errorlens",
-		"grapecity.gc-excelviewer",
 		"mhutchie.git-graph",
 		"github.vscode-github-actions",
 		"github.codespaces",
@@ -41,6 +40,7 @@
 		"postman.postman-for-vscode",
 		"rogalmic.vscode-xml-complete",
 		"dotjoshjohnson.xml",
-		"ms-dotnettools.vscode-dotnet-runtime"
+		"ms-dotnettools.vscode-dotnet-runtime",
+		"aaron-bond.better-comments"
 	]
 }

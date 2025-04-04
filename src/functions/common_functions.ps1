@@ -251,7 +251,7 @@ function Get-FileNameWoInvalidChars {
 	[CmdletBinding()]
 	[OutputType([String])]
 	Param ([String]$name = '')
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $name)
 	# 使用する正規表現パターンを定義
 	$invalidCharsPattern = '[{0}]' -f [RegEx]::Escape( [IO.Path]::GetInvalidFileNameChars() -Join '')
 	$additionalReplaces = '[*\?<>|]'	# Linux/MacではGetInvalidFileNameChars()が不完全なため、ダメ押しで置換
@@ -319,7 +319,7 @@ function Get-NarrowChar {
 	[CmdletBinding()]
 	[OutputType([String])]
 	Param ([String]$text = '')
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $text)
 	$replaceChars = @{
 		'０１２３４５６７８９'                                           = '0123456789'
 		'ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ' = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -475,7 +475,7 @@ function Remove-SpecialCharacter {
 	[CmdletBinding()]
 	[OutputType([String])]
 	Param ([String]$text)
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $text)
 	$text = $text.Replace('&amp;', '&')
 	$replacements = @{
 		'*' = '＊' # 全角
@@ -545,7 +545,7 @@ function Remove-TabSpace {
 	[CmdletBinding()]
 	[OutputType([String])]
 	Param ([String]$text)
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $text)
 	return $text.Replace("`t", ' ') -replace '\s+', ' '
 	Remove-Variable -Name text -ErrorAction SilentlyContinue
 }
@@ -908,7 +908,7 @@ function Get-RemainingCapacity {
 	Param (
 		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][string]$targetDir
 	)
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $targetDir)
 	if ($IsWindows) {
 		try {
 			switch -Regex ($targetDir) {
@@ -940,69 +940,69 @@ function Get-RemainingCapacity {
 
 # region ファイルロック
 
-#----------------------------------------------------------------------
-# 色付きWrite-Output
-#----------------------------------------------------------------------
-function Out-Msg-Color {
-	<#
-	.SYNOPSIS
-		コンソールに色付きのメッセージを表示する。
+# #----------------------------------------------------------------------
+# # 色付きWrite-Output
+# #----------------------------------------------------------------------
+# function Out-Msg-Color {
+# 	<#
+# 	.SYNOPSIS
+# 		コンソールに色付きのメッセージを表示する。
 
-	.DESCRIPTION
-		指定した前景色（文字色）および背景色で、メッセージをコンソールに出力する。
-		出力後、元のコンソールカラー設定に戻る。
+# 	.DESCRIPTION
+# 		指定した前景色（文字色）および背景色で、メッセージをコンソールに出力する。
+# 		出力後、元のコンソールカラー設定に戻る。
 
-	.PARAMETER text
-		表示するテキスト。
+# 	.PARAMETER text
+# 		表示するテキスト。
 
-	.PARAMETER fg
-		文字の色（ConsoleColor）。
+# 	.PARAMETER fg
+# 		文字の色（ConsoleColor）。
 
-	.PARAMETER bg
-		背景の色（ConsoleColor）。
+# 	.PARAMETER bg
+# 		背景の色（ConsoleColor）。
 
-	.PARAMETER noNL
-		改行をしない場合は `$true` を指定。
+# 	.PARAMETER noNL
+# 		改行をしない場合は `$true` を指定。
 
-	.EXAMPLE
-		PS> Out-Msg-Color -text "Hello, World!" -fg Green
+# 	.EXAMPLE
+# 		PS> Out-Msg-Color -text "Hello, World!" -fg Green
 
-		緑色の "Hello, World!" を表示。
+# 		緑色の "Hello, World!" を表示。
 
-	.EXAMPLE
-		PS> Out-Msg-Color -text "Error!" -fg White -bg Red
+# 	.EXAMPLE
+# 		PS> Out-Msg-Color -text "Error!" -fg White -bg Red
 
-		赤背景・白文字で "Error!" を表示。
+# 		赤背景・白文字で "Error!" を表示。
 
-	.EXAMPLE
-		PS> Out-Msg-Color -text "Processing..." -fg Yellow -noNL $true
+# 	.EXAMPLE
+# 		PS> Out-Msg-Color -text "Processing..." -fg Yellow -noNL $true
 
-		黄色の "Processing..." を表示し、改行しない。
+# 		黄色の "Processing..." を表示し、改行しない。
 
-	.NOTES
-		- `Write-Host` を使用しているため、標準出力にリダイレクトはできない。
-		- `fg` や `bg` の指定がない場合は、デフォルトのコンソールカラーを使用する。
-	#>
-	[CmdletBinding()]
-	[OutputType([Void])]
-	Param (
-		[Parameter(Mandatory = $false)][Object]$text = '',
-		[Parameter(Mandatory = $false)][ConsoleColor]$fg,
-		[Parameter(Mandatory = $false)][ConsoleColor]$bg,
-		[Parameter(Mandatory = $false)][Boolean]$noNL
-	)
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	try {
-		if ($fg) { $host.UI.RawUI.ForegroundColor = $fg }
-		if ($bg) { $host.UI.RawUI.BackgroundColor = $bg }
-		Write-Host -Object $text -NoNewline:$noNL
-	} catch { Write-Warning "メッセージの出力中にエラーが発生しました: $_"
-	} finally {
-		$host.UI.RawUI.ForegroundColor = $prevFg
-		$host.UI.RawUI.BackgroundColor = $prevBg
-	}
-	Remove-Variable -Name text, fg, bg, noNL, prevFg, prevBg, writeHostParams -ErrorAction SilentlyContinue
-}
+# 	.NOTES
+# 		- `Write-Host` を使用しているため、標準出力にリダイレクトはできない。
+# 		- `fg` や `bg` の指定がない場合は、デフォルトのコンソールカラーを使用する。
+# 	#>
+# 	[CmdletBinding()]
+# 	[OutputType([Void])]
+# 	Param (
+# 		[Parameter(Mandatory = $false)][Object]$text = '',
+# 		[Parameter(Mandatory = $false)][ConsoleColor]$fg,
+# 		[Parameter(Mandatory = $false)][ConsoleColor]$bg,
+# 		[Parameter(Mandatory = $false)][Boolean]$noNL
+# 	)
+# 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+# 	try {
+# 		if ($fg) { $host.UI.RawUI.ForegroundColor = $fg }
+# 		if ($bg) { $host.UI.RawUI.BackgroundColor = $bg }
+# 		Write-Host -Object $text -NoNewline:$noNL
+# 	} catch { Write-Warning "メッセージの出力中にエラーが発生しました: $_"
+# 	} finally {
+# 		$host.UI.RawUI.ForegroundColor = $prevFg
+# 		$host.UI.RawUI.BackgroundColor = $prevBg
+# 	}
+# 	Remove-Variable -Name text, fg, bg, noNL, prevFg, prevBg, writeHostParams -ErrorAction SilentlyContinue
+# }
 
 # endregion コンソール出力
 
@@ -1544,7 +1544,6 @@ function ConvertFrom-Base64 {
 		$img.EndInit()
 		$img.Freeze()
 		return $img
-	}
-	catch {Write-Error "Base64文字列から画像を変換する際にエラーが発生しました: $_" ; return $null }
-	finally {Remove-Variable -Name base64, img -ErrorAction SilentlyContinue}
+	} catch { Write-Error "Base64文字列から画像を変換する際にエラーが発生しました: $_" ; return $null }
+	finally { Remove-Variable -Name base64, img -ErrorAction SilentlyContinue }
 }
