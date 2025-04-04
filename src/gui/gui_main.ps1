@@ -84,7 +84,8 @@ function Out-ExecutionLog {
 	)
 	if ($script:guiMaxExecLogLines -gt 0) { Limit-LogLines $outText $script:guiMaxExecLogLines }
 	$rtfRange = [System.Windows.Documents.TextRange]::new($outText.Document.ContentEnd, $outText.Document.ContentEnd)
-	$rtfRange.Text = ("{0}`n" -f $Message)
+	if ($type -eq 'Output') { $rtfRange.Text = ("{0}`n" -f $Message) }
+	else { $rtfRange.Text = ("{0}: {1}`n" -f $type, $Message)}
 	$rtfRange.ApplyPropertyValue([System.Windows.Documents.TextElement]::ForegroundProperty, $msgTypesColorMap[$type] )
 	$outText.ScrollToEnd()
 	Remove-Variable -Name message, type, rtfRange -ErrorAction SilentlyContinue
