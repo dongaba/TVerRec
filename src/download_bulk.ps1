@@ -77,19 +77,18 @@ try {
 	$keywords = @(Read-KeywordList)
 	if ($keywords.Count -eq 0) { throw 'キーワードリストが空です。処理を中断します。' }
 	else { $keywordTotal = $keywords.Count }
-	$keywordProcessed = 0
+	$keywordNum = 0
 
 	# 進捗表示の初期化
 	$toastShowParams = @{
-		Text1   = $script:msg.BulkDownloading
-		Text2   = $script:msg.ExtractAndDownloadVideoFromKeywords
-		Detail1 = $script:msg.Loading
-		Detail2 = $script:msg.Loading
-		Tag     = $script:appName
-		Silent  = $false
-		Group   = 'Bulk'
+		Text1      = $script:msg.BulkDownloading
+		Text2      = $script:msg.ExtractAndDownloadVideoFromKeywords
+		WorkDetail = $script:msg.Loading
+		Tag        = $script:appName
+		Silent     = $false
+		Group      = 'Bulk'
 	}
-	Show-ProgressToast2Row @toastShowParams
+	Show-ProgressToast @toastShowParams
 
 	# ジョブ管理の初期化
 	$script:jobList = @()
@@ -103,14 +102,14 @@ try {
 	#======================================================================
 	# ビデオリンクの収集
 	#======================================================================
-	$totalStartTime = Get-Date
+	$linkCollectionStartTime = Get-Date
 	$uniqueVideoLinks = [System.Collections.Generic.HashSet[string]]::new()
 	$videoKeywordMap = @{}
 
 	Write-Output ($script:msg.LongBoldBorder)
 	Write-Information 'キーワードからビデオリンクを収集中...'
 	foreach ($keyword in $keywords) {
-		$keywordProcessed++
+		$keywordNum++
 		$keyword = Remove-TabSpace($keyword)
 
 		Write-Output ('')
@@ -122,23 +121,21 @@ try {
 		if ((Get-RemainingCapacity $script:downloadBaseDir) -lt $script:minDownloadBaseDirCapacity ) { Write-Warning ($script:msg.NoEnoughCapacity -f $script:downloadBaseDir ) ; break }
 
 		# 進捗情報の更新
-		$secElapsed = (Get-Date) - $totalStartTime
-		$secRemaining = if ($keywordProcessed -ne 0) { [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $keywordProcessed) * ($keywordTotal - $keywordProcessed)) }
-		else { '' }
+		$secElapsed = (Get-Date) - $linkCollectionStartTime
+		if ($keywordNum -ne 0) {
+			$secRemaining = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $keywordNum) * ($keywordTotal - $keywordNum))
+			$minRemaining = ('{0}分' -f ([Int][Math]::Ceiling($secRemaining / 60)))
+		} else { $minRemaining = '' }
 
 		$toastUpdateParams = @{
-			Title1     = (Remove-TabSpace ($keyword))
-			Rate1      = [Float]($keywordProcessed / $keywordTotal)
-			LeftText1  = ('{0}/{1}' -f $keywordProcessed, $keywordTotal)
-			RightText1 = $secRemaining
-			Title2     = ''
-			Rate2      = 0
-			LeftText2  = ''
-			RightText2 = ''
-			Tag        = $script:appName
-			Group      = 'Bulk'
+			Title     = (Remove-TabSpace ($keyword))
+			Rate      = [Float]($keywordNum / $keywordTotal)
+			LeftText  = ('{0}/{1}' -f $keywordNum, $keywordTotal)
+			RightText = $minRemaining
+			Tag       = $script:appName
+			Group     = 'Bulk'
 		}
-		Update-ProgressToast2Row @toastUpdateParams
+		Update-ProgressToast @toastUpdateParams
 
 		# キーワードの正規化とビデオリンク取得
 		$keyword = Get-ContentWoComment($keyword.Replace('https://tver.jp/', '').Trim())
@@ -163,15 +160,16 @@ try {
 	#======================================================================
 	# ビデオのダウンロード
 	#======================================================================
+	$downloadStartTime = Get-Date
 	$videoTotal = $uniqueVideoLinks.Count
-	$videoProcessed = 0
+	$videoNum = 0
 
 	Write-Output ('')
 	Write-Output ($script:msg.LongBoldBorder)
 	Write-Output ('全 {0} 件のビデオをダウンロードします' -f $videoTotal)
 
 	foreach ($videoLink in $uniqueVideoLinks) {
-		$videoProcessed++
+		$videoNum++
 		$keyword = $videoKeywordMap[$videoLink]
 
 		# ディレクトリの存在確認
@@ -181,14 +179,26 @@ try {
 		if ((Get-RemainingCapacity $script:downloadWorkDir) -lt $script:minDownloadWorkDirCapacity ) { Write-Warning ($script:msg.NoEnoughCapacity -f $script:downloadWorkDir ) ; break }
 		if ((Get-RemainingCapacity $script:downloadBaseDir) -lt $script:minDownloadBaseDirCapacity ) { Write-Warning ($script:msg.NoEnoughCapacity -f $script:downloadBaseDir ) ; break }
 
+		# 進捗率の計算
+		$secElapsed = (Get-Date) - $downloadStartTime
+		if ($videoNum -ne 0) {
+			$secRemaining = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $videoNum) * ($videoTotal - $videoNum))
+			$minRemaining = ('{0}分' -f ([Int][Math]::Ceiling($secRemaining / 60)))
+		}
+
 		# 進捗情報の更新
-		$toastUpdateParams.Title2 = $videoLink
-		$toastUpdateParams.Rate2 = [Float]($videoProcessed / $videoTotal)
-		$toastUpdateParams.LeftText2 = ('{0}/{1}' -f $videoProcessed, $videoTotal)
-		Update-ProgressToast2Row @toastUpdateParams
+		$toastUpdateParams = @{
+			Title     = $videoLink
+			Rate      = [Float]($videoNum / $videoTotal)
+			LeftText  = ('{0}/{1}' -f $videoNum, $videoTotal)
+			RightText = $minRemaining
+			Tag       = $script:appName
+			Group     = 'Bulk'
+		}
+		Update-ProgressToast @toastUpdateParams
 
 		Write-Output ($script:msg.ShortBoldBorder)
-		Write-Output ('{0}/{1} - {2}' -f $videoProcessed, $videoTotal, $videoLink)
+		Write-Output ('{0}/{1} - {2}' -f $videoNum, $videoTotal, $videoLink)
 
 		# ダウンロードプロセスの制御
 		Wait-YtdlProcess $script:parallelDownloadFileNum
@@ -213,18 +223,14 @@ try {
 
 	# 最終進捗表示
 	$toastUpdateParams = @{
-		Title1     = $script:msg.ExtractingVideoFromKeywords
-		Rate1      = 1
-		LeftText1  = ''
-		RightText1 = 0
-		Title2     = $script:msg.DownloadingVideo
-		Rate2      = 1
-		LeftText2  = ''
-		RightText2 = '0'
-		Tag        = $script:appName
-		Group      = 'Bulk'
+		Title     = $script:msg.ExtractingVideoFromKeywords
+		Rate      = 1
+		LeftText  = ''
+		RightText = $script:msg.Completed
+		Tag       = $script:appName
+		Group     = 'Bulk'
 	}
-	Update-ProgressToast2Row @toastUpdateParams
+	Update-ProgressToast @toastUpdateParams
 
 	# 完了メッセージ
 	Write-Output ('')
@@ -237,7 +243,7 @@ try {
 	throw
 } finally {
 	# 変数のクリーンアップ
-	Remove-Variable -Name args, keywords, keywordTotal, keywordProcessed, toastShowParams,
+	Remove-Variable -Name args, keywords, keywordTotal, keywordNum, toastShowParams,
 	totalStartTime, keyword, resultLinks, processedCount, videoLinks, videoCount,
 	secElapsed, secRemaining, videoLink, toastUpdateParams, videoProcessed,
 	uniqueVideoLinks, videoKeywordMap, errorCount, maxErrors -ErrorAction SilentlyContinue
