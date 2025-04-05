@@ -9,7 +9,7 @@ if (!$IsWindows) { Throw ('❌️ Windows以外では動作しません。For Wi
 Add-Type -AssemblyName PresentationFramework | Out-Null
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# region 環境設定
+#region 環境設定
 
 try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
@@ -40,10 +40,10 @@ $msgVerbose = New-Object System.Collections.Generic.List[String]
 $msgDebug = New-Object System.Collections.Generic.List[String]
 $msgInformation = New-Object System.Collections.Generic.List[String]
 
-# endregion 環境設定
+#endregion 環境設定
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# region 関数定義
+#region 関数定義
 
 # GUIイベントの処理
 function Sync-WpfEvents {
@@ -85,19 +85,19 @@ function Out-ExecutionLog {
 	if ($script:guiMaxExecLogLines -gt 0) { Limit-LogLines $outText $script:guiMaxExecLogLines }
 	$rtfRange = [System.Windows.Documents.TextRange]::new($outText.Document.ContentEnd, $outText.Document.ContentEnd)
 	if ($type -eq 'Output') { $rtfRange.Text = ("{0}`n" -f $Message) }
-	else { $rtfRange.Text = ("{0}: {1}`n" -f $type, $Message)}
+	else { $rtfRange.Text = ("{0}: {1}`n" -f $type, $Message) }
 	$rtfRange.ApplyPropertyValue([System.Windows.Documents.TextElement]::ForegroundProperty, $msgTypesColorMap[$type] )
 	$outText.ScrollToEnd()
 	Remove-Variable -Name message, type, rtfRange -ErrorAction SilentlyContinue
 }
 
-# endregion 関数定義
+#endregion 関数定義
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # メイン処理
 
 #----------------------------------------------------------------------
-# region WPFのWindow設定
+#region WPFのWindow設定
 
 try {
 	[Xml]$mainXaml = [String](Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecMain.xaml'))
@@ -149,10 +149,10 @@ $btnWiki.Content = $script:msg.btnWiki
 $btnSetting.Content = $script:msg.btnSetting
 $btnExit.Content = $script:msg.btnExit
 
-# endregion WPFのWindow設定
+#endregion WPFのWindow設定
 
 #----------------------------------------------------------------------
-# region バックグラウンドジョブ化する処理を持つボタン
+#region バックグラウンドジョブ化する処理を持つボタン
 
 $btns = @(
 	$mainWindow.FindName('btnSingle'), #0
@@ -204,10 +204,10 @@ foreach ($btn in $btns) {
 		})
 }
 
-# endregion バックグラウンドジョブ化する処理を持つボタン
+#endregion バックグラウンドジョブ化する処理を持つボタン
 
 #----------------------------------------------------------------------
-# region ジョブ化しないボタンのアクション
+#region ジョブ化しないボタンのアクション
 
 $btnWorkOpen.Add_Click({ Invoke-Item $script:downloadWorkDir })
 $btnDownloadOpen.Add_Click({ Invoke-Item $script:downloadBaseDir })
@@ -239,10 +239,10 @@ $btnSetting.Add_Click({
 	})
 $btnExit.Add_Click({ $mainWindow.close() })
 
-# endregion ジョブ化しないボタンのアクション
+#endregion ジョブ化しないボタンのアクション
 
 #----------------------------------------------------------------------
-# region ウィンドウ表示
+#region ウィンドウ表示
 
 # 処理停止ボタンの初期値は無効
 $btnKillAll.IsEnabled = $false
@@ -252,10 +252,10 @@ try {
 	[Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0) | Out-Null
 } catch { Throw ($script:msg.WindowRenderError) }
 
-# endregion ウィンドウ表示
+#endregion ウィンドウ表示
 
 #----------------------------------------------------------------------
-# region ウィンドウ表示後のループ処理
+#region ウィンドウ表示後のループ処理
 while ($mainWindow.IsVisible) {
 	if ($jobs = Get-Job) {
 		# ジョブがある場合の処理
@@ -291,10 +291,10 @@ while ($mainWindow.IsVisible) {
 	Start-Sleep -Milliseconds 10
 }
 
-# endregion ウィンドウ表示後のループ処理
+#endregion ウィンドウ表示後のループ処理
 
 #----------------------------------------------------------------------
-# region 終了処理
+#region 終了処理
 
 # Windowが閉じられたら乗っているゴミジョブを削除して終了
 Get-Job | Receive-Job -Wait -AutoRemoveJob -Force
@@ -309,4 +309,4 @@ Remove-Variable -Name btnWorkOpen, btnDownloadOpen, btnsaveOpen, btnKeywordOpen,
 Remove-Variable -Name btnClearLog, btnKillAll, btnWiki, btnSetting, btnExit -ErrorAction SilentlyContinue
 Remove-Variable -Name jobs, job, msgType, jobMsg, logType -ErrorAction SilentlyContinue
 
-# endregion 終了処理
+#endregion 終了処理

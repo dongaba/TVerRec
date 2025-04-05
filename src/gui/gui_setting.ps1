@@ -10,7 +10,7 @@ Add-Type -AssemblyName System.Windows.Forms | Out-Null
 Add-Type -AssemblyName PresentationFramework | Out-Null
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# region 環境設定
+#region 環境設定
 
 try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
@@ -115,10 +115,10 @@ $settingAttributes = @(
 	'$script:preferredLanguage'
 )
 
-# endregion 環境設定
+#endregion 環境設定
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# region 関数定義
+#region 関数定義
 
 # GUIイベントの処理
 function Sync-WpfEvents {
@@ -280,13 +280,13 @@ function Save-UserSetting {
 	Remove-Variable -Name stopSetting, day, hour, checkbox, stopHours -ErrorAction SilentlyContinue
 }
 
-# endregion 関数定義
+#endregion 関数定義
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # メイン処理
 
 #----------------------------------------------------------------------
-# region WPFのWindow設定
+#region WPFのWindow設定
 
 try {
 	[Xml]$mainXaml = [String](Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecSetting.xaml'))
@@ -532,11 +532,11 @@ $preferredLanguage.Items.Add('日本語') | Out-Null	# ja-JP
 $preferredLanguage.Items.Add('English') | Out-Null	# en-US
 
 
-# endregion WPFのWindow設定
+#endregion WPFのWindow設定
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
-# region ボタンのアクション
+#region ボタンのアクション
 $btnWiki.Add_Click({ Start-Process‘https://github.com/dongaba/TVerRec/wiki’ })
 $btnCancel.Add_Click({ $settingWindow.close() })
 $btnSave.Add_Click({ Save-UserSetting ; $settingWindow.close() })
@@ -625,13 +625,13 @@ $chkbxStop21All.Add_Click({ Sync-MultiCheckboxes -hour '21' -allCheckbox $chkbxS
 $chkbxStop22All.Add_Click({ Sync-MultiCheckboxes -hour '22' -allCheckbox $chkbxStop22All })
 $chkbxStop23All.Add_Click({ Sync-MultiCheckboxes -hour '23' -allCheckbox $chkbxStop23All })
 
-# endregion ボタンのアクション
+#endregion ボタンのアクション
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
-# region 設定ファイルの読み込み
+#region 設定ファイルの読み込み
 Read-UserSetting
-# endregion 設定ファイルの読み込み
+#endregion 設定ファイルの読み込み
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
@@ -653,14 +653,14 @@ $form.AssignHandle($currentProcess.MainWindowHandle)
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 #----------------------------------------------------------------------
-# region ウィンドウ表示後のループ処理
+#region ウィンドウ表示後のループ処理
 while ($settingWindow.IsVisible) {
 	# GUIイベント処理
 	Sync-WpfEvents
 	Start-Sleep -Milliseconds 10
 }
 
-# endregion ウィンドウ表示後のループ処理
+#endregion ウィンドウ表示後のループ処理
 #----------------------------------------------------------------------
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

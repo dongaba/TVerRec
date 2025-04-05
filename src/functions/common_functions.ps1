@@ -7,8 +7,7 @@ Set-StrictMode -Version Latest
 Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
 Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
-# region ガーベッジコレクション
-
+#region ガーベッジコレクション
 #----------------------------------------------------------------------
 # ガーベッジコレクション
 #----------------------------------------------------------------------
@@ -50,11 +49,9 @@ function Invoke-GarbageCollection() {
 	Write-Verbose -Message 'Performing a final pass of garbage collection ...' ; [System.GC]::Collect()
 	Write-Verbose -Message 'Garbage collection completed.'
 }
+#endregion ガーベッジコレクション
 
-# endregion ガーベッジコレクション
-
-# region タイムスタンプ
-
+#region タイムスタンプ
 #----------------------------------------------------------------------
 # タイムスタンプ更新
 #----------------------------------------------------------------------
@@ -192,11 +189,9 @@ function ConvertTo-UnixTime {
 	return [int64][math]::Round($unixTime.TotalSeconds)
 	Remove-Variable -Name InputDate, unixTime -ErrorAction SilentlyContinue
 }
+#endregion タイムスタンプ
 
-# endregion タイムスタンプ
-
-# region 文字列操作
-
+#region 文字列操作
 #----------------------------------------------------------------------
 # ファイル名・ディレクトリ名に禁止文字の削除
 #----------------------------------------------------------------------
@@ -595,11 +590,9 @@ function Get-ContentWoComment {
 	return $text.Split("`t")[0].Split(' ')[0].Split('#')[0]
 	Remove-Variable -Name text -ErrorAction SilentlyContinue
 }
+#endregion 文字列操作
 
-# endregion 文字列操作
-
-# region ファイル操作
-
+#region ファイル操作
 #----------------------------------------------------------------------
 # 指定したPath配下の指定した条件でファイルを削除
 #----------------------------------------------------------------------
@@ -729,11 +722,9 @@ function Expand-Zip {
 	} else { Throw ($script:msg.FileNotFound -f $path) }
 	Remove-Variable -Name path, destination -ErrorAction SilentlyContinue
 }
+#endregion ファイル操作
 
-# endregion ファイル操作
-
-# region ファイルロック
-
+#region ファイルロック
 #----------------------------------------------------------------------
 # ファイルのロック
 #----------------------------------------------------------------------
@@ -851,10 +842,9 @@ function Unlock-File {
 	}
 	Remove-Variable -Name path, result -ErrorAction SilentlyContinue
 }
+#endregion ファイルロック
 
-# endregion ファイルロック
-
-# region ディスク監視
+#region ディスク監視
 #----------------------------------------------------------------------
 # ディレクトリの空き容量確認(MB)
 #----------------------------------------------------------------------
@@ -925,10 +915,9 @@ function Get-RemainingCapacity {
 	return [int64]($freeSpace / 1MB)
 	Remove-Variable -Name targetDir, targetDrive, freeSpace, targetRoot -ErrorAction SilentlyContinue
 }
-# endregion ディスク監視
+#endregion ディスク監視
 
-# region トースト通知
-
+#region トースト通知
 # モジュールのインポート
 if ($IsWindows -and !$script:disableToastNotification -and (!('Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder' -as [Type]))) {
 	Add-Type -LiteralPath (Join-Path $script:libDir 'win/core/Microsoft.Windows.SDK.NET.dll') | Out-Null
@@ -1427,7 +1416,7 @@ function Update-ProgressToast2Row {
 	}
 	Remove-Variable -Name title1, rate1, leftText1, rightText1, title2, rate2, leftText2, rightText2, tag, group, toastData, toastProgressData -ErrorAction SilentlyContinue
 }
-# endregion トースト通知
+#endregion トースト通知
 
 #----------------------------------------------------------------------
 # Base64画像の展開
