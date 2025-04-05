@@ -16,7 +16,7 @@
 
 	.NOTES
 		前提条件:
-		- PowerShell 7.0以上が必要です
+		- PowerShell 7.0以上を推奨です
 		- インターネット接続が必要です
 		- TVerRecの設定ファイルが正しく設定されている必要があります
 		- 設定ファイルでpreferredYoutubedlが正しく設定されている必要があります

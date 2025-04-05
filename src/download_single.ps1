@@ -23,7 +23,7 @@
 	.NOTES
 		前提条件:
 		- Windows環境で実行する必要があります
-		- PowerShell 7.0以上が必要です
+		- PowerShell 7.0以上を推奨です
 		- TVerRecの設定ファイルが正しく設定されている必要があります
 		- GUIモードの場合、Windows Formsが利用可能である必要があります
 		- 十分なディスク容量が必要です

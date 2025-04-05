@@ -20,7 +20,7 @@
 	.NOTES
 		前提条件:
 		- Windows環境で実行する必要があります
-		- PowerShell 7.0以上が必要です
+		- PowerShell 7.0以上を推奨です
 		- TVerRecの設定ファイルが正しく設定されている必要があります
 
 		削除対象:
@@ -100,7 +100,7 @@ if ($script:cleanupDownloadBaseDir -and $script:cleanupSaveBaseDir ) { $totalCle
 elseif ($script:cleanupDownloadBaseDir -or $script:cleanupSaveBaseDir ) { $totalCleanupSteps = 3 }
 else { $totalCleanupSteps = 2 }
 
-# 半日以上前のログファイル・ロックファイルを削除
+# 1日以上前のログファイル・ロックファイルを削除
 $toastUpdateParams = @{
 	Title     = $script:logDir
 	Rate      = [Float]( 1 / $totalCleanupSteps )
@@ -110,16 +110,27 @@ $toastUpdateParams = @{
 	Group     = 'Delete'
 }
 Update-ProgressToast @toastUpdateParams
-Get-ChildItem -Path $script:logDir -Include @('ffmpeg_error_*.log', 'ffmpeg_err_*.log', 'ytdl_out_*.log', 'ytdl_err_*.log') -File -Recurse |
-	Remove-File -DelPeriod 1
+$getChildItemParams = @{
+	Path        = $script:logDir
+	Include     = @('ffmpeg_error_*.log', 'ffmpeg_err_*.log', 'ytdl_out_*.log', 'ytdl_err_*.log')
+	File        = $true
+	Recurse     = $true
+	ErrorAction = 'SilentlyContinue'
+}
+Get-ChildItem @getChildItemParams | Remove-File -DelPeriod 1
 
 # 作業ディレクトリ
 $toastUpdateParams.Title = $script:downloadWorkDir
 $toastUpdateParams.Rate = [Float]( 2 / $totalCleanupSteps )
 Update-ProgressToast @toastUpdateParams
-Remove-UnMovedTempFile
-Get-ChildItem -Path $script:downloadWorkDir -Include @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a-Frag*', '*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*') -File -Recurse |
-	Remove-File -DelPeriod 0
+$workDirParams = @{
+	Path    = $script:downloadWorkDir
+	Include = @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a-Frag*',
+		'*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*')
+	File    = $true
+	Recurse = $true
+}
+Get-ChildItem @workDirParams | Remove-File -DelPeriod 0
 
 # ダウンロード先
 $toastUpdateParams.Title = $script:downloadBaseDir
@@ -129,20 +140,33 @@ Update-ProgressToast @toastUpdateParams
 Write-Output ($script:msg.DeleteFilesFailedToRename)
 Remove-UnRenamedTempFile
 if ($script:cleanupDownloadBaseDir) {
-	Get-ChildItem -Path $script:downloadBaseDir -Include @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a-Frag*', '*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*') -File -Recurse |
-		Remove-File -DelPeriod 0
+	$downloadDirParams = @{
+		Path        = $script:downloadBaseDir
+		Include     = @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a-Frag*',
+			'*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*')
+		File        = $true
+		Recurse     = $true
+		ErrorAction = 'SilentlyContinue'
+	}
+	Get-ChildItem @downloadDirParams | Remove-File -DelPeriod 0
 }
 
 # 移動先
 $toastUpdateParams.Title = $script:saveBaseDir
 $toastUpdateParams.Rate = 1
 Update-ProgressToast @toastUpdateParams
-if ($script:cleanupSaveBaseDir)	{
-	if ($script:saveBaseDir) {
-		foreach ($saveDir in $script:saveBaseDirArray) {
-			Get-ChildItem -Path $saveDir -Include @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a-Frag*', '*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*') -File -Recurse |
-				Remove-File -DelPeriod 0
+if ($script:cleanupSaveBaseDir -and $script:saveBaseDir) {
+	$script:saveDirArray = $script:saveBaseDirArray.ToArray()
+	$saveDirArray | ForEach-Object {
+		$saveDir = $_
+		$saveDirParams = @{
+			Path    = $saveDir
+			Include = @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a-Frag*',
+				'*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*')
+			File    = $true
+			Recurse = $true
 		}
+		Get-ChildItem @saveDirParams | Remove-File -DelPeriod 0
 	}
 }
 

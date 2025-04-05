@@ -19,7 +19,7 @@
 	.NOTES
 		前提条件:
 		- Windows環境で実行する必要があります
-		- PowerShell 7.0以上が必要です
+		- PowerShell 7.0以上を推奨です
 		- WPFアセンブリが必要です
 
 		主な機能:
