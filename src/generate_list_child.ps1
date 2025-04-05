@@ -71,7 +71,7 @@ try {
 Get-Token
 foreach ($videoLink in $videoLinks) {
 	Write-Output ('　{0}' -f $videoLink)
-	Update-VideoList -Keyword ([Ref]$keyword) -VideoLink ([Ref]$videoLink)
+	Update-VideoList -Keyword $keyword -VideoLink $videoLink
 }
 
 Remove-Variable -Name keyword, videoLinks, videoLink -ErrorAction SilentlyContinue

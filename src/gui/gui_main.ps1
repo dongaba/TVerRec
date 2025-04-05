@@ -110,7 +110,7 @@ function Sync-WpfEvents {
 }
 
 # 最大行数以上の実行ログをクリア
-function Limit-LogLines {
+function Limit-LogLine {
 	<#
 		.SYNOPSIS
 			ログの行数を制限します。
@@ -129,7 +129,7 @@ function Limit-LogLines {
 			System.Void
 
 		.EXAMPLE
-			Limit-LogLines -richTextBox $outText -limit 1000
+			Limit-LogLine -richTextBox $outText -limit 1000
 	#>
 	[OutputType([Void])]
 	Param (
@@ -170,7 +170,7 @@ function Out-ExecutionLog {
 		[parameter(Mandatory = $false)][String]$message = '',
 		[parameter(Mandatory = $false)][String]$type = 'Output'
 	)
-	if ($script:guiMaxExecLogLines -gt 0) { Limit-LogLines $outText $script:guiMaxExecLogLines }
+	if ($script:guiMaxExecLogLines -gt 0) { Limit-LogLine $outText $script:guiMaxExecLogLines }
 	$rtfRange = [System.Windows.Documents.TextRange]::new($outText.Document.ContentEnd, $outText.Document.ContentEnd)
 	if ($type -eq 'Output') { $rtfRange.Text = ("{0}`n" -f $Message) }
 	else { $rtfRange.Text = ("{0}: {1}`n" -f $type, $Message) }

@@ -184,7 +184,7 @@ foreach ($keyword in $keywords) {
 			Update-ProgressToast2Row @toastUpdateParams
 			Write-Output ('　{0}/{1} - {2}' -f $videoNum, $videoTotal, $videoLink)
 			# TVer番組ダウンロードのメイン処理
-			Update-VideoList -Keyword ([Ref]$keyword) -VideoLink ([Ref]$videoLink)
+			Update-VideoList -Keyword $keyword -VideoLink $videoLink
 		}
 	}
 	#----------------------------------------------------------------------

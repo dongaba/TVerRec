@@ -245,7 +245,7 @@ function ConvertTo-UnixTime {
 #----------------------------------------------------------------------
 # ファイル名・ディレクトリ名に禁止文字の削除
 #----------------------------------------------------------------------
-function Get-FileNameWoInvalidChars {
+function Get-FileNameWoInvalidChar {
 	<#
 		.SYNOPSIS
 			ファイル名に使用できない無効な文字を削除し、安全なファイル名を生成します。
@@ -268,19 +268,19 @@ function Get-FileNameWoInvalidChars {
 			- 無効な文字を削除した後の安全なファイル名。
 
 		.EXAMPLE
-			PS> Get-FileNameWoInvalidChars -name "invalid:file*name?.txt"
+			PS> Get-FileNameWoInvalidChar -name "invalid:file*name?.txt"
 			"invalid-filename-.txt"
 
 			Windows のファイル名に使用できない `:` `*` `?` を削除または置換。
 
 		.EXAMPLE
-			PS> Get-FileNameWoInvalidChars -name "test/|<>file"
+			PS> Get-FileNameWoInvalidChar -name "test/|<>file"
 			"test-file"
 
 			Linux/Mac で問題となる `/` `|` `<>` も削除。
 
 		.EXAMPLE
-			PS> Get-FileNameWoInvalidChars -name "file--name--test"
+			PS> Get-FileNameWoInvalidChar -name "file--name--test"
 			"file-name-test"
 
 			連続した `-` を一つに統一。
@@ -688,34 +688,48 @@ function Remove-File {
 			- マルチスレッド処理時は `$script:multithreadNum` に従い、並列実行数が制限される。
 			- ファイル削除時のエラーは `Warning` として記録される。
 	#>
-	[CmdletBinding()]
+	[CmdletBinding(SupportsShouldProcess = $true)]
 	[OutputType([Void])]
 	Param (
 		[parameter(Mandatory = $true)][System.IO.FileInfo]$basePath,
 		[Parameter(Mandatory = $true)][String[]]$conditions,
 		[Parameter(Mandatory = $true)][int32]$delPeriod
 	)
-	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $basePath)
-	$limitDateTime = (Get-Date).AddDays(-1 * $delPeriod)
-	if ($script:enableMultithread) {
-		Write-Debug ('Multithread Processing Enabled')
-		# 並列化が有効の場合は並列化
-		try {
-			$conditions | ForEach-Object -Parallel {
-				Write-Output ('　{0}' -f (Join-Path $using:basePath $_))
-				(Get-ChildItem -LiteralPath $using:basePath -Recurse -File -Filter $_ -ErrorAction SilentlyContinue).Where({ $_.LastWriteTime -lt $using:limitDateTime }) | Remove-Item -Force -ErrorAction SilentlyContinue | Out-Null
-			} -ThrottleLimit $script:multithreadNum
-		} catch { Write-Warning ($script:msg.FileCannotBeDeleted) }
-	} else {
-		# 並列化が無効の場合は従来型処理
-		try {
-			foreach ($condition in $conditions) {
-				Write-Output ('　{0}' -f (Join-Path $basePath $condition))
-				(Get-ChildItem -LiteralPath $basePath -Recurse -File -Filter $condition -ErrorAction SilentlyContinue).Where({ $_.LastWriteTime -lt $limitDateTime }) | Remove-Item -Force -ErrorAction SilentlyContinue | Out-Null
-			}
-		} catch { Write-Warning ($script:msg.FileCannotBeDeleted) }
+	begin {
+		Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $basePath)
+		$limitDateTime = (Get-Date).AddDays(-1 * $delPeriod)
+		$targetFiles = @()
+		if ($script:enableMultithread) {
+			Write-Debug ('Multithread Processing Enabled')
+			# 並列化が有効の場合は並列化
+			try {
+				$targetFiles = $conditions | ForEach-Object -Parallel {
+					Write-Information ('　{0}' -f (Join-Path $using:basePath $_))
+					Get-ChildItem -LiteralPath $using:basePath -Recurse -File -Filter $_ -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -lt $using:limitDateTime } | Select-Object -ExpandProperty FullName
+				} -ThrottleLimit $script:multithreadNum
+			} catch { Write-Warning ($script:msg.FileCannotBeDeleted) }
+		} else {
+			# 並列化が無効の場合は従来型処理
+			try {
+				foreach ($condition in $conditions) {
+					Write-Information ('　{0}' -f (Join-Path $basePath $condition))
+					$targetFiles += Get-ChildItem -LiteralPath $basePath -Recurse -File -Filter $condition -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -lt $limitDateTime } | Select-Object -ExpandProperty FullName
+				}
+			} catch { Write-Warning ($script:msg.FileCannotBeDeleted) }
+		}
 	}
-	Remove-Variable -Name basePath, conditions, delPeriod, limitDateTime, condition -ErrorAction SilentlyContinue
+	process {
+		foreach ($file in $targetFiles) {
+			try {
+				if ($PSCmdlet.ShouldProcess($file, 'Remove file')) {
+					Remove-Item -LiteralPath $file -Force -ErrorAction Stop
+				}
+			} catch { Write-Warning ('{0} : {1}' -f $file, $script:msg.FileCannotBeDeleted) }
+		}
+	}
+	end {
+		Remove-Variable -Name basePath, conditions, delPeriod, limitDateTime, condition -ErrorAction SilentlyContinue
+	}
 }
 
 #----------------------------------------------------------------------
