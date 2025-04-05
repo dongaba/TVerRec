@@ -419,7 +419,7 @@ function Format-HistoryRecord {
 			- videoValidated: 検証状態
 
 		.EXAMPLE
-			$historyRecord = Format-HistoryRecord -videoInfo ([ref]$videoInfo)
+			$historyRecord = Format-HistoryRecord -videoInfo $videoInfo
 
 		.NOTES
 			この関数は以下の処理を行います：
@@ -427,7 +427,7 @@ function Format-HistoryRecord {
 			2. ダウンロード履歴レコードの形式に整形
 			3. 整形したレコードを返す
 	#>
-	Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
+	Param ([Parameter(Mandatory = $true)][PSCustomObject]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	return [PSCustomObject]@{
 		videoPage       = $videoInfo.episodePageURL
@@ -1547,15 +1547,24 @@ function Remove-SpecialNote {
 			3. 削除後、余分な空白を除去
 			4. 処理後のテキストを返す
 	#>
+	[CmdletBinding(SupportsShouldProcess = $true)]
 	Param ([Parameter(Mandatory = $true)][String]$text)
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	# 特殊文字の位置を取得し、長さを計算
-	$length1 = [Math]::Max(0, $text.IndexOf('》') - $text.IndexOf('《'))
-	$length2 = [Math]::Max(0, $text.IndexOf('】') - $text.IndexOf('【'))
-	# 10文字以上あれば特殊文字とその間を削除
-	if (($length1 -gt 10) -or ($length2 -gt 10)) { $text = (($text -replace '《.*?》|【.*?】', '') -replace '\s+', ' ').Trim() }
-	return $text
-	Remove-Variable -Name text, length1, length2 -ErrorAction SilentlyContinue
+	begin {
+		Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+		# 特殊文字の位置を取得し、長さを計算
+		$length1 = [Math]::Max(0, $text.IndexOf('》') - $text.IndexOf('《'))
+		$length2 = [Math]::Max(0, $text.IndexOf('】') - $text.IndexOf('【'))
+	}
+	process {
+		if ($PSCmdlet.ShouldProcess($text, 'Trim characters')) {
+			# 10文字以上あれば特殊文字とその間を削除
+			if (($length1 -gt 10) -or ($length2 -gt 10)) { $text = (($text -replace '《.*?》|【.*?】', '') -replace '\s+', ' ').Trim() }
+		}
+	}
+	end {
+		return $text
+		Remove-Variable -Name text, length1, length2 -ErrorAction SilentlyContinue
+	}
 }
 
 #----------------------------------------------------------------------
@@ -1627,7 +1636,7 @@ function Invoke-VideoDownload {
 	if ($DebugPreference -ne 'SilentlyContinue') { Show-VideoDebugInfo ([Ref]$videoInfo) }
 	if ($force) {
 		$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
-		$newVideo = Format-HistoryRecord ([Ref]$videoInfo)
+		$newVideo = Format-HistoryRecord $videoInfo
 	} else {
 		<# * 状態の振り分け設定
 			* ここまで来ているということはEpisodeIDでは履歴とマッチしなかったということ
@@ -1662,7 +1671,7 @@ function Invoke-VideoDownload {
 						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
 						$videoInfo.fileName = '-- IGNORED --'
 						$videoInfo.fileRelPath = '-- IGNORED --'
-						$newVideo = Format-HistoryRecord ([Ref]$videoInfo) ; $skipDownload = $true
+						$newVideo = Format-HistoryRecord $videoInfo ; $skipDownload = $true
 						break
 					}
 				}
@@ -1670,7 +1679,7 @@ function Invoke-VideoDownload {
 				if (!$skipDownload) {
 					Write-Output ($script:msg.DownloadEpisodeIdChanged)
 					$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
-					$newVideo = Format-HistoryRecord ([Ref]$videoInfo)
+					$newVideo = Format-HistoryRecord $videoInfo
 				}
 			} else {
 				# 履歴ファイルに存在せず、実ファイルも存在せず、ダウンロード対象外リストと合致	→無視する
@@ -1681,7 +1690,7 @@ function Invoke-VideoDownload {
 						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
 						$videoInfo.fileName = '-- IGNORED --'
 						$videoInfo.fileRelPath = '-- IGNORED --'
-						$newVideo = Format-HistoryRecord ([Ref]$videoInfo) ; $skipDownload = $true
+						$newVideo = Format-HistoryRecord $videoInfo ; $skipDownload = $true
 						break
 					}
 				}
@@ -1689,7 +1698,7 @@ function Invoke-VideoDownload {
 				if (!$skipDownload) {
 					Write-Output ($script:msg.DownloadEpisodeAdded)
 					$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
-					$newVideo = Format-HistoryRecord ([Ref]$videoInfo)
+					$newVideo = Format-HistoryRecord $videoInfo
 				}
 			}
 		} else {
@@ -1697,12 +1706,12 @@ function Invoke-VideoDownload {
 				# 履歴ファイルに存在する	→スキップして次のファイルに
 				Write-Warning ($script:msg.DownloadHistExists)
 				$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '1' ; $videoInfo.fileName = '-- SKIPPED --'
-				$newVideo = Format-HistoryRecord ([Ref]$videoInfo) ; $skipDownload = $true
+				$newVideo = Format-HistoryRecord $videoInfo ; $skipDownload = $true
 			} elseif (Test-Path $videoInfo.filePath) {
 				# 履歴ファイルに存在しないが、実ファイルが存在する	→検証だけする
 				Write-Warning ($script:msg.DownloadFileExists)
 				$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0' ; $videoInfo.fileName = '-- SKIPPED --'
-				$newVideo = Format-HistoryRecord ([Ref]$videoInfo) ; $skipDownload = $true
+				$newVideo = Format-HistoryRecord $videoInfo ; $skipDownload = $true
 			} else {
 				# 履歴ファイルに存在せず、実ファイルも存在せず、ダウンロード対象外リストと合致	→無視する
 				$ignoreTitles = @(Read-IgnoreList)
@@ -1710,7 +1719,7 @@ function Invoke-VideoDownload {
 					if (($videoInfo.fileName -like ('*{0}*' -f $ignoreTitle)) -or ($videoInfo.seriesName -like ('*{0}*' -f $ignoreTitle))) {
 						Update-IgnoreList $ignoreTitle ; Write-Warning ($script:msg.IgnoreEpisodeAdded)
 						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0' ; $videoInfo.fileName = '-- IGNORED --' ; $videoInfo.fileRelPath = '-- IGNORED --'
-						$newVideo = Format-HistoryRecord ([Ref]$videoInfo) ; $skipDownload = $true
+						$newVideo = Format-HistoryRecord $videoInfo ; $skipDownload = $true
 						break
 					}
 				}
@@ -1718,7 +1727,7 @@ function Invoke-VideoDownload {
 				if (!$skipDownload) {
 					Write-Output ($script:msg.DownloadEpisodeAdded)
 					$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
-					$newVideo = Format-HistoryRecord ([Ref]$videoInfo)
+					$newVideo = Format-HistoryRecord $videoInfo
 				}
 			}
 		}
@@ -1967,10 +1976,21 @@ function Suspend-Process () {
     2. ファイル名が特定のパターンに一致するファイルを削除
 #>
 function Remove-UnMovedTempFile {
-	[CmdletBinding()]
+	[CmdletBinding(SupportsShouldProcess = $true)]
 	Param ()
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	(Get-ChildItem -Path $script:downloadWorkDir -File).Where({ $_.Name -match '^ep[a-z0-9]{8}\..*\.(mp4|ts)$' }) | Remove-Item -Force -ErrorAction SilentlyContinue
+	begin {
+		Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+		$targetFiles = (Get-ChildItem -Path $script:downloadWorkDir -File).Where({ $_.Name -match '^ep[a-z0-9]{8}\..*(\.)*(mp4|ts)$' })
+	}
+	process {
+		foreach ($file in $targetFiles) {
+			try {
+				if ($PSCmdlet.ShouldProcess($file, 'Remove file')) {
+					Remove-Item -LiteralPath $file -Force -ErrorAction Stop
+				}
+			} catch { Write-Warning ('{0} : {1}' -f $file, $script:msg.FileCannotBeDeleted) }
+		}
+	}
 }
 
 #----------------------------------------------------------------------
@@ -1994,15 +2014,26 @@ function Remove-UnRenamedTempFile {
 			1. ダウンロード先フォルダ内のファイルを検索
 			2. ファイル名が特定のパターンに一致するファイルを削除
 	#>
-	[CmdletBinding()]
+	[CmdletBinding(SupportsShouldProcess = $true)]
 	Param ()
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	if ($IsWindows) {
-		$forCmd = "for %E in (mp4 ts) do for /r `"$script:downloadBaseDir`" %F in (ep*.%E) do @echo %F"
-		(& cmd /c $forCmd).Where({ ($_ -cmatch 'ep[a-z0-9]{8}.mp4$') -or ($_ -cmatch 'ep[a-z0-9]{8}.ts$') }) | Remove-Item -Force -ErrorAction SilentlyContinue
-	} else {
-		$findCmd = "find `"$script:downloadBaseDir`" -type f -name 'ep*.mp4' -or -type f -name 'ep*.ts'"
-		(& sh -c $findCmd).Where({ ($_ -cmatch 'ep[a-z0-9]{8}.mp4$') -or ($_ -cmatch 'ep[a-z0-9]{8}.ts$') }) | Remove-Item -Force -ErrorAction SilentlyContinue
+	begin {
+		Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+		if ($IsWindows) {
+			$forCmd = "for %E in (mp4 ts) do for /r `"$script:downloadBaseDir`" %F in (ep*.%E) do @echo %F"
+			$targetFiles = @(& cmd /c $forCmd).Where({ ($_ -cmatch 'ep[a-z0-9]{8}.mp4$') -or ($_ -cmatch 'ep[a-z0-9]{8}.ts$') })
+		} else {
+			$findCmd = "find `"$script:downloadBaseDir`" -type f -name 'ep*.mp4' -or -type f -name 'ep*.ts'"
+			$targetFiles = @(& sh -c $findCmd).Where({ ($_ -cmatch 'ep[a-z0-9]{8}.mp4$') -or ($_ -cmatch 'ep[a-z0-9]{8}.ts$') })
+		}
+	}
+	process {
+		foreach ($file in $targetFiles) {
+			try {
+				if ($PSCmdlet.ShouldProcess($file, 'Remove file')) {
+					Remove-Item -LiteralPath $file -Force -ErrorAction Stop
+				}
+			} catch { Write-Warning ('{0} : {1}' -f $file, $script:msg.FileCannotBeDeleted) }
+		}
 	}
 }
 #endregion ダウンロード失敗ファイル削除関連
