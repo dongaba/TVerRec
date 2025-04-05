@@ -3,6 +3,65 @@
 #		不要ファイル削除処理スクリプト
 #
 ###################################################################################
+<#
+	.SYNOPSIS
+		TVerRecの不要ファイルとディレクトリを削除するスクリプト
+
+	.DESCRIPTION
+		ダウンロード処理で生成された不要ファイルやディレクトリを削除します。
+		以下の処理を順番に実行します：
+		1. 中断されたダウンロードで生成された一時ファイルの削除
+		2. ダウンロード対象外の番組の削除
+		3. 空ディレクトリの削除
+
+	.PARAMETER guiMode
+		オプションのパラメータ。GUIモードで実行するかどうかを指定します。
+
+	.NOTES
+		前提条件:
+		- Windows環境で実行する必要があります
+		- PowerShell 7.0以上が必要です
+		- TVerRecの設定ファイルが正しく設定されている必要があります
+
+		削除対象:
+		1. 一時ファイル
+		- ログファイル（半日以上前のもの）
+		- ダウンロード中断ファイル（*.ytdl, *.part*）
+		- サムネイル画像（*.jpg, *.webp）
+		- 字幕ファイル（*.srt, *.vtt）
+		- その他の一時ファイル
+		2. ダウンロード対象外番組
+		- ignore_list.txtに記載された番組
+		3. 空ディレクトリ
+		- 隠しファイルのみのディレクトリを含む
+
+		処理の流れ:
+		1. 一時ファイルの削除
+		1.1 ログディレクトリのクリーンアップ
+		1.2 作業ディレクトリのクリーンアップ
+		1.3 ダウンロードディレクトリのクリーンアップ
+		1.4 保存先ディレクトリのクリーンアップ（設定時）
+		2. 対象外番組の削除
+		2.1 ignore_list.txtの読み込み
+		2.2 対象ディレクトリの特定
+		2.3 並列処理による削除
+		3. 空ディレクトリの削除
+		3.1 空ディレクトリの特定
+		3.2 並列処理による削除
+
+	.EXAMPLE
+		# 通常モードで実行
+		.\delete_trash.ps1
+
+		# GUIモードで実行
+		.\delete_trash.ps1 gui
+
+	.OUTPUTS
+		System.Void
+		各処理の実行結果をコンソールに出力します。
+		進捗状況はトースト通知でも表示されます。
+#>
+
 Set-StrictMode -Version Latest
 $script:guiMode = if ($args) { [String]$args[0] } else { '' }
 
@@ -51,7 +110,7 @@ $toastUpdateParams = @{
 	Group     = 'Delete'
 }
 Update-ProgressToast @toastUpdateParams
-Remove-Files `
+Remove-File `
 	-BasePath $script:logDir `
 	-Conditions @('ffmpeg_error_*.log', 'ffmpeg_err_*.log', 'ytdl_out_*.log', 'ytdl_err_*.log') `
 	-DelPeriod 1
@@ -60,9 +119,10 @@ Remove-Files `
 $toastUpdateParams.Title = $script:downloadWorkDir
 $toastUpdateParams.Rate = [Float]( 2 / $totalCleanupSteps )
 Update-ProgressToast @toastUpdateParams
-Remove-Files `
+Remove-UnMovedTempFile
+Remove-File `
 	-BasePath $script:downloadWorkDir `
-	-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a', '*.live_chat.json', '*.mp4-Frag*', '*.ts-Frag*') `
+	-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a-Frag*', '*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*') `
 	-DelPeriod 0
 
 # ダウンロード先
@@ -71,11 +131,11 @@ $toastUpdateParams.Rate = [Float]( 3 / $totalCleanupSteps )
 Update-ProgressToast @toastUpdateParams
 # リネームに失敗したファイルを削除
 Write-Output ($script:msg.DeleteFilesFailedToRename)
-Remove-UnRenamedTempFiles
+Remove-UnRenamedTempFile
 if ($script:cleanupDownloadBaseDir) {
-	Remove-Files `
+	Remove-File `
 		-BasePath $script:downloadBaseDir `
-		-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a', '*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*') `
+		-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a-Frag*', '*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*') `
 		-DelPeriod 0
 }
 
@@ -86,9 +146,9 @@ Update-ProgressToast @toastUpdateParams
 if ($script:cleanupSaveBaseDir)	{
 	if ($script:saveBaseDir) {
 		foreach ($saveDir in $script:saveBaseDirArray) {
-			Remove-Files `
+			Remove-File `
 				-BasePath $saveDir `
-				-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a', '*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*') `
+				-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a-Frag*', '*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*') `
 				-DelPeriod 0
 		}
 	}

@@ -3,6 +3,64 @@
 #		Windows用ffmpeg最新化処理スクリプト
 #
 ###################################################################################
+<#
+	.SYNOPSIS
+		TVerRecで使用するffmpegを最新バージョンに更新するスクリプト
+
+	.DESCRIPTION
+		ffmpegの最新バージョンをダウンロードし、インストールします。
+		Windows、Linux、macOSの各プラットフォームに対応しています。
+		以下の処理を実行します：
+		1. 現在のバージョン確認
+		2. 最新バージョンの確認
+		3. 必要に応じたダウンロードと更新
+		4. インストール後の検証
+
+	.NOTES
+		前提条件:
+		- PowerShell 7.0以上が必要です
+		- インターネット接続が必要です
+		- TVerRecの設定ファイルが正しく設定されている必要があります
+		- 十分なディスク容量が必要です
+
+		対応プラットフォーム:
+		1. Windows
+		- x64, Arm64, x86アーキテクチャに対応
+		- yt-dlp/FFmpeg-Buildsからダウンロード
+		2. Linux
+		- x64, Arm64アーキテクチャに対応
+		- yt-dlp/FFmpeg-Buildsからダウンロード
+		3. macOS
+		- Intel(amd64), Apple Silicon(arm64)に対応
+		- ffmpeg.martin-riedl.deからダウンロード
+
+		処理の流れ:
+		1. 現在の環境確認
+		1.1 OSとアーキテクチャの判定
+		1.2 現在のバージョン確認
+		2. 最新版の確認
+		2.1 リポジトリの確認
+		2.2 最新バージョンの取得
+		3. 更新処理
+		3.1 ダウンロード
+		3.2 アーカイブの展開
+		3.3 実行ファイルの配置
+		4. 検証
+		4.1 実行権限の設定
+		4.2 バージョン確認
+
+	.EXAMPLE
+		# スクリプトの実行
+		.\update_ffmpeg.ps1
+
+	.OUTPUTS
+		System.Void
+		処理の進行状況と結果をコンソールに出力します。
+		- 現在のバージョン
+		- 最新のバージョン
+		- 更新の成功/失敗
+#>
+
 Set-StrictMode -Version Latest
 Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
 

@@ -3,6 +3,51 @@
 #		TVer固有関数スクリプト
 #
 ###################################################################################
+<#
+	.SYNOPSIS
+		TVerRecのTVer固有の機能を提供する関数群
+
+	.DESCRIPTION
+		TVerRecのTVer固有の機能を実装した関数群を提供します。
+		以下の主要な機能を含みます：
+		1. TVerのAPIトークン取得
+		2. 番組検索と情報取得
+		3. ダウンロードリストの管理
+		4. 番組情報の解析と整形
+
+	.NOTES
+		主要な機能:
+		1. APIアクセス
+		- トークン取得と管理
+		- 各種APIエンドポイントへのアクセス
+		- レスポンスの解析
+
+		2. 番組検索
+		- キーワードによる検索
+		- シリーズ/エピソード情報の取得
+		- タレント/タグによる検索
+		- マイページ/トップページからの情報取得
+
+		3. 情報管理
+		- 番組情報の整形
+		- ダウンロードリストの作成
+		- 無視リストとの照合
+
+		4. 地域制限対応
+		- 日本のIPアドレス取得
+		- GeoIP情報の管理
+
+		含まれる主要関数:
+		- Get-Token: TVerのAPIトークンを取得
+		- Get-VideoLinksFromKeyword: キーワードから番組リンクを取得
+		- Get-VideoInfo: 番組の詳細情報を取得
+		- Update-VideoList: ダウンロードリストを更新
+		- Get-JpIP: 日本のIPアドレスを取得
+
+	.LINK
+		https://github.com/dongaba/TVerRec
+#>
+
 Set-StrictMode -Version Latest
 Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
@@ -10,6 +55,20 @@ Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 # TVerのAPI Tokenを取得
 #----------------------------------------------------------------------
 function Get-Token () {
+	<#
+		.SYNOPSIS
+			TVerのAPIトークンを取得します。
+
+		.DESCRIPTION
+			TVerのプラットフォームAPIを使用するために必要なトークンを取得します。
+			この関数は匿名ユーザーとしてのトークンを取得します。
+
+		.EXAMPLE
+			Get-Token
+
+		.NOTES
+			この関数は内部で使用される変数$script:platformUIDと$script:platformTokenを設定します。
+	#>
 	[CmdletBinding()]
 	[OutputType([Void])]
 	Param ()
@@ -28,6 +87,8 @@ function Get-Token () {
 		$tokenResponse = Invoke-RestMethod -Uri $tverTokenURL -Method 'POST' -Headers $httpHeader -Body $requestBody -TimeoutSec $script:timeoutSec
 		$script:platformUID = $tokenResponse.Result.platform_uid
 		$script:platformToken = $tokenResponse.Result.platform_token
+		Write-Debug	('Platform UID: {0}' -f $script:platformUID)
+		Write-Debug	('Platform Token: {0}' -f $script:platformToken)
 	} catch { Throw ($script:msg.TokenRetrievalFailed) }
 	Remove-Variable -Name tverTokenURL, httpHeader, requestBody, tokenResponse -ErrorAction SilentlyContinue
 }
@@ -36,9 +97,43 @@ function Get-Token () {
 # キーワードから番組のリンクへの変換
 #----------------------------------------------------------------------
 function Get-VideoLinksFromKeyword {
+	<#
+		.SYNOPSIS
+			キーワードからTVerの番組リンクを取得します。
+
+		.DESCRIPTION
+			指定されたキーワードに基づいて、TVerの番組リンクを取得します。
+			キーワードは以下の形式で指定できます：
+			- episodes/{id}: 特定のエピソード
+			- series/{id}: シリーズ
+			- talents/{id}: タレント
+			- tag/{id}: タグ
+			- ranking/{id}: ランキング
+			- new/{id}: 新着
+			- end/{id}: 終了間近
+			- mypage/{page}: マイページ
+			- toppage: トップページ
+			- sitemap: サイトマップ
+
+		.PARAMETER keyword
+			検索するキーワードを指定します。
+
+		.EXAMPLE
+			Get-VideoLinksFromKeyword -keyword "episodes/123456"
+
+		.EXAMPLE
+			Get-VideoLinksFromKeyword -keyword "series/789012"
+
+		.OUTPUTS
+			System.Collections.Generic.List[String]
+			取得したエピソードリンクのリストを返します。
+
+		.NOTES
+			この関数は内部で他の関数を呼び出して、様々な種類のリンクを取得します。
+	#>
 	[CmdletBinding()]
 	[OutputType([System.Collections.Generic.List[String]])]
-	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String][Ref]$keyword)
+	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$keyword)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$linkCollection = [PSCustomObject]@{
 		episodeLinks     = @{}
@@ -50,7 +145,7 @@ function Get-VideoLinksFromKeyword {
 	}
 	if ($keyword.IndexOf('/') -gt 0) {
 		$key = $keyword.split(' ')[0].split("`t")[0].Split('/')[0]
-		$tverID = Remove-Comment(($keyword.Replace("$key/", '')).Trim())
+		$tverID = Get-ContentWoComment(($keyword.Replace("$key/", '')).Trim())
 	} else { $key = '' ; $tverID = '' }
 	if (($keyword -eq 'sitemap') -or ($keyword -eq 'toppage')) { $key = $keyword }
 	Invoke-StatisticsCheck -Operation 'search' -TVerType $key -TVerID $tverID
@@ -85,6 +180,34 @@ function Get-VideoLinksFromKeyword {
 # エピソード以外のリンクをためたバッファを順次API呼び出し
 #----------------------------------------------------------------------
 function Get-LinkFromBuffer {
+	<#
+		.SYNOPSIS
+			バッファに格納されたリンクからエピソードリンクを取得します。
+
+		.DESCRIPTION
+			エピソード以外のリンク（シリーズ、タレント、スペシャルなど）を格納したバッファから、
+			実際のエピソードリンクを取得します。
+
+		.PARAMETER tverIDs
+			処理するTVerのIDの配列。
+
+		.PARAMETER tverIDType
+			リンクの種類を指定します。以下のいずれかを指定できます：
+			- specialMainLinks
+			- specialLinks
+			- talentLinks
+			- seriesLinks
+			- seasonLinks
+
+		.PARAMETER linkCollection
+			リンクを格納するオブジェクトへの参照。
+
+		.EXAMPLE
+			Get-LinkFromBuffer -tverIDs @("123456", "789012") -tverIDType "seriesLinks" -linkCollection $linkCollection
+
+		.NOTES
+			この関数は内部でGet-LinkFromKeywordを呼び出して、実際のエピソードリンクを取得します。
+	#>
 	[CmdletBinding()]
 	[OutputType([Void])]
 	Param (
@@ -113,6 +236,43 @@ function Get-LinkFromBuffer {
 # IDまたはキーワードによる番組検索から番組ページのLinkを取得
 #----------------------------------------------------------------------
 function Get-LinkFromKeyword {
+	<#
+		.SYNOPSIS
+			IDまたはキーワードを使用してTVerの番組リンクを取得します。
+
+		.DESCRIPTION
+			指定されたIDまたはキーワードを使用して、TVerのAPIを呼び出し、
+			番組のリンクを取得します。
+
+		.PARAMETER id
+			検索するIDまたはキーワード。
+
+		.PARAMETER linkType
+			リンクの種類を指定します。以下のいずれかを指定できます：
+			- seriesLinks
+			- seasonLinks
+			- talentLinks
+			- specialMainLinks
+			- specialLinks
+			- tag
+			- new
+			- end
+			- ranking
+			- keyword
+			- category
+
+		.PARAMETER linkCollection
+			リンクを格納するオブジェクトへの参照。
+
+		.EXAMPLE
+			Get-LinkFromKeyword -id "123456" -linkType "seriesLinks" -linkCollection $linkCollection
+
+		.EXAMPLE
+			Get-LinkFromKeyword -id "ドラマ" -linkType "keyword" -linkCollection $linkCollection
+
+		.NOTES
+			この関数は内部でGet-SearchResultを呼び出して、実際の検索結果を取得します。
+	#>
 	[CmdletBinding()]
 	[OutputType([Void])]
 	Param (
@@ -138,18 +298,53 @@ function Get-LinkFromKeyword {
 			$type = 'ranking' ; break
 		}
 		'category' { 'https://platform-api.tver.jp/service/api/v1/callCategoryHome/{0}' -f $id; break }
-		'keyword' { 'https://platform-api.tver.jp/service/api/v1/callKeywordSearch'; $keyword = $id ; break }
+		'keyword' { 'https://platform-api.tver.jp/service/api/v2/callKeywordSearch'; $type = 'keyword' ; $keyword = $id ; break }
 		default { Write-Warning $script:msg.InvalidTypeSpecified }
 	}
 	# 検索結果の取得
-	Get-SearchResults -baseURL $baseURL -Type $type -Keyword $keyword -LinkCollection ([Ref]$linkCollection)
+	Get-SearchResult -baseURL $baseURL -Type $type -Keyword $keyword -LinkCollection ([Ref]$linkCollection)
 	Remove-Variable -Name id, linkType, type, baseURL, keyword -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
 # 各種IDによる番組検索から番組ページのLinkを取得
 #----------------------------------------------------------------------
-function Get-SearchResults {
+function Get-SearchResult {
+	<#
+		.SYNOPSIS
+			TVerのAPIを使用して検索結果を取得します。
+
+		.DESCRIPTION
+			指定されたパラメータを使用してTVerのAPIを呼び出し、
+			検索結果を取得してリンクコレクションに追加します。
+
+		.PARAMETER baseURL
+			検索に使用するAPIのベースURL。
+
+		.PARAMETER type
+			検索の種類を指定します。
+
+		.PARAMETER keyword
+			キーワード検索の場合の検索キーワード。
+
+		.PARAMETER requireData
+			マイページ検索の場合に必要なデータ。
+
+		.PARAMETER loginRequired
+			ログインが必要かどうかを指定します。
+
+		.PARAMETER linkCollection
+			リンクを格納するオブジェクトへの参照。
+
+		.EXAMPLE
+			Get-SearchResult -baseURL "https://platform-api.tver.jp/service/api/v1/callSeriesSeasons/123456" -type "series" -linkCollection $linkCollection
+
+		.EXAMPLE
+			Get-SearchResult -baseURL "https://platform-api.tver.jp/service/api/v1/callKeywordSearch" -type "keyword" -keyword "ドラマ" -linkCollection $linkCollection
+
+		.NOTES
+			この関数は内部でTVerのAPIを呼び出し、結果を解析してリンクコレクションに追加します。
+	#>
 	[CmdletBinding()]
 	[OutputType([Void])]
 	Param (
@@ -217,6 +412,24 @@ function Get-SearchResults {
 # トップページから番組ページのLinkを取得
 #----------------------------------------------------------------------
 function Get-LinkFromTopPage {
+	<#
+		.SYNOPSIS
+			TVerのトップページから番組リンクを取得します。
+
+		.DESCRIPTION
+			TVerのトップページのコンテンツを解析し、表示されている番組のリンクを取得します。
+			トップページには様々な種類のコンテンツ（新着、ランキング、タレントなど）が表示されています。
+
+		.PARAMETER linkCollection
+			リンクを格納するオブジェクトへの参照。
+
+		.EXAMPLE
+			Get-LinkFromTopPage -linkCollection $linkCollection
+
+		.NOTES
+			この関数はTVerのトップページAPIを呼び出し、表示されているコンテンツから
+			番組リンクを抽出します。
+	#>
 	[CmdletBinding()]
 	[OutputType([Void])]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject][Ref]$linkCollection)
@@ -254,6 +467,24 @@ function Get-LinkFromTopPage {
 # サイトマップから番組ページのLinkを取得
 #----------------------------------------------------------------------
 function Get-LinkFromSiteMap {
+	<#
+		.SYNOPSIS
+			TVerのサイトマップから番組リンクを取得します。
+
+		.DESCRIPTION
+			TVerのサイトマップを解析し、公開されている番組のリンクを取得します。
+			サイトマップには様々な種類のコンテンツ（エピソード、シリーズ、スペシャルなど）が含まれています。
+
+		.PARAMETER linkCollection
+			リンクを格納するオブジェクトへの参照。
+
+		.EXAMPLE
+			Get-LinkFromSiteMap -linkCollection $linkCollection
+
+		.NOTES
+			この関数はTVerのサイトマップXMLを取得し、その中から番組リンクを抽出します。
+			サイトマップには重複したリンクが含まれる可能性があるため、重複は除去されます。
+	#>
 	[CmdletBinding()]
 	[OutputType([Void])]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject][Ref]$linkCollection)
@@ -315,6 +546,38 @@ function Get-LinkFromSiteMap {
 # マイページから番組ページのLinkを取得
 #----------------------------------------------------------------------
 function Get-LinkFromMyPage {
+	<#
+		.SYNOPSIS
+			TVerのマイページから番組リンクを取得します。
+
+		.DESCRIPTION
+			TVerのマイページのコンテンツを解析し、ユーザーに関連する番組のリンクを取得します。
+			マイページには以下のようなコンテンツが含まれます：
+			- お気に入り
+			- あとで見る
+			- 視聴履歴
+			- お気に入り
+
+		.PARAMETER page
+			取得するマイページの種類を指定します：
+			- fav: お気に入り
+			- later: あとで見る
+			- resume: 視聴履歴
+			- favorite: お気に入り
+
+		.PARAMETER linkCollection
+			リンクを格納するオブジェクトへの参照。
+
+		.EXAMPLE
+			Get-LinkFromMyPage -page "fav" -linkCollection $linkCollection
+
+		.EXAMPLE
+			Get-LinkFromMyPage -page "later" -linkCollection $linkCollection
+
+		.NOTES
+			この関数はTVerのマイページAPIを呼び出し、ユーザーに関連するコンテンツから
+			番組リンクを抽出します。ログインが必要な場合があります。
+	#>
 	[CmdletBinding()]
 	[OutputType([Void])]
 	Param (
@@ -330,7 +593,7 @@ function Get-LinkFromMyPage {
 		'favorite' { $baseURL = ('{0}/service/api/v2/callMyFavorite' -f $baseURLPrefix) ; $requireData = 'mylist' ; break }
 		default { Write-Warning ($script:msg.UnknownContentsType -f 'mypage', $page) }
 	}
-	Get-SearchResults -baseURL $baseURL -Type 'mypage' -RequireData $requireData -LoginRequired $loginRequired -LinkCollection ([Ref]$linkCollection)
+	Get-SearchResult -baseURL $baseURL -Type 'mypage' -RequireData $requireData -LoginRequired $loginRequired -LinkCollection ([Ref]$linkCollection)
 	Remove-Variable -Name baseURLPrefix, baseURL, requireData, loginRequired -ErrorAction SilentlyContinue
 }
 
@@ -338,6 +601,51 @@ function Get-LinkFromMyPage {
 # TVerのAPIを叩いて番組情報取得
 #----------------------------------------------------------------------
 function Get-VideoInfo {
+	<#
+		.SYNOPSIS
+			TVerの番組情報を取得します。
+
+		.DESCRIPTION
+			指定されたエピソードIDを使用して、TVerのAPIから番組の詳細情報を取得します。
+			取得される情報には以下のようなものがあります：
+			- シリーズ情報
+			- シーズン情報
+			- エピソード情報
+			- 放送局情報
+			- 放送日時
+			- 配信終了日時
+			- 番組説明
+
+		.PARAMETER episodeID
+			情報を取得するエピソードのID。
+
+		.EXAMPLE
+			Get-VideoInfo -episodeID "123456"
+
+		.OUTPUTS
+			PSCustomObject
+			以下のプロパティを持つオブジェクトを返します：
+			- seriesName: シリーズ名
+			- seriesID: シリーズID
+			- seriesPageURL: シリーズページのURL
+			- seasonName: シーズン名
+			- seasonID: シーズンID
+			- episodeNum: エピソード番号
+			- episodeID: エピソードID
+			- episodePageURL: エピソードページのURL
+			- episodeName: エピソード名
+			- mediaName: 放送局名
+			- providerName: 制作会社名
+			- broadcastDate: 放送日
+			- endTime: 配信終了日時
+			- versionNum: バージョン番号
+			- videoInfoURL: 動画情報のURL
+			- descriptionText: 番組説明
+
+		.NOTES
+			この関数はTVerのAPIを呼び出し、番組の詳細情報を取得します。
+			取得した情報は整形されて返されます。
+	#>
 	Param ([Parameter(Mandatory = $true)][String]$episodeID)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	#----------------------------------------------------------------------
@@ -347,25 +655,25 @@ function Get-VideoInfo {
 	try { $response = Invoke-RestMethod -Uri $tverVideoInfoURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec }
 	catch { Write-Warning ($script:msg.HttpOtherError -f $_.Exception.Message) ; return }
 	# シリーズ
-		<#
-		Series.Content.Titleだと複数シーズンがある際に現在メインで配信中のシリーズ名が返ってくることがある
-		Episode.Content.SeriesTitleだとSeries名+Season名が設定される番組もある
-		3.2.2からEpisode.Content.SeriesTitleを採用することとする。
-		理由は、Series.Content.Titleだとファイル名が冗長になることがあることと、複数シーズン配信時に最新シーズン名になってしまうことがあるため。
-		#>
-	$videoSeries = (Remove-SpecialCharacter (Get-NarrowChars ($response.Result.Episode.Content.SeriesTitle))).Trim()
+	<#
+		* Series.Content.Titleだと複数シーズンがある際に現在メインで配信中のシリーズ名が返ってくることがある
+		* Episode.Content.SeriesTitleだとSeries名+Season名が設定される番組もある
+		* 3.2.2からEpisode.Content.SeriesTitleを採用することとする。
+		* 理由は、Series.Content.Titleだとファイル名が冗長になることがあることと、複数シーズン配信時に最新シーズン名になってしまうことがあるため。
+	#>
+	$videoSeries = (Remove-SpecialCharacter (Get-NarrowChar ($response.Result.Episode.Content.SeriesTitle))).Trim()
 	$videoSeriesID = $response.Result.Series.Content.Id
 	$videoSeriesPageURL = ('https://tver.jp/series/{0}' -f $response.Result.Series.Content.Id)
 	# シーズン
-	$videoSeason = (Remove-SpecialCharacter (Get-NarrowChars ($response.Result.Season.Content.Title))).Trim()
+	$videoSeason = (Remove-SpecialCharacter (Get-NarrowChar ($response.Result.Season.Content.Title))).Trim()
 	$videoSeasonID = $response.Result.Season.Content.Id
 	# エピソード
-	$episodeName = (Remove-SpecialCharacter (Get-NarrowChars ($response.Result.Episode.Content.Title))).Trim()
+	$episodeName = (Remove-SpecialCharacter (Get-NarrowChar ($response.Result.Episode.Content.Title))).Trim()
 	$videoEpisodeID = $response.Result.Episode.Content.Id
 	$videoEpisodePageURL = ('https://tver.jp/episodes/{0}' -f $videoEpisodeID)
 	# 放送局
-	$mediaName = (Get-NarrowChars ($response.Result.Episode.Content.BroadcasterName)).Trim()
-	$providerName = (Get-NarrowChars ($response.Result.Episode.Content.ProductionProviderName)).Trim()
+	$mediaName = (Get-NarrowChar ($response.Result.Episode.Content.BroadcasterName)).Trim()
+	$providerName = (Get-NarrowChar ($response.Result.Episode.Content.ProductionProviderName)).Trim()
 	# 放送日
 	$broadcastDate = (($response.Result.Episode.Content.BroadcastDateLabel).Replace('ほか', '').Replace('放送分', '放送').Replace('配信分', '配信')).Trim()
 	# 配信終了日時
@@ -385,78 +693,78 @@ function Get-VideoInfo {
 		if ($script:proxyUrl) { $httpParams.Proxy = $script:proxyUrl }
 		$videoInfo = Invoke-RestMethod @httpParams
 		Write-Debug $videoInfo
-		$descriptionText = (Get-NarrowChars ($videoInfo.Description).Replace('&amp;', '&')).Trim()
-		$videoEpisodeNum = (Get-NarrowChars ($videoInfo.No)).Trim()
+		$descriptionText = (Get-NarrowChar ($videoInfo.Description).Replace('&amp;', '&')).Trim()
+		$videoEpisodeNum = (Get-NarrowChar ($videoInfo.No)).Trim()
 		# Streaks情報取得
 		if ($videoInfo.PSObject.Properties.Name -contains 'streaks') {
-			<#
-			$isStreaks = $true
-			$streaksRefID = $videoInfo.streaks.videoRefID
-			# $streaksMediaID = $videoInfo.streaks.mediaID
-			$streaksProjectID = $videoInfo.streaks.projectID
-			# Streaksキー取得
-			try {
-				$adTemplateJsonURL = ('https://player.tver.jp/player/ad_template.json')
-				$ati = (Invoke-RestMethod -Uri $adTemplateJsonURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec).$streaksProjectID.pc
-			} catch { Write-Warning ($script:msg.StreaksKeyRetrievalFailed -f $_.Exception.Message) ; return }
-			# m3u8 URL取得
-			try {
-				$streaksInfoBaseURL = 'https://playback.api.streaks.jp/v1/projects/{0}/medias/ref:{1}?ati={2}' -f $streaksProjectID, $streaksRefID, $ati
-				$httpHeader = @{
-					'Origin'           = 'https://tver.jp'
-					'Referer'          = 'https://tver.jp/'
-					'Forwarded'        = $script:jpIP
-					'Forwarded-For'    = $script:jpIP
-					'X-Forwarded'      = $script:jpIP
-					'X-Forwarded-For'  = $script:jpIP
-					'X-Originating-IP' = $script:jpIP
-				}
-				$httpParams = @{
-					Uri        = $streaksInfoBaseURL
-					Method     = 'GET'
-					Headers    = $httpHeader
-					TimeoutSec = $script:timeoutSec
-				}
-				if ($script:proxyUrl) { $httpParams.Proxy = $script:proxyUrl }
-				if ((Test-Path Variable:Script:proxyAuthRequired) -and ($script:proxyAuthRequired)) {
-					$proxyCredential = Get-Credential -Message 'Please enter your username and password for the proxy server.'
-					$httpParams.ProxyCredential = $proxyCredential
-				}
-				$m3u8URL = (Invoke-RestMethod @httpParams).sources.src
-			} catch { Write-Warning ($script:msg.StreaksM3U8RetrievalFailed -f $_.Exception.Message) ; $m3u8URL = '' }
-			else { $m3u8URL = '' }		#; $isStreaks = $false }
+			<# * StreaksからのM3U8情報取得
+				$isStreaks = $true
+				$streaksRefID = $videoInfo.streaks.videoRefID
+				# $streaksMediaID = $videoInfo.streaks.mediaID
+				$streaksProjectID = $videoInfo.streaks.projectID
+				# Streaksキー取得
+				try {
+					$adTemplateJsonURL = ('https://player.tver.jp/player/ad_template.json')
+					$ati = (Invoke-RestMethod -Uri $adTemplateJsonURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec).$streaksProjectID.pc
+				} catch { Write-Warning ($script:msg.StreaksKeyRetrievalFailed -f $_.Exception.Message) ; return }
+				# m3u8 URL取得
+				try {
+					$streaksInfoBaseURL = 'https://playback.api.streaks.jp/v1/projects/{0}/medias/ref:{1}?ati={2}' -f $streaksProjectID, $streaksRefID, $ati
+					$httpHeader = @{
+						'Origin'           = 'https://tver.jp'
+						'Referer'          = 'https://tver.jp/'
+						'Forwarded'        = $script:jpIP
+						'Forwarded-For'    = $script:jpIP
+						'X-Forwarded'      = $script:jpIP
+						'X-Forwarded-For'  = $script:jpIP
+						'X-Originating-IP' = $script:jpIP
+					}
+					$httpParams = @{
+						Uri        = $streaksInfoBaseURL
+						Method     = 'GET'
+						Headers    = $httpHeader
+						TimeoutSec = $script:timeoutSec
+					}
+					if ($script:proxyUrl) { $httpParams.Proxy = $script:proxyUrl }
+					if ((Test-Path Variable:Script:proxyAuthRequired) -and ($script:proxyAuthRequired)) {
+						$proxyCredential = Get-Credential -Message 'Please enter your username and password for the proxy server.'
+						$httpParams.ProxyCredential = $proxyCredential
+					}
+					$m3u8URL = (Invoke-RestMethod @httpParams).sources.src
+				} catch { Write-Warning ($script:msg.StreaksM3U8RetrievalFailed -f $_.Exception.Message) ; $m3u8URL = '' }
+				else { $m3u8URL = '' }		#; $isStreaks = $false }
 			#>
 		}
-		<#
 		# Brightcove情報取得
-		if ($videoInfo.PSObject.Properties.Name -contains 'video') {
-			$accountID = $videoInfo.video.accountID
-			$videoRefID = if ($videoInfo.video.PSObject.Properties.Name -contains 'videoRefID') { ('ref%3A{0}' -f $videoInfo.video.videoRefID) } else { $videoInfo.video.videoID }
-			$playerID = $videoInfo.video.playerID
-			# Brightcoveキー取得
-			try {
-				$brightcoveJsURL = ('https://players.brightcove.net/{0}/{1}_default/index.min.js' -f $accountID, $playerID)
-				$brightcovePk = if ((Invoke-RestMethod -Uri $brightcoveJsURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec) -match 'policyKey:"([a-zA-Z0-9_-]*)"') { $matches[1] }
-			} catch { Write-Debug ($script:msg.BrightcoveKeyRetrievalFailed -f $_.Exception.Message) ; return }
-			# m3u8とmpd URL取得
-			try {
-				$brightcoveURL = ('https://edge.api.brightcove.com/playback/v1/accounts/{0}/videos/{1}' -f $accountID, $videoRefID)
-				$httpHeader = @{
-					'Accept'           = ('application/json;pk={0}' -f $brightcovePk)
-					'Forwarded'        = $script:jpIP
-					'Forwarded-For'    = $script:jpIP
-					'X-Forwarded'      = $script:jpIP
-					'X-Forwarded-For'  = $script:jpIP
-					'X-Originating-IP' = $script:jpIP
-				}
-				$response = Invoke-RestMethod -Uri $brightcoveURL -Method 'GET' -Headers $httpHeader -TimeoutSec $script:timeoutSec
-				# HLS
-				$m3u8URL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*mpeg*' }).where({ $_.ext_x_version -eq 4 })[0].src
-				# Dash
-				# $mpdURL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*dash*' })[0].src
-				$isBrightcove = $true
-			} catch { Write-Debug ($script:msg.BrightcoveM3U8RetrievalFailed -f $_.Exception.Message) ; $isBrightcove = $false }
-		}
+		<# * BrightcoveからのM3U8情報取得。MPDは取得できないことが多いので、HLSのみ取得するように変更
+			if ($videoInfo.PSObject.Properties.Name -contains 'video') {
+				$accountID = $videoInfo.video.accountID
+				$videoRefID = if ($videoInfo.video.PSObject.Properties.Name -contains 'videoRefID') { ('ref%3A{0}' -f $videoInfo.video.videoRefID) } else { $videoInfo.video.videoID }
+				$playerID = $videoInfo.video.playerID
+				# Brightcoveキー取得
+				try {
+					$brightcoveJsURL = ('https://players.brightcove.net/{0}/{1}_default/index.min.js' -f $accountID, $playerID)
+					$brightcovePk = if ((Invoke-RestMethod -Uri $brightcoveJsURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec) -match 'policyKey:"([a-zA-Z0-9_-]*)"') { $matches[1] }
+				} catch { Write-Debug ($script:msg.BrightcoveKeyRetrievalFailed -f $_.Exception.Message) ; return }
+				# m3u8とmpd URL取得
+				try {
+					$brightcoveURL = ('https://edge.api.brightcove.com/playback/v1/accounts/{0}/videos/{1}' -f $accountID, $videoRefID)
+					$httpHeader = @{
+						'Accept'           = ('application/json;pk={0}' -f $brightcovePk)
+						'Forwarded'        = $script:jpIP
+						'Forwarded-For'    = $script:jpIP
+						'X-Forwarded'      = $script:jpIP
+						'X-Forwarded-For'  = $script:jpIP
+						'X-Originating-IP' = $script:jpIP
+					}
+					$response = Invoke-RestMethod -Uri $brightcoveURL -Method 'GET' -Headers $httpHeader -TimeoutSec $script:timeoutSec
+					# HLS
+					$m3u8URL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*mpeg*' }).where({ $_.ext_x_version -eq 4 })[0].src
+					# Dash
+					# $mpdURL = $response.sources.where({ $_.src -like 'https://*' }).where({ $_.type -like '*dash*' })[0].src
+					$isBrightcove = $true
+				} catch { Write-Debug ($script:msg.BrightcoveM3U8RetrievalFailed -f $_.Exception.Message) ; $isBrightcove = $false }
+			}
 		#>
 	} catch { Write-Warning ($script:msg.VideoInfoRetrievalFailed -f $_.Exception.Message) ; return }
 
@@ -471,15 +779,15 @@ function Get-VideoInfo {
 	# エピソード番号が1桁の際は頭0埋めして2桁に
 	$videoEpisodeNum = $videoEpisodeNum.PadLeft(2, '0')
 	# 放送日を整形
-	if ($broadcastDate -cmatch '([0-9]+)(月)([0-9]+)(日)(.+?)(放送|配信)') {	#きょうのわんこなど「2025/3/17週放送」のようなパターンもある
+	if ($broadcastDate -cmatch '([0-9]+)(月)([0-9]+)(日)(.+?)(放送|配信)') {	# ! きょうのわんこなど「2025/3/17週放送」のようなパターンもある
 		$currentYear = (Get-Date).Year
 		try {
 			$parsedBroadcastDate = [DateTime]::ParseExact(('{0}{1}{2}' -f $currentYear, $matches[1].PadLeft(2, '0'), $matches[3].PadLeft(2, '0')), 'yyyyMMdd', $null)
-			# 実日付の翌日よりも放送日が未来だったら当年ではなく昨年の番組と判断する(年末の番組を年初にダウンロードするケース)
+			# * 実日付の翌日よりも放送日が未来だったら当年ではなく昨年の番組と判断する(年末の番組を年初にダウンロードするケース)
 			$broadcastYear = $parsedBroadcastDate -gt (Get-Date).AddDays(+1) ? $currentYear - 1 : $currentYear
 			$broadcastDate = ('{0}年{1}{2}{3}{4}{5}' -f $broadcastYear, $matches[1].PadLeft(2, '0'), $matches[2], $matches[3].PadLeft(2, '0'), $matches[4], $matches[6])
 		} catch {
-			# 上記でエラーが出た場合は年が間違っているはず。年が不明なので年無しで整形する
+			# * 上記でエラーが出た場合は年が間違っているはず。年が不明なので年無しで整形する
 			$broadcastDate = ('{0}{1}{2}{3}{4}' -f $matches[1].PadLeft(2, '0'), $matches[2], $matches[3].PadLeft(2, '0'), $matches[4], $matches[6])
 		}
 	}
@@ -500,11 +808,11 @@ function Get-VideoInfo {
 		versionNum      = $versionNum
 		videoInfoURL    = $tverVideoInfoURL
 		descriptionText = $descriptionText
-		<#
-		m3u8URL         = $m3u8URL
-		mpdURL          = $mpdURL
-		isStreaks       = $isStreaks
-		isBrightcove    = $isBrightcove
+		<# * M3U8・MPDを取得していたときの名残
+			m3u8URL         = $m3u8URL
+			mpdURL          = $mpdURL
+			isStreaks       = $isStreaks
+			isBrightcove    = $isBrightcove
 		#>
 	}
 	Remove-Variable -Name episodeID, tverVideoInfoBaseURL, tverVideoInfoURL, response, videoSeries, videoSeriesID, videoSeriesPageURL, videoSeason, videoSeasonID, episodeName, videoEpisodeID, videoEpisodePageURL, mediaName, providerName, broadcastDate, endTime, versionNum, videoInfo, descriptionText, videoEpisodeNum, streaksRefID, streaksProjectID, ati, brightcoveJsURL, brightcovePk, brightcoveURL, accountID, videoRefID, playerID, httpHeader, response, m3u8URL, isStreaks, isBrightcove -ErrorAction SilentlyContinue
@@ -514,6 +822,26 @@ function Get-VideoInfo {
 # Geo IP関連
 #----------------------------------------------------------------------
 function Get-JpIP {
+	<#
+		.SYNOPSIS
+			日本のIPアドレスをランダムに取得します。
+
+		.DESCRIPTION
+			日本に割り当てられているIPアドレスレンジから、
+			ランダムにIPアドレスを選択して返します。
+			IP-API.comを使用して、選択したIPアドレスが実際に日本に割り当てられていることを確認します。
+
+		.EXAMPLE
+			Get-JpIP
+
+		.OUTPUTS
+			String
+			日本のIPアドレスを返します。
+
+		.NOTES
+			この関数はTVerのAPIアクセス時に使用されるIPアドレスを取得するために使用されます。
+			日本国内のIPアドレスを使用することで、地域制限のあるコンテンツにアクセスできるようになります。
+	#>
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# 日本に割り当てられているIPアドレスレンジの取得
 	$allCIDR = Import-Csv $script:jpIPList

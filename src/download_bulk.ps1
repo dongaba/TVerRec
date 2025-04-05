@@ -3,6 +3,52 @@
 #		一括ダウンロード処理スクリプト
 #
 ###################################################################################
+<#
+	.SYNOPSIS
+		TVerRecの一括ダウンロード処理を実行するスクリプト
+
+	.DESCRIPTION
+		TVerRecの一括ダウンロード処理を実行するスクリプトです。
+		以下の処理を順番に実行します：
+		1. キーワードリストの読み込み
+		2. 各キーワードに対する動画検索
+		3. ダウンロード履歴との照合
+		4. 動画のダウンロード処理
+		5. リネームに失敗したファイルの削除
+
+	.PARAMETER guiMode
+		オプションのパラメータ。GUIモードで実行するかどうかを指定します。
+
+	.NOTES
+		前提条件:
+		- Windows環境で実行する必要があります
+		- PowerShell 7.0以上が必要です
+		- TVerRecの設定ファイルが正しく設定されている必要があります
+		- 十分なディスク容量が必要です
+
+		処理の流れ:
+		1. 環境設定の読み込み
+		2. キーワードリストの読み込み
+		3. 各キーワードに対する処理
+		3.1 動画リンクの取得
+		3.2 ダウンロード履歴との照合
+		3.3 動画のダウンロード
+		4. ダウンロード完了待機
+		5. リネーム失敗ファイルの削除
+
+	.EXAMPLE
+		# 通常モードで実行
+		.\download_bulk.ps1
+
+		# GUIモードで実行
+		.\download_bulk.ps1 gui
+
+	.OUTPUTS
+		System.Void
+		各処理の実行結果をコンソールに出力します。
+		進捗状況はトースト通知でも表示されます。
+#>
+
 Set-StrictMode -Version Latest
 $script:guiMode = if ($args) { [String]$args[0] } else { '' }
 
@@ -84,8 +130,8 @@ foreach ($keyword in $keywords) {
 	}
 	Update-ProgressToast2Row @toastUpdateParams
 
-	$keyword = (Remove-Comment($keyword.Replace('https://tver.jp/', '').Trim()))
-	$resultLinks = @(Get-VideoLinksFromKeyword ([Ref]$keyword))
+	$keyword = (Get-ContentWoComment($keyword.Replace('https://tver.jp/', '').Trim()))
+	$resultLinks = @(Get-VideoLinksFromKeyword $keyword)
 
 	# URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 	if ($resultLinks.Count -ne 0) { $videoLinks, $processedCount = Invoke-HistoryMatchCheck $resultLinks }
@@ -120,7 +166,7 @@ foreach ($keyword in $keywords) {
 		Suspend-Process
 
 		# TVer番組ダウンロードのメイン処理
-		Invoke-VideoDownload -Keyword ([Ref]$keyword) -VideoLink ([Ref]$videoLink) -Force $false
+		Invoke-VideoDownload -Keyword $keyword -episodeID $videoLink.Replace('https://tver.jp/episodes/', '') -Force $false
 	}
 	#----------------------------------------------------------------------
 
@@ -135,7 +181,7 @@ Wait-DownloadCompletion
 # リネームに失敗したファイルを削除
 Write-Output ('')
 Write-Output ($script:msg.DeleteFilesFailedToRename)
-Remove-UnRenamedTempFiles
+Remove-UnRenamedTempFile
 
 $toastUpdateParams = @{
 	Title1     = $script:msg.ExtractingVideoFromKeywords
