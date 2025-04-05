@@ -124,7 +124,7 @@ catch { Throw ('❌️ 作業ディレクトリの作成に失敗しました') 
 Write-Output ('')
 Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('TVerRecの最新版をダウンロードします')
-if (!(Get-Variable updateChannel -Scope Script -ErrorAction SilentlyContinue)) { $script:updateChannel = 'release' }
+if (!(Test-Path Variable:Script:updateChannel)) { $script:updateChannel = 'release' }
 try {
 	$zipURL = switch ($script:updateChannel) {
 		'dev' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/dev.zip' ; break }

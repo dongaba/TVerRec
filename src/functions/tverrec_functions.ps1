@@ -1117,7 +1117,7 @@ function Invoke-Ytdl {
 	$ytdlArgsString = $ytdlArgs -join ' '
 	Write-Debug ($script:msg.ExecCommand -f 'youtube-dl', $script:ytdlPath, $ytdlArgsString)
 
-	if ($script:debugMode) {
+	if ((Test-Path Variable:Script:debugMode) -and $script:debugMode) {
 		$startProcessParams = @{
 			FilePath               = $script:ytdlPath
 			ArgumentList           = $ytdlArgsString
