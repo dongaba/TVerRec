@@ -702,31 +702,26 @@ function Format-ListRecord {
 function Update-VideoList {
 	<#
 		.SYNOPSIS
-			TVer番組のダウンロードリストを作成・更新します。
+			TVer番組のダウンロードリストを作成します。
 
 		.DESCRIPTION
-			指定されたURLからTVer番組の情報を取得し、ダウンロードリストに追加します。
-			ダウンロード対象外リストに含まれる番組は無視されます。
+			指定されたキーワードでTVer番組を検索し、ダウンロードリストを作成します。
+			無視リストに登録されている番組は除外されます。
 
 		.PARAMETER keyword
-			検索キーワードを参照で指定します。
-
-		.PARAMETER videoLink
-			ダウンロードするTVer番組のURLを参照で指定します。
+			検索キーワードを指定します。
 
 		.OUTPUTS
-			[Void]
-			この関数は値を返しません。
+			System.Void
 
 		.EXAMPLE
-			Update-VideoList -keyword ([ref]$keyword) -videoLink ([ref]$videoLink)
+			Update-VideoList -keyword "ドラマ"
 
 		.NOTES
-			この関数は以下の処理を行います：
-			1. 指定されたURLから番組情報を取得
-			2. ダウンロード対象外リストとの照合
-			3. ダウンロードリストへの追加
-			4. リストファイルの更新
+			処理の流れ:
+			1. キーワードでTVer番組を検索
+			2. 無視リストに登録されている番組を除外
+			3. ダウンロードリストをCSVファイルに出力
 	#>
 	[OutputType([Void])]
 	Param (
