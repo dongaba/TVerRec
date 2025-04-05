@@ -110,20 +110,16 @@ $toastUpdateParams = @{
 	Group     = 'Delete'
 }
 Update-ProgressToast @toastUpdateParams
-Remove-File `
-	-BasePath $script:logDir `
-	-Conditions @('ffmpeg_error_*.log', 'ffmpeg_err_*.log', 'ytdl_out_*.log', 'ytdl_err_*.log') `
-	-DelPeriod 1
+Get-ChildItem -Path $script:logDir -Include @('ffmpeg_error_*.log', 'ffmpeg_err_*.log', 'ytdl_out_*.log', 'ytdl_err_*.log') -File -Recurse |
+	Remove-File -DelPeriod 1
 
 # 作業ディレクトリ
 $toastUpdateParams.Title = $script:downloadWorkDir
 $toastUpdateParams.Rate = [Float]( 2 / $totalCleanupSteps )
 Update-ProgressToast @toastUpdateParams
 Remove-UnMovedTempFile
-Remove-File `
-	-BasePath $script:downloadWorkDir `
-	-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a-Frag*', '*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*') `
-	-DelPeriod 0
+Get-ChildItem -Path $script:downloadWorkDir -Include @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a-Frag*', '*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*') -File -Recurse |
+	Remove-File -DelPeriod 0
 
 # ダウンロード先
 $toastUpdateParams.Title = $script:downloadBaseDir
@@ -133,10 +129,8 @@ Update-ProgressToast @toastUpdateParams
 Write-Output ($script:msg.DeleteFilesFailedToRename)
 Remove-UnRenamedTempFile
 if ($script:cleanupDownloadBaseDir) {
-	Remove-File `
-		-BasePath $script:downloadBaseDir `
-		-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a-Frag*', '*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*') `
-		-DelPeriod 0
+	Get-ChildItem -Path $script:downloadBaseDir -Include @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a-Frag*', '*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*') -File -Recurse |
+		Remove-File -DelPeriod 0
 }
 
 # 移動先
@@ -146,10 +140,8 @@ Update-ProgressToast @toastUpdateParams
 if ($script:cleanupSaveBaseDir)	{
 	if ($script:saveBaseDir) {
 		foreach ($saveDir in $script:saveBaseDirArray) {
-			Remove-File `
-				-BasePath $saveDir `
-				-Conditions @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a-Frag*', '*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*') `
-				-DelPeriod 0
+			Get-ChildItem -Path $saveDir -Include @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a-Frag*', '*.live_chat.json', '*.temp.mp4', '*.temp.ts', '*.mp4-Frag*', '*.ts-Frag*') -File -Recurse |
+				Remove-File -DelPeriod 0
 		}
 	}
 }

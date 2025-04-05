@@ -649,26 +649,45 @@ function Get-ContentWoComment {
 function Remove-File {
 	<#
 		.SYNOPSIS
-			指定した条件に基づいて古いファイルを削除する。
+			指定した条件に基づいて古いファイルを削除します。
 
 		.DESCRIPTION
-			指定したディレクトリ (`basePath`) 内のファイルを、指定した条件 (`conditions`) に基づいて検索し、
-			指定した削除期間 (`delPeriod`) よりも古いファイルを削除する。
-			マルチスレッド処理をサポートしており、並列処理を有効にすることでパフォーマンスを向上できる。
+			この関数は、以下の2つの方法でファイル削除を実行します：
+
+			1. 条件指定による削除:
+			- 指定したディレクトリ (`basePath`) 内のファイルを、指定した条件 (`conditions`) に基づいて検索
+			- 指定した削除期間 (`delPeriod`) よりも古いファイルを削除
+
+			2. パイプライン入力による削除:
+			- パイプラインから直接ファイルオブジェクトを受け取り
+			- 指定した削除期間よりも古いファイルを削除
+
+			パフォーマンス最適化:
+			- マルチスレッド処理をサポート (`$script:enableMultithread` が `$true` の場合)
+			- 並列処理数は `$script:multithreadNum` で制御
+			- メモリ効率を考慮した動的なファイルリスト管理
+			- パイプライン処理の最適化
+
+			進捗表示:
+			- `Write-Information` を使用して処理状況を表示
+			- 検索条件、削除対象ファイル、実際の削除操作を表示
 
 		.PARAMETER basePath
-			検索対象のディレクトリのパス。
+			検索対象のディレクトリまたはファイルを指定します。
+			パイプライン入力の場合は、FileInfo オブジェクトとして受け取ります。
 
 		.PARAMETER conditions
 			削除対象のファイル名パターン（ワイルドカード可）の配列。
+			パイプライン入力の場合は不要です。
 
 		.PARAMETER delPeriod
 			削除対象となるファイルの最終更新日時の閾値（日数単位）。
-			`delPeriod` 日よりも古いファイルが削除される。
+			この日数よりも古いファイルが削除されます。
 
 		.INPUTS
-			System.IO.FileInfo, System.String[], System.Int32
-			- ファイルパス、条件リスト、削除期間。
+			System.IO.FileInfo
+			- パイプラインからファイルオブジェクトを受け取ることができます。
+			- ファイルの LastWriteTime プロパティを使用して経過日数を判定します。
 
 		.OUTPUTS
 			なし（[Void]）
@@ -676,59 +695,104 @@ function Remove-File {
 		.EXAMPLE
 			PS> Remove-File -basePath "C:\Logs" -conditions @("*.log", "*.tmp") -delPeriod 30
 
-			`C:\Logs` 内の `*.log` および `*.tmp` ファイルのうち、最終更新日時が 30 日よりも古いファイルを削除する。
+			`C:\Logs` 内の `*.log` および `*.tmp` ファイルのうち、
+			最終更新日時が 30 日よりも古いファイルを削除します。
 
 		.EXAMPLE
-			PS> Remove-File -basePath "/var/logs" -conditions @("*.log") -delPeriod 7
+			PS> Get-ChildItem -Path "C:\Logs" -Recurse -File | Remove-File -delPeriod 7
 
-			`/var/logs` ディレクトリ内の `.log` ファイルで 7 日以上経過したものを削除する。
+			パイプラインを使用して、`C:\Logs` 内のすべてのファイルから
+			7日以上経過したものを削除します。
 
 		.NOTES
-			- `$script:enableMultithread` が `$true` の場合、マルチスレッド処理を行う。
-			- マルチスレッド処理時は `$script:multithreadNum` に従い、並列実行数が制限される。
-			- ファイル削除時のエラーは `Warning` として記録される。
+			- マルチスレッド処理を有効にする場合は、`$script:enableMultithread` を `$true` に設定
+			- 並列処理数は `$script:multithreadNum` で調整可能
+			- 処理状況は `Write-Information` で確認可能 (-InformationAction Continue を指定)
+			- エラー発生時は Warning として記録
+			- ShouldProcess をサポートしており、-WhatIf で削除前の確認が可能
 	#>
-	[CmdletBinding(SupportsShouldProcess = $true)]
+	[CmdletBinding(SupportsShouldProcess = $true, SupportsPaging = $true)]
 	[OutputType([Void])]
 	Param (
-		[parameter(Mandatory = $true)][System.IO.FileInfo]$basePath,
-		[Parameter(Mandatory = $true)][String[]]$conditions,
-		[Parameter(Mandatory = $true)][int32]$delPeriod
+		[Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
+		[System.IO.FileInfo]$basePath,
+
+		[Parameter(Mandatory = $false)]
+		[String[]]$conditions,
+
+		[Parameter(Mandatory = $true)]
+		[int32]$delPeriod
 	)
 	begin {
-		Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $basePath)
+		Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 		$limitDateTime = (Get-Date).AddDays(-1 * $delPeriod)
-		$targetFiles = @()
-		if ($script:enableMultithread) {
-			Write-Debug ('Multithread Processing Enabled')
-			# 並列化が有効の場合は並列化
-			try {
-				$targetFiles = $conditions | ForEach-Object -Parallel {
-					Write-Information ('　{0}' -f (Join-Path $using:basePath $_))
-					Get-ChildItem -LiteralPath $using:basePath -Recurse -File -Filter $_ -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -lt $using:limitDateTime } | Select-Object -ExpandProperty FullName
-				} -ThrottleLimit $script:multithreadNum
-			} catch { Write-Warning ($script:msg.FileCannotBeDeleted) }
-		} else {
-			# 並列化が無効の場合は従来型処理
-			try {
-				foreach ($condition in $conditions) {
-					Write-Information ('　{0}' -f (Join-Path $basePath $condition))
-					$targetFiles += Get-ChildItem -LiteralPath $basePath -Recurse -File -Filter $condition -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -lt $limitDateTime } | Select-Object -ExpandProperty FullName
-				}
-			} catch { Write-Warning ($script:msg.FileCannotBeDeleted) }
-		}
+		$targetFiles = [System.Collections.Generic.List[string]]::new()
 	}
+
 	process {
-		foreach ($file in $targetFiles) {
-			try {
-				if ($PSCmdlet.ShouldProcess($file, 'Remove file')) {
-					Remove-Item -LiteralPath $file -Force -ErrorAction Stop
+		if ($conditions) {
+			# 条件指定がある場合の処理
+			if ($script:enableMultithread) {
+				Write-Debug ('Multithread Processing Enabled')
+				try {
+					# 並列処理で見つかったファイルを一時的に格納
+					$parallelResults = $conditions | ForEach-Object -ThrottleLimit $script:multithreadNum -Parallel {
+						Write-Information ('検索条件: {0}' -f $_)
+						Get-ChildItem -LiteralPath $using:basePath -Recurse -File -Filter $_ -ErrorAction SilentlyContinue |
+							Where-Object { $_.LastWriteTime -lt $using:limitDateTime } |
+							ForEach-Object {
+								Write-Information ('削除対象: {0}' -f $_.FullName)
+								$_.FullName
+							}
+						}
+						# 並列処理の結果をまとめてリストに追加
+						if ($parallelResults) {
+							$targetFiles.AddRange($parallelResults)
+						}
+					} catch {
+						Write-Warning ($script:msg.FileCannotBeDeleted)
+					}
+				} else {
+					try {
+						foreach ($condition in $conditions) {
+							Write-Information ('検索条件: {0}' -f $condition)
+							$files = Get-ChildItem -LiteralPath $basePath -Recurse -File -Filter $condition -ErrorAction SilentlyContinue |
+								Where-Object { $_.LastWriteTime -lt $limitDateTime } |
+								ForEach-Object {
+									Write-Information ('削除対象: {0}' -f $_.FullName)
+									$_.FullName
+								}
+						if ($files) {
+							$targetFiles.AddRange($files)
+						}
+					}
+				} catch {
+					Write-Warning ($script:msg.FileCannotBeDeleted)
 				}
-			} catch { Write-Warning ('{0} : {1}' -f $file, $script:msg.FileCannotBeDeleted) }
+			}
+		} else {
+			# パイプライン入力の場合の処理
+			if ($basePath.LastWriteTime -lt $limitDateTime) {
+				Write-Information ('削除対象: {0}' -f $basePath.FullName)
+				$targetFiles.Add($basePath.FullName)
+			}
 		}
 	}
+
 	end {
-		Remove-Variable -Name basePath, conditions, delPeriod, limitDateTime, condition -ErrorAction SilentlyContinue
+		# ファイル削除の実行
+		$targetFiles | ForEach-Object {
+			try {
+				if ($PSCmdlet.ShouldProcess($_, 'Remove file')) {
+					Write-Information ('ファイル削除: {0}' -f $_)
+					Remove-Item -LiteralPath $_ -Force -ErrorAction Stop
+				}
+			} catch {
+				Write-Warning ('{0} : {1}' -f $_, $script:msg.FileCannotBeDeleted)
+			}
+		}
+
+		Remove-Variable -Name basePath, conditions, delPeriod, limitDateTime, targetFiles, parallelResults -ErrorAction SilentlyContinue
 	}
 }
 
