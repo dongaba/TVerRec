@@ -73,8 +73,8 @@ try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
-} catch { Throw ('❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.') }
-if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space') }
+} catch { throw '❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.' }
+if ($script:scriptRoot.Contains(' ')) { throw '❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space' }
 . (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -193,7 +193,7 @@ while ($videoNotValidatedNum -ne 0) {
 			}
 			Update-ProgressToast @toastUpdateParams
 
-			if (!(Test-Path $script:downloadBaseDir -PathType Container)) { Throw ($script:msg.DownloadDirNotAccessible) }
+			if (!(Test-Path $script:downloadBaseDir -PathType Container)) { throw ($script:msg.DownloadDirNotAccessible) }
 			# 番組の整合性チェック
 			Write-Output ('{0}/{1} - {2}' -f $validateNum, $validateTotal, $videoHist.videoPath)
 			Invoke-IntegrityCheck -VideoHist $videoHist -DecodeOption $decodeOption
@@ -224,7 +224,7 @@ while ($videoNotValidatedNum -ne 0) {
 			})
 		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 		try { $newRecords | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append ; Start-Sleep -Seconds 1 }
-		catch { Throw ($script:msg.UpdateFailed -f $script:msg.HistFile) }
+		catch { throw ($script:msg.UpdateFailed -f $script:msg.HistFile) }
 		finally { Unlock-File $script:histLockFilePath | Out-Null }
 		# videoPageごとに最新のdownloadDateを持つレコードを取得
 		$latestHists = Get-LatestHistory

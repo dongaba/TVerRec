@@ -847,7 +847,7 @@ function Expand-Zip {
 		Write-Verbose ('Extracting {0} into {1}' -f $path, $destination)
 		[System.IO.Compression.ZipFile]::ExtractToDirectory($path, $destination, $true)
 		Write-Verbose ('Extracted {0}' -f $path)
-	} else { Throw ($script:msg.FileNotFound -f $path) }
+	} else { throw ($script:msg.FileNotFound -f $path) }
 	Remove-Variable -Name path, destination -ErrorAction SilentlyContinue
 }
 #endregion ファイル操作

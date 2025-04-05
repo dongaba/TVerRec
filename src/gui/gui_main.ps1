@@ -39,7 +39,7 @@
 
 using namespace System.Windows.Threading
 Set-StrictMode -Version Latest
-if (!$IsWindows) { Throw ('❌️ Windows以外では動作しません。For Windows only') ; Start-Sleep 10 }
+if (!$IsWindows) { throw ('❌️ Windows以外では動作しません。For Windows only') ; Start-Sleep 10 }
 Add-Type -AssemblyName PresentationFramework | Out-Null
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -50,8 +50,8 @@ try {
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	$script:scriptRoot = Convert-Path (Join-Path $script:scriptRoot '../')
 	Set-Location $script:scriptRoot
-} catch { Throw ('❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.') }
-if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space') }
+} catch { throw '❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.' }
+if ($script:scriptRoot.Contains(' ')) { throw '❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space' }
 . (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 
 # パラメータ設定
@@ -190,7 +190,7 @@ function Out-ExecutionLog {
 try {
 	[Xml]$mainXaml = [String](Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecMain.xaml'))
 	$mainWindow = [System.Windows.Markup.XamlReader]::Load(([System.Xml.XmlNodeReader]::new($mainXaml)))
-} catch { Throw ($script:msg.GuiBroken) }
+} catch { throw ($script:msg.GuiBroken) }
 # PowerShellのウィンドウを非表示に
 Add-Type -Name Window -Namespace Console -MemberDefinition @'
 	[DllImport("Kernel32.dll")] public static extern IntPtr GetConsoleWindow();
@@ -338,7 +338,7 @@ try {
 	$mainWindow.Show() | Out-Null
 	$mainWindow.Activate() | Out-Null
 	[Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0) | Out-Null
-} catch { Throw ($script:msg.WindowRenderError) }
+} catch { throw ($script:msg.WindowRenderError) }
 
 #endregion ウィンドウ表示
 

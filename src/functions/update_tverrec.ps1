@@ -88,7 +88,7 @@ function Expand-Zip {
 		Write-Verbose ('Extracting {0} into {1}' -f $path, $destination)
 		[System.IO.Compression.ZipFile]::ExtractToDirectory($path, $destination, $true)
 		Write-Verbose ('Extracted {0}' -f $path)
-	} else { Throw ($script:msg.FileNotFound -f $path) }
+	} else { throw ($script:msg.FileNotFound -f $path) }
 	Remove-Variable -Name path, destination -ErrorAction SilentlyContinue
 }
 
@@ -160,8 +160,8 @@ try {
 	if ($myInvocation.MyCommand.CommandType -eq 'ExternalScript') { $scriptRoot = Split-Path -Parent -Path (Split-Path -Parent -Path $myInvocation.MyCommand.Definition) }
 	else { $scriptRoot = Convert-Path .. }
 	Set-Location $scriptRoot
-} catch { Throw ('❌️ ディレクトリ設定に失敗しました') }
-if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
+} catch { throw ('❌️ ディレクトリ設定に失敗しました') }
+if ($script:scriptRoot.Contains(' ')) { throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
 try {
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	. (Convert-Path (Join-Path $script:scriptRoot '../conf/system_setting.ps1'))
@@ -185,7 +185,7 @@ Write-Output ('作業ディレクトリを作成します')
 $updateTemp = Join-Path $scriptRoot '../tverrec-update-temp'
 if (Test-Path $updateTemp ) { Remove-Item -LiteralPath $updateTemp -Force -Recurse -ErrorAction SilentlyContinue }
 try { New-Item -ItemType Directory -Path $updateTemp | Out-Null }
-catch { Throw ('❌️ 作業ディレクトリの作成に失敗しました') }
+catch { throw ('❌️ 作業ディレクトリの作成に失敗しました') }
 
 # TVerRecの最新バージョン取得
 Write-Output ('')
@@ -201,7 +201,7 @@ try {
 		default { (Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec).where{ ($_.prerelease -eq $false) }[0].zipball_url }
 	}
 	Invoke-WebRequest -Uri $zipURL -OutFile (Join-Path $updateTemp 'TVerRecLatest.zip') -TimeoutSec $script:timeoutSec
-} catch { Throw ('❌️ ダウンロードに失敗しました');	exit 1 }
+} catch { throw ('❌️ ダウンロードに失敗しました');	exit 1 }
 
 # 最新バージョンがダウンロードできていたら展開
 Write-Output ('')
@@ -209,8 +209,8 @@ Write-Output ('━━━━━━━━━━━━━━━━━━━━━�
 Write-Output ('ダウンロードしたTVerRecを解凍します')
 try {
 	if (Test-Path (Join-Path $updateTemp 'TVerRecLatest.zip') -PathType Leaf) { Expand-Zip -Path (Join-Path $updateTemp 'TVerRecLatest.zip') -Destination $updateTemp }
-	else { Throw ('❌️ ダウンロードしたファイルが見つかりません') }
-} catch { Throw ('❌️ ダウンロードしたファイルの解凍に失敗しました') }
+	else { throw ('❌️ ダウンロードしたファイルが見つかりません') }
+} catch { throw ('❌️ ダウンロードしたファイルの解凍に失敗しました') }
 
 # ディレクトリは上書きできないので独自関数で以下のディレクトリをループ
 Write-Output ('')
@@ -219,14 +219,14 @@ Write-Output ('ダウンロードしたTVerRecを配置します')
 try {
 	$newTVerRecDir = (Get-ChildItem -LiteralPath $updateTemp -Directory ).fullname
 	Get-ChildItem -LiteralPath $newTVerRecDir -Force | ForEach-Object { Move-Files -Source $_.FullName -Destination ('{0}{1}' -f (Join-Path $scriptRoot '../'), $_.Name ) }
-} catch { Throw ('❌️ ダウンロードしたTVerRecの配置に失敗しました') }
+} catch { throw ('❌️ ダウンロードしたTVerRecの配置に失敗しました') }
 
 # 作業ディレクトリを削除
 Write-Output ('')
 Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('アップデートの作業ディレクトリを削除します')
 try { if (Test-Path $updateTemp ) { Remove-Item -LiteralPath $updateTemp -Force -Recurse } }
-catch { Throw ('❌️ 作業ディレクトリの削除に失敗しました') }
+catch { throw ('❌️ 作業ディレクトリの削除に失敗しました') }
 
 # 過去のバージョンで使用していたファイルを削除、または移行
 Write-Output ('')

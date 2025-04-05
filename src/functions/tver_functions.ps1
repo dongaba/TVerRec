@@ -89,7 +89,7 @@ function Get-Token () {
 		$script:platformToken = $tokenResponse.Result.platform_token
 		Write-Debug	('Platform UID: {0}' -f $script:platformUID)
 		Write-Debug	('Platform Token: {0}' -f $script:platformToken)
-	} catch { Throw ($script:msg.TokenRetrievalFailed) }
+	} catch { throw ($script:msg.TokenRetrievalFailed) }
 	Remove-Variable -Name tverTokenURL, httpHeader, requestBody, tokenResponse -ErrorAction SilentlyContinue
 }
 

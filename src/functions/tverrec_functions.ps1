@@ -232,7 +232,7 @@ function Invoke-ToolUpdateCheck {
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	& (Join-Path $scriptRoot ('functions/{0}' -f $scriptName) )
-	if (!$?) { Throw ($script:msg.ToolUpdateFailed -f $targetName) }
+	if (!$?) { throw ($script:msg.ToolUpdateFailed -f $targetName) }
 	Remove-Variable -Name scriptName, targetName -ErrorAction SilentlyContinue
 }
 
@@ -285,7 +285,7 @@ function Invoke-TverrecPathCheck {
 	if (!(Test-Path $path -PathType $pathType)) {
 		if (!($sampleFilePath -and (Test-Path $sampleFilePath -PathType 'Leaf'))) {
 			if ($continue) { Write-Warning ($script:msg.NotExistContinue -f $errorMessage) ; return }
-			else { Throw ($script:msg.NotExist -f $errorMessage) }
+			else { throw ($script:msg.NotExist -f $errorMessage) }
 		}
 		Copy-Item -LiteralPath $sampleFilePath -Destination $path -Force | Out-Null
 	}
@@ -323,10 +323,10 @@ function Invoke-RequiredFileCheck {
 	[OutputType([Void])]
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	if (!$script:downloadBaseDir) { Throw ($script:msg.DirNotSpecified -f $script:msg.DownloadDir) }
+	if (!$script:downloadBaseDir) { throw ($script:msg.DirNotSpecified -f $script:msg.DownloadDir) }
 	else { Invoke-TverrecPathCheck -Path $script:downloadBaseDir -errorMessage $script:msg.DownloadDir }
 	$script:downloadBaseDir = $script:downloadBaseDir.TrimEnd('\/')
-	if (!$script:downloadWorkDir) { Throw ($script:msg.DirNotSpecified -f $script:msg.WorkDir) }
+	if (!$script:downloadWorkDir) { throw ($script:msg.DirNotSpecified -f $script:msg.WorkDir) }
 	else { Invoke-TverrecPathCheck -Path $script:downloadWorkDir -errorMessage $script:msg.WorkDir }
 	$script:downloadWorkDir = $script:downloadWorkDir.TrimEnd('\/')
 	if ($script:saveBaseDir) {
@@ -383,7 +383,6 @@ function Get-LatestHistory {
 	} catch { Write-Warning ($script:msg.LoadFailed -f $script:msg.HistFile) }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
 	return $latestHists
-	Remove-Variable -Name latestHists -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -494,9 +493,12 @@ function Optimize-HistoryFile {
 		try { $cleanedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
 		catch { $originalLists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
 		finally { Start-Sleep -Seconds 1 }
-	} catch { Write-Warning ($script:msg.OptimizeHistFailed) }
-	finally { Unlock-File $script:histLockFilePath | Out-Null }
-	Remove-Variable -Name cleanedHist -ErrorAction SilentlyContinue
+	} catch {
+		Write-Warning ($script:msg.OptimizeHistFailed)
+	} finally {
+		Unlock-File $script:histLockFilePath | Out-Null
+		Remove-Variable -Name cleanedHist -ErrorAction SilentlyContinue
+	}
 }
 
 #----------------------------------------------------------------------
@@ -537,9 +539,12 @@ function Limit-HistoryFile {
 		try { $purgedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
 		catch { $originalLists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
 		finally { Start-Sleep -Seconds 1 }
-	} catch { Write-Warning ($script:msg.CleanupHistFailed) }
-	finally { Unlock-File $script:histLockFilePath | Out-Null }
-	Remove-Variable -Name retentionPeriod, purgedHist -ErrorAction SilentlyContinue
+	} catch {
+		Write-Warning ($script:msg.CleanupHistFailed)
+	} finally {
+		Unlock-File $script:histLockFilePath | Out-Null
+		Remove-Variable -Name retentionPeriod, purgedHist -ErrorAction SilentlyContinue
+	}
 }
 
 #----------------------------------------------------------------------
@@ -576,9 +581,12 @@ function Repair-HistoryFile {
 		try { $uniquedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
 		catch { $originalLists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
 		finally { Start-Sleep -Seconds 1 }
-	} catch { Write-Warning ($script:msg.DistinctHistFailed) }
-	finally { Unlock-File $script:histLockFilePath | Out-Null }
-	Remove-Variable -Name originalLists, latestHists, uniquedHist -ErrorAction SilentlyContinue
+	} catch {
+		Write-Warning ($script:msg.DistinctHistFailed)
+	} finally {
+		Unlock-File $script:histLockFilePath | Out-Null
+		Remove-Variable -Name originalLists, latestHists, uniquedHist -ErrorAction SilentlyContinue
+	}
 }
 #endregion ダウンロード履歴関連
 
@@ -614,10 +622,9 @@ function Read-DownloadList {
 	try {
 		while (-not (Lock-File $script:listLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 		$listFileData = Import-Csv -LiteralPath $script:listFilePath -Encoding UTF8
-	} catch { Throw ($script:msg.LoadFailed -f $script:msg.ListFile) }
+	} catch { throw ($script:msg.LoadFailed -f $script:msg.ListFile) }
 	finally { Unlock-File $script:listLockFilePath | Out-Null }
 	return $listFileData
-	Remove-Variable -Name listFileData -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -654,12 +661,11 @@ function Get-LinkFromDownloadList {
 			while (-not (Lock-File $script:listLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 			# 空行とダウンロード対象外を除き、EpisodeIDのみを抽出
 			$videoLinks = @((Import-Csv -LiteralPath $script:listFilePath -Encoding UTF8).Where({ !($_ -cmatch '^\s*$') }).Where({ !($_.EpisodeID -cmatch '^#') }) | Select-Object episodeID)
-		} catch { Throw ($script:msg.LoadFailed -f $script:msg.ListFile) }
+		} catch { throw ($script:msg.LoadFailed -f $script:msg.ListFile) }
 		finally { Unlock-File $script:listLockFilePath | Out-Null }
 	} else { $videoLinks = @() }
 	$videoLinks = $videoLinks.episodeID -replace '^(.+)', 'https://tver.jp/episodes/$1'
 	return @($videoLinks)
-	Remove-Variable -Name videoLinks -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -796,9 +802,12 @@ function Update-VideoList {
 		while ((Lock-File $script:listLockFilePath).result -ne $true) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 		$newVideo | Export-Csv -LiteralPath $script:listFilePath -Encoding UTF8 -Append
 		Write-Debug ($script:msg.ListWritten)
-	} catch { Write-Warning ($script:msg.ListUpdateFailed) ; continue }
-	finally { Unlock-File $script:listLockFilePath | Out-Null }
-	Remove-Variable -Name keyword, videoLink, ignoreWord, newVideo, ignore, episodeID, ignoreTitles, ignoreTitle -ErrorAction SilentlyContinue
+	} catch {
+		Write-Warning ($script:msg.ListUpdateFailed) ; continue
+	} finally {
+		Unlock-File $script:listLockFilePath | Out-Null
+		Remove-Variable -Name keyword, videoLink, ignoreWord, newVideo, ignore, episodeID, ignoreTitles, ignoreTitle -ErrorAction SilentlyContinue
+	}
 }
 
 #endregion ダウンロードリスト関連
@@ -837,10 +846,9 @@ function Read-IgnoreList {
 		while (-not (Lock-File $script:ignoreLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 		# コメントと空行を除いて抽出
 		$ignoreTitles = @((Get-Content $script:ignoreFilePath -Encoding UTF8).Where({ !($_ -cmatch '^\s*$') }).Where({ !($_ -cmatch '^;.*$') }))
-	} catch { Throw ($script:msg.LoadFailed -f $script:msg.IgnoreFile) }
+	} catch { throw ($script:msg.LoadFailed -f $script:msg.IgnoreFile) }
 	finally { Unlock-File $script:ignoreLockFilePath | Out-Null }
 	return $ignoreTitles
-	Remove-Variable -Name ignoreTitles -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -936,9 +944,8 @@ function Read-KeywordList {
 	$keywords = @()
 	# コメントと空行を除いて抽出
 	try { $keywords = @((Get-Content $script:keywordFilePath -Encoding UTF8).Where({ $_ -notmatch '^\s*$|^#.*$' })) }
-	catch { Throw ($script:msg.LoadFailed -f $script:msg.KeywordFile) }
+	catch { throw ($script:msg.LoadFailed -f $script:msg.KeywordFile) }
 	return $keywords
-	Remove-Variable -Name keywords -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -980,8 +987,8 @@ function Invoke-HistoryMatchCheck {
 	$histCompResult = @(Compare-Object -IncludeEqual $resultLinks $histVideoPages)
 	try { $processedCount = ($histCompResult.Where({ $_.SideIndicator -eq '==' })).Count } catch { $processedCount = 0 }
 	try { $videoLinks = @($histCompResult.Where({ $_.SideIndicator -eq '<=' }).InputObject) } catch { $videoLinks = @() }
+	Remove-Variable -Name resultLinks, histFileData, histVideoPages, histCompResult -ErrorAction SilentlyContinue
 	return @($videoLinks, $processedCount)
-	Remove-Variable -Name resultLinks, histFileData, histVideoPages, histCompResult, processedCount, videoLinks -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -1024,8 +1031,8 @@ function Invoke-ListMatchCheck {
 	$listCompResult = @(Compare-Object -IncludeEqual $resultLinks $listVideoPages)
 	try { $processedCount = ($listCompResult.Where({ $_.SideIndicator -eq '==' })).Count } catch { $processedCount = 0 }
 	try { $videoLinks = @($listCompResult.Where({ $_.SideIndicator -eq '<=' }).InputObject) } catch { $videoLinks = @() }
+	Remove-Variable -Name resultLinks, listFileData, listVideoPages, listFileLine, listCompResult -ErrorAction SilentlyContinue
 	return @($videoLinks, $processedCount)
-	Remove-Variable -Name resultLinks, listFileData, listVideoPages, listFileLine, listCompResult, processedCount, videoLinks -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
