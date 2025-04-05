@@ -3,6 +3,42 @@
 #		TVerRec固有関数スクリプト
 #
 ###################################################################################
+<#
+	.SYNOPSIS
+		TVerRecの主要な機能を提供する関数群を定義します。
+
+	.DESCRIPTION
+		TVerRecアプリケーションの中核となる機能を提供する関数群を定義します。
+		主に以下の4つのカテゴリの機能を提供します：
+		1. TVer APIアクセス関連
+		- APIトークンの取得と管理
+		- 番組情報の取得と解析
+		2. ダウンロード管理関連
+		- 番組のダウンロード処理
+		- ダウンロードリストの管理
+		- ダウンロード履歴の管理
+		3. ファイル管理関連
+		- ダウンロードファイルの命名規則
+		- ファイルの整合性チェック
+		- 一時ファイルの管理
+		4. システム管理関連
+		- 設定の管理
+		- 統計情報の収集
+		- 環境情報の管理
+
+	.NOTES
+		主要な機能：
+		- TVer番組の検索とダウンロード
+		- ダウンロードリストの作成と管理
+		- ダウンロード履歴の管理
+		- ファイルの整合性チェック
+		- システム設定の管理
+		- 統計情報の収集
+
+	.LINK
+		https://github.com/dongaba/TVerRec
+#>
+
 Set-StrictMode -Version Latest
 Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 Add-Type -AssemblyName 'System.Globalization' | Out-Null
@@ -1549,7 +1585,7 @@ function Invoke-VideoDownload {
 			この関数は値を返しません。
 
 		.EXAMPLE
-			Invoke-VideoDownload -keyword ([ref]$keyword) -videoLink ([ref]$videoLink) -force $true
+			Invoke-VideoDownload -keyword $keyword -episodeID $episodeID -force $true
 
 		.NOTES
 			この関数は以下の処理を行います：
@@ -1571,13 +1607,12 @@ function Invoke-VideoDownload {
 	[OutputType([Void])]
 	Param (
 		[Parameter(Mandatory = $false)][String]$keyword,
-		[Parameter(Mandatory = $true)][String]$videoLink,
+		[Parameter(Mandatory = $true)][String]$episodeID,
 		[Parameter(Mandatory = $false)][Boolean]$force = $false
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$newVideo = $null
 	$skipDownload = $false
-	$episodeID = $videoLink.Replace('https://tver.jp/episodes/', '')
 	# TVerのAPIを叩いて番組情報取得
 	Invoke-StatisticsCheck -Operation 'getinfo' -TVerType 'link' -TVerID $episodeID
 	$videoInfo = Get-VideoInfo $episodeID

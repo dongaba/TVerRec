@@ -3,6 +3,56 @@
 #		共通関数スクリプト
 #
 ###################################################################################
+<#
+	.SYNOPSIS
+	TVerRecの共通機能を提供する関数群を定義します。
+
+	.DESCRIPTION
+	TVerRecアプリケーションで使用される共通の機能を提供する関数群を定義します。
+	主に以下の7つのカテゴリの機能を提供します：
+
+	1. メモリ管理関連
+		- ガベージコレクションの制御
+		- メモリ使用の最適化
+
+	2. 時間処理関連
+		- タイムスタンプの生成と変換
+		- UNIX時間とDateTime型の相互変換
+
+	3. 文字列処理関連
+		- ファイル名の無効文字除去
+		- 全角/半角文字の変換
+		- 特殊文字の処理
+
+	4. ファイル操作関連
+		- ファイルの削除と管理
+		- ZIPファイルの展開
+		- ファイルロックの制御
+
+	5. ディスク管理関連
+		- ディスク容量の監視
+		- 空き容量の確認
+
+	6. 通知機能関連
+		- トースト通知の表示
+		- 進捗状況の表示と更新
+
+	7. データ変換関連
+		- Base64エンコードデータの変換
+		- 画像データの処理
+
+	.NOTES
+	主要な機能：
+	- システムリソースの効率的な管理
+	- ファイルシステムの安全な操作
+	- マルチプラットフォーム対応の通知機能
+	- データ形式の変換と処理
+	- 文字列とエンコーディングの処理
+
+	.LINK
+	https://github.com/dongaba/TVerRec
+#>
+
 Set-StrictMode -Version Latest
 Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
 Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -315,7 +365,7 @@ function Get-NarrowChar {
 	$replaceChars = @{
 		'０１２３４５６７８９'                                           = '0123456789'
 		'ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ' = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-		'＠＃＄％＾＆＊－＋＿／［］｛｝（）＜＞　￥＼”；：．，'                          = '@#$%^&*-+_/[]{}()<> \\";:.,'
+		'＠＃＄％＾＆＊－＋＿／［］｛｝（）＜＞　￥＼"；：．，'                          = '@#$%^&*-+_/[]{}()<> \\";:.,'
 	}
 	foreach ($entry in $replaceChars.GetEnumerator()) {
 		for ($i = 0 ; $i -lt $entry.Name.Length ; $i++) {
@@ -446,13 +496,13 @@ function Remove-SpecialCharacter {
 			アスタリスク `*`、パイプ `|`、コロン `:` を全角に変換。
 
 		.EXAMPLE
-			PS> Remove-SpecialCharacter -text "Hello“World”"
+			PS> Remove-SpecialCharacter -text "Hello"World""
 			"HelloWorld"
 
 			全角ダブルクォートを削除。
 
 		.EXAMPLE
-			PS> Remove-SpecialCharacter -text "Can’t"
+			PS> Remove-SpecialCharacter -text "Can't"
 			"Can't"
 
 			U+2019 のシングルクォートを標準の `'` に変換。
@@ -475,8 +525,8 @@ function Remove-SpecialCharacter {
 		"`u{2018}" = "'" # * U+2018をU+0027に変換
 		"`u{2019}" = "'" # * U+2019をU+0027に変換
 		'"'        = '' # 削除
-		"`u{201C}" = ''  # * 全角(「“」)でもダブルクォートとして認識されるようなので削除
-		"`u{201D}" = ''  # * 全角(「”」)でもダブルクォートとして認識されるようなので削除
+		"`u{201C}" = ''  # * 全角(""")でもダブルクォートとして認識されるようなので削除
+		"`u{201D}" = ''  # * 全角(""")でもダブルクォートとして認識されるようなので削除
 		'?'        = '？' # 全角
 		'!'        = '！' # 全角
 		'/'        = '／' # 全角

@@ -3,6 +3,61 @@
 #		Windows用youtube-dl最新化処理スクリプト
 #
 ###################################################################################
+<#
+	.SYNOPSIS
+		TVerRecで使用するyt-dlpを最新バージョンに更新するスクリプト
+
+	.DESCRIPTION
+		yt-dlpの最新バージョンをダウンロードし、インストールします。
+		複数のソースから選択してダウンロードできます：
+		- yt-dlp（標準版）
+		- ytdl-patched（パッチ適用版）
+		- yt-dlp-nightly（開発版）
+
+	.NOTES
+		前提条件:
+		- PowerShell 7.0以上が必要です
+		- インターネット接続が必要です
+		- TVerRecの設定ファイルが正しく設定されている必要があります
+		- 設定ファイルでpreferredYoutubedlが正しく設定されている必要があります
+
+		対応ソース:
+		1. yt-dlp (yt-dlp/yt-dlp)
+		- 安定版
+		- 一般利用向け
+		2. ytdl-patched (ytdl-patched/ytdl-patched)
+		- パッチ適用版
+		- 追加機能対応
+		3. yt-dlp-nightly (yt-dlp/yt-dlp-nightly-builds)
+		- 開発版
+		- 最新機能テスト用
+
+		処理の流れ:
+		1. 現在の環境確認
+		1.1 設定の読み込み
+		1.2 現在のバージョン確認
+		2. 最新版の確認
+		2.1 ソースの選択
+		2.2 最新バージョンの取得
+		3. 更新処理
+		3.1 ダウンロード
+		3.2 実行ファイルの配置
+		4. 検証
+		4.1 実行権限の設定
+		4.2 バージョン確認
+
+	.EXAMPLE
+		# スクリプトの実行
+		.\update_youtube-dl.ps1
+
+	.OUTPUTS
+		System.Void
+		処理の進行状況と結果をコンソールに出力します。
+		- 現在のバージョン
+		- 最新のバージョン
+		- 更新の成功/失敗
+#>
+
 Set-StrictMode -Version Latest
 Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
 

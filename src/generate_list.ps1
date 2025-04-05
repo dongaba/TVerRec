@@ -3,6 +3,59 @@
 #		番組リストファイル出力処理スクリプト
 #
 ###################################################################################
+<#
+	.SYNOPSIS
+		TVerRecのダウンロードリストを生成するスクリプト
+
+	.DESCRIPTION
+		キーワードリストから番組を検索し、ダウンロードリストを生成します。
+		以下の処理を順番に実行します：
+		1. キーワードリストの読み込み
+		2. 各キーワードでの番組検索
+		3. ダウンロード履歴との照合
+		4. ダウンロードリストの生成
+
+	.PARAMETER guiMode
+		オプションのパラメータ。GUIモードで実行するかどうかを指定します。
+
+	.NOTES
+		前提条件:
+		- Windows環境で実行する必要があります
+		- PowerShell 7.0以上が必要です
+		- TVerRecの設定ファイルが正しく設定されている必要があります
+		- keyword_list.txtにキーワードが記載されている必要があります
+
+		処理の流れ:
+		1. 初期設定
+		1.1 環境チェック
+		1.2 キーワードリストの読み込み
+		1.3 トークンの取得
+		2. キーワード処理
+		2.1 各キーワードでの番組検索
+		2.2 ダウンロード履歴との照合
+		2.3 重複チェック
+		3. 並列処理
+		3.1 マルチスレッド有効時は処理を分割
+		3.2 子プロセスでの番組情報取得
+		3.3 結果の統合
+		4. リスト生成
+		4.1 番組情報の整理
+		4.2 ダウンロードリストの出力
+
+	.EXAMPLE
+		# 通常モードで実行
+		.\generate_list.ps1
+
+		# GUIモードで実行
+		.\generate_list.ps1 gui
+
+	.OUTPUTS
+		System.Void
+		各処理の実行結果をコンソールに出力します。
+		進捗状況はトースト通知でも表示されます。
+		download_list.txtにダウンロードリストが生成されます。
+#>
+
 Set-StrictMode -Version Latest
 $script:guiMode = if ($args) { [String]$args[0] } else { '' }
 
@@ -74,7 +127,7 @@ foreach ($keyword in $keywords) {
 	Update-ProgressToast2Row @toastUpdateParams
 
 	$keyword = (Get-ContentWoComment($keyword.Replace('https://tver.jp/', '').Trim()))
-	$listLinks = @(Get-VideoLinksFromKeyword ([Ref]$keyword))
+	$listLinks = @(Get-VideoLinksFromKeyword $keyword)
 
 	# URLがすでにダウンロードリストやダウンロード履歴に存在する場合は検索結果から除外
 	if ($listLinks.Count -ne 0) {

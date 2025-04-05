@@ -3,6 +3,44 @@
 #		GUI設定スクリプト
 #
 ###################################################################################
+<#
+	.SYNOPSIS
+		TVerRecの設定画面を提供するGUIスクリプト
+
+	.DESCRIPTION
+		TVerRecの各種設定を変更するためのグラフィカルユーザーインターフェース（GUI）を提供します。
+		以下の設定カテゴリを管理します：
+		- 基本的な設定（ダウンロードディレクトリ、作業ディレクトリなど）
+		- 動作設定（マルチスレッド、通知設定など）
+		- マイページ設定（プラットフォームID、トークンなど）
+		- ダウンロード設定（並列ダウンロード数、タイムアウトなど）
+		- 動画ファイル名設定（シリーズ名、放送日などの追加）
+		- Ytdl/ffmpeg設定（デコードオプション、更新設定など）
+		- Geo IP設定（プロキシ設定など）
+		- スケジュール設定（停止時間の設定）
+		- 言語設定
+
+	.NOTES
+		前提条件:
+		- Windows環境で実行する必要があります
+		- PowerShell 7.0以上が必要です
+		- WPFアセンブリが必要です
+
+		主な機能:
+		1. 設定の読み込みと表示
+		2. 設定の変更と保存
+		3. ディレクトリ選択ダイアログ
+		4. スケジュール設定の管理
+
+	.EXAMPLE
+		# 設定画面を起動
+		.\gui_setting.ps1
+
+	.OUTPUTS
+		System.Void
+		設定を変更し、user_setting.ps1ファイルに保存します。
+#>
+
 using namespace System.Windows.Threading
 Set-StrictMode -Version Latest
 if (!$IsWindows) { Throw ('❌️ Windows以外では動作しません') ; Start-Sleep 10 }
@@ -122,6 +160,20 @@ $settingAttributes = @(
 
 # GUIイベントの処理
 function Sync-WpfEvents {
+	<#
+		.SYNOPSIS
+			WPFのイベントを同期的に処理します。
+
+		.DESCRIPTION
+			WPFのイベントディスパッチャーを使用して、GUIイベントを同期的に処理します。
+			これにより、UIの応答性を維持しながらイベントを処理することができます。
+
+		.OUTPUTS
+			System.Void
+
+		.NOTES
+			この関数は内部で使用され、直接呼び出すことは想定されていません。
+	#>
 	[OutputType([Void])]
 	Param ()
 	[DispatcherFrame] $frame = [DispatcherFrame]::new($true)
@@ -138,7 +190,26 @@ function Sync-WpfEvents {
 }
 
 # ディレクトリ選択ダイアログ
-function Select-Folder() {
+function Select-Folder {
+	<#
+		.SYNOPSIS
+			フォルダ選択ダイアログを表示します。
+
+		.DESCRIPTION
+			ユーザーにフォルダを選択させるダイアログを表示し、選択されたパスをテキストボックスに設定します。
+
+		.PARAMETER description
+			ダイアログの説明文
+
+		.PARAMETER textBox
+			選択されたパスを表示するテキストボックス
+
+		.OUTPUTS
+			System.Void
+
+		.EXAMPLE
+			Select-Folder -description "ダウンロードディレクトリを選択" -textBox $downloadDirTextBox
+	#>
 	[OutputType([Void])]
 	Param (
 		[parameter(Mandatory = $true)]$description,
@@ -154,6 +225,24 @@ function Select-Folder() {
 
 # user_setting.ps1から各設定項目を読み込む
 function Read-UserSetting {
+	<#
+		.SYNOPSIS
+			ユーザー設定を読み込みます。
+
+		.DESCRIPTION
+			user_setting.ps1ファイルから設定を読み込み、GUIの各コントロールに反映します。
+			未定義の設定項目はデフォルト値で初期化されます。
+
+		.OUTPUTS
+			System.Void
+
+		.NOTES
+			処理の流れ:
+			1. 設定ファイルの読み込み
+			2. 各設定項目の値を取得
+			3. GUIコントロールに値を設定
+			4. スケジュール設定の読み込みと反映
+	#>
 	[OutputType([Void])]
 	Param ()
 	$undefAttributes = @('$script:downloadBaseDir', '$script:downloadWorkDir', '$script:saveBaseDir', '$script:myPlatformUID', '$script:myPlatformToken', '$script:myMemberSID', '$script:proxyUrl')
@@ -207,6 +296,24 @@ function Read-UserSetting {
 
 # user_setting.ps1に各設定項目を書き込む
 function Save-UserSetting {
+	<#
+		.SYNOPSIS
+			ユーザー設定を保存します。
+
+		.DESCRIPTION
+			GUIで変更された設定をuser_setting.ps1ファイルに保存します。
+			既存の設定ファイルがある場合は、自動生成部分のみを更新します。
+
+		.OUTPUTS
+			System.Void
+
+		.NOTES
+			処理の流れ:
+			1. 既存の設定ファイルの読み込み
+			2. 自動生成部分の特定
+			3. 新しい設定の生成
+			4. 設定ファイルの更新
+	#>
 	[OutputType([Void])]
 	Param ()
 	$newSetting = @()
@@ -537,7 +644,7 @@ $preferredLanguage.Items.Add('English') | Out-Null	# en-US
 
 #----------------------------------------------------------------------
 #region ボタンのアクション
-$btnWiki.Add_Click({ Start-Process‘https://github.com/dongaba/TVerRec/wiki’ })
+$btnWiki.Add_Click({ Start-Process 'https://github.com/dongaba/TVerRec/wiki' })
 $btnCancel.Add_Click({ $settingWindow.close() })
 $btnSave.Add_Click({ Save-UserSetting ; $settingWindow.close() })
 $btnDownloadBaseDir.Add_Click({ Select-Folder $script:msg.SelectDownloadDir $script:downloadBaseDir })

@@ -3,6 +3,64 @@
 #		個別ダウンロード処理スクリプト
 #
 ###################################################################################
+<#
+	.SYNOPSIS
+		TVerRecで個別の番組URLをダウンロードするスクリプト
+
+	.DESCRIPTION
+		指定されたURLの番組を個別にダウンロードします。
+		以下の機能を提供します：
+		1. TVer番組の個別ダウンロード
+		2. 複数URLの一括ダウンロード
+		3. GUI/CUIでのURL入力
+		4. TVer以外のサイトからのダウンロード対応
+
+	.PARAMETER guiMode
+		オプションのパラメータ。GUIモードで実行するかどうかを指定します。
+		GUIモードの場合、URLを入力するためのダイアログが表示されます。
+		CUIモードの場合、コンソールでURLを入力します。
+
+	.NOTES
+		前提条件:
+		- Windows環境で実行する必要があります
+		- PowerShell 7.0以上が必要です
+		- TVerRecの設定ファイルが正しく設定されている必要があります
+		- GUIモードの場合、Windows Formsが利用可能である必要があります
+		- 十分なディスク容量が必要です
+
+		処理の流れ:
+		1. 初期設定
+		1.1 環境チェック
+		1.2 トークンの取得
+		1.3 GUI/CUIモードの判定
+		2. URL入力処理
+		2.1 GUIモード: ダイアログでの入力
+		2.2 CUIモード: コンソールでの入力
+		3. ダウンロード処理
+		3.1 URLの種類判定（TVer/その他）
+		3.2 並列ダウンロードの制御
+		3.3 個別番組のダウンロード
+		4. 後処理
+		4.1 ダウンロード完了の待機
+		4.2 一時ファイルの削除
+
+		対応URL:
+		- TVer: https://tver.jp/で始まるURL
+		- その他: youtube-dlでサポートされているサイトのURL
+
+	.EXAMPLE
+		# 通常モードで実行（CUI）
+		.\download_single.ps1
+
+		# GUIモードで実行
+		.\download_single.ps1 gui
+
+	.OUTPUTS
+		System.Void
+		各処理の実行結果をコンソールに出力します。
+		GUIモードの場合は入力ダイアログも表示されます。
+#>
+
 Set-StrictMode -Version Latest
 $script:guiMode = if ($args) { [String]$args[0] } else { '' }
 
@@ -119,7 +177,7 @@ while ($true) {
 				Write-Output ('')
 				Write-Output ($script:msg.MediumBoldBorder)
 				Write-Output ('{0}: {1}' -f $script:msg.SingleDownloadTVerURL, $videoLink)
-				Invoke-VideoDownload -Keyword ([Ref]$keyword) -VideoLink ([Ref]$videoLink) -Force $script:forceSingleDownload
+				Invoke-VideoDownload -Keyword $keyword -episodeID $videoLink.Replace('https://tver.jp/episodes/', '') -Force $script:forceSingleDownload
 				break
 			}
 			'^.*://' { # TVer以外のサイトへの対応

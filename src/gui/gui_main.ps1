@@ -3,6 +3,40 @@
 #		GUIメインスクリプト
 #
 ###################################################################################
+<#
+	.SYNOPSIS
+		TVerRecのGUIメインスクリプト
+
+	.DESCRIPTION
+		TVerRecのグラフィカルユーザーインターフェース（GUI）を提供するメインスクリプトです。
+		Windows Presentation Foundation (WPF)を使用してGUIを構築し、以下の機能を提供します：
+		- 単一番組のダウンロード
+		- 一括ダウンロード
+		- ダウンロードリストの生成と管理
+		- 番組の削除と移動
+		- 設定の管理
+
+	.NOTES
+		前提条件:
+		- Windows環境で実行する必要があります
+		- PowerShell 7.0以上が必要です
+		- WPFアセンブリが必要です
+
+		主な機能:
+		1. GUIの初期化と表示
+		2. ユーザーイベントの処理
+		3. バックグラウンドジョブの管理
+		4. ログ出力の管理
+
+	.EXAMPLE
+		# スクリプトを実行してGUIを起動
+		.\gui_main.ps1
+
+	.OUTPUTS
+		System.Void
+		GUIウィンドウを表示し、ユーザーの操作に応じて各種処理を実行します。
+#>
+
 using namespace System.Windows.Threading
 Set-StrictMode -Version Latest
 if (!$IsWindows) { Throw ('❌️ Windows以外では動作しません。For Windows only') ; Start-Sleep 10 }
@@ -47,6 +81,20 @@ $msgInformation = New-Object System.Collections.Generic.List[String]
 
 # GUIイベントの処理
 function Sync-WpfEvents {
+	<#
+		.SYNOPSIS
+			WPFのイベントを同期的に処理します。
+
+		.DESCRIPTION
+			WPFのイベントディスパッチャーを使用して、GUIイベントを同期的に処理します。
+			これにより、UIの応答性を維持しながらイベントを処理することができます。
+
+		.OUTPUTS
+			System.Void
+
+		.NOTES
+			この関数は内部で使用され、直接呼び出すことは想定されていません。
+	#>
 	Param ()
 	[DispatcherFrame] $frame = [DispatcherFrame]::new($true)
 	[Dispatcher]::CurrentDispatcher.BeginInvoke(
@@ -62,7 +110,27 @@ function Sync-WpfEvents {
 }
 
 # 最大行数以上の実行ログをクリア
-function Limit-LogLines() {
+function Limit-LogLines {
+	<#
+		.SYNOPSIS
+			ログの行数を制限します。
+
+		.DESCRIPTION
+			指定された最大行数を超えるログエントリを削除します。
+			これにより、メモリ使用量を制御し、パフォーマンスを維持します。
+
+		.PARAMETER richTextBox
+			ログを表示するRichTextBoxコントロール
+
+		.PARAMETER limit
+			保持する最大行数
+
+		.OUTPUTS
+			System.Void
+
+		.EXAMPLE
+			Limit-LogLines -richTextBox $outText -limit 1000
+	#>
 	[OutputType([Void])]
 	Param (
 		[parameter(Mandatory = $true)]$richTextBox,
@@ -77,6 +145,26 @@ function Limit-LogLines() {
 
 # テキストボックスへのログ出力と再描画
 function Out-ExecutionLog {
+	<#
+		.SYNOPSIS
+			実行ログをテキストボックスに出力します。
+
+		.DESCRIPTION
+			指定されたメッセージをテキストボックスに出力し、メッセージタイプに応じて色分けを行います。
+			ログの最大行数を超えた場合は、古いログを自動的に削除します。
+
+		.PARAMETER message
+			出力するメッセージ
+
+		.PARAMETER type
+			メッセージのタイプ（Output, Error, Warning, Verbose, Debug, Information）
+
+		.OUTPUTS
+			System.Void
+
+		.EXAMPLE
+			Out-ExecutionLog -message "処理が完了しました" -type "Output"
+	#>
 	[OutputType([Void])]
 	Param (
 		[parameter(Mandatory = $false)][String]$message = '',
