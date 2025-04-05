@@ -245,7 +245,7 @@ function ConvertTo-UnixTime {
 #----------------------------------------------------------------------
 # ファイル名・ディレクトリ名に禁止文字の削除
 #----------------------------------------------------------------------
-function Get-FileNameWoInvalidChars {
+function Get-FileNameWoInvalidChar {
 	<#
 		.SYNOPSIS
 			ファイル名に使用できない無効な文字を削除し、安全なファイル名を生成します。
@@ -268,19 +268,19 @@ function Get-FileNameWoInvalidChars {
 			- 無効な文字を削除した後の安全なファイル名。
 
 		.EXAMPLE
-			PS> Get-FileNameWoInvalidChars -name "invalid:file*name?.txt"
+			PS> Get-FileNameWoInvalidChar -name "invalid:file*name?.txt"
 			"invalid-filename-.txt"
 
 			Windows のファイル名に使用できない `:` `*` `?` を削除または置換。
 
 		.EXAMPLE
-			PS> Get-FileNameWoInvalidChars -name "test/|<>file"
+			PS> Get-FileNameWoInvalidChar -name "test/|<>file"
 			"test-file"
 
 			Linux/Mac で問題となる `/` `|` `<>` も削除。
 
 		.EXAMPLE
-			PS> Get-FileNameWoInvalidChars -name "file--name--test"
+			PS> Get-FileNameWoInvalidChar -name "file--name--test"
 			"file-name-test"
 
 			連続した `-` を一つに統一。

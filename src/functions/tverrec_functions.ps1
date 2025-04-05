@@ -761,8 +761,8 @@ function Update-VideoList {
 	#>
 	[OutputType([Void])]
 	Param (
-		[Parameter(Mandatory = $true)][String][Ref]$keyword,
-		[Parameter(Mandatory = $true)][String][Ref]$videoLink
+		[Parameter(Mandatory = $true)][String]$keyword,
+		[Parameter(Mandatory = $true)][String]$videoLink
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$ignoreWord = ''
@@ -1205,7 +1205,7 @@ function Invoke-Ytdl {
 				Write-Debug ('youtube-dl Process ID: {0}' -f $processId)
 				# タイムアウト監視ジョブを開始
 				$monitorJob = Start-Job -ScriptBlock {
-					Param ($processId, $timeoutSeconds)
+					Param ($using:processId, $timeoutSeconds)
 					$startTime = Get-Date
 					while ((Get-Process -Id $processId -ErrorAction SilentlyContinue)) {
 						# 指定時間が経過したら強制終了
@@ -1326,7 +1326,7 @@ function Invoke-NonTverYtdl {
 			Write-Debug ('youtube-dl Process ID: {0}' -f $processId)
 			# タイムアウト監視ジョブを開始
 			$monitorJob = Start-Job -ScriptBlock {
-				Param ($processId, $timeoutSeconds)
+				Param ($using:processId, $timeoutSeconds)
 				$startTime = Get-Date
 				while ((Get-Process -Id $processId -ErrorAction SilentlyContinue)) {
 					# 指定時間が経過したら強制終了
@@ -1798,7 +1798,7 @@ function Format-VideoFileInfo {
 		if ($script:addEpisodeNumber) { $videoName = ('{0}Ep{1} ' -f $videoName, $videoInfo.episodeNum) }
 	}
 	# ファイル名にできない文字列を除去
-	$videoName = ((Get-FileNameWoInvalidChars (Remove-SpecialCharacter $videoName)) -replace '\s+', ' ').Trim()
+	$videoName = ((Get-FileNameWoInvalidChar (Remove-SpecialCharacter $videoName)) -replace '\s+', ' ').Trim()
 	# SMBで255バイトまでしかファイル名を持てないらしいので、超えないようにファイル名をトリミング。安全目の上限値としており、限界値は攻めていない
 	$fileNameLimit = $script:fileNameLengthMax - 30
 	if ([System.Text.Encoding]::UTF8.GetByteCount($videoName) -gt $fileNameLimit) {
@@ -1810,8 +1810,8 @@ function Format-VideoFileInfo {
 
 	# フォルダ名を生成
 	$videoFileDir = @()
-	if ($script:sortVideoByMedia) { $videoFileDir += Get-FileNameWoInvalidChars (Remove-SpecialCharacter ($videoInfo.mediaName).Trim(' ', '.')) }
-	if ($script:sortVideoBySeries) { $videoFileDir += Get-FileNameWoInvalidChars (Remove-SpecialCharacter ('{0} {1}' -f $videoInfo.seriesName, $videoInfo.seasonName ).Trim(' ', '.')) }
+	if ($script:sortVideoByMedia) { $videoFileDir += Get-FileNameWoInvalidChar (Remove-SpecialCharacter ($videoInfo.mediaName).Trim(' ', '.')) }
+	if ($script:sortVideoBySeries) { $videoFileDir += Get-FileNameWoInvalidChar (Remove-SpecialCharacter ('{0} {1}' -f $videoInfo.seriesName, $videoInfo.seasonName ).Trim(' ', '.')) }
 	$videoFileDir = Join-Path $script:downloadBaseDir @videoFileDir		# 3コ以上行けるので配列のまま渡す
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'fileDir' -Value $videoFileDir.Replace('\', '/')
 
