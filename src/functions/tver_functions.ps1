@@ -251,7 +251,7 @@ function Get-LinkFromKeyword {
 			$type = 'ranking' ; break
 		}
 		'category' { 'https://platform-api.tver.jp/service/api/v1/callCategoryHome/{0}' -f $id; break }
-		'keyword' { 'https://platform-api.tver.jp/service/api/v1/callKeywordSearch'; $keyword = $id ; break }
+		'keyword' { 'https://platform-api.tver.jp/service/api/v2/callKeywordSearch'; $type = 'keyword' ; $keyword = $id ; break }
 		default { Write-Warning $script:msg.InvalidTypeSpecified }
 	}
 	# 検索結果の取得
