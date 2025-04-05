@@ -14,32 +14,32 @@ Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 #----------------------------------------------------------------------
 function Invoke-GarbageCollection() {
 	<#
-	.SYNOPSIS
-		強制的にガベージコレクション (GC) を実行し、不要なメモリを解放します。
+		.SYNOPSIS
+			強制的にガベージコレクション (GC) を実行し、不要なメモリを解放します。
 
-	.DESCRIPTION
-		この関数は、.NET のガベージコレクタ ([System.GC]) を手動で実行し、
-		メモリ管理を最適化するために 2 回の GC サイクルを実施します。
-		1 回目の GC 実行後、保留中のファイナライザを処理し、
-		再度 GC を実行することで、不要なメモリを最大限解放します。
+		.DESCRIPTION
+			この関数は、.NET のガベージコレクタ ([System.GC]) を手動で実行し、
+			メモリ管理を最適化するために 2 回の GC サイクルを実施します。
+			1 回目の GC 実行後、保留中のファイナライザを処理し、
+			再度 GC を実行することで、不要なメモリを最大限解放します。
 
-	.INPUTS
-		なし
+		.INPUTS
+			なし
 
-	.OUTPUTS
-		なし
+		.OUTPUTS
+			なし
 
-	.EXAMPLE
-		PS> Invoke-GarbageCollection
-		強制的にガベージコレクションを実行し、不要なメモリを解放します。
+		.EXAMPLE
+			PS> Invoke-GarbageCollection
+			強制的にガベージコレクションを実行し、不要なメモリを解放します。
 
-	.LINK
-		https://learn.microsoft.com/en-us/dotnet/standard/garbage-collection/
+		.LINK
+			https://learn.microsoft.com/en-us/dotnet/standard/garbage-collection/
 
-	.NOTES
-		- この関数は通常の PowerShell スクリプト実行時には不要です。
-		- 高メモリ使用状態が続くアプリケーションなど、明示的に GC を実行する必要がある場合に使用してください。
-		- [System.GC]::Collect() は、.NET のメモリ管理によって自動的に実行されるため、過度に使用しないよう注意してください。
+		.NOTES
+			- この関数は通常の PowerShell スクリプト実行時には不要です。
+			- 高メモリ使用状態が続くアプリケーションなど、明示的に GC を実行する必要がある場合に使用してください。
+			- [System.GC]::Collect() は、.NET のメモリ管理によって自動的に実行されるため、過度に使用しないよう注意してください。
 	#>
 	[CmdletBinding()]
 	[OutputType([Void])]
@@ -60,33 +60,33 @@ function Invoke-GarbageCollection() {
 #----------------------------------------------------------------------
 function Get-TimeStamp {
 	<#
-	.SYNOPSIS
-		現在のタイムスタンプを "yyyy-MM-dd HH:mm:ss" の形式で取得します。
+		.SYNOPSIS
+			現在のタイムスタンプを "yyyy-MM-dd HH:mm:ss" の形式で取得します。
 
-	.DESCRIPTION
-		この関数は現在の日時を取得し、"yyyy-MM-dd HH:mm:ss" 形式の文字列として返します。
-		ログ記録やファイル名のタイムスタンプなどに利用できます。
+		.DESCRIPTION
+			この関数は現在の日時を取得し、"yyyy-MM-dd HH:mm:ss" 形式の文字列として返します。
+			ログ記録やファイル名のタイムスタンプなどに利用できます。
 
-	.INPUTS
-		なし
+		.INPUTS
+			なし
 
-	.OUTPUTS
-		System.String
-		- 現在の日時を "yyyy-MM-dd HH:mm:ss" の形式で表した文字列。
+		.OUTPUTS
+			System.String
+			- 現在の日時を "yyyy-MM-dd HH:mm:ss" の形式で表した文字列。
 
-	.EXAMPLE
-		PS> Get-TimeStamp
-		2025-04-02 15:30:45
+		.EXAMPLE
+			PS> Get-TimeStamp
+			2025-04-02 15:30:45
 
-		現在のタイムスタンプを取得し、"yyyy-MM-dd HH:mm:ss" の形式で表示します。
+			現在のタイムスタンプを取得し、"yyyy-MM-dd HH:mm:ss" の形式で表示します。
 
-	.LINK
-		https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/get-date
+		.LINK
+			https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/get-date
 
-	.NOTES
-		- PowerShell の `Get-Date` を使用して現在の日時を取得しています。
-		- `ToString('yyyy-MM-dd HH:mm:ss')` により、カスタムフォーマットで日時を出力します。
-		- ログファイルの命名規則やスクリプト内のタイムスタンプ生成などに便利です。
+		.NOTES
+			- PowerShell の `Get-Date` を使用して現在の日時を取得しています。
+			- `ToString('yyyy-MM-dd HH:mm:ss')` により、カスタムフォーマットで日時を出力します。
+			- ログファイルの命名規則やスクリプト内のタイムスタンプ生成などに便利です。
 	#>
 	[CmdletBinding()]
 	[OutputType([String])]
@@ -99,37 +99,37 @@ function Get-TimeStamp {
 #----------------------------------------------------------------------
 function ConvertFrom-UnixTime {
 	<#
-	.SYNOPSIS
-		Unix タイムスタンプをローカル日時に変換します。
+		.SYNOPSIS
+			Unix タイムスタンプをローカル日時に変換します。
 
-	.DESCRIPTION
-		この関数は、Unix エポック (1970-01-01 00:00:00 UTC) からの秒数を受け取り、
-		ローカル時刻に変換して返します。
+		.DESCRIPTION
+			この関数は、Unix エポック (1970-01-01 00:00:00 UTC) からの秒数を受け取り、
+			ローカル時刻に変換して返します。
 
-	.PARAMETER UnixTime
-		変換する Unix タイムスタンプ (1970年1月1日 00:00:00 UTC からの経過秒数) を指定します。
+		.PARAMETER UnixTime
+			変換する Unix タイムスタンプ (1970年1月1日 00:00:00 UTC からの経過秒数) を指定します。
 
-	.INPUTS
-		System.Int64
-		- 変換する Unix タイムスタンプ (秒単位)。
+		.INPUTS
+			System.Int64
+			- 変換する Unix タイムスタンプ (秒単位)。
 
-	.OUTPUTS
-		System.DateTime
-		- 変換後のローカル日時。
+		.OUTPUTS
+			System.DateTime
+			- 変換後のローカル日時。
 
-	.EXAMPLE
-		PS> ConvertFrom-UnixTime -UnixTime 1712050000
-		2024年4月2日 15:06:40
+		.EXAMPLE
+			PS> ConvertFrom-UnixTime -UnixTime 1712050000
+			2024年4月2日 15:06:40
 
-		Unix タイムスタンプ 1712050000 をローカル時刻に変換します。
+			Unix タイムスタンプ 1712050000 をローカル時刻に変換します。
 
-	.LINK
-		https://learn.microsoft.com/en-us/dotnet/api/system.datetime
+		.LINK
+			https://learn.microsoft.com/en-us/dotnet/api/system.datetime
 
-	.NOTES
-		- `UnixTime` は 1970年1月1日 00:00:00 UTC からの経過秒数として扱われます。
-		- `.ToLocalTime()` を使用して、現在のタイムゾーンの時刻に変換します。
-		- `Remove-Variable` は変数の明示的な削除を試みますが、影響は限定的です。
+		.NOTES
+			- `UnixTime` は 1970年1月1日 00:00:00 UTC からの経過秒数として扱われます。
+			- `.ToLocalTime()` を使用して、現在のタイムゾーンの時刻に変換します。
+			- `Remove-Variable` は変数の明示的な削除を試みますが、影響は限定的です。
 	#>
 	[CmdletBinding()]
 	[OutputType([Void])]
@@ -145,44 +145,44 @@ function ConvertFrom-UnixTime {
 #----------------------------------------------------------------------
 function ConvertTo-UnixTime {
 	<#
-	.SYNOPSIS
-		指定した日時を Unix タイムスタンプ (1970年1月1日 00:00:00 UTC からの経過秒数) に変換します。
+		.SYNOPSIS
+			指定した日時を Unix タイムスタンプ (1970年1月1日 00:00:00 UTC からの経過秒数) に変換します。
 
-	.DESCRIPTION
-		この関数は、入力された `DateTime` 値を UTC に変換し、Unix エポック (1970-01-01 00:00:00 UTC) からの
-		経過秒数として返します。Unix タイムスタンプは、システムログや API のタイムスタンプとして
-		よく使用されます。
+		.DESCRIPTION
+			この関数は、入力された `DateTime` 値を UTC に変換し、Unix エポック (1970-01-01 00:00:00 UTC) からの
+			経過秒数として返します。Unix タイムスタンプは、システムログや API のタイムスタンプとして
+			よく使用されます。
 
-	.PARAMETER InputDate
-		変換する日時 (DateTime 型)。ローカル時刻として渡された場合、自動的に UTC に変換されます。
+		.PARAMETER InputDate
+			変換する日時 (DateTime 型)。ローカル時刻として渡された場合、自動的に UTC に変換されます。
 
-	.INPUTS
-		System.DateTime
-		- 変換する日時。
+		.INPUTS
+			System.DateTime
+			- 変換する日時。
 
-	.OUTPUTS
-		System.Int64
-		- Unix タイムスタンプ (1970年1月1日 00:00:00 UTC からの経過秒数)。
+		.OUTPUTS
+			System.Int64
+			- Unix タイムスタンプ (1970年1月1日 00:00:00 UTC からの経過秒数)。
 
-	.EXAMPLE
-		PS> ConvertTo-UnixTime -InputDate (Get-Date)
-		1712050000
+		.EXAMPLE
+			PS> ConvertTo-UnixTime -InputDate (Get-Date)
+			1712050000
 
-		現在の日時を Unix タイムスタンプに変換します。
+			現在の日時を Unix タイムスタンプに変換します。
 
-	.EXAMPLE
-		PS> ConvertTo-UnixTime -InputDate "2025-04-02 12:34:56"
-		1743593696
+		.EXAMPLE
+			PS> ConvertTo-UnixTime -InputDate "2025-04-02 12:34:56"
+			1743593696
 
-		指定した日時を Unix タイムスタンプに変換します。
+			指定した日時を Unix タイムスタンプに変換します。
 
-	.LINK
-		https://learn.microsoft.com/en-us/dotnet/api/system.datetime
+		.LINK
+			https://learn.microsoft.com/en-us/dotnet/api/system.datetime
 
-	.NOTES
-		- Unix タイムスタンプは UTC を基準とするため、入力日時は `.ToUniversalTime()` で UTC に変換されます。
-		- `New-TimeSpan` を使用して Unix エポック (1970-01-01 00:00:00 UTC) からの経過秒数を計算します。
-		- `Math.Round()` を使用して、秒単位で切り捨てまたは四捨五入します。
+		.NOTES
+			- Unix タイムスタンプは UTC を基準とするため、入力日時は `.ToUniversalTime()` で UTC に変換されます。
+			- `New-TimeSpan` を使用して Unix エポック (1970-01-01 00:00:00 UTC) からの経過秒数を計算します。
+			- `Math.Round()` を使用して、秒単位で切り捨てまたは四捨五入します。
 	#>
 	[CmdletBinding()]
 	[OutputType([int64])]
@@ -202,51 +202,51 @@ function ConvertTo-UnixTime {
 #----------------------------------------------------------------------
 function Get-FileNameWoInvalidChars {
 	<#
-	.SYNOPSIS
-		ファイル名に使用できない無効な文字を削除し、安全なファイル名を生成します。
+		.SYNOPSIS
+			ファイル名に使用できない無効な文字を削除し、安全なファイル名を生成します。
 
-	.DESCRIPTION
-		この関数は、指定された文字列からファイル名として使用できない無効な文字を削除し、
-		OS に依存せず適切なファイル名を生成します。
-		Windows の `GetInvalidFileNameChars()` に加え、Linux/Mac で問題となる `*?<>|` などの記号や
-		制御文字も削除します。
+		.DESCRIPTION
+			この関数は、指定された文字列からファイル名として使用できない無効な文字を削除し、
+			OS に依存せず適切なファイル名を生成します。
+			Windows の `GetInvalidFileNameChars()` に加え、Linux/Mac で問題となる `*?<>|` などの記号や
+			制御文字も削除します。
 
-	.PARAMETER name
-		ファイル名として使用したい文字列。デフォルトは空文字列 (`''`)。
+		.PARAMETER name
+			ファイル名として使用したい文字列。デフォルトは空文字列 (`''`)。
 
-	.INPUTS
-		System.String
-		- 無効な文字を除去する元のファイル名。
+		.INPUTS
+			System.String
+			- 無効な文字を除去する元のファイル名。
 
-	.OUTPUTS
-		System.String
-		- 無効な文字を削除した後の安全なファイル名。
+		.OUTPUTS
+			System.String
+			- 無効な文字を削除した後の安全なファイル名。
 
-	.EXAMPLE
-		PS> Get-FileNameWoInvalidChars -name "invalid:file*name?.txt"
-		"invalid-filename-.txt"
+		.EXAMPLE
+			PS> Get-FileNameWoInvalidChars -name "invalid:file*name?.txt"
+			"invalid-filename-.txt"
 
-		Windows のファイル名に使用できない `:` `*` `?` を削除または置換。
+			Windows のファイル名に使用できない `:` `*` `?` を削除または置換。
 
-	.EXAMPLE
-		PS> Get-FileNameWoInvalidChars -name "test/|<>file"
-		"test-file"
+		.EXAMPLE
+			PS> Get-FileNameWoInvalidChars -name "test/|<>file"
+			"test-file"
 
-		Linux/Mac で問題となる `/` `|` `<>` も削除。
+			Linux/Mac で問題となる `/` `|` `<>` も削除。
 
-	.EXAMPLE
-		PS> Get-FileNameWoInvalidChars -name "file--name--test"
-		"file-name-test"
+		.EXAMPLE
+			PS> Get-FileNameWoInvalidChars -name "file--name--test"
+			"file-name-test"
 
-		連続した `-` を一つに統一。
+			連続した `-` を一つに統一。
 
-	.LINK
-		https://learn.microsoft.com/en-us/dotnet/api/system.io.path.getinvalidfilenamechars
+		.LINK
+			https://learn.microsoft.com/en-us/dotnet/api/system.io.path.getinvalidfilenamechars
 
-	.NOTES
-		- `GetInvalidFileNameChars()` を使用して OS に応じた無効文字を取得。
-		- `-replace` を使用して、追加の無効文字や制御文字も削除。
-		- 連続する `-` を 1 つに統一し、より読みやすいファイル名を生成。
+		.NOTES
+			- `GetInvalidFileNameChars()` を使用して OS に応じた無効文字を取得。
+			- `-replace` を使用して、追加の無効文字や制御文字も削除。
+			- 連続する `-` を 1 つに統一し、より読みやすいファイル名を生成。
 	#>
 	[CmdletBinding()]
 	[OutputType([String])]
@@ -270,51 +270,48 @@ function Get-FileNameWoInvalidChars {
 #----------------------------------------------------------------------
 function Get-NarrowChar {
 	<#
-	.SYNOPSIS
-		全角文字を半角に、半角カタカナを全角カタカナに変換します。
+		.SYNOPSIS
+			全角文字を半角に、半角カタカナを全角カタカナに変換します。
 
-	.DESCRIPTION
-		この関数は、以下の変換を行います:
-		- 全角英数字を半角英数字に変換
-		- 全角記号を半角記号に変換
-		- 半角カタカナを全角カタカナに変換
-		これにより、異なるフォーマットのテキストデータを統一し、検索や比較が容易になります。
+		.DESCRIPTION
+			この関数は、以下の変換を行います:
+			- 全角英数字を半角英数字に変換
+			- 全角記号を半角記号に変換
+			- 半角カタカナを全角カタカナに変換
+			これにより、異なるフォーマットのテキストデータを統一し、検索や比較が容易になります。
 
-	.PARAMETER text
-		変換対象の文字列。デフォルトは空文字列 (`''`)。
+		.PARAMETER text
+			変換対象の文字列。デフォルトは空文字列 (`''`)。
 
-	.INPUTS
-		System.String
-		- 変換前の文字列。
+		.INPUTS
+			System.String
+			- 変換前の文字列。
 
-	.OUTPUTS
-		System.String
-		- 変換後の文字列。
+		.OUTPUTS
+			System.String
+			- 変換後の文字列。
 
-	.EXAMPLE
-		PS> Get-NarrowChar -text "Ｔｅｓｔ１２３"
-		"Test123"
+		.EXAMPLE
+			PS> Get-NarrowChar -text "Ｔｅｓｔ１２３"
+			"Test123"
 
-		全角英数字を半角に変換。
+			全角英数字を半角に変換。
 
-	.EXAMPLE
-		PS> Get-NarrowChar -text "ｶﾀｶﾅ ﾃｽﾄ"
-		"カタカナ テスト"
+		.EXAMPLE
+			PS> Get-NarrowChar -text "ｶﾀｶﾅ ﾃｽﾄ"
+			"カタカナ テスト"
 
-		半角カタカナを全角カタカナに変換。
+			半角カタカナを全角カタカナに変換。
 
-	.EXAMPLE
-		PS> Get-NarrowChar -text "＠＃＄％＾＆＊"
-		"@#$%^&*"
+		.EXAMPLE
+			PS> Get-NarrowChar -text "＠＃＄％＾＆＊"
+			"@#$%^&*"
 
-		全角記号を半角記号に変換。
+			全角記号を半角記号に変換。
 
-	.LINK
-		https://en.wikipedia.org/wiki/Halfwidth_and_Fullwidth_Forms
-
-	.NOTES
-		- 変換には `-replace` を使用せず `.Replace()` を用いて高速化。
-		- `GetEnumerator()` を用いたループで各文字を効率的に変換。
+		.NOTES
+			- 変換には `-replace` を使用せず `.Replace()` を用いて高速化。
+			- `GetEnumerator()` を用いたループで各文字を効率的に変換。
 	#>
 	[CmdletBinding()]
 	[OutputType([String])]
@@ -426,73 +423,71 @@ function Get-NarrowChar {
 #----------------------------------------------------------------------
 function Remove-SpecialCharacter {
 	<#
-	.SYNOPSIS
-		特殊文字を適切な文字に置換または削除する。
+		.SYNOPSIS
+			特殊文字を適切な文字に置換または削除する。
 
-	.DESCRIPTION
-		この関数は、以下の処理を行います:
-		- `&amp;` を `&` に変換
-		- 特定の特殊文字を全角に変換 (例: `*` → `＊`)
-		- ダブルクォート (`"`) を削除
-		- U+2018, U+2019 のシングルクォートを標準の `'` に変換
+		.DESCRIPTION
+			この関数は、以下の処理を行います:
+			- `&amp;` を `&` に変換
+			- 特定の特殊文字を全角に変換 (例: `*` → `＊`)
+			- ダブルクォート (`"`) を削除
+			- U+2018, U+2019 のシングルクォートを標準の `'` に変換
 
-	.PARAMETER text
-		変換対象の文字列。
+		.PARAMETER text
+			変換対象の文字列。
 
-	.INPUTS
-		System.String
-		- 変換前の文字列。
+		.INPUTS
+			System.String
+			- 変換前の文字列。
 
-	.OUTPUTS
-		System.String
-		- 変換後の文字列。
+		.OUTPUTS
+			System.String
+			- 変換後の文字列。
 
-	.EXAMPLE
-		PS> Remove-SpecialCharacter -text "Test*File|Name:2024"
-		"Test＊File｜Name：2024"
+		.EXAMPLE
+			PS> Remove-SpecialCharacter -text "Test*File|Name:2024"
+			"Test＊File｜Name：2024"
 
-		アスタリスク `*`、パイプ `|`、コロン `:` を全角に変換。
+			アスタリスク `*`、パイプ `|`、コロン `:` を全角に変換。
 
-	.EXAMPLE
-		PS> Remove-SpecialCharacter -text "Hello“World”"
-		"HelloWorld"
+		.EXAMPLE
+			PS> Remove-SpecialCharacter -text "Hello“World”"
+			"HelloWorld"
 
-		全角ダブルクォートを削除。
+			全角ダブルクォートを削除。
 
-	.EXAMPLE
-		PS> Remove-SpecialCharacter -text "Can’t"
-		"Can't"
+		.EXAMPLE
+			PS> Remove-SpecialCharacter -text "Can’t"
+			"Can't"
 
-		U+2019 のシングルクォートを標準の `'` に変換。
+			U+2019 のシングルクォートを標準の `'` に変換。
 
-	.LINK
-		https://unicode.org/
-
-	.NOTES
-		- 一部の特殊記号は削除されず全角に置き換え。
-		- ダブルクォート (`"`) は削除。
+		.NOTES
+			- 一部の特殊記号は削除されず全角に置き換え。
+			- ダブルクォート (`"`) は削除。
 	#>
 	[CmdletBinding()]
 	[OutputType([String])]
 	Param ([String]$text)
 	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $text)
 	$text = $text.Replace('&amp;', '&')
+	# * 下記一部がUnicode指定なので、VScodeなどのIDEで勝手に変換されないようにするため
 	$replacements = @{
-		'*' = '＊' # 全角
-		'|' = '｜' # 全角
-		':' = '：' # 全角
-		';' = '；' # 全角
-		"‘" = "'" # U+2018をU+0027に変換
-		"’" = "'" # U+2019をU+0027に変換
-		'"' = '' # 削除
-		'“' = '' # 全角でもダブルクォートとして認識されるようなので削除
-		'”' = '' # 全角でもダブルクォートとして認識されるようなので削除
-		'?' = '？' # 全角
-		'!' = '！' # 全角
-		'/' = '／' # 全角
-		'\' = '＼' # 全角
-		'<' = '＜' # 全角
-		'>' = '＞' # 全角
+		'*'        = '＊' # 全角
+		'|'        = '｜' # 全角
+		':'        = '：' # 全角
+		';'        = '；' # 全角
+		"`u{2018}" = "'" # * U+2018をU+0027に変換
+		"`u{2019}" = "'" # * U+2019をU+0027に変換
+		'"'        = '' # 削除
+		"`u{201C}" = ''  # * 全角(「“」)でもダブルクォートとして認識されるようなので削除
+		"`u{201D}" = ''  # * 全角(「”」)でもダブルクォートとして認識されるようなので削除
+		'?'        = '？' # 全角
+		'!'        = '！' # 全角
+		'/'        = '／' # 全角
+		'\'        = '＼' # 全角
+		'<'        = '＜' # 全角
+		'>'        = '＞' # 全角
 	}
 	foreach ($replacement in $replacements.GetEnumerator()) { $text = $text.Replace($replacement.Name, $replacement.Value) }
 	return $text
@@ -504,43 +499,40 @@ function Remove-SpecialCharacter {
 #----------------------------------------------------------------------
 function Remove-TabSpace {
 	<#
-	.SYNOPSIS
-		タブや連続したスペースを単一スペースに置換する。
+		.SYNOPSIS
+			タブや連続したスペースを単一スペースに置換する。
 
-	.DESCRIPTION
-		この関数は、以下の処理を行います:
-		- タブ (`\t`) をスペース (` `) に変換。
-		- 連続したスペース (`\s+`) を単一のスペース (` `) に置換。
+		.DESCRIPTION
+			この関数は、以下の処理を行います:
+			- タブ (`\t`) をスペース (` `) に変換。
+			- 連続したスペース (`\s+`) を単一のスペース (` `) に置換。
 
-	.PARAMETER text
-		変換対象の文字列。
+		.PARAMETER text
+			変換対象の文字列。
 
-	.INPUTS
-		System.String
-		- 変換前の文字列。
+		.INPUTS
+			System.String
+			- 変換前の文字列。
 
-	.OUTPUTS
-		System.String
-		- 変換後の文字列。
+		.OUTPUTS
+			System.String
+			- 変換後の文字列。
 
-	.EXAMPLE
-		PS> Remove-TabSpace -text "Hello`tWorld"
-		"Hello World"
+		.EXAMPLE
+			PS> Remove-TabSpace -text "Hello`tWorld"
+			"Hello World"
 
-		タブがスペースに変換される。
+			タブがスペースに変換される。
 
-	.EXAMPLE
-		PS> Remove-TabSpace -text "This   is   a  test"
-		"This is a test"
+		.EXAMPLE
+			PS> Remove-TabSpace -text "This   is   a  test"
+			"This is a test"
 
-		連続したスペースが単一スペースに変換される。
+			連続したスペースが単一スペースに変換される。
 
-	.LINK
-		https://docs.microsoft.com/en-us/powershell/
-
-	.NOTES
-		- タブ (`\t`) はすべてスペースに変換される。
-		- 複数のスペースは単一のスペースにまとめられる。
+		.NOTES
+			- タブ (`\t`) はすべてスペースに変換される。
+			- 複数のスペースは単一のスペースにまとめられる。
 	#>
 	[CmdletBinding()]
 	[OutputType([String])]
@@ -555,50 +547,47 @@ function Remove-TabSpace {
 #----------------------------------------------------------------------
 function Get-ContentWoComment {
 	<#
-	.SYNOPSIS
-		文字列からコメントや不要な空白を削除する。
+		.SYNOPSIS
+			文字列からコメントや不要な空白を削除する。
 
-	.DESCRIPTION
-		この関数は、以下の処理を行います:
-		- タブ (`\t`) で区切られた最初の要素を取得
-		- スペース (` `) で区切られた最初の要素を取得
-		- `#` 記号を含む場合、最初の `#` 以降の部分を削除
+		.DESCRIPTION
+			この関数は、以下の処理を行います:
+			- タブ (`\t`) で区切られた最初の要素を取得
+			- スペース (` `) で区切られた最初の要素を取得
+			- `#` 記号を含む場合、最初の `#` 以降の部分を削除
 
-	.PARAMETER text
-		変換対象の文字列。
+		.PARAMETER text
+			変換対象の文字列。
 
-	.INPUTS
-		System.String
-		- 変換前の文字列。
+		.INPUTS
+			System.String
+			- 変換前の文字列。
 
-	.OUTPUTS
-		System.String
-		- コメントや不要な部分を削除した文字列。
+		.OUTPUTS
+			System.String
+			- コメントや不要な部分を削除した文字列。
 
-	.EXAMPLE
-		PS> Get-ContentWoComment -text "command # this is a comment"
-		"command"
+		.EXAMPLE
+			PS> Get-ContentWoComment -text "command # this is a comment"
+			"command"
 
-		`#` 以降のコメントを削除。
+			`#` 以降のコメントを削除。
 
-	.EXAMPLE
-		PS> Get-ContentWoComment -text "command    argument    # comment"
-		"command"
+		.EXAMPLE
+			PS> Get-ContentWoComment -text "command    argument    # comment"
+			"command"
 
-		スペースで区切られた最初の要素のみを取得。
+			スペースで区切られた最初の要素のみを取得。
 
-	.EXAMPLE
-		PS> Get-ContentWoComment -text "command`targument`tmore # comment"
-		"command"
+		.EXAMPLE
+			PS> Get-ContentWoComment -text "command`targument`tmore # comment"
+			"command"
 
-		タブで区切られた最初の要素のみを取得。
+			タブで区切られた最初の要素のみを取得。
 
-	.LINK
-		https://docs.microsoft.com/en-us/powershell/
-
-	.NOTES
-		- `#` より前の文字列のみを取得する。
-		- スペースやタブで区切られた最初の要素のみを保持する。
+		.NOTES
+			- `#` より前の文字列のみを取得する。
+			- スペースやタブで区切られた最初の要素のみを保持する。
 	#>
 	[OutputType([String])]
 	Param ([String]$text)
@@ -616,45 +605,45 @@ function Get-ContentWoComment {
 #----------------------------------------------------------------------
 function Remove-File {
 	<#
-	.SYNOPSIS
-		指定した条件に基づいて古いファイルを削除する。
+		.SYNOPSIS
+			指定した条件に基づいて古いファイルを削除する。
 
-	.DESCRIPTION
-		指定したディレクトリ (`basePath`) 内のファイルを、指定した条件 (`conditions`) に基づいて検索し、
-		指定した削除期間 (`delPeriod`) よりも古いファイルを削除する。
-		マルチスレッド処理をサポートしており、並列処理を有効にすることでパフォーマンスを向上できる。
+		.DESCRIPTION
+			指定したディレクトリ (`basePath`) 内のファイルを、指定した条件 (`conditions`) に基づいて検索し、
+			指定した削除期間 (`delPeriod`) よりも古いファイルを削除する。
+			マルチスレッド処理をサポートしており、並列処理を有効にすることでパフォーマンスを向上できる。
 
-	.PARAMETER basePath
-		検索対象のディレクトリのパス。
+		.PARAMETER basePath
+			検索対象のディレクトリのパス。
 
-	.PARAMETER conditions
-		削除対象のファイル名パターン（ワイルドカード可）の配列。
+		.PARAMETER conditions
+			削除対象のファイル名パターン（ワイルドカード可）の配列。
 
-	.PARAMETER delPeriod
-		削除対象となるファイルの最終更新日時の閾値（日数単位）。
-		`delPeriod` 日よりも古いファイルが削除される。
+		.PARAMETER delPeriod
+			削除対象となるファイルの最終更新日時の閾値（日数単位）。
+			`delPeriod` 日よりも古いファイルが削除される。
 
-	.INPUTS
-		System.IO.FileInfo, System.String[], System.Int32
-		- ファイルパス、条件リスト、削除期間。
+		.INPUTS
+			System.IO.FileInfo, System.String[], System.Int32
+			- ファイルパス、条件リスト、削除期間。
 
-	.OUTPUTS
-		なし（[Void]）
+		.OUTPUTS
+			なし（[Void]）
 
-	.EXAMPLE
-		PS> Remove-File -basePath "C:\Logs" -conditions @("*.log", "*.tmp") -delPeriod 30
+		.EXAMPLE
+			PS> Remove-File -basePath "C:\Logs" -conditions @("*.log", "*.tmp") -delPeriod 30
 
-		`C:\Logs` 内の `*.log` および `*.tmp` ファイルのうち、最終更新日時が 30 日よりも古いファイルを削除する。
+			`C:\Logs` 内の `*.log` および `*.tmp` ファイルのうち、最終更新日時が 30 日よりも古いファイルを削除する。
 
-	.EXAMPLE
-		PS> Remove-File -basePath "/var/logs" -conditions @("*.log") -delPeriod 7
+		.EXAMPLE
+			PS> Remove-File -basePath "/var/logs" -conditions @("*.log") -delPeriod 7
 
-		`/var/logs` ディレクトリ内の `.log` ファイルで 7 日以上経過したものを削除する。
+			`/var/logs` ディレクトリ内の `.log` ファイルで 7 日以上経過したものを削除する。
 
-	.NOTES
-		- `$script:enableMultithread` が `$true` の場合、マルチスレッド処理を行う。
-		- マルチスレッド処理時は `$script:multithreadNum` に従い、並列実行数が制限される。
-		- ファイル削除時のエラーは `Warning` として記録される。
+		.NOTES
+			- `$script:enableMultithread` が `$true` の場合、マルチスレッド処理を行う。
+			- マルチスレッド処理時は `$script:multithreadNum` に従い、並列実行数が制限される。
+			- ファイル削除時のエラーは `Warning` として記録される。
 	#>
 	[CmdletBinding()]
 	[OutputType([Void])]
@@ -691,40 +680,40 @@ function Remove-File {
 #----------------------------------------------------------------------
 function Expand-Zip {
 	<#
-	.SYNOPSIS
-		ZIPファイルを指定したディレクトリに展開する。
+		.SYNOPSIS
+			ZIPファイルを指定したディレクトリに展開する。
 
-	.DESCRIPTION
-		指定したZIPファイル (`path`) を、指定した展開先 (`destination`) に解凍する。
-		すでに展開先に同名のファイルが存在する場合は、上書きする。
+		.DESCRIPTION
+			指定したZIPファイル (`path`) を、指定した展開先 (`destination`) に解凍する。
+			すでに展開先に同名のファイルが存在する場合は、上書きする。
 
-	.PARAMETER path
-		展開するZIPファイルのパス。
+		.PARAMETER path
+			展開するZIPファイルのパス。
 
-	.PARAMETER destination
-		ZIPファイルを展開するディレクトリのパス。
+		.PARAMETER destination
+			ZIPファイルを展開するディレクトリのパス。
 
-	.INPUTS
-		System.String
-		- ZIPファイルのパスと展開先ディレクトリ。
+		.INPUTS
+			System.String
+			- ZIPファイルのパスと展開先ディレクトリ。
 
-	.OUTPUTS
-		なし（[Void]）
+		.OUTPUTS
+			なし（[Void]）
 
-	.EXAMPLE
-		PS> Expand-Zip -path "C:\Backup\data.zip" -destination "C:\ExtractedData"
+		.EXAMPLE
+			PS> Expand-Zip -path "C:\Backup\data.zip" -destination "C:\ExtractedData"
 
-		`C:\Backup\data.zip` を `C:\ExtractedData` に展開する。
+			`C:\Backup\data.zip` を `C:\ExtractedData` に展開する。
 
-	.EXAMPLE
-		PS> Expand-Zip -path "/home/user/archive.zip" -destination "/home/user/unpacked"
+		.EXAMPLE
+			PS> Expand-Zip -path "/home/user/archive.zip" -destination "/home/user/unpacked"
 
-		`/home/user/archive.zip` を `/home/user/unpacked` に展開する（Linux環境）。
+			`/home/user/archive.zip` を `/home/user/unpacked` に展開する（Linux環境）。
 
-	.NOTES
-		- ZIPファイルが存在しない場合、エラーをスローする。
-		- すでに展開先にファイルが存在する場合は上書きされる。
-		- .NET の `[System.IO.Compression.ZipFile]::ExtractToDirectory` を利用して展開を実施。
+		.NOTES
+			- ZIPファイルが存在しない場合、エラーをスローする。
+			- すでに展開先にファイルが存在する場合は上書きされる。
+			- .NET の `[System.IO.Compression.ZipFile]::ExtractToDirectory` を利用して展開を実施。
 	#>
 	[CmdletBinding()]
 	[OutputType([Void])]
@@ -750,39 +739,39 @@ function Expand-Zip {
 #----------------------------------------------------------------------
 function Lock-File {
 	<#
-	.SYNOPSIS
-		指定したファイルをロックする。
+		.SYNOPSIS
+			指定したファイルをロックする。
 
-	.DESCRIPTION
-		指定したファイル (`path`) を開き、読み書きロックを設定することで、他のプロセスによるアクセスを防ぐ。
+		.DESCRIPTION
+			指定したファイル (`path`) を開き、読み書きロックを設定することで、他のプロセスによるアクセスを防ぐ。
 
-	.PARAMETER path
-		ロックするファイルのパス。
+		.PARAMETER path
+			ロックするファイルのパス。
 
-	.INPUTS
-		System.String
-		- ロックするファイルのパス。
+		.INPUTS
+			System.String
+			- ロックするファイルのパス。
 
-	.OUTPUTS
-		PSCustomObject
-		- `path` : 指定されたファイルパス
-		- `result` : ロックの成否（`$true` または `$false`）
+		.OUTPUTS
+			PSCustomObject
+			- `path` : 指定されたファイルパス
+			- `result` : ロックの成否（`$true` または `$false`）
 
-	.EXAMPLE
-		PS> Lock-File -path "C:\Temp\test.txt"
+		.EXAMPLE
+			PS> Lock-File -path "C:\Temp\test.txt"
 
-		`C:\Temp\test.txt` をロックする。
+			`C:\Temp\test.txt` をロックする。
 
-	.EXAMPLE
-		PS> $lockResult = Lock-File -path "/home/user/data.log"
-		PS> $lockResult.result
+		.EXAMPLE
+			PS> $lockResult = Lock-File -path "/home/user/data.log"
+			PS> $lockResult.result
 
-		`/home/user/data.log` をロックし、結果 (`$true` または `$false`) を取得。
+			`/home/user/data.log` をロックし、結果 (`$true` または `$false`) を取得。
 
-	.NOTES
-		- `[System.IO.FileInfo]` を使用してファイル情報を取得し、`Open` メソッドでロックを確立。
-		- `FileShare.None` を指定することで、他のプロセスがファイルにアクセスできないようにする。
-		- ロックに失敗すると `$false` を返す。
+		.NOTES
+			- `[System.IO.FileInfo]` を使用してファイル情報を取得し、`Open` メソッドでロックを確立。
+			- `FileShare.None` を指定することで、他のプロセスがファイルにアクセスできないようにする。
+			- ロックに失敗すると `$false` を返す。
 	#>
 	[CmdletBinding()]
 	[OutputType([PSCustomObject])]
@@ -807,39 +796,39 @@ function Lock-File {
 #----------------------------------------------------------------------
 function Unlock-File {
 	<#
-	.SYNOPSIS
-		指定したファイルのロックを解除する。
+		.SYNOPSIS
+			指定したファイルのロックを解除する。
 
-	.DESCRIPTION
-		`Lock-File` 関数でロックされたファイルを解放し、他のプロセスがアクセスできるようにする。
+		.DESCRIPTION
+			`Lock-File` 関数でロックされたファイルを解放し、他のプロセスがアクセスできるようにする。
 
-	.PARAMETER path
-		ロックを解除するファイルのパス。
+		.PARAMETER path
+			ロックを解除するファイルのパス。
 
-	.INPUTS
-		System.String
-		- ロックを解除するファイルのパス。
+		.INPUTS
+			System.String
+			- ロックを解除するファイルのパス。
 
-	.OUTPUTS
-		PSCustomObject
-		- `path` : 指定されたファイルパス
-		- `result` : ロック解除の成否（`$true` または `$false`）
+		.OUTPUTS
+			PSCustomObject
+			- `path` : 指定されたファイルパス
+			- `result` : ロック解除の成否（`$true` または `$false`）
 
-	.EXAMPLE
-		PS> Unlock-File -path "C:\Temp\test.txt"
+		.EXAMPLE
+			PS> Unlock-File -path "C:\Temp\test.txt"
 
-		`C:\Temp\test.txt` のロックを解除する。
+			`C:\Temp\test.txt` のロックを解除する。
 
-	.EXAMPLE
-		PS> $unlockResult = Unlock-File -path "/home/user/data.log"
-		PS> $unlockResult.result
+		.EXAMPLE
+			PS> $unlockResult = Unlock-File -path "/home/user/data.log"
+			PS> $unlockResult.result
 
-		`/home/user/data.log` のロックを解除し、結果 (`$true` または `$false`) を取得。
+			`/home/user/data.log` のロックを解除し、結果 (`$true` または `$false`) を取得。
 
-	.NOTES
-		- `Lock-File` 関数でロックしたファイルを開放するために使用する。
-		- `$script:fileStream` からエントリを削除し、リソースを解放する。
-		- すでにロックが解除されている場合は何もしない。
+		.NOTES
+			- `Lock-File` 関数でロックしたファイルを開放するために使用する。
+			- `$script:fileStream` からエントリを削除し、リソースを解放する。
+			- すでにロックが解除されている場合は何もしない。
 	#>
 	[CmdletBinding()]
 	[OutputType([PSCustomObject])]
@@ -871,37 +860,37 @@ function Unlock-File {
 #----------------------------------------------------------------------
 function Get-RemainingCapacity {
 	<#
-	.SYNOPSIS
-		指定したディレクトリの空き容量を取得する。
+		.SYNOPSIS
+			指定したディレクトリの空き容量を取得する。
 
-	.DESCRIPTION
-		指定したディレクトリのあるドライブやファイルシステムの空き容量をMB単位で返す。
+		.DESCRIPTION
+			指定したディレクトリのあるドライブやファイルシステムの空き容量をMB単位で返す。
 
-	.PARAMETER targetDir
-		空き容量を取得する対象ディレクトリ。
+		.PARAMETER targetDir
+			空き容量を取得する対象ディレクトリ。
 
-	.INPUTS
-		System.String
-		- チェックするディレクトリのパス。
+		.INPUTS
+			System.String
+			- チェックするディレクトリのパス。
 
-	.OUTPUTS
-		System.Int64
-		- 指定したディレクトリのあるドライブの空き容量（MB単位）。
+		.OUTPUTS
+			System.Int64
+			- 指定したディレクトリのあるドライブの空き容量（MB単位）。
 
-	.EXAMPLE
-		PS> Get-RemainingCapacity -targetDir "C:\Users"
+		.EXAMPLE
+			PS> Get-RemainingCapacity -targetDir "C:\Users"
 
-		`C:\Users` のあるドライブの空き容量を取得。
+			`C:\Users` のあるドライブの空き容量を取得。
 
-	.EXAMPLE
-		PS> Get-RemainingCapacity -targetDir "/home/user"
+		.EXAMPLE
+			PS> Get-RemainingCapacity -targetDir "/home/user"
 
-		`/home/user` のあるファイルシステムの空き容量を取得。
+			`/home/user` のあるファイルシステムの空き容量を取得。
 
-	.NOTES
-		- Windows では `Get-CimInstance` を使用。
-		- Linux/macOS では `df` コマンドを実行。
-		- UNC パス (`\\server\share`) の場合は `dir` コマンドを利用。
+		.NOTES
+			- Windows では `Get-CimInstance` を使用。
+			- Linux/macOS では `df` コマンドを実行。
+			- UNC パス (`\\server\share`) の場合は `dir` コマンドを利用。
 	#>
 	[CmdletBinding()]
 	[OutputType([int64])]
@@ -938,74 +927,6 @@ function Get-RemainingCapacity {
 }
 # endregion ディスク監視
 
-# region ファイルロック
-
-# #----------------------------------------------------------------------
-# # 色付きWrite-Output
-# #----------------------------------------------------------------------
-# function Out-Msg-Color {
-# 	<#
-# 	.SYNOPSIS
-# 		コンソールに色付きのメッセージを表示する。
-
-# 	.DESCRIPTION
-# 		指定した前景色（文字色）および背景色で、メッセージをコンソールに出力する。
-# 		出力後、元のコンソールカラー設定に戻る。
-
-# 	.PARAMETER text
-# 		表示するテキスト。
-
-# 	.PARAMETER fg
-# 		文字の色（ConsoleColor）。
-
-# 	.PARAMETER bg
-# 		背景の色（ConsoleColor）。
-
-# 	.PARAMETER noNL
-# 		改行をしない場合は `$true` を指定。
-
-# 	.EXAMPLE
-# 		PS> Out-Msg-Color -text "Hello, World!" -fg Green
-
-# 		緑色の "Hello, World!" を表示。
-
-# 	.EXAMPLE
-# 		PS> Out-Msg-Color -text "Error!" -fg White -bg Red
-
-# 		赤背景・白文字で "Error!" を表示。
-
-# 	.EXAMPLE
-# 		PS> Out-Msg-Color -text "Processing..." -fg Yellow -noNL $true
-
-# 		黄色の "Processing..." を表示し、改行しない。
-
-# 	.NOTES
-# 		- `Write-Host` を使用しているため、標準出力にリダイレクトはできない。
-# 		- `fg` や `bg` の指定がない場合は、デフォルトのコンソールカラーを使用する。
-# 	#>
-# 	[CmdletBinding()]
-# 	[OutputType([Void])]
-# 	Param (
-# 		[Parameter(Mandatory = $false)][Object]$text = '',
-# 		[Parameter(Mandatory = $false)][ConsoleColor]$fg,
-# 		[Parameter(Mandatory = $false)][ConsoleColor]$bg,
-# 		[Parameter(Mandatory = $false)][Boolean]$noNL
-# 	)
-# 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-# 	try {
-# 		if ($fg) { $host.UI.RawUI.ForegroundColor = $fg }
-# 		if ($bg) { $host.UI.RawUI.BackgroundColor = $bg }
-# 		Write-Host -Object $text -NoNewline:$noNL
-# 	} catch { Write-Warning "メッセージの出力中にエラーが発生しました: $_"
-# 	} finally {
-# 		$host.UI.RawUI.ForegroundColor = $prevFg
-# 		$host.UI.RawUI.BackgroundColor = $prevBg
-# 	}
-# 	Remove-Variable -Name text, fg, bg, noNL, prevFg, prevBg, writeHostParams -ErrorAction SilentlyContinue
-# }
-
-# endregion コンソール出力
-
 # region トースト通知
 
 # モジュールのインポート
@@ -1020,35 +941,35 @@ if ($IsWindows -and !$script:disableToastNotification -and (!('Microsoft.Toolkit
 #----------------------------------------------------------------------
 function Show-GeneralToast {
 	<#
-	.SYNOPSIS
-		カスタムテキストと期間を指定してトースト通知を表示します。
+		.SYNOPSIS
+			カスタムテキストと期間を指定してトースト通知を表示します。
 
-	.DESCRIPTION
-		この関数は、Windows、Linux、macOS の各プラットフォームで指定された内容のトースト通知を表示します。
-		ユーザーは通知のメッセージ、期間、および音が鳴るかどうかを制御できます。
-		通知の期間は「短い」または「長い」を選択できます。
+		.DESCRIPTION
+			この関数は、Windows、Linux、macOS の各プラットフォームで指定された内容のトースト通知を表示します。
+			ユーザーは通知のメッセージ、期間、および音が鳴るかどうかを制御できます。
+			通知の期間は「短い」または「長い」を選択できます。
 
-	.PARAMETER text1
-		トースト通知のメインコンテンツとなるテキストです。通知に表示される主要なテキストを指定します。
+		.PARAMETER text1
+			トースト通知のメインコンテンツとなるテキストです。通知に表示される主要なテキストを指定します。
 
-	.PARAMETER text2
-		オプションで、通知の副次的なテキストを指定します。追加の詳細情報などを表示するために使用できます。
+		.PARAMETER text2
+			オプションで、通知の副次的なテキストを指定します。追加の詳細情報などを表示するために使用できます。
 
-	.PARAMETER duration
-		通知の表示時間を指定します。「短い」または「長い」のいずれかを選択できます。デフォルトは「短い」です。
+		.PARAMETER duration
+			通知の表示時間を指定します。「短い」または「長い」のいずれかを選択できます。デフォルトは「短い」です。
 
-	.PARAMETER silent
-		このパラメータが$trueの場合、通知の音が鳴りません。デフォルトは$falseで、音が鳴ります。
+		.PARAMETER silent
+			このパラメータが$trueの場合、通知の音が鳴りません。デフォルトは$falseで、音が鳴ります。
 
-	.EXAMPLE
-		Show-GeneralToast -text1 "タスク完了" -text2 "すべての処理が完了しました！" -duration "Long"
+		.EXAMPLE
+			Show-GeneralToast -text1 "タスク完了" -text2 "すべての処理が完了しました！" -duration "Long"
 
-		「長い」期間のトースト通知を指定されたメッセージで表示します。
+			「長い」期間のトースト通知を指定されたメッセージで表示します。
 
-	.EXAMPLE
-		Show-GeneralToast -text1 "エラーが発生しました" -silent $true
+		.EXAMPLE
+			Show-GeneralToast -text1 "エラーが発生しました" -silent $true
 
-		音なしでトースト通知を表示します。
+			音なしでトースト通知を表示します。
 	#>
 	[CmdletBinding()]
 	[OutputType([Void])]
@@ -1106,44 +1027,44 @@ function Show-GeneralToast {
 #----------------------------------------------------------------------
 function Show-ProgressToast {
 	<#
-	.SYNOPSIS
-		進行状況を示すトースト通知を表示します。
+		.SYNOPSIS
+			進行状況を示すトースト通知を表示します。
 
-	.DESCRIPTION
-		この関数は、Windows、Linux、macOS の各プラットフォームで進行状況を示すトースト通知を表示します。
-		ユーザーは通知のメッセージ、進行状況の詳細、期間、および音の有無を制御できます。
-		通知は「短い」または「長い」期間で表示できます。
+		.DESCRIPTION
+			この関数は、Windows、Linux、macOS の各プラットフォームで進行状況を示すトースト通知を表示します。
+			ユーザーは通知のメッセージ、進行状況の詳細、期間、および音の有無を制御できます。
+			通知は「短い」または「長い」期間で表示できます。
 
-	.PARAMETER text1
-		トースト通知のメインテキストです。通常、処理が開始されたことや進行中のタスクに関する説明が表示されます。
+		.PARAMETER text1
+			トースト通知のメインテキストです。通常、処理が開始されたことや進行中のタスクに関する説明が表示されます。
 
-	.PARAMETER text2
-		オプションの副次的なテキストです。追加情報や補足的な説明を表示するために使用します。
+		.PARAMETER text2
+			オプションの副次的なテキストです。追加情報や補足的な説明を表示するために使用します。
 
-	.PARAMETER workDetail
-		進行中の作業の詳細情報です。進捗状況の説明を通知に追加するために使用します。
+		.PARAMETER workDetail
+			進行中の作業の詳細情報です。進捗状況の説明を通知に追加するために使用します。
 
-	.PARAMETER tag
-		トースト通知のタグです。同じグループに属する通知を識別するために使用します。
+		.PARAMETER tag
+			トースト通知のタグです。同じグループに属する通知を識別するために使用します。
 
-	.PARAMETER group
-		トースト通知のグループ名です。同じグループ内で通知を整理できます。
+		.PARAMETER group
+			トースト通知のグループ名です。同じグループ内で通知を整理できます。
 
-	.PARAMETER duration
-		通知の表示時間を指定します。「短い」または「長い」のいずれかを選択できます。デフォルトは「短い」です。
+		.PARAMETER duration
+			通知の表示時間を指定します。「短い」または「長い」のいずれかを選択できます。デフォルトは「短い」です。
 
-	.PARAMETER silent
-		音なしで通知を表示する場合は$trueを指定します。デフォルトは$falseで、音が鳴ります。
+		.PARAMETER silent
+			音なしで通知を表示する場合は$trueを指定します。デフォルトは$falseで、音が鳴ります。
 
-	.EXAMPLE
-		Show-ProgressToast -text1 "処理中" -text2 "ファイルを読み込んでいます..." -workDetail "データのロード" -tag "fileLoad" -group "taskGroup" -duration "Long"
+		.EXAMPLE
+			Show-ProgressToast -text1 "処理中" -text2 "ファイルを読み込んでいます..." -workDetail "データのロード" -tag "fileLoad" -group "taskGroup" -duration "Long"
 
-		長期間表示される進行状況を示すトースト通知を表示します。
+			長期間表示される進行状況を示すトースト通知を表示します。
 
-	.EXAMPLE
-		Show-ProgressToast -text1 "エラー発生" -silent $true -tag "errorTask" -group "errorGroup"
+		.EXAMPLE
+			Show-ProgressToast -text1 "エラー発生" -silent $true -tag "errorTask" -group "errorGroup"
 
-		音なしでエラー発生を通知する進行状況トーストを表示します。
+			音なしでエラー発生を通知する進行状況トーストを表示します。
 	#>
 	[CmdletBinding()]
 	[OutputType([Void])]
@@ -1215,40 +1136,40 @@ function Show-ProgressToast {
 #----------------------------------------------------------------------
 function Update-ProgressToast {
 	<#
-	.SYNOPSIS
-		進行状況の更新を行うトースト通知を更新します。
+		.SYNOPSIS
+			進行状況の更新を行うトースト通知を更新します。
 
-	.DESCRIPTION
-		この関数は、Windows プラットフォームで進行状況を更新するためのトースト通知を更新します。
-		進行中の作業の進捗率や状態を動的に更新するために使用できます。
+		.DESCRIPTION
+			この関数は、Windows プラットフォームで進行状況を更新するためのトースト通知を更新します。
+			進行中の作業の進捗率や状態を動的に更新するために使用できます。
 
-	.PARAMETER title
-		トースト通知のタイトルテキストです。主に作業の種類を示します。
+		.PARAMETER title
+			トースト通知のタイトルテキストです。主に作業の種類を示します。
 
-	.PARAMETER rate
-		進行状況の進捗率を指定します。通常は0〜100の範囲で指定されます。
+		.PARAMETER rate
+			進行状況の進捗率を指定します。通常は0〜100の範囲で指定されます。
 
-	.PARAMETER leftText
-		進行状況の左側に表示されるテキストです。作業のステータスや詳細情報を記載します。
+		.PARAMETER leftText
+			進行状況の左側に表示されるテキストです。作業のステータスや詳細情報を記載します。
 
-	.PARAMETER rightText
-		進行状況の右側に表示されるテキストです。作業の進捗状況に関連する追加情報を表示します。
+		.PARAMETER rightText
+			進行状況の右側に表示されるテキストです。作業の進捗状況に関連する追加情報を表示します。
 
-	.PARAMETER tag
-		トースト通知のタグです。同じグループ内の通知を識別するために使用します。
+		.PARAMETER tag
+			トースト通知のタグです。同じグループ内の通知を識別するために使用します。
 
-	.PARAMETER group
-		トースト通知のグループ名です。同じグループ内で通知を整理できます。
+		.PARAMETER group
+			トースト通知のグループ名です。同じグループ内で通知を整理できます。
 
-	.EXAMPLE
-		Update-ProgressToast -rate "50" -leftText "データ処理中" -rightText "進捗: 50%" -tag "dataProcessing" -group "taskGroup"
+		.EXAMPLE
+			Update-ProgressToast -rate "50" -leftText "データ処理中" -rightText "進捗: 50%" -tag "dataProcessing" -group "taskGroup"
 
-		進行中のデータ処理の進捗を50%に更新するトースト通知を表示します。
+			進行中のデータ処理の進捗を50%に更新するトースト通知を表示します。
 
-	.EXAMPLE
-		Update-ProgressToast -rate "75" -leftText "ファイルの書き込み" -rightText "進捗: 75%" -tag "fileWrite" -group "taskGroup"
+		.EXAMPLE
+			Update-ProgressToast -rate "75" -leftText "ファイルの書き込み" -rightText "進捗: 75%" -tag "fileWrite" -group "taskGroup"
 
-		ファイルの書き込み進捗を75%に更新するトースト通知を表示します。
+			ファイルの書き込み進捗を75%に更新するトースト通知を表示します。
 	#>
 	[CmdletBinding()]
 	[OutputType([Void])]
@@ -1287,46 +1208,46 @@ function Update-ProgressToast {
 #----------------------------------------------------------------------
 function Show-ProgressToast2Row {
 	<#
-	.SYNOPSIS
-		2行の進行状況を示すトースト通知を表示します。
+		.SYNOPSIS
+			2行の進行状況を示すトースト通知を表示します。
 
-	.DESCRIPTION
-		この関数は、Windows、Linux、macOS プラットフォームで2行の進行状況を示すトースト通知を表示します。
-		各行に異なる進行状況を表示でき、ユーザーは通知のメッセージ、進行状況の詳細、期間、および音の有無を制御できます。
+		.DESCRIPTION
+			この関数は、Windows、Linux、macOS プラットフォームで2行の進行状況を示すトースト通知を表示します。
+			各行に異なる進行状況を表示でき、ユーザーは通知のメッセージ、進行状況の詳細、期間、および音の有無を制御できます。
 
-	.PARAMETER text1
-		トースト通知のメインテキストです。通常、処理が開始されたことや進行中のタスクに関する説明が表示されます。
+		.PARAMETER text1
+			トースト通知のメインテキストです。通常、処理が開始されたことや進行中のタスクに関する説明が表示されます。
 
-	.PARAMETER text2
-		オプションで、副次的なテキストです。追加の詳細情報などを表示するために使用します。
+		.PARAMETER text2
+			オプションで、副次的なテキストです。追加の詳細情報などを表示するために使用します。
 
-	.PARAMETER detail1
-		1行目の進行状況の詳細情報です。進捗状況に関連する詳細な説明を表示します。
+		.PARAMETER detail1
+			1行目の進行状況の詳細情報です。進捗状況に関連する詳細な説明を表示します。
 
-	.PARAMETER detail2
-		2行目の進行状況の詳細情報です。進捗状況に関連する追加情報を表示します。
+		.PARAMETER detail2
+			2行目の進行状況の詳細情報です。進捗状況に関連する追加情報を表示します。
 
-	.PARAMETER tag
-		トースト通知のタグです。同じグループに属する通知を識別するために使用します。
+		.PARAMETER tag
+			トースト通知のタグです。同じグループに属する通知を識別するために使用します。
 
-	.PARAMETER duration
-		通知の表示時間を指定します。「Short」または「Long」を選択できます。デフォルトは「Short」です。
+		.PARAMETER duration
+			通知の表示時間を指定します。「Short」または「Long」を選択できます。デフォルトは「Short」です。
 
-	.PARAMETER silent
-		音なしで通知を表示する場合は$trueを指定します。デフォルトは$falseで、音が鳴ります。
+		.PARAMETER silent
+			音なしで通知を表示する場合は$trueを指定します。デフォルトは$falseで、音が鳴ります。
 
-	.PARAMETER group
-		トースト通知のグループ名です。同じグループ内で通知を整理できます。
+		.PARAMETER group
+			トースト通知のグループ名です。同じグループ内で通知を整理できます。
 
-	.EXAMPLE
-		Show-ProgressToast2Row -text1 "処理中" -text2 "ファイルを読み込んでいます..." -detail1 "データのロード" -detail2 "進捗: 50%" -tag "fileLoad" -group "taskGroup" -duration "Long"
+		.EXAMPLE
+			Show-ProgressToast2Row -text1 "処理中" -text2 "ファイルを読み込んでいます..." -detail1 "データのロード" -detail2 "進捗: 50%" -tag "fileLoad" -group "taskGroup" -duration "Long"
 
-		長期間表示される2行の進行状況を示すトースト通知を表示します。
+			長期間表示される2行の進行状況を示すトースト通知を表示します。
 
-	.EXAMPLE
-		Show-ProgressToast2Row -text1 "エラー発生" -silent $true -tag "errorTask" -group "errorGroup"
+		.EXAMPLE
+			Show-ProgressToast2Row -text1 "エラー発生" -silent $true -tag "errorTask" -group "errorGroup"
 
-		音なしでエラー発生を通知する2行の進行状況トーストを表示します。
+			音なしでエラー発生を通知する2行の進行状況トーストを表示します。
 	#>
 	[CmdletBinding()]
 	[OutputType([Void])]
@@ -1408,52 +1329,52 @@ function Show-ProgressToast2Row {
 #----------------------------------------------------------------------
 function Update-ProgressToast2Row {
 	<#
-	.SYNOPSIS
-		2行の進行状況を示すトースト通知を更新します。
+		.SYNOPSIS
+			2行の進行状況を示すトースト通知を更新します。
 
-	.DESCRIPTION
-		この関数は、Windows プラットフォームで進行状況を更新するためのトースト通知を更新します。
-		2行の進行状況を表示するトースト通知を動的に更新するために使用できます。進捗率や詳細情報を含めた通知を更新します。
+		.DESCRIPTION
+			この関数は、Windows プラットフォームで進行状況を更新するためのトースト通知を更新します。
+			2行の進行状況を表示するトースト通知を動的に更新するために使用できます。進捗率や詳細情報を含めた通知を更新します。
 
-	.PARAMETER title1
-		1行目の進行状況のタイトルテキストです。進行中の作業のタイトルや説明を示します。
+		.PARAMETER title1
+			1行目の進行状況のタイトルテキストです。進行中の作業のタイトルや説明を示します。
 
-	.PARAMETER rate1
-		1行目の進行状況の進捗率を指定します。通常は0〜100の範囲で指定されます。
+		.PARAMETER rate1
+			1行目の進行状況の進捗率を指定します。通常は0〜100の範囲で指定されます。
 
-	.PARAMETER leftText1
-		1行目の進行状況の左側に表示されるテキストです。作業のステータスや詳細情報を記載します。
+		.PARAMETER leftText1
+			1行目の進行状況の左側に表示されるテキストです。作業のステータスや詳細情報を記載します。
 
-	.PARAMETER rightText1
-		1行目の進行状況の右側に表示されるテキストです。進捗の詳細情報や完了までの残り時間を示します。
+		.PARAMETER rightText1
+			1行目の進行状況の右側に表示されるテキストです。進捗の詳細情報や完了までの残り時間を示します。
 
-	.PARAMETER title2
-		2行目の進行状況のタイトルテキストです。2番目の進行状況の作業や詳細を示します。
+		.PARAMETER title2
+			2行目の進行状況のタイトルテキストです。2番目の進行状況の作業や詳細を示します。
 
-	.PARAMETER rate2
-		2行目の進行状況の進捗率を指定します。通常は0〜100の範囲で指定されます。
+		.PARAMETER rate2
+			2行目の進行状況の進捗率を指定します。通常は0〜100の範囲で指定されます。
 
-	.PARAMETER leftText2
-		2行目の進行状況の左側に表示されるテキストです。作業のステータスや詳細情報を記載します。
+		.PARAMETER leftText2
+			2行目の進行状況の左側に表示されるテキストです。作業のステータスや詳細情報を記載します。
 
-	.PARAMETER rightText2
-		2行目の進行状況の右側に表示されるテキストです。進捗の詳細情報や完了までの残り時間を示します。
+		.PARAMETER rightText2
+			2行目の進行状況の右側に表示されるテキストです。進捗の詳細情報や完了までの残り時間を示します。
 
-	.PARAMETER tag
-		トースト通知のタグです。同じグループ内で通知を識別するために使用します。
+		.PARAMETER tag
+			トースト通知のタグです。同じグループ内で通知を識別するために使用します。
 
-	.PARAMETER group
-		トースト通知のグループ名です。同じグループ内で通知を整理できます。
+		.PARAMETER group
+			トースト通知のグループ名です。同じグループ内で通知を整理できます。
 
-	.EXAMPLE
-		Update-ProgressToast2Row -title1 "データ処理中" -rate1 "50" -leftText1 "処理中" -rightText1 "残り10分" -title2 "ファイル書き込み" -rate2 "75" -leftText2 "書き込み中" -rightText2 "残り5分" -tag "dataProcessing" -group "taskGroup"
+		.EXAMPLE
+			Update-ProgressToast2Row -title1 "データ処理中" -rate1 "50" -leftText1 "処理中" -rightText1 "残り10分" -title2 "ファイル書き込み" -rate2 "75" -leftText2 "書き込み中" -rightText2 "残り5分" -tag "dataProcessing" -group "taskGroup"
 
-		2行の進行状況を示すトースト通知を表示し、データ処理とファイル書き込みの進捗を更新します。
+			2行の進行状況を示すトースト通知を表示し、データ処理とファイル書き込みの進捗を更新します。
 
-	.EXAMPLE
-		Update-ProgressToast2Row -title1 "タスク1" -rate1 "25" -leftText1 "進行中" -rightText1 "残り15分" -title2 "タスク2" -rate2 "50" -leftText2 "進行中" -rightText2 "残り10分" -tag "taskGroup1" -group "group1"
+		.EXAMPLE
+			Update-ProgressToast2Row -title1 "タスク1" -rate1 "25" -leftText1 "進行中" -rightText1 "残り15分" -title2 "タスク2" -rate2 "50" -leftText2 "進行中" -rightText2 "残り10分" -tag "taskGroup1" -group "group1"
 
-		2つのタスクの進捗を更新するトースト通知を表示します。
+			2つのタスクの進捗を更新するトースト通知を表示します。
 	#>
 	[CmdletBinding()]
 	[OutputType([Void])]
@@ -1513,25 +1434,25 @@ function Update-ProgressToast2Row {
 #----------------------------------------------------------------------
 function ConvertFrom-Base64 {
 	<#
-	.SYNOPSIS
-		Base64エンコードされた文字列を画像に変換します。
+		.SYNOPSIS
+			Base64エンコードされた文字列を画像に変換します。
 
-	.DESCRIPTION
-		この関数は、Base64形式でエンコードされた文字列を受け取り、その文字列を画像オブジェクトに変換します。
-		主に画像データをBase64でエンコードして保存し、後でそのデータを画像として表示したい場合に使用されます。
+		.DESCRIPTION
+			この関数は、Base64形式でエンコードされた文字列を受け取り、その文字列を画像オブジェクトに変換します。
+			主に画像データをBase64でエンコードして保存し、後でそのデータを画像として表示したい場合に使用されます。
 
-	.PARAMETER base64
-		Base64形式でエンコードされた文字列です。この文字列は画像のデータを表しており、通常は長い文字列になります。
+		.PARAMETER base64
+			Base64形式でエンコードされた文字列です。この文字列は画像のデータを表しており、通常は長い文字列になります。
 
-	.OUTPUTS
-		この関数は、変換された画像オブジェクト（`System.Windows.Media.Imaging.BitmapImage`）を返します。
+		.OUTPUTS
+			この関数は、変換された画像オブジェクト（`System.Windows.Media.Imaging.BitmapImage`）を返します。
 
-	.EXAMPLE
-		$base64String = "iVBORw0KGgoAAAANSUhEUgAAA..."
-		$image = ConvertFrom-Base64 -base64 $base64String
-		$image  # 画像オブジェクトが返されます。
+		.EXAMPLE
+			$base64String = "iVBORw0KGgoAAAANSUhEUgAAA..."
+			$image = ConvertFrom-Base64 -base64 $base64String
+			$image  # 画像オブジェクトが返されます。
 
-		Base64エンコードされた文字列を画像オブジェクトに変換して表示する例です。
+			Base64エンコードされた文字列を画像オブジェクトに変換して表示する例です。
 	#>
 	Param (
 		[Parameter(Mandatory = $true)][String]$base64
