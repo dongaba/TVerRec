@@ -86,7 +86,6 @@
 	"thunder-client.sidebar.showActivityFromCollection": true,
 	"thunder-client.workspaceRelativePath": "./.vscode/",
 	"workbench.colorTheme": "Default Dark+",
-	"workbench.editor.enablePreview": true,
 	"workbench.iconTheme": "material-icon-theme",
 	"workbench.preferredLightColorTheme": "Default Dark+",
 	"workbench.startupEditor": "newUntitledFile",
