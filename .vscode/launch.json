@@ -121,6 +121,13 @@
 			"request": "launch",
 			"script": "${workspaceFolder}/src/functions/update_tverrec.ps1",
 			"type": "PowerShell"
+		},
+		{
+			"cwd": "${workspaceFolder}/src",
+			"name": "Debug Cosole",
+			"request": "launch",
+			"script": "${workspaceFolder}/src/debug_console.ps1",
+			"type": "PowerShell"
 		}
 	],
 	"version": "0.2.0"
