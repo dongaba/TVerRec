@@ -1555,7 +1555,7 @@ function Remove-SpecialNote {
 			4. 処理後のテキストを返す
 	#>
 	[CmdletBinding(SupportsShouldProcess = $true)]
-	Param ([Parameter(Mandatory = $true)][String]$text)
+	Param ([Parameter(Mandatory = $false)][String]$text = '')
 	begin {
 		Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 		# 特殊文字の位置を取得し、長さを計算
