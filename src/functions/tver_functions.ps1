@@ -384,14 +384,16 @@ function Get-SearchResult {
 		{ $_ -in 'new', 'end', 'ranking' } { $searchResultsRaw.Result.Contents.Contents ; break }
 		default { $searchResultsRaw.Result.Contents }
 	}
+
+	# 早期フィルタリング - 処理不要なタイプを除外
+	$searchResults = $searchResults | Where-Object { $_.Type -notin @('live', 'banner') }
+
 	# searchResultsを並び替え
-	$order = @('specialMain', 'special', 'talent', 'series', 'season', 'episode', 'live', 'banner')
+	$order = @('specialMain', 'special', 'talent', 'series', 'season', 'episode')
 	$sortedSearchResults = $searchResults | Sort-Object { $order.IndexOf($_.Type) }
 	# タイプ別に再帰呼び出し
 	foreach ($searchResult in $sortedSearchResults) {
 		switch ($searchResult.Type) {
-			'live' { break }
-			'banner' { break }
 			'episode' { $linkCollection.episodeLinks[('https://tver.jp/episodes/{0}' -f $searchResult.Content.Id)] = $searchResult.Content.EndAt ; break }
 			'season' { $linkCollection.seasonLinks.Add($searchResult.Content.Id) ; break }
 			'series' { $linkCollection.seriesLinks.Add($searchResult.Content.Id) ; break }
