@@ -16,12 +16,18 @@
 
 	.PARAMETER guiMode
 		オプションのパラメータ。GUIモードで実行するかどうかを指定します。
+		- 指定なし: 通常モードで実行
+		- 'gui': GUIモードで実行
+		- その他の値: 通常モードで実行
 
 	.NOTES
 		前提条件:
-		- Windows環境で実行する必要があります
-		- PowerShell 7.0以上を推奨です
+		- Windows、Linux、またはmacOS環境で実行する必要があります
+		- PowerShell 7.0以上を推奨します
 		- TVerRecの設定ファイルが正しく設定されている必要があります
+		- 十分なディスク容量が必要です
+		- インターネット接続が必要です
+		- TVerのアカウントが必要な場合があります
 
 		削除対象:
 		1. 一時ファイル
@@ -31,7 +37,7 @@
 		- 字幕ファイル（*.srt, *.vtt）
 		- その他の一時ファイル
 		2. ダウンロード対象外番組
-		- ignore_list.txtに記載された番組
+		- ignore.confに記載された番組
 		3. 空ディレクトリ
 		- 隠しファイルのみのディレクトリを含む
 
@@ -42,7 +48,7 @@
 		1.3 ダウンロードディレクトリのクリーンアップ
 		1.4 保存先ディレクトリのクリーンアップ（設定時）
 		2. 対象外番組の削除
-		2.1 ignore_list.txtの読み込み
+		2.1 ignore.confの読み込み
 		2.2 対象ディレクトリの特定
 		2.3 並列処理による削除
 		3. 空ディレクトリの削除
@@ -58,8 +64,12 @@
 
 	.OUTPUTS
 		System.Void
-		各処理の実行結果をコンソールに出力します。
-		進捗状況はトースト通知でも表示されます。
+		このスクリプトは以下の出力を行います：
+		- コンソールへの進捗状況の表示
+		- トースト通知による進捗状況の表示
+		- エラー発生時のエラーメッセージ
+		- 処理完了時のサマリー情報
+		- 削除されたファイルとディレクトリの一覧
 #>
 
 Set-StrictMode -Version Latest
@@ -117,12 +127,15 @@ $getChildItemParams = @{
 	Recurse     = $true
 	ErrorAction = 'SilentlyContinue'
 }
-Get-ChildItem @getChildItemParams | Remove-File -DelPeriod 1
+Get-ChildItem @getChildItemParams -ErrorAction SilentlyContinue | Remove-File -DelPeriod 1
 
 # 作業ディレクトリ
 $toastUpdateParams.Title = $script:downloadWorkDir
 $toastUpdateParams.Rate = [Float]( 2 / $totalCleanupSteps )
 Update-ProgressToast @toastUpdateParams
+# リネームに失敗したファイルを削除
+Write-Output ($script:msg.DeleteFilesFailedToRename)
+Remove-UnMovedTempFile
 $workDirParams = @{
 	Path    = $script:downloadWorkDir
 	Include = @('*.ytdl', '*.jpg', '*.webp', '*.srt', '*.vtt', '*.part*', '*.m4a-Frag*',
@@ -130,7 +143,7 @@ $workDirParams = @{
 	File    = $true
 	Recurse = $true
 }
-Get-ChildItem @workDirParams | Remove-File -DelPeriod 0
+Get-ChildItem @workDirParams -ErrorAction SilentlyContinue | Remove-File -DelPeriod 0
 
 # ダウンロード先
 $toastUpdateParams.Title = $script:downloadBaseDir
@@ -148,7 +161,7 @@ if ($script:cleanupDownloadBaseDir) {
 		Recurse     = $true
 		ErrorAction = 'SilentlyContinue'
 	}
-	Get-ChildItem @downloadDirParams | Remove-File -DelPeriod 0
+	Get-ChildItem @downloadDirParams -ErrorAction SilentlyContinue | Remove-File -DelPeriod 0
 }
 
 # 移動先

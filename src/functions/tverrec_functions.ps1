@@ -27,6 +27,14 @@
 		- 環境情報の管理
 
 	.NOTES
+		前提条件:
+		- Windows、Linux、またはmacOS環境で実行する必要があります
+		- PowerShell 7.0以上を推奨します
+		- TVerRecの設定ファイルが正しく設定されている必要があります
+		- 十分なディスク容量が必要です
+		- インターネット接続が必要です
+		- TVerのアカウントが必要な場合があります
+
 		主要な機能：
 		- TVer番組の検索とダウンロード
 		- ダウンロードリストの作成と管理
@@ -664,8 +672,8 @@ function Get-LinkFromDownloadList {
 		} catch { throw ($script:msg.LoadFailed -f $script:msg.ListFile) }
 		finally { Unlock-File $script:listLockFilePath | Out-Null }
 	} else { $videoLinks = @() }
-	$videoLinks = $videoLinks.episodeID -replace '^(.+)', 'https://tver.jp/episodes/$1'
-	return @($videoLinks)
+	$episodeIDs = [string[]]$videoLinks.episodeID
+	return @($episodeIDs)
 }
 
 #----------------------------------------------------------------------
@@ -768,13 +776,12 @@ function Update-VideoList {
 	[OutputType([Void])]
 	Param (
 		[Parameter(Mandatory = $true)][String]$keyword,
-		[Parameter(Mandatory = $true)][String]$videoLink
+		[Parameter(Mandatory = $true)][String]$episodeID
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$ignoreWord = ''
 	$newVideo = $null
 	$ignore = $false
-	$episodeID = $videoLink.Replace('https://tver.jp/episodes/', '')
 	# TVerのAPIを叩いて番組情報取得
 	Invoke-StatisticsCheck -Operation 'getinfo' -TVerType 'link' -TVerID $episodeID
 	$videoInfo = Get-VideoInfo $episodeID
@@ -960,7 +967,7 @@ function Invoke-HistoryMatchCheck {
 			指定されたURLリストとダウンロード履歴を比較し、まだダウンロードされていない
 			URLのみを返します。また、既にダウンロード済みのURLの数も返します。
 
-		.PARAMETER resultLinks
+		.PARAMETER episodeLinks
 			チェック対象のURLリストを指定します。
 
 		.OUTPUTS
@@ -968,7 +975,7 @@ function Invoke-HistoryMatchCheck {
 			未ダウンロードのURLの配列と、既にダウンロード済みのURLの数を含む配列。
 
 		.EXAMPLE
-			$result = Invoke-HistoryMatchCheck -resultLinks @("https://tver.jp/...", "https://tver.jp/...")
+			$result = Invoke-HistoryMatchCheck -episodeLinks @("https://tver.jp/...", "https://tver.jp/...")
 
 		.NOTES
 			この関数は以下の処理を行います：
@@ -978,16 +985,16 @@ function Invoke-HistoryMatchCheck {
 			4. 未ダウンロードのURLとダウンロード済みの数を返す
 	#>
 	[OutputType([String[]])]
-	Param ([Parameter(Mandatory = $true)][Alias('links')][String[]]$resultLinks)
+	Param ([Parameter(Mandatory = $true)][String[]]$episodeLinks)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# ダウンロード履歴ファイルのデータを読み込み
 	$histFileData = @(Get-LatestHistory)
-	if ($histFileData.Count -eq 0) { $histVideoPages = @() } else { $histVideoPages = @($histFileData.VideoPage) }
+	if ($histFileData.Count -eq 0) { $histVideoPages = @() } else { $histVideoPages = @($histFileData.videoPage.Replace('https://tver.jp/episodes/', '')) }
 	# URLがすでにダウンロード履歴に存在する場合は検索結果から除外
-	$histCompResult = @(Compare-Object -IncludeEqual $resultLinks $histVideoPages)
+	$histCompResult = @(Compare-Object -IncludeEqual $episodeLinks $histVideoPages)
 	try { $processedCount = ($histCompResult.Where({ $_.SideIndicator -eq '==' })).Count } catch { $processedCount = 0 }
 	try { $videoLinks = @($histCompResult.Where({ $_.SideIndicator -eq '<=' }).InputObject) } catch { $videoLinks = @() }
-	Remove-Variable -Name resultLinks, histFileData, histVideoPages, histCompResult -ErrorAction SilentlyContinue
+	Remove-Variable -Name episodeLinks, histFileData, histVideoPages, histCompResult -ErrorAction SilentlyContinue
 	return @($videoLinks, $processedCount)
 }
 
@@ -1070,15 +1077,15 @@ function Invoke-HistoryAndListMatchCheck {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# ダウンロードリストファイルのデータを読み込み
 	$listFileData = @(Read-DownloadList)
-	$listVideoPages = New-Object System.Collections.Generic.List[Object]
-	foreach ($listFileLine in $listFileData) { $listVideoPages.Add(@('https://tver.jp/episodes/{0}' -f $listFileLine.EpisodeID.Replace('#', ''))) }
+	$listVideoID = New-Object System.Collections.Generic.List[Object]
+	foreach ($listFileLine in $listFileData) { $listVideoID.Add(@($listFileLine.EpisodeID.Replace('#', ''))) }
 	# ダウンロード履歴ファイルのデータを読み込み
 	$histFileData = @(Get-LatestHistory)
-	$histVideoPages = if ($histFileData.Count -eq 0) { @() } else { $histFileData.VideoPage }
+	$histVideoID = if ($histFileData.Count -eq 0) { @() } else { $histFileData.VideoPage.Replace('https://tver.jp/episodes/', '') }
 	# ダウンロードリストとダウンロード履歴をマージ
-	if ($histVideoPages) { $listVideoPages.AddRange($histVideoPages) }
+	if ($histVideoID) { $listVideoID.AddRange($histVideoID) }
 	# URLがすでにダウンロード履歴に存在する場合は検索結果から除外
-	$listCompResult = Compare-Object -IncludeEqual $resultLinks $listVideoPages
+	$listCompResult = Compare-Object -IncludeEqual $resultLinks $listVideoID
 	try { $processedCount = ($listCompResult.Where({ $_.SideIndicator -eq '==' })).Count } catch { $processedCount = 0 }
 	try { $videoLinks = @($listCompResult.Where({ $_.SideIndicator -eq '<=' }).InputObject) } catch { $videoLinks = @() }
 	return @($videoLinks, $processedCount)
@@ -1992,9 +1999,7 @@ function Remove-UnMovedTempFile {
 	process {
 		foreach ($file in $targetFiles) {
 			try {
-				if ($PSCmdlet.ShouldProcess($file, 'Remove file')) {
-					Remove-Item -LiteralPath $file -Force -ErrorAction Stop
-				}
+				if ($PSCmdlet.ShouldProcess($file, 'Remove file')) { Remove-Item -LiteralPath $file -Force -ErrorAction SilentlyContinue }
 			} catch { Write-Warning ('{0} : {1}' -f $file, $script:msg.FileCannotBeDeleted) }
 		}
 	}

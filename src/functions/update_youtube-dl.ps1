@@ -16,10 +16,13 @@
 
 	.NOTES
 		前提条件:
+		- Windows、Linux、またはmacOS環境で実行する必要があります
 		- PowerShell 7.0以上を推奨です
 		- インターネット接続が必要です
 		- TVerRecの設定ファイルが正しく設定されている必要があります
 		- 設定ファイルでpreferredYoutubedlが正しく設定されている必要があります
+		- 十分なディスク容量が必要です
+		- 管理者権限が必要な場合があります
 
 		対応ソース:
 		1. yt-dlp (yt-dlp/yt-dlp)
@@ -47,15 +50,21 @@
 		4.2 バージョン確認
 
 	.EXAMPLE
-		# スクリプトの実行
+		# スクリプトの実行（デフォルトのソース）
 		.\update_youtube-dl.ps1
 
 	.OUTPUTS
 		System.Void
-		処理の進行状況と結果をコンソールに出力します。
-		- 現在のバージョン
-		- 最新のバージョン
-		- 更新の成功/失敗
+		このスクリプトは以下の出力を行います：
+		- 現在のyt-dlpのバージョン
+		- 利用可能な最新バージョン
+		- ダウンロードの進捗状況
+		- 更新処理の結果
+		- エラー発生時のエラーメッセージ
+		- デバッグ情報（設定時）
+
+	.LINK
+		https://github.com/dongaba/TVerRec
 #>
 
 Set-StrictMode -Version Latest

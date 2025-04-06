@@ -10,6 +10,10 @@
 	.DESCRIPTION
 		generate_list.ps1から呼び出される子プロセス用スクリプトです。
 		マルチスレッド処理時に並列で番組情報を取得します。
+		以下の機能を提供します：
+		1. キーワードに基づく番組情報の取得
+		2. 複数URLの並列処理
+		3. リストファイルの更新
 
 	.PARAMETER args
 		必須パラメータ。以下の順序で指定します：
@@ -18,11 +22,13 @@
 
 	.NOTES
 		前提条件:
-		- Windows環境で実行する必要があります
-		- PowerShell 7.0以上を推奨です
+		- Windows、Linux、またはmacOS環境で実行する必要があります
+		- PowerShell 7.0以上を推奨します
 		- TVerRecの設定ファイルが正しく設定されている必要があります
 		- generate_list.ps1から呼び出される必要があります
 		- 必要なパラメータが正しく渡される必要があります
+		- インターネット接続が必要です
+		- TVerのアカウントが必要な場合があります
 
 		処理の流れ:
 		1. 初期設定
@@ -41,8 +47,11 @@
 
 	.OUTPUTS
 		System.Void
-		処理結果をコンソールに出力します。
-		親プロセスで結果が統合されます。
+		このスクリプトは以下の出力を行います：
+		- コンソールへの進捗状況の表示
+		- エラー発生時のエラーメッセージ
+		- 処理完了時のサマリー情報
+		- 更新されたリストファイル
 #>
 
 Set-StrictMode -Version Latest
@@ -50,7 +59,7 @@ Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
 if ($args.Count -ge 2) {
 	$keyword = [String]$args[0]
-	$videoLinks = $args[1..($args.Count - 1)]
+	$episodeIDs = $args[1..($args.Count - 1)]
 } else { throw ('❌️ 子プロセスの引数が不足しています。Arguments for child process are missing') }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -69,9 +78,9 @@ try {
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # メイン処理
 Get-Token
-foreach ($videoLink in $videoLinks) {
-	Write-Output ('　{0}' -f $videoLink)
-	Update-VideoList -Keyword $keyword -VideoLink $videoLink
+foreach ($episodeID in $episodeIDs) {
+	Write-Output ('　{0}' -f $episodeID)
+	Update-VideoList -Keyword $keyword -EpisodeID $episodeID
 }
 
 Remove-Variable -Name keyword, videoLinks, videoLink -ErrorAction SilentlyContinue

@@ -42,12 +42,31 @@
 		- 画像データの処理
 
 	.NOTES
+	前提条件:
+	- Windows、Linux、またはmacOS環境で実行する必要があります
+	- PowerShell 7.0以上を推奨します
+	- 十分なディスク容量が必要です
+	- インターネット接続が必要な場合があります
+
 	主要な機能：
 	- システムリソースの効率的な管理
 	- ファイルシステムの安全な操作
 	- マルチプラットフォーム対応の通知機能
 	- データ形式の変換と処理
 	- 文字列とエンコーディングの処理
+
+	.EXAMPLE
+		# 関数の読み込み
+		. .\common_functions.ps1
+
+		# ガベージコレクションの実行
+		Invoke-GarbageCollection
+
+		# タイムスタンプの取得
+		$timestamp = Get-TimeStamp
+
+		# ファイル名の無効文字を除去
+		$safeName = Remove-InvalidFileNameChars "無効な文字を含むファイル名"
 
 	.LINK
 	https://github.com/dongaba/TVerRec
@@ -740,42 +759,25 @@ function Remove-File {
 						Write-Information ('検索条件: {0}' -f $_)
 						Get-ChildItem -LiteralPath $using:basePath -Recurse -File -Filter $_ -ErrorAction SilentlyContinue |
 							Where-Object { $_.LastWriteTime -lt $using:limitDateTime } |
-							ForEach-Object {
-								Write-Information ('削除対象: {0}' -f $_.FullName)
-								$_.FullName
-							}
+							ForEach-Object { Write-Information ('削除対象: {0}' -f $_.FullName) ; $_.FullName }
 						}
 						# 並列処理の結果をまとめてリストに追加
-						if ($parallelResults) {
-							$targetFiles.AddRange($parallelResults)
-						}
-					} catch {
-						Write-Warning ($script:msg.FileCannotBeDeleted)
-					}
+						if ($parallelResults) { $targetFiles.AddRange($parallelResults) }
+					} catch { Write-Warning ($script:msg.FileCannotBeDeleted) }
 				} else {
 					try {
 						foreach ($condition in $conditions) {
 							Write-Information ('検索条件: {0}' -f $condition)
 							$files = Get-ChildItem -LiteralPath $basePath -Recurse -File -Filter $condition -ErrorAction SilentlyContinue |
 								Where-Object { $_.LastWriteTime -lt $limitDateTime } |
-								ForEach-Object {
-									Write-Information ('削除対象: {0}' -f $_.FullName)
-									$_.FullName
-								}
-						if ($files) {
-							$targetFiles.AddRange($files)
-						}
+								ForEach-Object { Write-Information ('削除対象: {0}' -f $_.FullName) ; $_.FullName }
+						if ($files) { $targetFiles.AddRange($files) }
 					}
-				} catch {
-					Write-Warning ($script:msg.FileCannotBeDeleted)
-				}
+				} catch { Write-Warning ($script:msg.FileCannotBeDeleted) }
 			}
 		} else {
 			# パイプライン入力の場合の処理
-			if ($basePath.LastWriteTime -lt $limitDateTime) {
-				Write-Information ('削除対象: {0}' -f $basePath.FullName)
-				$targetFiles.Add($basePath.FullName)
-			}
+			if ($basePath.LastWriteTime -lt $limitDateTime) { Write-Information ('削除対象: {0}' -f $basePath.FullName) ; $targetFiles.Add($basePath.FullName) }
 		}
 	}
 
@@ -783,13 +785,8 @@ function Remove-File {
 		# ファイル削除の実行
 		$targetFiles | ForEach-Object {
 			try {
-				if ($PSCmdlet.ShouldProcess($_, 'Remove file')) {
-					Write-Information ('ファイル削除: {0}' -f $_)
-					Remove-Item -LiteralPath $_ -Force -ErrorAction Stop
-				}
-			} catch {
-				Write-Warning ('{0} : {1}' -f $_, $script:msg.FileCannotBeDeleted)
-			}
+				if ($PSCmdlet.ShouldProcess($_, 'Remove file')) { Write-Information ('ファイル削除: {0}' -f $_) ; Remove-Item -LiteralPath $_ -Force -ErrorAction SilentlyContinue }
+			} catch { Write-Warning ('{0} : {1}' -f $_, $script:msg.FileCannotBeDeleted) }
 		}
 
 		Remove-Variable -Name basePath, conditions, delPeriod, limitDateTime, targetFiles, parallelResults -ErrorAction SilentlyContinue

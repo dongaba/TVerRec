@@ -16,6 +16,14 @@
 		4. 番組情報の解析と整形
 
 	.NOTES
+		前提条件:
+		- Windows、Linux、またはmacOS環境で実行する必要があります
+		- PowerShell 7.0以上を推奨します
+		- TVerRecの設定ファイルが正しく設定されている必要があります
+		- 十分なディスク容量が必要です
+		- インターネット接続が必要です
+		- TVerのアカウントが必要な場合があります
+
 		主要な機能:
 		1. APIアクセス
 		- トークン取得と管理
@@ -150,7 +158,7 @@ function Get-VideoLinksFromKeyword {
 	if (($keyword -eq 'sitemap') -or ($keyword -eq 'toppage')) { $key = $keyword }
 	Invoke-StatisticsCheck -Operation 'search' -TVerType $key -TVerID $tverID
 	switch ($key) {
-		'episodes' { $linkCollection.episodeLinks[('https://tver.jp/episodes/{0}' -f $tverID)] = 0 ; break }	# キーワードファイルにあるEpisodeはEndAtが不明なので0を設定
+		'episodes' { $linkCollection.episodeLinks[$tverID] = 0 ; break }	# キーワードファイルにあるEpisodeはEndAtが不明なので0を設定
 		'series' { $linkCollection.seriesLinks.Add($tverID) ; break }
 		'talents' { $linkCollection.talentLinks.Add($tverID) ; break }
 		'tag' { Get-LinkFromKeyword -id $tverID -linkType 'tag' -LinkCollection ([Ref]$linkCollection) ; break }
@@ -394,7 +402,7 @@ function Get-SearchResult {
 	# タイプ別に再帰呼び出し
 	foreach ($searchResult in $sortedSearchResults) {
 		switch ($searchResult.Type) {
-			'episode' { $linkCollection.episodeLinks[('https://tver.jp/episodes/{0}' -f $searchResult.Content.Id)] = $searchResult.Content.EndAt ; break }
+			'episode' { $linkCollection.episodeLinks[$searchResult.Content.Id] = $searchResult.Content.EndAt ; break }
 			'season' { $linkCollection.seasonLinks.Add($searchResult.Content.Id) ; break }
 			'series' { $linkCollection.seriesLinks.Add($searchResult.Content.Id) ; break }
 			'talent' { $linkCollection.talentLinks.Add($searchResult.Content.Id) ; break }
@@ -447,7 +455,7 @@ function Get-LinkFromTopPage {
 				foreach ($content in $contents) {
 					if ($content.Type -eq 'live') { break }
 					switch ($content.Type) {
-						'episode' { $linkCollection.episodeLinks[('https://tver.jp/episodes/{0}' -f $content.Content.Id)] = $content.Content.EndAt ; break }
+						'episode' { $linkCollection.episodeLinks[$content.Content.Id] = $content.Content.EndAt ; break }
 						'series' { $linkCollection.seriesLinks.Add($content.Content.Id) ; break }
 						'season' { $linkCollection.seasonLinks.Add($content.Content.Id) ; break }
 						'talent' { $linkCollection.talentLinks.Add($content.Content.Id) ; break }
@@ -506,7 +514,7 @@ function Get-LinkFromSiteMap {
 			if ($parts.Length -ge 2) {
 				$tverID = @{ type = $parts[0] ; id = $parts[1] }
 				switch ($tverID.type) {
-					'episodes' { if (-not $linkCollection.episodeLinks.ContainsKey('https://tver.jp/episodes/{0}' -f $tverID.id)) { $linkCollection.episodeLinks[$episodeUrl] = 0 } ; break }	# サイトマップにあるEpisodeはEndAtが不明なので0を設定
+					'episodes' { if (-not $linkCollection.episodeLinks.ContainsKey($tverID.id)) { $linkCollection.episodeLinks[$tverID.id] = 0 } ; break }	# サイトマップにあるEpisodeはEndAtが不明なので0を設定
 					'series' { if (-not $script:sitemapParseEpisodeOnly) { if (-not $linkCollection.seriesLinks.Contains($tverID.id)) { $linkCollection.seriesLinks.Add($tverID.id) } } ; break }
 					'specials' { if (-not $script:sitemapParseEpisodeOnly) { if (-not $linkCollection.specialLinks.Contains($tverID.id)) { $linkCollection.specialLinks.Add($tverID.id) } } ; break }
 					'categories' { if (-not $script:sitemapParseEpisodeOnly) { if (-not $linkCollection.categoryLinks.Contains($tverID.id)) { $linkCollection.categoryLinks.Add($tverID.id) } } ; break }

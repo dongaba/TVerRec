@@ -17,13 +17,18 @@
 
 	.PARAMETER guiMode
 		オプションのパラメータ。GUIモードで実行するかどうかを指定します。
+		- 指定なし: 通常モードで実行
+		- 'gui': GUIモードで実行
+		- その他の値: 通常モードで実行
 
 	.NOTES
 		前提条件:
-		- Windows環境で実行する必要があります
-		- PowerShell 7.0以上を推奨です
+		- Windows、Linux、またはmacOS環境で実行する必要があります
+		- PowerShell 7.0以上を推奨します
 		- TVerRecの設定ファイルが正しく設定されている必要があります
-		- keyword_list.txtにキーワードが記載されている必要があります
+		- keyword.confにキーワードが記載されている必要があります
+		- インターネット接続が必要です
+		- TVerのアカウントが必要な場合があります
 
 		処理の流れ:
 		1. 初期設定
@@ -51,9 +56,11 @@
 
 	.OUTPUTS
 		System.Void
-		各処理の実行結果をコンソールに出力します。
-		進捗状況はトースト通知でも表示されます。
-		download_list.txtにダウンロードリストが生成されます。
+		このスクリプトは以下の出力を行います：
+		- コンソールへの進捗状況の表示
+		- トースト通知による進捗状況の表示
+		- エラー発生時のエラーメッセージ
+		- 処理完了時のサマリー情報
 #>
 
 Set-StrictMode -Version Latest
@@ -131,10 +138,10 @@ foreach ($keyword in $keywords) {
 
 	# URLがすでにダウンロードリストやダウンロード履歴に存在する場合は検索結果から除外
 	if ($listLinks.Count -ne 0) {
-		if ($script:listGenHistoryCheck) { $videoLinks, $processedCount = Invoke-HistoryAndListMatchCheck $listLinks }
-		else { $videoLinks, $processedCount = Invoke-ListMatchCheck $listLinks }
-	} else { $videoLinks = @() ; $processedCount = 0 }
-	$videoTotal = $videoLinks.Count
+		if ($script:listGenHistoryCheck) { $episodeIDs, $processedCount = Invoke-HistoryAndListMatchCheck $listLinks }
+		else { $episodeIDs, $processedCount = Invoke-ListMatchCheck $listLinks }
+	} else { $episodeIDs = @() ; $processedCount = 0 }
+	$videoTotal = $episodeIDs.Count
 	if ($videoTotal -eq 0) { Write-Output ($script:msg.VideoCountWhenZero -f $videoTotal, $processedCount) }
 	else { Write-Output ($script:msg.VideoCountNonZero -f $videoTotal, $processedCount) }
 
@@ -143,15 +150,15 @@ foreach ($keyword in $keywords) {
 	if ($script:enableMultithread) {
 		Write-Debug ('Multithread Processing Enabled')
 		# 並列化が有効の場合は並列化
-		if ($videoLinks -ne 0) {
+		if ($episodeIDs -ne 0) {
 			# 配列を分割
 			$partitions = @{}
-			$totalCount = $videoLinks.Count
+			$totalCount = $episodeIDs.Count
 			$partitionSize = [math]::Ceiling($totalCount / $script:multithreadNum)
 			for ($i = 0 ; $i -lt $script:multithreadNum ; $i++) {
 				$startIndex = $i * $partitionSize
 				$endIndex = [math]::Min(($i + 1) * $partitionSize, $totalCount)
-				if ($startIndex -lt $totalCount) { $partitions[$i] = $videoLinks[$startIndex..($endIndex - 1)] }
+				if ($startIndex -lt $totalCount) { $partitions[$i] = $episodeIDs[$startIndex..($endIndex - 1)] }
 			}
 
 			$paraJobSBs = @{}
@@ -175,16 +182,16 @@ foreach ($keyword in $keywords) {
 	} else {
 		# 並列化が無効の場合は従来型処理
 		$videoNum = 0
-		foreach ($videoLink in $videoLinks) {
+		foreach ($episodeID in $episodeIDs) {
 			$videoNum++
 			# 進捗情報の更新
-			$toastUpdateParams.Title2 = $videoLink
+			$toastUpdateParams.Title2 = $episodeID
 			$toastUpdateParams.Rate2 = [Float]($videoNum / $videoTotal)
 			$toastUpdateParams.LeftText2 = ('{0}/{1}' -f $videoNum, $videoTotal)
 			Update-ProgressToast2Row @toastUpdateParams
-			Write-Output ('　{0}/{1} - {2}' -f $videoNum, $videoTotal, $videoLink)
+			Write-Output ('　{0}/{1} - {2}' -f $videoNum, $videoTotal, $episodeID)
 			# TVer番組ダウンロードのメイン処理
-			Update-VideoList -Keyword $keyword -VideoLink $videoLink
+			Update-VideoList -Keyword $keyword -EpisodeID $episodeID
 		}
 	}
 	#----------------------------------------------------------------------

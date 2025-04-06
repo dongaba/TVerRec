@@ -18,13 +18,19 @@
 
 	.PARAMETER guiMode
 		オプションのパラメータ。GUIモードで実行するかどうかを指定します。
+		- 指定なし: 通常モードで実行
+		- 'gui': GUIモードで実行
+		- その他の値: 通常モードで実行
 
 	.NOTES
 		前提条件:
-		- Windows環境で実行する必要があります
-		- PowerShell 7.0以上を推奨です
+		- Windows、Linux、またはmacOS環境で実行する必要があります
+		- PowerShell 7.0以上を推奨します
 		- TVerRecの設定ファイルが正しく設定されている必要があります
 		- 十分なディスク容量が必要です
+		- インターネット接続が必要です
+		- TVerのアカウントが必要な場合があります
+		- キーワードリストファイルが存在する必要があります
 
 		処理の流れ:
 		1. 環境設定の読み込み
@@ -45,8 +51,12 @@
 
 	.OUTPUTS
 		System.Void
-		各処理の実行結果をコンソールに出力します。
-		進捗状況はトースト通知でも表示されます。
+		このスクリプトは以下の出力を行います：
+		- コンソールへの進捗状況の表示
+		- トースト通知による進捗状況の表示
+		- エラー発生時のエラーメッセージ
+		- 処理完了時のサマリー情報
+		- ダウンロードした動画ファイル
 #>
 
 Set-StrictMode -Version Latest
@@ -102,7 +112,7 @@ try {
 	# ビデオリンクの収集
 	#======================================================================
 	$linkCollectionStartTime = Get-Date
-	$uniqueVideoLinks = [System.Collections.Generic.HashSet[string]]::new()
+	$uniqueEpisodeIDs = [System.Collections.Generic.HashSet[string]]::new()
 	$videoKeywordMap = @{}
 
 	Write-Output ($script:msg.LongBoldBorder)
@@ -142,16 +152,16 @@ try {
 
 		# 履歴チェックと重複排除
 		if ($resultLinks.Count -ne 0) {
-			$videoLinks, $processedCount = Invoke-HistoryMatchCheck $resultLinks
-			foreach ($link in $videoLinks) {
-				if ($uniqueVideoLinks.Add($link)) {
+			$episodeIDs, $processedCount = Invoke-HistoryMatchCheck $resultLinks
+			foreach ($link in $episodeIDs) {
+				if ($uniqueEpisodeIDs.Add($link)) {
 					$videoKeywordMap[$link] = $keyword
 				}
 			}
-		} else { $videoLinks = @() ; $processedCount = 0 }
+		} else { $episodeIDs = @() ; $processedCount = 0 }
 
 		# 結果の表示
-		$videoCount = $videoLinks.Count
+		$videoCount = $episodeIDs.Count
 		if ($videoCount -eq 0) { Write-Output ($script:msg.VideoCountWhenZero -f $videoCount, $processedCount) }
 		else { Write-Output ($script:msg.VideoCountNonZero -f $videoCount, $processedCount) }
 	}
@@ -160,16 +170,16 @@ try {
 	# ビデオのダウンロード
 	#======================================================================
 	$downloadStartTime = Get-Date
-	$videoTotal = $uniqueVideoLinks.Count
+	$videoTotal = $uniqueEpisodeIDs.Count
 	$videoNum = 0
 
 	Write-Output ('')
 	Write-Output ($script:msg.LongBoldBorder)
 	Write-Output ('全 {0} 件のビデオをダウンロードします' -f $videoTotal)
 
-	foreach ($videoLink in $uniqueVideoLinks) {
+	foreach ($episodeID in $uniqueEpisodeIDs) {
 		$videoNum++
-		$keyword = $videoKeywordMap[$videoLink]
+		$keyword = $videoKeywordMap[$episodeID]
 
 		# ディレクトリの存在確認
 		if (!(Test-Path $script:downloadBaseDir -PathType Container)) { throw $script:msg.DownloadDirNotAccessible }
@@ -187,7 +197,7 @@ try {
 
 		# 進捗情報の更新
 		$toastUpdateParams = @{
-			Title     = $videoLink
+			Title     = $episodeID
 			Rate      = [Float]($videoNum / $videoTotal)
 			LeftText  = ('{0}/{1}' -f $videoNum, $videoTotal)
 			RightText = $minRemaining
@@ -197,14 +207,14 @@ try {
 		Update-ProgressToast @toastUpdateParams
 
 		Write-Output ($script:msg.ShortBoldBorder)
-		Write-Output ('{0}/{1} - {2}' -f $videoNum, $videoTotal, $videoLink)
+		Write-Output ('{0}/{1} - {2}' -f $videoNum, $videoTotal, $episodeID)
 
 		# ダウンロードプロセスの制御
 		Wait-YtdlProcess $script:parallelDownloadFileNum
 		Suspend-Process
 
 		# ビデオのダウンロード
-		Invoke-VideoDownload -Keyword $keyword -episodeID $videoLink.Replace('https://tver.jp/episodes/', '') -Force $false
+		Invoke-VideoDownload -Keyword $keyword -episodeID $episodeID -Force $false
 	}
 
 	#======================================================================
