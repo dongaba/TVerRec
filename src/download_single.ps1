@@ -154,7 +154,6 @@ Register-EngineEvent PowerShell.Exiting -Action {
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 try {
 	# 必須ファイルのチェックとトークンの取得
-	Write-Output ($script:msg.LongBoldBorder)
 	Invoke-RequiredFileCheck
 	Suspend-Process
 	Get-Token

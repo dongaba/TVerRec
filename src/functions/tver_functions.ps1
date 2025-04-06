@@ -502,43 +502,31 @@ function Get-LinkFromSiteMap {
 	}
 	foreach ($url in $searchResults) {
 		try {
-			$url = $url.Split('/')
-			$tverID = @{ type = $url[0] ; id = $url[1] }
-		} catch { $tverID = @{ type = $null ; id = $null } }
-		if ($tverID.id) {
-			switch ($tverID.type) {
-				'episodes' {
-					$linkCollection.episodeLinks[('https://tver.jp/episodes/{0}' -f $tverID.id)] = 0	# サイトマップにあるEpisodeはEndAtが不明なので0を設定
-					break
+			$parts = $url.Split('/')
+			if ($parts.Length -ge 2) {
+				$tverID = @{ type = $parts[0] ; id = $parts[1] }
+				switch ($tverID.type) {
+					'episodes' { if (-not $linkCollection.episodeLinks.ContainsKey('https://tver.jp/episodes/{0}' -f $tverID.id)) { $linkCollection.episodeLinks[$episodeUrl] = 0 } ; break }	# サイトマップにあるEpisodeはEndAtが不明なので0を設定
+					'series' { if (-not $script:sitemapParseEpisodeOnly) { if (-not $linkCollection.seriesLinks.Contains($tverID.id)) { $linkCollection.seriesLinks.Add($tverID.id) } } ; break }
+					'specials' { if (-not $script:sitemapParseEpisodeOnly) { if (-not $linkCollection.specialLinks.Contains($tverID.id)) { $linkCollection.specialLinks.Add($tverID.id) } } ; break }
+					'categories' { if (-not $script:sitemapParseEpisodeOnly) { if (-not $linkCollection.categoryLinks.Contains($tverID.id)) { $linkCollection.categoryLinks.Add($tverID.id) } } ; break }
 				}
-				'series' {
-					if (!$script:sitemapParseEpisodeOnly) { $linkCollection.seriesLinks.Add($tverID.id) }
-					break
-				}
-				'ranking' {
-					if (!$script:sitemapParseEpisodeOnly) {
-						Write-Information ($script:msg.ExtractingEpisodes -f (Get-Date), $tverID.type, $tverID.id)
-						Get-LinkFromKeyword -id $tverID.id -linkType 'ranking' -LinkCollection ([Ref]$linkCollection)
-					}
-					break
-				}
-				'specials' {
-					if (!$script:sitemapParseEpisodeOnly) {
-						Write-Information ($script:msg.ExtractingEpisodes -f (Get-Date), $tverID.type, $tverID.id)
-						Get-LinkFromKeyword -id $tverID.id -linkType 'specialMainLinks' -LinkCollection ([Ref]$linkCollection)
-					}
-					break
-				}
-				'categories' {
-					if (!$script:sitemapParseEpisodeOnly) {
-						Write-Information ($script:msg.ExtractingEpisodes -f (Get-Date), $tverID.type, $tverID.id)
-						Get-LinkFromKeyword -id $tverID.id -linkType 'category' -LinkCollection ([Ref]$linkCollection)
-					}
-					break
-				}
-				{ $_ -in @('info', 'live', 'mypage') } { break }
-				default { if (!$script:sitemapParseEpisodeOnly) { Write-Warning ($script:msg.UnknownContentsType -f $tverID.type, $tverID.id) } }
 			}
+		} catch {
+			Write-Warning ($script:msg.UnknownContentsType -f $tverID.type, $tverID.id)
+		}
+	}
+
+	# specialLinksとcategoryLinksの処理
+	if (-not $script:sitemapParseEpisodeOnly) {
+		$linkCollection.specialLinks | Select-Object -Unique | ForEach-Object {
+			Write-Information ($script:msg.ExtractingEpisodes -f (Get-Date), 'specials', $_)
+			Get-LinkFromKeyword -id $_ -linkType 'specialMainLinks' -LinkCollection ([Ref]$linkCollection)
+		}
+
+		$linkCollection.categoryLinks | Select-Object -Unique | ForEach-Object {
+			Write-Information ($script:msg.ExtractingEpisodes -f (Get-Date), 'categories', $_)
+			Get-LinkFromKeyword -id $_ -linkType 'category' -LinkCollection ([Ref]$linkCollection)
 		}
 	}
 	Remove-Variable -Name callSearchURL, searchResultsRaw, searchResults, url, tverID -ErrorAction SilentlyContinue
