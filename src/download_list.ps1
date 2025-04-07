@@ -142,7 +142,7 @@ try {
 		if ($videoNum -ne 0) {
 			$secRemaining = [Int][Math]::Ceiling(($secElapsed.TotalSeconds / $videoNum) * ($videoTotal - $videoNum))
 			$minRemaining = ('{0}分' -f ([Int][Math]::Ceiling($secRemaining / 60)))
-		}
+		} else { $minRemaining = '' }
 
 		# 進捗情報の更新
 		$toastUpdateParams = @{
