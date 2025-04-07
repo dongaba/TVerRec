@@ -41,6 +41,7 @@
 		"rogalmic.vscode-xml-complete",
 		"dotjoshjohnson.xml",
 		"ms-dotnettools.vscode-dotnet-runtime",
-		"aaron-bond.better-comments"
+		"aaron-bond.better-comments",
+		"ms-azuretools.vscode-docker"
 	]
 }

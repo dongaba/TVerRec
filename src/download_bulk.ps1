@@ -116,7 +116,8 @@ try {
 	$videoKeywordMap = @{}
 
 	Write-Output ($script:msg.LongBoldBorder)
-	Write-Information 'キーワードからビデオリンクを収集中...'
+	Write-Output ($script:msg.ExtractingVideoFromKeywords)
+
 	foreach ($keyword in $keywords) {
 		$keywordNum++
 		$keyword = Remove-TabSpace($keyword)
@@ -153,14 +154,9 @@ try {
 		# 履歴チェックと重複排除
 		if ($resultLinks.Count -ne 0) {
 			$episodeIDs, $processedCount = Invoke-HistoryMatchCheck $resultLinks
-			foreach ($link in $episodeIDs) {
-				if ($uniqueEpisodeIDs.Add($link)) {
-					$videoKeywordMap[$link] = $keyword
-				}
-			}
+			foreach ($link in $episodeIDs) {if ($uniqueEpisodeIDs.Add($link)) { $videoKeywordMap[$link] = $keyword } }
 		} else { $episodeIDs = @() ; $processedCount = 0 }
 
-		# 結果の表示
 		$videoCount = $episodeIDs.Count
 		if ($videoCount -eq 0) { Write-Output ($script:msg.VideoCountWhenZero -f $videoCount, $processedCount) }
 		else { Write-Output ($script:msg.VideoCountNonZero -f $videoCount, $processedCount) }
@@ -175,7 +171,7 @@ try {
 
 	Write-Output ('')
 	Write-Output ($script:msg.LongBoldBorder)
-	Write-Output ('全 {0} 件のビデオをダウンロードします' -f $videoTotal)
+	Write-Output ($script:msg.DownloadingVideo)
 
 	foreach ($episodeID in $uniqueEpisodeIDs) {
 		$videoNum++
@@ -232,7 +228,7 @@ try {
 
 	# 最終進捗表示
 	$toastUpdateParams = @{
-		Title     = $script:msg.ExtractingVideoFromKeywords
+		Title     = $script:msg.BulkDownloading
 		Rate      = 1
 		LeftText  = ''
 		RightText = $script:msg.Completed

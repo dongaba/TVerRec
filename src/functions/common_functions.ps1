@@ -756,10 +756,10 @@ function Remove-File {
 				try {
 					# 並列処理で見つかったファイルを一時的に格納
 					$parallelResults = $conditions | ForEach-Object -ThrottleLimit $script:multithreadNum -Parallel {
-						Write-Information ('検索条件: {0}' -f $_)
+						Write-Debug ($script:msg.DeleteCondition -f $_)
 						Get-ChildItem -LiteralPath $using:basePath -Recurse -File -Filter $_ -ErrorAction SilentlyContinue |
 							Where-Object { $_.LastWriteTime -lt $using:limitDateTime } |
-							ForEach-Object { Write-Information ('削除対象: {0}' -f $_.FullName) ; $_.FullName }
+							ForEach-Object { Write-Debug ($script:msg.DeleteTarget -f $_.FullName) ; $_.FullName }
 						}
 						# 並列処理の結果をまとめてリストに追加
 						if ($parallelResults) { $targetFiles.AddRange($parallelResults) }
@@ -767,17 +767,17 @@ function Remove-File {
 				} else {
 					try {
 						foreach ($condition in $conditions) {
-							Write-Information ('検索条件: {0}' -f $condition)
+							Write-Debug ($script:msg.DeleteCondition -f $condition)
 							$files = Get-ChildItem -LiteralPath $basePath -Recurse -File -Filter $condition -ErrorAction SilentlyContinue |
 								Where-Object { $_.LastWriteTime -lt $limitDateTime } |
-								ForEach-Object { Write-Information ('削除対象: {0}' -f $_.FullName) ; $_.FullName }
+								ForEach-Object { Write-Debug ($script:msg.DeleteTarget -f $_.FullName) ; $_.FullName }
 						if ($files) { $targetFiles.AddRange($files) }
 					}
 				} catch { Write-Warning ($script:msg.FileCannotBeDeleted) }
 			}
 		} else {
 			# パイプライン入力の場合の処理
-			if ($basePath.LastWriteTime -lt $limitDateTime) { Write-Information ('削除対象: {0}' -f $basePath.FullName) ; $targetFiles.Add($basePath.FullName) }
+			if ($basePath.LastWriteTime -lt $limitDateTime) { Write-Debug ($script:msg.DeleteTarget -f $basePath.FullName) ; $targetFiles.Add($basePath.FullName) }
 		}
 	}
 
@@ -785,8 +785,8 @@ function Remove-File {
 		# ファイル削除の実行
 		$targetFiles | ForEach-Object {
 			try {
-				if ($PSCmdlet.ShouldProcess($_, 'Remove file')) { Write-Information ('ファイル削除: {0}' -f $_) ; Remove-Item -LiteralPath $_ -Force -ErrorAction SilentlyContinue }
-			} catch { Write-Warning ('{0} : {1}' -f $_, $script:msg.FileCannotBeDeleted) }
+				if ($PSCmdlet.ShouldProcess($_, 'Remove file')) { Write-Information ($script:msg.DeleteFile -f $_) ; Remove-Item -LiteralPath $_ -Force -ErrorAction SilentlyContinue }
+			} catch { Write-Warning $script:msg.FileCannotBeDeleted }
 		}
 
 		Remove-Variable -Name basePath, conditions, delPeriod, limitDateTime, targetFiles, parallelResults -ErrorAction SilentlyContinue
