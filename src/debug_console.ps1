@@ -113,11 +113,11 @@ Write-Output '━━━━━━━━━━━━━━━━━━━━━━
 Get-Setting | Format-Table -HideTableHeaders
 
 # IPアドレス関連
-Write-Output '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ IPアドレス ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+Write-Output '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ IPアドレス ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
 $script:clientEnvs.GetEnumerator() | Format-Table -HideTableHeaders
 
 # 全変数
-Write-Output '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 全変数 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+Write-Output '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 変数 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
 Get-Variable | Format-Table -HideTableHeaders
 
 # コマンド使用方法
