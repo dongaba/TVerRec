@@ -459,7 +459,7 @@ Describe 'Expand-Zip Tests' {
 	}
 	It 'zipファイルが存在しない場合はエラーを投げること' {
 		$nonExistingPath = 'NonExisting\sample.zip'
-		{ Expand-Zip -Path $nonExistingPath -Destination $destinationPath } | Should -Throw ('❌️ {0}が見つかりません' -f $nonExistingPath)
+		{ Expand-Zip -Path $nonExistingPath -Destination $destinationPath } | Should -throw ('❌️ {0}が見つかりません' -f $nonExistingPath)
 	}
 
 	AfterAll {

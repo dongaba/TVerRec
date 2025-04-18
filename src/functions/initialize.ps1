@@ -37,6 +37,14 @@
 		- ロックファイル用変数の初期化
 
 	.NOTES
+		前提条件:
+		- Windows、Linux、またはmacOS環境で実行する必要があります
+		- PowerShell 7.0以上を推奨します
+		- TVerRecの設定ファイルが正しく設定されている必要があります
+		- 十分なディスク容量が必要です
+		- インターネット接続が必要です
+		- TVerのアカウントが必要な場合があります
+
 		主要な機能：
 		- アプリケーションの初期設定
 		- 設定ファイルの管理
@@ -83,21 +91,21 @@ Write-Debug "Message Table Loaded: $script:uiCulture"
 # 設定ファイル読み込み
 if ( Test-Path (Join-Path $script:confDir 'system_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'system_setting.ps1')) }
-	catch { Throw ($script:msg.LoadSystemSettingFailed) }
-} else { Throw ($script:msg.SystemSettingNotFound) }
+	catch { throw ($script:msg.LoadSystemSettingFailed) }
+} else { throw ($script:msg.SystemSettingNotFound) }
 
 if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
-	catch { Throw ($script:msg.LoadUserSettingFailed) }
+	catch { throw ($script:msg.LoadUserSettingFailed) }
 } elseif ($IsWindows) {
 	Write-Output ($script:msg.UserSettingNeedsToBeCreated)
 	try { & 'gui/gui_setting.ps1' }
-	catch { Throw ($script:msg.LoadSettingGUIFailed) }
+	catch { throw ($script:msg.LoadSettingGUIFailed) }
 	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 		try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
-		catch { Throw ($script:msg.LoadUserSettingFailed) }
-	} else { Throw ($script:msg.UserSettingNotCompleted) }
-} else { Throw ($script:msg.UserSettingNotCompleted) }
+		catch { throw ($script:msg.LoadUserSettingFailed) }
+	} else { throw ($script:msg.UserSettingNotCompleted) }
+} else { throw ($script:msg.UserSettingNotCompleted) }
 if ($script:preferredLanguage) {
 	$script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:preferredLanguage)) { $script:langFile.$script:preferredLanguage }
 	else { $defaultLang = 'en-US'; $script:langFile.$defaultLang }
@@ -106,11 +114,11 @@ if ($script:preferredLanguage) {
 #----------------------------------------------------------------------
 # 外部関数ファイルの読み込み
 try { . (Convert-Path (Join-Path $script:scriptRoot 'functions/common_functions.ps1')) }
-catch { Throw ($script:msg.LoadCommonFuncFailed) }
+catch { throw ($script:msg.LoadCommonFuncFailed) }
 try { . (Convert-Path (Join-Path $script:scriptRoot 'functions/tver_functions.ps1')) }
-catch { Throw ($script:msg.LoadTVerFuncFailed) }
+catch { throw ($script:msg.LoadTVerFuncFailed) }
 try { . (Convert-Path (Join-Path $script:scriptRoot 'functions/tverrec_functions.ps1')) }
-catch { Throw ($script:msg.LoadTVerRecFuncFailed) }
+catch { throw ($script:msg.LoadTVerRecFuncFailed) }
 
 #----------------------------------------------------------------------
 # 開発環境用に設定上書き
@@ -120,7 +128,7 @@ try {
 	if (Test-Path $devConfFile) { . $devConfFile ; Write-Output ($script:msg.DevConfLoaded) }
 	if (Test-Path $devFunctionFile) { . $devFunctionFile ; Write-Output ($script:msg.DevFuncLoaded) }
 	Remove-Variable -Name devFunctionFile, devConfFile -ErrorAction SilentlyContinue
-} catch { Throw ($script:msg.LoadDevFilesFailed) }
+} catch { throw ($script:msg.LoadDevFilesFailed) }
 
 #----------------------------------------------------------------------
 # 連続実行時は以降の処理は不要なのでexit

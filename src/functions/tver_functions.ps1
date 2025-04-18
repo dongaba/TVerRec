@@ -16,6 +16,14 @@
 		4. 番組情報の解析と整形
 
 	.NOTES
+		前提条件:
+		- Windows、Linux、またはmacOS環境で実行する必要があります
+		- PowerShell 7.0以上を推奨します
+		- TVerRecの設定ファイルが正しく設定されている必要があります
+		- 十分なディスク容量が必要です
+		- インターネット接続が必要です
+		- TVerのアカウントが必要な場合があります
+
 		主要な機能:
 		1. APIアクセス
 		- トークン取得と管理
@@ -89,7 +97,7 @@ function Get-Token () {
 		$script:platformToken = $tokenResponse.Result.platform_token
 		Write-Debug	('Platform UID: {0}' -f $script:platformUID)
 		Write-Debug	('Platform Token: {0}' -f $script:platformToken)
-	} catch { Throw ($script:msg.TokenRetrievalFailed) }
+	} catch { throw ($script:msg.TokenRetrievalFailed) }
 	Remove-Variable -Name tverTokenURL, httpHeader, requestBody, tokenResponse -ErrorAction SilentlyContinue
 }
 
@@ -150,7 +158,7 @@ function Get-VideoLinksFromKeyword {
 	if (($keyword -eq 'sitemap') -or ($keyword -eq 'toppage')) { $key = $keyword }
 	Invoke-StatisticsCheck -Operation 'search' -TVerType $key -TVerID $tverID
 	switch ($key) {
-		'episodes' { $linkCollection.episodeLinks[('https://tver.jp/episodes/{0}' -f $tverID)] = 0 ; break }	# キーワードファイルにあるEpisodeはEndAtが不明なので0を設定
+		'episodes' { $linkCollection.episodeLinks[$tverID] = 0 ; break }	# キーワードファイルにあるEpisodeはEndAtが不明なので0を設定
 		'series' { $linkCollection.seriesLinks.Add($tverID) ; break }
 		'talents' { $linkCollection.talentLinks.Add($tverID) ; break }
 		'tag' { Get-LinkFromKeyword -id $tverID -linkType 'tag' -LinkCollection ([Ref]$linkCollection) ; break }
@@ -384,15 +392,17 @@ function Get-SearchResult {
 		{ $_ -in 'new', 'end', 'ranking' } { $searchResultsRaw.Result.Contents.Contents ; break }
 		default { $searchResultsRaw.Result.Contents }
 	}
+
+	# 早期フィルタリング - 処理不要なタイプを除外
+	$searchResults = $searchResults | Where-Object { $_.Type -notin @('live', 'banner') }
+
 	# searchResultsを並び替え
-	$order = @('specialMain', 'special', 'talent', 'series', 'season', 'episode', 'live', 'banner')
+	$order = @('specialMain', 'special', 'talent', 'series', 'season', 'episode')
 	$sortedSearchResults = $searchResults | Sort-Object { $order.IndexOf($_.Type) }
 	# タイプ別に再帰呼び出し
 	foreach ($searchResult in $sortedSearchResults) {
 		switch ($searchResult.Type) {
-			'live' { break }
-			'banner' { break }
-			'episode' { $linkCollection.episodeLinks[('https://tver.jp/episodes/{0}' -f $searchResult.Content.Id)] = $searchResult.Content.EndAt ; break }
+			'episode' { $linkCollection.episodeLinks[$searchResult.Content.Id] = $searchResult.Content.EndAt ; break }
 			'season' { $linkCollection.seasonLinks.Add($searchResult.Content.Id) ; break }
 			'series' { $linkCollection.seriesLinks.Add($searchResult.Content.Id) ; break }
 			'talent' { $linkCollection.talentLinks.Add($searchResult.Content.Id) ; break }
@@ -445,7 +455,7 @@ function Get-LinkFromTopPage {
 				foreach ($content in $contents) {
 					if ($content.Type -eq 'live') { break }
 					switch ($content.Type) {
-						'episode' { $linkCollection.episodeLinks[('https://tver.jp/episodes/{0}' -f $content.Content.Id)] = $content.Content.EndAt ; break }
+						'episode' { $linkCollection.episodeLinks[$content.Content.Id] = $content.Content.EndAt ; break }
 						'series' { $linkCollection.seriesLinks.Add($content.Content.Id) ; break }
 						'season' { $linkCollection.seasonLinks.Add($content.Content.Id) ; break }
 						'talent' { $linkCollection.talentLinks.Add($content.Content.Id) ; break }
@@ -500,43 +510,31 @@ function Get-LinkFromSiteMap {
 	}
 	foreach ($url in $searchResults) {
 		try {
-			$url = $url.Split('/')
-			$tverID = @{ type = $url[0] ; id = $url[1] }
-		} catch { $tverID = @{ type = $null ; id = $null } }
-		if ($tverID.id) {
-			switch ($tverID.type) {
-				'episodes' {
-					$linkCollection.episodeLinks[('https://tver.jp/episodes/{0}' -f $tverID.id)] = 0	# サイトマップにあるEpisodeはEndAtが不明なので0を設定
-					break
+			$parts = $url.Split('/')
+			if ($parts.Length -ge 2) {
+				$tverID = @{ type = $parts[0] ; id = $parts[1] }
+				switch ($tverID.type) {
+					'episodes' { if (-not $linkCollection.episodeLinks.ContainsKey($tverID.id)) { $linkCollection.episodeLinks[$tverID.id] = 0 } ; break }	# サイトマップにあるEpisodeはEndAtが不明なので0を設定
+					'series' { if (-not $script:sitemapParseEpisodeOnly) { if (-not $linkCollection.seriesLinks.Contains($tverID.id)) { $linkCollection.seriesLinks.Add($tverID.id) } } ; break }
+					'specials' { if (-not $script:sitemapParseEpisodeOnly) { if (-not $linkCollection.specialLinks.Contains($tverID.id)) { $linkCollection.specialLinks.Add($tverID.id) } } ; break }
+					'categories' { if (-not $script:sitemapParseEpisodeOnly) { if (-not $linkCollection.categoryLinks.Contains($tverID.id)) { $linkCollection.categoryLinks.Add($tverID.id) } } ; break }
 				}
-				'series' {
-					if (!$script:sitemapParseEpisodeOnly) { $linkCollection.seriesLinks.Add($tverID.id) }
-					break
-				}
-				'ranking' {
-					if (!$script:sitemapParseEpisodeOnly) {
-						Write-Information ($script:msg.ExtractingEpisodes -f (Get-Date), $tverID.type, $tverID.id)
-						Get-LinkFromKeyword -id $tverID.id -linkType 'ranking' -LinkCollection ([Ref]$linkCollection)
-					}
-					break
-				}
-				'specials' {
-					if (!$script:sitemapParseEpisodeOnly) {
-						Write-Information ($script:msg.ExtractingEpisodes -f (Get-Date), $tverID.type, $tverID.id)
-						Get-LinkFromKeyword -id $tverID.id -linkType 'specialMainLinks' -LinkCollection ([Ref]$linkCollection)
-					}
-					break
-				}
-				'categories' {
-					if (!$script:sitemapParseEpisodeOnly) {
-						Write-Information ($script:msg.ExtractingEpisodes -f (Get-Date), $tverID.type, $tverID.id)
-						Get-LinkFromKeyword -id $tverID.id -linkType 'category' -LinkCollection ([Ref]$linkCollection)
-					}
-					break
-				}
-				{ $_ -in @('info', 'live', 'mypage') } { break }
-				default { if (!$script:sitemapParseEpisodeOnly) { Write-Warning ($script:msg.UnknownContentsType -f $tverID.type, $tverID.id) } }
 			}
+		} catch {
+			Write-Warning ($script:msg.UnknownContentsType -f $tverID.type, $tverID.id)
+		}
+	}
+
+	# specialLinksとcategoryLinksの処理
+	if (-not $script:sitemapParseEpisodeOnly) {
+		$linkCollection.specialLinks | Select-Object -Unique | ForEach-Object {
+			Write-Information ($script:msg.ExtractingEpisodes -f (Get-Date), 'specials', $_)
+			Get-LinkFromKeyword -id $_ -linkType 'specialMainLinks' -LinkCollection ([Ref]$linkCollection)
+		}
+
+		$linkCollection.categoryLinks | Select-Object -Unique | ForEach-Object {
+			Write-Information ($script:msg.ExtractingEpisodes -f (Get-Date), 'categories', $_)
+			Get-LinkFromKeyword -id $_ -linkType 'category' -LinkCollection ([Ref]$linkCollection)
 		}
 	}
 	Remove-Variable -Name callSearchURL, searchResultsRaw, searchResults, url, tverID -ErrorAction SilentlyContinue

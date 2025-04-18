@@ -85,7 +85,7 @@
 	"thunder-client.sidebar.defaultTab": "Collections",
 	"thunder-client.sidebar.showActivityFromCollection": true,
 	"thunder-client.workspaceRelativePath": "./.vscode/",
-	"workbench.colorTheme": "Default Dark+",
+	"workbench.colorTheme": "MacOS Modern Dark - Xcode Modern",
 	"workbench.iconTheme": "material-icon-theme",
 	"workbench.preferredLightColorTheme": "Default Dark+",
 	"workbench.startupEditor": "newUntitledFile",

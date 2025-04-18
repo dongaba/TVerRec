@@ -23,7 +23,7 @@
 	.NOTES
 		前提条件:
 		- Windows環境で実行する必要があります
-		- PowerShell 7.0以上が必要です
+		- PowerShell 7.0以上を推奨です
 		- WPFアセンブリが必要です
 
 		主な機能:
@@ -43,7 +43,7 @@
 
 using namespace System.Windows.Threading
 Set-StrictMode -Version Latest
-if (!$IsWindows) { Throw ('❌️ Windows以外では動作しません') ; Start-Sleep 10 }
+if (!$IsWindows) { throw ('❌️ Windows以外では動作しません') ; Start-Sleep 10 }
 Add-Type -AssemblyName System.Windows.Forms | Out-Null
 Add-Type -AssemblyName PresentationFramework | Out-Null
 
@@ -55,8 +55,8 @@ try {
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	$script:scriptRoot = Convert-Path (Join-Path $script:scriptRoot '../')
 	Set-Location $script:scriptRoot
-} catch { Throw ('❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.') }
-if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space') }
+} catch { throw '❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.' }
+if ($script:scriptRoot.Contains(' ')) { throw '❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space' }
 
 #----------------------------------------------------------------------
 # メッセージファイル読み込み
@@ -74,11 +74,11 @@ Write-Debug "Message Table Loaded: $script:uiCulture"
 $script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 if ( Test-Path (Join-Path $script:confDir 'system_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'system_setting.ps1')) }
-	catch { Throw ($script:msg.LoadSystemSettingFailed) }
-} else { Throw ($script:msg.SystemSettingNotFound) }
+	catch { throw ($script:msg.LoadSystemSettingFailed) }
+} else { throw ($script:msg.SystemSettingNotFound) }
 if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
-	catch { Throw ($script:msg.LoadUserSettingFailed) }
+	catch { throw ($script:msg.LoadUserSettingFailed) }
 } else { New-Item (Join-Path $script:confDir 'user_setting.ps1') -Force | Out-Null }
 if ($script:preferredLanguage) {
 	$script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:preferredLanguage)) { $script:langFile.$script:preferredLanguage }
@@ -89,7 +89,7 @@ if ($script:preferredLanguage) {
 # 外部関数ファイルの読み込み
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/common_functions.ps1'))
-} catch { Throw ($script:msg.LoadCommonFuncFailed) }
+} catch { throw ($script:msg.LoadCommonFuncFailed) }
 
 $days = @('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')
 $hours = 0..23
@@ -398,7 +398,7 @@ function Save-UserSetting {
 try {
 	[Xml]$mainXaml = [String](Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecSetting.xaml'))
 	$settingWindow = [System.Windows.Markup.XamlReader]::Load(([System.Xml.XmlNodeReader]::new($mainXaml)))
-} catch { Throw ($script:msg.GuiBroken) }
+} catch { throw ($script:msg.GuiBroken) }
 # PowerShellのウィンドウを非表示に
 Add-Type -Name Window -Namespace Console -MemberDefinition @'
 	[DllImport("Kernel32.dll")] public static extern IntPtr GetConsoleWindow();
@@ -748,7 +748,7 @@ try {
 	$settingWindow.Show() | Out-Null
 	$settingWindow.Activate() | Out-Null
 	[Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0) | Out-Null
-} catch { Throw ($script:msg.WindowRenderError) }
+} catch { throw ($script:msg.WindowRenderError) }
 
 # メインウィンドウ取得
 $currentProcess = [Diagnostics.Process]::GetCurrentProcess()

@@ -18,14 +18,19 @@
 
 	.PARAMETER guiMode
 		オプションのパラメータ。GUIモードで実行するかどうかを指定します。
+		- 指定なし: 通常モードで実行
+		- 'gui': GUIモードで実行
+		- その他の値: 通常モードで実行
 
 	.NOTES
 		前提条件:
-		- Windows環境で実行する必要があります
-		- PowerShell 7.0以上が必要です
+		- Windows、Linux、またはmacOS環境で実行する必要があります
+		- PowerShell 7.0以上を推奨します
 		- TVerRecの設定ファイルが正しく設定されている必要があります
 		- ffmpegがインストールされている必要があります
 		- ダウンロード履歴ファイルが存在する必要があります
+		- 十分なディスク容量が必要です
+		- インターネット接続が必要です
 
 		処理の流れ:
 		1. 履歴ファイルの管理
@@ -58,9 +63,12 @@
 
 	.OUTPUTS
 		System.Void
-		各処理の実行結果をコンソールに出力します。
-		進捗状況はトースト通知でも表示されます。
-		検証結果はダウンロード履歴ファイルに記録されます。
+		このスクリプトは以下の出力を行います：
+		- コンソールへの進捗状況の表示
+		- トースト通知による進捗状況の表示
+		- エラー発生時のエラーメッセージ
+		- 処理完了時のサマリー情報
+		- 検証結果の詳細レポート
 #>
 
 Set-StrictMode -Version Latest
@@ -73,8 +81,8 @@ try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
-} catch { Throw ('❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.') }
-if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space') }
+} catch { throw '❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.' }
+if ($script:scriptRoot.Contains(' ')) { throw '❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space' }
 . (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -193,7 +201,7 @@ while ($videoNotValidatedNum -ne 0) {
 			}
 			Update-ProgressToast @toastUpdateParams
 
-			if (!(Test-Path $script:downloadBaseDir -PathType Container)) { Throw ($script:msg.DownloadDirNotAccessible) }
+			if (!(Test-Path $script:downloadBaseDir -PathType Container)) { throw ($script:msg.DownloadDirNotAccessible) }
 			# 番組の整合性チェック
 			Write-Output ('{0}/{1} - {2}' -f $validateNum, $validateTotal, $videoHist.videoPath)
 			Invoke-IntegrityCheck -VideoHist $videoHist -DecodeOption $decodeOption
@@ -224,7 +232,7 @@ while ($videoNotValidatedNum -ne 0) {
 			})
 		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 		try { $newRecords | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append ; Start-Sleep -Seconds 1 }
-		catch { Throw ($script:msg.UpdateFailed -f $script:msg.HistFile) }
+		catch { throw ($script:msg.UpdateFailed -f $script:msg.HistFile) }
 		finally { Unlock-File $script:histLockFilePath | Out-Null }
 		# videoPageごとに最新のdownloadDateを持つレコードを取得
 		$latestHists = Get-LatestHistory

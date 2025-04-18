@@ -90,3 +90,6 @@ ignore.conf.*
 
 #yt-dlpエクストラクタ
 *__pycache__*
+
+#Ignore cursor AI rules
+.cursor/rules/codacy.mdc

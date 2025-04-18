@@ -17,16 +17,19 @@
 
 	.PARAMETER guiMode
 		オプションのパラメータ。GUIモードで実行するかどうかを指定します。
-		GUIモードの場合、URLを入力するためのダイアログが表示されます。
-		CUIモードの場合、コンソールでURLを入力します。
+		- 指定なし: CUIモードで実行（コンソールでURL入力）
+		- 'gui': GUIモードで実行（ダイアログでURL入力）
+		- その他の値: CUIモードで実行
 
 	.NOTES
 		前提条件:
-		- Windows環境で実行する必要があります
-		- PowerShell 7.0以上が必要です
+		- Windows、Linux、またはmacOS環境で実行する必要があります
+		- PowerShell 7.0以上を推奨します
 		- TVerRecの設定ファイルが正しく設定されている必要があります
-		- GUIモードの場合、Windows Formsが利用可能である必要があります
+		- GUIモードの場合、Windows Formsが利用可能である必要があります（Windowsのみ）
 		- 十分なディスク容量が必要です
+		- インターネット接続が必要です
+		- TVerのアカウントが必要な場合があります
 
 		処理の流れ:
 		1. 初期設定
@@ -57,62 +60,22 @@
 
 	.OUTPUTS
 		System.Void
-		各処理の実行結果をコンソールに出力します。
-		GUIモードの場合は入力ダイアログも表示されます。
+		このスクリプトは以下の出力を行います：
+		- コンソールへの進捗状況の表示
+		- GUIモードの場合、URL入力ダイアログの表示
+		- エラー発生時のエラーメッセージ
+		- 処理完了時のサマリー情報
+		- ダウンロードした動画ファイル
 #>
 
 Set-StrictMode -Version Latest
 $script:guiMode = if ($args) { [String]$args[0] } else { '' }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# 環境設定
+# 関数定義
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-try {
-	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
-	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
-	Set-Location $script:scriptRoot
-} catch { Throw ('❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.') }
-if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space') }
-. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
-
-#━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# メイン処理
-Invoke-RequiredFileCheck
-Suspend-Process
-Get-Token
-$keyword = $script:msg.KeywordForSingleDownload
-
-# GUI起動を判定
-if (!$script:guiMode) { $script:guiMode = $false }
-
-# ジョブを管理
-$script:jobList = @()
-
-# スクリプト終了時にジョブを停止
-Register-EngineEvent PowerShell.Exiting -Action {
-	foreach ($jobId in $script:jobList) {
-		Stop-Job -Id $jobId -Force -ErrorAction SilentlyContinue
-		Remove-Job -Id $jobId -Force -ErrorAction SilentlyContinue
-	}
-} | Out-Null
-
-#----------------------------------------------------------------------
-# 無限ループ
-while ($true) {
-	# いろいろ初期化
-	$videoLink = ''
-	# 移動先ディレクトリの存在確認(稼働中に共有ディレクトリが切断された場合に対応)
-	if (!(Test-Path $script:downloadBaseDir -PathType Container)) { Throw ($script:msg.DownloadDirNotAccessible) }
-	# youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
-	Wait-YtdlProcess $script:parallelDownloadFileNum
-	Suspend-Process
-
-	# 複数アドレス入力用配列
-	$script:videoPageList = @()
-
-	if (!$script:guiMode) {
-		$script:videoPageList = @((Read-Host $script:msg.SingleDownloadCUIMessage).Trim().Split())
-	} else {
+function Show-UrlInputDialog {
+	try {
 		# アセンブリの読み込み
 		Add-Type -AssemblyName System.Windows.Forms | Out-Null
 		Add-Type -AssemblyName System.Drawing | Out-Null
@@ -160,54 +123,144 @@ while ($true) {
 
 		# ダイアログの表示
 		$inputForm.ShowDialog() | Out-Null
-	}
 
-	# 配列の空白要素を削除
-	$script:videoPageList = $script:videoPageList.where({ $_ -ne '' })
-	if (-not $script:videoPageList) { break }
-
-	# 複数入力されていたら全てダウンロード
-	foreach ($videoLink in  $script:videoPageList) {
-		# youtube-dlプロセスの確認と、youtube-dlのプロセス数が多い場合の待機
-		Wait-YtdlProcess $script:parallelDownloadFileNum
-		Suspend-Process
-
-		switch -Regex ($videoLink) {
-			'^https://tver.jp/(/?.*)' { # TVer番組ダウンロードのメイン処理
-				Write-Output ('')
-				Write-Output ($script:msg.MediumBoldBorder)
-				Write-Output ('{0}: {1}' -f $script:msg.SingleDownloadTVerURL, $videoLink)
-				Invoke-VideoDownload -Keyword $keyword -episodeID $videoLink.Replace('https://tver.jp/episodes/', '') -Force $script:forceSingleDownload
-				break
-			}
-			'^.*://' { # TVer以外のサイトへの対応
-				Write-Output ('')
-				Write-Output ($script:msg.MediumBoldBorder)
-				Write-Output ('{0}: {1}' -f $script:msg.SingleDownloadNonTVerURL, $videoLink)
-				Invoke-NonTverYtdl $videoLink
-				Start-Sleep -Seconds 1
-				break
-			}
-			default { Write-Warning ('{0}: {1}' -f $script:msg.SingleDownloadNotURL, $videoLink) }
-		}
+		return $script:videoPageList
+	} catch {
+		Write-Error "URL入力ダイアログの表示中にエラーが発生しました: $($_.Exception.Message)"
+		Write-Error "Stack trace: $($_.ScriptStackTrace)"
+		throw
 	}
 }
 
-# youtube-dlのプロセスが終わるまで待機
-Write-Output ('')
-Write-Output ($script:msg.WaitingDownloadCompletion)
-Wait-DownloadCompletion
+#━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 環境設定
+#━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+try {
+	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
+	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
+	Set-Location $script:scriptRoot
+} catch { throw '❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.' }
+if ($script:scriptRoot.Contains(' ')) { throw '❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space' }
+. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 
-# リネームに失敗したファイルを削除
-Write-Output ('')
-Write-Output ($script:msg.DeleteFilesFailedToRename)
-Remove-UnRenamedTempFile
+# 実行モードの設定
+$script:guiMode = if ($args) { [String]$args[0] } else { '' }
 
-Remove-Variable -Name args, keyword, videoPageURL -ErrorAction SilentlyContinue
+# ジョブ管理の初期化
+$script:jobList = @()
+Register-EngineEvent PowerShell.Exiting -Action {
+	foreach ($jobId in $script:jobList) {
+		Stop-Job -Id $jobId -Force -ErrorAction SilentlyContinue
+		Remove-Job -Id $jobId -Force -ErrorAction SilentlyContinue
+	}
+} | Out-Null
 
-Invoke-GarbageCollection
 
-Write-Output ('')
-Write-Output ($script:msg.LongBoldBorder)
-Write-Output ($script:msg.SingleDownloadCompleted)
-Write-Output ($script:msg.LongBoldBorder)
+#━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# メイン処理
+#━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+try {
+	# 必須ファイルのチェックとトークンの取得
+	Invoke-RequiredFileCheck
+	Suspend-Process
+	Get-Token
+
+	# キーワードの設定
+	$keyword = $script:msg.KeywordForSingleDownload
+
+	# GUIモードの判定
+	if (!$script:guiMode) { $script:guiMode = $false }
+
+	# ジョブ管理の初期化
+	$script:jobList = @()
+	Register-EngineEvent PowerShell.Exiting -Action {
+		foreach ($jobId in $script:jobList) {
+			Stop-Job -Id $jobId -Force -ErrorAction SilentlyContinue
+			Remove-Job -Id $jobId -Force -ErrorAction SilentlyContinue
+		}
+	} | Out-Null
+
+	#----------------------------------------------------------------------
+	# 無限ループ
+	while ($true) {
+		# 初期化
+		$videoLink = ''
+		$script:videoPageList = @()
+
+		# ディレクトリの存在確認
+		if (!(Test-Path $script:downloadBaseDir -PathType Container)) { throw $script:msg.DownloadDirNotAccessible }
+
+		# youtube-dlプロセスの制御
+		Wait-YtdlProcess $script:parallelDownloadFileNum
+		Suspend-Process
+
+		# URL入力処理
+		if (!$script:guiMode) {
+			# CUIモードでの入力
+			$script:videoPageList = @((Read-Host $script:msg.SingleDownloadCUIMessage).Trim().Split())
+		} else {
+			# GUIモードでの入力
+			$script:videoPageList = Show-UrlInputDialog
+		}
+
+		# 入力の検証
+		$script:videoPageList = $script:videoPageList.where({ $_ -ne '' })
+		if (-not $script:videoPageList) { break }
+
+		# ダウンロード処理
+		foreach ($videoLink in $script:videoPageList) {
+			# プロセス制御
+			Wait-YtdlProcess $script:parallelDownloadFileNum
+			Suspend-Process
+
+			# URLの種類に応じた処理
+			switch -Regex ($videoLink) {
+				'^https://tver.jp/(/?.*)' {
+					# TVer番組のダウンロード
+					Write-Output ('')
+					Write-Output ($script:msg.MediumBoldBorder)
+					Write-Output ('{0}: {1}' -f $script:msg.SingleDownloadTVerURL, $videoLink)
+					Invoke-VideoDownload -Keyword $keyword -episodeID $videoLink.Replace('https://tver.jp/episodes/', '') -Force $script:forceSingleDownload
+					break
+				}
+				'^.*://' {
+					# その他のサイトのダウンロード
+					Write-Output ('')
+					Write-Output ($script:msg.MediumBoldBorder)
+					Write-Output ('{0}: {1}' -f $script:msg.SingleDownloadNonTVerURL, $videoLink)
+					Invoke-NonTverYtdl $videoLink
+					Start-Sleep -Seconds 1
+					break
+				}
+				default {
+					Write-Warning ('{0}: {1}' -f $script:msg.SingleDownloadNotURL, $videoLink)
+				}
+			}
+		}
+	}
+
+	# ダウンロード完了待機
+	Write-Output ('')
+	Write-Output ($script:msg.WaitingDownloadCompletion)
+	Wait-DownloadCompletion
+
+	# リネーム失敗ファイルの削除
+	Write-Output ('')
+	Write-Output ($script:msg.DeleteFilesFailedToRename)
+	Remove-UnRenamedTempFile
+
+} catch {
+	Write-Error "Error occurred: $($_.Exception.Message)"
+	Write-Error "Stack trace: $($_.ScriptStackTrace)"
+	throw
+} finally {
+	# 変数のクリーンアップ
+	Remove-Variable -Name args, keyword, videoPageURL -ErrorAction SilentlyContinue
+	Invoke-GarbageCollection
+
+	# 完了メッセージ
+	Write-Output ('')
+	Write-Output ($script:msg.LongBoldBorder)
+	Write-Output ($script:msg.SingleDownloadCompleted)
+	Write-Output ($script:msg.LongBoldBorder)
+}
