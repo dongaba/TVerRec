@@ -29,7 +29,6 @@
 	# for a few rules you wish to "exclude".  Note: if a rule is in both IncludeRules
 	# and ExcludeRules, the rule will be excluded.
 	ExcludeRules = @(
-		'PSUseBOMForUnicodeEncodedFile',
 		'PSUseProcessBlockForPipelineCommand'
 	)
 	# You can use the following entry to supply parameters to rules that take parameters.

@@ -3,6 +3,64 @@
 #		番組移動処理スクリプト
 #
 ###################################################################################
+<#
+	.SYNOPSIS
+		TVerRecでダウンロードした番組を指定のディレクトリに移動するスクリプト
+
+	.DESCRIPTION
+		ダウンロードした番組を指定の保存先ディレクトリに移動し、空のディレクトリを削除します。
+		以下の処理を順番に実行します：
+		1. 移動先ディレクトリの一覧取得
+		2. ダウンロードディレクトリの一覧取得
+		3. 番組ファイルの移動
+		4. 空ディレクトリの削除
+
+	.PARAMETER guiMode
+		オプションのパラメータ。GUIモードで実行するかどうかを指定します。
+		- 指定なし: 通常モードで実行
+		- 'gui': GUIモードで実行
+		- その他の値: 通常モードで実行
+
+	.NOTES
+		前提条件:
+		- Windows、Linux、またはmacOS環境で実行する必要があります
+		- PowerShell 7.0以上を推奨します
+		- TVerRecの設定ファイルが正しく設定されている必要があります
+		- 保存先ディレクトリが設定されている必要があります
+		- 十分なディスク容量が必要です
+		- インターネット接続が必要です
+
+		処理の流れ:
+		1. 移動先ディレクトリの処理
+		1.1 保存先ディレクトリ配下のディレクトリ一覧を取得
+		1.2 ジャンクションやシンボリックリンクを解決
+		2. ダウンロードディレクトリの処理
+		2.1 動画ファイルを含むディレクトリを特定
+		2.2 移動先ディレクトリと名前が一致するものを抽出
+		3. ファイル移動の処理
+		3.1 同名ディレクトリ間でファイルを移動
+		3.2 エラー発生時は警告を表示
+		4. クリーンアップ処理
+		4.1 空ディレクトリを特定
+		4.2 並列処理による空ディレクトリの削除
+
+	.EXAMPLE
+		# 通常モードで実行
+		.\move_video.ps1
+
+		# GUIモードで実行
+		.\move_video.ps1 gui
+
+	.OUTPUTS
+		System.Void
+		このスクリプトは以下の出力を行います：
+		- コンソールへの進捗状況の表示
+		- トースト通知による進捗状況の表示
+		- エラー発生時のエラーメッセージ
+		- 処理完了時のサマリー情報
+		- 移動したファイルの一覧
+#>
+
 Set-StrictMode -Version Latest
 $script:guiMode = if ($args) { [String]$args[0] } else { '' }
 
@@ -13,8 +71,8 @@ try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
-} catch { Throw ('❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.') }
-if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space') }
+} catch { throw '❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.' }
+if ($script:scriptRoot.Contains(' ')) { throw '❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space' }
 . (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

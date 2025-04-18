@@ -3,22 +3,60 @@
 #		GUI設定スクリプト
 #
 ###################################################################################
+<#
+	.SYNOPSIS
+		TVerRecの設定画面を提供するGUIスクリプト
+
+	.DESCRIPTION
+		TVerRecの各種設定を変更するためのグラフィカルユーザーインターフェース（GUI）を提供します。
+		以下の設定カテゴリを管理します：
+		- 基本的な設定（ダウンロードディレクトリ、作業ディレクトリなど）
+		- 動作設定（マルチスレッド、通知設定など）
+		- マイページ設定（プラットフォームID、トークンなど）
+		- ダウンロード設定（並列ダウンロード数、タイムアウトなど）
+		- 動画ファイル名設定（シリーズ名、放送日などの追加）
+		- Ytdl/ffmpeg設定（デコードオプション、更新設定など）
+		- Geo IP設定（プロキシ設定など）
+		- スケジュール設定（停止時間の設定）
+		- 言語設定
+
+	.NOTES
+		前提条件:
+		- Windows環境で実行する必要があります
+		- PowerShell 7.0以上を推奨です
+		- WPFアセンブリが必要です
+
+		主な機能:
+		1. 設定の読み込みと表示
+		2. 設定の変更と保存
+		3. ディレクトリ選択ダイアログ
+		4. スケジュール設定の管理
+
+	.EXAMPLE
+		# 設定画面を起動
+		.\gui_setting.ps1
+
+	.OUTPUTS
+		System.Void
+		設定を変更し、user_setting.ps1ファイルに保存します。
+#>
+
 using namespace System.Windows.Threading
 Set-StrictMode -Version Latest
-if (!$IsWindows) { Throw ('❌️ Windows以外では動作しません') ; Start-Sleep 10 }
+if (!$IsWindows) { throw ('❌️ Windows以外では動作しません') ; Start-Sleep 10 }
 Add-Type -AssemblyName System.Windows.Forms | Out-Null
 Add-Type -AssemblyName PresentationFramework | Out-Null
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# region 環境設定
+#region 環境設定
 
 try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	$script:scriptRoot = Convert-Path (Join-Path $script:scriptRoot '../')
 	Set-Location $script:scriptRoot
-} catch { Throw ('❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.') }
-if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space') }
+} catch { throw '❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.' }
+if ($script:scriptRoot.Contains(' ')) { throw '❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space' }
 
 #----------------------------------------------------------------------
 # メッセージファイル読み込み
@@ -36,11 +74,11 @@ Write-Debug "Message Table Loaded: $script:uiCulture"
 $script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 if ( Test-Path (Join-Path $script:confDir 'system_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'system_setting.ps1')) }
-	catch { Throw ($script:msg.LoadSystemSettingFailed) }
-} else { Throw ($script:msg.SystemSettingNotFound) }
+	catch { throw ($script:msg.LoadSystemSettingFailed) }
+} else { throw ($script:msg.SystemSettingNotFound) }
 if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
-	catch { Throw ($script:msg.LoadUserSettingFailed) }
+	catch { throw ($script:msg.LoadUserSettingFailed) }
 } else { New-Item (Join-Path $script:confDir 'user_setting.ps1') -Force | Out-Null }
 if ($script:preferredLanguage) {
 	$script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:preferredLanguage)) { $script:langFile.$script:preferredLanguage }
@@ -51,7 +89,7 @@ if ($script:preferredLanguage) {
 # 外部関数ファイルの読み込み
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/common_functions.ps1'))
-} catch { Throw ($script:msg.LoadCommonFuncFailed) }
+} catch { throw ($script:msg.LoadCommonFuncFailed) }
 
 $days = @('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')
 $hours = 0..23
@@ -115,13 +153,27 @@ $settingAttributes = @(
 	'$script:preferredLanguage'
 )
 
-# endregion 環境設定
+#endregion 環境設定
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# region 関数定義
+#region 関数定義
 
 # GUIイベントの処理
 function Sync-WpfEvents {
+	<#
+		.SYNOPSIS
+			WPFのイベントを同期的に処理します。
+
+		.DESCRIPTION
+			WPFのイベントディスパッチャーを使用して、GUIイベントを同期的に処理します。
+			これにより、UIの応答性を維持しながらイベントを処理することができます。
+
+		.OUTPUTS
+			System.Void
+
+		.NOTES
+			この関数は内部で使用され、直接呼び出すことは想定されていません。
+	#>
 	[OutputType([Void])]
 	Param ()
 	[DispatcherFrame] $frame = [DispatcherFrame]::new($true)
@@ -138,7 +190,26 @@ function Sync-WpfEvents {
 }
 
 # ディレクトリ選択ダイアログ
-function Select-Folder() {
+function Select-Folder {
+	<#
+		.SYNOPSIS
+			フォルダ選択ダイアログを表示します。
+
+		.DESCRIPTION
+			ユーザーにフォルダを選択させるダイアログを表示し、選択されたパスをテキストボックスに設定します。
+
+		.PARAMETER description
+			ダイアログの説明文
+
+		.PARAMETER textBox
+			選択されたパスを表示するテキストボックス
+
+		.OUTPUTS
+			System.Void
+
+		.EXAMPLE
+			Select-Folder -description "ダウンロードディレクトリを選択" -textBox $downloadDirTextBox
+	#>
 	[OutputType([Void])]
 	Param (
 		[parameter(Mandatory = $true)]$description,
@@ -154,6 +225,24 @@ function Select-Folder() {
 
 # user_setting.ps1から各設定項目を読み込む
 function Read-UserSetting {
+	<#
+		.SYNOPSIS
+			ユーザー設定を読み込みます。
+
+		.DESCRIPTION
+			user_setting.ps1ファイルから設定を読み込み、GUIの各コントロールに反映します。
+			未定義の設定項目はデフォルト値で初期化されます。
+
+		.OUTPUTS
+			System.Void
+
+		.NOTES
+			処理の流れ:
+			1. 設定ファイルの読み込み
+			2. 各設定項目の値を取得
+			3. GUIコントロールに値を設定
+			4. スケジュール設定の読み込みと反映
+	#>
 	[OutputType([Void])]
 	Param ()
 	$undefAttributes = @('$script:downloadBaseDir', '$script:downloadWorkDir', '$script:saveBaseDir', '$script:myPlatformUID', '$script:myPlatformToken', '$script:myMemberSID', '$script:proxyUrl')
@@ -207,6 +296,24 @@ function Read-UserSetting {
 
 # user_setting.ps1に各設定項目を書き込む
 function Save-UserSetting {
+	<#
+		.SYNOPSIS
+			ユーザー設定を保存します。
+
+		.DESCRIPTION
+			GUIで変更された設定をuser_setting.ps1ファイルに保存します。
+			既存の設定ファイルがある場合は、自動生成部分のみを更新します。
+
+		.OUTPUTS
+			System.Void
+
+		.NOTES
+			処理の流れ:
+			1. 既存の設定ファイルの読み込み
+			2. 自動生成部分の特定
+			3. 新しい設定の生成
+			4. 設定ファイルの更新
+	#>
 	[OutputType([Void])]
 	Param ()
 	$newSetting = @()
@@ -280,18 +387,18 @@ function Save-UserSetting {
 	Remove-Variable -Name stopSetting, day, hour, checkbox, stopHours -ErrorAction SilentlyContinue
 }
 
-# endregion 関数定義
+#endregion 関数定義
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # メイン処理
 
 #----------------------------------------------------------------------
-# region WPFのWindow設定
+#region WPFのWindow設定
 
 try {
 	[Xml]$mainXaml = [String](Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecSetting.xaml'))
 	$settingWindow = [System.Windows.Markup.XamlReader]::Load(([System.Xml.XmlNodeReader]::new($mainXaml)))
-} catch { Throw ($script:msg.GuiBroken) }
+} catch { throw ($script:msg.GuiBroken) }
 # PowerShellのウィンドウを非表示に
 Add-Type -Name Window -Namespace Console -MemberDefinition @'
 	[DllImport("Kernel32.dll")] public static extern IntPtr GetConsoleWindow();
@@ -472,42 +579,52 @@ $tabLanguage.Header = $script:msg.tabLanguage
 $preferredLanguageHeader.Header = $script:msg.preferredLanguageHeader
 $preferredLanguageText.Text = $script:msg.preferredLanguageText
 
+
 # ComboBOxのラベルを言語別に設定
+# True/Falseオプションを追加するコントロール
 $trueFalseOptions = @($script:msg.SettingDefault, $script:msg.SettingTrue, $script:msg.SettingFalse)
-foreach ($option in $trueFalseOptions) { $enableMultithread.Items.Add($option) | Out-Null }
-foreach ($option in $trueFalseOptions) { $disableToastNotification.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $detailedProgress.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $extractDescTextToList.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $listGenHistoryCheck.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $cleanupDownloadBaseDir.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $cleanupSaveBaseDir.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $emptyDownloadBaseDir.Items.Add($option)  | Out-Null }
+$trueFalseControls = @(
+	$enableMultithread,
+	$disableToastNotification,
+	$detailedProgress,
+	$extractDescTextToList,
+	$listGenHistoryCheck,
+	$cleanupDownloadBaseDir,
+	$cleanupSaveBaseDir,
+	$emptyDownloadBaseDir,
+	$embedSubtitle,
+	$embedMetatag,
+	$sortVideoBySeries,
+	$sortVideoByMedia,
+	$forceSingleDownload,
+	$sitemapParseEpisodeOnly,
+	$downloadWhenEpisodeIdChanged,
+	$addSeriesName,
+	$addSeasonName,
+	$addBroadcastDate,
+	$addEpisodeNumber,
+	$removeSpecialNote,
+	$forceSoftwareDecodeFlag,
+	$simplifiedValidation,
+	$disableValidation,
+	$disableUpdateYoutubedl,
+	$disableUpdateFfmpeg,
+	$ytdlRandomIp,
+	$scheduleStop
+)
+foreach ($control in $trueFalseControls) {
+	foreach ($option in $trueFalseOptions) { $control.Items.Add($option) | Out-Null }
+}
+# カスタムオプションを追加するコントロール
 $updateChannel.Items.Add($script:msg.SettingDefault) | Out-Null
 $updateChannel.Items.Add('release') | Out-Null
 $updateChannel.Items.Add('prerelease') | Out-Null
 $updateChannel.Items.Add('master') | Out-Null
 $updateChannel.Items.Add('beta') | Out-Null
 $updateChannel.Items.Add('dev') | Out-Null
-foreach ($option in $trueFalseOptions) { $embedSubtitle.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $embedMetatag.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $sortVideoBySeries.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $sortVideoByMedia.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $forceSingleDownload.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $sitemapParseEpisodeOnly.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $downloadWhenEpisodeIdChanged.Items.Add($option)  | Out-Null }
 $videoContainerFormat.Items.Add($script:msg.SettingDefault) | Out-Null
 $videoContainerFormat.Items.Add('mp4') | Out-Null
 $videoContainerFormat.Items.Add('ts') | Out-Null
-foreach ($option in $trueFalseOptions) { $addSeriesName.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $addSeasonName.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $addBroadcastDate.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $addEpisodeNumber.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $removeSpecialNote.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $forceSoftwareDecodeFlag.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $simplifiedValidation.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $disableValidation.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $disableUpdateYoutubedl.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $disableUpdateFfmpeg.Items.Add($option)  | Out-Null }
 $windowShowStyle.Items.Add($script:msg.SettingDefault) | Out-Null
 $windowShowStyle.Items.Add('Minimized') | Out-Null
 $windowShowStyle.Items.Add('Hidden') | Out-Null
@@ -517,18 +634,17 @@ $preferredYoutubedl.Items.Add($script:msg.SettingDefault) | Out-Null
 $preferredYoutubedl.Items.Add('yt-dlp') | Out-Null
 $preferredYoutubedl.Items.Add('yt-dlp-nightly') | Out-Null
 $preferredYoutubedl.Items.Add('ytdl-patched') | Out-Null
-foreach ($option in $trueFalseOptions) { $ytdlRandomIp.Items.Add($option)  | Out-Null }
-foreach ($option in $trueFalseOptions) { $scheduleStop.Items.Add($option)  | Out-Null }
 $preferredLanguage.Items.Add($script:msg.SettingDefault) | Out-Null
 $preferredLanguage.Items.Add('日本語') | Out-Null	# ja-JP
 $preferredLanguage.Items.Add('English') | Out-Null	# en-US
 
-# endregion WPFのWindow設定
+
+#endregion WPFのWindow設定
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
-# region ボタンのアクション
-$btnWiki.Add_Click({ Start-Process‘https://github.com/dongaba/TVerRec/wiki’ })
+#region ボタンのアクション
+$btnWiki.Add_Click({ Start-Process 'https://github.com/dongaba/TVerRec/wiki' })
 $btnCancel.Add_Click({ $settingWindow.close() })
 $btnSave.Add_Click({ Save-UserSetting ; $settingWindow.close() })
 $btnDownloadBaseDir.Add_Click({ Select-Folder $script:msg.SelectDownloadDir $script:downloadBaseDir })
@@ -616,13 +732,13 @@ $chkbxStop21All.Add_Click({ Sync-MultiCheckboxes -hour '21' -allCheckbox $chkbxS
 $chkbxStop22All.Add_Click({ Sync-MultiCheckboxes -hour '22' -allCheckbox $chkbxStop22All })
 $chkbxStop23All.Add_Click({ Sync-MultiCheckboxes -hour '23' -allCheckbox $chkbxStop23All })
 
-# endregion ボタンのアクション
+#endregion ボタンのアクション
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
-# region 設定ファイルの読み込み
+#region 設定ファイルの読み込み
 Read-UserSetting
-# endregion 設定ファイルの読み込み
+#endregion 設定ファイルの読み込み
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
@@ -632,7 +748,7 @@ try {
 	$settingWindow.Show() | Out-Null
 	$settingWindow.Activate() | Out-Null
 	[Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0) | Out-Null
-} catch { Throw ($script:msg.WindowRenderError) }
+} catch { throw ($script:msg.WindowRenderError) }
 
 # メインウィンドウ取得
 $currentProcess = [Diagnostics.Process]::GetCurrentProcess()
@@ -644,14 +760,14 @@ $form.AssignHandle($currentProcess.MainWindowHandle)
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 #----------------------------------------------------------------------
-# region ウィンドウ表示後のループ処理
+#region ウィンドウ表示後のループ処理
 while ($settingWindow.IsVisible) {
 	# GUIイベント処理
 	Sync-WpfEvents
 	Start-Sleep -Milliseconds 10
 }
 
-# endregion ウィンドウ表示後のループ処理
+#endregion ウィンドウ表示後のループ処理
 #----------------------------------------------------------------------
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -3,6 +3,74 @@
 #		番組整合性チェック処理スクリプト
 #
 ###################################################################################
+<#
+	.SYNOPSIS
+		TVerRecでダウンロードした番組の整合性をチェックするスクリプト
+
+	.DESCRIPTION
+		ダウンロードした番組ファイルの整合性チェックとダウンロード履歴の管理を行います。
+		以下の処理を順番に実行します：
+		1. ダウンロード履歴のクリーンアップ
+		2. 古い履歴レコードの削除
+		3. 重複レコードの削除
+		4. 番組ファイルの整合性チェック
+		5. 未検証ファイルの再チェック
+
+	.PARAMETER guiMode
+		オプションのパラメータ。GUIモードで実行するかどうかを指定します。
+		- 指定なし: 通常モードで実行
+		- 'gui': GUIモードで実行
+		- その他の値: 通常モードで実行
+
+	.NOTES
+		前提条件:
+		- Windows、Linux、またはmacOS環境で実行する必要があります
+		- PowerShell 7.0以上を推奨します
+		- TVerRecの設定ファイルが正しく設定されている必要があります
+		- ffmpegがインストールされている必要があります
+		- ダウンロード履歴ファイルが存在する必要があります
+		- 十分なディスク容量が必要です
+		- インターネット接続が必要です
+
+		処理の流れ:
+		1. 履歴ファイルの管理
+		1.1 破損レコードの削除
+		1.2 古いレコードの削除（設定された保持期間に基づく）
+		1.3 重複レコードの削除
+		2. 整合性チェック
+		2.1 未検証ファイルの特定
+		2.2 ffmpegによる動画ファイルの検証
+		2.3 検証結果の記録
+		3. 再検証処理
+		3.1 検証中断ファイルの状態リセット
+		3.2 未検証ファイルの再チェック
+		4. 最終クリーンアップ
+		4.1 履歴ファイルの最適化
+		4.2 結果の確認
+
+		検証内容:
+		- 動画ファイルの存在確認
+		- ffmpegによる動画ファイルのデコード確認
+		- ファイルサイズの確認
+		- 動画の再生時間確認
+
+	.EXAMPLE
+		# 通常モードで実行
+		.\validate_video.ps1
+
+		# GUIモードで実行
+		.\validate_video.ps1 gui
+
+	.OUTPUTS
+		System.Void
+		このスクリプトは以下の出力を行います：
+		- コンソールへの進捗状況の表示
+		- トースト通知による進捗状況の表示
+		- エラー発生時のエラーメッセージ
+		- 処理完了時のサマリー情報
+		- 検証結果の詳細レポート
+#>
+
 Set-StrictMode -Version Latest
 $script:guiMode = if ($args) { [String]$args[0] } else { '' }
 
@@ -13,8 +81,8 @@ try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
-} catch { Throw ('❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.') }
-if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space') }
+} catch { throw '❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.' }
+if ($script:scriptRoot.Contains(' ')) { throw '❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space' }
 . (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -133,7 +201,7 @@ while ($videoNotValidatedNum -ne 0) {
 			}
 			Update-ProgressToast @toastUpdateParams
 
-			if (!(Test-Path $script:downloadBaseDir -PathType Container)) { Throw ($script:msg.DownloadDirNotAccessible) }
+			if (!(Test-Path $script:downloadBaseDir -PathType Container)) { throw ($script:msg.DownloadDirNotAccessible) }
 			# 番組の整合性チェック
 			Write-Output ('{0}/{1} - {2}' -f $validateNum, $validateTotal, $videoHist.videoPath)
 			Invoke-IntegrityCheck -VideoHist $videoHist -DecodeOption $decodeOption
@@ -164,7 +232,7 @@ while ($videoNotValidatedNum -ne 0) {
 			})
 		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 		try { $newRecords | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append ; Start-Sleep -Seconds 1 }
-		catch { Throw ($script:msg.UpdateFailed -f $script:msg.HistFile) }
+		catch { throw ($script:msg.UpdateFailed -f $script:msg.HistFile) }
 		finally { Unlock-File $script:histLockFilePath | Out-Null }
 		# videoPageごとに最新のdownloadDateを持つレコードを取得
 		$latestHists = Get-LatestHistory

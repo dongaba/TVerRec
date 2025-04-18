@@ -113,20 +113,20 @@ Describe 'DateTime型をUNIX時間に変換' {
 #----------------------------------------------------------------------
 Describe 'ファイル名・ディレクトリ名に禁止文字の削除' {
 	It 'String型で返ってくること' {
-		Get-FileNameWithoutInvalidChars 'Test\Path/File\Name' | Should -BeOfType String
+		Get-FileNameWoInvalidChars 'Test\Path/File\Name' | Should -BeOfType String
 	}
 	It 'ファイル名から無効な文字を取り除くこと' {
 		$fileNameWithInvalidChars = 'test<file>|name?.txt'
 		$expectedResult = 'test-file-name-.txt'
-		Get-FileNameWithoutInvalidChars -Name $fileNameWithInvalidChars | Should -BeExactly $expectedResult
+		Get-FileNameWoInvalidChars -Name $fileNameWithInvalidChars | Should -BeExactly $expectedResult
 	}
 	It '無効な文字がなければ同じ名前を返すこと' {
 		$validName = 'valid-file_name.txt'
-		Get-FileNameWithoutInvalidChars -Name $validName | Should -BeExactly $validName
+		Get-FileNameWoInvalidChars -Name $validName | Should -BeExactly $validName
 	}
 	It '無効なファイル名文字をすべて削除すること' {
 		$nameWithInvalidChars = 'Invalid:Name*/?<>|'
-		$result = Get-FileNameWithoutInvalidChars -Name $nameWithInvalidChars
+		$result = Get-FileNameWoInvalidChars -Name $nameWithInvalidChars
 		$invalidChars = [IO.Path]::GetInvalidFileNameChars()
 		# Assert that none of the invalid characters are present in the result
 		foreach ($char in $invalidChars) {
@@ -138,25 +138,25 @@ Describe 'ファイル名・ディレクトリ名に禁止文字の削除' {
 	}
 	It '特定の無効なファイル名文字をハイフンに置き換えること' {
 		$nameWithSpecificChars = 'NameWith*Question?Mark<Greater>Than|Pipe'
-		Get-FileNameWithoutInvalidChars -Name $nameWithSpecificChars | Should -BeExactly 'NameWith-Question-Mark-Greater-Than-Pipe'
+		Get-FileNameWoInvalidChars -Name $nameWithSpecificChars | Should -BeExactly 'NameWith-Question-Mark-Greater-Than-Pipe'
 	}
 	It '名前から印字不可能な文字を取り除くこと' {
 		$nameWithNonPrintables = 'NameWith[]'
-		Get-FileNameWithoutInvalidChars -Name $nameWithNonPrintables | Should -BeExactly 'NameWith[]'
+		Get-FileNameWoInvalidChars -Name $nameWithNonPrintables | Should -BeExactly 'NameWith[]'
 	}
 	It 'ファイル名の*と?を-に置き換えること' {
 		$fileNameWithStarAndQuestion = 'file*name?.txt'
 		$expectedResult = 'file-name-.txt'
-		Get-FileNameWithoutInvalidChars -Name $fileNameWithStarAndQuestion | Should -BeExactly $expectedResult
+		Get-FileNameWoInvalidChars -Name $fileNameWithStarAndQuestion | Should -BeExactly $expectedResult
 	}
 	It '名前から印字不可能な文字を取り除くこと' {
 		$fileNameWithNonPrintableChars = "test`u{0016}file`u{0019}name.txt"
 		$expectedResult = 'testfilename.txt'
-		Get-FileNameWithoutInvalidChars -Name $fileNameWithNonPrintableChars | Should -BeExactly $expectedResult
+		Get-FileNameWoInvalidChars -Name $fileNameWithNonPrintableChars | Should -BeExactly $expectedResult
 	}
 	It '空文字列入力を処理すること' {
 		$emptyName = ''
-		Get-FileNameWithoutInvalidChars -Name $emptyName  | Should -BeExactly $emptyName
+		Get-FileNameWoInvalidChars -Name $emptyName  | Should -BeExactly $emptyName
 	}
 }
 
@@ -165,7 +165,7 @@ Describe 'ファイル名・ディレクトリ名に禁止文字の削除' {
 #----------------------------------------------------------------------
 Describe '英数のみ全角→半角(カタカナは全角)' {
 	It 'String型で返ってくること' {
-		Get-NarrowChars 'ﾃｽﾄ' | Should -BeOfType String
+		Get-NarrowChar 'ﾃｽﾄ' | Should -BeOfType String
 	}
 	It '全角英数が半角となること' -TestCases @(
 		@{Target = '０１２３４５６７８９' ; Expected = '0123456789' }
@@ -173,7 +173,7 @@ Describe '英数のみ全角→半角(カタカナは全角)' {
 		@{Target = 'ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ' ; Expected = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' }
 	) {
 		Param ($Target, $Expected)
-		Get-NarrowChars $Target | Should -Be $Expected
+		Get-NarrowChar $Target | Should -Be $Expected
 	}
 	It '半角英数はそのまま返却されること' -TestCases @(
 		@{Target = '0123456789' ; Expected = '0123456789' }
@@ -181,7 +181,7 @@ Describe '英数のみ全角→半角(カタカナは全角)' {
 		@{Target = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' ; Expected = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' }
 	) {
 		Param ($Target, $Expected)
-		Get-NarrowChars $Target | Should -Be $Expected
+		Get-NarrowChar $Target | Should -Be $Expected
 	}
 	It '全角記号が半角記号になること' -TestCases @(
 		@{
@@ -190,13 +190,13 @@ Describe '英数のみ全角→半角(カタカナは全角)' {
 		}
 	) {
 		Param ($Target, $Expected)
-		Get-NarrowChars $Target | Should -Be $Expected
+		Get-NarrowChar $Target | Should -Be $Expected
 	}
 	It '半角記号はそのまま返却されること' -TestCases @(
 		@{Target = '@#$%^&*-+_/[]{}()<> \\";:.,' ; Expected = '@#$%^&*-+_/[]{}()<> \\";:.,' }
 	) {
 		Param ($Target, $Expected)
-		Get-NarrowChars $Target | Should -Be $Expected
+		Get-NarrowChar $Target | Should -Be $Expected
 	}
 
 	It '全角カタカナはそのまま返却されること' -TestCases @(
@@ -210,7 +210,7 @@ Describe '英数のみ全角→半角(カタカナは全角)' {
 		}
 	) {
 		Param ($Target, $Expected)
-		Get-NarrowChars $Target | Should -Be $Expected
+		Get-NarrowChar $Target | Should -Be $Expected
 	}
 	It '半角カタカナは全角となること' -TestCases @(
 		@{
@@ -223,7 +223,7 @@ Describe '英数のみ全角→半角(カタカナは全角)' {
 		}
 	) {
 		Param ($Target, $Expected)
-		Get-NarrowChars $Target | Should -Be $Expected
+		Get-NarrowChar $Target | Should -Be $Expected
 	}
 }
 
@@ -298,7 +298,7 @@ Describe 'タブとスペースを詰めて半角スペース1文字に' {
 #----------------------------------------------------------------------
 Describe '設定ファイルの行末コメントを削除' {
 	It 'String型で返ってくること' {
-		Remove-Comment 'テスト' | Should -BeOfType String
+		Get-ContentWoComment 'テスト' | Should -BeOfType String
 	}
 	It '設定ファイルの行末コメントを削除すること' -TestCases @(
 		@{Target = 'series/srz38rt0a3		#情熱大陸' ; Expected = 'series/srz38rt0a3' }
@@ -311,7 +311,7 @@ Describe '設定ファイルの行末コメントを削除' {
 		@{Target = 'toppage #トップページに表示される動画' ; Expected = 'toppage' }
 	) {
 		Param ($Target, $Expected)
-		Remove-Comment $Target | Should -Be $Expected
+		Get-ContentWoComment $Target | Should -Be $Expected
 	}
 }
 
@@ -322,7 +322,7 @@ Describe '設定ファイルの行末コメントを削除' {
 #----------------------------------------------------------------------
 # 指定したPath配下の指定した条件でファイルを削除
 #----------------------------------------------------------------------
-Describe 'Remove-Files Tests' {
+Describe 'Remove-File Tests' {
 	Context 'シングルスレッド' {
 		BeforeAll {
 			Function Get-TestDrive {}
@@ -355,7 +355,7 @@ Describe 'Remove-Files Tests' {
 			$conditions = '*.txt'
 			$delPeriod = 1
 
-			{ Remove-Files -basePath $basePath -conditions $conditions -delPeriod $delPeriod } | Should -Not -Throw
+			{ Remove-File -basePath $basePath -conditions $conditions -delPeriod $delPeriod } | Should -Not -Throw
 
 			$existingFiles = Get-ChildItem -Path $testFolderPath -File
 			$existingFiles.Count | Should -Be 4
@@ -400,7 +400,7 @@ Describe 'Remove-Files Tests' {
 			$conditions = '*.txt'
 			$delPeriod = 1
 
-			{ Remove-Files -basePath $basePath -conditions $conditions -delPeriod $delPeriod } | Should -Not -Throw
+			{ Remove-File -basePath $basePath -conditions $conditions -delPeriod $delPeriod } | Should -Not -Throw
 
 			$existingFiles = Get-ChildItem -LiteralPath $testFolderPath -File
 			$existingFiles.Count | Should -Be 40
@@ -459,7 +459,7 @@ Describe 'Expand-Zip Tests' {
 	}
 	It 'zipファイルが存在しない場合はエラーを投げること' {
 		$nonExistingPath = 'NonExisting\sample.zip'
-		{ Expand-Zip -Path $nonExistingPath -Destination $destinationPath } | Should -Throw ('❌️ {0}が見つかりません' -f $nonExistingPath)
+		{ Expand-Zip -Path $nonExistingPath -Destination $destinationPath } | Should -throw ('❌️ {0}が見つかりません' -f $nonExistingPath)
 	}
 
 	AfterAll {

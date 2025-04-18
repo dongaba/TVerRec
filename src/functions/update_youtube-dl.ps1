@@ -3,6 +3,70 @@
 #		Windows用youtube-dl最新化処理スクリプト
 #
 ###################################################################################
+<#
+	.SYNOPSIS
+		TVerRecで使用するyt-dlpを最新バージョンに更新するスクリプト
+
+	.DESCRIPTION
+		yt-dlpの最新バージョンをダウンロードし、インストールします。
+		複数のソースから選択してダウンロードできます：
+		- yt-dlp（標準版）
+		- ytdl-patched（パッチ適用版）
+		- yt-dlp-nightly（開発版）
+
+	.NOTES
+		前提条件:
+		- Windows、Linux、またはmacOS環境で実行する必要があります
+		- PowerShell 7.0以上を推奨です
+		- インターネット接続が必要です
+		- TVerRecの設定ファイルが正しく設定されている必要があります
+		- 設定ファイルでpreferredYoutubedlが正しく設定されている必要があります
+		- 十分なディスク容量が必要です
+		- 管理者権限が必要な場合があります
+
+		対応ソース:
+		1. yt-dlp (yt-dlp/yt-dlp)
+		- 安定版
+		- 一般利用向け
+		2. ytdl-patched (ytdl-patched/ytdl-patched)
+		- パッチ適用版
+		- 追加機能対応
+		3. yt-dlp-nightly (yt-dlp/yt-dlp-nightly-builds)
+		- 開発版
+		- 最新機能テスト用
+
+		処理の流れ:
+		1. 現在の環境確認
+		1.1 設定の読み込み
+		1.2 現在のバージョン確認
+		2. 最新版の確認
+		2.1 ソースの選択
+		2.2 最新バージョンの取得
+		3. 更新処理
+		3.1 ダウンロード
+		3.2 実行ファイルの配置
+		4. 検証
+		4.1 実行権限の設定
+		4.2 バージョン確認
+
+	.EXAMPLE
+		# スクリプトの実行（デフォルトのソース）
+		.\update_youtube-dl.ps1
+
+	.OUTPUTS
+		System.Void
+		このスクリプトは以下の出力を行います：
+		- 現在のyt-dlpのバージョン
+		- 利用可能な最新バージョン
+		- ダウンロードの進捗状況
+		- 更新処理の結果
+		- エラー発生時のエラーメッセージ
+		- デバッグ情報（設定時）
+
+	.LINK
+		https://github.com/dongaba/TVerRec
+#>
+
 Set-StrictMode -Version Latest
 Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
 
@@ -21,7 +85,7 @@ function Expand-Zip {
 		Write-Verbose ('Extracting {0} into {1}' -f $path, $destination)
 		[System.IO.Compression.ZipFile]::ExtractToDirectory($path, $destination, $true)
 		Write-Verbose ('Extracted {0}' -f $path)
-	} else { Throw ($script:msg.FileNotFound -f $path) }
+	} else { throw ($script:msg.FileNotFound -f $path) }
 	Remove-Variable -Name path, destination -ErrorAction SilentlyContinue
 }
 
@@ -32,8 +96,8 @@ try {
 	if ($myInvocation.MyCommand.CommandType -eq 'ExternalScript') { $scriptRoot = Split-Path -Parent -Path (Split-Path -Parent -Path $myInvocation.MyCommand.Definition) }
 	else { $scriptRoot = Convert-Path .. }
 	Set-Location $script:scriptRoot
-} catch { Throw ('❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.') }
-if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space') }
+} catch { throw '❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.' }
+if ($script:scriptRoot.Contains(' ')) { throw '❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space' }
 
 #----------------------------------------------------------------------
 # メッセージファイル読み込み
@@ -50,20 +114,20 @@ Write-Debug "Message Table Loaded: $script:uiCulture"
 $script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 if ( Test-Path (Join-Path $script:confDir 'system_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'system_setting.ps1')) }
-	catch { Throw ($script:msg.LoadSystemSettingFailed) }
-} else { Throw ($script:msg.SystemSettingNotFound) }
+	catch { throw ($script:msg.LoadSystemSettingFailed) }
+} else { throw ($script:msg.SystemSettingNotFound) }
 if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
-	catch { Throw ($script:msg.LoadUserSettingFailed) }
+	catch { throw ($script:msg.LoadUserSettingFailed) }
 } elseif ($IsWindows) {
 	Write-Output ($script:msg.UserSettingNeedsToBeCreated)
 	try { & 'gui/gui_setting.ps1' }
-	catch { Throw ($script:msg.LoadSettingGUIFailed) }
+	catch { throw ($script:msg.LoadSettingGUIFailed) }
 	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 		try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
-		catch { Throw ($script:msg.LoadUserSettingFailed) }
-	} else { Throw ($script:msg.UserSettingNotCompleted) }
-} else { Throw ($script:msg.UserSettingNotCompleted) }
+		catch { throw ($script:msg.LoadUserSettingFailed) }
+	} else { throw ($script:msg.UserSettingNotCompleted) }
+} else { throw ($script:msg.UserSettingNotCompleted) }
 if ($script:preferredLanguage) {
 	$script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:preferredLanguage)) { $script:langFile.$script:preferredLanguage }
 	else { $defaultLang = 'en-US'; $script:langFile.$defaultLang }

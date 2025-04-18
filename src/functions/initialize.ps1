@@ -3,9 +3,76 @@
 #		関数読み込みスクリプト
 #
 ###################################################################################
+<#
+	.SYNOPSIS
+		TVerRecの初期化処理を行うスクリプトです。
+
+	.DESCRIPTION
+		TVerRecアプリケーションの起動時に必要な初期化処理を実行します。
+		主に以下の5つのカテゴリの初期化を行います：
+
+		1. 基本設定の初期化
+		- ロゴデータの設定
+		- 言語設定の読み込み
+		- メッセージリソースの初期化
+
+		2. 設定ファイルの読み込み
+		- システム設定ファイルの読み込み
+		- ユーザー設定ファイルの読み込み
+		- 開発環境用設定の読み込み
+
+		3. 関数ファイルの読み込み
+		- 共通関数の読み込み
+		- TVer固有関数の読み込み
+		- TVerRec固有関数の読み込み
+
+		4. パスの初期化
+		- 各種設定ファイルのパス設定
+		- ログファイルのパス設定
+		- 実行ファイルのパス設定
+
+		5. 環境設定の初期化
+		- HTTPヘッダーの設定
+		- GeoIP情報の設定
+		- ロックファイル用変数の初期化
+
+	.NOTES
+		前提条件:
+		- Windows、Linux、またはmacOS環境で実行する必要があります
+		- PowerShell 7.0以上を推奨します
+		- TVerRecの設定ファイルが正しく設定されている必要があります
+		- 十分なディスク容量が必要です
+		- インターネット接続が必要です
+		- TVerのアカウントが必要な場合があります
+
+		主要な機能：
+		- アプリケーションの初期設定
+		- 設定ファイルの管理
+		- 関数ライブラリの読み込み
+		- パス設定の初期化
+		- 実行環境の設定
+
+	.LINK
+		https://github.com/dongaba/TVerRec
+#>
+
 Set-StrictMode -Version Latest
 Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 try { $launchMode = [String]$args[0] } catch { $launchMode = '' }
+
+# ロゴデータ
+$script:logoLines = @(
+	'⣴⠟⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦',
+	'⣿⠀⠀⣿⣿⣿⣿⡿⠟⠛⠛⠛⠛⠳⢦⣄⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿',
+	'⣿⠀⠀⣿⣿⡟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠈⢳⣄⠀⠀⠀⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⣿⠀⠀⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠙⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿',
+	'⣿⠀⠀⣿⠏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⣆⠀⠀⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣿⣦⠀⠈⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿',
+	'⣿⠀⠀⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⠀⠀⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⠀⠀⣿⡟⠁⣀⣀⠈⢻⣿⠀⠋⢀⣀⡀⠙⣿⠀⠀⣿⣿⣿⠟⠀⢀⣿⡟⠁⣀⣀⠈⢻⣿⡟⠁⣀⣀⠈⢻⣿⣿⣿⣿',
+	'⣿⠀⠀⣿⣆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⠏⠀⠀⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⠀⠀⣿⠀⠾⠿⠿⠷⠀⣿⠀⣾⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⣠⣿⣿⠀⠾⠿⠿⠷⠀⣿⠀⣾⣿⣿⣿⣿⣿⣿⣿⣿',
+	'⣿⠀⠀⣿⣿⣧⡀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡼⠋⠀⠀⠀⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⣦⡀⠈⠻⠟⠁⢀⣴⣿⠀⢶⣶⣶⣶⣶⣿⠀⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣧⠀⠘⣿⣿⠀⢶⣶⣶⣶⣶⣿⠀⢿⣿⣿⣿⣿⣿⣿⣿⣿',
+	'⣿⠀⠀⣿⣿⣿⣿⣷⣦⣤⣤⣤⣤⣴⣾⠋⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⣿⣿⣦⡀⢀⣴⣿⣿⣿⣧⡀⠉⠉⢀⣼⣿⠀⣿⣿⣿⣿⣿⣿⠀⠀⣿⣿⣿⣧⠀⠘⣿⣧⡀⠉⠉⢀⣼⣿⣧⡀⠉⠉⢀⣼⣿⣿⣿⣿',
+	'⣿⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⠙⢷⣄⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿',
+	'⠻⣦⣤⣿⣿⣿⣿⣿⣿⣿⣿⣤⣤⣤⣤⣽⣷⣤⣤⣤⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟'
+)
 
 $script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 $script:devDir = Join-Path $script:scriptRoot '../dev'
@@ -24,21 +91,21 @@ Write-Debug "Message Table Loaded: $script:uiCulture"
 # 設定ファイル読み込み
 if ( Test-Path (Join-Path $script:confDir 'system_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'system_setting.ps1')) }
-	catch { Throw ($script:msg.LoadSystemSettingFailed) }
-} else { Throw ($script:msg.SystemSettingNotFound) }
+	catch { throw ($script:msg.LoadSystemSettingFailed) }
+} else { throw ($script:msg.SystemSettingNotFound) }
 
 if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
-	catch { Throw ($script:msg.LoadUserSettingFailed) }
+	catch { throw ($script:msg.LoadUserSettingFailed) }
 } elseif ($IsWindows) {
 	Write-Output ($script:msg.UserSettingNeedsToBeCreated)
 	try { & 'gui/gui_setting.ps1' }
-	catch { Throw ($script:msg.LoadSettingGUIFailed) }
+	catch { throw ($script:msg.LoadSettingGUIFailed) }
 	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 		try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
-		catch { Throw ($script:msg.LoadUserSettingFailed) }
-	} else { Throw ($script:msg.UserSettingNotCompleted) }
-} else { Throw ($script:msg.UserSettingNotCompleted) }
+		catch { throw ($script:msg.LoadUserSettingFailed) }
+	} else { throw ($script:msg.UserSettingNotCompleted) }
+} else { throw ($script:msg.UserSettingNotCompleted) }
 if ($script:preferredLanguage) {
 	$script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:preferredLanguage)) { $script:langFile.$script:preferredLanguage }
 	else { $defaultLang = 'en-US'; $script:langFile.$defaultLang }
@@ -47,11 +114,11 @@ if ($script:preferredLanguage) {
 #----------------------------------------------------------------------
 # 外部関数ファイルの読み込み
 try { . (Convert-Path (Join-Path $script:scriptRoot 'functions/common_functions.ps1')) }
-catch { Throw ($script:msg.LoadCommonFuncFailed) }
+catch { throw ($script:msg.LoadCommonFuncFailed) }
 try { . (Convert-Path (Join-Path $script:scriptRoot 'functions/tver_functions.ps1')) }
-catch { Throw ($script:msg.LoadTVerFuncFailed) }
+catch { throw ($script:msg.LoadTVerFuncFailed) }
 try { . (Convert-Path (Join-Path $script:scriptRoot 'functions/tverrec_functions.ps1')) }
-catch { Throw ($script:msg.LoadTVerRecFuncFailed) }
+catch { throw ($script:msg.LoadTVerRecFuncFailed) }
 
 #----------------------------------------------------------------------
 # 開発環境用に設定上書き
@@ -61,7 +128,7 @@ try {
 	if (Test-Path $devConfFile) { . $devConfFile ; Write-Output ($script:msg.DevConfLoaded) }
 	if (Test-Path $devFunctionFile) { . $devFunctionFile ; Write-Output ($script:msg.DevFuncLoaded) }
 	Remove-Variable -Name devFunctionFile, devConfFile -ErrorAction SilentlyContinue
-} catch { Throw ($script:msg.LoadDevFilesFailed) }
+} catch { throw ($script:msg.LoadDevFilesFailed) }
 
 #----------------------------------------------------------------------
 # 連続実行時は以降の処理は不要なのでexit

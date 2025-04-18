@@ -3,6 +3,58 @@
 #		ループ処理スクリプト
 #
 ###################################################################################
+<#
+	.SYNOPSIS
+		TVerRecのメインループ処理を実行するスクリプト
+
+	.DESCRIPTION
+		TVerRecの主要な処理を定期的に実行するループスクリプトです。
+		以下の処理を順番に実行します：
+		1. 一括ダウンロード処理
+		2. ゴミ箱の削除処理
+		3. 動画の検証処理
+		4. 動画の移動処理
+		各処理の間には指定された待機時間が設定されています。
+
+	.PARAMETER guiMode
+		オプションのパラメータ。GUIモードで実行するかどうかを指定します。
+		- 指定なし: 通常モードで実行
+		- 'gui': GUIモードで実行
+		- その他の値: 通常モードで実行
+
+	.NOTES
+		前提条件:
+		- Windows、Linux、またはmacOS環境で実行する必要があります
+		- PowerShell 7.0以上を推奨します
+		- TVerRecの設定ファイルが正しく設定されている必要があります
+		- 十分なディスク容量が必要です
+		- インターネット接続が必要です
+		- TVerのアカウントが必要な場合があります
+
+		処理の流れ:
+		1. 環境設定の読み込み
+		2. メインループの開始
+		3. 各処理の実行
+		4. 待機時間のカウントダウン表示
+		5. 次のループへ
+
+	.EXAMPLE
+		# 通常モードで実行
+		.\loop.ps1
+
+		# GUIモードで実行
+		.\loop.ps1 gui
+
+	.OUTPUTS
+		System.Void
+		このスクリプトは以下の出力を行います：
+		- コンソールへの進捗状況の表示
+		- トースト通知による進捗状況の表示
+		- エラー発生時のエラーメッセージ
+		- 処理完了時のサマリー情報
+		- 各処理の実行結果
+#>
+
 Set-StrictMode -Version Latest
 $script:guiMode = if ($args) { [String]$args[0] } else { '' }
 
@@ -13,8 +65,8 @@ try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	Set-Location $script:scriptRoot
-} catch { Throw ('❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.') }
-if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space') }
+} catch { throw '❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.' }
+if ($script:scriptRoot.Contains(' ')) { throw '❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space' }
 . (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1')) 'loop'
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

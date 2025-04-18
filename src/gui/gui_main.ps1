@@ -3,21 +3,55 @@
 #		GUIメインスクリプト
 #
 ###################################################################################
+<#
+	.SYNOPSIS
+		TVerRecのGUIメインスクリプト
+
+	.DESCRIPTION
+		TVerRecのグラフィカルユーザーインターフェース（GUI）を提供するメインスクリプトです。
+		Windows Presentation Foundation (WPF)を使用してGUIを構築し、以下の機能を提供します：
+		- 単一番組のダウンロード
+		- 一括ダウンロード
+		- ダウンロードリストの生成と管理
+		- 番組の削除と移動
+		- 設定の管理
+
+	.NOTES
+		前提条件:
+		- Windows環境で実行する必要があります
+		- PowerShell 7.0以上を推奨です
+		- WPFアセンブリが必要です
+
+		主な機能:
+		1. GUIの初期化と表示
+		2. ユーザーイベントの処理
+		3. バックグラウンドジョブの管理
+		4. ログ出力の管理
+
+	.EXAMPLE
+		# スクリプトを実行してGUIを起動
+		.\gui_main.ps1
+
+	.OUTPUTS
+		System.Void
+		GUIウィンドウを表示し、ユーザーの操作に応じて各種処理を実行します。
+#>
+
 using namespace System.Windows.Threading
 Set-StrictMode -Version Latest
-if (!$IsWindows) { Throw ('❌️ Windows以外では動作しません。For Windows only') ; Start-Sleep 10 }
+if (!$IsWindows) { throw ('❌️ Windows以外では動作しません。For Windows only') ; Start-Sleep 10 }
 Add-Type -AssemblyName PresentationFramework | Out-Null
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# region 環境設定
+#region 環境設定
 
 try {
 	if ($myInvocation.MyCommand.CommandType -ne 'ExternalScript') { $script:scriptRoot = Convert-Path . }
 	else { $script:scriptRoot = Split-Path -Parent -Path $myInvocation.MyCommand.Definition }
 	$script:scriptRoot = Convert-Path (Join-Path $script:scriptRoot '../')
 	Set-Location $script:scriptRoot
-} catch { Throw ('❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.') }
-if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space') }
+} catch { throw '❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.' }
+if ($script:scriptRoot.Contains(' ')) { throw '❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space' }
 . (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 
 # パラメータ設定
@@ -40,13 +74,27 @@ $msgVerbose = New-Object System.Collections.Generic.List[String]
 $msgDebug = New-Object System.Collections.Generic.List[String]
 $msgInformation = New-Object System.Collections.Generic.List[String]
 
-# endregion 環境設定
+#endregion 環境設定
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# region 関数定義
+#region 関数定義
 
 # GUIイベントの処理
 function Sync-WpfEvents {
+	<#
+		.SYNOPSIS
+			WPFのイベントを同期的に処理します。
+
+		.DESCRIPTION
+			WPFのイベントディスパッチャーを使用して、GUIイベントを同期的に処理します。
+			これにより、UIの応答性を維持しながらイベントを処理することができます。
+
+		.OUTPUTS
+			System.Void
+
+		.NOTES
+			この関数は内部で使用され、直接呼び出すことは想定されていません。
+	#>
 	Param ()
 	[DispatcherFrame] $frame = [DispatcherFrame]::new($true)
 	[Dispatcher]::CurrentDispatcher.BeginInvoke(
@@ -62,7 +110,27 @@ function Sync-WpfEvents {
 }
 
 # 最大行数以上の実行ログをクリア
-function Limit-LogLines() {
+function Limit-LogLine {
+	<#
+		.SYNOPSIS
+			ログの行数を制限します。
+
+		.DESCRIPTION
+			指定された最大行数を超えるログエントリを削除します。
+			これにより、メモリ使用量を制御し、パフォーマンスを維持します。
+
+		.PARAMETER richTextBox
+			ログを表示するRichTextBoxコントロール
+
+		.PARAMETER limit
+			保持する最大行数
+
+		.OUTPUTS
+			System.Void
+
+		.EXAMPLE
+			Limit-LogLine -richTextBox $outText -limit 1000
+	#>
 	[OutputType([Void])]
 	Param (
 		[parameter(Mandatory = $true)]$richTextBox,
@@ -77,31 +145,52 @@ function Limit-LogLines() {
 
 # テキストボックスへのログ出力と再描画
 function Out-ExecutionLog {
+	<#
+		.SYNOPSIS
+			実行ログをテキストボックスに出力します。
+
+		.DESCRIPTION
+			指定されたメッセージをテキストボックスに出力し、メッセージタイプに応じて色分けを行います。
+			ログの最大行数を超えた場合は、古いログを自動的に削除します。
+
+		.PARAMETER message
+			出力するメッセージ
+
+		.PARAMETER type
+			メッセージのタイプ（Output, Error, Warning, Verbose, Debug, Information）
+
+		.OUTPUTS
+			System.Void
+
+		.EXAMPLE
+			Out-ExecutionLog -message "処理が完了しました" -type "Output"
+	#>
 	[OutputType([Void])]
 	Param (
 		[parameter(Mandatory = $false)][String]$message = '',
 		[parameter(Mandatory = $false)][String]$type = 'Output'
 	)
-	if ($script:guiMaxExecLogLines -gt 0) { Limit-LogLines $outText $script:guiMaxExecLogLines }
+	if ($script:guiMaxExecLogLines -gt 0) { Limit-LogLine $outText $script:guiMaxExecLogLines }
 	$rtfRange = [System.Windows.Documents.TextRange]::new($outText.Document.ContentEnd, $outText.Document.ContentEnd)
-	$rtfRange.Text = ("{0}`n" -f $Message)
+	if ($type -eq 'Output') { $rtfRange.Text = ("{0}`n" -f $Message) }
+	else { $rtfRange.Text = ("{0}: {1}`n" -f $type, $Message) }
 	$rtfRange.ApplyPropertyValue([System.Windows.Documents.TextElement]::ForegroundProperty, $msgTypesColorMap[$type] )
 	$outText.ScrollToEnd()
 	Remove-Variable -Name message, type, rtfRange -ErrorAction SilentlyContinue
 }
 
-# endregion 関数定義
+#endregion 関数定義
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # メイン処理
 
 #----------------------------------------------------------------------
-# region WPFのWindow設定
+#region WPFのWindow設定
 
 try {
 	[Xml]$mainXaml = [String](Get-Content -LiteralPath (Join-Path $script:xamlDir 'TVerRecMain.xaml'))
 	$mainWindow = [System.Windows.Markup.XamlReader]::Load(([System.Xml.XmlNodeReader]::new($mainXaml)))
-} catch { Throw ($script:msg.GuiBroken) }
+} catch { throw ($script:msg.GuiBroken) }
 # PowerShellのウィンドウを非表示に
 Add-Type -Name Window -Namespace Console -MemberDefinition @'
 	[DllImport("Kernel32.dll")] public static extern IntPtr GetConsoleWindow();
@@ -148,10 +237,10 @@ $btnWiki.Content = $script:msg.btnWiki
 $btnSetting.Content = $script:msg.btnSetting
 $btnExit.Content = $script:msg.btnExit
 
-# endregion WPFのWindow設定
+#endregion WPFのWindow設定
 
 #----------------------------------------------------------------------
-# region バックグラウンドジョブ化する処理を持つボタン
+#region バックグラウンドジョブ化する処理を持つボタン
 
 $btns = @(
 	$mainWindow.FindName('btnSingle'), #0
@@ -203,10 +292,10 @@ foreach ($btn in $btns) {
 		})
 }
 
-# endregion バックグラウンドジョブ化する処理を持つボタン
+#endregion バックグラウンドジョブ化する処理を持つボタン
 
 #----------------------------------------------------------------------
-# region ジョブ化しないボタンのアクション
+#region ジョブ化しないボタンのアクション
 
 $btnWorkOpen.Add_Click({ Invoke-Item $script:downloadWorkDir })
 $btnDownloadOpen.Add_Click({ Invoke-Item $script:downloadBaseDir })
@@ -238,10 +327,10 @@ $btnSetting.Add_Click({
 	})
 $btnExit.Add_Click({ $mainWindow.close() })
 
-# endregion ジョブ化しないボタンのアクション
+#endregion ジョブ化しないボタンのアクション
 
 #----------------------------------------------------------------------
-# region ウィンドウ表示
+#region ウィンドウ表示
 
 # 処理停止ボタンの初期値は無効
 $btnKillAll.IsEnabled = $false
@@ -249,12 +338,12 @@ try {
 	$mainWindow.Show() | Out-Null
 	$mainWindow.Activate() | Out-Null
 	[Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0) | Out-Null
-} catch { Throw ($script:msg.WindowRenderError) }
+} catch { throw ($script:msg.WindowRenderError) }
 
-# endregion ウィンドウ表示
+#endregion ウィンドウ表示
 
 #----------------------------------------------------------------------
-# region ウィンドウ表示後のループ処理
+#region ウィンドウ表示後のループ処理
 while ($mainWindow.IsVisible) {
 	if ($jobs = Get-Job) {
 		# ジョブがある場合の処理
@@ -290,10 +379,10 @@ while ($mainWindow.IsVisible) {
 	Start-Sleep -Milliseconds 10
 }
 
-# endregion ウィンドウ表示後のループ処理
+#endregion ウィンドウ表示後のループ処理
 
 #----------------------------------------------------------------------
-# region 終了処理
+#region 終了処理
 
 # Windowが閉じられたら乗っているゴミジョブを削除して終了
 Get-Job | Receive-Job -Wait -AutoRemoveJob -Force
@@ -308,4 +397,4 @@ Remove-Variable -Name btnWorkOpen, btnDownloadOpen, btnsaveOpen, btnKeywordOpen,
 Remove-Variable -Name btnClearLog, btnKillAll, btnWiki, btnSetting, btnExit -ErrorAction SilentlyContinue
 Remove-Variable -Name jobs, job, msgType, jobMsg, logType -ErrorAction SilentlyContinue
 
-# endregion 終了処理
+#endregion 終了処理

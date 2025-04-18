@@ -3,6 +3,74 @@
 #		Windows用ffmpeg最新化処理スクリプト
 #
 ###################################################################################
+<#
+	.SYNOPSIS
+		TVerRecで使用するffmpegを最新バージョンに更新するスクリプト
+
+	.DESCRIPTION
+		ffmpegの最新バージョンをダウンロードし、インストールします。
+		Windows、Linux、macOSの各プラットフォームに対応しています。
+		以下の処理を実行します：
+		1. 現在のバージョン確認
+		2. 最新バージョンの確認
+		3. 必要に応じたダウンロードと更新
+		4. インストール後の検証
+
+	.NOTES
+		前提条件:
+		- Windows、Linux、またはmacOS環境で実行する必要があります
+		- PowerShell 7.0以上を推奨です
+		- インターネット接続が必要です
+		- TVerRecの設定ファイルが正しく設定されている必要があります
+		- 十分なディスク容量が必要です
+		- 管理者権限が必要な場合があります
+		- プラットフォームに応じたアーキテクチャのサポートが必要です
+
+		対応プラットフォーム:
+		1. Windows
+		- x64, Arm64, x86アーキテクチャに対応
+		- yt-dlp/FFmpeg-Buildsからダウンロード
+		2. Linux
+		- x64, Arm64アーキテクチャに対応
+		- yt-dlp/FFmpeg-Buildsからダウンロード
+		3. macOS
+		- Intel(amd64), Apple Silicon(arm64)に対応
+		- ffmpeg.martin-riedl.deからダウンロード
+
+		処理の流れ:
+		1. 現在の環境確認
+		1.1 OSとアーキテクチャの判定
+		1.2 現在のバージョン確認
+		2. 最新版の確認
+		2.1 リポジトリの確認
+		2.2 最新バージョンの取得
+		3. 更新処理
+		3.1 ダウンロード
+		3.2 アーカイブの展開
+		3.3 実行ファイルの配置
+		4. 検証
+		4.1 実行権限の設定
+		4.2 バージョン確認
+
+	.EXAMPLE
+		# スクリプトの実行（デフォルト）
+		.\update_ffmpeg.ps1
+
+	.OUTPUTS
+		System.Void
+		このスクリプトは以下の出力を行います：
+		- 現在のffmpegのバージョン
+		- 利用可能な最新バージョン
+		- ダウンロードの進捗状況
+		- 更新処理の結果
+		- エラー発生時のエラーメッセージ
+		- デバッグ情報（設定時）
+		- プラットフォームとアーキテクチャの情報
+
+	.LINK
+		https://github.com/dongaba/TVerRec
+#>
+
 Set-StrictMode -Version Latest
 Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
 
@@ -21,7 +89,7 @@ function Expand-Zip {
 		Write-Verbose ('Extracting {0} into {1}' -f $path, $destination)
 		[System.IO.Compression.ZipFile]::ExtractToDirectory($path, $destination, $true)
 		Write-Verbose ('Extracted {0}' -f $path)
-	} else { Throw ($script:msg.FileNotFound -f $path) }
+	} else { throw ($script:msg.FileNotFound -f $path) }
 	Remove-Variable -Name path, destination -ErrorAction SilentlyContinue
 }
 
@@ -32,8 +100,8 @@ try {
 	if ($myInvocation.MyCommand.CommandType -eq 'ExternalScript') { $scriptRoot = Split-Path -Parent -Path (Split-Path -Parent -Path $myInvocation.MyCommand.Definition) }
 	else { $scriptRoot = Convert-Path .. }
 	Set-Location $script:scriptRoot
-} catch { Throw ('❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.') }
-if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space') }
+} catch { throw '❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.' }
+if ($script:scriptRoot.Contains(' ')) { throw '❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space' }
 
 #----------------------------------------------------------------------
 # メッセージファイル読み込み
@@ -50,20 +118,20 @@ Write-Debug "Message Table Loaded: $script:uiCulture"
 $script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 if ( Test-Path (Join-Path $script:confDir 'system_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'system_setting.ps1')) }
-	catch { Throw ($script:msg.LoadSystemSettingFailed) }
-} else { Throw ($script:msg.SystemSettingNotFound) }
+	catch { throw ($script:msg.LoadSystemSettingFailed) }
+} else { throw ($script:msg.SystemSettingNotFound) }
 if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
-	catch { Throw ($script:msg.LoadUserSettingFailed) }
+	catch { throw ($script:msg.LoadUserSettingFailed) }
 } elseif ($IsWindows) {
 	Write-Output ($script:msg.UserSettingNeedsToBeCreated)
 	try { & 'gui/gui_setting.ps1' }
-	catch { Throw ($script:msg.LoadSettingGUIFailed) }
+	catch { throw ($script:msg.LoadSettingGUIFailed) }
 	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 		try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
-		catch { Throw ($script:msg.LoadUserSettingFailed) }
-	} else { Throw ($script:msg.UserSettingNotCompleted) }
-} else { Throw ($script:msg.UserSettingNotCompleted) }
+		catch { throw ($script:msg.LoadUserSettingFailed) }
+	} else { throw ($script:msg.UserSettingNotCompleted) }
+} else { throw ($script:msg.UserSettingNotCompleted) }
 if ($script:preferredLanguage) {
 	$script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:preferredLanguage)) { $script:langFile.$script:preferredLanguage }
 	else { $defaultLang = 'en-US'; $script:langFile.$defaultLang }

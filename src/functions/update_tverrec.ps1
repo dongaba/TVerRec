@@ -3,6 +3,83 @@
 #		TVerRec自動アップデート処理スクリプト
 #
 ###################################################################################
+<#
+	.SYNOPSIS
+		TVerRecを最新バージョンに更新するスクリプト
+
+	.DESCRIPTION
+		TVerRecの最新バージョンをダウンロードし、インストールします。
+		以下のチャンネルから選択してダウンロードできます：
+		- release（安定版）
+		- prerelease（プレリリース版）
+		- master（開発版）
+		- beta（ベータ版）
+		- dev（開発版）
+
+	.NOTES
+	前提条件:
+	- Windows、Linux、またはmacOS環境で実行する必要があります
+	- PowerShell 7.0以上を推奨です
+	- インターネット接続が必要です
+	- TVerRecの設定ファイルが正しく設定されている必要があります
+	- 設定ファイルでupdateChannelが正しく設定されている必要があります
+	- 十分なディスク容量が必要です
+	- 管理者権限が必要な場合があります
+
+	更新チャンネル:
+	1. release
+	- 安定版
+	- 一般利用向け
+	2. prerelease
+	- プレリリース版
+	- テスト版
+	3. master
+	- 開発版メイン
+	- 最新機能テスト用
+	4. beta
+	- ベータ版
+	- テスト用
+	5. dev
+	- 開発版
+	- 開発者向け
+
+	処理の流れ:
+	1. 準備
+	1.1 作業ディレクトリの作成
+	1.2 古いファイルの削除
+	2. ダウンロード
+	2.1 チャンネルの選択
+	2.2 最新バージョンの取得
+	3. インストール
+	3.1 アーカイブの展開
+	3.2 ファイルの配置
+	4. クリーンアップ
+	4.1 古いファイルの削除
+	4.2 権限の設定
+	5. 移行処理
+	5.1 設定ファイルの更新
+	5.2 ディレクトリ構造の更新
+
+	.EXAMPLE
+		# スクリプトの実行（デフォルトのチャンネル）
+		.\update_tverrec.ps1
+
+	.OUTPUTS
+		System.Void
+		このスクリプトは以下の出力を行います：
+		- 更新処理の開始通知
+		- 作業ディレクトリの作成状況
+		- ダウンロードの進捗状況
+		- ファイルの配置状況
+		- クリーンアップ処理の状況
+		- 更新完了通知
+		- エラー発生時のエラーメッセージ
+		- デバッグ情報（設定時）
+
+	.LINK
+		https://github.com/dongaba/TVerRec
+#>
+
 Set-StrictMode -Version Latest
 Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
 
@@ -21,7 +98,7 @@ function Expand-Zip {
 		Write-Verbose ('Extracting {0} into {1}' -f $path, $destination)
 		[System.IO.Compression.ZipFile]::ExtractToDirectory($path, $destination, $true)
 		Write-Verbose ('Extracted {0}' -f $path)
-	} else { Throw ($script:msg.FileNotFound -f $path) }
+	} else { throw ($script:msg.FileNotFound -f $path) }
 	Remove-Variable -Name path, destination -ErrorAction SilentlyContinue
 }
 
@@ -93,8 +170,8 @@ try {
 	if ($myInvocation.MyCommand.CommandType -eq 'ExternalScript') { $scriptRoot = Split-Path -Parent -Path (Split-Path -Parent -Path $myInvocation.MyCommand.Definition) }
 	else { $scriptRoot = Convert-Path .. }
 	Set-Location $scriptRoot
-} catch { Throw ('❌️ ディレクトリ設定に失敗しました') }
-if ($script:scriptRoot.Contains(' ')) { Throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
+} catch { throw ('❌️ ディレクトリ設定に失敗しました') }
+if ($script:scriptRoot.Contains(' ')) { throw ('❌️ TVerRecはスペースを含むディレクトリに配置できません') }
 try {
 	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
 	. (Convert-Path (Join-Path $script:scriptRoot '../conf/system_setting.ps1'))
@@ -118,13 +195,13 @@ Write-Output ('作業ディレクトリを作成します')
 $updateTemp = Join-Path $scriptRoot '../tverrec-update-temp'
 if (Test-Path $updateTemp ) { Remove-Item -LiteralPath $updateTemp -Force -Recurse -ErrorAction SilentlyContinue }
 try { New-Item -ItemType Directory -Path $updateTemp | Out-Null }
-catch { Throw ('❌️ 作業ディレクトリの作成に失敗しました') }
+catch { throw ('❌️ 作業ディレクトリの作成に失敗しました') }
 
 # TVerRecの最新バージョン取得
 Write-Output ('')
 Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('TVerRecの最新版をダウンロードします')
-if (!(Get-Variable updateChannel -Scope Script -ErrorAction SilentlyContinue)) { $script:updateChannel = 'release' }
+if (!(Test-Path Variable:Script:updateChannel)) { $script:updateChannel = 'release' }
 try {
 	$zipURL = switch ($script:updateChannel) {
 		'dev' { 'https://github.com/dongaba/TVerRec/archive/refs/heads/dev.zip' ; break }
@@ -134,7 +211,7 @@ try {
 		default { (Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec).where{ ($_.prerelease -eq $false) }[0].zipball_url }
 	}
 	Invoke-WebRequest -Uri $zipURL -OutFile (Join-Path $updateTemp 'TVerRecLatest.zip') -TimeoutSec $script:timeoutSec
-} catch { Throw ('❌️ ダウンロードに失敗しました');	exit 1 }
+} catch { throw ('❌️ ダウンロードに失敗しました');	exit 1 }
 
 # 最新バージョンがダウンロードできていたら展開
 Write-Output ('')
@@ -142,8 +219,8 @@ Write-Output ('━━━━━━━━━━━━━━━━━━━━━�
 Write-Output ('ダウンロードしたTVerRecを解凍します')
 try {
 	if (Test-Path (Join-Path $updateTemp 'TVerRecLatest.zip') -PathType Leaf) { Expand-Zip -Path (Join-Path $updateTemp 'TVerRecLatest.zip') -Destination $updateTemp }
-	else { Throw ('❌️ ダウンロードしたファイルが見つかりません') }
-} catch { Throw ('❌️ ダウンロードしたファイルの解凍に失敗しました') }
+	else { throw ('❌️ ダウンロードしたファイルが見つかりません') }
+} catch { throw ('❌️ ダウンロードしたファイルの解凍に失敗しました') }
 
 # ディレクトリは上書きできないので独自関数で以下のディレクトリをループ
 Write-Output ('')
@@ -152,14 +229,14 @@ Write-Output ('ダウンロードしたTVerRecを配置します')
 try {
 	$newTVerRecDir = (Get-ChildItem -LiteralPath $updateTemp -Directory ).fullname
 	Get-ChildItem -LiteralPath $newTVerRecDir -Force | ForEach-Object { Move-Files -Source $_.FullName -Destination ('{0}{1}' -f (Join-Path $scriptRoot '../'), $_.Name ) }
-} catch { Throw ('❌️ ダウンロードしたTVerRecの配置に失敗しました') }
+} catch { throw ('❌️ ダウンロードしたTVerRecの配置に失敗しました') }
 
 # 作業ディレクトリを削除
 Write-Output ('')
 Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 Write-Output ('アップデートの作業ディレクトリを削除します')
 try { if (Test-Path $updateTemp ) { Remove-Item -LiteralPath $updateTemp -Force -Recurse } }
-catch { Throw ('❌️ 作業ディレクトリの削除に失敗しました') }
+catch { throw ('❌️ 作業ディレクトリの削除に失敗しました') }
 
 # 過去のバージョンで使用していたファイルを削除、または移行
 Write-Output ('')
