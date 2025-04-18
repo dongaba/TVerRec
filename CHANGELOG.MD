@@ -1,5 +1,15 @@
 # Change Log
 
+## [3.4.7](https://github.com/dongaba/TVerRec/releases/tag/v3.4.7)
+
+### 3.4.7 Added
+
+### 3.4.7 Changed
+
+### 3.4.7 Fixed
+
+- 放送局ごとのフォルダや番組ごとのフォルダを作成しない設定だとダウンロードに失敗する不具合を修正 #264
+
 ## [3.4.6](https://github.com/dongaba/TVerRec/releases/tag/v3.4.6)
 
 ### 3.4.6 Added
