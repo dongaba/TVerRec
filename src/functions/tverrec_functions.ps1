@@ -1835,7 +1835,8 @@ function Format-VideoFileInfo {
 	$videoFileDir = @()
 	if ($script:sortVideoByMedia) { $videoFileDir += Get-FileNameWoInvalidChar (Remove-SpecialCharacter ($videoInfo.mediaName).Trim(' ', '.')) }
 	if ($script:sortVideoBySeries) { $videoFileDir += Get-FileNameWoInvalidChar (Remove-SpecialCharacter ('{0} {1}' -f $videoInfo.seriesName, $videoInfo.seasonName ).Trim(' ', '.')) }
-	$videoFileDir = Join-Path $script:downloadBaseDir @videoFileDir		# 3コ以上行けるので配列のまま渡す
+	if ($videoFileDir) { $videoFileDir = Join-Path $script:downloadBaseDir @videoFileDir }		# 3コ以上行けるので配列のまま渡す
+	else { $videoFileDir = $script:downloadBaseDir }
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'fileDir' -Value $videoFileDir.Replace('\', '/')
 
 	$videoFilePath = Join-Path $videoFileDir $videoInfo.fileName
