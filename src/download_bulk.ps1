@@ -126,10 +126,6 @@ try {
 		Write-Output ($script:msg.MediumBoldBorder)
 		Write-Output ('{0}' -f $keyword)
 
-		# 空き容量少ないときは中断
-		if ((Get-RemainingCapacity $script:downloadWorkDir) -lt $script:minDownloadWorkDirCapacity ) { Write-Warning ($script:msg.NoEnoughCapacity -f $script:downloadWorkDir ) ; break }
-		if ((Get-RemainingCapacity $script:downloadBaseDir) -lt $script:minDownloadBaseDirCapacity ) { Write-Warning ($script:msg.NoEnoughCapacity -f $script:downloadBaseDir ) ; break }
-
 		# 進捗情報の更新
 		$secElapsed = (Get-Date) - $linkCollectionStartTime
 		if ($keywordNum -ne 0) {
