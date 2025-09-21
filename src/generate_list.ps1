@@ -150,7 +150,7 @@ try {
 		$allEpisodeIDs += $episodeIDs
 	}
 
-	$allEpisodeIDs = $allEpisodeIDs | Sort-Object -Unique
+	$allEpisodeIDs = @($allEpisodeIDs | Sort-Object -Unique)
 
 	#======================================================================
 	# 個々の番組の情報の取得
@@ -190,7 +190,7 @@ try {
 	# } else {
 	# 並列化が無効の場合は従来型処理
 	$listGenStartTime = Get-Date
-	$videoTotal = $allEpisodeIDs.Count
+	$videoTotal = $allEpisodeIDs.Count			# * #269
 	$videoNum = 0
 	foreach ($episodeID in $allEpisodeIDs) {
 		$videoNum++

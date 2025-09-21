@@ -147,20 +147,20 @@ else { $ffmpegPath = Join-Path $script:binDir 'ffmpeg' }
 switch ($true) {
 	$IsWindows {
 		# 残っているかもしれない中間ファイルを削除
-		Remove-Item -Path ('{0}/ffmpeg-*-gpl-*' -f $script:binDir) -Force -Recurse -ErrorAction SilentlyContinue | Out-Null
+		Remove-Item -Path ('{0}/ffmpeg-*-gpl*' -f $script:binDir) -Force -Recurse -ErrorAction SilentlyContinue | Out-Null
 		Remove-Item -LiteralPath (Join-Path $script:binDir 'ffmpeg.zip') -Force -ErrorAction SilentlyContinue | Out-Null
 		# ffmpegのバージョン取得
 		try {
 			if (Test-Path $ffmpegPath -PathType Leaf) {
 				$ffmpegFileVersion = (& $ffmpegPath -version)
-				if ($ffmpegFileVersion[0] -cmatch 'ffmpeg version (\w*)(\d+\.*\d*\.*\d*)') { $currentVersion = $matches[2] }
+				if ($ffmpegFileVersion[0] -cmatch 'ffmpeg version (\w*)-(\d+\.*\d*\.*\d*)') { $currentVersion = $matches[2] }
 			} else { $currentVersion = '' }
 		} catch { $currentVersion = '' }
 		# ffmpegの最新バージョン取得
 		$releases = 'https://github.com/yt-dlp/FFmpeg-Builds/wiki/Latest'
 		try {
 			$latestRelease = Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec
-			if ($latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)/ffmpeg-(\w*)(\d+\.*\d*\.*\d*)(.*)(-win64-gpl-)(.*).zip') { $latestVersion = $matches[7] }
+			if ($latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)/ffmpeg-(\w*)-(\d+\.*\d*\.*\d*)(.*)(-win64-gpl).zip') { $latestVersion = $matches[7] }
 		} catch { Write-Warning ($script:msg.ToolLatestNotIdentified -f 'ffmpeg') ; return }
 		if ($currentVersion -eq $latestVersion) {
 			Write-Output ('')
@@ -177,12 +177,12 @@ switch ($true) {
 		# アーキテクチャごとのURLパターン
 		$arch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture
 		$pattern = switch ($arch) {
-			'X64' { '-win64-gpl-' ; break }
-			'Arm64' { '-winarm64-gpl-' ; break }
-			'X86' { '-win32-gpl-' ; break }
-			Default { '-win32-gpl-' }
+			'X64' { '-win64-gpl' ; break }
+			'Arm64' { '-winarm64-gpl' ; break }
+			'X86' { '-win32-gpl' ; break }
+			Default { '-win32-gpl' }
 		}
-		if ($latestRelease -cmatch "https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(${pattern})(.*).zip") {
+		if ($latestRelease -cmatch "https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(${pattern}).zip") {
 			$downloadURL = $matches[0]
 			# ダウンロード
 			Write-Output ($script:msg.ToolDownload -f 'ffmpeg', $arch)
@@ -194,16 +194,16 @@ switch ($true) {
 			catch { Write-Warning ($script:msg.ToolExtractFailed -f 'ffmpeg') ; return }
 			# 配置
 			Write-Output ($script:msg.ToolDeploy -f 'ffmpeg')
-			try { Move-Item -Path ('{0}/ffmpeg-*-gpl-*/bin/ff*.exe' -f $script:binDir) -Destination $script:binDir -Force | Out-Null }
+			try { Move-Item -Path ('{0}/ffmpeg-*-gpl/bin/ff*.exe' -f $script:binDir) -Destination $script:binDir -Force | Out-Null }
 			catch { Write-Warning ($script:msg.ToolDeployFailed -f 'ffmpeg') ; return }
 			# ゴミ掃除
 			Write-Output $script:msg.ToolRemoveWorkingFiles
-			Remove-Item -Path ('{0}/ffmpeg-*-gpl-*' -f $script:binDir) -Force -Recurse -ErrorAction SilentlyContinue | Out-Null
+			Remove-Item -Path ('{0}/ffmpeg-*-gpl' -f $script:binDir) -Force -Recurse -ErrorAction SilentlyContinue | Out-Null
 			Remove-Item -LiteralPath (Join-Path $script:binDir 'ffmpeg.zip') -Force -ErrorAction SilentlyContinue | Out-Null
 			# バージョンチェック
 			try {
 				$ffmpegFileVersion = (& $ffmpegPath -version)
-				if ($ffmpegFileVersion[0] -cmatch 'ffmpeg version (\w*)(\d+\.*\d*\.*\d*)') { $currentVersion = $matches[2] }
+				if ($ffmpegFileVersion[0] -cmatch 'ffmpeg version (\w*)-(\d+\.*\d*\.*\d*)') { $currentVersion = $matches[2] }
 				Write-Output ($script:msg.ToolUpdated -f 'ffmpeg', $currentVersion)
 			} catch { Write-Warning $script:msg.ToolVersionCheckFailed ; return }
 		}
@@ -212,20 +212,20 @@ switch ($true) {
 
 	$IsLinux {
 		# 残っているかもしれない中間ファイルを削除
-		Remove-Item -Path ('{0}/ffmpeg-*-gpl-*' -f $script:binDir) -Force -Recurse -ErrorAction SilentlyContinue | Out-Null
+		Remove-Item -Path ('{0}/ffmpeg-*-gpl*' -f $script:binDir) -Force -Recurse -ErrorAction SilentlyContinue | Out-Null
 		Remove-Item -LiteralPath (Join-Path $script:binDir 'ffmpeg.tar.xz') -Force -ErrorAction SilentlyContinue | Out-Null
 		# ffmpegのバージョン取得
 		try {
 			if (Test-Path $ffmpegPath -PathType Leaf) {
 				$ffmpegFileVersion = (& $ffmpegPath -version)
-				if ($ffmpegFileVersion[0] -cmatch 'ffmpeg version (\w*)(\d+\.*\d*\.*\d*)') { $currentVersion = $matches[2] }
+				if ($ffmpegFileVersion[0] -cmatch 'ffmpeg version (\w*)-(\d+\.*\d*\.*\d*)') { $currentVersion = $matches[2] }
 			} else { $currentVersion = '' }
 		} catch { $currentVersion = '' }
 		# ffmpegの最新バージョン取得
 		$releases = 'https://github.com/yt-dlp/FFmpeg-Builds/wiki/Latest'
 		try {
 			$latestRelease = Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec
-			if ($latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)/ffmpeg-(\w*)(\d+\.*\d*\.*\d*)(.*)(-linux64-gpl-)(.*).tar.xz') { $latestVersion = $matches[7] }
+			if ($latestRelease -cmatch 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)/ffmpeg-(\w*)-(\d+\.*\d*\.*\d*)(.*)(-linux64-gpl).tar.xz') { $latestVersion = $matches[7] }
 		} catch { Write-Warning ($script:msg.ToolLatestNotIdentified -f 'ffmpeg') ; return }
 		if ($currentVersion -eq $latestVersion) {
 			Write-Output ('')
@@ -253,7 +253,7 @@ switch ($true) {
 			Write-Warning ($script:msg.ToolArchitectureNotIdentified2 -f $arch, 'ffmpeg')
 			return
 		}
-		if ($latestRelease -cmatch "https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-linux${cpu}-gpl-)(.*).tar.xz") {
+		if ($latestRelease -cmatch "https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-(.*)(-linux${cpu}-gpl).tar.xz") {
 			$downloadURL = $matches[0]
 			# ダウンロード
 			Write-Output ($script:msg.ToolDownload -f 'ffmpeg', $arch )
@@ -265,11 +265,11 @@ switch ($true) {
 			catch { Write-Warning ($script:msg.ToolExtractFailed -f 'ffmpeg') ; return }
 			# 配置
 			Write-Output ($script:msg.ToolDeploy -f 'ffmpeg')
-			try { Move-Item -Path ('{0}/ffmpeg-*-gpl-*/bin/ff*' -f $script:binDir) -Destination $script:binDir -Force | Out-Null }
+			try { Move-Item -Path ('{0}/ffmpeg-*-gpl/bin/ff*' -f $script:binDir) -Destination $script:binDir -Force | Out-Null }
 			catch { Write-Warning ($script:msg.ToolDeployFailed -f 'ffmpeg') ; return }
 			# ゴミ掃除
 			Write-Output $script:msg.ToolRemoveWorkingFiles
-			Remove-Item -Path ('{0}/ffmpeg-*-gpl-*' -f $script:binDir) -Force -Recurse -ErrorAction SilentlyContinue | Out-Null
+			Remove-Item -Path ('{0}/ffmpeg-*-gpl' -f $script:binDir) -Force -Recurse -ErrorAction SilentlyContinue | Out-Null
 			Remove-Item -LiteralPath (Join-Path $script:binDir 'ffmpeg.tar.xz') -Force -ErrorAction SilentlyContinue | Out-Null
 			# 実行権限の付与
 			& chmod a+x $ffmpegPath
@@ -277,7 +277,7 @@ switch ($true) {
 			# バージョンチェック
 			try {
 				$ffmpegFileVersion = (& $ffmpegPath -version)
-				if ($ffmpegFileVersion[0] -cmatch 'ffmpeg version (\w*)(\d+\.*\d*\.*\d*)') { $currentVersion = $matches[2] }
+				if ($ffmpegFileVersion[0] -cmatch 'ffmpeg version (\w*)-(\d+\.*\d*\.*\d*)') { $currentVersion = $matches[2] }
 				Write-Output ($script:msg.ToolUpdated -f 'ffmpeg', $currentVersion)
 			} catch { Write-Warning $script:msg.ToolVersionCheckFailed ; return }
 		}
