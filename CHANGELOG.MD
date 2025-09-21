@@ -1,5 +1,16 @@
 # Change Log
 
+## [3.4.8](https://github.com/dongaba/TVerRec/releases/tag/v3.4.8)
+
+### 3.4.8 Added
+
+### 3.4.8 Changed
+
+### 3.4.8 Fixed
+
+- Ffmpegのメジャーバージョンアップに対応 #287
+- リスト作成時に対象番組が1検事にエラーとなる問題を修正 #269
+
 ## [3.4.7](https://github.com/dongaba/TVerRec/releases/tag/v3.4.7)
 
 ### 3.4.7 Added
