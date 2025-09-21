@@ -1081,7 +1081,7 @@ function Invoke-HistoryAndListMatchCheck {
 	foreach ($listFileLine in $listFileData) { $listVideoID.Add(@($listFileLine.EpisodeID.Replace('#', ''))) }
 	# ダウンロード履歴ファイルのデータを読み込み
 	$histFileData = @(Get-LatestHistory)
-	$histVideoID = if ($histFileData.Count -eq 0) { @() } else { $histFileData.VideoPage.Replace('https://tver.jp/episodes/', '') }
+	$histVideoID = if ($histFileData.Count -eq 0) { @() } else { @($histFileData.VideoPage.Replace('https://tver.jp/episodes/', '')) }
 	# ダウンロードリストとダウンロード履歴をマージ
 	if ($histVideoID) { $listVideoID.AddRange($histVideoID) }
 	# URLがすでにダウンロード履歴に存在する場合は検索結果から除外
