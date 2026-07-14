@@ -91,12 +91,20 @@ Write-Debug "Message Table Loaded: $script:uiCulture"
 # 設定ファイル読み込み
 if ( Test-Path (Join-Path $script:confDir 'system_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'system_setting.ps1')) }
-	catch { throw ($script:msg.LoadSystemSettingFailed) }
+	catch {
+		Write-Error $_
+		Write-Error $_.ScriptStackTrace
+		throw ($script:msg.LoadSystemSettingFailed)
+	}
 } else { throw ($script:msg.SystemSettingNotFound) }
 
 if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
-	catch { throw ($script:msg.LoadUserSettingFailed) }
+	catch {
+		Write-Error $_
+		Write-Error $_.ScriptStackTrace
+		throw ($script:msg.LoadUserSettingFailed)
+	}
 } elseif ($IsWindows) {
 	Write-Output ($script:msg.UserSettingNeedsToBeCreated)
 	try { & 'gui/gui_setting.ps1' }
