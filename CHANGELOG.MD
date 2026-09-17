@@ -5,9 +5,11 @@
 ### 3.4.9 Added
 
 - TVerの番組URLからエピソードIDを抽出する`Get-EpisodeIDFromURL`を追加
+- TVerのtagを収集してキーワードサンプルファイルとの漏れを確認するスクリプト`test/tools/check_tags.ps1`を追加
 
 ### 3.4.9 Changed
 
+- キーワードサンプルファイルに不足していたジャンル(13件)、放送局(23件)、ランキング(6件)を追加し、重複していたtagを整理
 - Dockerのベースイメージをサポート終了済みのubuntu:25.04からubuntu:24.04(LTS)に変更(あわせて`libicu76`を`libicu74`に変更) #293
 - `tver_functions.Test.ps1`を現行の関数構成に合わせて全面的に書き直し(モックテストと実接続テストを分離)
 - `common_functions.Test.ps1`、`initialize.Test.ps1`、`tverrec_functions.Test.ps1`を現行の仕様に合わせて修正
