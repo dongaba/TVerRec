@@ -107,7 +107,8 @@ try {
 	# ビデオリンクの収集
 	#======================================================================
 	$totalStartTime = Get-Date
-	$allEpisodeIDs = @()
+	$uniqueEpisodeIDs = [System.Collections.Generic.HashSet[string]]::new()
+	$videoKeywordMap = @{}
 
 	foreach ($keyword in $keywords) {
 		$keywordNum++
@@ -147,10 +148,9 @@ try {
 		if ($videoCount -eq 0) { Write-Output ($script:msg.VideoCountWhenZero -f $videoCount, $processedCount) }
 		else { Write-Output ($script:msg.VideoCountNonZero -f $videoCount, $processedCount) }
 
-		$allEpisodeIDs += $episodeIDs
+		# エピソードごとに抽出元キーワードを対応付け(重複は最初のキーワードを保持)
+		foreach ($link in $episodeIDs) { if ($uniqueEpisodeIDs.Add($link)) { $videoKeywordMap[$link] = $keyword } }
 	}
-
-	$allEpisodeIDs = @($allEpisodeIDs | Sort-Object -Unique)
 
 	#======================================================================
 	# 個々の番組の情報の取得
@@ -190,9 +190,9 @@ try {
 	# } else {
 	# 並列化が無効の場合は従来型処理
 	$listGenStartTime = Get-Date
-	$videoTotal = $allEpisodeIDs.Count			# * #269
+	$videoTotal = $uniqueEpisodeIDs.Count			# * #269
 	$videoNum = 0
-	foreach ($episodeID in $allEpisodeIDs) {
+	foreach ($episodeID in $uniqueEpisodeIDs) {
 		$videoNum++
 
 		# 進捗率の計算
@@ -214,6 +214,7 @@ try {
 
 		Write-Output ('　{0}/{1} - {2}' -f $videoNum, $videoTotal, $episodeID)
 		# TVer番組ダウンロードのメイン処理
+		$keyword = $videoKeywordMap[$episodeID]
 		Update-VideoList -Keyword $keyword -EpisodeID $episodeID
 	}
 	# }

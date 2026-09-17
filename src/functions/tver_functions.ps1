@@ -150,6 +150,7 @@ function Get-VideoLinksFromKeyword {
 		talentLinks      = New-Object System.Collections.Generic.List[String]
 		specialMainLinks = New-Object System.Collections.Generic.List[String]
 		specialLinks     = New-Object System.Collections.Generic.List[String]
+		categoryLinks    = New-Object System.Collections.Generic.List[String]
 	}
 	if ($keyword.IndexOf('/') -gt 0) {
 		$key = $keyword.split(' ')[0].split("`t")[0].Split('/')[0]
@@ -290,6 +291,7 @@ function Get-LinkFromKeyword {
 	)
 	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $id)
 	$type = ''
+	$keyword = ''
 	# ベースURLをタイプに応じて設定
 	$baseURL = switch ($linkType) {
 		'seriesLinks' { ('https://platform-api.tver.jp/service/api/v1/callSeriesSeasons/{0}' -f $id) ; break }
@@ -773,7 +775,7 @@ function Get-VideoInfo {
 	# シリーズ名がシーズン名を含む場合はシーズン名をクリア
 	if ($videoSeries -cmatch [RegEx]::Escape($videoSeason)) { $videoSeason = '' }
 	# エピソード番号を極力修正
-	if ((($videoEpisodeNum -eq 1) -or ($videoEpisodeNum % 10 -eq 0)) -and ($episodeName -imatch '([#|第|Episode|ep|Take|Vol|Part|Chapter|Flight|Karte|Case|Stage|Mystery|Ope|Story|Sign|Trap|Letter|Act]+\.?\s?)(\d+)(.*)')) { $videoEpisodeNum = $matches[2] }
+	if (($videoEpisodeNum -match '^\d+$') -and (([Int]$videoEpisodeNum -eq 1) -or ([Int]$videoEpisodeNum % 10 -eq 0)) -and ($episodeName -imatch '((?:#|第|Episode|ep|Take|Vol|Part|Chapter|Flight|Karte|Case|Stage|Mystery|Ope|Story|Sign|Trap|Letter|Act)+\.?\s?)(\d+)(.*)')) { $videoEpisodeNum = $matches[2] }
 	# エピソード番号が1桁の際は頭0埋めして2桁に
 	$videoEpisodeNum = $videoEpisodeNum.PadLeft(2, '0')
 	# 放送日を整形
@@ -850,7 +852,8 @@ function Get-JpIP {
 		[Array]::Reverse($startIPArray) ; $startIPInt = [BitConverter]::ToUInt32($startIPArray, 0)
 		$endIPArray = [System.Net.IPAddress]::Parse($randomCIDR[0].end).GetAddressBytes()
 		[Array]::Reverse($endIPArray) ; $endIPInt = [BitConverter]::ToUInt32($endIPArray, 0)
-		$randomIPInt = $startIPInt + [UInt32](Get-Random -Maximum ($endIPInt - $startIPInt - 1)) + 1	# CIDR範囲の先頭と末尾を除く
+		# CIDR範囲の先頭と末尾を除く。範囲が極小(/31,/32)だとGet-Randomが例外になるため先頭IPを使う
+		$randomIPInt = if (($endIPInt - $startIPInt) -le 1) { $startIPInt } else { $startIPInt + [UInt32](Get-Random -Maximum ($endIPInt - $startIPInt - 1)) + 1 }
 		$randomIPArray = [System.BitConverter]::GetBytes($randomIPInt)
 		[Array]::Reverse($randomIPArray) ; $jpIP = [System.Net.IPAddress]::new($randomIPArray).ToString()
 		try { $check = Invoke-RestMethod -Uri ('http://ip-api.com/json/{0}?fields=16785410' -f $jpIP) -TimeoutSec $script:timeoutSec }
