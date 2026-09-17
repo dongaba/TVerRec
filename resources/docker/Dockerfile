@@ -1,4 +1,4 @@
-FROM ubuntu:25.04
+FROM ubuntu:24.04
 
 ENV POWERSHELL_TELEMETRY_OPTOUT=1
 
@@ -21,12 +21,12 @@ RUN	apt-get update \
 	jq \
 	libssl-dev \
 	libunwind8 \
+	libicu74 \
 	vim \
 	htop \
 	sudo \
 	tzdata \
 	net-tools \
-	libicu76 \
 	python3-pycryptodome \
 	&& apt-get upgrade -y \
 	&& apt-get autoremove -y \

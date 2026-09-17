@@ -1400,7 +1400,7 @@ function Get-YtdlProcessCount {
 	}
 	try {
 		switch ($true) {
-			$IsWindows { return [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name $processName).Count / 2, [MidpointRounding]::AwayFromZero ); break }
+			$IsWindows { return [Int][Math]::Round(@(Get-Process -ErrorAction Ignore -Name $processName).Count / 2, [MidpointRounding]::AwayFromZero ); break }	# * @()で囲まないとプロセスが0/1個のときStrictModeで例外になり常に0が返る
 			$IsLinux { return @(Get-Process -ErrorAction Ignore -Name $processName).Count ; break }
 			$IsMacOS { $psCmd = 'ps' ; return (& sh -c $psCmd | grep $processName | grep -v grep | grep -c ^).Trim() ; break }
 			default { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
@@ -1437,7 +1437,7 @@ function Get-FfmpegProcessCount {
 	$processName = 'ffmpeg'
 	try {
 		switch ($true) {
-			$IsWindows { return [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name $processName).Count, [MidpointRounding]::AwayFromZero ); break }
+			$IsWindows { return @(Get-Process -ErrorAction Ignore -Name $processName).Count ; break }	# * @()で囲まないとプロセスが0/1個のときStrictModeで例外になる
 			$IsLinux { return @(Get-Process -ErrorAction Ignore -Name $processName).Count ; break }
 			$IsMacOS { $psCmd = 'ps' ; return (& sh -c $psCmd | grep $processName | grep -v grep | grep -c ^).Trim() ; break }
 			default { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }

@@ -1,5 +1,26 @@
 # Change Log
 
+## [3.4.9](https://github.com/dongaba/TVerRec/releases/tag/v3.4.9)
+
+### 3.4.9 Added
+
+- TVerの番組URLからエピソードIDを抽出する`Get-EpisodeIDFromURL`を追加
+
+### 3.4.9 Changed
+
+- Dockerのベースイメージをサポート終了済みのubuntu:25.04からubuntu:24.04(LTS)に変更(あわせて`libicu76`を`libicu74`に変更) #293
+- `tver_functions.Test.ps1`を現行の関数構成に合わせて全面的に書き直し(モックテストと実接続テストを分離)
+
+### 3.4.9 Fixed
+
+- TVerの仕様変更により、トップページ(`toppage`)からの番組取得が例外で停止する問題を修正(`v1/callHome`→`v2/callHome`)
+- トップページで`live`の後ろにあるコンテンツを取りこぼす問題を修正
+- 個別ダウンロードやキーワードファイルで`?p=0`などのクエリ文字列付きURLを指定すると400 (Bad Request)になる問題を修正 #301
+- カテゴリページの検索結果が取得できない問題を修正
+- サイトマップの特集ページを誤ったAPIで検索し404の警告が大量に出る問題を修正
+- ip-api.comに接続できない環境で起動時に無限ループする問題を修正 #277
+- Windows環境でyoutube-dl/ffmpegのプロセスが1個以下のときにプロセス数が常に0と判定され、並列数制御やダウンロード完了待ちが機能しないことがある問題を修正
+
 ## [3.4.8](https://github.com/dongaba/TVerRec/releases/tag/v3.4.8)
 
 ### 3.4.8 Added
