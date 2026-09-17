@@ -215,12 +215,15 @@ try {
 
 			# URLの種類に応じた処理
 			switch -Regex ($videoLink) {
-				'^https://tver.jp/(/?.*)' {
+				'^https?://(?:www\.)?tver\.jp/' {
 					# TVer番組のダウンロード
 					Write-Output ('')
 					Write-Output ($script:msg.MediumBoldBorder)
 					Write-Output ('{0}: {1}' -f $script:msg.SingleDownloadTVerURL, $videoLink)
-					Invoke-VideoDownload -Keyword $keyword -episodeID $videoLink.Replace('https://tver.jp/episodes/', '') -Force $script:forceSingleDownload
+					# * 共有URLに付与される「?p=0」「?play=feature」などのクエリ文字列を除いてエピソードIDを抽出 (#301)
+					$episodeID = Get-EpisodeIDFromURL -url $videoLink
+					if ($episodeID) { Invoke-VideoDownload -Keyword $keyword -episodeID $episodeID -Force $script:forceSingleDownload }
+					else { Write-Warning ('{0}: {1}' -f $script:msg.SingleDownloadNotURL, $videoLink) }
 					break
 				}
 				'^.*://' {
@@ -255,7 +258,7 @@ try {
 	throw
 } finally {
 	# 変数のクリーンアップ
-	Remove-Variable -Name args, keyword, videoPageURL -ErrorAction SilentlyContinue
+	Remove-Variable -Name args, keyword, videoPageURL, episodeID -ErrorAction SilentlyContinue
 	Invoke-GarbageCollection
 
 	# 完了メッセージ

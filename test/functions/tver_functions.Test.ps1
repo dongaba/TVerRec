@@ -1,709 +1,292 @@
 Import-Module Pester -MinimumVersion 5.0
 
-# region BeforeAll
+#----------------------------------------------------------------------
+# tver_functions.ps1 のテスト
+#
+#   Invoke-Pester ./test/functions/tver_functions.Test.ps1 -Output Detailed               # すべて
+#   Invoke-Pester ./test/functions/tver_functions.Test.ps1 -Output Detailed -ExcludeTag 'TVer'   # モックのみ(オフライン)
+#   Invoke-Pester ./test/functions/tver_functions.Test.ps1 -Output Detailed -Tag 'TVer'   # TVerへの実接続のみ
+#
+#   ※ TVerタグのテストは日本国内(またはVPN/Proxy経由)からの実行を前提とします
+#----------------------------------------------------------------------
 
-#----------------------------------------------------------------------
-# テスト対象ファイルの読み込み
-#----------------------------------------------------------------------
+# region BeforeAll
 BeforeAll {
 	Write-Host ('テストスクリプト: {0}' -f $PSCommandPath)
-	$targetFile = $PSCommandPath.Replace('test', 'src').Replace('.Test.ps1', '.ps1')
+	# * パスに「test」「src」「tver」を含むディレクトリ配下でも正しく解決できるよう、リポジトリルートから組み立てる
+	$script:repoRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+	$targetFile = Join-Path $script:repoRoot ('src/functions/{0}' -f (Split-Path $PSCommandPath -Leaf).Replace('.Test.ps1', '.ps1'))
 	Write-Host ('　テスト対象: {0}' -f $targetFile)
-	$script:scriptRoot = Convert-Path ./src
+	$script:scriptRoot = Convert-Path (Join-Path $script:repoRoot 'src')
 	Set-Location $script:scriptRoot
 	$script:disableToastNotification = $false
-	. ($targetFile).Replace('tver', 'common')
+	# メッセージテーブル(警告メッセージの書式に必要)
+	$script:msg = (Get-Content -Path (Join-Path $script:scriptRoot '../resources/lang/messages.json') -Raw | ConvertFrom-Json).'ja-JP'
+	. (Join-Path $script:repoRoot 'src/functions/common_functions.ps1')
 	function Invoke-StatisticsCheck {}
 	. $targetFile
 	Write-Host ('　テスト対象の読み込みを行いました')
 
-	$script:seriesID = 'sre2549ef6'	# カンブリア宮殿
-	$script:seasonID = 's0000038'	# カンブリア宮殿
-	$script:talentID = 't021fb6'	# 村上龍
-	$script:specialMainID = 'zone4'	# 北海道・東北
-	$script:specialDetailID = 'hokkaido-tohoku'	# 北海道・東北
-	$script:tagID = 'golf'	# ゴルフ
-	$script:genre = 'drama'	# ドラマ
-	$script:keyword = 'カンブリア'
+	# 関数が参照するスクリプト変数(StrictMode下で未定義参照にならないように初期化)
+	$script:timeoutSec = 30
+	$script:jpIP = '133.242.0.10'
+	$script:proxyUrl = $null
+	$script:myMemberSID = $null
+	$script:myPlatformUID = $null
+	$script:myPlatformToken = $null
+	$script:platformUID = 'test-uid'
+	$script:platformToken = 'test-token'
+	$script:sitemapParseEpisodeOnly = $true
+	$script:removeSpecialNote = $false
 	$script:commonHttpHeader = @{
 		'x-tver-platform-type' = 'web'
 		'Origin'               = 'https://tver.jp'
-		'Referer'              = 'https://tver.jp'
+		'Referer'              = 'https://tver.jp/'
+		'X-Forwarded-For'      = $script:jpIP
 	}
-	function MockProcessSearchResults {
-		Param ($baseURL, $type, $keyword)
-		return [PSCustomObject]@{
-			episodeLinks = @('https://tver.jp/episodes/dummy2', 'https://tver.jp/episodes/dummy1', 'https://tver.jp/episodes/dummy2')  | Sort-Object -Unique
-			seasonLinks  = @('seasonDummy2', 'seasonDummy1', 'seasonDummy2')  | Sort-Object -Unique
-			seriesLinks  = @('seriesDummy2', 'seriesDummy1', 'seriesDummy2')  | Sort-Object -Unique
-			specialLinks = @('specialDummy2', 'specialDummy1', 'specialDummy2')  | Sort-Object -Unique
+
+	# テスト用のリンクコレクションを生成
+	function New-TestLinkCollection {
+		[PSCustomObject]@{
+			episodeLinks     = @{}
+			seriesLinks      = New-Object System.Collections.Generic.List[String]
+			seasonLinks      = New-Object System.Collections.Generic.List[String]
+			talentLinks      = New-Object System.Collections.Generic.List[String]
+			specialMainLinks = New-Object System.Collections.Generic.List[String]
+			specialLinks     = New-Object System.Collections.Generic.List[String]
+			categoryLinks    = New-Object System.Collections.Generic.List[String]
 		}
 	}
+	# APIレスポンスのコンテンツ要素を生成
+	function New-Item ([String]$type, [String]$id, [Int64]$endAt = 0) {
+		[PSCustomObject]@{ type = $type ; content = [PSCustomObject]@{ id = $id ; endAt = $endAt } }
+	}
 }
-
 # endregion BeforeAll
 
 #----------------------------------------------------------------------
 # TVerのAPI Tokenを取得
 #----------------------------------------------------------------------
-Describe 'TVerのAPI Tokenを取得' {
-	BeforeAll {
-		$script:timeoutSec = 30
-		$script:platformUID = $null
-		$script:platformToken = $null
-	}
-
+Describe 'Get-Token' {
 	Context 'モックチェック' {
-		BeforeAll {
-			Mock Invoke-RestMethod {
-				return @{
-					Result = @{
-						platform_uid   = 'mocked-uid'
-						platform_token = 'mocked-token'
-					}
-				}
-			}
+		BeforeEach {
+			Mock Invoke-RestMethod { [PSCustomObject]@{ Result = [PSCustomObject]@{ platform_uid = 'mocked-uid' ; platform_token = 'mocked-token' } } }
+		}
+		AfterAll {
+			$script:platformUID = 'test-uid'
+			$script:platformToken = 'test-token'
 		}
 
-		It 'トークンを正しく変数にセットされること' {
+		It 'トークンが変数にセットされること' {
 			Get-Token
 			$script:platformUID | Should -BeExactly 'mocked-uid'
 			$script:platformToken | Should -BeExactly 'mocked-token'
 		}
 		It '呼び出しの引数が正しいこと' {
 			Get-Token
-			Assert-MockCalled Invoke-RestMethod -Times 1 -ParameterFilter {
+			Should -Invoke Invoke-RestMethod -Times 1 -Exactly -ParameterFilter {
 				$Uri -eq 'https://platform-api.tver.jp/v2/api/platform_users/browser/create' -and
 				$Method -eq 'POST' -and
-				$Headers['Content-Type'] -eq 'application/x-www-form-urlencoded' -and
-				$Body -eq 'device_type=pc' -and
-				$TimeoutSec -eq $script:timeoutSec
+				$Body -eq 'device_type=pc'
 			}
 		}
-		It 'HTTPエラーの際にエラーを投げるされること' {
-			Mock Invoke-RestMethod { throw }
+		It 'HTTPエラーの際に例外を投げること' {
+			Mock Invoke-RestMethod { throw 'error' }
 			{ Get-Token } | Should -Throw
 		}
 	}
+}
 
-	Context 'TVerとの接続確認' -Tag 'TVer' {
-		It 'エラーなく返却されること' {
-			{ Get-Token } | Should -Not -Throw
-		}
-		It 'トークンの型がStringであること' {
-			Get-Token
-			$script:platformUID | Should -BeOfType string
-			$script:platformToken | Should -BeOfType string
-		}
-		It 'トークンの長さが想定どおりであること' {
-			Get-Token
-			$script:platformUID.Length | Should -Be 36
-			$script:platformToken.Length | Should -Be 40
-		}
+#----------------------------------------------------------------------
+# URLからエピソードIDを抽出 (#301 のリグレッション)
+#----------------------------------------------------------------------
+Describe 'Get-EpisodeIDFromURL' {
+	It '<url> から <expected> を抽出すること' -ForEach @(
+		@{ url = 'https://tver.jp/episodes/epuaqm8ooq' ; expected = 'epuaqm8ooq' }
+		@{ url = 'https://tver.jp/episodes/epuaqm8ooq?p=0' ; expected = 'epuaqm8ooq' }
+		@{ url = 'https://tver.jp/episodes/epuaqm8ooq?play=feature&p=0' ; expected = 'epuaqm8ooq' }
+		@{ url = 'https://tver.jp/episodes/epuaqm8ooq/' ; expected = 'epuaqm8ooq' }
+		@{ url = 'https://tver.jp/episodes/epuaqm8ooq#top' ; expected = 'epuaqm8ooq' }
+		@{ url = 'https://tver.jp/lp/episodes/epuaqm8ooq' ; expected = 'epuaqm8ooq' }
+		@{ url = 'https://tver.jp/lp/episodes/epuaqm8ooq?p=0' ; expected = 'epuaqm8ooq' }
+		@{ url = 'https://www.tver.jp/episodes/epuaqm8ooq' ; expected = 'epuaqm8ooq' }
+	) {
+		Get-EpisodeIDFromURL -url $url | Should -BeExactly $expected
+	}
+	It 'エピソード以外のURLでは空文字を返すこと: <url>' -ForEach @(
+		@{ url = 'https://tver.jp/series/sre2549ef6' }
+		@{ url = 'https://tver.jp/lp/f0033031' }
+		@{ url = 'https://tver.jp/episodes/' }
+		@{ url = 'https://example.com/episodes/epuaqm8ooq' }
+		@{ url = '' }
+	) {
+		Get-EpisodeIDFromURL -url $url | Should -BeExactly ''
 	}
 }
 
 #----------------------------------------------------------------------
 # キーワードから番組のリンクへの変換
 #----------------------------------------------------------------------
-
-
-#----------------------------------------------------------------------
-# 各種IDによる番組検索から番組ページのLinkを取得
-#----------------------------------------------------------------------
-
-#----------------------------------------------------------------------
-# SeriesIDによる番組検索から番組ページのLinkを取得
-#----------------------------------------------------------------------
-Describe 'SeriesIDによる番組検索から番組ページのLinkを取得' {
+Describe 'Get-VideoLinksFromKeyword' {
 	Context 'モックチェック' {
-		BeforeAll {
-			$mockParams = @{
-				CommandName = 'ProcessSearchResults'
-				MockWith    = { MockProcessSearchResults -baseURL $args[0] }
-			}
-			Mock @mockParams
+		BeforeEach {
+			Mock Get-LinkFromKeyword {}
+			Mock Get-LinkFromTopPage {}
+			Mock Get-LinkFromSiteMap {}
+			Mock Get-LinkFromMyPage {}
 		}
 
-		It 'SeriesIDが入力されエラーとならないこと' {
-			{ Get-LinkFromSeriesID -seriesID '12345' } | Should -Not -Throw
+		It 'episodes指定でエピソードIDをそのまま返すこと' {
+			Get-VideoLinksFromKeyword -keyword 'episodes/epuaqm8ooq' | Should -BeExactly 'epuaqm8ooq'
 		}
-		It 'nullが入力された際にエラーとなること' {
-			{ Get-LinkFromSeriesID -seriesID $null } | Should -Throw
+		It 'episodes指定でクエリ文字列やコメントを除去すること' {
+			Get-VideoLinksFromKeyword -keyword "episodes/epuaqm8ooq?p=0`t#コメント" | Should -BeExactly 'epuaqm8ooq'
 		}
-		It '呼び出しの引数が正しいこと' {
-			$testSeriesID = '12345'
-			$expectedBaseURL = "https://platform-api.tver.jp/service/api/v1/callSeriesSeasons/$testSeriesID"
-			Get-LinkFromSeriesID -seriesID '12345'
-			Assert-MockCalled ProcessSearchResults -Times 1 -ParameterFilter { $baseURL -eq $expectedBaseURL }
+		It 'lp/episodes指定でもエピソードIDを返すこと' {
+			Get-VideoLinksFromKeyword -keyword 'lp/episodes/epuaqm8ooq?p=0' | Should -BeExactly 'epuaqm8ooq'
+			Should -Invoke Get-LinkFromKeyword -Times 0 -Exactly
 		}
-		It 'PSCustomObject型を返すこと' {
-			$result = Get-LinkFromSeriesID -seriesID '12345'
-			$result | Should -BeOfType [PSCustomObject]
-			$result.Count | Should -Be 1
-			$result.seasonLinks.Count | Should -Be 2
-			$result.seasonLinks[0] | Should -BeOfType string
+		It 'lp/series指定でもseriesLinksとして処理されること' {
+			Get-VideoLinksFromKeyword -keyword 'lp/series/sre2549ef6' | Out-Null
+			Should -Invoke Get-LinkFromKeyword -Times 1 -Exactly -ParameterFilter { $id -eq 'sre2549ef6' -and $linkType -eq 'seriesLinks' }
 		}
-		It '重複削除して返却されること' {
-			$result = Get-LinkFromSeriesID -seriesID '12345'
-			$result.seasonLinks | Should -Contain 'seasonDummy1'
-			$result.seasonLinks | Should -Contain 'seasonDummy2'
+		It 'series指定でseriesLinksとしてAPI呼び出しされること' {
+			Get-VideoLinksFromKeyword -keyword 'series/sre2549ef6?p=0' | Out-Null
+			Should -Invoke Get-LinkFromKeyword -Times 1 -Exactly -ParameterFilter { $id -eq 'sre2549ef6' -and $linkType -eq 'seriesLinks' }
 		}
-	}
-
-	Context 'TVerとの接続確認' -Tag 'TVer' {
-		BeforeAll {
-			$script:timeoutSec = 30
-			Get-Token
+		It '<keyword> が <linkType> として処理されること' -ForEach @(
+			@{ keyword = 'tag/golf' ; id = 'golf' ; linkType = 'tag' }
+			@{ keyword = 'new/all' ; id = 'all' ; linkType = 'new' }
+			@{ keyword = 'end/drama' ; id = 'drama' ; linkType = 'end' }
+			@{ keyword = 'ranking/all' ; id = 'all' ; linkType = 'ranking' }
+		) {
+			$expectedId = $id ; $expectedLinkType = $linkType
+			Get-VideoLinksFromKeyword -keyword $keyword | Out-Null
+			Should -Invoke Get-LinkFromKeyword -Times 1 -Exactly -ParameterFilter { $id -eq $expectedId -and $linkType -eq $expectedLinkType }
 		}
-
-		It 'エラーなく返却されること' {
-			{ Get-LinkFromSeriesID -seriesID $seriesID } | Should -Not -Throw
+		It 'フリーワードはkeywordとして処理されること' {
+			Get-VideoLinksFromKeyword -keyword 'カンブリア' | Out-Null
+			Should -Invoke Get-LinkFromKeyword -Times 1 -Exactly -ParameterFilter { $id -eq 'カンブリア' -and $linkType -eq 'keyword' }
 		}
-		It 'PSCustomObject型で返却されること' {
-			$result = Get-LinkFromSeriesID -seriesID $seriesID
-			$result | Should -BeOfType PSCustomObject
+		It 'toppage/sitemapがそれぞれの関数に振り分けられること' {
+			Get-VideoLinksFromKeyword -keyword 'toppage' | Out-Null
+			Get-VideoLinksFromKeyword -keyword 'sitemap' | Out-Null
+			Should -Invoke Get-LinkFromTopPage -Times 1 -Exactly
+			Should -Invoke Get-LinkFromSiteMap -Times 1 -Exactly
 		}
-		It 'シーズンが返却されること' {
-			$result = Get-LinkFromSeriesID -seriesID $seriesID
-			@($result.seasonLinks).Count | Should -BeGreaterOrEqual 1
-			@($result.seasonLinks)[0].Substring(0, 1) | Should -Be 's'
+		It '結果が0件の場合は何も返さないこと' {
+			Get-VideoLinksFromKeyword -keyword 'tag/golf' | Should -BeNullOrEmpty
 		}
 	}
 }
 
 #----------------------------------------------------------------------
-# SeasonIDによる番組検索から番組ページのLinkを取得
+# IDまたはキーワードによる番組検索
 #----------------------------------------------------------------------
-Describe 'SeasonIDによる番組検索から番組ページのLinkを取得' {
+Describe 'Get-LinkFromKeyword' {
 	Context 'モックチェック' {
-		BeforeAll {
-			$mockParams = @{
-				CommandName = 'ProcessSearchResults'
-				MockWith    = { MockProcessSearchResults -baseURL $args[0] }
-			}
-			Mock @mockParams
-		}
+		BeforeEach { Mock Get-SearchResult {} }
 
-		It 'SeasonIDが入力されエラーとならないこと' {
-			{ Get-LinkFromSeasonID -seasonID '12345' } | Should -Not -Throw
-		}
-		It 'nullが入力された際にエラーとなること' {
-			{ Get-LinkFromSeasonID -seasonID $null } | Should -Throw
-		}
-		It '呼び出しの引数が正しいこと' {
-			$testSeasonID = '12345'
-			$expectedBaseURL = "https://platform-api.tver.jp/service/api/v1/callSeasonEpisodes/$testSeasonID"
-			Get-LinkFromSeasonID -seasonID '12345'
-			Assert-MockCalled ProcessSearchResults -Times 1 -ParameterFilter { $baseURL -eq $expectedBaseURL }
-		}
-		It 'PSCustomObject型を返すこと' {
-			$result = Get-LinkFromSeasonID -seasonID '12345'
-			$result | Should -BeOfType [PSCustomObject]
-			$result.Count | Should -Be 1
-			@($result.episodeLinks).Count | Should -Be 2
-			$result.episodeLinks[0] | Should -BeOfType string
-		}
-		It '重複削除して返却されること' {
-			$result = Get-LinkFromSeasonID -seasonID '12345'
-			$result.episodeLinks | Should -Contain 'https://tver.jp/episodes/dummy1'
-			$result.episodeLinks | Should -Contain 'https://tver.jp/episodes/dummy2'
-		}
-	}
-
-	Context 'TVerとの接続確認' -Tag 'TVer' {
-		BeforeAll {
-			$script:timeoutSec = 30
-			Get-Token
-		}
-
-		It 'エラーなく返却されること' {
-			{ Get-LinkFromSeasonID -seasonID $seasonID } | Should -Not -Throw
-		}
-		It 'PSCustomObject型で返却されること' {
-			$result = Get-LinkFromSeasonID -seasonID $seasonID
-			$result | Should -BeOfType PSCustomObject
-		}
-		It 'エピソードが返却されること' {
-			$result = Get-LinkFromSeasonID -seasonID $seasonID
-			@($result.episodeLinks).Count | Should -BeGreaterOrEqual 1
-			@($result.episodeLinks)[0].Substring(0, 27) | Should -Be 'https://tver.jp/episodes/ep'
+		It '<linkType> で正しいURLとTypeが渡されること' -ForEach @(
+			@{ linkType = 'seriesLinks' ; id = 'sr1' ; url = 'https://platform-api.tver.jp/service/api/v1/callSeriesSeasons/sr1' ; type = '' }
+			@{ linkType = 'seasonLinks' ; id = 's1' ; url = 'https://platform-api.tver.jp/service/api/v1/callSeasonEpisodes/s1' ; type = '' }
+			@{ linkType = 'talentLinks' ; id = 't1' ; url = 'https://platform-api.tver.jp/service/api/v1/callTalentEpisode/t1' ; type = '' }
+			@{ linkType = 'specialMainLinks' ; id = 'sm1' ; url = 'https://platform-api.tver.jp/service/api/v1/callSpecialContents/sm1' ; type = 'specialmain' }
+			@{ linkType = 'specialLinks' ; id = 'sp1' ; url = 'https://platform-api.tver.jp/service/api/v1/callSpecialContentsDetail/sp1' ; type = 'specialdetail' }
+			@{ linkType = 'tag' ; id = 'golf' ; url = 'https://platform-api.tver.jp/service/api/v1/callTagSearch/golf' ; type = '' }
+			@{ linkType = 'new' ; id = 'all' ; url = 'https://platform-api.tver.jp/service/api/v1/callNewerDetail/all' ; type = 'new' }
+			@{ linkType = 'end' ; id = 'all' ; url = 'https://platform-api.tver.jp/service/api/v1/callEnderDetail/all' ; type = 'end' }
+			@{ linkType = 'ranking' ; id = 'all' ; url = 'https://platform-api.tver.jp/service/api/v1/callEpisodeRanking' ; type = 'ranking' }
+			@{ linkType = 'ranking' ; id = 'drama' ; url = 'https://platform-api.tver.jp/service/api/v1/callEpisodeRankingDetail/drama' ; type = 'ranking' }
+			@{ linkType = 'category' ; id = 'drama' ; url = 'https://platform-api.tver.jp/service/api/v1/callCategoryHome/drama' ; type = 'category' }
+			@{ linkType = 'keyword' ; id = 'カンブリア' ; url = 'https://platform-api.tver.jp/service/api/v2/callKeywordSearch' ; type = 'keyword' }
+		) {
+			$lc = New-TestLinkCollection
+			$expectedUrl = $url ; $expectedType = $type
+			Get-LinkFromKeyword -id $id -linkType $linkType -LinkCollection ([Ref]$lc)
+			Should -Invoke Get-SearchResult -Times 1 -Exactly -ParameterFilter { $baseURL -eq $expectedUrl -and "$Type" -eq $expectedType }
 		}
 	}
 }
 
 #----------------------------------------------------------------------
-# TalentIDによるタレント検索から番組ページのLinkを取得
+# 検索結果の解析
 #----------------------------------------------------------------------
-Describe 'TalentIDによるタレント検索から番組ページのLinkを取得' {
+Describe 'Get-SearchResult' {
 	Context 'モックチェック' {
-		BeforeAll {
-			$mockParams = @{
-				CommandName = 'ProcessSearchResults'
-				MockWith    = { MockProcessSearchResults -baseURL $args[0] }
+		BeforeEach { Mock Get-LinkFromKeyword {} ; Mock Write-Warning {} }
+
+		It '通常の検索結果を種類別に振り分けること(live/bannerは除外)' {
+			Mock Invoke-RestMethod {
+				[PSCustomObject]@{ Result = [PSCustomObject]@{ Contents = @(
+							(New-Item 'episode' 'ep1' 100), (New-Item 'live' 'le1'), (New-Item 'banner' 'b1'),
+							(New-Item 'series' 'sr1'), (New-Item 'season' 's1'), (New-Item 'talent' 't1'), (New-Item 'specialMain' 'sm1')
+						)
+					}
+				}
 			}
-			Mock @mockParams
+			$lc = New-TestLinkCollection
+			Get-SearchResult -baseURL 'https://example/api' -LinkCollection ([Ref]$lc)
+			$lc.episodeLinks['ep1'] | Should -Be 100
+			$lc.seriesLinks | Should -Be @('sr1')
+			$lc.seasonLinks | Should -Be @('s1')
+			$lc.talentLinks | Should -Be @('t1')
+			$lc.specialMainLinks | Should -Be @('sm1')
+			Should -Invoke Write-Warning -Times 0 -Exactly
 		}
-
-		It 'TalentIDが入力されエラーとならないこと' {
-			{ Get-LinkFromTalentID -talentID '12345' } | Should -Not -Throw
+		It '匿名アクセス時にplatform_uid/platform_tokenとキーワードが付与されること' {
+			Mock Invoke-RestMethod { [PSCustomObject]@{ Result = [PSCustomObject]@{ Contents = @() } } }
+			$lc = New-TestLinkCollection
+			Get-SearchResult -baseURL 'https://example/api' -Type 'keyword' -Keyword 'abc' -LinkCollection ([Ref]$lc)
+			Should -Invoke Invoke-RestMethod -Times 1 -Exactly -ParameterFilter { $Uri -eq 'https://example/api?platform_uid=test-uid&platform_token=test-token&keyword=abc' }
 		}
-		It 'nullが入力された際にエラーとなること' {
-			{ Get-LinkFromTalentID -talentID $null } | Should -Throw
+		It 'ログイン時はmember_sidが付与されること' {
+			Mock Invoke-RestMethod { [PSCustomObject]@{ Result = [PSCustomObject]@{ Contents = @() } } }
+			$script:myMemberSID = 'sid123'
+			try {
+				$lc = New-TestLinkCollection
+				Get-SearchResult -baseURL 'https://example/api' -Type 'mypage' -RequireData 'later' -LoginRequired $true -LinkCollection ([Ref]$lc)
+				Should -Invoke Invoke-RestMethod -Times 1 -Exactly -ParameterFilter { $Uri -eq 'https://example/api?member_sid=sid123&require_data=later' }
+			} finally { $script:myMemberSID = $null }
 		}
-		It '呼び出しの引数が正しいこと' {
-			$testTalentID = '12345'
-			$expectedBaseURL = "https://platform-api.tver.jp/service/api/v1/callTalentEpisode/$testTalentID"
-			Get-LinkFromTalentID -talentID '12345'
-			Assert-MockCalled ProcessSearchResults -Times 1 -ParameterFilter { $baseURL -eq $expectedBaseURL }
+		It 'new/end/rankingは入れ子のContentsを参照すること' {
+			Mock Invoke-RestMethod { [PSCustomObject]@{ Result = [PSCustomObject]@{ Contents = [PSCustomObject]@{ Contents = @((New-Item 'episode' 'ep2' 200)) } } } }
+			$lc = New-TestLinkCollection
+			Get-SearchResult -baseURL 'https://example/api' -Type 'new' -LinkCollection ([Ref]$lc)
+			$lc.episodeLinks.Keys | Should -Be @('ep2')
 		}
-		It 'PSCustomObject型を返すこと' {
-			$result = Get-LinkFromTalentID -talentID '12345'
-			$result | Should -BeOfType [PSCustomObject]
-			$result.Count | Should -Be 1
-			@($result.episodeLinks).Count | Should -Be 2
-			$result.episodeLinks[0] | Should -BeOfType string
+		It 'specialmainのspecialはspecialLinksに追加されること' {
+			Mock Invoke-RestMethod { [PSCustomObject]@{ Result = [PSCustomObject]@{ specialContents = @((New-Item 'special' 'sp1')) } } }
+			$lc = New-TestLinkCollection
+			Get-SearchResult -baseURL 'https://example/api' -Type 'specialmain' -LinkCollection ([Ref]$lc)
+			$lc.specialLinks | Should -Be @('sp1')
 		}
-		It '重複削除して返却されること' {
-			$result = Get-LinkFromTalentID -talentID '12345'
-			$result.episodeLinks | Should -Contain 'https://tver.jp/episodes/dummy1'
-			$result.episodeLinks | Should -Contain 'https://tver.jp/episodes/dummy2'
+		It 'specialdetailはContent.Contentsを参照すること' {
+			Mock Invoke-RestMethod { [PSCustomObject]@{ Result = [PSCustomObject]@{ Contents = [PSCustomObject]@{ Content = [PSCustomObject]@{ Contents = @((New-Item 'series' 'sr9')) } } } } }
+			$lc = New-TestLinkCollection
+			Get-SearchResult -baseURL 'https://example/api' -Type 'specialdetail' -LinkCollection ([Ref]$lc)
+			$lc.seriesLinks | Should -Be @('sr9')
 		}
-	}
-
-	Context 'TVerとの接続確認' -Tag 'TVer' {
-		BeforeAll {
-			$script:timeoutSec = 30
-			Get-Token
-		}
-
-		It 'エラーなく返却されること' {
-			{ Get-LinkFromTalentID -talentID $talentID } | Should -Not -Throw
-		}
-		It 'PSCustomObject型で返却されること' {
-			$result = Get-LinkFromTalentID -talentID $talentID
-			$result | Should -BeOfType PSCustomObject
-		}
-		It 'エピソードが返却されること' {
-			$result = Get-LinkFromTalentID -talentID $talentID
-			@($result.episodeLinks).Count | Should -BeGreaterOrEqual 1
-			@($result.episodeLinks)[0].Substring(0, 27) | Should -Be 'https://tver.jp/episodes/ep'
-		}
-	}
-}
-
-#----------------------------------------------------------------------
-# SpecialIDによる特集ページのLinkを取得
-#----------------------------------------------------------------------
-Describe 'SpecialIDによる特集ページのLinkを取得' {
-	Context 'モックチェック' {
-		BeforeAll {
-			$mockParams = @{
-				CommandName = 'ProcessSearchResults'
-				MockWith    = { MockProcessSearchResults -baseURL $args[0] -type $args[1] }
+		It 'categoryはcomponents配下のcontentsを参照すること' {
+			Mock Invoke-RestMethod {
+				[PSCustomObject]@{ Result = [PSCustomObject]@{ components = @(
+							[PSCustomObject]@{ type = 'billboard' ; contents = @((New-Item 'specialMain' 'sm7')) },
+							[PSCustomObject]@{ type = 'richHorizontal' ; contents = @((New-Item 'episode' 'ep7' 700), (New-Item 'series' 'sr7')) }
+						)
+					}
+				}
 			}
-			Mock @mockParams
-		}
-
-		It 'SpecialIDが入力されエラーとならないこと' {
-			{ Get-LinkFromSpecialMainID -specialMainID '12345' } | Should -Not -Throw
-		}
-		It 'nullが入力された際にエラーとなること' {
-			{ Get-LinkFromSpecialMainID -specialMainID $null } | Should -Throw
-		}
-		It '呼び出しの引数が正しいこと' {
-			$testSpecialMainID = '12345'
-			$expectedBaseURL = "https://platform-api.tver.jp/service/api/v1/callSpecialContents/$testSpecialMainID"
-			Get-LinkFromSpecialMainID -specialMainID '12345'
-			Assert-MockCalled -CommandName ProcessSearchResults -Times 1 -Exactly -ParameterFilter { ($baseURL -eq $expectedBaseURL) -and ($Type -eq 'specialmain') }
-		}
-		It 'PSCustomObject型を返すこと' {
-			$result = Get-LinkFromSpecialMainID -specialMainID '12345'
-			$result | Should -BeOfType [PSCustomObject]
-			$result.Count | Should -Be 1
-			$result.specialLinks.Count | Should -Be 2
-			$result.specialLinks[0] | Should -BeOfType string
-		}
-		It '重複削除して返却されること' {
-			$result = Get-LinkFromSpecialMainID -specialMainID '12345'
-			$result.specialLinks | Should -Contain 'specialDummy1'
-			$result.specialLinks | Should -Contain 'specialDummy2'
-		}
-	}
-
-	Context 'TVerとの接続確認' -Tag 'TVer' {
-		BeforeAll {
-			$script:timeoutSec = 30
-			Get-Token
-		}
-
-		It 'エラーなく返却されること' {
-			{ Get-LinkFromSpecialMainID -specialMainID $specialMainID } | Should -Not -Throw
-		}
-		It 'String型で返却されること' {
-			$result = Get-LinkFromSpecialMainID -specialMainID $specialMainID
-			$result | Should -BeOfType PSCustomObject
-		}
-		It 'エピソードが返却されること' {
-			$result = Get-LinkFromSpecialMainID -specialMainID $specialMainID
-			@($result.specialLinks).Count | Should -BeGreaterOrEqual 1
-			@($result.specialLinks)[0] | Should -Be 'hokkaido-tohoku'
-		}
-	}
-}
-
-#----------------------------------------------------------------------
-# SpecialDetailIDによる特集ページのLinkを取得
-#----------------------------------------------------------------------
-Describe 'SpecialDetailIDによる特集ページのLinkを取得' {
-	Context 'モックチェック' {
-		BeforeAll {
-			$mockParams = @{
-				CommandName = 'ProcessSearchResults'
-				MockWith    = { MockProcessSearchResults -baseURL $args[0] -type $args[1] }
-			}
-			Mock @mockParams
-		}
-
-		It 'SpecialDetailIDが入力されエラーとならないこと' {
-			{ Get-LinkFromSpecialDetailID -specialDetailID '12345' } | Should -Not -Throw
-		}
-		It 'nullが入力された際にエラーとなること' {
-			{ Get-LinkFromSpecialDetailID -specialDetailID $null } | Should -Throw
-		}
-		It '呼び出しの引数が正しいこと' {
-			$testSpecialDetailID = '12345'
-			$expectedBaseURL = "https://platform-api.tver.jp/service/api/v1/callSpecialContentsDetail/$testSpecialDetailID"
-			Get-LinkFromSpecialDetailID -specialDetailID '12345'
-			Assert-MockCalled -CommandName ProcessSearchResults -Times 1 -Exactly -ParameterFilter { ($baseURL -eq $expectedBaseURL) -and ($Type -eq 'specialdetail') }
-		}
-		It 'PSCustomObject型を返すこと' {
-			$result = Get-LinkFromSpecialDetailID -specialDetailID '12345'
-			$result | Should -BeOfType [PSCustomObject]
-			$result.Count | Should -Be 1
-			@($result.episodeLinks).Count | Should -Be 2
-			$result.episodeLinks[0] | Should -BeOfType string
-		}
-		It '重複削除して返却されること' {
-			$result = Get-LinkFromSpecialDetailID -specialDetailID '12345'
-			$result.episodeLinks | Should -Contain 'https://tver.jp/episodes/dummy1'
-			$result.episodeLinks | Should -Contain 'https://tver.jp/episodes/dummy2'
-		}
-	}
-
-	Context 'TVerとの接続確認' -Tag 'TVer' {
-		BeforeAll {
-			$script:timeoutSec = 30
-			Get-Token
-		}
-
-		It 'エラーなく返却されること' {
-			{ Get-LinkFromSpecialDetailID -specialDetailID $specialDetailID } | Should -Not -Throw
-		}
-		It 'PSCustomObject型で返却されること' {
-			$result = Get-LinkFromSpecialDetailID -specialDetailID $specialDetailID
-			$result | Should -BeOfType PSCustomObject
-		}
-		It 'エピソードが返却されること' {
-			$result = Get-LinkFromSpecialDetailID -specialDetailID $specialDetailID
-			@($result.episodeLinks).Count | Should -BeGreaterOrEqual 1
-			@($result.episodeLinks)[0].Substring(0, 27) | Should -Be 'https://tver.jp/episodes/ep'
-		}
-	}
-}
-
-#----------------------------------------------------------------------
-# タグから番組ページのLinkを取得
-#----------------------------------------------------------------------
-Describe 'タグから番組ページのLinkを取得' {
-	Context 'モックチェック' {
-		BeforeAll {
-			$mockParams = @{
-				CommandName = 'ProcessSearchResults'
-				MockWith    = { MockProcessSearchResults -baseURL $args[0] }
-			}
-			Mock @mockParams
-		}
-
-		It 'タグIDが入力されエラーとならないこと' {
-			{ Get-LinkFromTag -tagID '12345' } | Should -Not -Throw
-		}
-		It 'nullが入力された際にエラーとなること' {
-			{ Get-LinkFromTag -tagID $null } | Should -Throw
-		}
-		It '呼び出しの引数が正しいこと' {
-			$testTagID = '12345'
-			$expectedBaseURL = "https://platform-api.tver.jp/service/api/v1/callTagSearch/$testTagID"
-			Get-LinkFromTag -tagID '12345'
-			Assert-MockCalled ProcessSearchResults -Times 1 -ParameterFilter { $baseURL -eq $expectedBaseURL }
-		}
-		It 'PSCustomObject型を返すこと' {
-			$result = Get-LinkFromTag -tagID '12345'
-			$result | Should -BeOfType [PSCustomObject]
-			$result.Count | Should -Be 1
-			@($result.episodeLinks).Count | Should -Be 2
-			$result.episodeLinks[0] | Should -BeOfType string
-		}
-		It '重複削除して返却されること' {
-			$result = Get-LinkFromTag -tagID '12345'
-			$result.episodeLinks | Should -Contain 'https://tver.jp/episodes/dummy1'
-			$result.episodeLinks | Should -Contain 'https://tver.jp/episodes/dummy2'
-		}
-	}
-
-	Context 'TVerとの接続確認' -Tag 'TVer' {
-		BeforeAll {
-			$script:timeoutSec = 30
-			Get-Token
-		}
-
-		It 'エラーなく返却されること' {
-			{ Get-LinkFromTag -tagID $tagID } | Should -Not -Throw
-		}
-		It 'PSCustomObject型で返却されること' {
-			$result = Get-LinkFromTag -tagID $tagID
-			$result | Should -BeOfType PSCustomObject
-		}
-		It 'エピソードが返却されること' {
-			$result = Get-LinkFromTag -tagID $tagID
-			@($result.episodeLinks).Count | Should -BeGreaterOrEqual 1
-			@($result.episodeLinks)[0].Substring(0, 27) | Should -Be 'https://tver.jp/episodes/ep'
-		}
-	}
-}
-
-#----------------------------------------------------------------------
-# 新着から番組ページのLinkを取得
-#----------------------------------------------------------------------
-Describe '新着から番組ページのLinkを取得' {
-	Context 'モックチェック' {
-		BeforeAll {
-			$mockParams = @{
-				CommandName = 'ProcessSearchResults'
-				MockWith    = { MockProcessSearchResults -baseURL $args[0] -type $args[1] }
-			}
-			Mock @mockParams
-		}
-
-		It 'シリーズIDが入力されエラーとならないこと' {
-			{ Get-LinkFromNew -genre '12345' } | Should -Not -Throw
-		}
-		It 'nullが入力された際にエラーとなること' {
-			{ Get-LinkFromNew -genre $null } | Should -Throw
-		}
-		It '呼び出しの引数が正しいこと' {
-			$testGenre = '12345'
-			$expectedBaseURL = "https://platform-api.tver.jp/service/api/v1/callNewerDetail/$testGenre"
-			Get-LinkFromNew -genre '12345'
-			Assert-MockCalled ProcessSearchResults -Times 1 -ParameterFilter { ($baseURL -eq $expectedBaseURL) -and ($Type -eq 'new') }
-		}
-		It 'PSCustomObject型を返すこと' {
-			$result = Get-LinkFromNew -genre '12345'
-			$result | Should -BeOfType [PSCustomObject]
-			$result.Count | Should -Be 1
-			@($result.episodeLinks).Count | Should -Be 2
-			$result.episodeLinks[0] | Should -BeOfType string
-		}
-		It '重複削除して返却されること' {
-			$result = Get-LinkFromNew -genre '12345'
-			$result.episodeLinks | Should -Contain 'https://tver.jp/episodes/dummy1'
-			$result.episodeLinks | Should -Contain 'https://tver.jp/episodes/dummy2'
-		}
-	}
-
-	Context 'TVerとの接続確認' -Tag 'TVer' {
-		BeforeAll {
-			$script:timeoutSec = 30
-			Get-Token
-		}
-
-		It 'エラーなく返却されること' {
-			{ Get-LinkFromNew -genre $genre } | Should -Not -Throw
-		}
-		It 'PSCustomObject型で返却されること' {
-			$result = Get-LinkFromNew -genre $genre
-			$result | Should -BeOfType PSCustomObject
-		}
-		It 'エピソードが返却されること' {
-			$result = Get-LinkFromNew -genre $genre
-			@($result.episodeLinks).Count | Should -BeGreaterOrEqual 1
-			@($result.episodeLinks)[0].Substring(0, 27) | Should -Be 'https://tver.jp/episodes/ep'
-		}
-	}
-}
-
-#----------------------------------------------------------------------
-# ランキングから番組ページのLinkを取得
-#----------------------------------------------------------------------
-Describe 'ランキングから番組ページのLinkを取得' {
-	Context 'モックチェック - 全カテゴリ' {
-		BeforeAll {
-			$mockParams = @{
-				CommandName = 'ProcessSearchResults'
-				MockWith    = { MockProcessSearchResults -baseURL $args[0] -type $args[1] }
-			}
-			Mock @mockParams
-		}
-
-		It 'allが入力されエラーとならないこと' {
-			{ Get-LinkFromRanking -genre 'all' } | Should -Not -Throw
-		}
-		It 'nullが入力された際にエラーとなること' {
-			{ Get-LinkFromRanking -genre $null } | Should -Throw
-		}
-		It '呼び出しの引数が正しいこと' {
-			$expectedBaseURL = 'https://platform-api.tver.jp/service/api/v1/callEpisodeRanking'
-			Get-LinkFromRanking -genre 'all'
-			Assert-MockCalled ProcessSearchResults -Times 1 -ParameterFilter { ($baseURL -eq $expectedBaseURL) -and ($Type -eq 'ranking') }
-		}
-		It 'PSCustomObject型を返すこと' {
-			$result = Get-LinkFromRanking -genre 'all'
-			$result | Should -BeOfType [PSCustomObject]
-			$result.Count | Should -Be 1
-			@($result.episodeLinks).Count | Should -Be 2
-			$result.episodeLinks[0] | Should -BeOfType string
-		}
-		It '重複削除して返却されること' {
-			$result = Get-LinkFromRanking -genre 'all'
-			$result.episodeLinks | Should -Contain 'https://tver.jp/episodes/dummy1'
-			$result.episodeLinks | Should -Contain 'https://tver.jp/episodes/dummy2'
-		}
-	}
-
-	Context 'モックチェック - 特定カテゴリ' {
-		BeforeAll {
-			$mockParams = @{
-				CommandName = 'ProcessSearchResults'
-				MockWith    = { MockProcessSearchResults -baseURL $args[0] -type $args[1] -keyword $args[2] }
-			}
-			Mock @mockParams
-		}
-
-		It 'genreIDが入力されエラーとならないこと' {
-			{ Get-LinkFromRanking -genre '12345' } | Should -Not -Throw
-		}
-		It 'nullが入力された際にエラーとなること' {
-			{ Get-LinkFromRanking -genre $null } | Should -Throw
-		}
-		It '呼び出しの引数が正しいこと' {
-			$testGenre = '12345'
-			$expectedBaseURL = "https://platform-api.tver.jp/service/api/v1/callEpisodeRankingDetail/$testGenre"
-			Get-LinkFromRanking -genre '12345'
-			Assert-MockCalled ProcessSearchResults -Times 1 -ParameterFilter { ($baseURL -eq $expectedBaseURL) -and ($Type -eq 'ranking') }
-		}
-		It 'PSCustomObject型を返すこと' {
-			$result = Get-LinkFromRanking -genre '12345'
-			$result | Should -BeOfType [PSCustomObject]
-			$result.Count | Should -Be 1
-			@($result.episodeLinks).Count | Should -Be 2
-			$result.episodeLinks[0] | Should -BeOfType string
-		}
-		It '重複削除して返却されること' {
-			$result = Get-LinkFromRanking -genre '12345'
-			$result.episodeLinks | Should -Contain 'https://tver.jp/episodes/dummy1'
-			$result.episodeLinks | Should -Contain 'https://tver.jp/episodes/dummy2'
-		}
-	}
-
-	Context 'TVerとの接続確認 - 全カテゴリ' -Tag 'TVer' {
-		BeforeAll {
-			$script:timeoutSec = 30
-			Get-Token
-		}
-
-		It 'エラーなく返却されること' {
-			{ Get-LinkFromRanking -genre 'all' } | Should -Not -Throw
-		}
-		It 'PSCustomObject型で返却されること' {
-			$result = Get-LinkFromRanking -genre 'all'
-			$result | Should -BeOfType PSCustomObject
-		}
-		It 'エピソードが返却されること' {
-			$result = Get-LinkFromRanking -genre 'all'
-			@($result.episodeLinks).Count | Should -BeGreaterOrEqual 1
-			@($result.episodeLinks)[0].Substring(0, 27) | Should -Be 'https://tver.jp/episodes/ep'
-		}
-	}
-
-	Context 'TVerとの接続確認 - 特定カテゴリ' -Tag 'TVer' {
-		BeforeAll {
-			$script:timeoutSec = 30
-			Get-Token
-		}
-
-		It 'エラーなく返却されること' {
-			{ Get-LinkFromRanking -genre $genre } | Should -Not -Throw
-		}
-		It 'PSCustomObject型で返却されること' {
-			$result = Get-LinkFromRanking -genre $genre
-			$result | Should -BeOfType PSCustomObject
-		}
-		It 'エピソードが返却されること' {
-			$result = Get-LinkFromRanking -genre $genre
-			@($result.episodeLinks).Count | Should -BeGreaterOrEqual 1
-			@($result.episodeLinks)[0].Substring(0, 27) | Should -Be 'https://tver.jp/episodes/ep'
-		}
-	}
-}
-
-#----------------------------------------------------------------------
-# TVerのAPIを叩いてフリーワード検索
-#----------------------------------------------------------------------
-Describe 'TVerのAPIを叩いてフリーワード検索' {
-	Context 'モックチェック' {
-		BeforeAll {
-			$mockParams = @{
-				CommandName = 'ProcessSearchResults'
-				MockWith    = { MockProcessSearchResults -baseURL $args[0] -type $args[1] -keyword $args[2] }
-			}
-			Mock @mockParams
-		}
-
-		It 'SpecialIDが入力されエラーとならないこと' {
-			{ Get-LinkFromFreeKeyword -keyword '12345' } | Should -Not -Throw
-		}
-		It 'nullが入力された際にエラーとなること' {
-			{ Get-LinkFromFreeKeyword -keyword $null } | Should -Throw
-		}
-		It '呼び出しの引数が正しいこと' {
-			$testKeyword = '12345'
-			$expectedBaseURL = 'https://platform-api.tver.jp/service/api/v1/callKeywordSearch'
-			Get-LinkFromFreeKeyword -keyword '12345'
-			Assert-MockCalled -CommandName ProcessSearchResults -Times 1 -Exactly -ParameterFilter {
-				($baseURL -eq $expectedBaseURL) -and ($Type -eq 'keyword') -and ($Keyword -eq $testKeyword)
-			}
-		}
-		It 'PSCustomObject型を返すこと' {
-			$result = Get-LinkFromFreeKeyword -keyword '12345'
-			$result | Should -BeOfType [PSCustomObject]
-			$result.Count | Should -Be 1
-			@($result.episodeLinks).Count | Should -Be 2
-			$result.episodeLinks[0] | Should -BeOfType string
-		}
-		It '重複削除して返却されること' {
-			$result = Get-LinkFromFreeKeyword -keyword '12345'
-			$result.episodeLinks | Should -Contain 'https://tver.jp/episodes/dummy1'
-			$result.episodeLinks | Should -Contain 'https://tver.jp/episodes/dummy2'
-		}
-	}
-
-	Context 'TVerとの接続確認' -Tag 'TVer' {
-		BeforeAll {
-			$script:timeoutSec = 30
-			Get-Token
-		}
-
-		It 'エラーなく返却されること' {
-			{ Get-LinkFromFreeKeyword -keyword $keyword } | Should -Not -Throw
-		}
-		It 'PSCustomObject型で返却されること' {
-			$result = Get-LinkFromFreeKeyword -keyword $keyword
-			$result | Should -BeOfType PSCustomObject
-		}
-		It 'エピソードが返却されること' {
-			$result = Get-LinkFromFreeKeyword -keyword $keyword
-			@($result.episodeLinks).Count | Should -BeGreaterOrEqual 1
-			@($result.episodeLinks)[0].Substring(0, 27) | Should -Be 'https://tver.jp/episodes/ep'
+			$lc = New-TestLinkCollection
+			Get-SearchResult -baseURL 'https://example/api' -Type 'category' -LinkCollection ([Ref]$lc)
+			$lc.episodeLinks['ep7'] | Should -Be 700
+			$lc.seriesLinks | Should -Be @('sr7')
+			$lc.specialMainLinks | Should -Be @('sm7')
+		}
+		It 'HTTPエラー時は警告を出して例外を投げないこと' {
+			Mock Invoke-RestMethod { throw 'Response status code does not indicate success: 400 (Bad Request).' }
+			$lc = New-TestLinkCollection
+			{ Get-SearchResult -baseURL 'https://example/api' -LinkCollection ([Ref]$lc) } | Should -Not -Throw
+			Should -Invoke Write-Warning -Times 1 -Exactly
 		}
 	}
 }
@@ -711,127 +294,69 @@ Describe 'TVerのAPIを叩いてフリーワード検索' {
 #----------------------------------------------------------------------
 # トップページから番組ページのLinkを取得
 #----------------------------------------------------------------------
-Describe 'トップページから番組ページのLinkを取得' {
+Describe 'Get-LinkFromTopPage' {
 	Context 'モックチェック' {
-		BeforeAll {
+		BeforeEach { Mock Write-Warning {} }
+
+		It 'v2のcallHomeを呼び出すこと' {
+			Mock Invoke-RestMethod { [PSCustomObject]@{ Result = [PSCustomObject]@{ components = @([PSCustomObject]@{ type = 'newer' ; contents = @((New-Item 'episode' 'ep1')) }) } } }
+			$lc = New-TestLinkCollection
+			Get-LinkFromTopPage ([Ref]$lc)
+			Should -Invoke Invoke-RestMethod -Times 1 -Exactly -ParameterFilter { $Uri -like 'https://platform-api.tver.jp/service/api/v2/callHome?platform_uid=*' }
+		}
+		It 'liveの後ろにあるコンテンツも取りこぼさないこと' {
 			Mock Invoke-RestMethod {
-				return @{
-					Result = @{
-						Components = @(
-							@{Type = 'horizontal' ; Contents = @(
-									@{Type = 'live' ; Content = @{ Id = 'horizontal-live' } },
-									@{Type = 'episode' ; Content = @{ Id = 'horizontal-episode' } },
-									@{Type = 'series' ; Content = @{ Id = 'horizontal-series' } },
-									@{Type = 'season' ; Content = @{ Id = 'horizontal-season' } },
-									@{Type = 'talent' ; Content = @{ Id = 'horizontal-talent' } },
-									@{Type = 'specialMain' ; Content = @{ Id = 'horizontal-specialMain' } },
-									@{Type = 'special' ; Content = @{ Id = 'horizontal-specialDetail' } },
-									@{Type = 'unsupported' ; Content = @{ Id = 'horizontal-unsupported' } }
-								)
-							},
-							@{Type = 'topics' ; Contents = @(@{Content = @(@{type = 'dummy' ; Content = @(
-													@{Type = 'live' ; Content = @{ Id = 'topic-live' } },
-													@{Type = 'episode' ; Content = @{ Id = 'topic-episode' } },
-													@{Type = 'series' ; Content = @{ Id = 'topic-series' } },
-													@{Type = 'season' ; Content = @{ Id = 'topic-season' } },
-													@{Type = 'talent' ; Content = @{ Id = 'topic-talent' } },
-													@{Type = 'unsupported' ; Content = @{ Id = 'topic-unsupported' } }
-												)
-											})
-									})
-							},
-							@{Type = 'banner' ; Contents = @(@{Type = 'other' ; Content = @{ Id = 'banner-other' } }) },
-							@{Type = 'resume' ; Contents = @(@{Type = 'other' ; Content = @{ Id = 'resume-other' } }) },
-							@{Type = 'favorite' ; Contents = @(@{Type = 'other' ; Content = @{ Id = 'favorite-other' } }) },
-							@{Type = 'unsupported' ; Contents = @(@{Type = 'unsupported' ; Content = @{ Id = 'unsupported-unsupported' } }) }
+				[PSCustomObject]@{ Result = [PSCustomObject]@{ components = @(
+							[PSCustomObject]@{ type = 'richHorizontal' ; contents = @((New-Item 'episode' 'ep1'), (New-Item 'live' 'le1'), (New-Item 'episode' 'ep2'), (New-Item 'series' 'sr1')) }
 						)
 					}
 				}
 			}
-			Mock Get-LinkFromSpecialMainID {
-				return [PSCustomObject]@{
-					episodeLinks = @($args[1])  | Sort-Object -Unique
-					seasonLinks  = @($args[1])  | Sort-Object -Unique
-					seriesLinks  = @($args[1])  | Sort-Object -Unique
-					specialLinks = @($args[1])  | Sort-Object -Unique
-				}
-			}
-			Mock Get-LinkFromSpecialDetailID {
-				return [PSCustomObject]@{
-					episodeLinks = @($args[1])  | Sort-Object -Unique
-					seasonLinks  = @($args[1])  | Sort-Object -Unique
-					seriesLinks  = @($args[1])  | Sort-Object -Unique
-					specialLinks = @($args[1])  | Sort-Object -Unique
-				}
-			}
-			Mock Get-LinkFromTalentID {
-				return [PSCustomObject]@{
-					episodeLinks = @($args[1])  | Sort-Object -Unique
-					seasonLinks  = @($args[1])  | Sort-Object -Unique
-					seriesLinks  = @($args[1])  | Sort-Object -Unique
-					specialLinks = @($args[1])  | Sort-Object -Unique
-				}
-			}
-			Mock Get-LinkFromSeasonID {
-				return [PSCustomObject]@{
-					episodeLinks = @($args[1])  | Sort-Object -Unique
-					seasonLinks  = @($args[1])  | Sort-Object -Unique
-					seriesLinks  = @($args[1])  | Sort-Object -Unique
-					specialLinks = @($args[1])  | Sort-Object -Unique
-				}
-			}
-			Mock Get-LinkFromSeriesID {
-				return [PSCustomObject]@{
-					episodeLinks = @($args[1])  | Sort-Object -Unique
-					seasonLinks  = @($args[1])  | Sort-Object -Unique
-					seriesLinks  = @($args[1])  | Sort-Object -Unique
-					specialLinks = @($args[1])  | Sort-Object -Unique
-				}
-			}
-			Mock Write-Warning {}
-			$script:platformUID = 'test_platform_uid'
-			$script:platformToken = 'test_platform_token'
-			$script:commonHttpHeader = @{ 'Test-Header' = 'HeaderValue' }
-			$script:timeoutSec = 30
+			$lc = New-TestLinkCollection
+			Get-LinkFromTopPage ([Ref]$lc)
+			@($lc.episodeLinks.Keys | Sort-Object) | Should -Be @('ep1', 'ep2')
+			$lc.seriesLinks | Should -Be @('sr1')
 		}
-
-		It 'returns a list of episode links' {
-			$result = Get-LinkFromTopPage | Sort-Object -Unique
-			$result.episodeLinks | Should -Be @('https://tver.jp/episodes/horizontal-episode', 'https://tver.jp/episodes/topic-episode')
-			$result.seriesLinks | Should -Be @('horizontal-series', 'topic-series')
-			$result.seasonLinks | Should -Be @('horizontal-season', 'topic-season')
-			$result.talentLinks | Should -Be @('horizontal-talent', 'topic-talent')
-			$result.specialMainLinks | Should -Be @('horizontal-specialMain')
-			$result.specialLinks | Should -Be @('horizontal-specialDetail')
-		}
-	}
-
-	Context 'TVerとの接続確認' -Tag 'TVer' {
-		BeforeAll {
-			$script:timeoutSec = 30
-			Get-Token
-			$script:commonHttpHeader = @{
-				'x-tver-platform-type' = 'web'
-				'Origin'               = 'https://tver.jp'
-				'Referer'              = 'https://tver.jp'
+		It '種類別に振り分けられ、topicsは入れ子を参照すること' {
+			Mock Invoke-RestMethod {
+				[PSCustomObject]@{ Result = [PSCustomObject]@{ components = @(
+							[PSCustomObject]@{ type = 'billboard' ; contents = @((New-Item 'specialMain' 'sm1')) },
+							[PSCustomObject]@{ type = 'special' ; contents = @((New-Item 'special' 'sp1')) },
+							[PSCustomObject]@{ type = 'talent' ; contents = @((New-Item 'talent' 't1')) },
+							[PSCustomObject]@{ type = 'seasonEpisode' ; contents = @((New-Item 'season' 's1')) },
+							[PSCustomObject]@{ type = 'topics' ; contents = [PSCustomObject]@{ Content = [PSCustomObject]@{ Content = @((New-Item 'episode' 'ep9')) } } }
+						)
+					}
+				}
 			}
+			$lc = New-TestLinkCollection
+			Get-LinkFromTopPage ([Ref]$lc)
+			$lc.specialMainLinks | Should -Be @('sm1')
+			$lc.specialLinks | Should -Be @('sp1')
+			$lc.talentLinks | Should -Be @('t1')
+			$lc.seasonLinks | Should -Be @('s1')
+			$lc.episodeLinks.Keys | Should -Be @('ep9')
 		}
-
-		It 'エラーなく返却されること' {
-			{ Get-LinkFromTopPage } | Should -Not -Throw
+		It '対象外のコンポーネントでは警告を出さないこと' {
+			Mock Invoke-RestMethod {
+				$types = @('banner', 'resume', 'favorite', 'onAirLiveEpisode', 'watchingSeries', 'similarSeries', 'watchlistReminder', 'welcome')
+				[PSCustomObject]@{ Result = [PSCustomObject]@{ components = @($types.ForEach({ [PSCustomObject]@{ type = $_ ; contents = @() } })) } }
+			}
+			$lc = New-TestLinkCollection
+			Get-LinkFromTopPage ([Ref]$lc)
+			Should -Invoke Write-Warning -Times 0 -Exactly
 		}
-		It 'String型(2つ以上のときは配列で返却されること' {
-			$result = Get-LinkFromTopPage
-
-			$result.episodeLinks | Should -BeOfType String
-			$result.seriesLinks | Should -BeOfType String
-			$result.seasonLinks | Should -Be $null
-			$result.talentLinks | Should -BeOfType String
-			$result.specialMainLinks | Should -BeOfType String
-			$result.specialLinks | Should -BeOfType String
-			@($result.episodeLinks)[0].Substring(0, 27) | Should -Be 'https://tver.jp/episodes/ep'
-			@($result.seriesLinks)[0].Substring(0, 2) | Should -Be 'sr'
-			@($result.talentLinks)[0].Substring(0, 1) | Should -Be 't'
+		It '未知のコンポーネントでは警告を出すこと' {
+			Mock Invoke-RestMethod { [PSCustomObject]@{ Result = [PSCustomObject]@{ components = @([PSCustomObject]@{ type = 'somethingNew' ; contents = @() }) } } }
+			$lc = New-TestLinkCollection
+			Get-LinkFromTopPage ([Ref]$lc)
+			Should -Invoke Write-Warning -Times 1 -Exactly
+		}
+		It 'resultが空(v1廃止時の挙動)でも例外にならず警告を出すこと' {
+			Mock Invoke-RestMethod { [PSCustomObject]@{ Result = [PSCustomObject]@{} } }
+			$lc = New-TestLinkCollection
+			{ Get-LinkFromTopPage ([Ref]$lc) } | Should -Not -Throw
+			Should -Invoke Write-Warning -Times 1 -Exactly
 		}
 	}
 }
@@ -839,35 +364,150 @@ Describe 'トップページから番組ページのLinkを取得' {
 #----------------------------------------------------------------------
 # サイトマップから番組ページのLinkを取得
 #----------------------------------------------------------------------
-Describe 'Get-LinkFromSiteMap' -Tag 'Target' {
+Describe 'Get-LinkFromSiteMap' {
+	Context 'モックチェック' {
+		BeforeAll {
+			$script:sitemapXml = [xml]@'
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://tver.jp/</loc></url>
+  <url><loc>https://tver.jp/episodes/ep1</loc></url>
+  <url><loc>https://tver.jp/episodes/ep1</loc></url>
+  <url><loc>https://tver.jp/episodes/ep2</loc></url>
+  <url><loc>https://tver.jp/series/sr1</loc></url>
+  <url><loc>https://tver.jp/specials/keibalive/all26_0403</loc></url>
+  <url><loc>https://tver.jp/specials/keibalive/all26_0404</loc></url>
+  <url><loc>https://tver.jp/categories/drama</loc></url>
+  <url><loc>https://tver.jp/live/ntv</loc></url>
+  <url><loc>https://tver.jp/tags/golf</loc></url>
+</urlset>
+'@
+		}
+		BeforeEach {
+			Mock Invoke-RestMethod { $script:sitemapXml }
+			Mock Get-LinkFromKeyword {}
+			Mock Write-Warning {}
+		}
+		AfterAll { $script:sitemapParseEpisodeOnly = $true }
 
-	BeforeAll {
-			$script:timeoutSec = 30
+		It 'エピソードのみ処理する設定ではエピソードだけを抽出すること' {
+			$script:sitemapParseEpisodeOnly = $true
+			$lc = New-TestLinkCollection
+			Get-LinkFromSiteMap ([Ref]$lc)
+			@($lc.episodeLinks.Keys | Sort-Object) | Should -Be @('ep1', 'ep2')
+			$lc.seriesLinks.Count | Should -Be 0
+			$lc.specialMainLinks.Count | Should -Be 0
+			Should -Invoke Get-LinkFromKeyword -Times 0 -Exactly
+		}
+		It 'エピソード以外も処理する設定で例外にならないこと(categoryLinks未定義のリグレッション)' {
 			$script:sitemapParseEpisodeOnly = $false
-			Get-Token
+			$lc = New-TestLinkCollection
+			{ Get-LinkFromSiteMap ([Ref]$lc) } | Should -Not -Throw
+			Should -Invoke Write-Warning -Times 0 -Exactly
+		}
+		It 'キーワード処理経由(実際のリンクコレクション)でも例外にならずエピソードを返すこと' {
+			$script:sitemapParseEpisodeOnly = $false
+			{ $script:sitemapResult = @(Get-VideoLinksFromKeyword -keyword 'sitemap') } | Should -Not -Throw
+			@($script:sitemapResult | Sort-Object) | Should -Be @('ep1', 'ep2')
+			Should -Invoke Get-LinkFromKeyword -Times 1 -Exactly -ParameterFilter { $id -eq 'keibalive' -and $linkType -eq 'specialMainLinks' }
+			Should -Invoke Get-LinkFromKeyword -Times 0 -Exactly -ParameterFilter { $linkType -eq 'specialLinks' }
+		}
+		It 'specialsはspecialMainLinksとして重複なく登録されること' {
+			$script:sitemapParseEpisodeOnly = $false
+			$lc = New-TestLinkCollection
+			Get-LinkFromSiteMap ([Ref]$lc)
+			$lc.seriesLinks | Should -Be @('sr1')
+			$lc.specialMainLinks | Should -Be @('keibalive')
+			$lc.specialLinks.Count | Should -Be 0
+		}
+		It 'categoriesはcategoryとして検索されること' {
+			$script:sitemapParseEpisodeOnly = $false
+			$lc = New-TestLinkCollection
+			Get-LinkFromSiteMap ([Ref]$lc)
+			Should -Invoke Get-LinkFromKeyword -Times 1 -Exactly -ParameterFilter { $id -eq 'drama' -and $linkType -eq 'category' }
+			$lc.categoryLinks.Count | Should -Be 0
+		}
+	}
+}
+
+#----------------------------------------------------------------------
+# 日本のIPアドレス取得 (#277 のリグレッション)
+#----------------------------------------------------------------------
+Describe 'Get-JpIP' {
+	Context 'モックチェック' {
+		BeforeEach {
+			$script:jpIPList = 'dummy.csv'
+			Mock Import-Csv { @([PSCustomObject]@{ start = '133.242.0.0' ; end = '133.242.255.255' }) }
+			Mock Start-Sleep {}
+		}
+
+		It '日本と判定されたIPアドレスを返すこと' {
+			Mock Invoke-RestMethod { [PSCustomObject]@{ CountryCode = 'JP' } }
+			$ip = Get-JpIP
+			$ip | Should -Match '^133\.242\.\d{1,3}\.\d{1,3}$'
+			Should -Invoke Invoke-RestMethod -Times 1 -Exactly
+		}
+		It 'ip-api.comに接続できない場合も無限ループせずIPアドレスを返すこと' {
+			Mock Invoke-RestMethod { throw 'blocked' }
+			$ip = Get-JpIP
+			$ip | Should -Match '^133\.242\.\d{1,3}\.\d{1,3}$'
+			Should -Invoke Invoke-RestMethod -Times 5 -Exactly
+		}
+		It '範囲が非常に狭いCIDRでも例外にならないこと' {
+			Mock Import-Csv { @([PSCustomObject]@{ start = '133.242.0.0' ; end = '133.242.0.1' }) }
+			Mock Invoke-RestMethod { [PSCustomObject]@{ CountryCode = 'JP' } }
+			{ Get-JpIP } | Should -Not -Throw
+		}
+	}
+}
+
+#----------------------------------------------------------------------
+# TVerとの実接続確認
+#----------------------------------------------------------------------
+Describe 'TVerとの接続確認' -Tag 'TVer' {
+	BeforeAll {
+		Get-Token
+		$script:liveEpisodeID = @(Get-VideoLinksFromKeyword -keyword 'new/all')[0]
+	}
+	AfterAll {
+		$script:platformUID = 'test-uid'
+		$script:platformToken = 'test-token'
 	}
 
-	It 'Returns episode links from sitemap' {
-		$result = Get-LinkFromSiteMap
-		$result.episodeLinks.Count | Should -BeGreaterOrEqual 1
+	It 'トークンが想定どおりの形式であること' {
+		$script:platformUID | Should -Match '^[0-9a-z]{30,}$'
+		$script:platformToken | Should -Match '^[0-9a-z]{40}$'
 	}
-
-	It 'Returns series links from sitemap when not episode only' {
-		$script:sitemapParseEpisodeOnly = $false
-		$result = Get-LinkFromSiteMap
-		$result.seriesLinks.Count | Should -BeGreaterOrEqual 1
+	It '<keyword> でエピソードが1件以上返却されること' -ForEach @(
+		@{ keyword = 'new/all' }
+		@{ keyword = 'end/all' }
+		@{ keyword = 'ranking/all' }
+		@{ keyword = 'tag/drama' }
+		@{ keyword = 'カンブリア' }
+	) {
+		$result = @(Get-VideoLinksFromKeyword -keyword $keyword)
+		$result.Count | Should -BeGreaterOrEqual 1
+		$result[0] | Should -Match '^ep[0-9a-z]+$'
 	}
-
-	It 'Returns series links from sitemap when episode only' {
-		$script:sitemapParseEpisodeOnly = $true
-		$result = Get-LinkFromSiteMap
-		$result.seriesLinks.Count | Should -Be 0
+	It 'トップページ(v2/callHome)からリンクが取得できること' {
+		$lc = New-TestLinkCollection
+		Get-LinkFromTopPage ([Ref]$lc) 3>$null
+		($lc.episodeLinks.Count + $lc.seriesLinks.Count) | Should -BeGreaterOrEqual 1
 	}
-
-	It 'Returns special links from sitemap when not episode only' {
-		$script:sitemapParseEpisodeOnly = $false
-		$result = Get-LinkFromSiteMap
-		$result.specialLinks.Count | Should -BeGreaterOrEqual 1
+	It 'カテゴリページからリンクが取得できること' {
+		$lc = New-TestLinkCollection
+		Get-LinkFromKeyword -id 'drama' -linkType 'category' -LinkCollection ([Ref]$lc)
+		($lc.episodeLinks.Count + $lc.seriesLinks.Count + $lc.specialMainLinks.Count) | Should -BeGreaterOrEqual 1
 	}
-
+	It 'シリーズからシーズンが取得できること' {
+		$lc = New-TestLinkCollection
+		Get-LinkFromKeyword -id 'sre2549ef6' -linkType 'seriesLinks' -LinkCollection ([Ref]$lc)
+		$lc.seasonLinks.Count | Should -BeGreaterOrEqual 1
+	}
+	It '番組情報が取得できること' {
+		$info = Get-VideoInfo -episodeID $script:liveEpisodeID
+		$info | Should -Not -BeNullOrEmpty
+		$info.episodeID | Should -BeExactly $script:liveEpisodeID
+		$info.seriesName | Should -Not -BeNullOrEmpty
+	}
 }

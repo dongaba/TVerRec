@@ -7,10 +7,14 @@ Import-Module Pester -MinimumVersion 5.0
 #----------------------------------------------------------------------
 BeforeAll {
 	Write-Host ('テストスクリプト: {0}' -f $PSCommandPath)
-	$targetFile = $PSCommandPath.Replace('test', 'src').Replace('.Test.ps1', '.ps1')
+	# * パスに「test」「src」「tver」を含むディレクトリ配下でも正しく解決できるよう、リポジトリルートから組み立てる
+	$script:repoRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+	$targetFile = Join-Path $script:repoRoot ('src/functions/{0}' -f (Split-Path $PSCommandPath -Leaf).Replace('.Test.ps1', '.ps1'))
 	Write-Host ('　テスト対象: {0}' -f $targetFile)
-	$script:libDir = Split-Path(Split-Path $targetFile.Replace('src', 'resources/lib') -Parent) -Parent
+	$script:libDir = Join-Path $script:repoRoot 'resources/lib'
 	$script:disableToastNotification = $false
+	# メッセージテーブル(Remove-File、Expand-Zipなどの警告・例外メッセージに必要)
+	$script:msg = (Get-Content -Path (Join-Path $script:repoRoot 'resources/lang/messages.json') -Raw | ConvertFrom-Json).'ja-JP'
 	. $targetFile
 	Write-Host ('　テスト対象の読み込みを行いました')
 }
@@ -113,20 +117,20 @@ Describe 'DateTime型をUNIX時間に変換' {
 #----------------------------------------------------------------------
 Describe 'ファイル名・ディレクトリ名に禁止文字の削除' {
 	It 'String型で返ってくること' {
-		Get-FileNameWoInvalidChars 'Test\Path/File\Name' | Should -BeOfType String
+		Get-FileNameWoInvalidChar 'Test\Path/File\Name' | Should -BeOfType String
 	}
 	It 'ファイル名から無効な文字を取り除くこと' {
 		$fileNameWithInvalidChars = 'test<file>|name?.txt'
 		$expectedResult = 'test-file-name-.txt'
-		Get-FileNameWoInvalidChars -Name $fileNameWithInvalidChars | Should -BeExactly $expectedResult
+		Get-FileNameWoInvalidChar -Name $fileNameWithInvalidChars | Should -BeExactly $expectedResult
 	}
 	It '無効な文字がなければ同じ名前を返すこと' {
 		$validName = 'valid-file_name.txt'
-		Get-FileNameWoInvalidChars -Name $validName | Should -BeExactly $validName
+		Get-FileNameWoInvalidChar -Name $validName | Should -BeExactly $validName
 	}
 	It '無効なファイル名文字をすべて削除すること' {
 		$nameWithInvalidChars = 'Invalid:Name*/?<>|'
-		$result = Get-FileNameWoInvalidChars -Name $nameWithInvalidChars
+		$result = Get-FileNameWoInvalidChar -Name $nameWithInvalidChars
 		$invalidChars = [IO.Path]::GetInvalidFileNameChars()
 		# Assert that none of the invalid characters are present in the result
 		foreach ($char in $invalidChars) {
@@ -138,25 +142,25 @@ Describe 'ファイル名・ディレクトリ名に禁止文字の削除' {
 	}
 	It '特定の無効なファイル名文字をハイフンに置き換えること' {
 		$nameWithSpecificChars = 'NameWith*Question?Mark<Greater>Than|Pipe'
-		Get-FileNameWoInvalidChars -Name $nameWithSpecificChars | Should -BeExactly 'NameWith-Question-Mark-Greater-Than-Pipe'
+		Get-FileNameWoInvalidChar -Name $nameWithSpecificChars | Should -BeExactly 'NameWith-Question-Mark-Greater-Than-Pipe'
 	}
 	It '名前から印字不可能な文字を取り除くこと' {
 		$nameWithNonPrintables = 'NameWith[]'
-		Get-FileNameWoInvalidChars -Name $nameWithNonPrintables | Should -BeExactly 'NameWith[]'
+		Get-FileNameWoInvalidChar -Name $nameWithNonPrintables | Should -BeExactly 'NameWith[]'
 	}
 	It 'ファイル名の*と?を-に置き換えること' {
 		$fileNameWithStarAndQuestion = 'file*name?.txt'
 		$expectedResult = 'file-name-.txt'
-		Get-FileNameWoInvalidChars -Name $fileNameWithStarAndQuestion | Should -BeExactly $expectedResult
+		Get-FileNameWoInvalidChar -Name $fileNameWithStarAndQuestion | Should -BeExactly $expectedResult
 	}
 	It '名前から印字不可能な文字を取り除くこと' {
 		$fileNameWithNonPrintableChars = "test`u{0016}file`u{0019}name.txt"
 		$expectedResult = 'testfilename.txt'
-		Get-FileNameWoInvalidChars -Name $fileNameWithNonPrintableChars | Should -BeExactly $expectedResult
+		Get-FileNameWoInvalidChar -Name $fileNameWithNonPrintableChars | Should -BeExactly $expectedResult
 	}
 	It '空文字列入力を処理すること' {
 		$emptyName = ''
-		Get-FileNameWoInvalidChars -Name $emptyName  | Should -BeExactly $emptyName
+		Get-FileNameWoInvalidChar -Name $emptyName  | Should -BeExactly $emptyName
 	}
 }
 
@@ -185,8 +189,8 @@ Describe '英数のみ全角→半角(カタカナは全角)' {
 	}
 	It '全角記号が半角記号になること' -TestCases @(
 		@{
-			Target   = '＠＃＄％＾＆＊－＋＿／［］｛｝（）＜＞　￥＼”；：．，'
-			Expected = '@#$%^&*-+_/[]{}()<> \\";:.,'
+			Target   = '＠＃＄％＾＆＊－＋＿／［］｛｝（）＜＞　￥＼；：．，'
+			Expected = '@#$%^&*-+_/[]{}()<> \\;:.,'
 		}
 	) {
 		Param ($Target, $Expected)
@@ -243,11 +247,13 @@ Describe 'いくつかの特殊文字を置換' {
 		@{Target = '"'     ; Expected = '' }
 		@{Target = '“'     ; Expected = '' }
 		@{Target = '”'     ; Expected = '' }
-		@{Target = ','     ; Expected = '' }
+		@{Target = ','     ; Expected = ',' }
 		@{Target = '?'     ; Expected = '？' }
 		@{Target = '!'     ; Expected = '！' }
-		@{Target = '/'     ; Expected = '-' }
-		@{Target = '\'     ; Expected = '-' }
+		@{Target = '/'     ; Expected = '／' }
+		@{Target = '\'     ; Expected = '＼' }
+		@{Target = "`u{2018}" ; Expected = "'" }
+		@{Target = "`u{2019}" ; Expected = "'" }
 		@{Target = '<'     ; Expected = '＜' }
 		@{Target = '>'     ; Expected = '＞' }
 	) {
@@ -256,7 +262,7 @@ Describe 'いくつかの特殊文字を置換' {
 	}
 	It '文字列から指定された文字を取り除くこと' {
 		$text = 'This is a "test" string, right?'
-		$expectedResult = 'This is a test string right？'
+		$expectedResult = 'This is a test string, right？'
 		Remove-SpecialCharacter -text $text | Should -BeExactly $expectedResult
 	}
 	It '空の文字列を扱えること' {
@@ -325,11 +331,9 @@ Describe '設定ファイルの行末コメントを削除' {
 Describe 'Remove-File Tests' {
 	Context 'シングルスレッド' {
 		BeforeAll {
-			Function Get-TestDrive {}
-			Mock Get-TestDrive { return 'TestPath' }
-
-			$testFolderPath = Join-Path (Get-TestDrive) 'TestFolder'
-			Remove-Item -Path (Get-TestDrive) -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
+			# * FileInfoに相対パスを渡すと.NETのカレントディレクトリ基準で解決されるため、絶対パスのTestDriveを使う
+			$testFolderPath = Join-Path $TestDrive 'TestFolder'
+			Remove-Item -Path $testFolderPath -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
 			New-Item -ItemType Directory -Path $testFolderPath | Out-Null
 			$script:enableMultithread = $false
 
@@ -362,18 +366,44 @@ Describe 'Remove-File Tests' {
 		}
 
 		AfterAll {
-			Remove-Item -Path (Get-TestDrive) -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
 			Remove-Variable -Name enableMultithread, condition, delPeriod -ErrorAction SilentlyContinue
+		}
+	}
+
+	Context 'パイプライン入力' {
+		BeforeAll {
+			$pipelineFolderPath = Join-Path $TestDrive 'PipelineFolder'
+			Remove-Item -Path $pipelineFolderPath -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
+			New-Item -ItemType Directory -Path $pipelineFolderPath | Out-Null
+			$script:enableMultithread = $false
+
+			$script:pipelineOldFiles = 1..2 | ForEach-Object {
+				$filePath = Join-Path $pipelineFolderPath ('{0}-pipe.txt' -f $_)
+				New-Item -ItemType File -Path $filePath | Out-Null
+				(Get-Item $filePath).LastWriteTime = (Get-Date).AddDays(-2)
+				$filePath
+			}
+			$script:pipelineNewFile = Join-Path $pipelineFolderPath '3-pipe.txt'
+			New-Item -ItemType File -Path $script:pipelineNewFile | Out-Null
+		}
+
+		It 'パイプライン入力で古いファイルだけを削除すること' {
+			Get-ChildItem -Path $pipelineFolderPath -File | Remove-File -delPeriod 1
+
+			foreach ($filePath in $script:pipelineOldFiles) { Test-Path $filePath | Should -BeFalse }
+			Test-Path $script:pipelineNewFile | Should -BeTrue
+		}
+
+		AfterAll {
+			Remove-Variable -Name enableMultithread, pipelineOldFiles, pipelineNewFile -Scope Script -ErrorAction SilentlyContinue
 		}
 	}
 
 	Context 'マルチスレッド' -Tag 'Multithread' {
 		BeforeAll {
-			Function Get-TestDrive {}
-			Mock Get-TestDrive { return 'TestPath' }
-
-			$testFolderPath = Join-Path (Get-TestDrive) 'TestFolder'
-			Remove-Item -Path (Get-TestDrive) -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
+			# * FileInfoに相対パスを渡すと.NETのカレントディレクトリ基準で解決されるため、絶対パスのTestDriveを使う
+			$testFolderPath = Join-Path $TestDrive 'TestFolder'
+			Remove-Item -Path $testFolderPath -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
 			New-Item -ItemType Directory -Path $testFolderPath | Out-Null
 			$script:enableMultithread = $true
 			$script:multithreadNum = 10
@@ -407,7 +437,6 @@ Describe 'Remove-File Tests' {
 		}
 
 		AfterAll {
-			Remove-Item -Path (Get-TestDrive) -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
 		}
 	}
 }
@@ -495,17 +524,12 @@ Describe 'ファイルのロック' {
 		$result.path | Should -Be $testPath
 		$script:fileStream[$testPath] | Should -Not -BeNullOrEmpty
 	}
-	It '既に自プロセスでロック取得済みの場合はロックを取得できないこと(Mac/Windows)' -Skip:($IsLinux) {
-		Lock-File -Path $testPath
+	It '既に自プロセスでロック取得済みの場合はロックを取得できないこと' {
+		# * .NET 6以降はLinuxでもFileShare.Noneによる排他が同一プロセス内で有効
+		Lock-File -Path $testPath | Out-Null
 		$result = Lock-File -Path $testPath
 		$result | Should -BeOfType [PSCustomObject]
 		$result.result | Should -BeFalse
-	}
-	It '既に自プロセスでロック取得済みの場合はロックを取得できること(Linux)' -Skip:(!$IsLinux) {
-		Lock-File -Path $testPath
-		$result = Lock-File -Path $testPath
-		$result | Should -BeOfType [PSCustomObject]
-		$result.result | Should -BeTrue
 	}
 	It '存在しないファイルのロック取得はできないこと' {
 		$nonExistentPath = 'NonExistentFile.txt'
@@ -514,23 +538,33 @@ Describe 'ファイルのロック' {
 		$result.path | Should -Be $nonExistentPath
 	}
 	It '他プロセスでロック取得している場合はロック取得できないこと' {
-		Start-Job -ScriptBlock {
-			$lockFilePath = 'multiple.lock'
-			$fileStream = [System.IO.File]::Open($lockFilePath, [System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
-			Start-Sleep -Seconds 60  # keep lock for 5 seconds
+		$lockFilePath = Join-Path $TestDrive 'multiple.lock'
+		New-Item -Path $lockFilePath -ItemType File -Force | Out-Null
+		$job = Start-Job -ArgumentList $lockFilePath -ScriptBlock {
+			Param ($path)
+			$fileStream = [System.IO.File]::Open($path, [System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+			Start-Sleep -Seconds 30
 			$fileStream.Close()
 		}
-		$result = Lock-File -path 'multiple.lock'
-		$result.result | Should -BeFalse
-		$result.path | Should -Be 'multiple.lock'
-
-		Wait-Job -State Completed
-		Unlock-File -path 'multiple.lock'
+		try {
+			# 別プロセスがロックを取得するまで待機(最大20秒)
+			$locked = $false
+			for ($i = 0 ; $i -lt 40 ; $i++) {
+				try { [System.IO.File]::Open($lockFilePath, 'Open', 'ReadWrite', 'None').Close() ; Start-Sleep -Milliseconds 500 }
+				catch { $locked = $true ; break }
+			}
+			$locked | Should -BeTrue -Because '別プロセスでロックが取得されている前提'
+			$result = Lock-File -path $lockFilePath
+			$result.result | Should -BeFalse
+			$result.path | Should -Be $lockFilePath
+		} finally {
+			Stop-Job -Job $job -ErrorAction SilentlyContinue
+			Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
+		}
 	}
 
 	AfterAll {
 		Remove-Item -Path $testPath -Force -ErrorAction SilentlyContinue | Out-Null
-		Remove-Item -Path 'multiple.lock' -Force -ErrorAction SilentlyContinue | Out-Null
 	}
 }
 
@@ -567,53 +601,39 @@ Describe 'ファイルのアンロック' {
 		$result = Unlock-File -Path 'nonexistent.lock'
 		$result.result | Should -BeFalse
 	}
-	It '他プロセスでロック取得したロックは解除できないこと' {
-		Start-Job -ScriptBlock {
-			$lockFilePath = 'multiple.lock'
-			$fileStream = [System.IO.File]::Open($lockFilePath, [System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
-			Start-Sleep -Seconds 60  # keep lock for 5 seconds
+	It '他プロセスが取得したロックには影響しないこと' {
+		$lockFilePath = Join-Path $TestDrive 'multiple.lock'
+		New-Item -Path $lockFilePath -ItemType File -Force | Out-Null
+		$job = Start-Job -ArgumentList $lockFilePath -ScriptBlock {
+			Param ($path)
+			$fileStream = [System.IO.File]::Open($path, [System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+			Start-Sleep -Seconds 30
 			$fileStream.Close()
 		}
-		$result = Unlock-File -path 'multiple.lock'
-		$result.result | Should -BeFalse
-		$result.path | Should -Be 'multiple.lock'
-
-		Wait-Job -State Completed
-		Unlock-File -path 'multiple.lock'
+		try {
+			# 別プロセスがロックを取得するまで待機(最大20秒)
+			$locked = $false
+			for ($i = 0 ; $i -lt 40 ; $i++) {
+				try { [System.IO.File]::Open($lockFilePath, 'Open', 'ReadWrite', 'None').Close() ; Start-Sleep -Milliseconds 500 }
+				catch { $locked = $true ; break }
+			}
+			$locked | Should -BeTrue -Because '別プロセスでロックが取得されている前提'
+			# * Unlock-Fileは自プロセスが取得したロックだけを解放し、他プロセスのロックには影響しない
+			$result = Unlock-File -path $lockFilePath
+			$result.path | Should -Be $lockFilePath
+			{ [System.IO.File]::Open($lockFilePath, 'Open', 'ReadWrite', 'None').Close() } | Should -Throw
+		} finally {
+			Stop-Job -Job $job -ErrorAction SilentlyContinue
+			Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
+		}
 	}
 
 	AfterAll {
-		Remove-Item -Path 'multiple.lock' -Force -ErrorAction SilentlyContinue | Out-Null
 	}
 }
 
 # endregion ファイルロック
 
-# region コンソール出力
-
-#----------------------------------------------------------------------
-# 色付きWrite-Output
-#----------------------------------------------------------------------
-Describe 'Out-Msg-Color テスト' {
-	BeforeAll {
-		Mock Write-Host {}
-	}
-
-	It '正しいテキストでWrite-Hostを呼び出す' {
-		Out-Msg-Color -text 'Hello, World!'
-		Assert-MockCalled -CommandName Write-Host -Times 1 -Scope It -ParameterFilter {
-			$Object -eq 'Hello, World!'
-		}
-	}
-	It 'noNLがtrueの場合、改行を出力しない。' {
-		Out-Msg-Color -text 'Hello, World!' -noNL $true
-		Assert-MockCalled -CommandName Write-Host -Times 1 -Scope It -ParameterFilter {
-			$NoNewline -eq $true
-		}
-	}
-}
-
-# endregion コンソール出力
 
 # region トースト通知
 
@@ -643,13 +663,21 @@ Describe 'Out-Msg-Color テスト' {
 # Base64画像の展開
 #----------------------------------------------------------------------
 Describe 'Base64画像の展開' {
-	It '無効なBase64文字列の場合は例外を投げる' {
-		$invalidBase64 = 'thisIsNotBase64'
-		{ ConvertFrom-Base64 -base64 $invalidBase64 } | Should -Throw
+	It '無効なBase64文字列の場合はエラーを出力して$nullを返すこと' {
+		$result = ConvertFrom-Base64 -base64 'thisIsNotBase64' -ErrorAction SilentlyContinue -ErrorVariable convertError
+		$result | Should -BeNullOrEmpty
+		$convertError | Should -Not -BeNullOrEmpty
 	}
 
-	It '空の文字列が渡された場合は例外を投げる' {
-		$emptyBase64 = ''
-		{ ConvertFrom-Base64 -base64 $emptyBase64 } | Should -Throw
+	It '空の文字列が渡された場合は例外を投げること' {
+		{ ConvertFrom-Base64 -base64 '' } | Should -Throw
+	}
+
+	It '有効なBase64文字列から画像を生成できること(Windows)' -Skip:(-not $IsWindows) {
+		Add-Type -AssemblyName PresentationCore
+		# 1x1ピクセルのPNG
+		$png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+		$result = ConvertFrom-Base64 -base64 $png
+		$result.PixelWidth | Should -Be 1
 	}
 }

@@ -143,6 +143,8 @@ function Get-VideoLinksFromKeyword {
 	[OutputType([System.Collections.Generic.List[String]])]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$keyword)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	# * 「lp/episodes/epxxxx」「lp/series/srxxxx」形式(TVerの共有URL由来)は「lp/」を除いて通常のIDとして扱う
+	$keyword = $keyword -replace '^lp/(?=(episodes|series)/)', ''
 	$linkCollection = [PSCustomObject]@{
 		episodeLinks     = @{}
 		seriesLinks      = New-Object System.Collections.Generic.List[String]
@@ -150,10 +152,13 @@ function Get-VideoLinksFromKeyword {
 		talentLinks      = New-Object System.Collections.Generic.List[String]
 		specialMainLinks = New-Object System.Collections.Generic.List[String]
 		specialLinks     = New-Object System.Collections.Generic.List[String]
+		categoryLinks    = New-Object System.Collections.Generic.List[String]
 	}
 	if ($keyword.IndexOf('/') -gt 0) {
 		$key = $keyword.split(' ')[0].split("`t")[0].Split('/')[0]
 		$tverID = Get-ContentWoComment(($keyword.Replace("$key/", '')).Trim())
+		# * 共有URL由来の「?p=0」「?play=feature」などのクエリ文字列やフラグメントを除去 (#301)
+		$tverID = ($tverID -split '[?#]')[0].TrimEnd('/')
 	} else { $key = '' ; $tverID = '' }
 	if (($keyword -eq 'sitemap') -or ($keyword -eq 'toppage')) { $key = $keyword }
 	Invoke-StatisticsCheck -Operation 'search' -TVerType $key -TVerID $tverID
@@ -290,6 +295,7 @@ function Get-LinkFromKeyword {
 	)
 	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $id)
 	$type = ''
+	$keyword = ''
 	# ベースURLをタイプに応じて設定
 	$baseURL = switch ($linkType) {
 		'seriesLinks' { ('https://platform-api.tver.jp/service/api/v1/callSeriesSeasons/{0}' -f $id) ; break }
@@ -305,7 +311,7 @@ function Get-LinkFromKeyword {
 			else { ('https://platform-api.tver.jp/service/api/v1/callEpisodeRankingDetail/{0}' -f $id) }
 			$type = 'ranking' ; break
 		}
-		'category' { 'https://platform-api.tver.jp/service/api/v1/callCategoryHome/{0}' -f $id; break }
+		'category' { ('https://platform-api.tver.jp/service/api/v1/callCategoryHome/{0}' -f $id) ; $type = 'category' ; break }
 		'keyword' { 'https://platform-api.tver.jp/service/api/v2/callKeywordSearch'; $type = 'keyword' ; $keyword = $id ; break }
 		default { Write-Warning $script:msg.InvalidTypeSpecified }
 	}
@@ -444,16 +450,21 @@ function Get-LinkFromTopPage {
 	[OutputType([Void])]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject][Ref]$linkCollection)
 	Write-Debug ('Dev - {0}' -f $MyInvocation.MyCommand.Name)
-	$callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v1/callHome'
+	# * v1/callHomeは2026年時点で空のresultを返すためv2を使用
+	$callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v2/callHome'
 	$callSearchURL = ('{0}?platform_uid={1}&platform_token={2}' -f $callSearchBaseURL, $script:platformUID, $script:platformToken)
 	try { $searchResults = Invoke-RestMethod -Uri $callSearchURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec }
 	catch { Write-Warning $script:msg.TopPageRetrievalFailed ; return }
-	foreach ($component in $searchResults.Result.Components) {
+	# * API仕様変更でresultが空になった場合(v1/callHome廃止時の挙動)に例外で止まらないようにする
+	try { $components = @($searchResults.Result.Components) } catch { $components = @() }
+	if ($components.Count -eq 0) { Write-Warning $script:msg.TopPageRetrievalFailed ; return }
+	foreach ($component in $components) {
 		switch ($component.Type) {
 			{ $_ -in @('horizontal', 'richHorizontal', 'ranking', 'talents', 'billboard', 'episodeRanking', 'newer', 'ender', 'talent', 'special', 'specialContent', 'topics', 'spikeRanking', 'seasonEpisode') } {
 				$contents = if ($component.Type -eq 'topics') { $component.Contents.Content.Content } else { $component.Contents }
 				foreach ($content in $contents) {
-					if ($content.Type -eq 'live') { break }
+					# * live/bannerはダウンロード対象外。breakだと残りのコンテンツを読み飛ばすためcontinue
+					if ($content.Type -in @('live', 'banner')) { continue }
 					switch ($content.Type) {
 						'episode' { $linkCollection.episodeLinks[$content.Content.Id] = $content.Content.EndAt ; break }
 						'series' { $linkCollection.seriesLinks.Add($content.Content.Id) ; break }
@@ -466,11 +477,12 @@ function Get-LinkFromTopPage {
 				}
 				break
 			}
-			{ $_ -in @('banner', 'resume', 'favorite') } { break }
+			# * ダウンロード対象を含まない(またはログインユーザー固有の)コンポーネント
+			{ $_ -in @('banner', 'resume', 'favorite', 'onAirLiveEpisode', 'watchingSeries', 'similarSeries', 'watchlistReminder', 'welcome') } { break }
 			default { Write-Warning ($script:msg.UnknownComponentType -f $component.Type) }
 		}
 	}
-	Remove-Variable -Name callSearchBaseURL, callSearchURL, searchResults, component, contents, content -ErrorAction SilentlyContinue
+	Remove-Variable -Name callSearchBaseURL, callSearchURL, searchResults, components, component, contents, content -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -516,7 +528,7 @@ function Get-LinkFromSiteMap {
 				switch ($tverID.type) {
 					'episodes' { if (-not $linkCollection.episodeLinks.ContainsKey($tverID.id)) { $linkCollection.episodeLinks[$tverID.id] = 0 } ; break }	# サイトマップにあるEpisodeはEndAtが不明なので0を設定
 					'series' { if (-not $script:sitemapParseEpisodeOnly) { if (-not $linkCollection.seriesLinks.Contains($tverID.id)) { $linkCollection.seriesLinks.Add($tverID.id) } } ; break }
-					'specials' { if (-not $script:sitemapParseEpisodeOnly) { if (-not $linkCollection.specialLinks.Contains($tverID.id)) { $linkCollection.specialLinks.Add($tverID.id) } } ; break }
+					'specials' { if (-not $script:sitemapParseEpisodeOnly) { if (-not $linkCollection.specialMainLinks.Contains($tverID.id)) { $linkCollection.specialMainLinks.Add($tverID.id) } } ; break }	# * specials/{specialMainID}/{specialID}の形式なのでMainIDとして扱う
 					'categories' { if (-not $script:sitemapParseEpisodeOnly) { if (-not $linkCollection.categoryLinks.Contains($tverID.id)) { $linkCollection.categoryLinks.Add($tverID.id) } } ; break }
 				}
 			}
@@ -525,19 +537,15 @@ function Get-LinkFromSiteMap {
 		}
 	}
 
-	# specialLinksとcategoryLinksの処理
-	if (-not $script:sitemapParseEpisodeOnly) {
-		$linkCollection.specialLinks | Select-Object -Unique | ForEach-Object {
-			Write-Information ($script:msg.ExtractingEpisodes -f (Get-Date), 'specials', $_)
-			Get-LinkFromKeyword -id $_ -linkType 'specialMainLinks' -LinkCollection ([Ref]$linkCollection)
+	# categoryLinksの処理 (specialMainLinks等は呼び出し元のループで処理される)
+	if ((-not $script:sitemapParseEpisodeOnly) -and ($linkCollection.categoryLinks.Count -ne 0)) {
+		foreach ($categoryID in @($linkCollection.categoryLinks | Select-Object -Unique)) {
+			Write-Information ($script:msg.ExtractingEpisodes -f (Get-Date), 'categories', $categoryID)
+			Get-LinkFromKeyword -id $categoryID -linkType 'category' -LinkCollection ([Ref]$linkCollection)
 		}
-
-		$linkCollection.categoryLinks | Select-Object -Unique | ForEach-Object {
-			Write-Information ($script:msg.ExtractingEpisodes -f (Get-Date), 'categories', $_)
-			Get-LinkFromKeyword -id $_ -linkType 'category' -LinkCollection ([Ref]$linkCollection)
-		}
+		$linkCollection.categoryLinks.Clear()
 	}
-	Remove-Variable -Name callSearchURL, searchResultsRaw, searchResults, url, tverID -ErrorAction SilentlyContinue
+	Remove-Variable -Name callSearchURL, searchResultsRaw, searchResults, url, tverID, categoryID -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -593,6 +601,39 @@ function Get-LinkFromMyPage {
 	}
 	Get-SearchResult -baseURL $baseURL -Type 'mypage' -RequireData $requireData -LoginRequired $loginRequired -LinkCollection ([Ref]$linkCollection)
 	Remove-Variable -Name baseURLPrefix, baseURL, requireData, loginRequired -ErrorAction SilentlyContinue
+}
+
+#----------------------------------------------------------------------
+# TVerの番組URLからエピソードIDを抽出
+#----------------------------------------------------------------------
+function Get-EpisodeIDFromURL {
+	<#
+		.SYNOPSIS
+			TVerの番組URLからエピソードIDを抽出します。
+
+		.DESCRIPTION
+			「https://tver.jp/episodes/epxxxxxxxx?p=0」のように、共有時にクエリ文字列や
+			フラグメントが付与されたURLや、「https://tver.jp/lp/episodes/epxxxxxxxx」形式のURLからも
+			エピソードIDのみを取り出します。
+			エピソードのURLでない場合(シリーズや特集のURLなど)は空文字を返します。
+
+		.PARAMETER url
+			TVerの番組URL。
+
+		.EXAMPLE
+			Get-EpisodeIDFromURL -url 'https://tver.jp/episodes/epuaqm8ooq?play=feature&p=0'
+			# epuaqm8ooq
+
+		.OUTPUTS
+			String
+	#>
+	[CmdletBinding()]
+	[OutputType([String])]
+	Param ([Parameter(Mandatory = $true)][AllowEmptyString()][String]$url)
+	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $url)
+	# * 「https://tver.jp/lp/episodes/epxxxx」形式(/episodes/へリダイレクトされる)にも対応
+	if ($url -match '^https?://(?:www\.)?tver\.jp/(?:lp/)?episodes?/(ep[0-9a-z]+)(?:[/?#]|$)') { return $matches[1] }
+	return ''
 }
 
 #----------------------------------------------------------------------
@@ -773,7 +814,7 @@ function Get-VideoInfo {
 	# シリーズ名がシーズン名を含む場合はシーズン名をクリア
 	if ($videoSeries -cmatch [RegEx]::Escape($videoSeason)) { $videoSeason = '' }
 	# エピソード番号を極力修正
-	if ((($videoEpisodeNum -eq 1) -or ($videoEpisodeNum % 10 -eq 0)) -and ($episodeName -imatch '([#|第|Episode|ep|Take|Vol|Part|Chapter|Flight|Karte|Case|Stage|Mystery|Ope|Story|Sign|Trap|Letter|Act]+\.?\s?)(\d+)(.*)')) { $videoEpisodeNum = $matches[2] }
+	if (($videoEpisodeNum -match '^\d+$') -and (([Int]$videoEpisodeNum -eq 1) -or ([Int]$videoEpisodeNum % 10 -eq 0)) -and ($episodeName -imatch '((?:#|第|Episode|ep|Take|Vol|Part|Chapter|Flight|Karte|Case|Stage|Mystery|Ope|Story|Sign|Trap|Letter|Act)+\.?\s?)(\d+)(.*)')) { $videoEpisodeNum = $matches[2] }
 	# エピソード番号が1桁の際は頭0埋めして2桁に
 	$videoEpisodeNum = $videoEpisodeNum.PadLeft(2, '0')
 	# 放送日を整形
@@ -843,19 +884,29 @@ function Get-JpIP {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# 日本に割り当てられているIPアドレスレンジの取得
 	$allCIDR = Import-Csv $script:jpIPList
+	# * ip-api.comに接続できない/レート制限(45req/min)にかかった場合に無限ループしないよう上限を設ける (#277)
+	$maxAttempts = 5
+	$attempt = 0
 	Do {
+		$attempt++
 		# ランダムなIPアドレスの取得
 		$randomCIDR = $allCIDR | Get-Random
 		$startIPArray = [System.Net.IPAddress]::Parse($randomCIDR[0].start).GetAddressBytes()
 		[Array]::Reverse($startIPArray) ; $startIPInt = [BitConverter]::ToUInt32($startIPArray, 0)
 		$endIPArray = [System.Net.IPAddress]::Parse($randomCIDR[0].end).GetAddressBytes()
 		[Array]::Reverse($endIPArray) ; $endIPInt = [BitConverter]::ToUInt32($endIPArray, 0)
-		$randomIPInt = $startIPInt + [UInt32](Get-Random -Maximum ($endIPInt - $startIPInt - 1)) + 1	# CIDR範囲の先頭と末尾を除く
+		# CIDR範囲の先頭と末尾を除く。範囲が極小(/31,/32)だとGet-Randomが例外になるため先頭IPを使う
+		$randomIPInt = if (($endIPInt - $startIPInt) -le 1) { $startIPInt } else { $startIPInt + [UInt32](Get-Random -Maximum ($endIPInt - $startIPInt - 1)) + 1 }
 		$randomIPArray = [System.BitConverter]::GetBytes($randomIPInt)
 		[Array]::Reverse($randomIPArray) ; $jpIP = [System.Net.IPAddress]::new($randomIPArray).ToString()
 		try { $check = Invoke-RestMethod -Uri ('http://ip-api.com/json/{0}?fields=16785410' -f $jpIP) -TimeoutSec $script:timeoutSec }
-		catch { $check = [pscustomobject]@{ CountryCode = '' } }
-	} While ($check.CountryCode -ne 'JP')
+		catch {
+			$check = [pscustomobject]@{ CountryCode = '' }
+			# * 接続できない場合はip-api.comによる検証を諦め、日本のIPレンジから選んだIPをそのまま使用する
+			if ($attempt -ge $maxAttempts) { Write-Debug 'ip-api.com verification skipped' ; break }
+			Start-Sleep -Seconds ([Math]::Min(2 * $attempt, 10))
+		}
+	} While (($check.CountryCode -ne 'JP') -and ($attempt -lt $maxAttempts * 4))
 	return $jpIP
-	Remove-Variable -Name allCIDR, randomCIDR, startIPArray, startIPInt, endIPArray, endIPInt, randomIPInt, randomIPArray, check -ErrorAction SilentlyContinue
+	Remove-Variable -Name allCIDR, maxAttempts, attempt, randomCIDR, startIPArray, startIPInt, endIPArray, endIPInt, randomIPInt, randomIPArray, check -ErrorAction SilentlyContinue
 }

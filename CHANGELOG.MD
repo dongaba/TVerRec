@@ -1,5 +1,33 @@
 # Change Log
 
+## [3.4.9](https://github.com/dongaba/TVerRec/releases/tag/v3.4.9)
+
+### 3.4.9 Added
+
+- TVerの番組URLからエピソードIDを抽出する`Get-EpisodeIDFromURL`を追加
+
+### 3.4.9 Changed
+
+- Dockerのベースイメージをサポート終了済みのubuntu:25.04からubuntu:24.04(LTS)に変更(あわせて`libicu76`を`libicu74`に変更) #293
+- `tver_functions.Test.ps1`を現行の関数構成に合わせて全面的に書き直し(モックテストと実接続テストを分離)
+- `common_functions.Test.ps1`、`initialize.Test.ps1`、`tverrec_functions.Test.ps1`を現行の仕様に合わせて修正
+  - `user_setting.ps1`がない環境(クローン直後やCI)でもテストを実行できるように変更
+  - テストを配置したパスに`test`や`src`などの文字列が含まれていてもテスト対象を正しく読み込めるように変更
+- `master`ブランチの修正(#272、#273、#275、Dependabotによる更新)を取り込み
+
+### 3.4.9 Fixed
+
+- TVerの仕様変更により、トップページ(`toppage`)からの番組取得が例外で停止する問題を修正(`v1/callHome`→`v2/callHome`)
+- トップページで`live`の後ろにあるコンテンツを取りこぼす問題を修正
+- 個別ダウンロードやキーワードファイルで`?p=0`などのクエリ文字列付きURLを指定すると400 (Bad Request)になる問題を修正 #301
+- カテゴリページの検索結果が取得できない問題を修正
+- サイトマップの特集ページを誤ったAPIで検索し404の警告が大量に出る問題を修正
+- ip-api.comに接続できない環境で起動時に無限ループする問題を修正 #277
+- Windows環境でyoutube-dl/ffmpegのプロセスが1個以下のときにプロセス数が常に0と判定され、並列数制御やダウンロード完了待ちが機能しないことがある問題を修正
+- `https://tver.jp/lp/episodes/...`形式のURLを個別ダウンロードやキーワードファイルで指定するとダウンロードできない問題を修正
+- `Remove-File`で削除条件(`-conditions`)を指定した場合にファイルが削除されない問題を修正
+- `common_functions.Test.ps1`が構文エラーで実行できなくなっていた問題を修正
+
 ## [3.4.8](https://github.com/dongaba/TVerRec/releases/tag/v3.4.8)
 
 ### 3.4.8 Added
@@ -11,7 +39,7 @@
 ### 3.4.8 Fixed
 
 - Ffmpegのメジャーバージョンアップに対応 #287
-- リスト作成時に対象番組が1検事にエラーとなる問題を修正 #269
+- リスト作成時に対象番組が1件時にエラーとなる問題を修正 #269
 
 ## [3.4.7](https://github.com/dongaba/TVerRec/releases/tag/v3.4.7)
 

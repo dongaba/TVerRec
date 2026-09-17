@@ -587,13 +587,13 @@ function Repair-HistoryFile {
 		$uniquedHist = $latestHists.Where({ $_.videoValidated -ne '3' })
 		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 		try { $uniquedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
-		catch { $originalLists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
+		catch { $latestHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
 		finally { Start-Sleep -Seconds 1 }
 	} catch {
 		Write-Warning ($script:msg.DistinctHistFailed)
 	} finally {
 		Unlock-File $script:histLockFilePath | Out-Null
-		Remove-Variable -Name originalLists, latestHists, uniquedHist -ErrorAction SilentlyContinue
+		Remove-Variable -Name latestHists, uniquedHist -ErrorAction SilentlyContinue
 	}
 }
 #endregion ダウンロード履歴関連
@@ -785,7 +785,7 @@ function Update-VideoList {
 	# TVerのAPIを叩いて番組情報取得
 	Invoke-StatisticsCheck -Operation 'getinfo' -TVerType 'link' -TVerID $episodeID
 	$videoInfo = Get-VideoInfo $episodeID
-	if ($null -eq $videoInfo) { Write-Warning ($script:msg.EpisodeInfoRetrievalFailed) ; continue }
+	if ($null -eq $videoInfo) { Write-Warning ($script:msg.EpisodeInfoRetrievalFailed) ; return }
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'keyword' -Value $keyword
 	# ダウンロード対象外に入っている番組の場合はリスト出力しない
 	$ignoreTitles = @(Read-IgnoreList)
@@ -810,7 +810,7 @@ function Update-VideoList {
 		$newVideo | Export-Csv -LiteralPath $script:listFilePath -Encoding UTF8 -Append
 		Write-Debug ($script:msg.ListWritten)
 	} catch {
-		Write-Warning ($script:msg.ListUpdateFailed) ; continue
+		Write-Warning ($script:msg.ListUpdateFailed) ; return
 	} finally {
 		Unlock-File $script:listLockFilePath | Out-Null
 		Remove-Variable -Name keyword, videoLink, ignoreWord, newVideo, ignore, episodeID, ignoreTitles, ignoreTitle -ErrorAction SilentlyContinue
@@ -1400,7 +1400,7 @@ function Get-YtdlProcessCount {
 	}
 	try {
 		switch ($true) {
-			$IsWindows { return [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name $processName).Count / 2, [MidpointRounding]::AwayFromZero ); break }
+			$IsWindows { return [Int][Math]::Round(@(Get-Process -ErrorAction Ignore -Name $processName).Count / 2, [MidpointRounding]::AwayFromZero ); break }	# * @()で囲まないとプロセスが0/1個のときStrictModeで例外になり常に0が返る
 			$IsLinux { return @(Get-Process -ErrorAction Ignore -Name $processName).Count ; break }
 			$IsMacOS { $psCmd = 'ps' ; return (& sh -c $psCmd | grep $processName | grep -v grep | grep -c ^).Trim() ; break }
 			default { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
@@ -1437,7 +1437,7 @@ function Get-FfmpegProcessCount {
 	$processName = 'ffmpeg'
 	try {
 		switch ($true) {
-			$IsWindows { return [Int][Math]::Round((Get-Process -ErrorAction Ignore -Name $processName).Count, [MidpointRounding]::AwayFromZero ); break }
+			$IsWindows { return @(Get-Process -ErrorAction Ignore -Name $processName).Count ; break }	# * @()で囲まないとプロセスが0/1個のときStrictModeで例外になる
 			$IsLinux { return @(Get-Process -ErrorAction Ignore -Name $processName).Count ; break }
 			$IsMacOS { $psCmd = 'ps' ; return (& sh -c $psCmd | grep $processName | grep -v grep | grep -c ^).Trim() ; break }
 			default { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
@@ -1639,12 +1639,12 @@ function Invoke-VideoDownload {
 	# TVerのAPIを叩いて番組情報取得
 	Invoke-StatisticsCheck -Operation 'getinfo' -TVerType 'link' -TVerID $episodeID
 	$videoInfo = Get-VideoInfo $episodeID
-	if ($null -eq $videoInfo) { Write-Warning ($script:msg.EpisodeInfoRetrievalFailed) ; continue }
+	if ($null -eq $videoInfo) { Write-Warning ($script:msg.EpisodeInfoRetrievalFailed) ; return }
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'keyword' -Value $keyword
 	# ダウンロードファイル名を生成
 	Format-VideoFileInfo ([Ref]$videoInfo)
 	# 番組タイトルが取得できなかった場合はスキップ次の番組へ
-	if (($videoInfo.fileName -eq '.mp4') -or ($videoInfo.fileName -eq '.ts')) { Write-Warning ($script:msg.EpisodeTitleRetrievalFailed) ; continue }
+	if (($videoInfo.fileName -eq '.mp4') -or ($videoInfo.fileName -eq '.ts')) { Write-Warning ($script:msg.EpisodeTitleRetrievalFailed) ; return }
 	# 番組情報のコンソール出力
 	Show-VideoInfo ([Ref]$videoInfo)
 	if ($DebugPreference -ne 'SilentlyContinue') { Show-VideoDebugInfo ([Ref]$videoInfo) }
@@ -1673,7 +1673,7 @@ function Invoke-VideoDownload {
 		#ダウンロード履歴ファイルのデータを読み込み
 		$histFileData = @(Get-LatestHistory)
 		if ($videoInfo.fileRelPath) { $histMatch = @($histFileData.Where({ $_.videoPath -eq $videoInfo.fileRelPath })) }
-		else { Write-Warning ($script:msg.FileNameRetrievalFailed) ; continue }
+		else { Write-Warning ($script:msg.FileNameRetrievalFailed) ; return }
 
 		if ($script:downloadWhenEpisodeIdChanged) {
 			if (($histMatch.Count -ne 0) -or (Test-Path $videoInfo.filePath)) {
@@ -1752,14 +1752,14 @@ function Invoke-VideoDownload {
 	try {
 		$newVideo | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append ; Start-Sleep -Seconds 1
 		Write-Debug ($script:msg.HistWritten)
-	} catch { Write-Warning ($script:msg.HistUpdateFailed) ; continue }
+	} catch { Write-Warning ($script:msg.HistUpdateFailed) ; return }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
 	# スキップ対象やダウンロード対象外は飛ばして次のファイルへ
-	if ($skipDownload) { continue }
+	if ($skipDownload) { return }
 	# 番組ディレクトリがなければ作成
 	if ($script:sortVideoBySeries -and !(Test-Path $videoInfo.fileDir -PathType Container)) {
 		try { New-Item -ItemType Directory -Path $videoInfo.fileDir -Force | Out-Null }
-		catch { Write-Warning ($script:msg.CreateEpisodeDirFailed) ; continue }
+		catch { Write-Warning ($script:msg.CreateEpisodeDirFailed) ; return }
 	}
 	# youtube-dl起動
 	if ($script:ytdlRandomIp -and $script:proxyUrl) {

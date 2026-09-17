@@ -197,9 +197,9 @@ function ConvertFrom-UnixTime {
 			- `.ToLocalTime()` を使用して、現在のタイムゾーンの時刻に変換します。
 			- `Remove-Variable` は変数の明示的な削除を試みますが、影響は限定的です。
 	#>
-	[CmdletBinding()]
-	[OutputType([Void])]
-	Param ([Parameter(Mandatory = $true)][int64]$UnixTime)
+        [CmdletBinding()]
+        [OutputType([datetime])]
+        Param ([Parameter(Mandatory = $true)][int64]$UnixTime)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$EpochDate = Get-Date -Year 1970 -Month 1 -Day 1 -Hour 0 -Minute 0 -Second 0 -AsUTC
 	return ($EpochDate.AddSeconds($UnixTime).ToLocalTime())
@@ -762,7 +762,7 @@ function Remove-File {
 							ForEach-Object { Write-Debug ($script:msg.DeleteTarget -f $_.FullName) ; $_.FullName }
 						}
 						# 並列処理の結果をまとめてリストに追加
-						if ($parallelResults) { $targetFiles.AddRange($parallelResults) }
+						if ($parallelResults) { $targetFiles.AddRange([String[]]@($parallelResults)) }	# * Object[]や単一のStringのままではList[String].AddRangeに渡せず例外になる
 					} catch { Write-Warning ($script:msg.FileCannotBeDeleted) }
 				} else {
 					try {
@@ -771,7 +771,7 @@ function Remove-File {
 							$files = Get-ChildItem -LiteralPath $basePath -Recurse -File -Filter $condition -ErrorAction SilentlyContinue |
 								Where-Object { $_.LastWriteTime -lt $limitDateTime } |
 								ForEach-Object { Write-Debug ($script:msg.DeleteTarget -f $_.FullName) ; $_.FullName }
-						if ($files) { $targetFiles.AddRange($files) }
+						if ($files) { $targetFiles.AddRange([String[]]@($files)) }	# * Object[]や単一のStringのままではList[String].AddRangeに渡せず例外になる
 					}
 				} catch { Write-Warning ($script:msg.FileCannotBeDeleted) }
 			}
