@@ -215,7 +215,7 @@ try {
 
 			# URLの種類に応じた処理
 			switch -Regex ($videoLink) {
-				'^https://tver\.jp/' {
+				'^https?://(?:www\.)?tver\.jp/' {
 					# TVer番組のダウンロード
 					Write-Output ('')
 					Write-Output ($script:msg.MediumBoldBorder)

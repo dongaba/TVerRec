@@ -13,14 +13,16 @@ Import-Module Pester -MinimumVersion 5.0
 # region BeforeAll
 BeforeAll {
 	Write-Host ('テストスクリプト: {0}' -f $PSCommandPath)
-	$targetFile = $PSCommandPath.Replace('test', 'src').Replace('.Test.ps1', '.ps1')
+	# * パスに「test」「src」「tver」を含むディレクトリ配下でも正しく解決できるよう、リポジトリルートから組み立てる
+	$script:repoRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+	$targetFile = Join-Path $script:repoRoot ('src/functions/{0}' -f (Split-Path $PSCommandPath -Leaf).Replace('.Test.ps1', '.ps1'))
 	Write-Host ('　テスト対象: {0}' -f $targetFile)
-	$script:scriptRoot = Convert-Path ./src
+	$script:scriptRoot = Convert-Path (Join-Path $script:repoRoot 'src')
 	Set-Location $script:scriptRoot
 	$script:disableToastNotification = $false
 	# メッセージテーブル(警告メッセージの書式に必要)
 	$script:msg = (Get-Content -Path (Join-Path $script:scriptRoot '../resources/lang/messages.json') -Raw | ConvertFrom-Json).'ja-JP'
-	. ($targetFile).Replace('tver', 'common')
+	. (Join-Path $script:repoRoot 'src/functions/common_functions.ps1')
 	function Invoke-StatisticsCheck {}
 	. $targetFile
 	Write-Host ('　テスト対象の読み込みを行いました')
@@ -105,11 +107,15 @@ Describe 'Get-EpisodeIDFromURL' {
 		@{ url = 'https://tver.jp/episodes/epuaqm8ooq?play=feature&p=0' ; expected = 'epuaqm8ooq' }
 		@{ url = 'https://tver.jp/episodes/epuaqm8ooq/' ; expected = 'epuaqm8ooq' }
 		@{ url = 'https://tver.jp/episodes/epuaqm8ooq#top' ; expected = 'epuaqm8ooq' }
+		@{ url = 'https://tver.jp/lp/episodes/epuaqm8ooq' ; expected = 'epuaqm8ooq' }
+		@{ url = 'https://tver.jp/lp/episodes/epuaqm8ooq?p=0' ; expected = 'epuaqm8ooq' }
+		@{ url = 'https://www.tver.jp/episodes/epuaqm8ooq' ; expected = 'epuaqm8ooq' }
 	) {
 		Get-EpisodeIDFromURL -url $url | Should -BeExactly $expected
 	}
 	It 'エピソード以外のURLでは空文字を返すこと: <url>' -ForEach @(
 		@{ url = 'https://tver.jp/series/sre2549ef6' }
+		@{ url = 'https://tver.jp/lp/f0033031' }
 		@{ url = 'https://tver.jp/episodes/' }
 		@{ url = 'https://example.com/episodes/epuaqm8ooq' }
 		@{ url = '' }
@@ -135,6 +141,14 @@ Describe 'Get-VideoLinksFromKeyword' {
 		}
 		It 'episodes指定でクエリ文字列やコメントを除去すること' {
 			Get-VideoLinksFromKeyword -keyword "episodes/epuaqm8ooq?p=0`t#コメント" | Should -BeExactly 'epuaqm8ooq'
+		}
+		It 'lp/episodes指定でもエピソードIDを返すこと' {
+			Get-VideoLinksFromKeyword -keyword 'lp/episodes/epuaqm8ooq?p=0' | Should -BeExactly 'epuaqm8ooq'
+			Should -Invoke Get-LinkFromKeyword -Times 0 -Exactly
+		}
+		It 'lp/series指定でもseriesLinksとして処理されること' {
+			Get-VideoLinksFromKeyword -keyword 'lp/series/sre2549ef6' | Out-Null
+			Should -Invoke Get-LinkFromKeyword -Times 1 -Exactly -ParameterFilter { $id -eq 'sre2549ef6' -and $linkType -eq 'seriesLinks' }
 		}
 		It 'series指定でseriesLinksとしてAPI呼び出しされること' {
 			Get-VideoLinksFromKeyword -keyword 'series/sre2549ef6?p=0' | Out-Null

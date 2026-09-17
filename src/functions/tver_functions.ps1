@@ -143,6 +143,8 @@ function Get-VideoLinksFromKeyword {
 	[OutputType([System.Collections.Generic.List[String]])]
 	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$keyword)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	# * 「lp/episodes/epxxxx」「lp/series/srxxxx」形式(TVerの共有URL由来)は「lp/」を除いて通常のIDとして扱う
+	$keyword = $keyword -replace '^lp/(?=(episodes|series)/)', ''
 	$linkCollection = [PSCustomObject]@{
 		episodeLinks     = @{}
 		seriesLinks      = New-Object System.Collections.Generic.List[String]
@@ -611,7 +613,8 @@ function Get-EpisodeIDFromURL {
 
 		.DESCRIPTION
 			「https://tver.jp/episodes/epxxxxxxxx?p=0」のように、共有時にクエリ文字列や
-			フラグメントが付与されたURLからもエピソードIDのみを取り出します。
+			フラグメントが付与されたURLや、「https://tver.jp/lp/episodes/epxxxxxxxx」形式のURLからも
+			エピソードIDのみを取り出します。
 			エピソードのURLでない場合(シリーズや特集のURLなど)は空文字を返します。
 
 		.PARAMETER url
@@ -628,7 +631,8 @@ function Get-EpisodeIDFromURL {
 	[OutputType([String])]
 	Param ([Parameter(Mandatory = $true)][AllowEmptyString()][String]$url)
 	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $url)
-	if ($url -match '^https?://(?:www\.)?tver\.jp/episodes/(ep[0-9a-z]+)(?:[/?#]|$)') { return $matches[1] }
+	# * 「https://tver.jp/lp/episodes/epxxxx」形式(/episodes/へリダイレクトされる)にも対応
+	if ($url -match '^https?://(?:www\.)?tver\.jp/(?:lp/)?episodes?/(ep[0-9a-z]+)(?:[/?#]|$)') { return $matches[1] }
 	return ''
 }
 

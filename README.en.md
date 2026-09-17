@@ -124,8 +124,8 @@ Directory structure is as follows.
     │
     ├─ resources/ ........................ Various Resources
     │  ├─ b64/ ........................... Images for GUI
-    │  ├─ colab/ ......................... Sample file for Gooble Colab
-    │  ├─ crx/ ........................... Gooble Chrome extension
+    │  ├─ colab/ ......................... Sample file for Google Colab
+    │  ├─ crx/ ........................... Google Chrome extension
     │  │  └─ TVerRecAssistant/ ............. TVerRec Assistant
     │  ├─ docker/ ........................ Sample for Docker
     │  │  ├─ docker-compose.yaml ........... docker-compose file
