@@ -13,7 +13,7 @@ function Compare-TVerRecMedia {
     [pscustomobject]@{Equivalent=([IO.File]::ReadAllText($SourcePath) -eq [IO.File]::ReadAllText($DestinationPath));Reason='video difference';Mode='fixture'}
 }
 try {
-    for($round=0;$round -lt 4;$round++){Move-TVerRecComparedFiles -SourceDirectory $source -DestinationDirectory $destination -FfmpegPath '' -FfprobePath '' -StateRoot $state -WarningAction SilentlyContinue}
+    for($round=0;$round -lt 4;$round++){Move-TVerRecComparedFile -SourceDirectory $source -DestinationDirectory $destination -FfmpegPath '' -FfprobePath '' -StateRoot $state -WarningAction SilentlyContinue}
     if(-not [IO.File]::Exists((Join-Path $source 'a.mp4'))){throw 'Different source removed'}
     if([IO.File]::Exists((Join-Path $source 'b.mp4'))){throw 'First unequal collision starved later matching file'}
     if([IO.File]::ReadAllText((Join-Path $destination 'b.mp4')) -ne 'SAME'){throw 'Matching destination changed'}

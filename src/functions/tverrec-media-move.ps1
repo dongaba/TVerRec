@@ -1,6 +1,6 @@
 . (Join-Path $PSScriptRoot 'tverrec-media-replace.ps1')
 
-function Move-TVerRecComparedFiles {
+function Move-TVerRecComparedFile {
     param([string]$SourceDirectory,[string]$DestinationDirectory,[string]$FfmpegPath,[string]$FfprobePath,[string]$StateRoot)
     if ([string]::IsNullOrWhiteSpace($SourceDirectory) -or [string]::IsNullOrWhiteSpace($DestinationDirectory)) { throw 'Move source/destination must not be empty.' }
     $source=[IO.Path]::GetFullPath($SourceDirectory)

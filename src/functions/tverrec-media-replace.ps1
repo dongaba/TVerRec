@@ -22,6 +22,7 @@ function Write-TVerRecReplacementManifest([string]$Path,[hashtable]$Record) {
 
 function Invoke-TVerRecMediaReplacement {
     [CmdletBinding()]
+    [OutputType([bool])]
     param([Parameter(Mandatory)][string]$SourcePath,[Parameter(Mandatory)][string]$DestinationPath,
         [string]$FfmpegPath,[string]$FfprobePath,[string]$StateRoot=(Join-Path $PSScriptRoot '../../db/media-replacement'))
     $gate=$null;$sourceGuard=$null;$destinationGuard=$null;$stage=$null;$backup=$null;$recovery=$null;$manifest=$null;$record=$null
@@ -107,12 +108,12 @@ function Invoke-TVerRecMediaReplacement {
         # Windows ReplaceFile requires access incompatible with the read guards.
         # Release at the last moment; validate the retired file and roll back below.
         $sourceGuard.Dispose();$sourceGuard=$null;$destinationGuard.Dispose();$destinationGuard=$null
-        Invoke-TVerRecAtomicReplace $stage $DestinationPath $backup
+        Invoke-TVerRecAtomicReplace -Stage $stage -Destination $DestinationPath -Backup $backup
         # FileShare.Delete permits atomic nameswaps. Validate what was actually retired,
         # then roll back an external nameswap instead of accepting an un-compared file.
         if((Get-FileHash -LiteralPath $backup -Algorithm SHA256).Hash -ne $destinationHash) {
             if((Get-FileHash -LiteralPath $DestinationPath -Algorithm SHA256).Hash -eq $sourceHash) {
-                Invoke-TVerRecAtomicReplace $backup $DestinationPath $stage
+                Invoke-TVerRecAtomicReplace -Stage $backup -Destination $DestinationPath -Backup $stage
             }
             throw "Replacement commit raced with destination update; recovery stage: $stage"
         }
