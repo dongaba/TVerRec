@@ -78,6 +78,7 @@ if ($script:scriptRoot.Contains(' ')) { throw '❌️ TVerRecはスペースを�
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # メイン処理
 Invoke-RequiredFileCheck
+if ($script:compareDuplicateVideos) { . (Join-Path $script:scriptRoot 'functions/tverrec-media-move.ps1') }
 Suspend-Process
 
 #======================================================================
@@ -195,7 +196,11 @@ if ($moveDirs) {
 		# 同名ディレクトリが存在する場合は配下のファイルを移動
 		if ((Test-Path -LiteralPath $moveFromPath) -and (Test-Path -LiteralPath $moveToPath)) {
 			Write-Output ('　{0}\* -> {1}' -f $moveFromPath, $moveToPath)
-			try { Get-ChildItem -LiteralPath $moveFromPath -File | Move-Item -Destination $moveToPath -Force | Out-Null }
+			try {
+				if ($script:compareDuplicateVideos) {
+					Move-TVerRecComparedFiles -SourceDirectory $moveFromPath -DestinationDirectory $moveToPath -FfmpegPath $script:ffmpegPath -FfprobePath $script:ffprobePath -StateRoot (Join-Path $script:dbDir 'media-replacement')
+				} else { Get-ChildItem -LiteralPath $moveFromPath -File | Move-Item -Destination $moveToPath -Force | Out-Null }
+			}
 			catch { Write-Warning ($script:msg.MoveFileFailed -f $moveFromPath) }
 		} else { Write-Warning ($script:msg.MoveFileNotAccessible -f $moveFromPath) }
 	}

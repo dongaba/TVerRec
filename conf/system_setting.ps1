@@ -14,6 +14,11 @@ $InformationPreference = 'Continue'
 #	基本的な設定
 #----------------------------------------------------------------------
 
+# 同名動画を比較して近似する新しい版のみ採用（旧版・原本コピーを退避）。
+# 有効にするには user_setting.ps1 に $script:compareDuplicateVideos = $true を設定。
+# 比較は最大1件/タイトルの移動、判定不能・差異ありは両方保持。
+$script:compareDuplicateVideos = $false
+
 # ダウンロード先のフルパス(絶対パス指定)
 #　ダウンロード先とは、ダウンロードが終わった動画ファイルが配置される場所です。
 #　例えばC:\Users\yamada-taro\Videoにダウンロードするのであれば
