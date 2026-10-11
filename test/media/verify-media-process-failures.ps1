@@ -27,6 +27,6 @@ Add-Type -TypeDefinition $csharp
 $failed=$false
 try{$null=[TVerRecStartupFixture.MediaComparison]::Audio($ffmpeg,$audio,$audio,30,480000,1)}catch{$failed=$true}
 if(-not $failed){throw 'Startup failure injection ineffective'}
-try{$process=[Diagnostics.Process]::GetProcessById([TVerRecStartupFixture.MediaComparison]::FirstPid);if(-not $process.HasExited){throw 'First decoder leaked after second startup failed'}}catch [ArgumentException]{}
+try{$process=[Diagnostics.Process]::GetProcessById([TVerRecStartupFixture.MediaComparison]::FirstPid);if(-not $process.HasExited){throw 'First decoder leaked after second startup failed'}}catch [ArgumentException]{Write-Verbose 'First decoder already exited and was reaped'}
 'PASS media process failures: early decoder failure, drain overflow, second-start cleanup'
 "Fixture evidence: $fixture"
