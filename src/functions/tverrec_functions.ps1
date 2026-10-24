@@ -1076,6 +1076,8 @@ function Get-LinkFromDownloadList {
 		} catch { throw ($script:msg.LoadFailed -f $script:msg.ListFile) }
 		finally { Unlock-File $script:listLockFilePath | Out-Null }
 	} else { $videoLinks = @() }
+	# 有効な行がない場合(ヘッダーのみ、またはすべてコメントアウト)は、StrictModeで空配列のプロパティ参照がエラーになるため、先に返す
+	if ($videoLinks.Count -eq 0) { return @() }
 	$episodeIDs = [string[]]$videoLinks.episodeID
 	return @($episodeIDs)
 }
@@ -1437,7 +1439,7 @@ function Read-KeywordList {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$keywords = @()
 	# コメントと空行を除いて抽出
-	try { $keywords = @((Get-Content $script:keywordFilePath -Encoding UTF8).Where({ $_ -notmatch '^\s*$|^#.*$' })) }
+	try { $keywords = @((Get-Content $script:keywordFilePath -Encoding UTF8 -ErrorAction Stop).Where({ $_ -notmatch '^\s*$|^#.*$' })) }
 	catch { throw ($script:msg.LoadFailed -f $script:msg.KeywordFile) }
 	return $keywords
 }
@@ -1570,7 +1572,8 @@ function Invoke-HistoryAndListMatchCheck {
 	# ダウンロード履歴ファイルのデータを読み込み
 	$histFileData = @(Get-LatestHistory)
 	$histFileData = @(Remove-SubtitleRecheckTarget $histFileData)	# 字幕の再確認の対象は「ダウンロード済み」に含めない
-	$histVideoID = if ($histFileData.Count -eq 0) { @() } else { @($histFileData.VideoPage.Replace('https://tver.jp/episodes/', '')) }
+	# 履歴が1件だけの場合に配列が文字列に展開されないよう、@()で包む
+	$histVideoID = @(if ($histFileData.Count -eq 0) { @() } else { $histFileData.VideoPage.Replace('https://tver.jp/episodes/', '') })
 	# ダウンロードリストとダウンロード履歴をマージ
 	if ($histVideoID) { $listVideoID.AddRange($histVideoID) }
 	# URLがすでにダウンロード履歴に存在する場合は検索結果から除外
