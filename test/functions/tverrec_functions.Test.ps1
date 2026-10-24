@@ -1208,23 +1208,31 @@ Describe 'ダウンロード済み・リスト登録済みの番組の除外' {
 
 	Context 'Invoke-ListMatchCheck' {
 		It 'ダウンロードリストにない番組だけを返し、登録済みの件数を数える(#で始まる対象外の番組も登録済みとして扱う)' {
-			$links = @('https://tver.jp/episodes/epAAAAAAAA', 'https://tver.jp/episodes/epBBBBBBBB', 'https://tver.jp/episodes/epNEW00001')
-			$videoLinks, $processedCount = Invoke-ListMatchCheck -resultLinks $links
-			@($videoLinks) | Should -Be @('https://tver.jp/episodes/epNEW00001')
-			$processedCount | Should -Be 2
-		}
-		It 'すべてが未登録なら、すべて返し、件数は0' {
-			$links = @('https://tver.jp/episodes/epNEW00001', 'https://tver.jp/episodes/epNEW00002')
-			$videoLinks, $processedCount = Invoke-ListMatchCheck -resultLinks $links
-			@($videoLinks).Count | Should -Be 2
-			$processedCount | Should -Be 0
-		}
-		# 実際の呼び出し元(generate_list.ps1)は、Get-VideoLinksFromKeywordが返すエピソードIDを渡すが、
-		# この関数は「https://tver.jp/episodes/ID」形式のURLと照合するため、IDでは登録済みの番組を除外できない。
-		It 'エピソードIDを渡した場合も、登録済みの番組を除外できる' -Skip:$true {
 			$videoLinks, $processedCount = Invoke-ListMatchCheck -resultLinks @('epAAAAAAAA', 'epBBBBBBBB', 'epNEW00001')
 			@($videoLinks) | Should -Be @('epNEW00001')
 			$processedCount | Should -Be 2
+		}
+		It 'すべてが未登録なら、すべて返し、件数は0' {
+			$videoLinks, $processedCount = Invoke-ListMatchCheck -resultLinks @('epNEW00001', 'epNEW00002')
+			@($videoLinks) | Should -Be @('epNEW00001', 'epNEW00002')
+			$processedCount | Should -Be 0
+		}
+		It 'すべてが登録済みなら、何も返さず、件数だけ数える' {
+			$videoLinks, $processedCount = Invoke-ListMatchCheck -resultLinks @('epAAAAAAAA', 'epBBBBBBBB')
+			@($videoLinks).Count | Should -Be 0
+			$processedCount | Should -Be 2
+		}
+		It 'ダウンロード履歴は見ない(履歴にあってもリストになければ未登録として返す)' {
+			Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value @($script:matchHistHeader, (Get-TestMatchHistRow 'epHIST00001'))
+			$videoLinks, $processedCount = Invoke-ListMatchCheck -resultLinks @('epHIST00001')
+			@($videoLinks) | Should -Be @('epHIST00001')
+			$processedCount | Should -Be 0
+		}
+		It 'ダウンロードリストが1件だけでも動作する' {
+			Set-Content -LiteralPath $script:listFilePath -Encoding UTF8 -Value @($script:matchListHeader, '"epAAAAAAAA","s1"')
+			$videoLinks, $processedCount = Invoke-ListMatchCheck -resultLinks @('epAAAAAAAA', 'epNEW00001')
+			@($videoLinks) | Should -Be @('epNEW00001')
+			$processedCount | Should -Be 1
 		}
 	}
 

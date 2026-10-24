@@ -1450,28 +1450,28 @@ function Read-KeywordList {
 function Invoke-HistoryMatchCheck {
 	<#
 		.SYNOPSIS
-			指定されたURLがダウンロード履歴に存在するかチェックし、未ダウンロードのURLのみを返します。
+			指定されたエピソードIDがダウンロード履歴に存在するかチェックし、未ダウンロードのエピソードIDのみを返します。
 
 		.DESCRIPTION
-			指定されたURLリストとダウンロード履歴を比較し、まだダウンロードされていない
-			URLのみを返します。また、既にダウンロード済みのURLの数も返します。
+			指定されたエピソードIDのリストとダウンロード履歴を比較し、まだダウンロードされていない
+			エピソードIDのみを返します。また、既にダウンロード済みのエピソードIDの数も返します。
 
 		.PARAMETER episodeLinks
-			チェック対象のURLリストを指定します。
+			チェック対象のエピソードIDのリストを指定します。
 
 		.OUTPUTS
 			[String[]]
-			未ダウンロードのURLの配列と、既にダウンロード済みのURLの数を含む配列。
+			未ダウンロードのエピソードIDの配列と、既にダウンロード済みのエピソードIDの数を含む配列。
 
 		.EXAMPLE
-			$result = Invoke-HistoryMatchCheck -episodeLinks @("https://tver.jp/...", "https://tver.jp/...")
+			$result = Invoke-HistoryMatchCheck -episodeLinks @("epXXXXXXXX", "epYYYYYYYY")
 
 		.NOTES
 			この関数は以下の処理を行います：
 			1. 最新のダウンロード履歴を取得
-			2. 履歴に存在するURLを抽出
-			3. 指定されたURLリストと履歴を比較
-			4. 未ダウンロードのURLとダウンロード済みの数を返す
+			2. 履歴に存在するエピソードIDを抽出
+			3. 指定されたエピソードIDのリストと履歴を比較
+			4. 未ダウンロードのエピソードIDとダウンロード済みの数を返す
 	#>
 	[OutputType([String[]])]
 	Param ([Parameter(Mandatory = $true)][String[]]$episodeLinks)
@@ -1480,7 +1480,7 @@ function Invoke-HistoryMatchCheck {
 	$histFileData = @(Get-LatestHistory)
 	$histFileData = @(Remove-SubtitleRecheckTarget $histFileData)	# 字幕の再確認の対象は「ダウンロード済み」に含めない
 	if ($histFileData.Count -eq 0) { $histVideoPages = @() } else { $histVideoPages = @($histFileData.videoPage.Replace('https://tver.jp/episodes/', '')) }
-	# URLがすでにダウンロード履歴に存在する場合は検索結果から除外
+	# エピソードIDがすでにダウンロード履歴に存在する場合は検索結果から除外
 	$histCompResult = @(Compare-Object -IncludeEqual $episodeLinks $histVideoPages)
 	try { $processedCount = ($histCompResult.Where({ $_.SideIndicator -eq '==' })).Count } catch { $processedCount = 0 }
 	try { $videoLinks = @($histCompResult.Where({ $_.SideIndicator -eq '<=' }).InputObject) } catch { $videoLinks = @() }
@@ -1494,41 +1494,42 @@ function Invoke-HistoryMatchCheck {
 function Invoke-ListMatchCheck {
 	<#
 		.SYNOPSIS
-			指定されたURLがダウンロードリストに存在するかチェックし、未登録のURLのみを返します。
+			指定されたエピソードIDがダウンロードリストに存在するかチェックし、未登録のエピソードIDのみを返します。
 
 		.DESCRIPTION
-			指定されたURLリストとダウンロードリストを比較し、まだ登録されていない
-			URLのみを返します。また、既に登録済みのURLの数も返します。
+			指定されたエピソードIDのリストとダウンロードリストを比較し、まだ登録されていない
+			エピソードIDのみを返します。また、既に登録済みのエピソードIDの数も返します。
 
 		.PARAMETER resultLinks
-			チェック対象のURLリストを指定します。
+			チェック対象のエピソードIDのリストを指定します。
 
 		.OUTPUTS
 			[String[]]
-			未登録のURLの配列と、既に登録済みのURLの数を含む配列。
+			未登録のエピソードIDの配列と、既に登録済みのエピソードIDの数を含む配列。
 
 		.EXAMPLE
-			$result = Invoke-ListMatchCheck -resultLinks @("https://tver.jp/...", "https://tver.jp/...")
+			$result = Invoke-ListMatchCheck -resultLinks @("epXXXXXXXX", "epYYYYYYYY")
 
 		.NOTES
 			この関数は以下の処理を行います：
 			1. ダウンロードリストファイルを読み込み
-			2. リストに存在するURLを抽出
-			3. 指定されたURLリストと比較
-			4. 未登録のURLと登録済みの数を返す
+			2. リストに存在するエピソードIDを抽出
+			3. 指定されたエピソードIDのリストと比較
+			4. 未登録のエピソードIDと登録済みの数を返す
 	#>
 	[OutputType([String[]])]
 	Param ([Parameter(Mandatory = $true)][Alias('links')][String[]]$resultLinks)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# ダウンロードリストファイルのデータを読み込み
 	$listFileData = @(Read-DownloadList)
-	$listVideoPages = New-Object System.Collections.Generic.List[String]
-	foreach ($item in $listFileData) { $listVideoPages.Add('https://tver.jp/episodes/{0}' -f $item.EpisodeID.Replace('#', '')) }
-	# URLがすでにダウンロード履歴に存在する場合は検索結果から除外
-	$listCompResult = @(Compare-Object -IncludeEqual $resultLinks $listVideoPages)
+	# エピソードIDで照合する(検索結果もダウンロードリストもエピソードID。#で始まるダウンロード対象外も登録済みとして扱う)
+	$listVideoIDs = New-Object System.Collections.Generic.List[String]
+	foreach ($item in $listFileData) { $listVideoIDs.Add($item.EpisodeID.Replace('#', '')) }
+	# エピソードIDがすでにダウンロードリストに存在する場合は検索結果から除外
+	$listCompResult = @(Compare-Object -IncludeEqual $resultLinks $listVideoIDs)
 	try { $processedCount = ($listCompResult.Where({ $_.SideIndicator -eq '==' })).Count } catch { $processedCount = 0 }
 	try { $videoLinks = @($listCompResult.Where({ $_.SideIndicator -eq '<=' }).InputObject) } catch { $videoLinks = @() }
-	Remove-Variable -Name resultLinks, listFileData, listVideoPages, listFileLine, listCompResult -ErrorAction SilentlyContinue
+	Remove-Variable -Name resultLinks, listFileData, listVideoIDs, listFileLine, listCompResult -ErrorAction SilentlyContinue
 	return @($videoLinks, $processedCount)
 }
 
@@ -1538,29 +1539,29 @@ function Invoke-ListMatchCheck {
 function Invoke-HistoryAndListMatchCheck {
 	<#
 		.SYNOPSIS
-			指定されたURLがダウンロードリストまたはダウンロード履歴に存在するかチェックし、未登録のURLのみを返します。
+			指定されたエピソードIDがダウンロードリストまたはダウンロード履歴に存在するかチェックし、未登録のエピソードIDのみを返します。
 
 		.DESCRIPTION
-			指定されたURLリストとダウンロードリスト、ダウンロード履歴を比較し、
-			まだ登録されていないURLのみを返します。また、既に登録済みのURLの数も返します。
+			指定されたエピソードIDのリストとダウンロードリスト、ダウンロード履歴を比較し、
+			まだ登録されていないエピソードIDのみを返します。また、既に登録済みのエピソードIDの数も返します。
 
 		.PARAMETER resultLinks
-			チェック対象のURLリストを指定します。
+			チェック対象のエピソードIDのリストを指定します。
 
 		.OUTPUTS
 			[String[]]
-			未登録のURLの配列と、既に登録済みのURLの数を含む配列。
+			未登録のエピソードIDの配列と、既に登録済みのエピソードIDの数を含む配列。
 
 		.EXAMPLE
-			$result = Invoke-HistoryAndListMatchCheck -resultLinks @("https://tver.jp/...", "https://tver.jp/...")
+			$result = Invoke-HistoryAndListMatchCheck -resultLinks @("epXXXXXXXX", "epYYYYYYYY")
 
 		.NOTES
 			この関数は以下の処理を行います：
 			1. ダウンロードリストファイルを読み込み
 			2. ダウンロード履歴ファイルを読み込み
 			3. 両方のリストをマージ
-			4. 指定されたURLリストと比較
-			5. 未登録のURLと登録済みの数を返す
+			4. 指定されたエピソードIDのリストと比較
+			5. 未登録のエピソードIDと登録済みの数を返す
 	#>
 	[OutputType([String[]])]
 	Param ([Parameter(Mandatory = $true)][Alias('links')][String[]]$resultLinks)
@@ -1576,7 +1577,7 @@ function Invoke-HistoryAndListMatchCheck {
 	$histVideoID = @(if ($histFileData.Count -eq 0) { @() } else { $histFileData.VideoPage.Replace('https://tver.jp/episodes/', '') })
 	# ダウンロードリストとダウンロード履歴をマージ
 	if ($histVideoID) { $listVideoID.AddRange($histVideoID) }
-	# URLがすでにダウンロード履歴に存在する場合は検索結果から除外
+	# エピソードIDがすでにダウンロード履歴に存在する場合は検索結果から除外
 	$listCompResult = Compare-Object -IncludeEqual $resultLinks $listVideoID
 	try { $processedCount = ($listCompResult.Where({ $_.SideIndicator -eq '==' })).Count } catch { $processedCount = 0 }
 	try { $videoLinks = @($listCompResult.Where({ $_.SideIndicator -eq '<=' }).InputObject) } catch { $videoLinks = @() }
