@@ -125,6 +125,9 @@ function Compare-Version {
 	return [Math]::Sign($remoteUnits.Count - $localUnits.Count)
 }
 
+#----------------------------------------------------------------------
+# PowerShellの新バージョンの確認
+#----------------------------------------------------------------------
 function Invoke-PowerShellUpdateCheck {
 	<#
 		.SYNOPSIS
@@ -420,6 +423,9 @@ function Invoke-TverrecPathCheck {
 	Remove-Variable -Name path, errorMessage, isFile, sampleFilePath, continue, pathType -ErrorAction SilentlyContinue
 }
 
+#----------------------------------------------------------------------
+# 作業ディレクトリとダウンロード先ディレクトリの重複判定
+#----------------------------------------------------------------------
 function Test-WorkDirOverlap {
 	<#
 		.SYNOPSIS
@@ -555,6 +561,9 @@ function Get-LatestHistory {
 	return $latestHists
 }
 
+#----------------------------------------------------------------------
+# 字幕の有無の記録と再ダウンロードが有効かの判定
+#----------------------------------------------------------------------
 function Test-SubtitleTrackingEnabled {
 	<#
 		.SYNOPSIS
@@ -572,6 +581,9 @@ function Test-SubtitleTrackingEnabled {
 	return [Boolean]($script:redownloadWhenSubtitleAdded -and $script:embedSubtitle -and ($script:videoContainerFormat -eq 'mp4'))
 }
 
+#----------------------------------------------------------------------
+# 番組の字幕の有無をyoutube-dlで確認
+#----------------------------------------------------------------------
 function Get-VideoSubtitleStatus {
 	<#
 		.SYNOPSIS
@@ -608,6 +620,9 @@ function Get-VideoSubtitleStatus {
 	} catch { Write-Debug $_ ; return '' }
 }
 
+#----------------------------------------------------------------------
+# 番組ファイルの字幕の有無をffprobeで確認
+#----------------------------------------------------------------------
 function Test-VideoFileHasSubtitle {
 	<#
 		.SYNOPSIS
@@ -635,6 +650,9 @@ function Test-VideoFileHasSubtitle {
 	finally { Remove-Item -LiteralPath $probeOutPath -Force -ErrorAction SilentlyContinue }
 }
 
+#----------------------------------------------------------------------
+# ダウンロード履歴にsubtitle列があるかの判定
+#----------------------------------------------------------------------
 function Test-HistorySubtitleColumn {
 	<#
 		.SYNOPSIS
@@ -655,6 +673,9 @@ function Test-HistorySubtitleColumn {
 	return $has
 }
 
+#----------------------------------------------------------------------
+# ダウンロード履歴にsubtitle列を追加
+#----------------------------------------------------------------------
 function Add-HistorySubtitleColumn {
 	<#
 		.SYNOPSIS
@@ -700,6 +721,9 @@ function Add-HistorySubtitleColumn {
 	}
 }
 
+#----------------------------------------------------------------------
+# ダウンロード履歴の字幕の有無を更新
+#----------------------------------------------------------------------
 function Set-HistorySubtitleStatus {
 	<#
 		.SYNOPSIS
@@ -711,6 +735,7 @@ function Set-HistorySubtitleStatus {
 		.PARAMETER Status
 			`1`: 字幕あり、`0`: 字幕なし、空文字: 不明
 	#>
+	[CmdletBinding(SupportsShouldProcess = $true)]
 	[OutputType([Void])]
 	Param (
 		[Parameter(Mandatory = $true)]$VideoHist,
@@ -718,6 +743,7 @@ function Set-HistorySubtitleStatus {
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if (!(Test-HistorySubtitleColumn)) { return }
+	if (!$PSCmdlet.ShouldProcess($script:histFilePath, 'Update subtitle status')) { return }
 	$record = $VideoHist.PSObject.Copy()
 	$record.subtitle = $Status
 	$record.downloadDate = Get-TimeStamp
@@ -727,6 +753,9 @@ function Set-HistorySubtitleStatus {
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
 }
 
+#----------------------------------------------------------------------
+# 字幕の再確認の対象をダウンロード済みから除外
+#----------------------------------------------------------------------
 function Remove-SubtitleRecheckTarget {
 	<#
 		.SYNOPSIS
@@ -742,6 +771,7 @@ function Remove-SubtitleRecheckTarget {
 		.OUTPUTS
 			[Object[]]
 	#>
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = '履歴のレコードを絞り込んで返すだけで、システムの状態は変更しない')]
 	[OutputType([Object[]])]
 	Param ([Parameter(Mandatory = $true)][AllowNull()][AllowEmptyCollection()][Object[]]$Hist)
 	if (!(Test-SubtitleTrackingEnabled)) { return @($Hist) }
@@ -1146,6 +1176,7 @@ function Update-VideoList {
 			2. 無視リストに登録されている番組を除外
 			3. ダウンロードリストをCSVファイルに出力
 	#>
+	[CmdletBinding(SupportsShouldProcess = $true)]
 	[OutputType([Void])]
 	Param (
 		[Parameter(Mandatory = $true)][String]$keyword,
@@ -1180,7 +1211,7 @@ function Update-VideoList {
 	# ダウンロードリストCSV書き出し
 	try {
 		Wait-FileLock $script:listLockFilePath
-		$newVideo | Export-Csv -LiteralPath $script:listFilePath -Encoding UTF8 -Append
+		if ($PSCmdlet.ShouldProcess($script:listFilePath, 'Add to download list')) { $newVideo | Export-Csv -LiteralPath $script:listFilePath -Encoding UTF8 -Append }
 		Write-Debug ($script:msg.ListWritten)
 	} catch {
 		Write-Warning ($script:msg.ListUpdateFailed) ; return
@@ -1332,6 +1363,7 @@ function Update-IgnoreList {
 			5. リストを更新
 			6. ロックを解除
 	#>
+	[CmdletBinding(SupportsShouldProcess = $true)]
 	[OutputType([Void])]
 	Param ([Parameter(Mandatory = $true)][String]$ignoreTitle)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -1340,7 +1372,7 @@ function Update-IgnoreList {
 	$ignoreTarget = @()
 	$ignoreElse = @()
 	$ignoreListNew = @()
-	if (Test-Path $script:ignoreFilePath -PathType Leaf) {
+	if ((Test-Path $script:ignoreFilePath -PathType Leaf) -and $PSCmdlet.ShouldProcess($script:ignoreFilePath, 'Update ignore list')) {
 		try {
 			Wait-FileLock $script:ignoreLockFilePath
 			$ignoreLists = @((Get-Content $script:ignoreFilePath -Encoding UTF8).Where( { $_ -notmatch '^\s*$|^(;;.*)$' }))
@@ -1826,6 +1858,9 @@ function Invoke-NonTverYtdl {
 	Remove-Variable -Name videoPageURL, tmpDir, baseDir, subttlDir, thumbDir, chaptDir, descDir, saveFile, ytdlArgs, ytdlArgsString, rateLimit, startProcessParams, ytdlProcess -ErrorAction SilentlyContinue
 }
 
+#----------------------------------------------------------------------
+# 実行ファイルのパスごとのプロセス数を取得
+#----------------------------------------------------------------------
 function Get-ProcessCountByPath {
 	<#
 		.SYNOPSIS
@@ -3191,6 +3226,9 @@ function Invoke-StatisticsCheck {
 #endregion 環境
 
 #region 番組ファイル移動関連
+#----------------------------------------------------------------------
+# ディレクトリのパスを末尾のフォルダ名ごとにグループ化
+#----------------------------------------------------------------------
 function Group-DirectoryPathByLeaf {
 	<#
 		.SYNOPSIS

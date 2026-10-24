@@ -78,6 +78,29 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
 # Zipファイルを解凍
 #----------------------------------------------------------------------
 function Expand-Zip {
+	<#
+		.SYNOPSIS
+			Zipファイルを解凍します。
+
+		.DESCRIPTION
+			指定したZipファイルを、指定したディレクトリに解凍します。
+			解凍先に同名のファイルがある場合は上書きします。
+
+		.PARAMETER path
+			解凍するZipファイルのパスを指定します。
+
+		.PARAMETER destination
+			解凍先のディレクトリのパスを指定します。
+
+		.OUTPUTS
+			[Void]
+
+		.EXAMPLE
+			Expand-Zip -Path "./ffmpeg.zip" -Destination "./bin"
+
+		.NOTES
+			Zipファイルが存在しない場合は例外を発生させます。
+	#>
 	[CmdletBinding()]
 	[OutputType([Void])]
 	Param (

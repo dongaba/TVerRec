@@ -96,8 +96,28 @@ $toastShowParams = @{
 }
 Show-ProgressToast @toastShowParams
 
-# プラットフォームに応じたディレクトリ一覧を取得する関数
+#----------------------------------------------------------------------
+# プラットフォームに応じたディレクトリ一覧を取得
+#----------------------------------------------------------------------
 function Get-DirectoriesWithPlatformCheck {
+	<#
+		.SYNOPSIS
+			指定したパス配下のディレクトリを、サブディレクトリを含めてすべて取得します。
+
+		.DESCRIPTION
+			Windowsでは、PowerShellがジャンクションを展開できないため、cmd.exeのdirコマンドでジャンクションを解決して取得します。
+			Linux/Macでは、findコマンドで取得します。
+
+		.PARAMETER paths
+			検索するディレクトリのパスを配列で指定します。
+
+		.OUTPUTS
+			[Collections.Generic.List[String]]
+			取得したディレクトリのフルパスの一覧。
+
+		.EXAMPLE
+			$dirs = Get-DirectoriesWithPlatformCheck -Paths @($script:downloadBaseDir)
+	#>
 	Param ([String[]]$paths)
 	$results = New-Object System.Collections.Generic.List[String]
 	if ($IsWindows) {
