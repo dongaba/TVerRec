@@ -159,7 +159,7 @@ Write-Output ($script:msg.JpIPFound -f $script:jpIP)
 $script:commonHttpHeader = @{
 	'x-tver-platform-type' = 'web'
 	'Origin'               = 'https://tver.jp'
-	'Referer'              = 'https://tver.jp'
+	'Referer'              = 'https://tver.jp/'
 	'Forwarded'            = $script:jpIP
 	'Forwarded-For'        = $script:jpIP
 	'X-Forwarded'          = $script:jpIP

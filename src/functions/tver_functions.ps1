@@ -377,7 +377,7 @@ function Get-SearchResult {
 	if ($loginRequired) { $callSearchURL = '{0}?member_sid={1}' -f $baseURL, $sid }						# TVerIDにログインして使う場合
 	else { $callSearchURL = '{0}?platform_uid={1}&platform_token={2}' -f $baseURL, $uid, $token }		# TVerIDを匿名で使う場合
 	switch ($type) {
-		'keyword' { if ($keyword) { $callSearchURL += "&keyword=$keyword" } ; break }
+		'keyword' { if ($keyword) { $callSearchURL += ('&keyword={0}' -f [Uri]::EscapeDataString($keyword)) } ; break }	# * 「King & Prince」のように「&」「#」を含む語が途中で切れないようURLエンコード
 		'mypage' { if ($requireData) { $callSearchURL += "&require_data=$requireData" } ; break }
 		default {}
 	}
@@ -478,7 +478,7 @@ function Get-LinkFromTopPage {
 				break
 			}
 			# * ダウンロード対象を含まない(またはログインユーザー固有の)コンポーネント
-			{ $_ -in @('banner', 'resume', 'favorite', 'onAirLiveEpisode', 'watchingSeries', 'similarSeries', 'watchlistReminder', 'welcome') } { break }
+			{ $_ -in @('banner', 'resume', 'favorite', 'onAirLiveEpisode', 'watchingSeries', 'similarSeries', 'watchlistReminder', 'welcome', 'channel') } { break }
 			default { Write-Warning ($script:msg.UnknownComponentType -f $component.Type) }
 		}
 	}
@@ -597,7 +597,7 @@ function Get-LinkFromMyPage {
 		'later' { $baseURL = ('{0}/service/api/v2/callMyLater' -f $baseURLPrefix) ; $requireData = $page ; break }
 		'resume' { $baseURL = ('{0}/service/api/v2/callMyResume' -f $baseURLPrefix) ; $requireData = $page ; break }
 		'favorite' { $baseURL = ('{0}/service/api/v2/callMyFavorite' -f $baseURLPrefix) ; $requireData = 'mylist' ; break }
-		default { Write-Warning ($script:msg.UnknownContentsType -f 'mypage', $page) }
+		default { Write-Warning ($script:msg.UnknownContentsType -f 'mypage', $page) ; return }
 	}
 	Get-SearchResult -baseURL $baseURL -Type 'mypage' -RequireData $requireData -LoginRequired $loginRequired -LinkCollection ([Ref]$linkCollection)
 	Remove-Variable -Name baseURLPrefix, baseURL, requireData, loginRequired -ErrorAction SilentlyContinue
@@ -716,7 +716,8 @@ function Get-VideoInfo {
 	# 放送日
 	$broadcastDate = (($response.Result.Episode.Content.BroadcastDateLabel).Replace('ほか', '').Replace('放送分', '放送').Replace('配信分', '配信')).Trim()
 	# 配信終了日時
-	$endTime = (ConvertFrom-UnixTime ($response.Result.Episode.Content.EndAt)).AddHours(9)
+	# * 実行環境のタイムゾーンに依存せず常に日本時間(JST)で扱う。ローカル時刻変換後に+9hするとJST環境で9時間ずれる
+	$endTime = [DateTimeOffset]::FromUnixTimeSeconds([Int64]$response.Result.Episode.Content.EndAt).ToOffset([TimeSpan]::FromHours(9)).DateTime
 	#----------------------------------------------------------------------
 	# 番組説明
 	try {

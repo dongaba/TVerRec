@@ -233,6 +233,7 @@ $script:commonHttpHeader = @{
 	'Forwarded-For'        = $script:jpIP
 	'X-Forwarded'          = $script:jpIP
 	'X-Forwarded-For'      = $script:jpIP
+	'X-Originating-IP'     = $script:jpIP
 }
 
 # ロックファイル用
