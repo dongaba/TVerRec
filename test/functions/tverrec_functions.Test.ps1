@@ -885,3 +885,434 @@ Describe 'Invoke-VideoDownloadの字幕の分岐(#312)' {
 		$script:ytdlCalls | Should -Be 1
 	}
 }
+
+#----------------------------------------------------------------------
+# バージョン比較
+#----------------------------------------------------------------------
+Describe 'Compare-Version' {
+	It 'remote=<remote> と local=<local> を比較すると <expected>' -ForEach @(
+		@{ remote = '1.2.3' ; local = '1.2.3' ; expected = 0 }
+		@{ remote = '1.2.4' ; local = '1.2.3' ; expected = 1 }
+		@{ remote = '1.2.3' ; local = '1.2.4' ; expected = -1 }
+		@{ remote = '1.10' ; local = '1.9' ; expected = 1 }	# 文字列ではなく数値として比較する
+		@{ remote = '1.9' ; local = '1.10' ; expected = -1 }
+		@{ remote = '3.4.10' ; local = '3.4.9' ; expected = 1 }
+		@{ remote = '2' ; local = '1.9.9' ; expected = 1 }
+		@{ remote = '1.2' ; local = '1.2.3' ; expected = -1 }	# 前半が同じなら、ユニット数が多い方が新しい
+		@{ remote = '1.2.3' ; local = '1.2' ; expected = 1 }
+	) {
+		Compare-Version -remote $remote -local $local | Should -Be $expected
+	}
+}
+
+#----------------------------------------------------------------------
+# ダウンロード履歴ファイルの整理(Optimize / Limit / Repair)
+#----------------------------------------------------------------------
+Describe 'ダウンロード履歴ファイルの整理' {
+	BeforeAll {
+		$script:histSaved = @{}
+		foreach ($n in 'histFilePath', 'histLockFilePath') {
+			$script:histSaved[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' }
+		}
+		$script:histTestHeader = '"videoPage","videoSeriesPage","genre","series","season","title","media","broadcastDate","downloadDate","videoDir","videoName","videoPath","videoValidated","subtitle"'
+		function script:Get-TestHistRow {
+			Param ([String]$Id, [String]$Date, [String]$Validated = '1')
+			return ('"https://tver.jp/episodes/{0}"' -f $Id) + (',""' * 7) + (',"{0}"' -f $Date) + (',""' * 3) + (',"{0}"' -f $Validated) + ',""'
+		}
+		$script:dateFormat = 'yyyy-MM-dd HH:mm:ss'
+	}
+	AfterAll {
+		foreach ($n in $script:histSaved.Keys) {
+			if ($script:histSaved[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:histSaved[$n] }
+		}
+	}
+	BeforeEach {
+		Mock Wait-FileLock {}
+		Mock Unlock-File {}
+		Mock Start-Sleep {}
+		$script:histTestDir = Join-Path $TestDrive ('hist{0}' -f [Guid]::NewGuid().ToString('N'))
+		New-Item -ItemType Directory -Path $script:histTestDir -Force | Out-Null
+		$script:histFilePath = Join-Path $script:histTestDir 'history.csv'
+		$script:histLockFilePath = Join-Path $script:histTestDir 'history.lock'
+		$script:now = Get-Date
+	}
+
+	Context 'Optimize-HistoryFile' {
+		It 'NULL文字を含む行を取り除く' {
+			$good1 = Get-TestHistRow -Id 'epAAAAAAAA' -Date $script:now.ToString($script:dateFormat)
+			$good2 = Get-TestHistRow -Id 'epBBBBBBBB' -Date $script:now.ToString($script:dateFormat)
+			Set-Content -LiteralPath $script:histFilePath -Value @($script:histTestHeader, $good1, "broken`0line", $good2) -Encoding UTF8
+			Optimize-HistoryFile 3>$null
+			(Get-Content -LiteralPath $script:histFilePath -Raw) | Should -Not -Match "`0"
+			$rows = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+			$rows.Count | Should -Be 2
+			$rows.videoPage | Should -Be @('https://tver.jp/episodes/epAAAAAAAA', 'https://tver.jp/episodes/epBBBBBBBB')
+		}
+		It 'videoValidatedが整数でない行と、downloadDateが日付でない行を取り除く' {
+			$date = $script:now.ToString($script:dateFormat)
+			Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value @(
+				$script:histTestHeader
+				(Get-TestHistRow -Id 'epOK000001' -Date $date -Validated '1')
+				(Get-TestHistRow -Id 'epBadVal01' -Date $date -Validated 'abc')
+				(Get-TestHistRow -Id 'epEmptyVal' -Date $date -Validated '')
+				(Get-TestHistRow -Id 'epBadDate1' -Date 'invalid')
+				(Get-TestHistRow -Id 'epBadDate2' -Date '2026-13-45 00:00:00')
+			)
+			Optimize-HistoryFile 3>$null
+			$rows = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+			$rows.Count | Should -Be 1
+			$rows[0].videoPage | Should -Be 'https://tver.jp/episodes/epOK000001'
+		}
+		It '問題のない履歴は内容を変えない' {
+			$date = $script:now.ToString($script:dateFormat)
+			Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value @($script:histTestHeader, (Get-TestHistRow -Id 'epAAAAAAAA' -Date $date -Validated '0'), (Get-TestHistRow -Id 'epBBBBBBBB' -Date $date -Validated '3'))
+			Optimize-HistoryFile 3>$null
+			$rows = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+			$rows.Count | Should -Be 2
+			$rows[0].videoValidated | Should -Be '0'
+			$rows[1].videoValidated | Should -Be '3'
+			$rows[0].downloadDate | Should -Be $date
+		}
+		It '処理の前後でロックを取得・解除する' {
+			Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value @($script:histTestHeader, (Get-TestHistRow -Id 'epAAAAAAAA' -Date $script:now.ToString($script:dateFormat)))
+			Optimize-HistoryFile 3>$null
+			Should -Invoke Wait-FileLock -Times 2 -Exactly
+			Should -Invoke Unlock-File -Times 2 -Exactly
+		}
+	}
+
+	Context 'Limit-HistoryFile' {
+		It '指定日数より前の履歴を取り除き、期間内の履歴は残す' {
+			Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value @(
+				$script:histTestHeader
+				(Get-TestHistRow -Id 'epRecent01' -Date $script:now.AddDays(-10).ToString($script:dateFormat))
+				(Get-TestHistRow -Id 'epOld00001' -Date $script:now.AddDays(-40).ToString($script:dateFormat))
+				(Get-TestHistRow -Id 'epToday001' -Date $script:now.ToString($script:dateFormat))
+			)
+			Limit-HistoryFile -retentionPeriod 30 3>$null
+			$rows = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+			$rows.videoPage | Should -Be @('https://tver.jp/episodes/epRecent01', 'https://tver.jp/episodes/epToday001')
+		}
+		It '保持期間が短ければ、より新しい履歴も取り除く' {
+			Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value @(
+				$script:histTestHeader
+				(Get-TestHistRow -Id 'epRecent01' -Date $script:now.AddDays(-10).ToString($script:dateFormat))
+				(Get-TestHistRow -Id 'epToday001' -Date $script:now.ToString($script:dateFormat))
+			)
+			Limit-HistoryFile -retentionPeriod 5 3>$null
+			$rows = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+			$rows.Count | Should -Be 1
+			$rows[0].videoPage | Should -Be 'https://tver.jp/episodes/epToday001'
+		}
+		It '日付を解釈できない行がある場合は、履歴を変更しない' {
+			$lines = @($script:histTestHeader, (Get-TestHistRow -Id 'epRecent01' -Date $script:now.AddDays(-10).ToString($script:dateFormat)), (Get-TestHistRow -Id 'epBadDate1' -Date 'invalid'))
+			Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value $lines
+			$before = Get-Content -LiteralPath $script:histFilePath -Raw
+			{ Limit-HistoryFile -retentionPeriod 30 3>$null } | Should -Not -Throw
+			Get-Content -LiteralPath $script:histFilePath -Raw | Should -Be $before
+		}
+		It '失敗してもロックを解除する' {
+			Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value @($script:histTestHeader, (Get-TestHistRow -Id 'epBadDate1' -Date 'invalid'))
+			Limit-HistoryFile -retentionPeriod 30 3>$null
+			Should -Invoke Unlock-File -Times 1 -Exactly
+		}
+	}
+
+	Context 'Repair-HistoryFile' {
+		It 'videoPageが重複している場合は、最新のdownloadDateのレコードだけ残す' {
+			Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value @(
+				$script:histTestHeader
+				(Get-TestHistRow -Id 'epAAAAAAAA' -Date '2026-01-01 00:00:00' -Validated '0')
+				(Get-TestHistRow -Id 'epBBBBBBBB' -Date '2026-01-02 00:00:00' -Validated '1')
+				(Get-TestHistRow -Id 'epAAAAAAAA' -Date '2026-01-03 00:00:00' -Validated '1')
+			)
+			Repair-HistoryFile 3>$null
+			$rows = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+			$rows.Count | Should -Be 2
+			($rows.Where({ $_.videoPage -like '*epAAAAAAAA' })).downloadDate | Should -Be '2026-01-03 00:00:00'
+			($rows.Where({ $_.videoPage -like '*epAAAAAAAA' })).videoValidated | Should -Be '1'
+		}
+		It '最新のレコードがvideoValidated=3(検証失敗)の番組は、履歴から取り除く' {
+			Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value @(
+				$script:histTestHeader
+				(Get-TestHistRow -Id 'epAAAAAAAA' -Date '2026-01-01 00:00:00' -Validated '1')
+				(Get-TestHistRow -Id 'epAAAAAAAA' -Date '2026-01-02 00:00:00' -Validated '3')
+				(Get-TestHistRow -Id 'epBBBBBBBB' -Date '2026-01-02 00:00:00' -Validated '1')
+			)
+			Repair-HistoryFile 3>$null
+			$rows = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+			$rows.Count | Should -Be 1
+			$rows[0].videoPage | Should -Be 'https://tver.jp/episodes/epBBBBBBBB'
+		}
+		It '全件が取り除かれても、CSVのヘッダーを残す' {
+			Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value @($script:histTestHeader, (Get-TestHistRow -Id 'epAAAAAAAA' -Date '2026-01-01 00:00:00' -Validated '3'))
+			Repair-HistoryFile 3>$null
+			@(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Count | Should -Be 0
+			(Get-Content -LiteralPath $script:histFilePath -TotalCount 1) | Should -Match 'videoPage'
+			# 次の追記を読み取れること
+			Add-Content -LiteralPath $script:histFilePath -Value (Get-TestHistRow -Id 'epCCCCCCCC' -Date '2026-02-01 00:00:00') -Encoding UTF8
+			@(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)[0].videoPage | Should -Be 'https://tver.jp/episodes/epCCCCCCCC'
+		}
+		It '直前の履歴を.bakに退避し、一時ファイルを残さない' {
+			$lines = @($script:histTestHeader, (Get-TestHistRow -Id 'epAAAAAAAA' -Date '2026-01-01 00:00:00' -Validated '1'), (Get-TestHistRow -Id 'epAAAAAAAA' -Date '2026-01-02 00:00:00' -Validated '1'))
+			Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value $lines
+			$before = Get-Content -LiteralPath $script:histFilePath -Raw
+			Repair-HistoryFile 3>$null
+			Get-Content -LiteralPath ($script:histFilePath + '.bak') -Raw | Should -Be $before
+			@(Get-ChildItem -LiteralPath $script:histTestDir -Filter '*.tmp').Count | Should -Be 0
+		}
+		It '履歴ファイルがない場合は例外にせず、警告だけ出してロックを解除する' {
+			{ Repair-HistoryFile 3>$null } | Should -Not -Throw
+			Test-Path -LiteralPath $script:histFilePath | Should -BeFalse
+			Should -Invoke Unlock-File -Times 1 -Exactly
+		}
+	}
+}
+
+#----------------------------------------------------------------------
+# ダウンロードリスト・キーワードリストの読み込み
+#----------------------------------------------------------------------
+Describe 'ダウンロードリストとキーワードリスト' {
+	BeforeAll {
+		$script:listSaved = @{}
+		foreach ($n in 'listFilePath', 'listLockFilePath', 'keywordFilePath', 'extractDescTextToList') {
+			$script:listSaved[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' }
+		}
+		$script:listHeader = '"seriesName","seriesID","seriesPageURL","seasonName","seasonID","episodeNo","episodeName","episodeID","episodePageURL","media","provider","broadcastDate","endTime","keyword","ignoreWord","descriptionText"'
+		function script:Get-TestListRow { Param ([String]$Id) return '"s"' + (',""' * 6) + (',"{0}"' -f $Id) + (',""' * 8) }
+	}
+	AfterAll {
+		foreach ($n in $script:listSaved.Keys) {
+			if ($script:listSaved[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:listSaved[$n] }
+		}
+	}
+	BeforeEach {
+		Mock Wait-FileLock {}
+		Mock Unlock-File {}
+		$script:listTestDir = Join-Path $TestDrive ('list{0}' -f [Guid]::NewGuid().ToString('N'))
+		New-Item -ItemType Directory -Path $script:listTestDir -Force | Out-Null
+		$script:listFilePath = Join-Path $script:listTestDir 'list.csv'
+		$script:listLockFilePath = Join-Path $script:listTestDir 'list.lock'
+		$script:keywordFilePath = Join-Path $script:listTestDir 'keyword.conf'
+	}
+
+	Context 'Read-DownloadList' {
+		It 'ダウンロードリストのレコードを返す' {
+			Set-Content -LiteralPath $script:listFilePath -Encoding UTF8 -Value @($script:listHeader, (Get-TestListRow 'epAAAAAAAA'), (Get-TestListRow '#epBBBBBBBB'))
+			$rows = @(Read-DownloadList)
+			$rows.Count | Should -Be 2
+			$rows.episodeID | Should -Be @('epAAAAAAAA', '#epBBBBBBBB')
+		}
+		It 'ファイルがない場合は例外にして、ロックを解除する' {
+			{ Read-DownloadList } | Should -Throw
+			Should -Invoke Unlock-File -Times 1 -Exactly
+		}
+	}
+
+	Context 'Get-LinkFromDownloadList' {
+		It '#で始まるダウンロード対象外を除き、エピソードIDだけを返す' {
+			Set-Content -LiteralPath $script:listFilePath -Encoding UTF8 -Value @($script:listHeader, (Get-TestListRow 'epAAAAAAAA'), (Get-TestListRow '#epBBBBBBBB'), (Get-TestListRow 'epCCCCCCCC'))
+			Get-LinkFromDownloadList | Should -Be @('epAAAAAAAA', 'epCCCCCCCC')
+		}
+		It 'リストファイルがなければ空を返す' {
+			@(Get-LinkFromDownloadList).Count | Should -Be 0
+		}
+		It '有効な行がない(ヘッダーのみ)場合も、例外にせず空を返す' {
+			Set-Content -LiteralPath $script:listFilePath -Encoding UTF8 -Value @($script:listHeader)
+			@(Get-LinkFromDownloadList).Count | Should -Be 0
+		}
+		It 'すべての行がダウンロード対象外(#)の場合も、例外にせず空を返す' {
+			Set-Content -LiteralPath $script:listFilePath -Encoding UTF8 -Value @($script:listHeader, (Get-TestListRow '#epAAAAAAAA'), (Get-TestListRow '#epBBBBBBBB'))
+			@(Get-LinkFromDownloadList).Count | Should -Be 0
+		}
+	}
+
+	Context 'Format-ListRecord' {
+		BeforeEach {
+			$script:testVideoInfo = [PSCustomObject]@{
+				seriesName = 'テスト番組' ; seriesID = 'sr1' ; seriesPageURL = 'https://tver.jp/series/sr1'
+				seasonName = 'シーズン1' ; seasonID = 'ss1' ; episodeNum = '3' ; episodeName = '第3話'
+				episodeID = 'epAAAAAAAA' ; episodePageURL = 'https://tver.jp/episodes/epAAAAAAAA'
+				mediaName = 'テスト局' ; providerName = 'テスト提供' ; broadcastDate = '10/24(土) 放送分' ; endTime = '2026/11/01 00:00'
+				keyword = 'k' ; ignoreWord = '' ; descriptionText = '説明文です'
+			}
+		}
+		It 'ビデオ情報をダウンロードリストの列に対応付ける' {
+			$script:extractDescTextToList = $false
+			$r = Format-ListRecord ([Ref]$script:testVideoInfo)
+			$r.seriesName | Should -Be 'テスト番組'
+			$r.episodeNo | Should -Be '3'
+			$r.episodeID | Should -Be 'epAAAAAAAA'
+			$r.media | Should -Be 'テスト局'
+			$r.provider | Should -Be 'テスト提供'
+			$r.keyword | Should -Be 'k'
+		}
+		It '説明文の出力が無効なら、説明文の列は空にする' {
+			$script:extractDescTextToList = $false
+			(Format-ListRecord ([Ref]$script:testVideoInfo)).descriptionText | Should -Be ''
+		}
+		It '説明文の出力が有効なら、説明文を含める' {
+			$script:extractDescTextToList = $true
+			(Format-ListRecord ([Ref]$script:testVideoInfo)).descriptionText | Should -Be '説明文です'
+		}
+		It 'ダウンロードリストのヘッダーと同じ列の並びになる' {
+			$script:extractDescTextToList = $true
+			(Format-ListRecord ([Ref]$script:testVideoInfo)).PSObject.Properties.Name -join ',' | Should -Be (($script:listHeader -replace '"', '') )
+		}
+	}
+
+	Context 'Read-KeywordList' {
+		It 'コメント行と空行を除き、キーワードだけを返す' {
+			Set-Content -LiteralPath $script:keywordFilePath -Encoding UTF8 -Value @('# コメント', '', 'tag/ドラマ', '   ', 'series/sr1', '#tag/無効', 'episodes/epAAAAAAAA')
+			Read-KeywordList | Should -Be @('tag/ドラマ', 'series/sr1', 'episodes/epAAAAAAAA')
+		}
+		It 'ファイルがない場合は例外にする' {
+			{ Read-KeywordList } | Should -Throw
+		}
+	}
+}
+
+#----------------------------------------------------------------------
+# ダウンロード済み・リスト登録済みの番組の除外
+#----------------------------------------------------------------------
+Describe 'ダウンロード済み・リスト登録済みの番組の除外' {
+	BeforeAll {
+		$script:matchSaved = @{}
+		foreach ($n in 'listFilePath', 'listLockFilePath', 'histFilePath', 'histLockFilePath', 'redownloadWhenSubtitleAdded') {
+			$script:matchSaved[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' }
+		}
+		$script:matchListHeader = '"episodeID","seriesName"'
+		$script:matchHistHeader = '"videoPage","videoSeriesPage","genre","series","season","title","media","broadcastDate","downloadDate","videoDir","videoName","videoPath","videoValidated","subtitle"'
+		function script:Get-TestMatchHistRow { Param ([String]$Id) return ('"https://tver.jp/episodes/{0}"' -f $Id) + (',""' * 7) + ',"2026-01-01 00:00:00"' + (',""' * 3) + ',"1",""' }
+	}
+	AfterAll {
+		foreach ($n in $script:matchSaved.Keys) {
+			if ($script:matchSaved[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:matchSaved[$n] }
+		}
+	}
+	BeforeEach {
+		Mock Wait-FileLock {}
+		Mock Unlock-File {}
+		$script:redownloadWhenSubtitleAdded = $false
+		$script:matchTestDir = Join-Path $TestDrive ('match{0}' -f [Guid]::NewGuid().ToString('N'))
+		New-Item -ItemType Directory -Path $script:matchTestDir -Force | Out-Null
+		$script:listFilePath = Join-Path $script:matchTestDir 'list.csv'
+		$script:listLockFilePath = Join-Path $script:matchTestDir 'list.lock'
+		$script:histFilePath = Join-Path $script:matchTestDir 'history.csv'
+		$script:histLockFilePath = Join-Path $script:matchTestDir 'history.lock'
+		Set-Content -LiteralPath $script:listFilePath -Encoding UTF8 -Value @($script:matchListHeader, '"epAAAAAAAA","s1"', '"#epBBBBBBBB","s2"')
+	}
+
+	Context 'Invoke-ListMatchCheck' {
+		It 'ダウンロードリストにない番組だけを返し、登録済みの件数を数える(#で始まる対象外の番組も登録済みとして扱う)' {
+			$videoLinks, $processedCount = Invoke-ListMatchCheck -resultLinks @('epAAAAAAAA', 'epBBBBBBBB', 'epNEW00001')
+			@($videoLinks) | Should -Be @('epNEW00001')
+			$processedCount | Should -Be 2
+		}
+		It 'すべてが未登録なら、すべて返し、件数は0' {
+			$videoLinks, $processedCount = Invoke-ListMatchCheck -resultLinks @('epNEW00001', 'epNEW00002')
+			@($videoLinks) | Should -Be @('epNEW00001', 'epNEW00002')
+			$processedCount | Should -Be 0
+		}
+		It 'すべてが登録済みなら、何も返さず、件数だけ数える' {
+			$videoLinks, $processedCount = Invoke-ListMatchCheck -resultLinks @('epAAAAAAAA', 'epBBBBBBBB')
+			@($videoLinks).Count | Should -Be 0
+			$processedCount | Should -Be 2
+		}
+		It 'ダウンロード履歴は見ない(履歴にあってもリストになければ未登録として返す)' {
+			Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value @($script:matchHistHeader, (Get-TestMatchHistRow 'epHIST00001'))
+			$videoLinks, $processedCount = Invoke-ListMatchCheck -resultLinks @('epHIST00001')
+			@($videoLinks) | Should -Be @('epHIST00001')
+			$processedCount | Should -Be 0
+		}
+		It 'ダウンロードリストが1件だけでも動作する' {
+			Set-Content -LiteralPath $script:listFilePath -Encoding UTF8 -Value @($script:matchListHeader, '"epAAAAAAAA","s1"')
+			$videoLinks, $processedCount = Invoke-ListMatchCheck -resultLinks @('epAAAAAAAA', 'epNEW00001')
+			@($videoLinks) | Should -Be @('epNEW00001')
+			$processedCount | Should -Be 1
+		}
+	}
+
+	Context 'Invoke-HistoryAndListMatchCheck' {
+		It 'ダウンロードリストにもダウンロード履歴にもない番組だけを返す' {
+			Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value @($script:matchHistHeader, (Get-TestMatchHistRow 'epHIST00001'), (Get-TestMatchHistRow 'epHIST00002'))
+			$videoLinks, $processedCount = Invoke-HistoryAndListMatchCheck -resultLinks @('epAAAAAAAA', 'epBBBBBBBB', 'epHIST00001', 'epHIST00002', 'epNEW00001')
+			@($videoLinks) | Should -Be @('epNEW00001')
+			$processedCount | Should -Be 4
+		}
+		It 'ダウンロード履歴が1件だけでも動作する' {
+			Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value @($script:matchHistHeader, (Get-TestMatchHistRow 'epHIST00001'))
+			$videoLinks, $processedCount = Invoke-HistoryAndListMatchCheck -resultLinks @('epHIST00001', 'epNEW00001')
+			@($videoLinks) | Should -Be @('epNEW00001')
+			$processedCount | Should -Be 1
+		}
+		It 'ダウンロード履歴が空でも、ダウンロードリストだけで判定できる' {
+			Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value @($script:matchHistHeader)
+			$videoLinks, $processedCount = Invoke-HistoryAndListMatchCheck -resultLinks @('epAAAAAAAA', 'epNEW00001')
+			@($videoLinks) | Should -Be @('epNEW00001')
+			$processedCount | Should -Be 1
+		}
+	}
+}
+
+#----------------------------------------------------------------------
+# リネームに失敗したファイルの削除(#297)
+# * ファイルの検索にcmd(Windows)またはfind(それ以外)を使うため、Linux/macOSでのみ検証する
+#----------------------------------------------------------------------
+Describe 'Remove-UnRenamedTempFile(#297)' -Skip:$IsWindows {
+	BeforeAll {
+		$script:unrenSaved = @{}
+		foreach ($n in 'deleteUnrenamedFile', 'downloadBaseDir') {
+			$script:unrenSaved[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' }
+		}
+	}
+	AfterAll {
+		foreach ($n in $script:unrenSaved.Keys) {
+			if ($script:unrenSaved[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:unrenSaved[$n] }
+		}
+	}
+	BeforeEach {
+		$script:unrenDir = Join-Path $TestDrive ('unren{0}' -f [Guid]::NewGuid().ToString('N'))
+		$script:unrenSub = Join-Path $script:unrenDir 'ドラマ'
+		New-Item -ItemType Directory -Path $script:unrenSub -Force | Out-Null
+		$script:downloadBaseDir = $script:unrenDir
+		$script:unrenTargets = @((Join-Path $script:unrenSub 'epa1b2c3d4.mp4'), (Join-Path $script:unrenDir 'epz9y8x7w6.ts'))
+		$script:unrenKeeps = @((Join-Path $script:unrenSub '番組 第1話.mp4'), (Join-Path $script:unrenDir 'episode.mp4'), (Join-Path $script:unrenSub 'epshort.mp4'))
+		foreach ($f in ($script:unrenTargets + $script:unrenKeeps)) { Set-Content -LiteralPath $f -Value 'x' -NoNewline }
+	}
+
+	It '削除する設定(既定)では、エピソードIDのままのファイルを削除し、通常のファイルは残す' {
+		$script:deleteUnrenamedFile = $true
+		$out = @(Remove-UnRenamedTempFile 3>&1)
+		foreach ($f in $script:unrenTargets) { Test-Path -LiteralPath $f | Should -BeFalse }
+		foreach ($f in $script:unrenKeeps) { Test-Path -LiteralPath $f | Should -BeTrue }
+		$out | Should -Contain $script:msg.DeleteFilesFailedToRename
+	}
+	It '削除しない設定では、ファイルを削除せず、残したファイルごとに警告を出す' {
+		$script:deleteUnrenamedFile = $false
+		$out = @(Remove-UnRenamedTempFile 3>&1)
+		foreach ($f in ($script:unrenTargets + $script:unrenKeeps)) { Test-Path -LiteralPath $f | Should -BeTrue }
+		$warnings = @($out.Where({ $_ -is [Management.Automation.WarningRecord] }))
+		$warnings.Count | Should -Be 2
+		foreach ($f in $script:unrenTargets) { ($warnings.Message -join "`n") | Should -Match ([regex]::Escape((Split-Path -Leaf $f))) }
+	}
+	It '削除しない設定では、「削除しています」というメッセージを出さない' {
+		$script:deleteUnrenamedFile = $false
+		$out = @(Remove-UnRenamedTempFile 3>&1)
+		$out | Should -Not -Contain $script:msg.DeleteFilesFailedToRename
+	}
+	It '削除しない設定で対象のファイルがなければ、何も警告しない' {
+		$script:deleteUnrenamedFile = $false
+		foreach ($f in $script:unrenTargets) { Remove-Item -LiteralPath $f -Force }
+		@(Remove-UnRenamedTempFile 3>&1).Where({ $_ -is [Management.Automation.WarningRecord] }).Count | Should -Be 0
+	}
+	It '-WhatIfでは、削除する設定でも削除しない' {
+		$script:deleteUnrenamedFile = $true
+		Remove-UnRenamedTempFile -WhatIf | Out-Null
+		foreach ($f in $script:unrenTargets) { Test-Path -LiteralPath $f | Should -BeTrue }
+	}
+}

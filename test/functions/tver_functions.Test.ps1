@@ -47,6 +47,8 @@ BeforeAll {
 
 	# テスト用のリンクコレクションを生成
 	function New-TestLinkCollection {
+		[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'テスト用のオブジェクトを生成するだけで、システムの状態は変更しない')]
+		Param ()
 		[PSCustomObject]@{
 			episodeLinks     = @{}
 			seriesLinks      = New-Object System.Collections.Generic.List[String]
@@ -58,7 +60,9 @@ BeforeAll {
 		}
 	}
 	# APIレスポンスのコンテンツ要素を生成
-	function New-Item ([String]$type, [String]$id, [Int64]$endAt = 0) {
+	function New-Item {
+		[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'テスト用のオブジェクトを生成するだけで、システムの状態は変更しない')]
+		Param ([String]$type, [String]$id, [Int64]$endAt = 0)
 		[PSCustomObject]@{ type = $type ; content = [PSCustomObject]@{ id = $id ; endAt = $endAt } }
 	}
 }

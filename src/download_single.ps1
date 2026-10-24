@@ -74,7 +74,29 @@ $script:guiMode = if ($args) { [String]$args[0] } else { '' }
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # 関数定義
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#----------------------------------------------------------------------
+# URL入力ダイアログの表示
+#----------------------------------------------------------------------
 function Show-UrlInputDialog {
+	<#
+		.SYNOPSIS
+			TVerの番組URLを入力するダイアログを表示します。
+
+		.DESCRIPTION
+			URLを入力するテキストボックスとOKボタンを持つダイアログを表示します。
+			複数のURLは、改行または空白で区切って入力できます。OKボタンで入力内容をURLの配列として返します。
+
+		.OUTPUTS
+			[String[]]
+			入力されたURLの配列。OKボタンを押さずに閉じた場合は、呼び出し元で初期化された値(通常は空の配列)になります。
+
+		.EXAMPLE
+			$videoPageList = Show-UrlInputDialog
+
+		.NOTES
+			Windows.Forms(GUI)を使用します。Escキーでダイアログを閉じられます。
+			ダイアログの表示中にエラーが発生した場合は、エラーを出力して例外を再スローします。
+	#>
 	try {
 		# アセンブリの読み込み
 		Add-Type -AssemblyName System.Windows.Forms | Out-Null
@@ -249,7 +271,6 @@ try {
 
 	# リネーム失敗ファイルの削除
 	Write-Output ('')
-	Write-Output ($script:msg.DeleteFilesFailedToRename)
 	Remove-UnRenamedTempFile
 
 } catch {

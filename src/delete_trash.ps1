@@ -150,7 +150,6 @@ $toastUpdateParams.Title = $script:downloadBaseDir
 $toastUpdateParams.Rate = [Float]( 3 / $totalCleanupSteps )
 Update-ProgressToast @toastUpdateParams
 # リネームに失敗したファイルを削除
-Write-Output ($script:msg.DeleteFilesFailedToRename)
 Remove-UnRenamedTempFile
 if ($script:cleanupDownloadBaseDir) {
 	$downloadDirParams = @{

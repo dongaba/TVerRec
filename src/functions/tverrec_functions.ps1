@@ -125,6 +125,9 @@ function Compare-Version {
 	return [Math]::Sign($remoteUnits.Count - $localUnits.Count)
 }
 
+#----------------------------------------------------------------------
+# PowerShellの新バージョンの確認
+#----------------------------------------------------------------------
 function Invoke-PowerShellUpdateCheck {
 	<#
 		.SYNOPSIS
@@ -420,6 +423,9 @@ function Invoke-TverrecPathCheck {
 	Remove-Variable -Name path, errorMessage, isFile, sampleFilePath, continue, pathType -ErrorAction SilentlyContinue
 }
 
+#----------------------------------------------------------------------
+# 作業ディレクトリとダウンロード先ディレクトリの重複判定
+#----------------------------------------------------------------------
 function Test-WorkDirOverlap {
 	<#
 		.SYNOPSIS
@@ -555,6 +561,9 @@ function Get-LatestHistory {
 	return $latestHists
 }
 
+#----------------------------------------------------------------------
+# 字幕の有無の記録と再ダウンロードが有効かの判定
+#----------------------------------------------------------------------
 function Test-SubtitleTrackingEnabled {
 	<#
 		.SYNOPSIS
@@ -572,6 +581,9 @@ function Test-SubtitleTrackingEnabled {
 	return [Boolean]($script:redownloadWhenSubtitleAdded -and $script:embedSubtitle -and ($script:videoContainerFormat -eq 'mp4'))
 }
 
+#----------------------------------------------------------------------
+# 番組の字幕の有無をyoutube-dlで確認
+#----------------------------------------------------------------------
 function Get-VideoSubtitleStatus {
 	<#
 		.SYNOPSIS
@@ -608,6 +620,9 @@ function Get-VideoSubtitleStatus {
 	} catch { Write-Debug $_ ; return '' }
 }
 
+#----------------------------------------------------------------------
+# 番組ファイルの字幕の有無をffprobeで確認
+#----------------------------------------------------------------------
 function Test-VideoFileHasSubtitle {
 	<#
 		.SYNOPSIS
@@ -635,6 +650,9 @@ function Test-VideoFileHasSubtitle {
 	finally { Remove-Item -LiteralPath $probeOutPath -Force -ErrorAction SilentlyContinue }
 }
 
+#----------------------------------------------------------------------
+# ダウンロード履歴にsubtitle列があるかの判定
+#----------------------------------------------------------------------
 function Test-HistorySubtitleColumn {
 	<#
 		.SYNOPSIS
@@ -655,6 +673,9 @@ function Test-HistorySubtitleColumn {
 	return $has
 }
 
+#----------------------------------------------------------------------
+# ダウンロード履歴にsubtitle列を追加
+#----------------------------------------------------------------------
 function Add-HistorySubtitleColumn {
 	<#
 		.SYNOPSIS
@@ -700,6 +721,9 @@ function Add-HistorySubtitleColumn {
 	}
 }
 
+#----------------------------------------------------------------------
+# ダウンロード履歴の字幕の有無を更新
+#----------------------------------------------------------------------
 function Set-HistorySubtitleStatus {
 	<#
 		.SYNOPSIS
@@ -711,6 +735,7 @@ function Set-HistorySubtitleStatus {
 		.PARAMETER Status
 			`1`: 字幕あり、`0`: 字幕なし、空文字: 不明
 	#>
+	[CmdletBinding(SupportsShouldProcess = $true)]
 	[OutputType([Void])]
 	Param (
 		[Parameter(Mandatory = $true)]$VideoHist,
@@ -718,6 +743,7 @@ function Set-HistorySubtitleStatus {
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if (!(Test-HistorySubtitleColumn)) { return }
+	if (!$PSCmdlet.ShouldProcess($script:histFilePath, 'Update subtitle status')) { return }
 	$record = $VideoHist.PSObject.Copy()
 	$record.subtitle = $Status
 	$record.downloadDate = Get-TimeStamp
@@ -727,6 +753,9 @@ function Set-HistorySubtitleStatus {
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
 }
 
+#----------------------------------------------------------------------
+# 字幕の再確認の対象をダウンロード済みから除外
+#----------------------------------------------------------------------
 function Remove-SubtitleRecheckTarget {
 	<#
 		.SYNOPSIS
@@ -742,6 +771,7 @@ function Remove-SubtitleRecheckTarget {
 		.OUTPUTS
 			[Object[]]
 	#>
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = '履歴のレコードを絞り込んで返すだけで、システムの状態は変更しない')]
 	[OutputType([Object[]])]
 	Param ([Parameter(Mandatory = $true)][AllowNull()][AllowEmptyCollection()][Object[]]$Hist)
 	if (!(Test-SubtitleTrackingEnabled)) { return @($Hist) }
@@ -1046,6 +1076,8 @@ function Get-LinkFromDownloadList {
 		} catch { throw ($script:msg.LoadFailed -f $script:msg.ListFile) }
 		finally { Unlock-File $script:listLockFilePath | Out-Null }
 	} else { $videoLinks = @() }
+	# 有効な行がない場合(ヘッダーのみ、またはすべてコメントアウト)は、StrictModeで空配列のプロパティ参照がエラーになるため、先に返す
+	if ($videoLinks.Count -eq 0) { return @() }
 	$episodeIDs = [string[]]$videoLinks.episodeID
 	return @($episodeIDs)
 }
@@ -1146,6 +1178,7 @@ function Update-VideoList {
 			2. 無視リストに登録されている番組を除外
 			3. ダウンロードリストをCSVファイルに出力
 	#>
+	[CmdletBinding(SupportsShouldProcess = $true)]
 	[OutputType([Void])]
 	Param (
 		[Parameter(Mandatory = $true)][String]$keyword,
@@ -1180,7 +1213,7 @@ function Update-VideoList {
 	# ダウンロードリストCSV書き出し
 	try {
 		Wait-FileLock $script:listLockFilePath
-		$newVideo | Export-Csv -LiteralPath $script:listFilePath -Encoding UTF8 -Append
+		if ($PSCmdlet.ShouldProcess($script:listFilePath, 'Add to download list')) { $newVideo | Export-Csv -LiteralPath $script:listFilePath -Encoding UTF8 -Append }
 		Write-Debug ($script:msg.ListWritten)
 	} catch {
 		Write-Warning ($script:msg.ListUpdateFailed) ; return
@@ -1332,6 +1365,7 @@ function Update-IgnoreList {
 			5. リストを更新
 			6. ロックを解除
 	#>
+	[CmdletBinding(SupportsShouldProcess = $true)]
 	[OutputType([Void])]
 	Param ([Parameter(Mandatory = $true)][String]$ignoreTitle)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
@@ -1340,7 +1374,7 @@ function Update-IgnoreList {
 	$ignoreTarget = @()
 	$ignoreElse = @()
 	$ignoreListNew = @()
-	if (Test-Path $script:ignoreFilePath -PathType Leaf) {
+	if ((Test-Path $script:ignoreFilePath -PathType Leaf) -and $PSCmdlet.ShouldProcess($script:ignoreFilePath, 'Update ignore list')) {
 		try {
 			Wait-FileLock $script:ignoreLockFilePath
 			$ignoreLists = @((Get-Content $script:ignoreFilePath -Encoding UTF8).Where( { $_ -notmatch '^\s*$|^(;;.*)$' }))
@@ -1405,7 +1439,7 @@ function Read-KeywordList {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$keywords = @()
 	# コメントと空行を除いて抽出
-	try { $keywords = @((Get-Content $script:keywordFilePath -Encoding UTF8).Where({ $_ -notmatch '^\s*$|^#.*$' })) }
+	try { $keywords = @((Get-Content $script:keywordFilePath -Encoding UTF8 -ErrorAction Stop).Where({ $_ -notmatch '^\s*$|^#.*$' })) }
 	catch { throw ($script:msg.LoadFailed -f $script:msg.KeywordFile) }
 	return $keywords
 }
@@ -1416,28 +1450,28 @@ function Read-KeywordList {
 function Invoke-HistoryMatchCheck {
 	<#
 		.SYNOPSIS
-			指定されたURLがダウンロード履歴に存在するかチェックし、未ダウンロードのURLのみを返します。
+			指定されたエピソードIDがダウンロード履歴に存在するかチェックし、未ダウンロードのエピソードIDのみを返します。
 
 		.DESCRIPTION
-			指定されたURLリストとダウンロード履歴を比較し、まだダウンロードされていない
-			URLのみを返します。また、既にダウンロード済みのURLの数も返します。
+			指定されたエピソードIDのリストとダウンロード履歴を比較し、まだダウンロードされていない
+			エピソードIDのみを返します。また、既にダウンロード済みのエピソードIDの数も返します。
 
 		.PARAMETER episodeLinks
-			チェック対象のURLリストを指定します。
+			チェック対象のエピソードIDのリストを指定します。
 
 		.OUTPUTS
 			[String[]]
-			未ダウンロードのURLの配列と、既にダウンロード済みのURLの数を含む配列。
+			未ダウンロードのエピソードIDの配列と、既にダウンロード済みのエピソードIDの数を含む配列。
 
 		.EXAMPLE
-			$result = Invoke-HistoryMatchCheck -episodeLinks @("https://tver.jp/...", "https://tver.jp/...")
+			$result = Invoke-HistoryMatchCheck -episodeLinks @("epXXXXXXXX", "epYYYYYYYY")
 
 		.NOTES
 			この関数は以下の処理を行います：
 			1. 最新のダウンロード履歴を取得
-			2. 履歴に存在するURLを抽出
-			3. 指定されたURLリストと履歴を比較
-			4. 未ダウンロードのURLとダウンロード済みの数を返す
+			2. 履歴に存在するエピソードIDを抽出
+			3. 指定されたエピソードIDのリストと履歴を比較
+			4. 未ダウンロードのエピソードIDとダウンロード済みの数を返す
 	#>
 	[OutputType([String[]])]
 	Param ([Parameter(Mandatory = $true)][String[]]$episodeLinks)
@@ -1446,7 +1480,7 @@ function Invoke-HistoryMatchCheck {
 	$histFileData = @(Get-LatestHistory)
 	$histFileData = @(Remove-SubtitleRecheckTarget $histFileData)	# 字幕の再確認の対象は「ダウンロード済み」に含めない
 	if ($histFileData.Count -eq 0) { $histVideoPages = @() } else { $histVideoPages = @($histFileData.videoPage.Replace('https://tver.jp/episodes/', '')) }
-	# URLがすでにダウンロード履歴に存在する場合は検索結果から除外
+	# エピソードIDがすでにダウンロード履歴に存在する場合は検索結果から除外
 	$histCompResult = @(Compare-Object -IncludeEqual $episodeLinks $histVideoPages)
 	try { $processedCount = ($histCompResult.Where({ $_.SideIndicator -eq '==' })).Count } catch { $processedCount = 0 }
 	try { $videoLinks = @($histCompResult.Where({ $_.SideIndicator -eq '<=' }).InputObject) } catch { $videoLinks = @() }
@@ -1460,41 +1494,42 @@ function Invoke-HistoryMatchCheck {
 function Invoke-ListMatchCheck {
 	<#
 		.SYNOPSIS
-			指定されたURLがダウンロードリストに存在するかチェックし、未登録のURLのみを返します。
+			指定されたエピソードIDがダウンロードリストに存在するかチェックし、未登録のエピソードIDのみを返します。
 
 		.DESCRIPTION
-			指定されたURLリストとダウンロードリストを比較し、まだ登録されていない
-			URLのみを返します。また、既に登録済みのURLの数も返します。
+			指定されたエピソードIDのリストとダウンロードリストを比較し、まだ登録されていない
+			エピソードIDのみを返します。また、既に登録済みのエピソードIDの数も返します。
 
 		.PARAMETER resultLinks
-			チェック対象のURLリストを指定します。
+			チェック対象のエピソードIDのリストを指定します。
 
 		.OUTPUTS
 			[String[]]
-			未登録のURLの配列と、既に登録済みのURLの数を含む配列。
+			未登録のエピソードIDの配列と、既に登録済みのエピソードIDの数を含む配列。
 
 		.EXAMPLE
-			$result = Invoke-ListMatchCheck -resultLinks @("https://tver.jp/...", "https://tver.jp/...")
+			$result = Invoke-ListMatchCheck -resultLinks @("epXXXXXXXX", "epYYYYYYYY")
 
 		.NOTES
 			この関数は以下の処理を行います：
 			1. ダウンロードリストファイルを読み込み
-			2. リストに存在するURLを抽出
-			3. 指定されたURLリストと比較
-			4. 未登録のURLと登録済みの数を返す
+			2. リストに存在するエピソードIDを抽出
+			3. 指定されたエピソードIDのリストと比較
+			4. 未登録のエピソードIDと登録済みの数を返す
 	#>
 	[OutputType([String[]])]
 	Param ([Parameter(Mandatory = $true)][Alias('links')][String[]]$resultLinks)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# ダウンロードリストファイルのデータを読み込み
 	$listFileData = @(Read-DownloadList)
-	$listVideoPages = New-Object System.Collections.Generic.List[String]
-	foreach ($item in $listFileData) { $listVideoPages.Add('https://tver.jp/episodes/{0}' -f $item.EpisodeID.Replace('#', '')) }
-	# URLがすでにダウンロード履歴に存在する場合は検索結果から除外
-	$listCompResult = @(Compare-Object -IncludeEqual $resultLinks $listVideoPages)
+	# エピソードIDで照合する(検索結果もダウンロードリストもエピソードID。#で始まるダウンロード対象外も登録済みとして扱う)
+	$listVideoIDs = New-Object System.Collections.Generic.List[String]
+	foreach ($item in $listFileData) { $listVideoIDs.Add($item.EpisodeID.Replace('#', '')) }
+	# エピソードIDがすでにダウンロードリストに存在する場合は検索結果から除外
+	$listCompResult = @(Compare-Object -IncludeEqual $resultLinks $listVideoIDs)
 	try { $processedCount = ($listCompResult.Where({ $_.SideIndicator -eq '==' })).Count } catch { $processedCount = 0 }
 	try { $videoLinks = @($listCompResult.Where({ $_.SideIndicator -eq '<=' }).InputObject) } catch { $videoLinks = @() }
-	Remove-Variable -Name resultLinks, listFileData, listVideoPages, listFileLine, listCompResult -ErrorAction SilentlyContinue
+	Remove-Variable -Name resultLinks, listFileData, listVideoIDs, listFileLine, listCompResult -ErrorAction SilentlyContinue
 	return @($videoLinks, $processedCount)
 }
 
@@ -1504,29 +1539,29 @@ function Invoke-ListMatchCheck {
 function Invoke-HistoryAndListMatchCheck {
 	<#
 		.SYNOPSIS
-			指定されたURLがダウンロードリストまたはダウンロード履歴に存在するかチェックし、未登録のURLのみを返します。
+			指定されたエピソードIDがダウンロードリストまたはダウンロード履歴に存在するかチェックし、未登録のエピソードIDのみを返します。
 
 		.DESCRIPTION
-			指定されたURLリストとダウンロードリスト、ダウンロード履歴を比較し、
-			まだ登録されていないURLのみを返します。また、既に登録済みのURLの数も返します。
+			指定されたエピソードIDのリストとダウンロードリスト、ダウンロード履歴を比較し、
+			まだ登録されていないエピソードIDのみを返します。また、既に登録済みのエピソードIDの数も返します。
 
 		.PARAMETER resultLinks
-			チェック対象のURLリストを指定します。
+			チェック対象のエピソードIDのリストを指定します。
 
 		.OUTPUTS
 			[String[]]
-			未登録のURLの配列と、既に登録済みのURLの数を含む配列。
+			未登録のエピソードIDの配列と、既に登録済みのエピソードIDの数を含む配列。
 
 		.EXAMPLE
-			$result = Invoke-HistoryAndListMatchCheck -resultLinks @("https://tver.jp/...", "https://tver.jp/...")
+			$result = Invoke-HistoryAndListMatchCheck -resultLinks @("epXXXXXXXX", "epYYYYYYYY")
 
 		.NOTES
 			この関数は以下の処理を行います：
 			1. ダウンロードリストファイルを読み込み
 			2. ダウンロード履歴ファイルを読み込み
 			3. 両方のリストをマージ
-			4. 指定されたURLリストと比較
-			5. 未登録のURLと登録済みの数を返す
+			4. 指定されたエピソードIDのリストと比較
+			5. 未登録のエピソードIDと登録済みの数を返す
 	#>
 	[OutputType([String[]])]
 	Param ([Parameter(Mandatory = $true)][Alias('links')][String[]]$resultLinks)
@@ -1538,10 +1573,11 @@ function Invoke-HistoryAndListMatchCheck {
 	# ダウンロード履歴ファイルのデータを読み込み
 	$histFileData = @(Get-LatestHistory)
 	$histFileData = @(Remove-SubtitleRecheckTarget $histFileData)	# 字幕の再確認の対象は「ダウンロード済み」に含めない
-	$histVideoID = if ($histFileData.Count -eq 0) { @() } else { @($histFileData.VideoPage.Replace('https://tver.jp/episodes/', '')) }
+	# 履歴が1件だけの場合に配列が文字列に展開されないよう、@()で包む
+	$histVideoID = @(if ($histFileData.Count -eq 0) { @() } else { $histFileData.VideoPage.Replace('https://tver.jp/episodes/', '') })
 	# ダウンロードリストとダウンロード履歴をマージ
 	if ($histVideoID) { $listVideoID.AddRange($histVideoID) }
-	# URLがすでにダウンロード履歴に存在する場合は検索結果から除外
+	# エピソードIDがすでにダウンロード履歴に存在する場合は検索結果から除外
 	$listCompResult = Compare-Object -IncludeEqual $resultLinks $listVideoID
 	try { $processedCount = ($listCompResult.Where({ $_.SideIndicator -eq '==' })).Count } catch { $processedCount = 0 }
 	try { $videoLinks = @($listCompResult.Where({ $_.SideIndicator -eq '<=' }).InputObject) } catch { $videoLinks = @() }
@@ -1826,6 +1862,9 @@ function Invoke-NonTverYtdl {
 	Remove-Variable -Name videoPageURL, tmpDir, baseDir, subttlDir, thumbDir, chaptDir, descDir, saveFile, ytdlArgs, ytdlArgsString, rateLimit, startProcessParams, ytdlProcess -ErrorAction SilentlyContinue
 }
 
+#----------------------------------------------------------------------
+# 実行ファイルのパスごとのプロセス数を取得
+#----------------------------------------------------------------------
 function Get-ProcessCountByPath {
 	<#
 		.SYNOPSIS
@@ -2550,6 +2589,7 @@ function Remove-UnRenamedTempFile {
 		.DESCRIPTION
 			ダウンロード先フォルダ内のリネームに失敗したファイルを削除します。
 			ファイル名が特定のパターンに一致するファイルを削除します。
+			`$script:deleteUnrenamedFile`が`$false`の場合は、削除せずに、残したファイルを警告として表示します。
 
 		.OUTPUTS
 			[Void]
@@ -2558,7 +2598,8 @@ function Remove-UnRenamedTempFile {
 		.NOTES
 			この関数は以下の処理を行います：
 			1. ダウンロード先フォルダ内のファイルを検索
-			2. ファイル名が特定のパターンに一致するファイルを削除
+			2. 削除しない設定の場合は、見つけたファイルを警告として表示して終了
+			3. ファイル名が特定のパターンに一致するファイルを削除
 	#>
 	[CmdletBinding(SupportsShouldProcess = $true)]
 	Param ()
@@ -2573,6 +2614,12 @@ function Remove-UnRenamedTempFile {
 		}
 	}
 	process {
+		# 削除しない設定の場合は、削除せずに残したファイルを警告として表示する
+		if (!$script:deleteUnrenamedFile) {
+			foreach ($file in $targetFiles) { Write-Warning ($script:msg.UnrenamedFileKept -f $file) }
+			return
+		}
+		Write-Output ($script:msg.DeleteFilesFailedToRename)
 		foreach ($file in $targetFiles) {
 			try {
 				if ($PSCmdlet.ShouldProcess($file, 'Remove file')) {
@@ -3191,6 +3238,9 @@ function Invoke-StatisticsCheck {
 #endregion 環境
 
 #region 番組ファイル移動関連
+#----------------------------------------------------------------------
+# ディレクトリのパスを末尾のフォルダ名ごとにグループ化
+#----------------------------------------------------------------------
 function Group-DirectoryPathByLeaf {
 	<#
 		.SYNOPSIS

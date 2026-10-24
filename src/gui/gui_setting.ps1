@@ -147,6 +147,7 @@ $settingAttributes = @(
 	'$script:cleanupDownloadBaseDir',
 	'$script:cleanupSaveBaseDir',
 	'$script:emptyDownloadBaseDir',
+	'$script:deleteUnrenamedFile',
 	'$script:moveConflictAction',
 	'$script:ytdlHttpHeader',
 	'$script:ytdlBaseArgs',
@@ -162,7 +163,9 @@ $settingAttributes = @(
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #region 関数定義
 
+#----------------------------------------------------------------------
 # GUIイベントの処理
+#----------------------------------------------------------------------
 function Sync-WpfEvents {
 	<#
 		.SYNOPSIS
@@ -193,7 +196,9 @@ function Sync-WpfEvents {
 	Remove-Variable -Name frame, f -ErrorAction SilentlyContinue
 }
 
+#----------------------------------------------------------------------
 # ディレクトリ選択ダイアログ
+#----------------------------------------------------------------------
 function Select-Folder {
 	<#
 		.SYNOPSIS
@@ -227,7 +232,9 @@ function Select-Folder {
 	Remove-Variable -Name description, textBox, fd -ErrorAction SilentlyContinue
 }
 
+#----------------------------------------------------------------------
 # user_setting.ps1から各設定項目を読み込む
+#----------------------------------------------------------------------
 function Read-UserSetting {
 	<#
 		.SYNOPSIS
@@ -298,7 +305,9 @@ function Read-UserSetting {
 	Remove-Variable -Name day, schedule, hour, checkbox -ErrorAction SilentlyContinue
 }
 
+#----------------------------------------------------------------------
 # user_setting.ps1に各設定項目を書き込む
+#----------------------------------------------------------------------
 function Save-UserSetting {
 	<#
 		.SYNOPSIS
@@ -464,6 +473,8 @@ $cleanupSaveBaseDirHeader.Header = $script:msg.cleanupSaveBaseDirHeader
 $cleanupSaveBaseDirText.Text = $script:msg.cleanupSaveBaseDirText
 $emptyDownloadBaseDirHeader.Header = $script:msg.emptyDownloadBaseDirHeader
 $emptyDownloadBaseDirText.Text = $script:msg.emptyDownloadBaseDirText
+$deleteUnrenamedFileHeader.Header = $script:msg.deleteUnrenamedFileHeader
+$deleteUnrenamedFileText.Text = $script:msg.deleteUnrenamedFileText
 $moveConflictActionHeader.Header = $script:msg.moveConflictActionHeader
 $moveConflictActionText.Text = $script:msg.moveConflictActionText
 $updateChannelHeader.Header = $script:msg.updateChannelHeader
@@ -604,6 +615,7 @@ $trueFalseControls = @(
 	$cleanupDownloadBaseDir,
 	$cleanupSaveBaseDir,
 	$emptyDownloadBaseDir,
+	$deleteUnrenamedFile,
 	$embedSubtitle,
 	$embedMetatag,
 	$embedThumbnail,
@@ -678,7 +690,32 @@ $btnFfmpegDecodeOptionVTB.Add_Click({ $ffmpegDecodeOption.Text = '-hwaccel video
 $btnFfmpegDecodeOptionPi4.Add_Click({ $ffmpegDecodeOption.Text = '-c:v h264_v4l2m2m -num_output_buffers 32 -num_capture_buffers 32' })
 $btnFfmpegDecodeOptionPi3.Add_Click({ $ffmpegDecodeOption.Text = '-c:v h264_omx' })
 
-function Set-YtdlOption ($height) {
+#----------------------------------------------------------------------
+# youtube-dlの画質オプションを入力欄に設定
+#----------------------------------------------------------------------
+function Set-YtdlOption {
+	<#
+		.SYNOPSIS
+			youtube-dlのオプション入力欄に、画質を指定するオプションを設定します。
+
+		.DESCRIPTION
+			高さ(画質)を指定すると、その高さ以下で最良の映像と音声を選ぶ`-f "bv[height<=高さ]+ba/b[height<=高さ]"`を設定します。
+			`Clear`を指定すると、入力欄を空にします。
+
+		.PARAMETER height
+			画質の高さ(1080、720、480、360など)、または、入力欄を空にする場合は`Clear`を指定します。
+
+		.OUTPUTS
+			[Void]
+
+		.EXAMPLE
+			Set-YtdlOption 720
+
+		.NOTES
+			GUIの入力欄($ytdlOption)を更新するだけで、システムの状態は変更しません。
+	#>
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = '画面の入力欄の文字列を設定するだけで、システムの状態は変更しない')]
+	Param ($height)
 	$ytdlOption.Text = if ($height -eq 'Clear') { '' }
 	else { '-f "bv[height<=' + $height + ']+ba/b[height<=' + $height + ']"' }
 }
@@ -688,7 +725,34 @@ $btnYtdlOption720.Add_Click({ Set-YtdlOption 720 })
 $btnYtdlOption480.Add_Click({ Set-YtdlOption 480 })
 $btnYtdlOption360.Add_Click({ Set-YtdlOption 360 })
 
+#----------------------------------------------------------------------
+# 曜日・時間のチェックボックスの一括連動
+#----------------------------------------------------------------------
 function Sync-MultiCheckboxes {
+	<#
+		.SYNOPSIS
+			ダウンロード停止時間帯のチェックボックスを、曜日または時間の「全て」のチェックボックスに連動させます。
+
+		.DESCRIPTION
+			dayを指定した場合は、その曜日の全時間帯のチェックボックスを、allCheckboxの状態に揃えます。
+			hourを指定した場合は、その時間の全曜日のチェックボックスを、allCheckboxの状態に揃えます。
+			allCheckboxのチェックを外した場合は、交差する側の「全て」のチェックボックス(曜日を指定した場合は各時間の、時間を指定した場合は各曜日の「全て」)のチェックも外します。
+
+		.PARAMETER day
+			曜日(Mon/Tue/Wed/Thu/Fri/Sat/Sun)を指定します。hourとは同時に指定しません。
+
+		.PARAMETER hour
+			時間(00〜23)を指定します。dayとは同時に指定しません。
+
+		.PARAMETER allCheckbox
+			曜日または時間の「全て」のチェックボックスを指定します。
+
+		.OUTPUTS
+			[Void]
+
+		.EXAMPLE
+			Sync-MultiCheckboxes -day 'Mon' -allCheckbox $chkbxStopMonAll
+	#>
 	param (
 		[String]$day,
 		[String]$hour,

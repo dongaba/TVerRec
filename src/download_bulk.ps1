@@ -219,7 +219,6 @@ try {
 
 	# リネームに失敗したファイルを削除
 	Write-Output ('')
-	Write-Output ($script:msg.DeleteFilesFailedToRename)
 	Remove-UnRenamedTempFile
 
 	# 最終進捗表示

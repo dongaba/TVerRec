@@ -79,7 +79,9 @@ $msgInformation = New-Object System.Collections.Generic.List[String]
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #region 関数定義
 
+#----------------------------------------------------------------------
 # GUIイベントの処理
+#----------------------------------------------------------------------
 function Sync-WpfEvents {
 	<#
 		.SYNOPSIS
@@ -109,7 +111,9 @@ function Sync-WpfEvents {
 	Remove-Variable -Name frame, f -ErrorAction SilentlyContinue
 }
 
+#----------------------------------------------------------------------
 # 最大行数以上の実行ログをクリア
+#----------------------------------------------------------------------
 function Limit-LogLine {
 	<#
 		.SYNOPSIS
@@ -143,7 +147,9 @@ function Limit-LogLine {
 	Remove-Variable -Name richTextBox, limit, linesToRemove, i -ErrorAction SilentlyContinue
 }
 
+#----------------------------------------------------------------------
 # テキストボックスへのログ出力と再描画
+#----------------------------------------------------------------------
 function Out-ExecutionLog {
 	<#
 		.SYNOPSIS

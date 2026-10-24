@@ -526,6 +526,7 @@ function Remove-SpecialCharacter {
 			- 一部の特殊記号は削除されず全角に置き換え。
 			- ダブルクォート (`"`) は削除。
 	#>
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = '文字列を置換して返すだけで、システムの状態は変更しない')]
 	[CmdletBinding()]
 	[OutputType([String])]
 	Param ([String]$text)
@@ -593,6 +594,7 @@ function Remove-TabSpace {
 			- タブ (`\t`) はすべてスペースに変換される。
 			- 複数のスペースは単一のスペースにまとめられる。
 	#>
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = '文字列を置換して返すだけで、システムの状態は変更しない')]
 	[CmdletBinding()]
 	[OutputType([String])]
 	Param ([String]$text)
@@ -1327,7 +1329,7 @@ function Update-ProgressToast {
 
 			ファイルの書き込み進捗を75%に更新するトースト通知を表示します。
 	#>
-	[CmdletBinding()]
+	[CmdletBinding(SupportsShouldProcess = $true)]
 	[OutputType([Void])]
 	Param (
 		[Parameter(Mandatory = $false)][String]$title = '',
@@ -1338,7 +1340,7 @@ function Update-ProgressToast {
 		[Parameter(Mandatory = $true )][String]$group
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	if (!$script:disableToastNotification) {
+	if (!$script:disableToastNotification -and $PSCmdlet.ShouldProcess($tag, 'Update toast')) {
 		switch ($true) {
 			$IsWindows {
 				$toastData = [System.Collections.Generic.Dictionary[String, String]]::new()
@@ -1532,7 +1534,7 @@ function Update-ProgressToast2Row {
 
 			2つのタスクの進捗を更新するトースト通知を表示します。
 	#>
-	[CmdletBinding()]
+	[CmdletBinding(SupportsShouldProcess = $true)]
 	[OutputType([Void])]
 	Param (
 		[Parameter(Mandatory = $false)][String]$title1 = '',
@@ -1547,7 +1549,7 @@ function Update-ProgressToast2Row {
 		[Parameter(Mandatory = $true )][String]$group
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	if (!($script:disableToastNotification)) {
+	if (!($script:disableToastNotification) -and $PSCmdlet.ShouldProcess($tag, 'Update toast')) {
 		$rightText1 = switch ($rightText1 ) {
 			'' { '' ; break }
 			'0' { $script:msg.Completed ; break }
