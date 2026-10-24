@@ -1564,6 +1564,67 @@ function Invoke-NonTverYtdl {
 	Remove-Variable -Name videoPageURL, tmpDir, baseDir, subttlDir, thumbDir, chaptDir, descDir, saveFile, ytdlArgs, ytdlArgsString, rateLimit, startProcessParams, ytdlProcess -ErrorAction SilentlyContinue
 }
 
+function Get-ProcessCountByPath {
+	<#
+		.SYNOPSIS
+			指定した実行ファイルから起動されているプロセスの数を取得します。
+
+		.DESCRIPTION
+			プロセス名ではなく実行ファイルのパスで絞り込んでプロセス数を数えます。
+			TVerRec以外が起動している同名のプロセス(別途起動したyt-dlpやffmpegなど)を数えないために使用します。
+			Windows: Get-Processの結果のPathが一致するものを数えます。
+			Linux: /proc/<PID>/cmdlineのコマンドラインを参照します。(psコマンドが無い環境でも動作)
+			macOS: ps -axo args= のコマンドラインを参照します。
+			コマンドラインの先頭が実行ファイルのパスであるものだけを数え、
+			他のプロセスの引数にパスが含まれているだけのものは数えません。
+
+		.PARAMETER Path
+			実行ファイルのパスを指定します。
+
+		.PARAMETER AllowInterpreter
+			指定すると、`python3 <Path>`のようにインタープリタ経由で起動されたプロセスも数えます。
+			yt-dlpのようにPythonスクリプトとして実行される場合に使用します。
+
+		.OUTPUTS
+			[Int]
+			該当するプロセスの数。取得できない場合は0。
+	#>
+	[OutputType([Int])]
+	Param (
+		[Parameter(Mandatory = $true)][String]$Path,
+		[Switch]$AllowInterpreter
+	)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	try {
+		$fullPath = [IO.Path]::GetFullPath($Path)
+		$processName = [IO.Path]::GetFileNameWithoutExtension($fullPath)
+		if ($IsWindows) {
+			return @(Get-Process -ErrorAction Ignore -Name $processName).Where({ $_.Path -and [String]::Equals($_.Path, $fullPath, [StringComparison]::OrdinalIgnoreCase) }).Count	# * @()で囲まないとプロセスが0/1個のときStrictModeで例外になる
+		}
+		if ($IsLinux) {
+			$cmdLines = foreach ($procDir in [IO.Directory]::GetDirectories('/proc')) {
+				if ([IO.Path]::GetFileName($procDir) -notmatch '^\d+$') { continue }
+				try { [IO.File]::ReadAllText((Join-Path $procDir 'cmdline')).Replace([Char]0, ' ').TrimEnd() } catch { continue }	# * 取得中に終了したプロセスは無視する
+			}
+		} elseif ($IsMacOS) {
+			$cmdLines = & ps -axo 'args=' 2>$null
+		} else {
+			Write-Debug ($script:msg.GetDownloadProcNumFailed)
+			return 0
+		}
+		$candidates = @($Path, $fullPath | Select-Object -Unique)
+		$count = 0
+		foreach ($cmdLine in @($cmdLines)) {
+			if (!$cmdLine) { continue }
+			foreach ($candidate in $candidates) {
+				if ($cmdLine -ceq $candidate -or $cmdLine.StartsWith($candidate + ' ', [StringComparison]::Ordinal)) { $count++ ; break }
+				if ($AllowInterpreter -and $cmdLine -match ('^\S*python\S*\s+{0}(\s|$)' -f [RegEx]::Escape($candidate))) { $count++ ; break }
+			}
+		}
+		return $count
+	} catch { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
+}
+
 #----------------------------------------------------------------------
 # youtube-dlのプロセスカウントを取得
 #----------------------------------------------------------------------
@@ -1574,7 +1635,7 @@ function Get-YtdlProcessCount {
 
 		.DESCRIPTION
 			現在実行中のyoutube-dlプロセスの数を取得します。
-			プラットフォームに応じて適切な方法でプロセス数をカウントします。
+			TVerRecが使用する実行ファイル(`$script:ytdlPath`)から起動されたプロセスだけを数えます。
 
 		.OUTPUTS
 			[Int]
@@ -1582,27 +1643,18 @@ function Get-YtdlProcessCount {
 
 		.NOTES
 			この関数は以下の処理を行います：
-			1. プラットフォームに応じて適切な方法でプロセスをカウント
-			2. Windows: youtube-dlプロセスの数を2で割って返す
-			3. Linux: youtube-dlプロセスの数をそのまま返す
-			4. macOS: psコマンドでyoutube-dlプロセスをカウント
+			1. Get-ProcessCountByPathで実行ファイルのパスが一致するプロセスをカウント
+			2. Windows: プロセスの数を2で割って返す
+			3. Linux/macOS: プロセスの数をそのまま返す
 	#>
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	$processName = switch ($script:preferredYoutubedl) {
-		'yt-dlp' { 'yt-dlp' }
-		'ytdl-patched' { 'youtube-dl' }
-		'yt-dlp-nightly' { 'yt-dlp' }
-	}
 	try {
-		switch ($true) {
-			$IsWindows { return [Int][Math]::Round(@(Get-Process -ErrorAction Ignore -Name $processName).Count / 2, [MidpointRounding]::AwayFromZero ); break }	# * @()で囲まないとプロセスが0/1個のときStrictModeで例外になり常に0が返る
-			$IsLinux { return @(Get-Process -ErrorAction Ignore -Name $processName).Count ; break }
-			$IsMacOS { $psCmd = 'ps' ; return (& sh -c $psCmd | grep $processName | grep -v grep | grep -c ^).Trim() ; break }
-			default { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
-		}
+		$count = Get-ProcessCountByPath -Path $script:ytdlPath -AllowInterpreter
+		if ($IsWindows) { return [Int][Math]::Round($count / 2, [MidpointRounding]::AwayFromZero) }	# * Windowsでは1回の実行で2プロセス(親子)になる
+		return $count
 	} catch { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
-	Remove-Variable -Name processName, psCmd -ErrorAction SilentlyContinue
+	Remove-Variable -Name count -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -1615,7 +1667,7 @@ function Get-FfmpegProcessCount {
 
 		.DESCRIPTION
 			現在実行中のffmpegプロセスの数を取得します。
-			プラットフォームに応じて適切な方法でプロセス数をカウントします。
+			TVerRecが使用する実行ファイル(`$script:ffmpegPath`)から起動されたプロセスだけを数えます。
 
 		.OUTPUTS
 			[Int]
@@ -1623,23 +1675,12 @@ function Get-FfmpegProcessCount {
 
 		.NOTES
 			この関数は以下の処理を行います：
-			1. プラットフォームに応じて適切な方法でプロセスをカウント
-			2. Windows: ffmpegプロセスの数をそのまま返す
-			3. Linux: ffmpegプロセスの数をそのまま返す
-			4. macOS: psコマンドでffmpegプロセスをカウント
+			1. Get-ProcessCountByPathで実行ファイルのパスが一致するプロセスをカウントして返す
 	#>
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	$processName = 'ffmpeg'
-	try {
-		switch ($true) {
-			$IsWindows { return @(Get-Process -ErrorAction Ignore -Name $processName).Count ; break }	# * @()で囲まないとプロセスが0/1個のときStrictModeで例外になる
-			$IsLinux { return @(Get-Process -ErrorAction Ignore -Name $processName).Count ; break }
-			$IsMacOS { $psCmd = 'ps' ; return (& sh -c $psCmd | grep $processName | grep -v grep | grep -c ^).Trim() ; break }
-			default { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
-		}
-	} catch { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
-	Remove-Variable -Name processName, psCmd -ErrorAction SilentlyContinue
+	try { return Get-ProcessCountByPath -Path $script:ffmpegPath }
+	catch { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
 }
 
 #----------------------------------------------------------------------

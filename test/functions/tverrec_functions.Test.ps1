@@ -430,3 +430,69 @@ Describe 'Test-WorkDirOverlap' {
 		Test-WorkDirOverlap -BaseDir $script:base -WorkDir $script:base.ToUpper() | Should -BeFalse
 	}
 }
+
+Describe 'Get-ProcessCountByPath / Get-YtdlProcessCount / Get-FfmpegProcessCount' -Skip:$IsWindows {
+	BeforeAll {
+		$script:procDir = Join-Path ([IO.Path]::GetTempPath()) ('TVerRecProc{0}' -f [Guid]::NewGuid().ToString('N'))
+		New-Item -ItemType Directory -Path $script:procDir | Out-Null
+		$sleepSrc = (Get-Command sleep -CommandType Application | Select-Object -First 1).Source
+		$script:fakeFfmpeg = Join-Path $script:procDir 'ffmpeg'
+		Copy-Item -LiteralPath $sleepSrc -Destination $script:fakeFfmpeg
+		$script:otherFfmpeg = Join-Path $script:procDir 'other-bin/ffmpeg'
+		New-Item -ItemType Directory -Path (Split-Path $script:otherFfmpeg) | Out-Null
+		Copy-Item -LiteralPath $sleepSrc -Destination $script:otherFfmpeg
+		$script:fakeYtdl = Join-Path $script:procDir 'yt-dlp'
+		Set-Content -LiteralPath $script:fakeYtdl -Value "#!/usr/bin/env python3`nimport time`ntime.sleep(60)`n"
+		chmod +x $script:fakeYtdl
+		$script:started = @()
+		$script:saveFfmpegPath = if (Test-Path Variable:Script:ffmpegPath) { $script:ffmpegPath } else { $null }
+		$script:saveYtdlPath = if (Test-Path Variable:Script:ytdlPath) { $script:ytdlPath } else { $null }
+	}
+	AfterAll {
+		foreach ($p in $script:started) { try { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } catch { Write-Debug $_ } }
+		Remove-Item -LiteralPath $script:procDir -Recurse -Force -ErrorAction SilentlyContinue
+		$script:ffmpegPath = $script:saveFfmpegPath
+		$script:ytdlPath = $script:saveYtdlPath
+	}
+	AfterEach {
+		foreach ($p in $script:started) { try { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } catch { Write-Debug $_ } }
+		$script:started = @()
+		Start-Sleep -Milliseconds 300
+	}
+	It 'プロセスがなければ0' {
+		Get-ProcessCountByPath -Path $script:fakeFfmpeg | Should -Be 0
+	}
+	It '指定した実行ファイルのプロセスだけを数える(別パスの同名プロセスは数えない)' {
+		$script:started += Start-Process -FilePath $script:fakeFfmpeg -ArgumentList '60' -PassThru
+		$script:started += Start-Process -FilePath $script:otherFfmpeg -ArgumentList '60' -PassThru
+		Start-Sleep -Milliseconds 500
+		Get-ProcessCountByPath -Path $script:fakeFfmpeg | Should -Be 1
+		Get-ProcessCountByPath -Path $script:otherFfmpeg | Should -Be 1
+	}
+	It '引数にパスが含まれているだけのプロセスは数えない' {
+		$script:started += Start-Process -FilePath 'sh' -ArgumentList @('-c', '"sleep 60"', ('"{0}"' -f $script:fakeFfmpeg)) -PassThru
+		Start-Sleep -Milliseconds 500
+		$script:started[-1].HasExited | Should -BeFalse	# 起動直後に終了して素通りしていないことの確認
+		Get-ProcessCountByPath -Path $script:fakeFfmpeg | Should -Be 0
+	}
+	It '-AllowInterpreter指定時はpython経由のスクリプトも数える' -Skip:(-not (Get-Command python3 -ErrorAction Ignore)) {
+		$script:started += Start-Process -FilePath $script:fakeYtdl -PassThru
+		Start-Sleep -Milliseconds 800
+		Get-ProcessCountByPath -Path $script:fakeYtdl -AllowInterpreter | Should -Be 1
+		Get-ProcessCountByPath -Path $script:fakeYtdl | Should -Be 0
+	}
+	It 'Get-FfmpegProcessCountは$script:ffmpegPathのプロセスだけを数える' {
+		$script:ffmpegPath = $script:fakeFfmpeg
+		$script:started += Start-Process -FilePath $script:fakeFfmpeg -ArgumentList '60' -PassThru
+		$script:started += Start-Process -FilePath $script:otherFfmpeg -ArgumentList '60' -PassThru
+		Start-Sleep -Milliseconds 500
+		Get-FfmpegProcessCount | Should -Be 1
+	}
+	It 'Get-YtdlProcessCountは$script:ytdlPathのプロセスだけを数える' -Skip:(-not (Get-Command python3 -ErrorAction Ignore)) {
+		$script:ytdlPath = $script:fakeYtdl
+		Get-YtdlProcessCount | Should -Be 0
+		$script:started += Start-Process -FilePath $script:fakeYtdl -PassThru
+		Start-Sleep -Milliseconds 800
+		Get-YtdlProcessCount | Should -Be 1
+	}
+}
