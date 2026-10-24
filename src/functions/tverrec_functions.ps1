@@ -125,6 +125,66 @@ function Compare-Version {
 	return [Math]::Sign($remoteUnits.Count - $localUnits.Count)
 }
 
+function Invoke-PowerShellUpdateCheck {
+	<#
+		.SYNOPSIS
+			PowerShellの新しいバージョンが公開されているかを確認し、あれば案内を表示します。
+
+		.DESCRIPTION
+			GitHubのPowerShellリポジトリから最新の正式版を取得し、実行中のPowerShellと比較します。
+			PowerShellはインストール方法が複数あるため、自動更新は行わず、新しいバージョンがあることの案内だけを表示します。
+			GitHubへの問い合わせは24時間に1回とし、結果は`log/powershell_update_check.txt`に保存します。
+			(それ以外の起動時は保存した結果で判定します)
+			取得に失敗した場合は何も表示せず、処理を継続します。
+
+		.OUTPUTS
+			[Void]
+
+		.NOTES
+			`$script:disableCheckPowerShellUpdate`が`$true`の場合は確認しません。
+	#>
+	[OutputType([Void])]
+	Param ()
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if ($script:disableCheckPowerShellUpdate) { return }
+	$cachePath = Join-Path $script:logDir 'powershell_update_check.txt'
+	$latestVersion = $null
+	$checkedAt = [DateTime]::MinValue
+	try {
+		if (Test-Path -LiteralPath $cachePath -PathType Leaf) {
+			$lines = @(Get-Content -LiteralPath $cachePath -TotalCount 2)
+			if ($lines.Count -ge 2) {
+				$checkedAt = [DateTime]::Parse($lines[0], [CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::RoundtripKind)
+				$latestVersion = $lines[1].Trim()
+			}
+		}
+	} catch { $latestVersion = $null ; $checkedAt = [DateTime]::MinValue }
+	$elapsedHours = ([DateTime]::UtcNow - $checkedAt.ToUniversalTime()).TotalHours
+	if (!$latestVersion -or $elapsedHours -ge 24 -or $elapsedHours -lt 0) {
+		$progressPreference = 'SilentlyContinue'
+		try {
+			$release = Invoke-RestMethod -Uri 'https://api.github.com/repos/PowerShell/PowerShell/releases/latest' -Method 'GET' -TimeoutSec $script:timeoutSec
+			$latestVersion = ([String]$release.tag_name).Trim('v', ' ')
+			if ($latestVersion -match '^\d+\.\d+\.\d+$') {
+				Set-Content -LiteralPath $cachePath -Value @([DateTime]::UtcNow.ToString('o'), $latestVersion) -ErrorAction SilentlyContinue
+			}
+		} catch { Write-Debug $_ ; return }
+		finally { $progressPreference = 'Continue' }
+	}
+	if ($latestVersion -notmatch '^\d+\.\d+\.\d+$') { return }
+	$localVersion = $PSVersionTable.PSVersion.ToString().Split('-')[0]	# 7.6.0-preview.1 → 7.6.0
+	if ((Compare-Version $latestVersion $localVersion) -gt 0) {
+		[Console]::ForegroundColor = 'Green'
+		Write-Output ('')
+		Write-Warning ($script:msg.ToolOutdated -f 'PowerShell')
+		Write-Warning ($script:msg.ToolLocalVersion -f $localVersion)
+		Write-Warning ($script:msg.ToolRemoteVersion -f $latestVersion)
+		Write-Warning ($script:msg.PowerShellUpdateHint)
+		Write-Output ('')
+		[Console]::ResetColor()
+	}
+}
+
 #----------------------------------------------------------------------
 # TVerRec最新化確認
 #----------------------------------------------------------------------

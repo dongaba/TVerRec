@@ -242,6 +242,11 @@ $script:disableUpdateYoutubedl = $false
 #　ffmpegの配布元の不具合等により自動アップデートがうまく動作しない場合には無効化することが可能です。
 $script:disableUpdateFfmpeg = $false
 
+# PowerShellの新バージョン通知を無効化
+#　起動時にPowerShellの新しいバージョンが公開されていると案内を表示します。(自動更新は行いません)
+#　GitHubへの問い合わせは24時間に1回です。案内が不要な場合は無効化することが可能です。
+$script:disableCheckPowerShellUpdate = $false
+
 # ソフトウェアデコードの強制(「$true」でソフトウェアデコードの強制。ただしCPU使用率が上がる)
 #　ダウンロードファイルの整合性検証時にハードウェアアクセラレーションを使わなくすることができます。
 #　高速なCPUが搭載されている場合はハードウェアアクセラレーションよりもCPUで処理したほうが処理が早いことがあります。

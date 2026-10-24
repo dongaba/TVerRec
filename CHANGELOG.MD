@@ -10,6 +10,7 @@
 - ダウンロード対象外リスト(`ignore.conf`)で、行頭に`regex:`を付けた行を正規表現として扱えるように`Test-IgnoreMatch`を追加(`regex:`で始まらない行の動作は従来どおり) #190
 - 番組移動時に移動先に同名のファイルがある場合の動作を選べる設定`$script:moveConflictAction`(Overwrite/Skip/Rename)を追加。既定は従来どおりの上書き(Overwrite) #230
 - GUIの更新間隔(ミリ秒)を設定ファイルとGUI設定画面から指定できる`$script:guiRefreshIntervalMs`と、`Get-GuiRefreshInterval`を追加。#306で100msに変更された既定値は10msに戻し、CPU使用率が気になる場合は100などを指定できるようにした
+- 起動時にPowerShellの新しいバージョンが公開されている場合に案内を表示(自動更新は行わない)。GitHubへの問い合わせは24時間に1回で、`$script:disableCheckPowerShellUpdate`で無効化可能(#313)
 - ダウンロードしたファイルにサムネイルを埋め込むかを選べる設定`$script:embedThumbnail`を追加。既定は従来どおり埋め込む(`$true`) #315
 - ダウンロード作業ディレクトリがダウンロード先ディレクトリと同じ、またはダウンロード先を含むフォルダの場合、不要ファイル削除でダウンロード済みのファイルを消す恐れがあるため、起動時にエラーで終了するように変更(#315)
 

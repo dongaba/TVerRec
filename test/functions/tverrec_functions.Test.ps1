@@ -519,3 +519,58 @@ Describe 'Group-DirectoryPathByLeaf' {
 		(Group-DirectoryPathByLeaf -Path $null).Count | Should -Be 0
 	}
 }
+
+Describe 'Invoke-PowerShellUpdateCheck' {
+	BeforeEach {
+		$script:saveLogDir = if (Test-Path Variable:Script:logDir) { $script:logDir } else { $null }
+		$script:saveDisable = if (Test-Path Variable:Script:disableCheckPowerShellUpdate) { $script:disableCheckPowerShellUpdate } else { $null }
+		$script:logDir = Join-Path $TestDrive ('log{0}' -f [Guid]::NewGuid().ToString('N'))
+		New-Item -ItemType Directory -Path $script:logDir | Out-Null
+		$script:cacheFile = Join-Path $script:logDir 'powershell_update_check.txt'
+		$script:disableCheckPowerShellUpdate = $false
+		$script:timeoutSec = 5
+		$script:restCalls = 0
+		$script:restVersion = 'v99.0.0'
+		Mock Invoke-RestMethod { $script:restCalls++ ; [PSCustomObject]@{ tag_name = $script:restVersion } }
+	}
+	AfterEach {
+		$script:logDir = $script:saveLogDir
+		$script:disableCheckPowerShellUpdate = $script:saveDisable
+	}
+	It '新しいバージョンがあれば案内を表示し、結果をキャッシュする' {
+		$out = Invoke-PowerShellUpdateCheck 3>&1 6>&1 | Out-String
+		$out | Should -Match '99\.0\.0'
+		$script:restCalls | Should -Be 1
+		(Get-Content -LiteralPath $script:cacheFile)[1] | Should -Be '99.0.0'
+	}
+	It '同じか古いバージョンなら案内を表示しない' {
+		$script:restVersion = 'v1.0.0'
+		$out = Invoke-PowerShellUpdateCheck 3>&1 6>&1 | Out-String
+		$out | Should -Not -Match 'PowerShell'
+	}
+	It '24時間以内ならGitHubに問い合わせずキャッシュで判定する' {
+		Set-Content -LiteralPath $script:cacheFile -Value @([DateTime]::UtcNow.AddHours(-1).ToString('o'), '99.0.0')
+		$out = Invoke-PowerShellUpdateCheck 3>&1 6>&1 | Out-String
+		$script:restCalls | Should -Be 0
+		$out | Should -Match '99\.0\.0'
+	}
+	It '24時間を超えていたら再度問い合わせる' {
+		Set-Content -LiteralPath $script:cacheFile -Value @([DateTime]::UtcNow.AddHours(-25).ToString('o'), '1.0.0')
+		Invoke-PowerShellUpdateCheck 3>&1 6>&1 | Out-Null
+		$script:restCalls | Should -Be 1
+	}
+	It '無効化設定なら何もしない' {
+		$script:disableCheckPowerShellUpdate = $true
+		Invoke-PowerShellUpdateCheck 3>&1 6>&1 | Out-Null
+		$script:restCalls | Should -Be 0
+	}
+	It '取得に失敗しても例外にならず何も表示しない' {
+		Mock Invoke-RestMethod { throw 'network error' }
+		{ Invoke-PowerShellUpdateCheck 3>&1 6>&1 | Out-Null } | Should -Not -Throw
+	}
+	It '壊れたキャッシュや想定外のバージョン文字列でも例外にならない' {
+		Set-Content -LiteralPath $script:cacheFile -Value @('not-a-date', 'x.y.z')
+		$script:restVersion = 'nightly'
+		{ Invoke-PowerShellUpdateCheck 3>&1 6>&1 | Out-Null } | Should -Not -Throw
+	}
+}

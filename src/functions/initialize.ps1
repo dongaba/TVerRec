@@ -219,6 +219,9 @@ if ( $myInvocation.ScriptName.Contains('gui')) {
 	catch { Write-Warning ($script:msg.YoutubeDLVersionCheckFailed) }
 	try { if (!$script:disableUpdateFfmpeg) { Invoke-ToolUpdateCheck -scriptName 'update_ffmpeg.ps1' -targetName 'ffmpeg' } }
 	catch { Write-Warning ($script:msg.FfmpegVersionCheckFailed) }
+	# PowerShellの最新化チェック(案内のみ)
+	try { Invoke-PowerShellUpdateCheck }
+	catch { Write-Debug $_ }
 	# pycryptodomexの導入確認(macOS/Linux)
 	try { Test-YtdlCryptoModule }
 	catch { Write-Debug $_ }
