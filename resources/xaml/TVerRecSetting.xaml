@@ -596,6 +596,10 @@
                                 <TextBlock Name="disableUpdateFfmpegText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox Name="disableUpdateFfmpeg" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
+                            <Expander Name="disableCheckPowerShellUpdateHeader" Margin="10,10,10,0" IsExpanded="False" >
+                                <TextBlock Name="disableCheckPowerShellUpdateText" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            </Expander>
+                            <ComboBox Name="disableCheckPowerShellUpdate" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
                             <Expander Name="ytdlOptionHeader" Margin="10,10,10,0" IsExpanded="False" >
                                 <TextBlock Name="ytdlOptionText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>

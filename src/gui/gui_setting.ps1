@@ -125,6 +125,7 @@ $settingAttributes = @(
 	'$script:preferredYoutubedl',
 	'$script:disableUpdateYoutubedl',
 	'$script:disableUpdateFfmpeg',
+	'$script:disableCheckPowerShellUpdate',
 	'$script:forceSoftwareDecodeFlag',
 	'$script:simplifiedValidation',
 	'$script:disableValidation',
@@ -568,6 +569,8 @@ $disableUpdateYoutubedlHeader.Header = $script:msg.disableUpdateYoutubedlHeader
 $disableUpdateYoutubedlText.Text = $script:msg.disableUpdateYoutubedlText
 $disableUpdateFfmpegHeader.Header = $script:msg.disableUpdateFfmpegHeader
 $disableUpdateFfmpegText.Text = $script:msg.disableUpdateFfmpegText
+$disableCheckPowerShellUpdateHeader.Header = $script:msg.disableCheckPowerShellUpdateHeader
+$disableCheckPowerShellUpdateText.Text = $script:msg.disableCheckPowerShellUpdateText
 $ytdlOptionHeader.Header = $script:msg.ytdlOptionHeader
 $ytdlOptionText.Text = $script:msg.ytdlOptionText
 $ytdlHttpHeaderHeader.Header = $script:msg.ytdlHttpHeaderHeader
@@ -635,6 +638,7 @@ $trueFalseControls = @(
 	$disableValidation,
 	$disableUpdateYoutubedl,
 	$disableUpdateFfmpeg,
+	$disableCheckPowerShellUpdate,
 	$ytdlRandomIp,
 	$scheduleStop
 )
