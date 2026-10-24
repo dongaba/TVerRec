@@ -395,3 +395,38 @@ Describe 'サムネイル埋め込み設定(embedThumbnail)' {
 		$script:capturedYtdlArgs | Should -Match '--embed-subs'
 	}
 }
+
+Describe 'Test-WorkDirOverlap' {
+	BeforeAll {
+		$script:root = Join-Path ([IO.Path]::GetTempPath()) 'TVerRecOverlapTest'
+		$script:base = Join-Path $script:root 'Video'
+	}
+	It '同じフォルダならtrue' {
+		Test-WorkDirOverlap -BaseDir $script:base -WorkDir $script:base | Should -BeTrue
+	}
+	It '末尾の区切り文字の有無が違っても同じフォルダならtrue' {
+		Test-WorkDirOverlap -BaseDir ($script:base + [IO.Path]::DirectorySeparatorChar) -WorkDir $script:base | Should -BeTrue
+	}
+	It '..を含む表記でも同じフォルダならtrue' {
+		$indirect = Join-Path (Join-Path $script:base 'sub') '..'
+		Test-WorkDirOverlap -BaseDir $script:base -WorkDir $indirect | Should -BeTrue
+	}
+	It '作業ディレクトリがダウンロード先を含むフォルダならtrue' {
+		Test-WorkDirOverlap -BaseDir $script:base -WorkDir $script:root | Should -BeTrue
+	}
+	It '作業ディレクトリがダウンロード先の配下ならfalse' {
+		Test-WorkDirOverlap -BaseDir $script:base -WorkDir (Join-Path $script:base 'work') | Should -BeFalse
+	}
+	It '別フォルダならfalse' {
+		Test-WorkDirOverlap -BaseDir $script:base -WorkDir (Join-Path $script:root 'Work') | Should -BeFalse
+	}
+	It '名前の先頭が同じだけの別フォルダならfalse' {
+		Test-WorkDirOverlap -BaseDir (Join-Path $script:root 'Video2') -WorkDir (Join-Path $script:root 'Video') | Should -BeFalse
+	}
+	It 'WindowsとmacOSでは大文字小文字を区別しない' -Skip:(-not ($IsWindows -or $IsMacOS)) {
+		Test-WorkDirOverlap -BaseDir $script:base -WorkDir $script:base.ToUpper() | Should -BeTrue
+	}
+	It 'Linuxでは大文字小文字を区別する' -Skip:($IsWindows -or $IsMacOS) {
+		Test-WorkDirOverlap -BaseDir $script:base -WorkDir $script:base.ToUpper() | Should -BeFalse
+	}
+}

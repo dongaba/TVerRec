@@ -360,6 +360,42 @@ function Invoke-TverrecPathCheck {
 	Remove-Variable -Name path, errorMessage, isFile, sampleFilePath, continue, pathType -ErrorAction SilentlyContinue
 }
 
+function Test-WorkDirOverlap {
+	<#
+		.SYNOPSIS
+			作業ディレクトリがダウンロード先ディレクトリと同一、またはダウンロード先ディレクトリを含むかを判定します。
+
+		.DESCRIPTION
+			不要ファイル削除処理は作業ディレクトリ配下の`*.jpg`や`*.part*`などを再帰的に削除するため、
+			作業ディレクトリがダウンロード先と同一、またはダウンロード先を含むフォルダだと、
+			ダウンロード済みの他のファイルまで削除する恐れがあります。
+			そのような設定を検出するための判定を行います。
+			パスの大文字小文字はWindowsとmacOSでは区別せず、Linuxでは区別します。
+
+		.PARAMETER BaseDir
+			ダウンロード先ディレクトリのパスを指定します。
+
+		.PARAMETER WorkDir
+			作業ディレクトリのパスを指定します。
+
+		.OUTPUTS
+			System.Boolean. 同一または包含している場合は$true、それ以外は$falseを返します。
+	#>
+	[OutputType([Boolean])]
+	Param (
+		[Parameter(Mandatory = $true)][String]$BaseDir,
+		[Parameter(Mandatory = $true)][String]$WorkDir
+	)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$sep = [IO.Path]::DirectorySeparatorChar
+	$comparison = if ($IsWindows -or $IsMacOS) { [StringComparison]::OrdinalIgnoreCase } else { [StringComparison]::Ordinal }
+	$base = [IO.Path]::GetFullPath($BaseDir).TrimEnd('\', '/')
+	$work = [IO.Path]::GetFullPath($WorkDir).TrimEnd('\', '/')
+	if ($base -eq '' -or $work -eq '') { return $true }	# ルート直下指定は常に包含とみなす
+	if ([String]::Equals($base, $work, $comparison)) { return $true }
+	return $base.StartsWith(($work + $sep), $comparison)
+}
+
 #----------------------------------------------------------------------
 # 設定で指定したファイル・ディレクトリの存在チェック
 #----------------------------------------------------------------------
@@ -397,6 +433,7 @@ function Invoke-RequiredFileCheck {
 	if (!$script:downloadWorkDir) { throw ($script:msg.DirNotSpecified -f $script:msg.WorkDir) }
 	else { Invoke-TverrecPathCheck -Path $script:downloadWorkDir -errorMessage $script:msg.WorkDir }
 	$script:downloadWorkDir = $script:downloadWorkDir.TrimEnd('\/')
+	if (Test-WorkDirOverlap -BaseDir $script:downloadBaseDir -WorkDir $script:downloadWorkDir) { throw ($script:msg.WorkDirOverlap -f $script:downloadWorkDir, $script:downloadBaseDir) }
 	if ($script:saveBaseDir) {
 		$script:saveBaseDirArray = $script:saveBaseDir.split(';').Trim().TrimEnd('\/')
 		foreach ($saveDir in $script:saveBaseDirArray) { Invoke-TverrecPathCheck -Path $saveDir.Trim() -errorMessage $script:msg.SaveDir -continue $true }
