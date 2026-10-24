@@ -257,6 +257,8 @@ Describe 'Move-VideoFileToDestination' {
 		$script:srcFile = Join-Path $script:srcDir '番組 第1話.mp4'
 		$script:dstFile = Join-Path $script:dstDir '番組 第1話.mp4'
 		Set-Content -LiteralPath $script:srcFile -Value 'new' -NoNewline
+		# ffprobeが存在しない場合は字幕の有無を確認できず(null)、従来どおりの動作になる
+		$script:ffprobePath = Join-Path $TestDrive 'ffprobe-not-exist'
 	}
 
 	It '同名ファイルがなければ、どの設定でも移動する' {
@@ -307,6 +309,52 @@ Describe 'Move-VideoFileToDestination' {
 		$r = Move-VideoFileToDestination -Path $script:srcFile -DestinationDir $script:dstDir -ConflictAction 'Rename'
 		$r.Destination | Should -Be (Join-Path $script:dstDir '番組 第1話 (2).mp4')
 		Get-Content -LiteralPath (Join-Path $script:dstDir '番組 第1話 (1).mp4') -Raw | Should -Be 'old1'
+	}
+	Context '字幕の有無による上書き防止' {
+		BeforeEach {
+			Set-Content -LiteralPath $script:dstFile -Value 'old' -NoNewline
+			Mock Test-VideoFileHasSubtitle { $script:subtitleMap[$VideoPath] }
+		}
+		It 'Overwrite: 移動先に字幕があり、移動元に字幕がなければ上書きしない' {
+			$script:subtitleMap = @{ $script:dstFile = $true ; $script:srcFile = $false }
+			$r = Move-VideoFileToDestination -Path $script:srcFile -DestinationDir $script:dstDir -ConflictAction 'Overwrite'
+			$r.Result | Should -Be 'SubtitleKept'
+			$r.Destination | Should -BeNullOrEmpty
+			Get-Content -LiteralPath $script:dstFile -Raw | Should -Be 'old'
+			Get-Content -LiteralPath $script:srcFile -Raw | Should -Be 'new'
+		}
+		It 'Overwrite: 移動先と移動元の両方に字幕があれば上書きする' {
+			$script:subtitleMap = @{ $script:dstFile = $true ; $script:srcFile = $true }
+			(Move-VideoFileToDestination -Path $script:srcFile -DestinationDir $script:dstDir -ConflictAction 'Overwrite').Result | Should -Be 'Overwritten'
+			Get-Content -LiteralPath $script:dstFile -Raw | Should -Be 'new'
+		}
+		It 'Overwrite: 移動先に字幕がなく、移動元に字幕があれば上書きする' {
+			$script:subtitleMap = @{ $script:dstFile = $false ; $script:srcFile = $true }
+			(Move-VideoFileToDestination -Path $script:srcFile -DestinationDir $script:dstDir -ConflictAction 'Overwrite').Result | Should -Be 'Overwritten'
+		}
+		It 'Overwrite: 両方とも字幕がなければ上書きする' {
+			$script:subtitleMap = @{ $script:dstFile = $false ; $script:srcFile = $false }
+			(Move-VideoFileToDestination -Path $script:srcFile -DestinationDir $script:dstDir -ConflictAction 'Overwrite').Result | Should -Be 'Overwritten'
+		}
+		It 'Overwrite: 字幕の有無を確認できない(ffprobeが使えないなど)場合は従来どおり上書きする' {
+			$script:subtitleMap = @{ $script:dstFile = $null ; $script:srcFile = $null }
+			(Move-VideoFileToDestination -Path $script:srcFile -DestinationDir $script:dstDir -ConflictAction 'Overwrite').Result | Should -Be 'Overwritten'
+			Set-Content -LiteralPath $script:srcFile -Value 'new' -NoNewline
+			Set-Content -LiteralPath $script:dstFile -Value 'old' -NoNewline
+			$script:subtitleMap = @{ $script:dstFile = $true ; $script:srcFile = $null }
+			(Move-VideoFileToDestination -Path $script:srcFile -DestinationDir $script:dstDir -ConflictAction 'Overwrite').Result | Should -Be 'Overwritten'
+		}
+		It 'Rename: 既存ファイルは上書きされないため、字幕の確認をせず別名で移動する' {
+			$script:subtitleMap = @{ $script:dstFile = $true ; $script:srcFile = $false }
+			(Move-VideoFileToDestination -Path $script:srcFile -DestinationDir $script:dstDir -ConflictAction 'Rename').Result | Should -Be 'Renamed'
+			Should -Invoke Test-VideoFileHasSubtitle -Times 0 -Exactly
+		}
+		It '同名ファイルがなければ字幕の確認をせず移動する' {
+			Remove-Item -LiteralPath $script:dstFile -Force
+			$script:subtitleMap = @{}
+			(Move-VideoFileToDestination -Path $script:srcFile -DestinationDir $script:dstDir -ConflictAction 'Overwrite').Result | Should -Be 'Moved'
+			Should -Invoke Test-VideoFileHasSubtitle -Times 0 -Exactly
+		}
 	}
 	It 'ファイル名に[ ]などを含んでも移動できる' {
 		$src = Join-Path $script:srcDir '大奥[有功] 第1話.mp4'
@@ -572,5 +620,268 @@ Describe 'Invoke-PowerShellUpdateCheck' {
 		Set-Content -LiteralPath $script:cacheFile -Value @('not-a-date', 'x.y.z')
 		$script:restVersion = 'nightly'
 		{ Invoke-PowerShellUpdateCheck 3>&1 6>&1 | Out-Null } | Should -Not -Throw
+	}
+}
+
+Describe '字幕の有無の記録と再ダウンロード(#312)' {
+	BeforeAll {
+		$script:subSaved = @{}
+		foreach ($n in 'redownloadWhenSubtitleAdded', 'embedSubtitle', 'videoContainerFormat', 'ytdlPath', 'histFilePath', 'histLockFilePath', 'histHasSubtitleColumn', 'proxyUrl', 'ytdlRandomIp') {
+			$script:subSaved[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' }
+		}
+		$script:subDir = Join-Path ([IO.Path]::GetTempPath()) ('TVerRecSub{0}' -f [Guid]::NewGuid().ToString('N'))
+		New-Item -ItemType Directory -Path $script:subDir | Out-Null
+	}
+	AfterAll {
+		foreach ($n in $script:subSaved.Keys) {
+			if ($script:subSaved[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:subSaved[$n] }
+		}
+		Remove-Item -LiteralPath $script:subDir -Recurse -Force -ErrorAction SilentlyContinue
+		Remove-Item Env:FAKE_YTDL_OUT, Env:FAKE_YTDL_EXIT -ErrorAction SilentlyContinue
+	}
+	BeforeEach {
+		$script:redownloadWhenSubtitleAdded = $true
+		$script:embedSubtitle = $true
+		$script:videoContainerFormat = 'mp4'
+		$script:histHasSubtitleColumn = $false
+		$script:proxyUrl = ''
+		$script:ytdlRandomIp = $false
+	}
+
+	Context 'Test-SubtitleTrackingEnabled' {
+		It '設定が有効・字幕埋め込み有効・mp4なら有効' { Test-SubtitleTrackingEnabled | Should -BeTrue }
+		It '設定が無効なら無効' { $script:redownloadWhenSubtitleAdded = $false ; Test-SubtitleTrackingEnabled | Should -BeFalse }
+		It '字幕を埋め込まない設定なら無効' { $script:embedSubtitle = $false ; Test-SubtitleTrackingEnabled | Should -BeFalse }
+		It 'mp4以外なら無効' { $script:videoContainerFormat = 'ts' ; Test-SubtitleTrackingEnabled | Should -BeFalse }
+	}
+
+	Context 'Get-VideoSubtitleStatus' -Skip:$IsWindows {
+		BeforeAll {
+			$script:ytdlPath = Join-Path $script:subDir 'yt-dlp'
+			Set-Content -LiteralPath $script:ytdlPath -Value "#!/bin/sh`nprintf '%s' `"`$FAKE_YTDL_OUT`"`nexit `${FAKE_YTDL_EXIT:-0}`n"
+			chmod +x $script:ytdlPath
+		}
+		It '字幕のJSONが返れば1' {
+			$env:FAKE_YTDL_OUT = '{"ja": [{"url": "https://example.com/a.vtt", "ext": "vtt"}]}' ; $env:FAKE_YTDL_EXIT = '0'
+			Get-VideoSubtitleStatus -EpisodePageURL 'https://tver.jp/episodes/epx' | Should -Be '1'
+		}
+		It 'NAが返れば0' {
+			$env:FAKE_YTDL_OUT = 'NA' ; $env:FAKE_YTDL_EXIT = '0'
+			Get-VideoSubtitleStatus -EpisodePageURL 'https://tver.jp/episodes/epx' | Should -Be '0'
+		}
+		It '空のJSONオブジェクトなら0' {
+			$env:FAKE_YTDL_OUT = '{}' ; $env:FAKE_YTDL_EXIT = '0'
+			Get-VideoSubtitleStatus -EpisodePageURL 'https://tver.jp/episodes/epx' | Should -Be '0'
+		}
+		It 'yt-dlpが失敗した場合は不明(空文字)' {
+			$env:FAKE_YTDL_OUT = '' ; $env:FAKE_YTDL_EXIT = '1'
+			Get-VideoSubtitleStatus -EpisodePageURL 'https://tver.jp/episodes/epx' | Should -Be ''
+		}
+		It '想定外の出力は不明(空文字)' {
+			$env:FAKE_YTDL_OUT = 'unexpected output' ; $env:FAKE_YTDL_EXIT = '0'
+			Get-VideoSubtitleStatus -EpisodePageURL 'https://tver.jp/episodes/epx' | Should -Be ''
+		}
+		It '出力がない場合は不明(空文字)' {
+			$env:FAKE_YTDL_OUT = '' ; $env:FAKE_YTDL_EXIT = '0'
+			Get-VideoSubtitleStatus -EpisodePageURL 'https://tver.jp/episodes/epx' | Should -Be ''
+		}
+	}
+
+	Context '履歴ファイルの列追加' {
+		BeforeEach {
+			$script:histFilePath = Join-Path $script:subDir ('history{0}.csv' -f [Guid]::NewGuid().ToString('N'))
+			$script:histLockFilePath = Join-Path $script:subDir 'history.lock'
+			Mock Wait-FileLock {}
+			Mock Unlock-File {}
+			$header = '"videoPage","videoSeriesPage","genre","series","season","title","media","broadcastDate","downloadDate","videoDir","videoName","videoPath","videoValidated"'
+			@($header, '"https://tver.jp/episodes/ep1","","tag/drama","番組A","","第1話","局","2026年01月01日放送","2026-01-01 00:00:00","d","a.mp4","a/a.mp4","1"') | Set-Content -LiteralPath $script:histFilePath -Encoding UTF8
+		}
+		It '列がなければTest-HistorySubtitleColumnは$false' { Test-HistorySubtitleColumn | Should -BeFalse }
+		It 'Add-HistorySubtitleColumn: 列を追加し、既存の行の値は変えず、空の列を持たせる' {
+			Add-HistorySubtitleColumn | Should -Be 'Added'
+			Test-HistorySubtitleColumn | Should -BeTrue
+			$rows = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+			$rows.Count | Should -Be 1
+			$rows[0].series | Should -Be '番組A'
+			$rows[0].videoValidated | Should -Be '1'
+			$rows[0].subtitle | Should -Be ''
+			Test-Path ('{0}.bak' -f $script:histFilePath) | Should -BeTrue
+		}
+		It 'Add-HistorySubtitleColumn: すでに列があれば何もしない(冪等)' {
+			Add-HistorySubtitleColumn | Out-Null
+			$before = Get-Content -LiteralPath $script:histFilePath -Raw
+			$script:histHasSubtitleColumn = $false
+			Add-HistorySubtitleColumn | Should -Be 'Exists'
+			Get-Content -LiteralPath $script:histFilePath -Raw | Should -Be $before
+		}
+		It 'Add-HistorySubtitleColumn: ヘッダーだけの履歴にも列を追加できる' {
+			(Get-Content -LiteralPath $script:histFilePath -TotalCount 1) | Set-Content -LiteralPath $script:histFilePath -Encoding UTF8
+			Add-HistorySubtitleColumn | Should -Be 'Added'
+			Test-HistorySubtitleColumn | Should -BeTrue
+			(Get-Content -LiteralPath $script:histFilePath -TotalCount 1) | Should -Match '"subtitle"$'
+		}
+		It 'Add-HistorySubtitleColumn: 追加後は新しい形式のレコードを追記できる' {
+			Add-HistorySubtitleColumn | Out-Null
+			$videoInfo = [PSCustomObject]@{ episodePageURL = 'https://tver.jp/episodes/ep2' ; seriesPageURL = '' ; keyword = 'k' ; seriesName = 's' ; seasonName = '' ; episodeName = 'e' ; mediaName = 'm' ; broadcastDate = 'b' ; fileDir = 'd' ; fileName = 'f.mp4' ; fileRelPath = 'd/f.mp4' ; validated = '0' ; subtitle = '1' }
+			$record = Format-HistoryRecord $videoInfo
+			$record.subtitle | Should -Be '1'
+			{ $record | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append } | Should -Not -Throw
+			@(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Count | Should -Be 2
+		}
+		It 'Format-HistoryRecord: 字幕の再確認の設定にかかわらず、常にsubtitle列を持つ(videoInfoにsubtitleがなければ空)' {
+			$videoInfo = [PSCustomObject]@{ episodePageURL = 'u' ; seriesPageURL = '' ; keyword = 'k' ; seriesName = 's' ; seasonName = '' ; episodeName = 'e' ; mediaName = 'm' ; broadcastDate = 'b' ; fileDir = 'd' ; fileName = 'f.mp4' ; fileRelPath = 'd/f.mp4' ; validated = '0' }
+			$script:redownloadWhenSubtitleAdded = $false
+			(Format-HistoryRecord $videoInfo).PSObject.Properties['subtitle'] | Should -Not -BeNullOrEmpty
+			(Format-HistoryRecord $videoInfo).subtitle | Should -Be ''
+			$script:redownloadWhenSubtitleAdded = $true
+			(Format-HistoryRecord $videoInfo).subtitle | Should -Be ''
+		}
+		It 'Format-HistoryRecord: レコードの列の並びは履歴ファイルの列の並びと一致する' {
+			$videoInfo = [PSCustomObject]@{ episodePageURL = 'u' ; seriesPageURL = '' ; keyword = 'k' ; seriesName = 's' ; seasonName = '' ; episodeName = 'e' ; mediaName = 'm' ; broadcastDate = 'b' ; fileDir = 'd' ; fileName = 'f.mp4' ; fileRelPath = 'd/f.mp4' ; validated = '0' }
+			$sampleHeader = (Get-Content -LiteralPath (Join-Path $script:repoRoot 'resources/sample/history.sample.csv') -TotalCount 1) -replace '"', ''
+			(Format-HistoryRecord $videoInfo).PSObject.Properties.Name -join ',' | Should -Be $sampleHeader
+		}
+	}
+
+	Context '字幕の再確認の対象を「ダウンロード済み」から除く' {
+		BeforeAll {
+			$script:subHists = @(
+				[PSCustomObject]@{ videoPage = 'https://tver.jp/episodes/ep_has' ; subtitle = '1' },
+				[PSCustomObject]@{ videoPage = 'https://tver.jp/episodes/ep_none' ; subtitle = '0' },
+				[PSCustomObject]@{ videoPage = 'https://tver.jp/episodes/ep_unknown' ; subtitle = '' }
+			)
+		}
+		It 'Remove-SubtitleRecheckTarget: 有効なら字幕なし(0)の行だけ除く' {
+			$r = @(Remove-SubtitleRecheckTarget $script:subHists)
+			$r.Count | Should -Be 2
+			$r.videoPage | Should -Not -Contain 'https://tver.jp/episodes/ep_none'
+		}
+		It 'Remove-SubtitleRecheckTarget: 無効なら何も除かない' {
+			$script:redownloadWhenSubtitleAdded = $false
+			@(Remove-SubtitleRecheckTarget $script:subHists).Count | Should -Be 3
+		}
+		It 'Remove-SubtitleRecheckTarget: subtitle列がない履歴は何も除かない' {
+			$old = @([PSCustomObject]@{ videoPage = 'https://tver.jp/episodes/ep_old' })
+			@(Remove-SubtitleRecheckTarget $old).Count | Should -Be 1
+		}
+		It 'Invoke-HistoryMatchCheck: 字幕なしの番組は未ダウンロードとして返し、字幕あり・不明は除外する' {
+			Mock Get-LatestHistory { $script:subHists }
+			$videoLinks, $processedCount = Invoke-HistoryMatchCheck @('ep_has', 'ep_none', 'ep_unknown', 'ep_new')
+			@($videoLinks) | Should -Contain 'ep_none'
+			@($videoLinks) | Should -Contain 'ep_new'
+			@($videoLinks) | Should -Not -Contain 'ep_has'
+			@($videoLinks) | Should -Not -Contain 'ep_unknown'
+			$processedCount | Should -Be 2
+		}
+		It 'Invoke-HistoryMatchCheck: 設定が無効なら従来どおり履歴にある番組はすべて除外する' {
+			$script:redownloadWhenSubtitleAdded = $false
+			Mock Get-LatestHistory { $script:subHists }
+			$videoLinks, $processedCount = Invoke-HistoryMatchCheck @('ep_has', 'ep_none', 'ep_unknown', 'ep_new')
+			@($videoLinks) | Should -Be @('ep_new')
+			$processedCount | Should -Be 3
+		}
+	}
+}
+
+Describe 'Invoke-VideoDownloadの字幕の分岐(#312)' {
+	BeforeAll {
+		$script:vdSaved = @{}
+		foreach ($n in 'redownloadWhenSubtitleAdded', 'downloadWhenEpisodeIdChanged', 'embedSubtitle', 'videoContainerFormat', 'histFilePath', 'histLockFilePath', 'histHasSubtitleColumn', 'downloadBaseDir', 'sortVideoBySeries', 'sortVideoByMedia') {
+			$script:vdSaved[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' }
+		}
+		$script:vdDir = Join-Path ([IO.Path]::GetTempPath()) ('TVerRecVd{0}' -f [Guid]::NewGuid().ToString('N'))
+		New-Item -ItemType Directory -Path $script:vdDir | Out-Null
+		# Get-VideoInfoはtver_functions.ps1にあり、このテストでは読み込まないため、Mockできるようにスタブを用意する
+		if (-not (Get-Command Get-VideoInfo -ErrorAction Ignore)) { function script:Get-VideoInfo { Param ($episodeID) } }
+		function script:New-TestVideoInfo {
+			Param ([String]$Id)
+			[PSCustomObject]@{ episodeID = $Id ; episodePageURL = "https://tver.jp/episodes/$Id" ; seriesPageURL = 'https://tver.jp/series/sr1' ; seriesName = 'テスト番組' ; seasonName = '' ; episodeName = '第1話' ; episodeNum = '1' ; mediaName = 'テスト局' ; broadcastDate = '2026年01月01日放送' }
+		}
+		$script:histHeader = '"videoPage","videoSeriesPage","genre","series","season","title","media","broadcastDate","downloadDate","videoDir","videoName","videoPath","videoValidated","subtitle"'
+	}
+	AfterAll {
+		foreach ($n in $script:vdSaved.Keys) {
+			if ($script:vdSaved[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:vdSaved[$n] }
+		}
+		Remove-Item -LiteralPath $script:vdDir -Recurse -Force -ErrorAction SilentlyContinue
+	}
+	BeforeEach {
+		$script:redownloadWhenSubtitleAdded = $true
+		$script:downloadWhenEpisodeIdChanged = $true
+		$script:embedSubtitle = $true
+		$script:videoContainerFormat = 'mp4'
+		$script:histHasSubtitleColumn = $false
+		$script:sortVideoBySeries = $true
+		$script:sortVideoByMedia = $false
+		$script:downloadBaseDir = Join-Path $script:vdDir 'dl'
+		$script:histFilePath = Join-Path $script:vdDir ('history{0}.csv' -f [Guid]::NewGuid().ToString('N'))
+		$script:histLockFilePath = Join-Path $script:vdDir 'history.lock'
+		$script:videoInfoToReturn = New-TestVideoInfo 'ep00000001'
+		$script:ytdlCalls = 0
+		$script:subtitleStatusToReturn = '1'
+		$script:subtitleProbeCalls = 0
+		$tmp = New-TestVideoInfo 'ep00000001'
+		Format-VideoFileInfo ([Ref]$tmp)
+		$script:expectedRelPath = $tmp.fileRelPath
+		Set-Content -LiteralPath $script:histFilePath -Value $script:histHeader -Encoding UTF8
+		Mock Invoke-StatisticsCheck {}
+		Mock Show-VideoInfo {}
+		Mock Wait-FileLock {}
+		Mock Unlock-File {}
+		Mock Start-Sleep {}
+		Mock Read-IgnoreList { @() }
+		Mock Get-VideoInfo { $script:videoInfoToReturn }
+		Mock Invoke-Ytdl { $script:ytdlCalls++ }
+		Mock Get-VideoSubtitleStatus { $script:subtitleProbeCalls++ ; $script:subtitleStatusToReturn }
+	}
+	It '新規のダウンロード: ダウンロード前に字幕の有無を確認し、履歴に記録する' {
+		Invoke-VideoDownload -Keyword 'k' -episodeID 'ep00000001' -Force $false 6>$null 3>$null
+		$script:ytdlCalls | Should -Be 1
+		$rows = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+		$rows.Count | Should -Be 1
+		$rows[0].subtitle | Should -Be '1'
+		$rows[0].videoValidated | Should -Be '0'
+	}
+	It '新規のダウンロード: 設定が無効なら字幕の確認をしない' {
+		$script:redownloadWhenSubtitleAdded = $false
+		Invoke-VideoDownload -Keyword 'k' -episodeID 'ep00000001' -Force $false 6>$null 3>$null
+		$script:ytdlCalls | Should -Be 1
+		$script:subtitleProbeCalls | Should -Be 0
+	}
+	It '字幕なしで保存済みの番組: まだ字幕がなければダウンロードせず、履歴も変えない' {
+		Add-Content -LiteralPath $script:histFilePath -Value ('"https://tver.jp/episodes/ep00000001","","k","テスト番組","","第1話","テスト局","b","2026-01-01 00:00:00","d","n.mp4","{0}","1","0"' -f $script:expectedRelPath) -Encoding UTF8
+		$script:subtitleStatusToReturn = '0'
+		Invoke-VideoDownload -Keyword 'k' -episodeID 'ep00000001' -Force $false 6>$null 3>$null
+		$script:ytdlCalls | Should -Be 0
+		@(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Count | Should -Be 1
+	}
+	It '字幕なしで保存済みの番組: 確認に失敗(不明)した場合もダウンロードしない' {
+		Add-Content -LiteralPath $script:histFilePath -Value ('"https://tver.jp/episodes/ep00000001","","k","テスト番組","","第1話","テスト局","b","2026-01-01 00:00:00","d","n.mp4","{0}","1","0"' -f $script:expectedRelPath) -Encoding UTF8
+		$script:subtitleStatusToReturn = ''
+		Invoke-VideoDownload -Keyword 'k' -episodeID 'ep00000001' -Force $false 6>$null 3>$null
+		$script:ytdlCalls | Should -Be 0
+	}
+	It '字幕なしで保存済みの番組: 字幕が追加されていれば再ダウンロードし、字幕ありとして記録する' {
+		Add-Content -LiteralPath $script:histFilePath -Value ('"https://tver.jp/episodes/ep00000001","","k","テスト番組","","第1話","テスト局","b","2026-01-01 00:00:00","d","n.mp4","{0}","1","0"' -f $script:expectedRelPath) -Encoding UTF8
+		$script:subtitleStatusToReturn = '1'
+		Invoke-VideoDownload -Keyword 'k' -episodeID 'ep00000001' -Force $false 6>$null 3>$null
+		$script:ytdlCalls | Should -Be 1
+		$script:subtitleProbeCalls | Should -Be 1	# 再確認の1回だけで、ダウンロード前の確認を重ねない
+		$rows = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+		$rows.Count | Should -Be 2
+		$rows[1].subtitle | Should -Be '1'
+		$rows[1].videoValidated | Should -Be '0'
+	}
+	It '字幕付きで保存済みの同名番組が別のエピソードIDで再配信: ダウンロードする(上書き防止は番組移動時に行う)' {
+		Add-Content -LiteralPath $script:histFilePath -Value ('"https://tver.jp/episodes/ep_old","","k","テスト番組","","第1話","テスト局","b","2026-01-01 00:00:00","d","n.mp4","{0}","1","1"' -f $script:expectedRelPath) -Encoding UTF8
+		Invoke-VideoDownload -Keyword 'k' -episodeID 'ep00000001' -Force $false 6>$null 3>$null
+		$script:ytdlCalls | Should -Be 1
+	}
+	It '字幕なしで保存済みの同名番組が別のエピソードIDで再配信: 従来どおりダウンロードする' {
+		Add-Content -LiteralPath $script:histFilePath -Value ('"https://tver.jp/episodes/ep_old","","k","テスト番組","","第1話","テスト局","b","2026-01-01 00:00:00","d","n.mp4","{0}","1","0"' -f $script:expectedRelPath) -Encoding UTF8
+		Invoke-VideoDownload -Keyword 'k' -episodeID 'ep00000001' -Force $false 6>$null 3>$null
+		$script:ytdlCalls | Should -Be 1
 	}
 }

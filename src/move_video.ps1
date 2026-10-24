@@ -202,6 +202,7 @@ if ($moveDirs) {
 					try {
 						$moveResult = Move-VideoFileToDestination -Path $moveFile.FullName -DestinationDir $moveToPath -ConflictAction $script:moveConflictAction
 						if ($moveResult.Result -eq 'Skipped') { Write-Warning ($script:msg.MoveFileSkipped -f $moveFile.Name) }
+						elseif ($moveResult.Result -eq 'SubtitleKept') { Write-Warning ($script:msg.MoveFileSubtitleKept -f $moveFile.Name) }
 						elseif ($moveResult.Result -eq 'Renamed') { Write-Output ($script:msg.MoveFileRenamed -f $moveFile.Name, (Split-Path -Leaf $moveResult.Destination)) }
 					} catch { Write-Warning ($script:msg.MoveFileFailed -f $moveFile.FullName) }
 				}

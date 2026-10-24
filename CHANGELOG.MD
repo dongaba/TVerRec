@@ -8,14 +8,18 @@
 - TVerのtagを収集してキーワードサンプルファイルとの漏れを確認するスクリプト`test/tools/check_tags.ps1`を追加
 - macOS/Linuxで、yt-dlpが使うPythonにpycryptodomexが導入されていない場合に、起動時に警告を表示する`Test-YtdlCryptoModule`を追加 #307
 - ダウンロード対象外リスト(`ignore.conf`)で、行頭に`regex:`を付けた行を正規表現として扱えるように`Test-IgnoreMatch`を追加(`regex:`で始まらない行の動作は従来どおり) #190
+- 番組移動時に、移動先のファイルに字幕があり、移動元のファイルに字幕がない場合は、字幕が失われるため上書きしないように変更(`$script:moveConflictAction`が`Overwrite`の場合。字幕の有無の確認にffprobeを使用) #312
 - 番組移動時に移動先に同名のファイルがある場合の動作を選べる設定`$script:moveConflictAction`(Overwrite/Skip/Rename)を追加。既定は従来どおりの上書き(Overwrite) #230
 - GUIの更新間隔(ミリ秒)を設定ファイルとGUI設定画面から指定できる`$script:guiRefreshIntervalMs`と、`Get-GuiRefreshInterval`を追加。#306で100msに変更された既定値は10msに戻し、CPU使用率が気になる場合は100などを指定できるようにした
 - 起動時にPowerShellの新しいバージョンが公開されている場合に案内を表示(自動更新は行わない)。GitHubへの問い合わせは24時間に1回で、`$script:disableCheckPowerShellUpdate`で無効化可能(#313)
+- 字幕なしでダウンロードした番組に字幕が追加された場合に、再ダウンロードして上書きする機能を追加(`$script:redownloadWhenSubtitleAdded`、既定は無効)。ダウンロード履歴(`history.csv`)に字幕の有無を記録する`subtitle`列を追加(#312)
 - ダウンロードしたファイルにサムネイルを埋め込むかを選べる設定`$script:embedThumbnail`を追加。既定は従来どおり埋め込む(`$true`) #315
 - ダウンロード作業ディレクトリがダウンロード先ディレクトリと同じ、またはダウンロード先を含むフォルダの場合、不要ファイル削除でダウンロード済みのファイルを消す恐れがあるため、起動時にエラーで終了するように変更(#315)
 
 ### 3.4.9 Changed
 
+- ffprobeを必須のコンポーネントとして、起動時に存在を確認するように変更(従来は`$script:simplifiedValidation`が有効な場合のみ。字幕の有無の確認に使用するため)(#312)
+- ダウンロード履歴(`history.csv`)のレイアウトを変更し、字幕の有無を記録する`subtitle`列を追加(`history.sample.csv`も同様)。`update_tverrec.ps1`による更新時、または起動時に自動で追加される。**履歴ファイルを複数のPCで共有している環境では、すべてのTVerRecをv3.4.9以降にすること**(古いバージョンは列が増えた履歴ファイルに追記できず、ダウンロードがスキップされる)(#312)
 - キーワードサンプルファイルに不足していたジャンル(13件)、放送局(23件)、ランキング(6件)を追加し、重複していたtagを整理
 - Dockerのベースイメージをサポート終了済みのubuntu:25.04からubuntu:24.04(LTS)に変更(あわせて`libicu76`を`libicu74`に変更) #293
 - `tver_functions.Test.ps1`を現行の関数構成に合わせて全面的に書き直し(モックテストと実接続テストを分離)

@@ -134,6 +134,7 @@ $settingAttributes = @(
 	'$script:embedSubtitle',
 	'$script:embedMetatag',
 	'$script:embedThumbnail',
+	'$script:redownloadWhenSubtitleAdded',
 	'$script:windowShowStyle',
 	'$script:ffmpegDecodeOption',
 	'$script:ytdlOption',
@@ -497,6 +498,8 @@ $embedMetatagHeader.Header = $script:msg.embedMetatagHeader
 $embedMetatagText.Text = $script:msg.embedMetatagText
 $embedThumbnailHeader.Header = $script:msg.embedThumbnailHeader
 $embedThumbnailText.Text = $script:msg.embedThumbnailText
+$redownloadWhenSubtitleAddedHeader.Header = $script:msg.redownloadWhenSubtitleAddedHeader
+$redownloadWhenSubtitleAddedText.Text = $script:msg.redownloadWhenSubtitleAddedText
 $sortVideoBySeriesHeader.Header = $script:msg.sortVideoBySeriesHeader
 $sortVideoBySeriesText.Text = $script:msg.sortVideoBySeriesText
 $sortVideoByMediaHeader.Header = $script:msg.sortVideoByMediaHeader
@@ -604,6 +607,7 @@ $trueFalseControls = @(
 	$embedSubtitle,
 	$embedMetatag,
 	$embedThumbnail,
+	$redownloadWhenSubtitleAdded,
 	$sortVideoBySeries,
 	$sortVideoByMedia,
 	$forceSingleDownload,

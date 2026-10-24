@@ -347,6 +347,26 @@ if (!$IsWindows) {
 	(& chmod a+x (Join-Path $script:scriptRoot '../unix/*.sh'))
 }
 
+# 履歴ファイルのレイアウト変更(v3.4.8→v3.4.9)
+$histFilePath = Join-Path $script:scriptRoot '../db/history.csv'
+if (Test-Path -LiteralPath $histFilePath -PathType Leaf) {
+	try {
+		$histFilePath = Convert-Path -LiteralPath $histFilePath
+		$histHeader = Get-Content -LiteralPath $histFilePath -Encoding UTF8 -TotalCount 1
+		if ($histHeader -and ($histHeader -notmatch '(^|,)"?subtitle"?(,|$)')) {
+			$histTempPath = '{0}.{1}.tmp' -f $histFilePath, [Guid]::NewGuid().ToString('N')
+			$currentHistFile = @(Import-Csv -LiteralPath $histFilePath -Encoding UTF8)
+			if ($currentHistFile.Count -gt 0) {
+				$currentHistFile | Select-Object -Property *, @{ Name = 'subtitle' ; Expression = { '' } } | Export-Csv -LiteralPath $histTempPath -Encoding UTF8
+			} else {
+				[IO.File]::WriteAllText($histTempPath, ('{0},"subtitle"{1}' -f $histHeader, [Environment]::NewLine), [Text.UTF8Encoding]::new($false))
+			}
+			[IO.File]::Replace($histTempPath, $histFilePath, ('{0}.bak' -f $histFilePath))
+			Write-Output ('履歴ファイルに字幕の有無を記録する列(subtitle)を追加しました')
+		}
+	} catch { Write-Warning ('⚠️ 履歴ファイルのレイアウト変更に失敗しました。次回起動時に再度試行します') }
+}
+
 # アップデータ自体の更新のためのファイル作成
 New-Item (Join-Path $script:scriptRoot '../log/updater_update.txt') -Type file -Force | Out-Null
 'このファイルはアップデータ自身のアプデートを完了させるために必要です。' | Out-File -FilePath (Join-Path $script:scriptRoot '../log/updater_update.txt')

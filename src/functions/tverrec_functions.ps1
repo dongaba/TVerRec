@@ -478,7 +478,7 @@ function Invoke-RequiredFileCheck {
 			3. 保存ベースディレクトリ
 			4. youtube-dl実行ファイル
 			5. ffmpeg実行ファイル
-			6. ffprobe実行ファイル（簡易検証が有効な場合）
+			6. ffprobe実行ファイル（簡易検証、字幕の確認に使用）
 			7. キーワードファイル
 			8. 無視ファイル
 			9. 履歴ファイル
@@ -500,11 +500,16 @@ function Invoke-RequiredFileCheck {
 	}
 	Invoke-TverrecPathCheck -Path $script:ytdlPath -errorMessage 'youtube-dl' -isFile
 	Invoke-TverrecPathCheck -Path $script:ffmpegPath -errorMessage 'ffmpeg' -isFile
-	if ($script:simplifiedValidation) { Invoke-TverrecPathCheck -Path $script:ffprobePath -errorMessage 'ffprobe' -isFile }
+	Invoke-TverrecPathCheck -Path $script:ffprobePath -errorMessage 'ffprobe' -isFile
 	Invoke-TverrecPathCheck -Path $script:keywordFilePath -errorMessage $script:msg.KeywordFile -isFile -sampleFilePath $script:keywordFileSamplePath
 	Invoke-TverrecPathCheck -Path $script:ignoreFilePath -errorMessage $script:msg.IgnoreFile -isFile -sampleFilePath $script:ignoreFileSamplePath
 	Invoke-TverrecPathCheck -Path $script:histFilePath -errorMessage $script:msg.HistFile -isFile -sampleFilePath $script:histFileSamplePath
 	Invoke-TverrecPathCheck -Path $script:listFilePath -errorMessage $script:msg.ListFile -isFile -sampleFilePath $script:listFileSamplePath
+	# 履歴に字幕の有無を記録する列(subtitle)がなければ追加(v3.4.9のレイアウト。通常はupdate_tverrec.ps1で追加済み)
+	switch (Add-HistorySubtitleColumn) {
+		'Added' { Write-Output ($script:msg.HistorySubtitleColumnAdded) }
+		'Failed' { Write-Warning ($script:msg.HistorySubtitleColumnAddFailed) ; $script:redownloadWhenSubtitleAdded = $false }
+	}
 	Remove-Variable -Name saveDir -ErrorAction SilentlyContinue
 }
 #endregion 起動時関連
@@ -550,6 +555,199 @@ function Get-LatestHistory {
 	return $latestHists
 }
 
+function Test-SubtitleTrackingEnabled {
+	<#
+		.SYNOPSIS
+			字幕の有無の記録と、字幕が追加された番組の再ダウンロードが有効かを判定します。
+
+		.DESCRIPTION
+			`$script:redownloadWhenSubtitleAdded`が有効で、字幕の埋め込みが有効、かつ、mp4形式のときだけ有効とみなします。
+			(字幕を埋め込まない場合は、字幕の有無を判定する意味がないため)
+
+		.OUTPUTS
+			[Boolean]
+	#>
+	[OutputType([Boolean])]
+	Param ()
+	return [Boolean]($script:redownloadWhenSubtitleAdded -and $script:embedSubtitle -and ($script:videoContainerFormat -eq 'mp4'))
+}
+
+function Get-VideoSubtitleStatus {
+	<#
+		.SYNOPSIS
+			TVerの番組に字幕が提供されているかを、ダウンロード前にyoutube-dlで確認します。
+
+		.DESCRIPTION
+			`yt-dlp --skip-download --print %(subtitles)j`で字幕の一覧だけを取得します。
+			字幕があれば`1`、字幕がなければ`0`を返します。
+			取得に失敗した場合(配信終了や通信エラーなど)は、字幕の有無を判断できないため空文字を返します。
+
+		.PARAMETER EpisodePageURL
+			エピソードページのURLを指定します。
+
+		.OUTPUTS
+			[String]
+			`1`: 字幕あり、`0`: 字幕なし、空文字: 不明
+	#>
+	[OutputType([String])]
+	Param ([Parameter(Mandatory = $true)][String]$EpisodePageURL)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$ytdlArgs = @('--skip-download', '--no-warnings', '--socket-timeout', '30', '--print', '%(subtitles)j')
+	if ($script:proxyUrl) { $ytdlArgs += @('--geo-verification-proxy', $script:proxyUrl) }
+	if (($script:ytdlRandomIp) -and (!$script:proxyUrl)) { $ytdlArgs += @('--xff', ('{0}/32' -f $script:jpIP)) }
+	$ytdlArgs += $EpisodePageURL
+	try {
+		$output = @(& $script:ytdlPath @ytdlArgs 2>$null)
+		if ($LASTEXITCODE -ne 0) { return '' }
+		$text = ($output -join '').Trim()
+		if (($text -eq 'NA') -or ($text -eq 'null')) { return '0' }	# 字幕がない番組はNAが返る
+		$subtitles = $text | ConvertFrom-Json -ErrorAction Stop
+		if ($subtitles -isnot [PSCustomObject]) { return '' }
+		if (@($subtitles.PSObject.Properties).Count -gt 0) { return '1' }
+		return '0'
+	} catch { Write-Debug $_ ; return '' }
+}
+
+function Test-VideoFileHasSubtitle {
+	<#
+		.SYNOPSIS
+			番組ファイルに字幕ストリームが含まれているかをffprobeで確認します。
+
+		.PARAMETER VideoPath
+			番組ファイルのパスを指定します。
+
+		.OUTPUTS
+			[Nullable[Boolean]]
+			字幕があれば$true、なければ$false、確認できなければ$nullを返します。
+	#>
+	[OutputType([Object])]
+	Param ([Parameter(Mandatory = $true)][String]$VideoPath)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if (!(Test-Path -LiteralPath $VideoPath -PathType Leaf)) { return $null }
+	if (!(Test-Path -LiteralPath $script:ffprobePath -PathType Leaf)) { return $null }
+	$probeOutPath = Join-Path ([IO.Path]::GetTempPath()) ('tverrec_subprobe_{0}.txt' -f [Guid]::NewGuid().ToString('N'))
+	try {
+		$probeArgs = ('-v error -select_streams s -show_entries stream=index -of csv=p=0 "{0}"' -f $VideoPath)
+		$probe = Start-Process -FilePath $script:ffprobePath -ArgumentList $probeArgs -RedirectStandardOutput $probeOutPath -NoNewWindow -Wait -PassThru
+		if (($probe.ExitCode -ne 0) -or !(Test-Path -LiteralPath $probeOutPath)) { return $null }
+		return [Boolean](@(Get-Content -LiteralPath $probeOutPath -Encoding UTF8 | Where-Object { $_.Trim() -ne '' }).Count -gt 0)
+	} catch { Write-Debug $_ ; return $null }
+	finally { Remove-Item -LiteralPath $probeOutPath -Force -ErrorAction SilentlyContinue }
+}
+
+function Test-HistorySubtitleColumn {
+	<#
+		.SYNOPSIS
+			ダウンロード履歴ファイルに字幕の有無を記録する列(subtitle)があるかを判定します。
+
+		.OUTPUTS
+			[Boolean]
+	#>
+	[OutputType([Boolean])]
+	Param ()
+	if ((Test-Path Variable:Script:histHasSubtitleColumn) -and $script:histHasSubtitleColumn) { return $true }
+	try {
+		$reader = [IO.StreamReader]::new($script:histFilePath, [Text.Encoding]::UTF8, $true)
+		try { $header = $reader.ReadLine() } finally { $reader.Dispose() }
+	} catch { return $false }
+	$has = [Boolean]($header -and ($header -match '(^|,)"?subtitle"?(,|$)'))
+	if ($has) { $script:histHasSubtitleColumn = $true }
+	return $has
+}
+
+function Add-HistorySubtitleColumn {
+	<#
+		.SYNOPSIS
+			ダウンロード履歴ファイルに字幕の有無を記録する列(subtitle)を追加します。
+
+		.DESCRIPTION
+			既存の履歴の字幕の有無は不明なので、追加する列は空にします。
+			すでに列がある場合は何もしません。
+			追加前の履歴は`history.csv.bak`に退避します。
+
+		.OUTPUTS
+			[String]
+			`Exists`: すでに列がある、`Added`: 追加した、`Failed`: 追加に失敗した
+	#>
+	[OutputType([String])]
+	Param ()
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if (Test-HistorySubtitleColumn) { return 'Exists' }
+	$locked = $false
+	$tempPath = $null
+	try {
+		Wait-FileLock $script:histLockFilePath
+		$locked = $true
+		# ロックを待つ間に他のプロセスが追加した場合
+		if (Test-HistorySubtitleColumn) { return 'Exists' }
+		$tempPath = '{0}.{1}.tmp' -f $script:histFilePath, [Guid]::NewGuid().ToString('N')
+		$hists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -ErrorAction Stop)
+		if ($hists.Count -gt 0) {
+			$hists | Select-Object -Property *, @{ Name = 'subtitle' ; Expression = { '' } } | Export-Csv -LiteralPath $tempPath -Encoding UTF8 -ErrorAction Stop
+		} else {
+			$reader = [IO.StreamReader]::new($script:histFilePath, [Text.Encoding]::UTF8, $true)
+			try { $header = $reader.ReadLine() } finally { $reader.Dispose() }
+			if ([String]::IsNullOrWhiteSpace($header)) { throw 'History CSV header is missing.' }
+			[IO.File]::WriteAllText($tempPath, ('{0},"subtitle"{1}' -f $header, [Environment]::NewLine), [Text.UTF8Encoding]::new($false))
+		}
+		[IO.File]::Replace($tempPath, $script:histFilePath, ('{0}.bak' -f $script:histFilePath))
+		$script:histHasSubtitleColumn = $true
+		return 'Added'
+	} catch { Write-Debug $_ ; return 'Failed' }
+	finally {
+		try { if ($null -ne $tempPath -and [IO.File]::Exists($tempPath)) { [IO.File]::Delete($tempPath) } }
+		finally { if ($locked) { Unlock-File $script:histLockFilePath | Out-Null } }
+	}
+}
+
+function Set-HistorySubtitleStatus {
+	<#
+		.SYNOPSIS
+			ダウンロード履歴の字幕の有無を更新するレコードを追記します。
+
+		.PARAMETER VideoHist
+			更新対象の番組の履歴レコード(Get-LatestHistoryで取得したもの)を指定します。
+
+		.PARAMETER Status
+			`1`: 字幕あり、`0`: 字幕なし、空文字: 不明
+	#>
+	[OutputType([Void])]
+	Param (
+		[Parameter(Mandatory = $true)]$VideoHist,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][String]$Status
+	)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if (!(Test-HistorySubtitleColumn)) { return }
+	$record = $VideoHist.PSObject.Copy()
+	$record.subtitle = $Status
+	$record.downloadDate = Get-TimeStamp
+	Wait-FileLock $script:histLockFilePath
+	try { $record | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append ; Start-Sleep -Seconds 1 }
+	catch { Write-Warning ($script:msg.HistUpdateFailed) }
+	finally { Unlock-File $script:histLockFilePath | Out-Null }
+}
+
+function Remove-SubtitleRecheckTarget {
+	<#
+		.SYNOPSIS
+			ダウンロード履歴から、字幕の再確認の対象になる番組(字幕なしで保存済み)を除きます。
+
+		.DESCRIPTION
+			ダウンロード済みの番組を判定する際に、字幕の再確認の対象を「ダウンロード済み」に含めないために使用します。
+			字幕の再確認が有効でない場合は、履歴をそのまま返します。
+
+		.PARAMETER Hist
+			ダウンロード履歴のレコードを指定します。
+
+		.OUTPUTS
+			[Object[]]
+	#>
+	[OutputType([Object[]])]
+	Param ([Parameter(Mandatory = $true)][AllowNull()][AllowEmptyCollection()][Object[]]$Hist)
+	if (!(Test-SubtitleTrackingEnabled)) { return @($Hist) }
+	return @($Hist.Where({ !($_.PSObject.Properties['subtitle'] -and ($_.subtitle -eq '0')) }))
+}
+
 #----------------------------------------------------------------------
 # ダウンロード履歴データの成形
 #----------------------------------------------------------------------
@@ -581,6 +779,7 @@ function Format-HistoryRecord {
 			- videoName: ビデオファイル名
 			- videoPath: ビデオファイルの相対パス
 			- videoValidated: 検証状態
+			- subtitle: 字幕の有無(1:字幕あり、0:字幕なし、空:不明)
 
 		.EXAMPLE
 			$historyRecord = Format-HistoryRecord -videoInfo $videoInfo
@@ -607,6 +806,7 @@ function Format-HistoryRecord {
 		videoName       = $videoInfo.fileName
 		videoPath       = $videoInfo.fileRelPath
 		videoValidated  = $videoInfo.validated
+		subtitle        = if ($videoInfo.PSObject.Properties['subtitle']) { [String]$videoInfo.subtitle } else { '' }
 	}
 }
 
@@ -1244,6 +1444,7 @@ function Invoke-HistoryMatchCheck {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# ダウンロード履歴ファイルのデータを読み込み
 	$histFileData = @(Get-LatestHistory)
+	$histFileData = @(Remove-SubtitleRecheckTarget $histFileData)	# 字幕の再確認の対象は「ダウンロード済み」に含めない
 	if ($histFileData.Count -eq 0) { $histVideoPages = @() } else { $histVideoPages = @($histFileData.videoPage.Replace('https://tver.jp/episodes/', '')) }
 	# URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 	$histCompResult = @(Compare-Object -IncludeEqual $episodeLinks $histVideoPages)
@@ -1336,6 +1537,7 @@ function Invoke-HistoryAndListMatchCheck {
 	foreach ($listFileLine in $listFileData) { $listVideoID.Add(@($listFileLine.EpisodeID.Replace('#', ''))) }
 	# ダウンロード履歴ファイルのデータを読み込み
 	$histFileData = @(Get-LatestHistory)
+	$histFileData = @(Remove-SubtitleRecheckTarget $histFileData)	# 字幕の再確認の対象は「ダウンロード済み」に含めない
 	$histVideoID = if ($histFileData.Count -eq 0) { @() } else { @($histFileData.VideoPage.Replace('https://tver.jp/episodes/', '')) }
 	# ダウンロードリストとダウンロード履歴をマージ
 	if ($histVideoID) { $listVideoID.AddRange($histVideoID) }
@@ -1944,7 +2146,28 @@ function Invoke-VideoDownload {
 	# 番組情報のコンソール出力
 	Show-VideoInfo ([Ref]$videoInfo)
 	if ($DebugPreference -ne 'SilentlyContinue') { Show-VideoDebugInfo ([Ref]$videoInfo) }
-	if ($force) {
+	# 字幕の有無の記録と、字幕が追加された番組の再ダウンロード判定
+	$subtitleTracking = Test-SubtitleTrackingEnabled
+	$subtitleStatus = $null
+	$subtitleRecheck = $false
+	$histFileData = $null
+	if (!$force -and $subtitleTracking) {
+		$histFileData = @(Get-LatestHistory)
+		$subtitleHists = @($histFileData.Where({ $_ -and $_.PSObject.Properties['subtitle'] }))
+		$sameEpisodeHists = @($subtitleHists.Where({ $_.videoPage -eq $videoInfo.episodePageURL }))
+		if (($sameEpisodeHists.Count -ne 0) -and ($sameEpisodeHists[0].subtitle -eq '0')) {
+			# 字幕なしで保存済みの番組	→字幕が追加されたか確認する
+			foreach ($ignoreTitle in @(Read-IgnoreList)) {
+				if ($ignoreTitle -and (Test-IgnoreMatch -Pattern $ignoreTitle -Target @($videoInfo.fileName, $videoInfo.seriesName) -Mode Wildcard)) { return }
+			}
+			Write-Output ($script:msg.SubtitleRecheck)
+			$subtitleStatus = Get-VideoSubtitleStatus -EpisodePageURL $videoInfo.episodePageURL
+			if ($subtitleStatus -ne '1') { Write-Output ($script:msg.SubtitleNotAdded) ; return }
+			Write-Output ($script:msg.SubtitleAdded)
+			$subtitleRecheck = $true
+		}
+	}
+	if ($force -or $subtitleRecheck) {
 		$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
 		$newVideo = Format-HistoryRecord $videoInfo
 	} else {
@@ -1966,8 +2189,8 @@ function Invoke-VideoDownload {
 						ダウンロード対象外リストに存在する	→無視
 						ダウンロード対象外リストに存在しない	→ダウンロード
 		#>
-		#ダウンロード履歴ファイルのデータを読み込み
-		$histFileData = @(Get-LatestHistory)
+		#ダウンロード履歴ファイルのデータを読み込み(字幕の判定で読み込み済みの場合は再利用)
+		if ($null -eq $histFileData) { $histFileData = @(Get-LatestHistory) }
 		if ($videoInfo.fileRelPath) { $histMatch = @($histFileData.Where({ $_.videoPath -eq $videoInfo.fileRelPath })) }
 		else { Write-Warning ($script:msg.FileNameRetrievalFailed) ; return }
 
@@ -2043,6 +2266,11 @@ function Invoke-VideoDownload {
 		}
 	}
 
+	# ダウンロードする番組の字幕の有無を記録
+	if ($subtitleTracking -and !$skipDownload -and $newVideo) {
+		if ($null -eq $subtitleStatus) { $subtitleStatus = Get-VideoSubtitleStatus -EpisodePageURL $videoInfo.episodePageURL }
+		$newVideo.subtitle = $subtitleStatus
+	}
 	# ダウンロード履歴CSV書き出し
 	Wait-FileLock $script:histLockFilePath
 	try {
@@ -2069,7 +2297,7 @@ function Invoke-VideoDownload {
 	catch { Write-Warning ($script:msg.InvokeYtdlFailed) }
 	# 5秒待機
 	Start-Sleep -Seconds 5
-	Remove-Variable -Name keyword, videoLink, force, newVideo, skipDownload, episodeID, histFileData, histMatch, ignoreTitles, ignoreTitle -ErrorAction SilentlyContinue
+	Remove-Variable -Name keyword, videoLink, force, newVideo, skipDownload, episodeID, histFileData, histMatch, ignoreTitles, ignoreTitle, subtitleTracking, subtitleStatus, subtitleRecheck, subtitleHists, sameEpisodeHists -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -3009,6 +3237,7 @@ function Move-VideoFileToDestination {
 			ファイルを移動先ディレクトリに移動します。
 			移動先に同名のファイルが既に存在する場合は、ConflictActionに従って動作します。
 			- Overwrite: 上書きします(既定。従来の動作)
+			            ただし、移動先のファイルに字幕があり、移動元のファイルに字幕がない場合は、字幕が失われるため上書きしません(Result=SubtitleKept)
 			- Skip     : 移動せず、移動元にファイルを残します
 			- Rename   : 「ファイル名 (1).mp4」のように、重複しない名前を付けて移動します
 			上記以外の値はOverwriteとして扱います。
@@ -3024,7 +3253,7 @@ function Move-VideoFileToDestination {
 
 		.OUTPUTS
 			[PSCustomObject]
-			Result(Moved/Overwritten/Skipped/Renamed)とDestination(移動後のパス。Skippedの場合は$null)を持つオブジェクト。
+			Result(Moved/Overwritten/Skipped/Renamed/SubtitleKept)とDestination(移動後のパス。SkippedとSubtitleKeptの場合は$null)を持つオブジェクト。
 
 		.EXAMPLE
 			Move-VideoFileToDestination -Path '/download/番組/第1話.mp4' -DestinationDir '/save/番組' -ConflictAction 'Skip'
@@ -3051,7 +3280,13 @@ function Move-VideoFileToDestination {
 				$num++
 			} while (Test-Path -LiteralPath $destPath)
 			$result = 'Renamed'
-		} else { $result = 'Overwritten' }
+		} else {
+			# 上書きの場合、移動先に字幕があり、移動元に字幕がなければ、字幕が失われるため上書きしない
+			if (((Test-VideoFileHasSubtitle -VideoPath $destPath) -eq $true) -and ((Test-VideoFileHasSubtitle -VideoPath $Path) -eq $false)) {
+				return [PSCustomObject]@{ Result = 'SubtitleKept' ; Destination = $null }
+			}
+			$result = 'Overwritten'
+		}
 	}
 	Move-Item -LiteralPath $Path -Destination $destPath -Force -ErrorAction Stop
 	return [PSCustomObject]@{ Result = $result ; Destination = $destPath }
