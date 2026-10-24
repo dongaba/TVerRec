@@ -580,21 +580,38 @@ function Repair-HistoryFile {
 	#>
 	[OutputType([Void])]
 	Param ()
+	$locked = $false
+	$tempPath = $null
 	try {
-		# videoPageごとに最新のdownloadDateを持つレコードを取得
-		$latestHists = Get-LatestHistory
-		# videoValidatedが「3:チェック失敗」のものと同じvideoPageを持つレコードを削除
-		$uniquedHist = $latestHists.Where({ $_.videoValidated -ne '3' })
+		# 読み込みから置換まで同じロックを保持し、途中の追記を失わないようにする
 		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-		try { $uniquedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
-		catch { $latestHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
-		finally { Start-Sleep -Seconds 1 }
+		$locked = $true
+		$latestHists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -ErrorAction Stop |
+			Group-Object -Property 'videoPage' |
+			ForEach-Object { $_.Group | Sort-Object -Property downloadDate, videoValidated -Descending | Select-Object -First 1 })
+		$uniquedHist = @($latestHists.Where({ $_.videoValidated -ne '3' }))
+		$tempPath = '{0}.{1}.tmp' -f $script:histFilePath, [Guid]::NewGuid().ToString('N')
+		if ($uniquedHist.Count -gt 0) {
+			$uniquedHist | Export-Csv -LiteralPath $tempPath -Encoding UTF8 -ErrorAction Stop
+		} else {
+			# 全件削除でもCSVヘッダーを残し、次回の追記を読み取れるようにする
+			$reader = [IO.StreamReader]::new($script:histFilePath, [Text.Encoding]::UTF8, $true)
+			try { $header = $reader.ReadLine() } finally { $reader.Dispose() }
+			if ([String]::IsNullOrWhiteSpace($header)) { throw 'History CSV header is missing.' }
+			[IO.File]::WriteAllText($tempPath, $header + [Environment]::NewLine, [Text.UTF8Encoding]::new($false))
+		}
+		# 一時ファイルの保存失敗時は元履歴に触れず、置換時に直前の履歴を退避する
+		[IO.File]::Replace($tempPath, $script:histFilePath, $script:histFilePath + '.bak')
 	} catch {
 		Write-Warning ($script:msg.DistinctHistFailed)
 	} finally {
-		Unlock-File $script:histLockFilePath | Out-Null
-		Remove-Variable -Name latestHists, uniquedHist -ErrorAction SilentlyContinue
+		try {
+			if ($null -ne $tempPath -and [IO.File]::Exists($tempPath)) { [IO.File]::Delete($tempPath) }
+		} finally {
+			if ($locked) { Unlock-File $script:histLockFilePath | Out-Null }
+		}
 	}
+
 }
 #endregion ダウンロード履歴関連
 
