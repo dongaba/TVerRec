@@ -208,6 +208,10 @@ while ($videoNotValidatedNum -ne 0) {
 			if ($script:embedSubtitle -and ($videoHist.videoPath -like '*.mp4')) {
 				if (Repair-SubtitleTiming -VideoPath (Join-Path (Convert-Path $script:downloadBaseDir) $videoHist.videoPath)) { Write-Output ($script:msg.SubtitleTimingRepaired) }
 			}
+			# 字幕ありと記録されているが実際には字幕が含まれていない場合(ダウンロードの失敗など)は、字幕なしに訂正して次回以降の再確認の対象にする
+			if ((Test-SubtitleTrackingEnabled) -and $videoHist.PSObject.Properties['subtitle'] -and ($videoHist.subtitle -eq '1') -and ($videoHist.videoPath -like '*.mp4')) {
+				if ((Test-VideoFileHasSubtitle -VideoPath (Join-Path (Convert-Path $script:downloadBaseDir) $videoHist.videoPath)) -eq $false) { Set-HistorySubtitleStatus -VideoHist $videoHist -Status '0' }
+			}
 			Invoke-IntegrityCheck -VideoHist $videoHist -DecodeOption $decodeOption
 			Suspend-Process
 			Start-Sleep -Seconds 1

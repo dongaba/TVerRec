@@ -125,6 +125,66 @@ function Compare-Version {
 	return [Math]::Sign($remoteUnits.Count - $localUnits.Count)
 }
 
+function Invoke-PowerShellUpdateCheck {
+	<#
+		.SYNOPSIS
+			PowerShellの新しいバージョンが公開されているかを確認し、あれば案内を表示します。
+
+		.DESCRIPTION
+			GitHubのPowerShellリポジトリから最新の正式版を取得し、実行中のPowerShellと比較します。
+			PowerShellはインストール方法が複数あるため、自動更新は行わず、新しいバージョンがあることの案内だけを表示します。
+			GitHubへの問い合わせは24時間に1回とし、結果は`log/powershell_update_check.txt`に保存します。
+			(それ以外の起動時は保存した結果で判定します)
+			取得に失敗した場合は何も表示せず、処理を継続します。
+
+		.OUTPUTS
+			[Void]
+
+		.NOTES
+			`$script:disableCheckPowerShellUpdate`が`$true`の場合は確認しません。
+	#>
+	[OutputType([Void])]
+	Param ()
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if ($script:disableCheckPowerShellUpdate) { return }
+	$cachePath = Join-Path $script:logDir 'powershell_update_check.txt'
+	$latestVersion = $null
+	$checkedAt = [DateTime]::MinValue
+	try {
+		if (Test-Path -LiteralPath $cachePath -PathType Leaf) {
+			$lines = @(Get-Content -LiteralPath $cachePath -TotalCount 2)
+			if ($lines.Count -ge 2) {
+				$checkedAt = [DateTime]::Parse($lines[0], [CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::RoundtripKind)
+				$latestVersion = $lines[1].Trim()
+			}
+		}
+	} catch { $latestVersion = $null ; $checkedAt = [DateTime]::MinValue }
+	$elapsedHours = ([DateTime]::UtcNow - $checkedAt.ToUniversalTime()).TotalHours
+	if (!$latestVersion -or $elapsedHours -ge 24 -or $elapsedHours -lt 0) {
+		$progressPreference = 'SilentlyContinue'
+		try {
+			$release = Invoke-RestMethod -Uri 'https://api.github.com/repos/PowerShell/PowerShell/releases/latest' -Method 'GET' -TimeoutSec $script:timeoutSec
+			$latestVersion = ([String]$release.tag_name).Trim('v', ' ')
+			if ($latestVersion -match '^\d+\.\d+\.\d+$') {
+				Set-Content -LiteralPath $cachePath -Value @([DateTime]::UtcNow.ToString('o'), $latestVersion) -ErrorAction SilentlyContinue
+			}
+		} catch { Write-Debug $_ ; return }
+		finally { $progressPreference = 'Continue' }
+	}
+	if ($latestVersion -notmatch '^\d+\.\d+\.\d+$') { return }
+	$localVersion = $PSVersionTable.PSVersion.ToString().Split('-')[0]	# 7.6.0-preview.1 → 7.6.0
+	if ((Compare-Version $latestVersion $localVersion) -gt 0) {
+		[Console]::ForegroundColor = 'Green'
+		Write-Output ('')
+		Write-Warning ($script:msg.ToolOutdated -f 'PowerShell')
+		Write-Warning ($script:msg.ToolLocalVersion -f $localVersion)
+		Write-Warning ($script:msg.ToolRemoteVersion -f $latestVersion)
+		Write-Warning ($script:msg.PowerShellUpdateHint)
+		Write-Output ('')
+		[Console]::ResetColor()
+	}
+}
+
 #----------------------------------------------------------------------
 # TVerRec最新化確認
 #----------------------------------------------------------------------
@@ -244,6 +304,67 @@ function Invoke-ToolUpdateCheck {
 }
 
 #----------------------------------------------------------------------
+# pycryptodomex(暗号化ストリームの復号に必要)の導入確認
+#----------------------------------------------------------------------
+function Test-YtdlCryptoModule {
+	<#
+		.SYNOPSIS
+			yt-dlpが使うPythonにpycryptodomexが導入されているかを確認し、未導入なら警告します。
+
+		.DESCRIPTION
+			AES-128で暗号化された動画ストリームは、pycryptodomexがないとyt-dlp内蔵の
+			ダウンローダーで処理できず、ffmpegに処理が引き渡されます。
+			その場合、証明書チェック回避設定がffmpegに引き継がれず、SSL証明書の検証エラーで
+			番組が取得できなくなります。
+			yt-dlpのshebangからPythonを特定し、Cryptodomeモジュールをimportできるかを確認します。
+			確認のみで、環境の変更は行いません。Windowsではyt-dlp.exeが依存を同梱しているため対象外です。
+
+		.OUTPUTS
+			[Void]
+			この関数は値を返しません。
+
+		.NOTES
+			この関数は以下の処理を行います：
+			1. Windows、またはyt-dlp系以外のツールの場合は何もしない
+			2. yt-dlpの1行目(shebang)から使用されるPythonを特定
+			3. 特定したPythonでCryptodomeをimportできるか確認
+			4. importできない場合のみ警告を表示(Pythonを特定できない場合は何もしない)
+	#>
+	[CmdletBinding()]
+	[OutputType([Void])]
+	Param ()
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if ($IsWindows) { return }
+	if ($script:preferredYoutubedl -notin @('yt-dlp', 'yt-dlp-nightly')) { return }
+	if (!(Test-Path -LiteralPath $script:ytdlPath -PathType Leaf)) { return }
+
+	# yt-dlpの1行目(shebang)から使用されるPythonを特定
+	$shebang = ''
+	try {
+		$stream = [System.IO.File]::OpenRead($script:ytdlPath)
+		try {
+			$buffer = New-Object byte[] 256
+			$readLength = $stream.Read($buffer, 0, $buffer.Length)
+			$shebang = ([System.Text.Encoding]::ASCII.GetString($buffer, 0, $readLength) -split '\r?\n')[0]
+		} finally { $stream.Dispose() }
+	} catch { Write-Debug $_ ; return }
+	if ($shebang -notmatch '^#!\s*(\S+)(?:\s+(\S+))?') { return }
+	$interpreter = $Matches[1]
+	if ((Split-Path -Leaf $interpreter) -eq 'env' -and $Matches[2]) { $interpreter = $Matches[2] }
+	$pythonCommand = Get-Command -Name $interpreter -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+	if (!$pythonCommand) { Write-Debug ('Python not found: {0}' -f $interpreter) ; return }
+
+	# Cryptodomeをimportできるか確認
+	try {
+		& $pythonCommand.Source -c 'import Cryptodome' *> $null
+		$exitCode = $LASTEXITCODE
+	} catch { Write-Debug $_ ; return }
+	if ($exitCode -ne 0) { Write-Warning ($script:msg.CryptoModuleNotFound -f $pythonCommand.Source) }
+
+	Remove-Variable -Name shebang, stream, buffer, readLength, interpreter, pythonCommand, exitCode -ErrorAction SilentlyContinue
+}
+
+#----------------------------------------------------------------------
 # ファイル・ディレクトリの存在チェック、なければサンプルファイルコピー
 #----------------------------------------------------------------------
 function Invoke-TverrecPathCheck {
@@ -299,6 +420,42 @@ function Invoke-TverrecPathCheck {
 	Remove-Variable -Name path, errorMessage, isFile, sampleFilePath, continue, pathType -ErrorAction SilentlyContinue
 }
 
+function Test-WorkDirOverlap {
+	<#
+		.SYNOPSIS
+			作業ディレクトリがダウンロード先ディレクトリと同一、またはダウンロード先ディレクトリを含むかを判定します。
+
+		.DESCRIPTION
+			不要ファイル削除処理は作業ディレクトリ配下の`*.jpg`や`*.part*`などを再帰的に削除するため、
+			作業ディレクトリがダウンロード先と同一、またはダウンロード先を含むフォルダだと、
+			ダウンロード済みの他のファイルまで削除する恐れがあります。
+			そのような設定を検出するための判定を行います。
+			パスの大文字小文字はWindowsとmacOSでは区別せず、Linuxでは区別します。
+
+		.PARAMETER BaseDir
+			ダウンロード先ディレクトリのパスを指定します。
+
+		.PARAMETER WorkDir
+			作業ディレクトリのパスを指定します。
+
+		.OUTPUTS
+			System.Boolean. 同一または包含している場合は$true、それ以外は$falseを返します。
+	#>
+	[OutputType([Boolean])]
+	Param (
+		[Parameter(Mandatory = $true)][String]$BaseDir,
+		[Parameter(Mandatory = $true)][String]$WorkDir
+	)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$sep = [IO.Path]::DirectorySeparatorChar
+	$comparison = if ($IsWindows -or $IsMacOS) { [StringComparison]::OrdinalIgnoreCase } else { [StringComparison]::Ordinal }
+	$base = [IO.Path]::GetFullPath($BaseDir).TrimEnd('\', '/')
+	$work = [IO.Path]::GetFullPath($WorkDir).TrimEnd('\', '/')
+	if ($base -eq '' -or $work -eq '') { return $true }	# ルート直下指定は常に包含とみなす
+	if ([String]::Equals($base, $work, $comparison)) { return $true }
+	return $base.StartsWith(($work + $sep), $comparison)
+}
+
 #----------------------------------------------------------------------
 # 設定で指定したファイル・ディレクトリの存在チェック
 #----------------------------------------------------------------------
@@ -321,7 +478,7 @@ function Invoke-RequiredFileCheck {
 			3. 保存ベースディレクトリ
 			4. youtube-dl実行ファイル
 			5. ffmpeg実行ファイル
-			6. ffprobe実行ファイル（簡易検証が有効な場合）
+			6. ffprobe実行ファイル（簡易検証、字幕の確認に使用）
 			7. キーワードファイル
 			8. 無視ファイル
 			9. 履歴ファイル
@@ -336,17 +493,23 @@ function Invoke-RequiredFileCheck {
 	if (!$script:downloadWorkDir) { throw ($script:msg.DirNotSpecified -f $script:msg.WorkDir) }
 	else { Invoke-TverrecPathCheck -Path $script:downloadWorkDir -errorMessage $script:msg.WorkDir }
 	$script:downloadWorkDir = $script:downloadWorkDir.TrimEnd('\/')
+	if (Test-WorkDirOverlap -BaseDir $script:downloadBaseDir -WorkDir $script:downloadWorkDir) { throw ($script:msg.WorkDirOverlap -f $script:downloadWorkDir, $script:downloadBaseDir) }
 	if ($script:saveBaseDir) {
 		$script:saveBaseDirArray = $script:saveBaseDir.split(';').Trim().TrimEnd('\/')
 		foreach ($saveDir in $script:saveBaseDirArray) { Invoke-TverrecPathCheck -Path $saveDir.Trim() -errorMessage $script:msg.SaveDir -continue $true }
 	}
 	Invoke-TverrecPathCheck -Path $script:ytdlPath -errorMessage 'youtube-dl' -isFile
 	Invoke-TverrecPathCheck -Path $script:ffmpegPath -errorMessage 'ffmpeg' -isFile
-	if ($script:simplifiedValidation) { Invoke-TverrecPathCheck -Path $script:ffprobePath -errorMessage 'ffprobe' -isFile }
+	Invoke-TverrecPathCheck -Path $script:ffprobePath -errorMessage 'ffprobe' -isFile
 	Invoke-TverrecPathCheck -Path $script:keywordFilePath -errorMessage $script:msg.KeywordFile -isFile -sampleFilePath $script:keywordFileSamplePath
 	Invoke-TverrecPathCheck -Path $script:ignoreFilePath -errorMessage $script:msg.IgnoreFile -isFile -sampleFilePath $script:ignoreFileSamplePath
 	Invoke-TverrecPathCheck -Path $script:histFilePath -errorMessage $script:msg.HistFile -isFile -sampleFilePath $script:histFileSamplePath
 	Invoke-TverrecPathCheck -Path $script:listFilePath -errorMessage $script:msg.ListFile -isFile -sampleFilePath $script:listFileSamplePath
+	# 履歴に字幕の有無を記録する列(subtitle)がなければ追加(v3.4.9のレイアウト。通常はupdate_tverrec.ps1で追加済み)
+	switch (Add-HistorySubtitleColumn) {
+		'Added' { Write-Output ($script:msg.HistorySubtitleColumnAdded) }
+		'Failed' { Write-Warning ($script:msg.HistorySubtitleColumnAddFailed) ; $script:redownloadWhenSubtitleAdded = $false }
+	}
 	Remove-Variable -Name saveDir -ErrorAction SilentlyContinue
 }
 #endregion 起動時関連
@@ -392,6 +555,199 @@ function Get-LatestHistory {
 	return $latestHists
 }
 
+function Test-SubtitleTrackingEnabled {
+	<#
+		.SYNOPSIS
+			字幕の有無の記録と、字幕が追加された番組の再ダウンロードが有効かを判定します。
+
+		.DESCRIPTION
+			`$script:redownloadWhenSubtitleAdded`が有効で、字幕の埋め込みが有効、かつ、mp4形式のときだけ有効とみなします。
+			(字幕を埋め込まない場合は、字幕の有無を判定する意味がないため)
+
+		.OUTPUTS
+			[Boolean]
+	#>
+	[OutputType([Boolean])]
+	Param ()
+	return [Boolean]($script:redownloadWhenSubtitleAdded -and $script:embedSubtitle -and ($script:videoContainerFormat -eq 'mp4'))
+}
+
+function Get-VideoSubtitleStatus {
+	<#
+		.SYNOPSIS
+			TVerの番組に字幕が提供されているかを、ダウンロード前にyoutube-dlで確認します。
+
+		.DESCRIPTION
+			`yt-dlp --skip-download --print %(subtitles)j`で字幕の一覧だけを取得します。
+			字幕があれば`1`、字幕がなければ`0`を返します。
+			取得に失敗した場合(配信終了や通信エラーなど)は、字幕の有無を判断できないため空文字を返します。
+
+		.PARAMETER EpisodePageURL
+			エピソードページのURLを指定します。
+
+		.OUTPUTS
+			[String]
+			`1`: 字幕あり、`0`: 字幕なし、空文字: 不明
+	#>
+	[OutputType([String])]
+	Param ([Parameter(Mandatory = $true)][String]$EpisodePageURL)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$ytdlArgs = @('--skip-download', '--no-warnings', '--socket-timeout', '30', '--print', '%(subtitles)j')
+	if ($script:proxyUrl) { $ytdlArgs += @('--geo-verification-proxy', $script:proxyUrl) }
+	if (($script:ytdlRandomIp) -and (!$script:proxyUrl)) { $ytdlArgs += @('--xff', ('{0}/32' -f $script:jpIP)) }
+	$ytdlArgs += $EpisodePageURL
+	try {
+		$output = @(& $script:ytdlPath @ytdlArgs 2>$null)
+		if ($LASTEXITCODE -ne 0) { return '' }
+		$text = ($output -join '').Trim()
+		if (($text -eq 'NA') -or ($text -eq 'null')) { return '0' }	# 字幕がない番組はNAが返る
+		$subtitles = $text | ConvertFrom-Json -ErrorAction Stop
+		if ($subtitles -isnot [PSCustomObject]) { return '' }
+		if (@($subtitles.PSObject.Properties).Count -gt 0) { return '1' }
+		return '0'
+	} catch { Write-Debug $_ ; return '' }
+}
+
+function Test-VideoFileHasSubtitle {
+	<#
+		.SYNOPSIS
+			番組ファイルに字幕ストリームが含まれているかをffprobeで確認します。
+
+		.PARAMETER VideoPath
+			番組ファイルのパスを指定します。
+
+		.OUTPUTS
+			[Nullable[Boolean]]
+			字幕があれば$true、なければ$false、確認できなければ$nullを返します。
+	#>
+	[OutputType([Object])]
+	Param ([Parameter(Mandatory = $true)][String]$VideoPath)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if (!(Test-Path -LiteralPath $VideoPath -PathType Leaf)) { return $null }
+	if (!(Test-Path -LiteralPath $script:ffprobePath -PathType Leaf)) { return $null }
+	$probeOutPath = Join-Path ([IO.Path]::GetTempPath()) ('tverrec_subprobe_{0}.txt' -f [Guid]::NewGuid().ToString('N'))
+	try {
+		$probeArgs = ('-v error -select_streams s -show_entries stream=index -of csv=p=0 "{0}"' -f $VideoPath)
+		$probe = Start-Process -FilePath $script:ffprobePath -ArgumentList $probeArgs -RedirectStandardOutput $probeOutPath -NoNewWindow -Wait -PassThru
+		if (($probe.ExitCode -ne 0) -or !(Test-Path -LiteralPath $probeOutPath)) { return $null }
+		return [Boolean](@(Get-Content -LiteralPath $probeOutPath -Encoding UTF8 | Where-Object { $_.Trim() -ne '' }).Count -gt 0)
+	} catch { Write-Debug $_ ; return $null }
+	finally { Remove-Item -LiteralPath $probeOutPath -Force -ErrorAction SilentlyContinue }
+}
+
+function Test-HistorySubtitleColumn {
+	<#
+		.SYNOPSIS
+			ダウンロード履歴ファイルに字幕の有無を記録する列(subtitle)があるかを判定します。
+
+		.OUTPUTS
+			[Boolean]
+	#>
+	[OutputType([Boolean])]
+	Param ()
+	if ((Test-Path Variable:Script:histHasSubtitleColumn) -and $script:histHasSubtitleColumn) { return $true }
+	try {
+		$reader = [IO.StreamReader]::new($script:histFilePath, [Text.Encoding]::UTF8, $true)
+		try { $header = $reader.ReadLine() } finally { $reader.Dispose() }
+	} catch { return $false }
+	$has = [Boolean]($header -and ($header -match '(^|,)"?subtitle"?(,|$)'))
+	if ($has) { $script:histHasSubtitleColumn = $true }
+	return $has
+}
+
+function Add-HistorySubtitleColumn {
+	<#
+		.SYNOPSIS
+			ダウンロード履歴ファイルに字幕の有無を記録する列(subtitle)を追加します。
+
+		.DESCRIPTION
+			既存の履歴の字幕の有無は不明なので、追加する列は空にします。
+			すでに列がある場合は何もしません。
+			追加前の履歴は`history.csv.bak`に退避します。
+
+		.OUTPUTS
+			[String]
+			`Exists`: すでに列がある、`Added`: 追加した、`Failed`: 追加に失敗した
+	#>
+	[OutputType([String])]
+	Param ()
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if (Test-HistorySubtitleColumn) { return 'Exists' }
+	$locked = $false
+	$tempPath = $null
+	try {
+		Wait-FileLock $script:histLockFilePath
+		$locked = $true
+		# ロックを待つ間に他のプロセスが追加した場合
+		if (Test-HistorySubtitleColumn) { return 'Exists' }
+		$tempPath = '{0}.{1}.tmp' -f $script:histFilePath, [Guid]::NewGuid().ToString('N')
+		$hists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -ErrorAction Stop)
+		if ($hists.Count -gt 0) {
+			$hists | Select-Object -Property *, @{ Name = 'subtitle' ; Expression = { '' } } | Export-Csv -LiteralPath $tempPath -Encoding UTF8 -ErrorAction Stop
+		} else {
+			$reader = [IO.StreamReader]::new($script:histFilePath, [Text.Encoding]::UTF8, $true)
+			try { $header = $reader.ReadLine() } finally { $reader.Dispose() }
+			if ([String]::IsNullOrWhiteSpace($header)) { throw 'History CSV header is missing.' }
+			[IO.File]::WriteAllText($tempPath, ('{0},"subtitle"{1}' -f $header, [Environment]::NewLine), [Text.UTF8Encoding]::new($false))
+		}
+		[IO.File]::Replace($tempPath, $script:histFilePath, ('{0}.bak' -f $script:histFilePath))
+		$script:histHasSubtitleColumn = $true
+		return 'Added'
+	} catch { Write-Debug $_ ; return 'Failed' }
+	finally {
+		try { if ($null -ne $tempPath -and [IO.File]::Exists($tempPath)) { [IO.File]::Delete($tempPath) } }
+		finally { if ($locked) { Unlock-File $script:histLockFilePath | Out-Null } }
+	}
+}
+
+function Set-HistorySubtitleStatus {
+	<#
+		.SYNOPSIS
+			ダウンロード履歴の字幕の有無を更新するレコードを追記します。
+
+		.PARAMETER VideoHist
+			更新対象の番組の履歴レコード(Get-LatestHistoryで取得したもの)を指定します。
+
+		.PARAMETER Status
+			`1`: 字幕あり、`0`: 字幕なし、空文字: 不明
+	#>
+	[OutputType([Void])]
+	Param (
+		[Parameter(Mandatory = $true)]$VideoHist,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][String]$Status
+	)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if (!(Test-HistorySubtitleColumn)) { return }
+	$record = $VideoHist.PSObject.Copy()
+	$record.subtitle = $Status
+	$record.downloadDate = Get-TimeStamp
+	Wait-FileLock $script:histLockFilePath
+	try { $record | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append ; Start-Sleep -Seconds 1 }
+	catch { Write-Warning ($script:msg.HistUpdateFailed) }
+	finally { Unlock-File $script:histLockFilePath | Out-Null }
+}
+
+function Remove-SubtitleRecheckTarget {
+	<#
+		.SYNOPSIS
+			ダウンロード履歴から、字幕の再確認の対象になる番組(字幕なしで保存済み)を除きます。
+
+		.DESCRIPTION
+			ダウンロード済みの番組を判定する際に、字幕の再確認の対象を「ダウンロード済み」に含めないために使用します。
+			字幕の再確認が有効でない場合は、履歴をそのまま返します。
+
+		.PARAMETER Hist
+			ダウンロード履歴のレコードを指定します。
+
+		.OUTPUTS
+			[Object[]]
+	#>
+	[OutputType([Object[]])]
+	Param ([Parameter(Mandatory = $true)][AllowNull()][AllowEmptyCollection()][Object[]]$Hist)
+	if (!(Test-SubtitleTrackingEnabled)) { return @($Hist) }
+	return @($Hist.Where({ !($_.PSObject.Properties['subtitle'] -and ($_.subtitle -eq '0')) }))
+}
+
 #----------------------------------------------------------------------
 # ダウンロード履歴データの成形
 #----------------------------------------------------------------------
@@ -423,6 +779,7 @@ function Format-HistoryRecord {
 			- videoName: ビデオファイル名
 			- videoPath: ビデオファイルの相対パス
 			- videoValidated: 検証状態
+			- subtitle: 字幕の有無(1:字幕あり、0:字幕なし、空:不明)
 
 		.EXAMPLE
 			$historyRecord = Format-HistoryRecord -videoInfo $videoInfo
@@ -449,6 +806,7 @@ function Format-HistoryRecord {
 		videoName       = $videoInfo.fileName
 		videoPath       = $videoInfo.fileRelPath
 		videoValidated  = $videoInfo.validated
+		subtitle        = if ($videoInfo.PSObject.Properties['subtitle']) { [String]$videoInfo.subtitle } else { '' }
 	}
 }
 
@@ -806,7 +1164,7 @@ function Update-VideoList {
 	$ignoreTitles = @(Read-IgnoreList)
 	foreach ($ignoreTitle in $ignoreTitles) {
 		if ($ignoreTitle) {
-			if (($videoInfo.seriesName -cmatch [RegEx]::Escape($ignoreTitle)) -or ($videoInfo.episodeName -cmatch [RegEx]::Escape($ignoreTitle))) {
+			if (Test-IgnoreMatch -Pattern $ignoreTitle -Target @($videoInfo.seriesName, $videoInfo.episodeName) -Mode Literal) {
 				$ignoreWord = $ignoreTitle ; Update-IgnoreList $ignoreTitle ; $ignore = $true
 				$videoInfo.episodeID = ('#{0}' -f $videoInfo.episodeID)
 				break
@@ -835,6 +1193,79 @@ function Update-VideoList {
 #endregion ダウンロードリスト関連
 
 #region ダウンロード対象外リスト関連
+#----------------------------------------------------------------------
+# ダウンロード対象外リストの1行が対象文字列にマッチするかを判定
+#----------------------------------------------------------------------
+function Test-IgnoreMatch {
+	<#
+		.SYNOPSIS
+			ダウンロード対象外リストの1行が、いずれかの対象文字列にマッチするかを判定します。
+
+		.DESCRIPTION
+			行頭が`regex:`の行は、それ以降を.NETの正規表現として対象文字列に適用します。
+			(部分一致。大文字小文字は区別します。区別しない場合は`regex:(?i)...`のように指定します)
+			それ以外の行は、従来どおり呼び出し元ごとの方式で判定します。
+			- Literal : 大文字小文字を区別する部分一致(ワイルドカードは通常の文字)。リスト作成時の判定
+			- Wildcard: `-like '*行*'`によるワイルドカード判定。ダウンロード時・不要ファイル削除時の判定
+			不正な正規表現の行は警告を1回だけ表示し、マッチしないものとして扱います。
+
+		.PARAMETER Pattern
+			ダウンロード対象外リストの1行を指定します。
+
+		.PARAMETER Target
+			判定対象の文字列(番組名、ファイル名など)を指定します。いずれかにマッチすれば$trueを返します。
+
+		.PARAMETER Mode
+			`regex:`で始まらない行の判定方式(Literal/Wildcard)を指定します。
+
+		.OUTPUTS
+			[Boolean]
+			マッチした場合は$true、それ以外は$false。
+
+		.EXAMPLE
+			Test-IgnoreMatch -Pattern 'regex:冷凍庫に眠っている (第|最終)' -Target @($videoInfo.fileName) -Mode Wildcard
+	#>
+	[CmdletBinding()]
+	[OutputType([Boolean])]
+	Param (
+		[Parameter(Mandatory = $true)][String]$Pattern,
+		[Parameter(Mandatory = $true)][AllowNull()][AllowEmptyString()][String[]]$Target,
+		[Parameter(Mandatory = $true)][ValidateSet('Literal', 'Wildcard')][String]$Mode
+	)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$targets = @($Target).Where({ $_ })
+	if ($targets.Count -eq 0) { return $false }
+
+	if ($Pattern -cmatch '^regex:(.*)$') {
+		$body = $Matches[1].Normalize([Text.NormalizationForm]::FormC)
+		if (!(Test-Path Variable:Script:ignoreRegexCache)) { $script:ignoreRegexCache = @{} }
+		if (!$script:ignoreRegexCache.ContainsKey($Pattern)) {
+			$regex = $null
+			if ($body.Trim() -ne '') {
+				try { $regex = [Regex]::new($body, [Text.RegularExpressions.RegexOptions]::None, [TimeSpan]::FromSeconds(1)) }
+				catch { $regex = $null }
+			}
+			if ($null -eq $regex) { Write-Warning ($script:msg.IgnoreRegexInvalid -f $Pattern) }
+			$script:ignoreRegexCache[$Pattern] = $regex
+		}
+		$regex = $script:ignoreRegexCache[$Pattern]
+		if ($null -eq $regex) { return $false }
+		foreach ($item in $targets) {
+			try { if ($regex.IsMatch($item.Normalize([Text.NormalizationForm]::FormC))) { return $true } }
+			catch [System.Text.RegularExpressions.RegexMatchTimeoutException] { Write-Warning ($script:msg.IgnoreRegexTimeout -f $Pattern) ; return $false }
+		}
+		return $false
+	}
+
+	foreach ($item in $targets) {
+		switch ($Mode) {
+			'Literal' { if ($item -cmatch [RegEx]::Escape($Pattern)) { return $true } }
+			'Wildcard' { if ($item -like ('*{0}*' -f $Pattern)) { return $true } }
+		}
+	}
+	return $false
+}
+
 #----------------------------------------------------------------------
 # ダウンロード対象外番組の読み込み
 #----------------------------------------------------------------------
@@ -920,14 +1351,23 @@ function Update-IgnoreList {
 			if ($ignoreTarget) { $ignoreListNew += $ignoreTarget }
 			if ($ignoreElse) { $ignoreListNew += $ignoreElse }
 			# 改行コードLFを強制 + NFCで出力
+			# 一時ファイルに書き出してから置換する(読み取り側が書き込み途中の不完全な内容を見ないようにする。失敗時は元ファイルに触れない)
+			$tempPath = '{0}.{1}.tmp' -f $script:ignoreFilePath, [Guid]::NewGuid().ToString('N')
 			try {
-				$ignoreListNew.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC) |
-					Out-File -LiteralPath $script:ignoreFilePath -Encoding UTF8 -NoNewline ; Start-Sleep -Seconds 1
+				$ignoreContent = (-join $ignoreListNew.ForEach({ '{0}{1}' -f $_, "`n" })).Normalize([Text.NormalizationForm]::FormC)
+				[IO.File]::WriteAllText($tempPath, $ignoreContent, [Text.UTF8Encoding]::new($false))
+				# 共有フォルダやウイルス対策ソフトによる一時的なアクセス競合に備えて、置換を数回リトライする
+				for ($retry = 1 ; $retry -le 5 ; $retry++) {
+					try { [IO.File]::Replace($tempPath, $script:ignoreFilePath, [NullString]::Value) ; break }
+					catch { if ($retry -ge 5) { throw } ; Start-Sleep -Milliseconds 200 }
+				}
+				Start-Sleep -Seconds 1
 				Write-Debug ($script:msg.IgnoreFileSortCompleted)
-			} catch {
-				$ignoreLists.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC) |
-					Out-File -LiteralPath $script:ignoreFilePath -Encoding UTF8 -NoNewline ; Start-Sleep -Seconds 1
-			} finally { Start-Sleep -Seconds 1 }
+			} catch { Write-Warning ($script:msg.IgnoreFileSortFailed) }
+			finally {
+				try { if ([IO.File]::Exists($tempPath)) { [IO.File]::Delete($tempPath) } } catch { Write-Debug $_.Exception.Message }
+				Start-Sleep -Seconds 1
+			}
 		} catch { Write-Warning ($script:msg.IgnoreFileSortFailed) }
 		finally { Unlock-File $script:ignoreLockFilePath | Out-Null }
 	}
@@ -1004,6 +1444,7 @@ function Invoke-HistoryMatchCheck {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# ダウンロード履歴ファイルのデータを読み込み
 	$histFileData = @(Get-LatestHistory)
+	$histFileData = @(Remove-SubtitleRecheckTarget $histFileData)	# 字幕の再確認の対象は「ダウンロード済み」に含めない
 	if ($histFileData.Count -eq 0) { $histVideoPages = @() } else { $histVideoPages = @($histFileData.videoPage.Replace('https://tver.jp/episodes/', '')) }
 	# URLがすでにダウンロード履歴に存在する場合は検索結果から除外
 	$histCompResult = @(Compare-Object -IncludeEqual $episodeLinks $histVideoPages)
@@ -1096,6 +1537,7 @@ function Invoke-HistoryAndListMatchCheck {
 	foreach ($listFileLine in $listFileData) { $listVideoID.Add(@($listFileLine.EpisodeID.Replace('#', ''))) }
 	# ダウンロード履歴ファイルのデータを読み込み
 	$histFileData = @(Get-LatestHistory)
+	$histFileData = @(Remove-SubtitleRecheckTarget $histFileData)	# 字幕の再確認の対象は「ダウンロード済み」に含めない
 	$histVideoID = if ($histFileData.Count -eq 0) { @() } else { @($histFileData.VideoPage.Replace('https://tver.jp/episodes/', '')) }
 	# ダウンロードリストとダウンロード履歴をマージ
 	if ($histVideoID) { $listVideoID.AddRange($histVideoID) }
@@ -1160,7 +1602,8 @@ function Invoke-Ytdl {
 		$ytdlArgs += ('--limit-rate {0}M' -f $rateLimit)
 	}
 	if ($script:videoContainerFormat -eq 'mp4') {
-		$ytdlArgs += '--merge-output-format mp4 --embed-thumbnail --embed-chapters'
+		$ytdlArgs += '--merge-output-format mp4 --embed-chapters'
+		if ($script:embedThumbnail) { $ytdlArgs += '--embed-thumbnail' }
 		$ytdlArgs += @('subtitle', 'thumbnail', 'chapter', 'description').ForEach{ '--paths "{0}:{1}"' -f $_, $script:downloadWorkDir }
 		if ($script:embedSubtitle) { $ytdlArgs += '--sub-langs all --convert-subs srt --embed-subs' }
 		if ($script:embedMetatag) { $ytdlArgs += '--embed-metadata' }
@@ -1315,7 +1758,8 @@ function Invoke-NonTverYtdl {
 				$rateLimit = [math]::Ceiling([int]$script:rateLimit / $script:parallelDownloadNumPerFile / 8)
 				('--limit-rate {0}M' -f $rateLimit)
 			})
-		'--merge-output-format mp4 --embed-thumbnail --embed-chapters'
+		'--merge-output-format mp4 --embed-chapters'
+		$(if ($script:embedThumbnail) { '--embed-thumbnail' })
 		$(@('subtitle', 'thumbnail', 'chapter', 'description').ForEach{ '--paths "{0}:{1}"' -f $_, $script:downloadWorkDir })
 		$(if ($script:embedSubtitle) { '--sub-langs all --convert-subs srt --embed-subs' })
 		$(if ($script:embedMetatag) { '--embed-metadata' })
@@ -1382,6 +1826,67 @@ function Invoke-NonTverYtdl {
 	Remove-Variable -Name videoPageURL, tmpDir, baseDir, subttlDir, thumbDir, chaptDir, descDir, saveFile, ytdlArgs, ytdlArgsString, rateLimit, startProcessParams, ytdlProcess -ErrorAction SilentlyContinue
 }
 
+function Get-ProcessCountByPath {
+	<#
+		.SYNOPSIS
+			指定した実行ファイルから起動されているプロセスの数を取得します。
+
+		.DESCRIPTION
+			プロセス名ではなく実行ファイルのパスで絞り込んでプロセス数を数えます。
+			TVerRec以外が起動している同名のプロセス(別途起動したyt-dlpやffmpegなど)を数えないために使用します。
+			Windows: Get-Processの結果のPathが一致するものを数えます。
+			Linux: /proc/<PID>/cmdlineのコマンドラインを参照します。(psコマンドが無い環境でも動作)
+			macOS: ps -axo args= のコマンドラインを参照します。
+			コマンドラインの先頭が実行ファイルのパスであるものだけを数え、
+			他のプロセスの引数にパスが含まれているだけのものは数えません。
+
+		.PARAMETER Path
+			実行ファイルのパスを指定します。
+
+		.PARAMETER AllowInterpreter
+			指定すると、`python3 <Path>`のようにインタープリタ経由で起動されたプロセスも数えます。
+			yt-dlpのようにPythonスクリプトとして実行される場合に使用します。
+
+		.OUTPUTS
+			[Int]
+			該当するプロセスの数。取得できない場合は0。
+	#>
+	[OutputType([Int])]
+	Param (
+		[Parameter(Mandatory = $true)][String]$Path,
+		[Switch]$AllowInterpreter
+	)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	try {
+		$fullPath = [IO.Path]::GetFullPath($Path)
+		$processName = [IO.Path]::GetFileNameWithoutExtension($fullPath)
+		if ($IsWindows) {
+			return @(Get-Process -ErrorAction Ignore -Name $processName).Where({ $_.Path -and [String]::Equals($_.Path, $fullPath, [StringComparison]::OrdinalIgnoreCase) }).Count	# * @()で囲まないとプロセスが0/1個のときStrictModeで例外になる
+		}
+		if ($IsLinux) {
+			$cmdLines = foreach ($procDir in [IO.Directory]::GetDirectories('/proc')) {
+				if ([IO.Path]::GetFileName($procDir) -notmatch '^\d+$') { continue }
+				try { [IO.File]::ReadAllText((Join-Path $procDir 'cmdline')).Replace([Char]0, ' ').TrimEnd() } catch { continue }	# * 取得中に終了したプロセスは無視する
+			}
+		} elseif ($IsMacOS) {
+			$cmdLines = & ps -axo 'args=' 2>$null
+		} else {
+			Write-Debug ($script:msg.GetDownloadProcNumFailed)
+			return 0
+		}
+		$candidates = @($Path, $fullPath | Select-Object -Unique)
+		$count = 0
+		foreach ($cmdLine in @($cmdLines)) {
+			if (!$cmdLine) { continue }
+			foreach ($candidate in $candidates) {
+				if ($cmdLine -ceq $candidate -or $cmdLine.StartsWith($candidate + ' ', [StringComparison]::Ordinal)) { $count++ ; break }
+				if ($AllowInterpreter -and $cmdLine -match ('^\S*python\S*\s+{0}(\s|$)' -f [RegEx]::Escape($candidate))) { $count++ ; break }
+			}
+		}
+		return $count
+	} catch { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
+}
+
 #----------------------------------------------------------------------
 # youtube-dlのプロセスカウントを取得
 #----------------------------------------------------------------------
@@ -1392,7 +1897,7 @@ function Get-YtdlProcessCount {
 
 		.DESCRIPTION
 			現在実行中のyoutube-dlプロセスの数を取得します。
-			プラットフォームに応じて適切な方法でプロセス数をカウントします。
+			TVerRecが使用する実行ファイル(`$script:ytdlPath`)から起動されたプロセスだけを数えます。
 
 		.OUTPUTS
 			[Int]
@@ -1400,27 +1905,18 @@ function Get-YtdlProcessCount {
 
 		.NOTES
 			この関数は以下の処理を行います：
-			1. プラットフォームに応じて適切な方法でプロセスをカウント
-			2. Windows: youtube-dlプロセスの数を2で割って返す
-			3. Linux: youtube-dlプロセスの数をそのまま返す
-			4. macOS: psコマンドでyoutube-dlプロセスをカウント
+			1. Get-ProcessCountByPathで実行ファイルのパスが一致するプロセスをカウント
+			2. Windows: プロセスの数を2で割って返す
+			3. Linux/macOS: プロセスの数をそのまま返す
 	#>
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	$processName = switch ($script:preferredYoutubedl) {
-		'yt-dlp' { 'yt-dlp' }
-		'ytdl-patched' { 'youtube-dl' }
-		'yt-dlp-nightly' { 'yt-dlp' }
-	}
 	try {
-		switch ($true) {
-			$IsWindows { return [Int][Math]::Round(@(Get-Process -ErrorAction Ignore -Name $processName).Count / 2, [MidpointRounding]::AwayFromZero ); break }	# * @()で囲まないとプロセスが0/1個のときStrictModeで例外になり常に0が返る
-			$IsLinux { return @(Get-Process -ErrorAction Ignore -Name $processName).Count ; break }
-			$IsMacOS { $psCmd = 'ps' ; return (& sh -c $psCmd | grep $processName | grep -v grep | grep -c ^).Trim() ; break }
-			default { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
-		}
+		$count = Get-ProcessCountByPath -Path $script:ytdlPath -AllowInterpreter
+		if ($IsWindows) { return [Int][Math]::Round($count / 2, [MidpointRounding]::AwayFromZero) }	# * Windowsでは1回の実行で2プロセス(親子)になる
+		return $count
 	} catch { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
-	Remove-Variable -Name processName, psCmd -ErrorAction SilentlyContinue
+	Remove-Variable -Name count -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -1433,7 +1929,7 @@ function Get-FfmpegProcessCount {
 
 		.DESCRIPTION
 			現在実行中のffmpegプロセスの数を取得します。
-			プラットフォームに応じて適切な方法でプロセス数をカウントします。
+			TVerRecが使用する実行ファイル(`$script:ffmpegPath`)から起動されたプロセスだけを数えます。
 
 		.OUTPUTS
 			[Int]
@@ -1441,23 +1937,12 @@ function Get-FfmpegProcessCount {
 
 		.NOTES
 			この関数は以下の処理を行います：
-			1. プラットフォームに応じて適切な方法でプロセスをカウント
-			2. Windows: ffmpegプロセスの数をそのまま返す
-			3. Linux: ffmpegプロセスの数をそのまま返す
-			4. macOS: psコマンドでffmpegプロセスをカウント
+			1. Get-ProcessCountByPathで実行ファイルのパスが一致するプロセスをカウントして返す
 	#>
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	$processName = 'ffmpeg'
-	try {
-		switch ($true) {
-			$IsWindows { return @(Get-Process -ErrorAction Ignore -Name $processName).Count ; break }	# * @()で囲まないとプロセスが0/1個のときStrictModeで例外になる
-			$IsLinux { return @(Get-Process -ErrorAction Ignore -Name $processName).Count ; break }
-			$IsMacOS { $psCmd = 'ps' ; return (& sh -c $psCmd | grep $processName | grep -v grep | grep -c ^).Trim() ; break }
-			default { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
-		}
-	} catch { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
-	Remove-Variable -Name processName, psCmd -ErrorAction SilentlyContinue
+	try { return Get-ProcessCountByPath -Path $script:ffmpegPath }
+	catch { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
 }
 
 #----------------------------------------------------------------------
@@ -1661,7 +2146,28 @@ function Invoke-VideoDownload {
 	# 番組情報のコンソール出力
 	Show-VideoInfo ([Ref]$videoInfo)
 	if ($DebugPreference -ne 'SilentlyContinue') { Show-VideoDebugInfo ([Ref]$videoInfo) }
-	if ($force) {
+	# 字幕の有無の記録と、字幕が追加された番組の再ダウンロード判定
+	$subtitleTracking = Test-SubtitleTrackingEnabled
+	$subtitleStatus = $null
+	$subtitleRecheck = $false
+	$histFileData = $null
+	if (!$force -and $subtitleTracking) {
+		$histFileData = @(Get-LatestHistory)
+		$subtitleHists = @($histFileData.Where({ $_ -and $_.PSObject.Properties['subtitle'] }))
+		$sameEpisodeHists = @($subtitleHists.Where({ $_.videoPage -eq $videoInfo.episodePageURL }))
+		if (($sameEpisodeHists.Count -ne 0) -and ($sameEpisodeHists[0].subtitle -eq '0')) {
+			# 字幕なしで保存済みの番組	→字幕が追加されたか確認する
+			foreach ($ignoreTitle in @(Read-IgnoreList)) {
+				if ($ignoreTitle -and (Test-IgnoreMatch -Pattern $ignoreTitle -Target @($videoInfo.fileName, $videoInfo.seriesName) -Mode Wildcard)) { return }
+			}
+			Write-Output ($script:msg.SubtitleRecheck)
+			$subtitleStatus = Get-VideoSubtitleStatus -EpisodePageURL $videoInfo.episodePageURL
+			if ($subtitleStatus -ne '1') { Write-Output ($script:msg.SubtitleNotAdded) ; return }
+			Write-Output ($script:msg.SubtitleAdded)
+			$subtitleRecheck = $true
+		}
+	}
+	if ($force -or $subtitleRecheck) {
 		$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
 		$newVideo = Format-HistoryRecord $videoInfo
 	} else {
@@ -1683,8 +2189,8 @@ function Invoke-VideoDownload {
 						ダウンロード対象外リストに存在する	→無視
 						ダウンロード対象外リストに存在しない	→ダウンロード
 		#>
-		#ダウンロード履歴ファイルのデータを読み込み
-		$histFileData = @(Get-LatestHistory)
+		#ダウンロード履歴ファイルのデータを読み込み(字幕の判定で読み込み済みの場合は再利用)
+		if ($null -eq $histFileData) { $histFileData = @(Get-LatestHistory) }
 		if ($videoInfo.fileRelPath) { $histMatch = @($histFileData.Where({ $_.videoPath -eq $videoInfo.fileRelPath })) }
 		else { Write-Warning ($script:msg.FileNameRetrievalFailed) ; return }
 
@@ -1692,7 +2198,7 @@ function Invoke-VideoDownload {
 			if (($histMatch.Count -ne 0) -or (Test-Path $videoInfo.filePath)) {
 				$ignoreTitles = @(Read-IgnoreList)
 				foreach ($ignoreTitle in $ignoreTitles) {
-					if (($videoInfo.fileName -like ('*{0}*' -f $ignoreTitle)) -or ($videoInfo.seriesName -like ('*{0}*' -f $ignoreTitle))) {
+					if (Test-IgnoreMatch -Pattern $ignoreTitle -Target @($videoInfo.fileName, $videoInfo.seriesName) -Mode Wildcard) {
 						# エピソードIDが変更になったがダウンロード対象外リストと合致	→無視する
 						Update-IgnoreList $ignoreTitle ; Write-Warning ($script:msg.IgnoreEpisodeAdded)
 						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
@@ -1712,7 +2218,7 @@ function Invoke-VideoDownload {
 				# 履歴ファイルに存在せず、実ファイルも存在せず、ダウンロード対象外リストと合致	→無視する
 				$ignoreTitles = @(Read-IgnoreList)
 				foreach ($ignoreTitle in $ignoreTitles) {
-					if (($videoInfo.fileName -like ('*{0}*' -f $ignoreTitle)) -or ($videoInfo.seriesName -like ('*{0}*' -f $ignoreTitle))) {
+					if (Test-IgnoreMatch -Pattern $ignoreTitle -Target @($videoInfo.fileName, $videoInfo.seriesName) -Mode Wildcard) {
 						Update-IgnoreList $ignoreTitle ; Write-Warning ($script:msg.IgnoreEpisodeAdded)
 						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
 						$videoInfo.fileName = '-- IGNORED --'
@@ -1743,7 +2249,7 @@ function Invoke-VideoDownload {
 				# 履歴ファイルに存在せず、実ファイルも存在せず、ダウンロード対象外リストと合致	→無視する
 				$ignoreTitles = @(Read-IgnoreList)
 				foreach ($ignoreTitle in $ignoreTitles) {
-					if (($videoInfo.fileName -like ('*{0}*' -f $ignoreTitle)) -or ($videoInfo.seriesName -like ('*{0}*' -f $ignoreTitle))) {
+					if (Test-IgnoreMatch -Pattern $ignoreTitle -Target @($videoInfo.fileName, $videoInfo.seriesName) -Mode Wildcard) {
 						Update-IgnoreList $ignoreTitle ; Write-Warning ($script:msg.IgnoreEpisodeAdded)
 						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0' ; $videoInfo.fileName = '-- IGNORED --' ; $videoInfo.fileRelPath = '-- IGNORED --'
 						$newVideo = Format-HistoryRecord $videoInfo ; $skipDownload = $true
@@ -1760,6 +2266,11 @@ function Invoke-VideoDownload {
 		}
 	}
 
+	# ダウンロードする番組の字幕の有無を記録
+	if ($subtitleTracking -and !$skipDownload -and $newVideo) {
+		if ($null -eq $subtitleStatus) { $subtitleStatus = Get-VideoSubtitleStatus -EpisodePageURL $videoInfo.episodePageURL }
+		$newVideo.subtitle = $subtitleStatus
+	}
 	# ダウンロード履歴CSV書き出し
 	Wait-FileLock $script:histLockFilePath
 	try {
@@ -1786,7 +2297,7 @@ function Invoke-VideoDownload {
 	catch { Write-Warning ($script:msg.InvokeYtdlFailed) }
 	# 5秒待機
 	Start-Sleep -Seconds 5
-	Remove-Variable -Name keyword, videoLink, force, newVideo, skipDownload, episodeID, histFileData, histMatch, ignoreTitles, ignoreTitle -ErrorAction SilentlyContinue
+	Remove-Variable -Name keyword, videoLink, force, newVideo, skipDownload, episodeID, histFileData, histMatch, ignoreTitles, ignoreTitle, subtitleTracking, subtitleStatus, subtitleRecheck, subtitleHists, sameEpisodeHists -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -2678,3 +3189,106 @@ function Invoke-StatisticsCheck {
 	Remove-Variable -Name operation, tverType, tverID, statisticsBase, epochTime, userProperties, clientEnv, value, eventParams, clientSetting, paramValue, gaBody, gaURL, gaKey, gaID, gaHeaders, response -ErrorAction SilentlyContinue
 }
 #endregion 環境
+
+#region 番組ファイル移動関連
+function Group-DirectoryPathByLeaf {
+	<#
+		.SYNOPSIS
+			ディレクトリのパスを、末尾のフォルダ名ごとにまとめます。
+
+		.DESCRIPTION
+			番組の移動元と移動先を「末尾のフォルダ名」で突き合わせるために、パスをフォルダ名ごとに集約します。
+			同じフォルダ名のディレクトリが複数ある場合は、すべてのパスを保持します。
+			(後から見つかったもので上書きしたり、先に見つかったものだけを採用したりしません)
+			同じパスが重複して渡された場合は1つにまとめます。パスの大文字小文字は区別しません。
+
+		.PARAMETER Path
+			ディレクトリのパスの配列を指定します。
+
+		.OUTPUTS
+			[Hashtable]
+			キーがフォルダ名、値がそのフォルダ名のパスの配列。キーの大文字小文字は区別しません。
+	#>
+	[OutputType([Hashtable])]
+	Param ([Parameter(Mandatory = $true)][AllowEmptyCollection()][AllowNull()][AllowEmptyString()][String[]]$Path)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$groups = @{}
+	foreach ($dirPath in $Path) {
+		if ([String]::IsNullOrWhiteSpace($dirPath)) { continue }
+		$trimmedPath = $dirPath.TrimEnd('\', '/')
+		if (!$trimmedPath) { continue }
+		$leaf = Split-Path -Leaf $trimmedPath
+		if (!$leaf) { continue }
+		if (!$groups.ContainsKey($leaf)) { $groups[$leaf] = [Collections.Generic.List[String]]::new() }
+		if ($groups[$leaf] -inotcontains $trimmedPath) { $groups[$leaf].Add($trimmedPath) }
+	}
+	return $groups
+}
+
+#----------------------------------------------------------------------
+# 番組ファイルの移動(移動先に同名ファイルがある場合の動作を指定可能)
+#----------------------------------------------------------------------
+function Move-VideoFileToDestination {
+	<#
+		.SYNOPSIS
+			ファイルを移動先ディレクトリに移動します。移動先に同名ファイルがある場合の動作を指定できます。
+
+		.DESCRIPTION
+			ファイルを移動先ディレクトリに移動します。
+			移動先に同名のファイルが既に存在する場合は、ConflictActionに従って動作します。
+			- Overwrite: 上書きします(既定。従来の動作)
+			            ただし、移動先のファイルに字幕があり、移動元のファイルに字幕がない場合は、字幕が失われるため上書きしません(Result=SubtitleKept)
+			- Skip     : 移動せず、移動元にファイルを残します
+			- Rename   : 「ファイル名 (1).mp4」のように、重複しない名前を付けて移動します
+			上記以外の値はOverwriteとして扱います。
+
+		.PARAMETER Path
+			移動するファイルのパスを指定します。
+
+		.PARAMETER DestinationDir
+			移動先ディレクトリのパスを指定します。
+
+		.PARAMETER ConflictAction
+			移動先に同名ファイルがある場合の動作(Overwrite/Skip/Rename)を指定します。
+
+		.OUTPUTS
+			[PSCustomObject]
+			Result(Moved/Overwritten/Skipped/Renamed/SubtitleKept)とDestination(移動後のパス。SkippedとSubtitleKeptの場合は$null)を持つオブジェクト。
+
+		.EXAMPLE
+			Move-VideoFileToDestination -Path '/download/番組/第1話.mp4' -DestinationDir '/save/番組' -ConflictAction 'Skip'
+	#>
+	[CmdletBinding()]
+	[OutputType([PSCustomObject])]
+	Param (
+		[Parameter(Mandatory = $true)][String]$Path,
+		[Parameter(Mandatory = $true)][String]$DestinationDir,
+		[Parameter(Mandatory = $false)][String]$ConflictAction = 'Overwrite'
+	)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$fileName = Split-Path -Leaf $Path
+	$destPath = Join-Path $DestinationDir $fileName
+	$result = 'Moved'
+	if (Test-Path -LiteralPath $destPath) {
+		if ($ConflictAction -eq 'Skip') { return [PSCustomObject]@{ Result = 'Skipped' ; Destination = $null } }
+		elseif ($ConflictAction -eq 'Rename') {
+			$baseName = [System.IO.Path]::GetFileNameWithoutExtension($fileName)
+			$extension = [System.IO.Path]::GetExtension($fileName)
+			$num = 1
+			do {
+				$destPath = Join-Path $DestinationDir ('{0} ({1}){2}' -f $baseName, $num, $extension)
+				$num++
+			} while (Test-Path -LiteralPath $destPath)
+			$result = 'Renamed'
+		} else {
+			# 上書きの場合、移動先に字幕があり、移動元に字幕がなければ、字幕が失われるため上書きしない
+			if (((Test-VideoFileHasSubtitle -VideoPath $destPath) -eq $true) -and ((Test-VideoFileHasSubtitle -VideoPath $Path) -eq $false)) {
+				return [PSCustomObject]@{ Result = 'SubtitleKept' ; Destination = $null }
+			}
+			$result = 'Overwritten'
+		}
+	}
+	Move-Item -LiteralPath $Path -Destination $destPath -Force -ErrorAction Stop
+	return [PSCustomObject]@{ Result = $result ; Destination = $destPath }
+}
+#endregion 番組ファイル移動関連

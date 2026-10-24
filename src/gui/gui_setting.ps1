@@ -110,6 +110,7 @@ $settingAttributes = @(
 	'$script:enableMultithread',
 	'$script:multithreadNum',
 	'$script:disableToastNotification',
+	'$script:guiRefreshIntervalMs',
 	'$script:rateLimit',
 	'$script:timeoutSec',
 	'$script:guiMaxExecLogLines',
@@ -132,6 +133,8 @@ $settingAttributes = @(
 	'$script:detailedProgress',
 	'$script:embedSubtitle',
 	'$script:embedMetatag',
+	'$script:embedThumbnail',
+	'$script:redownloadWhenSubtitleAdded',
 	'$script:windowShowStyle',
 	'$script:ffmpegDecodeOption',
 	'$script:ytdlOption',
@@ -144,6 +147,7 @@ $settingAttributes = @(
 	'$script:cleanupDownloadBaseDir',
 	'$script:cleanupSaveBaseDir',
 	'$script:emptyDownloadBaseDir',
+	'$script:moveConflictAction',
 	'$script:ytdlHttpHeader',
 	'$script:ytdlBaseArgs',
 	'$script:nonTVerYtdlBaseArgs',
@@ -440,6 +444,8 @@ $multithreadNumHeader.Header = $script:msg.multithreadNumHeader
 $multithreadNumText.Text = $script:msg.multithreadNumText
 $disableToastHeader.Header = $script:msg.disableToastHeader
 $disableToastText.Text = $script:msg.disableToastText
+$guiRefreshIntervalMsHeader.Header = $script:msg.guiRefreshIntervalMsHeader
+$guiRefreshIntervalMsText.Text = $script:msg.guiRefreshIntervalMsText
 $maxExecLogLinesHeader.Header = $script:msg.maxExecLogLinesHeader
 $maxExecLogLinesText.Text = $script:msg.maxExecLogLinesText
 $histRetentionPeriodHeader.Header = $script:msg.histRetentionPeriodHeader
@@ -458,6 +464,8 @@ $cleanupSaveBaseDirHeader.Header = $script:msg.cleanupSaveBaseDirHeader
 $cleanupSaveBaseDirText.Text = $script:msg.cleanupSaveBaseDirText
 $emptyDownloadBaseDirHeader.Header = $script:msg.emptyDownloadBaseDirHeader
 $emptyDownloadBaseDirText.Text = $script:msg.emptyDownloadBaseDirText
+$moveConflictActionHeader.Header = $script:msg.moveConflictActionHeader
+$moveConflictActionText.Text = $script:msg.moveConflictActionText
 $updateChannelHeader.Header = $script:msg.updateChannelHeader
 $updateChannelText.Text = $script:msg.updateChannelText
 # マイページタブ
@@ -488,6 +496,10 @@ $embedSubtitleHeader.Header = $script:msg.embedSubtitleHeader
 $embedSubtitleText.Text = $script:msg.embedSubtitleText
 $embedMetatagHeader.Header = $script:msg.embedMetatagHeader
 $embedMetatagText.Text = $script:msg.embedMetatagText
+$embedThumbnailHeader.Header = $script:msg.embedThumbnailHeader
+$embedThumbnailText.Text = $script:msg.embedThumbnailText
+$redownloadWhenSubtitleAddedHeader.Header = $script:msg.redownloadWhenSubtitleAddedHeader
+$redownloadWhenSubtitleAddedText.Text = $script:msg.redownloadWhenSubtitleAddedText
 $sortVideoBySeriesHeader.Header = $script:msg.sortVideoBySeriesHeader
 $sortVideoBySeriesText.Text = $script:msg.sortVideoBySeriesText
 $sortVideoByMediaHeader.Header = $script:msg.sortVideoByMediaHeader
@@ -594,6 +606,8 @@ $trueFalseControls = @(
 	$emptyDownloadBaseDir,
 	$embedSubtitle,
 	$embedMetatag,
+	$embedThumbnail,
+	$redownloadWhenSubtitleAdded,
 	$sortVideoBySeries,
 	$sortVideoByMedia,
 	$forceSingleDownload,
@@ -625,6 +639,10 @@ $updateChannel.Items.Add('dev') | Out-Null
 $videoContainerFormat.Items.Add($script:msg.SettingDefault) | Out-Null
 $videoContainerFormat.Items.Add('mp4') | Out-Null
 $videoContainerFormat.Items.Add('ts') | Out-Null
+$moveConflictAction.Items.Add($script:msg.SettingDefault) | Out-Null
+$moveConflictAction.Items.Add('Overwrite') | Out-Null
+$moveConflictAction.Items.Add('Skip') | Out-Null
+$moveConflictAction.Items.Add('Rename') | Out-Null
 $windowShowStyle.Items.Add($script:msg.SettingDefault) | Out-Null
 $windowShowStyle.Items.Add('Minimized') | Out-Null
 $windowShowStyle.Items.Add('Hidden') | Out-Null

@@ -119,14 +119,12 @@ function Get-DirectoriesWithPlatformCheck {
 }
 
 # 移動先ディレクトリ配下のディレクトリ一覧
+# * 同名のフォルダが複数ある場合もすべて保持する(キー: フォルダ名、値: パスの配列)
 $moveToPathsHash = @{}
 if ($script:saveBaseDir) {
 	$script:saveBaseDirArray = $script:saveBaseDir.Split(';').Trim()
 	$saveBaseDirs = Get-DirectoriesWithPlatformCheck -paths $script:saveBaseDirArray
-	foreach ($saveBaseDir in $saveBaseDirs) {
-		$saveBaseDirLeaf = Split-Path -Leaf $saveBaseDir
-		$moveToPathsHash[$saveBaseDirLeaf] = $saveBaseDir
-	}
+	$moveToPathsHash = Group-DirectoryPathByLeaf -Path @($saveBaseDirs)
 }
 
 # ダウンロードディレクトリ配下のディレクトリ一覧
@@ -135,11 +133,8 @@ Write-Output ($script:msg.MediumBoldBorder)
 Write-Output ($script:msg.ListUpSourceDirs)
 $moveFromPathsHash = @{}
 if ($script:saveBaseDir) {
-	$moveFromFiles = Get-ChildItem -LiteralPath $script:downloadBaseDir -Include @('*.mp4', '*.ts') -Recurse -File -Force -ErrorAction SilentlyContinue
-	foreach ($moveFromFile in $moveFromFiles) {
-		$moveFromDirName = $moveFromFile.Directory.Name
-		if (-not $moveFromPathsHash.ContainsKey($moveFromDirName)) { $moveFromPathsHash[$moveFromDirName] = $moveFromFile.Directory.FullName }
-	}
+	$moveFromFiles = @(Get-ChildItem -LiteralPath $script:downloadBaseDir -Include @('*.mp4', '*.ts') -Recurse -File -Force -ErrorAction SilentlyContinue)
+	$moveFromPathsHash = Group-DirectoryPathByLeaf -Path @($moveFromFiles.ForEach({ $_.Directory.FullName }))
 }
 
 # 移動先ディレクトリとダウンロードディレクトリの一致を抽出
@@ -189,15 +184,30 @@ if ($moveDirs) {
 		Update-ProgressToast @toastUpdateParams
 
 		# .Normalize([Text.NormalizationForm]::FormC)
-		$moveFromPath = $moveFromPathsHash[$dir] ?? $moveFromPathsHash[$dir.Normalize([Text.NormalizationForm]::FormC)]
-		$moveToPath = $moveToPathsHash[$dir] ?? $moveToPathsHash[$dir.Normalize([Text.NormalizationForm]::FormC)]
+		$moveFromPaths = @($moveFromPathsHash[$dir] ?? $moveFromPathsHash[$dir.Normalize([Text.NormalizationForm]::FormC)])
+		$moveToPaths = @($moveToPathsHash[$dir] ?? $moveToPathsHash[$dir.Normalize([Text.NormalizationForm]::FormC)])
 
-		# 同名ディレクトリが存在する場合は配下のファイルを移動
-		if ((Test-Path -LiteralPath $moveFromPath) -and (Test-Path -LiteralPath $moveToPath)) {
-			Write-Output ('　{0}\* -> {1}' -f $moveFromPath, $moveToPath)
-			try { Get-ChildItem -LiteralPath $moveFromPath -File | Move-Item -Destination $moveToPath -Force | Out-Null }
-			catch { Write-Warning ($script:msg.MoveFileFailed -f $moveFromPath) }
-		} else { Write-Warning ($script:msg.MoveFileNotAccessible -f $moveFromPath) }
+		# 移動先に同名のフォルダが複数ある場合は、どれに移動すべきか判断できないため移動しない
+		if ($moveToPaths.Count -gt 1) {
+			Write-Warning ($script:msg.MoveDestAmbiguous -f $dir, ($moveToPaths -join ' , '))
+			continue
+		}
+		$moveToPath = $moveToPaths[0]
+
+		# 同名ディレクトリが存在する場合は配下のファイルを移動(移動元に同名のフォルダが複数ある場合はすべて対象)
+		foreach ($moveFromPath in $moveFromPaths) {
+			if ((Test-Path -LiteralPath $moveFromPath) -and (Test-Path -LiteralPath $moveToPath)) {
+				Write-Output ('　{0}\* -> {1}' -f $moveFromPath, $moveToPath)
+				foreach ($moveFile in @(Get-ChildItem -LiteralPath $moveFromPath -File)) {
+					try {
+						$moveResult = Move-VideoFileToDestination -Path $moveFile.FullName -DestinationDir $moveToPath -ConflictAction $script:moveConflictAction
+						if ($moveResult.Result -eq 'Skipped') { Write-Warning ($script:msg.MoveFileSkipped -f $moveFile.Name) }
+						elseif ($moveResult.Result -eq 'SubtitleKept') { Write-Warning ($script:msg.MoveFileSubtitleKept -f $moveFile.Name) }
+						elseif ($moveResult.Result -eq 'Renamed') { Write-Output ($script:msg.MoveFileRenamed -f $moveFile.Name, (Split-Path -Leaf $moveResult.Destination)) }
+					} catch { Write-Warning ($script:msg.MoveFileFailed -f $moveFile.FullName) }
+				}
+			} else { Write-Warning ($script:msg.MoveFileNotAccessible -f $moveFromPath) }
+		}
 	}
 }
 #----------------------------------------------------------------------
@@ -275,7 +285,7 @@ $toastUpdateParams = @{
 }
 Update-ProgressToast @toastUpdateParams
 
-Remove-Variable -Name args, toastShowParams, moveToPathsHash, moveFromPathsHash, moveDirs, moveDir, totalStartTime, dirNum, dirTotal, dir, secElapsed, secRemaining, minRemaining, progressRate, toastUpdateParams, targetFolderName, moveFromPath, moveToPath, emptyDirs, emptyDirTotal, emptyDirNum -ErrorAction SilentlyContinue
+Remove-Variable -Name args, toastShowParams, moveToPathsHash, moveFromPathsHash, moveDirs, moveDir, totalStartTime, dirNum, dirTotal, dir, secElapsed, secRemaining, minRemaining, progressRate, toastUpdateParams, targetFolderName, moveFromPath, moveToPath, moveFromPaths, moveToPaths, moveFromFiles, saveBaseDirs, moveFile, moveResult, emptyDirs, emptyDirTotal, emptyDirNum -ErrorAction SilentlyContinue
 
 Invoke-GarbageCollection
 

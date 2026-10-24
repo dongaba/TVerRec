@@ -569,6 +569,49 @@ Describe 'ファイルのロック' {
 }
 
 #----------------------------------------------------------------------
+# ファイルロックの取得待ち(タイムアウト付き)
+#----------------------------------------------------------------------
+Describe 'ファイルロックの取得待ち' {
+	BeforeEach {
+		$script:fileInfo = @{}
+		$script:fileStream = @{}
+		$waitLockPath = Join-Path $TestDrive 'wait.lock'
+		New-Item -Path $waitLockPath -ItemType File -Force | Out-Null
+	}
+
+	AfterEach {
+		Unlock-File $waitLockPath | Out-Null
+		Remove-Item -Path $waitLockPath -Force -ErrorAction SilentlyContinue | Out-Null
+	}
+
+	It 'ロックが空いていれば即座に取得できること' {
+		{ Wait-FileLock -Path $waitLockPath -TimeoutSeconds 5 } | Should -Not -Throw
+		$script:fileStream[$waitLockPath] | Should -Not -BeNullOrEmpty
+	}
+	It '別のハンドルが解放されるまで待ってから取得できること' {
+		$holder = [System.IO.File]::Open($waitLockPath, 'Open', 'ReadWrite', 'None')
+		$releaser = Start-ThreadJob -ArgumentList $holder -ScriptBlock { Param ($h) ; Start-Sleep -Milliseconds 1500 ; $h.Dispose() }
+		try {
+			{ Wait-FileLock -Path $waitLockPath -TimeoutSeconds 10 -InformationAction SilentlyContinue } | Should -Not -Throw
+			$script:fileStream[$waitLockPath] | Should -Not -BeNullOrEmpty
+		} finally {
+			Wait-Job $releaser | Out-Null
+			Remove-Job $releaser -Force -ErrorAction SilentlyContinue
+			$holder.Dispose()
+		}
+	}
+	It '上限時間を超えたら例外をスローすること' {
+		$holder = [System.IO.File]::Open($waitLockPath, 'Open', 'ReadWrite', 'None')
+		try {
+			$sw = [System.Diagnostics.Stopwatch]::StartNew()
+			{ Wait-FileLock -Path $waitLockPath -TimeoutSeconds 2 -InformationAction SilentlyContinue -WarningAction SilentlyContinue } | Should -Throw
+			$sw.Elapsed.TotalSeconds | Should -BeGreaterOrEqual 2
+			$sw.Elapsed.TotalSeconds | Should -BeLessThan 5
+		} finally { $holder.Dispose() }
+	}
+}
+
+#----------------------------------------------------------------------
 # ファイルのアンロック
 #----------------------------------------------------------------------
 Describe 'ファイルのアンロック' {
@@ -681,3 +724,36 @@ Describe 'Base64画像の展開' {
 		$result.PixelWidth | Should -Be 1
 	}
 }
+
+# region GUI更新間隔
+
+Describe 'Get-GuiRefreshInterval' {
+	BeforeEach { Remove-Variable -Name guiRefreshIntervalMs -Scope Script -ErrorAction SilentlyContinue }
+	AfterAll { Remove-Variable -Name guiRefreshIntervalMs -Scope Script -ErrorAction SilentlyContinue }
+
+	It '設定が未定義の場合は既定値の10を返す' {
+		Get-GuiRefreshInterval | Should -Be 10
+	}
+	It '範囲内の整数はそのまま返す' {
+		foreach ($value in @(1, 10, 100, 1000)) {
+			$script:guiRefreshIntervalMs = $value
+			Get-GuiRefreshInterval | Should -Be $value
+		}
+	}
+	It '数字の文字列も整数として扱う(GUIの設定画面はTextBoxの文字列)' {
+		$script:guiRefreshIntervalMs = '100'
+		Get-GuiRefreshInterval | Should -Be 100
+	}
+	It '範囲外・数値以外・空は既定値の10を返す' {
+		foreach ($value in @(0, -5, 1001, 100000, 'abc', '', $null, '1.5')) {
+			$script:guiRefreshIntervalMs = $value
+			Get-GuiRefreshInterval | Should -Be 10
+		}
+	}
+	It 'Int型で返す' {
+		$script:guiRefreshIntervalMs = '50'
+		(Get-GuiRefreshInterval).GetType().Name | Should -Be 'Int32'
+	}
+}
+
+# endregion GUI更新間隔

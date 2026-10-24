@@ -208,7 +208,7 @@ if ($script:forceSingleDownload) {
 	# 削除対象の特定
 	foreach ($ignoreTitleRaw in $ignoreTitles) {
 		$ignoreTitle = $ignoreTitleRaw.Normalize([Text.NormalizationForm]::FormC)
-		$filteredDirs = $workDirEntities.Where({ $_.Name.Normalize([Text.NormalizationForm]::FormC) -like "*${ignoreTitle}*" })
+		$filteredDirs = $workDirEntities.Where({ Test-IgnoreMatch -Pattern $ignoreTitle -Target @($_.Name.Normalize([Text.NormalizationForm]::FormC)) -Mode Wildcard })
 		foreach ($filteredDir in $filteredDirs) {
 			$ignoreDirs.Add($filteredDir)
 			Update-IgnoreList $ignoreTitle

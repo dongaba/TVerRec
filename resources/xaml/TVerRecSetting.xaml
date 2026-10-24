@@ -368,6 +368,10 @@
                                 <TextBlock Name="disableToastText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox Name="disableToastNotification" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
+                            <Expander Name="guiRefreshIntervalMsHeader" Margin="10,10,10,0" IsExpanded="False" >
+                                <TextBlock Name="guiRefreshIntervalMsText" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            </Expander>
+                            <TextBox Name="guiRefreshIntervalMs" Style="{DynamicResource TextBoxStyle}" />
                             <Expander Name="maxExecLogLinesHeader" Margin="10,10,10,0" IsExpanded="False" >
                                 <TextBlock Name="maxExecLogLinesText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
@@ -404,6 +408,10 @@
                                 <TextBlock Name="emptyDownloadBaseDirText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox Name="emptyDownloadBaseDir" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
+                            <Expander Name="moveConflictActionHeader" Margin="10,10,10,0" IsExpanded="False" >
+                                <TextBlock Name="moveConflictActionText" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            </Expander>
+                            <ComboBox Name="moveConflictAction" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
                             <Expander Name="updateChannelHeader" Margin="10,10,10,0" IsExpanded="False" >
                                 <TextBlock Name="updateChannelText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
@@ -470,6 +478,14 @@
                                 <TextBlock Name="embedMetatagText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox Name="embedMetatag" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
+                            <Expander Name="embedThumbnailHeader" Margin="10,10,10,0" IsExpanded="False" >
+                                <TextBlock Name="embedThumbnailText" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            </Expander>
+                            <ComboBox Name="embedThumbnail" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
+                            <Expander Name="redownloadWhenSubtitleAddedHeader" Margin="10,10,10,0" IsExpanded="False" >
+                                <TextBlock Name="redownloadWhenSubtitleAddedText" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            </Expander>
+                            <ComboBox Name="redownloadWhenSubtitleAdded" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
                             <Expander Name="sortVideoBySeriesHeader" Margin="10,10,10,0" IsExpanded="False" >
                                 <TextBlock Name="sortVideoBySeriesText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
