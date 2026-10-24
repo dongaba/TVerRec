@@ -1624,3 +1624,35 @@ function ConvertFrom-Base64 {
 	} catch { Write-Error "Base64文字列から画像を変換する際にエラーが発生しました: $_" ; return $null }
 	finally { Remove-Variable -Name base64, img -ErrorAction SilentlyContinue }
 }
+
+#region GUI更新間隔
+#----------------------------------------------------------------------
+# GUIの更新間隔(ミリ秒)の取得
+#----------------------------------------------------------------------
+function Get-GuiRefreshInterval {
+	<#
+		.SYNOPSIS
+			GUIのメイン画面がイベントを処理する間隔(ミリ秒)を取得します。
+
+		.DESCRIPTION
+			設定`$script:guiRefreshIntervalMs`の値を返します。
+			設定が未定義、数値以外、または1～1000の範囲外の場合は既定値の10を返します。
+
+		.OUTPUTS
+			[Int]
+			GUIの更新間隔(ミリ秒)。
+
+		.EXAMPLE
+			Start-Sleep -Milliseconds (Get-GuiRefreshInterval)
+	#>
+	[CmdletBinding()]
+	[OutputType([Int])]
+	Param ()
+	$defaultInterval = 10
+	if (!(Test-Path Variable:Script:guiRefreshIntervalMs)) { return $defaultInterval }
+	$interval = 0
+	if (![Int]::TryParse([String]$script:guiRefreshIntervalMs, [Ref]$interval)) { return $defaultInterval }
+	if (($interval -lt 1) -or ($interval -gt 1000)) { return $defaultInterval }
+	return $interval
+}
+#endregion GUI更新間隔

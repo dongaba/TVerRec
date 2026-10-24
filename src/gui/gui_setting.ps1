@@ -110,6 +110,7 @@ $settingAttributes = @(
 	'$script:enableMultithread',
 	'$script:multithreadNum',
 	'$script:disableToastNotification',
+	'$script:guiRefreshIntervalMs',
 	'$script:rateLimit',
 	'$script:timeoutSec',
 	'$script:guiMaxExecLogLines',
@@ -441,6 +442,8 @@ $multithreadNumHeader.Header = $script:msg.multithreadNumHeader
 $multithreadNumText.Text = $script:msg.multithreadNumText
 $disableToastHeader.Header = $script:msg.disableToastHeader
 $disableToastText.Text = $script:msg.disableToastText
+$guiRefreshIntervalMsHeader.Header = $script:msg.guiRefreshIntervalMsHeader
+$guiRefreshIntervalMsText.Text = $script:msg.guiRefreshIntervalMsText
 $maxExecLogLinesHeader.Header = $script:msg.maxExecLogLinesHeader
 $maxExecLogLinesText.Text = $script:msg.maxExecLogLinesText
 $histRetentionPeriodHeader.Header = $script:msg.histRetentionPeriodHeader

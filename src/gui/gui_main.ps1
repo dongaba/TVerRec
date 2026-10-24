@@ -344,6 +344,7 @@ try {
 
 #----------------------------------------------------------------------
 #region ウィンドウ表示後のループ処理
+$guiRefreshIntervalMs = Get-GuiRefreshInterval
 while ($mainWindow.IsVisible) {
 	if ($jobs = Get-Job) {
 		# ジョブがある場合の処理
@@ -376,7 +377,7 @@ while ($mainWindow.IsVisible) {
 	}
 	# GUIイベント処理
 	Sync-WpfEvents
-	Start-Sleep -Milliseconds 100
+	Start-Sleep -Milliseconds $guiRefreshIntervalMs
 }
 
 #endregion ウィンドウ表示後のループ処理
@@ -395,6 +396,6 @@ Remove-Variable -Name btnBulk, btnDelete, btnList, btnListGen, btnLoop, btnMove,
 Remove-Variable -Name btns, scriptBlocks, threadNames, btn, lblStatus -ErrorAction SilentlyContinue
 Remove-Variable -Name btnWorkOpen, btnDownloadOpen, btnsaveOpen, btnKeywordOpen, btnIgnoreOpen, btnListOpen -ErrorAction SilentlyContinue
 Remove-Variable -Name btnClearLog, btnKillAll, btnWiki, btnSetting, btnExit -ErrorAction SilentlyContinue
-Remove-Variable -Name jobs, job, msgType, jobMsg, logType -ErrorAction SilentlyContinue
+Remove-Variable -Name jobs, job, msgType, jobMsg, logType, guiRefreshIntervalMs -ErrorAction SilentlyContinue
 
 #endregion 終了処理

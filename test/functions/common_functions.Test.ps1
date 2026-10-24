@@ -724,3 +724,36 @@ Describe 'Base64画像の展開' {
 		$result.PixelWidth | Should -Be 1
 	}
 }
+
+# region GUI更新間隔
+
+Describe 'Get-GuiRefreshInterval' {
+	BeforeEach { Remove-Variable -Name guiRefreshIntervalMs -Scope Script -ErrorAction SilentlyContinue }
+	AfterAll { Remove-Variable -Name guiRefreshIntervalMs -Scope Script -ErrorAction SilentlyContinue }
+
+	It '設定が未定義の場合は既定値の10を返す' {
+		Get-GuiRefreshInterval | Should -Be 10
+	}
+	It '範囲内の整数はそのまま返す' {
+		foreach ($value in @(1, 10, 100, 1000)) {
+			$script:guiRefreshIntervalMs = $value
+			Get-GuiRefreshInterval | Should -Be $value
+		}
+	}
+	It '数字の文字列も整数として扱う(GUIの設定画面はTextBoxの文字列)' {
+		$script:guiRefreshIntervalMs = '100'
+		Get-GuiRefreshInterval | Should -Be 100
+	}
+	It '範囲外・数値以外・空は既定値の10を返す' {
+		foreach ($value in @(0, -5, 1001, 100000, 'abc', '', $null, '1.5')) {
+			$script:guiRefreshIntervalMs = $value
+			Get-GuiRefreshInterval | Should -Be 10
+		}
+	}
+	It 'Int型で返す' {
+		$script:guiRefreshIntervalMs = '50'
+		(Get-GuiRefreshInterval).GetType().Name | Should -Be 'Int32'
+	}
+}
+
+# endregion GUI更新間隔

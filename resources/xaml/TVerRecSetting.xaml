@@ -368,6 +368,10 @@
                                 <TextBlock Name="disableToastText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox Name="disableToastNotification" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
+                            <Expander Name="guiRefreshIntervalMsHeader" Margin="10,10,10,0" IsExpanded="False" >
+                                <TextBlock Name="guiRefreshIntervalMsText" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            </Expander>
+                            <TextBox Name="guiRefreshIntervalMs" Style="{DynamicResource TextBoxStyle}" />
                             <Expander Name="maxExecLogLinesHeader" Margin="10,10,10,0" IsExpanded="False" >
                                 <TextBlock Name="maxExecLogLinesText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
