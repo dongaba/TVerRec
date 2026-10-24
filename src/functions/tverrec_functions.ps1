@@ -1851,7 +1851,16 @@ function Format-VideoFileInfo {
 	# フォルダ名を生成
 	$videoFileDir = @()
 	if ($script:sortVideoByMedia) { $videoFileDir += Get-FileNameWoInvalidChar (Remove-SpecialCharacter ($videoInfo.mediaName).Trim(' ', '.')) }
-	if ($script:sortVideoBySeries) { $videoFileDir += Get-FileNameWoInvalidChar (Remove-SpecialCharacter ('{0} {1}' -f $videoInfo.seriesName, $videoInfo.seasonName ).Trim(' ', '.')) }
+	if ($script:sortVideoBySeries) {
+		$seriesDirName = Get-FileNameWoInvalidChar (Remove-SpecialCharacter ('{0} {1}' -f $videoInfo.seriesName, $videoInfo.seasonName ).Trim(' ', '.'))
+		# フォルダ名もSMBの255バイト制限があるため、長い場合はトリミング(末尾の空白・ピリオドはWindowsで使えないので除去)
+		$dirNameLimit = $script:fileNameLengthMax - 30
+		if ([System.Text.Encoding]::UTF8.GetByteCount($seriesDirName) -gt $dirNameLimit) {
+			while ([System.Text.Encoding]::UTF8.GetByteCount($seriesDirName) -gt $dirNameLimit) { $seriesDirName = $seriesDirName.Substring(0, $seriesDirName.Length - 1) }
+			$seriesDirName = ('{0}……' -f $seriesDirName.Trim(' ', '.'))
+		}
+		$videoFileDir += $seriesDirName
+	}
 	if ($videoFileDir) { $videoFileDir = Join-Path $script:downloadBaseDir @videoFileDir }		# 3コ以上行けるので配列のまま渡す
 	else { $videoFileDir = $script:downloadBaseDir }
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'fileDir' -Value $videoFileDir.Replace('\', '/')
@@ -1861,7 +1870,7 @@ function Format-VideoFileInfo {
 	$videoFileRelPath = $videoFilePath.Replace($script:downloadBaseDir, '')
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'fileRelPath' -Value $videoFileRelPath.Replace('\', '/').TrimStart('/')
 
-	Remove-Variable -Name videoName, fileNameLimit, videoFileDir, videoFilePath, videoFileRelPath -ErrorAction SilentlyContinue
+	Remove-Variable -Name videoName, fileNameLimit, seriesDirName, dirNameLimit, videoFileDir, videoFilePath, videoFileRelPath -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
