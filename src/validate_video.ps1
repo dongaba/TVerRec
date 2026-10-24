@@ -230,7 +230,7 @@ while ($videoNotValidatedNum -ne 0) {
 				$_.downloadDate = Get-TimeStamp
 				$_
 			})
-		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+		Wait-FileLock $script:histLockFilePath
 		try { $newRecords | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append ; Start-Sleep -Seconds 1 }
 		catch { throw ($script:msg.UpdateFailed -f $script:msg.HistFile) }
 		finally { Unlock-File $script:histLockFilePath | Out-Null }
