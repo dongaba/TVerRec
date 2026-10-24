@@ -147,6 +147,7 @@ $settingAttributes = @(
 	'$script:cleanupDownloadBaseDir',
 	'$script:cleanupSaveBaseDir',
 	'$script:emptyDownloadBaseDir',
+	'$script:deleteUnrenamedFile',
 	'$script:moveConflictAction',
 	'$script:ytdlHttpHeader',
 	'$script:ytdlBaseArgs',
@@ -472,6 +473,8 @@ $cleanupSaveBaseDirHeader.Header = $script:msg.cleanupSaveBaseDirHeader
 $cleanupSaveBaseDirText.Text = $script:msg.cleanupSaveBaseDirText
 $emptyDownloadBaseDirHeader.Header = $script:msg.emptyDownloadBaseDirHeader
 $emptyDownloadBaseDirText.Text = $script:msg.emptyDownloadBaseDirText
+$deleteUnrenamedFileHeader.Header = $script:msg.deleteUnrenamedFileHeader
+$deleteUnrenamedFileText.Text = $script:msg.deleteUnrenamedFileText
 $moveConflictActionHeader.Header = $script:msg.moveConflictActionHeader
 $moveConflictActionText.Text = $script:msg.moveConflictActionText
 $updateChannelHeader.Header = $script:msg.updateChannelHeader
@@ -612,6 +615,7 @@ $trueFalseControls = @(
 	$cleanupDownloadBaseDir,
 	$cleanupSaveBaseDir,
 	$emptyDownloadBaseDir,
+	$deleteUnrenamedFile,
 	$embedSubtitle,
 	$embedMetatag,
 	$embedThumbnail,

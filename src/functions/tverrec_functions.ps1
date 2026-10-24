@@ -2589,6 +2589,7 @@ function Remove-UnRenamedTempFile {
 		.DESCRIPTION
 			ダウンロード先フォルダ内のリネームに失敗したファイルを削除します。
 			ファイル名が特定のパターンに一致するファイルを削除します。
+			`$script:deleteUnrenamedFile`が`$false`の場合は、削除せずに、残したファイルを警告として表示します。
 
 		.OUTPUTS
 			[Void]
@@ -2597,7 +2598,8 @@ function Remove-UnRenamedTempFile {
 		.NOTES
 			この関数は以下の処理を行います：
 			1. ダウンロード先フォルダ内のファイルを検索
-			2. ファイル名が特定のパターンに一致するファイルを削除
+			2. 削除しない設定の場合は、見つけたファイルを警告として表示して終了
+			3. ファイル名が特定のパターンに一致するファイルを削除
 	#>
 	[CmdletBinding(SupportsShouldProcess = $true)]
 	Param ()
@@ -2612,6 +2614,12 @@ function Remove-UnRenamedTempFile {
 		}
 	}
 	process {
+		# 削除しない設定の場合は、削除せずに残したファイルを警告として表示する
+		if (!$script:deleteUnrenamedFile) {
+			foreach ($file in $targetFiles) { Write-Warning ($script:msg.UnrenamedFileKept -f $file) }
+			return
+		}
+		Write-Output ($script:msg.DeleteFilesFailedToRename)
 		foreach ($file in $targetFiles) {
 			try {
 				if ($PSCmdlet.ShouldProcess($file, 'Remove file')) {

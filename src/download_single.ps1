@@ -271,7 +271,6 @@ try {
 
 	# リネーム失敗ファイルの削除
 	Write-Output ('')
-	Write-Output ($script:msg.DeleteFilesFailedToRename)
 	Remove-UnRenamedTempFile
 
 } catch {

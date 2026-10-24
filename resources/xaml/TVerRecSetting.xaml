@@ -408,6 +408,10 @@
                                 <TextBlock Name="emptyDownloadBaseDirText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>
                             <ComboBox Name="emptyDownloadBaseDir" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
+                            <Expander Name="deleteUnrenamedFileHeader" Margin="10,10,10,0" IsExpanded="False" >
+                                <TextBlock Name="deleteUnrenamedFileText" Margin="20,0,20,5" TextWrapping="Wrap" />
+                            </Expander>
+                            <ComboBox Name="deleteUnrenamedFile" SelectedIndex="0" Style="{DynamicResource ComboBoxStyle}" />
                             <Expander Name="moveConflictActionHeader" Margin="10,10,10,0" IsExpanded="False" >
                                 <TextBlock Name="moveConflictActionText" Margin="20,0,20,5" TextWrapping="Wrap" />
                             </Expander>

@@ -1257,3 +1257,62 @@ Describe 'ダウンロード済み・リスト登録済みの番組の除外' {
 		}
 	}
 }
+
+#----------------------------------------------------------------------
+# リネームに失敗したファイルの削除(#297)
+# * ファイルの検索にcmd(Windows)またはfind(それ以外)を使うため、Linux/macOSでのみ検証する
+#----------------------------------------------------------------------
+Describe 'Remove-UnRenamedTempFile(#297)' -Skip:$IsWindows {
+	BeforeAll {
+		$script:unrenSaved = @{}
+		foreach ($n in 'deleteUnrenamedFile', 'downloadBaseDir') {
+			$script:unrenSaved[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' }
+		}
+	}
+	AfterAll {
+		foreach ($n in $script:unrenSaved.Keys) {
+			if ($script:unrenSaved[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:unrenSaved[$n] }
+		}
+	}
+	BeforeEach {
+		$script:unrenDir = Join-Path $TestDrive ('unren{0}' -f [Guid]::NewGuid().ToString('N'))
+		$script:unrenSub = Join-Path $script:unrenDir 'ドラマ'
+		New-Item -ItemType Directory -Path $script:unrenSub -Force | Out-Null
+		$script:downloadBaseDir = $script:unrenDir
+		$script:unrenTargets = @((Join-Path $script:unrenSub 'epa1b2c3d4.mp4'), (Join-Path $script:unrenDir 'epz9y8x7w6.ts'))
+		$script:unrenKeeps = @((Join-Path $script:unrenSub '番組 第1話.mp4'), (Join-Path $script:unrenDir 'episode.mp4'), (Join-Path $script:unrenSub 'epshort.mp4'))
+		foreach ($f in ($script:unrenTargets + $script:unrenKeeps)) { Set-Content -LiteralPath $f -Value 'x' -NoNewline }
+	}
+
+	It '削除する設定(既定)では、エピソードIDのままのファイルを削除し、通常のファイルは残す' {
+		$script:deleteUnrenamedFile = $true
+		$out = @(Remove-UnRenamedTempFile 3>&1)
+		foreach ($f in $script:unrenTargets) { Test-Path -LiteralPath $f | Should -BeFalse }
+		foreach ($f in $script:unrenKeeps) { Test-Path -LiteralPath $f | Should -BeTrue }
+		$out | Should -Contain $script:msg.DeleteFilesFailedToRename
+	}
+	It '削除しない設定では、ファイルを削除せず、残したファイルごとに警告を出す' {
+		$script:deleteUnrenamedFile = $false
+		$out = @(Remove-UnRenamedTempFile 3>&1)
+		foreach ($f in ($script:unrenTargets + $script:unrenKeeps)) { Test-Path -LiteralPath $f | Should -BeTrue }
+		$warnings = @($out.Where({ $_ -is [Management.Automation.WarningRecord] }))
+		$warnings.Count | Should -Be 2
+		foreach ($f in $script:unrenTargets) { ($warnings.Message -join "`n") | Should -Match ([regex]::Escape((Split-Path -Leaf $f))) }
+	}
+	It '削除しない設定では、「削除しています」というメッセージを出さない' {
+		$script:deleteUnrenamedFile = $false
+		$out = @(Remove-UnRenamedTempFile 3>&1)
+		$out | Should -Not -Contain $script:msg.DeleteFilesFailedToRename
+	}
+	It '削除しない設定で対象のファイルがなければ、何も警告しない' {
+		$script:deleteUnrenamedFile = $false
+		foreach ($f in $script:unrenTargets) { Remove-Item -LiteralPath $f -Force }
+		@(Remove-UnRenamedTempFile 3>&1).Where({ $_ -is [Management.Automation.WarningRecord] }).Count | Should -Be 0
+	}
+	It '-WhatIfでは、削除する設定でも削除しない' {
+		$script:deleteUnrenamedFile = $true
+		Remove-UnRenamedTempFile -WhatIf | Out-Null
+		foreach ($f in $script:unrenTargets) { Test-Path -LiteralPath $f | Should -BeTrue }
+	}
+}
