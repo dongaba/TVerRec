@@ -240,6 +240,12 @@ Describe 'Get-SearchResult' {
 			Get-SearchResult -baseURL 'https://example/api' -Type 'keyword' -Keyword 'abc' -LinkCollection ([Ref]$lc)
 			Should -Invoke Invoke-RestMethod -Times 1 -Exactly -ParameterFilter { $Uri -eq 'https://example/api?platform_uid=test-uid&platform_token=test-token&keyword=abc' }
 		}
+		It 'キーワードの「&」「#」「空白」がURLエンコードされること' {
+			Mock Invoke-RestMethod { [PSCustomObject]@{ Result = [PSCustomObject]@{ Contents = @() } } }
+			$lc = New-TestLinkCollection
+			Get-SearchResult -baseURL 'https://example/api' -Type 'keyword' -Keyword 'King & Prince #1' -LinkCollection ([Ref]$lc)
+			Should -Invoke Invoke-RestMethod -Times 1 -Exactly -ParameterFilter { $Uri -eq 'https://example/api?platform_uid=test-uid&platform_token=test-token&keyword=King%20%26%20Prince%20%231' }
+		}
 		It 'ログイン時はmember_sidが付与されること' {
 			Mock Invoke-RestMethod { [PSCustomObject]@{ Result = [PSCustomObject]@{ Contents = @() } } }
 			$script:myMemberSID = 'sid123'
@@ -316,6 +322,20 @@ Describe 'Get-LinkFromTopPage' {
 			Get-LinkFromTopPage ([Ref]$lc)
 			@($lc.episodeLinks.Keys | Sort-Object) | Should -Be @('ep1', 'ep2')
 			$lc.seriesLinks | Should -Be @('sr1')
+		}
+		It 'channelコンポーネントは警告なしで読み飛ばし、他のコンテンツは処理すること' {
+			Mock Invoke-RestMethod {
+				[PSCustomObject]@{ Result = [PSCustomObject]@{ components = @(
+						[PSCustomObject]@{ type = 'channel' ; contents = @([PSCustomObject]@{ type = 'channel' ; content = [PSCustomObject]@{ id = 'tbs' } }) },
+						[PSCustomObject]@{ type = 'newer' ; contents = @((New-Item 'episode' 'ep1')) }
+					)
+					}
+				}
+			}
+			$lc = New-TestLinkCollection
+			Get-LinkFromTopPage ([Ref]$lc)
+			$lc.episodeLinks.Keys | Should -Be @('ep1')
+			Should -Invoke Write-Warning -Times 0 -Exactly
 		}
 		It '種類別に振り分けられ、topicsは入れ子を参照すること' {
 			Mock Invoke-RestMethod {
@@ -426,6 +446,50 @@ Describe 'Get-LinkFromSiteMap' {
 			Get-LinkFromSiteMap ([Ref]$lc)
 			Should -Invoke Get-LinkFromKeyword -Times 1 -Exactly -ParameterFilter { $id -eq 'drama' -and $linkType -eq 'category' }
 			$lc.categoryLinks.Count | Should -Be 0
+		}
+	}
+}
+
+#----------------------------------------------------------------------
+# マイページから番組ページのLinkを取得
+#----------------------------------------------------------------------
+Describe 'Get-LinkFromMyPage' {
+	Context 'モックチェック' {
+		BeforeEach { Mock Write-Warning {} ; Mock Get-SearchResult {} }
+
+		It '未知のページ名では警告のみで例外を投げず、APIを呼ばないこと' {
+			$lc = New-TestLinkCollection
+			{ Get-LinkFromMyPage -Page 'unknown' -LinkCollection ([Ref]$lc) } | Should -Not -Throw
+			Should -Invoke Write-Warning -Times 1 -Exactly
+			Should -Invoke Get-SearchResult -Times 0 -Exactly
+		}
+		It '既知のページ名ではGet-SearchResultを呼ぶこと' {
+			$lc = New-TestLinkCollection
+			Get-LinkFromMyPage -Page 'later' -LinkCollection ([Ref]$lc)
+			Should -Invoke Get-SearchResult -Times 1 -Exactly
+		}
+	}
+}
+
+#----------------------------------------------------------------------
+# TVerのAPIを叩いて番組情報取得
+#----------------------------------------------------------------------
+Describe 'Get-VideoInfo' {
+	Context 'モックチェック' {
+		It '配信終了日時が実行環境のタイムゾーンに関係なくJSTで返ること' {
+			# 1800622799 = 2027-01-22 12:59:59 UTC = 2027-01-22 21:59:59 JST
+			Mock Invoke-RestMethod {
+				if ($Uri -like '*callEpisode*') {
+					[PSCustomObject]@{ Result = [PSCustomObject]@{
+							Episode = [PSCustomObject]@{ Content = [PSCustomObject]@{ Id = 'ep1' ; SeriesTitle = 'S' ; Title = 'T' ; BroadcasterName = 'B' ; ProductionProviderName = 'P' ; BroadcastDateLabel = '' ; EndAt = 1800622799 ; version = 3 } }
+							Series = [PSCustomObject]@{ Content = [PSCustomObject]@{ Id = 'sr1' } }
+							Season = [PSCustomObject]@{ Content = [PSCustomObject]@{ Id = 's1' ; Title = '' } }
+						}
+					}
+				} else { [PSCustomObject]@{ Description = 'd' ; No = '1' } }
+			}
+			$info = Get-VideoInfo -episodeID 'ep1'
+			$info.endTime.ToString('yyyy-MM-dd HH:mm:ss') | Should -Be '2027-01-22 21:59:59'
 		}
 	}
 }

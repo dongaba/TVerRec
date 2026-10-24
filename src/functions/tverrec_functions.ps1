@@ -123,7 +123,6 @@ function Compare-Version {
 	}
 	# 個々のユニットが完全に一致している場合はユニット数が多い方が大きいとする
 	return [Math]::Sign($remoteUnits.Count - $localUnits.Count)
-	Remove-Variable -Name remote, local, remoteUnits, localUnits, unitLength, i -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -382,8 +381,8 @@ function Get-LatestHistory {
 	[OutputType([PSCustomObject])]
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
 	try {
+		Wait-FileLock $script:histLockFilePath
 		# videoPageごとに最新のdownloadDateを持つレコードを取得
 		$latestHists = (Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8) |
 			Group-Object -Property 'videoPage' |
@@ -480,7 +479,7 @@ function Optimize-HistoryFile {
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	try {
-		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+		Wait-FileLock $script:histLockFilePath
 		$originalLists = @(Get-Content -LiteralPath $script:histFilePath -Encoding UTF8)
 		# NULL文字(0x00)を含む行をフィルタリング
 		$cleanedHist = $originalLists.Where({ $_ -notmatch "`0" })
@@ -490,7 +489,7 @@ function Optimize-HistoryFile {
 	} catch { Write-Warning ($script:msg.OptimizeHistFailed) }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
 	try {
-		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+		Wait-FileLock $script:histLockFilePath
 		$originalLists = Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8
 		# videoValidatedがNullでなく、整数に変換可能。downloadDateが日付に変換できるものを残す
 		$cleanedHist = $originalLists.Where({
@@ -541,7 +540,7 @@ function Limit-HistoryFile {
 	Param ([Parameter(Mandatory = $true)][Int32]$retentionPeriod)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	try {
-		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+		Wait-FileLock $script:histLockFilePath
 		$originalLists = Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8
 		$purgedHist = $originalLists.Where({ [DateTime]::ParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null) -gt (Get-Date).AddDays(-1 * $retentionPeriod) })
 		try { $purgedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
@@ -580,21 +579,38 @@ function Repair-HistoryFile {
 	#>
 	[OutputType([Void])]
 	Param ()
+	$locked = $false
+	$tempPath = $null
 	try {
-		# videoPageごとに最新のdownloadDateを持つレコードを取得
-		$latestHists = Get-LatestHistory
-		# videoValidatedが「3:チェック失敗」のものと同じvideoPageを持つレコードを削除
-		$uniquedHist = $latestHists.Where({ $_.videoValidated -ne '3' })
-		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
-		try { $uniquedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
-		catch { $latestHists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
-		finally { Start-Sleep -Seconds 1 }
+		# 読み込みから置換まで同じロックを保持し、途中の追記を失わないようにする
+		Wait-FileLock $script:histLockFilePath
+		$locked = $true
+		$latestHists = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -ErrorAction Stop |
+			Group-Object -Property 'videoPage' |
+			ForEach-Object { $_.Group | Sort-Object -Property downloadDate, videoValidated -Descending | Select-Object -First 1 })
+		$uniquedHist = @($latestHists.Where({ $_.videoValidated -ne '3' }))
+		$tempPath = '{0}.{1}.tmp' -f $script:histFilePath, [Guid]::NewGuid().ToString('N')
+		if ($uniquedHist.Count -gt 0) {
+			$uniquedHist | Export-Csv -LiteralPath $tempPath -Encoding UTF8 -ErrorAction Stop
+		} else {
+			# 全件削除でもCSVヘッダーを残し、次回の追記を読み取れるようにする
+			$reader = [IO.StreamReader]::new($script:histFilePath, [Text.Encoding]::UTF8, $true)
+			try { $header = $reader.ReadLine() } finally { $reader.Dispose() }
+			if ([String]::IsNullOrWhiteSpace($header)) { throw 'History CSV header is missing.' }
+			[IO.File]::WriteAllText($tempPath, $header + [Environment]::NewLine, [Text.UTF8Encoding]::new($false))
+		}
+		# 一時ファイルの保存失敗時は元履歴に触れず、置換時に直前の履歴を退避する
+		[IO.File]::Replace($tempPath, $script:histFilePath, $script:histFilePath + '.bak')
 	} catch {
 		Write-Warning ($script:msg.DistinctHistFailed)
 	} finally {
-		Unlock-File $script:histLockFilePath | Out-Null
-		Remove-Variable -Name latestHists, uniquedHist -ErrorAction SilentlyContinue
+		try {
+			if ($null -ne $tempPath -and [IO.File]::Exists($tempPath)) { [IO.File]::Delete($tempPath) }
+		} finally {
+			if ($locked) { Unlock-File $script:histLockFilePath | Out-Null }
+		}
 	}
+
 }
 #endregion ダウンロード履歴関連
 
@@ -628,7 +644,7 @@ function Read-DownloadList {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$listFileData = @()
 	try {
-		while (-not (Lock-File $script:listLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+		Wait-FileLock $script:listLockFilePath
 		$listFileData = Import-Csv -LiteralPath $script:listFilePath -Encoding UTF8
 	} catch { throw ($script:msg.LoadFailed -f $script:msg.ListFile) }
 	finally { Unlock-File $script:listLockFilePath | Out-Null }
@@ -666,7 +682,7 @@ function Get-LinkFromDownloadList {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if (Test-Path $script:listFilePath -PathType Leaf) {
 		try {
-			while (-not (Lock-File $script:listLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+			Wait-FileLock $script:listLockFilePath
 			# 空行とダウンロード対象外を除き、EpisodeIDのみを抽出
 			$videoLinks = @((Import-Csv -LiteralPath $script:listFilePath -Encoding UTF8).Where({ !($_ -cmatch '^\s*$') }).Where({ !($_.EpisodeID -cmatch '^#') }) | Select-Object episodeID)
 		} catch { throw ($script:msg.LoadFailed -f $script:msg.ListFile) }
@@ -743,7 +759,6 @@ function Format-ListRecord {
 	if ($script:extractDescTextToList) { $downloadListItem | Add-Member -NotePropertyName descriptionText -NotePropertyValue $videoInfo.descriptionText }
 	else { $downloadListItem | Add-Member -NotePropertyName descriptionText -NotePropertyValue '' }
 	return $downloadListItem
-	Remove-Variable -Name downloadListItem -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -806,7 +821,7 @@ function Update-VideoList {
 	else { Write-Output ($script:msg.ListAdded) ; $newVideo = Format-ListRecord ([Ref]$videoInfo) }
 	# ダウンロードリストCSV書き出し
 	try {
-		while ((Lock-File $script:listLockFilePath).result -ne $true) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+		Wait-FileLock $script:listLockFilePath
 		$newVideo | Export-Csv -LiteralPath $script:listFilePath -Encoding UTF8 -Append
 		Write-Debug ($script:msg.ListWritten)
 	} catch {
@@ -850,7 +865,7 @@ function Read-IgnoreList {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$ignoreTitles = @()
 	try {
-		while (-not (Lock-File $script:ignoreLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+		Wait-FileLock $script:ignoreLockFilePath
 		# コメントと空行を除いて抽出
 		$ignoreTitles = @((Get-Content $script:ignoreFilePath -Encoding UTF8).Where({ !($_ -cmatch '^\s*$') }).Where({ !($_ -cmatch '^;.*$') }))
 	} catch { throw ($script:msg.LoadFailed -f $script:msg.IgnoreFile) }
@@ -896,7 +911,7 @@ function Update-IgnoreList {
 	$ignoreListNew = @()
 	if (Test-Path $script:ignoreFilePath -PathType Leaf) {
 		try {
-			while (-not (Lock-File $script:ignoreLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+			Wait-FileLock $script:ignoreLockFilePath
 			$ignoreLists = @((Get-Content $script:ignoreFilePath -Encoding UTF8).Where( { $_ -notmatch '^\s*$|^(;;.*)$' }))
 			$ignoreComment = @(Get-Content $script:ignoreFileSamplePath -Encoding UTF8)
 			$ignoreTarget = @($ignoreLists.Where({ $_ -eq $ignoreTitle }) | Sort-Object -Unique)
@@ -1089,7 +1104,6 @@ function Invoke-HistoryAndListMatchCheck {
 	try { $processedCount = ($listCompResult.Where({ $_.SideIndicator -eq '==' })).Count } catch { $processedCount = 0 }
 	try { $videoLinks = @($listCompResult.Where({ $_.SideIndicator -eq '<=' }).InputObject) } catch { $videoLinks = @() }
 	return @($videoLinks, $processedCount)
-	Remove-Variable -Name resultLinks, listFileData, listVideoPages, listFileLine, histFileData, histVideoPages, listCompResult, processedCount, videoLinks -ErrorAction SilentlyContinue
 }
 #endregion ダウンロード対象判定処理
 
@@ -1577,7 +1591,6 @@ function Remove-SpecialNote {
 	}
 	end {
 		return $text
-		Remove-Variable -Name text, length1, length2 -ErrorAction SilentlyContinue
 	}
 }
 
@@ -1748,7 +1761,7 @@ function Invoke-VideoDownload {
 	}
 
 	# ダウンロード履歴CSV書き出し
-	while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+	Wait-FileLock $script:histLockFilePath
 	try {
 		$newVideo | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append ; Start-Sleep -Seconds 1
 		Write-Debug ($script:msg.HistWritten)
@@ -1834,7 +1847,16 @@ function Format-VideoFileInfo {
 	# フォルダ名を生成
 	$videoFileDir = @()
 	if ($script:sortVideoByMedia) { $videoFileDir += Get-FileNameWoInvalidChar (Remove-SpecialCharacter ($videoInfo.mediaName).Trim(' ', '.')) }
-	if ($script:sortVideoBySeries) { $videoFileDir += Get-FileNameWoInvalidChar (Remove-SpecialCharacter ('{0} {1}' -f $videoInfo.seriesName, $videoInfo.seasonName ).Trim(' ', '.')) }
+	if ($script:sortVideoBySeries) {
+		$seriesDirName = Get-FileNameWoInvalidChar (Remove-SpecialCharacter ('{0} {1}' -f $videoInfo.seriesName, $videoInfo.seasonName ).Trim(' ', '.'))
+		# フォルダ名もSMBの255バイト制限があるため、長い場合はトリミング(末尾の空白・ピリオドはWindowsで使えないので除去)
+		$dirNameLimit = $script:fileNameLengthMax - 30
+		if ([System.Text.Encoding]::UTF8.GetByteCount($seriesDirName) -gt $dirNameLimit) {
+			while ([System.Text.Encoding]::UTF8.GetByteCount($seriesDirName) -gt $dirNameLimit) { $seriesDirName = $seriesDirName.Substring(0, $seriesDirName.Length - 1) }
+			$seriesDirName = ('{0}……' -f $seriesDirName.Trim(' ', '.'))
+		}
+		$videoFileDir += $seriesDirName
+	}
 	if ($videoFileDir) { $videoFileDir = Join-Path $script:downloadBaseDir @videoFileDir }		# 3コ以上行けるので配列のまま渡す
 	else { $videoFileDir = $script:downloadBaseDir }
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'fileDir' -Value $videoFileDir.Replace('\', '/')
@@ -1844,7 +1866,7 @@ function Format-VideoFileInfo {
 	$videoFileRelPath = $videoFilePath.Replace($script:downloadBaseDir, '')
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'fileRelPath' -Value $videoFileRelPath.Replace('\', '/').TrimStart('/')
 
-	Remove-Variable -Name videoName, fileNameLimit, videoFileDir, videoFilePath, videoFileRelPath -ErrorAction SilentlyContinue
+	Remove-Variable -Name videoName, fileNameLimit, seriesDirName, dirNameLimit, videoFileDir, videoFilePath, videoFileRelPath -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -2143,7 +2165,177 @@ function Invoke-FFmpegProcess {
 		$process.WaitForExit()
 	} catch { Write-Warning ($script:msg.ExecFailed -f $execName) ; return }
 	return $process.ExitCode
-	Remove-Variable -Name commonParams -ErrorAction SilentlyContinue
+}
+
+#----------------------------------------------------------------------
+# SRT字幕の「0秒字幕」を次の字幕にマージ
+#----------------------------------------------------------------------
+function Merge-ZeroDurationSubtitle {
+	<#
+		.SYNOPSIS
+			SRT字幕の中で表示時間が0秒になっている字幕を、同時刻に始まる次の字幕へマージします。
+
+		.DESCRIPTION
+			yt-dlpで字幕をmp4に埋め込むと、同一タイミングの字幕(2行表示)のうち1つ目が
+			「開始時刻 --> 開始時刻」の0秒字幕になり、表示されなくなることがあります。
+			0秒字幕と、同じ開始時刻を持つ直後の字幕を1つにまとめ、テキストを改行でつなぎます。
+			マージ対象がない場合は、内容を変更しません。
+
+		.PARAMETER SrtText
+			SRT形式の字幕テキスト全体を指定します。
+
+		.OUTPUTS
+			[PSCustomObject]
+			Content: マージ後のSRTテキスト、MergedCount: マージした件数
+
+		.EXAMPLE
+			$result = Merge-ZeroDurationSubtitle -SrtText (Get-Content -LiteralPath 'a.srt' -Raw -Encoding UTF8)
+	#>
+	[OutputType([PSCustomObject])]
+	Param ([Parameter(Mandatory = $true)][AllowEmptyString()][String]$SrtText)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$timePattern = '^\s*(\d{1,2}:\d{2}:\d{2}[,.]\d{3})\s*-->\s*(\d{1,2}:\d{2}:\d{2}[,.]\d{3})'
+	$cues = [System.Collections.Generic.List[PSCustomObject]]::new()
+	foreach ($block in ($SrtText.Trim() -split '(?:\r?\n){2,}')) {
+		$lines = @($block -split '\r?\n')
+		$timeLineIndex = -1
+		for ($i = 0; $i -lt [Math]::Min($lines.Count, 2); $i++) {
+			if ($lines[$i] -match $timePattern) { $timeLineIndex = $i ; break }
+		}
+		if ($timeLineIndex -lt 0) { continue }
+		$null = $lines[$timeLineIndex] -match $timePattern
+		$cues.Add([PSCustomObject]@{
+				Start = $Matches[1]
+				End   = $Matches[2]
+				Text  = @($lines | Select-Object -Skip ($timeLineIndex + 1))
+			})
+	}
+
+	$merged = [System.Collections.Generic.List[PSCustomObject]]::new()
+	$mergedCount = 0
+	$idx = 0
+	while ($idx -lt $cues.Count) {
+		$cue = $cues[$idx]
+		# 0秒字幕が連続していても、同じ開始時刻の字幕であれば順にたぐり寄せる
+		while (($cue.Start -eq $cue.End) -and (($idx + 1) -lt $cues.Count) -and ($cues[$idx + 1].Start -eq $cue.Start)) {
+			$next = $cues[$idx + 1]
+			$cue = [PSCustomObject]@{ Start = $cue.Start ; End = $next.End ; Text = @($cue.Text) + @($next.Text) }
+			$mergedCount++
+			$idx++
+		}
+		$merged.Add($cue)
+		$idx++
+	}
+
+	$sb = [System.Text.StringBuilder]::new()
+	$no = 1
+	foreach ($cue in $merged) {
+		$null = $sb.Append(('{0}' -f $no)).Append("`n")
+		$null = $sb.Append(('{0} --> {1}' -f $cue.Start, $cue.End)).Append("`n")
+		foreach ($line in $cue.Text) { $null = $sb.Append($line).Append("`n") }
+		$null = $sb.Append("`n")
+		$no++
+	}
+	return [PSCustomObject]@{ Content = $sb.ToString() ; MergedCount = $mergedCount }
+}
+
+#----------------------------------------------------------------------
+# 番組ファイルに埋め込まれた字幕の「0秒字幕」を修復
+#----------------------------------------------------------------------
+function Repair-SubtitleTiming {
+	<#
+		.SYNOPSIS
+			mp4に埋め込まれた字幕から0秒字幕を検出し、マージして埋め込み直します。
+
+		.DESCRIPTION
+			ffprobeで字幕ストリームを調べ、ffmpegでSRTとして取り出して0秒字幕をマージします。
+			マージ対象があった場合のみ、映像・音声はコピーのまま字幕だけを差し替えます。
+			いずれかの手順に失敗した場合は、元のファイルを変更しません。
+
+		.PARAMETER VideoPath
+			対象のmp4ファイルのフルパスを指定します。
+
+		.OUTPUTS
+			[Boolean]
+			字幕を修復してファイルを差し替えた場合は$true、それ以外は$falseを返します。
+
+		.NOTES
+			この関数は以下の処理を行います：
+			1. ffprobeで字幕ストリームと言語を取得
+			2. 各字幕ストリームをSRTとして一時ディレクトリに書き出し
+			3. 0秒字幕をマージ(対象がなければ終了)
+			4. 映像・音声をコピーしつつ、マージ後の字幕で新しいmp4を作成
+			5. 同じディレクトリに複製してから元のファイルを置き換え
+	#>
+	[OutputType([Boolean])]
+	Param ([Parameter(Mandatory = $true)][String]$VideoPath)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if (!(Test-Path -LiteralPath $VideoPath -PathType Leaf)) { return $false }
+	if (!(Test-Path -LiteralPath $script:ffprobePath -PathType Leaf)) { return $false }
+	$workDir = Join-Path ([System.IO.Path]::GetTempPath()) ('tverrec_sub_{0}' -f [Guid]::NewGuid().ToString('N'))
+	$stagedPath = ('{0}.subfix.tmp' -f $VideoPath)
+	try {
+		New-Item -ItemType Directory -Path $workDir -Force | Out-Null
+
+		# 字幕ストリームの一覧(出現順のindexと言語)を取得
+		$probeOutPath = Join-Path $workDir 'probe.txt'
+		$probeArgs = ('-v error -select_streams s -show_entries stream=index:stream_tags=language -of csv=p=0 "{0}"' -f $VideoPath)
+		Write-Debug ($script:msg.ExecCommand -f 'ffprobe', $script:ffprobePath, $probeArgs)
+		$probe = Start-Process -FilePath $script:ffprobePath -ArgumentList $probeArgs -RedirectStandardOutput $probeOutPath -NoNewWindow -Wait -PassThru
+		if (($probe.ExitCode -ne 0) -or !(Test-Path -LiteralPath $probeOutPath)) { return $false }
+		$languages = @(Get-Content -LiteralPath $probeOutPath -Encoding UTF8 | Where-Object { $_.Trim() -ne '' } | ForEach-Object { ($_ -split ',')[1] })
+		if ($languages.Count -eq 0) { return $false }
+
+		# 字幕を取り出して0秒字幕をマージ
+		$totalMerged = 0
+		for ($i = 0 ; $i -lt $languages.Count ; $i++) {
+			$srtPath = Join-Path $workDir ('sub{0}.srt' -f $i)
+			$extractArgs = ('-hide_banner -v error -y -i "{0}" -map 0:s:{1} -c:s srt "{2}"' -f $VideoPath, $i, $srtPath)
+			Write-Debug ($script:msg.ExecCommand -f 'ffmpeg', $script:ffmpegPath, $extractArgs)
+			$extract = Start-Process -FilePath $script:ffmpegPath -ArgumentList $extractArgs -NoNewWindow -Wait -PassThru
+			if (($extract.ExitCode -ne 0) -or !(Test-Path -LiteralPath $srtPath)) { return $false }
+			$result = Merge-ZeroDurationSubtitle -SrtText (Get-Content -LiteralPath $srtPath -Raw -Encoding UTF8)
+			[System.IO.File]::WriteAllText($srtPath, $result.Content, [System.Text.UTF8Encoding]::new($false))
+			$totalMerged += $result.MergedCount
+		}
+		if ($totalMerged -eq 0) { return $false }
+
+		# 映像・音声などはそのまま、字幕のみ差し替えた新しいmp4を作成
+		$outPath = Join-Path $workDir 'out.mp4'
+		$inputArgs = ('-i "{0}"' -f $VideoPath)
+		# * チャプターはデータストリームとしても複製されるため、-map_chapters側に任せてデータストリームは除外する
+		$mapArgs = '-map 0 -map -0:s -map -0:d'
+		for ($i = 0 ; $i -lt $languages.Count ; $i++) {
+			$inputArgs += (' -i "{0}"' -f (Join-Path $workDir ('sub{0}.srt' -f $i)))
+			$mapArgs += (' -map {0}:0' -f ($i + 1))
+		}
+		$metaArgs = ''
+		for ($i = 0 ; $i -lt $languages.Count ; $i++) {
+			if ($languages[$i] -and ($languages[$i] -ne 'und')) { $metaArgs += (' -metadata:s:s:{0} language={1}' -f $i, $languages[$i]) }
+		}
+		$remuxArgs = ('-hide_banner -v error -y {0} {1} -map_metadata 0 -map_chapters 0 -c copy -c:s mov_text{2} "{3}"' -f $inputArgs, $mapArgs, $metaArgs, $outPath)
+		Write-Debug ($script:msg.ExecCommand -f 'ffmpeg', $script:ffmpegPath, $remuxArgs)
+		$remux = Start-Process -FilePath $script:ffmpegPath -ArgumentList $remuxArgs -NoNewWindow -Wait -PassThru
+		if (($remux.ExitCode -ne 0) -or !(Test-Path -LiteralPath $outPath)) { return $false }
+		if ((Get-Item -LiteralPath $outPath).Length -lt ((Get-Item -LiteralPath $VideoPath).Length * 0.9)) { return $false }
+
+		# 字幕ストリーム数が変わっていないことを確認してから置き換え
+		$checkOutPath = Join-Path $workDir 'check.txt'
+		$checkArgs = ('-v error -select_streams s -show_entries stream=index -of csv=p=0 "{0}"' -f $outPath)
+		$check = Start-Process -FilePath $script:ffprobePath -ArgumentList $checkArgs -RedirectStandardOutput $checkOutPath -NoNewWindow -Wait -PassThru
+		if (($check.ExitCode -ne 0) -or (@(Get-Content -LiteralPath $checkOutPath | Where-Object { $_.Trim() -ne '' }).Count -ne $languages.Count)) { return $false }
+
+		Copy-Item -LiteralPath $outPath -Destination $stagedPath -Force
+		Move-Item -LiteralPath $stagedPath -Destination $VideoPath -Force
+		return $true
+	} catch {
+		Write-Warning ($script:msg.SubtitleTimingRepairFailed)
+		Write-Verbose $_.Exception.Message
+		return $false
+	} finally {
+		Remove-Item -LiteralPath $stagedPath -Force -ErrorAction SilentlyContinue
+		Remove-Item -LiteralPath $workDir -Recurse -Force -ErrorAction SilentlyContinue
+	}
 }
 
 #----------------------------------------------------------------------
@@ -2200,7 +2392,7 @@ function Invoke-IntegrityCheck {
 					# 該当のレコードを複製
 					$targetHist.downloadDate = Get-TimeStamp
 					$targetHist.videoValidated = '2'
-					while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+					Wait-FileLock $script:histLockFilePath
 					try { $targetHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append ; Start-Sleep -Seconds 1 }
 					catch { Write-Warning ($script:msg.HistUpdateFailed) ; return }
 					finally { Unlock-File $script:histLockFilePath | Out-Null }
@@ -2246,7 +2438,7 @@ function Invoke-IntegrityCheck {
 			# 「3:チェック失敗」に変更したレコードを追記。(downloadDateは現在日時)
 			$targetHist.downloadDate = Get-TimeStamp
 			$targetHist.videoValidated = '3'
-			while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+			Wait-FileLock $script:histLockFilePath
 			try { $targetHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append ; Start-Sleep -Seconds 1 }
 			catch { Write-Warning ($script:msg.HistUpdateFailed) }
 			finally { Unlock-File $script:histLockFilePath | Out-Null }
@@ -2258,7 +2450,7 @@ function Invoke-IntegrityCheck {
 			Write-Output ($script:msg.ValidationOK)
 			$targetHist.downloadDate = Get-TimeStamp
 			$targetHist.videoValidated = '1'
-			while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+			Wait-FileLock $script:histLockFilePath
 			try { $targetHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append ; Start-Sleep -Seconds 1 }
 			catch { Write-Warning ($script:msg.HistUpdateFailed) }
 			finally { Unlock-File $script:histLockFilePath | Out-Null }
@@ -2386,7 +2578,6 @@ function Get-Setting {
 		}
 	}
 	return $configList.GetEnumerator() | Sort-Object -Property key
-	Remove-Variable -Name configList, configs, excludePattern, filePath, filePathList, key, config, configParts -ErrorAction SilentlyContinue
 }
 $script:clientSettings = Get-Setting
 

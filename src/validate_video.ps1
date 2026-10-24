@@ -204,6 +204,10 @@ while ($videoNotValidatedNum -ne 0) {
 			if (!(Test-Path $script:downloadBaseDir -PathType Container)) { throw ($script:msg.DownloadDirNotAccessible) }
 			# 番組の整合性チェック
 			Write-Output ('{0}/{1} - {2}' -f $validateNum, $validateTotal, $videoHist.videoPath)
+			# 埋め込み字幕の「0秒字幕」を修復(整合性チェック前に実施)
+			if ($script:embedSubtitle -and ($videoHist.videoPath -like '*.mp4')) {
+				if (Repair-SubtitleTiming -VideoPath (Join-Path (Convert-Path $script:downloadBaseDir) $videoHist.videoPath)) { Write-Output ($script:msg.SubtitleTimingRepaired) }
+			}
 			Invoke-IntegrityCheck -VideoHist $videoHist -DecodeOption $decodeOption
 			Suspend-Process
 			Start-Sleep -Seconds 1
@@ -230,7 +234,7 @@ while ($videoNotValidatedNum -ne 0) {
 				$_.downloadDate = Get-TimeStamp
 				$_
 			})
-		while (-not (Lock-File $script:histLockFilePath).result) { Write-Information ($script:msg.WaitingLock) ; Start-Sleep -Seconds 1 }
+		Wait-FileLock $script:histLockFilePath
 		try { $newRecords | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append ; Start-Sleep -Seconds 1 }
 		catch { throw ($script:msg.UpdateFailed -f $script:msg.HistFile) }
 		finally { Unlock-File $script:histLockFilePath | Out-Null }

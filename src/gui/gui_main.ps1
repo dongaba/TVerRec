@@ -376,7 +376,7 @@ while ($mainWindow.IsVisible) {
 	}
 	# GUIイベント処理
 	Sync-WpfEvents
-	Start-Sleep -Milliseconds 10
+	Start-Sleep -Milliseconds 100
 }
 
 #endregion ウィンドウ表示後のループ処理
