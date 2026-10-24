@@ -222,6 +222,12 @@ $script:embedSubtitle = $true
 #　ダウンロードしたファイルにメタタグを埋め込むかを設定します。
 $script:embedMetatag = $true
 
+# 番組ファイルへのサムネイルの埋め込み
+#　ダウンロードしたファイルにサムネイル画像を埋め込むかを設定します。
+#　「$true」の場合はサムネイルを埋め込みます。
+#　「$false」の場合はサムネイルを埋め込みません。
+$script:embedThumbnail = $true
+
 # youtube-dlの取得元
 #　youtube-dlに起因する問題(例えばダウンロードできないなど)が起きた際には2種類のyoutube-dlを使い分けることが可能です。
 #　'yt-dlp'を設定するとyt-dlp(https://github.com/yt-dlp/yt-dlp)から取得します。

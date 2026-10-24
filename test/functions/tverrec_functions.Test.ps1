@@ -319,3 +319,79 @@ Describe 'Move-VideoFileToDestination' {
 		{ Move-VideoFileToDestination -Path (Join-Path $script:srcDir 'none.mp4') -DestinationDir $script:dstDir } | Should -Throw
 	}
 }
+
+Describe 'サムネイル埋め込み設定(embedThumbnail)' {
+	BeforeAll {
+		# * 実際にはyt-dlpを起動せず、Start-Processに渡された引数だけを捕捉する
+		Mock Invoke-StatisticsCheck {}
+		Mock Start-Process {
+			$script:capturedYtdlArgs = $ArgumentList
+			return [PSCustomObject]@{ Id = 1 ; ExitCode = 0 ; Handle = 0 }
+		}
+		$script:backup = @{}
+		foreach ($name in @('debugMode', 'ytdlTimeoutSec', 'ytdlPath', 'ytdlStdOutLogPath', 'ytdlStdErrLogPath', 'videoContainerFormat', 'downloadWorkDir', 'ffmpegPath', 'embedThumbnail', 'embedSubtitle', 'embedMetatag', 'jobList')) {
+			$script:backup[$name] = if (Test-Path ('Variable:Script:{0}' -f $name)) { (Get-Variable -Name $name -Scope Script).Value } else { '__UNDEFINED__' }
+		}
+		$script:debugMode = $true	# * ログファイルを作る分岐を避ける
+		$script:ytdlTimeoutSec = 0
+		$script:ytdlPath = 'yt-dlp'
+		$script:ytdlStdOutLogPath = Join-Path $TestDrive 'stdout.log'
+		$script:ytdlStdErrLogPath = Join-Path $TestDrive 'stderr.log'
+		New-Item -ItemType File -Path $script:ytdlStdOutLogPath, $script:ytdlStdErrLogPath -Force | Out-Null
+		$script:videoContainerFormat = 'mp4'
+		$script:downloadWorkDir = Join-Path $TestDrive 'work'
+		$script:ffmpegPath = 'ffmpeg'
+		$script:embedSubtitle = $true
+		$script:embedMetatag = $true
+		$script:jobList = @()
+		$script:videoInfo = [PSCustomObject]@{
+			fileDir        = (Join-Path $TestDrive 'download').Replace('\', '/')
+			filePath       = (Join-Path $TestDrive 'download/番組 第1話.mp4').Replace('\', '/')
+			fileName       = '番組 第1話.mp4'
+			episodeID      = 'epabcd1234'
+			episodePageURL = 'https://tver.jp/episodes/epabcd1234'
+		}
+	}
+	AfterAll {
+		foreach ($name in $script:backup.Keys) {
+			if ($script:backup[$name] -is [String] -and $script:backup[$name] -eq '__UNDEFINED__') { Remove-Variable -Name $name -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $name -Scope Script -Value $script:backup[$name] }
+		}
+	}
+	BeforeEach { $script:capturedYtdlArgs = $null }
+
+	It 'system_setting.ps1の既定値は$true(従来どおり埋め込む)' {
+		$setting = Get-Content -LiteralPath (Join-Path $script:confDir 'system_setting.ps1') -Raw
+		$setting | Should -Match '(?m)^\$script:embedThumbnail = \$true\s*$'
+	}
+	It 'Invoke-Ytdl: $trueなら--embed-thumbnailを渡す' {
+		$script:embedThumbnail = $true
+		$videoInfo = $script:videoInfo
+		Invoke-Ytdl -videoInfo ([ref]$videoInfo) 6>$null 3>$null
+		$script:capturedYtdlArgs | Should -Match '--embed-thumbnail'
+		$script:capturedYtdlArgs | Should -Match '--embed-chapters'
+		$script:capturedYtdlArgs | Should -Match '--merge-output-format mp4'
+	}
+	It 'Invoke-Ytdl: $falseなら--embed-thumbnailを渡さず、他の埋め込みは維持する' {
+		$script:embedThumbnail = $false
+		$videoInfo = $script:videoInfo
+		Invoke-Ytdl -videoInfo ([ref]$videoInfo) 6>$null 3>$null
+		$script:capturedYtdlArgs | Should -Not -Match '--embed-thumbnail'
+		$script:capturedYtdlArgs | Should -Match '--embed-chapters'
+		$script:capturedYtdlArgs | Should -Match '--embed-subs'
+		$script:capturedYtdlArgs | Should -Match '--embed-metadata'
+	}
+	It 'Invoke-NonTverYtdl: $trueなら--embed-thumbnailを渡す' {
+		$script:embedThumbnail = $true
+		Invoke-NonTverYtdl -videoPageURL 'https://example.com/video' 6>$null 3>$null
+		$script:capturedYtdlArgs | Should -Match '--embed-thumbnail'
+		$script:capturedYtdlArgs | Should -Match '--embed-chapters'
+	}
+	It 'Invoke-NonTverYtdl: $falseなら--embed-thumbnailを渡さず、他の埋め込みは維持する' {
+		$script:embedThumbnail = $false
+		Invoke-NonTverYtdl -videoPageURL 'https://example.com/video' 6>$null 3>$null
+		$script:capturedYtdlArgs | Should -Not -Match '--embed-thumbnail'
+		$script:capturedYtdlArgs | Should -Match '--embed-chapters'
+		$script:capturedYtdlArgs | Should -Match '--embed-subs'
+	}
+}

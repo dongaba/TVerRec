@@ -133,6 +133,7 @@ $settingAttributes = @(
 	'$script:detailedProgress',
 	'$script:embedSubtitle',
 	'$script:embedMetatag',
+	'$script:embedThumbnail',
 	'$script:windowShowStyle',
 	'$script:ffmpegDecodeOption',
 	'$script:ytdlOption',
@@ -494,6 +495,8 @@ $embedSubtitleHeader.Header = $script:msg.embedSubtitleHeader
 $embedSubtitleText.Text = $script:msg.embedSubtitleText
 $embedMetatagHeader.Header = $script:msg.embedMetatagHeader
 $embedMetatagText.Text = $script:msg.embedMetatagText
+$embedThumbnailHeader.Header = $script:msg.embedThumbnailHeader
+$embedThumbnailText.Text = $script:msg.embedThumbnailText
 $sortVideoBySeriesHeader.Header = $script:msg.sortVideoBySeriesHeader
 $sortVideoBySeriesText.Text = $script:msg.sortVideoBySeriesText
 $sortVideoByMediaHeader.Header = $script:msg.sortVideoByMediaHeader
@@ -600,6 +603,7 @@ $trueFalseControls = @(
 	$emptyDownloadBaseDir,
 	$embedSubtitle,
 	$embedMetatag,
+	$embedThumbnail,
 	$sortVideoBySeries,
 	$sortVideoByMedia,
 	$forceSingleDownload,

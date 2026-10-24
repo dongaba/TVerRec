@@ -1303,7 +1303,8 @@ function Invoke-Ytdl {
 		$ytdlArgs += ('--limit-rate {0}M' -f $rateLimit)
 	}
 	if ($script:videoContainerFormat -eq 'mp4') {
-		$ytdlArgs += '--merge-output-format mp4 --embed-thumbnail --embed-chapters'
+		$ytdlArgs += '--merge-output-format mp4 --embed-chapters'
+		if ($script:embedThumbnail) { $ytdlArgs += '--embed-thumbnail' }
 		$ytdlArgs += @('subtitle', 'thumbnail', 'chapter', 'description').ForEach{ '--paths "{0}:{1}"' -f $_, $script:downloadWorkDir }
 		if ($script:embedSubtitle) { $ytdlArgs += '--sub-langs all --convert-subs srt --embed-subs' }
 		if ($script:embedMetatag) { $ytdlArgs += '--embed-metadata' }
@@ -1458,7 +1459,8 @@ function Invoke-NonTverYtdl {
 				$rateLimit = [math]::Ceiling([int]$script:rateLimit / $script:parallelDownloadNumPerFile / 8)
 				('--limit-rate {0}M' -f $rateLimit)
 			})
-		'--merge-output-format mp4 --embed-thumbnail --embed-chapters'
+		'--merge-output-format mp4 --embed-chapters'
+		$(if ($script:embedThumbnail) { '--embed-thumbnail' })
 		$(@('subtitle', 'thumbnail', 'chapter', 'description').ForEach{ '--paths "{0}:{1}"' -f $_, $script:downloadWorkDir })
 		$(if ($script:embedSubtitle) { '--sub-langs all --convert-subs srt --embed-subs' })
 		$(if ($script:embedMetatag) { '--embed-metadata' })
