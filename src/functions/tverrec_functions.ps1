@@ -2903,6 +2903,40 @@ function Invoke-StatisticsCheck {
 #endregion 環境
 
 #region 番組ファイル移動関連
+function Group-DirectoryPathByLeaf {
+	<#
+		.SYNOPSIS
+			ディレクトリのパスを、末尾のフォルダ名ごとにまとめます。
+
+		.DESCRIPTION
+			番組の移動元と移動先を「末尾のフォルダ名」で突き合わせるために、パスをフォルダ名ごとに集約します。
+			同じフォルダ名のディレクトリが複数ある場合は、すべてのパスを保持します。
+			(後から見つかったもので上書きしたり、先に見つかったものだけを採用したりしません)
+			同じパスが重複して渡された場合は1つにまとめます。パスの大文字小文字は区別しません。
+
+		.PARAMETER Path
+			ディレクトリのパスの配列を指定します。
+
+		.OUTPUTS
+			[Hashtable]
+			キーがフォルダ名、値がそのフォルダ名のパスの配列。キーの大文字小文字は区別しません。
+	#>
+	[OutputType([Hashtable])]
+	Param ([Parameter(Mandatory = $true)][AllowEmptyCollection()][AllowNull()][AllowEmptyString()][String[]]$Path)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$groups = @{}
+	foreach ($dirPath in $Path) {
+		if ([String]::IsNullOrWhiteSpace($dirPath)) { continue }
+		$trimmedPath = $dirPath.TrimEnd('\', '/')
+		if (!$trimmedPath) { continue }
+		$leaf = Split-Path -Leaf $trimmedPath
+		if (!$leaf) { continue }
+		if (!$groups.ContainsKey($leaf)) { $groups[$leaf] = [Collections.Generic.List[String]]::new() }
+		if ($groups[$leaf] -inotcontains $trimmedPath) { $groups[$leaf].Add($trimmedPath) }
+	}
+	return $groups
+}
+
 #----------------------------------------------------------------------
 # 番組ファイルの移動(移動先に同名ファイルがある場合の動作を指定可能)
 #----------------------------------------------------------------------

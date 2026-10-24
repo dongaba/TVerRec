@@ -496,3 +496,26 @@ Describe 'Get-ProcessCountByPath / Get-YtdlProcessCount / Get-FfmpegProcessCount
 		Get-YtdlProcessCount | Should -Be 1
 	}
 }
+
+Describe 'Group-DirectoryPathByLeaf' {
+	It '同じフォルダ名のパスをすべて保持する' {
+		$r = Group-DirectoryPathByLeaf -Path @('/lib/ドラマ/地獄先生', '/lib/アニメ/地獄先生', '/lib/ドラマ/別番組')
+		@($r['地獄先生']).Count | Should -Be 2
+		$r['地獄先生'] | Should -Contain '/lib/ドラマ/地獄先生'
+		$r['地獄先生'] | Should -Contain '/lib/アニメ/地獄先生'
+		@($r['別番組']).Count | Should -Be 1
+	}
+	It '同じパスの重複や末尾の区切り文字の違いは1つにまとめる' {
+		$r = Group-DirectoryPathByLeaf -Path @('/lib/番組', '/lib/番組/', '/LIB/番組')
+		@($r['番組']).Count | Should -Be 1
+	}
+	It 'キーの大文字小文字は区別しない' {
+		$r = Group-DirectoryPathByLeaf -Path @('/lib/Show')
+		$r.ContainsKey('show') | Should -BeTrue
+	}
+	It '空文字・$null・空配列でも例外にならず空を返す' {
+		(Group-DirectoryPathByLeaf -Path @()).Count | Should -Be 0
+		(Group-DirectoryPathByLeaf -Path @('', $null)).Count | Should -Be 0
+		(Group-DirectoryPathByLeaf -Path $null).Count | Should -Be 0
+	}
+}
