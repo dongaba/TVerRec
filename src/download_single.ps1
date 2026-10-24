@@ -74,7 +74,29 @@ $script:guiMode = if ($args) { [String]$args[0] } else { '' }
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # 関数定義
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#----------------------------------------------------------------------
+# URL入力ダイアログの表示
+#----------------------------------------------------------------------
 function Show-UrlInputDialog {
+	<#
+		.SYNOPSIS
+			TVerの番組URLを入力するダイアログを表示します。
+
+		.DESCRIPTION
+			URLを入力するテキストボックスとOKボタンを持つダイアログを表示します。
+			複数のURLは、改行または空白で区切って入力できます。OKボタンで入力内容をURLの配列として返します。
+
+		.OUTPUTS
+			[String[]]
+			入力されたURLの配列。OKボタンを押さずに閉じた場合は、呼び出し元で初期化された値(通常は空の配列)になります。
+
+		.EXAMPLE
+			$videoPageList = Show-UrlInputDialog
+
+		.NOTES
+			Windows.Forms(GUI)を使用します。Escキーでダイアログを閉じられます。
+			ダイアログの表示中にエラーが発生した場合は、エラーを出力して例外を再スローします。
+	#>
 	try {
 		# アセンブリの読み込み
 		Add-Type -AssemblyName System.Windows.Forms | Out-Null
@@ -215,12 +237,15 @@ try {
 
 			# URLの種類に応じた処理
 			switch -Regex ($videoLink) {
-				'^https://tver.jp/(/?.*)' {
+				'^https?://(?:www\.)?tver\.jp/' {
 					# TVer番組のダウンロード
 					Write-Output ('')
 					Write-Output ($script:msg.MediumBoldBorder)
 					Write-Output ('{0}: {1}' -f $script:msg.SingleDownloadTVerURL, $videoLink)
-					Invoke-VideoDownload -Keyword $keyword -episodeID $videoLink.Replace('https://tver.jp/episodes/', '') -Force $script:forceSingleDownload
+					# * 共有URLに付与される「?p=0」「?play=feature」などのクエリ文字列を除いてエピソードIDを抽出 (#301)
+					$episodeID = Get-EpisodeIDFromURL -url $videoLink
+					if ($episodeID) { Invoke-VideoDownload -Keyword $keyword -episodeID $episodeID -Force $script:forceSingleDownload }
+					else { Write-Warning ('{0}: {1}' -f $script:msg.SingleDownloadNotURL, $videoLink) }
 					break
 				}
 				'^.*://' {
@@ -246,7 +271,6 @@ try {
 
 	# リネーム失敗ファイルの削除
 	Write-Output ('')
-	Write-Output ($script:msg.DeleteFilesFailedToRename)
 	Remove-UnRenamedTempFile
 
 } catch {
@@ -255,7 +279,7 @@ try {
 	throw
 } finally {
 	# 変数のクリーンアップ
-	Remove-Variable -Name args, keyword, videoPageURL -ErrorAction SilentlyContinue
+	Remove-Variable -Name args, keyword, videoPageURL, episodeID -ErrorAction SilentlyContinue
 	Invoke-GarbageCollection
 
 	# 完了メッセージ

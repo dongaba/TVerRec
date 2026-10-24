@@ -203,7 +203,6 @@ function ConvertFrom-UnixTime {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$EpochDate = Get-Date -Year 1970 -Month 1 -Day 1 -Hour 0 -Minute 0 -Second 0 -AsUTC
 	return ($EpochDate.AddSeconds($UnixTime).ToLocalTime())
-	Remove-Variable -Name UnixTime, EpochDate -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -256,7 +255,6 @@ function ConvertTo-UnixTime {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$unixTime = New-TimeSpan -Start '1970-01-01' -End $InputDate.ToUniversalTime()
 	return [int64][math]::Round($unixTime.TotalSeconds)
-	Remove-Variable -Name InputDate, unixTime -ErrorAction SilentlyContinue
 }
 #endregion タイムスタンプ
 
@@ -326,7 +324,6 @@ function Get-FileNameWoInvalidChar {
 		-replace $nonPrintableChars, '' `
 		-replace '-+', '-'
 	return $name
-	Remove-Variable -Name invalidCharsPattern, name, additionalReplaces, nonPrintableChars -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -479,7 +476,6 @@ function Get-NarrowChar {
 		$text = $text.Replace($replacement.Name, $replacement.Value)
 	}
 	return $text
-	Remove-Variable -Name text, replaceChars, entry, i, replacements, replacement -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -530,6 +526,7 @@ function Remove-SpecialCharacter {
 			- 一部の特殊記号は削除されず全角に置き換え。
 			- ダブルクォート (`"`) は削除。
 	#>
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = '文字列を置換して返すだけで、システムの状態は変更しない')]
 	[CmdletBinding()]
 	[OutputType([String])]
 	Param ([String]$text)
@@ -555,7 +552,6 @@ function Remove-SpecialCharacter {
 	}
 	foreach ($replacement in $replacements.GetEnumerator()) { $text = $text.Replace($replacement.Name, $replacement.Value) }
 	return $text
-	Remove-Variable -Name text, replacements, replacement -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -598,12 +594,12 @@ function Remove-TabSpace {
 			- タブ (`\t`) はすべてスペースに変換される。
 			- 複数のスペースは単一のスペースにまとめられる。
 	#>
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = '文字列を置換して返すだけで、システムの状態は変更しない')]
 	[CmdletBinding()]
 	[OutputType([String])]
 	Param ([String]$text)
 	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $text)
 	return $text.Replace("`t", ' ') -replace '\s+', ' '
-	Remove-Variable -Name text -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -657,7 +653,6 @@ function Get-ContentWoComment {
 	Param ([String]$text)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	return $text.Split("`t")[0].Split(' ')[0].Split('#')[0]
-	Remove-Variable -Name text -ErrorAction SilentlyContinue
 }
 #endregion 文字列操作
 
@@ -762,7 +757,7 @@ function Remove-File {
 							ForEach-Object { Write-Debug ($script:msg.DeleteTarget -f $_.FullName) ; $_.FullName }
 						}
 						# 並列処理の結果をまとめてリストに追加
-						if ($parallelResults) { $targetFiles.AddRange($parallelResults) }
+						if ($parallelResults) { $targetFiles.AddRange([String[]]@($parallelResults)) }	# * Object[]や単一のStringのままではList[String].AddRangeに渡せず例外になる
 					} catch { Write-Warning ($script:msg.FileCannotBeDeleted) }
 				} else {
 					try {
@@ -771,7 +766,7 @@ function Remove-File {
 							$files = Get-ChildItem -LiteralPath $basePath -Recurse -File -Filter $condition -ErrorAction SilentlyContinue |
 								Where-Object { $_.LastWriteTime -lt $limitDateTime } |
 								ForEach-Object { Write-Debug ($script:msg.DeleteTarget -f $_.FullName) ; $_.FullName }
-						if ($files) { $targetFiles.AddRange($files) }
+						if ($files) { $targetFiles.AddRange([String[]]@($files)) }	# * Object[]や単一のStringのままではList[String].AddRangeに渡せず例外になる
 					}
 				} catch { Write-Warning ($script:msg.FileCannotBeDeleted) }
 			}
@@ -898,13 +893,63 @@ function Lock-File {
 		$script:fileInfo[$path] = [System.IO.FileInfo]::new($path)
 		$script:fileStream[$path] = $script:fileInfo[$path].Open([System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
 		$result = $true
-	} catch { $result = $false }
+		$errorMessage = ''
+	} catch {
+		# 失敗理由(他プロセス/他ホストによる保持、権限不足など)を呼び出し元で参照できるよう保持
+		$result = $false
+		$errorMessage = $_.Exception.Message
+		Write-Debug ('{0} - Failed to lock {1}: {2}' -f $MyInvocation.MyCommand.Name, $path, $errorMessage)
+	}
 	# 結果の返却
 	return [PSCustomObject]@{
-		path   = $path
-		result = $result
+		path         = $path
+		result       = $result
+		errorMessage = $errorMessage
 	}
-	Remove-Variable -Name path, result -ErrorAction SilentlyContinue
+	Remove-Variable -Name path, result, errorMessage -ErrorAction SilentlyContinue
+}
+
+#----------------------------------------------------------------------
+# ファイルロックの取得待ち(タイムアウト付き)
+#----------------------------------------------------------------------
+function Wait-FileLock {
+	<#
+		.SYNOPSIS
+			ファイルのロックが取得できるまで待機する。上限時間を超えた場合は例外をスローする。
+
+		.PARAMETER path
+			ロックするファイルのパス。
+
+		.PARAMETER timeoutSeconds
+			待機の上限秒数(既定: 60)。
+
+		.NOTES
+			- `Lock-File` を100〜500ミリ秒のランダムな間隔で再試行する(他プロセスが短い間隔でロックを取り直す場合でも、解放の隙間に入りやすくするため)。
+			- 上限を超えるとロック対象のパスと直近の失敗理由を警告に出し、例外をスローする。
+			- 呼び出し元は try/catch/finally で囲み、finally で `Unlock-File` を呼ぶこと。
+	#>
+	[CmdletBinding()]
+	[OutputType([Void])]
+	Param (
+		[parameter(Mandatory = $true)][String]$path,
+		[Int32]$timeoutSeconds = 60
+	)
+	$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+	$lastNoticeSeconds = -1
+	while ($true) {
+		$lockResult = Lock-File $path
+		if ($lockResult.result) { return }
+		if ($stopwatch.Elapsed.TotalSeconds -ge $timeoutSeconds) {
+			Write-Warning ($script:msg.LockWaitTimeout -f $timeoutSeconds, $path, $lockResult.errorMessage)
+			throw ($script:msg.LockWaitTimeout -f $timeoutSeconds, $path, $lockResult.errorMessage)
+		}
+		# 待機メッセージは再試行間隔が短くなっても約1秒に1回だけ表示する
+		if (($stopwatch.Elapsed.TotalSeconds - $lastNoticeSeconds) -ge 1) {
+			Write-Information ($script:msg.WaitingLock)
+			$lastNoticeSeconds = $stopwatch.Elapsed.TotalSeconds
+		}
+		Start-Sleep -Milliseconds (Get-Random -Minimum 100 -Maximum 501)
+	}
 }
 
 #----------------------------------------------------------------------
@@ -1038,7 +1083,6 @@ function Get-RemainingCapacity {
 		} catch { Write-Information ($script:msg.CapacityUnknown -f $targetDir) ; $freeSpace = 9999999999 }
 	}
 	return [int64]($freeSpace / 1MB)
-	Remove-Variable -Name targetDir, targetDrive, freeSpace, targetRoot -ErrorAction SilentlyContinue
 }
 #endregion ディスク監視
 
@@ -1285,7 +1329,7 @@ function Update-ProgressToast {
 
 			ファイルの書き込み進捗を75%に更新するトースト通知を表示します。
 	#>
-	[CmdletBinding()]
+	[CmdletBinding(SupportsShouldProcess = $true)]
 	[OutputType([Void])]
 	Param (
 		[Parameter(Mandatory = $false)][String]$title = '',
@@ -1296,7 +1340,7 @@ function Update-ProgressToast {
 		[Parameter(Mandatory = $true )][String]$group
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	if (!$script:disableToastNotification) {
+	if (!$script:disableToastNotification -and $PSCmdlet.ShouldProcess($tag, 'Update toast')) {
 		switch ($true) {
 			$IsWindows {
 				$toastData = [System.Collections.Generic.Dictionary[String, String]]::new()
@@ -1490,7 +1534,7 @@ function Update-ProgressToast2Row {
 
 			2つのタスクの進捗を更新するトースト通知を表示します。
 	#>
-	[CmdletBinding()]
+	[CmdletBinding(SupportsShouldProcess = $true)]
 	[OutputType([Void])]
 	Param (
 		[Parameter(Mandatory = $false)][String]$title1 = '',
@@ -1505,7 +1549,7 @@ function Update-ProgressToast2Row {
 		[Parameter(Mandatory = $true )][String]$group
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	if (!($script:disableToastNotification)) {
+	if (!($script:disableToastNotification) -and $PSCmdlet.ShouldProcess($tag, 'Update toast')) {
 		$rightText1 = switch ($rightText1 ) {
 			'' { '' ; break }
 			'0' { $script:msg.Completed ; break }
@@ -1582,3 +1626,35 @@ function ConvertFrom-Base64 {
 	} catch { Write-Error "Base64文字列から画像を変換する際にエラーが発生しました: $_" ; return $null }
 	finally { Remove-Variable -Name base64, img -ErrorAction SilentlyContinue }
 }
+
+#region GUI更新間隔
+#----------------------------------------------------------------------
+# GUIの更新間隔(ミリ秒)の取得
+#----------------------------------------------------------------------
+function Get-GuiRefreshInterval {
+	<#
+		.SYNOPSIS
+			GUIのメイン画面がイベントを処理する間隔(ミリ秒)を取得します。
+
+		.DESCRIPTION
+			設定`$script:guiRefreshIntervalMs`の値を返します。
+			設定が未定義、数値以外、または1～1000の範囲外の場合は既定値の10を返します。
+
+		.OUTPUTS
+			[Int]
+			GUIの更新間隔(ミリ秒)。
+
+		.EXAMPLE
+			Start-Sleep -Milliseconds (Get-GuiRefreshInterval)
+	#>
+	[CmdletBinding()]
+	[OutputType([Int])]
+	Param ()
+	$defaultInterval = 10
+	if (!(Test-Path Variable:Script:guiRefreshIntervalMs)) { return $defaultInterval }
+	$interval = 0
+	if (![Int]::TryParse([String]$script:guiRefreshIntervalMs, [Ref]$interval)) { return $defaultInterval }
+	if (($interval -lt 1) -or ($interval -gt 1000)) { return $defaultInterval }
+	return $interval
+}
+#endregion GUI更新間隔

@@ -49,12 +49,8 @@ function saveStorageMember(member_sid) {
 
 //クエリパラメータの処理
 function getSearchParams(search) {
-	const params = new URLSearchParams(search);
-	let result = {};
-	for (const [key, value] of params) {
-		result[key] = value;
-	}
-	return result;
+	// 角括弧による代入(result[key] = value)は、__proto__などのキーでプロトタイプ汚染につながるため、Object.fromEntriesを使う
+	return Object.fromEntries(new URLSearchParams(search));
 }
 
 //ローカルストレージの変更時にコンソールメッセージ

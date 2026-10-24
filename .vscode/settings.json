@@ -87,7 +87,7 @@
 	"thunder-client.workspaceRelativePath": "./.vscode/",
 	"workbench.colorTheme": "MacOS Modern Dark - Xcode Modern",
 	"workbench.iconTheme": "material-icon-theme",
-	"workbench.preferredLightColorTheme": "Default Dark+",
+	"workbench.preferredLightColorTheme": "Dark+",
 	"workbench.startupEditor": "newUntitledFile",
 	"xmlComplete.formattingStyle": "singleLineAttributes"
 }

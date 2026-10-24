@@ -91,12 +91,20 @@ Write-Debug "Message Table Loaded: $script:uiCulture"
 # 設定ファイル読み込み
 if ( Test-Path (Join-Path $script:confDir 'system_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'system_setting.ps1')) }
-	catch { throw ($script:msg.LoadSystemSettingFailed) }
+	catch {
+		Write-Error $_
+		Write-Error $_.ScriptStackTrace
+		throw ($script:msg.LoadSystemSettingFailed)
+	}
 } else { throw ($script:msg.SystemSettingNotFound) }
 
 if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 	try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
-	catch { throw ($script:msg.LoadUserSettingFailed) }
+	catch {
+		Write-Error $_
+		Write-Error $_.ScriptStackTrace
+		throw ($script:msg.LoadUserSettingFailed)
+	}
 } elseif ($IsWindows) {
 	Write-Output ($script:msg.UserSettingNeedsToBeCreated)
 	try { & 'gui/gui_setting.ps1' }
@@ -211,6 +219,12 @@ if ( $myInvocation.ScriptName.Contains('gui')) {
 	catch { Write-Warning ($script:msg.YoutubeDLVersionCheckFailed) }
 	try { if (!$script:disableUpdateFfmpeg) { Invoke-ToolUpdateCheck -scriptName 'update_ffmpeg.ps1' -targetName 'ffmpeg' } }
 	catch { Write-Warning ($script:msg.FfmpegVersionCheckFailed) }
+	# PowerShellの最新化チェック(案内のみ)
+	try { Invoke-PowerShellUpdateCheck }
+	catch { Write-Debug $_ }
+	# pycryptodomexの導入確認(macOS/Linux)
+	try { Test-YtdlCryptoModule }
+	catch { Write-Debug $_ }
 }
 
 # 共通HTTPヘッダ
@@ -225,6 +239,7 @@ $script:commonHttpHeader = @{
 	'Forwarded-For'        = $script:jpIP
 	'X-Forwarded'          = $script:jpIP
 	'X-Forwarded-For'      = $script:jpIP
+	'X-Originating-IP'     = $script:jpIP
 }
 
 # ロックファイル用

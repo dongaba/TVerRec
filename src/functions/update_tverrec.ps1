@@ -87,6 +87,29 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
 # Zipファイルを解凍
 #----------------------------------------------------------------------
 function Expand-Zip {
+	<#
+		.SYNOPSIS
+			Zipファイルを解凍します。
+
+		.DESCRIPTION
+			指定したZipファイルを、指定したディレクトリに解凍します。
+			解凍先に同名のファイルがある場合は上書きします。
+
+		.PARAMETER path
+			解凍するZipファイルのパスを指定します。
+
+		.PARAMETER destination
+			解凍先のディレクトリのパスを指定します。
+
+		.OUTPUTS
+			[Void]
+
+		.EXAMPLE
+			Expand-Zip -Path "./ffmpeg.zip" -Destination "./bin"
+
+		.NOTES
+			Zipファイルが存在しない場合は例外を発生させます。
+	#>
 	[CmdletBinding()]
 	[OutputType([Void])]
 	Param (
@@ -106,6 +129,27 @@ function Expand-Zip {
 # ディレクトリの上書き
 #----------------------------------------------------------------------
 function Move-Files() {
+	<#
+		.SYNOPSIS
+			ディレクトリまたはファイルを、移動先に上書きして移動します。
+
+		.DESCRIPTION
+			移動元が移動先に存在するディレクトリの場合は、配下のファイルとディレクトリを再帰的に移動(上書き)し、移動後の空の移動元を削除します。
+			それ以外の場合は、Move-Itemで強制的に移動します。
+			ただし、アップデータ自身(update_tverrec.*)は、実行中のため移動の対象から除外します。
+
+		.PARAMETER source
+			移動元のファイルまたはディレクトリのパスを指定します。
+
+		.PARAMETER destination
+			移動先のパスを指定します。
+
+		.OUTPUTS
+			[Void]
+
+		.EXAMPLE
+			Move-Files -Source "./TVerRec-master" -Destination "../"
+	#>
 	[CmdletBinding()]
 	[OutputType([Void])]
 	Param (
@@ -131,9 +175,27 @@ function Move-Files() {
 # 存在したら削除
 #----------------------------------------------------------------------
 Function Remove-IfExist {
+	<#
+		.SYNOPSIS
+			存在する場合に、ファイルまたはディレクトリを削除します。
+
+		.DESCRIPTION
+			指定したパスが存在する場合に限り、配下を含めて強制的に削除します。存在しない場合は何もしません。
+			-WhatIfと-Confirmに対応しています。
+
+		.PARAMETER path
+			削除するファイルまたはディレクトリのパスを指定します。ワイルドカードも指定できます。
+
+		.OUTPUTS
+			[Void]
+
+		.EXAMPLE
+			Remove-IfExist -Path "../docker"
+	#>
+	[CmdletBinding(SupportsShouldProcess = $true)]
 	Param ([Parameter(Mandatory = $true)][String]$path)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	if (Test-Path $path) { Remove-Item -LiteralPath $path -Force -Recurse | Out-Null }
+	if ((Test-Path $path) -and $PSCmdlet.ShouldProcess($path, 'Remove')) { Remove-Item -LiteralPath $path -Force -Recurse | Out-Null }
 	Remove-Variable -Name path -ErrorAction SilentlyContinue
 }
 
@@ -141,6 +203,25 @@ Function Remove-IfExist {
 # 存在したらリネーム
 #----------------------------------------------------------------------
 Function Rename-IfExist {
+	<#
+		.SYNOPSIS
+			存在する場合に、ファイルの名前を変更します。
+
+		.DESCRIPTION
+			指定したパスにファイルが存在する場合に限り、名前を変更します。存在しない場合や、ディレクトリの場合は何もしません。
+
+		.PARAMETER path
+			名前を変更するファイルのパスを指定します。
+
+		.PARAMETER newName
+			新しいファイル名を指定します(パスではなく名前のみ)。
+
+		.OUTPUTS
+			[Void]
+
+		.EXAMPLE
+			Rename-IfExist -Path "./a.txt" -NewName "b.txt"
+	#>
 	Param (
 		[Parameter(Mandatory = $true)][String]$path,
 		[Parameter(Mandatory = $true)][String]$newName
@@ -154,6 +235,25 @@ Function Rename-IfExist {
 # 存在したら移動
 #----------------------------------------------------------------------
 Function Move-IfExist {
+	<#
+		.SYNOPSIS
+			存在する場合に、ファイルを移動します。
+
+		.DESCRIPTION
+			指定したパスにファイルが存在する場合に限り、移動先に強制的に移動(上書き)します。存在しない場合や、ディレクトリの場合は何もしません。
+
+		.PARAMETER path
+			移動するファイルのパスを指定します。
+
+		.PARAMETER destination
+			移動先のパスを指定します。
+
+		.OUTPUTS
+			[Void]
+
+		.EXAMPLE
+			Move-IfExist -Path "./a.txt" -Destination "../b.txt"
+	#>
 	Param (
 		[Parameter(Mandatory = $true)][String]$path,
 		[Parameter(Mandatory = $true)][String]$destination
@@ -345,6 +445,26 @@ if (!$IsWindows) {
 	Write-Output ('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 	Write-Output ('実行権限の付与します')
 	(& chmod a+x (Join-Path $script:scriptRoot '../unix/*.sh'))
+}
+
+# 履歴ファイルのレイアウト変更(v3.4.8→v3.4.9)
+$histFilePath = Join-Path $script:scriptRoot '../db/history.csv'
+if (Test-Path -LiteralPath $histFilePath -PathType Leaf) {
+	try {
+		$histFilePath = Convert-Path -LiteralPath $histFilePath
+		$histHeader = Get-Content -LiteralPath $histFilePath -Encoding UTF8 -TotalCount 1
+		if ($histHeader -and ($histHeader -notmatch '(^|,)"?subtitle"?(,|$)')) {
+			$histTempPath = '{0}.{1}.tmp' -f $histFilePath, [Guid]::NewGuid().ToString('N')
+			$currentHistFile = @(Import-Csv -LiteralPath $histFilePath -Encoding UTF8)
+			if ($currentHistFile.Count -gt 0) {
+				$currentHistFile | Select-Object -Property *, @{ Name = 'subtitle' ; Expression = { '' } } | Export-Csv -LiteralPath $histTempPath -Encoding UTF8
+			} else {
+				[IO.File]::WriteAllText($histTempPath, ('{0},"subtitle"{1}' -f $histHeader, [Environment]::NewLine), [Text.UTF8Encoding]::new($false))
+			}
+			[IO.File]::Replace($histTempPath, $histFilePath, ('{0}.bak' -f $histFilePath))
+			Write-Output ('履歴ファイルに字幕の有無を記録する列(subtitle)を追加しました')
+		}
+	} catch { Write-Warning ('⚠️ 履歴ファイルのレイアウト変更に失敗しました。次回起動時に再度試行します') }
 }
 
 # アップデータ自体の更新のためのファイル作成

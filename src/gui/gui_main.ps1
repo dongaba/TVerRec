@@ -79,7 +79,9 @@ $msgInformation = New-Object System.Collections.Generic.List[String]
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #region 関数定義
 
+#----------------------------------------------------------------------
 # GUIイベントの処理
+#----------------------------------------------------------------------
 function Sync-WpfEvents {
 	<#
 		.SYNOPSIS
@@ -109,7 +111,9 @@ function Sync-WpfEvents {
 	Remove-Variable -Name frame, f -ErrorAction SilentlyContinue
 }
 
+#----------------------------------------------------------------------
 # 最大行数以上の実行ログをクリア
+#----------------------------------------------------------------------
 function Limit-LogLine {
 	<#
 		.SYNOPSIS
@@ -143,7 +147,9 @@ function Limit-LogLine {
 	Remove-Variable -Name richTextBox, limit, linesToRemove, i -ErrorAction SilentlyContinue
 }
 
+#----------------------------------------------------------------------
 # テキストボックスへのログ出力と再描画
+#----------------------------------------------------------------------
 function Out-ExecutionLog {
 	<#
 		.SYNOPSIS
@@ -344,6 +350,7 @@ try {
 
 #----------------------------------------------------------------------
 #region ウィンドウ表示後のループ処理
+$guiRefreshIntervalMs = Get-GuiRefreshInterval
 while ($mainWindow.IsVisible) {
 	if ($jobs = Get-Job) {
 		# ジョブがある場合の処理
@@ -376,7 +383,7 @@ while ($mainWindow.IsVisible) {
 	}
 	# GUIイベント処理
 	Sync-WpfEvents
-	Start-Sleep -Milliseconds 10
+	Start-Sleep -Milliseconds $guiRefreshIntervalMs
 }
 
 #endregion ウィンドウ表示後のループ処理
@@ -395,6 +402,6 @@ Remove-Variable -Name btnBulk, btnDelete, btnList, btnListGen, btnLoop, btnMove,
 Remove-Variable -Name btns, scriptBlocks, threadNames, btn, lblStatus -ErrorAction SilentlyContinue
 Remove-Variable -Name btnWorkOpen, btnDownloadOpen, btnsaveOpen, btnKeywordOpen, btnIgnoreOpen, btnListOpen -ErrorAction SilentlyContinue
 Remove-Variable -Name btnClearLog, btnKillAll, btnWiki, btnSetting, btnExit -ErrorAction SilentlyContinue
-Remove-Variable -Name jobs, job, msgType, jobMsg, logType -ErrorAction SilentlyContinue
+Remove-Variable -Name jobs, job, msgType, jobMsg, logType, guiRefreshIntervalMs -ErrorAction SilentlyContinue
 
 #endregion 終了処理
