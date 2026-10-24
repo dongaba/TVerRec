@@ -55,3 +55,31 @@ Describe 'Format-VideoFileInfo' {
 AfterAll {
 	if ($script:cleanupUserSetting) { Remove-Item -LiteralPath $script:userSettingPath -ErrorAction SilentlyContinue }
 }
+
+Describe 'Merge-ZeroDurationSubtitle' {
+	It '0秒字幕を同じ開始時刻の次の字幕にマージする' {
+		$srt = "1`n00:00:05,000 --> 00:00:05,000`n字幕1`n`n2`n00:00:05,000 --> 00:00:09,000`n字幕2`n"
+		$result = Merge-ZeroDurationSubtitle -SrtText $srt
+		$result.MergedCount | Should -Be 1
+		$result.Content | Should -Be "1`n00:00:05,000 --> 00:00:09,000`n字幕1`n字幕2`n`n"
+	}
+	It '0秒字幕が連続しても1つにまとめ、通し番号を振り直す' {
+		$srt = "1`n00:00:01,000 --> 00:00:02,000`nA`n`n2`n00:00:05,000 --> 00:00:05,000`nB`n`n3`n00:00:05,000 --> 00:00:05,000`nC`n`n4`n00:00:05,000 --> 00:00:08,000`nD`n"
+		$result = Merge-ZeroDurationSubtitle -SrtText $srt
+		$result.MergedCount | Should -Be 2
+		$result.Content | Should -Be "1`n00:00:01,000 --> 00:00:02,000`nA`n`n2`n00:00:05,000 --> 00:00:08,000`nB`nC`nD`n`n"
+	}
+	It 'マージ対象がなければ件数0を返す' {
+		$srt = "1`n00:00:01,000 --> 00:00:03,000`nあ`n`n2`n00:00:05,000 --> 00:00:09,000`nい`n"
+		(Merge-ZeroDurationSubtitle -SrtText $srt).MergedCount | Should -Be 0
+	}
+	It '次に同じ開始時刻の字幕がない0秒字幕は削除せず残す' {
+		$srt = "1`n00:00:05,000 --> 00:00:05,000`n孤立`n`n2`n00:00:07,000 --> 00:00:09,000`n次`n"
+		$result = Merge-ZeroDurationSubtitle -SrtText $srt
+		$result.MergedCount | Should -Be 0
+		$result.Content | Should -Match '孤立'
+	}
+	It '空文字列でもエラーにならない' {
+		(Merge-ZeroDurationSubtitle -SrtText '').MergedCount | Should -Be 0
+	}
+}
