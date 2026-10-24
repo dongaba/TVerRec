@@ -203,7 +203,6 @@ function ConvertFrom-UnixTime {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$EpochDate = Get-Date -Year 1970 -Month 1 -Day 1 -Hour 0 -Minute 0 -Second 0 -AsUTC
 	return ($EpochDate.AddSeconds($UnixTime).ToLocalTime())
-	Remove-Variable -Name UnixTime, EpochDate -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -256,7 +255,6 @@ function ConvertTo-UnixTime {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$unixTime = New-TimeSpan -Start '1970-01-01' -End $InputDate.ToUniversalTime()
 	return [int64][math]::Round($unixTime.TotalSeconds)
-	Remove-Variable -Name InputDate, unixTime -ErrorAction SilentlyContinue
 }
 #endregion タイムスタンプ
 
@@ -326,7 +324,6 @@ function Get-FileNameWoInvalidChar {
 		-replace $nonPrintableChars, '' `
 		-replace '-+', '-'
 	return $name
-	Remove-Variable -Name invalidCharsPattern, name, additionalReplaces, nonPrintableChars -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -479,7 +476,6 @@ function Get-NarrowChar {
 		$text = $text.Replace($replacement.Name, $replacement.Value)
 	}
 	return $text
-	Remove-Variable -Name text, replaceChars, entry, i, replacements, replacement -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -555,7 +551,6 @@ function Remove-SpecialCharacter {
 	}
 	foreach ($replacement in $replacements.GetEnumerator()) { $text = $text.Replace($replacement.Name, $replacement.Value) }
 	return $text
-	Remove-Variable -Name text, replacements, replacement -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -603,7 +598,6 @@ function Remove-TabSpace {
 	Param ([String]$text)
 	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $text)
 	return $text.Replace("`t", ' ') -replace '\s+', ' '
-	Remove-Variable -Name text -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -657,7 +651,6 @@ function Get-ContentWoComment {
 	Param ([String]$text)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	return $text.Split("`t")[0].Split(' ')[0].Split('#')[0]
-	Remove-Variable -Name text -ErrorAction SilentlyContinue
 }
 #endregion 文字列操作
 
@@ -898,13 +891,58 @@ function Lock-File {
 		$script:fileInfo[$path] = [System.IO.FileInfo]::new($path)
 		$script:fileStream[$path] = $script:fileInfo[$path].Open([System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
 		$result = $true
-	} catch { $result = $false }
+		$errorMessage = ''
+	} catch {
+		# 失敗理由(他プロセス/他ホストによる保持、権限不足など)を呼び出し元で参照できるよう保持
+		$result = $false
+		$errorMessage = $_.Exception.Message
+		Write-Debug ('{0} - Failed to lock {1}: {2}' -f $MyInvocation.MyCommand.Name, $path, $errorMessage)
+	}
 	# 結果の返却
 	return [PSCustomObject]@{
-		path   = $path
-		result = $result
+		path         = $path
+		result       = $result
+		errorMessage = $errorMessage
 	}
-	Remove-Variable -Name path, result -ErrorAction SilentlyContinue
+	Remove-Variable -Name path, result, errorMessage -ErrorAction SilentlyContinue
+}
+
+#----------------------------------------------------------------------
+# ファイルロックの取得待ち(タイムアウト付き)
+#----------------------------------------------------------------------
+function Wait-FileLock {
+	<#
+		.SYNOPSIS
+			ファイルのロックが取得できるまで待機する。上限時間を超えた場合は例外をスローする。
+
+		.PARAMETER path
+			ロックするファイルのパス。
+
+		.PARAMETER timeoutSeconds
+			待機の上限秒数(既定: 60)。
+
+		.NOTES
+			- `Lock-File` を1秒間隔で再試行する。
+			- 上限を超えるとロック対象のパスと直近の失敗理由を警告に出し、例外をスローする。
+			- 呼び出し元は try/catch/finally で囲み、finally で `Unlock-File` を呼ぶこと。
+	#>
+	[CmdletBinding()]
+	[OutputType([Void])]
+	Param (
+		[parameter(Mandatory = $true)][String]$path,
+		[Int32]$timeoutSeconds = 60
+	)
+	$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+	while ($true) {
+		$lockResult = Lock-File $path
+		if ($lockResult.result) { return }
+		if ($stopwatch.Elapsed.TotalSeconds -ge $timeoutSeconds) {
+			Write-Warning ($script:msg.LockWaitTimeout -f $timeoutSeconds, $path, $lockResult.errorMessage)
+			throw ($script:msg.LockWaitTimeout -f $timeoutSeconds, $path, $lockResult.errorMessage)
+		}
+		Write-Information ($script:msg.WaitingLock)
+		Start-Sleep -Seconds 1
+	}
 }
 
 #----------------------------------------------------------------------
@@ -1038,7 +1076,6 @@ function Get-RemainingCapacity {
 		} catch { Write-Information ($script:msg.CapacityUnknown -f $targetDir) ; $freeSpace = 9999999999 }
 	}
 	return [int64]($freeSpace / 1MB)
-	Remove-Variable -Name targetDir, targetDrive, freeSpace, targetRoot -ErrorAction SilentlyContinue
 }
 #endregion ディスク監視
 

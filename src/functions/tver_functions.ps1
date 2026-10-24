@@ -909,5 +909,4 @@ function Get-JpIP {
 		}
 	} While (($check.CountryCode -ne 'JP') -and ($attempt -lt $maxAttempts * 4))
 	return $jpIP
-	Remove-Variable -Name allCIDR, maxAttempts, attempt, randomCIDR, startIPArray, startIPInt, endIPArray, endIPInt, randomIPInt, randomIPArray, check -ErrorAction SilentlyContinue
 }
