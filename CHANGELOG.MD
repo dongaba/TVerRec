@@ -6,6 +6,7 @@
 
 - TVerの番組URLからエピソードIDを抽出する`Get-EpisodeIDFromURL`を追加
 - TVerのtagを収集してキーワードサンプルファイルとの漏れを確認するスクリプト`test/tools/check_tags.ps1`を追加
+- macOS/Linuxで、yt-dlpが使うPythonにpycryptodomexが導入されていない場合に、起動時に警告を表示する`Test-YtdlCryptoModule`を追加 #307
 
 ### 3.4.9 Changed
 

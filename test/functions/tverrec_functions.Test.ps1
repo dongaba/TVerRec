@@ -83,3 +83,73 @@ Describe 'Merge-ZeroDurationSubtitle' {
 		(Merge-ZeroDurationSubtitle -SrtText '').MergedCount | Should -Be 0
 	}
 }
+
+Describe 'Test-YtdlCryptoModule' -Skip:$IsWindows {
+	BeforeAll {
+		# * 実際のPythonに依存しないよう、終了コードだけを返す偽のPythonを用意する
+		$script:fakeBinDir = Join-Path $TestDrive 'fakebin'
+		New-Item -ItemType Directory -Path $script:fakeBinDir -Force | Out-Null
+		foreach ($case in @{ fakepyok = 0; fakepyng = 1 }.GetEnumerator()) {
+			$fakePython = Join-Path $script:fakeBinDir $case.Key
+			Set-Content -LiteralPath $fakePython -Value ("#!/bin/sh`nexit {0}`n" -f $case.Value) -NoNewline
+			& chmod +x $fakePython
+		}
+		$script:newYtdl = {
+			Param ([String]$Shebang)
+			$ytdl = Join-Path $TestDrive 'yt-dlp'
+			Set-Content -LiteralPath $ytdl -Value ("{0}`nprint(1)`n" -f $Shebang) -NoNewline
+			return $ytdl
+		}
+		$script:originalPath = $env:PATH
+		$script:originalYoutubedl = $script:preferredYoutubedl
+		$script:hadYtdlPath = Test-Path Variable:Script:ytdlPath
+		if ($script:hadYtdlPath) { $script:originalYtdlPath = $script:ytdlPath }
+	}
+	BeforeEach { $script:preferredYoutubedl = 'yt-dlp' }
+	AfterAll {
+		$env:PATH = $script:originalPath
+		$script:preferredYoutubedl = $script:originalYoutubedl
+		if ($script:hadYtdlPath) { $script:ytdlPath = $script:originalYtdlPath }
+		else { Remove-Variable -Name ytdlPath -Scope Script -ErrorAction SilentlyContinue }
+	}
+
+	It 'importに失敗するPythonでは警告し、Pythonのパスを含める(shebangが絶対パス)' {
+		$script:ytdlPath = & $script:newYtdl ('#!{0}' -f (Join-Path $script:fakeBinDir 'fakepyng'))
+		Test-YtdlCryptoModule -WarningVariable warn -WarningAction SilentlyContinue
+		$warn | Should -HaveCount 1
+		$warn[0].Message | Should -BeLike ('*{0}*' -f (Join-Path $script:fakeBinDir 'fakepyng'))
+		$warn[0].Message | Should -BeLike '*pycryptodomex*'
+	}
+	It 'importに失敗するPythonでは警告する(shebangが/usr/bin/env形式)' {
+		$env:PATH = '{0}:{1}' -f $script:fakeBinDir, $script:originalPath
+		$script:ytdlPath = & $script:newYtdl '#!/usr/bin/env fakepyng'
+		Test-YtdlCryptoModule -WarningVariable warn -WarningAction SilentlyContinue
+		$warn | Should -HaveCount 1
+	}
+	It 'importに成功するPythonでは警告しない' {
+		$script:ytdlPath = & $script:newYtdl ('#!{0}' -f (Join-Path $script:fakeBinDir 'fakepyok'))
+		Test-YtdlCryptoModule -WarningVariable warn -WarningAction SilentlyContinue
+		$warn | Should -HaveCount 0
+	}
+	It 'Pythonを特定できない場合は警告しない' {
+		$script:ytdlPath = & $script:newYtdl '#!/usr/bin/env nosuchpython'
+		Test-YtdlCryptoModule -WarningVariable warn -WarningAction SilentlyContinue
+		$warn | Should -HaveCount 0
+	}
+	It 'shebangがない場合は警告しない' {
+		$script:ytdlPath = & $script:newYtdl 'not a shebang'
+		Test-YtdlCryptoModule -WarningVariable warn -WarningAction SilentlyContinue
+		$warn | Should -HaveCount 0
+	}
+	It 'yt-dlpが存在しない場合は警告しない' {
+		$script:ytdlPath = Join-Path $TestDrive 'not-exist'
+		Test-YtdlCryptoModule -WarningVariable warn -WarningAction SilentlyContinue
+		$warn | Should -HaveCount 0
+	}
+	It 'yt-dlp系以外のツールでは確認しない' {
+		$script:ytdlPath = & $script:newYtdl ('#!{0}' -f (Join-Path $script:fakeBinDir 'fakepyng'))
+		$script:preferredYoutubedl = 'ytdl-patched'
+		Test-YtdlCryptoModule -WarningVariable warn -WarningAction SilentlyContinue
+		$warn | Should -HaveCount 0
+	}
+}

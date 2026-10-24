@@ -244,6 +244,67 @@ function Invoke-ToolUpdateCheck {
 }
 
 #----------------------------------------------------------------------
+# pycryptodomex(暗号化ストリームの復号に必要)の導入確認
+#----------------------------------------------------------------------
+function Test-YtdlCryptoModule {
+	<#
+		.SYNOPSIS
+			yt-dlpが使うPythonにpycryptodomexが導入されているかを確認し、未導入なら警告します。
+
+		.DESCRIPTION
+			AES-128で暗号化された動画ストリームは、pycryptodomexがないとyt-dlp内蔵の
+			ダウンローダーで処理できず、ffmpegに処理が引き渡されます。
+			その場合、証明書チェック回避設定がffmpegに引き継がれず、SSL証明書の検証エラーで
+			番組が取得できなくなります。
+			yt-dlpのshebangからPythonを特定し、Cryptodomeモジュールをimportできるかを確認します。
+			確認のみで、環境の変更は行いません。Windowsではyt-dlp.exeが依存を同梱しているため対象外です。
+
+		.OUTPUTS
+			[Void]
+			この関数は値を返しません。
+
+		.NOTES
+			この関数は以下の処理を行います：
+			1. Windows、またはyt-dlp系以外のツールの場合は何もしない
+			2. yt-dlpの1行目(shebang)から使用されるPythonを特定
+			3. 特定したPythonでCryptodomeをimportできるか確認
+			4. importできない場合のみ警告を表示(Pythonを特定できない場合は何もしない)
+	#>
+	[CmdletBinding()]
+	[OutputType([Void])]
+	Param ()
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if ($IsWindows) { return }
+	if ($script:preferredYoutubedl -notin @('yt-dlp', 'yt-dlp-nightly')) { return }
+	if (!(Test-Path -LiteralPath $script:ytdlPath -PathType Leaf)) { return }
+
+	# yt-dlpの1行目(shebang)から使用されるPythonを特定
+	$shebang = ''
+	try {
+		$stream = [System.IO.File]::OpenRead($script:ytdlPath)
+		try {
+			$buffer = New-Object byte[] 256
+			$readLength = $stream.Read($buffer, 0, $buffer.Length)
+			$shebang = ([System.Text.Encoding]::ASCII.GetString($buffer, 0, $readLength) -split '\r?\n')[0]
+		} finally { $stream.Dispose() }
+	} catch { Write-Debug $_ ; return }
+	if ($shebang -notmatch '^#!\s*(\S+)(?:\s+(\S+))?') { return }
+	$interpreter = $Matches[1]
+	if ((Split-Path -Leaf $interpreter) -eq 'env' -and $Matches[2]) { $interpreter = $Matches[2] }
+	$pythonCommand = Get-Command -Name $interpreter -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+	if (!$pythonCommand) { Write-Debug ('Python not found: {0}' -f $interpreter) ; return }
+
+	# Cryptodomeをimportできるか確認
+	try {
+		& $pythonCommand.Source -c 'import Cryptodome' *> $null
+		$exitCode = $LASTEXITCODE
+	} catch { Write-Debug $_ ; return }
+	if ($exitCode -ne 0) { Write-Warning ($script:msg.CryptoModuleNotFound -f $pythonCommand.Source) }
+
+	Remove-Variable -Name shebang, stream, buffer, readLength, interpreter, pythonCommand, exitCode -ErrorAction SilentlyContinue
+}
+
+#----------------------------------------------------------------------
 # ファイル・ディレクトリの存在チェック、なければサンプルファイルコピー
 #----------------------------------------------------------------------
 function Invoke-TverrecPathCheck {
@@ -806,7 +867,7 @@ function Update-VideoList {
 	$ignoreTitles = @(Read-IgnoreList)
 	foreach ($ignoreTitle in $ignoreTitles) {
 		if ($ignoreTitle) {
-			if (($videoInfo.seriesName -cmatch [RegEx]::Escape($ignoreTitle)) -or ($videoInfo.episodeName -cmatch [RegEx]::Escape($ignoreTitle))) {
+			if (Test-IgnoreMatch -Pattern $ignoreTitle -Target @($videoInfo.seriesName, $videoInfo.episodeName) -Mode Literal) {
 				$ignoreWord = $ignoreTitle ; Update-IgnoreList $ignoreTitle ; $ignore = $true
 				$videoInfo.episodeID = ('#{0}' -f $videoInfo.episodeID)
 				break
@@ -835,6 +896,79 @@ function Update-VideoList {
 #endregion ダウンロードリスト関連
 
 #region ダウンロード対象外リスト関連
+#----------------------------------------------------------------------
+# ダウンロード対象外リストの1行が対象文字列にマッチするかを判定
+#----------------------------------------------------------------------
+function Test-IgnoreMatch {
+	<#
+		.SYNOPSIS
+			ダウンロード対象外リストの1行が、いずれかの対象文字列にマッチするかを判定します。
+
+		.DESCRIPTION
+			行頭が`regex:`の行は、それ以降を.NETの正規表現として対象文字列に適用します。
+			(部分一致。大文字小文字は区別します。区別しない場合は`regex:(?i)...`のように指定します)
+			それ以外の行は、従来どおり呼び出し元ごとの方式で判定します。
+			- Literal : 大文字小文字を区別する部分一致(ワイルドカードは通常の文字)。リスト作成時の判定
+			- Wildcard: `-like '*行*'`によるワイルドカード判定。ダウンロード時・不要ファイル削除時の判定
+			不正な正規表現の行は警告を1回だけ表示し、マッチしないものとして扱います。
+
+		.PARAMETER Pattern
+			ダウンロード対象外リストの1行を指定します。
+
+		.PARAMETER Target
+			判定対象の文字列(番組名、ファイル名など)を指定します。いずれかにマッチすれば$trueを返します。
+
+		.PARAMETER Mode
+			`regex:`で始まらない行の判定方式(Literal/Wildcard)を指定します。
+
+		.OUTPUTS
+			[Boolean]
+			マッチした場合は$true、それ以外は$false。
+
+		.EXAMPLE
+			Test-IgnoreMatch -Pattern 'regex:冷凍庫に眠っている (第|最終)' -Target @($videoInfo.fileName) -Mode Wildcard
+	#>
+	[CmdletBinding()]
+	[OutputType([Boolean])]
+	Param (
+		[Parameter(Mandatory = $true)][String]$Pattern,
+		[Parameter(Mandatory = $true)][AllowNull()][AllowEmptyString()][String[]]$Target,
+		[Parameter(Mandatory = $true)][ValidateSet('Literal', 'Wildcard')][String]$Mode
+	)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$targets = @($Target).Where({ $_ })
+	if ($targets.Count -eq 0) { return $false }
+
+	if ($Pattern -cmatch '^regex:(.*)$') {
+		$body = $Matches[1].Normalize([Text.NormalizationForm]::FormC)
+		if (!(Test-Path Variable:Script:ignoreRegexCache)) { $script:ignoreRegexCache = @{} }
+		if (!$script:ignoreRegexCache.ContainsKey($Pattern)) {
+			$regex = $null
+			if ($body.Trim() -ne '') {
+				try { $regex = [Regex]::new($body, [Text.RegularExpressions.RegexOptions]::None, [TimeSpan]::FromSeconds(1)) }
+				catch { $regex = $null }
+			}
+			if ($null -eq $regex) { Write-Warning ($script:msg.IgnoreRegexInvalid -f $Pattern) }
+			$script:ignoreRegexCache[$Pattern] = $regex
+		}
+		$regex = $script:ignoreRegexCache[$Pattern]
+		if ($null -eq $regex) { return $false }
+		foreach ($item in $targets) {
+			try { if ($regex.IsMatch($item.Normalize([Text.NormalizationForm]::FormC))) { return $true } }
+			catch [System.Text.RegularExpressions.RegexMatchTimeoutException] { Write-Warning ($script:msg.IgnoreRegexTimeout -f $Pattern) ; return $false }
+		}
+		return $false
+	}
+
+	foreach ($item in $targets) {
+		switch ($Mode) {
+			'Literal' { if ($item -cmatch [RegEx]::Escape($Pattern)) { return $true } }
+			'Wildcard' { if ($item -like ('*{0}*' -f $Pattern)) { return $true } }
+		}
+	}
+	return $false
+}
+
 #----------------------------------------------------------------------
 # ダウンロード対象外番組の読み込み
 #----------------------------------------------------------------------
@@ -1692,7 +1826,7 @@ function Invoke-VideoDownload {
 			if (($histMatch.Count -ne 0) -or (Test-Path $videoInfo.filePath)) {
 				$ignoreTitles = @(Read-IgnoreList)
 				foreach ($ignoreTitle in $ignoreTitles) {
-					if (($videoInfo.fileName -like ('*{0}*' -f $ignoreTitle)) -or ($videoInfo.seriesName -like ('*{0}*' -f $ignoreTitle))) {
+					if (Test-IgnoreMatch -Pattern $ignoreTitle -Target @($videoInfo.fileName, $videoInfo.seriesName) -Mode Wildcard) {
 						# エピソードIDが変更になったがダウンロード対象外リストと合致	→無視する
 						Update-IgnoreList $ignoreTitle ; Write-Warning ($script:msg.IgnoreEpisodeAdded)
 						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
@@ -1712,7 +1846,7 @@ function Invoke-VideoDownload {
 				# 履歴ファイルに存在せず、実ファイルも存在せず、ダウンロード対象外リストと合致	→無視する
 				$ignoreTitles = @(Read-IgnoreList)
 				foreach ($ignoreTitle in $ignoreTitles) {
-					if (($videoInfo.fileName -like ('*{0}*' -f $ignoreTitle)) -or ($videoInfo.seriesName -like ('*{0}*' -f $ignoreTitle))) {
+					if (Test-IgnoreMatch -Pattern $ignoreTitle -Target @($videoInfo.fileName, $videoInfo.seriesName) -Mode Wildcard) {
 						Update-IgnoreList $ignoreTitle ; Write-Warning ($script:msg.IgnoreEpisodeAdded)
 						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
 						$videoInfo.fileName = '-- IGNORED --'
@@ -1743,7 +1877,7 @@ function Invoke-VideoDownload {
 				# 履歴ファイルに存在せず、実ファイルも存在せず、ダウンロード対象外リストと合致	→無視する
 				$ignoreTitles = @(Read-IgnoreList)
 				foreach ($ignoreTitle in $ignoreTitles) {
-					if (($videoInfo.fileName -like ('*{0}*' -f $ignoreTitle)) -or ($videoInfo.seriesName -like ('*{0}*' -f $ignoreTitle))) {
+					if (Test-IgnoreMatch -Pattern $ignoreTitle -Target @($videoInfo.fileName, $videoInfo.seriesName) -Mode Wildcard) {
 						Update-IgnoreList $ignoreTitle ; Write-Warning ($script:msg.IgnoreEpisodeAdded)
 						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0' ; $videoInfo.fileName = '-- IGNORED --' ; $videoInfo.fileRelPath = '-- IGNORED --'
 						$newVideo = Format-HistoryRecord $videoInfo ; $skipDownload = $true
