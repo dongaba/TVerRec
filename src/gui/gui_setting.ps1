@@ -144,6 +144,7 @@ $settingAttributes = @(
 	'$script:cleanupDownloadBaseDir',
 	'$script:cleanupSaveBaseDir',
 	'$script:emptyDownloadBaseDir',
+	'$script:moveConflictAction',
 	'$script:ytdlHttpHeader',
 	'$script:ytdlBaseArgs',
 	'$script:nonTVerYtdlBaseArgs',
@@ -458,6 +459,8 @@ $cleanupSaveBaseDirHeader.Header = $script:msg.cleanupSaveBaseDirHeader
 $cleanupSaveBaseDirText.Text = $script:msg.cleanupSaveBaseDirText
 $emptyDownloadBaseDirHeader.Header = $script:msg.emptyDownloadBaseDirHeader
 $emptyDownloadBaseDirText.Text = $script:msg.emptyDownloadBaseDirText
+$moveConflictActionHeader.Header = $script:msg.moveConflictActionHeader
+$moveConflictActionText.Text = $script:msg.moveConflictActionText
 $updateChannelHeader.Header = $script:msg.updateChannelHeader
 $updateChannelText.Text = $script:msg.updateChannelText
 # マイページタブ
@@ -625,6 +628,10 @@ $updateChannel.Items.Add('dev') | Out-Null
 $videoContainerFormat.Items.Add($script:msg.SettingDefault) | Out-Null
 $videoContainerFormat.Items.Add('mp4') | Out-Null
 $videoContainerFormat.Items.Add('ts') | Out-Null
+$moveConflictAction.Items.Add($script:msg.SettingDefault) | Out-Null
+$moveConflictAction.Items.Add('Overwrite') | Out-Null
+$moveConflictAction.Items.Add('Skip') | Out-Null
+$moveConflictAction.Items.Add('Rename') | Out-Null
 $windowShowStyle.Items.Add($script:msg.SettingDefault) | Out-Null
 $windowShowStyle.Items.Add('Minimized') | Out-Null
 $windowShowStyle.Items.Add('Hidden') | Out-Null

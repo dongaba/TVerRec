@@ -369,6 +369,13 @@ $script:cleanupSaveBaseDir = $false
 #　「$false」の場合は空ディレクトリ削除時処理を実行しません。
 $script:emptyDownloadBaseDir = $true
 
+# 番組移動時に移動先に同名のファイルがある場合の処理
+#　ファイル移動処理時に、移動先に同名のファイルが既に存在する場合の処理を設定します。
+#　「Overwrite」の場合は上書きします。
+#　「Skip」の場合は移動せず、ダウンロードディレクトリにファイルを残します。(次回のファイル移動処理でも再度スキップされます)
+#　「Rename」の場合は「ファイル名 (1).mp4」のように別名を付けて移動します。
+$script:moveConflictAction = 'Overwrite'
+
 # youtube-dlのHTTPヘッダ
 #　youtube-dlがHTTPアクセスをする際に追加のHTTPヘッダを指定することができます。
 $script:ytdlHttpHeader = 'Accept-Language:ja-JP'

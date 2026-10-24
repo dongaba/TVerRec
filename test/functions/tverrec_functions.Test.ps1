@@ -247,3 +247,75 @@ Describe 'Update-IgnoreList' {
 		{ [IO.File]::Open($script:ignoreLockFilePath, 'Open', 'ReadWrite', 'None').Dispose() } | Should -Not -Throw
 	}
 }
+
+Describe 'Move-VideoFileToDestination' {
+	BeforeEach {
+		$script:srcDir = Join-Path $TestDrive 'src'
+		$script:dstDir = Join-Path $TestDrive 'dst'
+		Remove-Item -LiteralPath $script:srcDir, $script:dstDir -Recurse -Force -ErrorAction SilentlyContinue
+		New-Item -ItemType Directory -Path $script:srcDir, $script:dstDir -Force | Out-Null
+		$script:srcFile = Join-Path $script:srcDir '番組 第1話.mp4'
+		$script:dstFile = Join-Path $script:dstDir '番組 第1話.mp4'
+		Set-Content -LiteralPath $script:srcFile -Value 'new' -NoNewline
+	}
+
+	It '同名ファイルがなければ、どの設定でも移動する' {
+		foreach ($action in @('Overwrite', 'Skip', 'Rename')) {
+			Set-Content -LiteralPath $script:srcFile -Value 'new' -NoNewline
+			Remove-Item -LiteralPath $script:dstFile -Force -ErrorAction SilentlyContinue
+			$r = Move-VideoFileToDestination -Path $script:srcFile -DestinationDir $script:dstDir -ConflictAction $action
+			$r.Result | Should -Be 'Moved'
+			$r.Destination | Should -Be $script:dstFile
+			Test-Path -LiteralPath $script:srcFile | Should -BeFalse
+			Get-Content -LiteralPath $script:dstFile -Raw | Should -Be 'new'
+		}
+	}
+	It 'Overwrite: 同名ファイルを上書きする' {
+		Set-Content -LiteralPath $script:dstFile -Value 'old' -NoNewline
+		$r = Move-VideoFileToDestination -Path $script:srcFile -DestinationDir $script:dstDir -ConflictAction 'Overwrite'
+		$r.Result | Should -Be 'Overwritten'
+		Get-Content -LiteralPath $script:dstFile -Raw | Should -Be 'new'
+		Test-Path -LiteralPath $script:srcFile | Should -BeFalse
+	}
+	It '既定値と未知の値はOverwriteとして扱う' {
+		Set-Content -LiteralPath $script:dstFile -Value 'old' -NoNewline
+		(Move-VideoFileToDestination -Path $script:srcFile -DestinationDir $script:dstDir).Result | Should -Be 'Overwritten'
+		Set-Content -LiteralPath $script:srcFile -Value 'new' -NoNewline
+		Set-Content -LiteralPath $script:dstFile -Value 'old' -NoNewline
+		(Move-VideoFileToDestination -Path $script:srcFile -DestinationDir $script:dstDir -ConflictAction 'Unknown').Result | Should -Be 'Overwritten'
+	}
+	It 'Skip: 移動せず、移動先も移動元も変更しない' {
+		Set-Content -LiteralPath $script:dstFile -Value 'old' -NoNewline
+		$r = Move-VideoFileToDestination -Path $script:srcFile -DestinationDir $script:dstDir -ConflictAction 'Skip'
+		$r.Result | Should -Be 'Skipped'
+		$r.Destination | Should -BeNullOrEmpty
+		Get-Content -LiteralPath $script:dstFile -Raw | Should -Be 'old'
+		Get-Content -LiteralPath $script:srcFile -Raw | Should -Be 'new'
+	}
+	It 'Rename: 既存ファイルを残し、連番を付けて移動する' {
+		Set-Content -LiteralPath $script:dstFile -Value 'old' -NoNewline
+		$r = Move-VideoFileToDestination -Path $script:srcFile -DestinationDir $script:dstDir -ConflictAction 'Rename'
+		$r.Result | Should -Be 'Renamed'
+		$r.Destination | Should -Be (Join-Path $script:dstDir '番組 第1話 (1).mp4')
+		Get-Content -LiteralPath $script:dstFile -Raw | Should -Be 'old'
+		Get-Content -LiteralPath $r.Destination -Raw | Should -Be 'new'
+		Test-Path -LiteralPath $script:srcFile | Should -BeFalse
+	}
+	It 'Rename: 連番も重複している場合は次の番号を使う' {
+		Set-Content -LiteralPath $script:dstFile -Value 'old' -NoNewline
+		Set-Content -LiteralPath (Join-Path $script:dstDir '番組 第1話 (1).mp4') -Value 'old1' -NoNewline
+		$r = Move-VideoFileToDestination -Path $script:srcFile -DestinationDir $script:dstDir -ConflictAction 'Rename'
+		$r.Destination | Should -Be (Join-Path $script:dstDir '番組 第1話 (2).mp4')
+		Get-Content -LiteralPath (Join-Path $script:dstDir '番組 第1話 (1).mp4') -Raw | Should -Be 'old1'
+	}
+	It 'ファイル名に[ ]などを含んでも移動できる' {
+		$src = Join-Path $script:srcDir '大奥[有功] 第1話.mp4'
+		Set-Content -LiteralPath $src -Value 'x' -NoNewline
+		$r = Move-VideoFileToDestination -Path $src -DestinationDir $script:dstDir -ConflictAction 'Skip'
+		$r.Result | Should -Be 'Moved'
+		Test-Path -LiteralPath (Join-Path $script:dstDir '大奥[有功] 第1話.mp4') | Should -BeTrue
+	}
+	It '移動元がなければ例外にする(呼び出し側で警告)' {
+		{ Move-VideoFileToDestination -Path (Join-Path $script:srcDir 'none.mp4') -DestinationDir $script:dstDir } | Should -Throw
+	}
+}

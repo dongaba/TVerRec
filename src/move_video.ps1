@@ -195,8 +195,13 @@ if ($moveDirs) {
 		# 同名ディレクトリが存在する場合は配下のファイルを移動
 		if ((Test-Path -LiteralPath $moveFromPath) -and (Test-Path -LiteralPath $moveToPath)) {
 			Write-Output ('　{0}\* -> {1}' -f $moveFromPath, $moveToPath)
-			try { Get-ChildItem -LiteralPath $moveFromPath -File | Move-Item -Destination $moveToPath -Force | Out-Null }
-			catch { Write-Warning ($script:msg.MoveFileFailed -f $moveFromPath) }
+			foreach ($moveFile in @(Get-ChildItem -LiteralPath $moveFromPath -File)) {
+				try {
+					$moveResult = Move-VideoFileToDestination -Path $moveFile.FullName -DestinationDir $moveToPath -ConflictAction $script:moveConflictAction
+					if ($moveResult.Result -eq 'Skipped') { Write-Warning ($script:msg.MoveFileSkipped -f $moveFile.Name) }
+					elseif ($moveResult.Result -eq 'Renamed') { Write-Output ($script:msg.MoveFileRenamed -f $moveFile.Name, (Split-Path -Leaf $moveResult.Destination)) }
+				} catch { Write-Warning ($script:msg.MoveFileFailed -f $moveFile.FullName) }
+			}
 		} else { Write-Warning ($script:msg.MoveFileNotAccessible -f $moveFromPath) }
 	}
 }
@@ -275,7 +280,7 @@ $toastUpdateParams = @{
 }
 Update-ProgressToast @toastUpdateParams
 
-Remove-Variable -Name args, toastShowParams, moveToPathsHash, moveFromPathsHash, moveDirs, moveDir, totalStartTime, dirNum, dirTotal, dir, secElapsed, secRemaining, minRemaining, progressRate, toastUpdateParams, targetFolderName, moveFromPath, moveToPath, emptyDirs, emptyDirTotal, emptyDirNum -ErrorAction SilentlyContinue
+Remove-Variable -Name args, toastShowParams, moveToPathsHash, moveFromPathsHash, moveDirs, moveDir, totalStartTime, dirNum, dirTotal, dir, secElapsed, secRemaining, minRemaining, progressRate, toastUpdateParams, targetFolderName, moveFromPath, moveToPath, moveFile, moveResult, emptyDirs, emptyDirTotal, emptyDirNum -ErrorAction SilentlyContinue
 
 Invoke-GarbageCollection
 

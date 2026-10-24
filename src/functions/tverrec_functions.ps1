@@ -1061,7 +1061,7 @@ function Update-IgnoreList {
 				[IO.File]::WriteAllText($tempPath, $ignoreContent, [Text.UTF8Encoding]::new($false))
 				# 共有フォルダやウイルス対策ソフトによる一時的なアクセス競合に備えて、置換を数回リトライする
 				for ($retry = 1 ; $retry -le 5 ; $retry++) {
-					try { [IO.File]::Replace($tempPath, $script:ignoreFilePath, $null) ; break }
+					try { [IO.File]::Replace($tempPath, $script:ignoreFilePath, [NullString]::Value) ; break }
 					catch { if ($retry -ge 5) { throw } ; Start-Sleep -Milliseconds 200 }
 				}
 				Start-Sleep -Seconds 1
@@ -2821,3 +2821,65 @@ function Invoke-StatisticsCheck {
 	Remove-Variable -Name operation, tverType, tverID, statisticsBase, epochTime, userProperties, clientEnv, value, eventParams, clientSetting, paramValue, gaBody, gaURL, gaKey, gaID, gaHeaders, response -ErrorAction SilentlyContinue
 }
 #endregion 環境
+
+#region 番組ファイル移動関連
+#----------------------------------------------------------------------
+# 番組ファイルの移動(移動先に同名ファイルがある場合の動作を指定可能)
+#----------------------------------------------------------------------
+function Move-VideoFileToDestination {
+	<#
+		.SYNOPSIS
+			ファイルを移動先ディレクトリに移動します。移動先に同名ファイルがある場合の動作を指定できます。
+
+		.DESCRIPTION
+			ファイルを移動先ディレクトリに移動します。
+			移動先に同名のファイルが既に存在する場合は、ConflictActionに従って動作します。
+			- Overwrite: 上書きします(既定。従来の動作)
+			- Skip     : 移動せず、移動元にファイルを残します
+			- Rename   : 「ファイル名 (1).mp4」のように、重複しない名前を付けて移動します
+			上記以外の値はOverwriteとして扱います。
+
+		.PARAMETER Path
+			移動するファイルのパスを指定します。
+
+		.PARAMETER DestinationDir
+			移動先ディレクトリのパスを指定します。
+
+		.PARAMETER ConflictAction
+			移動先に同名ファイルがある場合の動作(Overwrite/Skip/Rename)を指定します。
+
+		.OUTPUTS
+			[PSCustomObject]
+			Result(Moved/Overwritten/Skipped/Renamed)とDestination(移動後のパス。Skippedの場合は$null)を持つオブジェクト。
+
+		.EXAMPLE
+			Move-VideoFileToDestination -Path '/download/番組/第1話.mp4' -DestinationDir '/save/番組' -ConflictAction 'Skip'
+	#>
+	[CmdletBinding()]
+	[OutputType([PSCustomObject])]
+	Param (
+		[Parameter(Mandatory = $true)][String]$Path,
+		[Parameter(Mandatory = $true)][String]$DestinationDir,
+		[Parameter(Mandatory = $false)][String]$ConflictAction = 'Overwrite'
+	)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$fileName = Split-Path -Leaf $Path
+	$destPath = Join-Path $DestinationDir $fileName
+	$result = 'Moved'
+	if (Test-Path -LiteralPath $destPath) {
+		if ($ConflictAction -eq 'Skip') { return [PSCustomObject]@{ Result = 'Skipped' ; Destination = $null } }
+		elseif ($ConflictAction -eq 'Rename') {
+			$baseName = [System.IO.Path]::GetFileNameWithoutExtension($fileName)
+			$extension = [System.IO.Path]::GetExtension($fileName)
+			$num = 1
+			do {
+				$destPath = Join-Path $DestinationDir ('{0} ({1}){2}' -f $baseName, $num, $extension)
+				$num++
+			} while (Test-Path -LiteralPath $destPath)
+			$result = 'Renamed'
+		} else { $result = 'Overwritten' }
+	}
+	Move-Item -LiteralPath $Path -Destination $destPath -Force -ErrorAction Stop
+	return [PSCustomObject]@{ Result = $result ; Destination = $destPath }
+}
+#endregion 番組ファイル移動関連

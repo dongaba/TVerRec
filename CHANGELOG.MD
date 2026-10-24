@@ -8,6 +8,7 @@
 - TVerのtagを収集してキーワードサンプルファイルとの漏れを確認するスクリプト`test/tools/check_tags.ps1`を追加
 - macOS/Linuxで、yt-dlpが使うPythonにpycryptodomexが導入されていない場合に、起動時に警告を表示する`Test-YtdlCryptoModule`を追加 #307
 - ダウンロード対象外リスト(`ignore.conf`)で、行頭に`regex:`を付けた行を正規表現として扱えるように`Test-IgnoreMatch`を追加(`regex:`で始まらない行の動作は従来どおり) #190
+- 番組移動時に移動先に同名のファイルがある場合の動作を選べる設定`$script:moveConflictAction`(Overwrite/Skip/Rename)を追加。既定は従来どおりの上書き(Overwrite) #230
 
 ### 3.4.9 Changed
 
