@@ -220,3 +220,30 @@ Describe 'Test-IgnoreMatch' {
 		}
 	}
 }
+
+Describe 'Update-IgnoreList' {
+	BeforeEach {
+		$script:fileInfo = @{}
+		$script:fileStream = @{}
+		$script:ignoreFilePath = Join-Path $TestDrive 'ignore.conf'
+		$script:ignoreFileSamplePath = Join-Path $TestDrive 'ignore.sample.conf'
+		$script:ignoreLockFilePath = Join-Path $TestDrive 'ignore.lock'
+		New-Item -Path $script:ignoreLockFilePath -ItemType File -Force | Out-Null
+		[IO.File]::WriteAllText($script:ignoreFileSamplePath, ";; sample`n", [Text.UTF8Encoding]::new($false))
+		[IO.File]::WriteAllText($script:ignoreFilePath, "番組A`n番組B`n番組C`n", [Text.UTF8Encoding]::new($false))
+	}
+
+	It '使用した番組を先頭(コメントの直後)に移動し、LF・BOMなしで保存すること' {
+		Update-IgnoreList -ignoreTitle '番組B' -WarningAction SilentlyContinue
+		$bytes = [IO.File]::ReadAllBytes($script:ignoreFilePath)
+		($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) | Should -BeFalse
+		$text = [IO.File]::ReadAllText($script:ignoreFilePath)
+		$text | Should -Be ";; sample`n番組B`n番組A`n番組C`n"
+	}
+	It '一時ファイルが残らず、ロックも解放されること' {
+		Update-IgnoreList -ignoreTitle '番組C' -WarningAction SilentlyContinue
+		@(Get-ChildItem -LiteralPath $TestDrive -Filter 'ignore.conf.*.tmp').Count | Should -Be 0
+		$script:fileStream.ContainsKey($script:ignoreLockFilePath) | Should -BeFalse
+		{ [IO.File]::Open($script:ignoreLockFilePath, 'Open', 'ReadWrite', 'None').Dispose() } | Should -Not -Throw
+	}
+}

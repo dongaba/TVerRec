@@ -1054,14 +1054,23 @@ function Update-IgnoreList {
 			if ($ignoreTarget) { $ignoreListNew += $ignoreTarget }
 			if ($ignoreElse) { $ignoreListNew += $ignoreElse }
 			# 改行コードLFを強制 + NFCで出力
+			# 一時ファイルに書き出してから置換する(読み取り側が書き込み途中の不完全な内容を見ないようにする。失敗時は元ファイルに触れない)
+			$tempPath = '{0}.{1}.tmp' -f $script:ignoreFilePath, [Guid]::NewGuid().ToString('N')
 			try {
-				$ignoreListNew.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC) |
-					Out-File -LiteralPath $script:ignoreFilePath -Encoding UTF8 -NoNewline ; Start-Sleep -Seconds 1
+				$ignoreContent = (-join $ignoreListNew.ForEach({ '{0}{1}' -f $_, "`n" })).Normalize([Text.NormalizationForm]::FormC)
+				[IO.File]::WriteAllText($tempPath, $ignoreContent, [Text.UTF8Encoding]::new($false))
+				# 共有フォルダやウイルス対策ソフトによる一時的なアクセス競合に備えて、置換を数回リトライする
+				for ($retry = 1 ; $retry -le 5 ; $retry++) {
+					try { [IO.File]::Replace($tempPath, $script:ignoreFilePath, $null) ; break }
+					catch { if ($retry -ge 5) { throw } ; Start-Sleep -Milliseconds 200 }
+				}
+				Start-Sleep -Seconds 1
 				Write-Debug ($script:msg.IgnoreFileSortCompleted)
-			} catch {
-				$ignoreLists.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC) |
-					Out-File -LiteralPath $script:ignoreFilePath -Encoding UTF8 -NoNewline ; Start-Sleep -Seconds 1
-			} finally { Start-Sleep -Seconds 1 }
+			} catch { Write-Warning ($script:msg.IgnoreFileSortFailed) }
+			finally {
+				try { if ([IO.File]::Exists($tempPath)) { [IO.File]::Delete($tempPath) } } catch { Write-Debug $_.Exception.Message }
+				Start-Sleep -Seconds 1
+			}
 		} catch { Write-Warning ($script:msg.IgnoreFileSortFailed) }
 		finally { Unlock-File $script:ignoreLockFilePath | Out-Null }
 	}

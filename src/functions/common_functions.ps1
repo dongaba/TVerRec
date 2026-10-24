@@ -922,7 +922,7 @@ function Wait-FileLock {
 			待機の上限秒数(既定: 60)。
 
 		.NOTES
-			- `Lock-File` を1秒間隔で再試行する。
+			- `Lock-File` を100〜500ミリ秒のランダムな間隔で再試行する(他プロセスが短い間隔でロックを取り直す場合でも、解放の隙間に入りやすくするため)。
 			- 上限を超えるとロック対象のパスと直近の失敗理由を警告に出し、例外をスローする。
 			- 呼び出し元は try/catch/finally で囲み、finally で `Unlock-File` を呼ぶこと。
 	#>
@@ -933,6 +933,7 @@ function Wait-FileLock {
 		[Int32]$timeoutSeconds = 60
 	)
 	$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+	$lastNoticeSeconds = -1
 	while ($true) {
 		$lockResult = Lock-File $path
 		if ($lockResult.result) { return }
@@ -940,8 +941,12 @@ function Wait-FileLock {
 			Write-Warning ($script:msg.LockWaitTimeout -f $timeoutSeconds, $path, $lockResult.errorMessage)
 			throw ($script:msg.LockWaitTimeout -f $timeoutSeconds, $path, $lockResult.errorMessage)
 		}
-		Write-Information ($script:msg.WaitingLock)
-		Start-Sleep -Seconds 1
+		# 待機メッセージは再試行間隔が短くなっても約1秒に1回だけ表示する
+		if (($stopwatch.Elapsed.TotalSeconds - $lastNoticeSeconds) -ge 1) {
+			Write-Information ($script:msg.WaitingLock)
+			$lastNoticeSeconds = $stopwatch.Elapsed.TotalSeconds
+		}
+		Start-Sleep -Milliseconds (Get-Random -Minimum 100 -Maximum 501)
 	}
 }
 
