@@ -153,3 +153,70 @@ Describe 'Test-YtdlCryptoModule' -Skip:$IsWindows {
 		$warn | Should -HaveCount 0
 	}
 }
+
+Describe 'Test-IgnoreMatch' {
+	BeforeEach { $script:ignoreRegexCache = @{} }
+
+	Context 'regex:で始まらない行(従来動作)' {
+		It 'Literal: 部分一致する' {
+			Test-IgnoreMatch -Pattern 'ちいかわ' -Target @('シリーズ', 'ちいかわ 第1話') -Mode Literal | Should -BeTrue
+		}
+		It 'Literal: 大文字小文字を区別する' {
+			Test-IgnoreMatch -Pattern 'abc' -Target @('ABC') -Mode Literal | Should -BeFalse
+		}
+		It 'Literal: *やの[ ]を通常の文字として扱う' {
+			Test-IgnoreMatch -Pattern 'あい*えお' -Target @('あいうえお') -Mode Literal | Should -BeFalse
+			Test-IgnoreMatch -Pattern 'あい*えお' -Target @('あい*えお') -Mode Literal | Should -BeTrue
+		}
+		It 'Wildcard: *がワイルドカードとして働く' {
+			Test-IgnoreMatch -Pattern 'あい*えお' -Target @('あいかきくけこえお') -Mode Wildcard | Should -BeTrue
+		}
+		It 'Wildcard: 大文字小文字を区別しない' {
+			Test-IgnoreMatch -Pattern 'abc' -Target @('xxABCxx') -Mode Wildcard | Should -BeTrue
+		}
+		It 'いずれのTargetにもマッチしなければ$false、Targetが空・nullでも$false' {
+			Test-IgnoreMatch -Pattern 'zzz' -Target @('abc', 'def') -Mode Wildcard | Should -BeFalse
+			Test-IgnoreMatch -Pattern 'zzz' -Target @($null, '') -Mode Wildcard | Should -BeFalse
+			Test-IgnoreMatch -Pattern 'zzz' -Target $null -Mode Literal | Should -BeFalse
+		}
+	}
+
+	Context 'regex:で始まる行' {
+		It '選択(a|b)で1行にまとめられる' {
+			$p = 'regex:私の夫は冷凍庫に眠っている (第|最終)'
+			Test-IgnoreMatch -Pattern $p -Target @('私の夫は冷凍庫に眠っている 第3話') -Mode Wildcard | Should -BeTrue
+			Test-IgnoreMatch -Pattern $p -Target @('私の夫は冷凍庫に眠っている 最終話') -Mode Wildcard | Should -BeTrue
+			Test-IgnoreMatch -Pattern $p -Target @('私の夫は冷凍庫に眠っている 特別編') -Mode Wildcard | Should -BeFalse
+		}
+		It 'どのモードでも同じ結果になる' {
+			Test-IgnoreMatch -Pattern 'regex:^abc\d+$' -Target @('abc123') -Mode Literal | Should -BeTrue
+			Test-IgnoreMatch -Pattern 'regex:^abc\d+$' -Target @('abc123') -Mode Wildcard | Should -BeTrue
+		}
+		It '大文字小文字を区別し、(?i)で区別しなくできる' {
+			Test-IgnoreMatch -Pattern 'regex:abc' -Target @('ABC') -Mode Wildcard | Should -BeFalse
+			Test-IgnoreMatch -Pattern 'regex:(?i)abc' -Target @('ABC') -Mode Wildcard | Should -BeTrue
+		}
+		It '[ ]は文字クラスとして働く(エスケープした[ ]は通常の文字)' {
+			Test-IgnoreMatch -Pattern 'regex:大奥～誕生\[有功･家光篇\]' -Target @('大奥～誕生[有功･家光篇] 第1話') -Mode Wildcard | Should -BeTrue
+		}
+		It 'いずれかのTargetにマッチすれば$true' {
+			Test-IgnoreMatch -Pattern 'regex:^シリーズA$' -Target @('エピソード.mp4', 'シリーズA') -Mode Wildcard | Should -BeTrue
+		}
+		It '不正な正規表現は警告して$false(警告は1回だけ)' {
+			$r1 = Test-IgnoreMatch -Pattern 'regex:(' -Target @('abc') -Mode Wildcard -WarningVariable w1 -WarningAction SilentlyContinue
+			$r2 = Test-IgnoreMatch -Pattern 'regex:(' -Target @('abc') -Mode Wildcard -WarningVariable w2 -WarningAction SilentlyContinue
+			$r1 | Should -BeFalse
+			$r2 | Should -BeFalse
+			$w1 | Should -HaveCount 1
+			$w2 | Should -HaveCount 0
+		}
+		It '本文が空の「regex:」はすべてにマッチさせず、警告して$false' {
+			Test-IgnoreMatch -Pattern 'regex:' -Target @('abc') -Mode Wildcard -WarningVariable w -WarningAction SilentlyContinue | Should -BeFalse
+			$w | Should -HaveCount 1
+		}
+		It '合成文字(NFD)の対象でもNFCの正規表現にマッチする' {
+			$nfd = 'が'.Normalize([Text.NormalizationForm]::FormD)
+			Test-IgnoreMatch -Pattern 'regex:が' -Target @($nfd) -Mode Wildcard | Should -BeTrue
+		}
+	}
+}
