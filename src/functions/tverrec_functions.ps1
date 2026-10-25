@@ -2097,7 +2097,7 @@ function Wait-YtdlProcess {
 
 		.DESCRIPTION
 			youtube-dlプロセスの数を監視し、指定された並列ダウンロード数以下になるまで
-			待機します。定期的にプロセス数を表示しながら、60秒間隔でチェックします。
+			待機します。定期的にプロセス数を表示しながら、10秒間隔でチェックします。
 
 		.PARAMETER parallelDownloadFileNum
 			並列ダウンロードの最大数を指定します。
@@ -2110,7 +2110,7 @@ function Wait-YtdlProcess {
 			1. youtube-dlプロセスの数を取得
 			2. 指定された数以下になるまで待機
 			3. プロセス数を表示
-			4. 60秒間隔でチェックを繰り返す
+			4. 10秒間隔でチェックを繰り返す
 	#>
 	[OutputType([Void])]
 	Param ([Int32]$parallelDownloadFileNum)
@@ -2124,7 +2124,7 @@ function Wait-YtdlProcess {
 		Write-Output ($script:msg.WaitingNumDownloadProc -f $parallelDownloadFileNum)
 		# Write-Information ($script:msg.NumDownloadProc -f (Get-Date), ($ytdlCount + $ffmpegCount))
 		Write-Information ($script:msg.NumDownloadProc -f (Get-Date), $ytdlCount)
-		Start-Sleep -Seconds 60
+		Start-Sleep -Seconds 10
 	}
 	Remove-Variable -Name parallelDownloadFileNum, ytdlCount -ErrorAction SilentlyContinue
 }
@@ -2395,8 +2395,8 @@ function Invoke-VideoDownload {
 	}
 	try { Invoke-Ytdl ([Ref]$videoInfo) }
 	catch { Write-Warning ($script:msg.InvokeYtdlFailed) }
-	# 5秒待機
-	Start-Sleep -Seconds 5
+	# 1秒待機
+	Start-Sleep -Seconds 1
 	Remove-Variable -Name keyword, videoLink, force, newVideo, skipDownload, episodeID, histFileData, histMatch, ignoreTitles, ignoreTitle, subtitleTracking, subtitleStatus, subtitleRecheck, subtitleHists, sameEpisodeHists -ErrorAction SilentlyContinue
 }
 
@@ -3243,11 +3243,15 @@ function Invoke-StatisticsCheck {
 	)
 	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $operation)
 	if (!$env:PESTER) {
-		$progressPreference = 'silentlyContinue'
+		# 統計送信は待たずに非同期で投げる(ダウンロード処理を遅くしないため)。失敗しても無視する
+		if (!$script:statisticsHttpClient) {
+			Add-Type -AssemblyName System.Net.Http -ErrorAction SilentlyContinue
+			$script:statisticsHttpClient = [System.Net.Http.HttpClient]::new()
+			$script:statisticsHttpClient.Timeout = [TimeSpan]::FromSeconds(5)
+		}
 		$statisticsBase = 'https://hits.sh/github.com/dongaba/TVerRec/'
-		try { Invoke-WebRequest -Uri ('{0}{1}.svg' -f $statisticsBase, $operation) -Method 'GET' -TimeoutSec 5 | Out-Null }
+		try { $countTask = $script:statisticsHttpClient.GetAsync(('{0}{1}.svg' -f $statisticsBase, $operation)) }
 		catch { Write-Debug ('Failed to collect count') }
-		finally { $progressPreference = 'Continue' }
 		if ($operation -eq 'search') { return }
 		$epochTime = [Int64]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() * 1000)
 		$userProperties = @{	# max 25 properties, max 24 chars of property name, 36 chars of property value
@@ -3287,18 +3291,14 @@ function Invoke-StatisticsCheck {
 		else { $gaURL = 'https://www.google-analytics.com/mp/collect' }
 		$gaKey = 'api_secret=3URTslDhRVu4Qpb66nDyAA'
 		$gaID = 'measurement_id=G-V9TJN18D5Z'
-		$gaHeaders = @{
-			'HOST'         = 'www.google-analytics.com'
-			'Content-Type' = 'application/json'
-		}
-		$progressPreference = 'silentlyContinue'
 		try {
-			$response = Invoke-RestMethod -Uri ('{0}?{1}&{2}' -f $gaURL, $gaKey, $gaID) -Method 'POST' -Headers $gaHeaders -Body $gaBody -TimeoutSec 5	#$script:timeoutSec
-			if ($DebugPreference -eq 'Continue') { Write-Debug ('GA Response: {0}' -f $response) }
+			$gaContent = [System.Net.Http.StringContent]::new($gaBody, [System.Text.Encoding]::UTF8, 'application/json')
+			$gaTask = $script:statisticsHttpClient.PostAsync(('{0}?{1}&{2}' -f $gaURL, $gaKey, $gaID), $gaContent)
+			# デバッグ時のみ応答を待って内容を表示する
+			if ($DebugPreference -eq 'Continue') { Write-Debug ('GA Response: {0}' -f $gaTask.GetAwaiter().GetResult().Content.ReadAsStringAsync().GetAwaiter().GetResult()) }
 		} catch { Write-Debug ('Failed to collect statistics') }
-		finally { $progressPreference = 'Continue' }
 	}
-	Remove-Variable -Name operation, tverType, tverID, statisticsBase, epochTime, userProperties, clientEnv, value, eventParams, clientSetting, paramValue, gaBody, gaURL, gaKey, gaID, gaHeaders, response -ErrorAction SilentlyContinue
+	Remove-Variable -Name operation, tverType, tverID, statisticsBase, epochTime, userProperties, clientEnv, value, eventParams, clientSetting, paramValue, gaBody, gaURL, gaKey, gaID, gaContent, gaTask, countTask -ErrorAction SilentlyContinue
 }
 #endregion 環境
 
