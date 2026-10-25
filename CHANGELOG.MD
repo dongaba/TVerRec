@@ -7,12 +7,10 @@
 - GUI設定画面に、起動時のPowerShellの新バージョン確認を無効化する設定(`$script:disableCheckPowerShellUpdate`)を追加
 - 新世代API(`contents-api.tver.jp`)が返す放送局IDと放送局名の対応表`resources/broadcaster.conf`と、対応表から放送局名を取得する`Get-BroadcasterName`を追加。放送局名は放送局別フォルダ名などに使われるため、旧APIの`BroadcasterName`と同じ名称を登録している。対応表にない放送局IDの場合は、旧APIで放送局名を取得して警告を表示するので、警告が出たら対応表に追記する
 - 番組情報のシーズン名・エピソード番号・放送日の整形処理を新旧のAPIで共通にする`Format-VideoInfoText`と、JSONの入れ子のプロパティを安全に取得する`Get-JsonProperty`を追加
-- `Get-VideoInfo`の新旧APIの戻り値を比較する調査用スクリプト`dev/Compare-VideoInfoApi.ps1`を追加
-- `Get-BroadcasterName`、`Format-VideoInfoText`、新世代APIを使う`Get-VideoInfo`のテストを追加
 
 ### 3.5.0 Changed
 
-- Chrome拡張機能「TVerRec Assistant」をv0.2.0に更新。TVerの通信をブロックしてURLから`platform_uid`・`platform_token`・`member_sid`を拾う方式をやめ、開いているTVerのページが提供するSDK(`window.TVer.getStatus()`)から取得するように変更。TVerのAPI仕様変更の影響を受けにくくなり、Refreshボタンやエラーモーダルの自動クリックが不要になった。未ログインの場合は`platform_uid`・`platform_token`、TVer IDにログイン中の場合は`member_sid`を表示し、`user_settings.ps1`用の形式でコピーできる。必要な権限は`activeTab`・`scripting`のみとなり、`declarativeNetRequest`関連の権限とルール定義(`json/`)、`background.js`、`tver.js`、`error.html`は不要になった
+- Chrome拡張機能「TVerRec Assistant」をv0.2.0に更新。TVerの通信をブロックしてURLから`platform_uid`・`platform_token`・`member_sid`を拾う方式をやめ、開いているTVerのページが提供するSDK(`window.TVer.getStatus()`)から取得するように変更。TVerのAPI仕様変更の影響を受けにくくなり、Refreshボタンやエラーモーダルの自動クリックが不要になった。未ログインの場合は`platform_uid`・`platform_token`、TVer IDにログイン中の場合は`member_sid`を表示し、`user_settings.ps1`用の形式でコピーできる
 - 字幕の有無を、エピソード情報のJSON(`isSubtitle`)から取得するように変更(`Get-VideoInfo`が`isSubtitle`を返し、`Get-VideoSubtitleStatus`が優先して使用)。取得できない場合は従来どおりyt-dlpで確認する
 - 不要ファイルやリネームに失敗したファイルを削除する際に、削除するファイル名を表示するように変更
 - GUI設定画面の各設定の説明に、既定値を追記
@@ -26,13 +24,16 @@
 ### 3.5.0 Fixed
 
 - ダウンロード履歴(`history.csv`)を整理する`Optimize-HistoryFile`と`Limit-HistoryFile`が、履歴ファイルを直接上書きしていたため、書き込み中にGUIの「処理停止」などで強制停止されると履歴が途中で切れる恐れがあった問題を修正。一時ファイルに書き出してから置換する`Save-HistoryFile`を追加し、書き込みに失敗・中断しても元の履歴を保持するように変更(置換時は直前の履歴を`history.csv.bak`に退避)。整理の結果が0件になる場合は、空ファイルではなくCSVヘッダーだけを残す
+- ダウンロードスケジュールによる停止(`Suspend-Process`)で、停止時間帯に23時台を含めると、翌日0時ではなく約24時間後まで待機してしまう問題を修正
+- `Save-HistoryFile`に`$null`を渡すと例外になる問題を修正(0件として扱い、ヘッダーのみを残す)
+- `Wait-DownloadProcess`が参照するメッセージ`WaitingDownloadProcess`が`messages.json`に存在しなかった問題を修正
 
 ## [3.4.9](https://github.com/dongaba/TVerRec/releases/tag/v3.4.9)
 
 ### 3.4.9 Added
 
 - TVerの番組URLからエピソードIDを抽出する`Get-EpisodeIDFromURL`を追加
-- TVerのtagを収集してキーワードサンプルファイルとの漏れを確認するスクリプト`test/tools/check_tags.ps1`を追加
+- TVerのtagを収集してキーワードサンプルファイルとの漏れを確認するスクリプト`dev/check_tags.ps1`を追加
 - macOS/Linuxで、yt-dlpが使うPythonにpycryptodomexが導入されていない場合に、起動時に警告を表示する`Test-YtdlCryptoModule`を追加 #307
 - ダウンロード対象外リスト(`ignore.conf`)で、行頭に`regex:`を付けた行を正規表現として扱えるように`Test-IgnoreMatch`を追加(`regex:`で始まらない行の動作は従来どおり) #190
 - 番組移動時に、移動先のファイルに字幕があり、移動元のファイルに字幕がない場合は、字幕が失われるため上書きしないように変更(`$script:moveConflictAction`が`Overwrite`の場合。字幕の有無の確認にffprobeを使用) #312

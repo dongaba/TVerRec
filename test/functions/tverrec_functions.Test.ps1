@@ -1930,3 +1930,520 @@ Describe 'Remove-UnMovedTempFile' {
 		{ Remove-UnMovedTempFile } | Should -Not -Throw
 	}
 }
+
+#----------------------------------------------------------------------
+# ファイル・ディレクトリの存在チェック
+#----------------------------------------------------------------------
+Describe 'Invoke-TverrecPathCheck' {
+	BeforeEach {
+		Mock Write-Warning {}
+		$script:pcDir = Join-Path $TestDrive ('pc{0}' -f [Guid]::NewGuid().ToString('N'))
+		New-Item -ItemType Directory -Path $script:pcDir -Force | Out-Null
+		$script:pcSample = Join-Path $script:pcDir 'sample.conf'
+		Set-Content -LiteralPath $script:pcSample -Value 'sample' -NoNewline
+	}
+	It 'ディレクトリが存在すれば、何もしないこと' {
+		{ Invoke-TverrecPathCheck -Path $script:pcDir -errorMessage 'ディレクトリ' } | Should -Not -Throw
+		Should -Invoke Write-Warning -Times 0 -Exactly
+	}
+	It 'ファイルが存在すれば、サンプルがあっても上書きしないこと' {
+		$target = Join-Path $script:pcDir 'target.conf'
+		Set-Content -LiteralPath $target -Value 'mine' -NoNewline
+		Invoke-TverrecPathCheck -Path $target -errorMessage 'ファイル' -isFile -sampleFilePath $script:pcSample
+		[IO.File]::ReadAllText($target) | Should -Be 'mine'
+	}
+	It 'ディレクトリが存在せずサンプルもなければ、例外にすること' {
+		{ Invoke-TverrecPathCheck -Path (Join-Path $script:pcDir 'nodir') -errorMessage '保存先' } | Should -Throw -ExpectedMessage ($script:msg.NotExist -f '保存先')
+	}
+	It 'ファイルが存在せずサンプルもなければ、例外にすること' {
+		{ Invoke-TverrecPathCheck -Path (Join-Path $script:pcDir 'no.conf') -errorMessage '設定' -isFile } | Should -Throw -ExpectedMessage ($script:msg.NotExist -f '設定')
+	}
+	It 'サンプルのパスが指定されていても、サンプル自体がなければ例外にすること' {
+		{ Invoke-TverrecPathCheck -Path (Join-Path $script:pcDir 'no.conf') -errorMessage '設定' -isFile -sampleFilePath (Join-Path $script:pcDir 'nosample') } | Should -Throw
+	}
+	It 'ファイルを指定したのにディレクトリしかなければ、存在しないものとして扱うこと' {
+		{ Invoke-TverrecPathCheck -Path $script:pcDir -errorMessage '設定' -isFile } | Should -Throw
+	}
+	It '-continueを指定すると、存在しなくても警告だけで続行し、何も作らないこと' {
+		$target = Join-Path $script:pcDir 'nodir'
+		{ Invoke-TverrecPathCheck -Path $target -errorMessage '保存先' -continue $true } | Should -Not -Throw
+		Should -Invoke Write-Warning -Times 1 -Exactly
+		Test-Path -LiteralPath $target | Should -BeFalse
+	}
+	It 'ファイルが存在せずサンプルがあれば、サンプルをコピーして作成すること' {
+		$target = Join-Path $script:pcDir 'new.conf'
+		Invoke-TverrecPathCheck -Path $target -errorMessage '設定' -isFile -sampleFilePath $script:pcSample
+		[IO.File]::ReadAllText($target) | Should -Be 'sample'
+		Should -Invoke Write-Warning -Times 0 -Exactly
+	}
+}
+
+#----------------------------------------------------------------------
+# 設定で指定したファイル・ディレクトリの存在チェック
+#----------------------------------------------------------------------
+Describe 'Invoke-RequiredFileCheck' {
+	BeforeAll {
+		$script:rfNames = @('downloadBaseDir', 'downloadWorkDir', 'saveBaseDir', 'saveBaseDirArray', 'ytdlPath', 'ffmpegPath', 'ffprobePath', 'keywordFilePath', 'keywordFileSamplePath', 'ignoreFilePath', 'ignoreFileSamplePath', 'histFilePath', 'histFileSamplePath', 'listFilePath', 'listFileSamplePath', 'redownloadWhenSubtitleAdded')
+		$script:rfSaved = @{}
+		foreach ($n in $script:rfNames) {
+			$script:rfSaved[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' }
+		}
+	}
+	AfterAll {
+		foreach ($n in $script:rfSaved.Keys) {
+			if ($script:rfSaved[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:rfSaved[$n] }
+		}
+	}
+	BeforeEach {
+		Mock Write-Warning {}
+		Mock Add-HistorySubtitleColumn { 'Exists' }
+		$root = Join-Path $TestDrive ('rf{0}' -f [Guid]::NewGuid().ToString('N'))
+		$script:rfRoot = $root
+		foreach ($d in 'download', 'work', 'save1', 'save2') { New-Item -ItemType Directory -Path (Join-Path $root $d) -Force | Out-Null }
+		foreach ($f in 'ytdl', 'ffmpeg', 'ffprobe', 'keyword.conf', 'ignore.conf', 'history.csv', 'list.csv', 'keyword.sample', 'ignore.sample', 'history.sample', 'list.sample') {
+			Set-Content -LiteralPath (Join-Path $root $f) -Value ('content of {0}' -f $f) -NoNewline
+		}
+		$script:downloadBaseDir = Join-Path $root 'download'
+		$script:downloadWorkDir = Join-Path $root 'work'
+		$script:saveBaseDir = ''
+		$script:ytdlPath = Join-Path $root 'ytdl'
+		$script:ffmpegPath = Join-Path $root 'ffmpeg'
+		$script:ffprobePath = Join-Path $root 'ffprobe'
+		$script:keywordFilePath = Join-Path $root 'keyword.conf' ; $script:keywordFileSamplePath = Join-Path $root 'keyword.sample'
+		$script:ignoreFilePath = Join-Path $root 'ignore.conf' ; $script:ignoreFileSamplePath = Join-Path $root 'ignore.sample'
+		$script:histFilePath = Join-Path $root 'history.csv' ; $script:histFileSamplePath = Join-Path $root 'history.sample'
+		$script:listFilePath = Join-Path $root 'list.csv' ; $script:listFileSamplePath = Join-Path $root 'list.sample'
+		$script:redownloadWhenSubtitleAdded = $true
+	}
+	It '必要なファイルとディレクトリがそろっていれば、例外にならず警告も出ないこと' {
+		{ Invoke-RequiredFileCheck | Out-Null } | Should -Not -Throw
+		Should -Invoke Write-Warning -Times 0 -Exactly
+	}
+	It 'ダウンロード先と作業ディレクトリの末尾の区切り文字を取り除くこと' {
+		$script:downloadBaseDir = (Join-Path $script:rfRoot 'download') + '/'
+		$script:downloadWorkDir = (Join-Path $script:rfRoot 'work') + '/'
+		Invoke-RequiredFileCheck | Out-Null
+		$script:downloadBaseDir | Should -Be (Join-Path $script:rfRoot 'download')
+		$script:downloadWorkDir | Should -Be (Join-Path $script:rfRoot 'work')
+	}
+	It 'ダウンロード先が未設定なら、例外にすること' {
+		$script:downloadBaseDir = ''
+		{ Invoke-RequiredFileCheck | Out-Null } | Should -Throw -ExpectedMessage ($script:msg.DirNotSpecified -f $script:msg.DownloadDir)
+	}
+	It 'ダウンロード先が存在しなければ、例外にすること' {
+		$script:downloadBaseDir = Join-Path $script:rfRoot 'nodownload'
+		{ Invoke-RequiredFileCheck | Out-Null } | Should -Throw -ExpectedMessage ($script:msg.NotExist -f $script:msg.DownloadDir)
+	}
+	It '作業ディレクトリが未設定なら、例外にすること' {
+		$script:downloadWorkDir = ''
+		{ Invoke-RequiredFileCheck | Out-Null } | Should -Throw -ExpectedMessage ($script:msg.DirNotSpecified -f $script:msg.WorkDir)
+	}
+	It '作業ディレクトリがダウンロード先と同じなら、例外にすること' {
+		$script:downloadWorkDir = $script:downloadBaseDir
+		{ Invoke-RequiredFileCheck | Out-Null } | Should -Throw -ExpectedMessage ($script:msg.WorkDirOverlap -f $script:downloadBaseDir, $script:downloadBaseDir)
+	}
+	It '作業ディレクトリがダウンロード先を含むフォルダなら、例外にすること' {
+		$script:downloadWorkDir = $script:rfRoot
+		{ Invoke-RequiredFileCheck | Out-Null } | Should -Throw -ExpectedMessage ($script:msg.WorkDirOverlap -f $script:rfRoot, $script:downloadBaseDir)
+	}
+	It '番組移動先は「;」区切りで複数指定でき、空白や末尾の区切り文字を取り除くこと' {
+		$s1 = Join-Path $script:rfRoot 'save1' ; $s2 = Join-Path $script:rfRoot 'save2'
+		$script:saveBaseDir = ('{0} ; {1}/' -f $s1, $s2)
+		Invoke-RequiredFileCheck | Out-Null
+		$script:saveBaseDirArray | Should -Be @($s1, $s2)
+		Should -Invoke Write-Warning -Times 0 -Exactly
+	}
+	It '番組移動先が存在しなくても、警告だけで続行すること' {
+		$script:saveBaseDir = ('{0};{1}' -f (Join-Path $script:rfRoot 'save1'), (Join-Path $script:rfRoot 'nosave'))
+		{ Invoke-RequiredFileCheck | Out-Null } | Should -Not -Throw
+		Should -Invoke Write-Warning -Times 1 -Exactly
+	}
+	It 'youtube-dlの実行ファイルがなければ、例外にすること' {
+		$script:ytdlPath = Join-Path $script:rfRoot 'noytdl'
+		{ Invoke-RequiredFileCheck | Out-Null } | Should -Throw -ExpectedMessage ($script:msg.NotExist -f 'youtube-dl')
+	}
+	It 'ffmpegまたはffprobeの実行ファイルがなければ、例外にすること' {
+		$script:ffmpegPath = Join-Path $script:rfRoot 'noffmpeg'
+		{ Invoke-RequiredFileCheck | Out-Null } | Should -Throw -ExpectedMessage ($script:msg.NotExist -f 'ffmpeg')
+	}
+	It 'ffprobeの実行ファイルがなければ、例外にすること' {
+		$script:ffprobePath = Join-Path $script:rfRoot 'noffprobe'
+		{ Invoke-RequiredFileCheck | Out-Null } | Should -Throw -ExpectedMessage ($script:msg.NotExist -f 'ffprobe')
+	}
+	It 'キーワード・無視・履歴・リストのファイルがなければ、サンプルからコピーして作成すること' {
+		foreach ($f in 'keyword.conf', 'ignore.conf', 'history.csv', 'list.csv') { Remove-Item -LiteralPath (Join-Path $script:rfRoot $f) }
+		Invoke-RequiredFileCheck | Out-Null
+		[IO.File]::ReadAllText($script:keywordFilePath) | Should -Be 'content of keyword.sample'
+		[IO.File]::ReadAllText($script:ignoreFilePath) | Should -Be 'content of ignore.sample'
+		[IO.File]::ReadAllText($script:histFilePath) | Should -Be 'content of history.sample'
+		[IO.File]::ReadAllText($script:listFilePath) | Should -Be 'content of list.sample'
+	}
+	It '既存のキーワードファイルは、サンプルで上書きしないこと' {
+		Invoke-RequiredFileCheck | Out-Null
+		[IO.File]::ReadAllText($script:keywordFilePath) | Should -Be 'content of keyword.conf'
+	}
+	It 'ファイルもサンプルもなければ、例外にすること' {
+		Remove-Item -LiteralPath $script:keywordFilePath
+		Remove-Item -LiteralPath $script:keywordFileSamplePath
+		{ Invoke-RequiredFileCheck | Out-Null } | Should -Throw -ExpectedMessage ($script:msg.NotExist -f $script:msg.KeywordFile)
+	}
+	It '履歴に字幕の列を追加したときは、そのメッセージを表示すること' {
+		Mock Add-HistorySubtitleColumn { 'Added' }
+		$out = @(Invoke-RequiredFileCheck)
+		$out | Should -Contain $script:msg.HistorySubtitleColumnAdded
+		$script:redownloadWhenSubtitleAdded | Should -BeTrue
+	}
+	It '履歴に字幕の列を追加できなかったときは、警告を出し、字幕追加時の再ダウンロードを無効にすること' {
+		Mock Add-HistorySubtitleColumn { 'Failed' }
+		Invoke-RequiredFileCheck | Out-Null
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.HistorySubtitleColumnAddFailed }
+		$script:redownloadWhenSubtitleAdded | Should -BeFalse
+	}
+}
+
+#----------------------------------------------------------------------
+# ffmpeg/ffprobeプロセスの起動
+#----------------------------------------------------------------------
+Describe 'Invoke-FFmpegProcess' {
+	BeforeAll {
+		$script:ffNames = @('ffmpegErrorLogPath', 'windowShowStyle')
+		$script:ffSaved = @{}
+		foreach ($n in $script:ffNames) {
+			$script:ffSaved[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' }
+		}
+	}
+	AfterAll {
+		foreach ($n in $script:ffSaved.Keys) {
+			if ($script:ffSaved[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:ffSaved[$n] }
+		}
+	}
+	BeforeEach {
+		$script:ffmpegErrorLogPath = Join-Path $TestDrive 'ffmpeg_error.log'
+		$script:windowShowStyle = 'Hidden'
+		$script:ffExit = 0
+		Mock Invoke-StatisticsCheck {}
+		Mock Write-Warning {}
+		Mock Start-Process {
+			$p = [PSCustomObject]@{ Handle = 1 ; ExitCode = $script:ffExit }
+			$p | Add-Member -MemberType ScriptMethod -Name WaitForExit -Value {} -PassThru
+		}
+	}
+	It 'プロセスの終了コードを返すこと' {
+		$script:ffExit = 0
+		Invoke-FFmpegProcess -filePath 'ffmpeg-x' -ffmpegArgs '-i a' -execName 'ffmpeg' | Should -Be 0
+		$script:ffExit = 1
+		Invoke-FFmpegProcess -filePath 'ffmpeg-x' -ffmpegArgs '-i a' -execName 'ffmpeg' | Should -Be 1
+	}
+	It '指定したパス・引数で、エラー出力をログに書き出し、終了を待って起動すること' {
+		Invoke-FFmpegProcess -filePath 'ffmpeg-x' -ffmpegArgs '-i a' -execName 'ffmpeg' | Out-Null
+		Should -Invoke Start-Process -Times 1 -Exactly -ParameterFilter {
+			($FilePath -eq 'ffmpeg-x') -and ($ArgumentList -eq '-i a') -and ($RedirectStandardError -eq $script:ffmpegErrorLogPath) -and $PassThru -and $Wait
+		}
+	}
+	It '統計情報の送信(validate)を呼ぶこと' {
+		Invoke-FFmpegProcess -filePath 'ffmpeg-x' -ffmpegArgs '-i a' -execName 'ffmpeg' | Out-Null
+		Should -Invoke Invoke-StatisticsCheck -Times 1 -Exactly -ParameterFilter { $Operation -eq 'validate' }
+	}
+	It 'Windows以外では、標準出力を/dev/nullに捨て、ウィンドウスタイルは指定しないこと' -Skip:$IsWindows {
+		Invoke-FFmpegProcess -filePath 'ffmpeg-x' -ffmpegArgs '-i a' -execName 'ffmpeg' | Out-Null
+		Should -Invoke Start-Process -Times 1 -Exactly -ParameterFilter { ($RedirectStandardOutput -eq '/dev/null') -and !$WindowStyle }
+	}
+	It 'Windowsでは、設定したウィンドウスタイルで起動すること' -Skip:(-not $IsWindows) {
+		Invoke-FFmpegProcess -filePath 'ffmpeg-x' -ffmpegArgs '-i a' -execName 'ffmpeg' | Out-Null
+		Should -Invoke Start-Process -Times 1 -Exactly -ParameterFilter { $WindowStyle -eq 'Hidden' }
+	}
+	It '起動に失敗したときは警告を出し、何も返さないこと' {
+		Mock Start-Process { throw 'cannot start' }
+		$result = Invoke-FFmpegProcess -filePath 'ffmpeg-x' -ffmpegArgs '-i a' -execName 'ffprobe'
+		$result | Should -BeNullOrEmpty
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq ($script:msg.ExecFailed -f 'ffprobe') }
+	}
+}
+
+#----------------------------------------------------------------------
+# 番組ファイルに埋め込まれた字幕の「0秒字幕」を修復
+#----------------------------------------------------------------------
+Describe 'Repair-SubtitleTiming' {
+	BeforeAll {
+		$script:rsNames = @('ffmpegPath', 'ffprobePath')
+		$script:rsSaved = @{}
+		foreach ($n in $script:rsNames) {
+			$script:rsSaved[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' }
+		}
+		$script:rsZeroSrt = "1`n00:00:01,000 --> 00:00:01,000`n行A`n`n2`n00:00:01,000 --> 00:00:03,000`n行B`n`n3`n00:00:05,000 --> 00:00:06,000`n行C`n"
+		$script:rsPlainSrt = "1`n00:00:01,000 --> 00:00:02,000`n行A`n`n2`n00:00:03,000 --> 00:00:04,000`n行B`n"
+		$script:rsTempCount = { @(Get-ChildItem -LiteralPath ([IO.Path]::GetTempPath()) -Filter 'tverrec_sub_*' -Directory -ErrorAction SilentlyContinue).Count }
+	}
+	AfterAll {
+		foreach ($n in $script:rsSaved.Keys) {
+			if ($script:rsSaved[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:rsSaved[$n] }
+		}
+	}
+	BeforeEach {
+		Mock Write-Warning {}
+		$dir = Join-Path $TestDrive ('rs{0}' -f [Guid]::NewGuid().ToString('N'))
+		New-Item -ItemType Directory -Path $dir -Force | Out-Null
+		$script:rsVideo = Join-Path $dir 'ep.mp4'
+		[IO.File]::WriteAllBytes($script:rsVideo, [byte[]](, [byte]120 * 1000))	# 'x' x 1000
+		$script:ffprobePath = Join-Path $dir 'ffprobe-fake'
+		Set-Content -LiteralPath $script:ffprobePath -Value 'x'
+		$script:ffmpegPath = Join-Path $dir 'ffmpeg-fake'
+		# 各ツールの挙動を差し替えるための設定
+		$script:rsProbeExit = 0 ; $script:rsProbeLines = @('2,jpn')
+		$script:rsExtractExit = 0 ; $script:rsSrt = @($script:rsZeroSrt, $script:rsZeroSrt, $script:rsZeroSrt)
+		$script:rsRemuxExit = 0 ; $script:rsOutSize = 1000
+		$script:rsCheckExit = 0 ; $script:rsCheckCount = 1
+		$script:rsRemuxArgs = $null ; $script:rsMergedSrt = $null ; $script:rsRemuxCalled = 0
+		Mock Start-Process {
+			$last = [regex]::Match($ArgumentList, '"([^"]+)"\s*$').Groups[1].Value
+			$exit = 0
+			if ($FilePath -eq $script:ffprobePath) {
+				if ($ArgumentList -match 'stream_tags=language') {
+					$exit = $script:rsProbeExit
+					if ($exit -eq 0) { [IO.File]::WriteAllLines($RedirectStandardOutput, [string[]]@($script:rsProbeLines)) }
+				} else {
+					$exit = $script:rsCheckExit
+					[IO.File]::WriteAllLines($RedirectStandardOutput, [string[]]@(1..$script:rsCheckCount | ForEach-Object { "$_" }))
+				}
+			} elseif ($ArgumentList -match 'mov_text') {
+				$script:rsRemuxCalled++
+				$script:rsRemuxArgs = $ArgumentList
+				$workDir = Split-Path $last -Parent
+				$script:rsMergedSrt = @(0..2 | ForEach-Object { $f = Join-Path $workDir ('sub{0}.srt' -f $_) ; if (Test-Path -LiteralPath $f) { [IO.File]::ReadAllText($f) } })
+				$exit = $script:rsRemuxExit
+				if ($exit -eq 0) { [IO.File]::WriteAllBytes($last, [byte[]](, [byte]82 * $script:rsOutSize)) }	# 'R'
+			} else {
+				$exit = $script:rsExtractExit
+				$idx = [int][regex]::Match($ArgumentList, '-map 0:s:(\d+)').Groups[1].Value
+				if ($exit -eq 0) { [IO.File]::WriteAllText($last, $script:rsSrt[$idx]) }
+			}
+			[PSCustomObject]@{ ExitCode = $exit }
+		}
+	}
+	It '映像ファイルがなければ、何も起動せず$falseを返すこと' {
+		Repair-SubtitleTiming -VideoPath (Join-Path $TestDrive 'nothing.mp4') | Should -BeFalse
+		Should -Invoke Start-Process -Times 0 -Exactly
+	}
+	It 'ffprobeがなければ、何も起動せず$falseを返すこと' {
+		Remove-Item -LiteralPath $script:ffprobePath
+		Repair-SubtitleTiming -VideoPath $script:rsVideo | Should -BeFalse
+		Should -Invoke Start-Process -Times 0 -Exactly
+	}
+	It 'ffprobeが失敗したときは、$falseを返し、元のファイルを変更しないこと' {
+		$script:rsProbeExit = 1
+		Repair-SubtitleTiming -VideoPath $script:rsVideo | Should -BeFalse
+		[IO.File]::ReadAllBytes($script:rsVideo)[0] | Should -Be 120
+	}
+	It '字幕ストリームがなければ、$falseを返し、字幕の取り出しをしないこと' {
+		$script:rsProbeLines = @()
+		Repair-SubtitleTiming -VideoPath $script:rsVideo | Should -BeFalse
+		Should -Invoke Start-Process -Times 1 -Exactly
+	}
+	It '0秒字幕がなければ、$falseを返し、埋め込み直さず、元のファイルを変更しないこと' {
+		$script:rsSrt = @($script:rsPlainSrt, $script:rsPlainSrt, $script:rsPlainSrt)
+		Repair-SubtitleTiming -VideoPath $script:rsVideo | Should -BeFalse
+		$script:rsRemuxCalled | Should -Be 0
+		[IO.File]::ReadAllBytes($script:rsVideo)[0] | Should -Be 120
+	}
+	It '0秒字幕があれば、マージした字幕で埋め込み直してファイルを差し替え、$trueを返すこと' {
+		Repair-SubtitleTiming -VideoPath $script:rsVideo | Should -BeTrue
+		[IO.File]::ReadAllBytes($script:rsVideo)[0] | Should -Be 82
+		$script:rsRemuxCalled | Should -Be 1
+		$script:rsMergedSrt[0] | Should -BeLike "*行A`n行B*"
+		@(Get-ChildItem -LiteralPath (Split-Path $script:rsVideo -Parent) -Filter '*.subfix.tmp').Count | Should -Be 0
+	}
+	It '映像・音声はコピーし、字幕は差し替え、言語を引き継ぐこと' {
+		Repair-SubtitleTiming -VideoPath $script:rsVideo | Should -BeTrue
+		$script:rsRemuxArgs | Should -BeLike '*-c copy -c:s mov_text*'
+		$script:rsRemuxArgs | Should -BeLike '*-map 0 -map -0:s -map -0:d -map 1:0*'
+		$script:rsRemuxArgs | Should -BeLike '*-map_chapters 0*'
+		$script:rsRemuxArgs | Should -BeLike '*-metadata:s:s:0 language=jpn*'
+	}
+	It '複数の字幕ストリームは順に取り出して埋め込み、言語が不明(und)のストリームには言語を指定しないこと' {
+		$script:rsProbeLines = @('2,jpn', '3,und')
+		$script:rsCheckCount = 2
+		Repair-SubtitleTiming -VideoPath $script:rsVideo | Should -BeTrue
+		$script:rsRemuxArgs | Should -BeLike '*-map 1:0 -map 2:0*'
+		$script:rsRemuxArgs | Should -BeLike '*language=jpn*'
+		$script:rsRemuxArgs | Should -Not -BeLike '*language=und*'
+		$script:rsRemuxArgs | Should -Not -BeLike '*-metadata:s:s:1*'
+	}
+	It '字幕の取り出しに失敗したときは、$falseを返し、元のファイルを変更しないこと' {
+		$script:rsExtractExit = 1
+		Repair-SubtitleTiming -VideoPath $script:rsVideo | Should -BeFalse
+		[IO.File]::ReadAllBytes($script:rsVideo)[0] | Should -Be 120
+	}
+	It '埋め込み直しに失敗したときは、$falseを返し、元のファイルを変更しないこと' {
+		$script:rsRemuxExit = 1
+		Repair-SubtitleTiming -VideoPath $script:rsVideo | Should -BeFalse
+		[IO.File]::ReadAllBytes($script:rsVideo)[0] | Should -Be 120
+	}
+	It '作成したファイルが元の90%未満なら、$falseを返し、元のファイルを変更しないこと' {
+		$script:rsOutSize = 800
+		Repair-SubtitleTiming -VideoPath $script:rsVideo | Should -BeFalse
+		[IO.File]::ReadAllBytes($script:rsVideo)[0] | Should -Be 120
+	}
+	It '作成したファイルが元の90%ちょうどなら、差し替えること' {
+		$script:rsOutSize = 900
+		Repair-SubtitleTiming -VideoPath $script:rsVideo | Should -BeTrue
+		[IO.File]::ReadAllBytes($script:rsVideo)[0] | Should -Be 82
+	}
+	It '字幕ストリームの数が変わってしまったときは、$falseを返し、元のファイルを変更しないこと' {
+		$script:rsCheckCount = 2
+		Repair-SubtitleTiming -VideoPath $script:rsVideo | Should -BeFalse
+		[IO.File]::ReadAllBytes($script:rsVideo)[0] | Should -Be 120
+	}
+	It '想定外の例外が起きたときは、警告を出し、$falseを返し、元のファイルを変更しないこと' {
+		Mock Start-Process { throw 'unexpected' }
+		Repair-SubtitleTiming -VideoPath $script:rsVideo | Should -BeFalse
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.SubtitleTimingRepairFailed }
+		[IO.File]::ReadAllBytes($script:rsVideo)[0] | Should -Be 120
+	}
+	It '成功しても失敗しても、一時ディレクトリを残さないこと' {
+		$before = & $script:rsTempCount
+		Repair-SubtitleTiming -VideoPath $script:rsVideo | Out-Null
+		$script:rsExtractExit = 1
+		Repair-SubtitleTiming -VideoPath $script:rsVideo | Out-Null
+		& $script:rsTempCount | Should -Be $before
+	}
+}
+
+#----------------------------------------------------------------------
+# 番組の整合性チェック
+#----------------------------------------------------------------------
+Describe 'Invoke-IntegrityCheck' {
+	BeforeAll {
+		$script:icNames = @('downloadBaseDir', 'ffmpegErrorLogPath', 'histFilePath', 'histLockFilePath', 'simplifiedValidation', 'ffmpegPath', 'ffprobePath')
+		$script:icSaved = @{}
+		foreach ($n in $script:icNames) {
+			$script:icSaved[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' }
+		}
+	}
+	AfterAll {
+		foreach ($n in $script:icSaved.Keys) {
+			if ($script:icSaved[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:icSaved[$n] }
+		}
+	}
+	BeforeEach {
+		$dir = Join-Path $TestDrive ('ic{0}' -f [Guid]::NewGuid().ToString('N'))
+		New-Item -ItemType Directory -Path (Join-Path $dir 'sub') -Force | Out-Null
+		$script:icDir = $dir
+		$script:downloadBaseDir = $dir
+		$script:ffmpegErrorLogPath = Join-Path $dir 'ffmpeg_error.log'
+		$script:histFilePath = Join-Path $dir 'history.csv'
+		$script:histLockFilePath = Join-Path $dir 'history.lock'
+		$script:simplifiedValidation = $false
+		$script:ffmpegPath = 'ffmpeg-x'
+		$script:ffprobePath = 'ffprobe-x'
+		$script:icVideo = Join-Path $dir 'sub/ep.mp4'
+		Set-Content -LiteralPath $script:icVideo -Value 'video' -NoNewline
+		$script:icHist = [PSCustomObject]@{ videoPage = 'https://tver.jp/episodes/epIC000001' ; videoPath = 'sub/ep.mp4' ; downloadDate = '2026-01-01 00:00:00' ; videoValidated = '0' }
+		$script:icVideoHist = [PSCustomObject]@{ videoPage = 'https://tver.jp/episodes/epIC000001' ; videoPath = 'sub/ep.mp4' }
+		$script:icExit = 0 ; $script:icErrLines = 0 ; $script:icExported = @()
+		Mock Get-LatestHistory { @($script:icHist) }
+		Mock Wait-FileLock {}
+		Mock Unlock-File {}
+		Mock Start-Sleep {}
+		Mock Write-Warning {}
+		Mock Export-Csv { $script:icExported += $InputObject.videoValidated }
+		Mock Invoke-FFmpegProcess {
+			if ($script:icErrLines -gt 0) { [IO.File]::WriteAllLines($script:ffmpegErrorLogPath, [string[]]@(1..$script:icErrLines | ForEach-Object { "error $_" })) }
+			return $script:icExit
+		}
+	}
+	It '未チェックの番組は、チェック中(2)を記録してからチェックし、問題がなければチェック済み(1)を記録して、ファイルを残すこと' {
+		$out = @(Invoke-IntegrityCheck -videoHist $script:icVideoHist)
+		$script:icExported | Should -Be @('2', '1')
+		$out | Should -Contain $script:msg.ValidationOK
+		Test-Path -LiteralPath $script:icVideo | Should -BeTrue
+		Should -Invoke Invoke-FFmpegProcess -Times 1 -Exactly
+		Should -Invoke Wait-FileLock -Times 2 -Exactly
+		Should -Invoke Unlock-File -Times 2 -Exactly
+	}
+	It '終了コードが0以外なら、チェック失敗(3)を記録し、警告を出し、ファイルを削除すること' {
+		$script:icExit = 1
+		Invoke-IntegrityCheck -videoHist $script:icVideoHist | Out-Null
+		$script:icExported | Should -Be @('2', '3')
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.ValidationNG }
+		Test-Path -LiteralPath $script:icVideo | Should -BeFalse
+	}
+	It 'エラーが30行までなら正常とし、31行以上ならチェック失敗とすること' {
+		$script:icErrLines = 30
+		Invoke-IntegrityCheck -videoHist $script:icVideoHist | Out-Null
+		$script:icExported | Should -Be @('2', '1')
+		Test-Path -LiteralPath $script:icVideo | Should -BeTrue
+		$script:icHist.videoValidated = '0' ; $script:icExported = @()
+		$script:icErrLines = 31
+		Invoke-IntegrityCheck -videoHist $script:icVideoHist | Out-Null
+		$script:icExported | Should -Be @('2', '3')
+		Test-Path -LiteralPath $script:icVideo | Should -BeFalse
+	}
+	It 'チェックのあと、ffmpegのエラーログを削除すること' {
+		$script:icErrLines = 3
+		Invoke-IntegrityCheck -videoHist $script:icVideoHist | Out-Null
+		Test-Path -LiteralPath $script:ffmpegErrorLogPath | Should -BeFalse
+	}
+	It '完全検査では、デコードオプションを付けてffmpegで検査すること' {
+		Invoke-IntegrityCheck -videoHist $script:icVideoHist -decodeOption '-hwaccel auto' | Out-Null
+		Should -Invoke Invoke-FFmpegProcess -Times 1 -Exactly -ParameterFilter {
+			($filePath -eq 'ffmpeg-x') -and ($execName -eq 'ffmpeg') -and ($ffmpegArgs -like '*-xerror -hwaccel auto -i "*sub*ep.mp4" -f null -*')
+		}
+	}
+	It '簡易検査では、ffprobeで検査すること' {
+		$script:simplifiedValidation = $true
+		Invoke-IntegrityCheck -videoHist $script:icVideoHist | Out-Null
+		Should -Invoke Invoke-FFmpegProcess -Times 1 -Exactly -ParameterFilter {
+			($filePath -eq 'ffprobe-x') -and ($execName -eq 'ffprobe') -and ($ffmpegArgs -like '*-err_detect explode -i "*sub*ep.mp4"')
+		}
+	}
+	It 'チェック済み(1)の番組は、チェックせずに他プロセスでチェック済みと表示すること' {
+		$script:icHist.videoValidated = '1'
+		$out = @(Invoke-IntegrityCheck -videoHist $script:icVideoHist)
+		$out | Should -Contain $script:msg.ValidationCompleted
+		Should -Invoke Invoke-FFmpegProcess -Times 0 -Exactly
+		$script:icExported.Count | Should -Be 0
+	}
+	It 'チェック中(2)の番組は、チェックせずに他プロセスでチェック中と表示すること' {
+		$script:icHist.videoValidated = '2'
+		$out = @(Invoke-IntegrityCheck -videoHist $script:icVideoHist)
+		$out | Should -Contain $script:msg.ValidationInProgress
+		Should -Invoke Invoke-FFmpegProcess -Times 0 -Exactly
+	}
+	It 'チェック失敗(3)の番組は、チェックせずに他プロセスで整合性エラーがあったと表示すること' {
+		$script:icHist.videoValidated = '3'
+		$out = @(Invoke-IntegrityCheck -videoHist $script:icVideoHist)
+		$out | Should -Contain $script:msg.ValidationFailed
+		Should -Invoke Invoke-FFmpegProcess -Times 0 -Exactly
+	}
+	It '想定外のステータスなら、履歴から削除されたものとして警告し、チェックしないこと' {
+		$script:icHist.videoValidated = '9'
+		Invoke-IntegrityCheck -videoHist $script:icVideoHist | Out-Null
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq ($script:msg.HistRecordRemoved -f $script:icVideoHist.videoPage) }
+		Should -Invoke Invoke-FFmpegProcess -Times 0 -Exactly
+	}
+	It '履歴にレコードがなければ、警告を出し、履歴は更新せず、ダウンロードしたファイルを削除すること' {
+		Mock Get-LatestHistory { @() }
+		Invoke-IntegrityCheck -videoHist $script:icVideoHist | Out-Null
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.HistRecordNotFound }
+		$script:icExported.Count | Should -Be 0
+		Test-Path -LiteralPath $script:icVideo | Should -BeFalse
+	}
+	It '別の番組の履歴しかなければ、レコードなしとして扱うこと' {
+		$script:icHist.videoPage = 'https://tver.jp/episodes/epOTHER0001'
+		Invoke-IntegrityCheck -videoHist $script:icVideoHist | Out-Null
+		$script:icExported.Count | Should -Be 0
+		Test-Path -LiteralPath $script:icVideo | Should -BeFalse
+	}
+	It 'チェック中(2)の記録に失敗したときは、警告を出してチェックせず、ロックを解放すること' {
+		Mock Export-Csv { throw 'disk full' }
+		Invoke-IntegrityCheck -videoHist $script:icVideoHist | Out-Null
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.HistUpdateFailed }
+		Should -Invoke Invoke-FFmpegProcess -Times 0 -Exactly
+		Should -Invoke Unlock-File -Times 1 -Exactly
+		Test-Path -LiteralPath $script:icVideo | Should -BeTrue
+	}
+}
