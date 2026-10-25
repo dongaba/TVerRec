@@ -3574,3 +3574,70 @@ Describe 'Get-LatestHistory' {
 		Should -Invoke Unlock-File -Times 1 -Exactly
 	}
 }
+
+#----------------------------------------------------------------------
+# 異常系の分岐(履歴の置換リトライ・整理の失敗・リスト読み込み失敗・削除失敗・正規表現タイムアウト)
+Describe '異常系の分岐' {
+	BeforeAll {
+		$script:abSaved = @{}
+		foreach ($n in 'histFilePath', 'histLockFilePath', 'listFilePath', 'listLockFilePath', 'deleteUnrenamedFile', 'downloadBaseDir', 'ignoreRegexCache') {
+			$script:abSaved[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' }
+		}
+	}
+	AfterAll {
+		foreach ($n in $script:abSaved.Keys) {
+			if ($script:abSaved[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:abSaved[$n] }
+		}
+	}
+	BeforeEach {
+		Mock Wait-FileLock {}
+		Mock Unlock-File {}
+		Mock Start-Sleep {}
+		Mock Write-Warning {}
+		$script:abDir = Join-Path $TestDrive ('ab{0}' -f [Guid]::NewGuid().ToString('N'))
+		New-Item -ItemType Directory -Path $script:abDir -Force | Out-Null
+		$script:histFilePath = Join-Path $script:abDir 'history.csv'
+		$script:histLockFilePath = Join-Path $script:abDir 'history.lock'
+		$script:listFilePath = Join-Path $script:abDir 'list.csv'
+		$script:listLockFilePath = Join-Path $script:abDir 'list.lock'
+	}
+
+	It 'Save-HistoryFile: 置換に失敗し続けたら5回試して例外を返し、一時ファイルを残さない' {
+		# 置換先(履歴ファイル)がないと[IO.File]::Replaceは失敗する
+		{ Save-HistoryFile -Lines @('a', 'b') } | Should -Throw
+		Should -Invoke Start-Sleep -Times 4 -Exactly
+		@(Get-ChildItem -LiteralPath $script:abDir -Filter '*.tmp').Count | Should -Be 0
+	}
+
+	It 'Optimize-HistoryFile: 履歴ファイルを処理できなくても例外にせず、警告を出してロックを解除する' {
+		{ Optimize-HistoryFile } | Should -Not -Throw
+		Should -Invoke Write-Warning -Times 2 -Exactly -ParameterFilter { $Message -eq $script:msg.OptimizeHistFailed }
+		Should -Invoke Unlock-File -Times 2 -Exactly
+	}
+
+	It 'Get-LinkFromDownloadList: リストを読み込めなければ例外を返し、ロックを解除する' {
+		Set-Content -LiteralPath $script:listFilePath -Value '"EpisodeID"' -Encoding UTF8
+		Mock Import-Csv { throw 'broken' }
+		{ Get-LinkFromDownloadList } | Should -Throw -ExpectedMessage ($script:msg.LoadFailed -f $script:msg.ListFile)
+		Should -Invoke Unlock-File -Times 1 -Exactly
+	}
+
+	It 'Remove-UnRenamedTempFile: 削除に失敗しても例外にせず、警告を出す' -Skip:$IsWindows {
+		$script:downloadBaseDir = $script:abDir
+		$script:deleteUnrenamedFile = $true
+		Set-Content -LiteralPath (Join-Path $script:abDir 'epa1b2c3d4.mp4') -Value 'x' -NoNewline
+		Mock Write-Information {}
+		Mock Write-Output {}
+		Mock Remove-Item { throw 'locked' }
+		{ Remove-UnRenamedTempFile } | Should -Not -Throw
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -like ('*' + $script:msg.FileCannotBeDeleted) }
+	}
+
+	It 'Test-IgnoreMatch: 正規表現の評価がタイムアウトしたら警告を出し、マッチしない扱いにする' {
+		$script:ignoreRegexCache = @{}
+		$target = ('a' * 40) + '!'
+		Test-IgnoreMatch -Pattern 'regex:^(a+)+$' -Target @($target) -Mode Literal | Should -BeFalse
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq ($script:msg.IgnoreRegexTimeout -f 'regex:^(a+)+$') }
+	}
+}

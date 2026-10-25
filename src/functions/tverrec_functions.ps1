@@ -1009,7 +1009,7 @@ function Optimize-HistoryFile {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	try {
 		Wait-FileLock $script:histLockFilePath
-		$originalLists = @(Get-Content -LiteralPath $script:histFilePath -Encoding UTF8)
+		$originalLists = @(Get-Content -LiteralPath $script:histFilePath -Encoding UTF8 -ErrorAction Stop)
 		# NULL文字(0x00)を含む行をフィルタリング
 		$cleanedHist = $originalLists.Where({ $_ -notmatch "`0" })
 		# 一時ファイル経由で置換(途中で失敗・強制停止されても元の履歴は壊れない)

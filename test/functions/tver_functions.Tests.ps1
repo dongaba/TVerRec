@@ -1010,3 +1010,128 @@ Describe 'TVerとの接続確認' -Tag 'TVer' {
 		$info.seriesName | Should -Not -BeNullOrEmpty
 	}
 }
+
+#----------------------------------------------------------------------
+# 追加テスト: 分岐の取りこぼし(エラー系・未対応パターン)
+#----------------------------------------------------------------------
+Describe 'Get-VideoLinksFromKeyword(talents/mypage)' {
+	BeforeEach {
+		Mock Get-LinkFromBuffer {}
+		Mock Get-LinkFromMyPage {}
+	}
+	It 'talents指定では、タレントIDをバッファ処理に渡すこと' {
+		Get-VideoLinksFromKeyword -keyword 'talents/tl1' | Out-Null
+		Should -Invoke Get-LinkFromBuffer -Times 1 -Exactly -ParameterFilter { $TverIDType -eq 'talentLinks' -and @($TverIDs) -contains 'tl1' }
+	}
+	It 'mypage指定では、ページ名を渡してマイページの取得を呼ぶこと' {
+		Get-VideoLinksFromKeyword -keyword 'mypage/fav' | Out-Null
+		Should -Invoke Get-LinkFromMyPage -Times 1 -Exactly -ParameterFilter { $Page -eq 'fav' }
+	}
+}
+
+Describe 'Get-SearchResult(エラー系・未対応の種類)' {
+	BeforeEach { Mock Write-Warning {} }
+	It 'HTTPのタイムアウトでは、タイムアウトの警告を出して中断すること' {
+		Mock Invoke-RestMethod { throw [System.Exception]::new('The request was canceled due to the configured HttpClient.Timeout of 30 seconds elapsing.') }
+		$lc = New-TestLinkCollection
+		{ Get-SearchResult -baseURL 'https://example/api' -LinkCollection ([Ref]$lc) } | Should -Not -Throw
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.HttpTimeout }
+	}
+	It 'その他のHTTPエラーでは、トークンを伏せたURL付きの警告を出して中断すること' {
+		Mock Invoke-RestMethod { throw [System.Exception]::new('connection refused') }
+		$lc = New-TestLinkCollection
+		Get-SearchResult -baseURL 'https://example/api' -LinkCollection ([Ref]$lc)
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -like '*connection refused*' -and $Message -like '*platform_token=***' -and $Message -notlike '*test-token*' }
+	}
+	It '未対応のコンテンツの種類は、警告して読み飛ばし、他のコンテンツは処理すること' {
+		Mock Invoke-RestMethod { [PSCustomObject]@{ Result = [PSCustomObject]@{ Contents = @((New-Item 'unknownType' 'x1'), (New-Item 'episode' 'ep1' 5)) } } }
+		$lc = New-TestLinkCollection
+		Get-SearchResult -baseURL 'https://example/api' -LinkCollection ([Ref]$lc)
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq ($script:msg.UnknownContentsType -f 'unknownType', 'x1') }
+		$lc.episodeLinks['ep1'] | Should -Be 5
+	}
+}
+
+Describe 'Get-LinkFromTopPage / Get-LinkFromSiteMap(エラー系・未対応の種類)' {
+	BeforeEach { Mock Write-Warning {} }
+	It 'トップページの取得に失敗したら、警告して中断すること' {
+		Mock Invoke-RestMethod { throw 'network down' }
+		$lc = New-TestLinkCollection
+		{ Get-LinkFromTopPage ([Ref]$lc) } | Should -Not -Throw
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.TopPageRetrievalFailed }
+	}
+	It 'トップページの未対応のコンテンツの種類は、警告して読み飛ばし、他は処理すること' {
+		Mock Invoke-RestMethod { [PSCustomObject]@{ Result = [PSCustomObject]@{ components = @([PSCustomObject]@{ type = 'newer' ; contents = @((New-Item 'unknownType' 'x1'), (New-Item 'episode' 'ep1')) }) } } }
+		$lc = New-TestLinkCollection
+		Get-LinkFromTopPage ([Ref]$lc)
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq ($script:msg.UnknownContentsType -f 'unknownType', 'x1') }
+		$lc.episodeLinks.ContainsKey('ep1') | Should -BeTrue
+	}
+	It 'サイトマップの取得に失敗したら、警告して中断すること' {
+		Mock Invoke-RestMethod { throw 'network down' }
+		$lc = New-TestLinkCollection
+		{ Get-LinkFromSiteMap ([Ref]$lc) } | Should -Not -Throw
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.SiteMapRetrievalFailed }
+	}
+}
+
+Describe 'Get-LinkFromMyPage(ページ別のAPI)' {
+	BeforeEach { Mock Get-SearchResult {} ; $script:myMemberSID = $null }
+	AfterEach { $script:myMemberSID = $null }
+	It '<Page>では、<Pattern>のAPIと<Require>をrequire_dataに指定して呼ぶこと(匿名)' -ForEach @(
+		@{ Page = 'fav' ; Pattern = '^https://platform-api\.tver\.jp/service/api/v2/callMylistDetail/\d+$' ; Require = 'mylist' }
+		@{ Page = 'later' ; Pattern = '^https://platform-api\.tver\.jp/service/api/v2/callMyLater$' ; Require = 'later' }
+		@{ Page = 'resume' ; Pattern = '^https://platform-api\.tver\.jp/service/api/v2/callMyResume$' ; Require = 'resume' }
+		@{ Page = 'favorite' ; Pattern = '^https://platform-api\.tver\.jp/service/api/v2/callMyFavorite$' ; Require = 'mylist' }
+	) {
+		$lc = New-TestLinkCollection
+		$expectedPattern = $Pattern ; $expectedRequire = $Require
+		Get-LinkFromMyPage -Page $Page -LinkCollection ([Ref]$lc)
+		Should -Invoke Get-SearchResult -Times 1 -Exactly -ParameterFilter { $baseURL -match $expectedPattern -and $RequireData -eq $expectedRequire -and $LoginRequired -eq $false -and $Type -eq 'mypage' }
+	}
+	It 'TVer IDにログインしている場合は、member-apiを使い、ログイン必須として呼ぶこと' {
+		$script:myMemberSID = 'sid123'
+		$lc = New-TestLinkCollection
+		Get-LinkFromMyPage -Page 'resume' -LinkCollection ([Ref]$lc)
+		Should -Invoke Get-SearchResult -Times 1 -Exactly -ParameterFilter { $baseURL -eq 'https://member-api.tver.jp/service/api/v2/callMyResume' -and $LoginRequired -eq $true }
+	}
+}
+
+Describe 'Get-BroadcasterName(対応表の読み込み失敗)' {
+	BeforeAll {
+		$script:gbnMap = if (Test-Path Variable:Script:broadcasterMap) { $script:broadcasterMap } else { $null }
+		$script:gbnRoot = $script:scriptRoot
+	}
+	AfterAll {
+		$script:broadcasterMap = $script:gbnMap
+		$script:scriptRoot = $script:gbnRoot
+	}
+	It '対応表を読み込めなければ、警告を出し、$nullを返して、例外にならないこと' {
+		Mock Write-Warning {}
+		$script:broadcasterMap = $null
+		$script:scriptRoot = Join-Path $TestDrive 'no-such-root/src'
+		{ Get-BroadcasterName -broadcasterID 'tx' } | Should -Not -Throw
+		Get-BroadcasterName -broadcasterID 'tx' | Should -BeNullOrEmpty
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -like ($script:msg.BroadcasterListLoadFailed -f '*') }
+	}
+}
+
+Describe 'Format-VideoInfoText(放送日の年の補完)' {
+	BeforeAll { function Remove-SpecialNote { Param ([String]$text) return $text } }
+	BeforeEach { $script:removeSpecialNote = $false }
+	It '放送日が実日付の翌日より未来なら、前年の番組として年を補完すること(年末の番組を年初にダウンロード)' {
+		Mock Get-Date { [DateTime]::new(2026, 1, 10, 12, 0, 0) }
+		(Format-VideoInfoText -seriesName 'S' -seasonName '' -episodeName 'T' -episodeNum '3' -broadcastDate '12月28日(日)放送').broadcastDate | Should -BeExactly '2025年12月28日放送'
+	}
+	It '放送日が過去または翌日以内なら、当年として年を補完すること' {
+		Mock Get-Date { [DateTime]::new(2026, 1, 10, 12, 0, 0) }
+		(Format-VideoInfoText -seriesName 'S' -seasonName '' -episodeName 'T' -episodeNum '3' -broadcastDate '1月5日(月)放送').broadcastDate | Should -BeExactly '2026年01月05日放送'
+		(Format-VideoInfoText -seriesName 'S' -seasonName '' -episodeName 'T' -episodeNum '3' -broadcastDate '1月11日(日)放送').broadcastDate | Should -BeExactly '2026年01月11日放送'
+	}
+	It '存在しない日付なら、年を補完せず、月日だけに整形すること' {
+		(Format-VideoInfoText -seriesName 'S' -seasonName '' -episodeName 'T' -episodeNum '3' -broadcastDate '2月30日(月)放送').broadcastDate | Should -BeExactly '02月30日放送'
+	}
+	It '「月日放送」の形式でなければ、放送日をそのまま返すこと' {
+		(Format-VideoInfoText -seriesName 'S' -seasonName '' -episodeName 'T' -episodeNum '3' -broadcastDate '2025/3/17週放送').broadcastDate | Should -BeExactly '2025/3/17週放送'
+	}
+}

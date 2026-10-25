@@ -838,3 +838,163 @@ Describe 'Get-RemainingCapacity(Windows)' -Skip:(-not $IsWindows) {
 }
 
 # endregion ディスク空き容量
+
+# region トースト通知
+
+Describe 'トースト通知' {
+	BeforeAll {
+		$script:tstNames = 'disableToastNotification', 'appName', 'toastAppLogo', 'appID'
+		$script:tst = @{}
+		foreach ($n in $script:tstNames) { $script:tst[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' } }
+		$script:tstPath = $env:PATH
+		$script:tstLog = $env:TOAST_LOG
+		$script:tstSep = [IO.Path]::PathSeparator
+		# * 通知を出す外部コマンド(notify-send/osascript)の代わりに、受け取った内容をログに書き出すだけの偽物を使う
+		function script:New-FakeToastCommand {
+			Param ([String]$Dir, [String]$Name, [String]$Body)
+			New-Item -ItemType Directory -Path $Dir -Force | Out-Null
+			$path = Join-Path $Dir $Name
+			Set-Content -LiteralPath $path -Value ("#!/bin/sh`n{0}`n" -f $Body) -NoNewline
+			& chmod a+x $path
+		}
+	}
+	AfterAll {
+		$env:PATH = $script:tstPath
+		$env:TOAST_LOG = $script:tstLog
+		foreach ($n in $script:tstNames) {
+			if ($script:tst[$n] -is [String] -and $script:tst[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:tst[$n] }
+		}
+	}
+	BeforeEach {
+		$script:disableToastNotification = $false
+		$script:appName = 'TVerRecTest'
+		$script:toastAppLogo = 'C:\logo.png'
+		$script:appID = '{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe'
+		$script:tstDir = Join-Path $TestDrive ('toast{0}' -f [Guid]::NewGuid().ToString('N'))
+		$env:TOAST_LOG = Join-Path $TestDrive ('toast{0}.log' -f [Guid]::NewGuid().ToString('N'))
+	}
+	AfterEach { $env:PATH = $script:tstPath }
+
+	Context 'Linux' -Skip:(-not $IsLinux) {
+		BeforeEach {
+			New-FakeToastCommand -Dir $script:tstDir -Name 'notify-send' -Body 'printf "%s\n" "$@" >> "$TOAST_LOG"'
+			$env:PATH = '{0}{1}{2}' -f $script:tstDir, $script:tstSep, $script:tstPath
+		}
+		It 'Show-GeneralToastは、アプリ名・表示時間・ロゴ・本文2つをnotify-sendに渡すこと' {
+			Show-GeneralToast -text1 'タイトル' -text2 '本文'
+			@(Get-Content -LiteralPath $env:TOAST_LOG) | Should -Be @('-a', 'TVerRecTest', '-t', '5000', '-i', 'C:\logo.png', 'タイトル', '本文')
+		}
+		It 'Show-ProgressToastとShow-ProgressToast2Rowも、本文をnotify-sendに渡すこと' {
+			Show-ProgressToast -text1 '処理中' -text2 '詳細' -workDetail '作業' -tag 't1' -group 'g1'
+			Show-ProgressToast2Row -text1 '処理中2' -text2 '詳細2' -detail1 'a' -detail2 'b' -tag 't2' -group 'g2'
+			$lines = @(Get-Content -LiteralPath $env:TOAST_LOG)
+			$lines | Should -Contain '処理中'
+			$lines | Should -Contain '詳細'
+			$lines | Should -Contain '処理中2'
+			$lines | Should -Contain '詳細2'
+		}
+		It '進捗の更新(Update-ProgressToast/2Row)では、notify-sendを呼ばないこと' {
+			Update-ProgressToast -title 'x' -rate '0.5' -leftText 'l' -rightText 'r' -tag 't1' -group 'g1'
+			Update-ProgressToast2Row -title1 'x' -rate1 '0.5' -leftText1 'l' -rightText1 '90' -title2 'y' -rate2 '1' -leftText2 'l' -rightText2 '0' -tag 't2' -group 'g2'
+			Test-Path -LiteralPath $env:TOAST_LOG | Should -BeFalse
+		}
+		It 'トースト通知が無効なら、どの関数でもnotify-sendを呼ばないこと' {
+			$script:disableToastNotification = $true
+			Show-GeneralToast -text1 'a'
+			Show-ProgressToast -text1 'a' -tag 't' -group 'g'
+			Show-ProgressToast2Row -text1 'a' -tag 't' -group 'g'
+			Update-ProgressToast -rate '0.1' -tag 't' -group 'g'
+			Update-ProgressToast2Row -rate1 '0.1' -rate2 '0.2' -tag 't' -group 'g'
+			Test-Path -LiteralPath $env:TOAST_LOG | Should -BeFalse
+		}
+		It 'Update-ProgressToastは、-WhatIfでは何もしないこと' {
+			{ Update-ProgressToast -rate '0.1' -tag 't' -group 'g' -WhatIf } | Should -Not -Throw
+			{ Update-ProgressToast2Row -rate1 '0.1' -rate2 '0.2' -tag 't' -group 'g' -WhatIf } | Should -Not -Throw
+		}
+		It 'notify-sendがない環境でも、例外にならないこと' {
+			New-Item -ItemType Directory -Path (Join-Path $script:tstDir 'empty') -Force | Out-Null
+			$env:PATH = Join-Path $script:tstDir 'empty'
+			{ Show-GeneralToast -text1 'a' } | Should -Not -Throw
+			{ Show-ProgressToast -text1 'a' -tag 't' -group 'g' } | Should -Not -Throw
+			{ Show-ProgressToast2Row -text1 'a' -tag 't' -group 'g' } | Should -Not -Throw
+			Test-Path -LiteralPath $env:TOAST_LOG | Should -BeFalse
+		}
+	}
+
+	Context 'macOS' -Skip:(-not $IsMacOS) {
+		BeforeEach {
+			New-FakeToastCommand -Dir $script:tstDir -Name 'osascript' -Body 'cat >> "$TOAST_LOG"'
+			$env:PATH = '{0}{1}{2}' -f $script:tstDir, $script:tstSep, $script:tstPath
+		}
+		It 'Show-GeneralToastは、通知用のAppleScriptを標準入力でosascriptに渡すこと' {
+			Show-GeneralToast -text1 'タイトル' -text2 '本文'
+			(Get-Content -LiteralPath $env:TOAST_LOG -Raw).Trim() | Should -Be 'display notification "本文" with title "TVerRecTest" subtitle "タイトル" sound name "Blow"'
+		}
+		It 'Show-ProgressToastとShow-ProgressToast2Rowも、同じ形式で通知すること' {
+			Show-ProgressToast -text1 '処理中' -text2 '詳細' -tag 't1' -group 'g1'
+			Show-ProgressToast2Row -text1 '処理中2' -text2 '詳細2' -tag 't2' -group 'g2'
+			$log = Get-Content -LiteralPath $env:TOAST_LOG -Raw
+			$log | Should -Match 'display notification "詳細" with title "TVerRecTest" subtitle "処理中"'
+			$log | Should -Match 'display notification "詳細2" with title "TVerRecTest" subtitle "処理中2"'
+		}
+		It '進捗の更新では、osascriptを呼ばないこと' {
+			Update-ProgressToast -rate '0.5' -tag 't1' -group 'g1'
+			Update-ProgressToast2Row -rate1 '0.5' -rightText1 '90' -rate2 '1' -rightText2 '0' -tag 't2' -group 'g2'
+			Test-Path -LiteralPath $env:TOAST_LOG | Should -BeFalse
+		}
+		It 'トースト通知が無効なら、osascriptを呼ばないこと' {
+			$script:disableToastNotification = $true
+			Show-GeneralToast -text1 'a'
+			Show-ProgressToast -text1 'a' -tag 't' -group 'g'
+			Show-ProgressToast2Row -text1 'a' -tag 't' -group 'g'
+			Test-Path -LiteralPath $env:TOAST_LOG | Should -BeFalse
+		}
+		It 'osascriptがない環境でも、例外にならないこと' {
+			New-Item -ItemType Directory -Path (Join-Path $script:tstDir 'empty') -Force | Out-Null
+			$env:PATH = Join-Path $script:tstDir 'empty'
+			{ Show-GeneralToast -text1 'a' } | Should -Not -Throw
+			{ Show-ProgressToast -text1 'a' -tag 't' -group 'g' } | Should -Not -Throw
+			{ Show-ProgressToast2Row -text1 'a' -tag 't' -group 'g' } | Should -Not -Throw
+		}
+	}
+
+	Context 'Windows' -Skip:(-not $IsWindows) {
+		BeforeAll {
+			# * CIのような非対話の環境では通知を出せない場合があるため、実際に出せるかを先に確認し、出せなければこのContextのテストはスキップする
+			$script:toastUsable = $false
+			try {
+				$xml = [Windows.Data.Xml.Dom.XmlDocument]::new()
+				$xml.LoadXml('<toast><visual><binding template="ToastGeneric"><text>probe</text></binding></visual></toast>')
+				[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe').Show([Windows.UI.Notifications.ToastNotification]::new($xml))
+				$script:toastUsable = $true
+			} catch { Write-Host ('　Windowsのトースト通知を出せない環境のため、スキップします: {0}' -f $_.Exception.Message) }
+		}
+		It 'Show-GeneralToastは、例外にならないこと(音あり・音なし)' {
+			if (!$script:toastUsable) { Set-ItResult -Skipped -Because 'トースト通知を出せない環境' ; return }
+			{ Show-GeneralToast -text1 'タイトル' -text2 '本文' } | Should -Not -Throw
+			{ Show-GeneralToast -text1 'タイトル' -text2 '本文' -duration 'Long' -silent $true } | Should -Not -Throw
+		}
+		It 'Show-ProgressToastとUpdate-ProgressToastは、例外にならないこと' {
+			if (!$script:toastUsable) { Set-ItResult -Skipped -Because 'トースト通知を出せない環境' ; return }
+			{ Show-ProgressToast -text1 '処理中' -text2 '詳細' -workDetail '作業' -tag 'tstp1' -group 'tstg' -silent $true } | Should -Not -Throw
+			{ Update-ProgressToast -title '作業' -rate '0.5' -leftText '左' -rightText '右' -tag 'tstp1' -group 'tstg' } | Should -Not -Throw
+		}
+		It 'Show-ProgressToast2RowとUpdate-ProgressToast2Rowは、例外にならないこと(残り時間・完了の表示を含む)' {
+			if (!$script:toastUsable) { Set-ItResult -Skipped -Because 'トースト通知を出せない環境' ; return }
+			{ Show-ProgressToast2Row -text1 '処理中' -text2 '詳細' -detail1 '1行目' -detail2 '2行目' -tag 'tstp2' -group 'tstg' -silent $true } | Should -Not -Throw
+			{ Update-ProgressToast2Row -title1 '1' -rate1 '0.5' -leftText1 '左' -rightText1 '90' -title2 '2' -rate2 '1' -leftText2 '左' -rightText2 '0' -tag 'tstp2' -group 'tstg' } | Should -Not -Throw
+			{ Update-ProgressToast2Row -rate1 '0.5' -rightText1 '' -rate2 '1' -rightText2 '' -tag 'tstp2' -group 'tstg' } | Should -Not -Throw
+		}
+		It 'トースト通知が無効なら、例外にならず何もしないこと' {
+			$script:disableToastNotification = $true
+			{ Show-GeneralToast -text1 'a' } | Should -Not -Throw
+			{ Show-ProgressToast -text1 'a' -tag 't' -group 'g' } | Should -Not -Throw
+			{ Update-ProgressToast -rate '0.1' -tag 't' -group 'g' } | Should -Not -Throw
+			{ Show-ProgressToast2Row -text1 'a' -tag 't' -group 'g' } | Should -Not -Throw
+			{ Update-ProgressToast2Row -rate1 '0.1' -rate2 '0.2' -tag 't' -group 'g' } | Should -Not -Throw
+		}
+	}
+}
+
+# endregion トースト通知

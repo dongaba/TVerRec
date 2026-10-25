@@ -37,6 +37,8 @@
 - 新バージョンの通知で表示する変更履歴の対象を、文字列比較で判定していたため、`3.10.0`が`3.9.0`より古いと扱われ、変更履歴が表示されない問題を修正(`Invoke-TVerRecUpdateCheck`。`Compare-Version`で比較する)
 - `update_ffmpeg.ps1`で、WindowsとLinuxのffmpegのバージョン表記が想定外の形式(ディストリビューション版の`6.1.1-3ubuntu5`など)だと、バージョン不明として扱わずに例外で終了する問題を修正
 - ダウンロード履歴(`history.csv`)を読み込めなかった場合に、`Get-LatestHistory`が警告だけで空の履歴として続行し、全番組が未ダウンロード扱いになる恐れがあった問題を修正(読み込み失敗として例外にして中断する)
+- 放送局名の対応表(`broadcaster.conf`)を読み込めなかった場合に、`Get-BroadcasterName`が警告を出さず(読み込み失敗が捕捉されず)に処理が続行していた問題を修正(読み込み失敗として扱う)
+- 履歴ファイル(`history.csv`)が存在しない場合に、`Optimize-HistoryFile`の読み込み失敗が捕捉されず、警告ではなくエラーが画面に出ていた問題を修正
 
 ## [3.4.9](https://github.com/dongaba/TVerRec/releases/tag/v3.4.9)
 

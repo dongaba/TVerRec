@@ -714,7 +714,7 @@ function Get-BroadcasterName {
 	if ($null -eq $script:broadcasterMap) {
 		$map = @{}
 		try {
-			foreach ($line in (Get-Content -Path (Join-Path $script:scriptRoot '../resources/broadcaster.conf') -Encoding UTF8)) {
+			foreach ($line in (Get-Content -Path (Join-Path $script:scriptRoot '../resources/broadcaster.conf') -Encoding UTF8 -ErrorAction Stop)) {
 				if (($line.Trim() -eq '') -or $line.TrimStart().StartsWith('#')) { continue }
 				$columns = $line.Split("`t")
 				if ($columns.Count -ge 2) { $map[$columns[0].Trim()] = $columns[1].Trim() }
