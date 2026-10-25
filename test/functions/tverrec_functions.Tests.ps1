@@ -2444,13 +2444,14 @@ Describe 'Invoke-IntegrityCheck' {
 		Set-Content -LiteralPath $script:icVideo -Value 'video' -NoNewline
 		$script:icHist = [PSCustomObject]@{ videoPage = 'https://tver.jp/episodes/epIC000001' ; videoPath = 'sub/ep.mp4' ; downloadDate = '2026-01-01 00:00:00' ; videoValidated = '0' }
 		$script:icVideoHist = [PSCustomObject]@{ videoPage = 'https://tver.jp/episodes/epIC000001' ; videoPath = 'sub/ep.mp4' }
-		$script:icExit = 0 ; $script:icErrLines = 0 ; $script:icExported = @()
+		$script:icExit = 0 ; $script:icErrLines = 0
+		# * Export-Csvはモックせず実際に履歴ファイルへ追記させ、書き込まれたvideoValidatedを読み戻して検証する
+		$script:icGetExported = { if (Test-Path -LiteralPath $script:histFilePath) { @(Import-Csv -LiteralPath $script:histFilePath | ForEach-Object { $_.videoValidated }) } else { @() } }
 		Mock Get-LatestHistory { @($script:icHist) }
 		Mock Wait-FileLock {}
 		Mock Unlock-File {}
 		Mock Start-Sleep {}
 		Mock Write-Warning {}
-		Mock Export-Csv { $script:icExported += $InputObject.videoValidated }
 		Mock Invoke-FFmpegProcess {
 			if ($script:icErrLines -gt 0) { [IO.File]::WriteAllLines($script:ffmpegErrorLogPath, [string[]]@(1..$script:icErrLines | ForEach-Object { "error $_" })) }
 			return $script:icExit
@@ -2458,7 +2459,7 @@ Describe 'Invoke-IntegrityCheck' {
 	}
 	It '未チェックの番組は、チェック中(2)を記録してからチェックし、問題がなければチェック済み(1)を記録して、ファイルを残すこと' {
 		$out = @(Invoke-IntegrityCheck -videoHist $script:icVideoHist)
-		$script:icExported | Should -Be @('2', '1')
+		(& $script:icGetExported) | Should -Be @('2', '1')
 		$out | Should -Contain $script:msg.ValidationOK
 		Test-Path -LiteralPath $script:icVideo | Should -BeTrue
 		Should -Invoke Invoke-FFmpegProcess -Times 1 -Exactly
@@ -2468,19 +2469,19 @@ Describe 'Invoke-IntegrityCheck' {
 	It '終了コードが0以外なら、チェック失敗(3)を記録し、警告を出し、ファイルを削除すること' {
 		$script:icExit = 1
 		Invoke-IntegrityCheck -videoHist $script:icVideoHist | Out-Null
-		$script:icExported | Should -Be @('2', '3')
+		(& $script:icGetExported) | Should -Be @('2', '3')
 		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.ValidationNG }
 		Test-Path -LiteralPath $script:icVideo | Should -BeFalse
 	}
 	It 'エラーが30行までなら正常とし、31行以上ならチェック失敗とすること' {
 		$script:icErrLines = 30
 		Invoke-IntegrityCheck -videoHist $script:icVideoHist | Out-Null
-		$script:icExported | Should -Be @('2', '1')
+		(& $script:icGetExported) | Should -Be @('2', '1')
 		Test-Path -LiteralPath $script:icVideo | Should -BeTrue
-		$script:icHist.videoValidated = '0' ; $script:icExported = @()
+		$script:icHist.videoValidated = '0' ; Remove-Item -LiteralPath $script:histFilePath -Force
 		$script:icErrLines = 31
 		Invoke-IntegrityCheck -videoHist $script:icVideoHist | Out-Null
-		$script:icExported | Should -Be @('2', '3')
+		(& $script:icGetExported) | Should -Be @('2', '3')
 		Test-Path -LiteralPath $script:icVideo | Should -BeFalse
 	}
 	It 'チェックのあと、ffmpegのエラーログを削除すること' {
@@ -2506,7 +2507,7 @@ Describe 'Invoke-IntegrityCheck' {
 		$out = @(Invoke-IntegrityCheck -videoHist $script:icVideoHist)
 		$out | Should -Contain $script:msg.ValidationCompleted
 		Should -Invoke Invoke-FFmpegProcess -Times 0 -Exactly
-		$script:icExported.Count | Should -Be 0
+		@(& $script:icGetExported).Count | Should -Be 0
 	}
 	It 'チェック中(2)の番組は、チェックせずに他プロセスでチェック中と表示すること' {
 		$script:icHist.videoValidated = '2'
@@ -2530,13 +2531,13 @@ Describe 'Invoke-IntegrityCheck' {
 		Mock Get-LatestHistory { @() }
 		Invoke-IntegrityCheck -videoHist $script:icVideoHist | Out-Null
 		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.HistRecordNotFound }
-		$script:icExported.Count | Should -Be 0
+		@(& $script:icGetExported).Count | Should -Be 0
 		Test-Path -LiteralPath $script:icVideo | Should -BeFalse
 	}
 	It '別の番組の履歴しかなければ、レコードなしとして扱うこと' {
 		$script:icHist.videoPage = 'https://tver.jp/episodes/epOTHER0001'
 		Invoke-IntegrityCheck -videoHist $script:icVideoHist | Out-Null
-		$script:icExported.Count | Should -Be 0
+		@(& $script:icGetExported).Count | Should -Be 0
 		Test-Path -LiteralPath $script:icVideo | Should -BeFalse
 	}
 	It 'チェック中(2)の記録に失敗したときは、警告を出してチェックせず、ロックを解放すること' {

@@ -27,7 +27,7 @@ jobs:
           $config = New-PesterConfiguration
           $config.Run.Path = './test/functions'
           $config.Run.Exit = $true
-          $config.Output.Verbosity = 'Normal'
+          $config.Output.Verbosity = 'Detailed'
           $config.CodeCoverage.Enabled = $true
           $config.CodeCoverage.Path = './src/functions/*.ps1'
           $config.CodeCoverage.OutputPath = 'coverage.xml'
