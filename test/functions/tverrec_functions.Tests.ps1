@@ -51,7 +51,8 @@ Describe 'Format-VideoFileInfo' {
 			episodeNum    = 1
 		}
 		Format-VideoFileInfo -videoInfo ([ref]$videoInfo)
-		$videoInfo.fileDir | Should -BeExactly $script:downloadBaseDir
+		# fileDirは区切り文字を「/」に正規化して返す(Windowsでは\を/に置換)
+		$videoInfo.fileDir | Should -BeExactly $script:downloadBaseDir.Replace('\', '/')
 	}
 }
 
