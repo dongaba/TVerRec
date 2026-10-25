@@ -13,6 +13,7 @@
 - 不要ファイルやリネームに失敗したファイルを削除する際に、削除するファイル名を表示するように変更
 - GUI設定画面の各設定の説明に、既定値を追記
 - キーワードサンプルファイル(`keyword.sample.conf`)に、ニュースのジャンルと放送局のtagを追加
+- 番組検索のHTTPエラー(404など)の警告に、失敗したAPIのURLを併記するように変更(`platform_token`・`member_sid`は伏せ字)。tagなどの検索結果から再帰的に呼ばれるAPIで失敗した場合も、原因となったIDを特定しやすくした
 
 ## [3.4.9](https://github.com/dongaba/TVerRec/releases/tag/v3.4.9)
 
