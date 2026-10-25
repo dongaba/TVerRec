@@ -299,6 +299,86 @@ Describe 'Get-SearchResult' {
 			Should -Invoke Write-Warning -Times 1 -Exactly
 		}
 	}
+
+	# 一括ダウンロード中は、シリーズ・シーズン・タレントのAPI結果を実行中だけ使い回す($script:searchCacheがあるときだけ)
+	Context 'API結果のキャッシュ(一括ダウンロード用)' {
+		BeforeEach {
+			Mock Get-LinkFromKeyword {}
+			Mock Write-Warning {}
+			Remove-Variable -Name searchCache -Scope Script -ErrorAction SilentlyContinue
+			$script:seriesResponse = [PSCustomObject]@{ Result = [PSCustomObject]@{ Contents = @((New-Item 'episode' 'ep1' 100)) } }
+		}
+		AfterEach { Remove-Variable -Name searchCache -Scope Script -ErrorAction SilentlyContinue }
+
+		It 'シリーズのAPIは、同じURLの2回目以降はキャッシュを使い、結果も同じになること' {
+			$script:searchCache = @{}
+			Mock Invoke-RestMethod { $script:seriesResponse }
+			$lc1 = New-TestLinkCollection
+			$lc2 = New-TestLinkCollection
+			Get-SearchResult -baseURL 'https://example/callSeriesSeasons/sr1' -LinkCollection ([Ref]$lc1)
+			Get-SearchResult -baseURL 'https://example/callSeriesSeasons/sr1' -LinkCollection ([Ref]$lc2)
+			Should -Invoke Invoke-RestMethod -Times 1 -Exactly
+			$lc1.episodeLinks['ep1'] | Should -Be 100
+			$lc2.episodeLinks['ep1'] | Should -Be 100
+		}
+		It 'シーズン・タレントのAPIもキャッシュされること' {
+			$script:searchCache = @{}
+			Mock Invoke-RestMethod { $script:seriesResponse }
+			foreach ($url in 'https://example/callSeasonEpisodes/s1', 'https://example/callTalentEpisode/t1') {
+				$lc = New-TestLinkCollection
+				Get-SearchResult -baseURL $url -LinkCollection ([Ref]$lc)
+				$lc = New-TestLinkCollection
+				Get-SearchResult -baseURL $url -LinkCollection ([Ref]$lc)
+			}
+			Should -Invoke Invoke-RestMethod -Times 2 -Exactly
+		}
+		It 'IDが違えば別のAPIとして呼ばれること' {
+			$script:searchCache = @{}
+			Mock Invoke-RestMethod { $script:seriesResponse }
+			$lc = New-TestLinkCollection
+			Get-SearchResult -baseURL 'https://example/callSeriesSeasons/sr1' -LinkCollection ([Ref]$lc)
+			Get-SearchResult -baseURL 'https://example/callSeriesSeasons/sr2' -LinkCollection ([Ref]$lc)
+			Should -Invoke Invoke-RestMethod -Times 2 -Exactly
+		}
+		It '新着・キーワード検索など、対象外のAPIはキャッシュしないこと' {
+			$script:searchCache = @{}
+			# 新着(new)は入れ子のContents、キーワード検索は直下のContentsを返す
+			Mock Invoke-RestMethod {
+				if ($Uri -like '*callNewerDetail*') { [PSCustomObject]@{ Result = [PSCustomObject]@{ Contents = [PSCustomObject]@{ Contents = @((New-Item 'episode' 'ep2' 200)) } } } }
+				else { $script:seriesResponse }
+			}
+			$lc = New-TestLinkCollection
+			Get-SearchResult -baseURL 'https://example/callNewerDetail/x' -Type 'new' -LinkCollection ([Ref]$lc)
+			Get-SearchResult -baseURL 'https://example/callNewerDetail/x' -Type 'new' -LinkCollection ([Ref]$lc)
+			Get-SearchResult -baseURL 'https://example/callKeywordSearch' -Type 'keyword' -Keyword 'abc' -LinkCollection ([Ref]$lc)
+			Get-SearchResult -baseURL 'https://example/callKeywordSearch' -Type 'keyword' -Keyword 'abc' -LinkCollection ([Ref]$lc)
+			Should -Invoke Invoke-RestMethod -Times 4 -Exactly
+			$script:searchCache.Count | Should -Be 0
+		}
+		It '失敗した結果はキャッシュせず、次回は再度APIを呼ぶこと' {
+			$script:searchCache = @{}
+			$script:restCalls = 0
+			Mock Invoke-RestMethod {
+				$script:restCalls++
+				if ($script:restCalls -eq 1) { throw 'Response status code does not indicate success: 500 (Server Error).' }
+				$script:seriesResponse
+			}
+			$lc = New-TestLinkCollection
+			Get-SearchResult -baseURL 'https://example/callSeriesSeasons/sr1' -LinkCollection ([Ref]$lc)
+			$lc.episodeLinks.Count | Should -Be 0
+			Get-SearchResult -baseURL 'https://example/callSeriesSeasons/sr1' -LinkCollection ([Ref]$lc)
+			Should -Invoke Invoke-RestMethod -Times 2 -Exactly
+			$lc.episodeLinks['ep1'] | Should -Be 100
+		}
+		It 'キャッシュ用の変数がなければ、従来どおり毎回APIを呼ぶこと' {
+			Mock Invoke-RestMethod { $script:seriesResponse }
+			$lc = New-TestLinkCollection
+			Get-SearchResult -baseURL 'https://example/callSeriesSeasons/sr1' -LinkCollection ([Ref]$lc)
+			Get-SearchResult -baseURL 'https://example/callSeriesSeasons/sr1' -LinkCollection ([Ref]$lc)
+			Should -Invoke Invoke-RestMethod -Times 2 -Exactly
+			Test-Path Variable:Script:searchCache | Should -BeFalse
+		}
+	}
 }
 
 #----------------------------------------------------------------------
@@ -636,6 +716,216 @@ Describe 'Get-VideoInfo(新世代API)' {
 			Mock Invoke-RestMethod { if ($Uri -like '*contents-api*') { [PSCustomObject]@{ code = 4002 } } else { New-LegacyApiResponse -uri $Uri } }
 			(Get-VideoInfo -episodeID 'ep1').mediaName | Should -BeExactly '旧API放送局名'
 		}
+	}
+}
+
+#----------------------------------------------------------------------
+# JSONの入れ子のプロパティを安全に取得
+#----------------------------------------------------------------------
+Describe 'Get-JsonProperty' {
+	BeforeAll {
+		$script:jsonObj = [PSCustomObject]@{
+			a      = [PSCustomObject]@{ b = [PSCustomObject]@{ c = 5 } }
+			flag   = $false
+			zero   = 0
+			empty  = ''
+			nothing = $null
+			text   = 'abc'
+			list   = @(1, 2, 3)
+		}
+	}
+	It '入れ子のプロパティをたどって値を返すこと' {
+		Get-JsonProperty $script:jsonObj @('a', 'b', 'c') | Should -Be 5
+	}
+	It 'プロパティ名が1つでも取得できること' {
+		Get-JsonProperty $script:jsonObj @('text') | Should -Be 'abc'
+	}
+	It '途中のオブジェクトを返せること' {
+		(Get-JsonProperty $script:jsonObj @('a', 'b')).c | Should -Be 5
+	}
+	It '存在しないプロパティは$nullを返すこと' {
+		Get-JsonProperty $script:jsonObj @('x') | Should -BeNullOrEmpty
+		Get-JsonProperty $script:jsonObj @('a', 'x', 'c') | Should -BeNullOrEmpty
+	}
+	It 'Set-StrictModeが有効でも、存在しないプロパティで例外にならないこと' {
+		Set-StrictMode -Version Latest
+		try {
+			{ Get-JsonProperty $script:jsonObj @('a', 'x', 'c') } | Should -Not -Throw
+			{ Get-JsonProperty $script:jsonObj @('x', 'y', 'z') } | Should -Not -Throw
+		} finally { Set-StrictMode -Off }
+	}
+	It '値が$false・0・空文字でも、$nullではなくそのまま返すこと' {
+		$flag = Get-JsonProperty $script:jsonObj @('flag')
+		$flag | Should -BeFalse
+		($null -eq $flag) | Should -BeFalse
+		$zero = Get-JsonProperty $script:jsonObj @('zero')
+		$zero | Should -Be 0
+		($null -eq $zero) | Should -BeFalse
+		$empty = Get-JsonProperty $script:jsonObj @('empty')
+		$empty | Should -BeExactly ''
+		($null -eq $empty) | Should -BeFalse
+	}
+	It '値が$nullのプロパティの先をたどっても$nullを返すこと' {
+		Get-JsonProperty $script:jsonObj @('nothing') | Should -BeNullOrEmpty
+		Get-JsonProperty $script:jsonObj @('nothing', 'x') | Should -BeNullOrEmpty
+	}
+	It '取得元が$nullでも$nullを返すこと' {
+		Get-JsonProperty $null @('a') | Should -BeNullOrEmpty
+	}
+	It '文字列など、プロパティを持たない値の先をたどっても$nullを返すこと' {
+		Get-JsonProperty $script:jsonObj @('text', 'x') | Should -BeNullOrEmpty
+	}
+	It '配列のプロパティは配列のまま返すこと' {
+		@(Get-JsonProperty $script:jsonObj @('list')) | Should -Be @(1, 2, 3)
+	}
+}
+
+#----------------------------------------------------------------------
+# エピソード以外のリンクをためたバッファを順次API呼び出し
+#----------------------------------------------------------------------
+Describe 'Get-LinkFromBuffer' {
+	BeforeEach {
+		Mock Get-LinkFromKeyword { $script:calledIds += $id ; $script:calledTypes += $linkType }
+		$script:calledIds = @()
+		$script:calledTypes = @()
+	}
+	It '重複を除き、IDの昇順に1回ずつGet-LinkFromKeywordを呼ぶこと' {
+		$lc = New-TestLinkCollection
+		Get-LinkFromBuffer -TverIDs @('sr2', 'sr1', 'sr2') -TverIDType 'seriesLinks' -LinkCollection ([Ref]$lc) 6>$null
+		Should -Invoke Get-LinkFromKeyword -Times 2 -Exactly
+		$script:calledIds | Should -Be @('sr1', 'sr2')
+	}
+	It 'バッファの種類がそのままlinkTypeとして渡されること' {
+		$lc = New-TestLinkCollection
+		Get-LinkFromBuffer -TverIDs @('s1') -TverIDType 'seasonLinks' -LinkCollection ([Ref]$lc) 6>$null
+		$script:calledTypes | Should -Be @('seasonLinks')
+	}
+	It '取得後に、リンクコレクション内の重複を除いてIDの昇順に整えること' {
+		$lc = New-TestLinkCollection
+		foreach ($id in 'sr2', 'sr1', 'sr2') { $lc.seriesLinks.Add($id) }
+		foreach ($id in 't2', 't1', 't2') { $lc.talentLinks.Add($id) }
+		foreach ($id in 's2', 's1', 's1') { $lc.seasonLinks.Add($id) }
+		foreach ($id in 'sp2', 'sp1', 'sp2') { $lc.specialLinks.Add($id) }
+		Get-LinkFromBuffer -TverIDs @('x') -TverIDType 'seasonLinks' -LinkCollection ([Ref]$lc) 6>$null
+		$lc.seriesLinks | Should -Be @('sr1', 'sr2')
+		$lc.talentLinks | Should -Be @('t1', 't2')
+		$lc.seasonLinks | Should -Be @('s1', 's2')
+		$lc.specialLinks | Should -Be @('sp1', 'sp2')
+		($lc.seriesLinks -is [System.Collections.Generic.List[String]]) | Should -BeTrue
+	}
+	It 'リンクが空のコレクションでも例外にならないこと' {
+		$lc = New-TestLinkCollection
+		{ Get-LinkFromBuffer -TverIDs @('x') -TverIDType 'seriesLinks' -LinkCollection ([Ref]$lc) 6>$null } | Should -Not -Throw
+		$lc.seriesLinks.Count | Should -Be 0
+	}
+	It 'IDが$nullや空配列ならGet-LinkFromKeywordを呼ばないこと' {
+		$lc = New-TestLinkCollection
+		Get-LinkFromBuffer -TverIDs $null -TverIDType 'seriesLinks' -LinkCollection ([Ref]$lc) 6>$null
+		Get-LinkFromBuffer -TverIDs @() -TverIDType 'seriesLinks' -LinkCollection ([Ref]$lc) 6>$null
+		Should -Invoke Get-LinkFromKeyword -Times 0 -Exactly
+	}
+	It '許可されていないバッファの種類は受け付けないこと' {
+		$lc = New-TestLinkCollection
+		{ Get-LinkFromBuffer -TverIDs @('x') -TverIDType 'categoryLinks' -LinkCollection ([Ref]$lc) 6>$null } | Should -Throw
+	}
+}
+
+#----------------------------------------------------------------------
+# 旧APIを叩いて番組情報取得
+#----------------------------------------------------------------------
+Describe 'Get-VideoInfoLegacy' {
+	BeforeAll {
+		# 旧API(callEpisode)のレスポンスを生成
+		function New-LegacyEpisodeResponse {
+			[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'テスト用のオブジェクトを生成するだけで状態を変更しない')]
+			Param ()
+			[PSCustomObject]@{ Result = [PSCustomObject]@{
+					Episode = [PSCustomObject]@{ Content = [PSCustomObject]@{ Id = 'ep1' ; SeriesTitle = 'S' ; Title = 'T' ; BroadcasterName = 'テレ東' ; ProductionProviderName = '制作' ; BroadcastDateLabel = '' ; EndAt = 1800622799 ; version = 3 } }
+					Series  = [PSCustomObject]@{ Content = [PSCustomObject]@{ Id = 'sr1' } }
+					Season  = [PSCustomObject]@{ Content = [PSCustomObject]@{ Id = 's1' ; Title = '本編' } }
+				}
+			}
+		}
+		# 旧API(statics)のレスポンスを生成。isSubtitleは指定したときだけ項目を持つ
+		function New-LegacyStaticsResponse {
+			[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'テスト用のオブジェクトを生成するだけで状態を変更しない')]
+			Param ([Object]$isSubtitle = $null)
+			$r = [PSCustomObject]@{ Description = 'D &amp; E' ; No = '2' }
+			if ($null -ne $isSubtitle) { $r | Add-Member -MemberType NoteProperty -Name 'isSubtitle' -Value $isSubtitle }
+			return $r
+		}
+	}
+	BeforeEach {
+		Mock Write-Warning {}
+		Mock Invoke-RestMethod {
+			if ($Uri -like '*callEpisode*') { New-LegacyEpisodeResponse }
+			else { New-LegacyStaticsResponse }
+		}
+	}
+	It '旧APIの2回の呼び出し(callEpisodeとstatics)で番組情報が取得できること' {
+		$info = Get-VideoInfoLegacy -episodeID 'ep1'
+		$info.seriesName | Should -BeExactly 'S'
+		$info.seriesID | Should -BeExactly 'sr1'
+		$info.seriesPageURL | Should -BeExactly 'https://tver.jp/series/sr1'
+		$info.seasonName | Should -BeExactly ''
+		$info.seasonID | Should -BeExactly 's1'
+		$info.episodeID | Should -BeExactly 'ep1'
+		$info.episodePageURL | Should -BeExactly 'https://tver.jp/episodes/ep1'
+		$info.episodeName | Should -BeExactly 'T'
+		$info.episodeNum | Should -BeExactly '02'
+		$info.mediaName | Should -BeExactly 'テレ東'
+		$info.providerName | Should -BeExactly '制作'
+		$info.versionNum | Should -Be 3
+		$info.descriptionText | Should -BeExactly 'D & E'
+		$info.videoInfoURL | Should -BeExactly 'https://statics.tver.jp/content/episode/ep1.json?v=3'
+		Should -Invoke Invoke-RestMethod -Times 2 -Exactly
+		Should -Invoke Invoke-RestMethod -Times 1 -Exactly -ParameterFilter { $Uri -eq 'https://platform-api.tver.jp/service/api/v1/callEpisode/ep1?platform_uid=test-uid&platform_token=test-token' }
+		Should -Invoke Invoke-RestMethod -Times 1 -Exactly -ParameterFilter { $Uri -eq 'https://statics.tver.jp/content/episode/ep1.json?v=3' }
+		Should -Invoke Write-Warning -Times 0 -Exactly
+	}
+	It '配信終了日時が実行環境のタイムゾーンに関係なくJSTで返ること' {
+		# 1800622799 = 2027-01-22 12:59:59 UTC = 2027-01-22 21:59:59 JST
+		(Get-VideoInfoLegacy -episodeID 'ep1').endTime.ToString('yyyy-MM-dd HH:mm:ss') | Should -Be '2027-01-22 21:59:59'
+	}
+	It 'statics側のisSubtitleが<value>なら、Booleanの<expected>を返すこと' -ForEach @(
+		@{ value = $true ; expected = $true }
+		@{ value = $false ; expected = $false }
+	) {
+		Mock Invoke-RestMethod {
+			if ($Uri -like '*callEpisode*') { New-LegacyEpisodeResponse }
+			else { $r = New-LegacyStaticsResponse ; $r | Add-Member -MemberType NoteProperty -Name 'isSubtitle' -Value $value ; $r }
+		}
+		$isSubtitle = (Get-VideoInfoLegacy -episodeID 'ep1').isSubtitle
+		$isSubtitle | Should -BeOfType [Boolean]
+		$isSubtitle | Should -Be $expected
+	}
+	It 'statics側にisSubtitleの項目がなければ$nullを返すこと(呼び出し側でyt-dlpでの確認にフォールバックさせる)' {
+		$info = Get-VideoInfoLegacy -episodeID 'ep1'
+		($null -eq $info.isSubtitle) | Should -BeTrue
+	}
+	It 'プロキシ設定があるときは、staticsの取得だけにプロキシを渡すこと' {
+		$script:proxyUrl = 'http://proxy.example:8080'
+		try {
+			Get-VideoInfoLegacy -episodeID 'ep1' | Out-Null
+			Should -Invoke Invoke-RestMethod -Times 1 -Exactly -ParameterFilter { $Uri -like '*statics.tver.jp*' -and $Proxy -eq 'http://proxy.example:8080' }
+			Should -Invoke Invoke-RestMethod -Times 0 -Exactly -ParameterFilter { $Uri -like '*callEpisode*' -and $Proxy }
+		} finally { $script:proxyUrl = $null }
+	}
+	It 'callEpisodeの取得に失敗したときは警告して何も返さず、staticsは取得しないこと' {
+		Mock Invoke-RestMethod { throw 'Response status code does not indicate success: 500 (Server Error).' }
+		$info = Get-VideoInfoLegacy -episodeID 'ep1'
+		$info | Should -BeNullOrEmpty
+		Should -Invoke Write-Warning -Times 1 -Exactly
+		Should -Invoke Invoke-RestMethod -Times 1 -Exactly
+	}
+	It 'staticsの取得に失敗したときは警告して何も返さないこと' {
+		Mock Invoke-RestMethod {
+			if ($Uri -like '*callEpisode*') { New-LegacyEpisodeResponse }
+			else { throw 'Response status code does not indicate success: 404 (Not Found).' }
+		}
+		$info = Get-VideoInfoLegacy -episodeID 'ep1'
+		$info | Should -BeNullOrEmpty
+		Should -Invoke Write-Warning -Times 1 -Exactly
 	}
 }
 

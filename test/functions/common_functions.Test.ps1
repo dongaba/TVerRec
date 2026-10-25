@@ -757,3 +757,42 @@ Describe 'Get-GuiRefreshInterval' {
 }
 
 # endregion GUI更新間隔
+
+# region ディスク空き容量
+
+#----------------------------------------------------------------------
+# ディレクトリの空き容量確認(MB)
+# * Windowsの分岐(Get-CimInstance / dir)は実環境が必要なため、Linux/macOS(df)の分岐のみ検証する
+#----------------------------------------------------------------------
+Describe 'Get-RemainingCapacity' -Skip:$IsWindows {
+	BeforeEach {
+		Mock Write-Information {}
+		$script:dfHeader = 'Filesystem 1024-blocks Used Available Capacity Mounted on'
+	}
+	It 'dfの空き容量(KB)をMBに換算して返すこと' {
+		Mock sh { $script:dfHeader ; '/dev/disk1 1000000 488000 512000 49% /' }
+		Get-RemainingCapacity -targetDir '/tmp' | Should -Be 500
+		Should -Invoke sh -Times 1 -Exactly
+		Should -Invoke Write-Information -Times 0 -Exactly
+	}
+	It '戻り値はInt64であること' {
+		Mock sh { $script:dfHeader ; '/dev/disk1 1000000 488000 1536000 49% /' }
+		$result = Get-RemainingCapacity -targetDir '/tmp'
+		$result | Should -BeOfType [Int64]
+		$result | Should -Be 1500
+	}
+	It 'パイプラインでディレクトリを渡せること' {
+		Mock sh { $script:dfHeader ; '/dev/disk1 1000000 488000 512000 49% /' }
+		'/tmp' | Get-RemainingCapacity | Should -Be 500
+	}
+	It '実在するディレクトリでは、正の値が返ること' {
+		Get-RemainingCapacity -targetDir $TestDrive | Should -BeGreaterThan 0
+	}
+	It '取得に失敗したときは、容量不明のメッセージを表示し、十分に大きい値(約9.5GB)を返すこと' {
+		Mock sh { throw 'df failed' }
+		Get-RemainingCapacity -targetDir '/tmp' | Should -BeGreaterThan 9000
+		Should -Invoke Write-Information -Times 1 -Exactly
+	}
+}
+
+# endregion ディスク空き容量

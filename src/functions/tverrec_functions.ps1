@@ -961,7 +961,7 @@ function Save-HistoryFile {
 		if ($PSCmdlet.ParameterSetName -eq 'Text') {
 			if ($Lines) { $Lines | Set-Content -LiteralPath $tempPath -Encoding UTF8 -ErrorAction Stop }
 			else { New-Item -ItemType File -Path $tempPath -Force -ErrorAction Stop | Out-Null }
-		} elseif (@($Records).Count -gt 0) {
+		} elseif ($null -ne $Records -and @($Records).Count -gt 0) {
 			$Records | Export-Csv -LiteralPath $tempPath -Encoding UTF8 -ErrorAction Stop
 		} else {
 			# 全件削除でもCSVヘッダーを残し、次回の追記を読み取れるようにする
@@ -2687,7 +2687,7 @@ function Suspend-Process () {
 				if ($script:stopSchedule[$currentDay] -contains $currentHour) {
 					Write-Output ($script:msg.WaitSuspendTime -f ($currentDateTime))
 					# 次の正時までの時間差を計算
-					$timeDifference = $currentDateTime.AddHours(1).Date.AddHours($currentDateTime.Hour + 1) - $currentDateTime
+					$timeDifference = $currentDateTime.Date.AddHours($currentDateTime.Hour + 1) - $currentDateTime
 					Start-Sleep -Seconds ([math]::Ceiling($timeDifference.TotalSeconds))
 				} else { break }
 			} else { break }

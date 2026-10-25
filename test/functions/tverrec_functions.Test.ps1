@@ -796,7 +796,7 @@ Describe 'Invoke-VideoDownloadの字幕の分岐(#312)' {
 		if (-not (Get-Command Get-VideoInfo -ErrorAction Ignore)) { function script:Get-VideoInfo { Param ($episodeID) } }
 		function script:New-TestVideoInfo {
 			Param ([String]$Id)
-			[PSCustomObject]@{ episodeID = $Id ; episodePageURL = "https://tver.jp/episodes/$Id" ; seriesPageURL = 'https://tver.jp/series/sr1' ; seriesName = 'テスト番組' ; seasonName = '' ; episodeName = '第1話' ; episodeNum = '1' ; mediaName = 'テスト局' ; broadcastDate = '2026年01月01日放送' }
+			[PSCustomObject]@{ episodeID = $Id ; episodePageURL = "https://tver.jp/episodes/$Id" ; seriesPageURL = 'https://tver.jp/series/sr1' ; seriesName = 'テスト番組' ; seasonName = '' ; episodeName = '第1話' ; episodeNum = '1' ; mediaName = 'テスト局' ; broadcastDate = '2026年01月01日放送' ; isSubtitle = $null }
 		}
 		$script:histHeader = '"videoPage","videoSeriesPage","genre","series","season","title","media","broadcastDate","downloadDate","videoDir","videoName","videoPath","videoValidated","subtitle"'
 	}
@@ -883,6 +883,446 @@ Describe 'Invoke-VideoDownloadの字幕の分岐(#312)' {
 		Add-Content -LiteralPath $script:histFilePath -Value ('"https://tver.jp/episodes/ep_old","","k","テスト番組","","第1話","テスト局","b","2026-01-01 00:00:00","d","n.mp4","{0}","1","0"' -f $script:expectedRelPath) -Encoding UTF8
 		Invoke-VideoDownload -Keyword 'k' -episodeID 'ep00000001' -Force $false 6>$null 3>$null
 		$script:ytdlCalls | Should -Be 1
+	}
+	It '新規のダウンロード: yt-dlp起動後の待機は1秒(5秒待たない)' {
+		Invoke-VideoDownload -Keyword 'k' -episodeID 'ep00000001' -Force $false 6>$null 3>$null
+		$script:ytdlCalls | Should -Be 1
+		Should -Invoke Start-Sleep -Times 0 -Exactly -ParameterFilter { $Seconds -eq 5 }
+		Should -Invoke Start-Sleep -Times 1 -ParameterFilter { $Seconds -eq 1 }
+	}
+	It '履歴・無視リストのキャッシュがあるとき: ファイルを読み直さず、ダウンロードした番組の履歴をキャッシュに反映する' {
+		$script:histCache = @()
+		$script:ignoreCache = @()
+		Mock Get-LatestHistory { throw 'キャッシュがあるのに履歴ファイルを読んだ' }
+		Mock Read-IgnoreList { throw 'キャッシュがあるのに無視リストを読んだ' }
+		try {
+			Invoke-VideoDownload -Keyword 'k' -episodeID 'ep00000001' -Force $false 6>$null 3>$null
+			$script:ytdlCalls | Should -Be 1
+			Should -Invoke Get-LatestHistory -Times 0 -Exactly
+			Should -Invoke Read-IgnoreList -Times 0 -Exactly
+			@($script:histCache).Count | Should -Be 1
+			@($script:histCache)[0].videoPage | Should -Be 'https://tver.jp/episodes/ep00000001'
+			@(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Count | Should -Be 1	# 履歴ファイルにも書かれている
+		} finally { Remove-Variable -Name histCache, histIdSet, ignoreCache -Scope Script -ErrorAction SilentlyContinue }
+	}
+}
+
+#----------------------------------------------------------------------
+# 一括ダウンロード用のキャッシュ(履歴・無視リスト)
+# * download_bulk.ps1が実行開始時に$script:histCache/$script:ignoreCacheを設定し、番組ごとの全件読み込みを避ける
+#----------------------------------------------------------------------
+Describe '一括ダウンロード用のキャッシュ' {
+	BeforeAll {
+		$script:cacheSaved = @{}
+		foreach ($n in 'redownloadWhenSubtitleAdded', 'embedSubtitle', 'videoContainerFormat') {
+			$script:cacheSaved[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' }
+		}
+		function script:Remove-TestCacheVariable { Remove-Variable -Name histCache, histIdSet, ignoreCache -Scope Script -ErrorAction SilentlyContinue }
+	}
+	AfterAll {
+		Remove-TestCacheVariable
+		foreach ($n in $script:cacheSaved.Keys) {
+			if ($script:cacheSaved[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:cacheSaved[$n] }
+		}
+	}
+	BeforeEach {
+		Remove-TestCacheVariable
+		$script:redownloadWhenSubtitleAdded = $true
+		$script:embedSubtitle = $true
+		$script:videoContainerFormat = 'mp4'
+		$script:cacheHists = @(
+			[PSCustomObject]@{ videoPage = 'https://tver.jp/episodes/ep_has' ; subtitle = '1' },
+			[PSCustomObject]@{ videoPage = 'https://tver.jp/episodes/ep_none' ; subtitle = '0' },
+			[PSCustomObject]@{ videoPage = 'https://tver.jp/episodes/ep_unknown' ; subtitle = '' }
+		)
+		Mock Get-LatestHistory { $script:cacheHists }
+		Mock Read-IgnoreList { @('ignoreA', 'ignoreB') }
+	}
+	AfterEach { Remove-TestCacheVariable }
+
+	Context 'Get-LatestHistoryCached' {
+		It 'キャッシュがなければ履歴ファイルを読む' {
+			@(Get-LatestHistoryCached).Count | Should -Be 3
+			Should -Invoke Get-LatestHistory -Times 1 -Exactly
+		}
+		It 'キャッシュがあれば履歴ファイルを読まずにキャッシュを返す' {
+			$script:histCache = @([PSCustomObject]@{ videoPage = 'https://tver.jp/episodes/ep_cached' ; subtitle = '1' })
+			$r = @(Get-LatestHistoryCached)
+			$r.Count | Should -Be 1
+			$r[0].videoPage | Should -Be 'https://tver.jp/episodes/ep_cached'
+			Should -Invoke Get-LatestHistory -Times 0 -Exactly
+		}
+		It '空のキャッシュでも履歴ファイルを読まない(履歴が空の環境)' {
+			$script:histCache = @()
+			@(Get-LatestHistoryCached).Count | Should -Be 0
+			Should -Invoke Get-LatestHistory -Times 0 -Exactly
+		}
+	}
+
+	Context 'Add-LatestHistoryCache' {
+		It 'キャッシュがなければ何もしない(キャッシュ変数を作らない)' {
+			Add-LatestHistoryCache ([PSCustomObject]@{ videoPage = 'https://tver.jp/episodes/ep_x' })
+			Test-Path Variable:Script:histCache | Should -BeFalse
+		}
+		It '同じvideoPageのレコードは置き換え、なければ追加し、ダウンロード済みIDのキャッシュを破棄する' {
+			$script:histCache = @(
+				[PSCustomObject]@{ videoPage = 'https://tver.jp/episodes/ep_a' ; subtitle = '0' },
+				[PSCustomObject]@{ videoPage = 'https://tver.jp/episodes/ep_b' ; subtitle = '1' }
+			)
+			$script:histIdSet = [System.Collections.Generic.HashSet[String]]::new()
+			Add-LatestHistoryCache ([PSCustomObject]@{ videoPage = 'https://tver.jp/episodes/ep_a' ; subtitle = '1' })
+			Add-LatestHistoryCache ([PSCustomObject]@{ videoPage = 'https://tver.jp/episodes/ep_c' ; subtitle = '0' })
+			@($script:histCache).Count | Should -Be 3
+			@($script:histCache).Where({ $_.videoPage -eq 'https://tver.jp/episodes/ep_a' }).Count | Should -Be 1
+			@($script:histCache).Where({ $_.videoPage -eq 'https://tver.jp/episodes/ep_a' })[0].subtitle | Should -Be '1'
+			$script:histIdSet | Should -BeNullOrEmpty
+		}
+		It 'レコードがnullなら何もしない' {
+			$script:histCache = @([PSCustomObject]@{ videoPage = 'https://tver.jp/episodes/ep_a' ; subtitle = '0' })
+			Add-LatestHistoryCache $null
+			@($script:histCache).Count | Should -Be 1
+		}
+	}
+
+	Context 'Get-IgnoreListCached' {
+		It 'キャッシュがなければ無視リストのファイルを読む' {
+			@(Get-IgnoreListCached) | Should -Be @('ignoreA', 'ignoreB')
+			Should -Invoke Read-IgnoreList -Times 1 -Exactly
+		}
+		It 'キャッシュがあればファイルを読まずにキャッシュを返す' {
+			$script:ignoreCache = @('cached')
+			@(Get-IgnoreListCached) | Should -Be @('cached')
+			Should -Invoke Read-IgnoreList -Times 0 -Exactly
+		}
+		It '空のキャッシュでもファイルを読まない(無視リストが空の環境)' {
+			$script:ignoreCache = @()
+			@(Get-IgnoreListCached).Count | Should -Be 0
+			Should -Invoke Read-IgnoreList -Times 0 -Exactly
+		}
+	}
+
+	Context 'Invoke-HistoryMatchCheck(履歴キャッシュあり)' {
+		It 'キャッシュなしと同じ結果を返す(字幕なしは未ダウンロード扱い)' {
+			$noCacheLinks, $noCacheCount = Invoke-HistoryMatchCheck @('ep_has', 'ep_none', 'ep_unknown', 'ep_new')
+			$script:histCache = $script:cacheHists
+			$links, $count = Invoke-HistoryMatchCheck @('ep_has', 'ep_none', 'ep_unknown', 'ep_new')
+			@($links) | Should -Be @($noCacheLinks)
+			$count | Should -Be $noCacheCount
+			@($links) | Should -Be @('ep_none', 'ep_new')
+			$count | Should -Be 2
+		}
+		It '設定が無効なら、字幕なしも含めて履歴にある番組をすべて除外する' {
+			$script:redownloadWhenSubtitleAdded = $false
+			$script:histCache = $script:cacheHists
+			$links, $count = Invoke-HistoryMatchCheck @('ep_has', 'ep_none', 'ep_unknown', 'ep_new')
+			@($links) | Should -Be @('ep_new')
+			$count | Should -Be 3
+		}
+		It '履歴ファイルを読まず、ダウンロード済みIDのHashSetを使い回す' {
+			$script:histCache = $script:cacheHists
+			Invoke-HistoryMatchCheck @('ep_new') | Out-Null
+			$first = $script:histIdSet
+			($first -is [System.Collections.Generic.HashSet[String]]) | Should -BeTrue
+			Invoke-HistoryMatchCheck @('ep_has') | Out-Null
+			[Object]::ReferenceEquals($first, $script:histIdSet) | Should -BeTrue
+			Should -Invoke Get-LatestHistory -Times 0 -Exactly
+		}
+		It '大文字小文字を区別しない(Compare-Objectと同じ)' {
+			$script:histCache = $script:cacheHists
+			$links, $count = Invoke-HistoryMatchCheck @('EP_HAS')
+			@($links).Count | Should -Be 0
+			$count | Should -Be 1
+		}
+		It 'Add-LatestHistoryCacheで追加した番組は、次の判定でダウンロード済みになる' {
+			$script:histCache = $script:cacheHists
+			$links, $count = Invoke-HistoryMatchCheck @('ep_new')
+			@($links) | Should -Be @('ep_new')
+			Add-LatestHistoryCache ([PSCustomObject]@{ videoPage = 'https://tver.jp/episodes/ep_new' ; subtitle = '1' })
+			$links, $count = Invoke-HistoryMatchCheck @('ep_new')
+			@($links).Count | Should -Be 0
+			$count | Should -Be 1
+		}
+		It '履歴が空のキャッシュなら、すべて未ダウンロードとして返す' {
+			$script:histCache = @()
+			$links, $count = Invoke-HistoryMatchCheck @('ep_a', 'ep_b')
+			@($links) | Should -Be @('ep_a', 'ep_b')
+			$count | Should -Be 0
+		}
+	}
+}
+
+#----------------------------------------------------------------------
+# youtube-dlプロセスの空き待ち
+#----------------------------------------------------------------------
+Describe 'Wait-YtdlProcess' {
+	It '同時実行数が上限に達している間は、10秒間隔で空きを確認する' {
+		$script:ytdlCountQueue = [System.Collections.Generic.Queue[Int32]]::new([Int32[]]@(5, 5, 0))
+		Mock Get-YtdlProcessCount { $script:ytdlCountQueue.Dequeue() }
+		Mock Start-Sleep {}
+		Wait-YtdlProcess 5 6>$null | Out-Null
+		Should -Invoke Start-Sleep -Times 2 -Exactly -ParameterFilter { $Seconds -eq 10 }
+	}
+	It '上限未満なら待たない' {
+		Mock Get-YtdlProcessCount { 4 }
+		Mock Start-Sleep {}
+		Wait-YtdlProcess 5 6>$null | Out-Null
+		Should -Invoke Start-Sleep -Times 0 -Exactly
+	}
+}
+
+#----------------------------------------------------------------------
+# ダウンロード履歴の安全な保存・字幕の有無の更新
+#----------------------------------------------------------------------
+Describe 'ダウンロード履歴の書き込み' {
+	BeforeAll {
+		$script:wSaved = @{}
+		foreach ($n in 'histFilePath', 'histLockFilePath', 'histHasSubtitleColumn') {
+			$script:wSaved[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' }
+		}
+		$script:wHeader = '"videoPage","videoSeriesPage","genre","series","season","title","media","broadcastDate","downloadDate","videoDir","videoName","videoPath","videoValidated","subtitle"'
+		$script:wHeaderNoSubtitle = '"videoPage","videoSeriesPage","genre","series","season","title","media","broadcastDate","downloadDate","videoDir","videoName","videoPath","videoValidated"'
+		function script:Get-TestWriteRow {
+			Param ([String]$Id, [String]$Subtitle = '0')
+			return ('"https://tver.jp/episodes/{0}"' -f $Id) + (',""' * 7) + ',"2026-01-01 00:00:00"' + (',""' * 3) + (',"1","{0}"' -f $Subtitle)
+		}
+	}
+	AfterAll {
+		foreach ($n in $script:wSaved.Keys) {
+			if ($script:wSaved[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:wSaved[$n] }
+		}
+	}
+	BeforeEach {
+		Mock Wait-FileLock {}
+		Mock Unlock-File {}
+		Mock Start-Sleep {}
+		Mock Write-Warning {}
+		Remove-Variable -Name histHasSubtitleColumn -Scope Script -ErrorAction SilentlyContinue	# 列の有無はファイルごとに判定し直す
+		$script:wDir = Join-Path $TestDrive ('write{0}' -f [Guid]::NewGuid().ToString('N'))
+		New-Item -ItemType Directory -Path $script:wDir -Force | Out-Null
+		$script:histFilePath = Join-Path $script:wDir 'history.csv'
+		$script:histLockFilePath = Join-Path $script:wDir 'history.lock'
+	}
+
+	Context 'Save-HistoryFile' {
+		It 'レコードをCSVで保存し、直前の履歴を.bakに退避すること' {
+			Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value @($script:wHeader, (Get-TestWriteRow 'epAAAAAAAA'), (Get-TestWriteRow 'epBBBBBBBB'))
+			$records = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8 | Where-Object { $_.videoPage -like '*epAAAAAAAA' })
+			Save-HistoryFile -Records $records
+			$rows = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+			$rows.Count | Should -Be 1
+			$rows[0].videoPage | Should -Be 'https://tver.jp/episodes/epAAAAAAAA'
+			$bak = $script:histFilePath + '.bak'
+			Test-Path -LiteralPath $bak | Should -BeTrue
+			@(Import-Csv -LiteralPath $bak -Encoding UTF8).Count | Should -Be 2
+		}
+		It '保存後に一時ファイルが残らないこと' {
+			Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value @($script:wHeader, (Get-TestWriteRow 'epAAAAAAAA'))
+			Save-HistoryFile -Records @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+			@(Get-ChildItem -LiteralPath $script:wDir -Filter '*.tmp').Count | Should -Be 0
+		}
+		It 'レコードが0件なら、元のCSVヘッダーだけを残すこと' {
+			Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value @($script:wHeader, (Get-TestWriteRow 'epAAAAAAAA'))
+			Save-HistoryFile -Records @()
+			@(Get-Content -LiteralPath $script:histFilePath).Count | Should -Be 1
+			(Get-Content -LiteralPath $script:histFilePath -TotalCount 1) | Should -Be $script:wHeader
+			@(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Count | Should -Be 0
+		}
+		It 'レコードが$nullでも、元のCSVヘッダーだけを残すこと' {
+			Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value @($script:wHeader, (Get-TestWriteRow 'epAAAAAAAA'))
+			Save-HistoryFile -Records $null
+			(Get-Content -LiteralPath $script:histFilePath -TotalCount 1) | Should -Be $script:wHeader
+			@(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Count | Should -Be 0
+		}
+		It 'ヘッダーだけに整理したあとも、新しいレコードを追記して読み取れること' {
+			Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value @($script:wHeader, (Get-TestWriteRow 'epAAAAAAAA'))
+			Save-HistoryFile -Records @()
+			Add-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value (Get-TestWriteRow 'epNEW00001')
+			$rows = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+			$rows.Count | Should -Be 1
+			$rows[0].videoPage | Should -Be 'https://tver.jp/episodes/epNEW00001'
+		}
+		It 'テキスト行で保存できること' {
+			Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value @($script:wHeader)
+			Save-HistoryFile -Lines @('line1', 'line2')
+			@(Get-Content -LiteralPath $script:histFilePath) | Should -Be @('line1', 'line2')
+		}
+		It 'テキスト行が空なら、空のファイルになること' {
+			Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value @($script:wHeader)
+			Save-HistoryFile -Lines @()
+			(Get-Item -LiteralPath $script:histFilePath).Length | Should -Be 0
+		}
+		It '履歴ファイルのヘッダーが読めず保存に失敗したときは、例外にして元の履歴を変更しないこと' {
+			Set-Content -LiteralPath $script:histFilePath -Value ''	# ヘッダーのない履歴
+			$before = [IO.File]::ReadAllText($script:histFilePath)
+			{ Save-HistoryFile -Records @() } | Should -Throw
+			[IO.File]::ReadAllText($script:histFilePath) | Should -Be $before
+			@(Get-ChildItem -LiteralPath $script:wDir -Filter '*.tmp').Count | Should -Be 0
+		}
+	}
+
+	Context 'Set-HistorySubtitleStatus' {
+		BeforeEach {
+			Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value @($script:wHeader, (Get-TestWriteRow 'epAAAAAAAA' '0'))
+			$script:wHist = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)[0]
+		}
+		It '履歴のレコードをコピーして、字幕の有無とダウンロード日時を更新したレコードを追記すること' {
+			Set-HistorySubtitleStatus -VideoHist $script:wHist -Status '1'
+			$rows = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+			$rows.Count | Should -Be 2
+			$rows[0].subtitle | Should -Be '0'	# 元のレコードは変わらない
+			$rows[1].subtitle | Should -Be '1'
+			$rows[1].videoPage | Should -Be 'https://tver.jp/episodes/epAAAAAAAA'
+			$rows[1].downloadDate | Should -Not -Be '2026-01-01 00:00:00'
+			[DateTime]::TryParse($rows[1].downloadDate, [Ref][DateTime]::MinValue) | Should -BeTrue
+		}
+		It '渡したレコード自体は変更しないこと' {
+			Set-HistorySubtitleStatus -VideoHist $script:wHist -Status '1'
+			$script:wHist.subtitle | Should -Be '0'
+			$script:wHist.downloadDate | Should -Be '2026-01-01 00:00:00'
+		}
+		It '字幕の有無が不明(空文字)でも記録できること' {
+			Set-HistorySubtitleStatus -VideoHist $script:wHist -Status ''
+			$rows = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+			$rows.Count | Should -Be 2
+			$rows[1].subtitle | Should -Be ''
+		}
+		It '履歴ファイルのロックを取得して、処理後に解放すること' {
+			Set-HistorySubtitleStatus -VideoHist $script:wHist -Status '1'
+			Should -Invoke Wait-FileLock -Times 1 -Exactly
+			Should -Invoke Unlock-File -Times 1 -Exactly
+		}
+		It 'subtitle列がない履歴には何も追記しないこと' {
+			Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value @($script:wHeaderNoSubtitle, ('"https://tver.jp/episodes/epAAAAAAAA"' + (',""' * 7) + ',"2026-01-01 00:00:00"' + (',""' * 3) + ',"1"'))
+			$before = [IO.File]::ReadAllText($script:histFilePath)
+			Set-HistorySubtitleStatus -VideoHist $script:wHist -Status '1'
+			[IO.File]::ReadAllText($script:histFilePath) | Should -Be $before
+			Should -Invoke Wait-FileLock -Times 0 -Exactly
+		}
+		It '-WhatIfでは追記しないこと' {
+			$before = [IO.File]::ReadAllText($script:histFilePath)
+			Set-HistorySubtitleStatus -VideoHist $script:wHist -Status '1' -WhatIf
+			[IO.File]::ReadAllText($script:histFilePath) | Should -Be $before
+		}
+		It '追記に失敗したときは警告を出し、例外にせず、ロックも解放すること' {
+			Mock Export-Csv { throw 'disk full' }
+			{ Set-HistorySubtitleStatus -VideoHist $script:wHist -Status '1' } | Should -Not -Throw
+			Should -Invoke Write-Warning -Times 1 -Exactly
+			Should -Invoke Unlock-File -Times 1 -Exactly
+		}
+	}
+}
+
+#----------------------------------------------------------------------
+# ダウンロードリストへの追加
+#----------------------------------------------------------------------
+Describe 'Update-VideoList' {
+	BeforeAll {
+		$script:ulSaved = @{}
+		foreach ($n in 'listFilePath', 'listLockFilePath', 'extractDescTextToList') {
+			$script:ulSaved[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' }
+		}
+		# Get-VideoInfoはtver_functions.ps1にあり、このテストでは読み込まないため、Mockできるようにスタブを用意する
+		if (-not (Get-Command Get-VideoInfo -ErrorAction Ignore)) { function script:Get-VideoInfo { Param ($episodeID) } }
+		function script:New-TestListVideoInfo {
+			Param ([String]$Id = 'epLIST0001')
+			[PSCustomObject]@{
+				seriesName = 'テスト番組' ; seriesID = 'sr1' ; seriesPageURL = 'https://tver.jp/series/sr1'
+				seasonName = '' ; seasonID = 'ss1' ; episodeNum = '03' ; episodeName = '第3話'
+				episodeID = $Id ; episodePageURL = "https://tver.jp/episodes/$Id"
+				mediaName = 'テスト局' ; providerName = 'テスト提供' ; broadcastDate = '2026年10月24日放送' ; endTime = '2026/11/01 00:00'
+				descriptionText = '説明文です'
+			}
+		}
+	}
+	AfterAll {
+		foreach ($n in $script:ulSaved.Keys) {
+			if ($script:ulSaved[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:ulSaved[$n] }
+		}
+	}
+	BeforeEach {
+		Mock Invoke-StatisticsCheck {}
+		Mock Wait-FileLock {}
+		Mock Unlock-File {}
+		Mock Write-Warning {}
+		Mock Update-IgnoreList {}
+		Mock Read-IgnoreList { @() }
+		Mock Get-VideoInfo { New-TestListVideoInfo }
+		$script:ulDir = Join-Path $TestDrive ('ul{0}' -f [Guid]::NewGuid().ToString('N'))
+		New-Item -ItemType Directory -Path $script:ulDir -Force | Out-Null
+		$script:listFilePath = Join-Path $script:ulDir 'list.csv'
+		$script:listLockFilePath = Join-Path $script:ulDir 'list.lock'
+		$script:extractDescTextToList = $false
+	}
+	It '対象外ではない番組は、キーワードを付けてダウンロードリストに追加すること' {
+		Update-VideoList -keyword 'tag/drama' -episodeID 'epLIST0001' | Out-Null
+		$rows = @(Import-Csv -LiteralPath $script:listFilePath -Encoding UTF8)
+		$rows.Count | Should -Be 1
+		$rows[0].episodeID | Should -Be 'epLIST0001'
+		$rows[0].seriesName | Should -Be 'テスト番組'
+		$rows[0].episodeName | Should -Be '第3話'
+		$rows[0].keyword | Should -Be 'tag/drama'
+		$rows[0].ignoreWord | Should -Be ''
+		Should -Invoke Update-IgnoreList -Times 0 -Exactly
+		Should -Invoke Write-Warning -Times 0 -Exactly
+	}
+	It '呼ぶたびに追記され、ヘッダーは1回だけになること' {
+		Mock Get-VideoInfo { New-TestListVideoInfo $episodeID }
+		Update-VideoList -keyword 'k' -episodeID 'epLIST0001' | Out-Null
+		Update-VideoList -keyword 'k' -episodeID 'epLIST0002' | Out-Null
+		$rows = @(Import-Csv -LiteralPath $script:listFilePath -Encoding UTF8)
+		$rows.episodeID | Should -Be @('epLIST0001', 'epLIST0002')
+		@(Get-Content -LiteralPath $script:listFilePath).Count | Should -Be 3
+	}
+	It 'ダウンロード対象外に合致する番組は、エピソードIDの先頭に#を付け、合致した語を記録し、無視リストを更新すること' {
+		Mock Read-IgnoreList { @('テスト番組') }
+		Update-VideoList -keyword 'k' -episodeID 'epLIST0001' 3>$null | Out-Null
+		$rows = @(Import-Csv -LiteralPath $script:listFilePath -Encoding UTF8)
+		$rows.Count | Should -Be 1
+		$rows[0].episodeID | Should -Be '#epLIST0001'
+		$rows[0].ignoreWord | Should -Be 'テスト番組'
+		Should -Invoke Update-IgnoreList -Times 1 -Exactly -ParameterFilter { $ignoreTitle -eq 'テスト番組' }
+		Should -Invoke Write-Warning -Times 1 -Exactly
+	}
+	It 'エピソード名だけに合致する場合も対象外として扱うこと' {
+		Mock Read-IgnoreList { @('第3話') }
+		Update-VideoList -keyword 'k' -episodeID 'epLIST0001' 3>$null | Out-Null
+		(Import-Csv -LiteralPath $script:listFilePath -Encoding UTF8)[0].episodeID | Should -Be '#epLIST0001'
+	}
+	It '空の行や合致しない語は無視し、対象外にしないこと' {
+		Mock Read-IgnoreList { @('', '別の番組') }
+		Update-VideoList -keyword 'k' -episodeID 'epLIST0001' | Out-Null
+		(Import-Csv -LiteralPath $script:listFilePath -Encoding UTF8)[0].episodeID | Should -Be 'epLIST0001'
+		Should -Invoke Update-IgnoreList -Times 0 -Exactly
+	}
+	It '説明文の出力が有効なら、説明文もリストに含めること' {
+		$script:extractDescTextToList = $true
+		Update-VideoList -keyword 'k' -episodeID 'epLIST0001' | Out-Null
+		(Import-Csv -LiteralPath $script:listFilePath -Encoding UTF8)[0].descriptionText | Should -Be '説明文です'
+	}
+	It '番組情報が取得できなかったときは警告を出し、リストに追加しないこと' {
+		Mock Get-VideoInfo { $null }
+		Update-VideoList -keyword 'k' -episodeID 'epLIST0001' | Out-Null
+		Test-Path -LiteralPath $script:listFilePath | Should -BeFalse
+		Should -Invoke Write-Warning -Times 1 -Exactly
+		Should -Invoke Wait-FileLock -Times 0 -Exactly
+	}
+	It 'リストへの書き込みに失敗したときは警告を出し、例外にせず、ロックも解放すること' {
+		Mock Export-Csv { throw 'disk full' }
+		{ Update-VideoList -keyword 'k' -episodeID 'epLIST0001' | Out-Null } | Should -Not -Throw
+		Should -Invoke Write-Warning -Times 1 -Exactly
+		Should -Invoke Unlock-File -Times 1 -Exactly
+	}
+	It '-WhatIfではリストに追加しないこと' {
+		Update-VideoList -keyword 'k' -episodeID 'epLIST0001' -WhatIf | Out-Null
+		Test-Path -LiteralPath $script:listFilePath | Should -BeFalse
+	}
+	It 'リストファイルのロックを取得して、処理後に解放すること' {
+		Update-VideoList -keyword 'k' -episodeID 'epLIST0001' | Out-Null
+		Should -Invoke Wait-FileLock -Times 1 -Exactly
+		Should -Invoke Unlock-File -Times 1 -Exactly
 	}
 }
 
@@ -1314,5 +1754,179 @@ Describe 'Remove-UnRenamedTempFile(#297)' -Skip:$IsWindows {
 		$script:deleteUnrenamedFile = $true
 		Remove-UnRenamedTempFile -WhatIf | Out-Null
 		foreach ($f in $script:unrenTargets) { Test-Path -LiteralPath $f | Should -BeTrue }
+	}
+}
+
+#----------------------------------------------------------------------
+# ダウンロードスケジュールに合わせた一時停止
+#----------------------------------------------------------------------
+Describe 'Suspend-Process' {
+	BeforeAll {
+		$script:spSaved = @{}
+		foreach ($n in 'scheduleStop', 'stopSchedule') {
+			$script:spSaved[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' }
+		}
+	}
+	AfterAll {
+		foreach ($n in $script:spSaved.Keys) {
+			if ($script:spSaved[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:spSaved[$n] }
+		}
+	}
+	BeforeEach {
+		$script:scheduleStop = $true
+		$script:stopSchedule = @{ 'Mon' = @(10) ; 'Sat' = @(23) }
+		$script:spNow = [DateTime]'2026-10-26 10:30:00'	# 月曜日
+		Mock Get-Date { $script:spNow }
+		Mock Start-Sleep { $script:spNow = $script:spNow.AddSeconds($Seconds) }	# 待機した分だけ時刻を進める
+	}
+	It 'スケジュール停止が無効なら、待機しない' {
+		$script:scheduleStop = $false
+		Suspend-Process | Out-Null
+		Should -Invoke Start-Sleep -Times 0 -Exactly
+	}
+	It '停止時間帯なら、次の正時まで待機し、停止時間外になったら戻ること' {
+		$out = @(Suspend-Process)
+		Should -Invoke Start-Sleep -Times 1 -Exactly -ParameterFilter { $Seconds -eq 1800 }
+		$out.Count | Should -Be 1	# 待機中のメッセージを1回表示
+		$script:spNow | Should -Be ([DateTime]'2026-10-26 11:00:00')
+	}
+	It '停止時間帯でなければ、待機しない' {
+		$script:stopSchedule = @{ 'Mon' = @(9) }
+		Suspend-Process | Out-Null
+		Should -Invoke Start-Sleep -Times 0 -Exactly
+	}
+	It '曜日が停止スケジュールになければ、待機しない' {
+		$script:stopSchedule = @{ 'Tue' = @(10) }
+		Suspend-Process | Out-Null
+		Should -Invoke Start-Sleep -Times 0 -Exactly
+	}
+	It '停止時間帯が連続する場合は、停止時間外になるまで1時間ずつ待機すること' {
+		$script:stopSchedule = @{ 'Mon' = @(10, 11) }
+		Suspend-Process | Out-Null
+		Should -Invoke Start-Sleep -Times 2 -Exactly
+		Should -Invoke Start-Sleep -Times 1 -Exactly -ParameterFilter { $Seconds -eq 1800 }
+		Should -Invoke Start-Sleep -Times 1 -Exactly -ParameterFilter { $Seconds -eq 3600 }
+	}
+	It '正時ちょうどなら、1時間待機すること' {
+		$script:spNow = [DateTime]'2026-10-26 10:00:00'
+		Suspend-Process | Out-Null
+		Should -Invoke Start-Sleep -Times 1 -Exactly -ParameterFilter { $Seconds -eq 3600 }
+	}
+	It '待機秒数は切り上げること' {
+		$script:spNow = [DateTime]'2026-10-26 10:59:30.5'
+		Suspend-Process | Out-Null
+		Should -Invoke Start-Sleep -Times 1 -Exactly -ParameterFilter { $Seconds -eq 30 }
+	}
+	It '23時台が停止時間帯でも、翌日0時までの時間だけ待機すること' {
+		$script:spNow = [DateTime]'2026-10-24 23:30:00'	# 土曜日
+		Suspend-Process | Out-Null
+		Should -Invoke Start-Sleep -Times 1 -Exactly -ParameterFilter { $Seconds -eq 1800 }
+		$script:spNow | Should -Be ([DateTime]'2026-10-25 00:00:00')
+	}
+	It '日をまたいで停止時間帯が続く場合は、翌日の停止時間帯も考慮すること' {
+		$script:stopSchedule = @{ 'Sat' = @(23) ; 'Sun' = @(0, 1) }
+		$script:spNow = [DateTime]'2026-10-24 23:30:00'
+		Suspend-Process | Out-Null
+		Should -Invoke Start-Sleep -Times 3 -Exactly
+		$script:spNow | Should -Be ([DateTime]'2026-10-25 02:00:00')
+	}
+}
+
+#----------------------------------------------------------------------
+# youtube-dl / ffmpegのプロセスが終わるまで待機
+#----------------------------------------------------------------------
+Describe 'Wait-DownloadCompletion' {
+	BeforeEach {
+		Mock Start-Sleep {}
+		Mock Write-Information {}
+	}
+	It 'プロセスがなければ待機しない' {
+		Mock Get-YtdlProcessCount { 0 }
+		Wait-DownloadCompletion
+		Should -Invoke Start-Sleep -Times 0 -Exactly
+		Should -Invoke Write-Information -Times 0 -Exactly
+	}
+	It 'プロセスが0になるまで、60秒ごとに確認し、プロセス数を表示すること' {
+		$script:wdcQueue = [System.Collections.Generic.Queue[Int32]]::new([Int32[]]@(3, 2, 0))
+		Mock Get-YtdlProcessCount { $script:wdcQueue.Dequeue() }
+		Wait-DownloadCompletion
+		Should -Invoke Start-Sleep -Times 2 -Exactly -ParameterFilter { $Seconds -eq 60 }
+		Should -Invoke Write-Information -Times 2 -Exactly
+		Should -Invoke Get-YtdlProcessCount -Times 3 -Exactly
+	}
+}
+
+Describe 'Wait-DownloadProcess' {
+	BeforeEach {
+		Mock Start-Sleep {}
+		Mock Get-YtdlProcessCount { $script:wdpYtdl.Dequeue() }
+		Mock Get-FfmpegProcessCount { $script:wdpFfmpeg.Dequeue() }
+	}
+	It 'yt-dlpもffmpegもなければ、待機も表示もしない' {
+		$script:wdpYtdl = [System.Collections.Generic.Queue[Int32]]::new([Int32[]]@(0))
+		$script:wdpFfmpeg = [System.Collections.Generic.Queue[Int32]]::new([Int32[]]@(0))
+		$out = @(Wait-DownloadProcess)
+		$out.Count | Should -Be 0
+		Should -Invoke Start-Sleep -Times 0 -Exactly
+	}
+	It 'yt-dlpとffmpegの合計数を表示し、60秒ごとに確認して、両方0になったら終了すること' {
+		$script:wdpYtdl = [System.Collections.Generic.Queue[Int32]]::new([Int32[]]@(2, 0))
+		$script:wdpFfmpeg = [System.Collections.Generic.Queue[Int32]]::new([Int32[]]@(1, 0))
+		$out = @(Wait-DownloadProcess)
+		$out.Count | Should -Be 1
+		$out[0] | Should -Be ($script:msg.WaitingDownloadProcess -f 3)
+		Should -Invoke Start-Sleep -Times 1 -Exactly -ParameterFilter { $Seconds -eq 60 }
+	}
+	It 'yt-dlpが先に終わっても、ffmpegが残っている間は待機を続けること' {
+		$script:wdpYtdl = [System.Collections.Generic.Queue[Int32]]::new([Int32[]]@(1, 0, 0))
+		$script:wdpFfmpeg = [System.Collections.Generic.Queue[Int32]]::new([Int32[]]@(0, 1, 0))
+		Wait-DownloadProcess | Out-Null
+		Should -Invoke Start-Sleep -Times 2 -Exactly
+	}
+}
+
+#----------------------------------------------------------------------
+# 移動に失敗したファイルの削除(作業フォルダ)
+#----------------------------------------------------------------------
+Describe 'Remove-UnMovedTempFile' {
+	BeforeAll {
+		$script:unmSaved = if (Test-Path Variable:Script:downloadWorkDir) { $script:downloadWorkDir } else { '__unset__' }
+	}
+	AfterAll {
+		if ($script:unmSaved -eq '__unset__') { Remove-Variable -Name downloadWorkDir -Scope Script -ErrorAction SilentlyContinue }
+		else { $script:downloadWorkDir = $script:unmSaved }
+	}
+	BeforeEach {
+		Mock Write-Information {}
+		$script:downloadWorkDir = Join-Path $TestDrive ('unm{0}' -f [Guid]::NewGuid().ToString('N'))
+		New-Item -ItemType Directory -Path (Join-Path $script:downloadWorkDir 'sub') -Force | Out-Null
+		$script:unmTargets = @('epa1b2c3d4.mp4', 'epa1b2c3d4.ts', 'epa1b2c3d4.f137.mp4', 'epz9y8x7w6.temp.ts')
+		$script:unmKeeps = @('番組 第1話.mp4', 'episode.mp4', 'epshort.mp4', 'epa1b2c3d4.mp4.part', 'epa1b2c3d4.jpg', 'epa1b2c3d4.mkv')
+		foreach ($f in ($script:unmTargets + $script:unmKeeps)) { Set-Content -LiteralPath (Join-Path $script:downloadWorkDir $f) -Value 'x' -NoNewline }
+		Set-Content -LiteralPath (Join-Path $script:downloadWorkDir 'sub/epa1b2c3d4.mp4') -Value 'x' -NoNewline	# サブフォルダは対象外
+	}
+	It 'エピソードIDのままの.mp4/.tsだけを削除し、それ以外のファイルは残すこと' {
+		Remove-UnMovedTempFile
+		foreach ($f in $script:unmTargets) { Test-Path -LiteralPath (Join-Path $script:downloadWorkDir $f) | Should -BeFalse -Because $f }
+		foreach ($f in $script:unmKeeps) { Test-Path -LiteralPath (Join-Path $script:downloadWorkDir $f) | Should -BeTrue -Because $f }
+		Should -Invoke Write-Information -Times 4 -Exactly
+	}
+	It 'サブフォルダの中のファイルは削除しないこと' {
+		Remove-UnMovedTempFile
+		Test-Path -LiteralPath (Join-Path $script:downloadWorkDir 'sub/epa1b2c3d4.mp4') | Should -BeTrue
+	}
+	It '-WhatIfでは削除しないこと' {
+		Remove-UnMovedTempFile -WhatIf
+		foreach ($f in $script:unmTargets) { Test-Path -LiteralPath (Join-Path $script:downloadWorkDir $f) | Should -BeTrue -Because $f }
+	}
+	It '対象のファイルがなければ、例外にならず何もしないこと' {
+		foreach ($f in $script:unmTargets) { Remove-Item -LiteralPath (Join-Path $script:downloadWorkDir $f) }
+		{ Remove-UnMovedTempFile } | Should -Not -Throw
+		Should -Invoke Write-Information -Times 0 -Exactly
+	}
+	It '作業フォルダが空でも、例外にならないこと' {
+		Get-ChildItem -LiteralPath $script:downloadWorkDir -Recurse -File | Remove-Item
+		{ Remove-UnMovedTempFile } | Should -Not -Throw
 	}
 }
