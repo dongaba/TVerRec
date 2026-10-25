@@ -242,7 +242,7 @@ function Invoke-TVerRecUpdateCheck {
 		Write-Output ('')
 		[Console]::ResetColor()
 		# 変更履歴の表示
-		foreach ($appRelease in @($appReleases.where({ $_.Tag_Name.Trim('v', ' ') -gt $appMajorVersion }))) {
+		foreach ($appRelease in @($appReleases.where({ (Compare-Version $_.Tag_Name.Trim('v', ' ').split(' ')[0] $appMajorVersion) -gt 0 }))) {
 			[Console]::ForegroundColor = 'Green'
 			Write-Output ($script:msg.MediumBoldBorder)
 			Write-Output ($script:msg.ToolUpdateLog -f $appRelease.tag_name)

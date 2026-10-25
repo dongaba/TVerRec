@@ -33,6 +33,7 @@
 - デバッグモードでyt-dlpの起動に失敗すると、後処理で例外が発生して元のエラーが隠れる問題を修正(`Invoke-Ytdl`)
 - ダウンロード対象外リスト(`ignore.conf`)が存在しない場合に、`Read-IgnoreList`が読み込み失敗の例外にならず空として扱っていた問題を修正(読み込み失敗として例外にする)
 - `Get-FileNameWoInvalidChar`が、Windowsでは`*?<>|`をファイル名から単純に除去し、macOS・Linuxと結果が異なっていた問題を修正(OSによらず`-`に置換)
+- 新バージョンの通知で表示する変更履歴の対象を、文字列比較で判定していたため、`3.10.0`が`3.9.0`より古いと扱われ、変更履歴が表示されない問題を修正(`Invoke-TVerRecUpdateCheck`。`Compare-Version`で比較する)
 
 ## [3.4.9](https://github.com/dongaba/TVerRec/releases/tag/v3.4.9)
 

@@ -351,6 +351,29 @@ Describe 'Update-IgnoreList' {
 		$script:fileStream.ContainsKey($script:ignoreLockFilePath) | Should -BeFalse
 		{ [IO.File]::Open($script:ignoreLockFilePath, 'Open', 'ReadWrite', 'None').Dispose() } | Should -Not -Throw
 	}
+	It 'ロックの取得に失敗したら、警告して元のファイルを変更せず、ロックの解放を試みること' {
+		Mock Wait-FileLock { throw 'lock timeout' }
+		Mock Unlock-File {}
+		Mock Start-Sleep {}
+		Mock Write-Warning {}
+		{ Update-IgnoreList -ignoreTitle '番組B' } | Should -Not -Throw
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.IgnoreFileSortFailed }
+		Should -Invoke Unlock-File -Times 1 -Exactly
+		[IO.File]::ReadAllText($script:ignoreFilePath) | Should -Be "番組A`n番組B`n番組C`n"
+	}
+	It '-WhatIfでは、ファイルを変更しないこと' {
+		Update-IgnoreList -ignoreTitle '番組C' -WhatIf
+		[IO.File]::ReadAllText($script:ignoreFilePath) | Should -Be "番組A`n番組B`n番組C`n"
+	}
+	It '対象外リストのファイルがなければ、何もせず例外にもならないこと' {
+		Remove-Item -LiteralPath $script:ignoreFilePath -Force
+		{ Update-IgnoreList -ignoreTitle '番組A' } | Should -Not -Throw
+		Test-Path -LiteralPath $script:ignoreFilePath | Should -BeFalse
+	}
+	It 'リストにない番組名を渡しても、既存の番組を失わずに保存すること' {
+		Update-IgnoreList -ignoreTitle '存在しない番組' -WarningAction SilentlyContinue
+		[IO.File]::ReadAllText($script:ignoreFilePath) | Should -Be ";; sample`n番組A`n番組B`n番組C`n"
+	}
 }
 
 Describe 'Move-VideoFileToDestination' {
@@ -3242,6 +3265,255 @@ Describe 'Get-ProcessCountByPath / Get-YtdlProcessCount / Get-FfmpegProcessCount
 				Get-ProcessCountByPath -Path $exe[0] | Should -Be 1
 				Get-ProcessCountByPath -Path $exe[1] | Should -Be 2
 			} finally { foreach ($pr in $procs) { Stop-Process -Id $pr.Id -Force -ErrorAction SilentlyContinue } }
+		}
+	}
+}
+
+Describe 'Invoke-TVerRecUpdateCheck' {
+	BeforeAll {
+		$script:utc = @{}
+		$script:utcDefinedUnblock = $false
+		foreach ($n in 'timeoutSec', 'appVersion', 'scriptRoot') { $script:utc[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' } }
+		# * Linux/macOSにはUnblock-Fileがないため、モックできるよう関数を用意する
+		if (!(Get-Command Unblock-File -ErrorAction SilentlyContinue)) { function global:Unblock-File { param($LiteralPath) } ; $script:utcDefinedUnblock = $true }
+	}
+	AfterAll {
+		foreach ($n in $script:utc.Keys) {
+			if ($script:utc[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:utc[$n] }
+		}
+		if ($script:utcDefinedUnblock) { Remove-Item Function:\Unblock-File -ErrorAction SilentlyContinue }
+	}
+	BeforeEach {
+		$script:timeoutSec = 5
+		$script:appVersion = '3.5.0'
+		$script:scriptRoot = Join-Path $TestDrive 'src'
+		New-Item -ItemType Directory -Path (Join-Path $script:scriptRoot 'functions') -Force | Out-Null
+		Mock Invoke-StatisticsCheck {}
+		Mock Invoke-WebRequest {}
+		Mock Unblock-File {}
+		Mock Start-Sleep {}
+		Mock Write-Warning {}
+		function script:New-FakeRelease { param($Tag, $Body = 'body', [Boolean]$Pre = $false) [PSCustomObject]@{ Tag_Name = $Tag ; body = $Body ; prerelease = $Pre } }
+	}
+	It '最新リリースが現在と同じなら、警告も更新スクリプトの取得もしないこと' {
+		Mock Invoke-RestMethod { @(New-FakeRelease 'v3.5.0') }
+		$out = @(Invoke-TVerRecUpdateCheck)
+		Should -Invoke Write-Warning -Times 0 -Exactly
+		Should -Invoke Invoke-WebRequest -Times 0 -Exactly
+		Should -Invoke Invoke-StatisticsCheck -Times 1 -Exactly -ParameterFilter { $Operation -eq 'launch' }
+	}
+	It '現在のバージョンのほうが新しい(開発版)なら、更新を促さないこと' {
+		$script:appVersion = '3.6.0 beta 1'
+		Mock Invoke-RestMethod { @(New-FakeRelease 'v3.5.0') }
+		Invoke-TVerRecUpdateCheck | Out-Null
+		Should -Invoke Write-Warning -Times 0 -Exactly
+		Should -Invoke Invoke-WebRequest -Times 0 -Exactly
+	}
+	It 'プレリリースは無視して、正式リリースの最新と比較すること' {
+		Mock Invoke-RestMethod { @((New-FakeRelease 'v9.9.9' -Pre $true), (New-FakeRelease 'v3.5.0')) }
+		Invoke-TVerRecUpdateCheck | Out-Null
+		Should -Invoke Write-Warning -Times 0 -Exactly
+	}
+	It '新しいリリースがあれば、バージョンを警告し、変更履歴を表示し、更新スクリプトを取得すること' {
+		Mock Invoke-RestMethod { @((New-FakeRelease 'v3.6.0' '### 追加'), (New-FakeRelease 'v3.5.0' 'old')) }
+		$out = (Invoke-TVerRecUpdateCheck) -join "`n"
+		Should -Invoke Write-Warning -ParameterFilter { $Message -eq ($script:msg.ToolOutdated -f 'TVerRec') } -Times 1 -Exactly
+		Should -Invoke Write-Warning -ParameterFilter { $Message -eq ($script:msg.ToolLocalVersion -f '3.5.0') } -Times 1 -Exactly
+		Should -Invoke Write-Warning -ParameterFilter { $Message -eq ($script:msg.ToolRemoteVersion -f '3.6.0') } -Times 1 -Exactly
+		$out | Should -Match ([regex]::Escape(($script:msg.ToolUpdateLog -f 'v3.6.0')))
+		$out | Should -Match '■ 追加'
+		$out | Should -Not -Match ([regex]::Escape(($script:msg.ToolUpdateLog -f 'v3.5.0')))
+		Should -Invoke Invoke-WebRequest -Times 1 -Exactly -ParameterFilter { $Uri -match 'master/src/functions/update_tverrec\.ps1$' -and $OutFile -match 'update_tverrec\.ps1$' -and $TimeoutSec -eq 5 }
+		Should -Invoke Write-Warning -ParameterFilter { $Message -eq ($script:msg.ToolUpdateInstruction -f 'TVerRec', 'update_tverrec') } -Times 1 -Exactly
+		Should -Invoke Start-Sleep -Times 10 -Exactly
+	}
+	It '現在より新しい複数のリリースがあれば、変更履歴をすべて表示すること' {
+		Mock Invoke-RestMethod { @((New-FakeRelease 'v3.7.0'), (New-FakeRelease 'v3.6.0'), (New-FakeRelease 'v3.5.0')) }
+		$out = (Invoke-TVerRecUpdateCheck) -join "`n"
+		$out | Should -Match ([regex]::Escape(($script:msg.ToolUpdateLog -f 'v3.7.0')))
+		$out | Should -Match ([regex]::Escape(($script:msg.ToolUpdateLog -f 'v3.6.0')))
+	}
+	It 'マイナーバージョンが2桁になっても、新しいリリースの変更履歴を表示すること(3.10.0 > 3.9.0)' {
+		$script:appVersion = '3.9.0'
+		Mock Invoke-RestMethod { @((New-FakeRelease 'v3.10.0'), (New-FakeRelease 'v3.9.0')) }
+		$out = (Invoke-TVerRecUpdateCheck) -join "`n"
+		$out | Should -Match ([regex]::Escape(($script:msg.ToolUpdateLog -f 'v3.10.0')))
+	}
+	It 'リリースが取得できなければ、警告して終了し、更新スクリプトは取得しないこと' {
+		Mock Invoke-RestMethod { @() }
+		Invoke-TVerRecUpdateCheck | Out-Null
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq ($script:msg.ToolLatestNotIdentified -f 'TVerRec') }
+		Should -Invoke Invoke-WebRequest -Times 0 -Exactly
+	}
+	It 'GitHubへの問い合わせが失敗したら、例外にならず警告して終了すること' {
+		Mock Invoke-RestMethod { throw 'network down' }
+		{ Invoke-TVerRecUpdateCheck | Out-Null } | Should -Not -Throw
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq ($script:msg.ToolLatestNotRetrieved -f 'TVerRec') }
+		Should -Invoke Invoke-WebRequest -Times 0 -Exactly
+	}
+	It '終了後は、進捗表示の設定を元に戻すこと(問い合わせ失敗時も)' {
+		Mock Invoke-RestMethod { throw 'network down' }
+		Invoke-TVerRecUpdateCheck | Out-Null
+		$progressPreference | Should -Be 'Continue'
+	}
+}
+
+Describe 'Invoke-ToolUpdateCheck' {
+	BeforeAll {
+		$script:tuc = if (Test-Path 'Variable:Script:scriptRoot') { $script:scriptRoot } else { '__unset__' }
+	}
+	AfterAll {
+		if ($script:tuc -eq '__unset__') { Remove-Variable -Name scriptRoot -Scope Script -ErrorAction SilentlyContinue }
+		else { $script:scriptRoot = $script:tuc }
+	}
+	BeforeEach {
+		$script:scriptRoot = Join-Path $TestDrive ('tuc{0}' -f [Guid]::NewGuid().ToString('N'))
+		New-Item -ItemType Directory -Path (Join-Path $script:scriptRoot 'functions') -Force | Out-Null
+	}
+	It '指定した更新スクリプトを実行し、成功すれば例外にならないこと' {
+		$marker = Join-Path $TestDrive 'ran.txt'
+		Set-Content -Path (Join-Path $script:scriptRoot 'functions/upd_ok.ps1') -Value "Set-Content -Path '$marker' -Value ran"
+		{ Invoke-ToolUpdateCheck -scriptName 'upd_ok.ps1' -targetName 'ffmpeg' } | Should -Not -Throw
+		Test-Path $marker | Should -BeTrue
+	}
+	It '更新スクリプトが失敗したら、更新失敗として例外にすること' {
+		Set-Content -Path (Join-Path $script:scriptRoot 'functions/upd_ng.ps1') -Value 'exit 1'
+		{ Invoke-ToolUpdateCheck -scriptName 'upd_ng.ps1' -targetName 'ffmpeg' } | Should -Throw -ExpectedMessage ($script:msg.ToolUpdateFailed -f 'ffmpeg')
+	}
+}
+
+
+Describe 'Test-VideoFileHasSubtitle' {
+	BeforeAll {
+		$script:tvs = if (Test-Path 'Variable:Script:ffprobePath') { $script:ffprobePath } else { '__unset__' }
+	}
+	AfterAll {
+		if ($script:tvs -eq '__unset__') { Remove-Variable -Name ffprobePath -Scope Script -ErrorAction SilentlyContinue }
+		else { $script:ffprobePath = $script:tvs }
+	}
+	BeforeEach {
+		$script:tvsVideo = Join-Path $TestDrive 'video.mp4'
+		Set-Content -LiteralPath $script:tvsVideo -Value 'dummy' -NoNewline
+		$script:ffprobePath = Join-Path $TestDrive 'ffprobe'
+		Set-Content -LiteralPath $script:ffprobePath -Value 'dummy' -NoNewline
+		$script:tvsOut = ''
+		$script:tvsExit = 0
+		$script:tvsOutPath = $null
+		$script:tvsArgs = $null
+		Mock Start-Process {
+			$script:tvsArgs = $ArgumentList
+			$script:tvsOutPath = $RedirectStandardOutput
+			if ($null -ne $script:tvsOut) { [IO.File]::WriteAllText($RedirectStandardOutput, $script:tvsOut) }
+			[PSCustomObject]@{ ExitCode = $script:tvsExit }
+		}
+	}
+	It '動画ファイルがなければ、$nullを返し、ffprobeを起動しないこと' {
+		Test-VideoFileHasSubtitle -VideoPath (Join-Path $TestDrive 'nothing.mp4') | Should -BeNullOrEmpty
+		Should -Invoke Start-Process -Times 0 -Exactly
+	}
+	It 'ffprobeがなければ、$nullを返し、ffprobeを起動しないこと' {
+		Remove-Item -LiteralPath $script:ffprobePath -Force
+		Test-VideoFileHasSubtitle -VideoPath $script:tvsVideo | Should -BeNullOrEmpty
+		Should -Invoke Start-Process -Times 0 -Exactly
+	}
+	It '字幕ストリームが1つ以上あれば、$trueを返すこと' {
+		$script:tvsOut = "2`n"
+		Test-VideoFileHasSubtitle -VideoPath $script:tvsVideo | Should -BeTrue
+	}
+	It '字幕ストリームが複数あっても、$trueを返すこと' {
+		$script:tvsOut = "2`n3`n"
+		Test-VideoFileHasSubtitle -VideoPath $script:tvsVideo | Should -BeTrue
+	}
+	It '出力が空、または空白行だけなら、$falseを返すこと' {
+		$script:tvsOut = ''
+		Test-VideoFileHasSubtitle -VideoPath $script:tvsVideo | Should -BeFalse
+		$script:tvsOut = "  `n`n"
+		Test-VideoFileHasSubtitle -VideoPath $script:tvsVideo | Should -BeFalse
+	}
+	It 'ffprobeの終了コードが0以外なら、字幕なしとは判断せず$nullを返すこと' {
+		$script:tvsOut = "2`n"
+		$script:tvsExit = 1
+		Test-VideoFileHasSubtitle -VideoPath $script:tvsVideo | Should -BeNullOrEmpty
+	}
+	It '出力ファイルが作られなければ、$nullを返すこと' {
+		$script:tvsOut = $null
+		Test-VideoFileHasSubtitle -VideoPath $script:tvsVideo | Should -BeNullOrEmpty
+	}
+	It 'ffprobeの起動に失敗しても、例外にならず$nullを返すこと' {
+		Mock Start-Process { throw 'cannot start' }
+		{ Test-VideoFileHasSubtitle -VideoPath $script:tvsVideo } | Should -Not -Throw
+		Test-VideoFileHasSubtitle -VideoPath $script:tvsVideo | Should -BeNullOrEmpty
+	}
+	It '字幕ストリームだけを調べる引数で、動画のパスを二重引用符で囲んで渡すこと' {
+		Test-VideoFileHasSubtitle -VideoPath $script:tvsVideo | Out-Null
+		$script:tvsArgs | Should -Match '-select_streams s'
+		$script:tvsArgs | Should -Match ([regex]::Escape(('"{0}"' -f $script:tvsVideo)))
+	}
+	It '一時出力ファイルは、結果にかかわらず削除されること' {
+		$script:tvsOut = "2`n"
+		Test-VideoFileHasSubtitle -VideoPath $script:tvsVideo | Out-Null
+		Test-Path -LiteralPath $script:tvsOutPath | Should -BeFalse
+		$script:tvsExit = 1
+		Test-VideoFileHasSubtitle -VideoPath $script:tvsVideo | Out-Null
+		Test-Path -LiteralPath $script:tvsOutPath | Should -BeFalse
+	}
+}
+
+Describe 'Get-SysInfo' {
+	BeforeAll {
+		$script:gsiNames = 'os', 'kernel', 'arch', 'guid', 'locale', 'tz', 'clientEnvs', 'appId'
+		$script:gsi = @{}
+		foreach ($n in $script:gsiNames) { $script:gsi[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' } }
+	}
+	AfterAll {
+		foreach ($n in $script:gsiNames) {
+			if ($script:gsi[$n] -is [String] -and $script:gsi[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:gsi[$n] }
+		}
+	}
+	BeforeEach { Mock Invoke-RestMethod { [PSCustomObject]@{ country = 'Japan' ; query = '203.0.113.1' } } }
+	It '位置情報APIの結果を、clientEnvsに項目名と値の組として格納すること' {
+		Get-SysInfo
+		$script:clientEnvs['country'] | Should -Be 'Japan'
+		$script:clientEnvs['query'] | Should -Be '203.0.113.1'
+		Should -Invoke Invoke-RestMethod -Times 1 -Exactly -ParameterFilter { $Uri -match 'ip-api\.com' -and $TimeoutSec -eq 5 }
+	}
+	It '位置情報APIが失敗しても、例外にならずclientEnvsは空で、進捗表示の設定を元に戻すこと' {
+		Mock Invoke-RestMethod { throw 'offline' }
+		{ Get-SysInfo } | Should -Not -Throw
+		$script:clientEnvs.Count | Should -Be 0
+		$progressPreference | Should -Be 'Continue'
+	}
+	It 'ロケールとタイムゾーンのオフセットを設定すること' {
+		Get-SysInfo
+		$script:locale | Should -Be (Get-Culture).Name
+		$script:tz | Should -Be ([String][TimeZoneInfo]::Local.BaseUtcOffset)
+	}
+	It 'OS・カーネル・アーキテクチャ・GUIDを、空でない文字列として設定すること' {
+		Get-SysInfo
+		foreach ($n in 'os', 'kernel', 'arch', 'guid') { [String](Get-Variable -Name $n -Scope Script -ValueOnly) | Should -Not -BeNullOrEmpty }
+	}
+	Context 'Linux' -Skip:(-not $IsLinux) {
+		It 'アーキテクチャは小文字で、uname -mと一致すること' {
+			Get-SysInfo
+			$script:arch | Should -BeExactly ((& uname -m).ToLower())
+		}
+		It '/etc/os-releaseがあれば、PRETTY_NAMEをOS名にすること' -Skip:(-not (Test-Path '/etc/os-release')) {
+			Get-SysInfo
+			$expected = (& grep 'PRETTY_NAME' /etc/os-release).Replace('PRETTY_NAME=', '').Replace('"', '')
+			$script:os | Should -BeExactly $expected
+		}
+		It '/etc/machine-idがあれば、GUIDにすること' -Skip:(-not (Test-Path '/etc/machine-id')) {
+			Get-SysInfo
+			$script:guid | Should -BeExactly (Get-Content /etc/machine-id)
+		}
+	}
+	Context 'macOS' -Skip:(-not $IsMacOS) {
+		It 'OS名にsw_versの製品名とバージョンを含み、GUIDにハイフンが含まれないこと' {
+			Get-SysInfo
+			$script:os | Should -BeExactly ('{0} {1}' -f (& sw_vers -productName), (& sw_vers -productVersion))
+			$script:guid | Should -Not -Match '-'
 		}
 	}
 }
