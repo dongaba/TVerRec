@@ -143,13 +143,15 @@ function Update-Ffmpeg {
 			4. 配置後のffmpegのバージョンを確認して表示
 			いずれかの手順に失敗した場合は、警告を表示して処理を中断します。
 	#>
-	[CmdletBinding()]
+	[CmdletBinding(SupportsShouldProcess = $true)]
 	[OutputType([Void])]
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# ffmpeg移動先相対Path
 	if ($IsWindows) { $ffmpegPath = Join-Path $script:binDir './ffmpeg.exe' }
 	else { $ffmpegPath = Join-Path $script:binDir 'ffmpeg' }
+	# -WhatIf指定時は、ダウンロード・展開・配置・中間ファイルの削除をすべて行わない
+	if (!$PSCmdlet.ShouldProcess($ffmpegPath, 'Update ffmpeg')) { return }
 
 	switch ($true) {
 		$IsWindows {

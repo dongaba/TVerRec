@@ -139,13 +139,15 @@ function Update-Ytdl {
 			4. 配置後のバージョンを確認して表示
 			いずれかの手順に失敗した場合は、警告を表示して処理を中断します。
 	#>
-	[CmdletBinding()]
+	[CmdletBinding(SupportsShouldProcess = $true)]
 	[OutputType([Void])]
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# youtube-dl移動先相対Path
 	if ($IsWindows) { $ytdlPath = Join-Path $script:binDir 'yt-dlp.exe' }
 	else { $ytdlPath = Join-Path $script:binDir 'yt-dlp' }
+	# -WhatIf指定時は、ダウンロード・配置をすべて行わない
+	if (!$PSCmdlet.ShouldProcess($ytdlPath, 'Update yt-dlp')) { return }
 
 	# githubの設定
 	$lookupTable = @{
