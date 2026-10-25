@@ -847,6 +847,61 @@ function Format-HistoryRecord {
 }
 
 #----------------------------------------------------------------------
+# ダウンロード履歴ファイルの安全な保存(一時ファイル経由で置換)
+#----------------------------------------------------------------------
+function Save-HistoryFile {
+	<#
+		.SYNOPSIS
+			ダウンロード履歴ファイルを、一時ファイル経由で安全に書き換えます。
+
+		.DESCRIPTION
+			履歴の内容をいったん一時ファイルに書き出し、書き出しが成功してから履歴ファイルと置換します。
+			書き出し中に失敗したり、処理が強制停止されたりしても、元の履歴ファイルは変更されません。
+			置換時には直前の履歴を「.bak」として退避します。
+			呼び出し元で履歴ファイルのロック(Wait-FileLock)を取得した状態で使用してください。
+
+		.PARAMETER Records
+			CSV形式で保存するレコードを指定します。0件の場合は元のCSVヘッダーだけを残します。
+
+		.PARAMETER Lines
+			テキスト行として保存する内容を指定します。
+
+		.OUTPUTS
+			[Void]
+			この関数は値を返しません。失敗時は例外をスローします。
+	#>
+	[CmdletBinding(DefaultParameterSetName = 'Csv')]
+	[OutputType([Void])]
+	Param (
+		[Parameter(Mandatory = $true, ParameterSetName = 'Csv')][AllowEmptyCollection()][AllowNull()][Object[]]$Records,
+		[Parameter(Mandatory = $true, ParameterSetName = 'Text')][AllowEmptyCollection()][AllowNull()][String[]]$Lines
+	)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$tempPath = '{0}.{1}.tmp' -f $script:histFilePath, [Guid]::NewGuid().ToString('N')
+	try {
+		if ($PSCmdlet.ParameterSetName -eq 'Text') {
+			if ($Lines) { $Lines | Set-Content -LiteralPath $tempPath -Encoding UTF8 -ErrorAction Stop }
+			else { New-Item -ItemType File -Path $tempPath -Force -ErrorAction Stop | Out-Null }
+		} elseif (@($Records).Count -gt 0) {
+			$Records | Export-Csv -LiteralPath $tempPath -Encoding UTF8 -ErrorAction Stop
+		} else {
+			# 全件削除でもCSVヘッダーを残し、次回の追記を読み取れるようにする
+			$reader = [IO.StreamReader]::new($script:histFilePath, [Text.Encoding]::UTF8, $true)
+			try { $header = $reader.ReadLine() } finally { $reader.Dispose() }
+			if ([String]::IsNullOrWhiteSpace($header)) { throw 'History CSV header is missing.' }
+			[IO.File]::WriteAllText($tempPath, $header + [Environment]::NewLine, [Text.UTF8Encoding]::new($false))
+		}
+		# 共有フォルダやウイルス対策ソフトによる一時的なアクセス競合に備えて、置換を数回リトライする
+		for ($retry = 1 ; $retry -le 5 ; $retry++) {
+			try { [IO.File]::Replace($tempPath, $script:histFilePath, $script:histFilePath + '.bak') ; break }
+			catch { if ($retry -ge 5) { throw } ; Start-Sleep -Milliseconds 200 }
+		}
+	} finally {
+		try { if ([IO.File]::Exists($tempPath)) { [IO.File]::Delete($tempPath) } } catch { Write-Debug $_.Exception.Message }
+	}
+}
+
+#----------------------------------------------------------------------
 # ダウンロード履歴の不整合を解消
 #----------------------------------------------------------------------
 function Optimize-HistoryFile {
@@ -877,8 +932,8 @@ function Optimize-HistoryFile {
 		$originalLists = @(Get-Content -LiteralPath $script:histFilePath -Encoding UTF8)
 		# NULL文字(0x00)を含む行をフィルタリング
 		$cleanedHist = $originalLists.Where({ $_ -notmatch "`0" })
-		try { $cleanedHist | Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 }
-		catch { $originalLists | Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 }
+		# 一時ファイル経由で置換(途中で失敗・強制停止されても元の履歴は壊れない)
+		try { Save-HistoryFile -Lines $cleanedHist }
 		finally { Start-Sleep -Seconds 1 }
 	} catch { Write-Warning ($script:msg.OptimizeHistFailed) }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
@@ -891,8 +946,8 @@ function Optimize-HistoryFile {
 					-and ([Int]::TryParse($_.videoValidated, [Ref]0)) `
 					-and ([DateTime]::TryParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null, [System.Globalization.DateTimeStyles]::None, [Ref]([DateTime]::MinValue)))
 			})
-		try { $cleanedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
-		catch { $originalLists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
+		# 一時ファイル経由で置換(途中で失敗・強制停止されても元の履歴は壊れない)
+		try { Save-HistoryFile -Records $cleanedHist }
 		finally { Start-Sleep -Seconds 1 }
 	} catch {
 		Write-Warning ($script:msg.OptimizeHistFailed)
@@ -937,8 +992,8 @@ function Limit-HistoryFile {
 		Wait-FileLock $script:histLockFilePath
 		$originalLists = Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8
 		$purgedHist = $originalLists.Where({ [DateTime]::ParseExact($_.downloadDate, 'yyyy-MM-dd HH:mm:ss', $null) -gt (Get-Date).AddDays(-1 * $retentionPeriod) })
-		try { $purgedHist | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
-		catch { $originalLists | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 }
+		# 一時ファイル経由で置換(途中で失敗・強制停止されても元の履歴は壊れない)
+		try { Save-HistoryFile -Records $purgedHist }
 		finally { Start-Sleep -Seconds 1 }
 	} catch {
 		Write-Warning ($script:msg.CleanupHistFailed)

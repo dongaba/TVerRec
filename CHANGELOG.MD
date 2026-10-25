@@ -20,6 +20,10 @@
 - 番組検索のHTTPエラー(404など)の警告に、失敗したAPIのURLを併記するように変更(`platform_token`・`member_sid`は伏せ字)。tagなどの検索結果から再帰的に呼ばれるAPIで失敗した場合も、原因となったIDを特定しやすくした
 - `Get-VideoInfo`が新世代API(`contents-api.tver.jp`の`v2/episodes`)から番組情報を取得するように変更。従来は`callEpisode`と`statics.tver.jp`の2回のAPI呼び出しが必要だったが1回になり、`platform_uid`・`platform_token`も不要。新世代APIから取得できない場合や、放送局IDが対応表にない場合は、従来の処理(`Get-VideoInfoLegacy`)にフォールバックする。新世代APIで取得した場合、戻り値の`versionNum`は`$null`になる(`Get-VideoInfo`の外では使用していない)
 
+### 3.5.0 Fixed
+
+- ダウンロード履歴(`history.csv`)を整理する`Optimize-HistoryFile`と`Limit-HistoryFile`が、履歴ファイルを直接上書きしていたため、書き込み中にGUIの「処理停止」などで強制停止されると履歴が途中で切れる恐れがあった問題を修正。一時ファイルに書き出してから置換する`Save-HistoryFile`を追加し、書き込みに失敗・中断しても元の履歴を保持するように変更(置換時は直前の履歴を`history.csv.bak`に退避)。整理の結果が0件になる場合は、空ファイルではなくCSVヘッダーだけを残す
+
 ## [3.4.9](https://github.com/dongaba/TVerRec/releases/tag/v3.4.9)
 
 ### 3.4.9 Added
