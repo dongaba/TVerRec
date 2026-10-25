@@ -1,32 +1,25 @@
 <!DOCTYPE html>
-<html style="font-size: 16px" lang="en">
+<html lang="ja">
 	<head>
 		<meta charset="utf-8" />
-		<meta name="keywords" content />
-		<meta name="description" content />
-		<title>Popup</title>
+		<title>TVerRec Assistant</title>
 		<link rel="stylesheet" href="../css/popup.css" />
 	</head>
 
 	<body>
-		<div>
-			<div class="logo">
-				<div class="v-center">
-				<img src="../icon/TVerRec-Icon-48.png" />
-				</div>
-			</div>
-			<div class="message">
-				<div class="v-center">
-					<div id="uid">platform_uid :</div>
-					<div id="token">platform_token :</div>
-					<div id="sid">member_sid :</div>
-				</div>
-			</div>
-			<div class="button">
-				<div class="h-center">
-					<button type="button" class="refresh-button" id="refresh">Refresh</button>
-				</div>
-			</div>
+		<div class="logo">
+			<img src="../icon/TVerRec-Icon-48.png" alt="TVerRec" />
+		</div>
+		<div class="message">
+			<div id="status">読み込み中...</div>
+			<div id="uid"></div>
+			<div id="token"></div>
+			<div id="sid"></div>
+		</div>
+		<div class="button">
+			<button type="button" class="action-button" id="open" hidden>TVerを開く</button>
+			<button type="button" class="action-button" id="copy" hidden>user_settings.ps1用にコピー</button>
+			<button type="button" class="action-button" id="refresh" hidden>再取得</button>
 		</div>
 		<script src="../js/popup.js"></script>
 	</body>

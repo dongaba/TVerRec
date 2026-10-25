@@ -1,5 +1,19 @@
 # Change Log
 
+## [3.5.0](https://github.com/dongaba/TVerRec/releases/tag/v3.5.0)
+
+### 3.5.0 Added
+
+- GUI設定画面に、起動時のPowerShellの新バージョン確認を無効化する設定(`$script:disableCheckPowerShellUpdate`)を追加
+
+### 3.5.0 Changed
+
+- Chrome拡張機能「TVerRec Assistant」をv0.2.0に更新。TVerの通信をブロックしてURLから`platform_uid`・`platform_token`・`member_sid`を拾う方式をやめ、開いているTVerのページが提供するSDK(`window.TVer.getStatus()`)から取得するように変更。TVerのAPI仕様変更の影響を受けにくくなり、Refreshボタンやエラーモーダルの自動クリックが不要になった。未ログインの場合は`platform_uid`・`platform_token`、TVer IDにログイン中の場合は`member_sid`を表示し、`user_settings.ps1`用の形式でコピーできる。必要な権限は`activeTab`・`scripting`のみとなり、`declarativeNetRequest`関連の権限とルール定義(`json/`)、`background.js`、`tver.js`、`error.html`は不要になった
+- 字幕の有無を、エピソード情報のJSON(`isSubtitle`)から取得するように変更(`Get-VideoInfo`が`isSubtitle`を返し、`Get-VideoSubtitleStatus`が優先して使用)。取得できない場合は従来どおりyt-dlpで確認する
+- 不要ファイルやリネームに失敗したファイルを削除する際に、削除するファイル名を表示するように変更
+- GUI設定画面の各設定の説明に、既定値を追記
+- キーワードサンプルファイル(`keyword.sample.conf`)に、ニュースのジャンルと放送局のtagを追加
+
 ## [3.4.9](https://github.com/dongaba/TVerRec/releases/tag/v3.4.9)
 
 ### 3.4.9 Added
@@ -16,6 +30,7 @@
 - ダウンロードフォルダに残ったリネームに失敗したファイルを、削除するか残すかを選べる設定`$script:deleteUnrenamedFile`を追加。既定は従来どおり削除(`$true`)。`$false`の場合は削除せず、残したファイルを警告として表示する。あわせて、削除中のメッセージは削除する設定のときだけ表示するように変更 #297
 - ダウンロードしたファイルにサムネイルを埋め込むかを選べる設定`$script:embedThumbnail`を追加。既定は従来どおり埋め込む(`$true`) #315
 - ダウンロード作業ディレクトリがダウンロード先ディレクトリと同じ、またはダウンロード先を含むフォルダの場合、不要ファイル削除でダウンロード済みのファイルを消す恐れがあるため、起動時にエラーで終了するように変更(#315)
+- 埋め込み字幕のうち、表示時間が0秒になって表示されない字幕(同時刻に始まる2行表示の字幕の1つ目)を、整合性チェック時に自動で修復する`Merge-ZeroDurationSubtitle`と`Repair-SubtitleTiming`を追加(`$script:embedSubtitle`が有効な場合のみ。修復に失敗した場合は元のファイルをそのまま使用) #168
 
 ### 3.4.9 Changed
 
@@ -29,6 +44,11 @@
   - テストを配置したパスに`test`や`src`などの文字列が含まれていてもテスト対象を正しく読み込めるように変更
 - `master`ブランチの修正(#272、#273、#275、Dependabotによる更新)を取り込み
 - ファイルロックの取得待ちに60秒の上限を設け、`Lock-File`が失敗理由(`errorMessage`)を返すように変更(`Wait-FileLock`を追加)
+- ダウンロード履歴の整合性チェック(`validate_video.ps1`)で、履歴ファイルのロック待ちに`Wait-FileLock`を使用するように変更
+- 設定ファイルの読み込みに失敗した場合に、例外の詳細とスタックトレースを表示するように変更 #300
+- 状態を変更する関数に`SupportsShouldProcess`を追加し(PSScriptAnalyzerの`PSUseShouldProcessForStateChangingFunctions`の指摘に対応)、コメントベースヘルプ(SYNOPSISなど)がなかった関数にヘルプを追加
+- `return`の後ろにあり実行されない`Remove-Variable`を削除(15か所。関数のローカル変数は関数終了時に破棄されるため動作への影響なし)
+- GitHub Actionsの`actions/checkout`(#298)、`github/codeql-action`(#296)、`peter-evans/dockerhub-description`(#295)を更新
 
 ### 3.4.9 Fixed
 
@@ -53,6 +73,9 @@
 - 番組移動時、移動先に同名のフォルダが複数ある場合に後から見つかったフォルダへ黙って移動していた問題を修正。判断できないため移動せず、候補を警告に表示するように変更(#314)
 - 番組移動時、移動元に同名のフォルダが複数ある場合(放送局別フォルダなど)に最初の1つしか移動されなかった問題を修正(#314)
 - yt-dlp/ffmpegのプロセス数を、プロセス名ではなくTVerRecが使う実行ファイルのパスで数えるように修正。TVerRec以外で動いている同名のプロセスがあると「ダウンロードの終了を待機しています」から進まなくなる問題を解消(#243)
+- `Invoke-ListMatchCheck`などがURLではなくエピソードIDで照合するように修正
+- ダウンロード履歴が1件だけのとき、ダウンロードリストに有効な行がないとき(ヘッダーのみ、またはすべてコメントアウト)、キーワードファイルがないときに、重複チェックや読み込みが正しく動作しない問題を修正
+- 履歴の修復(`videoValidated`が失敗のレコードの削除)中に別のプロセスが追記した履歴が失われることがある問題を修正。読み込みから置換まで同じロックを保持し、一時ファイル経由で置換して直前の履歴を`.bak`に退避するようにした。全件削除でもCSVヘッダーを残す #304
 
 ## [3.4.8](https://github.com/dongaba/TVerRec/releases/tag/v3.4.8)
 

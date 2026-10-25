@@ -1,78 +1,64 @@
 html {
 	font-family: Helvetica, Arial, Verdana, Tahoma, sans-serif;
 	font-size: 12px;
-	width: 800px;
-	height: 108px;
-	border-radius: 10px;
+	width: 620px;
 	background-color: #eee;
 }
 
+body {
+	margin: 10px;
+	display: grid;
+	grid-template-columns: 58px 1fr;
+	grid-template-rows: auto auto;
+	gap: 10px 0;
+}
+
 .logo {
-	width: 58px;
-	height: 58px;
-	position: absolute;
-	top: 10px;
-	left: 10px;
-	vertical-align: middle;
 	background: #d8453e;
 	display: flex;
 	align-items: center;
+	justify-content: center;
 	border-radius: 10px 0 0 10px;
 }
 
 .message {
-	width: 722px;
-	height: 58px;
+	min-height: 58px;
+	padding: 6px 10px;
+	box-sizing: border-box;
 	font-size: 11px;
-	position: absolute;
-	top: 10px;
-	left: 68px;
+	line-height: 1.6;
 	display: flex;
-	align-items: center;
+	flex-direction: column;
 	justify-content: center;
 	color: #fff;
 	background-color: #333;
 	border-radius: 0 10px 10px 0;
-}
-
-.v-center {
-	margin: 5px;
-	flex: 1;
-}
-
-.h-center {
-	margin: 0 auto;
+	word-break: break-all;
 }
 
 .button {
-	position: absolute;
-	top: 78px;
-	left: 10px;
-	width: 780px;
-	vertical-align: middle;
+	grid-column: 1 / -1;
 	display: flex;
 	justify-content: center;
-	align-items: center;
+	gap: 10px;
 }
 
-.refresh-button {
-	font-size: 14px;
-	width: 150px;
-	height: 20px;
-	text-align: center;
+.action-button {
+	font-size: 13px;
+	min-width: 150px;
+	height: 24px;
+	padding: 0 12px;
 	color: #fff;
 	background-color: #333;
 	border: none;
-	border-radius: 10px;
-	margin: 0 auto;
+	border-radius: 12px;
+	cursor: pointer;
 }
 
-.refresh-button:hover {
-	font-size: 14px;
-	width: 150px;
-	height: 20px;
-	text-align: center;
-	color: #fff;
+.action-button:hover {
 	background: #d8453e;
-	border-radius: 10px;
+}
+
+[hidden] {
+	display: none !important;
 }

@@ -1,11 +1,10 @@
-﻿{
+{
 	"manifest_version": 3,
 	"name": "TVerRec Assistant",
-	"description": "Capture \"platform_uid\" , \"platform_token\" and \"member_sid\" to download your TVer favorites in TVerRec",
-	"version": "0.1.0",
+	"description": "Get \"platform_uid\" , \"platform_token\" and \"member_sid\" to download your TVer favorites in TVerRec",
+	"version": "0.2.0",
 	"author": "dongaba",
 	"homepage_url": "https://github.com/dongaba/TVerRec",
-	"incognito": "split",
 	"icons": {
 		"16": "icon/TVerRec-Icon-16.png",
 		"32": "icon/TVerRec-Icon-32.png",
@@ -14,43 +13,10 @@
 	},
 	"permissions": [
 		"activeTab",
-		"tabs",
-		"scripting",
-		"storage",
-		"declarativeNetRequest",
-		"declarativeNetRequestFeedback"
+		"scripting"
 	],
 	"host_permissions": [
-		"*://tver.jp/*",
-		"*://*.tver.jp/*"
-	],
-	"declarative_net_request": {
-		"rule_resources": [
-			{
-				"id": "platform-rule",
-				"enabled": true,
-				"path": "json/platform-rule.json"
-			},
-			{
-				"id": "member-rule",
-				"enabled": true,
-				"path": "json/member-rule.json"
-			}
-		]
-	},
-	"background": {
-		"service_worker": "js/background.js"
-	},
-	"content_scripts": [
-		{
-			"matches": [
-				"*://tver.jp/*",
-				"*://*.tver.jp/*"
-			],
-			"js": [
-				"js/tver.js"
-			]
-		}
+		"https://tver.jp/*"
 	],
 	"action": {
 		"default_popup": "html/popup.html"

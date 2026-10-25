@@ -1,60 +1,132 @@
 /*global chrome*/
 
-// ストレージからデータを読み込む関数
-function readStorage() {
-	chrome.storage.local.get(null, (data) => {
-		const { key_uid, key_token, key_sid } = data;
-		if ((key_uid && key_token) || key_sid) {
-			console.log(`TVerRec Assistant: platform_uid = ${key_uid}`);
-			console.log(`TVerRec Assistant: platform_token = ${key_token}`);
-			console.log(`TVerRec Assistant: member_sid = ${key_sid}`);
-			const uidElement = document.getElementById("uid");
-			const tokenElement = document.getElementById("token");
-			const sidElement = document.getElementById("sid");
-			if (uidElement) {
-				uidElement.innerText = `platform_uid : ${key_uid}`;
-			}
-			if (tokenElement) {
-				tokenElement.innerText = `platform_token : ${key_token}`;
-			}
-			if (sidElement) {
-				sidElement.innerText = `member_sid : ${key_sid}`;
+// TVerのページが公開しているSDK(window.TVer)から認証情報を取得する。
+// 通信のブロックやURLの解析は行わない。
+const TVER_URL_PATTERN = /^https:\/\/([a-z0-9-]+\.)*tver\.jp\//;
+const $ = (id) => document.getElementById(id);
+
+let currentText = "";
+
+// TVerのページ(MAIN world)内で実行される関数。外部の変数は参照できない。
+async function readTVerStatus() {
+	const tver = window.TVer;
+	if (!tver || typeof tver.getStatus !== "function") {
+		return { ok: false, reason: "sdk" };
+	}
+	try {
+		if (typeof tver.waitForInit === "function") {
+			await Promise.race([
+				tver.waitForInit(),
+				new Promise((resolve) => setTimeout(resolve, 3000)),
+			]);
+		}
+		const status = await tver.getStatus();
+		let sid;
+		if (status.login) {
+			sid = status.session_id;
+			if (!sid && typeof tver.getSessionID === "function") {
+				sid = await tver.getSessionID();
 			}
 		}
-	});
+		return {
+			ok: true,
+			login: Boolean(status.login),
+			uid: status.platform_uid,
+			token: status.platform_token,
+			sid: sid,
+		};
+	} catch (e) {
+		return { ok: false, reason: "error", message: String(e) };
+	}
 }
 
-// ストレージのクリア
-function clearStorage() {
-	chrome.storage.local.clear();
+function setButtons({ open = false, copy = false, refresh = false }) {
+	$("open").hidden = !open;
+	$("copy").hidden = !copy;
+	$("refresh").hidden = !refresh;
 }
 
-// ボタンクリック時に実行する処理を定義
-document.getElementById("refresh").addEventListener("click", async () => {
-	clearStorage();
-	console.log(
-		"TVerRec Assistant: platform_uid, platform_token and member_sid cleared"
-	);
+function clearValues() {
+	currentText = "";
+	for (const id of ["uid", "token", "sid"]) {
+		$(id).textContent = "";
+	}
+}
 
-	//ルールを有効化
-	chrome.runtime.sendMessage(
-		{ action: "enablePlatformRule", data: "" },
-		function () {
-			window.close();
-		}
-	);
-	chrome.runtime.sendMessage(
-		{ action: "enableMemberRule", data: "" },
-		function () {
-			window.close();
-		}
-	);
+function showStatus(text) {
+	$("status").textContent = text;
+}
 
-	//新規タブでTVerを開く
+function showResult(result) {
+	// TVer IDにログイン中はmember_sidのみ、未ログインの場合はplatform_uidとplatform_tokenを使用する
+	if (result.login && result.sid) {
+		$("status").textContent = "TVer IDにログイン中です。member_sid を user_settings.ps1 に設定してください。";
+		$("sid").textContent = `member_sid : ${result.sid}`;
+		currentText = `$script:myMemberSID = '${result.sid}'`;
+	} else if (!result.login && result.uid && result.token) {
+		$("status").textContent = "未ログインです。platform_uid と platform_token を user_settings.ps1 に設定してください。";
+		$("uid").textContent = `platform_uid : ${result.uid}`;
+		$("token").textContent = `platform_token : ${result.token}`;
+		currentText = `$script:myPlatformUID = '${result.uid}'\n$script:myPlatformToken = '${result.token}'`;
+	} else {
+		showStatus("認証情報を取得できませんでした。ページの読み込み完了後に再取得してください。");
+		setButtons({ refresh: true });
+		return;
+	}
+	setButtons({ copy: true, refresh: true });
+}
+
+async function load() {
+	clearValues();
+	setButtons({});
+	showStatus("読み込み中...");
+
+	const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+	if (!tab || !tab.url || !TVER_URL_PATTERN.test(tab.url)) {
+		showStatus("このページはTVerのページではありません。TVerのページを開いた状態で実行してください。");
+		setButtons({ open: true });
+		return;
+	}
+
+	try {
+		const [injection] = await chrome.scripting.executeScript({
+			target: { tabId: tab.id },
+			world: "MAIN",
+			func: readTVerStatus,
+		});
+		const result = injection && injection.result;
+		if (result && result.ok) {
+			showResult(result);
+		} else if (result && result.reason === "sdk") {
+			showStatus("TVerのSDKが見つかりません。TVer側の仕様が変更された可能性があります。");
+			setButtons({ refresh: true });
+		} else {
+			showStatus(`取得に失敗しました。${(result && result.message) || ""}`);
+			setButtons({ refresh: true });
+		}
+	} catch (e) {
+		showStatus(`取得に失敗しました。${e}`);
+		setButtons({ refresh: true });
+	}
+}
+
+$("open").addEventListener("click", () => {
 	chrome.tabs.create({ url: "https://tver.jp/mypage/fav" });
-
-	readStorage();
+	window.close();
 });
 
-// ストレージからデータを読み込む
-readStorage();
+$("refresh").addEventListener("click", load);
+
+$("copy").addEventListener("click", async () => {
+	try {
+		await navigator.clipboard.writeText(currentText);
+		$("copy").textContent = "コピーしました";
+		setTimeout(() => {
+			$("copy").textContent = "user_settings.ps1用にコピー";
+		}, 1500);
+	} catch (e) {
+		showStatus(`コピーに失敗しました。${e}`);
+	}
+});
+
+load();
