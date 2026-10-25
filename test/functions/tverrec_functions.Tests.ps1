@@ -2955,12 +2955,11 @@ Describe 'Invoke-Ytdl / Invoke-NonTverYtdl のyt-dlp起動方法' {
 			$out | Should -Contain 'ERR-LINE'
 			$out | Should -Contain 'Exit Code: 0'
 		}
-		# * 既知の不具合: Start-Processが失敗すると、finallyが未設定の$stdOutContentなどを参照し、StrictModeで別の例外になる
-		#   (警告は出るが、例外が呼び出し元まで伝わる)。修正したらこのSkipを外す
-		It '起動に失敗したときは、警告を出し、例外にならないこと' -Skip {
+		It '起動に失敗したときは、警告を出し、例外にならず、終了コードは表示しないこと' {
 			Mock Start-Process { throw 'cannot start' }
-			{ Invoke-YtdlVariant -Name 'Invoke-Ytdl' 6>$null } | Should -Not -Throw
+			{ $script:dbgOut = @(Invoke-YtdlVariant -Name 'Invoke-Ytdl') } | Should -Not -Throw
 			Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq ($script:msg.ExecFailed -f 'youtube-dl') }
+			($script:dbgOut -join "`n") | Should -Not -Match 'Exit Code'
 		}
 	}
 	Context 'ログファイルの用意(Windows以外、またはウィンドウを非表示にする設定)' {
@@ -3009,6 +3008,55 @@ Describe 'Invoke-Ytdl / Invoke-NonTverYtdl のyt-dlp起動方法' {
 			$script:spCalls | Should -Be 1
 			Should -Invoke Start-Job -Times 1 -Exactly -ParameterFilter { ($ArgumentList[0] -eq 1) -and ($ArgumentList[1] -eq 30) }
 			$script:jobList | Should -Contain 77
+		}
+		It '<Name>: 監視ジョブは、タイムアウトを過ぎたら実際にプロセスを強制終了すること' -ForEach @(@{ Name = 'Invoke-Ytdl' }, @{ Name = 'Invoke-NonTverYtdl' }) {
+			# * Start-Jobに渡されたスクリプトを取り出し、別に起動した長時間のプロセスに対して、本物のRunspaceで実行する
+			#   (このDescribeではStart-Process/Start-Jobをモックしているため、.NETのAPIを直接使う)
+			Mock Start-Job { $script:capturedJobScript = $ScriptBlock ; $script:capturedJobArgs = $ArgumentList ; [PSCustomObject]@{ Id = 77 } }
+			$script:ytdlTimeoutSec = 2
+			Invoke-YtdlVariant -Name $Name 6>$null
+			$script:capturedJobArgs.Count | Should -Be 3
+			$script:capturedJobArgs[0] | Should -Be 1
+			$script:capturedJobArgs[1] | Should -Be 2
+			$script:capturedJobArgs[2] | Should -Be ($script:msg.TerminateDueToTimeout -f 'youtube-dl', 2)
+			$psi = if ($IsWindows) { [Diagnostics.ProcessStartInfo]::new('ping', '-n 60 127.0.0.1') } else { [Diagnostics.ProcessStartInfo]::new('sleep', '60') }
+			$psi.UseShellExecute = $false ; $psi.CreateNoWindow = $true ; $psi.RedirectStandardOutput = $true
+			$target = [Diagnostics.Process]::Start($psi)
+			$ps = $null
+			try {
+				$ps = [PowerShell]::Create()
+				$ps.AddScript($script:capturedJobScript.ToString()).AddArgument($target.Id).AddArgument(2).AddArgument($script:capturedJobArgs[2]) | Out-Null
+				$async = $ps.BeginInvoke()
+				$async.AsyncWaitHandle.WaitOne(30000) | Out-Null
+				$target.WaitForExit(5000) | Out-Null
+				$target.HasExited | Should -BeTrue
+				($ps.Streams.Warning | ForEach-Object { $_.Message }) | Should -Contain $script:capturedJobArgs[2]
+			} finally {
+				if ($ps) { $ps.Dispose() }
+				if (!$target.HasExited) { $target.Kill() }
+				$target.Dispose()
+			}
+		}
+		It '<Name>: 監視ジョブは、プロセスがタイムアウト前に終了していれば、何も出力せずに終了すること' -ForEach @(@{ Name = 'Invoke-Ytdl' }, @{ Name = 'Invoke-NonTverYtdl' }) {
+			Mock Start-Job { $script:capturedJobScript = $ScriptBlock ; $script:capturedJobArgs = $ArgumentList ; [PSCustomObject]@{ Id = 77 } }
+			$script:ytdlTimeoutSec = 30
+			Invoke-YtdlVariant -Name $Name 6>$null
+			$psi = if ($IsWindows) { [Diagnostics.ProcessStartInfo]::new('ping', '-n 1 127.0.0.1') } else { [Diagnostics.ProcessStartInfo]::new('true') }
+			$psi.UseShellExecute = $false ; $psi.CreateNoWindow = $true ; $psi.RedirectStandardOutput = $true
+			$target = [Diagnostics.Process]::Start($psi)
+			$target.WaitForExit()
+			$ps = $null
+			try {
+				$ps = [PowerShell]::Create()
+				$ps.AddScript($script:capturedJobScript.ToString()).AddArgument($target.Id).AddArgument(30).AddArgument('msg') | Out-Null
+				$async = $ps.BeginInvoke()
+				$async.AsyncWaitHandle.WaitOne(20000) | Should -BeTrue
+				$ps.Streams.Warning.Count | Should -Be 0
+				$ps.Streams.Error.Count | Should -Be 0
+			} finally {
+				if ($ps) { $ps.Dispose() }
+				$target.Dispose()
+			}
 		}
 		It '<Name>: タイムアウトなしでの起動に失敗したときは、警告を出すこと' -ForEach @(@{ Name = 'Invoke-Ytdl' }, @{ Name = 'Invoke-NonTverYtdl' }) {
 			Mock Start-Process { throw 'cannot start' }

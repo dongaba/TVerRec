@@ -1887,6 +1887,7 @@ function Invoke-Ytdl {
 			RedirectStandardError  = $script:ytdlStdErrLogPath
 		}
 		Write-Output 'youtube-dlの実行中...'
+		$ytdlProcess = $null ; $stdOutContent = $null ; $stdErrContent = $null	# * 起動に失敗したときもfinallyで参照できるようにする
 		try {
 			$ytdlProcess = Start-Process @startProcessParams
 			$ytdlProcess.Handle | Out-Null
@@ -1901,7 +1902,7 @@ function Invoke-Ytdl {
 		finally {
 			Write-Output $stdOutContent
 			Write-Output $stdErrContent
-			Write-Output ('Exit Code: {0}' -f $ytdlProcess.ExitCode)
+			if ($ytdlProcess) { Write-Output ('Exit Code: {0}' -f $ytdlProcess.ExitCode) }
 		}
 	} else {
 		$startProcessParams = @{
@@ -1933,20 +1934,20 @@ function Invoke-Ytdl {
 				Write-Debug ('youtube-dl Process ID: {0}' -f $processId)
 				# タイムアウト監視ジョブを開始
 				$monitorJob = Start-Job -ScriptBlock {
-					Param ($using:processId, $timeoutSeconds)
+					Param ($processId, $timeoutSeconds, $timeoutMessage)
 					$startTime = Get-Date
 					while ((Get-Process -Id $processId -ErrorAction SilentlyContinue)) {
 						# 指定時間が経過したら強制終了
 						if ((New-TimeSpan -Start $startTime -End (Get-Date)).TotalSeconds -ge $timeoutSeconds) {
 							if ($IsWindows) { Start-Process -FilePath 'taskkill' -ArgumentList "/F /T /PID $processId" -NoNewWindow -Wait }
 							else { Stop-Process -Id $processId -Force }
-							Write-Warning ($script:msg.TerminateDueToTimeout -f 'youtube-dl', $script:ytdlTimeoutSec)
+							Write-Warning $timeoutMessage
 							break
 						}
 						Start-Sleep -Seconds 1
 					}
 					exit
-				} -ArgumentList $processId, $script:ytdlTimeoutSec
+				} -ArgumentList $processId, $script:ytdlTimeoutSec, ($script:msg.TerminateDueToTimeout -f 'youtube-dl', $script:ytdlTimeoutSec)
 				# ジョブIDを変数に追加
 				$script:jobList += $monitorJob.Id
 			} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') ; return }
@@ -2055,20 +2056,20 @@ function Invoke-NonTverYtdl {
 			Write-Debug ('youtube-dl Process ID: {0}' -f $processId)
 			# タイムアウト監視ジョブを開始
 			$monitorJob = Start-Job -ScriptBlock {
-				Param ($using:processId, $timeoutSeconds)
+				Param ($processId, $timeoutSeconds, $timeoutMessage)
 				$startTime = Get-Date
 				while ((Get-Process -Id $processId -ErrorAction SilentlyContinue)) {
 					# 指定時間が経過したら強制終了
 					if ((New-TimeSpan -Start $startTime -End (Get-Date)).TotalSeconds -ge $timeoutSeconds) {
 						if ($IsWindows) { Start-Process -FilePath 'taskkill' -ArgumentList "/F /T /PID $processId" -NoNewWindow -Wait }
 						else { Stop-Process -Id $processId -Force }
-						Write-Warning ($script:msg.TerminateDueToTimeout -f 'youtube-dl', $script:ytdlTimeoutSec)
+						Write-Warning $timeoutMessage
 						break
 					}
 					Start-Sleep -Seconds 1
 				}
 				exit
-			} -ArgumentList $processId, $script:ytdlTimeoutSec
+			} -ArgumentList $processId, $script:ytdlTimeoutSec, ($script:msg.TerminateDueToTimeout -f 'youtube-dl', $script:ytdlTimeoutSec)
 			# ジョブIDを変数に追加
 			$script:jobList += $monitorJob.Id
 		} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') ; return }
