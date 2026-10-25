@@ -128,7 +128,7 @@ function Expand-Zip {
 #----------------------------------------------------------------------
 # ディレクトリの上書き
 #----------------------------------------------------------------------
-function Move-Files() {
+function Move-File() {
 	<#
 		.SYNOPSIS
 			ディレクトリまたはファイルを、移動先に上書きして移動します。
@@ -148,7 +148,7 @@ function Move-Files() {
 			[Void]
 
 		.EXAMPLE
-			Move-Files -Source "./TVerRec-master" -Destination "../"
+			Move-File -Source "./TVerRec-master" -Destination "../"
 	#>
 	[CmdletBinding()]
 	[OutputType([Void])]
@@ -158,9 +158,9 @@ function Move-Files() {
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if ((Test-Path $destination) -and (Test-Path -PathType Container $source)) {
-		# ディレクトリ上書き(移動先に存在 かつ ディレクトリ)は再帰的にMove-Files呼び出し
+		# ディレクトリ上書き(移動先に存在 かつ ディレクトリ)は再帰的にMove-File呼び出し
 		$items = (Get-ChildItem $source).Where({ $_.Name -inotlike '*update_tverrec.*' })
-		foreach ($item in $items) { Move-Files -Source $item.FullName -Destination (Join-Path $destination $item.Name) }
+		foreach ($item in $items) { Move-File -Source $item.FullName -Destination (Join-Path $destination $item.Name) }
 		# 移動し終わったディレクトリを削除
 		Remove-Item -LiteralPath $source -Recurse -Force | Out-Null
 	} else {
@@ -328,7 +328,7 @@ Write-Output ('━━━━━━━━━━━━━━━━━━━━━�
 Write-Output ('ダウンロードしたTVerRecを配置します')
 try {
 	$newTVerRecDir = (Get-ChildItem -LiteralPath $updateTemp -Directory ).fullname
-	Get-ChildItem -LiteralPath $newTVerRecDir -Force | ForEach-Object { Move-Files -Source $_.FullName -Destination ('{0}{1}' -f (Join-Path $scriptRoot '../'), $_.Name ) }
+	Get-ChildItem -LiteralPath $newTVerRecDir -Force | ForEach-Object { Move-File -Source $_.FullName -Destination ('{0}{1}' -f (Join-Path $scriptRoot '../'), $_.Name ) }
 } catch { throw ('❌️ ダウンロードしたTVerRecの配置に失敗しました') }
 
 # 作業ディレクトリを削除

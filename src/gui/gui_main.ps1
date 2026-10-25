@@ -82,7 +82,7 @@ $msgInformation = New-Object System.Collections.Generic.List[String]
 #----------------------------------------------------------------------
 # GUIイベントの処理
 #----------------------------------------------------------------------
-function Sync-WpfEvents {
+function Sync-WpfEvent {
 	<#
 		.SYNOPSIS
 			WPFのイベントを同期的に処理します。
@@ -382,7 +382,7 @@ while ($mainWindow.IsVisible) {
 		}
 	}
 	# GUIイベント処理
-	Sync-WpfEvents
+	Sync-WpfEvent
 	Start-Sleep -Milliseconds $guiRefreshIntervalMs
 }
 

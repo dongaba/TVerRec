@@ -167,7 +167,7 @@ $settingAttributes = @(
 #----------------------------------------------------------------------
 # GUIイベントの処理
 #----------------------------------------------------------------------
-function Sync-WpfEvents {
+function Sync-WpfEvent {
 	<#
 		.SYNOPSIS
 			WPFのイベントを同期的に処理します。
@@ -732,7 +732,7 @@ $btnYtdlOption360.Add_Click({ Set-YtdlOption 360 })
 #----------------------------------------------------------------------
 # 曜日・時間のチェックボックスの一括連動
 #----------------------------------------------------------------------
-function Sync-MultiCheckboxes {
+function Sync-MultiCheckbox {
 	<#
 		.SYNOPSIS
 			ダウンロード停止時間帯のチェックボックスを、曜日または時間の「全て」のチェックボックスに連動させます。
@@ -755,7 +755,7 @@ function Sync-MultiCheckboxes {
 			[Void]
 
 		.EXAMPLE
-			Sync-MultiCheckboxes -day 'Mon' -allCheckbox $chkbxStopMonAll
+			Sync-MultiCheckbox -day 'Mon' -allCheckbox $chkbxStopMonAll
 	#>
 	param (
 		[String]$day,
@@ -784,39 +784,39 @@ function Sync-MultiCheckboxes {
 }
 
 # 各曜日に対してクリックイベントを登録
-$chkbxStopMonAll.Add_Click({ Sync-MultiCheckboxes -day 'Mon' -allCheckbox $chkbxStopMonAll })
-$chkbxStopTueAll.Add_Click({ Sync-MultiCheckboxes -day 'Tue' -allCheckbox $chkbxStopTueAll })
-$chkbxStopWedAll.Add_Click({ Sync-MultiCheckboxes -day 'Wed' -allCheckbox $chkbxStopWedAll })
-$chkbxStopThuAll.Add_Click({ Sync-MultiCheckboxes -day 'Thu' -allCheckbox $chkbxStopThuAll })
-$chkbxStopFriAll.Add_Click({ Sync-MultiCheckboxes -day 'Fri' -allCheckbox $chkbxStopFriAll })
-$chkbxStopSatAll.Add_Click({ Sync-MultiCheckboxes -day 'Sat' -allCheckbox $chkbxStopSatAll })
-$chkbxStopSunAll.Add_Click({ Sync-MultiCheckboxes -day 'Sun' -allCheckbox $chkbxStopSunAll })
+$chkbxStopMonAll.Add_Click({ Sync-MultiCheckbox -day 'Mon' -allCheckbox $chkbxStopMonAll })
+$chkbxStopTueAll.Add_Click({ Sync-MultiCheckbox -day 'Tue' -allCheckbox $chkbxStopTueAll })
+$chkbxStopWedAll.Add_Click({ Sync-MultiCheckbox -day 'Wed' -allCheckbox $chkbxStopWedAll })
+$chkbxStopThuAll.Add_Click({ Sync-MultiCheckbox -day 'Thu' -allCheckbox $chkbxStopThuAll })
+$chkbxStopFriAll.Add_Click({ Sync-MultiCheckbox -day 'Fri' -allCheckbox $chkbxStopFriAll })
+$chkbxStopSatAll.Add_Click({ Sync-MultiCheckbox -day 'Sat' -allCheckbox $chkbxStopSatAll })
+$chkbxStopSunAll.Add_Click({ Sync-MultiCheckbox -day 'Sun' -allCheckbox $chkbxStopSunAll })
 
 # 各時間に対してクリックイベントを登録
-$chkbxStop00All.Add_Click({ Sync-MultiCheckboxes -hour '00' -allCheckbox $chkbxStop00All })
-$chkbxStop01All.Add_Click({ Sync-MultiCheckboxes -hour '01' -allCheckbox $chkbxStop01All })
-$chkbxStop02All.Add_Click({ Sync-MultiCheckboxes -hour '02' -allCheckbox $chkbxStop02All })
-$chkbxStop03All.Add_Click({ Sync-MultiCheckboxes -hour '03' -allCheckbox $chkbxStop03All })
-$chkbxStop04All.Add_Click({ Sync-MultiCheckboxes -hour '04' -allCheckbox $chkbxStop04All })
-$chkbxStop05All.Add_Click({ Sync-MultiCheckboxes -hour '05' -allCheckbox $chkbxStop05All })
-$chkbxStop06All.Add_Click({ Sync-MultiCheckboxes -hour '06' -allCheckbox $chkbxStop06All })
-$chkbxStop07All.Add_Click({ Sync-MultiCheckboxes -hour '07' -allCheckbox $chkbxStop07All })
-$chkbxStop08All.Add_Click({ Sync-MultiCheckboxes -hour '08' -allCheckbox $chkbxStop08All })
-$chkbxStop09All.Add_Click({ Sync-MultiCheckboxes -hour '09' -allCheckbox $chkbxStop09All })
-$chkbxStop10All.Add_Click({ Sync-MultiCheckboxes -hour '10' -allCheckbox $chkbxStop10All })
-$chkbxStop11All.Add_Click({ Sync-MultiCheckboxes -hour '11' -allCheckbox $chkbxStop11All })
-$chkbxStop12All.Add_Click({ Sync-MultiCheckboxes -hour '12' -allCheckbox $chkbxStop12All })
-$chkbxStop13All.Add_Click({ Sync-MultiCheckboxes -hour '13' -allCheckbox $chkbxStop13All })
-$chkbxStop14All.Add_Click({ Sync-MultiCheckboxes -hour '14' -allCheckbox $chkbxStop14All })
-$chkbxStop15All.Add_Click({ Sync-MultiCheckboxes -hour '15' -allCheckbox $chkbxStop15All })
-$chkbxStop16All.Add_Click({ Sync-MultiCheckboxes -hour '16' -allCheckbox $chkbxStop16All })
-$chkbxStop17All.Add_Click({ Sync-MultiCheckboxes -hour '17' -allCheckbox $chkbxStop17All })
-$chkbxStop18All.Add_Click({ Sync-MultiCheckboxes -hour '18' -allCheckbox $chkbxStop18All })
-$chkbxStop19All.Add_Click({ Sync-MultiCheckboxes -hour '19' -allCheckbox $chkbxStop19All })
-$chkbxStop20All.Add_Click({ Sync-MultiCheckboxes -hour '20' -allCheckbox $chkbxStop20All })
-$chkbxStop21All.Add_Click({ Sync-MultiCheckboxes -hour '21' -allCheckbox $chkbxStop21All })
-$chkbxStop22All.Add_Click({ Sync-MultiCheckboxes -hour '22' -allCheckbox $chkbxStop22All })
-$chkbxStop23All.Add_Click({ Sync-MultiCheckboxes -hour '23' -allCheckbox $chkbxStop23All })
+$chkbxStop00All.Add_Click({ Sync-MultiCheckbox -hour '00' -allCheckbox $chkbxStop00All })
+$chkbxStop01All.Add_Click({ Sync-MultiCheckbox -hour '01' -allCheckbox $chkbxStop01All })
+$chkbxStop02All.Add_Click({ Sync-MultiCheckbox -hour '02' -allCheckbox $chkbxStop02All })
+$chkbxStop03All.Add_Click({ Sync-MultiCheckbox -hour '03' -allCheckbox $chkbxStop03All })
+$chkbxStop04All.Add_Click({ Sync-MultiCheckbox -hour '04' -allCheckbox $chkbxStop04All })
+$chkbxStop05All.Add_Click({ Sync-MultiCheckbox -hour '05' -allCheckbox $chkbxStop05All })
+$chkbxStop06All.Add_Click({ Sync-MultiCheckbox -hour '06' -allCheckbox $chkbxStop06All })
+$chkbxStop07All.Add_Click({ Sync-MultiCheckbox -hour '07' -allCheckbox $chkbxStop07All })
+$chkbxStop08All.Add_Click({ Sync-MultiCheckbox -hour '08' -allCheckbox $chkbxStop08All })
+$chkbxStop09All.Add_Click({ Sync-MultiCheckbox -hour '09' -allCheckbox $chkbxStop09All })
+$chkbxStop10All.Add_Click({ Sync-MultiCheckbox -hour '10' -allCheckbox $chkbxStop10All })
+$chkbxStop11All.Add_Click({ Sync-MultiCheckbox -hour '11' -allCheckbox $chkbxStop11All })
+$chkbxStop12All.Add_Click({ Sync-MultiCheckbox -hour '12' -allCheckbox $chkbxStop12All })
+$chkbxStop13All.Add_Click({ Sync-MultiCheckbox -hour '13' -allCheckbox $chkbxStop13All })
+$chkbxStop14All.Add_Click({ Sync-MultiCheckbox -hour '14' -allCheckbox $chkbxStop14All })
+$chkbxStop15All.Add_Click({ Sync-MultiCheckbox -hour '15' -allCheckbox $chkbxStop15All })
+$chkbxStop16All.Add_Click({ Sync-MultiCheckbox -hour '16' -allCheckbox $chkbxStop16All })
+$chkbxStop17All.Add_Click({ Sync-MultiCheckbox -hour '17' -allCheckbox $chkbxStop17All })
+$chkbxStop18All.Add_Click({ Sync-MultiCheckbox -hour '18' -allCheckbox $chkbxStop18All })
+$chkbxStop19All.Add_Click({ Sync-MultiCheckbox -hour '19' -allCheckbox $chkbxStop19All })
+$chkbxStop20All.Add_Click({ Sync-MultiCheckbox -hour '20' -allCheckbox $chkbxStop20All })
+$chkbxStop21All.Add_Click({ Sync-MultiCheckbox -hour '21' -allCheckbox $chkbxStop21All })
+$chkbxStop22All.Add_Click({ Sync-MultiCheckbox -hour '22' -allCheckbox $chkbxStop22All })
+$chkbxStop23All.Add_Click({ Sync-MultiCheckbox -hour '23' -allCheckbox $chkbxStop23All })
 
 #endregion ボタンのアクション
 #----------------------------------------------------------------------
@@ -849,7 +849,7 @@ $form.AssignHandle($currentProcess.MainWindowHandle)
 #region ウィンドウ表示後のループ処理
 while ($settingWindow.IsVisible) {
 	# GUIイベント処理
-	Sync-WpfEvents
+	Sync-WpfEvent
 	Start-Sleep -Milliseconds 10
 }
 
