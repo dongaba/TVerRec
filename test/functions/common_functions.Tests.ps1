@@ -33,6 +33,13 @@ Describe 'ガーベッジコレクション' {
 		$attributes = $function.OutputType
 		$attributes.Type.Name | Should -BeExactly $expectedOutputType
 	}
+	It '例外にならず、ガベージコレクションの各段階をVerboseで出力すること' {
+		$out = Invoke-GarbageCollection -Verbose 4>&1 | ForEach-Object { $_.Message }
+		$out | Should -Contain 'Starting garbage collection ...'
+		$out | Should -Contain 'Waiting for pending finalizers ...'
+		$out | Should -Contain 'Performing a final pass of garbage collection ...'
+		$out | Should -Contain 'Garbage collection completed.'
+	}
 	# It 'メモリ使用量が削減すること(しないことも多いのでFailすることも多々ある)' {
 	# 	$before = (Get-Process -Id $PID).ws
 	# 	Invoke-GarbageCollection
@@ -791,6 +798,41 @@ Describe 'Get-RemainingCapacity' -Skip:$IsWindows {
 	It '取得に失敗したときは、容量不明のメッセージを表示し、十分に大きい値(約9.5GB)を返すこと' {
 		Mock sh { throw 'df failed' }
 		Get-RemainingCapacity -targetDir '/tmp' | Should -BeGreaterThan 9000
+		Should -Invoke Write-Information -Times 1 -Exactly
+	}
+}
+
+Describe 'Get-RemainingCapacity(Windows)' -Skip:(-not $IsWindows) {
+	BeforeEach {
+		Mock Write-Information {}
+	}
+	It 'ドライブレターのパスでは、そのドライブの空き容量(バイト)をMBに換算して返すこと' {
+		Mock Get-CimInstance { [PSCustomObject]@{ FreeSpace = 5368709120 } }	# 5GB
+		Get-RemainingCapacity -targetDir 'C:\Users\test' | Should -Be 5120
+		Should -Invoke Get-CimInstance -Times 1 -Exactly -ParameterFilter { ($ClassName -eq 'Win32_LogicalDisk' -or $args -contains 'Win32_LogicalDisk') -and ($Filter -eq "DeviceID='C:'") }
+		Should -Invoke Write-Information -Times 0 -Exactly
+	}
+	It 'ドライブレターは大文字小文字を問わず、ネットワークドライブ(Z:)でも先頭2文字で判定すること' {
+		Mock Get-CimInstance { [PSCustomObject]@{ FreeSpace = 1073741824 } }	# 1GB
+		Get-RemainingCapacity -targetDir 'z:\video' | Should -Be 1024
+		Should -Invoke Get-CimInstance -Times 1 -Exactly -ParameterFilter { $Filter -eq "DeviceID='z:'" }
+	}
+	It '戻り値はInt64であること' {
+		Mock Get-CimInstance { [PSCustomObject]@{ FreeSpace = 3221225472 } }
+		Get-RemainingCapacity -targetDir 'C:\' | Should -BeOfType [Int64]
+	}
+	It 'UNCパスでは、\\サーバー\共有 の部分だけをdirに渡し、最終行の空きバイト数をMBに換算して返すこと' {
+		Mock cmd { '' ; '               5 個のファイル        1,234 バイト' ; '               2 個のディレクトリ  1,073,741,824 バイトの空き領域' }
+		Get-RemainingCapacity -targetDir '\\server\share\sub\dir' | Should -Be 1024
+		Should -Invoke cmd -Times 1 -Exactly -ParameterFilter { $args -contains '\\server\share' }
+	}
+	It 'ドライブレターでもUNCでもないパスでは、容量不明のメッセージを表示し、十分に大きい値を返すこと' {
+		Get-RemainingCapacity -targetDir 'relative\path' | Should -BeGreaterThan 9000
+		Should -Invoke Write-Information -Times 1 -Exactly
+	}
+	It '取得に失敗したときは、容量不明のメッセージを表示し、十分に大きい値を返すこと' {
+		Mock Get-CimInstance { throw 'CIM failed' }
+		Get-RemainingCapacity -targetDir 'C:\' | Should -BeGreaterThan 9000
 		Should -Invoke Write-Information -Times 1 -Exactly
 	}
 }

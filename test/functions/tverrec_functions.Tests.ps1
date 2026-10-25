@@ -1807,7 +1807,7 @@ Describe 'ダウンロード済み・リスト登録済みの番組の除外' {
 # リネームに失敗したファイルの削除(#297)
 # * ファイルの検索にcmd(Windows)またはfind(それ以外)を使うため、Linux/macOSでのみ検証する
 #----------------------------------------------------------------------
-Describe 'Remove-UnRenamedTempFile(#297)' -Skip:$IsWindows {
+Describe 'Remove-UnRenamedTempFile(#297)' {
 	BeforeAll {
 		$script:unrenSaved = @{}
 		foreach ($n in 'deleteUnrenamedFile', 'downloadBaseDir') {
@@ -1822,7 +1822,8 @@ Describe 'Remove-UnRenamedTempFile(#297)' -Skip:$IsWindows {
 	}
 	BeforeEach {
 		$script:unrenDir = Join-Path $TestDrive ('unren{0}' -f [Guid]::NewGuid().ToString('N'))
-		$script:unrenSub = Join-Path $script:unrenDir 'ドラマ'
+		# * Windowsでは、dirの出力が文字コードに依存するため、サブフォルダ名は英数字にする
+		$script:unrenSub = Join-Path $script:unrenDir $(if ($IsWindows) { 'drama' } else { 'ドラマ' })
 		New-Item -ItemType Directory -Path $script:unrenSub -Force | Out-Null
 		$script:downloadBaseDir = $script:unrenDir
 		$script:unrenTargets = @((Join-Path $script:unrenSub 'epa1b2c3d4.mp4'), (Join-Path $script:unrenDir 'epz9y8x7w6.ts'))
@@ -2551,5 +2552,649 @@ Describe 'Invoke-IntegrityCheck' {
 		Should -Invoke Invoke-FFmpegProcess -Times 0 -Exactly
 		Should -Invoke Unlock-File -Times 1 -Exactly
 		Test-Path -LiteralPath $script:icVideo | Should -BeTrue
+	}
+}
+
+Describe 'Read-IgnoreList' {
+	BeforeAll {
+		$script:ril = @{}
+		foreach ($n in 'ignoreFilePath', 'ignoreLockFilePath') { $script:ril[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' } }
+	}
+	AfterAll {
+		foreach ($n in $script:ril.Keys) {
+			if ($script:ril[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:ril[$n] }
+		}
+	}
+	BeforeEach {
+		$dir = Join-Path $TestDrive ('ril{0}' -f [Guid]::NewGuid().ToString('N'))
+		New-Item -ItemType Directory -Path $dir -Force | Out-Null
+		$script:ignoreFilePath = Join-Path $dir 'ignore.conf'
+		$script:ignoreLockFilePath = Join-Path $dir 'ignore.lock'
+		Mock Wait-FileLock {}
+		Mock Unlock-File {}
+	}
+	It 'コメント行(;)と空行・空白だけの行を除き、番組名だけを順に返すこと' {
+		[IO.File]::WriteAllText($script:ignoreFilePath, "; コメント`n番組A`n`n   `n;番組B`n番組C`n", [Text.UTF8Encoding]::new($false))
+		@(Read-IgnoreList) | Should -Be @('番組A', '番組C')
+	}
+	It '番組が1件だけでも、@()で包めば配列として扱えること' {
+		[IO.File]::WriteAllText($script:ignoreFilePath, "番組A`n", [Text.UTF8Encoding]::new($false))
+		$r = @(Read-IgnoreList)
+		$r.Count | Should -Be 1
+		$r[0] | Should -BeExactly '番組A'
+	}
+	It '有効な行がなければ、空を返すこと' {
+		[IO.File]::WriteAllText($script:ignoreFilePath, "; コメントだけ`n`n", [Text.UTF8Encoding]::new($false))
+		@(Read-IgnoreList).Count | Should -Be 0
+	}
+	It '先頭が空白の行はコメントとして扱わず、そのまま返すこと' {
+		[IO.File]::WriteAllText($script:ignoreFilePath, " ;番組A`n", [Text.UTF8Encoding]::new($false))
+		@(Read-IgnoreList) | Should -Be @(' ;番組A')
+	}
+	It 'ファイルのロックを取得して、処理後に解放すること' {
+		[IO.File]::WriteAllText($script:ignoreFilePath, "番組A`n", [Text.UTF8Encoding]::new($false))
+		Read-IgnoreList | Out-Null
+		Should -Invoke Wait-FileLock -Times 1 -Exactly
+		Should -Invoke Unlock-File -Times 1 -Exactly
+	}
+	It '読み込みに失敗したときは、読み込み失敗として例外にし、ロックも解放すること' {
+		Mock Get-Content { throw 'disk error' }
+		{ Read-IgnoreList } | Should -Throw -ExpectedMessage ($script:msg.LoadFailed -f $script:msg.IgnoreFile)
+		Should -Invoke Unlock-File -Times 1 -Exactly
+	}
+	It 'ファイルがなければ、例外にはならず空を返し、ロックも解放すること(現状の挙動)' {
+		# * Get-Contentの「パスが存在しない」エラーは例外にならないため、catchには入らない
+		$r = @(Read-IgnoreList 2>$null)
+		$r.Count | Should -Be 0
+		Should -Invoke Unlock-File -Times 1 -Exactly
+	}
+}
+
+Describe 'Remove-SpecialNote' {
+	It '《》の間が10文字を超えるなら、《》とその間を削除すること' {
+		Remove-SpecialNote -text '番組名《これは十一文字以上の特別な注記です》' | Should -BeExactly '番組名'
+	}
+	It '【】の間が10文字を超えるなら、【】とその間を削除すること' {
+		Remove-SpecialNote -text '番組名【これは十一文字以上の特別な注記です】' | Should -BeExactly '番組名'
+	}
+	It '10文字以下なら削除しないこと(閾値の境界)' {
+		# * 《》の位置の差が10以下(間が9文字)なら残し、11以上(間が10文字)なら削除する
+		Remove-SpecialNote -text '番組名《123456789》' | Should -BeExactly '番組名《123456789》'
+		Remove-SpecialNote -text '番組名《1234567890》' | Should -BeExactly '番組名'
+	}
+	It '特殊文字がなければ、そのまま返すこと' {
+		Remove-SpecialNote -text '番組名 サブタイトル' | Should -BeExactly '番組名 サブタイトル'
+	}
+	It '削除したあと、連続する空白を1つにまとめ、前後の空白を取り除くこと' {
+		Remove-SpecialNote -text '  番組名  《これは十一文字以上の特別な注記です》  サブタイトル ' | Should -BeExactly '番組名 サブタイトル'
+	}
+	It '《》と【】の両方があれば、どちらも削除すること' {
+		Remove-SpecialNote -text '番組名《これは十一文字以上の特別な注記です》【これも十一文字以上の特別な注記です】' | Should -BeExactly '番組名'
+	}
+	It '引数なし・空文字でも例外にならず、空文字を返すこと' {
+		Remove-SpecialNote | Should -BeExactly ''
+		Remove-SpecialNote -text '' | Should -BeExactly ''
+	}
+	It '-WhatIfでは、削除対象でも変更しないこと' {
+		$text = '番組名《これは十一文字以上の特別な注記です》'
+		Remove-SpecialNote -text $text -WhatIf | Should -BeExactly $text
+	}
+}
+
+Describe 'Show-VideoInfo / Show-VideoDebugInfo' {
+	BeforeEach {
+		$script:videoContainerFormat = 'mp4'
+		$script:svi = [PSCustomObject]@{
+			fileName        = 'Episode.mp4'
+			broadcastDate   = '2025-04-18'
+			mediaName       = 'Media'
+			endTime         = '2025/05/01 23:59'
+			descriptionText = '説明文'
+			episodePageURL  = 'https://tver.jp/episodes/epSV000001'
+		}
+	}
+	It 'Show-VideoInfo: 番組名(拡張子なし)・放送日・テレビ局・配信終了・番組説明を、この順に出力すること' {
+		$out = @(Show-VideoInfo -videoInfo ([ref]$script:svi))
+		$out | Should -Be @(
+			($script:msg.EpisodeName -f 'Episode.')
+			($script:msg.BroadcastDate -f '2025-04-18')
+			($script:msg.MediaName -f 'Media')
+			($script:msg.EndDate -f '2025/05/01 23:59')
+			($script:msg.EpisodeDetail -f '説明文')
+		)
+	}
+	It 'Show-VideoDebugInfo: エピソードページのURLをデバッグ出力すること' {
+		Mock Write-Debug {}
+		Show-VideoDebugInfo -videoInfo ([ref]$script:svi)
+		Should -Invoke Write-Debug -Times 1 -Exactly -ParameterFilter { $Message -eq 'https://tver.jp/episodes/epSV000001' }
+	}
+	It 'Show-VideoDebugInfo: 標準出力には何も出さないこと' {
+		Mock Write-Debug {}
+		@(Show-VideoDebugInfo -videoInfo ([ref]$script:svi)).Count | Should -Be 0
+	}
+}
+
+Describe 'Invoke-VideoDownloadの履歴・ダウンロード対象外・失敗の分岐' {
+	BeforeAll {
+		$script:vbSaved = @{}
+		foreach ($n in 'redownloadWhenSubtitleAdded', 'downloadWhenEpisodeIdChanged', 'embedSubtitle', 'videoContainerFormat', 'histFilePath', 'histLockFilePath', 'histHasSubtitleColumn', 'downloadBaseDir', 'sortVideoBySeries', 'sortVideoByMedia', 'ytdlRandomIp', 'proxyUrl', 'ignoreCache', 'histCache') {
+			$script:vbSaved[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' }
+		}
+		$script:vbDir = Join-Path ([IO.Path]::GetTempPath()) ('TVerRecVb{0}' -f [Guid]::NewGuid().ToString('N'))
+		New-Item -ItemType Directory -Path $script:vbDir | Out-Null
+		# Get-VideoInfoはtver_functions.ps1にあり、このテストでは読み込まないため、Mockできるようにスタブを用意する
+		if (-not (Get-Command Get-VideoInfo -ErrorAction Ignore)) { function script:Get-VideoInfo { Param ($episodeID) } }
+		function script:New-VbVideoInfo {
+			Param ([String]$Id)
+			[PSCustomObject]@{ episodeID = $Id ; episodePageURL = "https://tver.jp/episodes/$Id" ; seriesPageURL = 'https://tver.jp/series/sr1' ; seriesName = 'テスト番組' ; seasonName = '' ; episodeName = '第1話' ; episodeNum = '1' ; mediaName = 'テスト局' ; broadcastDate = '2026年01月01日放送' ; isSubtitle = $null }
+		}
+		function script:Add-VbHistoryRow {
+			Param ([String]$Id, [String]$RelPath, [String]$Subtitle = '1')
+			Add-Content -LiteralPath $script:histFilePath -Value ('"https://tver.jp/episodes/{0}","","k","テスト番組","","第1話","テスト局","b","2026-01-01 00:00:00","d","n.mp4","{1}","1","{2}"' -f $Id, $RelPath, $Subtitle) -Encoding UTF8
+		}
+		$script:vbHistHeader = '"videoPage","videoSeriesPage","genre","series","season","title","media","broadcastDate","downloadDate","videoDir","videoName","videoPath","videoValidated","subtitle"'
+	}
+	AfterAll {
+		foreach ($n in $script:vbSaved.Keys) {
+			if ($script:vbSaved[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:vbSaved[$n] }
+		}
+		Remove-Item -LiteralPath $script:vbDir -Recurse -Force -ErrorAction SilentlyContinue
+	}
+	BeforeEach {
+		$script:redownloadWhenSubtitleAdded = $false	# * 既定では字幕の記録・再確認を行わない(字幕の分岐は別のDescribeで確認)
+		$script:downloadWhenEpisodeIdChanged = $true
+		$script:embedSubtitle = $true
+		$script:videoContainerFormat = 'mp4'
+		$script:histHasSubtitleColumn = $false
+		$script:sortVideoBySeries = $true
+		$script:sortVideoByMedia = $false
+		$script:ytdlRandomIp = $false
+		$script:proxyUrl = ''
+		Remove-Variable -Name ignoreCache, histCache -Scope Script -ErrorAction SilentlyContinue
+		$script:downloadBaseDir = Join-Path $script:vbDir ('dl{0}' -f [Guid]::NewGuid().ToString('N'))
+		New-Item -ItemType Directory -Path $script:downloadBaseDir -Force | Out-Null
+		$script:histFilePath = Join-Path $script:vbDir ('history{0}.csv' -f [Guid]::NewGuid().ToString('N'))
+		$script:histLockFilePath = Join-Path $script:vbDir 'history.lock'
+		Set-Content -LiteralPath $script:histFilePath -Value $script:vbHistHeader -Encoding UTF8
+		$script:videoInfoToReturn = New-VbVideoInfo 'ep00000001'
+		$script:ytdlCalls = 0
+		$script:ignoreToReturn = @()
+		$tmp = New-VbVideoInfo 'ep00000001'
+		Format-VideoFileInfo ([Ref]$tmp)
+		$script:vbRelPath = $tmp.fileRelPath
+		$script:vbFilePath = $tmp.filePath
+		Mock Invoke-StatisticsCheck {}
+		Mock Show-VideoInfo {}
+		Mock Wait-FileLock {}
+		Mock Unlock-File {}
+		Mock Start-Sleep {}
+		Mock Write-Warning {}
+		Mock Update-IgnoreList {}
+		Mock Read-IgnoreList { $script:ignoreToReturn }
+		Mock Get-VideoInfo { $script:videoInfoToReturn }
+		Mock Invoke-Ytdl { $script:ytdlCalls++ }
+		Mock Get-VideoSubtitleStatus { '1' }
+	}
+	Context 'エピソードIDが変わったときもダウンロードする設定(downloadWhenEpisodeIdChanged)' {
+		It '同名の番組が履歴にあっても、ダウンロード対象外リストに合致すれば、ダウンロードせず対象外として履歴に記録すること' {
+			Add-VbHistoryRow -Id 'ep_old' -RelPath $script:vbRelPath
+			$script:ignoreToReturn = @('*テスト番組*')
+			Invoke-VideoDownload -Keyword 'k' -episodeID 'ep00000001' -Force $false 6>$null
+			$script:ytdlCalls | Should -Be 0
+			Should -Invoke Update-IgnoreList -Times 1 -Exactly -ParameterFilter { $ignoreTitle -eq '*テスト番組*' }
+			Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.IgnoreEpisodeAdded }
+			$rows = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+			$rows.Count | Should -Be 2
+			$rows[1].videoName | Should -Be '-- IGNORED --'
+			$rows[1].videoPath | Should -Be '-- IGNORED --'
+			$rows[1].videoValidated | Should -Be '0'
+		}
+		It '履歴にも実ファイルにもなくても、ダウンロード対象外リストに合致すれば、ダウンロードせず対象外として履歴に記録すること' {
+			$script:ignoreToReturn = @('*テスト番組*')
+			Invoke-VideoDownload -Keyword 'k' -episodeID 'ep00000001' -Force $false 6>$null
+			$script:ytdlCalls | Should -Be 0
+			Should -Invoke Update-IgnoreList -Times 1 -Exactly
+			$rows = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+			$rows.Count | Should -Be 1
+			$rows[0].videoName | Should -Be '-- IGNORED --'
+		}
+		It '履歴になくても、実ファイルがあれば、エピソードID変更としてダウンロードすること' {
+			New-Item -ItemType File -Path $script:vbFilePath -Force | Out-Null
+			$out = @(Invoke-VideoDownload -Keyword 'k' -episodeID 'ep00000001' -Force $false 6>$null)
+			$out | Should -Contain $script:msg.DownloadEpisodeIdChanged
+			$script:ytdlCalls | Should -Be 1
+		}
+	}
+	Context 'エピソードIDが変わったらダウンロードしない設定' {
+		BeforeEach { $script:downloadWhenEpisodeIdChanged = $false }
+		It '同名の番組が履歴にあれば、ダウンロードせず、検証済みのスキップとして履歴に記録すること' {
+			Add-VbHistoryRow -Id 'ep_old' -RelPath $script:vbRelPath
+			Invoke-VideoDownload -Keyword 'k' -episodeID 'ep00000001' -Force $false 6>$null
+			$script:ytdlCalls | Should -Be 0
+			Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.DownloadHistExists }
+			$rows = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+			$rows.Count | Should -Be 2
+			$rows[1].videoName | Should -Be '-- SKIPPED --'
+			$rows[1].videoValidated | Should -Be '1'
+		}
+		It '履歴になくても実ファイルがあれば、ダウンロードせず、未検証のスキップとして履歴に記録すること(整合性検証の対象)' {
+			New-Item -ItemType File -Path $script:vbFilePath -Force | Out-Null
+			Invoke-VideoDownload -Keyword 'k' -episodeID 'ep00000001' -Force $false 6>$null
+			$script:ytdlCalls | Should -Be 0
+			Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.DownloadFileExists }
+			$rows = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+			$rows.Count | Should -Be 1
+			$rows[0].videoName | Should -Be '-- SKIPPED --'
+			$rows[0].videoValidated | Should -Be '0'
+		}
+		It '履歴にも実ファイルにもなくても、ダウンロード対象外リストに合致すれば、ダウンロードせず対象外として履歴に記録すること' {
+			$script:ignoreToReturn = @('*テスト番組*')
+			Invoke-VideoDownload -Keyword 'k' -episodeID 'ep00000001' -Force $false 6>$null
+			$script:ytdlCalls | Should -Be 0
+			Should -Invoke Update-IgnoreList -Times 1 -Exactly
+			$rows = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+			$rows[0].videoName | Should -Be '-- IGNORED --'
+			$rows[0].videoPath | Should -Be '-- IGNORED --'
+		}
+		It '履歴にも実ファイルにもなく、ダウンロード対象外にも合致しなければ、ダウンロードすること' {
+			$out = @(Invoke-VideoDownload -Keyword 'k' -episodeID 'ep00000001' -Force $false 6>$null)
+			$out | Should -Contain $script:msg.DownloadEpisodeAdded
+			$script:ytdlCalls | Should -Be 1
+			$rows = @(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8)
+			$rows[0].videoValidated | Should -Be '0'
+			$rows[0].videoPath | Should -Be $script:vbRelPath
+		}
+		It '-Forceなら、履歴にあってもダウンロードすること' {
+			Add-VbHistoryRow -Id 'ep_old' -RelPath $script:vbRelPath
+			Invoke-VideoDownload -Keyword 'k' -episodeID 'ep00000001' -Force $true 6>$null
+			$script:ytdlCalls | Should -Be 1
+			@(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Count | Should -Be 2
+		}
+	}
+	Context '失敗時の動作' {
+		It '保存ファイルの相対パスが取得できなければ、警告を出し、履歴に記録せずダウンロードもしないこと' {
+			Mock Format-VideoFileInfo {}
+			$script:videoInfoToReturn | Add-Member -NotePropertyName fileName -NotePropertyValue 'x.mp4'
+			$script:videoInfoToReturn | Add-Member -NotePropertyName fileRelPath -NotePropertyValue ''
+			Invoke-VideoDownload -Keyword 'k' -episodeID 'ep00000001' -Force $false 6>$null
+			Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.FileNameRetrievalFailed }
+			$script:ytdlCalls | Should -Be 0
+			@(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Count | Should -Be 0
+		}
+		It '履歴の書き込みに失敗したときは、警告を出し、ダウンロードせず、ロックを解放すること' {
+			Mock Export-Csv { throw 'disk full' }
+			Invoke-VideoDownload -Keyword 'k' -episodeID 'ep00000001' -Force $false 6>$null
+			Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.HistUpdateFailed }
+			$script:ytdlCalls | Should -Be 0
+			# * 履歴の読み込み(Get-LatestHistory)も同じロックを使うため、書き込み用の取得と解放が対になっていることを確認する
+			Should -Invoke Wait-FileLock -ParameterFilter { $path -eq $script:histLockFilePath } -Times 2 -Exactly
+			Should -Invoke Unlock-File -ParameterFilter { $path -eq $script:histLockFilePath } -Times 2 -Exactly
+		}
+		It '番組ディレクトリを作成できなければ、警告を出し、ダウンロードしないこと' {
+			Remove-Item -LiteralPath $script:downloadBaseDir -Recurse -Force
+			Mock New-Item { throw 'denied' }
+			Invoke-VideoDownload -Keyword 'k' -episodeID 'ep00000001' -Force $false 6>$null
+			Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.CreateEpisodeDirFailed }
+			$script:ytdlCalls | Should -Be 0
+		}
+		It 'yt-dlpの起動で例外になっても、警告を出して処理を続けること' {
+			Mock Invoke-Ytdl { throw 'boom' }
+			{ Invoke-VideoDownload -Keyword 'k' -episodeID 'ep00000001' -Force $false 6>$null } | Should -Not -Throw
+			Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.InvokeYtdlFailed }
+		}
+	}
+	It 'ランダムIPとProxyを両方設定しているときは、yt-dlpの起動前にその旨を案内すること' {
+		$script:ytdlRandomIp = $true
+		$script:proxyUrl = 'http://proxy.example:8080'
+		$out = @(Invoke-VideoDownload -Keyword 'k' -episodeID 'ep00000001' -Force $false 6>$null)
+		$out | Should -Contain $script:msg.NotifyYtdlOptions1
+		$out | Should -Contain $script:msg.NotifyYtdlOptions2
+		$out | Should -Contain $script:msg.NotifyYtdlOptions3
+		$script:ytdlCalls | Should -Be 1
+	}
+	It 'ランダムIPだけの設定なら、案内しないこと' {
+		$script:ytdlRandomIp = $true
+		$out = @(Invoke-VideoDownload -Keyword 'k' -episodeID 'ep00000001' -Force $false 6>$null)
+		$out | Should -Not -Contain $script:msg.NotifyYtdlOptions1
+	}
+	It '字幕を再確認する番組でも、ダウンロード対象外リストに合致すれば、確認せずダウンロードもしないこと' {
+		$script:redownloadWhenSubtitleAdded = $true
+		Add-VbHistoryRow -Id 'ep00000001' -RelPath $script:vbRelPath -Subtitle '0'
+		$script:ignoreToReturn = @('*テスト番組*')
+		Invoke-VideoDownload -Keyword 'k' -episodeID 'ep00000001' -Force $false 6>$null
+		$script:ytdlCalls | Should -Be 0
+		Should -Invoke Get-VideoSubtitleStatus -Times 0 -Exactly
+		@(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Count | Should -Be 1
+	}
+}
+
+Describe 'Invoke-Ytdl / Invoke-NonTverYtdl のyt-dlp起動方法' {
+	BeforeAll {
+		$script:ysSaved = @{}
+		foreach ($n in 'debugMode', 'ytdlTimeoutSec', 'ytdlPath', 'ytdlStdOutLogPath', 'ytdlStdErrLogPath', 'videoContainerFormat', 'downloadWorkDir', 'ffmpegPath', 'embedThumbnail', 'embedSubtitle', 'embedMetatag', 'jobList', 'rateLimit', 'parallelDownloadNumPerFile', 'windowShowStyle', 'proxyUrl', 'ytdlRandomIp') {
+			$script:ysSaved[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' }
+		}
+		function script:Invoke-YtdlVariant {
+			Param ([String]$Name)
+			if ($Name -eq 'Invoke-Ytdl') {
+				$vi = [PSCustomObject]@{ fileDir = (Join-Path $TestDrive 'download').Replace('\', '/') ; filePath = (Join-Path $TestDrive 'download/番組.mp4').Replace('\', '/') ; fileName = '番組.mp4' ; episodeID = 'epabcd1234' ; episodePageURL = 'https://tver.jp/episodes/epabcd1234' }
+				Invoke-Ytdl -videoInfo ([ref]$vi)
+			} else { Invoke-NonTverYtdl -videoPageURL 'https://example.com/video' }
+		}
+	}
+	AfterAll {
+		foreach ($n in $script:ysSaved.Keys) {
+			if ($script:ysSaved[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:ysSaved[$n] }
+		}
+	}
+	BeforeEach {
+		$script:debugMode = $false
+		$script:ytdlTimeoutSec = 0
+		$script:ytdlPath = 'yt-dlp'
+		$script:ytdlStdOutLogPath = Join-Path $TestDrive 'ytdl_stdout.log'
+		$script:ytdlStdErrLogPath = Join-Path $TestDrive 'ytdl_stderr.log'
+		$script:videoContainerFormat = 'mp4'
+		$script:downloadWorkDir = Join-Path $TestDrive 'work'
+		$script:ffmpegPath = 'ffmpeg'
+		$script:embedThumbnail = $true
+		$script:embedSubtitle = $true
+		$script:embedMetatag = $true
+		$script:jobList = @()
+		$script:rateLimit = 0
+		$script:parallelDownloadNumPerFile = 2
+		$script:windowShowStyle = 'Minimized'
+		$script:proxyUrl = ''
+		$script:ytdlRandomIp = $false
+		$script:spParams = $null
+		$script:spCalls = 0
+		Mock Invoke-StatisticsCheck {}
+		Mock Write-Warning {}
+		Mock Start-Process {
+			$script:spCalls++
+			# * 渡された引数を保持する(指定されなかった項目は$null)
+			$script:spParams = @{ ArgumentList = $ArgumentList ; Wait = $Wait ; RedirectStandardOutput = $RedirectStandardOutput ; RedirectStandardError = $RedirectStandardError ; WindowStyle = $WindowStyle }
+			return [PSCustomObject]@{ Id = 1 ; ExitCode = 0 ; Handle = 0 }
+		}
+		Mock Start-Job { return [PSCustomObject]@{ Id = 77 } }
+	}
+	Context 'ダウンロード速度の制限(rateLimit)' {
+		It '<Name>: 0または空なら--limit-rateを渡さないこと' -ForEach @(@{ Name = 'Invoke-Ytdl' }, @{ Name = 'Invoke-NonTverYtdl' }) {
+			foreach ($v in @(0, '')) {
+				$script:rateLimit = $v
+				Invoke-YtdlVariant -Name $Name 6>$null
+				$script:spParams['ArgumentList'] | Should -Not -Match '--limit-rate'
+			}
+		}
+		It '<Name>: 指定値を「同時ダウンロード数」と8(bit→byte)で割って、切り上げたMB/sで渡すこと' -ForEach @(@{ Name = 'Invoke-Ytdl' }, @{ Name = 'Invoke-NonTverYtdl' }) {
+			$script:rateLimit = 100	# 100 / 2 / 8 = 6.25 → 7
+			Invoke-YtdlVariant -Name $Name 6>$null
+			$script:spParams['ArgumentList'] | Should -Match '--limit-rate 7M( |$)'
+		}
+	}
+	It 'Invoke-Ytdl: mp4以外では、マージ形式や埋め込みのオプションを渡さないこと' {
+		$script:videoContainerFormat = 'ts'
+		Invoke-YtdlVariant -Name 'Invoke-Ytdl' 6>$null
+		$script:spParams['ArgumentList'] | Should -Not -Match '--merge-output-format'
+		$script:spParams['ArgumentList'] | Should -Not -Match '--embed-'
+	}
+	Context 'デバッグモード' {
+		BeforeEach {
+			$script:debugMode = $true
+			Set-Content -LiteralPath $script:ytdlStdOutLogPath -Value 'OUT-LINE' -Encoding UTF8
+			Set-Content -LiteralPath $script:ytdlStdErrLogPath -Value 'ERR-LINE' -Encoding UTF8
+		}
+		It '終了を待ち、標準出力・標準エラーのログと終了コードを表示すること' -Skip:$IsWindows {
+			$out = @(Invoke-YtdlVariant -Name 'Invoke-Ytdl' 3>$null)
+			$script:spParams['Wait'] | Should -BeTrue
+			$script:spParams['RedirectStandardOutput'] | Should -Be $script:ytdlStdOutLogPath
+			$script:spParams['RedirectStandardError'] | Should -Be $script:ytdlStdErrLogPath
+			$out | Should -Contain 'OUT-LINE'
+			$out | Should -Contain 'ERR-LINE'
+			$out | Should -Contain 'Exit Code: 0'
+		}
+		# * 既知の不具合: Start-Processが失敗すると、finallyが未設定の$stdOutContentなどを参照し、StrictModeで別の例外になる
+		#   (警告は出るが、例外が呼び出し元まで伝わる)。修正したらこのSkipを外す
+		It '起動に失敗したときは、警告を出し、例外にならないこと' -Skip {
+			Mock Start-Process { throw 'cannot start' }
+			{ Invoke-YtdlVariant -Name 'Invoke-Ytdl' 6>$null } | Should -Not -Throw
+			Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq ($script:msg.ExecFailed -f 'youtube-dl') }
+		}
+	}
+	Context 'ログファイルの用意(Windows以外、またはウィンドウを非表示にする設定)' {
+		It '<Name>: 標準出力・標準エラーのログを、同じ乱数を付けた名前で作成して渡すこと' -Skip:$IsWindows -ForEach @(@{ Name = 'Invoke-Ytdl' }, @{ Name = 'Invoke-NonTverYtdl' }) {
+			Invoke-YtdlVariant -Name $Name 6>$null
+			$out = $script:spParams['RedirectStandardOutput']
+			$err = $script:spParams['RedirectStandardError']
+			$out | Should -Match 'ytdl_stdout_(\d{16})\.log$'
+			$num = [Regex]::Match($out, '_(\d{16})\.log$').Groups[1].Value
+			$err | Should -BeLike ('*ytdl_stderr_{0}.log' -f $num)
+			Test-Path -LiteralPath $out | Should -BeTrue
+			Test-Path -LiteralPath $err | Should -BeTrue
+			$script:spParams['WindowStyle'] | Should -BeNullOrEmpty
+		}
+		It '<Name>: ログファイルを作れなければ、警告を出し、yt-dlpを起動しないこと' -Skip:$IsWindows -ForEach @(@{ Name = 'Invoke-Ytdl' }, @{ Name = 'Invoke-NonTverYtdl' }) {
+			Mock New-Item { throw 'denied' }
+			Invoke-YtdlVariant -Name $Name 6>$null
+			Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.FfmpegErrFileInitializeFailed }
+			$script:spCalls | Should -Be 0
+		}
+	}
+	Context 'Windowsのウィンドウ表示' {
+		It '<Name>: 非表示以外の設定なら、そのウィンドウスタイルで起動し、ログへはリダイレクトしないこと' -Skip:(-not $IsWindows) -ForEach @(@{ Name = 'Invoke-Ytdl' }, @{ Name = 'Invoke-NonTverYtdl' }) {
+			$script:windowShowStyle = 'Minimized'
+			Invoke-YtdlVariant -Name $Name 6>$null
+			$script:spParams['WindowStyle'] | Should -Be 'Minimized'
+			$script:spParams['RedirectStandardOutput'] | Should -BeNullOrEmpty
+		}
+		It '<Name>: 非表示なら、Hiddenで起動し、ログへリダイレクトすること' -Skip:(-not $IsWindows) -ForEach @(@{ Name = 'Invoke-Ytdl' }, @{ Name = 'Invoke-NonTverYtdl' }) {
+			$script:windowShowStyle = 'Hidden'
+			Invoke-YtdlVariant -Name $Name 6>$null
+			$script:spParams['WindowStyle'] | Should -Be 'Hidden'
+			$script:spParams['RedirectStandardOutput'] | Should -Match 'ytdl_stdout_\d{16}\.log$'
+		}
+	}
+	Context '起動(タイムアウト監視)' {
+		It '<Name>: タイムアウトが0なら監視ジョブを作らず、起動だけすること' -ForEach @(@{ Name = 'Invoke-Ytdl' }, @{ Name = 'Invoke-NonTverYtdl' }) {
+			Invoke-YtdlVariant -Name $Name 6>$null
+			$script:spCalls | Should -Be 1
+			Should -Invoke Start-Job -Times 0 -Exactly
+			$script:jobList.Count | Should -Be 0
+		}
+		It '<Name>: タイムアウトを指定したら、プロセスIDとタイムアウト秒で監視ジョブを作り、ジョブIDを記録すること' -ForEach @(@{ Name = 'Invoke-Ytdl' }, @{ Name = 'Invoke-NonTverYtdl' }) {
+			$script:ytdlTimeoutSec = 30
+			Invoke-YtdlVariant -Name $Name 6>$null
+			$script:spCalls | Should -Be 1
+			Should -Invoke Start-Job -Times 1 -Exactly -ParameterFilter { ($ArgumentList[0] -eq 1) -and ($ArgumentList[1] -eq 30) }
+			$script:jobList | Should -Contain 77
+		}
+		It '<Name>: タイムアウトなしでの起動に失敗したときは、警告を出すこと' -ForEach @(@{ Name = 'Invoke-Ytdl' }, @{ Name = 'Invoke-NonTverYtdl' }) {
+			Mock Start-Process { throw 'cannot start' }
+			Invoke-YtdlVariant -Name $Name 6>$null
+			Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq ($script:msg.ExecFailed -f 'youtube-dl') }
+			Should -Invoke Start-Job -Times 0 -Exactly
+		}
+		It '<Name>: タイムアウトありでの起動に失敗したときは、警告を出し、監視ジョブを作らないこと' -ForEach @(@{ Name = 'Invoke-Ytdl' }, @{ Name = 'Invoke-NonTverYtdl' }) {
+			$script:ytdlTimeoutSec = 30
+			Mock Start-Process { throw 'cannot start' }
+			Invoke-YtdlVariant -Name $Name 6>$null
+			Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq ($script:msg.ExecFailed -f 'youtube-dl') }
+			Should -Invoke Start-Job -Times 0 -Exactly
+		}
+	}
+}
+
+Describe 'Test-YtdlCryptoModule(Windows)' -Skip:(-not $IsWindows) {
+	BeforeAll {
+		$script:tycSaved = @{}
+		foreach ($n in 'preferredYoutubedl', 'ytdlPath') { $script:tycSaved[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' } }
+	}
+	AfterAll {
+		foreach ($n in $script:tycSaved.Keys) {
+			if ($script:tycSaved[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:tycSaved[$n] }
+		}
+	}
+	It 'Windowsでは確認せず、警告も出さないこと' {
+		$script:preferredYoutubedl = 'yt-dlp'
+		$script:ytdlPath = Join-Path $TestDrive 'yt-dlp'
+		Set-Content -LiteralPath $script:ytdlPath -Value "#!nosuchpython`nprint(1)`n" -NoNewline
+		Mock Get-Command {}
+		Test-YtdlCryptoModule -WarningVariable warn -WarningAction SilentlyContinue
+		$warn | Should -HaveCount 0
+		Should -Invoke Get-Command -Times 0 -Exactly
+	}
+}
+
+Describe 'Get-VideoSubtitleStatus(OS非依存)' {
+	BeforeAll {
+		$script:gvsSaved = @{}
+		foreach ($n in 'ytdlPath', 'proxyUrl', 'ytdlRandomIp', 'jpIP') { $script:gvsSaved[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' } }
+		# * 実際のyt-dlpを使わず、関数のMockで出力と終了コードを再現する(Windowsでも動かすため、シェルスクリプトを使わない)
+		function script:Invoke-FakeYtdl { }
+	}
+	AfterAll {
+		foreach ($n in $script:gvsSaved.Keys) {
+			if ($script:gvsSaved[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:gvsSaved[$n] }
+		}
+	}
+	BeforeEach {
+		$script:ytdlPath = 'Invoke-FakeYtdl'
+		$script:proxyUrl = ''
+		$script:ytdlRandomIp = $false
+		$script:jpIP = '203.0.113.7'
+		$script:fakeOut = ''
+		$script:fakeExit = 0
+		Mock Invoke-FakeYtdl { $global:LASTEXITCODE = $script:fakeExit ; $script:fakeOut }
+	}
+	It 'IsSubtitleが$true/$falseで渡されていれば、yt-dlpを起動せずに1/0を返すこと' {
+		Get-VideoSubtitleStatus -EpisodePageURL 'https://tver.jp/episodes/epx' -IsSubtitle $true | Should -Be '1'
+		Get-VideoSubtitleStatus -EpisodePageURL 'https://tver.jp/episodes/epx' -IsSubtitle $false | Should -Be '0'
+		Should -Invoke Invoke-FakeYtdl -Times 0 -Exactly
+	}
+	It '<Name>' -ForEach @(
+		@{ Name = '字幕のJSONが返れば1' ; Out = '{"ja": [{"url": "https://example.com/a.vtt", "ext": "vtt"}]}' ; Exit = 0 ; Expected = '1' }
+		@{ Name = 'NAが返れば0' ; Out = 'NA' ; Exit = 0 ; Expected = '0' }
+		@{ Name = 'nullが返れば0' ; Out = 'null' ; Exit = 0 ; Expected = '0' }
+		@{ Name = '空のJSONオブジェクトなら0' ; Out = '{}' ; Exit = 0 ; Expected = '0' }
+		@{ Name = 'yt-dlpが失敗した(終了コードが0以外)場合は不明(空文字)' ; Out = '{"ja": [{}]}' ; Exit = 1 ; Expected = '' }
+		@{ Name = '想定外の出力は不明(空文字)' ; Out = 'unexpected output' ; Exit = 0 ; Expected = '' }
+		@{ Name = 'JSONでもオブジェクトでなければ不明(空文字)' ; Out = '[1, 2]' ; Exit = 0 ; Expected = '' }
+		@{ Name = '出力がない場合は不明(空文字)' ; Out = '' ; Exit = 0 ; Expected = '' }
+	) {
+		$script:fakeOut = $Out ; $script:fakeExit = $Exit
+		Get-VideoSubtitleStatus -EpisodePageURL 'https://tver.jp/episodes/epx' | Should -BeExactly $Expected
+	}
+	It 'yt-dlpには、ダウンロードせず字幕情報だけを出力する引数と、番組のURL(最後)を渡すこと' {
+		Get-VideoSubtitleStatus -EpisodePageURL 'https://tver.jp/episodes/epx' | Out-Null
+		Should -Invoke Invoke-FakeYtdl -Times 1 -Exactly -ParameterFilter {
+			($args -contains '--skip-download') -and ($args -contains '--print') -and ($args -contains '%(subtitles)j') -and ($args[-1] -eq 'https://tver.jp/episodes/epx') -and ($args -notcontains '--geo-verification-proxy') -and ($args -notcontains '--xff')
+		}
+	}
+	It 'Proxyを設定していれば、--geo-verification-proxyで渡し、ランダムIPは使わないこと' {
+		$script:proxyUrl = 'http://proxy.example:8080'
+		$script:ytdlRandomIp = $true
+		Get-VideoSubtitleStatus -EpisodePageURL 'https://tver.jp/episodes/epx' | Out-Null
+		Should -Invoke Invoke-FakeYtdl -Times 1 -Exactly -ParameterFilter {
+			($args -contains '--geo-verification-proxy') -and ($args -contains 'http://proxy.example:8080') -and ($args -notcontains '--xff')
+		}
+	}
+	It 'ランダムIPだけを設定していれば、--xffで日本のIPアドレスを渡すこと' {
+		$script:ytdlRandomIp = $true
+		Get-VideoSubtitleStatus -EpisodePageURL 'https://tver.jp/episodes/epx' | Out-Null
+		Should -Invoke Invoke-FakeYtdl -Times 1 -Exactly -ParameterFilter {
+			($args -contains '--xff') -and ($args -contains '203.0.113.7/32') -and ($args -notcontains '--geo-verification-proxy')
+		}
+	}
+}
+
+Describe 'Get-ProcessCountByPath / Get-YtdlProcessCount / Get-FfmpegProcessCount(OS非依存・Windows)' {
+	BeforeAll {
+		$script:pcSaved = @{}
+		foreach ($n in 'ytdlPath', 'ffmpegPath') { $script:pcSaved[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' } }
+	}
+	AfterAll {
+		foreach ($n in $script:pcSaved.Keys) {
+			if ($script:pcSaved[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:pcSaved[$n] }
+		}
+	}
+	It 'Get-FfmpegProcessCount: $script:ffmpegPathのプロセス数をそのまま返すこと' {
+		$script:ffmpegPath = Join-Path $TestDrive 'ffmpeg'
+		Mock Get-ProcessCountByPath { 3 }
+		Get-FfmpegProcessCount | Should -Be 3
+		Should -Invoke Get-ProcessCountByPath -Times 1 -Exactly -ParameterFilter { ($Path -eq $script:ffmpegPath) -and !$AllowInterpreter }
+	}
+	It 'Get-FfmpegProcessCount: 数えるのに失敗したときは0を返すこと' {
+		$script:ffmpegPath = Join-Path $TestDrive 'ffmpeg'
+		Mock Get-ProcessCountByPath { throw 'failed' }
+		Get-FfmpegProcessCount | Should -Be 0
+	}
+	It 'Get-YtdlProcessCount: $script:ytdlPathのプロセスを、インタープリタ経由も含めて数えること' {
+		$script:ytdlPath = Join-Path $TestDrive 'yt-dlp'
+		Mock Get-ProcessCountByPath { 2 }
+		Get-YtdlProcessCount | Should -BeGreaterThan 0
+		Should -Invoke Get-ProcessCountByPath -Times 1 -Exactly -ParameterFilter { ($Path -eq $script:ytdlPath) -and $AllowInterpreter }
+	}
+	It 'Get-YtdlProcessCount: 数えるのに失敗したときは0を返すこと' {
+		$script:ytdlPath = Join-Path $TestDrive 'yt-dlp'
+		Mock Get-ProcessCountByPath { throw 'failed' }
+		Get-YtdlProcessCount | Should -Be 0
+	}
+	It 'Get-YtdlProcessCount(Windows以外): 数えた数をそのまま返すこと' -Skip:$IsWindows {
+		$script:ytdlPath = Join-Path $TestDrive 'yt-dlp'
+		Mock Get-ProcessCountByPath { 3 }
+		Get-YtdlProcessCount | Should -Be 3
+	}
+	It 'Get-YtdlProcessCount(Windows): 1回の実行で2プロセス(親子)になるため、数えた数の半分(0.5は切り上げ)を返すこと' -Skip:(-not $IsWindows) -ForEach @(
+		@{ Count = 0 ; Expected = 0 }
+		@{ Count = 1 ; Expected = 1 }
+		@{ Count = 2 ; Expected = 1 }
+		@{ Count = 3 ; Expected = 2 }
+		@{ Count = 4 ; Expected = 2 }
+	) {
+		$script:ytdlPath = Join-Path $TestDrive 'yt-dlp'
+		$script:pcCount = $Count
+		Mock Get-ProcessCountByPath { $script:pcCount }
+		Get-YtdlProcessCount | Should -Be $Expected
+	}
+	Context 'Get-ProcessCountByPath(Windows)' -Skip:(-not $IsWindows) {
+		It 'プロセス名(拡張子なし)でGet-Processを絞り、実行ファイルのパスが一致するものだけを数えること(大文字小文字は区別しない)' {
+			Mock Get-Process {
+				@(
+					[PSCustomObject]@{ Path = 'C:\tools\ffmpeg.exe' }
+					[PSCustomObject]@{ Path = 'c:\TOOLS\FFMPEG.EXE' }
+					[PSCustomObject]@{ Path = 'D:\other\ffmpeg.exe' }
+					[PSCustomObject]@{ Path = $null }
+				)
+			}
+			Get-ProcessCountByPath -Path 'C:\tools\ffmpeg.exe' | Should -Be 2
+			Should -Invoke Get-Process -Times 1 -Exactly -ParameterFilter { $Name -eq 'ffmpeg' }
+		}
+		It '一致するプロセスがなければ0を返すこと' {
+			Mock Get-Process { @() }
+			Get-ProcessCountByPath -Path 'C:\tools\ffmpeg.exe' | Should -Be 0
+		}
+		It '実際に起動したプロセスを、実行ファイルのパスごとに数えること(別フォルダの同名プロセスは数えない)' {
+			$exe = @()
+			foreach ($name in 'a', 'b') {
+				$dir = Join-Path $TestDrive ('pc{0}' -f $name)
+				New-Item -ItemType Directory -Path $dir -Force | Out-Null
+				$exe += (Join-Path $dir 'fakeping.exe')
+				Copy-Item -LiteralPath (Join-Path $env:SystemRoot 'System32\PING.EXE') -Destination $exe[-1]
+			}
+			$procs = @()
+			try {
+				$procs += Start-Process -FilePath $exe[0] -ArgumentList '-n 30 127.0.0.1' -PassThru -WindowStyle Hidden
+				$procs += Start-Process -FilePath $exe[1] -ArgumentList '-n 30 127.0.0.1' -PassThru -WindowStyle Hidden
+				$procs += Start-Process -FilePath $exe[1] -ArgumentList '-n 30 127.0.0.1' -PassThru -WindowStyle Hidden
+				Start-Sleep -Seconds 2
+				Get-ProcessCountByPath -Path $exe[0] | Should -Be 1
+				Get-ProcessCountByPath -Path $exe[1] | Should -Be 2
+			} finally { foreach ($pr in $procs) { Stop-Process -Id $pr.Id -Force -ErrorAction SilentlyContinue } }
+		}
 	}
 }

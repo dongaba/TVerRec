@@ -230,7 +230,7 @@ function Get-LinkFromBuffer {
 	Param (
 		[Parameter(Mandatory = $false)][Object[]]$tverIDs,
 		[Parameter(Mandatory = $true)][ValidateSet('specialMainLinks', 'specialLinks', 'talentLinks', 'seriesLinks', 'seasonLinks')][String]$tverIDType,
-		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject][Ref]$linkCollection
+		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject]$linkCollection
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if ($tverIDs) {
@@ -295,7 +295,7 @@ function Get-LinkFromKeyword {
 	Param (
 		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$id,
 		[Parameter(Mandatory = $false)][ValidateSet('seriesLinks', 'seasonLinks', 'talentLinks', 'specialMainLinks', 'specialLinks', 'tag', 'new', 'end', 'ranking', 'keyword', 'category')][String]$linkType,
-		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject][Ref]$linkCollection
+		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject]$linkCollection
 	)
 	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $id)
 	$type = ''
@@ -371,7 +371,7 @@ function Get-SearchResult {
 		[Parameter(Mandatory = $false)][String]$keyword,
 		[Parameter(Mandatory = $false)][String]$requireData,
 		[Parameter(Mandatory = $false)][Boolean]$loginRequired,
-		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject][Ref]$linkCollection
+		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject]$linkCollection
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# URLの整形
@@ -464,7 +464,7 @@ function Get-LinkFromTopPage {
 	#>
 	[CmdletBinding()]
 	[OutputType([Void])]
-	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject][Ref]$linkCollection)
+	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject]$linkCollection)
 	Write-Debug ('Dev - {0}' -f $MyInvocation.MyCommand.Name)
 	# * v1/callHomeは2026年時点で空のresultを返すためv2を使用
 	$callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v2/callHome'
@@ -525,7 +525,7 @@ function Get-LinkFromSiteMap {
 	#>
 	[CmdletBinding()]
 	[OutputType([Void])]
-	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject][Ref]$linkCollection)
+	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject]$linkCollection)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$callSearchURL = 'https://tver.jp/sitemap.xml'
 	try { $searchResultsRaw = Invoke-RestMethod -Uri $callSearchURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec }
@@ -604,7 +604,7 @@ function Get-LinkFromMyPage {
 	[OutputType([Void])]
 	Param (
 		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$page,
-		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject][Ref]$linkCollection
+		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject]$linkCollection
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$baseURLPrefix = if ($script:myMemberSID) { 'https://member-api.tver.jp' ; $loginRequired = $true } else { 'https://platform-api.tver.jp' ; $loginRequired = $false }

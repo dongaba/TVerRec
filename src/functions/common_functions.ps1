@@ -750,12 +750,14 @@ function Remove-File {
 			if ($script:enableMultithread) {
 				Write-Debug ('Multithread Processing Enabled')
 				try {
+					# 並列処理のrunspaceでは$script:が参照できないため、$using:で渡せるようローカル変数に退避
+					$parallelMsg = $script:msg
 					# 並列処理で見つかったファイルを一時的に格納
 					$parallelResults = $conditions | ForEach-Object -ThrottleLimit $script:multithreadNum -Parallel {
-						Write-Debug ($script:msg.DeleteCondition -f $_)
+						Write-Debug ($using:parallelMsg.DeleteCondition -f $_)
 						Get-ChildItem -LiteralPath $using:basePath -Recurse -File -Filter $_ -ErrorAction SilentlyContinue |
 							Where-Object { $_.LastWriteTime -lt $using:limitDateTime } |
-							ForEach-Object { Write-Debug ($script:msg.DeleteTarget -f $_.FullName) ; $_.FullName }
+							ForEach-Object { Write-Debug ($using:parallelMsg.DeleteTarget -f $_.FullName) ; $_.FullName }
 						}
 						# 並列処理の結果をまとめてリストに追加
 						if ($parallelResults) { $targetFiles.AddRange([String[]]@($parallelResults)) }	# * Object[]や単一のStringのままではList[String].AddRangeに渡せず例外になる
