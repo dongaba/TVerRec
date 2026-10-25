@@ -4,14 +4,18 @@
 function enablePlatformRule() {
 	chrome.declarativeNetRequest.updateEnabledRulesets(
 		{ enableRulesetIds: ["platform-rule"] },
-		() => {}
+		() => {
+			// 結果は使用しない
+		}
 	);
 	console.log("TVerRec Assistant: Platform API Rule Enabled");
 }
 function enableMemberRule() {
 	chrome.declarativeNetRequest.updateEnabledRulesets(
 		{ enableRulesetIds: ["member-rule"] },
-		() => {}
+		() => {
+			// 結果は使用しない
+		}
 	);
 	console.log("TVerRec Assistant: Member API Rule Enabled");
 }
@@ -20,14 +24,18 @@ function enableMemberRule() {
 function disablePlatformRule() {
 	chrome.declarativeNetRequest.updateEnabledRulesets(
 		{ disableRulesetIds: ["platform-rule"] },
-		() => {}
+		() => {
+			// 結果は使用しない
+		}
 	);
 	console.log("TVerRec Assistant: Platform API Rule Disabled");
 }
 function disableMemberRule() {
 	chrome.declarativeNetRequest.updateEnabledRulesets(
 		{ disableRulesetIds: ["member-rule"] },
-		() => {}
+		() => {
+			// 結果は使用しない
+		}
 	);
 	console.log("TVerRec Assistant: Member API Rule Disabled");
 }

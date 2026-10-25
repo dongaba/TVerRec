@@ -2,7 +2,15 @@
 
 // TVerのページが公開しているSDK(window.TVer)から認証情報を取得する。
 // 通信のブロックやURLの解析は行わない。
-const TVER_URL_PATTERN = /^https:\/\/([a-z0-9-]+\.)*tver\.jp\//;
+// https://tver.jp/ および *.tver.jp のURLかどうかを判定する(正規表現ではなくURL APIで判定)
+const isTVerUrl = (url) => {
+	try {
+		const { protocol, hostname } = new URL(url);
+		return protocol === "https:" && (hostname === "tver.jp" || hostname.endsWith(".tver.jp"));
+	} catch {
+		return false;
+	}
+};
 const $ = (id) => document.getElementById(id);
 
 let currentText = "";
@@ -82,7 +90,7 @@ async function load() {
 	showStatus("読み込み中...");
 
 	const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-	if (!tab || !tab.url || !TVER_URL_PATTERN.test(tab.url)) {
+	if (!tab || !tab.url || !isTVerUrl(tab.url)) {
 		showStatus("このページはTVerのページではありません。TVerのページを開いた状態で実行してください。");
 		setButtons({ open: true });
 		return;
