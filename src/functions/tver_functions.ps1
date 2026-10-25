@@ -678,6 +678,7 @@ function Get-VideoInfo {
 			- broadcastDate: 放送日
 			- endTime: 配信終了日時
 			- versionNum: バージョン番号
+			- isSubtitle: 字幕の有無($true/$false。取得できなければ$null)
 			- videoInfoURL: 動画情報のURL
 			- descriptionText: 番組説明
 
@@ -735,6 +736,8 @@ function Get-VideoInfo {
 		Write-Debug $videoInfo
 		$descriptionText = (Get-NarrowChar ($videoInfo.Description).Replace('&amp;', '&')).Trim()
 		$videoEpisodeNum = (Get-NarrowChar ($videoInfo.No)).Trim()
+		# 字幕の有無(エピソードJSONのisSubtitle)。項目が無いときは$nullとし、呼び出し側でyoutube-dlでの確認にフォールバックさせる
+		$isSubtitle = if ($videoInfo.PSObject.Properties.Name -contains 'isSubtitle') { [Boolean]$videoInfo.isSubtitle } else { $null }
 		# Streaks情報取得
 		if ($videoInfo.PSObject.Properties.Name -contains 'streaks') {
 			<# * StreaksからのM3U8情報取得
@@ -846,6 +849,7 @@ function Get-VideoInfo {
 		broadcastDate   = $broadcastDate
 		endTime         = $endTime
 		versionNum      = $versionNum
+		isSubtitle      = $isSubtitle
 		videoInfoURL    = $tverVideoInfoURL
 		descriptionText = $descriptionText
 		<# * M3U8・MPDを取得していたときの名残

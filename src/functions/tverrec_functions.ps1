@@ -587,9 +587,11 @@ function Test-SubtitleTrackingEnabled {
 function Get-VideoSubtitleStatus {
 	<#
 		.SYNOPSIS
-			TVerの番組に字幕が提供されているかを、ダウンロード前にyoutube-dlで確認します。
+			TVerの番組に字幕が提供されているかを、ダウンロード前に確認します。
 
 		.DESCRIPTION
+			エピソードJSONのisSubtitle(Get-VideoInfoが取得済み)が渡されたときは、それをそのまま使います。
+			渡されなかったとき(取得できなかったとき)は、
 			`yt-dlp --skip-download --print %(subtitles)j`で字幕の一覧だけを取得します。
 			字幕があれば`1`、字幕がなければ`0`を返します。
 			取得に失敗した場合(配信終了や通信エラーなど)は、字幕の有無を判断できないため空文字を返します。
@@ -602,8 +604,12 @@ function Get-VideoSubtitleStatus {
 			`1`: 字幕あり、`0`: 字幕なし、空文字: 不明
 	#>
 	[OutputType([String])]
-	Param ([Parameter(Mandatory = $true)][String]$EpisodePageURL)
+	Param (
+		[Parameter(Mandatory = $true)][String]$EpisodePageURL,
+		[Object]$IsSubtitle = $null
+	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if ($IsSubtitle -is [Boolean]) { return $(if ($IsSubtitle) { '1' } else { '0' }) }
 	$ytdlArgs = @('--skip-download', '--no-warnings', '--socket-timeout', '30', '--print', '%(subtitles)j')
 	if ($script:proxyUrl) { $ytdlArgs += @('--geo-verification-proxy', $script:proxyUrl) }
 	if (($script:ytdlRandomIp) -and (!$script:proxyUrl)) { $ytdlArgs += @('--xff', ('{0}/32' -f $script:jpIP)) }
@@ -2200,7 +2206,7 @@ function Invoke-VideoDownload {
 				if ($ignoreTitle -and (Test-IgnoreMatch -Pattern $ignoreTitle -Target @($videoInfo.fileName, $videoInfo.seriesName) -Mode Wildcard)) { return }
 			}
 			Write-Output ($script:msg.SubtitleRecheck)
-			$subtitleStatus = Get-VideoSubtitleStatus -EpisodePageURL $videoInfo.episodePageURL
+			$subtitleStatus = Get-VideoSubtitleStatus -EpisodePageURL $videoInfo.episodePageURL -IsSubtitle $videoInfo.isSubtitle
 			if ($subtitleStatus -ne '1') { Write-Output ($script:msg.SubtitleNotAdded) ; return }
 			Write-Output ($script:msg.SubtitleAdded)
 			$subtitleRecheck = $true
@@ -2307,7 +2313,7 @@ function Invoke-VideoDownload {
 
 	# ダウンロードする番組の字幕の有無を記録
 	if ($subtitleTracking -and !$skipDownload -and $newVideo) {
-		if ($null -eq $subtitleStatus) { $subtitleStatus = Get-VideoSubtitleStatus -EpisodePageURL $videoInfo.episodePageURL }
+		if ($null -eq $subtitleStatus) { $subtitleStatus = Get-VideoSubtitleStatus -EpisodePageURL $videoInfo.episodePageURL -IsSubtitle $videoInfo.isSubtitle }
 		$newVideo.subtitle = $subtitleStatus
 	}
 	# ダウンロード履歴CSV書き出し
