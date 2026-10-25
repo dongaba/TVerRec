@@ -3244,7 +3244,7 @@ function Invoke-StatisticsCheck {
 	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $operation)
 	if (!$env:PESTER) {
 		# 統計送信は待たずに非同期で投げる(ダウンロード処理を遅くしないため)。失敗しても無視する
-		if (!$script:statisticsHttpClient) {
+		if (!(Test-Path Variable:Script:statisticsHttpClient) -or !$script:statisticsHttpClient) {
 			Add-Type -AssemblyName System.Net.Http -ErrorAction SilentlyContinue
 			$script:statisticsHttpClient = [System.Net.Http.HttpClient]::new()
 			$script:statisticsHttpClient.Timeout = [TimeSpan]::FromSeconds(5)
