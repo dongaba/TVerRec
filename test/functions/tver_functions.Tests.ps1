@@ -3,9 +3,9 @@ Import-Module Pester -MinimumVersion 5.0
 #----------------------------------------------------------------------
 # tver_functions.ps1 のテスト
 #
-#   Invoke-Pester ./test/functions/tver_functions.Test.ps1 -Output Detailed               # すべて
-#   Invoke-Pester ./test/functions/tver_functions.Test.ps1 -Output Detailed -ExcludeTag 'TVer'   # モックのみ(オフライン)
-#   Invoke-Pester ./test/functions/tver_functions.Test.ps1 -Output Detailed -Tag 'TVer'   # TVerへの実接続のみ
+#   Invoke-Pester ./test/functions/tver_functions.Tests.ps1 -Output Detailed               # すべて
+#   Invoke-Pester ./test/functions/tver_functions.Tests.ps1 -Output Detailed -ExcludeTag 'TVer'   # モックのみ(オフライン)
+#   Invoke-Pester ./test/functions/tver_functions.Tests.ps1 -Output Detailed -Tag 'TVer'   # TVerへの実接続のみ
 #
 #   ※ TVerタグのテストは日本国内(またはVPN/Proxy経由)からの実行を前提とします
 #----------------------------------------------------------------------
@@ -15,7 +15,7 @@ BeforeAll {
 	Write-Host ('テストスクリプト: {0}' -f $PSCommandPath)
 	# * パスに「test」「src」「tver」を含むディレクトリ配下でも正しく解決できるよう、リポジトリルートから組み立てる
 	$script:repoRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
-	$targetFile = Join-Path $script:repoRoot ('src/functions/{0}' -f (Split-Path $PSCommandPath -Leaf).Replace('.Test.ps1', '.ps1'))
+	$targetFile = Join-Path $script:repoRoot ('src/functions/{0}' -f (Split-Path $PSCommandPath -Leaf).Replace('.Tests.ps1', '.ps1'))
 	Write-Host ('　テスト対象: {0}' -f $targetFile)
 	$script:scriptRoot = Convert-Path (Join-Path $script:repoRoot 'src')
 	Set-Location $script:scriptRoot
