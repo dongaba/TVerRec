@@ -204,15 +204,11 @@ if ($script:forceSingleDownload) {
 	$ignoreDirs = New-Object System.Collections.Generic.List[Object]
 	if ($ignoreTitles.Count -eq 0) { return }
 
-	# 削除対象の特定
-	foreach ($ignoreTitleRaw in $ignoreTitles) {
-		$ignoreTitle = $ignoreTitleRaw.Normalize([Text.NormalizationForm]::FormC)
-		$filteredDirs = $workDirEntities.Where({ Test-IgnoreMatch -Pattern $ignoreTitle -Target @($_.Name.Normalize([Text.NormalizationForm]::FormC)) -Mode Wildcard })
-		foreach ($filteredDir in $filteredDirs) {
-			$ignoreDirs.Add($filteredDir)
-			Update-IgnoreList $ignoreTitle
-		}
-	}
+	# 削除対象の特定(Test-IgnoreMatchを行数 x フォルダ数回呼ぶと数分かかるため、一括判定する)
+	$matchResult = Find-IgnoreMatchedIndex -Name $workDirEntities.Name -IgnoreTitle $ignoreTitles
+	foreach ($i in $matchResult.Index) { $ignoreDirs.Add($workDirEntities[$i]) }
+	# 使用した番組のリスト並べ替えは、タイトルごとに1回だけ行う
+	foreach ($usedTitle in $matchResult.UsedTitle) { Update-IgnoreList $usedTitle }
 
 	#----------------------------------------------------------------------
 	if ($ignoreDirs.Count -ne 0) {

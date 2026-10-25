@@ -1547,6 +1547,71 @@ function Update-IgnoreList {
 	}
 	Remove-Variable -Name ignoreTitle, ignoreLists, ignoreComment, ignoreTarget, ignoreElse, ignoreListNew -ErrorAction SilentlyContinue
 }
+#----------------------------------------------------------------------
+# ダウンロード対象外リストにマッチする番組名(フォルダ名)の一括特定
+#----------------------------------------------------------------------
+function Find-IgnoreMatchedIndex {
+	<#
+		.SYNOPSIS
+			ダウンロード対象外リストの各行にマッチする番組名の位置を一括で特定します。
+
+		.DESCRIPTION
+			Test-IgnoreMatch -Mode Wildcard を「リストの行数 x 番組名の数」回呼び出す処理の高速版です。
+			(3,000行 x 1,000フォルダでは数百万回の関数呼び出しとなり、数分かかるため)
+			判定結果は Test-IgnoreMatch -Mode Wildcard と同じです。
+			- regex:で始まる行 : Test-IgnoreMatch に委ねる
+			- *?[ ]を含む行 : -like '*行*' と同じワイルドカード判定(大文字小文字を区別しない)
+			- その他の行 : 部分一致(大文字小文字を区別しない)。全番組名を連結した文字列で一次判定する
+
+		.PARAMETER Name
+			判定対象の番組名(フォルダ名)の配列を指定します。NFCに正規化して判定します。
+
+		.PARAMETER IgnoreTitle
+			ダウンロード対象外リストの行(コメント・空行を除いたもの)の配列を指定します。
+
+		.OUTPUTS
+			[PSCustomObject]
+			Index     : マッチした番組名の位置(Nameの添字)の昇順配列
+			UsedTitle : 1件以上マッチしたリストの行(NFC正規化後)の配列
+
+		.EXAMPLE
+			$result = Find-IgnoreMatchedIndex -Name $workDirEntities.Name -IgnoreTitle $ignoreTitles
+	#>
+	[CmdletBinding()]
+	[OutputType([PSCustomObject])]
+	Param (
+		[Parameter(Mandatory = $true)][AllowEmptyCollection()][AllowEmptyString()][String[]]$Name,
+		[Parameter(Mandatory = $true)][AllowEmptyCollection()][AllowEmptyString()][String[]]$IgnoreTitle
+	)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$names = @($Name.ForEach({ $_.Normalize([Text.NormalizationForm]::FormC) }))
+	$allNames = [String]::Join("`n", $names)
+	$matchedIdx = New-Object System.Collections.Generic.HashSet[Int]
+	$usedTitles = New-Object System.Collections.Generic.List[String]
+	foreach ($titleRaw in $IgnoreTitle) {
+		$title = $titleRaw.Normalize([Text.NormalizationForm]::FormC)
+		$hit = $false
+		if ($title -cmatch '^regex:') {
+			for ($i = 0 ; $i -lt $names.Count ; $i++) {
+				if (Test-IgnoreMatch -Pattern $title -Target @($names[$i]) -Mode Wildcard) { [void]$matchedIdx.Add($i) ; $hit = $true }
+			}
+		} elseif ([Management.Automation.WildcardPattern]::ContainsWildcardCharacters($title)) {
+			$wildcard = [Management.Automation.WildcardPattern]::new(('*{0}*' -f $title), [Management.Automation.WildcardOptions]::IgnoreCase)
+			for ($i = 0 ; $i -lt $names.Count ; $i++) {
+				if ($names[$i] -and $wildcard.IsMatch($names[$i])) { [void]$matchedIdx.Add($i) ; $hit = $true }
+			}
+		} elseif ($allNames.IndexOf($title, [StringComparison]::OrdinalIgnoreCase) -ge 0) {
+			for ($i = 0 ; $i -lt $names.Count ; $i++) {
+				if ($names[$i] -and $names[$i].IndexOf($title, [StringComparison]::OrdinalIgnoreCase) -ge 0) { [void]$matchedIdx.Add($i) ; $hit = $true }
+			}
+		}
+		if ($hit) { $usedTitles.Add($title) }
+	}
+	return [PSCustomObject]@{
+		Index     = [Int[]]@($matchedIdx | Sort-Object)
+		UsedTitle = [String[]]$usedTitles.ToArray()
+	}
+}
 #endregion ダウンロード対象外リスト関連
 
 #region ダウンロード対象判定処理

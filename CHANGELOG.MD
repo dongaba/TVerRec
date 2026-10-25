@@ -7,6 +7,7 @@
 - GUI設定画面に、起動時のPowerShellの新バージョン確認を無効化する設定(`$script:disableCheckPowerShellUpdate`)を追加
 - 新世代API(`contents-api.tver.jp`)が返す放送局IDと放送局名の対応表`resources/broadcaster.conf`と、対応表から放送局名を取得する`Get-BroadcasterName`を追加。放送局名は放送局別フォルダ名などに使われるため、旧APIの`BroadcasterName`と同じ名称を登録している。対応表にない放送局IDの場合は、旧APIで放送局名を取得して警告を表示するので、警告が出たら対応表に追記する
 - 番組情報のシーズン名・エピソード番号・放送日の整形処理を新旧のAPIで共通にする`Format-VideoInfoText`と、JSONの入れ子のプロパティを安全に取得する`Get-JsonProperty`を追加
+- ダウンロード対象外リストにマッチする番組名を一括で特定する`Find-IgnoreMatchedIndex`を追加
 
 ### 3.5.0 Changed
 
@@ -20,6 +21,7 @@
 - 一括ダウンロードの待ち時間を短縮。youtube-dlの同時実行数が上限に達したときの空き確認の間隔を60秒から10秒に、番組ごとのyoutube-dl起動後の待機を5秒から1秒に変更(`Wait-YtdlProcess`、`Invoke-VideoDownload`)
 - 一括ダウンロードで、番組ごとにダウンロード履歴(`history.csv`)の全件読み込みとダウンロード対象外リストの読み込みを行っていたのを、実行開始時に1回だけ読み込んで使い回すように変更(`Get-LatestHistoryCached`、`Add-LatestHistoryCache`、`Get-IgnoreListCached`を追加)。ダウンロードした番組の履歴はキャッシュにも反映する。履歴ファイルを共有している環境では、実行中に他のPCが追記した履歴はその実行中は反映されない
 - 一括ダウンロードの番組抽出を高速化。キーワードごとに履歴の全件を処理して突き合わせていたのを、ダウンロード済みのエピソードIDをHashSetにして使い回すように変更(`Invoke-HistoryMatchCheck`)。あわせて、シリーズ・シーズン・タレントのAPI(`callSeriesSeasons`、`callSeasonEpisodes`、`callTalentEpisode`)の結果を、実行中だけ使い回すように変更し、キーワード間で同じIDを何度も取得しないようにした(`Get-SearchResult`)。実行中に追加された番組は、その実行中は反映されない
+- 不要ファイル削除の「ダウンロード対象外の番組を削除します」で、ダウンロード先のフォルダ数 x ダウンロード対象外リストの行数だけ`Test-IgnoreMatch`を呼んでいたのを、`Find-IgnoreMatchedIndex`による一括判定に変更し短縮(`delete_trash.ps1`)。あわせて、一致したフォルダごとに行っていたダウンロード対象外リストの並べ替え(`Update-IgnoreList`)を、一致したタイトルごとに1回だけ行うように変更
 
 ### 3.5.0 Fixed
 

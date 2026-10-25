@@ -154,6 +154,107 @@ Describe 'Test-YtdlCryptoModule' -Skip:$IsWindows {
 	}
 }
 
+Describe 'Find-IgnoreMatchedIndex' {
+	BeforeEach { $script:ignoreRegexCache = @{} }
+
+	Context '基本動作' {
+		It '部分一致した番組名の位置と、使用された行を返す' {
+			$r = Find-IgnoreMatchedIndex -Name @('ちいかわ', 'ニュース', 'ちいかわ 特別編', 'ドラマ') -IgnoreTitle @('ちいかわ', '存在しない番組')
+			$r.Index | Should -Be @(0, 2)
+			$r.UsedTitle | Should -Be @('ちいかわ')
+		}
+		It '大文字小文字を区別しない' {
+			$r = Find-IgnoreMatchedIndex -Name @('xxABCxx', 'def') -IgnoreTitle @('abc')
+			$r.Index | Should -Be @(0)
+		}
+		It 'マッチしなければ空(Index・UsedTitleとも0件)' {
+			$r = Find-IgnoreMatchedIndex -Name @('a', 'b') -IgnoreTitle @('zzz')
+			@($r.Index) | Should -HaveCount 0
+			@($r.UsedTitle) | Should -HaveCount 0
+		}
+		It '番組名またはリストが空でも例外にならない' {
+			@((Find-IgnoreMatchedIndex -Name @() -IgnoreTitle @('a')).Index) | Should -HaveCount 0
+			@((Find-IgnoreMatchedIndex -Name @('a') -IgnoreTitle @()).Index) | Should -HaveCount 0
+		}
+		It '複数の行が同じ番組名にマッチしても位置は重複しない' {
+			$r = Find-IgnoreMatchedIndex -Name @('ちいかわ 第1話') -IgnoreTitle @('ちいかわ', '第1話')
+			$r.Index | Should -Be @(0)
+			$r.UsedTitle | Should -Be @('ちいかわ', '第1話')
+		}
+		It '行をまたいだ誤マッチをしない(連結文字列の境界)' {
+			$r = Find-IgnoreMatchedIndex -Name @('abc', 'def') -IgnoreTitle @('cde', 'c d')
+			@($r.Index) | Should -HaveCount 0
+		}
+	}
+
+	Context 'ワイルドカード・正規表現' {
+		It '*がワイルドカードとして働く' {
+			$r = Find-IgnoreMatchedIndex -Name @('あいかきくけこえお', 'あいえお') -IgnoreTitle @('あい*えお')
+			$r.Index | Should -Be @(0, 1)
+		}
+		It '[ ]を含む行は-likeと同じ扱い(文字クラス)' {
+			$r = Find-IgnoreMatchedIndex -Name @('a1', 'b1', '[新]a') -IgnoreTitle @('[ab]1')
+			$r.Index | Should -Be @(0, 1)
+		}
+		It 'regex:行はTest-IgnoreMatchと同じ判定' {
+			$r = Find-IgnoreMatchedIndex -Name @('冷凍庫に眠っている 第3話', '冷凍庫に眠っている 特別編') -IgnoreTitle @('regex:冷凍庫に眠っている (第|最終)')
+			$r.Index | Should -Be @(0)
+		}
+	}
+
+	Context 'Unicode正規化' {
+		It 'NFD(濁点が分離)の番組名でもNFCのリスト行にマッチする' {
+			$nfd = 'テレビ'.Normalize([Text.NormalizationForm]::FormD) + ' 第1話'
+			$nfd.Length | Should -BeGreaterThan 'テレビ 第1話'.Length
+			$r = Find-IgnoreMatchedIndex -Name @($nfd) -IgnoreTitle @('テレビ')
+			$r.Index | Should -Be @(0)
+		}
+	}
+
+	Context 'Test-IgnoreMatch -Mode Wildcard との結果一致' {
+		It '様々な行・番組名の組み合わせで、全件の判定が一致する' {
+			$names = @(
+				'ちいかわ', 'ちいかわ 第1話', 'ニュース7', 'NEWS ZERO', '[新]ドラマ', '大奥～誕生[有功･家光篇]',
+				'あいうえお', 'あい*えお', 'a1', 'b1', 'テレビ'.Normalize([Text.NormalizationForm]::FormD), '', '冷凍庫に眠っている 第3話'
+			)
+			$titles = @(
+				'ちいかわ', 'news', 'ニュース', '[新]', '[ab]1', 'あい*えお', 'あい?えお', '*', '?', '大奥～誕生',
+				'テレビ', 'regex:^NEWS', 'regex:(?i)^news', 'regex:冷凍庫に眠っている (第|最終)', '存在しない', 'zzz*'
+			)
+			$expected = New-Object System.Collections.Generic.List[Int]
+			$expectedTitles = New-Object System.Collections.Generic.List[String]
+			foreach ($title in $titles) {
+				$tn = $title.Normalize([Text.NormalizationForm]::FormC)
+				$hit = $false
+				for ($i = 0 ; $i -lt $names.Count ; $i++) {
+					if (Test-IgnoreMatch -Pattern $tn -Target @($names[$i].Normalize([Text.NormalizationForm]::FormC)) -Mode Wildcard) {
+						if (!$expected.Contains($i)) { $expected.Add($i) }
+						$hit = $true
+					}
+				}
+				if ($hit) { $expectedTitles.Add($tn) }
+			}
+			$script:ignoreRegexCache = @{}
+			$r = Find-IgnoreMatchedIndex -Name $names -IgnoreTitle $titles
+			$r.Index | Should -Be @($expected | Sort-Object)
+			$r.UsedTitle | Should -Be @($expectedTitles)
+		}
+	}
+
+	Context '性能' {
+		It '無視行3,000 x フォルダ1,500でも10秒以内に終わる' {
+			$names = 1..1500 | ForEach-Object { 'フォルダ{0:D4} 番組名サンプル' -f $_ }
+			$titles = (1..2990 | ForEach-Object { '存在しない番組{0:D4}' -f $_ }) + @('フォルダ0100', 'フォルダ1500', '番組名*0042')
+			$sw = [Diagnostics.Stopwatch]::StartNew()
+			$r = Find-IgnoreMatchedIndex -Name $names -IgnoreTitle $titles
+			$sw.Stop()
+			$sw.Elapsed.TotalSeconds | Should -BeLessThan 10
+			$r.Index | Should -Be @(99, 1499)
+			$r.UsedTitle | Should -Be @('フォルダ0100', 'フォルダ1500')
+		}
+	}
+}
+
 Describe 'Test-IgnoreMatch' {
 	BeforeEach { $script:ignoreRegexCache = @{} }
 
