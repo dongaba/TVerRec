@@ -88,6 +88,11 @@ try {
 	else { $keywordTotal = $keywords.Count }
 	$keywordNum = 0
 
+	# 履歴ファイルと無視リストは最初に1回だけ読み込んで使い回す(番組ごとの全件読み込みを避けるため)
+	# * 他のPCが実行中に追記した履歴は、この実行中は反映されない
+	$script:histCache = @(Get-LatestHistory)
+	$script:ignoreCache = @(Read-IgnoreList)
+
 	# 進捗表示の初期化
 	$toastShowParams = @{
 		Text1      = $script:msg.BulkDownloading
@@ -242,6 +247,9 @@ try {
 	Write-Error "Stack trace: $($_.ScriptStackTrace)"
 	throw
 } finally {
+	# キャッシュの破棄
+	Remove-Variable -Name histCache, ignoreCache -Scope Script -ErrorAction SilentlyContinue
+
 	# 変数のクリーンアップ
 	Remove-Variable -Name args, keywords, keywordTotal, keywordNum, toastShowParams,
 	totalStartTime, keyword, resultLinks, processedCount, videoLinks, videoCount,

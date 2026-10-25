@@ -562,6 +562,84 @@ function Get-LatestHistory {
 }
 
 #----------------------------------------------------------------------
+# ダウンロード履歴の最新レコードを取得(一括ダウンロード中はキャッシュを使用)
+#----------------------------------------------------------------------
+function Get-LatestHistoryCached {
+	<#
+		.SYNOPSIS
+			ダウンロード履歴の最新レコードを取得します。キャッシュがあればキャッシュを返します。
+
+		.DESCRIPTION
+			`$script:histCache`が設定されている場合は、履歴ファイルを読み直さずにその内容を返します。
+			設定されていない場合は`Get-LatestHistory`で履歴ファイルを読み込みます。
+			一括ダウンロードで番組ごとに履歴ファイル(CSV)の全件読み込みが走るのを避けるために使用します。
+
+		.OUTPUTS
+			[PSCustomObject[]] 各ビデオページの最新履歴レコードの配列
+
+		.NOTES
+			キャッシュは呼び出し元(download_bulk.ps1)が設定・破棄します。
+			キャッシュ中は、他のPCが履歴ファイルに追記した内容は反映されません。
+	#>
+	[OutputType([PSCustomObject])]
+	Param ()
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if ((Test-Path Variable:Script:histCache) -and ($null -ne $script:histCache)) { return $script:histCache }
+	return (Get-LatestHistory)
+}
+
+#----------------------------------------------------------------------
+# ダウンロード履歴のキャッシュに新しいレコードを反映
+#----------------------------------------------------------------------
+function Add-LatestHistoryCache {
+	<#
+		.SYNOPSIS
+			ダウンロード履歴のキャッシュに、履歴ファイルへ追記したレコードを反映します。
+
+		.DESCRIPTION
+			`$script:histCache`が設定されている場合に、同じビデオページのレコードを新しいレコードで置き換えます。
+			キャッシュが設定されていない場合は何もしません。
+
+		.PARAMETER Record
+			履歴ファイルに追記したレコードを指定します。
+
+		.OUTPUTS
+			[Void]
+	#>
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'スクリプト内のキャッシュ変数を更新するだけで、システムの状態は変更しない')]
+	[OutputType([Void])]
+	Param ([Parameter(Mandatory = $false)][AllowNull()][PSCustomObject]$Record)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if (!(Test-Path Variable:Script:histCache) -or ($null -eq $script:histCache) -or ($null -eq $Record)) { return }
+	$script:histCache = @(@($script:histCache).Where({ $_ -and ($_.videoPage -ne $Record.videoPage) })) + @($Record)
+}
+
+#----------------------------------------------------------------------
+# ダウンロード対象外リストを取得(一括ダウンロード中はキャッシュを使用)
+#----------------------------------------------------------------------
+function Get-IgnoreListCached {
+	<#
+		.SYNOPSIS
+			ダウンロード対象外番組のリストを取得します。キャッシュがあればキャッシュを返します。
+
+		.DESCRIPTION
+			`$script:ignoreCache`が設定されている場合は、ファイルを読み直さずにその内容を返します。
+			設定されていない場合は`Read-IgnoreList`でファイルを読み込みます。
+
+		.OUTPUTS
+			[String[]] ダウンロード対象外番組名の配列
+
+		.NOTES
+			キャッシュは呼び出し元(download_bulk.ps1)が設定・破棄します。
+	#>
+	[OutputType([String[]])]
+	Param ()
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if ((Test-Path Variable:Script:ignoreCache) -and ($null -ne $script:ignoreCache)) { return $script:ignoreCache }
+	return (Read-IgnoreList)
+}
+
+#----------------------------------------------------------------------
 # 字幕の有無の記録と再ダウンロードが有効かの判定
 #----------------------------------------------------------------------
 function Test-SubtitleTrackingEnabled {
@@ -1538,7 +1616,7 @@ function Invoke-HistoryMatchCheck {
 	Param ([Parameter(Mandatory = $true)][String[]]$episodeLinks)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# ダウンロード履歴ファイルのデータを読み込み
-	$histFileData = @(Get-LatestHistory)
+	$histFileData = @(Get-LatestHistoryCached)
 	$histFileData = @(Remove-SubtitleRecheckTarget $histFileData)	# 字幕の再確認の対象は「ダウンロード済み」に含めない
 	if ($histFileData.Count -eq 0) { $histVideoPages = @() } else { $histVideoPages = @($histFileData.videoPage.Replace('https://tver.jp/episodes/', '')) }
 	# エピソードIDがすでにダウンロード履歴に存在する場合は検索結果から除外
@@ -2252,12 +2330,12 @@ function Invoke-VideoDownload {
 	$subtitleRecheck = $false
 	$histFileData = $null
 	if (!$force -and $subtitleTracking) {
-		$histFileData = @(Get-LatestHistory)
+		$histFileData = @(Get-LatestHistoryCached)
 		$subtitleHists = @($histFileData.Where({ $_ -and $_.PSObject.Properties['subtitle'] }))
 		$sameEpisodeHists = @($subtitleHists.Where({ $_.videoPage -eq $videoInfo.episodePageURL }))
 		if (($sameEpisodeHists.Count -ne 0) -and ($sameEpisodeHists[0].subtitle -eq '0')) {
 			# 字幕なしで保存済みの番組	→字幕が追加されたか確認する
-			foreach ($ignoreTitle in @(Read-IgnoreList)) {
+			foreach ($ignoreTitle in @(Get-IgnoreListCached)) {
 				if ($ignoreTitle -and (Test-IgnoreMatch -Pattern $ignoreTitle -Target @($videoInfo.fileName, $videoInfo.seriesName) -Mode Wildcard)) { return }
 			}
 			Write-Output ($script:msg.SubtitleRecheck)
@@ -2290,13 +2368,13 @@ function Invoke-VideoDownload {
 						ダウンロード対象外リストに存在しない	→ダウンロード
 		#>
 		#ダウンロード履歴ファイルのデータを読み込み(字幕の判定で読み込み済みの場合は再利用)
-		if ($null -eq $histFileData) { $histFileData = @(Get-LatestHistory) }
+		if ($null -eq $histFileData) { $histFileData = @(Get-LatestHistoryCached) }
 		if ($videoInfo.fileRelPath) { $histMatch = @($histFileData.Where({ $_.videoPath -eq $videoInfo.fileRelPath })) }
 		else { Write-Warning ($script:msg.FileNameRetrievalFailed) ; return }
 
 		if ($script:downloadWhenEpisodeIdChanged) {
 			if (($histMatch.Count -ne 0) -or (Test-Path $videoInfo.filePath)) {
-				$ignoreTitles = @(Read-IgnoreList)
+				$ignoreTitles = @(Get-IgnoreListCached)
 				foreach ($ignoreTitle in $ignoreTitles) {
 					if (Test-IgnoreMatch -Pattern $ignoreTitle -Target @($videoInfo.fileName, $videoInfo.seriesName) -Mode Wildcard) {
 						# エピソードIDが変更になったがダウンロード対象外リストと合致	→無視する
@@ -2316,7 +2394,7 @@ function Invoke-VideoDownload {
 				}
 			} else {
 				# 履歴ファイルに存在せず、実ファイルも存在せず、ダウンロード対象外リストと合致	→無視する
-				$ignoreTitles = @(Read-IgnoreList)
+				$ignoreTitles = @(Get-IgnoreListCached)
 				foreach ($ignoreTitle in $ignoreTitles) {
 					if (Test-IgnoreMatch -Pattern $ignoreTitle -Target @($videoInfo.fileName, $videoInfo.seriesName) -Mode Wildcard) {
 						Update-IgnoreList $ignoreTitle ; Write-Warning ($script:msg.IgnoreEpisodeAdded)
@@ -2347,7 +2425,7 @@ function Invoke-VideoDownload {
 				$newVideo = Format-HistoryRecord $videoInfo ; $skipDownload = $true
 			} else {
 				# 履歴ファイルに存在せず、実ファイルも存在せず、ダウンロード対象外リストと合致	→無視する
-				$ignoreTitles = @(Read-IgnoreList)
+				$ignoreTitles = @(Get-IgnoreListCached)
 				foreach ($ignoreTitle in $ignoreTitles) {
 					if (Test-IgnoreMatch -Pattern $ignoreTitle -Target @($videoInfo.fileName, $videoInfo.seriesName) -Mode Wildcard) {
 						Update-IgnoreList $ignoreTitle ; Write-Warning ($script:msg.IgnoreEpisodeAdded)
@@ -2376,6 +2454,7 @@ function Invoke-VideoDownload {
 	try {
 		$newVideo | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append ; Start-Sleep -Seconds 1
 		Write-Debug ($script:msg.HistWritten)
+		Add-LatestHistoryCache $newVideo
 	} catch { Write-Warning ($script:msg.HistUpdateFailed) ; return }
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
 	# スキップ対象やダウンロード対象外は飛ばして次のファイルへ
