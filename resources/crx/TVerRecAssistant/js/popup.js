@@ -84,13 +84,36 @@ function showResult(result) {
 	setButtons({ copy: true, refresh: true });
 }
 
+// 操作中のタブを取得する。TVerのページでなければnullを返す
+async function getActiveTVerTab() {
+	const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+	if (tab && tab.url && isTVerUrl(tab.url)) {
+		return tab;
+	}
+	return null;
+}
+
+// TVerのページで実行した結果を画面に反映する
+function handleInjectionResult(result) {
+	if (result && result.ok) {
+		showResult(result);
+		return;
+	}
+	if (result && result.reason === "sdk") {
+		showStatus("TVerのSDKが見つかりません。TVer側の仕様が変更された可能性があります。");
+	} else {
+		showStatus(`取得に失敗しました。${(result && result.message) || ""}`);
+	}
+	setButtons({ refresh: true });
+}
+
 async function load() {
 	clearValues();
 	setButtons({});
 	showStatus("読み込み中...");
 
-	const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-	if (!tab || !tab.url || !isTVerUrl(tab.url)) {
+	const tab = await getActiveTVerTab();
+	if (!tab) {
 		showStatus("このページはTVerのページではありません。TVerのページを開いた状態で実行してください。");
 		setButtons({ open: true });
 		return;
@@ -102,16 +125,7 @@ async function load() {
 			world: "MAIN",
 			func: readTVerStatus,
 		});
-		const result = injection && injection.result;
-		if (result && result.ok) {
-			showResult(result);
-		} else if (result && result.reason === "sdk") {
-			showStatus("TVerのSDKが見つかりません。TVer側の仕様が変更された可能性があります。");
-			setButtons({ refresh: true });
-		} else {
-			showStatus(`取得に失敗しました。${(result && result.message) || ""}`);
-			setButtons({ refresh: true });
-		}
+		handleInjectionResult(injection && injection.result);
 	} catch (e) {
 		showStatus(`取得に失敗しました。${e}`);
 		setButtons({ refresh: true });
