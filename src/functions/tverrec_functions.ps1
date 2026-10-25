@@ -1471,7 +1471,7 @@ function Read-IgnoreList {
 	try {
 		Wait-FileLock $script:ignoreLockFilePath
 		# コメントと空行を除いて抽出
-		$ignoreTitles = @((Get-Content $script:ignoreFilePath -Encoding UTF8).Where({ !($_ -cmatch '^\s*$') }).Where({ !($_ -cmatch '^;.*$') }))
+		$ignoreTitles = @((Get-Content $script:ignoreFilePath -Encoding UTF8 -ErrorAction Stop).Where({ !($_ -cmatch '^\s*$') }).Where({ !($_ -cmatch '^;.*$') }))
 	} catch { throw ($script:msg.LoadFailed -f $script:msg.IgnoreFile) }
 	finally { Unlock-File $script:ignoreLockFilePath | Out-Null }
 	return $ignoreTitles

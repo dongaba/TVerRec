@@ -29,6 +29,10 @@
 - ダウンロードスケジュールによる停止(`Suspend-Process`)で、停止時間帯に23時台を含めると、翌日0時ではなく約24時間後まで待機してしまう問題を修正
 - `Save-HistoryFile`に`$null`を渡すと例外になる問題を修正(0件として扱い、ヘッダーのみを残す)
 - `Wait-DownloadProcess`が参照するメッセージ`WaitingDownloadProcess`が`messages.json`に存在しなかった問題を修正
+- yt-dlpのタイムアウト監視ジョブ(`Invoke-Ytdl`、`Invoke-NonTverYtdl`)にプロセスIDなどが渡されておらず、タイムアウトしてもyt-dlpが強制終了されなかった問題を修正
+- デバッグモードでyt-dlpの起動に失敗すると、後処理で例外が発生して元のエラーが隠れる問題を修正(`Invoke-Ytdl`)
+- ダウンロード対象外リスト(`ignore.conf`)が存在しない場合に、`Read-IgnoreList`が読み込み失敗の例外にならず空として扱っていた問題を修正(読み込み失敗として例外にする)
+- `Get-FileNameWoInvalidChar`が、Windowsでは`*?<>|`をファイル名から単純に除去し、macOS・Linuxと結果が異なっていた問題を修正(OSによらず`-`に置換)
 
 ## [3.4.9](https://github.com/dongaba/TVerRec/releases/tag/v3.4.9)
 

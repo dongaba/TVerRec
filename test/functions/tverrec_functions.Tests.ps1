@@ -2603,10 +2603,9 @@ Describe 'Read-IgnoreList' {
 		{ Read-IgnoreList } | Should -Throw -ExpectedMessage ($script:msg.LoadFailed -f $script:msg.IgnoreFile)
 		Should -Invoke Unlock-File -Times 1 -Exactly
 	}
-	It 'ファイルがなければ、例外にはならず空を返し、ロックも解放すること(現状の挙動)' {
-		# * Get-Contentの「パスが存在しない」エラーは例外にならないため、catchには入らない
-		$r = @(Read-IgnoreList 2>$null)
-		$r.Count | Should -Be 0
+	It 'ファイルがなければ、読み込み失敗として例外にし、ロックも解放すること' {
+		# * Get-Contentの「パスが存在しない」エラーは-ErrorAction Stopがないと例外にならず、catchに入らず空を返していた
+		{ Read-IgnoreList } | Should -Throw -ExpectedMessage ($script:msg.LoadFailed -f $script:msg.IgnoreFile)
 		Should -Invoke Unlock-File -Times 1 -Exactly
 	}
 }
