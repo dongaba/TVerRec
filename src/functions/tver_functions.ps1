@@ -390,11 +390,14 @@ function Get-SearchResult {
 	catch {
 		if ($_.Exception.Message.Contains('The request was canceled due to the configured HttpClient.Timeout of')) {
 			Write-Warning ($script:msg.HttpTimeout) ; return
-		} elseif ($_.Exception.Message.Contains('Response status code does not indicate success:')) {
-			# 再帰呼び出し先で失敗した場合も原因のURLを特定できるよう、トークン類を伏せたURLを併記する
+		} else {
+			# どのAPIで失敗したか(再帰呼び出し先を含む)を特定できるよう、トークン類を伏せたURLを併記する
+			# * 例外メッセージは環境の言語で出力されるため、日本語環境ではHttpOtherError側に入る。どちらもURL付きで表示する
 			$maskedURL = $callSearchURL -replace '(platform_token|member_sid)=[^&]+', '$1=***'
-			Write-Warning ($script:msg.HttpBadResponse -f ('{0} ({1})' -f $_.Exception.Message, $maskedURL)) ; return
-		} else { Write-Warning ($script:msg.HttpOtherError -f $_.Exception.Message) ; return }
+			$errorDetail = '{0} ({1})' -f $_.Exception.Message, $maskedURL
+			if ($_.Exception.Message.Contains('Response status code does not indicate success:')) { Write-Warning ($script:msg.HttpBadResponse -f $errorDetail) ; return }
+			else { Write-Warning ($script:msg.HttpOtherError -f $errorDetail) ; return }
+		}
 	}
 	# タイプ別に参照先を調整
 	$searchResults = switch ($type) {
@@ -427,7 +430,7 @@ function Get-SearchResult {
 			default { Write-Warning ($script:msg.UnknownContentsType -f $searchResult.Type, $searchResult.Content.Id) }
 		}
 	}
-	Remove-Variable -Name baseURL, type, keyword, requireData, loginRequired, sid, uid, token, callSearchURL, maskedURL, searchResultsRaw, searchResults, order, sortedSearchResults, searchResult -ErrorAction SilentlyContinue
+	Remove-Variable -Name baseURL, type, keyword, requireData, loginRequired, sid, uid, token, callSearchURL, maskedURL, errorDetail, searchResultsRaw, searchResults, order, sortedSearchResults, searchResult -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
