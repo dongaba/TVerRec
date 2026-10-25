@@ -10,6 +10,9 @@ BeforeAll {
 	Set-Location $script:scriptRoot
 	$script:confDir = Convert-Path (Join-Path $script:repoRoot 'conf')
 	$script:msg = (Get-Content -Path (Join-Path $script:repoRoot 'resources/lang/messages.json') -Raw | ConvertFrom-Json).'ja-JP'
+	# common_functions.ps1は読み込み時(Windowsのトースト通知の初期化)にこれらを参照するため、読み込む前に定義する
+	$script:libDir = Join-Path $script:repoRoot 'resources/lib'
+	$script:disableToastNotification = $false
 	. (Join-Path $script:scriptRoot 'functions/common_functions.ps1')
 	. (Join-Path $script:confDir 'system_setting.ps1')
 	# user_setting.ps1がない環境(クローン直後やCI)では一時的に作成し、テスト後に削除する

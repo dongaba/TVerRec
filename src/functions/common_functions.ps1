@@ -318,9 +318,10 @@ function Get-FileNameWoInvalidChar {
 	$invalidCharsPattern = '[{0}]' -f [RegEx]::Escape( [IO.Path]::GetInvalidFileNameChars() -Join '')
 	$additionalReplaces = '[*\?<>|]'	# Linux/MacではGetInvalidFileNameChars()が不完全なため、ダメ押しで置換
 	$nonPrintableChars = '[\x00-\x1F\x7F]'	# ASCII制御文字()
-	# 無効な文字を削除
-	$name = $name -replace $invalidCharsPattern, '' `
-		-replace $additionalReplaces, '-' `
+	# 追加の無効文字を先に「-」へ置換する(WindowsではGetInvalidFileNameChars()に*?<>|が含まれ、先に削除すると置換されずOSで結果が変わるため)
+	# そのあと無効な文字を削除
+	$name = $name -replace $additionalReplaces, '-' `
+		-replace $invalidCharsPattern, '' `
 		-replace $nonPrintableChars, '' `
 		-replace '-+', '-'
 	return $name
