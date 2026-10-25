@@ -550,13 +550,14 @@ function Get-LatestHistory {
 	[OutputType([PSCustomObject])]
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$latestHists = @()
 	try {
 		Wait-FileLock $script:histLockFilePath
 		# videoPageごとに最新のdownloadDateを持つレコードを取得
 		$latestHists = (Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8) |
 			Group-Object -Property 'videoPage' |
 			ForEach-Object { $_.Group | Sort-Object -Property downloadDate, videoValidated -Descending | Select-Object -First 1 }
-	} catch { Write-Warning ($script:msg.LoadFailed -f $script:msg.HistFile) }
+	} catch { throw ($script:msg.LoadFailed -f $script:msg.HistFile) }	# * 履歴を読めないまま空で続行すると全番組を未ダウンロード扱いにしてしまうため、他のRead系関数と同様に例外とする
 	finally { Unlock-File $script:histLockFilePath | Out-Null }
 	return $latestHists
 }

@@ -36,6 +36,7 @@
 - `Get-FileNameWoInvalidChar`が、Windowsでは`*?<>|`をファイル名から単純に除去し、macOS・Linuxと結果が異なっていた問題を修正(OSによらず`-`に置換)
 - 新バージョンの通知で表示する変更履歴の対象を、文字列比較で判定していたため、`3.10.0`が`3.9.0`より古いと扱われ、変更履歴が表示されない問題を修正(`Invoke-TVerRecUpdateCheck`。`Compare-Version`で比較する)
 - `update_ffmpeg.ps1`で、WindowsとLinuxのffmpegのバージョン表記が想定外の形式(ディストリビューション版の`6.1.1-3ubuntu5`など)だと、バージョン不明として扱わずに例外で終了する問題を修正
+- ダウンロード履歴(`history.csv`)を読み込めなかった場合に、`Get-LatestHistory`が警告だけで空の履歴として続行し、全番組が未ダウンロード扱いになる恐れがあった問題を修正(読み込み失敗として例外にして中断する)
 
 ## [3.4.9](https://github.com/dongaba/TVerRec/releases/tag/v3.4.9)
 

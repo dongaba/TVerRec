@@ -3517,3 +3517,60 @@ Describe 'Get-SysInfo' {
 		}
 	}
 }
+
+Describe 'Get-LatestHistory' {
+	BeforeAll {
+		$script:glhNames = 'histFilePath', 'histLockFilePath'
+		$script:glh = @{}
+		foreach ($n in $script:glhNames) { $script:glh[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' } }
+		$script:glhHeader = '"videoPage","videoSeriesPage","genre","series","season","title","media","broadcastDate","downloadDate","videoDir","videoName","videoPath","videoValidated"'
+		function script:New-HistRow { Param ([String]$Page, [String]$Date, [String]$Validated = '0') ; '"{0}","","tag/drama","番組","","話","局","2026年01月01日放送","{1}","d","a.mp4","a/a.mp4","{2}"' -f $Page, $Date, $Validated }
+	}
+	AfterAll {
+		foreach ($n in $script:glhNames) {
+			if ($script:glh[$n] -is [String] -and $script:glh[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:glh[$n] }
+		}
+	}
+	BeforeEach {
+		$script:histFilePath = Join-Path $TestDrive ('history{0}.csv' -f [Guid]::NewGuid().ToString('N'))
+		$script:histLockFilePath = Join-Path $TestDrive 'history.lock'
+		Mock Wait-FileLock {}
+		Mock Unlock-File {}
+	}
+	It '番組ごとに、downloadDateが最新のレコードだけを返すこと' {
+		@($script:glhHeader, (New-HistRow 'https://tver.jp/episodes/a' '2026-01-01 00:00:00'), (New-HistRow 'https://tver.jp/episodes/a' '2026-03-01 00:00:00'), (New-HistRow 'https://tver.jp/episodes/b' '2026-02-01 00:00:00'), (New-HistRow 'https://tver.jp/episodes/a' '2026-02-01 00:00:00')) | Set-Content -LiteralPath $script:histFilePath -Encoding UTF8
+		$r = @(Get-LatestHistory)
+		$r.Count | Should -Be 2
+		($r | Where-Object { $_.videoPage -eq 'https://tver.jp/episodes/a' }).downloadDate | Should -Be '2026-03-01 00:00:00'
+		($r | Where-Object { $_.videoPage -eq 'https://tver.jp/episodes/b' }).downloadDate | Should -Be '2026-02-01 00:00:00'
+	}
+	It 'downloadDateが同じなら、videoValidatedが大きいほうを返すこと' {
+		@($script:glhHeader, (New-HistRow 'https://tver.jp/episodes/a' '2026-01-01 00:00:00' '0'), (New-HistRow 'https://tver.jp/episodes/a' '2026-01-01 00:00:00' '1')) | Set-Content -LiteralPath $script:histFilePath -Encoding UTF8
+		$r = @(Get-LatestHistory)
+		$r.Count | Should -Be 1
+		$r[0].videoValidated | Should -Be '1'
+	}
+	It 'ヘッダーだけの履歴ファイルなら、空を返し、例外にならないこと' {
+		$script:glhHeader | Set-Content -LiteralPath $script:histFilePath -Encoding UTF8
+		{ Get-LatestHistory } | Should -Not -Throw
+		@(Get-LatestHistory).Count | Should -Be 0
+	}
+	It 'ファイルのロックを取得して、処理後に解放すること' {
+		@($script:glhHeader, (New-HistRow 'https://tver.jp/episodes/a' '2026-01-01 00:00:00')) | Set-Content -LiteralPath $script:histFilePath -Encoding UTF8
+		Get-LatestHistory | Out-Null
+		Should -Invoke Wait-FileLock -Times 1 -Exactly -ParameterFilter { $path -eq $script:histLockFilePath }
+		Should -Invoke Unlock-File -Times 1 -Exactly
+	}
+	It '履歴ファイルがなければ、空で続行せず、読み込み失敗として例外にし、ロックも解放すること' {
+		# * 履歴を読めないまま空で続行すると、全番組が未ダウンロード扱いになってしまう
+		{ Get-LatestHistory } | Should -Throw -ExpectedMessage ($script:msg.LoadFailed -f $script:msg.HistFile)
+		Should -Invoke Unlock-File -Times 1 -Exactly
+	}
+	It 'ロックの取得に失敗したときも、読み込み失敗として例外にし、ロックの解放を試みること' {
+		@($script:glhHeader, (New-HistRow 'https://tver.jp/episodes/a' '2026-01-01 00:00:00')) | Set-Content -LiteralPath $script:histFilePath -Encoding UTF8
+		Mock Wait-FileLock { throw 'lock timeout' }
+		{ Get-LatestHistory } | Should -Throw -ExpectedMessage ($script:msg.LoadFailed -f $script:msg.HistFile)
+		Should -Invoke Unlock-File -Times 1 -Exactly
+	}
+}
