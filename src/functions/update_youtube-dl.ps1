@@ -112,108 +112,142 @@ function Expand-Zip {
 	Remove-Variable -Name path, destination -ErrorAction SilentlyContinue
 }
 
-#━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# 環境設定
-#━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-try {
-	if ($myInvocation.MyCommand.CommandType -eq 'ExternalScript') { $scriptRoot = Split-Path -Parent -Path (Split-Path -Parent -Path $myInvocation.MyCommand.Definition) }
-	else { $scriptRoot = Convert-Path .. }
-	Set-Location $script:scriptRoot
-} catch { throw '❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.' }
-if ($script:scriptRoot.Contains(' ')) { throw '❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space' }
-
 #----------------------------------------------------------------------
-# メッセージファイル読み込み
-$script:langDir = Convert-Path (Join-Path $scriptRoot '../resources/lang')
-$script:uiCulture = [System.Globalization.CultureInfo]::CurrentUICulture.Name
-Write-Debug "Current Language: $script:uiCulture"
-$script:langFile = Get-Content -Path (Join-Path $script:langDir 'messages.json') | ConvertFrom-Json
-$script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:uiCulture)) { $script:langFile.$script:uiCulture }
-else { $defaultLang = 'en-US'; $script:langFile.$defaultLang }
-Write-Debug "Message Table Loaded: $script:uiCulture"
-
+# youtube-dl(yt-dlp)を最新版に更新します。
 #----------------------------------------------------------------------
-# 設定ファイル読み込み
-$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
-if ( Test-Path (Join-Path $script:confDir 'system_setting.ps1') ) {
-	try { . (Convert-Path (Join-Path $script:confDir 'system_setting.ps1')) }
-	catch { throw ($script:msg.LoadSystemSettingFailed) }
-} else { throw ($script:msg.SystemSettingNotFound) }
-if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
-	try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
-	catch { throw ($script:msg.LoadUserSettingFailed) }
-} elseif ($IsWindows) {
-	Write-Output ($script:msg.UserSettingNeedsToBeCreated)
-	try { & 'gui/gui_setting.ps1' }
-	catch { throw ($script:msg.LoadSettingGUIFailed) }
+function Update-Ytdl {
+	<#
+		.SYNOPSIS
+			youtube-dl(yt-dlp)を最新版に更新します。
+
+		.DESCRIPTION
+			$script:preferredYoutubedlで指定されたyt-dlp/ytdl-patched/yt-dlp-nightlyの最新リリースをGitHubで確認し、
+			ローカルのバージョンと異なる場合はダウンロードして、binディレクトリに配置します。
+
+		.OUTPUTS
+			[Void]
+			この関数は値を返しません。結果は標準出力と警告で通知します。
+
+		.EXAMPLE
+			Update-Ytdl
+
+		.NOTES
+			この関数は以下の処理を行います：
+			1. 指定されたyoutube-dlの種類からGitHubのリポジトリを特定
+			2. ローカルと最新のバージョンを取得して比較
+			3. 異なる場合は、ダウンロードして配置し、実行権限を付与(Windows以外)
+			4. 配置後のバージョンを確認して表示
+			いずれかの手順に失敗した場合は、警告を表示して処理を中断します。
+	#>
+	[CmdletBinding()]
+	[OutputType([Void])]
+	Param ()
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	# youtube-dl移動先相対Path
+	if ($IsWindows) { $ytdlPath = Join-Path $script:binDir 'yt-dlp.exe' }
+	else { $ytdlPath = Join-Path $script:binDir 'yt-dlp' }
+
+	# githubの設定
+	$lookupTable = @{
+		'yt-dlp'         = 'yt-dlp/yt-dlp'
+		'ytdl-patched'   = 'ytdl-patched/ytdl-patched'
+		'yt-dlp-nightly' = 'yt-dlp/yt-dlp-nightly-builds'
+	}
+	if ($lookupTable.ContainsKey($script:preferredYoutubedl)) { $repo = $lookupTable[$script:preferredYoutubedl] }
+	else { Write-Warning ($script:msg.ToolInvalidSource -f $script:preferredYoutubedl) ; return }
+	$releases = ('https://api.github.com/repos/{0}/releases' -f $repo)
+
+	# youtube-dlのバージョン取得
+	try {
+		if (Test-Path $ytdlPath -PathType Leaf) { $currentVersion = (& $ytdlPath --version) }
+		else { $currentVersion = '' }
+	} catch { $currentVersion = '' }
+
+	# youtube-dlの最新バージョン取得
+	try { $latestVersion = (Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec)[0].Tag_Name }
+	catch { Write-Warning ($script:msg.ToolLatestNotIdentified -f $script:preferredYoutubedl) ; return }
+
+	# youtube-dlのダウンロード
+	if ($latestVersion -eq $currentVersion) {
+		Write-Output ('')
+		Write-Output ($script:msg.ToolUpToDate -f $script:preferredYoutubedl)
+		Write-Output ($script:msg.ToolLocalVersion -f $currentVersion)
+		Write-Output ($script:msg.ToolRemoteVersion -f $latestVersion)
+	} else {
+		Write-Output ('')
+		Write-Warning ($script:msg.ToolOutdated -f $script:preferredYoutubedl)
+		Write-Output ($script:msg.ToolLocalVersion -f $currentVersion)
+		Write-Output ($script:msg.ToolRemoteVersion -f $latestVersion)
+		if ($script:preferredYoutubedl -eq 'yt-dlp-nightly') { $downloadFileName = 'yt-dlp' }
+		else { $downloadFileName = $script:preferredYoutubedl }
+		if (!$IsWindows) { $fileBeforeRename = $downloadFileName ; $fileAfterRename = 'yt-dlp' }
+		else { $fileBeforeRename = ('{0}.exe' -f $downloadFileName) ; $fileAfterRename = 'yt-dlp.exe' }
+		Write-Output ($script:msg.ToolDownload -f $script:preferredYoutubedl, [String]([System.Runtime.InteropServices.RuntimeInformation]::OSDescription).split()[0..1])
+		try {
+			#ダウンロード
+			$tag = (Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec)[0].Tag_Name
+			$downloadURL = ('https://github.com/{0}/releases/download/{1}/{2}' -f $repo, $tag, $fileBeforeRename)
+			$ytdlFileLocation = Join-Path $script:binDir $fileAfterRename
+			Invoke-WebRequest -Uri $downloadURL -Out $ytdlFileLocation -TimeoutSec $script:timeoutSec
+		} catch { Write-Warning ($script:msg.ToolDownloadFailed -f $script:preferredYoutubedl) ; return }
+		if (!$IsWindows) { (& chmod a+x $ytdlFileLocation) }
+
+		# バージョンチェック
+		try {
+			$currentVersion = (& $ytdlPath --version)
+			Write-Output ($script:msg.ToolUpdated -f $script:preferredYoutubedl, $currentVersion)
+		} catch { Write-Warning $script:msg.ToolVersionCheckFailed ; return }
+
+	}
+
+	Remove-Variable -Name lookupTable, releases, ytdlPath, currentVersion, latestVersion, file, fileAfterRename, fileBeforeRename, tag, downloadURL, ytdlFileLocation -ErrorAction SilentlyContinue
+}
+
+#━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 環境設定と実行
+#━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# ドット読み込み(テストなど)のときは、関数の定義だけを行い、更新処理は実行しない
+if ($MyInvocation.InvocationName -ne '.') {
+	try {
+		if ($myInvocation.MyCommand.CommandType -eq 'ExternalScript') { $scriptRoot = Split-Path -Parent -Path (Split-Path -Parent -Path $myInvocation.MyCommand.Definition) }
+		else { $scriptRoot = Convert-Path .. }
+		Set-Location $script:scriptRoot
+	} catch { throw '❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.' }
+	if ($script:scriptRoot.Contains(' ')) { throw '❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space' }
+
+	#----------------------------------------------------------------------
+	# メッセージファイル読み込み
+	$script:langDir = Convert-Path (Join-Path $scriptRoot '../resources/lang')
+	$script:uiCulture = [System.Globalization.CultureInfo]::CurrentUICulture.Name
+	Write-Debug "Current Language: $script:uiCulture"
+	$script:langFile = Get-Content -Path (Join-Path $script:langDir 'messages.json') | ConvertFrom-Json
+	$script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:uiCulture)) { $script:langFile.$script:uiCulture }
+	else { $defaultLang = 'en-US'; $script:langFile.$defaultLang }
+	Write-Debug "Message Table Loaded: $script:uiCulture"
+
+	#----------------------------------------------------------------------
+	# 設定ファイル読み込み
+	$script:confDir = Convert-Path (Join-Path $script:scriptRoot '../conf')
+	if ( Test-Path (Join-Path $script:confDir 'system_setting.ps1') ) {
+		try { . (Convert-Path (Join-Path $script:confDir 'system_setting.ps1')) }
+		catch { throw ($script:msg.LoadSystemSettingFailed) }
+	} else { throw ($script:msg.SystemSettingNotFound) }
 	if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
 		try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
 		catch { throw ($script:msg.LoadUserSettingFailed) }
+	} elseif ($IsWindows) {
+		Write-Output ($script:msg.UserSettingNeedsToBeCreated)
+		try { & 'gui/gui_setting.ps1' }
+		catch { throw ($script:msg.LoadSettingGUIFailed) }
+		if ( Test-Path (Join-Path $script:confDir 'user_setting.ps1') ) {
+			try { . (Convert-Path (Join-Path $script:confDir 'user_setting.ps1')) }
+			catch { throw ($script:msg.LoadUserSettingFailed) }
+		} else { throw ($script:msg.UserSettingNotCompleted) }
 	} else { throw ($script:msg.UserSettingNotCompleted) }
-} else { throw ($script:msg.UserSettingNotCompleted) }
-if ($script:preferredLanguage) {
-	$script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:preferredLanguage)) { $script:langFile.$script:preferredLanguage }
-	else { $defaultLang = 'en-US'; $script:langFile.$defaultLang }
+	if ($script:preferredLanguage) {
+		$script:msg = if (($script:langFile | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name).Contains($script:preferredLanguage)) { $script:langFile.$script:preferredLanguage }
+		else { $defaultLang = 'en-US'; $script:langFile.$defaultLang }
+	}
+
+	Update-Ytdl
 }
-
-#━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# メイン処理
-
-# youtube-dl移動先相対Path
-if ($IsWindows) { $ytdlPath = Join-Path $script:binDir 'yt-dlp.exe' }
-else { $ytdlPath = Join-Path $script:binDir 'yt-dlp' }
-
-# githubの設定
-$lookupTable = @{
-	'yt-dlp'         = 'yt-dlp/yt-dlp'
-	'ytdl-patched'   = 'ytdl-patched/ytdl-patched'
-	'yt-dlp-nightly' = 'yt-dlp/yt-dlp-nightly-builds'
-}
-if ($lookupTable.ContainsKey($script:preferredYoutubedl)) { $repo = $lookupTable[$script:preferredYoutubedl] }
-else { Write-Warning ($script:msg.ToolInvalidSource -f $script:preferredYoutubedl) ; return }
-$releases = ('https://api.github.com/repos/{0}/releases' -f $repo)
-
-# youtube-dlのバージョン取得
-try {
-	if (Test-Path $ytdlPath -PathType Leaf) { $currentVersion = (& $ytdlPath --version) }
-	else { $currentVersion = '' }
-} catch { $currentVersion = '' }
-
-# youtube-dlの最新バージョン取得
-try { $latestVersion = (Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec)[0].Tag_Name }
-catch { Write-Warning ($script:msg.ToolLatestNotIdentified -f $script:preferredYoutubedl) ; return }
-
-# youtube-dlのダウンロード
-if ($latestVersion -eq $currentVersion) {
-	Write-Output ('')
-	Write-Output ($script:msg.ToolUpToDate -f $script:preferredYoutubedl)
-	Write-Output ($script:msg.ToolLocalVersion -f $currentVersion)
-	Write-Output ($script:msg.ToolRemoteVersion -f $latestVersion)
-} else {
-	Write-Output ('')
-	Write-Warning ($script:msg.ToolOutdated -f $script:preferredYoutubedl)
-	Write-Output ($script:msg.ToolLocalVersion -f $currentVersion)
-	Write-Output ($script:msg.ToolRemoteVersion -f $latestVersion)
-	if ($script:preferredYoutubedl -eq 'yt-dlp-nightly') { $downloadFileName = 'yt-dlp' }
-	else { $downloadFileName = $script:preferredYoutubedl }
-	if (!$IsWindows) { $fileBeforeRename = $downloadFileName ; $fileAfterRename = 'yt-dlp' }
-	else { $fileBeforeRename = ('{0}.exe' -f $downloadFileName) ; $fileAfterRename = 'yt-dlp.exe' }
-	Write-Output ($script:msg.ToolDownload -f $script:preferredYoutubedl, [String]([System.Runtime.InteropServices.RuntimeInformation]::OSDescription).split()[0..1])
-	try {
-		#ダウンロード
-		$tag = (Invoke-RestMethod -Uri $releases -Method 'GET' -TimeoutSec $script:timeoutSec)[0].Tag_Name
-		$downloadURL = ('https://github.com/{0}/releases/download/{1}/{2}' -f $repo, $tag, $fileBeforeRename)
-		$ytdlFileLocation = Join-Path $script:binDir $fileAfterRename
-		Invoke-WebRequest -Uri $downloadURL -Out $ytdlFileLocation -TimeoutSec $script:timeoutSec
-	} catch { Write-Warning ($script:msg.ToolDownloadFailed -f $script:preferredYoutubedl) ; return }
-	if (!$IsWindows) { (& chmod a+x $ytdlFileLocation) }
-
-	# バージョンチェック
-	try {
-		$currentVersion = (& $ytdlPath --version)
-		Write-Output ($script:msg.ToolUpdated -f $script:preferredYoutubedl, $currentVersion)
-	} catch { Write-Warning $script:msg.ToolVersionCheckFailed ; return }
-
-}
-
-Remove-Variable -Name lookupTable, releases, ytdlPath, currentVersion, latestVersion, file, fileAfterRename, fileBeforeRename, tag, downloadURL, ytdlFileLocation -ErrorAction SilentlyContinue

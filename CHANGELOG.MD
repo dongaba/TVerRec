@@ -22,6 +22,7 @@
 - 一括ダウンロードで、番組ごとにダウンロード履歴(`history.csv`)の全件読み込みとダウンロード対象外リストの読み込みを行っていたのを、実行開始時に1回だけ読み込んで使い回すように変更(`Get-LatestHistoryCached`、`Add-LatestHistoryCache`、`Get-IgnoreListCached`を追加)。ダウンロードした番組の履歴はキャッシュにも反映する。履歴ファイルを共有している環境では、実行中に他のPCが追記した履歴はその実行中は反映されない
 - 一括ダウンロードの番組抽出を高速化。キーワードごとに履歴の全件を処理して突き合わせていたのを、ダウンロード済みのエピソードIDをHashSetにして使い回すように変更(`Invoke-HistoryMatchCheck`)。あわせて、シリーズ・シーズン・タレントのAPI(`callSeriesSeasons`、`callSeasonEpisodes`、`callTalentEpisode`)の結果を、実行中だけ使い回すように変更し、キーワード間で同じIDを何度も取得しないようにした(`Get-SearchResult`)。実行中に追加された番組は、その実行中は反映されない
 - 不要ファイル削除の「ダウンロード対象外の番組を削除します」で、ダウンロード先のフォルダ数 x ダウンロード対象外リストの行数だけ`Test-IgnoreMatch`を呼んでいたのを、`Find-IgnoreMatchedIndex`による一括判定に変更し短縮(`delete_trash.ps1`)。あわせて、一致したフォルダごとに行っていたダウンロード対象外リストの並べ替え(`Update-IgnoreList`)を、一致したタイトルごとに1回だけ行うように変更
+- `update_ffmpeg.ps1`と`update_youtube-dl.ps1`の更新処理を、それぞれ`Update-Ffmpeg`・`Update-Ytdl`の関数にまとめ、スクリプトとして実行したときだけ環境設定と更新処理を行うように変更(動作は同じ。ドット読み込みでは更新処理を実行しないため、テストできるようになった)
 
 ### 3.5.0 Fixed
 
@@ -34,6 +35,7 @@
 - ダウンロード対象外リスト(`ignore.conf`)が存在しない場合に、`Read-IgnoreList`が読み込み失敗の例外にならず空として扱っていた問題を修正(読み込み失敗として例外にする)
 - `Get-FileNameWoInvalidChar`が、Windowsでは`*?<>|`をファイル名から単純に除去し、macOS・Linuxと結果が異なっていた問題を修正(OSによらず`-`に置換)
 - 新バージョンの通知で表示する変更履歴の対象を、文字列比較で判定していたため、`3.10.0`が`3.9.0`より古いと扱われ、変更履歴が表示されない問題を修正(`Invoke-TVerRecUpdateCheck`。`Compare-Version`で比較する)
+- `update_ffmpeg.ps1`で、WindowsとLinuxのffmpegのバージョン表記が想定外の形式(ディストリビューション版の`6.1.1-3ubuntu5`など)だと、バージョン不明として扱わずに例外で終了する問題を修正
 
 ## [3.4.9](https://github.com/dongaba/TVerRec/releases/tag/v3.4.9)
 
