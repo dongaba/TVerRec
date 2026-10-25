@@ -5,6 +5,10 @@
 ### 3.5.0 Added
 
 - GUI設定画面に、起動時のPowerShellの新バージョン確認を無効化する設定(`$script:disableCheckPowerShellUpdate`)を追加
+- 新世代API(`contents-api.tver.jp`)が返す放送局IDと放送局名の対応表`resources/broadcaster.conf`と、対応表から放送局名を取得する`Get-BroadcasterName`を追加。放送局名は放送局別フォルダ名などに使われるため、旧APIの`BroadcasterName`と同じ名称を登録している。対応表にない放送局IDの場合は、旧APIで放送局名を取得して警告を表示するので、警告が出たら対応表に追記する
+- 番組情報のシーズン名・エピソード番号・放送日の整形処理を新旧のAPIで共通にする`Format-VideoInfoText`と、JSONの入れ子のプロパティを安全に取得する`Get-JsonProperty`を追加
+- `Get-VideoInfo`の新旧APIの戻り値を比較する調査用スクリプト`dev/Compare-VideoInfoApi.ps1`を追加
+- `Get-BroadcasterName`、`Format-VideoInfoText`、新世代APIを使う`Get-VideoInfo`のテストを追加
 
 ### 3.5.0 Changed
 
@@ -14,6 +18,7 @@
 - GUI設定画面の各設定の説明に、既定値を追記
 - キーワードサンプルファイル(`keyword.sample.conf`)に、ニュースのジャンルと放送局のtagを追加
 - 番組検索のHTTPエラー(404など)の警告に、失敗したAPIのURLを併記するように変更(`platform_token`・`member_sid`は伏せ字)。tagなどの検索結果から再帰的に呼ばれるAPIで失敗した場合も、原因となったIDを特定しやすくした
+- `Get-VideoInfo`が新世代API(`contents-api.tver.jp`の`v2/episodes`)から番組情報を取得するように変更。従来は`callEpisode`と`statics.tver.jp`の2回のAPI呼び出しが必要だったが1回になり、`platform_uid`・`platform_token`も不要。新世代APIから取得できない場合や、放送局IDが対応表にない場合は、従来の処理(`Get-VideoInfoLegacy`)にフォールバックする。新世代APIで取得した場合、戻り値の`versionNum`は`$null`になる(`Get-VideoInfo`の外では使用していない)
 
 ## [3.4.9](https://github.com/dongaba/TVerRec/releases/tag/v3.4.9)
 

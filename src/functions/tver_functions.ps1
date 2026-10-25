@@ -59,6 +59,10 @@
 Set-StrictMode -Version Latest
 Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 
+# 放送局IDと放送局名の対応表(Get-BroadcasterNameが初回呼び出し時に読み込む)と、対応表にない放送局IDの警告済み管理
+$script:broadcasterMap = $null
+$script:unknownBroadcasterID = @{}
+
 #----------------------------------------------------------------------
 # TVerのAPI Tokenを取得
 #----------------------------------------------------------------------
@@ -639,6 +643,158 @@ function Get-EpisodeIDFromURL {
 }
 
 #----------------------------------------------------------------------
+# JSONの入れ子のプロパティを安全に取得
+#----------------------------------------------------------------------
+function Get-JsonProperty {
+	<#
+		.SYNOPSIS
+			JSONから変換したオブジェクトの入れ子のプロパティを安全に取得します。
+
+		.DESCRIPTION
+			Set-StrictModeが有効でも、途中のプロパティが存在しない場合に例外とならず$nullを返します。
+
+		.PARAMETER object
+			取得元のオブジェクト。
+
+		.PARAMETER path
+			たどるプロパティ名の配列。
+
+		.EXAMPLE
+			Get-JsonProperty $response @('episode', 'title')
+	#>
+	[CmdletBinding()]
+	[OutputType([Object])]
+	Param (
+		[Parameter(Mandatory = $false)][AllowNull()][Object]$object,
+		[Parameter(Mandatory = $true)][String[]]$path
+	)
+	$current = $object
+	foreach ($name in $path) {
+		if ($null -eq $current) { return $null }
+		if ($current.PSObject.Properties.Name -contains $name) { $current = $current.$name }
+		else { return $null }
+	}
+	return $current
+}
+
+#----------------------------------------------------------------------
+# 放送局IDから放送局名を取得
+#----------------------------------------------------------------------
+function Get-BroadcasterName {
+	<#
+		.SYNOPSIS
+			放送局IDから放送局名を取得します。
+
+		.DESCRIPTION
+			新世代API(contents-api)は放送局名ではなく放送局ID(broadcast_provider_id)を返すため、
+			resources/broadcaster.confの対応表から、旧APIのBroadcasterNameと同じ放送局名を取得します。
+			対応表は初回の呼び出し時に読み込み、以降は読み込み済みの内容を使用します。
+			対応表にない放送局IDの場合は$nullを返します。
+
+		.PARAMETER broadcasterID
+			放送局ID(例: tx)。
+
+		.EXAMPLE
+			Get-BroadcasterName -broadcasterID 'tx'
+	#>
+	[CmdletBinding()]
+	[OutputType([String])]
+	Param ([Parameter(Mandatory = $true)][AllowEmptyString()][String]$broadcasterID)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if ($null -eq $script:broadcasterMap) {
+		$map = @{}
+		try {
+			foreach ($line in (Get-Content -Path (Join-Path $script:scriptRoot '../resources/broadcaster.conf') -Encoding UTF8)) {
+				if (($line.Trim() -eq '') -or $line.TrimStart().StartsWith('#')) { continue }
+				$columns = $line.Split("`t")
+				if ($columns.Count -ge 2) { $map[$columns[0].Trim()] = $columns[1].Trim() }
+			}
+		} catch { Write-Warning ($script:msg.BroadcasterListLoadFailed -f $_.Exception.Message) }
+		$script:broadcasterMap = $map
+	}
+	if ($script:broadcasterMap.ContainsKey($broadcasterID)) { return $script:broadcasterMap[$broadcasterID] }
+	return $null
+}
+
+#----------------------------------------------------------------------
+# 番組情報のシーズン名・エピソード番号・放送日を整形
+#----------------------------------------------------------------------
+function Format-VideoInfoText {
+	<#
+		.SYNOPSIS
+			番組情報のシーズン名・エピソード名・エピソード番号・放送日を整形します。
+
+		.DESCRIPTION
+			新旧どちらのAPIで取得した番組情報にも共通する整形処理です。
+			- 「《」と「》」で挟まれた文字の除去(設定が有効な場合)
+			- シーズン名が「本編」の場合や、シリーズ名がシーズン名を含む場合のシーズン名のクリア
+			- エピソード番号の補正と2桁への0埋め
+			- 放送日への年の補完
+
+		.PARAMETER seriesName
+			シリーズ名。
+
+		.PARAMETER seasonName
+			シーズン名。
+
+		.PARAMETER episodeName
+			エピソード名。
+
+		.PARAMETER episodeNum
+			エピソード番号。
+
+		.PARAMETER broadcastDate
+			放送日の表示文字列(例: 10月18日(日)放送)。
+
+		.OUTPUTS
+			PSCustomObject
+			seasonName、episodeName、episodeNum、broadcastDateを持つオブジェクトを返します。
+	#>
+	[CmdletBinding()]
+	[OutputType([PSCustomObject])]
+	Param (
+		[Parameter(Mandatory = $true)][AllowEmptyString()][String]$seriesName,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][String]$seasonName,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][String]$episodeName,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][String]$episodeNum,
+		[Parameter(Mandatory = $true)][AllowEmptyString()][String]$broadcastDate
+	)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$videoSeries = $seriesName
+	$videoSeason = $seasonName
+	$videoEpisodeNum = $episodeNum
+	# 「《」と「》」で挟まれた文字を除去
+	if ($script:removeSpecialNote) { $videoSeason = Remove-SpecialNote $videoSeason ; $episodeName = Remove-SpecialNote $episodeName }
+	# シーズン名が本編の場合はシーズン名をクリア
+	if ($videoSeason -eq '本編') { $videoSeason = '' }
+	# シリーズ名がシーズン名を含む場合はシーズン名をクリア
+	if ($videoSeries -cmatch [RegEx]::Escape($videoSeason)) { $videoSeason = '' }
+	# エピソード番号を極力修正
+	if (($videoEpisodeNum -match '^\d+$') -and (([Int]$videoEpisodeNum -eq 1) -or ([Int]$videoEpisodeNum % 10 -eq 0)) -and ($episodeName -imatch '((?:#|第|Episode|ep|Take|Vol|Part|Chapter|Flight|Karte|Case|Stage|Mystery|Ope|Story|Sign|Trap|Letter|Act)+\.?\s?)(\d+)(.*)')) { $videoEpisodeNum = $matches[2] }
+	# エピソード番号が1桁の際は頭0埋めして2桁に
+	$videoEpisodeNum = $videoEpisodeNum.PadLeft(2, '0')
+	# 放送日を整形
+	if ($broadcastDate -cmatch '([0-9]+)(月)([0-9]+)(日)(.+?)(放送|配信)') {	# ! きょうのわんこなど「2025/3/17週放送」のようなパターンもある
+		$currentYear = (Get-Date).Year
+		try {
+			$parsedBroadcastDate = [DateTime]::ParseExact(('{0}{1}{2}' -f $currentYear, $matches[1].PadLeft(2, '0'), $matches[3].PadLeft(2, '0')), 'yyyyMMdd', $null)
+			# * 実日付の翌日よりも放送日が未来だったら当年ではなく昨年の番組と判断する(年末の番組を年初にダウンロードするケース)
+			$broadcastYear = $parsedBroadcastDate -gt (Get-Date).AddDays(+1) ? $currentYear - 1 : $currentYear
+			$broadcastDate = ('{0}年{1}{2}{3}{4}{5}' -f $broadcastYear, $matches[1].PadLeft(2, '0'), $matches[2], $matches[3].PadLeft(2, '0'), $matches[4], $matches[6])
+		} catch {
+			# * 上記でエラーが出た場合は年が間違っているはず。年が不明なので年無しで整形する
+			$broadcastDate = ('{0}{1}{2}{3}{4}' -f $matches[1].PadLeft(2, '0'), $matches[2], $matches[3].PadLeft(2, '0'), $matches[4], $matches[6])
+		}
+	}
+	return [PSCustomObject]@{
+		seasonName    = $videoSeason
+		episodeName   = $episodeName
+		episodeNum    = $videoEpisodeNum
+		broadcastDate = $broadcastDate
+	}
+}
+
+#----------------------------------------------------------------------
 # TVerのAPIを叩いて番組情報取得
 #----------------------------------------------------------------------
 function Get-VideoInfo {
@@ -647,7 +803,113 @@ function Get-VideoInfo {
 			TVerの番組情報を取得します。
 
 		.DESCRIPTION
-			指定されたエピソードIDを使用して、TVerのAPIから番組の詳細情報を取得します。
+			指定されたエピソードIDを使用して、新世代API(contents-api.tver.jpのv2/episodes)から番組の詳細情報を取得します。
+			1回の呼び出しで、シリーズ・シーズン・エピソードの情報、説明文、エピソード番号、字幕の有無が得られ、
+			platform_uid・platform_tokenも不要です。
+			次の場合は、旧API(Get-VideoInfoLegacy)にフォールバックします。
+			- 新世代APIの呼び出しに失敗した場合、または必要な項目が得られなかった場合
+			- 放送局IDがresources/broadcaster.confにない場合(旧APIの放送局名と同じ名称にするため。警告を表示します)
+
+		.PARAMETER episodeID
+			情報を取得するエピソードのID。
+
+		.EXAMPLE
+			Get-VideoInfo -episodeID "123456"
+
+		.OUTPUTS
+			PSCustomObject
+			Get-VideoInfoLegacyと同じプロパティを持つオブジェクトを返します。
+			新世代APIで取得した場合、versionNumは$nullです(旧APIのstatics取得用のバージョンのため不要)。
+
+		.NOTES
+			放送局名は、フォルダ名などに使われるため旧APIのBroadcasterNameと同じ値を返す必要があります。
+			そのため新世代APIのproduction_provider(制作局)は使いません(放送局と異なる場合があるため)。
+	#>
+	[CmdletBinding()]
+	[OutputType([PSCustomObject])]
+	Param ([Parameter(Mandatory = $true)][String]$episodeID)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$tverVideoInfoURL = 'https://contents-api.tver.jp/contents/api/v2/episodes/{0}' -f $episodeID
+	try {
+		$response = Invoke-RestMethod -Uri $tverVideoInfoURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec
+		$episode = Get-JsonProperty $response @('episode')
+		$series = Get-JsonProperty $response @('series')
+		$season = Get-JsonProperty $response @('season')
+		if (($null -eq $episode) -or ($null -eq $series)) { throw 'episode or series is missing' }
+		$videoEpisodeID = [String](Get-JsonProperty $episode @('id'))
+		if ($videoEpisodeID -eq '') { throw 'episode id is missing' }
+		# 放送局名(旧APIのBroadcasterNameと同じ名称にするため対応表を使用)
+		$broadcasterID = [String](Get-JsonProperty $episode @('broadcast_provider_id'))
+		$mediaName = Get-BroadcasterName -broadcasterID $broadcasterID
+		if ([String]::IsNullOrEmpty($mediaName)) {
+			if (-not $script:unknownBroadcasterID.ContainsKey($broadcasterID)) {
+				$script:unknownBroadcasterID[$broadcasterID] = $true
+				Write-Warning ($script:msg.UnknownBroadcasterID -f $broadcasterID)
+			}
+			$legacyInfo = Get-VideoInfoLegacy -episodeID $episodeID
+			if ($null -ne $legacyInfo) { return $legacyInfo }
+			# * 旧APIでも取得できない場合は、他の放送局と混ざらないよう放送局IDをそのまま使用する
+			Write-Warning ($script:msg.UnknownBroadcasterIDFallback -f $broadcasterID)
+			$mediaName = $broadcasterID
+		}
+		# 終了日時(UNIX秒)。無ければISO 8601の値から変換する
+		$endAt = Get-JsonProperty $episode @('view_status', 'end_at')
+		if ($null -eq $endAt) { $endAt = [DateTimeOffset]::Parse([String](Get-JsonProperty $episode @('end_at'))).ToUnixTimeSeconds() }
+		# * 実行環境のタイムゾーンに依存せず常に日本時間(JST)で扱う
+		$endTime = [DateTimeOffset]::FromUnixTimeSeconds([Int64]$endAt).ToOffset([TimeSpan]::FromHours(9)).DateTime
+		# 字幕の有無。項目が無いときは$nullとし、呼び出し側でyoutube-dlでの確認にフォールバックさせる
+		$isSubtitleValue = Get-JsonProperty $episode @('is_subtitle')
+		$isSubtitle = if ($null -ne $isSubtitleValue) { [Boolean]$isSubtitleValue } else { $null }
+		# シリーズ名は旧APIのEpisode.Content.SeriesTitleに合わせ、series.titleを採用(比較して全件一致を確認済み)
+		$videoSeries = (Remove-SpecialCharacter (Get-NarrowChar ([String](Get-JsonProperty $series @('title'))))).Trim()
+		$videoSeriesID = [String](Get-JsonProperty $series @('id'))
+		$videoSeason = (Remove-SpecialCharacter (Get-NarrowChar ([String](Get-JsonProperty $season @('title'))))).Trim()
+		$videoSeasonID = [String](Get-JsonProperty $season @('id'))
+		$episodeName = (Remove-SpecialCharacter (Get-NarrowChar ([String](Get-JsonProperty $episode @('title'))))).Trim()
+		$mediaName = (Get-NarrowChar $mediaName).Trim()
+		$providerName = (Get-NarrowChar ([String](Get-JsonProperty $episode @('production_provider', 'display_name')))).Trim()
+		$broadcastDate = (([String](Get-JsonProperty $episode @('broadcast_date_label'))).Replace('ほか', '').Replace('放送分', '放送').Replace('配信分', '配信')).Trim()
+		$descriptionText = (Get-NarrowChar (([String](Get-JsonProperty $episode @('description'))).Replace('&amp;', '&'))).Trim()
+		$videoEpisodeNum = (Get-NarrowChar ([String](Get-JsonProperty $episode @('index_no')))).Trim()
+	} catch {
+		# * 新世代APIで取得できなかった場合は旧APIにフォールバック
+		Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $_.Exception.Message)
+		return (Get-VideoInfoLegacy -episodeID $episodeID)
+	}
+	$formatted = Format-VideoInfoText -seriesName $videoSeries -seasonName $videoSeason -episodeName $episodeName -episodeNum $videoEpisodeNum -broadcastDate $broadcastDate
+	return [PSCustomObject]@{
+		seriesName      = $videoSeries
+		seriesID        = $videoSeriesID
+		seriesPageURL   = ('https://tver.jp/series/{0}' -f $videoSeriesID)
+		seasonName      = $formatted.seasonName
+		seasonID        = $videoSeasonID
+		episodeNum      = $formatted.episodeNum
+		episodeID       = $videoEpisodeID
+		episodePageURL  = ('https://tver.jp/episodes/{0}' -f $videoEpisodeID)
+		episodeName     = $formatted.episodeName
+		mediaName       = $mediaName
+		providerName    = $providerName
+		broadcastDate   = $formatted.broadcastDate
+		endTime         = $endTime
+		versionNum      = $null
+		isSubtitle      = $isSubtitle
+		videoInfoURL    = $tverVideoInfoURL
+		descriptionText = $descriptionText
+	}
+}
+
+#----------------------------------------------------------------------
+# 旧APIを叩いて番組情報取得
+#----------------------------------------------------------------------
+function Get-VideoInfoLegacy {
+	<#
+		.SYNOPSIS
+			旧API(platform-api / statics)でTVerの番組情報を取得します。
+
+		.DESCRIPTION
+			指定されたエピソードIDを使用して、旧APIから番組の詳細情報を取得します。
+			新世代API(contents-api)で取得できない場合や、放送局IDが対応表にない場合のフォールバックとして
+			Get-VideoInfoから呼び出されます。
 			取得される情報には以下のようなものがあります：
 			- シリーズ情報
 			- シーズン情報
@@ -661,7 +923,7 @@ function Get-VideoInfo {
 			情報を取得するエピソードのID。
 
 		.EXAMPLE
-			Get-VideoInfo -episodeID "123456"
+			Get-VideoInfoLegacy -episodeID "123456"
 
 		.OUTPUTS
 			PSCustomObject
@@ -813,29 +1075,9 @@ function Get-VideoInfo {
 		#>
 	} catch { Write-Warning ($script:msg.VideoInfoRetrievalFailed -f $_.Exception.Message) ; return }
 
-	# 「《」と「》」で挟まれた文字を除去
-	if ($script:removeSpecialNote) { $videoSeason = Remove-SpecialNote $videoSeason ; $episodeName = Remove-SpecialNote $episodeName }
-	# シーズン名が本編の場合はシーズン名をクリア
-	if ($videoSeason -eq '本編') { $videoSeason = '' }
-	# シリーズ名がシーズン名を含む場合はシーズン名をクリア
-	if ($videoSeries -cmatch [RegEx]::Escape($videoSeason)) { $videoSeason = '' }
-	# エピソード番号を極力修正
-	if (($videoEpisodeNum -match '^\d+$') -and (([Int]$videoEpisodeNum -eq 1) -or ([Int]$videoEpisodeNum % 10 -eq 0)) -and ($episodeName -imatch '((?:#|第|Episode|ep|Take|Vol|Part|Chapter|Flight|Karte|Case|Stage|Mystery|Ope|Story|Sign|Trap|Letter|Act)+\.?\s?)(\d+)(.*)')) { $videoEpisodeNum = $matches[2] }
-	# エピソード番号が1桁の際は頭0埋めして2桁に
-	$videoEpisodeNum = $videoEpisodeNum.PadLeft(2, '0')
-	# 放送日を整形
-	if ($broadcastDate -cmatch '([0-9]+)(月)([0-9]+)(日)(.+?)(放送|配信)') {	# ! きょうのわんこなど「2025/3/17週放送」のようなパターンもある
-		$currentYear = (Get-Date).Year
-		try {
-			$parsedBroadcastDate = [DateTime]::ParseExact(('{0}{1}{2}' -f $currentYear, $matches[1].PadLeft(2, '0'), $matches[3].PadLeft(2, '0')), 'yyyyMMdd', $null)
-			# * 実日付の翌日よりも放送日が未来だったら当年ではなく昨年の番組と判断する(年末の番組を年初にダウンロードするケース)
-			$broadcastYear = $parsedBroadcastDate -gt (Get-Date).AddDays(+1) ? $currentYear - 1 : $currentYear
-			$broadcastDate = ('{0}年{1}{2}{3}{4}{5}' -f $broadcastYear, $matches[1].PadLeft(2, '0'), $matches[2], $matches[3].PadLeft(2, '0'), $matches[4], $matches[6])
-		} catch {
-			# * 上記でエラーが出た場合は年が間違っているはず。年が不明なので年無しで整形する
-			$broadcastDate = ('{0}{1}{2}{3}{4}' -f $matches[1].PadLeft(2, '0'), $matches[2], $matches[3].PadLeft(2, '0'), $matches[4], $matches[6])
-		}
-	}
+	# 「《」と「》」で挟まれた文字の除去、シーズン名・エピソード番号・放送日の整形
+	$formatted = Format-VideoInfoText -seriesName $videoSeries -seasonName $videoSeason -episodeName $episodeName -episodeNum $videoEpisodeNum -broadcastDate $broadcastDate
+	$videoSeason = $formatted.seasonName ; $episodeName = $formatted.episodeName ; $videoEpisodeNum = $formatted.episodeNum ; $broadcastDate = $formatted.broadcastDate
 	return [PSCustomObject]@{
 		seriesName      = $videoSeries
 		seriesID        = $videoSeriesID

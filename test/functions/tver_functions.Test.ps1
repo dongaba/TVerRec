@@ -499,6 +499,147 @@ Describe 'Get-VideoInfo' {
 }
 
 #----------------------------------------------------------------------
+# 放送局IDから放送局名を取得
+#----------------------------------------------------------------------
+Describe 'Get-BroadcasterName' {
+	Context 'モックチェック' {
+		It '対応表にある放送局IDから旧APIのBroadcasterNameと同じ名称が取得できること' {
+			Get-BroadcasterName -broadcasterID 'tx' | Should -BeExactly 'テレ東'
+			Get-BroadcasterName -broadcasterID 'cx' | Should -BeExactly 'フジテレビ'
+		}
+		It '整形前の名称(全角文字など)がそのまま返ること' {
+			Get-BroadcasterName -broadcasterID 'bs4' | Should -BeExactly 'ＢＳ日本'
+		}
+		It '対応表にない放送局IDは$nullが返ること' {
+			Get-BroadcasterName -broadcasterID 'unknown-station' | Should -BeNullOrEmpty
+		}
+		It '空の放送局IDは$nullが返ること' {
+			Get-BroadcasterName -broadcasterID '' | Should -BeNullOrEmpty
+		}
+	}
+}
+
+#----------------------------------------------------------------------
+# 番組情報の整形
+#----------------------------------------------------------------------
+Describe 'Format-VideoInfoText' {
+	Context 'モックチェック' {
+		BeforeAll {
+			# Remove-SpecialNoteはtverrec_functions.ps1の関数のため、このテストでは簡易版で代用する
+			function Remove-SpecialNote { Param ([String]$text) return ($text -replace '《[^》]*》', '') }
+		}
+		BeforeEach { $script:removeSpecialNote = $false }
+		It 'エピソード番号が1桁のときは頭0埋めして2桁になること' {
+			(Format-VideoInfoText -seriesName 'S' -seasonName '' -episodeName 'T' -episodeNum '2' -broadcastDate '').episodeNum | Should -BeExactly '02'
+		}
+		It 'シーズン名が本編のときはシーズン名がクリアされること' {
+			(Format-VideoInfoText -seriesName 'S' -seasonName '本編' -episodeName 'T' -episodeNum '1' -broadcastDate '').seasonName | Should -BeExactly ''
+		}
+		It 'シリーズ名がシーズン名を含むときはシーズン名がクリアされること' {
+			(Format-VideoInfoText -seriesName 'ドラマ season2' -seasonName 'season2' -episodeName 'T' -episodeNum '3' -broadcastDate '').seasonName | Should -BeExactly ''
+		}
+		It '《》で挟まれた文字が設定有効時に除去されること' {
+			$script:removeSpecialNote = $true
+			(Format-VideoInfoText -seriesName 'S' -seasonName '' -episodeName 'T《再》' -episodeNum '3' -broadcastDate '').episodeName | Should -BeExactly 'T'
+		}
+		It '放送日に年が補完されること' {
+			$result = Format-VideoInfoText -seriesName 'S' -seasonName '' -episodeName 'T' -episodeNum '3' -broadcastDate ((Get-Date).AddDays(-1).ToString('M月d日') + '(月)放送')
+			$result.broadcastDate | Should -Match '^[0-9]{4}年[0-9]{2}月[0-9]{2}日'
+		}
+	}
+}
+
+#----------------------------------------------------------------------
+# 番組情報取得(新世代API)
+#----------------------------------------------------------------------
+Describe 'Get-VideoInfo(新世代API)' {
+	Context 'モックチェック' {
+		BeforeAll {
+			# 新世代API(contents-api v2/episodes)のレスポンスを生成
+			function New-ContentsApiResponse {
+				[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'テスト用のオブジェクトを生成するだけで状態を変更しない')]
+				Param ([String]$broadcasterID = 'tx')
+				[PSCustomObject]@{
+					episode = [PSCustomObject]@{
+						id                    = 'ep1'
+						title                 = 'T'
+						broadcast_provider_id = $broadcasterID
+						production_provider   = [PSCustomObject]@{ display_name = '制作局' }
+						broadcast_date_label  = ''
+						description           = 'D &amp; E'
+						index_no              = 2
+						is_subtitle           = $true
+						end_at                = '2027-01-22T12:59:59Z'
+						view_status           = [PSCustomObject]@{ end_at = 1800622799 }
+					}
+					season  = [PSCustomObject]@{ id = 's1' ; title = '本編' }
+					series  = [PSCustomObject]@{ id = 'sr1' ; title = 'S' }
+				}
+			}
+			# 旧API(callEpisode + statics)のレスポンスを生成
+			function New-LegacyApiResponse {
+				[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'テスト用のオブジェクトを生成するだけで状態を変更しない')]
+				Param ([String]$uri)
+				if ($uri -like '*callEpisode*') {
+					[PSCustomObject]@{ Result = [PSCustomObject]@{
+							Episode = [PSCustomObject]@{ Content = [PSCustomObject]@{ Id = 'ep1' ; SeriesTitle = 'S' ; Title = 'T' ; BroadcasterName = '旧API放送局名' ; ProductionProviderName = 'P' ; BroadcastDateLabel = '' ; EndAt = 1800622799 ; version = 3 } }
+							Series = [PSCustomObject]@{ Content = [PSCustomObject]@{ Id = 'sr1' } }
+							Season = [PSCustomObject]@{ Content = [PSCustomObject]@{ Id = 's1' ; Title = '' } }
+						}
+					}
+				} else { [PSCustomObject]@{ Description = 'd' ; No = '1' } }
+			}
+		}
+		BeforeEach { $script:unknownBroadcasterID = @{} }
+		It '新世代APIの1回の呼び出しで番組情報が取得でき、旧APIは呼ばれないこと' {
+			Mock Invoke-RestMethod { New-ContentsApiResponse }
+			$info = Get-VideoInfo -episodeID 'ep1'
+			$info.seriesName | Should -BeExactly 'S'
+			$info.seriesID | Should -BeExactly 'sr1'
+			$info.seasonName | Should -BeExactly ''
+			$info.seasonID | Should -BeExactly 's1'
+			$info.episodeID | Should -BeExactly 'ep1'
+			$info.episodeNum | Should -BeExactly '02'
+			$info.mediaName | Should -BeExactly 'テレ東'
+			$info.providerName | Should -BeExactly '制作局'
+			$info.descriptionText | Should -BeExactly 'D & E'
+			$info.isSubtitle | Should -BeTrue
+			$info.versionNum | Should -BeNullOrEmpty
+			$info.endTime.ToString('yyyy-MM-dd HH:mm:ss') | Should -Be '2027-01-22 21:59:59'
+			Should -Invoke Invoke-RestMethod -Times 1 -Exactly
+			Should -Invoke Invoke-RestMethod -Times 0 -Exactly -ParameterFilter { $Uri -like '*platform-api*' }
+		}
+		It '放送局名は制作局(production_provider)ではなく対応表の放送局名になること' {
+			Mock Invoke-RestMethod { New-ContentsApiResponse -broadcasterID 'bs9' }
+			(Get-VideoInfo -episodeID 'ep1').mediaName | Should -BeExactly 'WOWOW'
+		}
+		It '対応表にない放送局IDは旧APIの放送局名になり、警告が1回だけ表示されること' {
+			Mock Invoke-RestMethod { if ($Uri -like '*contents-api*') { New-ContentsApiResponse -broadcasterID 'newstation' } else { New-LegacyApiResponse -uri $Uri } }
+			Mock Write-Warning {}
+			$info1 = Get-VideoInfo -episodeID 'ep1'
+			$info2 = Get-VideoInfo -episodeID 'ep1'
+			$info1.mediaName | Should -BeExactly '旧API放送局名'
+			$info2.mediaName | Should -BeExactly '旧API放送局名'
+			Should -Invoke Write-Warning -Times 1 -Exactly
+		}
+		It '対応表になく旧APIでも取得できないときは放送局IDがそのまま使われること' {
+			Mock Invoke-RestMethod { if ($Uri -like '*contents-api*') { New-ContentsApiResponse -broadcasterID 'newstation' } else { throw 'legacy API failed' } }
+			(Get-VideoInfo -episodeID 'ep1' 3>$null).mediaName | Should -BeExactly 'newstation'
+		}
+		It '新世代APIの呼び出しに失敗したときは旧APIにフォールバックすること' {
+			Mock Invoke-RestMethod { if ($Uri -like '*contents-api*') { throw 'contents API failed' } else { New-LegacyApiResponse -uri $Uri } }
+			$info = Get-VideoInfo -episodeID 'ep1'
+			$info.mediaName | Should -BeExactly '旧API放送局名'
+			$info.episodeID | Should -BeExactly 'ep1'
+		}
+		It '新世代APIのレスポンスにepisodeがないときは旧APIにフォールバックすること' {
+			Mock Invoke-RestMethod { if ($Uri -like '*contents-api*') { [PSCustomObject]@{ code = 4002 } } else { New-LegacyApiResponse -uri $Uri } }
+			(Get-VideoInfo -episodeID 'ep1').mediaName | Should -BeExactly '旧API放送局名'
+		}
+	}
+}
+
+#----------------------------------------------------------------------
 # 日本のIPアドレス取得 (#277 のリグレッション)
 #----------------------------------------------------------------------
 Describe 'Get-JpIP' {
