@@ -393,7 +393,7 @@ function Get-SearchResult {
 		} else {
 			# どのAPIで失敗したか(再帰呼び出し先を含む)を特定できるよう、トークン類を伏せたURLを併記する
 			# * 例外メッセージは環境の言語で出力されるため、日本語環境ではHttpOtherError側に入る。どちらもURL付きで表示する
-			$maskedURL = $callSearchURL -replace '(platform_token|member_sid)=[^&]+', '$1=***'
+			$maskedURL = $callSearchURL -replace '(platform_uid|platform_token|member_sid)=[^&]+', '$1=***'
 			$errorDetail = '{0} ({1})' -f $_.Exception.Message, $maskedURL
 			if ($_.Exception.Message.Contains('Response status code does not indicate success:')) { Write-Warning ($script:msg.HttpBadResponse -f $errorDetail) ; return }
 			else { Write-Warning ($script:msg.HttpOtherError -f $errorDetail) ; return }

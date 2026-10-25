@@ -17,7 +17,7 @@
 - 不要ファイルやリネームに失敗したファイルを削除する際に、削除するファイル名を表示するように変更
 - GUI設定画面の各設定の説明に、既定値を追記
 - キーワードサンプルファイル(`keyword.sample.conf`)に、ニュースのジャンルと放送局のtagを追加
-- 番組検索のHTTPエラー(404など)の警告に、失敗したAPIのURLを併記するように変更(`platform_token`・`member_sid`は伏せ字)。tagなどの検索結果から再帰的に呼ばれるAPIで失敗した場合も、原因となったIDを特定しやすくした
+- 番組検索のHTTPエラー(404など)の警告に、失敗したAPIのURLを併記するように変更(`platform_uid`・`platform_token`・`member_sid`は伏せ字)。tagなどの検索結果から再帰的に呼ばれるAPIで失敗した場合も、原因となったIDを特定しやすくした
 - `Get-VideoInfo`が新世代API(`contents-api.tver.jp`の`v2/episodes`)から番組情報を取得するように変更。従来は`callEpisode`と`statics.tver.jp`の2回のAPI呼び出しが必要だったが1回になり、`platform_uid`・`platform_token`も不要。新世代APIから取得できない場合や、放送局IDが対応表にない場合は、従来の処理(`Get-VideoInfoLegacy`)にフォールバックする。新世代APIで取得した場合、戻り値の`versionNum`は`$null`になる(`Get-VideoInfo`の外では使用していない)
 - 一括ダウンロードの待ち時間を短縮。youtube-dlの同時実行数が上限に達したときの空き確認の間隔を60秒から10秒に、番組ごとのyoutube-dl起動後の待機を5秒から1秒に変更(`Wait-YtdlProcess`、`Invoke-VideoDownload`)
 
