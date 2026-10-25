@@ -1,0 +1,42 @@
+name: Pester
+
+on:
+  push:
+    branches: [master, beta, dev]
+  pull_request:
+    branches: [master, beta, dev]
+
+jobs:
+  pester:
+    name: Pester (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Run Pester
+        shell: pwsh
+        run: |
+          Import-Module Pester -MinimumVersion 5.0
+          $config = New-PesterConfiguration
+          $config.Run.Path = './test/functions'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Normal'
+          $config.CodeCoverage.Enabled = $true
+          $config.CodeCoverage.Path = './src/functions/*.ps1'
+          $config.CodeCoverage.OutputPath = 'coverage.xml'
+          Invoke-Pester -Configuration $config
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.os }}
+          path: coverage.xml
+          if-no-files-found: ignore
