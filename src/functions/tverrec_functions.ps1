@@ -612,6 +612,7 @@ function Add-LatestHistoryCache {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if (!(Test-Path Variable:Script:histCache) -or ($null -eq $script:histCache) -or ($null -eq $Record)) { return }
 	$script:histCache = @(@($script:histCache).Where({ $_ -and ($_.videoPage -ne $Record.videoPage) })) + @($Record)
+	$script:histIdSet = $null	# ダウンロード済みIDのキャッシュは次回に作り直す
 }
 
 #----------------------------------------------------------------------
@@ -1616,6 +1617,22 @@ function Invoke-HistoryMatchCheck {
 	Param ([Parameter(Mandatory = $true)][String[]]$episodeLinks)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# ダウンロード履歴ファイルのデータを読み込み
+	# 一括ダウンロード中(履歴キャッシュあり)は、ダウンロード済みのIDをHashSetにして使い回す(キーワードごとの全件処理を避けるため)
+	if ((Test-Path Variable:Script:histCache) -and ($null -ne $script:histCache)) {
+		if (!(Test-Path Variable:Script:histIdSet) -or ($null -eq $script:histIdSet)) {
+			$histFileData = @(Remove-SubtitleRecheckTarget @(Get-LatestHistoryCached))	# 字幕の再確認の対象は「ダウンロード済み」に含めない
+			$histIdList = [System.Collections.Generic.List[String]]::new()
+			foreach ($histRecord in $histFileData.Where({ $_ })) { $histIdList.Add($histRecord.videoPage.Replace('https://tver.jp/episodes/', '')) }
+			# * Compare-Objectと同様に大文字小文字を区別しない
+			$script:histIdSet = [System.Collections.Generic.HashSet[String]]::new($histIdList, [System.StringComparer]::OrdinalIgnoreCase)
+		}
+		$videoLinks = [System.Collections.Generic.List[String]]::new()
+		$processedCount = 0
+		foreach ($episodeLink in $episodeLinks) {
+			if ($script:histIdSet.Contains($episodeLink)) { $processedCount++ } else { $videoLinks.Add($episodeLink) }
+		}
+		return @($videoLinks.ToArray(), $processedCount)
+	}
 	$histFileData = @(Get-LatestHistoryCached)
 	$histFileData = @(Remove-SubtitleRecheckTarget $histFileData)	# 字幕の再確認の対象は「ダウンロード済み」に含めない
 	if ($histFileData.Count -eq 0) { $histVideoPages = @() } else { $histVideoPages = @($histFileData.videoPage.Replace('https://tver.jp/episodes/', '')) }

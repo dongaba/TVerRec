@@ -21,6 +21,7 @@
 - `Get-VideoInfo`が新世代API(`contents-api.tver.jp`の`v2/episodes`)から番組情報を取得するように変更。従来は`callEpisode`と`statics.tver.jp`の2回のAPI呼び出しが必要だったが1回になり、`platform_uid`・`platform_token`も不要。新世代APIから取得できない場合や、放送局IDが対応表にない場合は、従来の処理(`Get-VideoInfoLegacy`)にフォールバックする。新世代APIで取得した場合、戻り値の`versionNum`は`$null`になる(`Get-VideoInfo`の外では使用していない)
 - 一括ダウンロードの待ち時間を短縮。youtube-dlの同時実行数が上限に達したときの空き確認の間隔を60秒から10秒に、番組ごとのyoutube-dl起動後の待機を5秒から1秒に変更(`Wait-YtdlProcess`、`Invoke-VideoDownload`)
 - 一括ダウンロードで、番組ごとにダウンロード履歴(`history.csv`)の全件読み込みとダウンロード対象外リストの読み込みを行っていたのを、実行開始時に1回だけ読み込んで使い回すように変更(`Get-LatestHistoryCached`、`Add-LatestHistoryCache`、`Get-IgnoreListCached`を追加)。ダウンロードした番組の履歴はキャッシュにも反映する。履歴ファイルを共有している環境では、実行中に他のPCが追記した履歴はその実行中は反映されない
+- 一括ダウンロードの番組抽出を高速化。キーワードごとに履歴の全件を処理して突き合わせていたのを、ダウンロード済みのエピソードIDをHashSetにして使い回すように変更(`Invoke-HistoryMatchCheck`)。あわせて、シリーズ・シーズン・タレントのAPI(`callSeriesSeasons`、`callSeasonEpisodes`、`callTalentEpisode`)の結果を、実行中だけ使い回すように変更し、キーワード間で同じIDを何度も取得しないようにした(`Get-SearchResult`)。実行中に追加された番組は、その実行中は反映されない
 
 ### 3.5.0 Fixed
 

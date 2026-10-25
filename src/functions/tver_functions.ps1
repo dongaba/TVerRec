@@ -386,19 +386,26 @@ function Get-SearchResult {
 		default {}
 	}
 	# 取得した値をタイプごとに調整
-	try { $searchResultsRaw = Invoke-RestMethod -Uri $callSearchURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec }
-	catch {
-		if ($_.Exception.Message.Contains('The request was canceled due to the configured HttpClient.Timeout of')) {
-			Write-Warning ($script:msg.HttpTimeout) ; return
-		} else {
-			# どのAPIで失敗したか(再帰呼び出し先を含む)を特定できるよう、トークン類を伏せたURLを併記する
-			# * 例外メッセージは環境の言語で出力されるため、日本語環境ではHttpOtherError側に入る。どちらもURL付きで表示する
-			$maskedURL = $callSearchURL -replace '(platform_uid|platform_token|member_sid)=[^&]+', '$1=***'
-			$errorDetail = '{0} ({1})' -f $_.Exception.Message, $maskedURL
-			if ($_.Exception.Message.Contains('Response status code does not indicate success:')) { Write-Warning ($script:msg.HttpBadResponse -f $errorDetail) ; return }
-			else { Write-Warning ($script:msg.HttpOtherError -f $errorDetail) ; return }
+	# 一括ダウンロード中は、シリーズ・シーズン・タレントのAPIの結果を実行中だけ使い回す(キーワード間で同じIDを何度も取得しないため)
+	$useSearchCache = (Test-Path Variable:Script:searchCache) -and ($null -ne $script:searchCache) -and ($baseURL -match '/(callSeriesSeasons|callSeasonEpisodes|callTalentEpisode)/')
+	if ($useSearchCache -and $script:searchCache.ContainsKey($callSearchURL)) { $searchResultsRaw = $script:searchCache[$callSearchURL] }
+	else {
+		try { $searchResultsRaw = Invoke-RestMethod -Uri $callSearchURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec }
+		catch {
+			if ($_.Exception.Message.Contains('The request was canceled due to the configured HttpClient.Timeout of')) {
+				Write-Warning ($script:msg.HttpTimeout) ; return
+			} else {
+				# どのAPIで失敗したか(再帰呼び出し先を含む)を特定できるよう、トークン類を伏せたURLを併記する
+				# * 例外メッセージは環境の言語で出力されるため、日本語環境ではHttpOtherError側に入る。どちらもURL付きで表示する
+				$maskedURL = $callSearchURL -replace '(platform_uid|platform_token|member_sid)=[^&]+', '$1=***'
+				$errorDetail = '{0} ({1})' -f $_.Exception.Message, $maskedURL
+				if ($_.Exception.Message.Contains('Response status code does not indicate success:')) { Write-Warning ($script:msg.HttpBadResponse -f $errorDetail) ; return }
+				else { Write-Warning ($script:msg.HttpOtherError -f $errorDetail) ; return }
+			}
 		}
+		if ($useSearchCache) { $script:searchCache[$callSearchURL] = $searchResultsRaw }
 	}
+
 	# タイプ別に参照先を調整
 	$searchResults = switch ($type) {
 		'specialmain' { $searchResultsRaw.Result.specialContents ; break }
@@ -430,7 +437,7 @@ function Get-SearchResult {
 			default { Write-Warning ($script:msg.UnknownContentsType -f $searchResult.Type, $searchResult.Content.Id) }
 		}
 	}
-	Remove-Variable -Name baseURL, type, keyword, requireData, loginRequired, sid, uid, token, callSearchURL, maskedURL, errorDetail, searchResultsRaw, searchResults, order, sortedSearchResults, searchResult -ErrorAction SilentlyContinue
+	Remove-Variable -Name baseURL, type, keyword, requireData, loginRequired, sid, uid, token, callSearchURL, maskedURL, errorDetail, searchResultsRaw, searchResults, order, sortedSearchResults, useSearchCache, searchResult -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------

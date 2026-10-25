@@ -92,6 +92,8 @@ try {
 	# * 他のPCが実行中に追記した履歴は、この実行中は反映されない
 	$script:histCache = @(Get-LatestHistory)
 	$script:ignoreCache = @(Read-IgnoreList)
+	# シリーズ・シーズン・タレントのAPI結果も実行中だけ使い回す
+	$script:searchCache = @{}
 
 	# 進捗表示の初期化
 	$toastShowParams = @{
@@ -248,7 +250,7 @@ try {
 	throw
 } finally {
 	# キャッシュの破棄
-	Remove-Variable -Name histCache, ignoreCache -Scope Script -ErrorAction SilentlyContinue
+	Remove-Variable -Name histCache, histIdSet, ignoreCache, searchCache -Scope Script -ErrorAction SilentlyContinue
 
 	# 変数のクリーンアップ
 	Remove-Variable -Name args, keywords, keywordTotal, keywordNum, toastShowParams,
