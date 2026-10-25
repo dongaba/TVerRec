@@ -2578,7 +2578,10 @@ function Remove-UnMovedTempFile {
 	process {
 		foreach ($file in $targetFiles) {
 			try {
-				if ($PSCmdlet.ShouldProcess($file, 'Remove file')) { Remove-Item -LiteralPath $file -Force -ErrorAction SilentlyContinue }
+				if ($PSCmdlet.ShouldProcess($file, 'Remove file')) {
+					Write-Information ($script:msg.DeleteFile -f $file)
+					Remove-Item -LiteralPath $file -Force -ErrorAction SilentlyContinue
+				}
 			} catch { Write-Warning ('{0} : {1}' -f $file, $script:msg.FileCannotBeDeleted) }
 		}
 	}
@@ -2629,6 +2632,7 @@ function Remove-UnRenamedTempFile {
 		foreach ($file in $targetFiles) {
 			try {
 				if ($PSCmdlet.ShouldProcess($file, 'Remove file')) {
+					Write-Information ($script:msg.DeleteFile -f $file)
 					Remove-Item -LiteralPath $file -Force -ErrorAction Stop
 				}
 			} catch { Write-Warning ('{0} : {1}' -f $file, $script:msg.FileCannotBeDeleted) }
