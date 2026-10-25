@@ -11,7 +11,7 @@
 
 ### 3.5.0 Changed
 
-- Chrome拡張機能「TVerRec Assistant」をv0.2.0に更新。TVerの通信をブロックしてURLから`platform_uid`・`platform_token`・`member_sid`を拾う方式をやめ、開いているTVerのページが提供するSDK(`window.TVer.getStatus()`)から取得するように変更。TVerのAPI仕様変更の影響を受けにくくなり、Refreshボタンやエラーモーダルの自動クリックが不要になった。未ログインの場合は`platform_uid`・`platform_token`、TVer IDにログイン中の場合は`member_sid`を表示し、`user_settings.ps1`用の形式でコピーできる
+- Chrome拡張機能「TVerRec Assistant」をv0.2.1に更新。TVerの通信をブロックしてURLから`platform_uid`・`platform_token`・`member_sid`を拾う方式をやめ、開いているTVerのページが提供するSDK(`window.TVer.getStatus()`)から取得するように変更。TVerのAPI仕様変更の影響を受けにくくなり、Refreshボタンやエラーモーダルの自動クリックが不要になった。未ログインの場合は`platform_uid`・`platform_token`、TVer IDにログイン中の場合は`member_sid`を表示し、`user_settings.ps1`用の形式でコピーできる
 - 字幕の有無を、エピソード情報のJSON(`isSubtitle`)から取得するように変更(`Get-VideoInfo`が`isSubtitle`を返し、`Get-VideoSubtitleStatus`が優先して使用)。取得できない場合は従来どおりyt-dlpで確認する
 - 不要ファイルやリネームに失敗したファイルを削除する際に、削除するファイル名を表示するように変更
 - GUI設定画面の各設定の説明に、既定値を追記
