@@ -30,7 +30,8 @@ jobs:
           $config.Output.Verbosity = 'Detailed'
           $config.CodeCoverage.Enabled = $true
           $config.CodeCoverage.Path = './src/functions/*.ps1'
-          $config.CodeCoverage.OutputPath = 'coverage.xml'
+          # * テストがSet-Locationで作業ディレクトリを変えるため、出力先は絶対パスで指定する
+          $config.CodeCoverage.OutputPath = Join-Path $env:GITHUB_WORKSPACE 'coverage.xml'
           Invoke-Pester -Configuration $config
 
       - name: Upload coverage
@@ -39,4 +40,4 @@ jobs:
         with:
           name: coverage-${{ matrix.os }}
           path: coverage.xml
-          if-no-files-found: ignore
+          if-no-files-found: error
