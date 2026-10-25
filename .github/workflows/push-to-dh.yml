@@ -2,7 +2,7 @@ name: Push to Docker Hub
 
 on:
   push:
-    branches: [master]
+    branches: [dev, beta, master]
 
 env:
   # Use docker.io for Docker Hub if empty
@@ -12,22 +12,26 @@ env:
 
 jobs:
   push_to_dockerhub:
-    name: Push Docker image to Docker Hub
+    name: Push Docker image to Docker Hub (${{ github.ref_name }})
     runs-on: ubuntu-latest
     #runs-on: self-hosted
     steps:
-      #Set Tag Name
+      #Set Tag Name and Build Context per branch
       - name: Set Tag Name as Preparation
         id: prep
         run: |
-          TAG="latest"
+          case "${GITHUB_REF_NAME}" in
+            master) TAG="latest"; CONTEXT="./resources/docker" ;;
+            beta)   TAG="beta";   CONTEXT="./resources/docker/beta" ;;
+            dev)    TAG="dev";    CONTEXT="./resources/docker/dev" ;;
+            *) echo "Unsupported branch: ${GITHUB_REF_NAME}" >&2; exit 1 ;;
+          esac
           echo "tag=${IMAGE_NAME}:${TAG}" >> $GITHUB_OUTPUT
+          echo "context=${CONTEXT}" >> $GITHUB_OUTPUT
 
       #Check out
       - name: Check out the repo
         uses: actions/checkout@v6
-        with:
-          ref: master
 
       #Collect metadata
       - name: Extract metadata for Docker
@@ -36,7 +40,7 @@ jobs:
         with:
           #images: dongaba/tverrec
           images: ${{ env.IMAGE_NAME }}
-          flavor: latest=true
+          flavor: latest=${{ github.ref_name == 'master' }}
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
@@ -65,15 +69,16 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: ./resources/docker
+          context: ${{ steps.prep.outputs.context }}
           platforms: linux/amd64,linux/arm64
           push: true
           provenance: mode=max
           tags: ${{ steps.prep.outputs.tag }}
           labels: ${{ steps.meta.outputs.labels }}
 
-      #Push README.md to Docker Hub
+      #Push README.md to Docker Hub (master only)
       - name: Docker Hub Description
+        if: github.ref_name == 'master'
         uses: peter-evans/dockerhub-description@v5
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}

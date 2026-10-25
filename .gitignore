@@ -35,6 +35,8 @@ linux-*
 mac-*
 win-*
 *.xlsx
+/coverage-artifacts
+/coverage-artifacts/*
 
 #テスト用のファイルなど
 /TestPath
