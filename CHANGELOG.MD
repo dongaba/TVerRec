@@ -27,6 +27,9 @@
 - `Invoke-VideoDownload`で3か所に重複していたダウンロード対象外リストとの照合を`Register-IgnoredVideo`に集約し、履歴・実ファイルの有無による分岐を整理(動作は変更していない)。`Invoke-Ytdl`と`Invoke-NonTverYtdl`で重複していた引数の組み立てとプロセス起動を`Get-YtdlCommonArgument`・`Get-YtdlMp4Argument`・`Start-YtdlProcess`に集約
 - `Get-VideoInfo`と`Get-VideoInfoLegacy`で重複していた番組情報の整形とオブジェクト生成を、`Format-TitleText`・`Format-NarrowText`・`Format-BroadcastDateLabel`・`Format-DescriptionText`・`ConvertFrom-UnixTimeToJst`・`New-VideoInfoObject`に集約。旧API側で項目が`$null`の場合に、メソッド呼び出しのエラーにならず空文字として扱うようになった
 - `Get-VideoInfoLegacy`内の、コメントアウトされていたStreaks・BrightcoveからのM3U8取得処理(約70行)を削除
+- `download_bulk.ps1`・`download_list.ps1`・`download_single.ps1`で重複していた、スクリプト終了時にバックグラウンドジョブを停止する処理の登録を`Register-JobCleanup`に集約
+- `resources/lang/messages.json`から、使われていないメッセージ(`GenerateList`、`InvokeFfmpegDownloadFailed`、`followOSSetting`と、削除済みのStreaks・Brightcove関連4件)を削除
+- `resources/lang/messages.json`の英語版に不足していた`UpdateFailed`を追加し、`ToolArchitectureNotIdentified2`で同じ引数が2回表示される誤りを修正
 
 ### 3.5.0 Fixed
 

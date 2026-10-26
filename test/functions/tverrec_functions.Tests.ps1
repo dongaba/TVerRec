@@ -3855,3 +3855,32 @@ Describe 'Update-IgnoreList(並べ替えの失敗)' {
 		@(Get-ChildItem -LiteralPath $TestDrive -Filter 'uiignore.conf.*.tmp').Count | Should -Be 0
 	}
 }
+
+Describe 'Register-JobCleanup' {
+	BeforeAll {
+		$script:rjcSavedJobList = if (Test-Path Variable:Script:jobList) { $script:jobList } else { '__unset__' }
+	}
+	AfterAll {
+		if ($script:rjcSavedJobList -eq '__unset__') { Remove-Variable -Name jobList -Scope Script -ErrorAction SilentlyContinue }
+		else { $script:jobList = $script:rjcSavedJobList }
+	}
+	AfterEach {
+		Get-EventSubscriber -SourceIdentifier 'PowerShell.Exiting' -ErrorAction SilentlyContinue | Unregister-Event -Force -ErrorAction SilentlyContinue
+		Get-Job | Remove-Job -Force -ErrorAction SilentlyContinue
+	}
+	It 'ジョブ一覧を空にして、PowerShellの終了時の処理を登録すること' {
+		$script:jobList = @(1, 2, 3)
+		Register-JobCleanup
+		@($script:jobList).Count | Should -Be 0
+		@(Get-EventSubscriber -SourceIdentifier 'PowerShell.Exiting').Count | Should -Be 1
+	}
+	It '終了時の処理が、ジョブ一覧に記録したジョブを停止して削除すること' {
+		Register-JobCleanup
+		$job = Start-Job -ScriptBlock { Start-Sleep -Seconds 60 }
+		$script:jobList += $job.Id
+		New-Event -SourceIdentifier 'PowerShell.Exiting' | Out-Null
+		# * イベントの処理は非同期のため、最大5秒待つ
+		for ($i = 0; ($i -lt 50) -and (Get-Job -Id $job.Id -ErrorAction SilentlyContinue); $i++) { Start-Sleep -Milliseconds 100 }
+		Get-Job -Id $job.Id -ErrorAction SilentlyContinue | Should -BeNullOrEmpty
+	}
+}

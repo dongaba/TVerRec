@@ -107,13 +107,7 @@ try {
 	Show-ProgressToast @toastShowParams
 
 	# ジョブ管理の初期化
-	$script:jobList = @()
-	Register-EngineEvent PowerShell.Exiting -Action {
-		foreach ($jobId in $script:jobList) {
-			Stop-Job -Id $jobId -Force -ErrorAction SilentlyContinue
-			Remove-Job -Id $jobId -Force -ErrorAction SilentlyContinue
-		}
-	} | Out-Null
+	Register-JobCleanup
 
 	#======================================================================
 	# ビデオリンクの収集

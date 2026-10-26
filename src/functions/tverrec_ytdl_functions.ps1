@@ -85,6 +85,37 @@ function Get-YtdlMp4Argument {
 }
 
 #----------------------------------------------------------------------
+# スクリプト終了時にバックグラウンドジョブを停止する処理の登録
+#----------------------------------------------------------------------
+function Register-JobCleanup {
+	<#
+		.SYNOPSIS
+			ジョブ一覧($script:jobList)を初期化し、PowerShellの終了時にそのジョブを停止・削除する処理を登録します。
+
+		.DESCRIPTION
+			youtube-dlのタイムアウト監視ジョブなど、バックグラウンドで動くジョブのIDを$script:jobListに記録しておくと、
+			PowerShellの終了時(PowerShell.Exitingイベント)に、記録したジョブを強制停止して削除します。
+
+		.OUTPUTS
+			[Void]
+			この関数は値を返しません。
+
+		.EXAMPLE
+			Register-JobCleanup
+	#>
+	[OutputType([Void])]
+	Param ()
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$script:jobList = @()
+	Register-EngineEvent PowerShell.Exiting -Action {
+		foreach ($jobId in $script:jobList) {
+			Stop-Job -Id $jobId -Force -ErrorAction SilentlyContinue
+			Remove-Job -Id $jobId -Force -ErrorAction SilentlyContinue
+		}
+	} | Out-Null
+}
+
+#----------------------------------------------------------------------
 # youtube-dlプロセスの起動とタイムアウト監視(デバッグモード以外)
 #----------------------------------------------------------------------
 function Start-YtdlProcess {

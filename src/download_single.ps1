@@ -169,13 +169,7 @@ if ($script:scriptRoot.Contains(' ')) { throw '❌️ TVerRecはスペースを�
 $script:guiMode = if ($args) { [String]$args[0] } else { '' }
 
 # ジョブ管理の初期化
-$script:jobList = @()
-Register-EngineEvent PowerShell.Exiting -Action {
-	foreach ($jobId in $script:jobList) {
-		Stop-Job -Id $jobId -Force -ErrorAction SilentlyContinue
-		Remove-Job -Id $jobId -Force -ErrorAction SilentlyContinue
-	}
-} | Out-Null
+Register-JobCleanup
 
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -194,13 +188,7 @@ try {
 	if (!$script:guiMode) { $script:guiMode = $false }
 
 	# ジョブ管理の初期化
-	$script:jobList = @()
-	Register-EngineEvent PowerShell.Exiting -Action {
-		foreach ($jobId in $script:jobList) {
-			Stop-Job -Id $jobId -Force -ErrorAction SilentlyContinue
-			Remove-Job -Id $jobId -Force -ErrorAction SilentlyContinue
-		}
-	} | Out-Null
+	Register-JobCleanup
 
 	#----------------------------------------------------------------------
 	# 無限ループ
