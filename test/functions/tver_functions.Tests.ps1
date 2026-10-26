@@ -19,6 +19,7 @@ BeforeAll {
 	Write-Host ('　テスト対象: {0}' -f $targetFile)
 	$script:scriptRoot = Convert-Path (Join-Path $script:repoRoot 'src')
 	Set-Location $script:scriptRoot
+	$script:broadcasterDir = Convert-Path (Join-Path $script:scriptRoot '../resources/broadcaster')
 	$script:disableToastNotification = $false
 	# メッセージテーブル(警告メッセージの書式に必要)
 	$script:msg = (Get-Content -Path (Join-Path $script:scriptRoot '../resources/lang/messages.json') -Raw | ConvertFrom-Json).'ja-JP'
@@ -1100,16 +1101,16 @@ Describe 'Get-LinkFromMyPage(ページ別のAPI)' {
 Describe 'Get-BroadcasterName(対応表の読み込み失敗)' {
 	BeforeAll {
 		$script:gbnMap = if (Test-Path Variable:Script:broadcasterMap) { $script:broadcasterMap } else { $null }
-		$script:gbnRoot = $script:scriptRoot
+		$script:gbnDir = $script:broadcasterDir
 	}
 	AfterAll {
 		$script:broadcasterMap = $script:gbnMap
-		$script:scriptRoot = $script:gbnRoot
+		$script:broadcasterDir = $script:gbnDir
 	}
 	It '対応表を読み込めなければ、警告を出し、$nullを返して、例外にならないこと' {
 		Mock Write-Warning {}
 		$script:broadcasterMap = $null
-		$script:scriptRoot = Join-Path $TestDrive 'no-such-root/src'
+		$script:broadcasterDir = Join-Path $TestDrive 'no-such-dir'
 		{ Get-BroadcasterName -broadcasterID 'tx' } | Should -Not -Throw
 		Get-BroadcasterName -broadcasterID 'tx' | Should -BeNullOrEmpty
 		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -like ($script:msg.BroadcasterListLoadFailed -f '*') }

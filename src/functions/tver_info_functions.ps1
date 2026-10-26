@@ -31,7 +31,7 @@ function Get-VideoInfo {
 			platform_uid・platform_tokenも不要です。
 			次の場合は、旧API(Get-VideoInfoLegacy)にフォールバックします。
 			- 新世代APIの呼び出しに失敗した場合、または必要な項目が得られなかった場合
-			- 放送局IDがresources/broadcaster.confにない場合(旧APIの放送局名と同じ名称にするため。警告を表示します)
+			- 放送局IDがresources/broadcaster/broadcaster.confにない場合(旧APIの放送局名と同じ名称にするため。警告を表示します)
 
 		.PARAMETER episodeID
 			情報を取得するエピソードのID。

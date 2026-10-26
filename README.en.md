@@ -124,6 +124,8 @@ Directory structure is as follows.
     │
     ├─ resources/ ........................ Various Resources
     │  ├─ b64/ ........................... Images for GUI
+    │  ├─ broadcaster/ ................... Broadcaster ID mapping
+    │  │  └─ broadcaster.conf .............. Mapping file of broadcaster IDs to broadcaster names
     │  ├─ colab/ ......................... Sample file for Google Colab
     │  ├─ crx/ ........................... Google Chrome extension
     │  │  └─ TVerRecAssistant/ ............. TVerRec Assistant

@@ -5,7 +5,7 @@
 ### 3.5.0 Added
 
 - GUI設定画面に、起動時のPowerShellの新バージョン確認を無効化する設定(`$script:disableCheckPowerShellUpdate`)を追加
-- 新世代API(`contents-api.tver.jp`)が返す放送局IDと放送局名の対応表`resources/broadcaster.conf`と、対応表から放送局名を取得する`Get-BroadcasterName`を追加。放送局名は放送局別フォルダ名などに使われるため、旧APIの`BroadcasterName`と同じ名称を登録している。対応表にない放送局IDの場合は、旧APIで放送局名を取得して警告を表示するので、警告が出たら対応表に追記する
+- 新世代API(`contents-api.tver.jp`)が返す放送局IDと放送局名の対応表`resources/broadcaster/broadcaster.conf`と、対応表から放送局名を取得する`Get-BroadcasterName`を追加。放送局名は放送局別フォルダ名などに使われるため、旧APIの`BroadcasterName`と同じ名称を登録している。対応表にない放送局IDの場合は、旧APIで放送局名を取得して警告を表示するので、警告が出たら対応表に追記する
 - 番組情報のシーズン名・エピソード番号・放送日の整形処理を新旧のAPIで共通にする`Format-VideoInfoText`と、JSONの入れ子のプロパティを安全に取得する`Get-JsonProperty`を追加
 - ダウンロード対象外リストにマッチする番組名を一括で特定する`Find-IgnoreMatchedIndex`を追加
 

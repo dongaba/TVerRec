@@ -114,10 +114,11 @@ function Remove-File {
 					$parallelMsg = $script:msg
 					# 並列処理で見つかったファイルを一時的に格納
 					$parallelResults = $conditions | ForEach-Object -ThrottleLimit $script:multithreadNum -Parallel {
-						Write-Debug ($using:parallelMsg.DeleteCondition -f $_)
+						$deleteMsg = $using:parallelMsg	# * $using:x.Prop の形は PSScriptAnalyzer が誤検知するため、一度ローカル変数で受ける
+						Write-Debug ($deleteMsg.DeleteCondition -f $_)
 						Get-ChildItem -LiteralPath $using:basePath -Recurse -File -Filter $_ -ErrorAction SilentlyContinue |
 							Where-Object { $_.LastWriteTime -lt $using:limitDateTime } |
-							ForEach-Object { Write-Debug ($using:parallelMsg.DeleteTarget -f $_.FullName) ; $_.FullName }
+							ForEach-Object { Write-Debug ($deleteMsg.DeleteTarget -f $_.FullName) ; $_.FullName }
 						}
 						# 並列処理の結果をまとめてリストに追加
 						if ($parallelResults) { $targetFiles.AddRange([String[]]@($parallelResults)) }	# * Object[]や単一のStringのままではList[String].AddRangeに渡せず例外になる

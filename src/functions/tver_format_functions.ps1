@@ -66,7 +66,7 @@ function Get-BroadcasterName {
 
 		.DESCRIPTION
 			新世代API(contents-api)は放送局名ではなく放送局ID(broadcast_provider_id)を返すため、
-			resources/broadcaster.confの対応表から、旧APIのBroadcasterNameと同じ放送局名を取得します。
+			resources/broadcaster/broadcaster.confの対応表から、旧APIのBroadcasterNameと同じ放送局名を取得します。
 			対応表は初回の呼び出し時に読み込み、以降は読み込み済みの内容を使用します。
 			対応表にない放送局IDの場合は$nullを返します。
 
@@ -83,7 +83,7 @@ function Get-BroadcasterName {
 	if ($null -eq $script:broadcasterMap) {
 		$map = @{}
 		try {
-			foreach ($line in (Get-Content -Path (Join-Path $script:scriptRoot '../resources/broadcaster.conf') -Encoding UTF8 -ErrorAction Stop)) {
+			foreach ($line in (Get-Content -Path (Join-Path $script:broadcasterDir 'broadcaster.conf') -Encoding UTF8 -ErrorAction Stop)) {
 				if (($line.Trim() -eq '') -or $line.TrimStart().StartsWith('#')) { continue }
 				$columns = $line.Split("`t")
 				if ($columns.Count -ge 2) { $map[$columns[0].Trim()] = $columns[1].Trim() }
