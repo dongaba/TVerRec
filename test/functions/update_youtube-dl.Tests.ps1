@@ -137,6 +137,15 @@ Describe 'Update-Ytdl' {
 			(Update-Ytdl) -join "`n" | Should -Match ([regex]::Escape(($script:msg.ToolUpdated -f 'yt-dlp', $script:ytLatest)))
 			Should -Invoke Invoke-WebRequest -Times 1 -Exactly
 		}
+		It 'ローカルの実行ファイルを起動できなくても、例外にならずバージョン空として更新すること' {
+			# * 実行権限はあるが起動できないファイル(存在しないインタプリタを指すshebang)
+			# * 実行権限のないファイルを&で起動すると、PowerShellがxdg-open/openに渡して関連付けられたアプリが開いてしまうため使わない
+			Set-Content -LiteralPath $script:ytLocal -Value "#!/nonexistent/interpreter`n" -NoNewline
+			& chmod a+x $script:ytLocal
+			{ Update-Ytdl | Out-Null } | Should -Not -Throw
+			Should -Invoke Invoke-WebRequest -Times 1 -Exactly
+			((& $script:ytLocal --version) -join '') | Should -Be $script:ytLatest
+		}
 		It 'ytdl-patchedは、ytdl-patchedのファイルをダウンロードして、yt-dlpという名前で配置すること' {
 			$script:preferredYoutubedl = 'ytdl-patched'
 			Update-Ytdl | Out-Null
@@ -215,6 +224,23 @@ Describe 'update_youtube-dl.ps1をスクリプトとして実行したとき' {
 		Remove-Item -LiteralPath (Join-Path $script:sbRoot 'conf/user_setting.ps1') -Force
 		$err = try { & $script:sbScript ; '' } catch { $_.Exception.Message }
 		@($script:msgAll.'ja-JP'.UserSettingNotCompleted, $script:msgAll.'en-US'.UserSettingNotCompleted) | Should -Contain $err
+	}
+	It '実際のスクリプトを-WhatIfで実行しても、設定ファイルを読み込んで更新処理まで到達し、何も変更しないこと' {
+		# * 一時ディレクトリ内のコピーではカバレッジが取れないため、実物を直接実行する。-WhatIfで更新処理の中身は実行しない
+		$userSetting = Join-Path $script:repoRoot 'conf/user_setting.ps1'
+		$created = -not (Test-Path $userSetting)
+		if ($created) { Set-Content -LiteralPath $userSetting -Value ('$script:binDir = ''{0}''' -f $script:sbBin) }
+		Mock Invoke-RestMethod {}
+		Mock Invoke-WebRequest {}
+		try {
+			$WhatIfPreference = $true
+			{ & $targetFile *> $null } | Should -Not -Throw
+		} finally {
+			$WhatIfPreference = $false
+			if ($created) { Remove-Item -LiteralPath $userSetting -Force -ErrorAction SilentlyContinue }
+		}
+		Should -Invoke Invoke-RestMethod -Times 0 -Exactly
+		Should -Invoke Invoke-WebRequest -Times 0 -Exactly
 	}
 	It 'ドット読み込みでは、更新処理を実行しないこと' {
 		. $script:sbScript
