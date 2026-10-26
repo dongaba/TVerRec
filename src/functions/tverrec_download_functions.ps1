@@ -114,6 +114,222 @@ function Register-IgnoredVideo {
 }
 
 #----------------------------------------------------------------------
+# 字幕が追加された番組の再ダウンロード判定
+#----------------------------------------------------------------------
+function Resolve-SubtitleRecheck {
+	<#
+		.SYNOPSIS
+			字幕なしで保存済みの番組について、字幕が追加されたかを確認し、再ダウンロードするかを判定します。
+
+		.DESCRIPTION
+			履歴に字幕なし(subtitle=0)で記録されている番組だけを対象にします。
+			ダウンロード対象外リストに合致する場合や、字幕が追加されていない場合は、Stopをtrueにして、以降の処理を中止させます。
+			字幕が追加されていれば、Recheckをtrueにして、再ダウンロードさせます。
+
+		.PARAMETER VideoInfo
+			番組情報のオブジェクトを指定します。
+
+		.PARAMETER HistFileData
+			読み込んだダウンロード履歴を受け取る変数を参照で指定します。後続の処理で再利用します。
+
+		.PARAMETER Result
+			判定結果を受け取る変数を参照で指定します。Stop、Status(字幕の有無)、Recheckを持つオブジェクトが入ります。
+			画面への出力と戻り値が混ざらないよう、結果は参照で返します。
+
+		.OUTPUTS
+			[Void]
+			この関数は値を返しません。
+	#>
+	[OutputType([Void])]
+	Param (
+		[Parameter(Mandatory = $true)][PSCustomObject]$VideoInfo,
+		[Parameter(Mandatory = $true)][Ref]$HistFileData,
+		[Parameter(Mandatory = $true)][Ref]$Result
+	)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$subtitleStatus = $null
+	$subtitleRecheck = $false
+	$stop = $false
+	$HistFileData.Value = @(Get-LatestHistoryCached)
+	$subtitleHists = @($HistFileData.Value.Where({ $_ -and $_.PSObject.Properties['subtitle'] }))
+	$sameEpisodeHists = @($subtitleHists.Where({ $_.videoPage -eq $VideoInfo.episodePageURL }))
+	if (($sameEpisodeHists.Count -ne 0) -and ($sameEpisodeHists[0].subtitle -eq '0')) {
+		# 字幕なしで保存済みの番組	→字幕が追加されたか確認する
+		foreach ($ignoreTitle in @(Get-IgnoreListCached)) {
+			if ($ignoreTitle -and (Test-IgnoreMatch -Pattern $ignoreTitle -Target @($VideoInfo.fileName, $VideoInfo.seriesName) -Mode Wildcard)) { $stop = $true ; break }
+		}
+		if (!$stop) {
+			Write-Output ($script:msg.SubtitleRecheck)
+			$subtitleStatus = Get-VideoSubtitleStatus -EpisodePageURL $VideoInfo.episodePageURL -IsSubtitle $VideoInfo.isSubtitle
+			if ($subtitleStatus -ne '1') { Write-Output ($script:msg.SubtitleNotAdded) ; $stop = $true }
+			else { Write-Output ($script:msg.SubtitleAdded) ; $subtitleRecheck = $true }
+		}
+	}
+	$Result.Value = [PSCustomObject]@{ Stop = $stop ; Status = $subtitleStatus ; Recheck = $subtitleRecheck }
+}
+
+#----------------------------------------------------------------------
+# 履歴・実ファイル・ダウンロード対象外リストから、ダウンロードの要否を判定
+#----------------------------------------------------------------------
+function Resolve-DownloadDecision {
+	<#
+		.SYNOPSIS
+			番組をダウンロードするか、スキップするか、ダウンロード対象外とするかを判定します。
+
+		.DESCRIPTION
+			履歴ファイル、実ファイル、ダウンロード対象外リストの状態から、履歴に記録する行(NewVideo)と、
+			ダウンロードを飛ばすか(SkipDownload)を決めます。番組のファイル名が取得できていない場合は、Stopをtrueにします。
+			スキップする場合は、VideoInfoのfileNameを'-- SKIPPED --'に書き換えます。
+
+		.PARAMETER VideoInfo
+			番組情報のオブジェクトを指定します。
+
+		.PARAMETER HistFileData
+			読み込み済みのダウンロード履歴を指定します。
+
+		.PARAMETER Result
+			判定結果を受け取る変数を参照で指定します。Stop、NewVideo、SkipDownloadを持つオブジェクトが入ります。
+			画面への出力と戻り値が混ざらないよう、結果は参照で返します。
+
+		.OUTPUTS
+			[Void]
+			この関数は値を返しません。
+	#>
+	[OutputType([Void])]
+	Param (
+		[Parameter(Mandatory = $true)][PSCustomObject]$VideoInfo,
+		[Parameter(Mandatory = $true)][AllowNull()][AllowEmptyCollection()][Object[]]$HistFileData,
+		[Parameter(Mandatory = $true)][Ref]$Result
+	)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$newVideo = $null
+	$skipDownload = $false
+	if ($VideoInfo.fileRelPath) { $histMatch = @($HistFileData.Where({ $_.videoPath -eq $VideoInfo.fileRelPath })) }
+	else {
+		Write-Warning ($script:msg.FileNameRetrievalFailed)
+		$Result.Value = [PSCustomObject]@{ Stop = $true ; NewVideo = $null ; SkipDownload = $false }
+		return
+	}
+
+	$checkIgnoreAndDownload = $false
+	$downloadMessage = $null
+	if ($script:downloadWhenEpisodeIdChanged) {
+		# 履歴ファイルまたは実ファイルに存在する	→エピソードIDが変更になったのでダウンロードする
+		# 履歴ファイルにも実ファイルにも存在しない	→新規の番組なのでダウンロードする
+		$checkIgnoreAndDownload = $true
+		if (($histMatch.Count -ne 0) -or (Test-Path $VideoInfo.filePath)) { $downloadMessage = $script:msg.DownloadEpisodeIdChanged }
+		else { $downloadMessage = $script:msg.DownloadEpisodeAdded }
+	} elseif ($histMatch.Count -ne 0) {
+		# 履歴ファイルに存在する	→スキップして次のファイルに
+		Write-Warning ($script:msg.DownloadHistExists)
+		$VideoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '1' ; $VideoInfo.fileName = '-- SKIPPED --'
+		$newVideo = Format-HistoryRecord $VideoInfo ; $skipDownload = $true
+	} elseif (Test-Path $VideoInfo.filePath) {
+		# 履歴ファイルに存在しないが、実ファイルが存在する	→検証だけする
+		Write-Warning ($script:msg.DownloadFileExists)
+		$VideoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0' ; $VideoInfo.fileName = '-- SKIPPED --'
+		$newVideo = Format-HistoryRecord $VideoInfo ; $skipDownload = $true
+	} else {
+		# 履歴ファイルにも実ファイルにも存在しない	→新規の番組なのでダウンロードする
+		$checkIgnoreAndDownload = $true
+		$downloadMessage = $script:msg.DownloadEpisodeAdded
+	}
+
+	if ($checkIgnoreAndDownload) {
+		# ダウンロード対象外リストと合致	→無視する
+		$ignoredVideo = $null
+		Register-IgnoredVideo -VideoInfo $VideoInfo -Result ([Ref]$ignoredVideo)
+		if ($ignoredVideo) { $newVideo = $ignoredVideo ; $skipDownload = $true }
+		else {
+			# ダウンロード対象外リストとも合致しない	→ダウンロードする
+			Write-Output $downloadMessage
+			$VideoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
+			$newVideo = Format-HistoryRecord $VideoInfo
+		}
+	}
+	$Result.Value = [PSCustomObject]@{ Stop = $false ; NewVideo = $newVideo ; SkipDownload = $skipDownload }
+}
+
+#----------------------------------------------------------------------
+# ダウンロード履歴への1行の追記
+#----------------------------------------------------------------------
+function Save-VideoHistory {
+	<#
+		.SYNOPSIS
+			ダウンロード履歴CSVに、番組1件分の行を追記します。
+
+		.DESCRIPTION
+			履歴ファイルのロックを取得して追記し、履歴のキャッシュにも反映します。ロックは、成功・失敗にかかわらず解除します。
+
+		.PARAMETER NewVideo
+			追記する履歴の行を指定します。
+
+		.PARAMETER Result
+			追記できたかどうか($true/$false)を受け取る変数を参照で指定します。
+
+		.OUTPUTS
+			[Void]
+			この関数は値を返しません。
+	#>
+	[OutputType([Void])]
+	Param (
+		[Parameter(Mandatory = $true)][AllowNull()]$NewVideo,
+		[Parameter(Mandatory = $true)][Ref]$Result
+	)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$Result.Value = $false
+	Wait-FileLock $script:histLockFilePath
+	try {
+		$NewVideo | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append ; Start-Sleep -Seconds 1
+		Write-Debug ($script:msg.HistWritten)
+		Add-LatestHistoryCache $NewVideo
+		$Result.Value = $true
+	} catch { Write-Warning ($script:msg.HistUpdateFailed) }
+	finally { Unlock-File $script:histLockFilePath | Out-Null }
+}
+
+#----------------------------------------------------------------------
+# 番組ディレクトリの作成とyoutube-dlの起動
+#----------------------------------------------------------------------
+function Start-VideoDownloadProcess {
+	<#
+		.SYNOPSIS
+			番組の保存先ディレクトリを作成し、youtube-dlを起動します。
+
+		.DESCRIPTION
+			番組ごとのディレクトリが必要な設定で、ディレクトリがなければ作成します(作成に失敗したら警告を出して中止します)。
+			そのあとyoutube-dlを起動し、1秒待機します。
+
+		.PARAMETER VideoInfo
+			ダウンロードする番組の情報を指定します。
+
+		.OUTPUTS
+			[Void]
+			この関数は値を返しません。
+	#>
+	[OutputType([Void])]
+	Param ([Parameter(Mandatory = $true)][PSCustomObject]$VideoInfo)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	# 番組ディレクトリがなければ作成
+	if ($script:sortVideoBySeries -and !(Test-Path $VideoInfo.fileDir -PathType Container)) {
+		try { New-Item -ItemType Directory -Path $VideoInfo.fileDir -Force -ErrorAction Stop | Out-Null }
+		catch { Write-Warning ($script:msg.CreateEpisodeDirFailed) ; return }
+	}
+	# youtube-dl起動
+	if ($script:ytdlRandomIp -and $script:proxyUrl) {
+		Write-Output ($script:msg.MediumBoldBorder)
+		Write-Output ($script:msg.NotifyYtdlOptions1)
+		Write-Output ($script:msg.NotifyYtdlOptions2)
+		Write-Output ($script:msg.NotifyYtdlOptions3)
+		Write-Output ($script:msg.MediumBoldBorder)
+	}
+	try { Invoke-Ytdl $VideoInfo }
+	catch { Write-Warning ($script:msg.InvokeYtdlFailed) }
+	# 1秒待機
+	Start-Sleep -Seconds 1
+}
+
+#----------------------------------------------------------------------
 # TVer番組ダウンロードのメイン処理
 #----------------------------------------------------------------------
 function Invoke-VideoDownload {
@@ -182,26 +398,13 @@ function Invoke-VideoDownload {
 	if ($DebugPreference -ne 'SilentlyContinue') { Show-VideoDebugInfo $videoInfo }
 	# 字幕の有無の記録と、字幕が追加された番組の再ダウンロード判定
 	$subtitleTracking = Test-SubtitleTrackingEnabled
-	$subtitleStatus = $null
-	$subtitleRecheck = $false
+	$subtitleCheck = [PSCustomObject]@{ Stop = $false ; Status = $null ; Recheck = $false }
 	$histFileData = $null
 	if (!$force -and $subtitleTracking) {
-		$histFileData = @(Get-LatestHistoryCached)
-		$subtitleHists = @($histFileData.Where({ $_ -and $_.PSObject.Properties['subtitle'] }))
-		$sameEpisodeHists = @($subtitleHists.Where({ $_.videoPage -eq $videoInfo.episodePageURL }))
-		if (($sameEpisodeHists.Count -ne 0) -and ($sameEpisodeHists[0].subtitle -eq '0')) {
-			# 字幕なしで保存済みの番組	→字幕が追加されたか確認する
-			foreach ($ignoreTitle in @(Get-IgnoreListCached)) {
-				if ($ignoreTitle -and (Test-IgnoreMatch -Pattern $ignoreTitle -Target @($videoInfo.fileName, $videoInfo.seriesName) -Mode Wildcard)) { return }
-			}
-			Write-Output ($script:msg.SubtitleRecheck)
-			$subtitleStatus = Get-VideoSubtitleStatus -EpisodePageURL $videoInfo.episodePageURL -IsSubtitle $videoInfo.isSubtitle
-			if ($subtitleStatus -ne '1') { Write-Output ($script:msg.SubtitleNotAdded) ; return }
-			Write-Output ($script:msg.SubtitleAdded)
-			$subtitleRecheck = $true
-		}
+		Resolve-SubtitleRecheck -VideoInfo $videoInfo -HistFileData ([Ref]$histFileData) -Result ([Ref]$subtitleCheck)
+		if ($subtitleCheck.Stop) { return }
 	}
-	if ($force -or $subtitleRecheck) {
+	if ($force -or $subtitleCheck.Recheck) {
 		$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
 		$newVideo = Format-HistoryRecord $videoInfo
 	} else {
@@ -225,80 +428,27 @@ function Invoke-VideoDownload {
 		#>
 		#ダウンロード履歴ファイルのデータを読み込み(字幕の判定で読み込み済みの場合は再利用)
 		if ($null -eq $histFileData) { $histFileData = @(Get-LatestHistoryCached) }
-		if ($videoInfo.fileRelPath) { $histMatch = @($histFileData.Where({ $_.videoPath -eq $videoInfo.fileRelPath })) }
-		else { Write-Warning ($script:msg.FileNameRetrievalFailed) ; return }
-
-		$checkIgnoreAndDownload = $false
-		$downloadMessage = $null
-		if ($script:downloadWhenEpisodeIdChanged) {
-			# 履歴ファイルまたは実ファイルに存在する	→エピソードIDが変更になったのでダウンロードする
-			# 履歴ファイルにも実ファイルにも存在しない	→新規の番組なのでダウンロードする
-			$checkIgnoreAndDownload = $true
-			if (($histMatch.Count -ne 0) -or (Test-Path $videoInfo.filePath)) { $downloadMessage = $script:msg.DownloadEpisodeIdChanged }
-			else { $downloadMessage = $script:msg.DownloadEpisodeAdded }
-		} elseif ($histMatch.Count -ne 0) {
-			# 履歴ファイルに存在する	→スキップして次のファイルに
-			Write-Warning ($script:msg.DownloadHistExists)
-			$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '1' ; $videoInfo.fileName = '-- SKIPPED --'
-			$newVideo = Format-HistoryRecord $videoInfo ; $skipDownload = $true
-		} elseif (Test-Path $videoInfo.filePath) {
-			# 履歴ファイルに存在しないが、実ファイルが存在する	→検証だけする
-			Write-Warning ($script:msg.DownloadFileExists)
-			$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0' ; $videoInfo.fileName = '-- SKIPPED --'
-			$newVideo = Format-HistoryRecord $videoInfo ; $skipDownload = $true
-		} else {
-			# 履歴ファイルにも実ファイルにも存在しない	→新規の番組なのでダウンロードする
-			$checkIgnoreAndDownload = $true
-			$downloadMessage = $script:msg.DownloadEpisodeAdded
-		}
-
-		if ($checkIgnoreAndDownload) {
-			# ダウンロード対象外リストと合致	→無視する
-			$ignoredVideo = $null
-			Register-IgnoredVideo -VideoInfo $videoInfo -Result ([Ref]$ignoredVideo)
-			if ($ignoredVideo) { $newVideo = $ignoredVideo ; $skipDownload = $true }
-			else {
-				# ダウンロード対象外リストとも合致しない	→ダウンロードする
-				Write-Output $downloadMessage
-				$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
-				$newVideo = Format-HistoryRecord $videoInfo
-			}
-		}
+		$decision = $null
+		Resolve-DownloadDecision -VideoInfo $videoInfo -HistFileData $histFileData -Result ([Ref]$decision)
+		if ($decision.Stop) { return }
+		$newVideo = $decision.NewVideo ; $skipDownload = $decision.SkipDownload
 	}
 
 	# ダウンロードする番組の字幕の有無を記録
 	if ($subtitleTracking -and !$skipDownload -and $newVideo) {
+		$subtitleStatus = $subtitleCheck.Status
 		if ($null -eq $subtitleStatus) { $subtitleStatus = Get-VideoSubtitleStatus -EpisodePageURL $videoInfo.episodePageURL -IsSubtitle $videoInfo.isSubtitle }
 		$newVideo.subtitle = $subtitleStatus
 	}
 	# ダウンロード履歴CSV書き出し
-	Wait-FileLock $script:histLockFilePath
-	try {
-		$newVideo | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append ; Start-Sleep -Seconds 1
-		Write-Debug ($script:msg.HistWritten)
-		Add-LatestHistoryCache $newVideo
-	} catch { Write-Warning ($script:msg.HistUpdateFailed) ; return }
-	finally { Unlock-File $script:histLockFilePath | Out-Null }
+	$historySaved = $false
+	Save-VideoHistory -NewVideo $newVideo -Result ([Ref]$historySaved)
+	if (!$historySaved) { return }
 	# スキップ対象やダウンロード対象外は飛ばして次のファイルへ
 	if ($skipDownload) { return }
-	# 番組ディレクトリがなければ作成
-	if ($script:sortVideoBySeries -and !(Test-Path $videoInfo.fileDir -PathType Container)) {
-		try { New-Item -ItemType Directory -Path $videoInfo.fileDir -Force -ErrorAction Stop | Out-Null }
-		catch { Write-Warning ($script:msg.CreateEpisodeDirFailed) ; return }
-	}
-	# youtube-dl起動
-	if ($script:ytdlRandomIp -and $script:proxyUrl) {
-		Write-Output ($script:msg.MediumBoldBorder)
-		Write-Output ($script:msg.NotifyYtdlOptions1)
-		Write-Output ($script:msg.NotifyYtdlOptions2)
-		Write-Output ($script:msg.NotifyYtdlOptions3)
-		Write-Output ($script:msg.MediumBoldBorder)
-	}
-	try { Invoke-Ytdl $videoInfo }
-	catch { Write-Warning ($script:msg.InvokeYtdlFailed) }
-	# 1秒待機
-	Start-Sleep -Seconds 1
-	Remove-Variable -Name keyword, videoLink, force, newVideo, skipDownload, episodeID, histFileData, histMatch, ignoreTitles, ignoreTitle, subtitleTracking, subtitleStatus, subtitleRecheck, subtitleHists, sameEpisodeHists, checkIgnoreAndDownload, downloadMessage, ignoredVideo -ErrorAction SilentlyContinue
+	# 番組ディレクトリの作成とyoutube-dlの起動
+	Start-VideoDownloadProcess -VideoInfo $videoInfo
+	Remove-Variable -Name newVideo, skipDownload, histFileData, subtitleTracking, subtitleCheck, subtitleStatus, decision, historySaved -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------

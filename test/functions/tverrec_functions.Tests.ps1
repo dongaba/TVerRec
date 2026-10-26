@@ -3883,3 +3883,179 @@ Describe 'Register-JobCleanup' {
 		Get-Job -Id $job.Id -ErrorAction SilentlyContinue | Should -BeNullOrEmpty
 	}
 }
+
+Describe 'Resolve-SubtitleRecheck' {
+	BeforeEach {
+		$script:rsrVideoInfo = [PSCustomObject]@{ episodePageURL = 'https://tver.jp/episodes/ep1' ; fileName = 'a.mp4' ; seriesName = 's' ; isSubtitle = $true }
+		$script:rsrHist = @()
+		$script:rsrIgnore = @()
+		$script:rsrStatus = '1'
+		Mock Get-LatestHistoryCached { $script:rsrHist }
+		Mock Get-IgnoreListCached { $script:rsrIgnore }
+		Mock Get-VideoSubtitleStatus { $script:rsrStatus }
+	}
+	It '同じ番組の履歴がなければ、何もせず、履歴だけ読み込んで返すこと' {
+		$hist = $null ; $result = $null
+		Resolve-SubtitleRecheck -VideoInfo $script:rsrVideoInfo -HistFileData ([Ref]$hist) -Result ([Ref]$result) | Out-Null
+		$result.Stop | Should -BeFalse
+		$result.Recheck | Should -BeFalse
+		$result.Status | Should -BeNullOrEmpty
+		@($hist).Count | Should -Be 0
+		Should -Invoke Get-VideoSubtitleStatus -Times 0 -Exactly
+	}
+	It '字幕ありで保存済みの番組なら、字幕の確認をしないこと' {
+		$script:rsrHist = @([PSCustomObject]@{ videoPage = 'https://tver.jp/episodes/ep1' ; subtitle = '1' })
+		$hist = $null ; $result = $null
+		Resolve-SubtitleRecheck -VideoInfo $script:rsrVideoInfo -HistFileData ([Ref]$hist) -Result ([Ref]$result) | Out-Null
+		$result.Recheck | Should -BeFalse
+		$result.Stop | Should -BeFalse
+		@($hist).Count | Should -Be 1
+		Should -Invoke Get-VideoSubtitleStatus -Times 0 -Exactly
+	}
+	It '字幕なしで保存済みで、字幕が追加されていれば、再ダウンロードを指示すること' {
+		$script:rsrHist = @([PSCustomObject]@{ videoPage = 'https://tver.jp/episodes/ep1' ; subtitle = '0' })
+		$hist = $null ; $result = $null
+		Resolve-SubtitleRecheck -VideoInfo $script:rsrVideoInfo -HistFileData ([Ref]$hist) -Result ([Ref]$result) | Out-Null
+		$result.Recheck | Should -BeTrue
+		$result.Stop | Should -BeFalse
+		$result.Status | Should -Be '1'
+	}
+	It '字幕なしで保存済みで、字幕が追加されていなければ、中止を指示すること' {
+		$script:rsrHist = @([PSCustomObject]@{ videoPage = 'https://tver.jp/episodes/ep1' ; subtitle = '0' })
+		$script:rsrStatus = '0'
+		$hist = $null ; $result = $null
+		Resolve-SubtitleRecheck -VideoInfo $script:rsrVideoInfo -HistFileData ([Ref]$hist) -Result ([Ref]$result) | Out-Null
+		$result.Stop | Should -BeTrue
+		$result.Recheck | Should -BeFalse
+	}
+	It '字幕なしで保存済みでも、ダウンロード対象外リストに合致すれば、字幕を確認せず中止を指示すること' {
+		$script:rsrHist = @([PSCustomObject]@{ videoPage = 'https://tver.jp/episodes/ep1' ; subtitle = '0' })
+		$script:rsrIgnore = @('*a.mp4*')
+		$hist = $null ; $result = $null
+		Resolve-SubtitleRecheck -VideoInfo $script:rsrVideoInfo -HistFileData ([Ref]$hist) -Result ([Ref]$result) | Out-Null
+		$result.Stop | Should -BeTrue
+		Should -Invoke Get-VideoSubtitleStatus -Times 0 -Exactly
+	}
+}
+
+Describe 'Resolve-DownloadDecision' {
+	BeforeEach {
+		$script:rddFile = Join-Path $TestDrive ('v{0}.mp4' -f [Guid]::NewGuid().ToString('N'))
+		$script:rddVideoInfo = [PSCustomObject]@{ fileRelPath = 'series/a.mp4' ; filePath = $script:rddFile ; fileName = 'a.mp4' }
+		$script:downloadWhenEpisodeIdChanged = $false
+		Mock Write-Warning {}
+		Mock Format-HistoryRecord { [PSCustomObject]@{ videoName = $script:rddVideoInfo.fileName ; videoValidated = $script:rddVideoInfo.validated } }
+		Mock Register-IgnoredVideo {}
+	}
+	It '番組のファイル名が取得できていなければ、警告を出して中止を指示すること' {
+		$script:rddVideoInfo.fileRelPath = ''
+		$result = $null
+		Resolve-DownloadDecision -VideoInfo $script:rddVideoInfo -HistFileData @() -Result ([Ref]$result) | Out-Null
+		$result.Stop | Should -BeTrue
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.FileNameRetrievalFailed }
+	}
+	It '履歴にあれば、検証済みのスキップとして記録し、ダウンロードしないこと' {
+		$hist = @([PSCustomObject]@{ videoPath = 'series/a.mp4' })
+		$result = $null
+		Resolve-DownloadDecision -VideoInfo $script:rddVideoInfo -HistFileData $hist -Result ([Ref]$result) | Out-Null
+		$result.Stop | Should -BeFalse
+		$result.SkipDownload | Should -BeTrue
+		$result.NewVideo.videoName | Should -Be '-- SKIPPED --'
+		$result.NewVideo.videoValidated | Should -Be '1'
+		$script:rddVideoInfo.fileName | Should -Be '-- SKIPPED --'
+	}
+	It '履歴になくても実ファイルがあれば、未検証のスキップとして記録し、ダウンロードしないこと' {
+		New-Item -ItemType File -Path $script:rddFile -Force | Out-Null
+		$result = $null
+		Resolve-DownloadDecision -VideoInfo $script:rddVideoInfo -HistFileData @() -Result ([Ref]$result) | Out-Null
+		$result.SkipDownload | Should -BeTrue
+		$result.NewVideo.videoValidated | Should -Be '0'
+	}
+	It '履歴にも実ファイルにもなく、対象外リストにも合致しなければ、ダウンロードすることを知らせること' {
+		$result = $null
+		$out = @(Resolve-DownloadDecision -VideoInfo $script:rddVideoInfo -HistFileData @() -Result ([Ref]$result))
+		$out | Should -Contain $script:msg.DownloadEpisodeAdded
+		$result.Stop | Should -BeFalse
+		$result.SkipDownload | Should -BeFalse
+		$result.NewVideo.videoName | Should -Be 'a.mp4'
+		$result.NewVideo.videoValidated | Should -Be '0'
+	}
+	It 'ダウンロード対象外リストに合致すれば、その記録を返し、ダウンロードしないこと' {
+		Mock Register-IgnoredVideo { $Result.Value = [PSCustomObject]@{ videoName = '-- IGNORED --' } }
+		$result = $null
+		Resolve-DownloadDecision -VideoInfo $script:rddVideoInfo -HistFileData @() -Result ([Ref]$result) | Out-Null
+		$result.SkipDownload | Should -BeTrue
+		$result.NewVideo.videoName | Should -Be '-- IGNORED --'
+	}
+}
+
+Describe 'Save-VideoHistory' {
+	BeforeEach {
+		$script:svhHist = Join-Path $TestDrive ('h{0}.csv' -f [Guid]::NewGuid().ToString('N'))
+		$script:histFilePath = $script:svhHist
+		$script:histLockFilePath = Join-Path $TestDrive 'h.lock'
+		Mock Wait-FileLock {}
+		Mock Unlock-File {}
+		Mock Start-Sleep {}
+		Mock Write-Warning {}
+		Mock Add-LatestHistoryCache {}
+	}
+	It '履歴CSVに1行追記し、キャッシュにも反映して、成功を返すこと' {
+		$row = [PSCustomObject]@{ videoName = 'a.mp4' ; videoPath = 'a.mp4' }
+		$ok = $false
+		Save-VideoHistory -NewVideo $row -Result ([Ref]$ok)
+		$ok | Should -BeTrue
+		@(Import-Csv -LiteralPath $script:svhHist -Encoding UTF8).Count | Should -Be 1
+		Should -Invoke Add-LatestHistoryCache -Times 1 -Exactly
+		Should -Invoke Unlock-File -Times 1 -Exactly
+	}
+	It '追記に失敗したら、警告を出して失敗を返し、ロックは解除すること' {
+		Mock Export-Csv { throw 'boom' }
+		$ok = $true
+		Save-VideoHistory -NewVideo ([PSCustomObject]@{ videoName = 'a.mp4' }) -Result ([Ref]$ok)
+		$ok | Should -BeFalse
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.HistUpdateFailed }
+		Should -Invoke Add-LatestHistoryCache -Times 0 -Exactly
+		Should -Invoke Unlock-File -Times 1 -Exactly
+	}
+}
+
+Describe 'Start-VideoDownloadProcess' {
+	BeforeEach {
+		$script:sdpDir = Join-Path $TestDrive ('d{0}' -f [Guid]::NewGuid().ToString('N'))
+		$script:sdpVideoInfo = [PSCustomObject]@{ fileDir = $script:sdpDir }
+		$script:sortVideoBySeries = $true
+		$script:ytdlRandomIp = $false
+		$script:proxyUrl = ''
+		Mock Invoke-Ytdl {}
+		Mock Start-Sleep {}
+		Mock Write-Warning {}
+	}
+	It '番組ごとのディレクトリを作成して、youtube-dlを起動すること' {
+		Start-VideoDownloadProcess -VideoInfo $script:sdpVideoInfo 6>$null
+		Test-Path -LiteralPath $script:sdpDir -PathType Container | Should -BeTrue
+		Should -Invoke Invoke-Ytdl -Times 1 -Exactly
+	}
+	It '番組ごとのディレクトリが不要な設定なら、作成しないこと' {
+		$script:sortVideoBySeries = $false
+		Start-VideoDownloadProcess -VideoInfo $script:sdpVideoInfo 6>$null
+		Test-Path -LiteralPath $script:sdpDir | Should -BeFalse
+		Should -Invoke Invoke-Ytdl -Times 1 -Exactly
+	}
+	It 'ディレクトリを作れなければ、警告を出し、youtube-dlを起動しないこと' {
+		Mock New-Item { throw 'boom' }
+		Start-VideoDownloadProcess -VideoInfo $script:sdpVideoInfo 6>$null
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.CreateEpisodeDirFailed }
+		Should -Invoke Invoke-Ytdl -Times 0 -Exactly
+	}
+	It 'youtube-dlの起動に失敗したら、警告を出すこと' {
+		Mock Invoke-Ytdl { throw 'boom' }
+		Start-VideoDownloadProcess -VideoInfo $script:sdpVideoInfo 6>$null
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.InvokeYtdlFailed }
+	}
+	It 'IPの偽装とプロキシを併用するときは、注意書きを表示すること' {
+		$script:ytdlRandomIp = $true ; $script:proxyUrl = 'http://proxy.example:8080'
+		$out = @(Start-VideoDownloadProcess -VideoInfo $script:sdpVideoInfo 6>$null)
+		$out | Should -Contain $script:msg.NotifyYtdlOptions1
+	}
+}
