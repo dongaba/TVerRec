@@ -23,6 +23,14 @@ BeforeAll {
 		Set-Content -LiteralPath $Path -Value ("#!/bin/sh`necho `"{0}`"`necho `"built with test`"" -f $Text) -NoNewline
 		if (!$IsWindows) { & chmod a+x $Path }
 	}
+	# 実行権限はあるが起動できないファイル(Linux/macOS)。存在しないインタプリタを指すshebangにする
+	# * 実行権限のないファイルを&で起動すると、PowerShellがxdg-open/openに渡して関連付けられたアプリが開いてしまうため使わない
+	function script:New-BrokenFfTool {
+		Param ([String]$Path)
+		New-Item -ItemType Directory -Path (Split-Path $Path -Parent) -Force | Out-Null
+		Set-Content -LiteralPath $Path -Value "#!/nonexistent/interpreter`n" -NoNewline
+		& chmod a+x $Path
+	}
 	# GitHub(Windows/Linux)の最新ビルド一覧ページの代わり。URLは実際と同じく1行に1つ
 	$script:ffWikiLatest = @'
 https://github.com/yt-dlp/FFmpeg-Builds/releases/download/autobuild-2025-01-02-12-34/ffmpeg-N-118000-gabcdef-linux64-gpl.tar.xz
@@ -151,6 +159,51 @@ Describe 'Update-Ffmpeg' {
 			Should -Invoke Write-Warning -ParameterFilter { $Message -eq ($script:msg.ToolDownloadFailed -f 'ffmpeg') } -Times 1 -Exactly
 			((& $script:ffLocal -version) -join "`n") | Should -Match 'N-100000'
 		}
+		It 'ローカルのffmpegを実行できなくても、例外にならずバージョン不明として更新すること' {
+			# * 起動に失敗すると、バージョン取得の例外処理に入る
+			New-BrokenFfTool -Path $script:ffLocal
+			{ Update-Ffmpeg | Out-Null } | Should -Not -Throw
+			Should -Invoke Invoke-WebRequest -Times 1 -Exactly
+		}
+		It '更新に成功したときは、エラーを出力しないこと' {
+			$records = @(Update-Ffmpeg 2>&1 | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] })
+			$records.Count | Should -Be 0
+		}
+		It 'CPUの種類を判別できなければ、警告して終了し、ダウンロードしないこと' {
+			Mock uname { 'mips' }
+			Update-Ffmpeg | Out-Null
+			Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq ($script:msg.ToolArchitectureNotIdentified1 -f 'ffmpeg') }
+			Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq ($script:msg.ToolArchitectureNotIdentified2 -f 'mips', 'ffmpeg') }
+			Should -Invoke Invoke-WebRequest -Times 0 -Exactly
+		}
+		It '展開に失敗したら、警告して終了すること' {
+			Mock tar { throw 'tar failed' }
+			Update-Ffmpeg | Out-Null
+			Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq ($script:msg.ToolExtractFailed -f 'ffmpeg') }
+			Test-Path -LiteralPath $script:ffLocal | Should -BeFalse
+		}
+		It '配布物にffmpegが含まれていなければ、配置の失敗を警告して終了すること' {
+			$emptyStage = Join-Path $TestDrive ('nobin{0}' -f [Guid]::NewGuid().ToString('N'))
+			New-Item -ItemType Directory -Path (Join-Path $emptyStage 'ffmpeg-N-118000-gabcdef-linux64-gpl') -Force | Out-Null
+			Set-Content -LiteralPath (Join-Path $emptyStage 'ffmpeg-N-118000-gabcdef-linux64-gpl/README') -Value 'x'
+			$script:ffEmptyArchive = Join-Path $TestDrive ('nobin{0}.tar.xz' -f [Guid]::NewGuid().ToString('N'))
+			& tar cJf $script:ffEmptyArchive -C $emptyStage 'ffmpeg-N-118000-gabcdef-linux64-gpl'
+			Mock Invoke-WebRequest { Copy-Item -LiteralPath $script:ffEmptyArchive -Destination $OutFile }
+			$out = (Update-Ffmpeg) -join "`n"
+			Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq ($script:msg.ToolDeployFailed -f 'ffmpeg') }
+			$out | Should -Not -Match ([regex]::Escape(($script:msg.ToolUpdated -f 'ffmpeg', '')))
+		}
+		It '配置したffmpegを起動できなければ、バージョン確認の失敗を警告すること' {
+			$badStage = Join-Path $TestDrive ('bad{0}' -f [Guid]::NewGuid().ToString('N'))
+			$badDir = Join-Path $badStage 'ffmpeg-N-118000-gabcdef-linux64-gpl/bin'
+			New-Item -ItemType Directory -Path $badDir -Force | Out-Null
+			foreach ($n in 'ffmpeg', 'ffprobe') { New-BrokenFfTool -Path (Join-Path $badDir $n) }
+			$script:ffBadArchive = Join-Path $TestDrive ('bad{0}.tar.xz' -f [Guid]::NewGuid().ToString('N'))
+			& tar cJf $script:ffBadArchive -C $badStage 'ffmpeg-N-118000-gabcdef-linux64-gpl'
+			Mock Invoke-WebRequest { Copy-Item -LiteralPath $script:ffBadArchive -Destination $OutFile }
+			Update-Ffmpeg | Out-Null
+			Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.ToolVersionCheckFailed }
+		}
 	}
 
 	Context 'macOS' -Skip:(-not $IsMacOS) {
@@ -217,6 +270,39 @@ Describe 'Update-Ffmpeg' {
 			Update-Ffmpeg | Out-Null
 			Should -Invoke Write-Warning -ParameterFilter { $Message -eq ($script:msg.ToolDownloadFailed -f 'ffmpeg') } -Times 1 -Exactly
 		}
+		It 'ローカルのffmpegのバージョン表記が想定外の形式でも、例外にならずバージョン不明として更新すること' {
+			New-FakeFfTool -Path $script:ffLocal -Text 'ffmpeg version abc Copyright (c) test'
+			{ Update-Ffmpeg | Out-Null } | Should -Not -Throw
+			Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq ($script:msg.ToolOutdated -f 'ffmpeg') }
+		}
+		It 'ローカルのffmpegを実行できなくても、例外にならずバージョン不明として更新すること' {
+			New-BrokenFfTool -Path $script:ffLocal
+			{ Update-Ffmpeg | Out-Null } | Should -Not -Throw
+			Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq ($script:msg.ToolOutdated -f 'ffmpeg') }
+		}
+		It '展開に失敗したら、警告して終了すること' {
+			Mock Invoke-WebRequest {
+				if ($OutFile) { Set-Content -LiteralPath $OutFile -Value 'not a zip' -NoNewline }
+				elseif ($Uri -match '/history/') { [PSCustomObject]@{ links = @([PSCustomObject]@{ href = ('/info/release/macos/{0}/release/{0}/1700000000_7.1' -f $script:ffMacArch) }) } }
+				else {
+					$links = foreach ($n in 'ffmpeg', 'ffprobe', 'ffplay') { [PSCustomObject]@{ href = ('/download/macos/{0}/1700000000_7.1/{1}.zip' -f $script:ffMacArch, $n) ; outerHTML = ('<a href="x">{0}.zip</a>' -f $n) } }
+					[PSCustomObject]@{ links = @($links) }
+				}
+			}
+			Update-Ffmpeg | Out-Null
+			Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq ($script:msg.ToolExtractFailed -f 'ffmpeg') }
+		}
+		It '配置したffmpegを起動できなければ、バージョン確認の失敗を警告すること' {
+			$badDir = Join-Path $TestDrive ('macbad{0}' -f [Guid]::NewGuid().ToString('N'))
+			New-Item -ItemType Directory -Path $badDir -Force | Out-Null
+			New-BrokenFfTool -Path (Join-Path $badDir 'ffmpeg')
+			$script:ffMacBadZip = Join-Path $TestDrive ('macbad{0}.zip' -f [Guid]::NewGuid().ToString('N'))
+			[IO.Compression.ZipFile]::CreateFromDirectory($badDir, $script:ffMacBadZip)
+			$orig = $script:ffMacZips['ffmpeg']
+			$script:ffMacZips['ffmpeg'] = $script:ffMacBadZip
+			try { Update-Ffmpeg | Out-Null } finally { $script:ffMacZips['ffmpeg'] = $orig }
+			Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.ToolVersionCheckFailed }
+		}
 	}
 
 	Context 'Windows' -Skip:(-not $IsWindows) {
@@ -256,6 +342,26 @@ Describe 'Update-Ffmpeg' {
 			# * 偽物のexeは実行できないため、更新後のバージョン確認に失敗する
 			Update-Ffmpeg | Out-Null
 			Should -Invoke Write-Warning -ParameterFilter { $Message -eq $script:msg.ToolVersionCheckFailed } -Times 1 -Exactly
+		}
+		It 'ローカルのffmpeg.exeを実行できなくても、例外にならずバージョン不明として更新すること' {
+			Set-Content -LiteralPath $script:ffLocal -Value 'not an exe' -NoNewline
+			{ Update-Ffmpeg | Out-Null } | Should -Not -Throw
+			Should -Invoke Invoke-WebRequest -Times 1 -Exactly
+		}
+		It '展開に失敗したら、警告して終了すること' {
+			Mock Invoke-WebRequest { Set-Content -LiteralPath $OutFile -Value 'not a zip' -NoNewline }
+			Update-Ffmpeg | Out-Null
+			Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq ($script:msg.ToolExtractFailed -f 'ffmpeg') }
+		}
+		It '配布物にffmpeg.exeが含まれていなければ、配置の失敗を警告して終了すること' {
+			$emptyStage = Join-Path $TestDrive ('nobin{0}' -f [Guid]::NewGuid().ToString('N'))
+			New-Item -ItemType Directory -Path (Join-Path $emptyStage 'ffmpeg-N-118000-gabcdef-win64-gpl') -Force | Out-Null
+			Set-Content -LiteralPath (Join-Path $emptyStage 'ffmpeg-N-118000-gabcdef-win64-gpl/README') -Value 'x'
+			$script:ffEmptyArchive = Join-Path $TestDrive ('nobin{0}.zip' -f [Guid]::NewGuid().ToString('N'))
+			[IO.Compression.ZipFile]::CreateFromDirectory($emptyStage, $script:ffEmptyArchive)
+			Mock Invoke-WebRequest { Copy-Item -LiteralPath $script:ffEmptyArchive -Destination $OutFile }
+			Update-Ffmpeg | Out-Null
+			Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq ($script:msg.ToolDeployFailed -f 'ffmpeg') }
 		}
 	}
 }
@@ -300,6 +406,23 @@ Describe 'update_ffmpeg.ps1をスクリプトとして実行したとき' {
 		Remove-Item -LiteralPath (Join-Path $script:sbRoot 'conf/user_setting.ps1') -Force
 		$err = try { & $script:sbScript ; '' } catch { $_.Exception.Message }
 		@($script:msgAll.'ja-JP'.UserSettingNotCompleted, $script:msgAll.'en-US'.UserSettingNotCompleted) | Should -Contain $err
+	}
+	It '実際のスクリプトを-WhatIfで実行しても、設定ファイルを読み込んで更新処理まで到達し、何も変更しないこと' {
+		# * 一時ディレクトリ内のコピーではカバレッジが取れないため、実物を直接実行する。-WhatIfで更新処理の中身は実行しない
+		$userSetting = Join-Path $script:repoRoot 'conf/user_setting.ps1'
+		$created = -not (Test-Path $userSetting)
+		if ($created) { Set-Content -LiteralPath $userSetting -Value ('$script:binDir = ''{0}''' -f $script:sbBin) }
+		Mock Invoke-RestMethod {}
+		Mock Invoke-WebRequest {}
+		try {
+			$WhatIfPreference = $true
+			{ & $targetFile *> $null } | Should -Not -Throw
+		} finally {
+			$WhatIfPreference = $false
+			if ($created) { Remove-Item -LiteralPath $userSetting -Force -ErrorAction SilentlyContinue }
+		}
+		Should -Invoke Invoke-RestMethod -Times 0 -Exactly
+		Should -Invoke Invoke-WebRequest -Times 0 -Exactly
 	}
 	It 'ドット読み込みでは、更新処理を実行しないこと' {
 		. $script:sbScript

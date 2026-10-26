@@ -204,8 +204,12 @@ function Update-Ffmpeg {
 				catch { Write-Warning ($script:msg.ToolExtractFailed -f 'ffmpeg') ; return }
 				# 配置
 				Write-Output ($script:msg.ToolDeploy -f 'ffmpeg')
-				try { Move-Item -Path ('{0}/ffmpeg-*-gpl/bin/ff*.exe' -f $script:binDir) -Destination $script:binDir -Force | Out-Null }
-				catch { Write-Warning ($script:msg.ToolDeployFailed -f 'ffmpeg') ; return }
+				# * ワイルドカードが何にも一致しない場合、Move-Itemはエラーにならないため、先に対象があることを確認する
+				try {
+					$deployFiles = @(Get-Item -Path ('{0}/ffmpeg-*-gpl/bin/ff*.exe' -f $script:binDir) -ErrorAction Stop)
+					if ($deployFiles.Count -eq 0) { throw 'ffmpeg to deploy was not found.' }
+					Move-Item -LiteralPath $deployFiles.FullName -Destination $script:binDir -Force -ErrorAction Stop | Out-Null
+				} catch { Write-Warning ($script:msg.ToolDeployFailed -f 'ffmpeg') ; return }
 				# ゴミ掃除
 				Write-Output $script:msg.ToolRemoveWorkingFiles
 				Remove-Item -Path ('{0}/ffmpeg-*-gpl' -f $script:binDir) -Force -Recurse -ErrorAction SilentlyContinue | Out-Null
@@ -276,8 +280,12 @@ function Update-Ffmpeg {
 				catch { Write-Warning ($script:msg.ToolExtractFailed -f 'ffmpeg') ; return }
 				# 配置
 				Write-Output ($script:msg.ToolDeploy -f 'ffmpeg')
-				try { Move-Item -Path ('{0}/ffmpeg-*-gpl/bin/ff*' -f $script:binDir) -Destination $script:binDir -Force | Out-Null }
-				catch { Write-Warning ($script:msg.ToolDeployFailed -f 'ffmpeg') ; return }
+				# * ワイルドカードが何にも一致しない場合、Move-Itemはエラーにならないため、先に対象があることを確認する
+				try {
+					$deployFiles = @(Get-Item -Path ('{0}/ffmpeg-*-gpl/bin/ff*' -f $script:binDir) -ErrorAction Stop)
+					if ($deployFiles.Count -eq 0) { throw 'ffmpeg to deploy was not found.' }
+					Move-Item -LiteralPath $deployFiles.FullName -Destination $script:binDir -Force -ErrorAction Stop | Out-Null
+				} catch { Write-Warning ($script:msg.ToolDeployFailed -f 'ffmpeg') ; return }
 				# ゴミ掃除
 				Write-Output $script:msg.ToolRemoveWorkingFiles
 				Remove-Item -Path ('{0}/ffmpeg-*-gpl' -f $script:binDir) -Force -Recurse -ErrorAction SilentlyContinue | Out-Null
@@ -375,7 +383,7 @@ function Update-Ffmpeg {
 		}
 	}
 
-	Remove-Variable -Name ffmpegPath, os, arch, ffmpegFileVersion, currentVersion, releases, latestRelease, latestVersion, cpu, downloadURL, ffmpegFileVersion, ffmpegReleases, ffprobeReleases, ffmpegReleaseInfo, ffprobeReleaseInfo -ErrorAction SilentlyContinue
+	Remove-Variable -Name ffmpegPath, os, arch, ffmpegFileVersion, currentVersion, releases, latestRelease, latestVersion, cpu, downloadURL, ffmpegFileVersion, ffmpegReleases, ffprobeReleases, ffmpegReleaseInfo, ffprobeReleaseInfo, deployFiles -ErrorAction SilentlyContinue
 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
