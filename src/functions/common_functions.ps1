@@ -1058,32 +1058,34 @@ function Get-RemainingCapacity {
 	Param (
 		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][string]$targetDir
 	)
-	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $targetDir)
-	if ($IsWindows) {
-		try {
-			switch -Regex ($targetDir) {
-				'^[a-zA-Z]:' {
-					# ローカルディスクまたはマウントされたネットワークドライブ (例: "C:\", "Z:\")
-					$targetDrive = $targetDir.Substring(0, 2)  # "C:" or "Z:"
-					$freeSpace = (Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='$targetDrive'").FreeSpace
-					break
+	process {
+		Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $targetDir)
+		if ($IsWindows) {
+			try {
+				switch -Regex ($targetDir) {
+					'^[a-zA-Z]:' {
+						# ローカルディスクまたはマウントされたネットワークドライブ (例: "C:\", "Z:\")
+						$targetDrive = $targetDir.Substring(0, 2)  # "C:" or "Z:"
+						$freeSpace = (Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='$targetDrive'").FreeSpace
+						break
+					}
+					'^\\\\' {
+						# UNC パス (例: "\\server\share")
+						$targetRoot = ($targetDir -replace '(^\\\\[^\\]+\\[^\\]+).*', '$1')  # \\server\share
+						$freeSpace = (& cmd /c dir $targetRoot) | Select-Object -Last 1 | ForEach-Object { $_ -replace ',' -split '\s+' } | Select-Object -Index 3
+						break
+					}
+					default { Write-Information ($script:msg.CapacityUnknown -f $targetDir) ; $freeSpace = 9999999999 }
 				}
-				'^\\\\' {
-					# UNC パス (例: "\\server\share")
-					$targetRoot = ($targetDir -replace '(^\\\\[^\\]+\\[^\\]+).*', '$1')  # \\server\share
-					$freeSpace = (& cmd /c dir $targetRoot) | Select-Object -Last 1 | ForEach-Object { $_ -replace ',' -split '\s+' } | Select-Object -Index 3
-					break
-				}
-				default { Write-Information ($script:msg.CapacityUnknown -f $targetDir) ; $freeSpace = 9999999999 }
-			}
-		} catch { Write-Information ($script:msg.CapacityUnknown -f $targetDir) ; $freeSpace = 9999999999 }
-	} else {
-		try {
-			$dfCmd = "df -P `"$targetDir`""
-			$freeSpace = [int64](((& sh -c $dfCmd) | Select-Object -Skip 1) -split '\s+')[3] * 1024
-		} catch { Write-Information ($script:msg.CapacityUnknown -f $targetDir) ; $freeSpace = 9999999999 }
+			} catch { Write-Information ($script:msg.CapacityUnknown -f $targetDir) ; $freeSpace = 9999999999 }
+		} else {
+			try {
+				$dfCmd = "df -P `"$targetDir`""
+				$freeSpace = [int64](((& sh -c $dfCmd) | Select-Object -Skip 1) -split '\s+')[3] * 1024
+			} catch { Write-Information ($script:msg.CapacityUnknown -f $targetDir) ; $freeSpace = 9999999999 }
+		}
+		return [int64]($freeSpace / 1MB)
 	}
-	return [int64]($freeSpace / 1MB)
 }
 #endregion ディスク監視
 

@@ -145,7 +145,7 @@ function Get-VideoLinksFromKeyword {
 	#>
 	[CmdletBinding()]
 	[OutputType([System.Collections.Generic.List[String]])]
-	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$keyword)
+	Param ([Parameter(Mandatory = $true)][String]$keyword)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# * 「lp/episodes/epxxxx」「lp/series/srxxxx」形式(TVerの共有URL由来)は「lp/」を除いて通常のIDとして扱う
 	$keyword = $keyword -replace '^lp/(?=(episodes|series)/)', ''
@@ -229,7 +229,7 @@ function Get-LinkFromBuffer {
 	Param (
 		[Parameter(Mandatory = $false)][Object[]]$tverIDs,
 		[Parameter(Mandatory = $true)][ValidateSet('specialMainLinks', 'specialLinks', 'talentLinks', 'seriesLinks', 'seasonLinks')][String]$tverIDType,
-		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject]$linkCollection
+		[Parameter(Mandatory = $true)][PSCustomObject]$linkCollection
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	if ($tverIDs) {
@@ -292,9 +292,9 @@ function Get-LinkFromKeyword {
 	[CmdletBinding()]
 	[OutputType([Void])]
 	Param (
-		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$id,
+		[Parameter(Mandatory = $true)][String]$id,
 		[Parameter(Mandatory = $false)][ValidateSet('seriesLinks', 'seasonLinks', 'talentLinks', 'specialMainLinks', 'specialLinks', 'tag', 'new', 'end', 'ranking', 'keyword', 'category')][String]$linkType,
-		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject]$linkCollection
+		[Parameter(Mandatory = $true)][PSCustomObject]$linkCollection
 	)
 	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $id)
 	$type = ''
@@ -370,7 +370,7 @@ function Get-SearchResult {
 		[Parameter(Mandatory = $false)][String]$keyword,
 		[Parameter(Mandatory = $false)][String]$requireData,
 		[Parameter(Mandatory = $false)][Boolean]$loginRequired,
-		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject]$linkCollection
+		[Parameter(Mandatory = $true)][PSCustomObject]$linkCollection
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	# URLの整形
@@ -463,7 +463,7 @@ function Get-LinkFromTopPage {
 	#>
 	[CmdletBinding()]
 	[OutputType([Void])]
-	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject]$linkCollection)
+	Param ([Parameter(Mandatory = $true)][PSCustomObject]$linkCollection)
 	Write-Debug ('Dev - {0}' -f $MyInvocation.MyCommand.Name)
 	# * v1/callHomeは2026年時点で空のresultを返すためv2を使用
 	$callSearchBaseURL = 'https://platform-api.tver.jp/service/api/v2/callHome'
@@ -524,7 +524,7 @@ function Get-LinkFromSiteMap {
 	#>
 	[CmdletBinding()]
 	[OutputType([Void])]
-	Param ([Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject]$linkCollection)
+	Param ([Parameter(Mandatory = $true)][PSCustomObject]$linkCollection)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$callSearchURL = 'https://tver.jp/sitemap.xml'
 	try { $searchResultsRaw = Invoke-RestMethod -Uri $callSearchURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec }
@@ -602,8 +602,8 @@ function Get-LinkFromMyPage {
 	[CmdletBinding()]
 	[OutputType([Void])]
 	Param (
-		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][String]$page,
-		[Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject]$linkCollection
+		[Parameter(Mandatory = $true)][String]$page,
+		[Parameter(Mandatory = $true)][PSCustomObject]$linkCollection
 	)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$baseURLPrefix = if ($script:myMemberSID) { 'https://member-api.tver.jp' ; $loginRequired = $true } else { 'https://platform-api.tver.jp' ; $loginRequired = $false }
