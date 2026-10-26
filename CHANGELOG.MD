@@ -27,6 +27,7 @@
 - `common_functions.ps1`(約1,660行)を用途別の5ファイル(`common_system_functions.ps1`、`common_time_functions.ps1`、`common_string_functions.ps1`、`common_file_functions.ps1`、`common_toast_functions.ps1`)に分割し、`common_functions.ps1`はそれらを読み込む入口にした(関数の中身は変更なし)
 - `Invoke-VideoDownload`(約180行)を、字幕の再確認(`Resolve-SubtitleRecheck`)、ダウンロード要否の判定(`Resolve-DownloadDecision`)、履歴の追記(`Save-VideoHistory`)、ディレクトリ作成とyoutube-dl起動(`Start-VideoDownloadProcess`)に分割し、本体は流れだけを書く形にした(動作は変更なし)
 - `tver_functions.ps1`(約1,200行)を用途別の4ファイル(`tver_api_functions.ps1`、`tver_link_functions.ps1`、`tver_format_functions.ps1`、`tver_info_functions.ps1`)に分割し、`tver_functions.ps1`はそれらを読み込む入口にした(関数の中身は変更なし)
+- `Update-Ffmpeg`(約270行)のOSごとの処理を、`Update-FfmpegWindows`・`Update-FfmpegLinux`・`Update-FfmpegMac`に分割し、`Update-Ffmpeg`は`-WhatIf`の確認とOSによる振り分けだけにした(動作は変更なし)
 - `Invoke-VideoDownload`で3か所に重複していたダウンロード対象外リストとの照合を`Register-IgnoredVideo`に集約し、履歴・実ファイルの有無による分岐を整理(動作は変更していない)。`Invoke-Ytdl`と`Invoke-NonTverYtdl`で重複していた引数の組み立てとプロセス起動を`Get-YtdlCommonArgument`・`Get-YtdlMp4Argument`・`Start-YtdlProcess`に集約
 - `Get-VideoInfo`と`Get-VideoInfoLegacy`で重複していた番組情報の整形とオブジェクト生成を、`Format-TitleText`・`Format-NarrowText`・`Format-BroadcastDateLabel`・`Format-DescriptionText`・`ConvertFrom-UnixTimeToJst`・`New-VideoInfoObject`に集約。旧API側で項目が`$null`の場合に、メソッド呼び出しのエラーにならず空文字として扱うようになった
 - `Get-VideoInfoLegacy`内の、コメントアウトされていたStreaks・BrightcoveからのM3U8取得処理(約70行)を削除
