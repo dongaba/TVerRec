@@ -2494,6 +2494,14 @@ Describe 'Invoke-IntegrityCheck' {
 		Should -Invoke Wait-FileLock -Times 2 -Exactly
 		Should -Invoke Unlock-File -Times 2 -Exactly
 	}
+	It 'エラーログファイルを作成できなければ、警告を出して中断し、チェックも履歴の更新もしないこと' {
+		# * 通常のファイルの下にはファイルを作成できない。New-Itemの失敗は非終了エラーのため、-ErrorAction Stopがないと捕捉されない
+		$script:ffmpegErrorLogPath = Join-Path $script:icVideo 'ffmpeg_error.log'
+		Invoke-IntegrityCheck -videoHist $script:icVideoHist | Out-Null
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.FfmpegErrFileInitializeFailed }
+		Should -Invoke Invoke-FFmpegProcess -Times 0 -Exactly
+		(& $script:icGetExported) | Should -BeNullOrEmpty
+	}
 	It '終了コードが0以外なら、チェック失敗(3)を記録し、警告を出し、ファイルを削除すること' {
 		$script:icExit = 1
 		Invoke-IntegrityCheck -videoHist $script:icVideoHist | Out-Null

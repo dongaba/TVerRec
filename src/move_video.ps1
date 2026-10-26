@@ -261,7 +261,7 @@ if ($script:emptyDownloadBaseDir) {
 				$emptyDirNum = ([Array]::IndexOf($using:emptyDirs, $_)) + 1
 				$emptyDirTotal = $using:emptyDirs.Count
 				Write-Output ('　{0}/{1} - {2}' -f $emptyDirNum, $emptyDirTotal, $_)
-				try { Remove-Item -LiteralPath $_ -Recurse -Force | Out-Null }
+				try { Remove-Item -LiteralPath $_ -Recurse -Force -ErrorAction Stop | Out-Null }
 				catch { Write-Warning ($script:msg.DeleteEmptyDirsFailed -f $_) }
 			} -ThrottleLimit $script:multithreadNum
 		} else {
@@ -287,7 +287,7 @@ if ($script:emptyDownloadBaseDir) {
 				Update-ProgressToast @toastUpdateParams
 
 				Write-Output ('　{0}/{1} - {2}' -f $emptyDirNum, $emptyDirTotal, $dir)
-				try { Remove-Item -LiteralPath $dir -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
+				try { Remove-Item -LiteralPath $dir -Recurse -Force -ErrorAction Stop | Out-Null
 				} catch { Write-Warning ($script:msg.DeleteEmptyDirsFailed -f $dir) }
 			}
 		}

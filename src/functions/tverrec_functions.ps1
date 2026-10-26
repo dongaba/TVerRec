@@ -1921,7 +1921,7 @@ function Invoke-Ytdl {
 			)
 			foreach ($logFile in $logFiles) {
 				$logFilePath = $logFile.Path.Replace('.log', ('_{0}.log' -f $randomNum))
-				try { New-Item -Path $logFilePath -ItemType File -Force | Out-Null }
+				try { New-Item -Path $logFilePath -ItemType File -Force -ErrorAction Stop | Out-Null }
 				catch { Write-Warning ($script:msg.FfmpegErrFileInitializeFailed) ; return }
 				$startProcessParams[$logFile.Redirect] = $logFilePath
 			}
@@ -2043,7 +2043,7 @@ function Invoke-NonTverYtdl {
 		)
 		foreach ($logFile in $logFiles) {
 			$logFilePath = $logFile.Path.Replace('.log', ('_{0}.log' -f $randomNum))
-			try { New-Item -Path $logFilePath -ItemType File -Force | Out-Null }
+			try { New-Item -Path $logFilePath -ItemType File -Force -ErrorAction Stop | Out-Null }
 			catch { Write-Warning ($script:msg.FfmpegErrFileInitializeFailed) ; return }
 			$startProcessParams[$logFile.Redirect] = $logFilePath
 		}
@@ -2545,7 +2545,7 @@ function Invoke-VideoDownload {
 	if ($skipDownload) { return }
 	# 番組ディレクトリがなければ作成
 	if ($script:sortVideoBySeries -and !(Test-Path $videoInfo.fileDir -PathType Container)) {
-		try { New-Item -ItemType Directory -Path $videoInfo.fileDir -Force | Out-Null }
+		try { New-Item -ItemType Directory -Path $videoInfo.fileDir -Force -ErrorAction Stop | Out-Null }
 		catch { Write-Warning ($script:msg.CreateEpisodeDirFailed) ; return }
 	}
 	# youtube-dl起動
@@ -3162,7 +3162,7 @@ function Invoke-IntegrityCheck {
 	$ffmpegProcessExitCode = 0
 	$errorCount = 0
 	$videoFilePath = Join-Path (Convert-Path $script:downloadBaseDir) $videoHist.videoPath
-	try { New-Item -Path $script:ffmpegErrorLogPath -ItemType File -Force | Out-Null }
+	try { New-Item -Path $script:ffmpegErrorLogPath -ItemType File -Force -ErrorAction Stop | Out-Null }
 	catch { Write-Warning ($script:msg.FfmpegErrFileInitializeFailed) ; return }
 
 	# これからチェックする番組のステータスをチェック

@@ -11,7 +11,7 @@
 		ghコマンドで、指定ブランチの最新の完了したワークフロー実行を探し、
 		カバレッジのアーティファクトを取得します。
 		取得後、OSごとの命令カバー率、3OSを合算した行カバー率、未カバー行の多いファイルを表示します。
-		取得先フォルダは実行のたびに作り直します。(既存のフォルダがあると、ghが上書きに失敗するため)
+		取得先は、OutDirの下の実行ごとのサブフォルダ(run-<実行ID>)です。古い実行のサブフォルダは、消せる範囲で自動的に片付けます。
 
 	.PARAMETER Branch
 		対象のブランチを指定します。省略時は、現在のブランチです。
@@ -20,7 +20,7 @@
 		対象のワークフローのファイル名を指定します。省略時は、pester.ymlです。
 
 	.PARAMETER OutDir
-		取得先のフォルダを指定します。省略時は、リポジトリ直下のcoverage-artifactsです。
+		取得先の親フォルダを指定します。省略時は、リポジトリ直下のcoverage-artifactsです。
 
 	.PARAMETER RunId
 		対象の実行IDを指定します。省略時は、指定ブランチの最新の完了した実行です。
@@ -82,16 +82,24 @@ if (!$NoDownload) {
 	if ($run.conclusion -ne 'success') {
 		Write-Output ('  ※失敗したテストの詳細: gh run view {0} --log-failed | grep -E "\[-\]|Expected|But was"' -f $RunId)
 	}
-	# * 取得先は作り直す。誤って別の場所を消さないよう、リポジトリ配下かつcoverage-artifactsの場合だけ削除する
-	if (Test-Path -LiteralPath $OutDir) {
-		$full = [IO.Path]::GetFullPath($OutDir)
-		if (!$full.StartsWith([IO.Path]::GetFullPath($repoRoot)) -or (Split-Path $full -Leaf) -ne 'coverage-artifacts') {
-			throw ('取得先 {0} は、リポジトリ配下のcoverage-artifactsではないため、自動では作り直せません。空のフォルダを指定してください。' -f $OutDir)
-		}
-		Remove-Item -LiteralPath $full -Recurse -Force
+	# * 取得先は実行ごとのサブフォルダにする。既存のフォルダを消せない環境(Resource busyなど)や、ghが上書きに失敗する問題を避けるため
+	$runDir = Join-Path $OutDir ('run-{0}' -f $RunId)
+	if (Test-Path -LiteralPath $runDir) {
+		try { Remove-Item -LiteralPath $runDir -Recurse -Force -ErrorAction Stop }
+		catch { $runDir = Join-Path $OutDir ('run-{0}-{1}' -f $RunId, (Get-Date -Format 'HHmmss')) }
 	}
-	& gh run download $RunId --dir $OutDir
+	& gh run download $RunId --dir $runDir
 	if ($LASTEXITCODE -ne 0) { throw 'ghでのダウンロードに失敗しました。' }
+	# 古い実行のフォルダは、消せる範囲で片付ける(消せなくても無視する)
+	foreach ($old in @(Get-ChildItem -LiteralPath $OutDir -Directory -Filter 'run-*' -ErrorAction SilentlyContinue).Where({ $_.FullName -ne (Get-Item -LiteralPath $runDir).FullName })) {
+		Remove-Item -LiteralPath $old.FullName -Recurse -Force -ErrorAction SilentlyContinue
+	}
+	$OutDir = $runDir
+}
+elseif (Test-Path -LiteralPath $OutDir) {
+	# ダウンロードしない場合は、最も新しい実行のフォルダを集計する(なければOutDirそのもの)
+	$latest = Get-ChildItem -LiteralPath $OutDir -Directory -Filter 'run-*' -ErrorAction SilentlyContinue | Sort-Object -Property LastWriteTime -Descending | Select-Object -First 1
+	if ($latest) { $OutDir = $latest.FullName }
 }
 
 #----------------------------------------------------------------------

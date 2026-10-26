@@ -909,7 +909,6 @@ function Lock-File {
 		result       = $result
 		errorMessage = $errorMessage
 	}
-	Remove-Variable -Name path, result, errorMessage -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -1013,7 +1012,6 @@ function Unlock-File {
 		path   = $path
 		result = $result
 	}
-	Remove-Variable -Name path, result -ErrorAction SilentlyContinue
 }
 #endregion ファイルロック
 

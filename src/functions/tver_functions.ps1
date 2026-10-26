@@ -190,7 +190,6 @@ function Get-VideoLinksFromKeyword {
 	}
 	if ($linkCollection.episodeLinks.Count -eq 0) { return }
 	else { return ($linkCollection.episodeLinks.GetEnumerator() | Sort-Object Value).Name }
-	Remove-Variable -Name keyword, key, tverID, linkTypes, linkType -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -317,7 +316,7 @@ function Get-LinkFromKeyword {
 		}
 		'category' { ('https://platform-api.tver.jp/service/api/v1/callCategoryHome/{0}' -f $id) ; $type = 'category' ; break }
 		'keyword' { 'https://platform-api.tver.jp/service/api/v2/callKeywordSearch'; $type = 'keyword' ; $keyword = $id ; break }
-		default { Write-Warning $script:msg.InvalidTypeSpecified }
+		default { Write-Warning $script:msg.InvalidTypeSpecified ; return }	# * 種類が不明なときは、URLが決まらないため検索せずに終了する
 	}
 	# 検索結果の取得
 	Get-SearchResult -baseURL $baseURL -Type $type -Keyword $keyword -LinkCollection ([Ref]$linkCollection)
@@ -1113,7 +1112,6 @@ function Get-VideoInfoLegacy {
 			isBrightcove    = $isBrightcove
 		#>
 	}
-	Remove-Variable -Name episodeID, tverVideoInfoBaseURL, tverVideoInfoURL, response, videoSeries, videoSeriesID, videoSeriesPageURL, videoSeason, videoSeasonID, episodeName, videoEpisodeID, videoEpisodePageURL, mediaName, providerName, broadcastDate, endTime, versionNum, videoInfo, descriptionText, videoEpisodeNum, streaksRefID, streaksProjectID, ati, brightcoveJsURL, brightcovePk, brightcoveURL, accountID, videoRefID, playerID, httpHeader, response, m3u8URL, isStreaks, isBrightcove -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------

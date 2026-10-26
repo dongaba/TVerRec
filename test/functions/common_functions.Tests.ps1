@@ -997,4 +997,18 @@ Describe 'トースト通知' {
 	}
 }
 
+Describe 'Update-ProgressToast2Row(残り時間と完了の表示の組み合わせ)' -Skip:$IsWindows {
+	BeforeAll { $script:t2Saved = if (Test-Path Variable:Script:disableToastNotification) { $script:disableToastNotification } else { '__unset__' } }
+	AfterAll {
+		if ($script:t2Saved -is [String] -and $script:t2Saved -eq '__unset__') { Remove-Variable -Name disableToastNotification -Scope Script -ErrorAction SilentlyContinue }
+		else { $script:disableToastNotification = $script:t2Saved }
+	}
+	It '上段が完了(0)、下段が残り時間でも、逆でも、例外にならないこと' {
+		$script:disableToastNotification = $false
+		{ Update-ProgressToast2Row -rate1 '1' -rightText1 '0' -rate2 '0.5' -rightText2 '90' -tag 't' -group 'g' } | Should -Not -Throw
+		{ Update-ProgressToast2Row -rate1 '0.5' -rightText1 '90' -rate2 '1' -rightText2 '0' -tag 't' -group 'g' } | Should -Not -Throw
+		{ Update-ProgressToast2Row -rate1 '0.5' -rightText1 '' -rate2 '0.5' -rightText2 '' -tag 't' -group 'g' } | Should -Not -Throw
+	}
+}
+
 # endregion トースト通知

@@ -390,7 +390,7 @@ function Save-UserSetting {
 	# 自動生成より後の部分
 	$newSetting += $endSegment
 	if ( $totalLineNum -ne 0 ) {
-		try { $newSetting += Get-Content $userSettingFile -Tail $tailLineNum }
+		try { $newSetting += Get-Content $userSettingFile -Tail $tailLineNum -ErrorAction Stop }
 		catch { Write-Warning ($script:msg.AutoGenNotDetected) }
 	}
 	# 改行コードLFを強制 + NFCで出力

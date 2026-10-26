@@ -1135,3 +1135,27 @@ Describe 'Format-VideoInfoText(放送日の年の補完)' {
 		(Format-VideoInfoText -seriesName 'S' -seasonName '' -episodeName 'T' -episodeNum '3' -broadcastDate '2025/3/17週放送').broadcastDate | Should -BeExactly '2025/3/17週放送'
 	}
 }
+
+Describe 'Get-LinkFromKeywordの種類の指定なし / Get-LinkFromSiteMapの処理失敗' {
+	BeforeEach {
+		Mock Write-Warning {}
+		Mock Get-SearchResult {}
+	}
+	It 'リンクの種類を指定しなければ、種類の指定が不正という警告を出すこと' {
+		$lc = New-TestLinkCollection
+		{ Get-LinkFromKeyword -id 'x' -linkCollection ([Ref]$lc) } | Should -Not -Throw
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.InvalidTypeSpecified }
+		Should -Invoke Get-SearchResult -Times 0 -Exactly
+	}
+	It 'サイトマップの1件の処理で例外になっても、警告を出して残りの処理を続けること' {
+		$script:sitemapParseEpisodeOnly = $false
+		try {
+			Mock Invoke-RestMethod { [xml]'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://tver.jp/series/sr1</loc></url><url><loc>https://tver.jp/episodes/ep1</loc></url></urlset>' }
+			$lc = New-TestLinkCollection
+			$lc.PSObject.Properties.Remove('seriesLinks')	# * seriesの処理で、存在しないプロパティの参照による例外を起こす
+			{ Get-LinkFromSiteMap ([Ref]$lc) } | Should -Not -Throw
+			Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq ($script:msg.UnknownContentsType -f 'series', 'sr1') }
+			$lc.episodeLinks.ContainsKey('ep1') | Should -BeTrue
+		} finally { $script:sitemapParseEpisodeOnly = $true }
+	}
+}
