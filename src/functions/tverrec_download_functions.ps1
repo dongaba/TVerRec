@@ -67,6 +67,53 @@ function Remove-SpecialNote {
 }
 
 #----------------------------------------------------------------------
+# ダウンロード対象外リストと合致する番組を、対象外として履歴用レコードにする
+#----------------------------------------------------------------------
+function Register-IgnoredVideo {
+	<#
+		.SYNOPSIS
+			番組がダウンロード対象外リストと合致するか確認し、合致すれば対象外として履歴用のレコードを作成します。
+
+		.DESCRIPTION
+			ダウンロード対象外リストを順に確認し、最初に合致した行について次の処理を行います。
+			1. 対象外リストの並び順を更新(使用した行を上に移動)
+			2. 警告を表示
+			3. 番組情報のvalidatedを'0'、fileNameとfileRelPathを'-- IGNORED --'に変更
+			4. 履歴用のレコードをResultに格納
+			合致する行がなければ、番組情報を変更せず、Resultも変更しません。
+
+		.PARAMETER VideoInfo
+			番組情報を指定します。合致した場合は、この番組情報が変更されます。
+
+		.PARAMETER Result
+			合致した場合に、履歴用のレコードを格納する変数を参照で指定します。
+
+		.OUTPUTS
+			[Void]
+			この関数は値を返しません。呼び出し元の出力を汚さないよう、結果は参照で返します。
+
+		.EXAMPLE
+			Register-IgnoredVideo -VideoInfo $videoInfo -Result ([Ref]$ignoredVideo)
+	#>
+	[OutputType([Void])]
+	Param (
+		[Parameter(Mandatory = $true)][PSCustomObject]$VideoInfo,
+		[Parameter(Mandatory = $true)][Ref]$Result
+	)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	foreach ($ignoreTitle in @(Get-IgnoreListCached)) {
+		if (Test-IgnoreMatch -Pattern $ignoreTitle -Target @($VideoInfo.fileName, $VideoInfo.seriesName) -Mode Wildcard) {
+			Update-IgnoreList $ignoreTitle ; Write-Warning ($script:msg.IgnoreEpisodeAdded)
+			$VideoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
+			$VideoInfo.fileName = '-- IGNORED --'
+			$VideoInfo.fileRelPath = '-- IGNORED --'
+			$Result.Value = Format-HistoryRecord $VideoInfo
+			return
+		}
+	}
+}
+
+#----------------------------------------------------------------------
 # TVer番組ダウンロードのメイン処理
 #----------------------------------------------------------------------
 function Invoke-VideoDownload {
@@ -181,74 +228,40 @@ function Invoke-VideoDownload {
 		if ($videoInfo.fileRelPath) { $histMatch = @($histFileData.Where({ $_.videoPath -eq $videoInfo.fileRelPath })) }
 		else { Write-Warning ($script:msg.FileNameRetrievalFailed) ; return }
 
+		$checkIgnoreAndDownload = $false
+		$downloadMessage = $null
 		if ($script:downloadWhenEpisodeIdChanged) {
-			if (($histMatch.Count -ne 0) -or (Test-Path $videoInfo.filePath)) {
-				$ignoreTitles = @(Get-IgnoreListCached)
-				foreach ($ignoreTitle in $ignoreTitles) {
-					if (Test-IgnoreMatch -Pattern $ignoreTitle -Target @($videoInfo.fileName, $videoInfo.seriesName) -Mode Wildcard) {
-						# エピソードIDが変更になったがダウンロード対象外リストと合致	→無視する
-						Update-IgnoreList $ignoreTitle ; Write-Warning ($script:msg.IgnoreEpisodeAdded)
-						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
-						$videoInfo.fileName = '-- IGNORED --'
-						$videoInfo.fileRelPath = '-- IGNORED --'
-						$newVideo = Format-HistoryRecord $videoInfo ; $skipDownload = $true
-						break
-					}
-				}
-				# エピソードIDが変更になった	→ダウンロードする
-				if (!$skipDownload) {
-					Write-Output ($script:msg.DownloadEpisodeIdChanged)
-					$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
-					$newVideo = Format-HistoryRecord $videoInfo
-				}
-			} else {
-				# 履歴ファイルに存在せず、実ファイルも存在せず、ダウンロード対象外リストと合致	→無視する
-				$ignoreTitles = @(Get-IgnoreListCached)
-				foreach ($ignoreTitle in $ignoreTitles) {
-					if (Test-IgnoreMatch -Pattern $ignoreTitle -Target @($videoInfo.fileName, $videoInfo.seriesName) -Mode Wildcard) {
-						Update-IgnoreList $ignoreTitle ; Write-Warning ($script:msg.IgnoreEpisodeAdded)
-						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
-						$videoInfo.fileName = '-- IGNORED --'
-						$videoInfo.fileRelPath = '-- IGNORED --'
-						$newVideo = Format-HistoryRecord $videoInfo ; $skipDownload = $true
-						break
-					}
-				}
-				# 履歴ファイルに存在せず、実ファイルも存在せず、ダウンロード対象外リストとも合致しない	→ダウンロードする
-				if (!$skipDownload) {
-					Write-Output ($script:msg.DownloadEpisodeAdded)
-					$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
-					$newVideo = Format-HistoryRecord $videoInfo
-				}
-			}
+			# 履歴ファイルまたは実ファイルに存在する	→エピソードIDが変更になったのでダウンロードする
+			# 履歴ファイルにも実ファイルにも存在しない	→新規の番組なのでダウンロードする
+			$checkIgnoreAndDownload = $true
+			if (($histMatch.Count -ne 0) -or (Test-Path $videoInfo.filePath)) { $downloadMessage = $script:msg.DownloadEpisodeIdChanged }
+			else { $downloadMessage = $script:msg.DownloadEpisodeAdded }
+		} elseif ($histMatch.Count -ne 0) {
+			# 履歴ファイルに存在する	→スキップして次のファイルに
+			Write-Warning ($script:msg.DownloadHistExists)
+			$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '1' ; $videoInfo.fileName = '-- SKIPPED --'
+			$newVideo = Format-HistoryRecord $videoInfo ; $skipDownload = $true
+		} elseif (Test-Path $videoInfo.filePath) {
+			# 履歴ファイルに存在しないが、実ファイルが存在する	→検証だけする
+			Write-Warning ($script:msg.DownloadFileExists)
+			$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0' ; $videoInfo.fileName = '-- SKIPPED --'
+			$newVideo = Format-HistoryRecord $videoInfo ; $skipDownload = $true
 		} else {
-			if ($histMatch.Count -ne 0) {
-				# 履歴ファイルに存在する	→スキップして次のファイルに
-				Write-Warning ($script:msg.DownloadHistExists)
-				$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '1' ; $videoInfo.fileName = '-- SKIPPED --'
-				$newVideo = Format-HistoryRecord $videoInfo ; $skipDownload = $true
-			} elseif (Test-Path $videoInfo.filePath) {
-				# 履歴ファイルに存在しないが、実ファイルが存在する	→検証だけする
-				Write-Warning ($script:msg.DownloadFileExists)
-				$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0' ; $videoInfo.fileName = '-- SKIPPED --'
-				$newVideo = Format-HistoryRecord $videoInfo ; $skipDownload = $true
-			} else {
-				# 履歴ファイルに存在せず、実ファイルも存在せず、ダウンロード対象外リストと合致	→無視する
-				$ignoreTitles = @(Get-IgnoreListCached)
-				foreach ($ignoreTitle in $ignoreTitles) {
-					if (Test-IgnoreMatch -Pattern $ignoreTitle -Target @($videoInfo.fileName, $videoInfo.seriesName) -Mode Wildcard) {
-						Update-IgnoreList $ignoreTitle ; Write-Warning ($script:msg.IgnoreEpisodeAdded)
-						$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0' ; $videoInfo.fileName = '-- IGNORED --' ; $videoInfo.fileRelPath = '-- IGNORED --'
-						$newVideo = Format-HistoryRecord $videoInfo ; $skipDownload = $true
-						break
-					}
-				}
-				# 履歴ファイルに存在せず、実ファイルも存在せず、ダウンロード対象外リストとも合致しない	→ダウンロードする
-				if (!$skipDownload) {
-					Write-Output ($script:msg.DownloadEpisodeAdded)
-					$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
-					$newVideo = Format-HistoryRecord $videoInfo
-				}
+			# 履歴ファイルにも実ファイルにも存在しない	→新規の番組なのでダウンロードする
+			$checkIgnoreAndDownload = $true
+			$downloadMessage = $script:msg.DownloadEpisodeAdded
+		}
+
+		if ($checkIgnoreAndDownload) {
+			# ダウンロード対象外リストと合致	→無視する
+			$ignoredVideo = $null
+			Register-IgnoredVideo -VideoInfo $videoInfo -Result ([Ref]$ignoredVideo)
+			if ($ignoredVideo) { $newVideo = $ignoredVideo ; $skipDownload = $true }
+			else {
+				# ダウンロード対象外リストとも合致しない	→ダウンロードする
+				Write-Output $downloadMessage
+				$videoInfo | Add-Member -MemberType NoteProperty -Name 'validated' -Value '0'
+				$newVideo = Format-HistoryRecord $videoInfo
 			}
 		}
 	}
@@ -285,7 +298,7 @@ function Invoke-VideoDownload {
 	catch { Write-Warning ($script:msg.InvokeYtdlFailed) }
 	# 1秒待機
 	Start-Sleep -Seconds 1
-	Remove-Variable -Name keyword, videoLink, force, newVideo, skipDownload, episodeID, histFileData, histMatch, ignoreTitles, ignoreTitle, subtitleTracking, subtitleStatus, subtitleRecheck, subtitleHists, sameEpisodeHists -ErrorAction SilentlyContinue
+	Remove-Variable -Name keyword, videoLink, force, newVideo, skipDownload, episodeID, histFileData, histMatch, ignoreTitles, ignoreTitle, subtitleTracking, subtitleStatus, subtitleRecheck, subtitleHists, sameEpisodeHists, checkIgnoreAndDownload, downloadMessage, ignoredVideo -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
