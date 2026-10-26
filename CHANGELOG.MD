@@ -28,6 +28,7 @@
 - `Get-VideoInfo`と`Get-VideoInfoLegacy`で重複していた番組情報の整形とオブジェクト生成を、`Format-TitleText`・`Format-NarrowText`・`Format-BroadcastDateLabel`・`Format-DescriptionText`・`ConvertFrom-UnixTimeToJst`・`New-VideoInfoObject`に集約。旧API側で項目が`$null`の場合に、メソッド呼び出しのエラーにならず空文字として扱うようになった
 - `Get-VideoInfoLegacy`内の、コメントアウトされていたStreaks・BrightcoveからのM3U8取得処理(約70行)を削除
 - `download_bulk.ps1`・`download_list.ps1`・`download_single.ps1`で重複していた、スクリプト終了時にバックグラウンドジョブを停止する処理の登録を`Register-JobCleanup`に集約
+- `Register-JobCleanup`の終了時処理が、`-Action`内では`$script:jobList`を参照できず実際には何も停止していなかったため、`Get-Job`で対象を取得する方式に修正
 - `resources/lang/messages.json`から、使われていないメッセージ(`GenerateList`、`InvokeFfmpegDownloadFailed`、`followOSSetting`と、削除済みのStreaks・Brightcove関連4件)を削除
 - `resources/lang/messages.json`の英語版に不足していた`UpdateFailed`を追加し、`ToolArchitectureNotIdentified2`で同じ引数が2回表示される誤りを修正
 

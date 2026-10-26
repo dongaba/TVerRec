@@ -3874,10 +3874,9 @@ Describe 'Register-JobCleanup' {
 		@($script:jobList).Count | Should -Be 0
 		@(Get-EventSubscriber -SourceIdentifier 'PowerShell.Exiting').Count | Should -Be 1
 	}
-	It '終了時の処理が、ジョブ一覧に記録したジョブを停止して削除すること' {
+	It '終了時の処理が、実行中のジョブを停止して削除すること' {
 		Register-JobCleanup
 		$job = Start-Job -ScriptBlock { Start-Sleep -Seconds 60 }
-		$script:jobList += $job.Id
 		New-Event -SourceIdentifier 'PowerShell.Exiting' | Out-Null
 		# * イベントの処理は非同期のため、最大5秒待つ
 		for ($i = 0; ($i -lt 50) -and (Get-Job -Id $job.Id -ErrorAction SilentlyContinue); $i++) { Start-Sleep -Milliseconds 100 }
