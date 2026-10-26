@@ -1809,228 +1809,92 @@ function Invoke-HistoryAndListMatchCheck {
 
 #region youtube-dl関連
 #----------------------------------------------------------------------
-# youtube-dlプロセスの起動
+# youtube-dlの共通引数の生成
 #----------------------------------------------------------------------
-function Invoke-Ytdl {
+function Get-YtdlCommonArgument {
 	<#
 		.SYNOPSIS
-			youtube-dlを使用してTVer番組をダウンロードします。
+			TVer/TVer以外で共通のyoutube-dl引数を生成します。
 
-		.DESCRIPTION
-			youtube-dlを使用してTVer番組をダウンロードし、指定された形式で保存します。
-			プロキシ設定、レート制限、字幕埋め込みなどのオプションをサポートします。
+		.PARAMETER BaseArgs
+			呼び出し元ごとの基本引数を指定します。
 
-		.PARAMETER videoInfo
-			ダウンロードする番組の情報を含むオブジェクトを参照で指定します。
+		.PARAMETER SaveDir
+			保存先ディレクトリ(home:付き)を指定します。
+
+		.PARAMETER TempDir
+			作業ディレクトリ(temp:付き)を指定します。
 
 		.OUTPUTS
-			[Void]
-			この関数は値を返しません。
-
-		.EXAMPLE
-			Invoke-Ytdl -videoInfo ([ref]$videoInfo)
-
-		.NOTES
-			この関数は以下の処理を行います：
-			1. ダウンロード用の一時ディレクトリと保存ディレクトリを設定
-			2. youtube-dlの引数を構築（プロキシ、レート制限、字幕設定など）
-			3. 既存ファイルの削除とリネーム用のコマンドを設定
-			4. youtube-dlプロセスを起動し、タイムアウト監視を開始
+			[String[]]
+			youtube-dlの引数の配列。
 	#>
-	[OutputType([Void])]
-	Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
-	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	Invoke-StatisticsCheck -Operation 'download'
-	if ($IsWindows) { foreach ($dir in @($script:downloadWorkDir, $script:downloadBaseDir)) { if ($dir[-1] -eq ':') { $dir += '\\' } } }
-	$tmpDir = ('temp:{0}' -f $script:downloadWorkDir)
-	$saveDir = ('home:{0}' -f $videoInfo.fileDir)
-
-	$ytdlArgs = @(
-		$script:ytdlBaseArgs
+	[OutputType([String[]])]
+	Param (
+		[Parameter(Mandatory = $true)][AllowNull()][AllowEmptyString()]$BaseArgs,
+		[Parameter(Mandatory = $true)][String]$SaveDir,
+		[Parameter(Mandatory = $true)][String]$TempDir
+	)
+	$ytdlCommonArgs = @(
+		$BaseArgs
 		('--concurrent-fragments {0}' -f $script:parallelDownloadNumPerFile)
 		('--add-header {0}' -f $script:ytdlHttpHeader)
-		('--paths "{0}"' -f $saveDir)
-		('--paths "{0}"' -f $tmpDir)
+		('--paths "{0}"' -f $SaveDir)
+		('--paths "{0}"' -f $TempDir)
 		('--ffmpeg-location "{0}"' -f $script:ffmpegPath)
 	)
-	if ($script:proxyUrl) { $ytdlArgs += ('--geo-verification-proxy {0}' -f $script:proxyUrl) }
-	if (($script:ytdlRandomIp) -and (!$script:proxyUrl)) { $ytdlArgs += ('--xff "{0}/32"' -f $script:jpIP) }
+	if ($script:proxyUrl) { $ytdlCommonArgs += ('--geo-verification-proxy {0}' -f $script:proxyUrl) }
+	if (($script:ytdlRandomIp) -and (!$script:proxyUrl)) { $ytdlCommonArgs += ('--xff "{0}/32"' -f $script:jpIP) }
 	if ($script:rateLimit -notin @(0, '')) {
 		$rateLimit = [Int][Math]::Ceiling([Int]$script:rateLimit / [Int]$script:parallelDownloadNumPerFile / 8)
-		$ytdlArgs += ('--limit-rate {0}M' -f $rateLimit)
+		$ytdlCommonArgs += ('--limit-rate {0}M' -f $rateLimit)
 	}
-	if ($script:videoContainerFormat -eq 'mp4') {
-		$ytdlArgs += '--merge-output-format mp4 --embed-chapters'
-		if ($script:embedThumbnail) { $ytdlArgs += '--embed-thumbnail' }
-		$ytdlArgs += @('subtitle', 'thumbnail', 'chapter', 'description').ForEach{ '--paths "{0}:{1}"' -f $_, $script:downloadWorkDir }
-		if ($script:embedSubtitle) { $ytdlArgs += '--sub-langs all --convert-subs srt --embed-subs' }
-		if ($script:embedMetatag) { $ytdlArgs += '--embed-metadata' }
-	}
-
-	$pwshRemoveIfExists = 'Remove-Item -LiteralPath ''{0}'' -Force -ErrorAction SilentlyContinue' -f $videoInfo.filePath.Replace("'", "''")
-	$ytdlTempOutFile = ('{0}/{1}.{2}' -f $videoInfo.fileDir.Replace("'", "''"), $videoInfo.episodeID, $script:videoContainerFormat)
-	$pwshRenameFile = 'Rename-Item -LiteralPath ''{0}'' -NewName ''{1}'' -Force -ErrorAction SilentlyContinue' -f $ytdlTempOutFile, $videoInfo.fileName.Replace("'", "''")
-	$ytdlExecArg = 'pwsh -Command \"{0} ; {1}\"' -f $pwshRemoveIfExists, $pwshRenameFile
-	$ytdlArgs += ('--exec "after_video:{0}"' -f $ytdlExecArg)
-	$ytdlArgs += $script:ytdlOption, $videoInfo.episodePageURL, ('--output "{0}.{1}"' -f $videoInfo.episodeID, $script:videoContainerFormat)
-
-	$ytdlArgsString = $ytdlArgs -join ' '
-	Write-Debug ($script:msg.ExecCommand -f 'youtube-dl', $script:ytdlPath, $ytdlArgsString)
-
-	if ((Test-Path Variable:Script:debugMode) -and $script:debugMode) {
-		$startProcessParams = @{
-			FilePath               = $script:ytdlPath
-			ArgumentList           = $ytdlArgsString
-			PassThru               = $true
-			Wait                   = $true
-			NoNewWindow            = $true
-			RedirectStandardOutput = $script:ytdlStdOutLogPath
-			RedirectStandardError  = $script:ytdlStdErrLogPath
-		}
-		Write-Output 'youtube-dlの実行中...'
-		$ytdlProcess = $null ; $stdOutContent = $null ; $stdErrContent = $null	# * 起動に失敗したときもfinallyで参照できるようにする
-		try {
-			$ytdlProcess = Start-Process @startProcessParams
-			$ytdlProcess.Handle | Out-Null
-			if ($IsWindows) {
-				$stdOutContent = [System.Text.Encoding]::GetEncoding(932).GetString([System.IO.File]::ReadAllBytes($script:ytdlStdOutLogPath))
-				$stdErrContent = [System.Text.Encoding]::GetEncoding(932).GetString([System.IO.File]::ReadAllBytes($script:ytdlStdErrLogPath))
-			} else {
-				$stdOutContent = Get-Content -Path $script:ytdlStdOutLogPath -Encoding UTF8
-				$stdErrContent = Get-Content -Path $script:ytdlStdErrLogPath -Encoding UTF8
-			}
-		} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') }
-		finally {
-			Write-Output $stdOutContent
-			Write-Output $stdErrContent
-			if ($ytdlProcess) { Write-Output ('Exit Code: {0}' -f $ytdlProcess.ExitCode) }
-		}
-	} else {
-		$startProcessParams = @{
-			FilePath     = $script:ytdlPath
-			ArgumentList = $ytdlArgsString
-			PassThru     = $true
-		}
-		if ($IsWindows -and ($script:windowShowStyle -ne 'Hidden')) { $startProcessParams.WindowStyle = $script:windowShowStyle }
-		else {
-			if ($IsWindows -and ($script:windowShowStyle -eq 'Hidden')) { $startProcessParams.WindowStyle = $script:windowShowStyle }
-			$randomNum = -join (1..16 | ForEach-Object { Get-Random -Minimum 0 -Maximum 10 })
-			$logFiles = @(
-				@{ Path = $script:ytdlStdOutLogPath; Redirect = 'RedirectStandardOutput' },
-				@{ Path = $script:ytdlStdErrLogPath; Redirect = 'RedirectStandardError' }
-			)
-			foreach ($logFile in $logFiles) {
-				$logFilePath = $logFile.Path.Replace('.log', ('_{0}.log' -f $randomNum))
-				try { New-Item -Path $logFilePath -ItemType File -Force -ErrorAction Stop | Out-Null }
-				catch { Write-Warning ($script:msg.FfmpegErrFileInitializeFailed) ; return }
-				$startProcessParams[$logFile.Redirect] = $logFilePath
-			}
-		}
-		if ($script:ytdlTimeoutSec -ne 0) {
-			try {
-				# youtube-dl プロセスを起動
-				$ytdlProcess = Start-Process @startProcessParams
-				$processId = $ytdlProcess.Id
-				$ytdlProcess.Handle | Out-Null
-				Write-Debug ('youtube-dl Process ID: {0}' -f $processId)
-				# タイムアウト監視ジョブを開始
-				$monitorJob = Start-Job -ScriptBlock {
-					Param ($processId, $timeoutSeconds, $timeoutMessage)
-					$startTime = Get-Date
-					while ((Get-Process -Id $processId -ErrorAction SilentlyContinue)) {
-						# 指定時間が経過したら強制終了
-						if ((New-TimeSpan -Start $startTime -End (Get-Date)).TotalSeconds -ge $timeoutSeconds) {
-							if ($IsWindows) { Start-Process -FilePath 'taskkill' -ArgumentList "/F /T /PID $processId" -NoNewWindow -Wait }
-							else { Stop-Process -Id $processId -Force }
-							Write-Warning $timeoutMessage
-							break
-						}
-						Start-Sleep -Seconds 1
-					}
-					exit
-				} -ArgumentList $processId, $script:ytdlTimeoutSec, ($script:msg.TerminateDueToTimeout -f 'youtube-dl', $script:ytdlTimeoutSec)
-				# ジョブIDを変数に追加
-				$script:jobList += $monitorJob.Id
-			} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') ; return }
-		} else {
-			try {
-				$ytdlProcess = Start-Process @startProcessParams
-				$processId = $ytdlProcess.Id
-				$ytdlProcess.Handle | Out-Null
-				Write-Debug ('youtube-dl Process ID: {0}' -f $processId)
-			} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') ; return }
-		}
-	}
-
-	Remove-Variable -Name tmpDir, saveDir, ytdlArgs, ytdlArgsString, ytdlExecArg, pwshRemoveIfExists, pwshRenameFile, startProcessParams, ytdlProcess, processId -ErrorAction SilentlyContinue
+	return $ytdlCommonArgs
 }
 
 #----------------------------------------------------------------------
-# youtube-dlプロセスの起動 (TVer以外のサイトへの対応)
+# youtube-dlのmp4用(マージ・埋め込み)引数の生成
 #----------------------------------------------------------------------
-function Invoke-NonTverYtdl {
+function Get-YtdlMp4Argument {
 	<#
 		.SYNOPSIS
-			youtube-dlを使用してTVer以外のサイトから動画をダウンロードします。
+			mp4出力時のマージ形式と、サムネイル・字幕・メタデータ埋め込みの引数を生成します。
 
-		.DESCRIPTION
-			youtube-dlを使用してTVer以外のサイトから動画をダウンロードし、
-			指定された形式で保存します。プロキシ設定やレート制限などの
-			オプションをサポートします。
+		.OUTPUTS
+			[String[]]
+			youtube-dlの引数の配列。
+	#>
+	[OutputType([String[]])]
+	Param ()
+	$ytdlMp4Args = @('--merge-output-format mp4 --embed-chapters')
+	if ($script:embedThumbnail) { $ytdlMp4Args += '--embed-thumbnail' }
+	$ytdlMp4Args += @('subtitle', 'thumbnail', 'chapter', 'description').ForEach{ '--paths "{0}:{1}"' -f $_, $script:downloadWorkDir }
+	if ($script:embedSubtitle) { $ytdlMp4Args += '--sub-langs all --convert-subs srt --embed-subs' }
+	if ($script:embedMetatag) { $ytdlMp4Args += '--embed-metadata' }
+	return $ytdlMp4Args
+}
 
-		.PARAMETER videoPageURL
-			ダウンロードする動画のページURLを指定します。
+#----------------------------------------------------------------------
+# youtube-dlプロセスの起動とタイムアウト監視(デバッグモード以外)
+#----------------------------------------------------------------------
+function Start-YtdlProcess {
+	<#
+		.SYNOPSIS
+			youtube-dlプロセスを起動し、必要に応じてタイムアウト監視ジョブを開始します。
+
+		.PARAMETER ArgumentString
+			youtube-dlに渡す引数の文字列を指定します。
 
 		.OUTPUTS
 			[Void]
 			この関数は値を返しません。
-
-		.EXAMPLE
-			Invoke-NonTverYtdl -URL 'https://example.com/video'
-
-		.NOTES
-			この関数は以下の処理を行います：
-			1. ダウンロード用の一時ディレクトリと保存ディレクトリを設定
-			2. youtube-dlの引数を構築（プロキシ、レート制限など）
-			3. 既存ファイルの削除とリネーム用のコマンドを設定
-			4. youtube-dlプロセスを起動
 	#>
 	[OutputType([Void])]
-	Param ([Parameter(Mandatory = $true)][Alias('URL')][String]$videoPageURL)
+	Param ([Parameter(Mandatory = $true)][String]$ArgumentString)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	Invoke-StatisticsCheck -Operation 'nontver'
-	if ($IsWindows) { foreach ($dir in @($script:downloadWorkDir, $script:downloadBaseDir)) { if ($dir[-1] -eq ':') { $dir += '\\' } } }
-	$tmpDir = ('temp:{0}' -f $script:downloadWorkDir)
-	$saveDir = ('home:{0}' -f $script:downloadBaseDir)
-	$saveFile = ('{0}' -f $script:ytdlNonTVerFileName)
-
-	$ytdlArgs = @(
-		$script:nonTVerYtdlBaseArgs
-		('--concurrent-fragments {0}' -f $script:parallelDownloadNumPerFile)
-		('--add-header {0}' -f $script:ytdlHttpHeader)
-		('--paths "{0}"' -f $saveDir)
-		('--paths "{0}"' -f $tmpDir)
-		('--ffmpeg-location "{0}"' -f $script:ffmpegPath)
-		$(if ($script:proxyUrl) { ('--geo-verification-proxy {0}' -f $script:proxyUrl) })
-		$(if (($script:ytdlRandomIp) -and (!$script:proxyUrl)) { ('--xff "{0}/32"' -f $script:jpIP) })
-		$(if ($script:rateLimit -notin @(0, '')) {
-				$rateLimit = [math]::Ceiling([int]$script:rateLimit / $script:parallelDownloadNumPerFile / 8)
-				('--limit-rate {0}M' -f $rateLimit)
-			})
-		'--merge-output-format mp4 --embed-chapters'
-		$(if ($script:embedThumbnail) { '--embed-thumbnail' })
-		$(@('subtitle', 'thumbnail', 'chapter', 'description').ForEach{ '--paths "{0}:{1}"' -f $_, $script:downloadWorkDir })
-		$(if ($script:embedSubtitle) { '--sub-langs all --convert-subs srt --embed-subs' })
-		$(if ($script:embedMetatag) { '--embed-metadata' })
-		$script:ytdlOption
-		"$videoPageURL"
-		"--output `"$saveFile`""
-	)
-	$ytdlArgsString = $ytdlArgs -join ' '
-	Write-Debug ($script:msg.ExecCommand -f 'youtube-dl', $script:ytdlPath, $ytdlArgsString)
 	$startProcessParams = @{
 		FilePath     = $script:ytdlPath
-		ArgumentList = $ytdlArgsString
+		ArgumentList = $ArgumentString
 		PassThru     = $true
 	}
 	if ($IsWindows -and ($script:windowShowStyle -ne 'Hidden')) { $startProcessParams.WindowStyle = $script:windowShowStyle }
@@ -2082,7 +1946,139 @@ function Invoke-NonTverYtdl {
 			Write-Debug ('youtube-dl Process ID: {0}' -f $processId)
 		} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') ; return }
 	}
-	Remove-Variable -Name videoPageURL, tmpDir, baseDir, subttlDir, thumbDir, chaptDir, descDir, saveFile, ytdlArgs, ytdlArgsString, rateLimit, startProcessParams, ytdlProcess -ErrorAction SilentlyContinue
+}
+
+#----------------------------------------------------------------------
+# youtube-dlプロセスの起動
+#----------------------------------------------------------------------
+function Invoke-Ytdl {
+	<#
+		.SYNOPSIS
+			youtube-dlを使用してTVer番組をダウンロードします。
+
+		.DESCRIPTION
+			youtube-dlを使用してTVer番組をダウンロードし、指定された形式で保存します。
+			プロキシ設定、レート制限、字幕埋め込みなどのオプションをサポートします。
+
+		.PARAMETER videoInfo
+			ダウンロードする番組の情報を含むオブジェクトを参照で指定します。
+
+		.OUTPUTS
+			[Void]
+			この関数は値を返しません。
+
+		.EXAMPLE
+			Invoke-Ytdl -videoInfo ([ref]$videoInfo)
+
+		.NOTES
+			この関数は以下の処理を行います：
+			1. ダウンロード用の一時ディレクトリと保存ディレクトリを設定
+			2. youtube-dlの引数を構築（プロキシ、レート制限、字幕設定など）
+			3. 既存ファイルの削除とリネーム用のコマンドを設定
+			4. youtube-dlプロセスを起動し、タイムアウト監視を開始
+	#>
+	[OutputType([Void])]
+	Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	Invoke-StatisticsCheck -Operation 'download'
+	if ($IsWindows) { foreach ($dir in @($script:downloadWorkDir, $script:downloadBaseDir)) { if ($dir[-1] -eq ':') { $dir += '\\' } } }
+	$tmpDir = ('temp:{0}' -f $script:downloadWorkDir)
+	$saveDir = ('home:{0}' -f $videoInfo.fileDir)
+
+	$ytdlArgs = @(Get-YtdlCommonArgument -BaseArgs $script:ytdlBaseArgs -SaveDir $saveDir -TempDir $tmpDir)
+	if ($script:videoContainerFormat -eq 'mp4') { $ytdlArgs += Get-YtdlMp4Argument }
+
+	$pwshRemoveIfExists = 'Remove-Item -LiteralPath ''{0}'' -Force -ErrorAction SilentlyContinue' -f $videoInfo.filePath.Replace("'", "''")
+	$ytdlTempOutFile = ('{0}/{1}.{2}' -f $videoInfo.fileDir.Replace("'", "''"), $videoInfo.episodeID, $script:videoContainerFormat)
+	$pwshRenameFile = 'Rename-Item -LiteralPath ''{0}'' -NewName ''{1}'' -Force -ErrorAction SilentlyContinue' -f $ytdlTempOutFile, $videoInfo.fileName.Replace("'", "''")
+	$ytdlExecArg = 'pwsh -Command \"{0} ; {1}\"' -f $pwshRemoveIfExists, $pwshRenameFile
+	$ytdlArgs += ('--exec "after_video:{0}"' -f $ytdlExecArg)
+	$ytdlArgs += $script:ytdlOption, $videoInfo.episodePageURL, ('--output "{0}.{1}"' -f $videoInfo.episodeID, $script:videoContainerFormat)
+
+	$ytdlArgsString = $ytdlArgs -join ' '
+	Write-Debug ($script:msg.ExecCommand -f 'youtube-dl', $script:ytdlPath, $ytdlArgsString)
+
+	if ((Test-Path Variable:Script:debugMode) -and $script:debugMode) {
+		$startProcessParams = @{
+			FilePath               = $script:ytdlPath
+			ArgumentList           = $ytdlArgsString
+			PassThru               = $true
+			Wait                   = $true
+			NoNewWindow            = $true
+			RedirectStandardOutput = $script:ytdlStdOutLogPath
+			RedirectStandardError  = $script:ytdlStdErrLogPath
+		}
+		Write-Output 'youtube-dlの実行中...'
+		$ytdlProcess = $null ; $stdOutContent = $null ; $stdErrContent = $null	# * 起動に失敗したときもfinallyで参照できるようにする
+		try {
+			$ytdlProcess = Start-Process @startProcessParams
+			$ytdlProcess.Handle | Out-Null
+			if ($IsWindows) {
+				$stdOutContent = [System.Text.Encoding]::GetEncoding(932).GetString([System.IO.File]::ReadAllBytes($script:ytdlStdOutLogPath))
+				$stdErrContent = [System.Text.Encoding]::GetEncoding(932).GetString([System.IO.File]::ReadAllBytes($script:ytdlStdErrLogPath))
+			} else {
+				$stdOutContent = Get-Content -Path $script:ytdlStdOutLogPath -Encoding UTF8
+				$stdErrContent = Get-Content -Path $script:ytdlStdErrLogPath -Encoding UTF8
+			}
+		} catch { Write-Warning ($script:msg.ExecFailed -f 'youtube-dl') }
+		finally {
+			Write-Output $stdOutContent
+			Write-Output $stdErrContent
+			if ($ytdlProcess) { Write-Output ('Exit Code: {0}' -f $ytdlProcess.ExitCode) }
+		}
+	} else {
+		Start-YtdlProcess -ArgumentString $ytdlArgsString
+	}
+
+	Remove-Variable -Name tmpDir, saveDir, ytdlArgs, ytdlArgsString, ytdlExecArg, pwshRemoveIfExists, pwshRenameFile, startProcessParams, ytdlProcess -ErrorAction SilentlyContinue
+}
+
+#----------------------------------------------------------------------
+# youtube-dlプロセスの起動 (TVer以外のサイトへの対応)
+#----------------------------------------------------------------------
+function Invoke-NonTverYtdl {
+	<#
+		.SYNOPSIS
+			youtube-dlを使用してTVer以外のサイトから動画をダウンロードします。
+
+		.DESCRIPTION
+			youtube-dlを使用してTVer以外のサイトから動画をダウンロードし、
+			指定された形式で保存します。プロキシ設定やレート制限などの
+			オプションをサポートします。
+
+		.PARAMETER videoPageURL
+			ダウンロードする動画のページURLを指定します。
+
+		.OUTPUTS
+			[Void]
+			この関数は値を返しません。
+
+		.EXAMPLE
+			Invoke-NonTverYtdl -URL 'https://example.com/video'
+
+		.NOTES
+			この関数は以下の処理を行います：
+			1. ダウンロード用の一時ディレクトリと保存ディレクトリを設定
+			2. youtube-dlの引数を構築（プロキシ、レート制限など）
+			3. 既存ファイルの削除とリネーム用のコマンドを設定
+			4. youtube-dlプロセスを起動
+	#>
+	[OutputType([Void])]
+	Param ([Parameter(Mandatory = $true)][Alias('URL')][String]$videoPageURL)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	Invoke-StatisticsCheck -Operation 'nontver'
+	if ($IsWindows) { foreach ($dir in @($script:downloadWorkDir, $script:downloadBaseDir)) { if ($dir[-1] -eq ':') { $dir += '\\' } } }
+	$tmpDir = ('temp:{0}' -f $script:downloadWorkDir)
+	$saveDir = ('home:{0}' -f $script:downloadBaseDir)
+	$saveFile = ('{0}' -f $script:ytdlNonTVerFileName)
+
+	$ytdlArgs = @(Get-YtdlCommonArgument -BaseArgs $script:nonTVerYtdlBaseArgs -SaveDir $saveDir -TempDir $tmpDir)
+	$ytdlArgs += Get-YtdlMp4Argument
+	$ytdlArgs += $script:ytdlOption, "$videoPageURL", "--output `"$saveFile`""
+	$ytdlArgsString = $ytdlArgs -join ' '
+	Write-Debug ($script:msg.ExecCommand -f 'youtube-dl', $script:ytdlPath, $ytdlArgsString)
+	Start-YtdlProcess -ArgumentString $ytdlArgsString
+	Remove-Variable -Name videoPageURL, tmpDir, saveDir, saveFile, ytdlArgs, ytdlArgsString -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
