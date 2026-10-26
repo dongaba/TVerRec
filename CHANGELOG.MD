@@ -11,6 +11,7 @@
 
 ### 3.5.0 Changed
 
+- GUI設定画面(`gui_setting.ps1`)の、`user_setting.ps1`の読み書きの処理を、`user_setting_functions.ps1`の関数(`ConvertTo-SettingDisplayText`・`ConvertTo-UserSettingLine`・`Merge-UserSettingContent`・`ConvertTo-StopScheduleLine`・`Get-StopScheduleFromSetting`)に切り出し。画面(WPF)に依存しないため、WPFの無い環境でもテストできる。保存時に言語設定の入力欄が一時的に`ja-JP`に書き換わる副作用はなくなった
 - Chrome拡張機能「TVerRec Assistant」をv0.2.1に更新。TVerの通信をブロックしてURLから`platform_uid`・`platform_token`・`member_sid`を拾う方式をやめ、開いているTVerのページが提供するSDK(`window.TVer.getStatus()`)から取得するように変更。TVerのAPI仕様変更の影響を受けにくくなり、Refreshボタンやエラーモーダルの自動クリックが不要になった。未ログインの場合は`platform_uid`・`platform_token`、TVer IDにログイン中の場合は`member_sid`を表示し、`user_settings.ps1`用の形式でコピーできる
 - 字幕の有無を、エピソード情報のJSON(`isSubtitle`)から取得するように変更(`Get-VideoInfo`が`isSubtitle`を返し、`Get-VideoSubtitleStatus`が優先して使用)。取得できない場合は従来どおりyt-dlpで確認する
 - 不要ファイルやリネームに失敗したファイルを削除する際に、削除するファイル名を表示するように変更

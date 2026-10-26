@@ -167,7 +167,8 @@ Directory structure is as follows.
     │  │  └─ update_youtube-dl.ps1 ........... youtube-dl auto update tool
     │  └─ gui/ ............................. GUI
     │     ├─ gui_main.ps1 .................... GUI version of TVerRec
-    │     └─ gui_setting.ps1 ................. GUI version of setting tool
+    │     ├─ gui_setting.ps1 ................. GUI version of setting tool
+    │     └─ user_setting_functions.ps1 ...... Read/write functions for user_setting.ps1 (for the settings GUI)
     │
     ├─ test/ ............................... Test scripts
     │

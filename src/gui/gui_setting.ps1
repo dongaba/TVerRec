@@ -90,6 +90,9 @@ if ($script:preferredLanguage) {
 try {
 	. (Convert-Path (Join-Path $script:scriptRoot '../src/functions/common_functions.ps1'))
 } catch { throw ($script:msg.LoadCommonFuncFailed) }
+try {
+	. (Convert-Path (Join-Path $script:scriptRoot '../src/gui/user_setting_functions.ps1'))
+} catch { throw ($script:msg.LoadUserSettingFuncFailed) }
 
 $days = @('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')
 $hours = 0..23
@@ -257,53 +260,25 @@ function Read-UserSetting {
 	#>
 	[OutputType([Void])]
 	Param ()
-	$undefAttributes = @('$script:downloadBaseDir', '$script:downloadWorkDir', '$script:saveBaseDir', '$script:myPlatformUID', '$script:myPlatformToken', '$script:myMemberSID', '$script:proxyUrl')
-	$userSettings = Get-Content -LiteralPath $userSettingFile -Encoding UTF8
+	$userSettings = @(Get-Content -LiteralPath $userSettingFile -Encoding UTF8)
 	# 動作停止設定以外の抽出
 	foreach ($settingAttribute in $settingAttributes) {
 		# 変数名から「$script:」を取った名前がBox名
 		$settingBox = $settingWindow.FindName($settingAttribute.Replace('$script:', ''))
 		if ($null -eq $settingBox) { Write-Debug "$settingAttribute is null" ; continue }
 		# ユーザー設定の値を取得しGUIに反映
-		$userSettingValue = ($userSettings -match ('^{0}' -f [RegEx]::Escape($settingAttribute)))
-		if ($userSettingValue) {
-			Write-Debug [String]$userSettingValue
-			$settingBox.Text = $userSettingValue.split('=', 2)[1].Trim().Trim("'")
-			if ($settingBox.Name -eq 'preferredLanguage') {
-				switch ($settingBox.Text) {
-					'ja-JP' { $settingBox.Text = '日本語' }
-					'en-US' { $settingBox.Text = 'English' }
-					default { $settingBox.Text = $script:msg.SettingDefault }
-				}
-			}
-			switch ($settingBox.Text) {
-				'$true' { $settingBox.Text = $script:msg.SettingTrue }
-				'$false' { $settingBox.Text = $script:msg.SettingFalse }
-			}
-		} elseif ($settingAttribute -in $undefAttributes) { $settingBox.Text = $script:msg.SettingUndefined }
-		else { $settingBox.Text = $script:msg.SettingDefault }
+		$settingBox.Text = ConvertTo-SettingDisplayText -Attribute $settingAttribute -Content $userSettings
 	}
-	# 動作停止設定の抽出
-	$scheduleStopPattern = '\$script:stopSchedule\s*=\s*@\{([^}]*)\}'
-	try {
-		$scheduleStopDetail = [RegEx]::Match($userSettings, $scheduleStopPattern)
-		# 抽出した内容を解析してチェックボックスに反映
-		if ($scheduleStopDetail.Success) {
-			$scheduleStopString = $scheduleStopDetail.Groups[1].Value
-			foreach ($day in $days) {
-				if ($scheduleStopString -match "'$day'\s*=\s*@\(([^)]*)\)") {
-					$schedule = $matches[1].Split(',').Trim().where({ $_ })
-					foreach ($hour in $schedule) {
-						$checkbox = $settingWindow.FindName(('chkbxStop{0}{1}' -f $day, ([Int]$hour).ToString('D2')))
-						if ($checkbox) { $checkbox.IsChecked = $true }
-					}
-				}
-			}
+	# 動作停止設定の抽出と、チェックボックスへの反映
+	$stopSchedule = Get-StopScheduleFromSetting -Content $userSettings -Days $days
+	foreach ($day in $days) {
+		if (!$stopSchedule.ContainsKey($day)) { continue }
+		foreach ($hour in $stopSchedule[$day]) {
+			$checkbox = $settingWindow.FindName(('chkbxStop{0}{1}' -f $day, $hour.ToString('D2')))
+			if ($checkbox) { $checkbox.IsChecked = $true }
 		}
-	} catch { return }
-	Remove-Variable -Name undefAttributes, userSettings, settingBox -ErrorAction SilentlyContinue
-	Remove-Variable -Name scheduleStopPattern, scheduleStopDetail, scheduleStopString -ErrorAction SilentlyContinue
-	Remove-Variable -Name day, schedule, hour, checkbox -ErrorAction SilentlyContinue
+	}
+	Remove-Variable -Name userSettings, settingAttribute, settingBox, stopSchedule, day, hour, checkbox -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -330,75 +305,34 @@ function Save-UserSetting {
 	#>
 	[OutputType([Void])]
 	Param ()
-	$newSetting = @()
-	$startSegment = '##Start Setting Generated from GUI'
-	$endSegment = '##End Setting Generated from GUI'
-	# ファイルが無ければ作ればいい
-	if (!(Test-Path $userSettingFile)) {
-		New-Item -Path $userSettingFile -ItemType File | Out-Null
-		$content = Get-Content -LiteralPath $userSettingFile
-		$totalLineNum = 0
-	} else {
-		$content = Get-Content -LiteralPath $userSettingFile -Encoding UTF8
-		#自動生成部分の行数を取得
-		$totalLineNum = try { $content.Count } catch { 0 }
-		$headLineNum = try { ($content | Select-String $startSegment).LineNumber } catch { 0 }
-		$tailLineNum = try { $totalLineNum - ($content | Select-String $endSegment).LineNumber } catch { 0 }
-	}
-	# 自動生成より前の部分
-	# 自動生成の開始位置が2行目以降の場合にだけ自動生成よりの前の部分がある
-	if ($headLineNum -ge 2 ) { $newSetting += $content[0..$($headLineNum - 2)] }
+	# ファイルが無ければ作る
+	if (!(Test-Path -LiteralPath $userSettingFile)) { New-Item -Path $userSettingFile -ItemType File | Out-Null }
+	$existingContent = @(Get-Content -LiteralPath $userSettingFile -Encoding UTF8)
 	# 動作停止設定以外の部分
-	$newSetting += $startSegment
-	if ($settingAttributes) {
-		foreach ($settingAttribute in $settingAttributes) {
-			$settingBox = $settingWindow.FindName($settingAttribute.Replace('$script:', ''))
-			# 言語設定はラベルから保存値に変える
-			if ($settingBox.Name -eq 'preferredLanguage') {
-				switch ($settingBox.Text) {
-					'日本語' { $settingBox.Text = 'ja-JP' }
-					'English' { $settingBox.Text = 'en-US' }
-					default { $settingBox.Text = '' }
-				}
-			}
-			switch -wildcard ($settingBox.Text) {
-				{ $_ -in '', $script:msg.SettingDefault, $script:msg.SettingUndefined } { break }
-				{ $_ -eq $script:msg.SettingTrue } { $newSetting += ('{0} = $true' -f $settingAttribute) ; break }
-				{ $_ -eq $script:msg.SettingFalse } { $newSetting += ('{0} = $false' -f $settingAttribute) ; break }
-				default {
-					if (([Int]::TryParse($settingBox.Text, [Ref]$null)) -or ($settingBox.Text -match '[${}]')) { $newSetting += ('{0} = {1}' -f $settingAttribute, $settingBox.Text) }
-					else { $newSetting += ('{0} = ''{1}''' -f $settingAttribute, $settingBox.Text) }
-				}
-			}
-		}
+	$generatedLines = @()
+	foreach ($settingAttribute in $settingAttributes) {
+		$settingBox = $settingWindow.FindName($settingAttribute.Replace('$script:', ''))
+		if ($null -eq $settingBox) { continue }
+		$line = ConvertTo-UserSettingLine -Attribute $settingAttribute -Text $settingBox.Text
+		if ($line) { $generatedLines += $line }
 	}
 	# 動作停止設定の部分
-	$stopSetting = @()
-	$stopSetting += '$script:stopSchedule = @{'
+	$stopHours = @{}
 	foreach ($day in $days) {
 		$stopHoursList = @()
 		foreach ($hour in $hours) {
 			$checkbox = $settingWindow.FindName(('chkbxStop{0}{1}' -f $day, $hour.ToString('D2')))
 			if ($checkbox -and $checkbox.IsChecked) { $stopHoursList += $hour }
 		}
-		# 停止時間を文字列に変換し、曜日ごとのエントリを作成
-		$stopHours = "'{0}' = @({1})" -f $day, ($stopHoursList -join ', ')
-		$stopSetting += "`t" + $stopHours
+		$stopHours[$day] = $stopHoursList
 	}
-	$stopSetting += '}'
-	$newSetting += $stopSetting
-	# 自動生成より後の部分
-	$newSetting += $endSegment
-	if ( $totalLineNum -ne 0 ) {
-		try { $newSetting += Get-Content $userSettingFile -Tail $tailLineNum -ErrorAction Stop }
-		catch { Write-Warning ($script:msg.AutoGenNotDetected) }
-	}
+	$generatedLines += ConvertTo-StopScheduleLine -StopHours $stopHours -Days $days
+	# 自動生成の部分だけを差し替える
+	$newSetting = Merge-UserSettingContent -ExistingContent $existingContent -GeneratedLines $generatedLines
 	# 改行コードLFを強制 + NFCで出力
-	$newSetting.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC)  | Out-File -LiteralPath $userSettingFile -Encoding UTF8 -NoNewline
-	Remove-Variable -Name newSetting, startSegment, endSegment, content -ErrorAction SilentlyContinue
-	Remove-Variable -Name totalLineNum, headLineNum, tailLineNum -ErrorAction SilentlyContinue
-	Remove-Variable -Name settingAttribute, settingBox -ErrorAction SilentlyContinue
-	Remove-Variable -Name stopSetting, day, hour, checkbox, stopHours -ErrorAction SilentlyContinue
+	$newSetting.ForEach({ "{0}`n" -f $_ }).Normalize([Text.NormalizationForm]::FormC) | Out-File -LiteralPath $userSettingFile -Encoding UTF8 -NoNewline
+	Remove-Variable -Name existingContent, generatedLines, settingAttribute, settingBox, line -ErrorAction SilentlyContinue
+	Remove-Variable -Name stopHours, stopHoursList, day, hour, checkbox, newSetting -ErrorAction SilentlyContinue
 }
 
 #endregion 関数定義
