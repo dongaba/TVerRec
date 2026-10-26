@@ -804,6 +804,153 @@ function Format-VideoInfoText {
 }
 
 #----------------------------------------------------------------------
+# 番組情報の整形(新旧APIで共通)
+#----------------------------------------------------------------------
+function ConvertFrom-UnixTimeToJst {
+	<#
+		.SYNOPSIS
+			UNIX時間(秒)を日本時間(JST)の日時に変換します。
+
+		.DESCRIPTION
+			実行環境のタイムゾーンに依存せず、常に日本時間(JST)で扱います。
+			ローカル時刻に変換してから+9時間すると、JST環境で9時間ずれるためです。
+
+		.PARAMETER UnixSeconds
+			UNIX時間(秒)を指定します。
+
+		.OUTPUTS
+			[DateTime]
+	#>
+	[OutputType([DateTime])]
+	Param ([Parameter(Mandatory = $true)][Int64]$UnixSeconds)
+	return [DateTimeOffset]::FromUnixTimeSeconds($UnixSeconds).ToOffset([TimeSpan]::FromHours(9)).DateTime
+}
+
+function Format-TitleText {
+	<#
+		.SYNOPSIS
+			シリーズ名・シーズン名・エピソード名を、ファイル名に使える形に整形します。
+
+		.DESCRIPTION
+			全角英数字などの半角化、ファイル名に使えない文字の除去、前後の空白の除去を行います。
+
+		.PARAMETER Text
+			整形する文字列を指定します。$nullは空文字として扱います。
+
+		.OUTPUTS
+			[String]
+	#>
+	[OutputType([String])]
+	Param ([Parameter(Mandatory = $true)][AllowNull()][AllowEmptyString()][String]$Text)
+	return (Remove-SpecialCharacter (Get-NarrowChar $Text)).Trim()
+}
+
+function Format-NarrowText {
+	<#
+		.SYNOPSIS
+			放送局名・制作会社名などを、全角英数字などを半角化して前後の空白を除去します。
+
+		.PARAMETER Text
+			整形する文字列を指定します。$nullは空文字として扱います。
+
+		.OUTPUTS
+			[String]
+	#>
+	[OutputType([String])]
+	Param ([Parameter(Mandatory = $true)][AllowNull()][AllowEmptyString()][String]$Text)
+	return (Get-NarrowChar $Text).Trim()
+}
+
+function Format-BroadcastDateLabel {
+	<#
+		.SYNOPSIS
+			放送日の表示文字列から、「ほか」を除き、「放送分」「配信分」を「放送」「配信」にします。
+
+		.PARAMETER Text
+			放送日の表示文字列を指定します。$nullは空文字として扱います。
+
+		.OUTPUTS
+			[String]
+	#>
+	[OutputType([String])]
+	Param ([Parameter(Mandatory = $true)][AllowNull()][AllowEmptyString()][String]$Text)
+	return $Text.Replace('ほか', '').Replace('放送分', '放送').Replace('配信分', '配信').Trim()
+}
+
+function Format-DescriptionText {
+	<#
+		.SYNOPSIS
+			番組説明の「&amp;」を「&」にし、全角英数字などを半角化して前後の空白を除去します。
+
+		.PARAMETER Text
+			番組説明を指定します。$nullは空文字として扱います。
+
+		.OUTPUTS
+			[String]
+	#>
+	[OutputType([String])]
+	Param ([Parameter(Mandatory = $true)][AllowNull()][AllowEmptyString()][String]$Text)
+	return (Get-NarrowChar $Text.Replace('&amp;', '&')).Trim()
+}
+
+function New-VideoInfoObject {
+	<#
+		.SYNOPSIS
+			Get-VideoInfoとGet-VideoInfoLegacyが返す番組情報オブジェクトを作成します。
+
+		.DESCRIPTION
+			シーズン名・エピソード名・エピソード番号・放送日をFormat-VideoInfoTextで整形し、
+			シリーズ・エピソードのページURLを組み立てて、番組情報オブジェクトを返します。
+			新旧どちらのAPIで取得した場合も、同じプロパティを同じ順序で返します。
+
+		.OUTPUTS
+			[PSCustomObject]
+			seriesName、seriesID、seriesPageURL、seasonName、seasonID、episodeNum、episodeID、episodePageURL、
+			episodeName、mediaName、providerName、broadcastDate、endTime、versionNum、isSubtitle、
+			videoInfoURL、descriptionText を持つオブジェクト。
+	#>
+	[OutputType([PSCustomObject])]
+	Param (
+		[Parameter(Mandatory = $true)][AllowNull()][AllowEmptyString()][String]$SeriesName,
+		[Parameter(Mandatory = $true)][AllowNull()][AllowEmptyString()][String]$SeriesID,
+		[Parameter(Mandatory = $true)][AllowNull()][AllowEmptyString()][String]$SeasonName,
+		[Parameter(Mandatory = $true)][AllowNull()][AllowEmptyString()][String]$SeasonID,
+		[Parameter(Mandatory = $true)][AllowNull()][AllowEmptyString()][String]$EpisodeNum,
+		[Parameter(Mandatory = $true)][AllowNull()][AllowEmptyString()][String]$EpisodeID,
+		[Parameter(Mandatory = $true)][AllowNull()][AllowEmptyString()][String]$EpisodeName,
+		[Parameter(Mandatory = $true)][AllowNull()][AllowEmptyString()][String]$MediaName,
+		[Parameter(Mandatory = $true)][AllowNull()][AllowEmptyString()][String]$ProviderName,
+		[Parameter(Mandatory = $true)][AllowNull()][AllowEmptyString()][String]$BroadcastDate,
+		[Parameter(Mandatory = $true)][DateTime]$EndTime,
+		[Parameter(Mandatory = $true)][AllowNull()]$VersionNum,
+		[Parameter(Mandatory = $true)][AllowNull()]$IsSubtitle,
+		[Parameter(Mandatory = $true)][String]$VideoInfoURL,
+		[Parameter(Mandatory = $true)][AllowNull()][AllowEmptyString()][String]$DescriptionText
+	)
+	# 「《」と「》」で挟まれた文字の除去、シーズン名・エピソード番号・放送日の整形
+	$formatted = Format-VideoInfoText -seriesName $SeriesName -seasonName $SeasonName -episodeName $EpisodeName -episodeNum $EpisodeNum -broadcastDate $BroadcastDate
+	return [PSCustomObject]@{
+		seriesName      = $SeriesName
+		seriesID        = $SeriesID
+		seriesPageURL   = ('https://tver.jp/series/{0}' -f $SeriesID)
+		seasonName      = $formatted.seasonName
+		seasonID        = $SeasonID
+		episodeNum      = $formatted.episodeNum
+		episodeID       = $EpisodeID
+		episodePageURL  = ('https://tver.jp/episodes/{0}' -f $EpisodeID)
+		episodeName     = $formatted.episodeName
+		mediaName       = $MediaName
+		providerName    = $ProviderName
+		broadcastDate   = $formatted.broadcastDate
+		endTime         = $EndTime
+		versionNum      = $VersionNum
+		isSubtitle      = $IsSubtitle
+		videoInfoURL    = $VideoInfoURL
+		descriptionText = $DescriptionText
+	}
+}
+
+#----------------------------------------------------------------------
 # TVerのAPIを叩いて番組情報取得
 #----------------------------------------------------------------------
 function Get-VideoInfo {
@@ -865,46 +1012,27 @@ function Get-VideoInfo {
 		$endAt = Get-JsonProperty $episode @('view_status', 'end_at')
 		if ($null -eq $endAt) { $endAt = [DateTimeOffset]::Parse([String](Get-JsonProperty $episode @('end_at'))).ToUnixTimeSeconds() }
 		# * 実行環境のタイムゾーンに依存せず常に日本時間(JST)で扱う
-		$endTime = [DateTimeOffset]::FromUnixTimeSeconds([Int64]$endAt).ToOffset([TimeSpan]::FromHours(9)).DateTime
+		$endTime = ConvertFrom-UnixTimeToJst -UnixSeconds $endAt
 		# 字幕の有無。項目が無いときは$nullとし、呼び出し側でyoutube-dlでの確認にフォールバックさせる
 		$isSubtitleValue = Get-JsonProperty $episode @('is_subtitle')
 		$isSubtitle = if ($null -ne $isSubtitleValue) { [Boolean]$isSubtitleValue } else { $null }
 		# シリーズ名は旧APIのEpisode.Content.SeriesTitleに合わせ、series.titleを採用(比較して全件一致を確認済み)
-		$videoSeries = (Remove-SpecialCharacter (Get-NarrowChar ([String](Get-JsonProperty $series @('title'))))).Trim()
+		$videoSeries = Format-TitleText (Get-JsonProperty $series @('title'))
 		$videoSeriesID = [String](Get-JsonProperty $series @('id'))
-		$videoSeason = (Remove-SpecialCharacter (Get-NarrowChar ([String](Get-JsonProperty $season @('title'))))).Trim()
+		$videoSeason = Format-TitleText (Get-JsonProperty $season @('title'))
 		$videoSeasonID = [String](Get-JsonProperty $season @('id'))
-		$episodeName = (Remove-SpecialCharacter (Get-NarrowChar ([String](Get-JsonProperty $episode @('title'))))).Trim()
-		$mediaName = (Get-NarrowChar $mediaName).Trim()
-		$providerName = (Get-NarrowChar ([String](Get-JsonProperty $episode @('production_provider', 'display_name')))).Trim()
-		$broadcastDate = (([String](Get-JsonProperty $episode @('broadcast_date_label'))).Replace('ほか', '').Replace('放送分', '放送').Replace('配信分', '配信')).Trim()
-		$descriptionText = (Get-NarrowChar (([String](Get-JsonProperty $episode @('description'))).Replace('&amp;', '&'))).Trim()
-		$videoEpisodeNum = (Get-NarrowChar ([String](Get-JsonProperty $episode @('index_no')))).Trim()
+		$episodeName = Format-TitleText (Get-JsonProperty $episode @('title'))
+		$mediaName = Format-NarrowText $mediaName
+		$providerName = Format-NarrowText (Get-JsonProperty $episode @('production_provider', 'display_name'))
+		$broadcastDate = Format-BroadcastDateLabel (Get-JsonProperty $episode @('broadcast_date_label'))
+		$descriptionText = Format-DescriptionText (Get-JsonProperty $episode @('description'))
+		$videoEpisodeNum = Format-NarrowText (Get-JsonProperty $episode @('index_no'))
 	} catch {
 		# * 新世代APIで取得できなかった場合は旧APIにフォールバック
 		Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $_.Exception.Message)
 		return (Get-VideoInfoLegacy -episodeID $episodeID)
 	}
-	$formatted = Format-VideoInfoText -seriesName $videoSeries -seasonName $videoSeason -episodeName $episodeName -episodeNum $videoEpisodeNum -broadcastDate $broadcastDate
-	return [PSCustomObject]@{
-		seriesName      = $videoSeries
-		seriesID        = $videoSeriesID
-		seriesPageURL   = ('https://tver.jp/series/{0}' -f $videoSeriesID)
-		seasonName      = $formatted.seasonName
-		seasonID        = $videoSeasonID
-		episodeNum      = $formatted.episodeNum
-		episodeID       = $videoEpisodeID
-		episodePageURL  = ('https://tver.jp/episodes/{0}' -f $videoEpisodeID)
-		episodeName     = $formatted.episodeName
-		mediaName       = $mediaName
-		providerName    = $providerName
-		broadcastDate   = $formatted.broadcastDate
-		endTime         = $endTime
-		versionNum      = $null
-		isSubtitle      = $isSubtitle
-		videoInfoURL    = $tverVideoInfoURL
-		descriptionText = $descriptionText
-	}
+	return New-VideoInfoObject -SeriesName $videoSeries -SeriesID $videoSeriesID -SeasonName $videoSeason -SeasonID $videoSeasonID -EpisodeNum $videoEpisodeNum -EpisodeID $videoEpisodeID -EpisodeName $episodeName -MediaName $mediaName -ProviderName $providerName -BroadcastDate $broadcastDate -EndTime $endTime -VersionNum $null -IsSubtitle $isSubtitle -VideoInfoURL $tverVideoInfoURL -DescriptionText $descriptionText
 }
 
 #----------------------------------------------------------------------
@@ -974,24 +1102,22 @@ function Get-VideoInfoLegacy {
 		* 3.2.2からEpisode.Content.SeriesTitleを採用することとする。
 		* 理由は、Series.Content.Titleだとファイル名が冗長になることがあることと、複数シーズン配信時に最新シーズン名になってしまうことがあるため。
 	#>
-	$videoSeries = (Remove-SpecialCharacter (Get-NarrowChar ($response.Result.Episode.Content.SeriesTitle))).Trim()
+	$videoSeries = Format-TitleText $response.Result.Episode.Content.SeriesTitle
 	$videoSeriesID = $response.Result.Series.Content.Id
-	$videoSeriesPageURL = ('https://tver.jp/series/{0}' -f $response.Result.Series.Content.Id)
 	# シーズン
-	$videoSeason = (Remove-SpecialCharacter (Get-NarrowChar ($response.Result.Season.Content.Title))).Trim()
+	$videoSeason = Format-TitleText $response.Result.Season.Content.Title
 	$videoSeasonID = $response.Result.Season.Content.Id
 	# エピソード
-	$episodeName = (Remove-SpecialCharacter (Get-NarrowChar ($response.Result.Episode.Content.Title))).Trim()
+	$episodeName = Format-TitleText $response.Result.Episode.Content.Title
 	$videoEpisodeID = $response.Result.Episode.Content.Id
-	$videoEpisodePageURL = ('https://tver.jp/episodes/{0}' -f $videoEpisodeID)
 	# 放送局
-	$mediaName = (Get-NarrowChar ($response.Result.Episode.Content.BroadcasterName)).Trim()
-	$providerName = (Get-NarrowChar ($response.Result.Episode.Content.ProductionProviderName)).Trim()
+	$mediaName = Format-NarrowText $response.Result.Episode.Content.BroadcasterName
+	$providerName = Format-NarrowText $response.Result.Episode.Content.ProductionProviderName
 	# 放送日
-	$broadcastDate = (($response.Result.Episode.Content.BroadcastDateLabel).Replace('ほか', '').Replace('放送分', '放送').Replace('配信分', '配信')).Trim()
+	$broadcastDate = Format-BroadcastDateLabel $response.Result.Episode.Content.BroadcastDateLabel
 	# 配信終了日時
 	# * 実行環境のタイムゾーンに依存せず常に日本時間(JST)で扱う。ローカル時刻変換後に+9hするとJST環境で9時間ずれる
-	$endTime = [DateTimeOffset]::FromUnixTimeSeconds([Int64]$response.Result.Episode.Content.EndAt).ToOffset([TimeSpan]::FromHours(9)).DateTime
+	$endTime = ConvertFrom-UnixTimeToJst -UnixSeconds $response.Result.Episode.Content.EndAt
 	#----------------------------------------------------------------------
 	# 番組説明
 	try {
@@ -1007,8 +1133,8 @@ function Get-VideoInfoLegacy {
 		if ($script:proxyUrl) { $httpParams.Proxy = $script:proxyUrl }
 		$videoInfo = Invoke-RestMethod @httpParams
 		Write-Debug $videoInfo
-		$descriptionText = (Get-NarrowChar ($videoInfo.Description).Replace('&amp;', '&')).Trim()
-		$videoEpisodeNum = (Get-NarrowChar ($videoInfo.No)).Trim()
+		$descriptionText = Format-DescriptionText $videoInfo.Description
+		$videoEpisodeNum = Format-NarrowText $videoInfo.No
 		# 字幕の有無(エピソードJSONのisSubtitle)。項目が無いときは$nullとし、呼び出し側でyoutube-dlでの確認にフォールバックさせる
 		$isSubtitle = if ($videoInfo.PSObject.Properties.Name -contains 'isSubtitle') { [Boolean]$videoInfo.isSubtitle } else { $null }
 		# Streaks情報取得
@@ -1084,34 +1210,7 @@ function Get-VideoInfoLegacy {
 		#>
 	} catch { Write-Warning ($script:msg.VideoInfoRetrievalFailed -f $_.Exception.Message) ; return }
 
-	# 「《」と「》」で挟まれた文字の除去、シーズン名・エピソード番号・放送日の整形
-	$formatted = Format-VideoInfoText -seriesName $videoSeries -seasonName $videoSeason -episodeName $episodeName -episodeNum $videoEpisodeNum -broadcastDate $broadcastDate
-	$videoSeason = $formatted.seasonName ; $episodeName = $formatted.episodeName ; $videoEpisodeNum = $formatted.episodeNum ; $broadcastDate = $formatted.broadcastDate
-	return [PSCustomObject]@{
-		seriesName      = $videoSeries
-		seriesID        = $videoSeriesID
-		seriesPageURL   = $videoSeriesPageURL
-		seasonName      = $videoSeason
-		seasonID        = $videoSeasonID
-		episodeNum      = $videoEpisodeNum
-		episodeID       = $videoEpisodeID
-		episodePageURL  = $videoEpisodePageURL
-		episodeName     = $episodeName
-		mediaName       = $mediaName
-		providerName    = $providerName
-		broadcastDate   = $broadcastDate
-		endTime         = $endTime
-		versionNum      = $versionNum
-		isSubtitle      = $isSubtitle
-		videoInfoURL    = $tverVideoInfoURL
-		descriptionText = $descriptionText
-		<# * M3U8・MPDを取得していたときの名残
-			m3u8URL         = $m3u8URL
-			mpdURL          = $mpdURL
-			isStreaks       = $isStreaks
-			isBrightcove    = $isBrightcove
-		#>
-	}
+	return New-VideoInfoObject -SeriesName $videoSeries -SeriesID $videoSeriesID -SeasonName $videoSeason -SeasonID $videoSeasonID -EpisodeNum $videoEpisodeNum -EpisodeID $videoEpisodeID -EpisodeName $episodeName -MediaName $mediaName -ProviderName $providerName -BroadcastDate $broadcastDate -EndTime $endTime -VersionNum $versionNum -IsSubtitle $isSubtitle -VideoInfoURL $tverVideoInfoURL -DescriptionText $descriptionText
 }
 
 #----------------------------------------------------------------------
