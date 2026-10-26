@@ -44,7 +44,9 @@
 - `Get-LinkFromKeyword`でリンクの種類を指定しなかった場合に、警告を出したあとも空のURLで検索を呼び出して引数エラーになっていた問題を修正(警告を出して終了する)
 - `move_video.ps1`と`delete_trash.ps1`の空フォルダ・無視フォルダの削除で、削除に失敗してもエラーが捕捉されず警告が出ない問題を修正(`-ErrorAction Stop`を指定)。空フォルダ削除の逐次処理は従来エラーを握りつぶしていたが、失敗時に警告を出すようになる
 - GUI設定(`gui_setting.ps1`)で設定ファイル末尾の読み込みに失敗しても警告が出ない問題を修正
-- `Remove-Variable`が`return`の後ろにあり実行されないコードを削除(`common_functions.ps1`、`tver_functions.ps1`)
+- `Invoke-IntegrityCheck`でffmpegのエラーログを読み込めなかった場合に、警告を出さずエラー数が未設定のまま進み、壊れた動画を正常と判定しうる問題を修正(警告を出し、エラー多数として扱う)
+- `Invoke-IntegrityCheck`と`Remove-UnMovedTempFile`で、ファイルの削除に失敗しても警告が出ない問題を修正(`-ErrorAction SilentlyContinue`により`catch`に届いていなかった)
+- `Remove-Variable`が`return`の後ろにあり実行されないコードを削除(`common_functions.ps1`、`tver_functions.ps1`、`tverrec_functions.ps1`)
 
 ## [3.4.9](https://github.com/dongaba/TVerRec/releases/tag/v3.4.9)
 

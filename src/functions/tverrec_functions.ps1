@@ -2178,7 +2178,6 @@ function Get-YtdlProcessCount {
 		if ($IsWindows) { return [Int][Math]::Round($count / 2, [MidpointRounding]::AwayFromZero) }	# * Windowsでは1回の実行で2プロセス(親子)になる
 		return $count
 	} catch { Write-Debug ($script:msg.GetDownloadProcNumFailed) ; return 0 }
-	Remove-Variable -Name count -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
@@ -2798,7 +2797,7 @@ function Remove-UnMovedTempFile {
 			try {
 				if ($PSCmdlet.ShouldProcess($file, 'Remove file')) {
 					Write-Information ($script:msg.DeleteFile -f $file)
-					Remove-Item -LiteralPath $file -Force -ErrorAction SilentlyContinue
+					Remove-Item -LiteralPath $file -Force -ErrorAction Stop
 				}
 			} catch { Write-Warning ('{0} : {1}' -f $file, $script:msg.FileCannotBeDeleted) }
 		}
@@ -3207,12 +3206,12 @@ function Invoke-IntegrityCheck {
 	# ffmpegが正常終了しても、大量エラーが出ることがあるのでエラーをカウント
 	try {
 		if (Test-Path $script:ffmpegErrorLogPath) {
-			$errorCount = (Get-Content -LiteralPath $script:ffmpegErrorLogPath | Measure-Object -Line).Lines
-			Get-Content -LiteralPath $script:ffmpegErrorLogPath -Encoding UTF8 | Write-Debug
+			$errorCount = (Get-Content -LiteralPath $script:ffmpegErrorLogPath -ErrorAction Stop | Measure-Object -Line).Lines
+			Get-Content -LiteralPath $script:ffmpegErrorLogPath -Encoding UTF8 -ErrorAction Stop | Write-Debug
 		}
 	} catch { Write-Warning ($script:msg.ErrorCountFailed) ; $errorCount = 9999999 }
 	# エラーをカウントしたらファイルを削除
-	try { if (Test-Path $script:ffmpegErrorLogPath) { Remove-Item -LiteralPath $script:ffmpegErrorLogPath -Force -ErrorAction SilentlyContinue | Out-Null } }
+	try { if (Test-Path $script:ffmpegErrorLogPath) { Remove-Item -LiteralPath $script:ffmpegErrorLogPath -Force -ErrorAction Stop | Out-Null } }
 	catch { Write-Warning ($script:msg.DeleteErrorFailed) }
 
 	$latestHists = Get-LatestHistory
@@ -3229,7 +3228,7 @@ function Invoke-IntegrityCheck {
 			catch { Write-Warning ($script:msg.HistUpdateFailed) }
 			finally { Unlock-File $script:histLockFilePath | Out-Null }
 			# ファイルを削除
-			try { Remove-Item -LiteralPath $videoFilePath -Force -ErrorAction SilentlyContinue | Out-Null }
+			try { Remove-Item -LiteralPath $videoFilePath -Force -ErrorAction Stop | Out-Null }
 			catch { Write-Warning ($script:msg.DeleteVideoFailed -f $videoFilePath) }
 		} else {
 			# 終了コードが0のときはダウンロード履歴にチェック済フラグを立てる
@@ -3244,7 +3243,7 @@ function Invoke-IntegrityCheck {
 	} else {
 		Write-Warning ($script:msg.HistRecordNotFound)
 		# 該当のレコードがない場合は履歴が削除済み。念の為ファイルも消しておく
-		try { Remove-Item -LiteralPath $videoFilePath -Force -ErrorAction SilentlyContinue | Out-Null }
+		try { Remove-Item -LiteralPath $videoFilePath -Force -ErrorAction Stop | Out-Null }
 		catch { Write-Warning ($script:msg.DeleteVideoFailed -f $videoFilePath) }
 	}
 	Remove-Variable -Name videoFilePath, ffmpegProcessExitCode, errorCount, targetHist, checkStatus, latestHists -ErrorAction SilentlyContinue

@@ -2584,6 +2584,60 @@ Describe 'Invoke-IntegrityCheck' {
 		Should -Invoke Unlock-File -Times 1 -Exactly
 		Test-Path -LiteralPath $script:icVideo | Should -BeTrue
 	}
+	# * 以下は-ErrorAction Stopがないと、非終了エラーがcatchに届かず警告も出ないことを確認するテスト。Write-Errorを出すモックで再現する
+	It 'エラーログを読み込めなければ、警告を出し、エラー多数として扱ってチェック失敗(3)を記録し、ファイルを削除すること' {
+		$script:icErrLines = 1
+		Mock Get-Content { Write-Error 'locked' } -ParameterFilter { $LiteralPath -eq $script:ffmpegErrorLogPath }
+		Invoke-IntegrityCheck -videoHist $script:icVideoHist | Out-Null
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.ErrorCountFailed }
+		(& $script:icGetExported) | Should -Be @('2', '3')
+		Test-Path -LiteralPath $script:icVideo | Should -BeFalse
+	}
+	It 'エラーログを削除できなければ、警告を出すが、チェック結果は記録すること' {
+		Mock Remove-Item { Write-Error 'locked' } -ParameterFilter { $LiteralPath -eq $script:ffmpegErrorLogPath }
+		Invoke-IntegrityCheck -videoHist $script:icVideoHist | Out-Null
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.DeleteErrorFailed }
+		(& $script:icGetExported) | Should -Be @('2', '1')
+	}
+	It 'チェックに失敗した番組のファイルを削除できなければ、警告を出すこと' {
+		$script:icExit = 1
+		Mock Remove-Item { Write-Error 'locked' } -ParameterFilter { $LiteralPath -like '*ep.mp4' }
+		Invoke-IntegrityCheck -videoHist $script:icVideoHist | Out-Null
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -like '*ep.mp4*' }
+		(& $script:icGetExported) | Should -Be @('2', '3')
+		Test-Path -LiteralPath $script:icVideo | Should -BeTrue
+	}
+	It '履歴に該当のレコードがなく、番組のファイルを削除できなければ、警告を出すこと' {
+		Mock Get-LatestHistory { @() }
+		Mock Remove-Item { Write-Error 'locked' } -ParameterFilter { $LiteralPath -like '*ep.mp4' }
+		Invoke-IntegrityCheck -videoHist $script:icVideoHist | Out-Null
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.HistRecordNotFound }
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -like '*ep.mp4*' }
+		Test-Path -LiteralPath $script:icVideo | Should -BeTrue
+	}
+	It 'チェック失敗の履歴を書き込めなければ、警告を出し、それでもファイルは削除すること' {
+		$script:icExit = 1
+		# * 1回目(チェック中の記録)は成功させ、2回目の書き込み前に履歴ファイルをフォルダに置き換えて、書き込みを失敗させる
+		$script:icWaitCalls = 0
+		Mock Wait-FileLock {
+			$script:icWaitCalls++
+			if ($script:icWaitCalls -eq 2) { Remove-Item -LiteralPath $script:histFilePath -Force ; New-Item -ItemType Directory -Path $script:histFilePath | Out-Null }
+		}
+		Invoke-IntegrityCheck -videoHist $script:icVideoHist | Out-Null
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.HistUpdateFailed }
+		Test-Path -LiteralPath $script:icVideo | Should -BeFalse
+	}
+	It 'チェック済みの履歴を書き込めなければ、警告を出すこと' {
+		# * 1回目(チェック中の記録)は成功させ、2回目の書き込み前に履歴ファイルをフォルダに置き換えて、書き込みを失敗させる
+		$script:icWaitCalls = 0
+		Mock Wait-FileLock {
+			$script:icWaitCalls++
+			if ($script:icWaitCalls -eq 2) { Remove-Item -LiteralPath $script:histFilePath -Force ; New-Item -ItemType Directory -Path $script:histFilePath | Out-Null }
+		}
+		Invoke-IntegrityCheck -videoHist $script:icVideoHist | Out-Null
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.HistUpdateFailed }
+		Test-Path -LiteralPath $script:icVideo | Should -BeTrue
+	}
 }
 
 Describe 'Read-IgnoreList' {
@@ -3647,5 +3701,155 @@ Describe '異常系の分岐' {
 		$target = ('a' * 40) + '!'
 		Test-IgnoreMatch -Pattern 'regex:^(a+)+$' -Target @($target) -Mode Literal | Should -BeFalse
 		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq ($script:msg.IgnoreRegexTimeout -f 'regex:^(a+)+$') }
+	}
+}
+
+
+Describe 'Remove-UnMovedTempFile(削除失敗)' {
+	BeforeAll {
+		$script:unfSaved = if (Test-Path Variable:Script:downloadWorkDir) { $script:downloadWorkDir } else { '__unset__' }
+	}
+	AfterAll {
+		if ($script:unfSaved -eq '__unset__') { Remove-Variable -Name downloadWorkDir -Scope Script -ErrorAction SilentlyContinue }
+		else { $script:downloadWorkDir = $script:unfSaved }
+	}
+	It '削除に失敗しても例外にせず、ファイルごとに警告を出すこと' {
+		$script:downloadWorkDir = Join-Path $TestDrive ('unf{0}' -f [Guid]::NewGuid().ToString('N'))
+		New-Item -ItemType Directory -Path $script:downloadWorkDir -Force | Out-Null
+		foreach ($f in @('epa1b2c3d4.mp4', 'epz9y8x7w6.ts')) { Set-Content -LiteralPath (Join-Path $script:downloadWorkDir $f) -Value 'x' -NoNewline }
+		Mock Write-Information {}
+		Mock Write-Warning {}
+		# * -ErrorAction Stopがないと非終了エラーはcatchに届かず、警告が出ない
+		Mock Remove-Item { Write-Error 'locked' }
+		{ Remove-UnMovedTempFile } | Should -Not -Throw
+		Should -Invoke Write-Warning -Times 2 -Exactly -ParameterFilter { $Message -like ('*' + $script:msg.FileCannotBeDeleted) }
+	}
+}
+
+Describe 'Format-VideoFileInfo(ファイル名の組み立てと長さ制限)' {
+	BeforeAll {
+		$script:fviNames = @('downloadBaseDir', 'addSeriesName', 'addSeasonName', 'addBroadcastDate', 'addEpisodeNumber', 'fileNameLengthMax', 'sortVideoByMedia', 'sortVideoBySeries', 'videoContainerFormat')
+		$script:fviSaved = @{}
+		foreach ($n in $script:fviNames) {
+			$script:fviSaved[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' }
+		}
+	}
+	AfterAll {
+		foreach ($n in $script:fviSaved.Keys) {
+			if ($script:fviSaved[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:fviSaved[$n] }
+		}
+	}
+	BeforeEach {
+		$script:downloadBaseDir = Join-Path $TestDrive 'fvi'
+		$script:addSeriesName = $true
+		$script:addSeasonName = $true
+		$script:addBroadcastDate = $true
+		$script:addEpisodeNumber = $true
+		$script:fileNameLengthMax = 255
+		$script:sortVideoByMedia = $false
+		$script:sortVideoBySeries = $true
+		$script:videoContainerFormat = 'mp4'
+	}
+	It '放送日とエピソード番号をファイル名に含めること(スラッシュはハイフンにする)' {
+		$videoInfo = [PSCustomObject]@{ mediaName = 'Media' ; seriesName = 'Series' ; seasonName = 'Season1' ; episodeName = 'Episode' ; broadcastDate = '2025/04/18' ; episodeNum = 3 }
+		Format-VideoFileInfo -videoInfo ([ref]$videoInfo)
+		$videoInfo.fileName | Should -BeExactly 'Series Season1 2025-04-18 Ep3 Episode.mp4'
+	}
+	It 'ファイル名が長すぎるときは、バイト数の上限に収まるように切り詰めて「……」を付けること' {
+		$script:fileNameLengthMax = 60	# * 上限は60-30=30バイト
+		$videoInfo = [PSCustomObject]@{ mediaName = 'Media' ; seriesName = 'S' ; seasonName = 'T' ; episodeName = ('あ' * 20) ; broadcastDate = '2025/04/18' ; episodeNum = 1 }
+		Format-VideoFileInfo -videoInfo ([ref]$videoInfo)
+		$base = $videoInfo.fileName -replace '\.mp4$', ''
+		$base | Should -BeLike '*……'
+		[Text.Encoding]::UTF8.GetByteCount($base.Substring(0, $base.Length - 2)) | Should -BeLessOrEqual 30
+	}
+	It 'シリーズのフォルダ名が長すぎるときも、切り詰めて「……」を付けること' {
+		$script:fileNameLengthMax = 60
+		$videoInfo = [PSCustomObject]@{ mediaName = 'Media' ; seriesName = ('い' * 30) ; seasonName = '' ; episodeName = 'Episode' ; broadcastDate = '2025/04/18' ; episodeNum = 1 }
+		Format-VideoFileInfo -videoInfo ([ref]$videoInfo)
+		$dirName = ($videoInfo.fileDir -split '/')[-1]
+		$dirName | Should -BeLike '*……'
+		[Text.Encoding]::UTF8.GetByteCount($dirName.Substring(0, $dirName.Length - 2)) | Should -BeLessOrEqual 30
+	}
+}
+
+Describe '履歴・プロセス数・Pythonの確認の異常系' {
+	BeforeAll {
+		$script:hxNames = @('histFilePath', 'histLockFilePath', 'histHasSubtitleColumn', 'ytdlPath', 'preferredYoutubedl')
+		$script:hxSaved = @{}
+		foreach ($n in $script:hxNames) {
+			$script:hxSaved[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' }
+		}
+	}
+	AfterAll {
+		foreach ($n in $script:hxSaved.Keys) {
+			if ($script:hxSaved[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:hxSaved[$n] }
+		}
+	}
+	BeforeEach {
+		$script:histHasSubtitleColumn = $false
+		$script:histLockFilePath = Join-Path $TestDrive 'hx.lock'
+	}
+	It 'Test-HistorySubtitleColumn: 履歴ファイルを読み込めなければ、列なし($false)を返すこと' {
+		$script:histFilePath = Join-Path $TestDrive 'hx_missing.csv'
+		Test-HistorySubtitleColumn | Should -BeFalse
+	}
+	It 'Add-HistorySubtitleColumn: ヘッダーが読み取れない履歴ファイルでは、Failedを返し、ロックを解放すること' {
+		$script:histFilePath = Join-Path $TestDrive 'hx_empty.csv'
+		New-Item -ItemType File -Path $script:histFilePath -Force | Out-Null
+		Mock Wait-FileLock {}
+		Mock Unlock-File {}
+		Add-HistorySubtitleColumn | Should -Be 'Failed'
+		Should -Invoke Unlock-File -Times 1 -Exactly
+		Get-Item -LiteralPath $script:histFilePath | ForEach-Object Length | Should -Be 0
+	}
+	It 'Get-YtdlProcessCount: プロセス数を取得できなければ、0を返すこと' {
+		Mock Get-ProcessCountByPath { throw 'failed' }
+		Get-YtdlProcessCount | Should -Be 0
+	}
+	It 'Test-YtdlCryptoModule: Pythonを起動できなければ、警告せずに終了すること' -Skip:$IsWindows {
+		# * 実行権限があるがshebangのインタプリタが存在しないファイルは、起動時に例外になる
+		$fakePython = Join-Path $TestDrive 'fakepybroken'
+		Set-Content -LiteralPath $fakePython -Value "#!/nonexistent/interpreter`n" -NoNewline
+		& chmod +x $fakePython
+		$ytdl = Join-Path $TestDrive 'yt-dlp-broken'
+		Set-Content -LiteralPath $ytdl -Value ("#!{0}`nprint(1)`n" -f $fakePython) -NoNewline
+		$script:preferredYoutubedl = 'yt-dlp'
+		$script:ytdlPath = $ytdl
+		$warn = @()
+		{ Test-YtdlCryptoModule -WarningVariable warn -WarningAction SilentlyContinue } | Should -Not -Throw
+		@($warn).Count | Should -Be 0
+	}
+}
+
+Describe 'Update-IgnoreList(並べ替えの失敗)' {
+	BeforeAll {
+		$script:uiNames = @('ignoreFilePath', 'ignoreFileSamplePath', 'ignoreLockFilePath')
+		$script:uiSaved = @{}
+		foreach ($n in $script:uiNames) {
+			$script:uiSaved[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' }
+		}
+	}
+	AfterAll {
+		foreach ($n in $script:uiSaved.Keys) {
+			if ($script:uiSaved[$n] -eq '__unset__') { Remove-Variable -Name $n -Scope Script -ErrorAction SilentlyContinue }
+			else { Set-Variable -Name $n -Scope Script -Value $script:uiSaved[$n] }
+		}
+	}
+	It '書き出す内容を正規化できなければ、警告を出し、元のファイルを変更せず、一時ファイルも残さないこと' {
+		$script:ignoreFilePath = Join-Path $TestDrive 'uiignore.conf'
+		$script:ignoreFileSamplePath = Join-Path $TestDrive 'uiignore.sample.conf'
+		$script:ignoreLockFilePath = Join-Path $TestDrive 'uiignore.lock'
+		[IO.File]::WriteAllText($script:ignoreFileSamplePath, ";; sample`n", [Text.UTF8Encoding]::new($false))
+		[IO.File]::WriteAllText($script:ignoreFilePath, "番組A`n番組B`n", [Text.UTF8Encoding]::new($false))
+		Mock Start-Sleep {}
+		Mock Write-Warning {}
+		# * 単独のサロゲート文字はUnicode正規化で例外になる
+		{ Update-IgnoreList -ignoreTitle ([string][char]0xD800) } | Should -Not -Throw
+		Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -eq $script:msg.IgnoreFileSortFailed }
+		[IO.File]::ReadAllText($script:ignoreFilePath) | Should -Be "番組A`n番組B`n"
+		@(Get-ChildItem -LiteralPath $TestDrive -Filter 'uiignore.conf.*.tmp').Count | Should -Be 0
 	}
 }
