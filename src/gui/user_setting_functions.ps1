@@ -67,7 +67,9 @@ function ConvertTo-SettingDisplayText {
 		if ($Attribute -in $undefAttributes) { return $script:msg.SettingUndefined }
 		return $script:msg.SettingDefault
 	}
-	$text = $parts[1].Trim().Trim("'")
+	$text = $parts[1].Trim()
+	# 単一引用符で囲まれた値は、外側の引用符を1組だけ外し、文字列中の''を'に戻す
+	if (($text.Length -ge 2) -and $text.StartsWith("'") -and $text.EndsWith("'")) { $text = $text.Substring(1, $text.Length - 2).Replace("''", "'") }
 	if ($Attribute -eq '$script:preferredLanguage') {
 		$text = switch ($text) {
 			'ja-JP' { '日本語' }
@@ -94,6 +96,7 @@ function ConvertTo-UserSettingLine {
 			入力が空、「デフォルト値」、「未設定」のときは、行を作りません($nullを返します)。
 			「する」「しない」は$true・$falseに、言語は「日本語」「English」からja-JP・en-USに変換します。
 			数値と、$・{・}を含む値(変数や式)は、そのまま書き出し、それ以外は、単一引用符で囲んで書き出します。
+			単一引用符で囲む値に含まれる'は、''にエスケープします。
 
 		.PARAMETER Attribute
 			設定項目の変数名を指定します。例: $script:downloadBaseDir
@@ -126,7 +129,8 @@ function ConvertTo-UserSettingLine {
 	if ($Text -eq $script:msg.SettingFalse) { return ('{0} = $false' -f $Attribute) }
 	$number = 0
 	if (([Int]::TryParse($Text, [Ref]$number)) -or ($Text -match '[${}]')) { return ('{0} = {1}' -f $Attribute, $Text) }
-	return ('{0} = ''{1}''' -f $Attribute, $Text)
+	# 文字列中の'は、''にエスケープして書き出す
+	return ('{0} = ''{1}''' -f $Attribute, $Text.Replace("'", "''"))
 }
 
 #----------------------------------------------------------------------

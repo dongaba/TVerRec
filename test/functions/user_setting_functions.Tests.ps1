@@ -81,6 +81,19 @@ Describe 'ConvertTo-UserSettingLine' {
 		ConvertTo-UserSettingLine -Attribute '$script:preferredLanguage' -Text 'English' | Should -Be '$script:preferredLanguage = ''en-US'''
 		ConvertTo-UserSettingLine -Attribute '$script:preferredLanguage' -Text $script:msg.SettingDefault | Should -BeNullOrEmpty
 	}
+	It '値に含まれる単一引用符は、二重にエスケープして書き出し、PowerShellとして正しく解釈できること' {
+		$line = ConvertTo-UserSettingLine -Attribute '$script:ytdlOption' -Text "it's"
+		$line | Should -Be '$script:ytdlOption = ''it''''s'''
+		$errors = $null
+		[System.Management.Automation.Language.Parser]::ParseInput($line, [Ref]$null, [Ref]$errors) | Out-Null
+		@($errors).Count | Should -Be 0
+	}
+	It '単一引用符を含む値は、書き出して読み込むと、元の値に戻ること(往復)' {
+		foreach ($value in "it's", "'quoted'", "ends with '", "''", "a''b") {
+			$line = ConvertTo-UserSettingLine -Attribute '$script:ytdlOption' -Text $value
+			ConvertTo-SettingDisplayText -Attribute '$script:ytdlOption' -Content @($line) | Should -Be $value
+		}
+	}
 	It '読み込んだ表示文字列をそのまま書き出すと、元の行に戻ること(往復)' {
 		$lines = @(
 			'$script:downloadBaseDir = ''D:\Videos''',
