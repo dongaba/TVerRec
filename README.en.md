@@ -158,7 +158,8 @@ Directory structure is as follows.
     │  │  ├─ initialize.ps1 .................. Initializer
     │  │  ├─ initialize_child.ps1 ............ Initializer for child process
     │  │  ├─ tver_functions.ps1 .............. TVer function
-    │  │  ├─ tverrec_functions.ps1 ........... TVerRec function
+    │  │  ├─ tverrec_functions.ps1 ........... TVerRec function (loads the files below)
+    │  │  ├─ tverrec_*_functions.ps1 ......... TVerRec function (split by purpose)
     │  │  ├─ update_ffmpeg.ps1 ............... ffmpeg auto update tool
     │  │  ├─ update_tverrec.ps1 .............. TVerRec auto update tool
     │  │  └─ update_youtube-dl.ps1 ........... youtube-dl auto update tool

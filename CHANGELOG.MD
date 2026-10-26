@@ -23,6 +23,7 @@
 - 一括ダウンロードの番組抽出を高速化。キーワードごとに履歴の全件を処理して突き合わせていたのを、ダウンロード済みのエピソードIDをHashSetにして使い回すように変更(`Invoke-HistoryMatchCheck`)。あわせて、シリーズ・シーズン・タレントのAPI(`callSeriesSeasons`、`callSeasonEpisodes`、`callTalentEpisode`)の結果を、実行中だけ使い回すように変更し、キーワード間で同じIDを何度も取得しないようにした(`Get-SearchResult`)。実行中に追加された番組は、その実行中は反映されない
 - 不要ファイル削除の「ダウンロード対象外の番組を削除します」で、ダウンロード先のフォルダ数 x ダウンロード対象外リストの行数だけ`Test-IgnoreMatch`を呼んでいたのを、`Find-IgnoreMatchedIndex`による一括判定に変更し短縮(`delete_trash.ps1`)。あわせて、一致したフォルダごとに行っていたダウンロード対象外リストの並べ替え(`Update-IgnoreList`)を、一致したタイトルごとに1回だけ行うように変更
 - `update_ffmpeg.ps1`と`update_youtube-dl.ps1`の更新処理を、それぞれ`Update-Ffmpeg`・`Update-Ytdl`の関数にまとめ、スクリプトとして実行したときだけ環境設定と更新処理を行うように変更(動作は同じ。ドット読み込みでは更新処理を実行しないため、テストできるようになった)
+- `tverrec_functions.ps1`(約3,500行)を用途別の10ファイル(`tverrec_startup_functions.ps1`、`tverrec_history_functions.ps1`、`tverrec_list_functions.ps1`、`tverrec_ignore_functions.ps1`、`tverrec_match_functions.ps1`、`tverrec_ytdl_functions.ps1`、`tverrec_download_functions.ps1`、`tverrec_integrity_functions.ps1`、`tverrec_environment_functions.ps1`、`tverrec_move_functions.ps1`)に分割。`tverrec_functions.ps1`は、これらを順に読み込む。関数の中身は変更していない
 
 ### 3.5.0 Fixed
 
