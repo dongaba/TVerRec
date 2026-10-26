@@ -200,14 +200,14 @@ function Invoke-Ytdl {
 			プロキシ設定、レート制限、字幕埋め込みなどのオプションをサポートします。
 
 		.PARAMETER videoInfo
-			ダウンロードする番組の情報を含むオブジェクトを参照で指定します。
+			ダウンロードする番組の情報を含むオブジェクトを指定します。この関数は内容を読み取るだけで、変更しません。
 
 		.OUTPUTS
 			[Void]
 			この関数は値を返しません。
 
 		.EXAMPLE
-			Invoke-Ytdl -videoInfo ([ref]$videoInfo)
+			Invoke-Ytdl -videoInfo $videoInfo
 
 		.NOTES
 			この関数は以下の処理を行います：
@@ -217,7 +217,7 @@ function Invoke-Ytdl {
 			4. youtube-dlプロセスを起動し、タイムアウト監視を開始
 	#>
 	[OutputType([Void])]
-	Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
+	Param ([Parameter(Mandatory = $true)][PSCustomObject]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	Invoke-StatisticsCheck -Operation 'download'
 	if ($IsWindows) { foreach ($dir in @($script:downloadWorkDir, $script:downloadBaseDir)) { if ($dir[-1] -eq ':') { $dir += '\\' } } }

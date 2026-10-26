@@ -50,7 +50,7 @@ Describe 'Format-VideoFileInfo' {
 			broadcastDate = '2025-04-18'
 			episodeNum    = 1
 		}
-		Format-VideoFileInfo -videoInfo ([ref]$videoInfo)
+		Format-VideoFileInfo -videoInfo $videoInfo
 		# fileDirは区切り文字を「/」に正規化して返す(Windowsでは\を/に置換)
 		$videoInfo.fileDir | Should -BeExactly $script:downloadBaseDir.Replace('\', '/')
 	}
@@ -543,7 +543,7 @@ Describe 'サムネイル埋め込み設定(embedThumbnail)' {
 	It 'Invoke-Ytdl: $trueなら--embed-thumbnailを渡す' {
 		$script:embedThumbnail = $true
 		$videoInfo = $script:videoInfo
-		Invoke-Ytdl -videoInfo ([ref]$videoInfo) 6>$null 3>$null
+		Invoke-Ytdl -videoInfo $videoInfo 6>$null 3>$null
 		$script:capturedYtdlArgs | Should -Match '--embed-thumbnail'
 		$script:capturedYtdlArgs | Should -Match '--embed-chapters'
 		$script:capturedYtdlArgs | Should -Match '--merge-output-format mp4'
@@ -551,7 +551,7 @@ Describe 'サムネイル埋め込み設定(embedThumbnail)' {
 	It 'Invoke-Ytdl: $falseなら--embed-thumbnailを渡さず、他の埋め込みは維持する' {
 		$script:embedThumbnail = $false
 		$videoInfo = $script:videoInfo
-		Invoke-Ytdl -videoInfo ([ref]$videoInfo) 6>$null 3>$null
+		Invoke-Ytdl -videoInfo $videoInfo 6>$null 3>$null
 		$script:capturedYtdlArgs | Should -Not -Match '--embed-thumbnail'
 		$script:capturedYtdlArgs | Should -Match '--embed-chapters'
 		$script:capturedYtdlArgs | Should -Match '--embed-subs'
@@ -953,7 +953,7 @@ Describe 'Invoke-VideoDownloadの字幕の分岐(#312)' {
 		$script:subtitleStatusToReturn = '1'
 		$script:subtitleProbeCalls = 0
 		$tmp = New-TestVideoInfo 'ep00000001'
-		Format-VideoFileInfo ([Ref]$tmp)
+		Format-VideoFileInfo $tmp
 		$script:expectedRelPath = $tmp.fileRelPath
 		Set-Content -LiteralPath $script:histFilePath -Value $script:histHeader -Encoding UTF8
 		Mock Invoke-StatisticsCheck {}
@@ -1711,7 +1711,7 @@ Describe 'ダウンロードリストとキーワードリスト' {
 		}
 		It 'ビデオ情報をダウンロードリストの列に対応付ける' {
 			$script:extractDescTextToList = $false
-			$r = Format-ListRecord ([Ref]$script:testVideoInfo)
+			$r = Format-ListRecord $script:testVideoInfo
 			$r.seriesName | Should -Be 'テスト番組'
 			$r.episodeNo | Should -Be '3'
 			$r.episodeID | Should -Be 'epAAAAAAAA'
@@ -1721,15 +1721,15 @@ Describe 'ダウンロードリストとキーワードリスト' {
 		}
 		It '説明文の出力が無効なら、説明文の列は空にする' {
 			$script:extractDescTextToList = $false
-			(Format-ListRecord ([Ref]$script:testVideoInfo)).descriptionText | Should -Be ''
+			(Format-ListRecord $script:testVideoInfo).descriptionText | Should -Be ''
 		}
 		It '説明文の出力が有効なら、説明文を含める' {
 			$script:extractDescTextToList = $true
-			(Format-ListRecord ([Ref]$script:testVideoInfo)).descriptionText | Should -Be '説明文です'
+			(Format-ListRecord $script:testVideoInfo).descriptionText | Should -Be '説明文です'
 		}
 		It 'ダウンロードリストのヘッダーと同じ列の並びになる' {
 			$script:extractDescTextToList = $true
-			(Format-ListRecord ([Ref]$script:testVideoInfo)).PSObject.Properties.Name -join ',' | Should -Be (($script:listHeader -replace '"', '') )
+			(Format-ListRecord $script:testVideoInfo).PSObject.Properties.Name -join ',' | Should -Be (($script:listHeader -replace '"', '') )
 		}
 	}
 
@@ -2741,7 +2741,7 @@ Describe 'Show-VideoInfo / Show-VideoDebugInfo' {
 		}
 	}
 	It 'Show-VideoInfo: 番組名(拡張子なし)・放送日・テレビ局・配信終了・番組説明を、この順に出力すること' {
-		$out = @(Show-VideoInfo -videoInfo ([ref]$script:svi))
+		$out = @(Show-VideoInfo -videoInfo $script:svi)
 		$out | Should -Be @(
 			($script:msg.EpisodeName -f 'Episode.')
 			($script:msg.BroadcastDate -f '2025-04-18')
@@ -2752,12 +2752,12 @@ Describe 'Show-VideoInfo / Show-VideoDebugInfo' {
 	}
 	It 'Show-VideoDebugInfo: エピソードページのURLをデバッグ出力すること' {
 		Mock Write-Debug {}
-		Show-VideoDebugInfo -videoInfo ([ref]$script:svi)
+		Show-VideoDebugInfo -videoInfo $script:svi
 		Should -Invoke Write-Debug -Times 1 -Exactly -ParameterFilter { $Message -eq 'https://tver.jp/episodes/epSV000001' }
 	}
 	It 'Show-VideoDebugInfo: 標準出力には何も出さないこと' {
 		Mock Write-Debug {}
-		@(Show-VideoDebugInfo -videoInfo ([ref]$script:svi)).Count | Should -Be 0
+		@(Show-VideoDebugInfo -videoInfo $script:svi).Count | Should -Be 0
 	}
 }
 
@@ -2808,7 +2808,7 @@ Describe 'Invoke-VideoDownloadの履歴・ダウンロード対象外・失敗�
 		$script:ytdlCalls = 0
 		$script:ignoreToReturn = @()
 		$tmp = New-VbVideoInfo 'ep00000001'
-		Format-VideoFileInfo ([Ref]$tmp)
+		Format-VideoFileInfo $tmp
 		$script:vbRelPath = $tmp.fileRelPath
 		$script:vbFilePath = $tmp.filePath
 		Mock Invoke-StatisticsCheck {}
@@ -2966,7 +2966,7 @@ Describe 'Invoke-Ytdl / Invoke-NonTverYtdl のyt-dlp起動方法' {
 			Param ([String]$Name)
 			if ($Name -eq 'Invoke-Ytdl') {
 				$vi = [PSCustomObject]@{ fileDir = (Join-Path $TestDrive 'download').Replace('\', '/') ; filePath = (Join-Path $TestDrive 'download/番組.mp4').Replace('\', '/') ; fileName = '番組.mp4' ; episodeID = 'epabcd1234' ; episodePageURL = 'https://tver.jp/episodes/epabcd1234' }
-				Invoke-Ytdl -videoInfo ([ref]$vi)
+				Invoke-Ytdl -videoInfo $vi
 			} else { Invoke-NonTverYtdl -videoPageURL 'https://example.com/video' }
 		}
 	}
@@ -3755,13 +3755,13 @@ Describe 'Format-VideoFileInfo(ファイル名の組み立てと長さ制限)' {
 	}
 	It '放送日とエピソード番号をファイル名に含めること(スラッシュはハイフンにする)' {
 		$videoInfo = [PSCustomObject]@{ mediaName = 'Media' ; seriesName = 'Series' ; seasonName = 'Season1' ; episodeName = 'Episode' ; broadcastDate = '2025/04/18' ; episodeNum = 3 }
-		Format-VideoFileInfo -videoInfo ([ref]$videoInfo)
+		Format-VideoFileInfo -videoInfo $videoInfo
 		$videoInfo.fileName | Should -BeExactly 'Series Season1 2025-04-18 Ep3 Episode.mp4'
 	}
 	It 'ファイル名が長すぎるときは、バイト数の上限に収まるように切り詰めて「……」を付けること' {
 		$script:fileNameLengthMax = 60	# * 上限は60-30=30バイト
 		$videoInfo = [PSCustomObject]@{ mediaName = 'Media' ; seriesName = 'S' ; seasonName = 'T' ; episodeName = ('あ' * 20) ; broadcastDate = '2025/04/18' ; episodeNum = 1 }
-		Format-VideoFileInfo -videoInfo ([ref]$videoInfo)
+		Format-VideoFileInfo -videoInfo $videoInfo
 		$base = $videoInfo.fileName -replace '\.mp4$', ''
 		$base | Should -BeLike '*……'
 		[Text.Encoding]::UTF8.GetByteCount($base.Substring(0, $base.Length - 2)) | Should -BeLessOrEqual 30
@@ -3769,7 +3769,7 @@ Describe 'Format-VideoFileInfo(ファイル名の組み立てと長さ制限)' {
 	It 'シリーズのフォルダ名が長すぎるときも、切り詰めて「……」を付けること' {
 		$script:fileNameLengthMax = 60
 		$videoInfo = [PSCustomObject]@{ mediaName = 'Media' ; seriesName = ('い' * 30) ; seasonName = '' ; episodeName = 'Episode' ; broadcastDate = '2025/04/18' ; episodeNum = 1 }
-		Format-VideoFileInfo -videoInfo ([ref]$videoInfo)
+		Format-VideoFileInfo -videoInfo $videoInfo
 		$dirName = ($videoInfo.fileDir -split '/')[-1]
 		$dirName | Should -BeLike '*……'
 		[Text.Encoding]::UTF8.GetByteCount($dirName.Substring(0, $dirName.Length - 2)) | Should -BeLessOrEqual 30

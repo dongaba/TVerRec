@@ -110,7 +110,7 @@ function Format-ListRecord {
 			保存するための形式に整形します。
 
 		.PARAMETER videoInfo
-			ビデオ情報を含むオブジェクトを参照で指定します。
+			ビデオ情報を含むオブジェクトを指定します。
 
 		.OUTPUTS
 			[PSCustomObject]
@@ -133,7 +133,7 @@ function Format-ListRecord {
 			- descriptionText: 説明文（オプション）
 
 		.EXAMPLE
-			$listRecord = Format-ListRecord -videoInfo ([ref]$videoInfo)
+			$listRecord = Format-ListRecord -videoInfo $videoInfo
 
 		.NOTES
 			この関数は以下の処理を行います：
@@ -142,7 +142,7 @@ function Format-ListRecord {
 			3. 説明文の有無に応じてプロパティを追加
 			4. 整形したレコードを返す
 	#>
-	Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
+	Param ([Parameter(Mandatory = $true)][PSCustomObject]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$downloadListItem = [PSCustomObject]@{
 		seriesName     = $videoInfo.seriesName
@@ -221,10 +221,10 @@ function Update-VideoList {
 	}
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'ignoreWord' -Value $ignoreWord
 	# 番組情報のコンソール出力
-	if ($DebugPreference -ne 'SilentlyContinue') { Show-VideoDebugInfo ([Ref]$videoInfo) }
+	if ($DebugPreference -ne 'SilentlyContinue') { Show-VideoDebugInfo $videoInfo }
 	# スキップフラグが立っているかチェック
-	if ($ignore) { Write-Warning ($script:msg.ListIgnoredAdded) ; $newVideo = Format-ListRecord ([Ref]$videoInfo) }
-	else { Write-Output ($script:msg.ListAdded) ; $newVideo = Format-ListRecord ([Ref]$videoInfo) }
+	if ($ignore) { Write-Warning ($script:msg.ListIgnoredAdded) ; $newVideo = Format-ListRecord $videoInfo }
+	else { Write-Output ($script:msg.ListAdded) ; $newVideo = Format-ListRecord $videoInfo }
 	# ダウンロードリストCSV書き出し
 	try {
 		Wait-FileLock $script:listLockFilePath

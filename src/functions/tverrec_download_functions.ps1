@@ -174,12 +174,12 @@ function Invoke-VideoDownload {
 	if ($null -eq $videoInfo) { Write-Warning ($script:msg.EpisodeInfoRetrievalFailed) ; return }
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'keyword' -Value $keyword
 	# ダウンロードファイル名を生成
-	Format-VideoFileInfo ([Ref]$videoInfo)
+	Format-VideoFileInfo $videoInfo
 	# 番組タイトルが取得できなかった場合はスキップ次の番組へ
 	if (($videoInfo.fileName -eq '.mp4') -or ($videoInfo.fileName -eq '.ts')) { Write-Warning ($script:msg.EpisodeTitleRetrievalFailed) ; return }
 	# 番組情報のコンソール出力
-	Show-VideoInfo ([Ref]$videoInfo)
-	if ($DebugPreference -ne 'SilentlyContinue') { Show-VideoDebugInfo ([Ref]$videoInfo) }
+	Show-VideoInfo $videoInfo
+	if ($DebugPreference -ne 'SilentlyContinue') { Show-VideoDebugInfo $videoInfo }
 	# 字幕の有無の記録と、字幕が追加された番組の再ダウンロード判定
 	$subtitleTracking = Test-SubtitleTrackingEnabled
 	$subtitleStatus = $null
@@ -294,7 +294,7 @@ function Invoke-VideoDownload {
 		Write-Output ($script:msg.NotifyYtdlOptions3)
 		Write-Output ($script:msg.MediumBoldBorder)
 	}
-	try { Invoke-Ytdl ([Ref]$videoInfo) }
+	try { Invoke-Ytdl $videoInfo }
 	catch { Write-Warning ($script:msg.InvokeYtdlFailed) }
 	# 1秒待機
 	Start-Sleep -Seconds 1
@@ -314,14 +314,14 @@ function Format-VideoFileInfo {
 			保存に必要な情報を生成します。
 
 		.PARAMETER videoInfo
-			ビデオ情報を含むオブジェクトを参照で指定します。
+			ビデオ情報を含むオブジェクトを指定します。
 
 		.OUTPUTS
 			[Void]
 			この関数は値を返しません。
 
 		.EXAMPLE
-			Format-VideoFileInfo -videoInfo ([ref]$videoInfo)
+			Format-VideoFileInfo -videoInfo $videoInfo
 
 		.NOTES
 			この関数は以下の処理を行います：
@@ -331,7 +331,7 @@ function Format-VideoFileInfo {
 			4. ビデオ情報オブジェクトに保存情報を追加
 	#>
 	[OutputType([Void])]
-	Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
+	Param ([Parameter(Mandatory = $true)][PSCustomObject]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$videoName = ''
 	# ファイル名を生成
@@ -394,14 +394,14 @@ function Show-VideoInfo {
 			エピソード詳細などの情報をコンソールに表示します。
 
 		.PARAMETER videoInfo
-			表示する番組情報を含むオブジェクトを参照で指定します。
+			表示する番組情報を含むオブジェクトを指定します。
 
 		.OUTPUTS
 			[Void]
 			この関数は値を返しません。
 
 		.EXAMPLE
-			Show-VideoInfo -videoInfo ([ref]$videoInfo)
+			Show-VideoInfo -videoInfo $videoInfo
 
 		.NOTES
 			この関数は以下の情報を表示します：
@@ -412,7 +412,7 @@ function Show-VideoInfo {
 			5. エピソード詳細（説明文）
 	#>
 	[OutputType([Void])]
-	Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
+	Param ([Parameter(Mandatory = $true)][PSCustomObject]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	Write-Output ($script:msg.EpisodeName -f $videoInfo.fileName.Replace($script:videoContainerFormat, ''))
 	Write-Output ($script:msg.BroadcastDate -f $videoInfo.broadcastDate)
@@ -438,21 +438,21 @@ function Show-VideoDebugInfo {
 			コンソールに表示します。
 
 		.PARAMETER videoInfo
-			表示する番組情報を含むオブジェクトを参照で指定します。
+			表示する番組情報を含むオブジェクトを指定します。
 
 		.OUTPUTS
 			[Void]
 			この関数は値を返しません。
 
 		.EXAMPLE
-			Show-VideoDebugInfo -videoInfo ([ref]$videoInfo)
+			Show-VideoDebugInfo -videoInfo $videoInfo
 
 		.NOTES
 			この関数は以下の情報を表示します：
 			1. エピソードページのURL
 	#>
 	[OutputType([Void])]
-	Param ([Parameter(Mandatory = $true)][PSCustomObject][Ref]$videoInfo)
+	Param ([Parameter(Mandatory = $true)][PSCustomObject]$videoInfo)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	Write-Debug $videoInfo.episodePageURL
 }
