@@ -154,7 +154,8 @@ Directory structure is as follows.
     │  ├─ move_vide.ps1 .................... Tool to move videos
     │  ├─ validate_video.ps1 ............... Tool to integrity check
     │  ├─ functions/ ....................... Common Functions
-    │  │  ├─ common_functions.ps1 ............ Common function
+    │  │  ├─ common_functions.ps1 ............ Common function (loads the files below)
+    │  │  ├─ common_*_functions.ps1 .......... Common function (split by purpose)
     │  │  ├─ initialize.ps1 .................. Initializer
     │  │  ├─ initialize_child.ps1 ............ Initializer for child process
     │  │  ├─ tver_functions.ps1 .............. TVer function
