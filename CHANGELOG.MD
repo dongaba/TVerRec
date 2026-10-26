@@ -11,7 +11,7 @@
 
 ### 3.5.0 Changed
 
-- GUIのラベル設定を、部品ごとに1行ずつ書く方式から、XAMLのName属性と`messages.json`の同名のキーを突き合わせて設定する方式(`Set-GuiLabel`)に変更。GUI部品を増やすときは、XAMLと`messages.json`の両言語に同じ名前を追加するだけでよい。`gui_main.ps1`と`gui_setting.ps1`で重複していた`Sync-WpfEvent`を`gui_wpf_functions.ps1`に共通化
+- GUIのラベル設定を、部品ごとに1行ずつ書く方式から、XAMLのName属性と`messages.json`の同名のキーを突き合わせて設定する方式(`Initialize-GuiLabel`)に変更。GUI部品を増やすときは、XAMLと`messages.json`の両言語に同じ名前を追加するだけでよい。`gui_main.ps1`と`gui_setting.ps1`で重複していた`Sync-WpfEvent`を`gui_wpf_functions.ps1`に共通化
 - GUI設定画面(`gui_setting.ps1`)の、`user_setting.ps1`の読み書きの処理を、`user_setting_functions.ps1`の関数(`ConvertTo-SettingDisplayText`・`ConvertTo-UserSettingLine`・`Merge-UserSettingContent`・`ConvertTo-StopScheduleLine`・`Get-StopScheduleFromSetting`)に切り出し。画面(WPF)に依存しないため、WPFの無い環境でもテストできる。保存時に言語設定の入力欄が一時的に`ja-JP`に書き換わる副作用はなくなった
 - Chrome拡張機能「TVerRec Assistant」をv0.2.1に更新。TVerの通信をブロックしてURLから`platform_uid`・`platform_token`・`member_sid`を拾う方式をやめ、開いているTVerのページが提供するSDK(`window.TVer.getStatus()`)から取得するように変更。TVerのAPI仕様変更の影響を受けにくくなり、Refreshボタンやエラーモーダルの自動クリックが不要になった。未ログインの場合は`platform_uid`・`platform_token`、TVer IDにログイン中の場合は`member_sid`を表示し、`user_settings.ps1`用の形式でコピーできる
 - 字幕の有無を、エピソード情報のJSON(`isSubtitle`)から取得するように変更(`Get-VideoInfo`が`isSubtitle`を返し、`Get-VideoSubtitleStatus`が優先して使用)。取得できない場合は従来どおりyt-dlpで確認する
@@ -31,7 +31,7 @@
 - `tver_functions.ps1`(約1,200行)を用途別の4ファイル(`tver_api_functions.ps1`、`tver_link_functions.ps1`、`tver_format_functions.ps1`、`tver_info_functions.ps1`)に分割し、`tver_functions.ps1`はそれらを読み込む入口にした(関数の中身は変更なし)
 - `Update-Ffmpeg`(約270行)のOSごとの処理を、`Update-FfmpegWindows`・`Update-FfmpegLinux`・`Update-FfmpegMac`に分割し、`Update-Ffmpeg`は`-WhatIf`の確認とOSによる振り分けだけにした(動作は変更なし)
 - `Invoke-VideoDownload`で3か所に重複していたダウンロード対象外リストとの照合を`Register-IgnoredVideo`に集約し、履歴・実ファイルの有無による分岐を整理(動作は変更していない)。`Invoke-Ytdl`と`Invoke-NonTverYtdl`で重複していた引数の組み立てとプロセス起動を`Get-YtdlCommonArgument`・`Get-YtdlMp4Argument`・`Start-YtdlProcess`に集約
-- `Get-VideoInfo`と`Get-VideoInfoLegacy`で重複していた番組情報の整形とオブジェクト生成を、`Format-TitleText`・`Format-NarrowText`・`Format-BroadcastDateLabel`・`Format-DescriptionText`・`ConvertFrom-UnixTimeToJst`・`New-VideoInfoObject`に集約。旧API側で項目が`$null`の場合に、メソッド呼び出しのエラーにならず空文字として扱うようになった
+- `Get-VideoInfo`と`Get-VideoInfoLegacy`で重複していた番組情報の整形とオブジェクト生成を、`Format-TitleText`・`Format-NarrowText`・`Format-BroadcastDateLabel`・`Format-DescriptionText`・`ConvertFrom-UnixTimeToJst`・`Build-VideoInfoObject`に集約。旧API側で項目が`$null`の場合に、メソッド呼び出しのエラーにならず空文字として扱うようになった
 - `Get-VideoInfoLegacy`内の、コメントアウトされていたStreaks・BrightcoveからのM3U8取得処理(約70行)を削除
 - `download_bulk.ps1`・`download_list.ps1`・`download_single.ps1`で重複していた、スクリプト終了時にバックグラウンドジョブを停止する処理の登録を`Register-JobCleanup`に集約
 - `Register-JobCleanup`の終了時処理が、`-Action`内では`$script:jobList`を参照できず実際には何も停止していなかったため、`Get-Job`で対象を取得する方式に修正

@@ -135,9 +135,11 @@ function Update-FfmpegWindows {
 			[Void]
 			この関数は値を返しません。結果は標準出力と警告で通知します。
 	#>
+	[CmdletBinding(SupportsShouldProcess = $true)]
 	[OutputType([Void])]
 	Param ([Parameter(Mandatory = $true)][String]$FfmpegPath)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if (!$PSCmdlet.ShouldProcess($FfmpegPath, 'Update ffmpeg')) { return }
 	# 残っているかもしれない中間ファイルを削除
 	Remove-Item -Path ('{0}/ffmpeg-*-gpl*' -f $script:binDir) -Force -Recurse -ErrorAction SilentlyContinue | Out-Null
 	Remove-Item -LiteralPath (Join-Path $script:binDir 'ffmpeg.zip') -Force -ErrorAction SilentlyContinue | Out-Null
@@ -225,9 +227,11 @@ function Update-FfmpegLinux {
 			[Void]
 			この関数は値を返しません。結果は標準出力と警告で通知します。
 	#>
+	[CmdletBinding(SupportsShouldProcess = $true)]
 	[OutputType([Void])]
 	Param ([Parameter(Mandatory = $true)][String]$FfmpegPath)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if (!$PSCmdlet.ShouldProcess($FfmpegPath, 'Update ffmpeg')) { return }
 	# 残っているかもしれない中間ファイルを削除
 	Remove-Item -Path ('{0}/ffmpeg-*-gpl*' -f $script:binDir) -Force -Recurse -ErrorAction SilentlyContinue | Out-Null
 	Remove-Item -LiteralPath (Join-Path $script:binDir 'ffmpeg.tar.xz') -Force -ErrorAction SilentlyContinue | Out-Null
@@ -324,9 +328,11 @@ function Update-FfmpegMac {
 			[Void]
 			この関数は値を返しません。結果は標準出力と警告で通知します。
 	#>
+	[CmdletBinding(SupportsShouldProcess = $true)]
 	[OutputType([Void])]
 	Param ([Parameter(Mandatory = $true)][String]$FfmpegPath)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if (!$PSCmdlet.ShouldProcess($FfmpegPath, 'Update ffmpeg')) { return }
 	# 残っているかもしれない中間ファイルを削除
 	$downloadFiles = @('ffmpeg.zip', 'ffprobe.zip', 'ffplay.zip')
 	foreach ($file in $downloadFiles) { Remove-Item -LiteralPath (Join-Path $script:binDir $file) -Force -ErrorAction SilentlyContinue | Out-Null }

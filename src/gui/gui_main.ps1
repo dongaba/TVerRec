@@ -191,7 +191,7 @@ $lblVersion.Content = ('Version {0}' -f $script:appVersion)
 $outText = $mainWindow.FindName('tbOutText')
 
 # GUI部品のラベルを言語別に設定(XAMLのName属性とmessages.jsonのキーが同じものに設定)
-Set-GuiLabel -Window $mainWindow -Xaml $mainXaml -Message $script:msg
+Initialize-GuiLabel -Window $mainWindow -Xaml $mainXaml -Message $script:msg
 
 #endregion WPFのWindow設定
 

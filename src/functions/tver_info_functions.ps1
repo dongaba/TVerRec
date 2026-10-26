@@ -99,7 +99,7 @@ function Get-VideoInfo {
 		Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $_.Exception.Message)
 		return (Get-VideoInfoLegacy -episodeID $episodeID)
 	}
-	return New-VideoInfoObject -SeriesName $videoSeries -SeriesID $videoSeriesID -SeasonName $videoSeason -SeasonID $videoSeasonID -EpisodeNum $videoEpisodeNum -EpisodeID $videoEpisodeID -EpisodeName $episodeName -MediaName $mediaName -ProviderName $providerName -BroadcastDate $broadcastDate -EndTime $endTime -VersionNum $null -IsSubtitle $isSubtitle -VideoInfoURL $tverVideoInfoURL -DescriptionText $descriptionText
+	return Build-VideoInfoObject -SeriesName $videoSeries -SeriesID $videoSeriesID -SeasonName $videoSeason -SeasonID $videoSeasonID -EpisodeNum $videoEpisodeNum -EpisodeID $videoEpisodeID -EpisodeName $episodeName -MediaName $mediaName -ProviderName $providerName -BroadcastDate $broadcastDate -EndTime $endTime -VersionNum $null -IsSubtitle $isSubtitle -VideoInfoURL $tverVideoInfoURL -DescriptionText $descriptionText
 }
 
 #----------------------------------------------------------------------
@@ -207,5 +207,5 @@ function Get-VideoInfoLegacy {
 		# * StreaksやBrightcoveからM3U8を取得する処理は不要になったため削除(過去の実装はgitの履歴を参照)
 	} catch { Write-Warning ($script:msg.VideoInfoRetrievalFailed -f $_.Exception.Message) ; return }
 
-	return New-VideoInfoObject -SeriesName $videoSeries -SeriesID $videoSeriesID -SeasonName $videoSeason -SeasonID $videoSeasonID -EpisodeNum $videoEpisodeNum -EpisodeID $videoEpisodeID -EpisodeName $episodeName -MediaName $mediaName -ProviderName $providerName -BroadcastDate $broadcastDate -EndTime $endTime -VersionNum $versionNum -IsSubtitle $isSubtitle -VideoInfoURL $tverVideoInfoURL -DescriptionText $descriptionText
+	return Build-VideoInfoObject -SeriesName $videoSeries -SeriesID $videoSeriesID -SeasonName $videoSeason -SeasonID $videoSeasonID -EpisodeNum $videoEpisodeNum -EpisodeID $videoEpisodeID -EpisodeName $episodeName -MediaName $mediaName -ProviderName $providerName -BroadcastDate $broadcastDate -EndTime $endTime -VersionNum $versionNum -IsSubtitle $isSubtitle -VideoInfoURL $tverVideoInfoURL -DescriptionText $descriptionText
 }

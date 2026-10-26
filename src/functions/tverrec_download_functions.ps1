@@ -385,7 +385,7 @@ function Invoke-VideoDownload {
 	$newVideo = $null
 	$skipDownload = $false
 	# TVerのAPIを叩いて番組情報取得
-	Invoke-StatisticsCheck -Operation 'getinfo' -TVerType 'link' -TVerID $episodeID
+	Invoke-StatisticsCheck -Operation 'getinfo'
 	$videoInfo = Get-VideoInfo $episodeID
 	if ($null -eq $videoInfo) { Write-Warning ($script:msg.EpisodeInfoRetrievalFailed) ; return }
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'keyword' -Value $keyword

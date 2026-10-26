@@ -116,7 +116,7 @@ function Get-GuiLabelAssignment {
 #----------------------------------------------------------------------
 # GUI部品へのラベルの設定
 #----------------------------------------------------------------------
-function Set-GuiLabel {
+function Initialize-GuiLabel {
 	<#
 		.SYNOPSIS
 			ウィンドウの各部品に、言語別のラベルを設定します。
@@ -134,7 +134,7 @@ function Set-GuiLabel {
 			System.Void
 
 		.EXAMPLE
-			Set-GuiLabel -Window $mainWindow -Xaml $mainXaml -Message $script:msg
+			Initialize-GuiLabel -Window $mainWindow -Xaml $mainXaml -Message $script:msg
 	#>
 	[OutputType([Void])]
 	Param (

@@ -278,7 +278,7 @@ function Format-DescriptionText {
 #----------------------------------------------------------------------
 # 番組情報オブジェクトの作成(新旧APIで共通)
 #----------------------------------------------------------------------
-function New-VideoInfoObject {
+function Build-VideoInfoObject {
 	<#
 		.SYNOPSIS
 			Get-VideoInfoとGet-VideoInfoLegacyが返す番組情報オブジェクトを作成します。

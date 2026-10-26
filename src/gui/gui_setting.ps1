@@ -338,7 +338,7 @@ $LogoImage.Source = ConvertFrom-Base64 $script:logoBase64
 $lblVersion.Content = ('Version {0}' -f $script:appVersion)
 
 # GUI部品のラベルを言語別に設定(XAMLのName属性とmessages.jsonのキーが同じものに設定)
-Set-GuiLabel -Window $settingWindow -Xaml $mainXaml -Message $script:msg
+Initialize-GuiLabel -Window $settingWindow -Xaml $mainXaml -Message $script:msg
 
 # ComboBOxのラベルを言語別に設定
 # True/Falseオプションを追加するコントロール

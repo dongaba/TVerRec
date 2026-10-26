@@ -147,12 +147,6 @@ function Invoke-StatisticsCheck {
 		.PARAMETER operation
 			統計を取得する操作を指定します。
 
-		.PARAMETER tverType
-			TVerのタイプを指定します。デフォルトは'none'です。
-
-		.PARAMETER tverID
-			TVerのIDを指定します。デフォルトは'none'です。
-
 		.OUTPUTS
 			[Void]
 			この関数は値を返しません。
@@ -165,9 +159,7 @@ function Invoke-StatisticsCheck {
 	#>
 	[OutputType([Void])]
 	Param (
-		[Parameter(Mandatory = $true )][String]$operation,
-		[Parameter(Mandatory = $false)][String]$tverType = 'none',
-		[Parameter(Mandatory = $false)][String]$tverID = 'none'
+		[Parameter(Mandatory = $true )][String]$operation
 	)
 	Write-Debug ('{0} - {1}' -f $MyInvocation.MyCommand.Name, $operation)
 	if (!$env:PESTER) {
@@ -226,6 +218,6 @@ function Invoke-StatisticsCheck {
 			if ($DebugPreference -eq 'Continue') { Write-Debug ('GA Response: {0}' -f $gaTask.GetAwaiter().GetResult().Content.ReadAsStringAsync().GetAwaiter().GetResult()) }
 		} catch { Write-Debug ('Failed to collect statistics') }
 	}
-	Remove-Variable -Name operation, tverType, tverID, statisticsBase, epochTime, userProperties, clientEnv, value, eventParams, clientSetting, paramValue, gaBody, gaURL, gaKey, gaID, gaContent, gaTask, countTask -ErrorAction SilentlyContinue
+	Remove-Variable -Name operation, statisticsBase, epochTime, userProperties, clientEnv, value, eventParams, clientSetting, paramValue, gaBody, gaURL, gaKey, gaID, gaContent, gaTask, countTask -ErrorAction SilentlyContinue
 }
 #endregion 環境

@@ -77,7 +77,7 @@ function Get-VideoLinksFromKeyword {
 		$tverID = ($tverID -split '[?#]')[0].TrimEnd('/')
 	} else { $key = '' ; $tverID = '' }
 	if (($keyword -eq 'sitemap') -or ($keyword -eq 'toppage')) { $key = $keyword }
-	Invoke-StatisticsCheck -Operation 'search' -TVerType $key -TVerID $tverID
+	Invoke-StatisticsCheck -Operation 'search'
 	switch ($key) {
 		'episodes' { $linkCollection.episodeLinks[$tverID] = 0 ; break }	# キーワードファイルにあるEpisodeはEndAtが不明なので0を設定
 		'series' { $linkCollection.seriesLinks.Add($tverID) ; break }
