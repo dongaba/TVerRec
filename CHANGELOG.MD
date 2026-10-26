@@ -26,6 +26,7 @@
 - `tverrec_functions.ps1`(約3,500行)を用途別の10ファイル(`tverrec_startup_functions.ps1`、`tverrec_history_functions.ps1`、`tverrec_list_functions.ps1`、`tverrec_ignore_functions.ps1`、`tverrec_match_functions.ps1`、`tverrec_ytdl_functions.ps1`、`tverrec_download_functions.ps1`、`tverrec_integrity_functions.ps1`、`tverrec_environment_functions.ps1`、`tverrec_move_functions.ps1`)に分割。`tverrec_functions.ps1`は、これらを順に読み込む。関数の中身は変更していない
 - `Invoke-VideoDownload`で3か所に重複していたダウンロード対象外リストとの照合を`Register-IgnoredVideo`に集約し、履歴・実ファイルの有無による分岐を整理(動作は変更していない)。`Invoke-Ytdl`と`Invoke-NonTverYtdl`で重複していた引数の組み立てとプロセス起動を`Get-YtdlCommonArgument`・`Get-YtdlMp4Argument`・`Start-YtdlProcess`に集約
 - `Get-VideoInfo`と`Get-VideoInfoLegacy`で重複していた番組情報の整形とオブジェクト生成を、`Format-TitleText`・`Format-NarrowText`・`Format-BroadcastDateLabel`・`Format-DescriptionText`・`ConvertFrom-UnixTimeToJst`・`New-VideoInfoObject`に集約。旧API側で項目が`$null`の場合に、メソッド呼び出しのエラーにならず空文字として扱うようになった
+- `Get-VideoInfoLegacy`内の、コメントアウトされていたStreaks・BrightcoveからのM3U8取得処理(約70行)を削除
 
 ### 3.5.0 Fixed
 
