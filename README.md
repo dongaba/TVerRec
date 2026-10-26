@@ -168,6 +168,8 @@ CMは入っていないため気に入った番組を配信終了後も残して
     │  └─ gui/ ............................. GUI設定
     │     ├─ gui_main.ps1 .................... GUI版のTVerRecを起動するツール
     │     ├─ gui_setting.ps1 ................. TVerRecの設定用画面を起動するツール
+    │     ├─ gui_label_functions.ps1 ......... GUIのラベルをXAMLとメッセージから設定する関数
+    │     ├─ gui_wpf_functions.ps1 ........... GUI(WPF)共通関数
     │     └─ user_setting_functions.ps1 ...... user_setting.ps1の読み書き関数(設定画面用)
     │
     ├─ test/ ............................... 自動テスト用スクリプト(配下のファイルは省略)

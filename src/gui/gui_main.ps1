@@ -37,7 +37,6 @@
 		GUIウィンドウを表示し、ユーザーの操作に応じて各種処理を実行します。
 #>
 
-using namespace System.Windows.Threading
 Set-StrictMode -Version Latest
 if (!$IsWindows) { throw ('❌️ Windows以外では動作しません。For Windows only') ; Start-Sleep 10 }
 Add-Type -AssemblyName PresentationFramework | Out-Null
@@ -53,6 +52,10 @@ try {
 } catch { throw '❌️ カレントディレクトリの設定に失敗しました。Failed to set current directory.' }
 if ($script:scriptRoot.Contains(' ')) { throw '❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space' }
 . (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
+try {
+	. (Convert-Path (Join-Path $script:scriptRoot '../src/gui/gui_label_functions.ps1'))
+	. (Convert-Path (Join-Path $script:scriptRoot '../src/gui/gui_wpf_functions.ps1'))
+} catch { throw ($script:msg.LoadGuiFuncFailed) }
 
 # パラメータ設定
 $jobTerminationStates = @('Completed', 'Failed', 'Stopped')
@@ -78,38 +81,6 @@ $msgInformation = New-Object System.Collections.Generic.List[String]
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #region 関数定義
-
-#----------------------------------------------------------------------
-# GUIイベントの処理
-#----------------------------------------------------------------------
-function Sync-WpfEvent {
-	<#
-		.SYNOPSIS
-			WPFのイベントを同期的に処理します。
-
-		.DESCRIPTION
-			WPFのイベントディスパッチャーを使用して、GUIイベントを同期的に処理します。
-			これにより、UIの応答性を維持しながらイベントを処理することができます。
-
-		.OUTPUTS
-			System.Void
-
-		.NOTES
-			この関数は内部で使用され、直接呼び出すことは想定されていません。
-	#>
-	Param ()
-	[DispatcherFrame] $frame = [DispatcherFrame]::new($true)
-	[Dispatcher]::CurrentDispatcher.BeginInvoke(
-		'Background',
-		[DispatcherOperationCallback] {
-			Param ([Object] $f)
-			($f -as [DispatcherFrame]).Continue = $false
-			return $null
-		},
-		$frame) | Out-Null
-	[Dispatcher]::PushFrame($frame)
-	Remove-Variable -Name frame, f -ErrorAction SilentlyContinue
-}
 
 #----------------------------------------------------------------------
 # 最大行数以上の実行ログをクリア
@@ -219,29 +190,8 @@ $lblVersion.Content = ('Version {0}' -f $script:appVersion)
 # ログ出力するためのテキストボックス
 $outText = $mainWindow.FindName('tbOutText')
 
-# GUI部品のラベルを言語別に設定
-$lblTool.Content = $script:msg.lblTool
-$lblLink.Content = $script:msg.lblLink
-$lblLog.Content = $script:msg.lblLog
-$btnLoop.Content = $script:msg.btnLoop
-$btnSingle.Content = $script:msg.btnSingle
-$btnBulk.Content = $script:msg.btnBulk
-$btnListGen.Content = $script:msg.btnListGen
-$btnList.Content = $script:msg.btnList
-$btnDelete.Content = $script:msg.btnDelete
-$btnValidate.Content = $script:msg.btnValidate
-$btnMove.Content = $script:msg.btnMove
-$btnKillAll.Content = $script:msg.btnKillAll
-$btnWorkOpen.Content = $script:msg.btnWorkOpen
-$btnDownloadOpen.Content = $script:msg.btnDownloadOpen
-$btnSaveOpen.Content = $script:msg.btnSaveOpen
-$btnKeywordOpen.Content = $script:msg.btnKeywordOpen
-$btnIgnoreOpen.Content = $script:msg.btnIgnoreOpen
-$btnListOpen.Content = $script:msg.btnListOpen
-$btnClearLog.Content = $script:msg.btnClearLog
-$btnWiki.Content = $script:msg.btnWiki
-$btnSetting.Content = $script:msg.btnSetting
-$btnExit.Content = $script:msg.btnExit
+# GUI部品のラベルを言語別に設定(XAMLのName属性とmessages.jsonのキーが同じものに設定)
+Set-GuiLabel -Window $mainWindow -Xaml $mainXaml -Message $script:msg
 
 #endregion WPFのWindow設定
 

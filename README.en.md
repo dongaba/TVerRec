@@ -168,6 +168,8 @@ Directory structure is as follows.
     │  └─ gui/ ............................. GUI
     │     ├─ gui_main.ps1 .................... GUI version of TVerRec
     │     ├─ gui_setting.ps1 ................. GUI version of setting tool
+    │     ├─ gui_label_functions.ps1 ......... Functions to set GUI labels from XAML and messages
+    │     ├─ gui_wpf_functions.ps1 ........... Common GUI (WPF) functions
     │     └─ user_setting_functions.ps1 ...... Read/write functions for user_setting.ps1 (for the settings GUI)
     │
     ├─ test/ ............................... Test scripts
