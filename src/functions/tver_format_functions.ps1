@@ -174,7 +174,7 @@ function Format-VideoInfoText {
 }
 
 #----------------------------------------------------------------------
-# 番組情報の整形(新旧APIで共通)
+# UNIX時間(秒)を日本時間(JST)の日時に変換
 #----------------------------------------------------------------------
 function ConvertFrom-UnixTimeToJst {
 	<#
@@ -196,6 +196,9 @@ function ConvertFrom-UnixTimeToJst {
 	return [DateTimeOffset]::FromUnixTimeSeconds($UnixSeconds).ToOffset([TimeSpan]::FromHours(9)).DateTime
 }
 
+#----------------------------------------------------------------------
+# シリーズ名・シーズン名・エピソード名をファイル名に使える形に整形
+#----------------------------------------------------------------------
 function Format-TitleText {
 	<#
 		.SYNOPSIS
@@ -215,6 +218,9 @@ function Format-TitleText {
 	return (Remove-SpecialCharacter (Get-NarrowChar $Text)).Trim()
 }
 
+#----------------------------------------------------------------------
+# 放送局名・制作会社名などを半角化して前後の空白を除去
+#----------------------------------------------------------------------
 function Format-NarrowText {
 	<#
 		.SYNOPSIS
@@ -231,6 +237,9 @@ function Format-NarrowText {
 	return (Get-NarrowChar $Text).Trim()
 }
 
+#----------------------------------------------------------------------
+# 放送日の表示文字列を整形(「ほか」の除去、「放送分」「配信分」の置換)
+#----------------------------------------------------------------------
 function Format-BroadcastDateLabel {
 	<#
 		.SYNOPSIS
@@ -247,6 +256,9 @@ function Format-BroadcastDateLabel {
 	return $Text.Replace('ほか', '').Replace('放送分', '放送').Replace('配信分', '配信').Trim()
 }
 
+#----------------------------------------------------------------------
+# 番組説明を整形(「&amp;」の置換、半角化、前後の空白の除去)
+#----------------------------------------------------------------------
 function Format-DescriptionText {
 	<#
 		.SYNOPSIS
@@ -263,6 +275,9 @@ function Format-DescriptionText {
 	return (Get-NarrowChar $Text.Replace('&amp;', '&')).Trim()
 }
 
+#----------------------------------------------------------------------
+# 番組情報オブジェクトの作成(新旧APIで共通)
+#----------------------------------------------------------------------
 function New-VideoInfoObject {
 	<#
 		.SYNOPSIS
