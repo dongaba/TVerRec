@@ -158,7 +158,8 @@ Directory structure is as follows.
     │  │  ├─ common_*_functions.ps1 .......... Common function (split by purpose)
     │  │  ├─ initialize.ps1 .................. Initializer
     │  │  ├─ initialize_child.ps1 ............ Initializer for child process
-    │  │  ├─ tver_functions.ps1 .............. TVer function
+    │  │  ├─ tver_functions.ps1 .............. TVer function (loads the files below)
+    │  │  ├─ tver_*_functions.ps1 ............ TVer function (split by purpose)
     │  │  ├─ tverrec_functions.ps1 ........... TVerRec function (loads the files below)
     │  │  ├─ tverrec_*_functions.ps1 ......... TVerRec function (split by purpose)
     │  │  ├─ update_ffmpeg.ps1 ............... ffmpeg auto update tool

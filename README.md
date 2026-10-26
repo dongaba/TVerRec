@@ -158,7 +158,8 @@ CMは入っていないため気に入った番組を配信終了後も残して
     │  │  ├─ common_*_functions.ps1 .......... 共通関数定義(用途別に分割)
     │  │  ├─ initialize.ps1 .................. 各ツールの初期処理定義
     │  │  ├─ initialize_child.ps1 ............ 各ツールの初期処理定義再帰呼び出し用
-    │  │  ├─ tver_functions.ps1 .............. TVer共通関数定義
+    │  │  ├─ tver_functions.ps1 .............. TVer共通関数定義(以下を読み込む)
+    │  │  ├─ tver_*_functions.ps1 ............ TVer共通関数定義(用途別に分割)
     │  │  ├─ tverrec_functions.ps1 ........... TVerRec共通関数定義(以下を読み込む)
     │  │  ├─ tverrec_*_functions.ps1 ......... TVerRec共通関数定義(用途別に分割)
     │  │  ├─ update_ffmpeg.ps1 ............... ffmpeg自動更新ツール
