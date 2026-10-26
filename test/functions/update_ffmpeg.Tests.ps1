@@ -283,7 +283,7 @@ Describe 'Update-Ffmpeg' {
 		It '展開に失敗したら、警告して終了すること' {
 			Mock Invoke-WebRequest {
 				if ($OutFile) { Set-Content -LiteralPath $OutFile -Value 'not a zip' -NoNewline }
-				elseif ($Uri -match '/history/') { [PSCustomObject]@{ links = @([PSCustomObject]@{ href = ('/info/release/macos/{0}/release/{0}/1700000000_7.1' -f $script:ffMacArch) }) } }
+				elseif ($Uri -match '/history/') { [PSCustomObject]@{ links = @([PSCustomObject]@{ href = ('/info/release/macos/{0}/release/{0}/1700000000_7.1' -f $script:ffMacArch) }, [PSCustomObject]@{ href = ('/info/release/macos/{0}/release/{0}/1600000000_7.0' -f $script:ffMacArch) }) } }
 				else {
 					$links = foreach ($n in 'ffmpeg', 'ffprobe', 'ffplay') { [PSCustomObject]@{ href = ('/download/macos/{0}/1700000000_7.1/{1}.zip' -f $script:ffMacArch, $n) ; outerHTML = ('<a href="x">{0}.zip</a>' -f $n) } }
 					[PSCustomObject]@{ links = @($links) }

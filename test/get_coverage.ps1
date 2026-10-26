@@ -68,10 +68,19 @@ if (!$NoDownload) {
 	if (!(Get-Command gh -ErrorAction SilentlyContinue)) { throw 'ghコマンドが見つかりません。GitHub CLIをインストールしてください。' }
 	if ($RunId -eq 0) {
 		if (!$Branch) { $Branch = (& git -C $repoRoot branch --show-current) }
-		$runs = @(& gh run list --workflow $Workflow --branch $Branch --status completed --limit 1 --json databaseId,conclusion,displayTitle,headSha | ConvertFrom-Json)
+		$runs = @(& gh run list --workflow $Workflow --branch $Branch --status completed --limit 1 --json databaseId | ConvertFrom-Json)
 		if ($runs.Count -eq 0) { throw ('ブランチ {0} に、完了した {1} の実行がありません。' -f $Branch, $Workflow) }
 		$RunId = $runs[0].databaseId
-		Write-Output ('対象の実行: {0} [{1}] {2} ({3})' -f $RunId, $runs[0].conclusion, $runs[0].displayTitle, $runs[0].headSha.Substring(0, 7))
+	}
+	# 実行の結果と、ジョブごとの結果を表示する(失敗したジョブは、失敗したステップも表示する)
+	$run = & gh run view $RunId --json conclusion,displayTitle,headSha,jobs | ConvertFrom-Json
+	Write-Output ('対象の実行: {0} [{1}] {2} ({3})' -f $RunId, $run.conclusion, $run.displayTitle, $run.headSha.Substring(0, 7))
+	foreach ($job in $run.jobs) {
+		Write-Output ('  {0,-24} {1}' -f $job.name, $job.conclusion)
+		foreach ($step in $job.steps.Where({ $_.conclusion -eq 'failure' })) { Write-Output ('    失敗したステップ: {0}' -f $step.name) }
+	}
+	if ($run.conclusion -ne 'success') {
+		Write-Output ('  ※失敗したテストの詳細: gh run view {0} --log-failed | grep -E "\[-\]|Expected|But was"' -f $RunId)
 	}
 	# * 取得先は作り直す。誤って別の場所を消さないよう、リポジトリ配下かつcoverage-artifactsの場合だけ削除する
 	if (Test-Path -LiteralPath $OutDir) {
