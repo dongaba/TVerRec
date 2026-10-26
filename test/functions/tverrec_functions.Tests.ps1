@@ -617,6 +617,8 @@ Describe 'Get-ProcessCountByPath / Get-YtdlProcessCount / Get-FfmpegProcessCount
 		$script:otherFfmpeg = Join-Path $script:procDir 'other-bin/ffmpeg'
 		New-Item -ItemType Directory -Path (Split-Path $script:otherFfmpeg) | Out-Null
 		Copy-Item -LiteralPath $sleepSrc -Destination $script:otherFfmpeg
+		# * macOSでは、コピーしたシステムのコマンドは署名が無効になり、起動直後に強制終了される場合があるため、署名し直す
+		if ($IsMacOS) { foreach ($fake in @($script:fakeFfmpeg, $script:otherFfmpeg)) { & codesign --force --sign - $fake *> $null } }
 		$script:fakeYtdl = Join-Path $script:procDir 'yt-dlp'
 		Set-Content -LiteralPath $script:fakeYtdl -Value "#!/usr/bin/env python3`nimport time`ntime.sleep(60)`n"
 		chmod +x $script:fakeYtdl
