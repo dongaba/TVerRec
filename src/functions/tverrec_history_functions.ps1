@@ -60,6 +60,60 @@ function Get-LatestHistory {
 }
 
 #----------------------------------------------------------------------
+# ダウンロード履歴ファイルの更新状態を取得
+#----------------------------------------------------------------------
+function Get-HistoryFileStamp {
+	<#
+		.SYNOPSIS
+			ダウンロード履歴ファイルの更新日時とサイズから、更新の有無を判定するための文字列を返します。
+
+		.DESCRIPTION
+			更新日時の精度が粗いファイルシステム(FAT、一部の共有フォルダなど)でも追記を検知できるよう、サイズも含めます。
+			ファイルが読めない場合は空文字を返します。
+
+		.OUTPUTS
+			[String]
+			「更新日時(Ticks):サイズ」の形式の文字列。
+	#>
+	[OutputType([String])]
+	Param ()
+	try {
+		$histFile = [IO.FileInfo]::new($script:histFilePath)
+		if (!$histFile.Exists) { return '' }
+		return ('{0}:{1}' -f $histFile.LastWriteTimeUtc.Ticks, $histFile.Length)
+	} catch { return '' }
+}
+
+#----------------------------------------------------------------------
+# ダウンロード履歴のキャッシュを、履歴ファイルが更新されていれば読み直す
+#----------------------------------------------------------------------
+function Sync-LatestHistoryCache {
+	<#
+		.SYNOPSIS
+			ダウンロード履歴のキャッシュを作成したあとに、履歴ファイルが更新されていれば、キャッシュを読み直します。
+
+		.DESCRIPTION
+			`$script:histCache`が設定されている場合だけ動作します。
+			他のPCや別の処理(個別ダウンロードなど)が履歴ファイルに追記していれば、`$script:histCacheStamp`と一致しなくなるため、
+			履歴ファイルを読み直し、ダウンロード済みIDのキャッシュ(`$script:histIdSet`)も作り直させます。
+
+		.OUTPUTS
+			[Void]
+	#>
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'スクリプト内のキャッシュ変数を更新するだけで、システムの状態は変更しない')]
+	[OutputType([Void])]
+	Param ()
+	if (!(Test-Path Variable:Script:histCache) -or ($null -eq $script:histCache)) { return }
+	$currentStamp = Get-HistoryFileStamp
+	if ((Test-Path Variable:Script:histCacheStamp) -and ($currentStamp -eq $script:histCacheStamp)) { return }
+	Write-Debug ('{0} - History file was updated. Reloading.' -f $MyInvocation.MyCommand.Name)
+	# * 読み込みの前に更新状態を記録する(読み込み中に追記されても、次回の判定で読み直される)
+	$script:histCacheStamp = $currentStamp
+	$script:histCache = @(Get-LatestHistory)
+	$script:histIdSet = $null
+}
+
+#----------------------------------------------------------------------
 # ダウンロード履歴の最新レコードを取得(一括ダウンロード中はキャッシュを使用)
 #----------------------------------------------------------------------
 function Get-LatestHistoryCached {
@@ -68,7 +122,7 @@ function Get-LatestHistoryCached {
 			ダウンロード履歴の最新レコードを取得します。キャッシュがあればキャッシュを返します。
 
 		.DESCRIPTION
-			`$script:histCache`が設定されている場合は、履歴ファイルを読み直さずにその内容を返します。
+			`$script:histCache`が設定されている場合は、履歴ファイルが更新されていない限り、読み直さずにその内容を返します。
 			設定されていない場合は`Get-LatestHistory`で履歴ファイルを読み込みます。
 			一括ダウンロードで番組ごとに履歴ファイル(CSV)の全件読み込みが走るのを避けるために使用します。
 
@@ -77,12 +131,15 @@ function Get-LatestHistoryCached {
 
 		.NOTES
 			キャッシュは呼び出し元(download_bulk.ps1)が設定・破棄します。
-			キャッシュ中は、他のPCが履歴ファイルに追記した内容は反映されません。
+			他のPCや別の処理が履歴ファイルに追記した場合は、Sync-LatestHistoryCacheが読み直します。
 	#>
 	[OutputType([PSCustomObject])]
 	Param ()
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	if ((Test-Path Variable:Script:histCache) -and ($null -ne $script:histCache)) { return $script:histCache }
+	if ((Test-Path Variable:Script:histCache) -and ($null -ne $script:histCache)) {
+		Sync-LatestHistoryCache
+		return $script:histCache
+	}
 	return (Get-LatestHistory)
 }
 

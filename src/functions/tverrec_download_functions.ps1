@@ -280,7 +280,11 @@ function Save-VideoHistory {
 	$Result.Value = $false
 	Wait-FileLock $script:histLockFilePath
 	try {
-		$NewVideo | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append ; Start-Sleep -Seconds 1
+		# キャッシュ作成後に他から追記されていなければ、自分の追記後の状態を記録する(自分の追記だけでキャッシュを読み直さないため)
+		$stampBefore = Get-HistoryFileStamp
+		$NewVideo | Export-Csv -LiteralPath $script:histFilePath -Encoding UTF8 -Append
+		if ((Test-Path Variable:Script:histCacheStamp) -and ($stampBefore -eq $script:histCacheStamp)) { $script:histCacheStamp = Get-HistoryFileStamp }
+		Start-Sleep -Seconds 1
 		Write-Debug ($script:msg.HistWritten)
 		Add-LatestHistoryCache $NewVideo
 		$Result.Value = $true
@@ -720,13 +724,15 @@ function Remove-UnRenamedTempFile {
 	Param ()
 	begin {
 		Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-		if ($IsWindows) {
-			$forCmd = "for %E in (mp4 ts) do for /r `"$script:downloadBaseDir`" %F in (ep*.%E) do @echo %F"
-			$targetFiles = @(& cmd /c $forCmd).Where({ ($_ -cmatch 'ep[a-z0-9]{8}.mp4$') -or ($_ -cmatch 'ep[a-z0-9]{8}.ts$') })
-		} else {
-			$findCmd = "find `"$script:downloadBaseDir`" -type f -name 'ep*.mp4' -or -type f -name 'ep*.ts'"
-			$targetFiles = @(& sh -c $findCmd).Where({ ($_ -cmatch 'ep[a-z0-9]{8}.mp4$') -or ($_ -cmatch 'ep[a-z0-9]{8}.ts$') })
-		}
+		# * cmdやfindの出力を経由すると、コンソールのコードページ(932など)で表せない文字を含むパスが文字化けして削除できないため、.NETで列挙する
+		$enumOptions = [IO.EnumerationOptions]::new()
+		$enumOptions.RecurseSubdirectories = $true
+		$enumOptions.IgnoreInaccessible = $true
+		$targetFiles = @()
+		try {
+			$foundFiles = @(@('ep*.mp4', 'ep*.ts').ForEach({ [IO.Directory]::EnumerateFiles($script:downloadBaseDir, $_, $enumOptions) }))
+			$targetFiles = @($foundFiles.Where({ [IO.Path]::GetFileName($_) -cmatch '^ep[a-z0-9]{8}\.(mp4|ts)$' }))
+		} catch { Write-Warning ('{0} : {1}' -f $script:downloadBaseDir, $_.Exception.Message) }
 	}
 	process {
 		# 削除しない設定の場合は、削除せずに残したファイルを警告として表示する

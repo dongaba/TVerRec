@@ -87,6 +87,7 @@ function Invoke-HistoryMatchCheck {
 	# ダウンロード履歴ファイルのデータを読み込み
 	# 一括ダウンロード中(履歴キャッシュあり)は、ダウンロード済みのIDをHashSetにして使い回す(キーワードごとの全件処理を避けるため)
 	if ((Test-Path Variable:Script:histCache) -and ($null -ne $script:histCache)) {
+		Sync-LatestHistoryCache	# 他のPCなどが履歴を更新していれば、ダウンロード済みIDも作り直す
 		if (!(Test-Path Variable:Script:histIdSet) -or ($null -eq $script:histIdSet)) {
 			$histFileData = @(Remove-SubtitleRecheckTarget @(Get-LatestHistoryCached))	# 字幕の再確認の対象は「ダウンロード済み」に含めない
 			$histIdList = [System.Collections.Generic.List[String]]::new()
