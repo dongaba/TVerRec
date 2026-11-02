@@ -105,7 +105,9 @@ function Sync-LatestHistoryCache {
 	Param ()
 	if (!(Test-Path Variable:Script:histCache) -or ($null -eq $script:histCache)) { return }
 	$currentStamp = Get-HistoryFileStamp
-	if ((Test-Path Variable:Script:histCacheStamp) -and ($currentStamp -eq $script:histCacheStamp)) { return }
+	# * 更新状態が未記録のキャッシュは、現在の状態を基準として記録するだけで読み直さない
+	if (!(Test-Path Variable:Script:histCacheStamp)) { $script:histCacheStamp = $currentStamp ; return }
+	if ($currentStamp -eq $script:histCacheStamp) { return }
 	Write-Debug ('{0} - History file was updated. Reloading.' -f $MyInvocation.MyCommand.Name)
 	# * 読み込みの前に更新状態を記録する(読み込み中に追記されても、次回の判定で読み直される)
 	$script:histCacheStamp = $currentStamp

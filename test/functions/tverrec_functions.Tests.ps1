@@ -611,12 +611,17 @@ Describe 'Get-ProcessCountByPath / Get-YtdlProcessCount / Get-FfmpegProcessCount
 	BeforeAll {
 		$script:procDir = Join-Path ([IO.Path]::GetTempPath()) ('TVerRecProc{0}' -f [Guid]::NewGuid().ToString('N'))
 		New-Item -ItemType Directory -Path $script:procDir | Out-Null
-		$sleepSrc = (Get-Command sleep -CommandType Application | Select-Object -First 1).Source
+		# * Linuxでは、sleepが名前で動作を切り替える1つのバイナリ(uutilsなど)の場合、別名でコピーすると起動直後に終了するため、shのコピーで待機する
+		# * 「; :」は、shがsleepをexecで置き換えて、コマンドラインが変わるのを防ぐため
+		$fakeSrcName = if ($IsLinux) { 'sh' } else { 'sleep' }
+		$script:fakeArgs = if ($IsLinux) { @('-c', '"sleep 60; :"') } else { @('60') }
+		$fakeSrc = Get-Item -LiteralPath (Get-Command $fakeSrcName -CommandType Application | Select-Object -First 1).Source
+		if ($fakeSrc.LinkTarget) { $fakeSrc = $fakeSrc.ResolveLinkTarget($true) }
 		$script:fakeFfmpeg = Join-Path $script:procDir 'ffmpeg'
-		Copy-Item -LiteralPath $sleepSrc -Destination $script:fakeFfmpeg
+		Copy-Item -LiteralPath $fakeSrc.FullName -Destination $script:fakeFfmpeg
 		$script:otherFfmpeg = Join-Path $script:procDir 'other-bin/ffmpeg'
 		New-Item -ItemType Directory -Path (Split-Path $script:otherFfmpeg) | Out-Null
-		Copy-Item -LiteralPath $sleepSrc -Destination $script:otherFfmpeg
+		Copy-Item -LiteralPath $fakeSrc.FullName -Destination $script:otherFfmpeg
 		# * macOSでは、コピーしたシステムのコマンドは署名が無効になり、起動直後に強制終了される場合があるため、署名し直す
 		if ($IsMacOS) { foreach ($fake in @($script:fakeFfmpeg, $script:otherFfmpeg)) { & codesign --force --sign - $fake *> $null } }
 		$script:fakeYtdl = Join-Path $script:procDir 'yt-dlp'
@@ -641,8 +646,8 @@ Describe 'Get-ProcessCountByPath / Get-YtdlProcessCount / Get-FfmpegProcessCount
 		Get-ProcessCountByPath -Path $script:fakeFfmpeg | Should -Be 0
 	}
 	It '指定した実行ファイルのプロセスだけを数える(別パスの同名プロセスは数えない)' {
-		$script:started += Start-Process -FilePath $script:fakeFfmpeg -ArgumentList '60' -PassThru
-		$script:started += Start-Process -FilePath $script:otherFfmpeg -ArgumentList '60' -PassThru
+		$script:started += Start-Process -FilePath $script:fakeFfmpeg -ArgumentList $script:fakeArgs -PassThru
+		$script:started += Start-Process -FilePath $script:otherFfmpeg -ArgumentList $script:fakeArgs -PassThru
 		Start-Sleep -Milliseconds 500
 		Get-ProcessCountByPath -Path $script:fakeFfmpeg | Should -Be 1
 		Get-ProcessCountByPath -Path $script:otherFfmpeg | Should -Be 1
@@ -661,8 +666,8 @@ Describe 'Get-ProcessCountByPath / Get-YtdlProcessCount / Get-FfmpegProcessCount
 	}
 	It 'Get-FfmpegProcessCountは$script:ffmpegPathのプロセスだけを数える' {
 		$script:ffmpegPath = $script:fakeFfmpeg
-		$script:started += Start-Process -FilePath $script:fakeFfmpeg -ArgumentList '60' -PassThru
-		$script:started += Start-Process -FilePath $script:otherFfmpeg -ArgumentList '60' -PassThru
+		$script:started += Start-Process -FilePath $script:fakeFfmpeg -ArgumentList $script:fakeArgs -PassThru
+		$script:started += Start-Process -FilePath $script:otherFfmpeg -ArgumentList $script:fakeArgs -PassThru
 		Start-Sleep -Milliseconds 500
 		Get-FfmpegProcessCount | Should -Be 1
 	}
@@ -1033,7 +1038,7 @@ Describe 'Invoke-VideoDownloadの字幕の分岐(#312)' {
 			@($script:histCache).Count | Should -Be 1
 			@($script:histCache)[0].videoPage | Should -Be 'https://tver.jp/episodes/ep00000001'
 			@(Import-Csv -LiteralPath $script:histFilePath -Encoding UTF8).Count | Should -Be 1	# 履歴ファイルにも書かれている
-		} finally { Remove-Variable -Name histCache, histIdSet, ignoreCache -Scope Script -ErrorAction SilentlyContinue }
+		} finally { Remove-Variable -Name histCache, histCacheStamp, histIdSet, ignoreCache -Scope Script -ErrorAction SilentlyContinue }
 	}
 }
 
@@ -1047,7 +1052,7 @@ Describe '一括ダウンロード用のキャッシュ' {
 		foreach ($n in 'redownloadWhenSubtitleAdded', 'embedSubtitle', 'videoContainerFormat') {
 			$script:cacheSaved[$n] = if (Test-Path "Variable:Script:$n") { (Get-Variable -Name $n -Scope Script).Value } else { '__unset__' }
 		}
-		function script:Remove-TestCacheVariable { Remove-Variable -Name histCache, histIdSet, ignoreCache -Scope Script -ErrorAction SilentlyContinue }
+		function script:Remove-TestCacheVariable { Remove-Variable -Name histCache, histCacheStamp, histIdSet, ignoreCache -Scope Script -ErrorAction SilentlyContinue }
 	}
 	AfterAll {
 		Remove-TestCacheVariable
@@ -2824,7 +2829,7 @@ Describe 'Invoke-VideoDownloadの履歴・ダウンロード対象外・失敗�
 		$script:sortVideoByMedia = $false
 		$script:ytdlRandomIp = $false
 		$script:proxyUrl = ''
-		Remove-Variable -Name ignoreCache, histCache -Scope Script -ErrorAction SilentlyContinue
+		Remove-Variable -Name ignoreCache, histCache, histCacheStamp -Scope Script -ErrorAction SilentlyContinue
 		$script:downloadBaseDir = Join-Path $script:vbDir ('dl{0}' -f [Guid]::NewGuid().ToString('N'))
 		New-Item -ItemType Directory -Path $script:downloadBaseDir -Force | Out-Null
 		$script:histFilePath = Join-Path $script:vbDir ('history{0}.csv' -f [Guid]::NewGuid().ToString('N'))
