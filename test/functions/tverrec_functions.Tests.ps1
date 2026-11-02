@@ -1962,6 +1962,32 @@ Describe 'Suspend-Process' {
 		Should -Invoke Start-Sleep -Times 3 -Exactly
 		$script:spNow | Should -Be ([DateTime]'2026-10-25 02:00:00')
 	}
+	It '週をまたいで停止時間帯が続く場合は、日曜の次の月曜の停止時間帯も考慮すること' {
+		$script:stopSchedule = @{ 'Sun' = @(23) ; 'Mon' = @(0) }
+		$script:spNow = [DateTime]'2026-10-25 23:30:00'	# 日曜日
+		Suspend-Process | Out-Null
+		Should -Invoke Start-Sleep -Times 2 -Exactly
+		Should -Invoke Start-Sleep -Times 1 -Exactly -ParameterFilter { $Seconds -eq 1800 }
+		Should -Invoke Start-Sleep -Times 1 -Exactly -ParameterFilter { $Seconds -eq 3600 }
+		$script:spNow | Should -Be ([DateTime]'2026-10-26 01:00:00')
+	}
+	It '停止スケジュールが空のハッシュテーブルなら、待機しない' {
+		$script:stopSchedule = @{}
+		{ Suspend-Process | Out-Null } | Should -Not -Throw
+		Should -Invoke Start-Sleep -Times 0 -Exactly
+	}
+	It '該当曜日の停止時間帯が空配列なら、待機しない' {
+		$script:stopSchedule = @{ 'Mon' = @() }
+		Suspend-Process | Out-Null
+		Should -Invoke Start-Sleep -Times 0 -Exactly
+	}
+	It '24時間すべてが停止時間帯でも、1時間ずつ待機を続け、最終的に停止時間外の曜日で戻ること' {
+		$script:stopSchedule = @{ 'Mon' = @(0..23) }
+		$script:spNow = [DateTime]'2026-10-26 22:00:00'
+		Suspend-Process | Out-Null
+		Should -Invoke Start-Sleep -Times 2 -Exactly
+		$script:spNow | Should -Be ([DateTime]'2026-10-27 00:00:00')	# 火曜日は停止対象外
+	}
 }
 
 #----------------------------------------------------------------------

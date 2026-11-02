@@ -89,6 +89,9 @@ try {
 if ($script:scriptRoot.Contains(' ')) { throw '❌️ TVerRecはスペースを含むディレクトリに配置できません。TVerRec cannot be placed in directories containing space' }
 . (Convert-Path (Join-Path $script:scriptRoot '../src/functions/initialize.ps1'))
 
+# ジョブ管理の初期化
+Register-JobCleanup
+
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # メイン処理
 Invoke-RequiredFileCheck
@@ -126,6 +129,9 @@ Write-Output '━━━━━━━━━━━━━━━━━━━━━━
 Write-Output '以下のようなコマンドが実行できます。'
 Write-Output "　　- Invoke-VideoDownload -episodeID 'ep12345678'"
 Write-Output "　　- Get-VideoInfo -episodeID 'ep12345678'"
+Write-Output '　　　　新API(v2/episodes)で取得します。取得できない場合は旧APIにフォールバックします。'
+Write-Output "　　- Get-VideoInfoLegacy -episodeID 'ep12345678'"
+Write-Output '　　　　旧APIで取得します。Get-VideoInfoとの戻り値の比較などに使えます。'
 Write-Output "　　- Get-VideoLinksFromKeyword -keyword 'キーワード'"
 Write-Output '　　　　キーワードは以下の形式で指定できます：'
 Write-Output '　　　　　　- episodes/{id}: 特定のエピソード'
