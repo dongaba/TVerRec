@@ -4,5 +4,7 @@ updates:
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
+    # PRはmasterではなくdevブランチに作成する
+    target-branch: "dev"
     schedule:
       interval: "weekly"
