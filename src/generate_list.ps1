@@ -165,44 +165,18 @@ try {
 	#======================================================================
 	# 個々の番組の情報の取得
 	#======================================================================
-	# if ($script:enableMultithread) {
-	# 	Write-Debug ('Multithread Processing Enabled')
-	# 	# 並列化が有効の場合は並列化
-	# 	if ($allEpisodeIDs -ne 0) {
-	# 		# 配列を分割
-	# 		$partitions = @{}
-	# 		$totalCount = $allEpisodeIDs.Count
-	# 		$partitionSize = [math]::Ceiling($totalCount / $script:multithreadNum)
-	# 		for ($i = 0 ; $i -lt $script:multithreadNum ; $i++) {
-	# 			$startIndex = $i * $partitionSize
-	# 			$endIndex = [math]::Min(($i + 1) * $partitionSize, $totalCount)
-	# 			if ($startIndex -lt $totalCount) { $partitions[$i] = $allEpisodeIDs[$startIndex..($endIndex - 1)] }
-	# 		}
-
-	# 		$paraJobSBs = @{}
-	# 		$paraJobDefs = @{}
-	# 		$paraJobs = @{}
-	# 		Write-Output ($script:msg.DisclaimerForMultithread)
-	# 		for ($i = 0 ; $i -lt $partitions.Count ; $i++) {
-	# 			$links = [String]$partitions[$i]
-	# 			$paraJobSBs[$i] = ("& ./generate_list_child.ps1 $keyword $links")
-	# 			$paraJobDefs[$i] = [ScriptBlock]::Create($paraJobSBs[$i])
-	# 			$paraJobs[$i] = Start-ThreadJob -ScriptBlock $paraJobDefs[$i]
-	# 		}
-	# 		do {
-	# 			$completedJobs = Get-Job -State Completed
-	# 			foreach ($job in $completedJobs) { Write-Output (Receive-Job -Job $job) ; Remove-Job -Job $job }
-	# 			Remove-Job -State Failed, Stopped, Suspended, Disconnected
-	# 			$remainingJobs = Get-Job
-	# 			Start-Sleep -Milliseconds 500
-	# 		} while ($remainingJobs)
-	# 	}
-	# } else {
-	# 並列化が無効の場合は従来型処理
+	# 番組情報はAPIの応答待ちが大半のため、並列処理が有効なら同時ダウンロードファイル数ずつ並列で先読みしておき、リストへの追加は順番に行う
+	# * 同時アクセス数は、APIへの過剰なアクセスによるBANを避けるため、ダウンロードと同じ同時ダウンロードファイル数に揃える
 	$listGenStartTime = Get-Date
-	$videoTotal = $uniqueEpisodeIDs.Count			# * #269
+	$episodeIDList = @($uniqueEpisodeIDs)
+	$videoTotal = $episodeIDList.Count			# * #269
+	$prefetchSize = if ($script:enableMultithread) { [Math]::Max([Int]$script:parallelDownloadFileNum, 1) } else { 0 }
 	$videoNum = 0
-	foreach ($episodeID in $uniqueEpisodeIDs) {
+	foreach ($episodeID in $episodeIDList) {
+		# 同時ダウンロードファイル数ごとに、次のまとまりの番組情報を並列で先読み
+		if ($prefetchSize -and (($videoNum % $prefetchSize) -eq 0)) {
+			Request-VideoInfoBatch -episodeIDs $episodeIDList[$videoNum..([Math]::Min($videoNum + $prefetchSize, $videoTotal) - 1)]
+		}
 		$videoNum++
 
 		# 進捗率の計算
@@ -227,7 +201,6 @@ try {
 		$keyword = $videoKeywordMap[$episodeID]
 		Update-VideoList -Keyword $keyword -EpisodeID $episodeID
 	}
-	# }
 	#----------------------------------------------------------------------
 
 
@@ -257,9 +230,10 @@ try {
 } finally {
 	# キャッシュの破棄
 	Remove-Variable -Name histCache, histCacheStamp, histIdSet, ignoreCache, searchCache -Scope Script -ErrorAction SilentlyContinue
+	Clear-VideoInfoPrefetch
 
 	# 変数のクリーンアップ
-	Remove-Variable -Name args, keywords, keywordNum, keywordTotal, toastShowParams, totalStartTime, keyword, listLinks, videoLinks, processedCount, videoTotal, secElapsed, secRemaining1, toastUpdateParams, partitions, totalCount, partitionSize, i, startIndex, endIndex, videoNum, paraJobSBs, paraJobDefs, paraJobs, links, completedJobs, job, remainingJobs, videoLink -ErrorAction SilentlyContinue
+	Remove-Variable -Name args, keywords, keywordNum, keywordTotal, toastShowParams, totalStartTime, keyword, listLinks, videoLinks, processedCount, videoTotal, secElapsed, secRemaining1, toastUpdateParams, episodeIDList, prefetchSize, videoNum, videoLink -ErrorAction SilentlyContinue
 
 	# ガベージコレクション
 	Invoke-GarbageCollection

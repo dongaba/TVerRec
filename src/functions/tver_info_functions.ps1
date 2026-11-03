@@ -54,7 +54,11 @@ function Get-VideoInfo {
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
 	$tverVideoInfoURL = 'https://contents-api.tver.jp/contents/api/v2/episodes/{0}' -f $episodeID
 	try {
-		$response = Invoke-RestMethod -Uri $tverVideoInfoURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec
+		# Request-VideoInfoBatchで先読み済みなら、その応答を使う(使ったら破棄する)
+		if ((Test-Path Variable:Script:videoInfoPrefetch) -and ($null -ne $script:videoInfoPrefetch) -and $script:videoInfoPrefetch.ContainsKey($episodeID)) {
+			$response = $script:videoInfoPrefetch[$episodeID]
+			$script:videoInfoPrefetch.Remove($episodeID)
+		} else { $response = Invoke-RestMethod -Uri $tverVideoInfoURL -Method 'GET' -Headers $script:commonHttpHeader -TimeoutSec $script:timeoutSec }
 		$episode = Get-JsonProperty $response @('episode')
 		$series = Get-JsonProperty $response @('series')
 		$season = Get-JsonProperty $response @('season')
@@ -100,6 +104,84 @@ function Get-VideoInfo {
 		return (Get-VideoInfoLegacy -episodeID $episodeID)
 	}
 	return Build-VideoInfoObject -SeriesName $videoSeries -SeriesID $videoSeriesID -SeasonName $videoSeason -SeasonID $videoSeasonID -EpisodeNum $videoEpisodeNum -EpisodeID $videoEpisodeID -EpisodeName $episodeName -MediaName $mediaName -ProviderName $providerName -BroadcastDate $broadcastDate -EndTime $endTime -VersionNum $null -IsSubtitle $isSubtitle -VideoInfoURL $tverVideoInfoURL -DescriptionText $descriptionText
+}
+
+#----------------------------------------------------------------------
+# 新世代APIの番組情報を並列で先読み
+#----------------------------------------------------------------------
+function Request-VideoInfoBatch {
+	<#
+		.SYNOPSIS
+			複数のエピソードの番組情報を、新世代API(contents-api.tver.jpのv2/episodes)から並列で取得しておきます。
+
+		.DESCRIPTION
+			指定されたエピソードIDのリクエストを同時に送信し、すべての応答を待ってから、
+			JSONを変換した結果を`$script:videoInfoPrefetch`に格納します。
+			Get-VideoInfoは先読み済みの応答があればそれを使うため、番組ごとに通信を待たずに済みます。
+			取得に失敗したエピソードは格納しないため、Get-VideoInfoが従来どおり個別に取得します(旧APIへのフォールバックも従来どおり)。
+
+		.PARAMETER episodeIDs
+			先読みするエピソードIDの配列を指定します。同時に送信するため、件数は呼び出し元で調整してください。
+
+		.OUTPUTS
+			[Void]
+
+		.EXAMPLE
+			Request-VideoInfoBatch -episodeIDs @('epXXXXXXXX', 'epYYYYYYYY')
+
+		.NOTES
+			先読み結果とHttpClientは呼び出し元(generate_list.ps1)がClear-VideoInfoPrefetchで破棄します。
+	#>
+	[OutputType([Void])]
+	Param ([Parameter(Mandatory = $true)][AllowEmptyCollection()][String[]]$episodeIDs)
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if (!(Test-Path Variable:Script:videoInfoPrefetch) -or ($null -eq $script:videoInfoPrefetch)) { $script:videoInfoPrefetch = @{} }
+	if (!(Test-Path Variable:Script:videoInfoHttpClient) -or !$script:videoInfoHttpClient) {
+		Add-Type -AssemblyName System.Net.Http -ErrorAction SilentlyContinue
+		$handler = [System.Net.Http.HttpClientHandler]::new()
+		$handler.AutomaticDecompression = [System.Net.DecompressionMethods]::GZip -bor [System.Net.DecompressionMethods]::Deflate
+		$script:videoInfoHttpClient = [System.Net.Http.HttpClient]::new($handler)
+		$script:videoInfoHttpClient.Timeout = [TimeSpan]::FromSeconds([Double]$script:timeoutSec)
+	}
+	# リクエストをまとめて送信
+	$tasks = [ordered]@{}
+	foreach ($episodeID in $episodeIDs) {
+		if ([String]::IsNullOrEmpty($episodeID) -or $tasks.Contains($episodeID)) { continue }
+		try {
+			$request = [System.Net.Http.HttpRequestMessage]::new([System.Net.Http.HttpMethod]::Get, ('https://contents-api.tver.jp/contents/api/v2/episodes/{0}' -f $episodeID))
+			foreach ($header in $script:commonHttpHeader.GetEnumerator()) { $request.Headers.TryAddWithoutValidation($header.Key, [String]$header.Value) | Out-Null }
+			$tasks[$episodeID] = $script:videoInfoHttpClient.SendAsync($request)
+		} catch { Write-Debug ('{0} - {1} - {2}' -f $MyInvocation.MyCommand.Name, $episodeID, $_.Exception.Message) }
+	}
+	# 応答を受け取り、成功したものだけ格納
+	foreach ($episodeID in $tasks.Keys) {
+		try {
+			$response = $tasks[$episodeID].GetAwaiter().GetResult()
+			try {
+				if ($response.IsSuccessStatusCode) { $script:videoInfoPrefetch[$episodeID] = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult() | ConvertFrom-Json }
+				else { Write-Debug ('{0} - {1} - HTTP {2}' -f $MyInvocation.MyCommand.Name, $episodeID, [Int]$response.StatusCode) }
+			} finally { $response.Dispose() }
+		} catch { Write-Debug ('{0} - {1} - {2}' -f $MyInvocation.MyCommand.Name, $episodeID, $_.Exception.Message) }
+	}
+}
+
+#----------------------------------------------------------------------
+# 番組情報の先読み結果の破棄
+#----------------------------------------------------------------------
+function Clear-VideoInfoPrefetch {
+	<#
+		.SYNOPSIS
+			Request-VideoInfoBatchの先読み結果とHttpClientを破棄します。
+
+		.OUTPUTS
+			[Void]
+	#>
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'スクリプト内のキャッシュ変数を破棄するだけで、システムの状態は変更しない')]
+	[OutputType([Void])]
+	Param ()
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	if ((Test-Path Variable:Script:videoInfoHttpClient) -and $script:videoInfoHttpClient) { $script:videoInfoHttpClient.Dispose() }
+	Remove-Variable -Name videoInfoPrefetch, videoInfoHttpClient -Scope Script -ErrorAction SilentlyContinue
 }
 
 #----------------------------------------------------------------------
