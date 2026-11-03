@@ -1459,6 +1459,24 @@ Describe 'Update-VideoList' {
 		Should -Invoke Wait-FileLock -Times 1 -Exactly
 		Should -Invoke Unlock-File -Times 1 -Exactly
 	}
+	Context '無視リストのキャッシュあり(リスト作成)' {
+		AfterEach { Remove-Variable -Name ignoreCache -Scope Script -ErrorAction SilentlyContinue }
+		It '無視リストのファイルを読まず、キャッシュで対象外を判定すること' {
+			Mock Get-VideoInfo { New-TestListVideoInfo $episodeID }
+			$script:ignoreCache = @('テスト番組')
+			Update-VideoList -keyword 'k' -episodeID 'epLIST0001' 3>$null | Out-Null
+			Update-VideoList -keyword 'k' -episodeID 'epLIST0002' 3>$null | Out-Null
+			@(Import-Csv -LiteralPath $script:listFilePath -Encoding UTF8).episodeID | Should -Be @('#epLIST0001', '#epLIST0002')
+			Should -Invoke Read-IgnoreList -Times 0 -Exactly
+		}
+		It 'キャッシュが空なら、ファイルを読まずにすべてリストに追加すること' {
+			Mock Read-IgnoreList { @('テスト番組') }
+			$script:ignoreCache = @()
+			Update-VideoList -keyword 'k' -episodeID 'epLIST0001' | Out-Null
+			(Import-Csv -LiteralPath $script:listFilePath -Encoding UTF8)[0].episodeID | Should -Be 'epLIST0001'
+			Should -Invoke Read-IgnoreList -Times 0 -Exactly
+		}
+	}
 }
 
 #----------------------------------------------------------------------
@@ -1829,6 +1847,74 @@ Describe 'ダウンロード済み・リスト登録済みの番組の除外' {
 			$videoLinks, $processedCount = Invoke-HistoryAndListMatchCheck -resultLinks @('epAAAAAAAA', 'epNEW00001')
 			@($videoLinks) | Should -Be @('epNEW00001')
 			$processedCount | Should -Be 1
+		}
+		It '大文字小文字を区別しない(リスト・履歴とも)' {
+			Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value @($script:matchHistHeader, (Get-TestMatchHistRow 'epHIST00001'))
+			$videoLinks, $processedCount = Invoke-HistoryAndListMatchCheck -resultLinks @('EPAAAAAAAA', 'ephist00001', 'epNEW00001')
+			@($videoLinks) | Should -Be @('epNEW00001')
+			$processedCount | Should -Be 2
+		}
+	}
+
+	Context '履歴キャッシュあり(リスト作成)' {
+		BeforeEach {
+			Set-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value @($script:matchHistHeader, (Get-TestMatchHistRow 'epHIST00001'))
+			$script:histCacheStamp = Get-HistoryFileStamp
+			$script:histCache = @(Get-LatestHistory)
+		}
+		AfterEach { Remove-Variable -Name histCache, histCacheStamp, histIdSet -Scope Script -ErrorAction SilentlyContinue }
+		It 'キャッシュなしと同じ結果を返す' {
+			$links, $count = Invoke-HistoryAndListMatchCheck -resultLinks @('epAAAAAAAA', 'epBBBBBBBB', 'epHIST00001', 'epNEW00001')
+			@($links) | Should -Be @('epNEW00001')
+			$count | Should -Be 3
+		}
+		It '履歴ファイルを読み直さず、ダウンロード済みIDのHashSetを使い回す' {
+			Mock Get-LatestHistory { throw 'should not be called' }
+			Invoke-HistoryAndListMatchCheck -resultLinks @('epNEW00001') | Out-Null
+			$first = $script:histIdSet
+			($first -is [System.Collections.Generic.HashSet[String]]) | Should -BeTrue
+			Invoke-HistoryAndListMatchCheck -resultLinks @('epNEW00002') | Out-Null
+			[Object]::ReferenceEquals($first, $script:histIdSet) | Should -BeTrue
+			Should -Invoke Get-LatestHistory -Times 0 -Exactly
+		}
+		It '他の処理が履歴ファイルに追記したら、読み直して判定に反映する' {
+			Invoke-HistoryAndListMatchCheck -resultLinks @('epNEW00001') | Out-Null
+			# * 更新日時の精度が粗くても検知できるよう、サイズも変わる追記で確認する
+			Add-Content -LiteralPath $script:histFilePath -Encoding UTF8 -Value (Get-TestMatchHistRow 'epNEW00001')
+			$links, $count = Invoke-HistoryAndListMatchCheck -resultLinks @('epNEW00001')
+			@($links).Count | Should -Be 0
+			$count | Should -Be 1
+		}
+		It 'ダウンロードリストはキャッシュせず、追加された番組をすぐに登録済みとして扱う' {
+			Invoke-HistoryAndListMatchCheck -resultLinks @('epNEW00001') | Out-Null
+			Add-Content -LiteralPath $script:listFilePath -Encoding UTF8 -Value '"epNEW00001","s3"'
+			$links, $count = Invoke-HistoryAndListMatchCheck -resultLinks @('epNEW00001')
+			@($links).Count | Should -Be 0
+			$count | Should -Be 1
+		}
+	}
+
+	Context 'Select-UnregisteredEpisodeID' {
+		BeforeAll {
+			function script:New-TestIdSet { Param ([String[]]$Ids) $set = [System.Collections.Generic.HashSet[String]]::new([System.StringComparer]::OrdinalIgnoreCase) ; foreach ($id in $Ids) { $set.Add($id) | Out-Null } ; return , $set }
+		}
+		It 'いずれかの集合に含まれる番組を除き、元の順序のまま返す' {
+			$links, $count = Select-UnregisteredEpisodeID -EpisodeLinks @('ep3', 'ep1', 'ep4', 'ep2') -IdSets @((New-TestIdSet 'ep1'), (New-TestIdSet 'ep2'))
+			@($links) | Should -Be @('ep3', 'ep4')
+			$count | Should -Be 2
+		}
+		It '両方の集合に含まれる番組も1件として数える' {
+			$links, $count = Select-UnregisteredEpisodeID -EpisodeLinks @('ep1') -IdSets @((New-TestIdSet 'ep1'), (New-TestIdSet 'ep1'))
+			@($links).Count | Should -Be 0
+			$count | Should -Be 1
+		}
+		It '空の集合や空のリストでも動作する' {
+			$links, $count = Select-UnregisteredEpisodeID -EpisodeLinks @('ep1') -IdSets @((New-TestIdSet @()))
+			@($links) | Should -Be @('ep1')
+			$count | Should -Be 0
+			$links, $count = Select-UnregisteredEpisodeID -EpisodeLinks @() -IdSets @((New-TestIdSet 'ep1'))
+			@($links).Count | Should -Be 0
+			$count | Should -Be 0
 		}
 	}
 }

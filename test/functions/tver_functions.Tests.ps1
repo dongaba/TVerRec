@@ -20,6 +20,8 @@ BeforeAll {
 	$script:scriptRoot = Convert-Path (Join-Path $script:repoRoot 'src')
 	Set-Location $script:scriptRoot
 	$script:broadcasterDir = Convert-Path (Join-Path $script:scriptRoot '../resources/broadcaster')
+	# common_functions.ps1は読み込み時(Windowsのトースト通知の初期化)にこれらを参照するため、読み込む前に定義する
+	$script:libDir = Join-Path $script:repoRoot 'resources/lib'
 	$script:disableToastNotification = $false
 	# メッセージテーブル(警告メッセージの書式に必要)
 	$script:msg = (Get-Content -Path (Join-Path $script:scriptRoot '../resources/lang/messages.json') -Raw | ConvertFrom-Json).'ja-JP'
@@ -717,6 +719,114 @@ Describe 'Get-VideoInfo(新世代API)' {
 			Mock Invoke-RestMethod { if ($Uri -like '*contents-api*') { [PSCustomObject]@{ code = 4002 } } else { New-LegacyApiResponse -uri $Uri } }
 			(Get-VideoInfo -episodeID 'ep1').mediaName | Should -BeExactly '旧API放送局名'
 		}
+	}
+}
+
+#----------------------------------------------------------------------
+# 新世代APIの番組情報の並列先読み(リスト作成用)
+#----------------------------------------------------------------------
+Describe 'Request-VideoInfoBatch / Clear-VideoInfoPrefetch' {
+	BeforeAll {
+		# * HttpClientはMockできないため、通信せずに応答を返すHttpMessageHandlerを差し込む
+		if (-not ('TVerRecTest.FakeEpisodeHandler' -as [Type])) {
+			Add-Type -TypeDefinition @'
+using System.Collections.Generic;
+using System.Net;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
+namespace TVerRecTest {
+	public class FakeEpisodeHandler : HttpMessageHandler {
+		public Dictionary<string, string> Bodies = new Dictionary<string, string>();
+		public List<HttpRequestMessage> Requests = new List<HttpRequestMessage>();
+		public bool Disposed;
+		protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
+			lock (Requests) { Requests.Add(request); }
+			string[] segments = request.RequestUri.Segments;
+			string id = segments[segments.Length - 1];
+			if (id == "epTHROW") { return Task.FromException<HttpResponseMessage>(new HttpRequestException("network error")); }
+			string body;
+			if (Bodies.TryGetValue(id, out body)) { return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(body) }); }
+			return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
+		}
+		protected override void Dispose(bool disposing) { Disposed = true; base.Dispose(disposing); }
+	}
+}
+'@
+		}
+		function script:Get-TestEpisodeJson {
+			Param ([String]$Id)
+			[PSCustomObject]@{
+				episode = [PSCustomObject]@{
+					id = $Id ; title = 'T' ; broadcast_provider_id = 'tx' ; production_provider = [PSCustomObject]@{ display_name = '制作局' }
+					broadcast_date_label = '' ; description = 'D' ; index_no = 2 ; is_subtitle = $true ; view_status = [PSCustomObject]@{ end_at = 1800622799 }
+				}
+				season  = [PSCustomObject]@{ id = 's1' ; title = '本編' }
+				series  = [PSCustomObject]@{ id = 'sr1' ; title = 'S' }
+			} | ConvertTo-Json -Depth 5 -Compress
+		}
+	}
+	BeforeEach {
+		Clear-VideoInfoPrefetch
+		$script:unknownBroadcasterID = @{}
+		$script:fakeHandler = [TVerRecTest.FakeEpisodeHandler]::new()
+		$script:fakeHandler.Bodies['epOK1'] = Get-TestEpisodeJson 'epOK1'
+		$script:fakeHandler.Bodies['epOK2'] = Get-TestEpisodeJson 'epOK2'
+		$script:videoInfoHttpClient = [System.Net.Http.HttpClient]::new($script:fakeHandler)
+	}
+	AfterAll { Clear-VideoInfoPrefetch }
+
+	It '成功した応答だけを格納し、HTTPエラーや通信エラーの番組は格納しないこと' {
+		{ Request-VideoInfoBatch -episodeIDs @('epOK1', 'ep404', 'epTHROW', 'epOK2') } | Should -Not -Throw
+		@($script:videoInfoPrefetch.Keys | Sort-Object) | Should -Be @('epOK1', 'epOK2')
+		$script:videoInfoPrefetch['epOK1'].episode.id | Should -BeExactly 'epOK1'
+		$script:fakeHandler.Requests.Count | Should -Be 4
+	}
+	It '新世代APIのURLに、共通のHTTPヘッダーを付けて送信すること' {
+		Request-VideoInfoBatch -episodeIDs @('epOK1')
+		$request = $script:fakeHandler.Requests[0]
+		$request.RequestUri.AbsoluteUri | Should -BeExactly 'https://contents-api.tver.jp/contents/api/v2/episodes/epOK1'
+		@($request.Headers.GetValues('x-tver-platform-type')) | Should -Be @('web')
+		@($request.Headers.GetValues('X-Forwarded-For')) | Should -Be @($script:jpIP)
+	}
+	It '重複したIDは1回だけ送ること' {
+		Request-VideoInfoBatch -episodeIDs @('epOK1', 'epOK1')
+		$script:fakeHandler.Requests.Count | Should -Be 1
+	}
+	It '空の配列でも例外にならないこと' {
+		{ Request-VideoInfoBatch -episodeIDs @() } | Should -Not -Throw
+		$script:fakeHandler.Requests.Count | Should -Be 0
+	}
+	It '続けて呼ぶと、先読み結果に追加し、HttpClientを使い回すこと' {
+		$client = $script:videoInfoHttpClient
+		Request-VideoInfoBatch -episodeIDs @('epOK1')
+		Request-VideoInfoBatch -episodeIDs @('epOK2')
+		[Object]::ReferenceEquals($client, $script:videoInfoHttpClient) | Should -BeTrue
+		$script:videoInfoPrefetch.Count | Should -Be 2
+	}
+	It 'Get-VideoInfoは先読み済みの応答を使って通信せず、使った応答は破棄すること' {
+		Mock Invoke-RestMethod { throw 'should not be called' }
+		Request-VideoInfoBatch -episodeIDs @('epOK1')
+		$info = Get-VideoInfo -episodeID 'epOK1'
+		$info.episodeID | Should -BeExactly 'epOK1'
+		$info.seriesName | Should -BeExactly 'S'
+		$info.mediaName | Should -BeExactly 'テレ東'
+		$script:videoInfoPrefetch.ContainsKey('epOK1') | Should -BeFalse
+		Should -Invoke Invoke-RestMethod -Times 0 -Exactly
+	}
+	It 'Get-VideoInfoは先読みできなかった番組を従来どおり個別に取得すること' {
+		Mock Invoke-RestMethod { Get-TestEpisodeJson 'ep404' | ConvertFrom-Json }
+		Request-VideoInfoBatch -episodeIDs @('ep404')
+		(Get-VideoInfo -episodeID 'ep404').episodeID | Should -BeExactly 'ep404'
+		Should -Invoke Invoke-RestMethod -Times 1 -Exactly -ParameterFilter { $Uri -like '*contents-api*ep404' }
+	}
+	It 'Clear-VideoInfoPrefetchで、HttpClientを破棄し、先読み結果を削除すること' {
+		Request-VideoInfoBatch -episodeIDs @('epOK1')
+		Clear-VideoInfoPrefetch
+		$script:fakeHandler.Disposed | Should -BeTrue
+		Test-Path Variable:Script:videoInfoPrefetch | Should -BeFalse
+		Test-Path Variable:Script:videoInfoHttpClient | Should -BeFalse
+		{ Clear-VideoInfoPrefetch } | Should -Not -Throw
 	}
 }
 
