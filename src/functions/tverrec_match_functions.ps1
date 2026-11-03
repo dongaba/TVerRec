@@ -84,33 +84,8 @@ function Invoke-HistoryMatchCheck {
 	[OutputType([String[]])]
 	Param ([Parameter(Mandatory = $true)][String[]]$episodeLinks)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	# ダウンロード履歴ファイルのデータを読み込み
-	# 一括ダウンロード中(履歴キャッシュあり)は、ダウンロード済みのIDをHashSetにして使い回す(キーワードごとの全件処理を避けるため)
-	if ((Test-Path Variable:Script:histCache) -and ($null -ne $script:histCache)) {
-		Sync-LatestHistoryCache	# 他のPCなどが履歴を更新していれば、ダウンロード済みIDも作り直す
-		if (!(Test-Path Variable:Script:histIdSet) -or ($null -eq $script:histIdSet)) {
-			$histFileData = @(Remove-SubtitleRecheckTarget @(Get-LatestHistoryCached))	# 字幕の再確認の対象は「ダウンロード済み」に含めない
-			$histIdList = [System.Collections.Generic.List[String]]::new()
-			foreach ($histRecord in $histFileData.Where({ $_ })) { $histIdList.Add($histRecord.videoPage.Replace('https://tver.jp/episodes/', '')) }
-			# * Compare-Objectと同様に大文字小文字を区別しない
-			$script:histIdSet = [System.Collections.Generic.HashSet[String]]::new($histIdList, [System.StringComparer]::OrdinalIgnoreCase)
-		}
-		$videoLinks = [System.Collections.Generic.List[String]]::new()
-		$processedCount = 0
-		foreach ($episodeLink in $episodeLinks) {
-			if ($script:histIdSet.Contains($episodeLink)) { $processedCount++ } else { $videoLinks.Add($episodeLink) }
-		}
-		return @($videoLinks.ToArray(), $processedCount)
-	}
-	$histFileData = @(Get-LatestHistoryCached)
-	$histFileData = @(Remove-SubtitleRecheckTarget $histFileData)	# 字幕の再確認の対象は「ダウンロード済み」に含めない
-	if ($histFileData.Count -eq 0) { $histVideoPages = @() } else { $histVideoPages = @($histFileData.videoPage.Replace('https://tver.jp/episodes/', '')) }
 	# エピソードIDがすでにダウンロード履歴に存在する場合は検索結果から除外
-	$histCompResult = @(Compare-Object -IncludeEqual $episodeLinks $histVideoPages)
-	try { $processedCount = ($histCompResult.Where({ $_.SideIndicator -eq '==' })).Count } catch { $processedCount = 0 }
-	try { $videoLinks = @($histCompResult.Where({ $_.SideIndicator -eq '<=' }).InputObject) } catch { $videoLinks = @() }
-	Remove-Variable -Name episodeLinks, histFileData, histVideoPages, histCompResult -ErrorAction SilentlyContinue
-	return @($videoLinks, $processedCount)
+	return (Select-UnregisteredEpisodeID -EpisodeLinks $episodeLinks -IdSets @(Get-DownloadedEpisodeIDSet))
 }
 
 #----------------------------------------------------------------------
@@ -145,17 +120,8 @@ function Invoke-ListMatchCheck {
 	[OutputType([String[]])]
 	Param ([Parameter(Mandatory = $true)][Alias('links')][String[]]$resultLinks)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	# ダウンロードリストファイルのデータを読み込み
-	$listFileData = @(Read-DownloadList)
-	# エピソードIDで照合する(検索結果もダウンロードリストもエピソードID。#で始まるダウンロード対象外も登録済みとして扱う)
-	$listVideoIDs = New-Object System.Collections.Generic.List[String]
-	foreach ($item in $listFileData) { $listVideoIDs.Add($item.EpisodeID.Replace('#', '')) }
 	# エピソードIDがすでにダウンロードリストに存在する場合は検索結果から除外
-	$listCompResult = @(Compare-Object -IncludeEqual $resultLinks $listVideoIDs)
-	try { $processedCount = ($listCompResult.Where({ $_.SideIndicator -eq '==' })).Count } catch { $processedCount = 0 }
-	try { $videoLinks = @($listCompResult.Where({ $_.SideIndicator -eq '<=' }).InputObject) } catch { $videoLinks = @() }
-	Remove-Variable -Name resultLinks, listFileData, listVideoIDs, listFileLine, listCompResult -ErrorAction SilentlyContinue
-	return @($videoLinks, $processedCount)
+	return (Select-UnregisteredEpisodeID -EpisodeLinks $resultLinks -IdSets @(Get-ListedEpisodeIDSet))
 }
 
 #----------------------------------------------------------------------
@@ -191,21 +157,93 @@ function Invoke-HistoryAndListMatchCheck {
 	[OutputType([String[]])]
 	Param ([Parameter(Mandatory = $true)][Alias('links')][String[]]$resultLinks)
 	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
-	# ダウンロードリストファイルのデータを読み込み
-	$listFileData = @(Read-DownloadList)
-	$listVideoID = New-Object System.Collections.Generic.List[Object]
-	foreach ($listFileLine in $listFileData) { $listVideoID.Add(@($listFileLine.EpisodeID.Replace('#', ''))) }
-	# ダウンロード履歴ファイルのデータを読み込み
-	$histFileData = @(Get-LatestHistory)
-	$histFileData = @(Remove-SubtitleRecheckTarget $histFileData)	# 字幕の再確認の対象は「ダウンロード済み」に含めない
-	# 履歴が1件だけの場合に配列が文字列に展開されないよう、@()で包む
-	$histVideoID = @(if ($histFileData.Count -eq 0) { @() } else { $histFileData.VideoPage.Replace('https://tver.jp/episodes/', '') })
-	# ダウンロードリストとダウンロード履歴をマージ
-	if ($histVideoID) { $listVideoID.AddRange($histVideoID) }
-	# エピソードIDがすでにダウンロード履歴に存在する場合は検索結果から除外
-	$listCompResult = Compare-Object -IncludeEqual $resultLinks $listVideoID
-	try { $processedCount = ($listCompResult.Where({ $_.SideIndicator -eq '==' })).Count } catch { $processedCount = 0 }
-	try { $videoLinks = @($listCompResult.Where({ $_.SideIndicator -eq '<=' }).InputObject) } catch { $videoLinks = @() }
-	return @($videoLinks, $processedCount)
+	# エピソードIDがすでにダウンロードリストかダウンロード履歴に存在する場合は検索結果から除外
+	return (Select-UnregisteredEpisodeID -EpisodeLinks $resultLinks -IdSets @((Get-ListedEpisodeIDSet), (Get-DownloadedEpisodeIDSet)))
+}
+
+#----------------------------------------------------------------------
+# ダウンロード済みのエピソードIDの集合を取得
+#----------------------------------------------------------------------
+function Get-DownloadedEpisodeIDSet {
+	<#
+		.SYNOPSIS
+			ダウンロード履歴にあるエピソードIDの集合(HashSet)を返します。
+
+		.DESCRIPTION
+			字幕の再確認の対象は「ダウンロード済み」に含めません。
+			`$script:histCache`が設定されている場合(一括ダウンロード・リスト作成中)は、作成したHashSetを`$script:histIdSet`に保存して使い回し、
+			キーワードごとに履歴の全件処理が走るのを避けます。
+
+		.OUTPUTS
+			[System.Collections.Generic.HashSet[String]] 大文字小文字を区別しないエピソードIDの集合
+	#>
+	[OutputType([System.Collections.Generic.HashSet[String]])]
+	Param ()
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$useCache = (Test-Path Variable:Script:histCache) -and ($null -ne $script:histCache)
+	if ($useCache) {
+		Sync-LatestHistoryCache	# 他のPCなどが履歴を更新していれば、ダウンロード済みIDも作り直す
+		if ((Test-Path Variable:Script:histIdSet) -and ($null -ne $script:histIdSet)) { return , $script:histIdSet }
+	}
+	$histFileData = @(Remove-SubtitleRecheckTarget @(Get-LatestHistoryCached))	# 字幕の再確認の対象は「ダウンロード済み」に含めない
+	# * Compare-Objectと同様に大文字小文字を区別しない
+	$histIdSet = [System.Collections.Generic.HashSet[String]]::new([System.StringComparer]::OrdinalIgnoreCase)
+	foreach ($histRecord in $histFileData.Where({ $_ -and $_.videoPage })) { $histIdSet.Add($histRecord.videoPage.Replace('https://tver.jp/episodes/', '')) | Out-Null }
+	if ($useCache) { $script:histIdSet = $histIdSet }
+	return , $histIdSet
+}
+
+#----------------------------------------------------------------------
+# ダウンロードリストに登録済みのエピソードIDの集合を取得
+#----------------------------------------------------------------------
+function Get-ListedEpisodeIDSet {
+	<#
+		.SYNOPSIS
+			ダウンロードリストにあるエピソードIDの集合(HashSet)を返します。
+
+		.DESCRIPTION
+			#で始まるダウンロード対象外の番組も、#を除いたエピソードIDで登録済みとして扱います。
+
+		.OUTPUTS
+			[System.Collections.Generic.HashSet[String]] 大文字小文字を区別しないエピソードIDの集合
+	#>
+	[OutputType([System.Collections.Generic.HashSet[String]])]
+	Param ()
+	Write-Debug ('{0}' -f $MyInvocation.MyCommand.Name)
+	$listIdSet = [System.Collections.Generic.HashSet[String]]::new([System.StringComparer]::OrdinalIgnoreCase)
+	foreach ($listRecord in @(Read-DownloadList)) { if ($listRecord.EpisodeID) { $listIdSet.Add($listRecord.EpisodeID.Replace('#', '')) | Out-Null } }
+	return , $listIdSet
+}
+
+#----------------------------------------------------------------------
+# エピソードIDの集合に含まれない番組だけを返す
+#----------------------------------------------------------------------
+function Select-UnregisteredEpisodeID {
+	<#
+		.SYNOPSIS
+			指定されたエピソードIDのうち、いずれの集合にも含まれないものと、含まれる件数を返します。
+
+		.PARAMETER EpisodeLinks
+			チェック対象のエピソードIDのリストを指定します。
+
+		.PARAMETER IdSets
+			登録済みのエピソードIDの集合(HashSet)の配列を指定します。
+
+		.OUTPUTS
+			[Object[]] 未登録のエピソードIDの配列と、登録済みの件数
+	#>
+	[OutputType([Object[]])]
+	Param (
+		[Parameter(Mandatory = $true)][AllowEmptyCollection()][String[]]$EpisodeLinks,
+		[Parameter(Mandatory = $true)][AllowEmptyCollection()][Object[]]$IdSets
+	)
+	$videoLinks = [System.Collections.Generic.List[String]]::new()
+	$processedCount = 0
+	foreach ($episodeLink in $EpisodeLinks) {
+		$registered = $false
+		foreach ($idSet in $IdSets) { if ($idSet.Contains($episodeLink)) { $registered = $true ; break } }
+		if ($registered) { $processedCount++ } else { $videoLinks.Add($episodeLink) }
+	}
+	return @($videoLinks.ToArray(), $processedCount)
 }
 #endregion ダウンロード対象判定処理

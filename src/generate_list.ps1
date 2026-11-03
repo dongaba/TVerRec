@@ -92,6 +92,16 @@ try {
 	else { $keywordTotal = $keywords.Count }
 	$keywordNum = 0
 
+	# 履歴ファイルと無視リストは最初に1回だけ読み込んで使い回す(キーワードごと・番組ごとの全件読み込みを避けるため)
+	# * 他のPCや別の処理が実行中に履歴ファイルを更新した場合は、更新日時とサイズの変化を検知して読み直す
+	if ($script:listGenHistoryCheck) {
+		$script:histCacheStamp = Get-HistoryFileStamp
+		$script:histCache = @(Get-LatestHistory)
+	}
+	$script:ignoreCache = @(Read-IgnoreList)
+	# シリーズ・シーズン・タレントのAPI結果も実行中だけ使い回す
+	$script:searchCache = @{}
+
 	# 進捗表示の初期化
 	$toastShowParams = @{
 		Text1      = $script:msg.ListCreation
@@ -245,6 +255,9 @@ try {
 	Write-Error "Stack trace: $($_.ScriptStackTrace)"
 	throw
 } finally {
+	# キャッシュの破棄
+	Remove-Variable -Name histCache, histCacheStamp, histIdSet, ignoreCache, searchCache -Scope Script -ErrorAction SilentlyContinue
+
 	# 変数のクリーンアップ
 	Remove-Variable -Name args, keywords, keywordNum, keywordTotal, toastShowParams, totalStartTime, keyword, listLinks, videoLinks, processedCount, videoTotal, secElapsed, secRemaining1, toastUpdateParams, partitions, totalCount, partitionSize, i, startIndex, endIndex, videoNum, paraJobSBs, paraJobDefs, paraJobs, links, completedJobs, job, remainingJobs, videoLink -ErrorAction SilentlyContinue
 

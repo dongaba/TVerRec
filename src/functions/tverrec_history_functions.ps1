@@ -132,7 +132,7 @@ function Get-LatestHistoryCached {
 			[PSCustomObject[]] 各ビデオページの最新履歴レコードの配列
 
 		.NOTES
-			キャッシュは呼び出し元(download_bulk.ps1)が設定・破棄します。
+			キャッシュは呼び出し元(download_bulk.ps1、generate_list.ps1)が設定・破棄します。
 			他のPCや別の処理が履歴ファイルに追記した場合は、Sync-LatestHistoryCacheが読み直します。
 	#>
 	[OutputType([PSCustomObject])]
@@ -188,7 +188,7 @@ function Get-IgnoreListCached {
 			[String[]] ダウンロード対象外番組名の配列
 
 		.NOTES
-			キャッシュは呼び出し元(download_bulk.ps1)が設定・破棄します。
+			キャッシュは呼び出し元(download_bulk.ps1、generate_list.ps1)が設定・破棄します。
 	#>
 	[OutputType([String[]])]
 	Param ()

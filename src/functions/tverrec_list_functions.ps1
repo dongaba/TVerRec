@@ -209,7 +209,7 @@ function Update-VideoList {
 	if ($null -eq $videoInfo) { Write-Warning ($script:msg.EpisodeInfoRetrievalFailed) ; return }
 	$videoInfo | Add-Member -MemberType NoteProperty -Name 'keyword' -Value $keyword
 	# ダウンロード対象外に入っている番組の場合はリスト出力しない
-	$ignoreTitles = @(Read-IgnoreList)
+	$ignoreTitles = @(Get-IgnoreListCached)	# リスト作成中はキャッシュを使い、番組ごとにファイルを読み直さない
 	foreach ($ignoreTitle in $ignoreTitles) {
 		if ($ignoreTitle) {
 			if (Test-IgnoreMatch -Pattern $ignoreTitle -Target @($videoInfo.seriesName, $videoInfo.episodeName) -Mode Literal) {

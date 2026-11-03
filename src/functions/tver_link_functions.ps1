@@ -297,7 +297,7 @@ function Get-SearchResult {
 		default {}
 	}
 	# 取得した値をタイプごとに調整
-	# 一括ダウンロード中は、シリーズ・シーズン・タレントのAPIの結果を実行中だけ使い回す(キーワード間で同じIDを何度も取得しないため)
+	# 一括ダウンロード・リスト作成中は、シリーズ・シーズン・タレントのAPIの結果を実行中だけ使い回す(キーワード間で同じIDを何度も取得しないため)
 	$useSearchCache = (Test-Path Variable:Script:searchCache) -and ($null -ne $script:searchCache) -and ($baseURL -match '/(callSeriesSeasons|callSeasonEpisodes|callTalentEpisode)/')
 	if ($useSearchCache -and $script:searchCache.ContainsKey($callSearchURL)) { $searchResultsRaw = $script:searchCache[$callSearchURL] }
 	else {
